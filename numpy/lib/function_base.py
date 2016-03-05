@@ -898,15 +898,19 @@ def average(a, axis=None, weights=None, returned=False):
     TypeError: Axis must be specified when shapes of a and weights differ.
 
     """
-    if not isinstance(a, np.matrix):
-        a = np.asarray(a)
+    a = np.asanyarray(a)
 
     if weights is None:
         avg = a.mean(axis)
         scl = avg.dtype.type(a.size/avg.size)
     else:
-        a = a + 0.0
-        wgt = np.asarray(weights)
+        wgt = np.asanyarray(weights)
+
+        if issubclass(a.dtype.type, (np.integer, np.bool_)):
+            result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
+        else:
+            result_dtype = np.result_type(a.dtype, wgt.dtype)
+
         # Sanity checks
         if a.shape != wgt.shape:
             if axis is None:
@@ -921,17 +925,18 @@ def average(a, axis=None, weights=None, returned=False):
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1, axis)
+            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = wgt.swapaxes(-1, axis)
 
-        scl = wgt.sum(axis=axis, dtype=np.result_type(a.dtype, wgt.dtype))
+        scl = wgt.sum(axis=axis, dtype=result_dtype)
         if (scl == 0.0).any():
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
-        avg = np.multiply(a, wgt).sum(axis)/scl
+        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
 
     if returned:
-        scl = np.multiply(avg, 0) + scl
+        scl = np.broadcast_to(scl, avg.shape)
         return avg, scl
     else:
         return avg

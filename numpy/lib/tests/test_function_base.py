@@ -167,6 +167,29 @@ class TestAverage(TestCase):
         avg, scl = average(y, weights=w2, axis=1, returned=True)
         assert_array_equal(scl, np.array([1., 6.]))
 
+    def test_subclasses(self):
+        class subclass(np.ndarray):
+            pass
+        a = np.array([[1,2],[3,4]]).view(subclass)
+        w = np.array([[1,2],[3,4]]).view(subclass)
+
+        assert_equal(type(np.average(a, weights=w)), subclass)
+
+        # also test matrices
+        a = np.matrix([[1,2],[3,4]])
+        w = np.matrix([[1,2],[3,4]])
+
+        r = np.average(a, axis=0, weights=w)
+        assert_equal(type(r), np.matrix)
+        assert_equal(r, [[2.5, 10.0/3]])
+
+    def test_upcasting(self):
+        types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
+                 ('f4', 'f4', 'f4'), ('f4', 'f8', 'f8')]
+        for at, wt, rt in types:
+            a = np.array([[1,2],[3,4]], dtype=at)
+            w = np.array([[1,2],[3,4]], dtype=wt)
+            assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))
 
 class TestSelect(TestCase):
     choices = [np.array([1, 2, 3]),
