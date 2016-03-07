@@ -12,6 +12,13 @@ interfacing with general-purpose data-base applications.
 There are also basic facilities for discrete fourier transform,
 basic linear algebra and random number generation.
 
+All numpy wheels distributed from pypi are BSD licensed.
+
+Windows wheels are linked against the ATLAS BLAS / LAPACK library, restricted
+to SSE2 instructions, so may not give optimal linear algebra performance for
+your machine. See http://docs.scipy.org/doc/numpy/user/install.html for
+alternatives.
+
 """
 from __future__ import division, print_function
 
