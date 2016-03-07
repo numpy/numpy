@@ -82,10 +82,7 @@ __all__ = [
 MaskType = np.bool_
 nomask = MaskType(0)
 
-class MaskedArrayFutureWarning(FutureWarning):
-    pass
-
-
+class MaskedArray
 def doc_note(initialdoc, note):
     """
     Adds a Notes section to an existing docstring.
@@ -3204,7 +3201,7 @@ class MaskedArray(ndarray):
                 " to  return both as views. This means that using"
                 " `__setitem__` will propagate values back through all masks"
                 " that are present.",
-                MaskedArrayFutureWarning
+                FutureWarning
             )
 
         if self is masked:
