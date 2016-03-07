@@ -3,7 +3,7 @@
 </div>
 -----------------
 
-[![Travis](https://img.shields.io/travis/numpy/numpy.svg)](https://travis-ci.org/numpy/numpy) 
+[![Travis-CI Build Status](https://travis-ci.org/numpy/numpy.svg?branch=master)](https://travis-ci.org/numpy/numpy)
 
 NumPy is the fundamental package needed for scientific computing with Python.
 This package contains:
