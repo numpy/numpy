@@ -14,9 +14,9 @@ def _index_deprecate(i, stacklevel=2):
     except TypeError:
         msg = ("object of type {} cannot be safely interpreted as "
                "an integer.".format(type(i)))
+        i = int(i)
         stacklevel += 1
         warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
-        i = int(i)
     return i
 
 
