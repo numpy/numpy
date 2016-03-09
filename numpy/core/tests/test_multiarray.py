@@ -716,6 +716,20 @@ class TestCreation(TestCase):
 
         assert_raises(ValueError, np.array, C()) # segfault?
 
+    def test_failed_len_sequence(self):
+        # gh-7393
+        class A(object):
+            def __init__(self, data):
+                self._data = data
+            def __getitem__(self, item):
+                return type(self)(self._data[item])
+            def __len__(self):
+                return len(self._data)
+
+        # len(d) should give 3, but len(d[0]) will fail
+        d = A([1,2,3])
+        assert_equal(len(np.array(d)), 3)
+
 
 class TestStructured(TestCase):
     def test_subarray_field_access(self):
