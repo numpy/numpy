@@ -649,6 +649,22 @@ class TestUfunc(TestCase):
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
 
+    def test_object_array_accumulate_inplace(self):
+        # Checks that in-place accumulates work, see also gh-7402
+        arr = np.ones(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        # Twice reproduced also for tuples:
+        np.add.accumulate(arr, out=arr)
+        np.add.accumulate(arr, out=arr)
+        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        np.add.accumulate(arr, out=arr, axis=-1)
+        np.add.accumulate(arr, out=arr, axis=-1)
+        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+
     def test_object_scalar_multiply(self):
         # Tickets #2469 and #4482
         arr = np.matrix([1, 2], dtype=object)
