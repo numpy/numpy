@@ -501,7 +501,10 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 {
 
     PyObject *module_internal;
-
+    /* 
+     * Store the function in the _internal module so that it 
+     * can be safely used and customized in subinterpreters.
+     */
     module_internal = PyImport_ImportModule("numpy.core._internal");
     if (module_internal != NULL) {
         if (repr) {
