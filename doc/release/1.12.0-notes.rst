@@ -177,6 +177,13 @@ were doing. This caused a complication in the downstream 'pandas' library
 that encountered an issue with 'numpy' compatibility. Now, all array-like
 methods in this module are called with keyword arguments instead.
 
+Operations on np.memmap objects return numpy arrays in most cases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously operations on a memmap (e.g. adding 1 to it) object would
+misleadingly return a memmap instance even if the result was actually
+not memmapped. Also reduction of a memmap (e.g.  ``.sum(axis=None``)
+return a numpy scalar instead of a 0d memmap.
+
 Deprecations
 ============
 
