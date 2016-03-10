@@ -5,7 +5,9 @@ import os
 import shutil
 from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
-from numpy import memmap
+from numpy import (
+    memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
+
 from numpy import arange, allclose, asarray
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
@@ -125,6 +127,51 @@ class TestMemmap(TestCase):
         assert_(new2.base is fp)
         new_array = asarray(fp)
         assert_(new_array.base is fp)
+
+    def test_ufunc_return_ndarray(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        for unary_op in [sum, average, product]:
+            result = unary_op(fp)
+            assert_(isscalar(result))
+            assert_(result.__class__ is self.data[0, 0].__class__)
+
+            assert_(unary_op(fp, axis=0).__class__ is ndarray)
+            assert_(unary_op(fp, axis=1).__class__ is ndarray)
+
+        for binary_op in [add, subtract, multiply]:
+            assert_(binary_op(fp, self.data).__class__ is ndarray)
+            assert_(binary_op(self.data, fp).__class__ is ndarray)
+            assert_(binary_op(fp, fp).__class__ is ndarray)
+
+        fp += 1
+        assert(fp.__class__ is memmap)
+        add(fp, 1, out=fp)
+        assert(fp.__class__ is memmap)
+
+    def test_getitem(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        assert_(fp[1:, :-1].__class__ is memmap)
+        # Fancy indexing returns a copy that is not memmapped
+        assert_(fp[[0, 1]].__class__ is ndarray)
+
+    def test_memmap_subclass(self):
+        class MemmapSubClass(memmap):
+            pass
+
+        fp = MemmapSubClass(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        # We keep previous behavior for subclasses of memmap, i.e. the
+        # ufunc and __getitem__ output is never turned into a ndarray
+        assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
+        assert_(sum(fp).__class__ is MemmapSubClass)
+        assert_(fp[1:, :-1].__class__ is MemmapSubClass)
+        assert(fp[[0, 1]].__class__ is MemmapSubClass)
+
 
 if __name__ == "__main__":
     run_module_suite()
