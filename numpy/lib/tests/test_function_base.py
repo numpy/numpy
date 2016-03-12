@@ -98,6 +98,7 @@ class TestRot90(TestCase):
 
 
 class TestFlip(TestCase):
+
     def test_axes(self):
         self.assertRaises(ValueError, np.flip, np.ones(4), axis=1)
         self.assertRaises(ValueError, np.flip, np.ones((4, 4)), axis=2)
@@ -126,13 +127,11 @@ class TestFlip(TestCase):
     def test_3d_swap_axis0(self):
         a = np.array([[[0, 1],
                        [2, 3]],
-
                       [[4, 5],
                        [6, 7]]])
 
         b = np.array([[[4, 5],
                        [6, 7]],
-
                       [[0, 1],
                        [2, 3]]])
 
@@ -141,13 +140,11 @@ class TestFlip(TestCase):
     def test_3d_swap_axis1(self):
         a = np.array([[[0, 1],
                        [2, 3]],
-
                       [[4, 5],
                        [6, 7]]])
 
         b = np.array([[[2, 3],
                        [0, 1]],
-
                       [[6, 7],
                        [4, 5]]])
 
@@ -155,16 +152,14 @@ class TestFlip(TestCase):
 
     def test_3d_swap_axis2(self):
         a = np.array([[[0, 1],
-                      [2, 3]],
-
-                     [[4, 5],
-                      [6, 7]]])
+                       [2, 3]],
+                      [[4, 5],
+                       [6, 7]]])
 
         b = np.array([[[1, 0],
-                    [3, 2]],
-
-                   [[5, 4],
-                    [7, 6]]])
+                       [3, 2]],
+                      [[5, 4],
+                       [7, 6]]])
 
         assert_equal(np.flip(a, 2), b)
 
