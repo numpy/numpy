@@ -54,6 +54,7 @@ Sums, products, differences
 
    prod
    sum
+   nanprod
    nansum
    cumprod
    cumsum
