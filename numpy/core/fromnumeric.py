@@ -52,6 +52,21 @@ def _wrapit(obj, method, *args, **kwds):
     return result
 
 
+def _wrapfunc(obj, method, *args, **kwds):
+    try:
+        return getattr(obj, method)(*args, **kwds)
+
+    # An AttributeError occurs if the object does not have
+    # such a method in its class.
+
+    # A TypeError occurs if the object does have such a method
+    # in its class, but its signature is not identical to that
+    # of NumPy's. This situation has occurred in the case of
+    # a downstream library like 'pandas'.
+    except (AttributeError, TypeError):
+        return _wrapit(obj, method, *args, **kwds)
+
+
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
     Take elements from an array along an axis.
@@ -116,11 +131,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     array([[4, 3],
            [5, 7]])
     """
-    try:
-        take = a.take
-    except AttributeError:
-        return _wrapit(a, 'take', indices, axis=axis, out=out, mode=mode)
-    return take(indices, axis=axis, out=out, mode=mode)
+    return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
 # not deprecated --- copy if necessary, view otherwise
@@ -218,11 +229,7 @@ def reshape(a, newshape, order='C'):
            [3, 4],
            [5, 6]])
     """
-    try:
-        reshape = a.reshape
-    except AttributeError:
-        return _wrapit(a, 'reshape', newshape, order=order)
-    return reshape(newshape, order=order)
+    return _wrapfunc(a, 'reshape', newshape, order=order)
 
 
 def choose(a, choices, out=None, mode='raise'):
@@ -344,11 +351,7 @@ def choose(a, choices, out=None, mode='raise'):
             [-1, -2, -3, -4, -5]]])
 
     """
-    try:
-        choose = a.choose
-    except AttributeError:
-        return _wrapit(a, 'choose', choices, out=out, mode=mode)
-    return choose(choices, out=out, mode=mode)
+    return _wrapfunc(a, 'choose', choices, out=out, mode=mode)
 
 
 def repeat(a, repeats, axis=None):
@@ -390,11 +393,7 @@ def repeat(a, repeats, axis=None):
            [3, 4]])
 
     """
-    try:
-        repeat = a.repeat
-    except AttributeError:
-        return _wrapit(a, 'repeat', repeats, axis=axis)
-    return repeat(repeats, axis=axis)
+    return _wrapfunc(a, 'repeat', repeats, axis=axis)
 
 
 def put(a, ind, v, mode='raise'):
@@ -497,11 +496,7 @@ def swapaxes(a, axis1, axis2):
             [3, 7]]])
 
     """
-    try:
-        swapaxes = a.swapaxes
-    except AttributeError:
-        return _wrapit(a, 'swapaxes', axis1, axis2)
-    return swapaxes(axis1, axis2)
+    return _wrapfunc(a, 'swapaxes', axis1, axis2)
 
 
 def transpose(a, axes=None):
@@ -550,14 +545,7 @@ def transpose(a, axes=None):
     (2, 1, 3)
 
     """
-    # The array method takes 'axes' as a var-args
-    # argument and not a keyword argument
-    try:
-        transpose = a.transpose
-    except AttributeError:
-        return _wrapit(a, 'transpose', axes)
-
-    return transpose(axes)
+    return _wrapfunc(a, 'transpose', axes)
 
 
 def partition(a, kth, axis=-1, kind='introselect', order=None):
@@ -713,11 +701,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     array([2, 1, 3, 4])
 
     """
-    try:
-        argpartition = a.argpartition
-    except AttributeError:
-        return _wrapit(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
-    return argpartition(kth, axis, kind=kind, order=order)
+    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
 def sort(a, axis=-1, kind='quicksort', order=None):
@@ -912,11 +896,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([0, 1])
 
     """
-    try:
-        argsort = a.argsort
-    except AttributeError:
-        return _wrapit(a, 'argsort', axis=axis, kind=kind, order=order)
-    return argsort(axis=axis, kind=kind, order=order)
+    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
 
 def argmax(a, axis=None, out=None):
@@ -972,11 +952,7 @@ def argmax(a, axis=None, out=None):
     1
 
     """
-    try:
-        argmax = a.argmax
-    except AttributeError:
-        return _wrapit(a, 'argmax', axis=axis, out=out)
-    return argmax(axis=axis, out=out)
+    return _wrapfunc(a, 'argmax', axis=axis, out=out)
 
 
 def argmin(a, axis=None, out=None):
@@ -1032,11 +1008,7 @@ def argmin(a, axis=None, out=None):
     0
 
     """
-    try:
-        argmin = a.argmin
-    except AttributeError:
-        return _wrapit(a, 'argmin', axis=axis, out=out)
-    return argmin(axis=axis, out=out)
+    return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
 def searchsorted(a, v, side='left', sorter=None):
@@ -1092,11 +1064,7 @@ def searchsorted(a, v, side='left', sorter=None):
     array([0, 5, 1, 2])
 
     """
-    try:
-        searchsorted = a.searchsorted
-    except AttributeError:
-        return _wrapit(a, 'searchsorted', v, side=side, sorter=sorter)
-    return searchsorted(v, side=side, sorter=sorter)
+    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
 
 def resize(a, new_shape):
@@ -1385,7 +1353,6 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         return asanyarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
 
 
-
 def ravel(a, order='C'):
     """Return a contiguous flattened array.
 
@@ -1568,13 +1535,7 @@ def nonzero(a):
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
     """
-    try:
-        nonzero = a.nonzero
-    except AttributeError:
-        res = _wrapit(a, 'nonzero')
-    else:
-        res = nonzero()
-    return res
+    return _wrapfunc(a, 'nonzero')
 
 
 def shape(a):
@@ -1682,11 +1643,7 @@ def compress(condition, a, axis=None, out=None):
     array([2])
 
     """
-    try:
-        compress = a.compress
-    except AttributeError:
-        return _wrapit(a, 'compress', condition, axis=axis, out=out)
-    return compress(condition, axis=axis, out=out)
+    return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
 
 
 def clip(a, a_min, a_max, out=None):
@@ -1739,11 +1696,7 @@ def clip(a, a_min, a_max, out=None):
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
-    try:
-        clip = a.clip
-    except AttributeError:
-        return _wrapit(a, 'clip', a_min, a_max, out=out)
-    return clip(a_min, a_max, out=out)
+    return _wrapfunc(a, 'clip', a_min, a_max, out=out)
 
 
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
@@ -2133,11 +2086,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
            [ 4,  9, 15]])
 
     """
-    try:
-        cumsum = a.cumsum
-    except AttributeError:
-        return _wrapit(a, 'cumsum', axis=axis, dtype=dtype, out=out)
-    return cumsum(axis=axis, dtype=dtype, out=out)
+    return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
 
 
 def cumproduct(a, axis=None, dtype=None, out=None):
@@ -2150,11 +2099,7 @@ def cumproduct(a, axis=None, dtype=None, out=None):
     cumprod : equivalent function; see for details.
 
     """
-    try:
-        cumprod = a.cumprod
-    except AttributeError:
-        return _wrapit(a, 'cumprod', axis=axis, dtype=dtype, out=out)
-    return cumprod(axis=axis, dtype=dtype, out=out)
+    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
 def ptp(a, axis=None, out=None):
@@ -2195,11 +2140,7 @@ def ptp(a, axis=None, out=None):
     array([1, 1])
 
     """
-    try:
-        ptp = a.ptp
-    except AttributeError:
-        return _wrapit(a, 'ptp', axis=axis, out=out)
-    return ptp(axis=axis, out=out)
+    return _wrapfunc(a, 'ptp', axis=axis, out=out)
 
 
 def amax(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2609,11 +2550,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
            [  4,  20, 120]])
 
     """
-    try:
-        cumprod = a.cumprod
-    except AttributeError:
-        return _wrapit(a, 'cumprod', axis=axis, dtype=dtype, out=out)
-    return cumprod(axis=axis, dtype=dtype, out=out)
+    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
 def ndim(a):
@@ -2821,11 +2758,7 @@ def around(a, decimals=0, out=None):
     array([ 0,  0,  0, 10])
 
     """
-    try:
-        round = a.round
-    except AttributeError:
-        return _wrapit(a, 'round', decimals=decimals, out=out)
-    return round(decimals=decimals, out=out)
+    return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
 def round_(a, decimals=0, out=None):
@@ -2839,11 +2772,7 @@ def round_(a, decimals=0, out=None):
     around : equivalent function
 
     """
-    try:
-        round = a.round
-    except AttributeError:
-        return _wrapit(a, 'round', decimals=decimals, out=out)
-    return round(decimals=decimals, out=out)
+    return around(a, decimals=decimals, out=out)
 
 
 def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
