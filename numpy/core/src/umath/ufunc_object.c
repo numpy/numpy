@@ -3239,17 +3239,22 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NPY_BEGIN_THREADS_NDITER(iter);
 
         do {
-
             dataptr_copy[0] = dataptr[0];
             dataptr_copy[1] = dataptr[1];
             dataptr_copy[2] = dataptr[0];
 
             /* Copy the first element to start the reduction */
             if (otype == NPY_OBJECT) {
+                /*
+                 * Input (dataptr[0]) and output (dataptr[1]) may point
+                 * to the same memory (i.e. np.add.accumulate(a, out=a)).
+                 * In that case need to incref before decref to avoid the
+                 * possibility of the reference count being zero temporarily.
+                 */
+                Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                 Py_XDECREF(*(PyObject **)dataptr_copy[0]);
                 *(PyObject **)dataptr_copy[0] =
                                     *(PyObject **)dataptr_copy[1];
-                Py_XINCREF(*(PyObject **)dataptr_copy[0]);
             }
             else {
                 memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
@@ -3302,10 +3307,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
         /* Copy the first element to start the reduction */
         if (otype == NPY_OBJECT) {
+            /*
+             * Input (dataptr[0]) and output (dataptr[1]) may point
+             * to the same memory (i.e. np.add.accumulate(a, out=a, axis=0)).
+             * In that case need to incref before decref to avoid the
+             * possibility of the reference count being zero temporarily.
+             */
+            Py_XINCREF(*(PyObject **)dataptr_copy[1]);
             Py_XDECREF(*(PyObject **)dataptr_copy[0]);
             *(PyObject **)dataptr_copy[0] =
                                 *(PyObject **)dataptr_copy[1];
-            Py_XINCREF(*(PyObject **)dataptr_copy[0]);
         }
         else {
             memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
