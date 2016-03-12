@@ -36,13 +36,85 @@ if sys.version_info[0] < 3:
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
     'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
     ]
+
+
+def flip(m, axis):
+    """
+    Reverse the order of elements in an array along the given axis.
+
+    The shape of the array is preserved, but the elements are reordered.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    m : array_like
+        Input array.
+    axis: integer
+        Axis in array, which entries are reversed.
+
+
+    Returns
+    -------
+    out : array_like
+        A view of `m` with the entries of axis reversed.  Since a view is
+        returned, this operation is done in constant time.
+
+    See Also
+    --------
+    flipud : Flip an array vertically (axis=0).
+    fliplr : Flip an array horizontally (axis=1).
+
+    Notes
+    -----
+    flip(m, 0) is equivalent to flipud(m).
+    flip(m, 1) is equivalent to fliplr(m).
+    flip(m, n) corresponds to ``m[...,::-1,...]`` with ``::-1`` at position n.
+
+    Examples
+    --------
+    >>> A = np.arange(8).reshape((2,2,2))
+    >>> A
+    array([[[0, 1],
+            [2, 3]],
+
+           [[4, 5],
+            [6, 7]]])
+
+    >>> flip(A, 0)
+    array([[[4, 5],
+            [6, 7]],
+
+           [[0, 1],
+            [2, 3]]])
+
+    >>> flip(A, 1)
+    array([[[2, 3],
+            [0, 1]],
+
+           [[6, 7],
+            [4, 5]]])
+
+    >>> A = np.random.randn(3,4,5)
+    >>> np.all(flip(A,2) == A[:,:,::-1,...])
+    True
+    """
+    if not hasattr(m, 'ndim'):
+        m = asarray(m)
+    indexer = [slice(None)] * m.ndim
+    try:
+        indexer[axis] = slice(None, None, -1)
+    except IndexError:
+        raise ValueError("axis=%i is invalid for the %i-dimensional input array"
+                         % (axis, m.ndim))
+    return m[tuple(indexer)]
 
 
 def iterable(y):
