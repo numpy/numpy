@@ -1021,12 +1021,25 @@ class TestBinaryRepr(TestCase):
     def test_zero(self):
         assert_equal(np.binary_repr(0), '0')
 
-    def test_large(self):
-        assert_equal(np.binary_repr(10736848), '101000111101010011010000')
+    def test_positive(self):
+        assert_equal(np.binary_repr(10), '1010')
+        assert_equal(np.binary_repr(12522),
+                     '11000011101010')
+        assert_equal(np.binary_repr(10736848),
+                     '101000111101010011010000')
 
     def test_negative(self):
         assert_equal(np.binary_repr(-1), '-1')
-        assert_equal(np.binary_repr(-1, width=8), '11111111')
+        assert_equal(np.binary_repr(-10), '-1010')
+        assert_equal(np.binary_repr(-12522),
+                     '-11000011101010')
+        assert_equal(np.binary_repr(-10736848),
+                     '-101000111101010011010000')
+
+    def test_sufficient_width(self):
+        assert_equal(np.binary_repr(0, width=5), '00000')
+        assert_equal(np.binary_repr(10, width=7), '0001010')
+        assert_equal(np.binary_repr(-5, width=7), '1111011')
 
 
 class TestBaseRepr(TestCase):
