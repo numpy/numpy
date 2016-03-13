@@ -1572,8 +1572,13 @@ class TestCorrCoef(TestCase):
                             [[1., -1.], [-1.,  1.]])
 
     def test_simple(self):
-        assert_almost_equal(corrcoef(self.A), self.res1)
-        assert_almost_equal(corrcoef(self.A, self.B), self.res2)
+        tgt1 = corrcoef(self.A)
+        assert_almost_equal(tgt1, self.res1)
+        assert_(np.all(np.abs(tgt1) <= 1.0))
+
+        tgt2 = corrcoef(self.A, self.B)
+        assert_almost_equal(tgt2, self.res2)
+        assert_(np.all(np.abs(tgt2) <= 1.0))
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
@@ -1599,7 +1604,10 @@ class TestCorrCoef(TestCase):
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
-        assert_allclose(corrcoef(x), np.array([[1., -1.j], [1.j, 1.]]))
+        res = corrcoef(x)
+        tgt = np.array([[1., -1.j], [1.j, 1.]])
+        assert_allclose(res, tgt)
+        assert_(np.all(np.abs(res) <= 1.0))
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
@@ -1620,6 +1628,7 @@ class TestCorrCoef(TestCase):
         with np.errstate(all='raise'):
             c = corrcoef(x)
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
+        assert_(np.all(np.abs(c) <= 1.0))
 
 
 class TestCov(TestCase):
