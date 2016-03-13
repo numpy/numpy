@@ -1298,6 +1298,20 @@ class TestMethods(TestCase):
         x3 = np.array([3.1, 4.5, 6.2])
         r = np.rec.fromarrays([x1, x2, x3], names='id,word,number')
 
+        x1.sort(order=-1)
+        assert_equal(x1, np.array([32, 21, 14]))
+
+        x2.sort(order=-1)
+        assert_equal(x2, np.array(['name', 'my', 'first']))
+
+        x3.sort(order=1)
+        assert_equal(x3, np.array([3.1, 4.5, 6.2]))
+
+        r.sort(order=-1)
+        assert_equal(r.id, np.array([32, 21, 14]))
+        assert_equal(r.word, np.array(['first', 'my', 'name']))
+        assert_equal(r.number, np.array([4.5, 3.1, 6.2]))
+
         r.sort(order=['id'])
         assert_equal(r.id, np.array([14, 21, 32]))
         assert_equal(r.word, np.array(['name', 'my', 'first']))
@@ -1459,6 +1473,53 @@ class TestMethods(TestCase):
         # unicode
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
+
+    def test_argsort_order(self):
+        dtype = np.dtype([
+                ('id', 'i8'),
+                ('First', 'S8'), 
+                ('Last', 'S8'), 
+                ])
+        data = np.array(
+            [ (0, 'Sam', 'Adams') ] * 100
+        +   [ (1, 'Brian', 'Adams') ] * 100
+        +   [ (2, 'Smith', 'Adams') ] * 100
+            , dtype=dtype)
+        data['id'] = np.arange(len(data)) % 100
+
+        # test stable sort
+        a = data.argsort(kind='m', order=['Last'])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+
+        a = data.argsort(kind='m', order=['Last', 'First'])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+
+        a = data.argsort(kind='m', order=['First', 'Last'])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=['First'])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        # reversed stable sort
+        a = data.argsort(kind='m', order=[('Last', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+
+        a = data.argsort(kind='m', order=[('Last', -1), ('First', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+        assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=[('Last', -1), 'First'])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+        assert (data[a]['First'][1:] >= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=[('First', -1)])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
+        assert (data[a]['First'][1:] <= data[a]['First'][:-1]).all()
+
+        a = data.argsort(kind='m', order=[('Last', -1), ('First', 0)])
+        assert (data[a]['id'].reshape(-1, 100) == np.arange(100)).all()
 
     def test_sort_unicode_kind(self):
         d = np.arange(10)

@@ -271,21 +271,51 @@ class _ctypes(object):
     _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
 
 
-# Given a datatype and an order object
-#  return a new names tuple
-#  with the order indicated
-def _newnames(datatype, order):
-    oldnames = datatype.names
-    nameslist = list(oldnames)
+# Given an array and an order object
+# return a new view of array and a normalized order tuple
+#  
+def _parse_order(array, order):
+    datatype = array.dtype
+
+    if order == -1 or order == 1:
+        # total reversal
+        try:
+            names = list(datatype.names)
+            order = tuple([ (name, order) for name in names])
+            return array.view(), order
+        except TypeError:
+            # no fields
+            array = array.view(dtype=[('_field', array.dtype)])
+            return array, (('_field', order),)
+
+    try:
+        names = list(datatype.names)
+    except TypeError:
+        raise ValueError("Cannot specify order when the array has no fields.");
+
     if isinstance(order, str):
         order = [order]
+
+    neworder = []
     if isinstance(order, (list, tuple)):
+
         for name in order:
-            try:
-                nameslist.remove(name)
-            except ValueError:
+            if isinstance(name, str):
+                # default is ASC ordering.
+                flag = 1
+            else:
+                name, flag = name
+                flag = int(flag)
+ 
+            if name not in names:
                 raise ValueError("unknown field name: %s" % (name,))
-        return tuple(list(order) + nameslist)
+
+            if flag not in (-1, 0, 1):
+                raise ValueError("sorting order for field : %s is not in (-1, 1)" % (name,))
+            neworder.append((name, flag))
+
+        return array.view(), tuple(neworder)
+            
     raise ValueError("unsupported order value: %s" % (order,))
 
 def _copy_fields(ary):

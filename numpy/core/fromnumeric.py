@@ -584,12 +584,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
-    order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string.  Not all fields need be specified, but
-        unspecified fields will still be used, in the order in which they
-        come up in the dtype, to break ties.
+    order : integer, str or list, optional
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
@@ -669,12 +668,11 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         the flattened array is used.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'
-    order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+    order : integer, str or list, optional
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
@@ -727,12 +725,11 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm. Default is 'quicksort'.
-    order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+    order : integer, str or list, optional
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See notes for details.
 
     Returns
     -------
@@ -784,6 +781,27 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
 
+    When the order argument is not None, the array is sorted as a structured
+    array. The value of order specifies the relative importance of columns: 
+    
+       * A list of tuples that consists of field name and an integer from (-1, 0, 1).
+         The structure array is sorted by the fields, each in the direction 
+         specified by the second item of the tuple: ascending (1) , descending (-1) , 
+         or skipped (0). 
+         The fields are used to break the ties in the order of their ocurrences in the list. 
+         The default direction (for fields not in the list) is 0.
+
+       * If a field has an ascending direction, the field name alone can be used in 
+         place of the tuple. This maintains compatibility with numpy <= 1.9.0.
+
+       * Order can also be a single integer +1 or -1, which means all fields are
+         in ascending or descending direction. The ranking of fields for tie-breaking
+         is the same as the ordering of the names of the dtype of the array.
+         In this case, for non-structure array input, a structured view is 
+         constructured for sorting. This is somewhat slower than sorting as a 
+         non-structure array via order=None.
+
+
     Examples
     --------
     >>> a = np.array([[1,4],[3,1]])
@@ -815,6 +833,14 @@ def sort(a, axis=-1, kind='quicksort', order=None):
            ('Arthur', 1.8, 41)],
           dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
 
+    Sort descending by age, then ascending by height if ages are equal:
+
+    >>> np.sort(a, order=[('age', -1), 'height'])               # doctest: +SKIP
+    array([('Arthur', 1.8, 41),
+            ('Galahad', 1.7, 38), 
+            ('Lancelot', 1.8999999999999999, 38)]
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
+
     """
     if axis is None:
         a = asanyarray(a).flatten()
@@ -842,12 +868,11 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
         the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm.
-    order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+    order : integer, str or list, optional
+        When order is not None, the array is sorted as a structured array.
+        The full format of order is a list of field names and their ordering. 
+        (+1 for ascending and -1 for descending)
+        See Notes section of :py:func:`sort` for details.
 
     Returns
     -------
@@ -904,6 +929,12 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     >>> np.argsort(x, order=('y','x'))
     array([0, 1])
+
+    >>> np.argsort(x, order=(('y', 1), ('x', -1)))
+    array([0, 1])
+
+    >>> np.argsort(x, order=(('y', -1), 'x'))
+    array([1, 0])
 
     """
     try:

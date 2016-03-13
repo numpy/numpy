@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayobject.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
@@ -118,6 +119,94 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
             } \
         } \
         return forward_ndarray_method(self, args, kwds, callable)
+
+static PyArrayObject * 
+parse_order(PyArrayObject *array, PyObject * order) 
+{
+    /* This function parses order argument and creates a new view
+     * to the array, where the dtype has been decorated with 
+     * c_metadata, ready to be used by VOID_Compare.
+     *
+     * The original array struct and descr are both intact. */
+
+    npy_intp i;
+    PyArray_Descr *descr = NULL, *newd = NULL;
+    SortOrderAuxData *p = NULL;
+    PyObject *tup = NULL;
+    PyArrayObject *newarray = NULL;
+    npy_intp n_fields;
+    static PyObject * _parse_order = NULL;
+
+
+    /* if order is not given, we do numerical sorting */
+    if (order == NULL || order == Py_None) {
+        Py_INCREF(array);
+        return array;
+    }
+
+    /* 
+     * If order is given, normalize it to a list of (field, direction).
+     * Then tell VOID_compare to use this, via c_metadata.
+     * The array to be sorted will always be viewed as a struct-array. 
+     * */
+
+    descr = PyArray_DESCR(array);
+
+    npy_cache_import("numpy.core._internal", "_parse_order", &_parse_order);
+
+    if (_parse_order == NULL) {
+        return NULL;
+    }
+
+    /* normalize the order parameter */
+
+    tup = PyObject_CallFunction(_parse_order, "OO", array, order);
+
+    if (tup == NULL) {
+        return NULL;
+    }
+    newarray = (PyArrayObject*) PyTuple_GET_ITEM(tup, 0); 
+    order = PyTuple_GET_ITEM(tup, 1); 
+    Py_INCREF(newarray);
+    Py_INCREF(order);
+    Py_DECREF(tup);
+
+    /* newarray has inherited the descr, so we set it to  
+     * a different one to keep the original descr intact. */
+
+    descr = PyArray_DESCR(newarray);
+    newd = PyArray_DescrNew(descr);
+    ((PyArrayObject_fields*) newarray)->descr = newd;
+    Py_DECREF(descr);
+
+    n_fields = PyTuple_GET_SIZE(order);
+
+    p = sort_order_aux_data_alloc(n_fields);
+
+    for (i = 0; i < n_fields; i++) {
+        PyObject *item, *key;
+        npy_intp flag;
+
+        item = PyTuple_GET_ITEM(order, i);
+        
+        /* key, flag = item */
+        key = PyTuple_GET_ITEM(item, 0);
+        flag = PyInt_AsLong(PyTuple_GET_ITEM(item, 1));
+
+        /* tup = descr.fields[key] */
+        tup = PyDict_GetItem(newd->fields, key);
+
+        p->fields[i].descr = (PyArray_Descr*) PyTuple_GET_ITEM(tup, 0);
+        p->fields[i].offset = PyInt_AsLong(PyTuple_GET_ITEM(tup, 1));
+        p->fields[i].flag = flag;
+    }
+
+    Py_DECREF(order);
+
+    newd->c_metadata = (NpyAuxData*) p;
+
+    return newarray;
+}
 
 
 static PyObject *
@@ -1116,8 +1205,6 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int val;
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL;
-    PyArray_Descr *saved = NULL;
-    PyArray_Descr *newd;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist,
@@ -1126,39 +1213,16 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                     &order)) {
         return NULL;
     }
-    if (order == Py_None) {
-        order = NULL;
-    }
-    if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
-        saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                            "order when the array has no fields.");
-            return NULL;
-        }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        Py_DECREF(newd->names);
-        newd->names = new_name;
-        ((PyArrayObject_fields *)self)->descr = newd;
+
+    self = parse_order(self, order);
+    if(!self) {
+        return NULL;
     }
 
     val = PyArray_Sort(self, axis, sortkind);
-    if (order != NULL) {
-        Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fields *)self)->descr = saved;
-    }
+
+    Py_DECREF(self);
+
     if (val < 0) {
         return NULL;
     }
@@ -1172,8 +1236,6 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int val;
     NPY_SELECTKIND sortkind = NPY_INTROSELECT;
     PyObject *order = NULL;
-    PyArray_Descr *saved = NULL;
-    PyArray_Descr *newd;
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyArrayObject * ktharray;
     PyObject * kthobj;
@@ -1187,46 +1249,22 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (order == Py_None) {
-        order = NULL;
-    }
-    if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
-        saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                            "order when the array has no fields.");
-            return NULL;
-        }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        Py_DECREF(newd->names);
-        newd->names = new_name;
-        ((PyArrayObject_fields *)self)->descr = newd;
+    self = parse_order(self, order);
+    if(!self) {
+        return NULL;
     }
 
     ktharray = (PyArrayObject *)PyArray_FromAny(kthobj, NULL, 0, 1,
                                                 NPY_ARRAY_DEFAULT, NULL);
-    if (ktharray == NULL)
+    if (ktharray == NULL) {
+        Py_DECREF(self);
         return NULL;
-
-    val = PyArray_Partition(self, ktharray, axis, sortkind);
-    Py_DECREF(ktharray);
-
-    if (order != NULL) {
-        Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fields *)self)->descr = saved;
     }
+    val = PyArray_Partition(self, ktharray, axis, sortkind);
+
+    Py_DECREF(ktharray);
+    Py_DECREF(self);
+
     if (val < 0) {
         return NULL;
     }
@@ -1239,7 +1277,6 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis = -1;
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL, *res;
-    PyArray_Descr *newd, *saved=NULL;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O", kwlist,
@@ -1248,38 +1285,15 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &order)) {
         return NULL;
     }
-    if (order == Py_None) {
-        order = NULL;
-    }
-    if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
-        saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify "
-                            "order when the array has no fields.");
-            return NULL;
-        }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        newd->names = new_name;
-        ((PyArrayObject_fields *)self)->descr = newd;
+    self = parse_order(self, order);
+    if(!self) {
+        return NULL;
     }
 
     res = PyArray_ArgSort(self, axis, sortkind);
-    if (order != NULL) {
-        Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fields *)self)->descr = saved;
-    }
+
+    Py_DECREF(self);
+
     return PyArray_Return((PyArrayObject *)res);
 }
 
@@ -1290,7 +1304,6 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis = -1;
     NPY_SELECTKIND sortkind = NPY_INTROSELECT;
     PyObject *order = NULL, *res;
-    PyArray_Descr *newd, *saved=NULL;
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyObject * kthobj;
     PyArrayObject * ktharray;
@@ -1302,45 +1315,23 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &order)) {
         return NULL;
     }
-    if (order == Py_None) {
-        order = NULL;
-    }
-    if (order != NULL) {
-        PyObject *new_name;
-        PyObject *_numpy_internal;
-        saved = PyArray_DESCR(self);
-        if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify "
-                            "order when the array has no fields.");
-            return NULL;
-        }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
-        if (new_name == NULL) {
-            return NULL;
-        }
-        newd = PyArray_DescrNew(saved);
-        newd->names = new_name;
-        ((PyArrayObject_fields *)self)->descr = newd;
+    self = parse_order(self, order);
+    if(!self) {
+        return NULL;
     }
 
     ktharray = (PyArrayObject *)PyArray_FromAny(kthobj, NULL, 0, 1,
                                                 NPY_ARRAY_DEFAULT, NULL);
-    if (ktharray == NULL)
+    if (ktharray == NULL) {
+        Py_DECREF(self);
         return NULL;
+    }
 
     res = PyArray_ArgPartition(self, ktharray, axis, sortkind);
-    Py_DECREF(ktharray);
 
-    if (order != NULL) {
-        Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fields *)self)->descr = saved;
-    }
+    Py_DECREF(ktharray);
+    Py_DECREF(self);
+
     return PyArray_Return((PyArrayObject *)res);
 }
 
