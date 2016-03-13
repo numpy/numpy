@@ -2461,11 +2461,17 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     # Handles complex arrays too
     m = np.asarray(m)
+    if m.ndim > 2:
+        raise ValueError("m has more than 2 dimensions")
+
     if y is None:
         dtype = np.result_type(m, np.float64)
     else:
         y = np.asarray(y)
+        if y.ndim > 2:
+            raise ValueError("y has more than 2 dimensions")
         dtype = np.result_type(m, y, np.float64)
+
     X = array(m, ndmin=2, dtype=dtype)
     if rowvar == 0 and X.shape[0] != 1:
         X = X.T
