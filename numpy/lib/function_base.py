@@ -2354,6 +2354,12 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
 
     Notes
     -----
+    Due to floating point rounding the resulting array may not be Hermitian,
+    the diagonal elements may not be 1, and the elements may not satisfy the
+    inequality abs(a) <= 1. The real and imaginary parts are clipped to the
+    interval [-1,  1] in an attempt to improve on that situation but is not
+    much help in the complex case.
+
     This function accepts but discards arguments `bias` and `ddof`.  This is
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
@@ -2366,13 +2372,21 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     c = cov(x, y, rowvar)
     try:
         d = diag(c)
-    except ValueError:  # scalar covariance
+    except ValueError:
+        # scalar covariance
         # nan if incorrect value (nan, inf, 0), 1 otherwise
         return c / c
-    d = sqrt(d)
-    # calculate "c / multiply.outer(d, d)" row-wise ... for memory and speed
-    for i in range(0, d.size):
-        c[i,:] /= (d * d[i])
+    stddev = sqrt(d.real)
+    c /= stddev[:, None]
+    c /= stddev[None, :]
+
+    # Clip real and imaginary parts to [-1, 1].  This does not guarantee
+    # abs(a[i,j]) <= 1 for complex arrays, but is the best we can do without
+    # excessive work.
+    np.clip(c.real, -1, 1, out=c.real)
+    if np.iscomplexobj(c):
+        np.clip(c.imag, -1, 1, out=c.imag)
+
     return c
 
 
