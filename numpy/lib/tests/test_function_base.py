@@ -1432,9 +1432,9 @@ class TestHistogramOptimBinNums(TestCase):
         for testlen, expectedResults in basic_test.items():
             # Create some sort of non uniform data to test with
             # (2 peak uniform mixture)
-            x1 = np.linspace(-10, -1, testlen/5 * 2)
-            x2 = np.linspace(1,10, testlen/5 * 3)
-            x = np.hstack((x1, x2))
+            x1 = np.linspace(-10, -1, testlen // 5 * 2)
+            x2 = np.linspace(1, 10, testlen // 5 * 3)
+            x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
                 assert_equal(len(a), numbins, err_msg="For the {0} estimator "
@@ -1446,7 +1446,7 @@ class TestHistogramOptimBinNums(TestCase):
         adaptive methods, especially the FD method. All bin numbers have been
         precalculated.
         """
-        small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 2, 'sturges': 1,
+        small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
                          'doane': 1, 'sqrt': 1},
                      2: {'fd': 2, 'scott': 1, 'rice': 3, 'sturges': 2,
                          'doane': 1, 'sqrt': 2},
@@ -1474,8 +1474,8 @@ class TestHistogramOptimBinNums(TestCase):
         Primarily for Scott and FD as the SD and IQR are both 0 in this case
         """
         novar_dataset = np.ones(100)
-        novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 10, 'sturges': 8,
-                            'doane': 1, 'sqrt': 10, 'auto': 8}
+        novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
+                            'doane': 1, 'sqrt': 1, 'auto': 1}
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
@@ -1510,14 +1510,14 @@ class TestHistogramOptimBinNums(TestCase):
         the shouldn't change.
         """
         # some basic sanity checking, with some fixed data. Checking for the correct number of bins
-        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,  'auto': 7},
-                      500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10, 'auto': 10},
-                      5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14, 'auto': 17}}
+        basic_test = {50:   {'fd': 8,  'scott': 8,  'rice': 15, 'sturges': 14, 'auto': 14},
+                      500:  {'fd': 15, 'scott': 16, 'rice': 32, 'sturges': 20, 'auto': 20},
+                      5000: {'fd': 33, 'scott': 33, 'rice': 69, 'sturges': 28, 'auto': 33}}
 
         for testlen, expectedResults in basic_test.items():
-            # create some sort of non uniform data to test with (2 peak uniform mixture)
-            x1 = np.linspace(-10, -1, testlen/5 * 2)
-            x2 = np.linspace(1, 10, testlen/5 * 3)
+            # create some sort of non uniform data to test with (3 peak uniform mixture)
+            x1 = np.linspace(-10, -1, testlen // 5 * 2)
+            x2 = np.linspace(1, 10, testlen // 5 * 3)
             x3 = np.linspace(-100, -50, testlen)
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():

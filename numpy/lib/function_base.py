@@ -157,13 +157,14 @@ def _hist_bin_sqrt(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
-    return int(np.ceil(np.sqrt(x.size)))
+    return x.ptp() / np.sqrt(x.size)
 
 
 def _hist_bin_sturges(x):
@@ -178,13 +179,14 @@ def _hist_bin_sturges(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
-    return int(np.ceil(np.log2(x.size))) + 1
+    return x.ptp() / np.ceil(np.log2(x.size) + 1.0)
 
 
 def _hist_bin_rice(x):
@@ -200,13 +202,14 @@ def _hist_bin_rice(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
-    return int(np.ceil(2 * x.size ** (1.0 / 3)))
+    return x.ptp() / (2.0 * x.size ** (1.0 / 3))
 
 
 def _hist_bin_scott(x):
@@ -220,16 +223,14 @@ def _hist_bin_scott(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
-    h = (24 * np.pi**0.5 / x.size)**(1.0 / 3) * np.std(x)
-    if h > 0:
-        return int(np.ceil(x.ptp() / h))
-    return 1
+    return (24.0 * np.pi**0.5 / x.size)**(1.0 / 3.0) * np.std(x)
 
 
 def _hist_bin_doane(x):
@@ -243,16 +244,17 @@ def _hist_bin_doane(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
     if x.size > 2:
         sg1 = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
         sigma = np.std(x)
-        if sigma > 0:
+        if sigma > 0.0:
             # These three operations add up to
             # g1 = np.mean(((x - np.mean(x)) / sigma)**3)
             # but use only one temp array instead of three
@@ -260,21 +262,21 @@ def _hist_bin_doane(x):
             np.true_divide(temp, sigma, temp)
             np.power(temp, 3, temp)
             g1 = np.mean(temp)
-            return int(np.ceil(1.0 + np.log2(x.size) +
-                                     np.log2(1.0 + np.absolute(g1) / sg1)))
-    return 1
+            return x.ptp() / (1.0 + np.log2(x.size) +
+                                    np.log2(1.0 + np.absolute(g1) / sg1))
+    return 0.0
 
 
 def _hist_bin_fd(x):
     """
     The Freedman-Diaconis histogram bin estimator.
 
-    The Freedman-Diaconis rule uses interquartile range (IQR)
-    binwidth. It is considered a variation of the Scott rule with more
-    robustness as the IQR is less affected by outliers than the standard
-    deviation. However, the IQR depends on fewer points than the
-    standard deviation, so it is less accurate, especially for long
-    tailed distributions.
+    The Freedman-Diaconis rule uses interquartile range (IQR) to
+    estimate binwidth. It is considered a variation of the Scott rule
+    with more robustness as the IQR is less affected by outliers than
+    the standard deviation. However, the IQR depends on fewer points
+    than the standard deviation, so it is less accurate, especially for
+    long tailed distributions.
 
     If the IQR is 0, this function returns 1 for the number of bins.
     Binwidth is inversely proportional to the cube root of data size
@@ -283,46 +285,42 @@ def _hist_bin_fd(x):
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
     """
     iqr = np.subtract(*np.percentile(x, [75, 25]))
-
-    if iqr > 0:
-        h = (2 * iqr * x.size ** (-1.0 / 3))
-        return int(np.ceil(x.ptp() / h))
-
-    # If iqr is 0, default number of bins is 1
-    return 1
+    return 2.0 * iqr * x.size ** (-1.0 / 3.0)
 
 
 def _hist_bin_auto(x):
     """
-    Histogram bin estimator that uses the maximum of the
+    Histogram bin estimator that uses the minimum width of the
     Freedman-Diaconis and Sturges estimators.
 
-    The FD estimator is usually the most robust method, but it tends to
-    be too small for small `x`. The Sturges estimator is quite good for
-    small (<1000) datasets and is the default in the R language. This
-    method gives good off the shelf behaviour.
+    The FD estimator is usually the most robust method, but its width
+    estimate tends to be too large for small `x`. The Sturges estimator
+    is quite good for small (<1000) datasets and is the default in the R
+    language. This method gives good off the shelf behaviour.
 
     Parameters
     ----------
     x : array_like
-        Input data that is to be histogrammed.
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
 
     Returns
     -------
-    n : An estimate of the optimal bin count for the given data.
+    w : An estimate of the optimal bin width for the given data.
 
     See Also
     --------
     _hist_bin_fd, _hist_bin_sturges
     """
-    return max(_hist_bin_fd(x), _hist_bin_sturges(x))
+    return min(_hist_bin_fd(x), _hist_bin_sturges(x))
 
 
 # Private dict initialized at module load time
@@ -548,20 +546,30 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         weights = weights.ravel()
     a = a.ravel()
 
-    if (range is not None):
-        mn, mx = range
-        if (mn > mx):
-            raise ValueError(
-                'max must be larger than min in range parameter.')
-        if not np.all(np.isfinite([mn, mx])):
-            raise ValueError(
-                'range parameter must be finite.')
+    # Do not modify the original value of range so we can check for `None`
+    if range is None:
+        if a.size == 0:
+            # handle empty arrays. Can't determine range, so use 0-1.
+            mn, mx = 0.0, 1.0
+        else:
+            mn, mx = a.min() + 0.0, a.max() + 0.0
+    else:
+        mn, mx = [mi + 0.0 for mi in range]
+    if mn > mx:
+        raise ValueError(
+            'max must be larger than min in range parameter.')
+    if not np.all(np.isfinite([mn, mx])):
+        raise ValueError(
+            'range parameter must be finite.')
+    if mn == mx:
+        mn -= 0.5
+        mx += 0.5
 
     if isinstance(bins, basestring):
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
         if bins not in _hist_bin_selectors:
-            raise ValueError("{0} not a valid estimator for `bins`".format(bins))
+            raise ValueError("{} not a valid estimator for bins".format(bins))
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
@@ -569,15 +577,22 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         b = a
         # Update the reference if the range needs truncation
         if range is not None:
-            mn, mx = range
             keep = (a >= mn)
             keep &= (a <= mx)
             if not np.logical_and.reduce(keep):
                 b = a[keep]
+
         if b.size == 0:
             bins = 1
         else:
-            bins = _hist_bin_selectors[bins](b)
+            # Do not call selectors on empty arrays
+            width = _hist_bin_selectors[bins](b)
+            if width:
+                bins = int(np.ceil((mx - mn) / width))
+            else:
+                # Width can be zero for some estimators, e.g. FD when
+                # the IQR of the data is zero.
+                bins = 1
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -593,16 +608,6 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         if np.isscalar(bins) and bins < 1:
             raise ValueError(
                 '`bins` should be a positive integer.')
-        if range is None:
-            if a.size == 0:
-                # handle empty arrays. Can't determine range, so use 0-1.
-                range = (0, 1)
-            else:
-                range = (a.min(), a.max())
-        mn, mx = [mi + 0.0 for mi in range]
-        if mn == mx:
-            mn -= 0.5
-            mx += 0.5
         # At this point, if the weights are not integer, floating point, or
         # complex, we have to use the slow algorithm.
         if weights is not None and not (np.can_cast(weights.dtype, np.double) or
