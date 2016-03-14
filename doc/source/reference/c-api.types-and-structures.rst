@@ -711,9 +711,10 @@ PyUFunc_Type
 
    .. c:member:: int PyUFuncObject.identity
 
-       Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`, or
-       :c:data:`PyUFunc_None` to indicate the identity for this operation.
-       It is only used for a reduce-like call on an empty array.
+       Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
+       :c:data:`PyUFunc_None` or :c:data:`PyUFunc_AllOnes` to indicate
+       the identity for this operation. It is only used for a
+       reduce-like call on an empty array.
 
    .. c:member:: void PyUFuncObject.functions(char** args, npy_intp* dims,
       npy_intp* steps, void* extradata)
@@ -745,8 +746,8 @@ PyUFunc_Type
    .. c:member:: int PyUFuncObject.ntypes
 
        The number of supported data types for the ufunc. This number
-       specifies how many different 1-d loops (of the builtin data types) are
-       available.
+       specifies how many different 1-d loops (of the builtin data
+       types) are available.
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -755,7 +756,7 @@ PyUFunc_Type
 
    .. c:member:: char *PyUFuncObject.types
 
-       An array of *nargs* :math:`\times` *ntypes* 8-bit type_numbers
+       An array of :math:`nargs \times ntypes` 8-bit type_numbers
        which contains the type signature for the function for each of
        the supported (builtin) data types. For each of the *ntypes*
        functions, the corresponding set of type numbers in this array
@@ -771,9 +772,9 @@ PyUFunc_Type
 
    .. c:member:: void *PyUFuncObject.ptr
 
-       Any dynamically allocated memory. Currently, this is used for dynamic
-       ufuncs created from a python function to store room for the types,
-       data, and name members.
+       Any dynamically allocated memory. Currently, this is used for
+       dynamic ufuncs created from a python function to store room for
+       the types, data, and name members.
 
    .. c:member:: PyObject *PyUFuncObject.obj
 
@@ -782,10 +783,11 @@ PyUFunc_Type
 
    .. c:member:: PyObject *PyUFuncObject.userloops
 
-       A dictionary of user-defined 1-d vector loops (stored as CObject ptrs)
-       for user-defined types. A loop may be registered by the user for any
-       user-defined type. It is retrieved by type number. User defined type
-       numbers are always larger than :c:data:`NPY_USERDEF`.
+       A dictionary of user-defined 1-d vector loops (stored as CObject
+       ptrs) for user-defined types. A loop may be registered by the
+       user for any user-defined type. It is retrieved by type number.
+       User defined type numbers are always larger than
+       :c:data:`NPY_USERDEF`.
 
 
    .. c:member:: npy_uint32 PyUFuncObject.op_flags
@@ -801,14 +803,15 @@ PyArrayIter_Type
 
 .. c:var: PyArrayIter_Type
 
-   This is an iterator object that makes it easy to loop over an N-dimensional
-   array. It is the object returned from the flat attribute of an
-   ndarray. It is also used extensively throughout the implementation
-   internals to loop over an N-dimensional array. The tp_as_mapping
-   interface is implemented so that the iterator object can be indexed
-   (using 1-d indexing), and a few methods are implemented through the
-   tp_methods table. This object implements the next method and can be
-   used anywhere an iterator can be used in Python.
+   This is an iterator object that makes it easy to loop over an
+   N-dimensional array. It is the object returned from the flat
+   attribute of an ndarray. It is also used extensively throughout the
+   implementation internals to loop over an N-dimensional array. The
+   tp_as_mapping interface is implemented so that the iterator object
+   can be indexed (using 1-d indexing), and a few methods are
+   implemented through the tp_methods table. This object implements the
+   next method and can be used anywhere an iterator can be used in
+   Python.
 
 .. c:type:: PyArrayIterObject
 
@@ -871,8 +874,8 @@ PyArrayIter_Type
    .. c:member:: npy_intp *PyArrayIterObject.backstrides
 
        How many bytes needed to jump from the end of a dimension back
-       to its beginning. Note that *backstrides* [k]= *strides* [k]*d
-       *ims_m1* [k], but it is stored here as an optimization.
+       to its beginning. Note that ``backstrides[k] == strides[k] *
+       dims_m1[k]``, but it is stored here as an optimization.
 
    .. c:member:: npy_intp *PyArrayIterObject.factors
 
@@ -900,8 +903,8 @@ How to use an array iterator on a C-level is explained more fully in
 later sections. Typically, you do not need to concern yourself with
 the internal structure of the iterator object, and merely interact
 with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
-:c:func:`PyArray_ITER_GOTO` (it, dest), or :c:func:`PyArray_ITER_GOTO1D` (it,
-index). All of these macros require the argument *it* to be a
+:c:func:`PyArray_ITER_GOTO` (it, dest), or :c:func:`PyArray_ITER_GOTO1D`
+(it, index). All of these macros require the argument *it* to be a
 :c:type:`PyArrayIterObject *`.
 
 
@@ -938,8 +941,8 @@ PyArrayMultiIter_Type
 
    .. c:macro: PyArrayMultiIterObject.PyObject_HEAD
 
-       Needed at the start of every Python object (holds reference count and
-       type identification).
+       Needed at the start of every Python object (holds reference count
+       and type identification).
 
    .. c:member:: int PyArrayMultiIterObject.numiter
 
@@ -963,17 +966,17 @@ PyArrayMultiIter_Type
 
    .. c:member:: PyArrayIterObject **PyArrayMultiIterObject.iters
 
-       An array of iterator objects that holds the iterators for the arrays
-       to be broadcast together. On return, the iterators are adjusted for
-       broadcasting.
+       An array of iterator objects that holds the iterators for the
+       arrays to be broadcast together. On return, the iterators are
+       adjusted for broadcasting.
 
 PyArrayNeighborhoodIter_Type
 ----------------------------
 
 .. c:var: PyArrayNeighborhoodIter_Type
 
-   This is an iterator object that makes it easy to loop over an N-dimensional
-   neighborhood.
+   This is an iterator object that makes it easy to loop over an
+   N-dimensional neighborhood.
 
 .. c:type:: PyArrayNeighborhoodIterObject
 
@@ -1003,8 +1006,8 @@ are :c:data:`Py{TYPE}ArrType_Type` where ``{TYPE}`` can be
 
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
-    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**, **CDouble**,
-    **CLongDouble**, **String**, **Unicode**, **Void**, and
+    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, and
     **Object**.
 
 These type names are part of the C-API and can therefore be created in
@@ -1012,9 +1015,9 @@ extension C-code. There is also a :c:data:`PyIntpArrType_Type` and a
 :c:data:`PyUIntpArrType_Type` that are simple substitutes for one of the
 integer types that can hold a pointer on the platform. The structure
 of these scalar objects is not exposed to C-code. The function
-:c:func:`PyArray_ScalarAsCtype` (..) can be used to extract the C-type value
-from the array scalar and the function :c:func:`PyArray_Scalar` (...) can be
-used to construct an array scalar from a C-value.
+:c:func:`PyArray_ScalarAsCtype` (..) can be used to extract the C-type
+value from the array scalar and the function :c:func:`PyArray_Scalar`
+(...) can be used to construct an array scalar from a C-value.
 
 
 Other C-Structures
@@ -1032,8 +1035,8 @@ PyArray_Dims
 
 .. c:type:: PyArray_Dims
 
-   This structure is very useful when shape and/or strides information is
-   supposed to be interpreted. The structure is:
+   This structure is very useful when shape and/or strides information
+   is supposed to be interpreted. The structure is:
 
    .. code-block:: c
 
@@ -1046,8 +1049,8 @@ PyArray_Dims
 
    .. c:member:: npy_intp *PyArray_Dims.ptr
 
-       A pointer to a list of (:c:type:`npy_intp`) integers which usually
-       represent array shape or array strides.
+       A pointer to a list of (:c:type:`npy_intp`) integers which
+       usually represent array shape or array strides.
 
    .. c:member:: int PyArray_Dims.len
 

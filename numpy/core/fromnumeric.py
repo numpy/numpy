@@ -135,20 +135,21 @@ def reshape(a, newshape, order='C'):
     newshape : int or tuple of ints
         The new shape should be compatible with the original shape. If
         an integer, then the result will be a 1-D array of that length.
-        One shape dimension can be -1. In this case, the value is inferred
-        from the length of the array and remaining dimensions.
+        One shape dimension can be -1. In this case, the value is
+        inferred from the length of the array and remaining dimensions.
     order : {'C', 'F', 'A'}, optional
-        Read the elements of `a` using this index order, and place the elements
-        into the reshaped array using this index order.  'C' means to
-        read / write the elements using C-like index order, with the last axis
-        index changing fastest, back to the first axis index changing slowest.
-        'F' means to read / write the elements using Fortran-like index order,
-        with the first index changing fastest, and the last index changing
-        slowest.
-        Note that the 'C' and 'F' options take no account of the memory layout
-        of the underlying array, and only refer to the order of indexing.  'A'
-        means to read / write the elements in Fortran-like index order if `a`
-        is Fortran *contiguous* in memory, C-like order otherwise.
+        Read the elements of `a` using this index order, and place the
+        elements into the reshaped array using this index order.  'C'
+        means to read / write the elements using C-like index order,
+        with the last axis index changing fastest, back to the first
+        axis index changing slowest. 'F' means to read / write the
+        elements using Fortran-like index order, with the first index
+        changing fastest, and the last index changing slowest. Note that
+        the 'C' and 'F' options take no account of the memory layout of
+        the underlying array, and only refer to the order of indexing.
+        'A' means to read / write the elements in Fortran-like index
+        order if `a` is Fortran *contiguous* in memory, C-like order
+        otherwise.
 
     Returns
     -------
@@ -560,11 +561,12 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
 
-    Creates a copy of the array with its elements rearranged in such a way that
-    the value of the element in kth position is in the position it would be in
-    a sorted array. All elements smaller than the kth element are moved before
-    this element and all equal or greater are moved behind it. The ordering of
-    the elements in the two partitions is undefined.
+    Creates a copy of the array with its elements rearranged in such a
+    way that the value of the element in k-th position is in the
+    position it would be in a sorted array. All elements smaller than
+    the k-th element are moved before this element and all equal or
+    greater are moved behind it. The ordering of the elements in the two
+    partitions is undefined.
 
     .. versionadded:: 1.8.0
 
@@ -573,23 +575,23 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     a : array_like
         Array to be sorted.
     kth : int or sequence of ints
-        Element index to partition by. The kth value of the element will be in
-        its final sorted position and all smaller elements will be moved before
-        it and all equal or greater elements behind it.
-        The order all elements in the partitions is undefined.
-        If provided with a sequence of kth it will partition all elements
-        indexed by kth  of them into their sorted position at once.
+        Element index to partition by. The k-th value of the element
+        will be in its final sorted position and all smaller elements
+        will be moved before it and all equal or greater elements behind
+        it. The order all elements in the partitions is undefined. If
+        provided with a sequence of k-th it will partition all elements
+        indexed by k-th  of them into their sorted position at once.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'.
     order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string.  Not all fields need be specified, but
-        unspecified fields will still be used, in the order in which they
-        come up in the dtype, to break ties.
+        When `a` is an array with fields defined, this argument
+        specifies which fields to compare first, second, etc.  A single
+        field can be specified as a string.  Not all fields need be
+        specified, but unspecified fields will still be used, in the
+        order in which they come up in the dtype, to break ties.
 
     Returns
     -------
@@ -604,10 +606,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Notes
     -----
-    The various selection algorithms are characterized by their average speed,
-    worst case performance, work space size, and whether they are stable. A
-    stable sort keeps items with the same key in the same relative order. The
-    available algorithms have the following properties:
+    The various selection algorithms are characterized by their average
+    speed, worst case performance, work space size, and whether they are
+    stable. A stable sort keeps items with the same key in the same
+    relative order. The available algorithms have the following
+    properties:
 
     ================= ======= ============= ============ =======
        kind            speed   worst case    work space  stable
@@ -616,14 +619,14 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     ================= ======= ============= ============ =======
 
     All the partition algorithms make temporary copies of the data when
-    partitioning along any but the last axis.  Consequently, partitioning
-    along the last axis is faster and uses less space than partitioning
-    along any other axis.
+    partitioning along any but the last axis.  Consequently,
+    partitioning along the last axis is faster and uses less space than
+    partitioning along any other axis.
 
-    The sort order for complex numbers is lexicographic. If both the real
-    and imaginary parts are non-nan then the order is determined by the
-    real parts except when they are equal, in which case the order is
-    determined by the imaginary parts.
+    The sort order for complex numbers is lexicographic. If both the
+    real and imaginary parts are non-nan then the order is determined by
+    the real parts except when they are equal, in which case the order
+    is determined by the imaginary parts.
 
     Examples
     --------
@@ -646,10 +649,10 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
 def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     """
-    Perform an indirect partition along the given axis using the algorithm
-    specified by the `kind` keyword. It returns an array of indices of the
-    same shape as `a` that index data along the given axis in partitioned
-    order.
+    Perform an indirect partition along the given axis using the
+    algorithm specified by the `kind` keyword. It returns an array of
+    indices of the same shape as `a` that index data along the given
+    axis in partitioned order.
 
     .. versionadded:: 1.8.0
 
@@ -658,29 +661,29 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     a : array_like
         Array to sort.
     kth : int or sequence of ints
-        Element index to partition by. The kth element will be in its final
-        sorted position and all smaller elements will be moved before it and
-        all larger elements behind it.
-        The order all elements in the partitions is undefined.
-        If provided with a sequence of kth it will partition all of them into
-        their sorted position at once.
+        Element index to partition by. The k-th element will be in its
+        final sorted position and all smaller elements will be moved
+        before it and all larger elements behind it. The order all
+        elements in the partitions is undefined. If provided with a
+        sequence of k-th it will partition all of them into their sorted
+        position at once.
     axis : int or None, optional
-        Axis along which to sort.  The default is -1 (the last axis). If None,
-        the flattened array is used.
+        Axis along which to sort. The default is -1 (the last axis). If
+        None, the flattened array is used.
     kind : {'introselect'}, optional
         Selection algorithm. Default is 'introselect'
     order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
+        When `a` is an array with fields defined, this argument
+        specifies which fields to compare first, second, etc. A single
+        field can be specified as a string, and not all fields need be
+        specified, but unspecified fields will still be used, in the
+        order in which they come up in the dtype, to break ties.
 
     Returns
     -------
     index_array : ndarray, int
         Array of indices that partition `a` along the specified axis.
-        In other words, ``a[index_array]`` yields a sorted `a`.
+        In other words, ``a[index_array]`` yields a partitioned `a`.
 
     See Also
     --------
