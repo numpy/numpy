@@ -1478,7 +1478,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermefik, hermeval
+    >>> from numpy.polynomial.hermite_e import hermefit, hermeval
     >>> x = np.linspace(-10, 10)
     >>> err = np.random.randn(len(x))/10
     >>> y = hermeval(x, [1, 2, 3]) + err
