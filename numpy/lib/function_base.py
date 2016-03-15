@@ -80,7 +80,8 @@ def _hist_bin_sqrt(x):
     """
     Square root histogram bin estimator.
 
-    Used by many programs for its simplicity.
+    Bin width is inversely proportional to the data size. Used by many
+    programs for its simplicity.
 
     Parameters
     ----------
@@ -90,7 +91,7 @@ def _hist_bin_sqrt(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     return x.ptp() / np.sqrt(x.size)
 
@@ -112,7 +113,7 @@ def _hist_bin_sturges(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     return x.ptp() / np.ceil(np.log2(x.size) + 1.0)
 
@@ -135,7 +136,7 @@ def _hist_bin_rice(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     return x.ptp() / (2.0 * x.size ** (1.0 / 3))
 
@@ -156,7 +157,7 @@ def _hist_bin_scott(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     return (24.0 * np.pi**0.5 / x.size)**(1.0 / 3.0) * np.std(x)
 
@@ -177,7 +178,7 @@ def _hist_bin_doane(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     if x.size > 2:
         sg1 = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
@@ -216,7 +217,7 @@ def _hist_bin_fd(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
     """
     iqr = np.subtract(*np.percentile(x, [75, 25]))
     return 2.0 * iqr * x.size ** (-1.0 / 3.0)
@@ -240,12 +241,14 @@ def _hist_bin_auto(x):
 
     Returns
     -------
-    w : An estimate of the optimal bin width for the given data.
+    h : An estimate of the optimal bin width for the given data.
 
     See Also
     --------
     _hist_bin_fd, _hist_bin_sturges
     """
+    # There is no need to check for zero here. If ptp is, so is IQR and
+    # vice versa. Either both are zero or neither one is.
     return min(_hist_bin_fd(x), _hist_bin_sturges(x))
 
 
@@ -276,9 +279,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         .. versionadded:: 1.11.0
 
-        If `bins` is a string from the list below, `histogram` will use the method
-        chosen to calculate the optimal number of bins (see Notes for more detail
-        on the estimators). For visualisation, we suggest using the 'auto' option.
+        If `bins` is a string from the list below, `histogram` will use
+        the method chosen to calculate the optimal bin width and
+        consequently the number of bins (see `Notes` for more detail on
+        the estimators) from the data that falls within the requested
+        range. While the bin width will be optimal for the actual data
+        in the range, the number of bins will be computed to fill the
+        entire range, including the empty portions. For visualisation,
+        using the 'auto' option is suggested. Weighted data is not
+        supported for automated bin size selection.
 
         'auto'
             Maximum of the 'sturges' and 'fd' estimators. Provides good all round performance
@@ -302,7 +311,11 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
         is simply ``(a.min(), a.max())``.  Values outside the range are
-        ignored.
+        ignored. The first element of the range must be less than or
+        equal to the second. `range` affects the automatic bin
+        computation as well. While bin width is computed to be optimal
+        based on the actual data within `range`, the bin count will fill
+        the entire range including portions containing no data.
     normed : bool, optional
         This keyword is deprecated in Numpy 1.6 due to confusing/buggy
         behavior. It will be removed in Numpy 2.0. Use the density keyword
@@ -352,12 +365,16 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     .. versionadded:: 1.11.0
 
-    The methods to estimate the optimal number of bins are well found in literature,
-    and are inspired by the choices R provides for histogram visualisation.
-    Note that having the number of bins proportional to :math:`n^{1/3}` is asymptotically optimal,
-    which is why it appears in most estimators.
-    These are simply plug-in methods that give good starting points for number of bins.
-    In the equations below, :math:`h` is the binwidth and :math:`n_h` is the number of bins
+    The methods to estimate the optimal number of bins are well founded
+    in literature, and are inspired by the choices R provides for
+    histogram visualisation. Note that having the number of bins
+    proportional to :math:`n^{1/3}` is asymptotically optimal, which is
+    why it appears in most estimators. These are simply plug-in methods
+    that give good starting points for number of bins. In the equations
+    below, :math:`h` is the binwidth and :math:`n_h` is the number of
+    bins. All estimators that compute bin counts are recast to bin width
+    using the `ptp` of the data. The final bin count is obtained from
+    ``np.round(np.ceil(range / h))`.
 
     'Auto' (maximum of the 'Sturges' and 'FD' estimators)
         A compromise to get a good value. For small datasets the sturges
@@ -381,16 +398,36 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         are very similar to the Freedman Diaconis Estimator in the absence of outliers.
 
     'Rice'
-        .. math:: n_h = \\left\\lceil 2n^{1/3} \\right\\rceil
-        The number of bins is only proportional to cube root of a.size.
-        It tends to overestimate the number of bins
-        and it does not take into account data variability.
+        .. math:: n_h = 2n^{1/3}
+
+        The number of bins is only proportional to cube root of
+        ``a.size``. It tends to overestimate the number of bins and it
+        does not take into account data variability.
 
     'Sturges'
-        .. math:: n_h = \\left\\lceil \\log _{2}n+1 \\right\\rceil
-        The number of bins is the base2 log of a.size.
-        This estimator assumes normality of data and is too conservative for larger,
-        non-normal datasets. This is the default method in R's `hist` method.
+        .. math:: n_h = \log _{2}n+1
+
+        The number of bins is the base 2 log of ``a.size``.  This
+        estimator assumes normality of data and is too conservative for
+        larger, non-normal datasets. This is the default method in R's
+        ``hist`` method.
+
+    'Doane'
+        .. math:: n_h = 1 + \log_{2}(n) +
+                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1})}
+
+            g_1 = mean[(\frac{x - \mu}{\sigma})^3]
+
+            \sigma_{g_1} = \sqrt{\frac{6(n - 2)}{(n + 1)(n + 3)}}
+
+        An improved version of Sturges' formula that produces better
+        estimates for non-normal datasets. This estimator attempts to
+        account for the skew of the data.
+
+    'Sqrt'
+        .. math:: n_h = \sqrt n
+        The simplest and fastest estimator. Only takes into account the
+        data size.
 
     Examples
     --------
@@ -455,7 +492,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
         if bins not in _hist_bin_selectors:
-            raise ValueError("{} not a valid estimator for bins".format(bins))
+            raise ValueError("{0} not a valid estimator for bins".format(bins))
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
