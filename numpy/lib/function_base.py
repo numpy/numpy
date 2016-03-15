@@ -2026,7 +2026,8 @@ def place(arr, mask, vals):
     vals : 1-D sequence
         Values to put into `a`. Only the first N elements are used, where
         N is the number of True values in `mask`. If `vals` is smaller
-        than N it will be repeated.
+        than N, it will be repeated, and if elements of `a` are to be masked,
+        this sequence must be non-empty.
 
     See Also
     --------
