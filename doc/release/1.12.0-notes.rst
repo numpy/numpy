@@ -128,15 +128,17 @@ but that can be overwritten by people making binary distributions of numpy.
 Improvements
 ============
 
-*np.loadtxt* now supports a single integer as ``usecol`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.loadtxt`` now supports a single integer as ``usecol`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Instead of using ``usecol=(n,)`` to read the nth column of a file
 it is now allowed to use ``usecol=n``. Also the error message is
 more user friendly when a non-integer is passed as a column index.
 
-Additional estimators for ``histogram``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins`` argument.
+Improved automated bin estimators for ``histogram``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins``
+argument. Added support for range-restricted histograms with automated
+bin estimation.
 
 ``bitwise_and`` identity changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,8 +159,8 @@ Assignment of ndarray object's ``data`` attribute
 Assigning the 'data' attribute is an inherently unsafe operation as pointed
 out in gh-7083. Such a capability will be removed in the future.
 
-Unsafe int casting of the num attribute in linspace
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unsafe int casting of the num attribute in ``linspace``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``np.linspace`` now raises DeprecationWarning when num cannot be safely
 interpreted as an integer.
 
