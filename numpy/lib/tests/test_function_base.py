@@ -1280,11 +1280,13 @@ class TestHistogram(TestCase):
 
 class TestHistogramOptimBinNums(TestCase):
     """
-    Provide test coverage when using provided estimators for optimal number of bins
+    Provide test coverage when using provided estimators for optimal number of
+    bins
     """
 
     def test_empty(self):
-        estimator_list = ['fd', 'scott', 'rice', 'sturges', 'auto']
+        estimator_list = ['fd', 'scott', 'rice', 'sturges',
+                          'doane', 'sqrt', 'auto']
         # check it can deal with empty data
         for estimator in estimator_list:
             a, b = histogram([], bins=estimator)
@@ -1293,13 +1295,18 @@ class TestHistogramOptimBinNums(TestCase):
 
     def test_simple(self):
         """
-        Straightforward testing with a mixture of linspace data (for consistency).
-        All test values have been precomputed and the values shouldn't change
+        Straightforward testing with a mixture of linspace data (for
+        consistency). All test values have been precomputed and the values
+        shouldn't change
         """
-        # some basic sanity checking, with some fixed data. Checking for the correct number of bins
-        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,  'auto': 7},
-                      500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10, 'auto': 10},
-                      5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14, 'auto': 17}}
+        # Some basic sanity checking, with some fixed data.
+        # Checking for the correct number of bins
+        basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7, 
+                             'doane': 8, 'sqrt': 8, 'auto': 7},
+                      500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10,
+                             'doane': 12, 'sqrt': 23, 'auto': 10},
+                      5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14,
+                             'doane': 17, 'sqrt': 71, 'auto': 17}}
 
         for testlen, expectedResults in basic_test.items():
             # Create some sort of non uniform data to test with
@@ -1309,14 +1316,14 @@ class TestHistogramOptimBinNums(TestCase):
             x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
-                assert_equal(len(a), numbins,
-                             err_msg="For the {0} estimator with datasize of {1} ".format(estimator, testlen))
+                assert_equal(len(a), numbins, err_msg="For the {0} estimator "
+                             "with datasize of {1}".format(estimator, testlen))
 
     def test_small(self):
         """
-        Smaller datasets have the potential to cause issues with the data adaptive methods
-        Especially the FD methods
-        All bin numbers have been precalculated
+        Smaller datasets have the potential to cause issues with the data
+        adaptive methods, especially the FD method. All bin numbers have been
+        precalculated.
         """
         small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
                          'doane': 1, 'sqrt': 1},
@@ -1329,8 +1336,8 @@ class TestHistogramOptimBinNums(TestCase):
             testdat = np.arange(testlen)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
-                assert_equal(len(a), expbins,
-                             err_msg="For the {0} estimator with datasize of {1} ".format(estimator, testlen))
+                assert_equal(len(a), expbins, err_msg="For the {0} estimator "
+                             "with datasize of {1}".format(estimator, testlen))
 
     def test_incorrect_methods(self):
         """
@@ -1351,22 +1358,24 @@ class TestHistogramOptimBinNums(TestCase):
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
-            assert_equal(len(a), numbins,
-                         err_msg="{0} estimator, No Variance test".format(estimator))
+            assert_equal(len(a), numbins, err_msg="{0} estimator, "
+                         "No Variance test".format(estimator))
 
     def test_outlier(self):
         """
-        Check the fd and scott with outliers
-        The fd determines a smaller binwidth since it's less affected by outliers
-        since the range is so (artificially) large this means more bins
-        most of which will be empty, but the data of interest usually is unaffected.
-        The Scott estimator is more affected and returns fewer bins, despite most of
-        the variance being in one area of the data
+        Check the FD, Scott and Doane with outliers.
+
+        The FD estimates a smaller binwidth since it's less affected by
+        outliers. Since the range is so (artificially) large, this means more
+        bins, most of which will be empty, but the data of interest usually is
+        unaffected. The Scott estimator is more affected and returns fewer bins,
+        despite most of the variance being in one area of the data. The Doane
+        estimator lies somewhere between the other two.
         """
         xcenter = np.linspace(-10, 10, 50)
         outlier_dataset = np.hstack((np.linspace(-110, -100, 5), xcenter))
 
-        outlier_resultdict = {'fd': 21, 'scott': 5}
+        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11}
 
         for estimator, numbins in outlier_resultdict.items():
             a, b = np.histogram(outlier_dataset, estimator)
