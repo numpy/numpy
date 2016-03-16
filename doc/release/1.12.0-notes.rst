@@ -127,6 +127,11 @@ Add a hook in ``numpy/__init__.py`` to import a ``numpy/_distributor_init.py``
 file that will remain empty (bar a docstring) in the standard numpy source,
 but that can be overwritten by people making binary distributions of numpy.
 
+New nanfunctions ``nancumsum`` and ``nancumprod`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
+compute ``cumsum`` and ``cumprod`` by ignoring nans.
+
 Improvements
 ============
 

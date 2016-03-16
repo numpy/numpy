@@ -10,6 +10,8 @@ Functions
 - `nanargmax` -- index of maximum non-NaN value
 - `nansum` -- sum of non-NaN values
 - `nanprod` -- product of non-NaN values
+- `nancumsum` -- cumulative sum of non-NaN values
+- `nancumprod` -- cumulative product of non-NaN values
 - `nanmean` -- mean of non-NaN values
 - `nanvar` -- variance of non-NaN values
 - `nanstd` -- standard deviation of non-NaN values
@@ -27,6 +29,7 @@ from numpy.lib.function_base import _ureduce as _ureduce
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
     'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
+    'nancumsum', 'nancumprod'
     ]
 
 
@@ -493,7 +496,11 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
 
     Returns
     -------
-    y : ndarray or numpy scalar
+    nansum : ndarray.
+        A new array holding the result is returned unless `out` is
+        specified, in which it is returned. The result has the same
+        size as `a`, and the same shape as `a` if `axis` is not None
+        or `a` is a 1-d array.
 
     See Also
     --------
@@ -505,11 +512,6 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     -----
     If both positive and negative infinity are present, the sum will be Not
     A Number (NaN).
-
-    Numpy integer arithmetic is modular. If the size of a sum exceeds the
-    size of an integer accumulator, its value will wrap around and the
-    result will be incorrect. Specifying ``dtype=double`` can alleviate
-    that problem.
 
     Examples
     --------
@@ -539,7 +541,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
 def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the product of array elements over a given axis treating Not a
-    Numbers (NaNs) as zero.
+    Numbers (NaNs) as ones.
 
     One is returned for slices that are all-NaN or empty.
 
@@ -573,19 +575,14 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
 
     Returns
     -------
-    y : ndarray or numpy scalar
+    nanprod : ndarray
+        A new array holding the result is returned unless `out` is
+        specified, in which case it is returned.
 
     See Also
     --------
     numpy.prod : Product across array propagating NaNs.
     isnan : Show which elements are NaN.
-
-    Notes
-    -----
-    Numpy integer arithmetic is modular. If the size of a product exceeds
-    the size of an integer accumulator, its value will wrap around and the
-    result will be incorrect. Specifying ``dtype=double`` can alleviate
-    that problem.
 
     Examples
     --------
@@ -604,6 +601,133 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     a, mask = _replace_nan(a, 1)
     return np.prod(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+
+
+def nancumsum(a, axis=None, dtype=None, out=None):
+    """
+    Return the cumulative sum of array elements over a given axis treating Not a
+    Numbers (NaNs) as zero.  The cumulative sum does not change when NaNs are
+    encountered and leading NaNs are replaced by zeros.
+
+    Zeros are returned for slices that are all-NaN or empty.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int, optional
+        Axis along which the cumulative sum is computed. The default
+        (None) is to compute the cumsum over the flattened array.
+    dtype : dtype, optional
+        Type of the returned array and of the accumulator in which the
+        elements are summed.  If `dtype` is not specified, it defaults
+        to the dtype of `a`, unless `a` has an integer dtype with a
+        precision less than that of the default platform integer.  In
+        that case, the default platform integer is used.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary. See `doc.ufuncs`
+        (Section "Output arguments") for more details.
+
+    Returns
+    -------
+    nancumsum : ndarray.
+        A new array holding the result is returned unless `out` is
+        specified, in which it is returned. The result has the same
+        size as `a`, and the same shape as `a` if `axis` is not None
+        or `a` is a 1-d array.
+
+    See Also
+    --------
+    numpy.cumsum : Cumulative sum across array propagating NaNs.
+    isnan : Show which elements are NaN.
+
+    Examples
+    --------
+    >>> np.nancumsum(1)
+    array([1])
+    >>> np.nancumsum([1])
+    array([1])
+    >>> np.nancumsum([1, np.nan])
+    array([ 1.,  1.])
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nancumsum(a)
+    array([ 1.,  3.,  6.,  6.])
+    >>> np.nancumsum(a, axis=0)
+    array([[ 1.,  2.],
+           [ 4.,  2.]])
+    >>> np.nancumsum(a, axis=1)
+    array([[ 1.,  3.],
+           [ 3.,  3.]])
+
+    """
+    a, mask = _replace_nan(a, 0)
+    return np.cumsum(a, axis=axis, dtype=dtype, out=out)
+
+
+def nancumprod(a, axis=None, dtype=None, out=None):
+    """
+    Return the cumulative product of array elements over a given axis treating Not a
+    Numbers (NaNs) as one.  The cumulative product does not change when NaNs are
+    encountered and leading NaNs are replaced by ones.
+
+    Ones are returned for slices that are all-NaN or empty.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int, optional
+        Axis along which the cumulative product is computed.  By default
+        the input is flattened.
+    dtype : dtype, optional
+        Type of the returned array, as well as of the accumulator in which
+        the elements are multiplied.  If *dtype* is not specified, it
+        defaults to the dtype of `a`, unless `a` has an integer dtype with
+        a precision less than that of the default platform integer.  In
+        that case, the default platform integer is used instead.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type of the resulting values will be cast if necessary.
+
+    Returns
+    -------
+    nancumprod : ndarray
+        A new array holding the result is returned unless `out` is
+        specified, in which case it is returned.
+
+    See Also
+    --------
+    numpy.cumprod : Cumulative product across array propagating NaNs.
+    isnan : Show which elements are NaN.
+
+    Examples
+    --------
+    >>> np.nancumprod(1)
+    array([1])
+    >>> np.nancumprod([1])
+    array([1])
+    >>> np.nancumprod([1, np.nan])
+    array([ 1.,  1.])
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nancumprod(a)
+    array([ 1.,  2.,  6.,  6.])
+    >>> np.nancumprod(a, axis=0)
+    array([[ 1.,  2.],
+           [ 3.,  2.]])
+    >>> np.nancumprod(a, axis=1)
+    array([[ 1.,  2.],
+           [ 3.,  3.]])
+
+    """
+    a, mask = _replace_nan(a, 1)
+    return np.cumprod(a, axis=axis, dtype=dtype, out=out)
 
 
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
