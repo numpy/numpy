@@ -58,6 +58,8 @@ Sums, products, differences
    nansum
    cumprod
    cumsum
+   nancumprod
+   nancumsum
    diff
    ediff1d
    gradient
