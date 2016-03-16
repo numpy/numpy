@@ -187,7 +187,7 @@ def _hist_bin_sturges(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
-    return x.ptp() / np.ceil(np.log2(x.size) + 1.0)
+    return x.ptp() / (np.log2(x.size) + 1.0)
 
 
 def _hist_bin_rice(x):
