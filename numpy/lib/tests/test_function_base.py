@@ -1382,7 +1382,7 @@ class TestHistogramOptimBinNums(TestCase):
         # some basic sanity checking, with some fixed data. Checking for the correct number of bins
         basic_test = {50:   {'fd': 8,  'scott': 8,  'rice': 15, 'sturges': 14, 'auto': 14},
                       500:  {'fd': 15, 'scott': 16, 'rice': 32, 'sturges': 20, 'auto': 20},
-                      5000: {'fd': 33, 'scott': 33, 'rice': 69, 'sturges': 28, 'auto': 33}}
+                      5000: {'fd': 33, 'scott': 33, 'rice': 69, 'sturges': 27, 'auto': 33}}
 
         for testlen, expectedResults in basic_test.items():
             # create some sort of non uniform data to test with (3 peak uniform mixture)
