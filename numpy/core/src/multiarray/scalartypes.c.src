@@ -2830,7 +2830,9 @@ static PyObject *
 static PyObject *
 bool_index(PyObject *a)
 {
-    return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
+    PyErr_SetString(PyExc_TypeError, 
+                    "A boolean scalar cannot be converted to an index");
+    return NULL;
 }
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
