@@ -1390,6 +1390,12 @@ class TestHistogram(TestCase):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
+        
+    def test_error_binnum_type (self):
+        # Tests if right Error is raised if bins argument is float
+        vals = np.linspace(0.0, 1.0, num=100)
+        histogram(vals, 5)
+        assert_raises(TypeError, histogram, vals, 2.4)   
 
     def test_finite_range(self):
         # Normal ranges should be fine
