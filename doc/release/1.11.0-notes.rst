@@ -68,33 +68,10 @@ In a future release the following changes will be made.
   change.  That differs from the current behavior where arrays that are
   f_contiguous but not c_contiguous can be viewed as a dtype type of
   different size causing the first dimension to change.
-* Currently, taking a view of a masked array produces a confusing result.
-  For example, if we write ``masked_view = masked_original[:]``, then
-  ``masked_view``'s data array will be a view of ``masked_original``'s data
-  array, so modifications to one array's data will also affect the other:
-  ``masked_view[0] = 123; assert masked_original[0] == 123``. But currently,
-  the *mask* array is copied during assignment operations. While
-  mask is *initially* a view it is considered to be *shared*.
-  The first assignment to the masked array will thus cause an implicit
-  copy, so that changes of one array's mask will not affect the other:
-  ``masked_view[0] = np.ma.masked; assert masked_original[0] is not
-  np.ma.masked``.
-  A similar situation happens when explicitly constructing a masked
-  array using ``MaskedArray(data, mask)`` -- the returned array will have
-  a view of ``data`` and "shares" the ``mask``. In the future, these cases
-  will be normalized so that the data and mask arrays are treated the
-  same way, and modifications to either will propagate between views.
-  The mask will not be copied during assignment operations and instead
-  the original mask will be modified as well. In 1.11, numpy will issue a
-  ``MaskedArrayFutureWarning`` warning whenever user code modifies the mask
-  of a view and this may cause values to propagate to another array.
-  To silence these warnings, and make your code robust against the
-  upcoming changes, you have two options: if you want to keep the current
-  behavior, call ``masked_view.unshare_mask()`` before modifying the mask.
-  If you want to get the future behavior early, use
-  ``masked_view._sharedmask = False``. However, note that setting
-  the ``_sharedmask`` attribute will break following explicit calls to
-  ``masked_view.unshare_mask()``.
+* Slicing a ``MaskedArray`` will return views of both data **and** mask.
+  Currently the mask is copy-on-write and changes to the mask in the slice do
+  not propagate to the original mask. See the FutureWarnings section below for
+  details.
 
 
 Compatibility notes
@@ -384,3 +361,32 @@ interval over the closed one, ``np.random.random_integers`` is being
 deprecated in favor of calling ``np.random.randint``, which has been
 enhanced with the ``dtype`` parameter as described under "New Features".
 However, ``np.random.random_integers`` will not be removed anytime soon.
+
+
+FutureWarnings
+==============
+
+Assigning to slices/views of ``MaskedArray``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Currently a slice of a masked array contains a view of the original data and a
+copy-on-write view of the mask. Consequently, any changes to the slice's mask
+will result in a copy of the original mask being made and that new mask being
+changed rather than the original. For example, if we make a slice of the
+original like so, ``view = original[:]``, then modifications to the data in one
+array will affect the data of the other but, because the mask will be copied
+during assignment operations, changes to the mask will remain local. A similar
+situation occurs when explicitly constructing a masked array using
+``MaskedArray(data, mask)``, the returned array will contain a view of ``data``
+but the mask will be a copy-on-write view of ``mask``.
+
+In the future, these cases will be normalized so that the data and mask arrays
+are treated the same way and modifications to either will propagate between
+views. In 1.11, numpy will issue a ``MaskedArrayFutureWarning`` warning
+whenever user code modifies the mask of a view that in the future may cause
+values to propagate back to the original.  To silence these warnings and make
+your code robust against the upcoming changes, you have two options: if you
+want to keep the current behavior, call ``masked_view.unshare_mask()`` before
+modifying the mask.  If you want to get the future behavior early, use
+``masked_view._sharedmask = False``. However, note that setting the
+``_sharedmask`` attribute will break following explicit calls to
+``masked_view.unshare_mask()``.
