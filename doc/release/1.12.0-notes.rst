@@ -18,6 +18,9 @@ Future Changes
 
 * In 1.13 NAT will always compare False except for ``NAT != NAT``,
   which will be True.  In short, NAT will behave like NaN
+* In 1.13 np.average will preserve subclasses, to match the behavior of most
+  other numpy functions such as np.mean. In particular, this means calls which
+  returned a scalar may return a 0-d subclass object instead.
 
 
 Compatibility notes
@@ -86,6 +89,9 @@ FutureWarning to changed behavior
 
 * ``np.full`` now returns an array of the fill-value's dtype if no dtype is
   given, instead of defaulting to float.
+* np.average will emit a warning if the argument is a subclass of ndarray,
+  as the subclass will be preserved starting in 1.13. (see Future Changes)
+
 
 C API
 ~~~~~
