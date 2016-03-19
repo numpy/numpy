@@ -3123,7 +3123,6 @@ class MaskedArray(ndarray):
         Return the item described by i, as a masked array.
 
         """
-
         dout = self.data[indx]
         # We could directly use ndarray.__getitem__ on self.
         # But then we would have to modify __array_finalize__ to prevent the
@@ -3194,19 +3193,6 @@ class MaskedArray(ndarray):
         locations.
 
         """
-        # 2016.01.15 -- v1.11.0
-        self._oldsharedmask = getattr(self, "_oldsharedmask", False)
-        self._oldsharedmask = self._oldsharedmask or self._sharedmask
-        if (self._mask is not nomask) and self._oldsharedmask:
-            warnings.warn(
-                "Currently, slicing will try to return a view of the data, but"
-                " will return a copy of the mask. In the future, it will try"
-                " to  return both as views. This means that using"
-                " `__setitem__` will propagate values back through all masks"
-                " that are present.",
-                MaskedArrayFutureWarning
-            )
-
         if self is masked:
             raise MaskError('Cannot alter the masked element.')
         _data = self._data
@@ -3248,10 +3234,24 @@ class MaskedArray(ndarray):
                 _mask[indx] = mval
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
+            # We want to remove the unshare logic from this place in the
+            # future. Note that _sharedmask has lots of false positives.
             if not self._isfield:
-                _oldsharedmask = self._oldsharedmask
+                if self._sharedmask and not (
+                        # If no one else holds a reference (we have two
+                        # references (_mask and self._mask) -- add one for
+                        # getrefcount) and the array owns its own data
+                        # copying the mask should do nothing.
+                        (sys.getrefcount(_mask) == 3) and _mask.flags.owndata):
+                    # 2016.01.15 -- v1.11.0
+                    warnings.warn(
+                       "setting an item on a masked array which has a shared "
+                       "mask will not copy the mask and also change the "
+                       "original mask array in the future.\n"
+                       "Check the NumPy 1.11 release notes for more "
+                       "information.",
+                       MaskedArrayFutureWarning, stacklevel=2)
                 self.unshare_mask()
-                self._oldsharedmask = _oldsharedmask
                 _mask = self._mask
             # Set the data, then the mask
             _data[indx] = dval
@@ -3457,7 +3457,6 @@ class MaskedArray(ndarray):
         if self._sharedmask:
             self._mask = self._mask.copy()
             self._sharedmask = False
-            self._oldsharedmask = False
         return self
 
     sharedmask = property(fget=lambda self: self._sharedmask,
