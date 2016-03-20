@@ -159,6 +159,10 @@ Generalized Ufuncs will now unlock the GIL
 Generalized Ufuncs, including most of the linalg module, will now unlock
 the Python global interpreter lock.
 
+np.roll can now roll multiple axes at the same time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``shift`` and ``axis`` arguments to ``roll`` are now broadcast against each
+other, and each specified axis is shifted accordingly.
 
 The *__complex__* method has been implemented on the ndarray object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

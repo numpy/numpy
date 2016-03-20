@@ -2145,6 +2145,42 @@ class TestRoll(TestCase):
         x2r = np.roll(x2, 1, axis=1)
         assert_equal(x2r, np.array([[4, 0, 1, 2, 3], [9, 5, 6, 7, 8]]))
 
+        # Roll multiple axes at once.
+        x2r = np.roll(x2, 1, axis=(0, 1))
+        assert_equal(x2r, np.array([[9, 5, 6, 7, 8], [4, 0, 1, 2, 3]]))
+
+        x2r = np.roll(x2, (1, 0), axis=(0, 1))
+        assert_equal(x2r, np.array([[5, 6, 7, 8, 9], [0, 1, 2, 3, 4]]))
+
+        x2r = np.roll(x2, (-1, 0), axis=(0, 1))
+        assert_equal(x2r, np.array([[5, 6, 7, 8, 9], [0, 1, 2, 3, 4]]))
+
+        x2r = np.roll(x2, (0, 1), axis=(0, 1))
+        assert_equal(x2r, np.array([[4, 0, 1, 2, 3], [9, 5, 6, 7, 8]]))
+
+        x2r = np.roll(x2, (0, -1), axis=(0, 1))
+        assert_equal(x2r, np.array([[1, 2, 3, 4, 0], [6, 7, 8, 9, 5]]))
+
+        x2r = np.roll(x2, (1, 1), axis=(0, 1))
+        assert_equal(x2r, np.array([[9, 5, 6, 7, 8], [4, 0, 1, 2, 3]]))
+
+        x2r = np.roll(x2, (-1, -1), axis=(0, 1))
+        assert_equal(x2r, np.array([[6, 7, 8, 9, 5], [1, 2, 3, 4, 0]]))
+
+        # Roll the same axis multiple times.
+        x2r = np.roll(x2, 1, axis=(0, 0))
+        assert_equal(x2r, np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]))
+
+        x2r = np.roll(x2, 1, axis=(1, 1))
+        assert_equal(x2r, np.array([[3, 4, 0, 1, 2], [8, 9, 5, 6, 7]]))
+
+        # Roll more than one turn in either direction.
+        x2r = np.roll(x2, 6, axis=1)
+        assert_equal(x2r, np.array([[4, 0, 1, 2, 3], [9, 5, 6, 7, 8]]))
+
+        x2r = np.roll(x2, -4, axis=1)
+        assert_equal(x2r, np.array([[4, 0, 1, 2, 3], [9, 5, 6, 7, 8]]))
+
     def test_roll_empty(self):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
