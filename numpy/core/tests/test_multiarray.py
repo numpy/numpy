@@ -3479,11 +3479,11 @@ class TestCompress(TestCase):
 class TestPutmask(object):
     def tst_basic(self, x, T, mask, val):
         np.putmask(x, mask, val)
-        assert_(np.all(x[mask] == T(val)))
-        assert_(x.dtype == T)
+        assert_equal(x[mask], T(val))
+        assert_equal(x.dtype, T)
 
     def test_ip_types(self):
-        unchecked_types = [str, unicode, np.void, object]
+        unchecked_types = [bytes, unicode, np.void, object]
 
         x = np.random.random(1000)*100
         mask = x < 40
@@ -3526,7 +3526,7 @@ class TestTake(object):
         assert_array_equal(x.take(ind, axis=0), x)
 
     def test_ip_types(self):
-        unchecked_types = [str, unicode, np.void, object]
+        unchecked_types = [bytes, unicode, np.void, object]
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4
