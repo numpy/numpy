@@ -9,7 +9,7 @@ import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose
+    assert_almost_equal, assert_allclose, assert_array_equal
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -446,6 +446,44 @@ class TestSizeOf(TestCase):
     def test_error(self):
         d = np.float32()
         assert_raises(TypeError, d.__sizeof__, "a")
+
+
+class TestMultiply(TestCase):
+    def test_seq_repeat(self):
+        # Test that basic sequences get repeated when multiplied with
+        # numpy integers. And errors are raised when multiplied with others.
+        # Some of this behaviour may be controversial and could be open for
+        # change.
+        for seq_type in (list, tuple):
+            seq = seq_type([1, 2, 3])
+            for numpy_type in np.typecodes["AllInteger"]:
+                i = np.dtype(numpy_type).type(2)
+                assert_equal(seq * i, seq * int(i))
+                assert_equal(i * seq, int(i) * seq)
+
+            for numpy_type in np.typecodes["All"].replace("V", ""):
+                if numpy_type in np.typecodes["AllInteger"]:
+                    continue
+                i = np.dtype(numpy_type).type()
+                assert_raises(TypeError, operator.mul, seq, i)
+                assert_raises(TypeError, operator.mul, i, seq)
+
+    def test_no_seq_repeat_basic_array_like(self):
+        # Test that an array-like which does not know how to be multiplied
+        # does not attempt sequence repeat (raise TypeError).
+        # See also gh-7428.
+        class ArrayLike(object):
+            def __init__(self, arr):
+                self.arr = arr
+            def __array__(self):
+                return self.arr
+
+        # Test for simple ArrayLike above and memoryviews (original report)
+        for arr_like in (ArrayLike(np.ones(3)), memoryview(np.ones(3))):
+            assert_array_equal(arr_like * np.float32(3.), np.full(3, 3.))
+            assert_array_equal(np.float32(3.) * arr_like, np.full(3, 3.))
+            assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
+            assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
 class TestAbs(TestCase):
