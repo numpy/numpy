@@ -1813,7 +1813,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
     int i, idim, ndim = PyArray_NDIM(self);
     npy_intp *strides;
-    npy_intp stride1, stride2;
+    npy_intp stride1, stride2, offset_stride;
     npy_intp *shape, dim1, dim2;
 
     char *data;
@@ -1860,35 +1860,21 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* Compute the data pointers and diag_size for the view */
     data = PyArray_DATA(self);
-    if (offset > 0) {
-        if (offset >= dim2) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride2;
-
-            diag_size = dim2 - offset;
-            if (dim1 < diag_size) {
-                diag_size = dim1;
-            }
-        }
-    }
-    else if (offset < 0) {
-        offset = -offset;
-        if (offset >= dim1) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride1;
-
-            diag_size = dim1 - offset;
-            if (dim2 < diag_size) {
-                diag_size = dim2;
-            }
-        }
+    if (offset >= 0) {
+        offset_stride = stride2;
+        dim2 -= offset;
     }
     else {
-        diag_size = dim1 < dim2 ? dim1 : dim2;
+        offset = -offset;
+        offset_stride = stride1;
+        dim1 -= offset;
+    }
+    diag_size = dim2 < dim1 ? dim2 : dim1;
+    if (diag_size < 0) {
+        diag_size = 0;
+    }
+    else {
+        data += offset * offset_stride;
     }
 
     /* Build the new shape and strides for the main data */
