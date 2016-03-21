@@ -364,7 +364,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         supported for automated bin size selection.
 
         'auto'
-            Maximum of the 'sturges' and 'fd' estimators. Provides good
+            Minimum of the 'sturges' and 'fd' estimators. Provides good
             all round performance
 
         'fd' (Freedman Diaconis Estimator)
@@ -462,7 +462,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     using the `ptp` of the data. The final bin count is obtained from
     ``np.round(np.ceil(range / h))`.
 
-    'Auto' (maximum of the 'Sturges' and 'FD' estimators)
+    'Auto' (minimum of the 'Sturges' and 'FD' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
