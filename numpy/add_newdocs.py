@@ -686,7 +686,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     See Also
     --------
-    empty, empty_like, zeros, zeros_like, ones, ones_like, fill
+    empty, empty_like, zeros, zeros_like, ones, ones_like, full, full_like
 
     Examples
     --------
