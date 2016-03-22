@@ -4,6 +4,7 @@ import numpy as np
 from numpy.compat import long
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
                         vstack, hstack, newaxis, concatenate, stack)
+from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
                            assert_equal, run_module_suite, assert_raises_regex)
 
@@ -212,6 +213,27 @@ class TestConcatenate(TestCase):
         # No arrays to concatenate raises ValueError
         assert_raises(ValueError, concatenate, ())
 
+        # Not passing a sequence of array-likes raises TypeError
+        assert_raises(TypeError, concatenate, 5)
+
+        # All concatenated arrays must have same number of dimensions
+        a = np.ones((1, 2, 3))
+        b = np.ones((2, 3))
+        for axis in range(-a.ndim, a.ndim):
+            assert_raises(ValueError, concatenate, (a, b), axis=axis)
+
+        # The concatenated dimension must not overflow
+        length = np.iinfo(np.intp).max // 2 + 1
+        a = np.ones((1, 1, 1))
+        for axis in range(-a.ndim, a.ndim):
+            shape = [1] * a.ndim
+            shape[axis] = length
+            strides = list(a.strides)
+            strides[axis] = 0
+            b = as_strided(a, shape=shape, strides=a.strides)
+            assert_raises(ValueError, concatenate, (b, b), axis=axis)
+        assert_raises(ValueError, concatenate, (b, b), axis=None)
+
     def test_concatenate_axis_None(self):
         a = np.arange(4, dtype=np.float64).reshape((2, 2))
         b = list(range(3))
@@ -274,6 +296,18 @@ class TestConcatenate(TestCase):
         assert_array_equal(concatenate((a0, a1, a2), 2), res)
         assert_array_equal(concatenate((a0, a1, a2), -1), res)
         assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
+
+    def test_concatenate_empty_non_arrays(self):
+        # gh-1586
+        a = np.ones((2, 1), dtype=np.intp)
+        # empty non arrays must match dimensions other than concatenation
+        assert_raises(ValueError, concatenate, (a, [[]]), axis=0)
+        concatenate((a, [[], []]), axis=1)
+        # empty non arrays have no effect on the output dtype
+        assert_equal(np.concatenate(([], a), axis=None).dtype, a.dtype)
+        assert_equal(np.concatenate((a, []), axis=None).dtype, a.dtype)
+        # it still works if all are empty non arrays
+        np.concatenate(([], []), axis=None)
 
 
 def test_stack():
