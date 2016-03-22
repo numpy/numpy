@@ -142,7 +142,7 @@ different. This can happen in two cases:
        index and the strides are never used. Any array with no elements may be
        considered C-style and Fortran-style contiguous.
 
-Point 1. means that ``self``and ``self.squeeze()`` always have the same
+Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and :term:`aligned` flags value. This also means that even a high
 dimensional array could be C-style and Fortran-style contiguous at the same
 time.
