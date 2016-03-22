@@ -936,6 +936,9 @@ static PyObject *
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
  *
+ * #oname = float*4, double*6, half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *
  * #otype = npy_float*4, npy_double*6, npy_half, npy_float,
  *          npy_double, npy_longdouble,
  *          npy_cfloat, npy_cdouble, npy_clongdouble#
@@ -1066,8 +1069,7 @@ static PyObject *
         out1 = out = @one@;
     }
     else if (arg2 < 0) {
-        @name@_ctype_power(arg1, -arg2, &out);
-        out1 = (@otype@) (1.0 / out);
+        @oname@_ctype_power(arg1, arg2, &out1);
     }
     else {
         @name@_ctype_power(arg1, arg2, &out);
