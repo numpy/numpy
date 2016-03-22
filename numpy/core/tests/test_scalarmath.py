@@ -122,6 +122,24 @@ class TestPower(TestCase):
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
+    def test_negative_power(self):
+        typelist = [np.int8, np.int16, np.int32, np.int64]
+        for t in typelist:
+            a = t(2)
+            b = t(-4)
+            result = a**b
+            msg = ("error with %r:"
+                   "got %r, expected %r") % (t, result, 0.0625)
+            assert_(result == 0.0625, msg)
+
+            c = t(4)
+            d = t(-15)
+            result = c**d
+            expected = 4.0**-15.0
+            msg = ("error with %r:"
+                   "got %r, expected %r") % (t, result, expected)
+            assert_almost_equal(result, expected, err_msg=msg)
+
     def test_mixed_types(self):
         typelist = [np.int8, np.int16, np.float16,
                     np.float32, np.float64, np.int8,
