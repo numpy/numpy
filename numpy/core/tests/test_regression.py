@@ -2182,6 +2182,21 @@ class TestRegression(TestCase):
         a = np.ones(3, dtype=[('object', 'O'), ('int', '<i2')])
         a.sort()
 
+    def test_reshape_size_overflow(self):
+        # gh-7455
+        a = np.ones(20)[::2]
+        if np.dtype(np.intp).itemsize == 8:
+            # 64 bit. The following are the prime factors of 2**63 + 5,
+            # plus a leading 2, so when multiplied together as int64,
+            # the result overflows to a total size of 10.
+            new_shape = (2, 13, 419, 691, 823, 2977518503)
+        else:
+            # 32 bit. The following are the prime factors of 2**31 + 5,
+            # plus a leading 2, so when multiplied together as int32,
+            # the result overflows to a total size of 10.
+            new_shape = (2, 7, 7, 43826197)
+        assert_raises(ValueError, a.reshape, new_shape)
+
 
 if __name__ == "__main__":
     run_module_suite()
