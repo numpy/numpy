@@ -2476,6 +2476,47 @@ class TestMethods(TestCase):
         assert_raises(AttributeError, lambda: a.conj())
         assert_raises(AttributeError, lambda: a.conjugate())
 
+    def test__complex__(self):
+        dtypes = ['i1', 'i2', 'i4', 'i8',
+                  'u1', 'u2', 'u4', 'u8',
+                  'f', 'd', 'g', 'F', 'D', 'G',
+                  '?', 'O']
+        for dt in dtypes:
+            a = np.array(7, dtype=dt)
+            b = np.array([7], dtype=dt)
+            c = np.array([[[[[7]]]]], dtype=dt)
+
+            msg = 'dtype: {0}'.format(dt)
+            ap = complex(a)
+            assert_equal(ap, a, msg)
+            bp = complex(b)
+            assert_equal(bp, b, msg)
+            cp = complex(c)
+            assert_equal(cp, c, msg)
+
+    def test__complex__should_not_work(self):
+        dtypes = ['i1', 'i2', 'i4', 'i8',
+                  'u1', 'u2', 'u4', 'u8',
+                  'f', 'd', 'g', 'F', 'D', 'G',
+                  '?', 'O']
+        for dt in dtypes:
+            a = np.array([1, 2, 3], dtype=dt)
+            assert_raises(TypeError, complex, a)
+
+        dt = np.dtype([('a', 'f8'), ('b', 'i1')])
+        b = np.array((1.0, 3), dtype=dt)
+        assert_raises(TypeError, complex, b)
+
+        c = np.array([(1.0, 3), (2e-3, 7)], dtype=dt)
+        assert_raises(TypeError, complex, c)
+
+        d = np.array('1+1j')
+        assert_raises(TypeError, complex, d)
+
+        e = np.array(['1+1j'], 'U')
+        assert_raises(TypeError, complex, e)
+
+
 class TestBinop(object):
     def test_inplace(self):
         # test refcount 1 inplace conversion
