@@ -51,7 +51,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ORDER order);
 
 /* FIXME: remove those from here */
-NPY_NO_EXPORT size_t
+NPY_NO_EXPORT void
 _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
 

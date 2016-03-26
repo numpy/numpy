@@ -152,9 +152,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     }
 
     /* make new_strides variable */
-    sd = (size_t) PyArray_DESCR(self)->elsize;
-    sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-            PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
+    _array_fill_strides(
+        new_strides, new_dimensions, new_nd, PyArray_DESCR(self)->elsize,
+        PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
     memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
     memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     Py_RETURN_NONE;
