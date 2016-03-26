@@ -665,6 +665,25 @@ class TestUfunc(TestCase):
         np.add.accumulate(arr, out=arr, axis=-1)
         assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
 
+    def test_object_array_reduceat_inplace(self):
+        # Checks that in-place reduceats work, see also gh-7465
+        arr = np.empty(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        out = np.empty(4, dtype=object)
+        out[:] = [[1] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        assert_array_equal(arr, out)
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        out = np.ones((2, 4), dtype=object)
+        out[0, :] = [[2] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        assert_array_equal(arr, out)
+
     def test_object_scalar_multiply(self):
         # Tickets #2469 and #4482
         arr = np.matrix([1, 2], dtype=object)
