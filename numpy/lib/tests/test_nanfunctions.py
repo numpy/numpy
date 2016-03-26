@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
-    assert_raises, assert_array_equal
+    assert_warns, assert_no_warnings, assert_raises, assert_array_equal
     )
 
 
@@ -21,6 +21,18 @@ _rdat = [np.array([0.6244, 0.2692, 0.0116, 0.1170]),
          np.array([0.5351, -0.9403, 0.2100, 0.4759, 0.2833]),
          np.array([0.1042, -0.5954]),
          np.array([0.1610, 0.1859, 0.3146])]
+
+# Rows of _ndat with nans converted to ones
+_ndat_ones = np.array([[0.6244, 1.0, 0.2692, 0.0116, 1.0, 0.1170],
+                       [0.5351, -0.9403, 1.0, 0.2100, 0.4759, 0.2833],
+                       [1.0, 1.0, 1.0, 0.1042, 1.0, -0.5954],
+                       [0.1610, 1.0, 1.0, 0.1859, 0.3146, 1.0]])
+
+# Rows of _ndat with nans converted to zeros
+_ndat_zeros = np.array([[0.6244, 0.0, 0.2692, 0.0116, 0.0, 0.1170],
+                        [0.5351, -0.9403, 0.0, 0.2100, 0.4759, 0.2833],
+                        [0.0, 0.0, 0.0, 0.1042, 0.0, -0.5954],
+                        [0.1610, 0.0, 0.0, 0.1859, 0.3146, 0.0]])
 
 
 class TestNanFunctions_MinMax(TestCase):
@@ -241,6 +253,16 @@ class TestNanFunctions_IntTypes(TestCase):
         for mat in self.integer_arrays():
             assert_equal(np.nanprod(mat), tgt)
 
+    def test_nancumsum(self):
+        tgt = np.cumsum(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nancumsum(mat), tgt)
+
+    def test_nancumprod(self):
+        tgt = np.cumprod(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nancumprod(mat), tgt)
+
     def test_nanmean(self):
         tgt = np.mean(self.mat)
         for mat in self.integer_arrays():
@@ -386,6 +408,89 @@ class TestNanFunctions_SumProd(TestCase, SharedNanFunctionsTestsMixin):
             tgt = tgt_value
             res = f(mat, axis=None)
             assert_equal(res, tgt)
+
+
+class TestNanFunctions_CumSumProd(TestCase, SharedNanFunctionsTestsMixin):
+
+    nanfuncs = [np.nancumsum, np.nancumprod]
+    stdfuncs = [np.cumsum, np.cumprod]
+
+    def test_allnans(self):
+        for f, tgt_value in zip(self.nanfuncs, [0, 1]):
+            # Unlike other nan-functions, sum/prod/cumsum/cumprod don't warn on all nan input
+            with assert_no_warnings():
+                res = f([np.nan]*3, axis=None)
+                tgt = tgt_value*np.ones((3))
+                assert_(np.array_equal(res, tgt), 'result is not %s * np.ones((3))' % (tgt_value))
+                # Check scalar
+                res = f(np.nan)
+                tgt = tgt_value*np.ones((1))
+                assert_(np.array_equal(res, tgt), 'result is not %s * np.ones((1))' % (tgt_value))
+                # Check there is no warning for not all-nan
+                f([0]*3, axis=None)
+
+    def test_empty(self):
+        for f, tgt_value in zip(self.nanfuncs, [0, 1]):
+            mat = np.zeros((0, 3))
+            tgt = tgt_value*np.ones((0, 3))
+            res = f(mat, axis=0)
+            assert_equal(res, tgt)
+            tgt = mat
+            res = f(mat, axis=1)
+            assert_equal(res, tgt)
+            tgt = np.zeros((0))
+            res = f(mat, axis=None)
+            assert_equal(res, tgt)
+
+    def test_keepdims(self):
+        for f, g in zip(self.nanfuncs, self.stdfuncs):
+            mat = np.eye(3)
+            for axis in [None, 0, 1]:
+                tgt = f(mat, axis=axis, out=None)
+                res = g(mat, axis=axis, out=None)
+                assert_(res.ndim == tgt.ndim)
+
+        for f in self.nanfuncs:
+            d = np.ones((3, 5, 7, 11))
+            # Randomly set some elements to NaN:
+            rs = np.random.RandomState(0)
+            d[rs.rand(*d.shape) < 0.5] = np.nan
+            res = f(d, axis=None)
+            assert_equal(res.shape, (1155,))
+            for axis in np.arange(4):
+                res = f(d, axis=axis)
+                assert_equal(res.shape, (3, 5, 7, 11))
+
+    def test_matrices(self):
+        # Check that it works and that type and
+        # shape are preserved
+        mat = np.matrix(np.eye(3))
+        for f in self.nanfuncs:
+            for axis in np.arange(2):
+                res = f(mat, axis=axis)
+                assert_(isinstance(res, np.matrix))
+                assert_(res.shape == (3, 3))
+            res = f(mat)
+            assert_(res.shape == (1, 3*3))
+
+    def test_result_values(self):
+        for axis in (-2, -1, 0, 1, None):
+            tgt = np.cumprod(_ndat_ones, axis=axis)
+            res = np.nancumprod(_ndat, axis=axis)
+            assert_almost_equal(res, tgt)
+            tgt = np.cumsum(_ndat_zeros,axis=axis)
+            res = np.nancumsum(_ndat, axis=axis)
+            assert_almost_equal(res, tgt)
+
+    def test_out(self):
+        mat = np.eye(3)
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            resout = np.eye(3)
+            for axis in (-2, -1, 0, 1):
+                tgt = rf(mat, axis=axis)
+                res = nf(mat, axis=axis, out=resout)
+                assert_almost_equal(res, resout)
+                assert_almost_equal(res, tgt)
 
 
 class TestNanFunctions_MeanVarStd(TestCase, SharedNanFunctionsTestsMixin):
