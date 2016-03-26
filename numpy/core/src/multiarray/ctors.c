@@ -929,8 +929,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         return NULL;
     }
 
-    /* Check dimensions */
-    size = 1;
+    /* Check datatype element size */
     sd = (size_t) descr->elsize;
     if (sd == 0) {
         if (!PyDataType_ISSTRING(descr)) {
@@ -950,6 +949,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
     }
 
+    /* Check dimensions */
+    size = sd;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -976,7 +977,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          */
         if (npy_mul_with_overflow_intp(&size, size, dim)) {
             PyErr_SetString(PyExc_ValueError,
-                            "array is too big.");
+                "array is too big; `arr.size * arr.dtype.itemsize` "
+                "is larger than the maximum possible size.");
             Py_DECREF(descr);
             return NULL;
         }
@@ -1025,7 +1027,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * the memory, but be careful with this...
              */
             memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
-            sd *= size;
+            sd = size;
         }
     }
     else {

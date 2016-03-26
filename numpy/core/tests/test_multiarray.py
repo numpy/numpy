@@ -730,6 +730,21 @@ class TestCreation(TestCase):
         d = A([1,2,3])
         assert_equal(len(np.array(d)), 3)
 
+    def test_array_too_big(self):
+        # Test that array creation succeeds for arrays addressable by intp
+        # on the byte level and fails for too large arrays.
+        buf = np.zeros(100)
+
+        max_bytes = np.iinfo(np.intp).max
+        for dtype in ["intp", "S20", "b"]:
+            dtype = np.dtype(dtype)
+            itemsize = dtype.itemsize
+
+            np.ndarray(buffer=buf, strides=(0,),
+                       shape=(max_bytes//itemsize,), dtype=dtype)
+            assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
+                          shape=(max_bytes//itemsize + 1,), dtype=dtype)
+
 
 class TestStructured(TestCase):
     def test_subarray_field_access(self):
