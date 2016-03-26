@@ -901,8 +901,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 {
     PyArrayObject_fields *fa;
     int i;
-    size_t sd;
-    npy_intp size;
+    npy_intp nbytes;
 
     if (descr->subarray) {
         PyObject *ret;
@@ -930,8 +929,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     /* Check datatype element size */
-    sd = (size_t) descr->elsize;
-    if (sd == 0) {
+    nbytes = descr->elsize;
+    if (nbytes == 0) {
         if (!PyDataType_ISSTRING(descr)) {
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
@@ -942,15 +941,14 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
         if (descr->type_num == NPY_STRING) {
-            sd = descr->elsize = 1;
+            nbytes = descr->elsize = 1;
         }
         else {
-            sd = descr->elsize = sizeof(npy_ucs4);
+            nbytes = descr->elsize = sizeof(npy_ucs4);
         }
     }
 
-    /* Check dimensions */
-    size = sd;
+    /* Check dimensions and multiply them to nbytes */
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -975,7 +973,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * multiplying the dimensions together to get the total size of the
          * array.
          */
-        if (npy_mul_with_overflow_intp(&size, size, dim)) {
+        if (npy_mul_with_overflow_intp(&nbytes, nbytes, dim)) {
             PyErr_SetString(PyExc_ValueError,
                 "array is too big; `arr.size * arr.dtype.itemsize` "
                 "is larger than the maximum possible size.");
@@ -1017,9 +1015,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
         fa->strides = fa->dimensions + nd;
         memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
-        if (strides == NULL) { /* fill it in */
-            sd = _array_fill_strides(fa->strides, dims, nd, sd,
-                                     flags, &(fa->flags));
+        if (strides == NULL) {  /* fill it in */
+            _array_fill_strides(fa->strides, dims, nd, descr->elsize,
+                                flags, &(fa->flags));
         }
         else {
             /*
@@ -1027,7 +1025,6 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * the memory, but be careful with this...
              */
             memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
-            sd = size;
         }
     }
     else {
@@ -1041,19 +1038,18 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
          */
-
-        if (sd == 0) {
-            sd = descr->elsize;
+        if (nbytes == 0) {
+            nbytes = descr->elsize;
         }
         /*
          * It is bad to have unitialized OBJECT pointers
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            data = npy_alloc_cache_zero(sd);
+            data = npy_alloc_cache_zero(nbytes);
         }
         else {
-            data = npy_alloc_cache(sd);
+            data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
             PyErr_NoMemory();
@@ -3774,9 +3770,11 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
  * If data is not given but created here, then flags will be NPY_ARRAY_DEFAULT
  * and a non-zero flags argument can be used to indicate a FORTRAN style
  * array is desired.
+ *
+ * Dimensions and itemsize must have been checked for validity.
  */
 
-NPY_NO_EXPORT size_t
+NPY_NO_EXPORT void
 _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
@@ -3847,7 +3845,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             *objflags |= (NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
         }
     }
-    return itemsize;
+    return;
 }
 
 /*
