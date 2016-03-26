@@ -4093,6 +4093,114 @@ small_correlate(const char * d_, npy_intp dstride,
 
 /*
  *****************************************************************************
+ **                            bincount dispatch                            **
+ *****************************************************************************
+ */
+
+/*
+ * Function to set up and performs a weighted bincount.
+ *
+ * If called with a NULL first argument, returns the typecode of the
+ * output type based on the 'wtype' typecode of the weights, or -1
+ * (and sets a TypeError) if the type is unsupported.
+ *
+ * If called with non-NULL arguments, performs a weighted bincount, and
+ * returns 0 on success, or -1 if an error occurred, in which case an
+ * exception will be set.
+ *
+ * list, lstride, llen: data pointer of bin list, its stride in bytes
+ *                      and number of elements, must be of npy_intp type
+ * weights, wstride: data pointer of weights array and stride in bytes
+ * out, ostride: data pointer of output array and stride in bytes, will
+ *               be treated as if of the type returned
+ * wtype: typenum of the weights array dtype
+ */
+NPY_NO_EXPORT int
+bincount_dispatch(const char *list, npy_intp lstride, npy_intp llen,
+                  const char *weights, npy_intp wstride,
+                  char *out, npy_intp ostride, enum NPY_TYPES wtype)
+{
+    NPY_BEGIN_THREADS_DEF;
+
+    switch (wtype) {
+/**begin repeat
+ * #TYPE = NPY_BOOL, NPY_BYTE, NPY_UBYTE, NPY_SHORT, NPY_USHORT,
+ *         NPY_INT, NPY_UINT, NPY_LONG, NPY_ULONG, NPY_LONGLONG,
+ *         NPY_ULONGLONG, NPY_HALF, NPY_FLOAT, NPY_DOUBLE,
+ *         NPY_LONGDOUBLE, NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
+ *         NPY_TIMEDELTA#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort,
+ *         npy_int, npy_uint, npy_long, npy_ulong, npy_longlong,
+ *         npy_ulonglong, npy_half, npy_float, npy_double,
+ *         npy_longdouble, npy_float, npy_double, npy_longdouble,
+ *         npy_timedelta#
+ * #OTYPE = NPY_LONG, NPY_LONG, NPY_ULONG, NPY_LONG, NPY_ULONG,
+ *          NPY_LONG, NPY_ULONG, NPY_LONG, NPY_ULONG, NPY_LONGLONG,
+ *          NPY_ULONGLONG, NPY_HALF, NPY_FLOAT, NPY_DOUBLE,
+ *          NPY_LONGDOUBLE, NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
+ *          NPY_TIMEDELTA#
+ * #otype = npy_long, npy_long, npy_ulong, npy_long, npy_ulong,
+ *          npy_long, npy_ulong, npy_long, npy_ulong, npy_longlong,
+ *          npy_ulonglong, npy_half, npy_float, npy_double,
+ *          npy_longdouble, npy_float, npy_double, npy_longdouble,
+ *          npy_timedelta#
+ * #ishalf = 0*11, 1, 0*7#
+ * #iscomplex = 0*15, 1*3, 0#
+ */
+        case @TYPE@:
+            if (list == NULL) {
+                return @OTYPE@;
+            }
+            NPY_BEGIN_THREADS_THRESHOLDED(llen);
+            while (llen--) {
+                npy_intp oidx = *(npy_intp *)list;
+                @type@ *w = (@type@ *)weights;
+                @otype@ *o = (@otype@ *)(out + ostride*oidx);
+
+#if @ishalf@
+                *o = npy_float_to_half(npy_half_to_float(*o) +
+                                       npy_half_to_float(*w));
+#elif @iscomplex@
+                o[0] += w[0];
+                o[1] += w[1];
+#else
+                *o += *w;
+#endif
+                list += lstride;
+                weights += wstride;
+            }
+            NPY_END_THREADS;
+            return 0;
+/**end repeat**/
+
+        case NPY_OBJECT:
+            if (list == NULL) {
+                return NPY_OBJECT;
+            }
+            while (llen--) {
+                npy_intp oidx = *(npy_intp *)list;
+                PyObject *w = *(PyObject **)weights;
+                PyObject **o = (PyObject **)(out + ostride*oidx);
+                PyObject *o_new = PyNumber_Add(*o, w);
+
+                if (o_new == NULL) {
+                    return -1;
+                }
+                Py_DECREF(*o);
+                *o = o_new;
+                list += lstride;
+                weights += wstride;
+            }
+            return 0;
+
+        default:
+            PyErr_SetString(PyExc_TypeError, "unsupported dtype.");
+            return -1;
+    }
+}
+
+/*
+ *****************************************************************************
  **                       SETUP FUNCTION POINTERS                           **
  *****************************************************************************
  */

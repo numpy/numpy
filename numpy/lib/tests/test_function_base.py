@@ -1390,12 +1390,12 @@ class TestHistogram(TestCase):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
-        
+
     def test_error_binnum_type (self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
-        assert_raises(TypeError, histogram, vals, 2.4)   
+        assert_raises(TypeError, histogram, vals, 2.4)
 
     def test_finite_range(self):
         # Normal ranges should be fine
@@ -2164,6 +2164,29 @@ class TestBincount(TestCase):
             np.bincount([1, 2, 3], [4, 5, 6])
         assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
         assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
+
+    def test_out_vs_weights_dtype(self):
+        # gh-6854
+        typecodes = ''.join(('?', np.typecodes['AllInteger'],
+                             np.typecodes['AllFloat'], 'm', 'O'))
+        bins = np.array([0, 1, 2, 0, 1, 2])
+        for dt in typecodes:
+            for swap in '<>':
+                dtype = np.dtype(swap + dt)
+                weights = np.array([1, 2, 3], dtype=dtype)
+                if dt in np.typecodes['Complex']:
+                    weights += weights[::-1] * 1j
+                out = np.bincount(bins, np.tile(weights, 2))
+                if (dt in '?' + np.typecodes['Integer'] and
+                        dtype.num < np.dtype('l').num):
+                    assert_equal(out.dtype, np.dtype('|l'))
+                elif (dt in np.typecodes['UnsignedInteger'] and
+                        dtype.num < np.dtype('L').num):
+                    assert_equal(out.dtype, np.dtype('|L'))
+                else:
+                    assert_equal(out.dtype, np.dtype('|' + dt))
+                weights = weights.astype(out.dtype) * 2
+                assert_equal(out, weights)
 
 
 class TestInterp(TestCase):

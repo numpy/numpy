@@ -8,6 +8,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
 #include "npy_config.h"
+#include "arraytypes.h" /* for bincount_dispatch */
 
 
 /*
@@ -57,23 +58,47 @@ check_array_monotonic(const double *a, npy_int lena)
 
 /* Find the minimum and maximum of an integer array */
 static void
-minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
+minmax(const char *data, npy_intp data_len, npy_intp data_stride,
+       npy_intp *mn, npy_intp *mx)
 {
-    npy_intp min = *data;
-    npy_intp max = *data;
+    npy_intp min = *(const npy_intp *)data;
+    npy_intp max = *(const npy_intp *)data;
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(data_len);
+    data += data_stride;
 
     while (--data_len) {
-        const npy_intp val = *(++data);
+        const npy_intp val = *(const npy_intp *)data;
         if (val < min) {
             min = val;
         }
         else if (val > max) {
             max = val;
         }
+        data += data_stride;
     }
 
     *mn = min;
     *mx = max;
+    NPY_END_THREADS;
+}
+
+/* Tally the bin occurrences in a bincount w/o weights call */
+static NPY_INLINE void
+bincount(const char *list, npy_intp lstride, npy_intp llen,
+         char *out, npy_intp ostride)
+{
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_THRESHOLDED(llen);
+    while (llen--) {
+        const npy_intp oidx = *(const npy_intp *)list;
+
+        *(npy_intp *)(out + ostride*oidx) += 1;
+        list += lstride;
+    }
+    NPY_END_THREADS;
 }
 
 /*
@@ -92,30 +117,36 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
-    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
-    npy_intp i;
-    double *weights , *dans;
+    PyObject *list;
+    PyObject *weights = Py_None;
+    PyObject *minlength = Py_None;
+    PyArrayObject *alist;
+    PyArrayObject *aweights = NULL;
+    PyArrayObject *out = NULL;
+    npy_intp llen, olen;
+
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO", kwlist,
+                                     &list, &weights, &minlength)) {
+        return NULL;
     }
 
-    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
-    if (lst == NULL) {
-        goto fail;
+    /* Make an aligned, not swapped npy_intp array out of list */
+    alist = (PyArrayObject *)PyArray_FROMANY(list, NPY_INTP, 1, 1,
+                                             NPY_ARRAY_ALIGNED);
+    if (alist == NULL) {
+        return NULL;
     }
-    len = PyArray_SIZE(lst);
+    llen = PyArray_SIZE(alist);
 
-    if (mlength == Py_None) {
-        minlength = 0;
+    /* Extract and process the minlength argument */
+    if (minlength == Py_None) {
+        olen = 0;
     }
     else {
-        minlength = PyArray_PyIntAsIntp(mlength);
-        if (minlength <= 0) {
+        olen = PyArray_PyIntAsIntp(minlength);
+        if (olen <= 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
                                 "minlength must be positive");
@@ -123,75 +154,90 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
         }
     }
+    if (llen > 0) {
+        /* Need a non-empty array to call minmax */
+        npy_intp min, max;
 
-    /* handle empty list */
-    if (len == 0) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
-        if (ans == NULL){
+        minmax((const char *)PyArray_DATA(alist), llen,
+               PyArray_STRIDE(alist, 0),&min, &max);
+        if (min < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "The first argument of bincount must be non-negative");
             goto fail;
         }
-        Py_DECREF(lst);
-        return (PyObject *)ans;
+        if (olen <= max) {
+            olen = max + 1;
+        }
     }
 
-    numbers = (npy_intp *)PyArray_DATA(lst);
-    minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "The first argument of bincount must be non-negative");
-        goto fail;
-    }
-    ans_size = mx + 1;
-    if (mlength != Py_None) {
-        if (ans_size < minlength) {
-            ans_size = minlength;
-        }
-    }
-    if (weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
-        if (ans == NULL) {
+    if (weights == Py_None) {
+        out = (PyArrayObject *)PyArray_ZEROS(1, &olen, NPY_INTP, 0);
+        if (out == NULL) {
             goto fail;
         }
-        ians = (npy_intp *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++)
-            ians[numbers[i]] += 1;
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
+        bincount((const char *)PyArray_DATA(alist), PyArray_STRIDE(alist, 0),
+                 llen, (char *)PyArray_DATA(out), PyArray_STRIDE(out, 0));
     }
     else {
-        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                weight, NPY_DOUBLE, 1, 1);
-        if (wts == NULL) {
+        /* Make an aligned, not-swapped array out of weights */
+        int flags = NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED;
+        int typenum, otypenum;
+        npy_intp wstride;
+
+        aweights = (PyArrayObject *)PyArray_CheckFromAny(weights, NULL, 0, 1,
+                                                         flags, NULL);
+        if (aweights == NULL) {
             goto fail;
         }
-        weights = (double *)PyArray_DATA(wts);
-        if (PyArray_SIZE(wts) != len) {
+        if (PyArray_SIZE(aweights) == 1) {
+            /* Let single item weights broadcast against any size list */
+            wstride = 0;
+        }
+        else if (PyArray_SIZE(aweights) != llen) {
             PyErr_SetString(PyExc_ValueError,
-                    "The weights and list don't have the same length.");
+                            "The weights and list don't have the same length");
             goto fail;
         }
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
-        if (ans == NULL) {
+        else {
+            wstride = PyArray_STRIDE(aweights, 0);
+        }
+        typenum = PyArray_DESCR(aweights)->type_num;
+
+        otypenum = bincount_dispatch(NULL, 0, 0, NULL, 0, NULL, 0, typenum);
+        if (otypenum < 0) {
+            /*
+             * TODO: Should we perhaps attempt to cast unsupported types
+             *       to, e.g. double before failing?
+             */
             goto fail;
         }
-        dans = (double *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++) {
-            dans[numbers[i]] += weights[i];
+
+        out = (PyArrayObject *)PyArray_ZEROS(1, &olen, otypenum, 0);
+        if (out == NULL) {
+            goto fail;
         }
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
-        Py_DECREF(wts);
+
+        if (bincount_dispatch((const char *)PyArray_DATA(alist),
+                              PyArray_STRIDE(alist, 0), llen,
+                              (const char *)PyArray_DATA(aweights),
+                              wstride, (char *)PyArray_DATA(out),
+                              PyArray_STRIDE(out, 0), typenum) < 0) {
+            goto fail;
+        }
+        Py_DECREF(aweights);
     }
-    return (PyObject *)ans;
+    Py_DECREF(alist);
+
+    return (PyObject *)out;
 
 fail:
-    Py_XDECREF(lst);
-    Py_XDECREF(wts);
-    Py_XDECREF(ans);
+    Py_XDECREF(alist);
+    Py_XDECREF(aweights);
+    Py_XDECREF(out);
+
     return NULL;
 }
+
 
 /*
  * digitize(x, bins, right=False) returns an array of integers the same length

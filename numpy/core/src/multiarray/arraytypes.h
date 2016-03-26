@@ -32,4 +32,9 @@ small_correlate(const char * d_, npy_intp dstride,
                 npy_intp nk, enum NPY_TYPES ktype,
                 char * out_, npy_intp ostride);
 
+/* for arr_bincount */
+NPY_NO_EXPORT int
+bincount_dispatch(const char *list, npy_intp lstride, npy_intp llen,
+                  const char *weights, npy_intp wstride,
+                  char *out, npy_intp ostride, enum NPY_TYPES wotype);
 #endif
