@@ -3700,10 +3700,18 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
                 /* Copy the first element to start the reduction */
                 if (otype == NPY_OBJECT) {
+                    /*
+                     * Input (dataptr[0]) and output (dataptr[1]) may
+                     * point to the same memory, e.g.
+                     * np.add.reduceat(a, np.arange(len(a)), out=a).
+                     * In that case need to incref before decref to
+                     * avoid the possibility of the reference count
+                     * being zero temporarily.
+                     */
+                    Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                     Py_XDECREF(*(PyObject **)dataptr_copy[0]);
                     *(PyObject **)dataptr_copy[0] =
                                         *(PyObject **)dataptr_copy[1];
-                    Py_XINCREF(*(PyObject **)dataptr_copy[0]);
                 }
                 else {
                     memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
@@ -3758,10 +3766,18 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
             /* Copy the first element to start the reduction */
             if (otype == NPY_OBJECT) {
+                /*
+                 * Input (dataptr[0]) and output (dataptr[1]) may point
+                 * to the same memory, e.g.
+                 * np.add.reduceat(a, np.arange(len(a)), out=a).
+                 * In that case need to incref before decref to avoid
+                 * the possibility of the reference count being zero
+                 * temporarily.
+                 */
+                Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                 Py_XDECREF(*(PyObject **)dataptr_copy[0]);
                 *(PyObject **)dataptr_copy[0] =
                                     *(PyObject **)dataptr_copy[1];
-                Py_XINCREF(*(PyObject **)dataptr_copy[0]);
             }
             else {
                 memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
