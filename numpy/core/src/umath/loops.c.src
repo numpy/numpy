@@ -772,6 +772,7 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
  *          npy_double, npy_double, npy_double, npy_double#
+ * #issigned = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -824,15 +825,15 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 
 /**begin repeat1
  * Arithmetic
- * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
- *          left_shift, right_shift#
- * #OP = +, -,*, &, |, ^, <<, >>#
+ * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor#
+ * #OP = +, -,*, &, |, ^#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps,
+              void *NPY_UNUSED(func))
 {
-    if(IS_BINARY_REDUCE) {
+    if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
         }
@@ -844,6 +845,109 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 }
 
 /**end repeat1**/
+
+/*
+ * Arithmetic bit shift operations.
+ *
+ * Intel hardware masks bit shift values, so large shifts wrap around
+ * and can produce surprising results. The special handling ensures that
+ * behavior is independent of compiler or hardware.
+ * TODO: We could implement consistent behavior for negative shifts,
+ *       which is undefined in C.
+ */
+
+#define LEFT_SHIFT_OP                               \
+    do {                                            \
+        if (NPY_LIKELY(in2 < sizeof(@type@) * 8)) { \
+            *out = in1 << in2;                      \
+        }                                           \
+        else {                                      \
+            *out = 0;                               \
+        }                                           \
+    } while (0)
+
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_left_shift(char **args, npy_intp *dimensions, npy_intp *steps,
+                  void *NPY_UNUSED(func))
+{
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            @type@ ip2_val = *(@type@ *)ip2;
+
+            if (NPY_LIKELY(ip2_val < sizeof(@type@) * 8)) {
+                io1 <<= ip2_val;
+            }
+            else {
+                io1 = 0;
+            }
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+        BINARY_LOOP_FAST(@type@, @type@, LEFT_SHIFT_OP);
+    }
+}
+
+#undef LEFT_SHIFT_OP
+
+#define RIGHT_SHIFT_OP_SIGNED                       \
+    do {                                            \
+        if (NPY_LIKELY(in2 < sizeof(@type@) * 8)) { \
+            *out = in1 >> in2;                      \
+        }                                           \
+        else if (in1 < 0) {                         \
+            *out = -1;                              \
+        }                                           \
+        else {                                      \
+            *out = 0;                               \
+        }                                           \
+    } while (0)
+
+#define RIGHT_SHIFT_OP_UNSIGNED                     \
+    do {                                            \
+        if (NPY_LIKELY(in2 < sizeof(@type@) * 8)) { \
+            *out = in1 >> in2;                      \
+        }                                           \
+        else {                                      \
+            *out = 0;                               \
+        }                                           \
+    } while (0)
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_right_shift(char **args, npy_intp *dimensions, npy_intp *steps,
+                   void *NPY_UNUSED(func))
+{
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            @type@ ip2_val = *(@type@ *)ip2;
+
+            if (NPY_LIKELY(ip2_val < sizeof(@type@) * 8)) {
+                io1 >>= ip2_val;
+            }
+#if @issigned@
+            else if (io1 < 0) {
+                io1 = -1;
+            }
+#endif
+            else {
+                io1 = 0;
+            }
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else {
+#if @issigned@
+        BINARY_LOOP_FAST(@type@, @type@, RIGHT_SHIFT_OP_SIGNED);
+#else
+        BINARY_LOOP_FAST(@type@, @type@, RIGHT_SHIFT_OP_UNSIGNED);
+#endif
+    }
+}
+
+#undef RIGHT_SHIFT_OP_SIGNED
+#undef RIGHT_SHIFT_OP_UNSIGNED
+
 
 /**begin repeat1
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,

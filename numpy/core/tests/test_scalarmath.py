@@ -525,5 +525,37 @@ class TestAbs(TestCase):
         self._test_abs_func(np.abs)
 
 
+class TestBitShifts(TestCase):
+
+    def test_left_shift(self):
+        # gh-2449
+        for dt in np.typecodes['AllInteger']:
+            arr = np.array([5, -5], dtype=dt)
+            scl_pos, scl_neg = arr
+            for shift in np.array([arr.dtype.itemsize * 8], dtype=dt):
+                res_pos = scl_pos << shift
+                res_neg = scl_neg << shift
+                assert_equal(res_pos, 0)
+                assert_equal(res_neg, 0)
+                # Result on scalars should be the same as on arrays
+                assert_array_equal(arr << shift, [res_pos, res_neg])
+
+    def test_right_shift(self):
+        # gh-2449
+        for dt in np.typecodes['AllInteger']:
+            arr = np.array([5, -5], dtype=dt)
+            scl_pos, scl_neg = arr
+            for shift in np.array([arr.dtype.itemsize * 8], dtype=dt):
+                res_pos = scl_pos >> shift
+                res_neg = scl_neg >> shift
+                assert_equal(res_pos, 0)
+                if dt in np.typecodes['UnsignedInteger']:
+                    assert_equal(res_neg, 0)
+                else:
+                    assert_equal(res_neg, -1)
+                # Result on scalars should be the same as on arrays
+                assert_array_equal(arr >> shift, [res_pos, res_neg], dt)
+
+
 if __name__ == "__main__":
     run_module_suite()

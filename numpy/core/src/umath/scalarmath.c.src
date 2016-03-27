@@ -245,24 +245,57 @@ static void
 /**end repeat**/
 
 
-
-/* QUESTION:  Should we check for overflow / underflow in (l,r)shift? */
-
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #issigned = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  */
 
 /**begin repeat1
- * #oper = and, xor, or, lshift, rshift#
- * #op = &, ^, |, <<, >>#
+ * #oper = and, xor, or#
+ * #op = &, ^, |#
  */
 
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 
 /**end repeat1**/
+
+#define @name@_ctype_lshift(arg1, arg2, out)           \
+    do {                                               \
+        if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
+            *(out) = (arg1) << (arg2);                 \
+        }                                              \
+        else {                                         \
+            *(out) = 0;                                \
+        }                                              \
+    } while (0)
+
+#if @issigned@
+    #define @name@_ctype_rshift(arg1, arg2, out)           \
+        do {                                               \
+            if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
+                *(out) = (arg1) >> (arg2);                 \
+            }                                              \
+            else if ((arg1) < 0) {                         \
+                *(out) = -1;                               \
+            }                                              \
+            else {                                         \
+                *(out) = 0;                                \
+            }                                              \
+        } while (0)
+#else
+    #define @name@_ctype_rshift(arg1, arg2, out)           \
+        do {                                               \
+            if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
+                *(out) = (arg1) >> (arg2);                 \
+            }                                              \
+            else {                                         \
+                *(out) = 0;                                \
+            }                                              \
+        } while (0)
+#endif
 
 /**end repeat**/
 
@@ -575,7 +608,7 @@ static void
  * 1) Convert the types to the common type if both are scalars (0 return)
  * 2) If both are not scalars use ufunc machinery (-2 return)
  * 3) If both are scalars but cannot be cast to the right type
- * return NotImplmented (-1 return)
+ * return NotImplemented (-1 return)
  *
  * 4) Perform the function on the C-type.
  * 5) If an error condition occurred, check to see
