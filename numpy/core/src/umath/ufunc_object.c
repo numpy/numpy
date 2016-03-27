@@ -3293,13 +3293,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             dataptr_copy[1] = dataptr[1];
             dataptr_copy[2] = dataptr[0];
 
-            /* Copy the first element to start the reduction */
+            /*
+             * Copy the first element to start the reduction.
+             *
+             * Output (dataptr[0]) and input (dataptr[1]) may point to
+             * the same memory, e.g. np.add.accumulate(a, out=a).
+             */
             if (otype == NPY_OBJECT) {
                 /*
-                 * Input (dataptr[0]) and output (dataptr[1]) may point
-                 * to the same memory (i.e. np.add.accumulate(a, out=a)).
-                 * In that case need to incref before decref to avoid the
-                 * possibility of the reference count being zero temporarily.
+                 * Incref before decref to avoid the possibility of the
+                 * reference count being zero temporarily.
                  */
                 Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                 Py_XDECREF(*(PyObject **)dataptr_copy[0]);
@@ -3307,7 +3310,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                     *(PyObject **)dataptr_copy[1];
             }
             else {
-                memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
             }
 
             if (count_m1 > 0) {
@@ -3355,13 +3358,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         dataptr_copy[1] = PyArray_BYTES(op[1]);
         dataptr_copy[2] = PyArray_BYTES(op[0]);
 
-        /* Copy the first element to start the reduction */
+        /*
+         * Copy the first element to start the reduction.
+         *
+         * Output (dataptr[0]) and input (dataptr[1]) may point to the
+         * same memory, e.g. np.add.accumulate(a, out=a).
+         */
         if (otype == NPY_OBJECT) {
             /*
-             * Input (dataptr[0]) and output (dataptr[1]) may point
-             * to the same memory (i.e. np.add.accumulate(a, out=a, axis=0)).
-             * In that case need to incref before decref to avoid the
-             * possibility of the reference count being zero temporarily.
+             * Incref before decref to avoid the possibility of the
+             * reference count being zero temporarily.
              */
             Py_XINCREF(*(PyObject **)dataptr_copy[1]);
             Py_XDECREF(*(PyObject **)dataptr_copy[0]);
@@ -3369,7 +3375,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                 *(PyObject **)dataptr_copy[1];
         }
         else {
-            memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+            memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
         }
 
         if (count > 1) {
@@ -3698,15 +3704,17 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                 dataptr_copy[1] = dataptr[1] + stride1*start;
                 dataptr_copy[2] = dataptr[0] + stride0_ind*i;
 
-                /* Copy the first element to start the reduction */
+                /*
+                 * Copy the first element to start the reduction.
+                 *
+                 * Output (dataptr[0]) and input (dataptr[1]) may point
+                 * to the same memory, e.g.
+                 * np.add.reduceat(a, np.arange(len(a)), out=a).
+                 */
                 if (otype == NPY_OBJECT) {
                     /*
-                     * Input (dataptr[0]) and output (dataptr[1]) may
-                     * point to the same memory, e.g.
-                     * np.add.reduceat(a, np.arange(len(a)), out=a).
-                     * In that case need to incref before decref to
-                     * avoid the possibility of the reference count
-                     * being zero temporarily.
+                     * Incref before decref to avoid the possibility of
+                     * the reference count being zero temporarily.
                      */
                     Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                     Py_XDECREF(*(PyObject **)dataptr_copy[0]);
@@ -3714,7 +3722,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                         *(PyObject **)dataptr_copy[1];
                 }
                 else {
-                    memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+                    memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
                 }
 
                 if (count > 1) {
@@ -3764,15 +3772,17 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             dataptr_copy[1] = PyArray_BYTES(op[1]) + stride1*start;
             dataptr_copy[2] = PyArray_BYTES(op[0]) + stride0_ind*i;
 
-            /* Copy the first element to start the reduction */
+            /*
+             * Copy the first element to start the reduction.
+             *
+             * Output (dataptr[0]) and input (dataptr[1]) may point to
+             * the same memory, e.g.
+             * np.add.reduceat(a, np.arange(len(a)), out=a).
+             */
             if (otype == NPY_OBJECT) {
                 /*
-                 * Input (dataptr[0]) and output (dataptr[1]) may point
-                 * to the same memory, e.g.
-                 * np.add.reduceat(a, np.arange(len(a)), out=a).
-                 * In that case need to incref before decref to avoid
-                 * the possibility of the reference count being zero
-                 * temporarily.
+                 * Incref before decref to avoid the possibility of the
+                 * reference count being zero temporarily.
                  */
                 Py_XINCREF(*(PyObject **)dataptr_copy[1]);
                 Py_XDECREF(*(PyObject **)dataptr_copy[0]);
@@ -3780,7 +3790,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                     *(PyObject **)dataptr_copy[1];
             }
             else {
-                memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
             }
 
             if (count > 1) {
