@@ -1415,11 +1415,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
          r = PyArray_NewFromDescr(&PyArray_Type, descr,
                                   nd, shape, strides, NULL, 0, NULL);
          if (r == NULL)
-            goto fail;
-         if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
-            Py_DECREF(r);
-            goto fail;
-         }
+            goto fail2;
          _copy_from_pil_style((char *)PyArray_DATA((PyArrayObject *)r), nd,
                               (char *)view->buf, shape, view->strides,
                               view->suboffsets, view->itemsize);
@@ -1430,6 +1426,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
 
 fail:
     Py_XDECREF(descr);
+fail2:
     Py_DECREF(memoryview);
     return -1;
 
