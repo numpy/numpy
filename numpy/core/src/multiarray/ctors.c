@@ -1263,7 +1263,7 @@ int
 _copy_from_pil_style(char* dest, int ndim, char *buf, npy_intp *shape,
                      npy_intp *strides, npy_intp *suboffsets, npy_intp itemsize)
 {
-    int ax, last_axis;
+    int ax, last_axis = 0;
     npy_intp indices[NPY_MAXDIMS];
     void **pointers[NPY_MAXDIMS];
     char *pointer = (char*)buf;
@@ -1274,8 +1274,8 @@ _copy_from_pil_style(char* dest, int ndim, char *buf, npy_intp *shape,
         pointers[ax] = (void **)pointer;
         if (suboffsets[ax] >= 0) {
             last_axis = ax;
-	        pointer = *((char**)pointer) + suboffsets[ax];
-	    }
+            pointer = *((char**)pointer) + suboffsets[ax];
+        }
     }
     /* compute blocksize */
     blocksize = itemsize;
