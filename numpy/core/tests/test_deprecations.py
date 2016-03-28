@@ -609,6 +609,25 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
         self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
 
 
+class TestNumericStyleTypecodes(_DeprecationTestCase):
+    """
+    Deprecate the old numeric-style dtypes, which are especially
+    confusing for complex types, e.g. Complex32 -> complex64. When the
+    deprecation cycle is complete, the check for the strings should be
+    removed from PyArray_DescrConverter in descriptor.c, and the
+    deprecated keys should not be added as capitalized aliases in
+    _add_aliases in numerictypes.py.
+    """
+    def test_all_dtypes(self):
+        deprecated_types = ['Bool', 'Complex32', 'Complex64', 'Float16',
+                            'Float32', 'Float64', 'Int8', 'Int16', 'Int32',
+                            'Int64' 'Object0', 'String0', 'Timedelta64',
+                            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Unicode0',
+                            'Void0']
+        for deprecated_type in deprecated_types:
+            self.assert_deprecated(np.dtype, args=(deprecated_type,))
+
+
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
