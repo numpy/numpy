@@ -1263,11 +1263,16 @@ int
 _copy_from_pil_style(char* dest, int ndim, char *buf, npy_intp *shape,
                      npy_intp *strides, npy_intp *suboffsets, npy_intp itemsize)
 {
-    int ax, last_axis = 0;
     npy_intp indices[NPY_MAXDIMS];
     void **pointers[NPY_MAXDIMS];
     char *pointer = (char*)buf;
     npy_intp blocksize;
+    int ax;
+    /* Since suboffsets cannot be all negative, last_axis will be inevitably
+     * reset in the initialization loop below.  However, the compiler cannot
+     * know this, so we preset last_axis to an arbitrary value. */
+    int last_axis = 0;
+
     /* Initialize indices and pointers. */
     for (ax = 0; ax < ndim; ++ax) {
         indices[ax] = 0;
