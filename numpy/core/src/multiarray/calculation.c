@@ -830,28 +830,24 @@ _GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
         return PyObject_CallFunction(op, "OO", m1, m2);
     }
     else {
-        PyObject *args, *kw, *ret;
+        PyObject *args, *ret;
+        static PyObject *kw = NULL;
+
+        if (kw == NULL) {
+            kw = Py_BuildValue("{s:s}", "casting", "unsafe");
+            if (kw == NULL) {
+                return NULL;
+            }
+        }
 
         args = Py_BuildValue("OOO", m1, m2, out);
         if (args == NULL) {
-            return NULL;
-        }
-        kw = PyDict_New();
-        if (kw == NULL) {
-            Py_DECREF(args);
-            return NULL;
-        }
-        if (PyDict_SetItemString(kw, "casting",
-                        PyUString_FromString("unsafe")) < 0) {
-            Py_DECREF(args);
-            Py_DECREF(kw);
             return NULL;
         }
 
         ret = PyObject_Call(op, args, kw);
 
         Py_DECREF(args);
-        Py_DECREF(kw);
 
         return ret;
     }
