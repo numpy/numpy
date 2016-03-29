@@ -535,6 +535,13 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         PyObject *tmp;
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
+        if (tmp == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Invalid unicode string passed in "
+                                              "for the array ordering. "
+                                              "Please pass in 'C', 'F', 'A' "
+                                              "or 'K' instead");
+            return NPY_FAIL;
+        }
         ret = PyArray_OrderConverter(tmp, val);
         Py_DECREF(tmp);
         return ret;
