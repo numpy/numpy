@@ -527,6 +527,14 @@ class TestAbs(TestCase):
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
 
+def test_longdouble_inf_loop():
+    mul = lambda x, y: x * y
+    assert_raises(TypeError, mul, np.longdouble(3), None)
+    assert_raises(TypeError, mul, None, np.longdouble(3))
+
+    assert_raises(TypeError, mul, np.clongdouble(3), None)
+    assert_raises(TypeError, mul, None, np.clongdouble(3))
+
 
 if __name__ == "__main__":
     run_module_suite()
