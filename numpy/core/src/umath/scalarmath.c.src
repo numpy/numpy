@@ -737,6 +737,9 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
 {
     int ret;
     ret = _@name@_convert_to_ctype(a, arg1);
+    if (ret == -2) {
+        return -3;
+    }
     if (ret < 0) {
         return ret;
     }
