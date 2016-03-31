@@ -424,7 +424,7 @@ def real_if_close(a,tol=100):
         from numpy.core import getlimits
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
-    if _nx.allclose(a.imag, 0, atol=tol):
+    if _nx.all(_nx.absolute(a.imag) < tol):
         a = a.real
     return a
 
