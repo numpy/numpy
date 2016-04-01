@@ -689,18 +689,31 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
             return ret_b;
         }
         else {
-         /* couldn't cast b to @name@.  Since converting a returned 0, it is
-          * convertable to @name@. See if instead we can convert it to b.
-          * then defer the operator call to that type.
-          */
-          PyArray_Descr *descr_a;
-          int ret = -1;
-          descr_a = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
-          if (PyArray_CanCastSafely(descr_a->type_num, ret_b)) {
-            ret = ret_b;
-          }
-          Py_DECREF(descr_a);
-          return ret;
+            /* couldn't cast b to @name@ but it is a numeric scalar.  Since
+             * converting a returned 0, it is convertable to @name@. See if
+             * instead we can convert it to b then defer the operator call to
+             * that type.
+             */
+            PyArray_Descr *descr_a;
+            int ret = -1;
+            descr_a = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
+            if (PyArray_CanCastSafely(descr_a->type_num, ret_b)) {
+                ret = ret_b;
+            }
+            else {
+                /* neither of a and b can be safely converted to the type of the
+                 * other.  Since they are both numeric scalars, use the type
+                 * promotion table to find the correct type to use.
+                 */
+                PyArray_Descr *descr_b, *descr_result;
+                descr_b = PyArray_DescrFromType(ret_b);
+                descr_result = PyArray_PromoteTypes(descr_a, descr_b);
+                ret = descr_result->type_num;
+                Py_DECREF(descr_b);
+                Py_DECREF(descr_result);
+            }
+            Py_DECREF(descr_a);
+            return ret;
         }
     }
     else {
@@ -715,6 +728,18 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
             descr_b = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(b));
             if (PyArray_CanCastSafely(ret_a, descr_b->type_num)) {
                 ret = descr_b->type_num;
+            }
+            else {
+                /* neither of a and b can be safely converted to the type of the
+                 * other.  Since they are both numeric scalars, use the type
+                 * promotion table to find the correct type to use.
+                 */
+                PyArray_Descr *descr_a, *descr_result;
+                descr_a = PyArray_DescrFromType(ret_a);
+                descr_result = PyArray_PromoteTypes(descr_a, descr_b);
+                ret = descr_result->type_num;
+                Py_DECREF(descr_a);
+                Py_DECREF(descr_result);
             }
             Py_DECREF(descr_b);
         }
