@@ -425,6 +425,11 @@ class TestPower(TestCase):
         res = x ** np.array([[[2]]])
         assert_equal(res.shape, (1, 1, 3))
 
+    def test_integer_power(self):
+        a = np.array([15, 15], 'i8')
+        b = a ** a
+        assert_equal(b, [437893890380859375, 437893890380859375])
+
 
 class TestLog2(TestCase):
     def test_log2_values(self):
