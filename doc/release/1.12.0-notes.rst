@@ -81,6 +81,13 @@ The following functions are changed: ``sum``, ``product``,
 The previous identity was 1, it is now -1. See entry in `Improvements`_ for
 more explanation.
 
+Scalar-Scalar power result type changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Raising an integer scalar to a negative integer power will always result in a
+floating point scalar type.  Previously when using mixed integer types an
+integer type would be produced, while the pure type case produced a floating
+point type.
+
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -174,6 +181,11 @@ complex.
 The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
 functions can now take ``pathlib.Path`` objects as an argument instead of a
 filename or open file object.
+
+Mixed type scalar-scalar operators should be faster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Rather than defering to the ufunc, mixed type scalar-scalar operators are
+handled in the scalar operator resulting in a speedup.
 
 
 Changes
