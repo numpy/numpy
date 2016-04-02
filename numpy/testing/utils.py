@@ -47,8 +47,12 @@ try:
     from unittest.case import SkipTest
 except ImportError:
     # on py2.6 unittest.case is not available. Ask nose for a replacement.
-    SkipTest = import_nose().SkipTest
-
+    try:
+        import nose
+        SkipTest = nose.SkipTest
+    except (ImportError, AttributeError):
+        # if nose is not available, testing won't work anyway
+        pass
 
 verbose = 0
 
