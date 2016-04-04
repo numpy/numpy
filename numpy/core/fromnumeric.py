@@ -1731,7 +1731,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `sum` method of sub-classes of
@@ -1885,7 +1885,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `any` method of sub-classes of
@@ -1970,7 +1970,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `all` method of sub-classes of
@@ -2167,7 +2167,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `amax` method of sub-classes of
@@ -2268,7 +2268,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `amin` method of sub-classes of
@@ -2809,7 +2809,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `mean` method of sub-classes of
@@ -2913,7 +2913,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `std` method of sub-classes of
@@ -3032,7 +3032,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the input array.
 
         If the default value is passed, then `keepdims` will not be
         passed through to the `var` method of sub-classes of
