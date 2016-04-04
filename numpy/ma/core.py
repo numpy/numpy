@@ -4786,7 +4786,7 @@ class MaskedArray(ndarray):
         """
         return dot(self, b, out=out, strict=strict)
 
-    def sum(self, axis=None, dtype=None, out=None):
+    def sum(self, axis=None, dtype=None, out=None, keepdims=False):
         """
         Return the sum of the array elements over the given axis.
         Masked elements are set to 0 internally.
@@ -4806,6 +4806,9 @@ class MaskedArray(ndarray):
             Alternative output array in which to place the result. It must
             have the same shape and buffer length as the expected output
             but the type will be cast if necessary.
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one.
 
         Returns
         -------
@@ -4836,7 +4839,7 @@ class MaskedArray(ndarray):
         newmask = _check_mask_axis(_mask, axis)
         # No explicit output
         if out is None:
-            result = self.filled(0).sum(axis, dtype=dtype)
+            result = self.filled(0).sum(axis, dtype=dtype, keepdims=keepdims)
             rndim = getattr(result, 'ndim', 0)
             if rndim:
                 result = result.view(type(self))
@@ -4845,7 +4848,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(0).sum(axis, dtype=dtype, out=out)
+        result = self.filled(0).sum(axis, dtype=dtype, out=out, keepdims=keepdims)
         if isinstance(out, MaskedArray):
             outmask = getattr(out, '_mask', nomask)
             if (outmask is nomask):
