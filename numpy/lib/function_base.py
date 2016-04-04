@@ -1027,7 +1027,8 @@ def average(a, axis=None, weights=None, returned=False):
         avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
 
     if returned:
-        scl = np.broadcast_to(scl, avg.shape)
+        if scl.shape != avg.shape:
+            scl = np.broadcast_to(scl, avg.shape).copy()
         return avg, scl
     else:
         return avg
