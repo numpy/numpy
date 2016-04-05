@@ -503,6 +503,12 @@ class TestMultiply(TestCase):
             assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
+    def test_memoryview(self):
+        for tp in types:
+            x = tp()
+            m = memoryview(x)
+            assert_equal(m.ndim, 0)
+
 
 class TestAbs(TestCase):
 
