@@ -4319,6 +4319,11 @@ class MaskedArray(ndarray):
                 return self.size
 
             axes = axis if isinstance(axis, tuple) else (axis,)
+            axes = tuple(a if a >= 0 else self.ndim + a for a in axes)
+            if len(axes) != len(set(axes)):
+                raise ValueError("duplicate value in 'axis'")
+            if np.any([a < 0 or a >= self.ndim for a in axes]):
+                raise ValueError("'axis' entry is out of bounds")
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
