@@ -917,12 +917,12 @@ NPY_NO_EXPORT void
         @type@ in2 = *(@type@ *)ip2;
         @type@ out;
 
+        if (in2 == 0) {
+          *((@type@ *)op1) = 1;
+          continue;
+        }
         if (in2 < 0 || in1 == 0) {
             *((@type@ *)op1) = 0;
-            continue;
-        }
-        if (in2 == 0) {
-            *((@type@ *)op1) = 1;
             continue;
         }
 
