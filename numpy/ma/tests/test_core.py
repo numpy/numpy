@@ -991,7 +991,7 @@ class TestMaskedArrayArithmetic(TestCase):
         res = count(ott, 0)
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
-        assert_raises(IndexError, ott.count, axis=1)
+        assert_raises(ValueError, ott.count, axis=1)
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
@@ -4312,6 +4312,9 @@ class TestOptionalArgs(TestCase):
         assert_equal(count(a, keepdims=True), 16*ones((1,1,1)))
         assert_equal(count(a, axis=1, keepdims=True), 2*ones((2,1,4)))
         assert_equal(count(a, axis=(0,1), keepdims=True), 4*ones((1,1,4)))
+        assert_equal(count(a, axis=-2), 2*ones((2,4)))
+        assert_raises(ValueError, count, a, axis=(1,1))
+        assert_raises(ValueError, count, a, axis=3)
 
         # check the 'nomask' path
         a = np.ma.array(d, mask=nomask)
@@ -4322,6 +4325,9 @@ class TestOptionalArgs(TestCase):
         assert_equal(count(a, keepdims=True), 24*ones((1,1,1)))
         assert_equal(count(a, axis=1, keepdims=True), 3*ones((2,1,4)))
         assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
+        assert_equal(count(a, axis=-2), 3*ones((2,4)))
+        assert_raises(ValueError, count, a, axis=(1,1))
+        assert_raises(ValueError, count, a, axis=3)
 
         # check the 'masked' singleton
         assert_equal(count(np.ma.masked), 0)
