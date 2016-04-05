@@ -4852,6 +4852,10 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     out : ufunc
         Returns a Numpy universal function (``ufunc``) object.
 
+    See Also
+    --------
+    vectorize : evaluates pyfunc over input arrays using broadcasting rules of numpy
+
     Notes
     -----
     The returned ufunc always returns PyObject arrays.

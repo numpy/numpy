@@ -2208,6 +2208,10 @@ class vectorize(object):
     >>> vpolyval([1, 2, 3], x=[0, 1])
     array([3, 6])
 
+    See Also
+    --------
+    frompyfunc : Takes an arbitrary Python function and returns a ufunc
+
     Notes
     -----
     The `vectorize` function is provided primarily for convenience, not for
