@@ -430,6 +430,10 @@ class TestPower(TestCase):
         b = a ** a
         assert_equal(b, [437893890380859375, 437893890380859375])
 
+    def test_integer_power_with_zero_exponent(self):
+        arr = np.arange(-10, 10)
+        assert_equal(np.power(arr, 0), np.ones_like(arr))
+
 
 class TestLog2(TestCase):
     def test_log2_values(self):
