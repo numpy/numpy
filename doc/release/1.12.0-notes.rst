@@ -183,10 +183,14 @@ methods in this module are called with keyword arguments instead.
 
 Operations on np.memmap objects return numpy arrays in most cases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Previously operations on a memmap (e.g. adding 1 to it) object would
-misleadingly return a memmap instance even if the result was actually
-not memmapped. Also reduction of a memmap (e.g.  ``.sum(axis=None``)
-return a numpy scalar instead of a 0d memmap.
+Previously operations on a memmap object would misleadingly return a memmap
+instance even if the result was actually not memmapped.  For example,
+``arr + 1`` or ``arr + arr`` would return memmap instances, although no memory
+from the output array is memmaped. Version 1.12 returns ordinary numpy arrays
+from these operations.
+
+Also, reduction of a memmap (e.g.  ``.sum(axis=None``) now returns a numpy
+scalar instead of a 0d memmap.
 
 Deprecations
 ============
