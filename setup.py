@@ -317,7 +317,7 @@ def parse_setuppy_commands():
         flake8="`setup.py flake8` is not supported, use flake8 standalone",
         )
     bad_commands['nosetests'] = bad_commands['test']
-    for commands in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
+    for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
                      'register', 'check', 'install_data', 'install_headers',
                      'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
