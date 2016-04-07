@@ -647,7 +647,7 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0)
+    array(object, dtype=None, copy=True, order='K', subok=False, ndmin=0)
 
     Create an array.
 
@@ -668,14 +668,18 @@ add_newdoc('numpy.core.multiarray', 'array',
         will only be made if __array__ returns a copy, if obj is a
         nested sequence, or if a copy is needed to satisfy any of the other
         requirements (`dtype`, `order`, etc.).
-    order : {'C', 'F', 'A'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional, default 'K'
         Specify the order of the array.  If order is 'C', then the array
         will be in C-contiguous order (last-index varies the fastest).
         If order is 'F', then the returned array will be in
         Fortran-contiguous order (first-index varies the fastest).
-        If order is 'A' (default), then the returned array may be
-        in any order (either C-, Fortran-contiguous, or even discontiguous),
-        unless a copy is required, in which case it will be C-contiguous.
+        If ``copy=False``, and order is set to 'A' or 'K', nothing
+        is ensured about the memory layout of the output array.
+        If ``copy=True`` and
+            - Order is 'A', then the order of the output is C
+              unless the input is fortran-ordered.
+            - Order is 'K', then the memory layout of the returned array is
+              kept as close as possible to the original array.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
         the returned array will be forced to be a base-class array (default).
