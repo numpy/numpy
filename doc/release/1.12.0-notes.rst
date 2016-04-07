@@ -192,6 +192,12 @@ from these operations.
 Also, reduction of a memmap (e.g.  ``.sum(axis=None``) now returns a numpy
 scalar instead of a 0d memmap.
 
+numpy.sctypes now includes bytes on Python3 too
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, it included str (bytes) and unicode on Python2, but only str
+(unicode) on Python3.
+
+
 Deprecations
 ============
 
