@@ -438,7 +438,7 @@ sctypes = {'int': [],
            'uint':[],
            'float':[],
            'complex':[],
-           'others':[bool, object, str, unicode, void]}
+           'others':[bool, object, bytes, unicode, void]}
 
 def _add_array_type(typename, bits):
     try:
