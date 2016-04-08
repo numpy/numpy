@@ -6,6 +6,7 @@ This release supports Python 2.7 and 3.4 - 3.5.
 Highlights
 ==========
 
+* Support for sharing numpy arrays between related processes.
 
 Dropped Support
 ===============

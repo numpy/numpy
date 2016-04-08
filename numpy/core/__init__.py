@@ -39,6 +39,7 @@ from . import getlimits
 from .getlimits import *
 from . import shape_base
 from .shape_base import *
+from . import shm
 del nt
 
 from .fromnumeric import amax as max, amin as min, round_ as round

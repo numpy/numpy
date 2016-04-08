@@ -13,3 +13,4 @@ Numpy basics
    basics.byteswapping
    basics.rec
    basics.subclassing
+   basics.shm
