@@ -1441,11 +1441,6 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             && PyDataType_FLAGCHK(PyArray_DESCR(mps[i]), NPY_NEEDS_PYAPI)) {
             object = 1;
         }
-        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
-                (PyObject *)mps[i], &axis);
-        if (its[i] == NULL) {
-            goto fail;
-        }
     }
 
     /* Now we can check the axis */
@@ -1470,6 +1465,14 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         PyErr_Format(PyExc_ValueError,
                 "axis(=%d) out of bounds", axis);
         goto fail;
+    }
+
+    for (i = 0; i < n; i++) {
+        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)mps[i], &axis);
+        if (its[i] == NULL) {
+            goto fail;
+        }
     }
 
     /* Now do the sorting */
