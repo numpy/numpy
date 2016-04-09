@@ -122,7 +122,8 @@ def empty(shape, dtype='d', alignment=32):
     dtype_raw = 'b'
 
     # We create the big array first
-    buf = sharedctypes.RawArray(dtype_raw, N_bytes_big)
+    # N_bytes_right has to be exactly int (and not e.g. np.int64)
+    buf = sharedctypes.RawArray(dtype_raw, int(N_bytes_big))
 
     sa = shmarray((N_bytes_big,), dtype_raw, buf)
 
