@@ -5,3 +5,4 @@ Shared memory arrays
 ********************
 
 .. automodule:: numpy.doc.shm
+
