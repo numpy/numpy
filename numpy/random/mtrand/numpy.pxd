@@ -2,12 +2,6 @@
 
 cdef extern from "numpy/npy_no_deprecated_api.h": pass
 
-cdef extern from "mt_compat.h":
-
-    object NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(object o))
-    void * NpyCapsule_AsVoidPtr(object o)
-    
-
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
