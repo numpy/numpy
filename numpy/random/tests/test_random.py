@@ -260,11 +260,13 @@ class TestRandomDist(TestCase):
 
     def test_random_integers(self):
         np.random.seed(self.seed)
-        actual = np.random.random_integers(-99, 99, size=(3, 2))
-        desired = np.array([[31, 3],
-                            [-52, 41],
-                            [-48, -66]])
-        assert_array_equal(actual, desired)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            actual = np.random.random_integers(-99, 99, size=(3, 2))
+            desired = np.array([[31, 3],
+                                [-52, 41],
+                                [-48, -66]])
+            assert_array_equal(actual, desired)
 
     def test_random_integers_max_int(self):
         # Tests whether random_integers can generate the
@@ -272,10 +274,12 @@ class TestRandomDist(TestCase):
         # into a C long. Previous implementations of this
         # method have thrown an OverflowError when attempting
         # to generate this integer.
-        actual = np.random.random_integers(np.iinfo('l').max,
-                                           np.iinfo('l').max)
-        desired = np.iinfo('l').max
-        assert_equal(actual, desired)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            actual = np.random.random_integers(np.iinfo('l').max,
+                                               np.iinfo('l').max)
+            desired = np.iinfo('l').max
+            assert_equal(actual, desired)
 
     def test_random_integers_deprecated(self):
         with warnings.catch_warnings():
