@@ -73,7 +73,7 @@ class TestModification(TestCase):
             pool = multiprocessing.Pool(2, init_pool, (arr,))
         except OSError as exc:
             msg = ("Couldn't even instantiate 'multiprocessing.Pool' from "
-                   "Python standard library ('{'), no point in continuing"
+                   "Python standard library ('{}'), no point in continuing."
                    .format(str(exc)))
             raise SkipTest(msg)
         pool.map(_modify_array_pool, range(arr.size))
