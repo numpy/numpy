@@ -13,8 +13,19 @@ pool_array = None
 
 
 # ... and global functions
-def _modify_array(idx):
+
+
+def init_pool(arr):
+    global pool_array
+    pool_array = arr
+
+
+def _modify_array_pool(idx):
     pool_array[idx] = idx ** 2
+
+
+def _modify_array_normal(arr, index):
+    arr[index] = index + 1
 
 
 class TestCreation(TestCase):
@@ -24,20 +35,17 @@ class TestCreation(TestCase):
             a = np.shm.ones(shape, dtype=typestr)
             assert_equal(a, np.ones(shape))
 
-
     def test_shared_zeros(self):
         for typestr in numtypes:
             shape = (10,)
             a = np.shm.zeros(shape, dtype=typestr)
             assert_equal(a, np.zeros(shape))
 
-
     def test_KiB_shared_zeros(self):
         for typestr in numtypes:
             shape = (2 ** 16, 8)
             a = np.shm.zeros(shape, dtype=typestr)
             assert_equal(a, np.zeros(shape))
-
 
     def test_MiB_shared_zeros(self):
         shape = (2 ** 17, 8, 8)
@@ -48,27 +56,20 @@ class TestCreation(TestCase):
 class TestModification(TestCase):
     def test_two_subprocesses_no_pickle(self):
         orig = np.zeros(4, float) + 8
-        a = np.shm.copy(orig)
+        arr = np.shm.copy(orig)
 
-        def modify_array(a):
-            a[0] = 1
-            a[1] = 2
-            a[2] = 3
-
-        p = multiprocessing.Process(target=modify_array, args=(a,))
+        p = multiprocessing.Process(target=_modify_array_normal,
+                                    args=(arr, 1))
         p.start()
         p.join()
 
-        assert_equal(a, np.array([1, 2, 3, 8], dtype=float))
-
+        assert_equal(arr, np.array([8, 2, 8, 8], dtype=float))
 
     def test_pool(self):
-        global pool_array
-        pool_array = np.shm.zeros(4, dtype=float)
-        arr = pool_array
+        arr = np.shm.zeros(4, dtype=float)
 
-        pool = multiprocessing.Pool(2)
-        pool.map(_modify_array, range(pool_array.size))
+        pool = multiprocessing.Pool(2, init_pool, (arr,))
+        pool.map(_modify_array_pool, range(arr.size))
         pool.close()
         pool.join()
 

@@ -57,7 +57,8 @@ at a time, so threre is no true multitasking.
     # we have to prepare the output
     out_arr = np.zeros(in_arr.shape, int)
 
-    # And finally the function wrapper
+    # And finally the function wrapper.
+    # It can be a function defined deeper than in the module's top level.
     def land_howmany9(index):
         result = howmany9(in_arr[index])
         out_arr[index] = result
@@ -117,13 +118,18 @@ you can just swap the normal numpy arrays with shm numpy arrays and off you go:
 
     out_arr = np.shm.zeros(in_arr.shape, int)
     # no other extra definitions compared to the threading version
+    # except land_howmany9 must be module's top-level function.
+    def land_howmany9(input_arr, output_arr, index):
+        result = howmany9(input_arr[index])
+        output_arr_arr[index] = result
 
     # DEFINITIONS END HERE, now comes the computation.
 
     import multiprocessing
 
     for index in range(in_arr.size):
-        process = multiprocessing.Process(target=land_howmany9, args=(index,))
+        process = multiprocessing.Process(target=land_howmany9,
+                                          args=(in_arr, out_arr, index,))
         process.start()
 
     # Ideally, we should join all processes, not just the last one
@@ -152,6 +158,7 @@ Therefore, the code would look like this:
     IN_ARRAY = None
     OUT_ARRAY = None
 
+    # module's top-level function
     def pool_init(in_array):
         global IN_ARRAY, OUT_ARRAY
         IN_ARRAY = in_array
@@ -159,6 +166,7 @@ Therefore, the code would look like this:
 
     # different from the threading version since here,
     # referring to local variables wouldn't work
+    # also module's top-level function
     def land_howmany9(index):
         result = howmany9(IN_ARRAY[index])
         OUT_ARRAY[index] = result

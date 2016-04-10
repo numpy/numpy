@@ -63,9 +63,7 @@ class shmarray(np.ndarray):
         # some magic (copied from np.ctypeslib) to make sure the ctypes array
         # has the array interface
         tp = type(buffer)
-        try:
-            tp.__array_interface__
-        except AttributeError:
+        if not hasattr(tp, "__array_interface__"):
             ctypeslib.prep_array(tp)
 
         obj = np.ndarray.__new__(cls, shape, dtype, buffer,
@@ -82,6 +80,16 @@ class shmarray(np.ndarray):
         if obj is None:
             return
         self.ctypesArray = getattr(obj, 'ctypesArray', None)
+
+    def __reduce_ex__(self, protocol):
+        '''delegate pickling of the data to the underlying storage, but keep copies
+        of shape, dtype & strides.
+
+        TODO - find how to get at the offset and order parameters and keep track of them as well.'''
+        return shmarray, (self.shape, self.dtype, self.ctypesArray, 0, self.strides, None)
+
+    def __reduce__(self):
+        return self.__reduce_ex__(0)
 
 
 def empty(shape, dtype='d', alignment=32):
