@@ -75,7 +75,7 @@
 #include <features.h>
 
 #if defined(__GLIBC__)
-#if !__GLIBC_PREREQ(2, 16)
+#if !__GLIBC_PREREQ(2, 18)
 
 #undef HAVE_CASIN
 #undef HAVE_CASINF
@@ -96,7 +96,7 @@
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
 
-#endif /* __GLIBC_PREREQ(2, 16) */
+#endif /* __GLIBC_PREREQ(2, 18) */
 #endif /* defined(__GLIBC_PREREQ) */
 
 #endif /* defined(HAVE_FEATURES_H) */
