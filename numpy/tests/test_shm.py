@@ -2,6 +2,7 @@ import multiprocessing
 
 import numpy as np
 from numpy.testing import TestCase, assert_equal, run_module_suite
+from nose.exc import SkipTest
 
 
 numtypes = [np.float64, np.int32, np.float32, np.uint8, np.complex]
@@ -68,7 +69,13 @@ class TestModification(TestCase):
     def test_pool(self):
         arr = np.shm.zeros(4, dtype=float)
 
-        pool = multiprocessing.Pool(2, init_pool, (arr,))
+        try:
+            pool = multiprocessing.Pool(2, init_pool, (arr,))
+        except OSError as exc:
+            msg = ("Couldn't even instantiate 'multiprocessing.Pool' from "
+                   "Python standard library ('{'), no point in continuing"
+                   .format(str(exc)))
+            raise SkipTest(msg)
         pool.map(_modify_array_pool, range(arr.size))
         pool.close()
         pool.join()
