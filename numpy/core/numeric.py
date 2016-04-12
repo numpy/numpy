@@ -6,7 +6,20 @@ import operator
 import sys
 import warnings
 
-from numpy.core import multiarray
+from . import multiarray
+from .multiarray import (
+    _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
+    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
+    WRAP, arange, array, broadcast, can_cast, compare_chararrays,
+    concatenate, copyto, count_nonzero, dot, dtype, einsum, empty,
+    empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
+    inner, int_asbuffer, lexsort, matmul, may_share_memory,
+    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
+    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
+    zeros)
+if sys.version_info[0] < 3:
+    from .multiarray import newbuffer, getbuffer
+
 from . import umath
 from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
@@ -14,6 +27,10 @@ from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError
+
+bitwise_not = invert
+ufunc = type(sin)
+newaxis = None
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -50,6 +67,7 @@ __all__ = [
     'TooHardError',
     ]
 
+
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
 
@@ -63,26 +81,6 @@ class ComplexWarning(RuntimeWarning):
 
     """
     pass
-
-bitwise_not = invert
-
-CLIP = multiarray.CLIP
-WRAP = multiarray.WRAP
-RAISE = multiarray.RAISE
-MAXDIMS = multiarray.MAXDIMS
-ALLOW_THREADS = multiarray.ALLOW_THREADS
-BUFSIZE = multiarray.BUFSIZE
-MAY_SHARE_BOUNDS = multiarray.MAY_SHARE_BOUNDS
-MAY_SHARE_EXACT = multiarray.MAY_SHARE_EXACT
-
-ndarray = multiarray.ndarray
-flatiter = multiarray.flatiter
-nditer = multiarray.nditer
-nested_iters = multiarray.nested_iters
-broadcast = multiarray.broadcast
-dtype = multiarray.dtype
-copyto = multiarray.copyto
-ufunc = type(sin)
 
 
 def zeros_like(a, dtype=None, order='K', subok=True):
@@ -147,6 +145,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, z, casting='unsafe')
     return res
 
+
 def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
@@ -192,6 +191,7 @@ def ones(shape, dtype=None, order='C'):
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
+
 
 def ones_like(a, dtype=None, order='K', subok=True):
     """
@@ -253,6 +253,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
+
 def full(shape, fill_value, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with `fill_value`.
@@ -300,6 +301,7 @@ def full(shape, fill_value, dtype=None, order='C'):
     a = empty(shape, dtype, order)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
+
 
 def full_like(a, fill_value, dtype=None, order='K', subok=True):
     """
@@ -373,42 +375,6 @@ def extend_all(module):
         if a not in adict:
             __all__.append(a)
 
-newaxis = None
-
-
-arange = multiarray.arange
-array = multiarray.array
-zeros = multiarray.zeros
-count_nonzero = multiarray.count_nonzero
-empty = multiarray.empty
-empty_like = multiarray.empty_like
-fromstring = multiarray.fromstring
-fromiter = multiarray.fromiter
-fromfile = multiarray.fromfile
-frombuffer = multiarray.frombuffer
-shares_memory = multiarray.shares_memory
-may_share_memory = multiarray.may_share_memory
-if sys.version_info[0] < 3:
-    newbuffer = multiarray.newbuffer
-    getbuffer = multiarray.getbuffer
-int_asbuffer = multiarray.int_asbuffer
-where = multiarray.where
-concatenate = multiarray.concatenate
-fastCopyAndTranspose = multiarray._fastCopyAndTranspose
-set_numeric_ops = multiarray.set_numeric_ops
-can_cast = multiarray.can_cast
-promote_types = multiarray.promote_types
-min_scalar_type = multiarray.min_scalar_type
-result_type = multiarray.result_type
-lexsort = multiarray.lexsort
-compare_chararrays = multiarray.compare_chararrays
-putmask = multiarray.putmask
-einsum = multiarray.einsum
-dot = multiarray.dot
-inner = multiarray.inner
-vdot = multiarray.vdot
-matmul = multiarray.matmul
-
 
 def asarray(a, dtype=None, order=None):
     """Convert the input to an array.
@@ -480,6 +446,7 @@ def asarray(a, dtype=None, order=None):
     """
     return array(a, dtype, copy=False, order=order)
 
+
 def asanyarray(a, dtype=None, order=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
 
@@ -531,6 +498,7 @@ def asanyarray(a, dtype=None, order=None):
     """
     return array(a, dtype, copy=False, order=order, subok=True)
 
+
 def ascontiguousarray(a, dtype=None):
     """
     Return a contiguous array in memory (C order).
@@ -567,6 +535,7 @@ def ascontiguousarray(a, dtype=None):
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
+
 def asfortranarray(a, dtype=None):
     """
     Return an array laid out in Fortran order in memory.
@@ -602,6 +571,7 @@ def asfortranarray(a, dtype=None):
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
+
 
 def require(a, dtype=None, requirements=None):
     """
@@ -698,6 +668,7 @@ def require(a, dtype=None, requirements=None):
             break
     return arr
 
+
 def isfortran(a):
     """
     Returns True if the array is Fortran contiguous but *not* C contiguous.
@@ -759,6 +730,7 @@ def isfortran(a):
     """
     return a.flags.fnc
 
+
 def argwhere(a):
     """
     Find the indices of array elements that are non-zero, grouped by element.
@@ -799,6 +771,7 @@ def argwhere(a):
     """
     return transpose(nonzero(a))
 
+
 def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
@@ -838,14 +811,17 @@ def flatnonzero(a):
     """
     return a.ravel().nonzero()[0]
 
+
 _mode_from_name_dict = {'v': 0,
                         's': 1,
                         'f': 2}
+
 
 def _mode_from_name(mode):
     if isinstance(mode, basestring):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
+
 
 def correlate(a, v, mode='valid'):
     """
@@ -913,6 +889,7 @@ def correlate(a, v, mode='valid'):
     """
     mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
+
 
 def convolve(a,v,mode='full'):
     """
@@ -1010,6 +987,7 @@ def convolve(a,v,mode='full'):
         raise ValueError('v cannot be empty')
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
+
 
 def outer(a, b, out=None):
     """
@@ -1331,6 +1309,7 @@ def tensordot(a, b, axes=2):
     res = dot(at, bt)
     return res.reshape(olda + oldb)
 
+
 def roll(a, shift, axis=None):
     """
     Roll array elements along a given axis.
@@ -1571,6 +1550,7 @@ def moveaxis(a, source, destination):
 def _move_axis_to_0(a, axis):
     return rollaxis(a, axis, 0)
 
+
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     """
     Return the cross product of two (arrays of) vectors.
@@ -1771,15 +1751,19 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     # This works because we are moving the last axis
     return rollaxis(cp, -1, axisc)
 
+
 #Use numarray's printing function
 from .arrayprint import array2string, get_printoptions, set_printoptions
+
 
 _typelessdata = [int_, float_, complex_]
 if issubclass(intc, int):
     _typelessdata.append(intc)
 
+
 if issubclass(longlong, int):
     _typelessdata.append(longlong)
+
 
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     """
@@ -1853,6 +1837,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
             lf = '\n'+' '*len("array(")
         return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 
+
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
     Return a string representation of the data in an array.
@@ -1888,6 +1873,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
 
     """
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
+
 
 def set_string_function(f, repr=True):
     """
@@ -1947,6 +1933,7 @@ def set_string_function(f, repr=True):
             return multiarray.set_string_function(array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
+
 
 set_string_function(array_str, 0)
 set_string_function(array_repr, 1)
@@ -2027,6 +2014,7 @@ def indices(dimensions, dtype=int):
         add(tmp, val, res[i])
     return res
 
+
 def fromfunction(function, shape, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
@@ -2080,7 +2068,8 @@ def fromfunction(function, shape, **kwargs):
     """
     dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
-    return function(*args,**kwargs)
+    return function(*args, **kwargs)
+
 
 def isscalar(num):
     """
@@ -2110,6 +2099,7 @@ def isscalar(num):
         return True
     else:
         return type(num) in ScalarType
+
 
 def binary_repr(num, width=None):
     """
@@ -2214,6 +2204,7 @@ def binary_repr(num, width=None):
             warn_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary
 
+
 def base_repr(number, base=2, padding=0):
     """
     Return a string representation of a number in the given base system.
@@ -2288,6 +2279,7 @@ def load(file):
         file = open(file, "rb")
     return pickle.load(file)
 
+
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
@@ -2300,6 +2292,7 @@ def _maketup(descr, val):
     else:
         res = [_maketup(fields[name][0], val) for name in dt.names]
         return tuple(res)
+
 
 def identity(n, dtype=None):
     """
@@ -2331,6 +2324,7 @@ def identity(n, dtype=None):
     """
     from numpy import eye
     return eye(n, dtype=dtype)
+
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2396,6 +2390,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
     return bool(res)
+
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2498,6 +2493,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         else:
             return cond
 
+
 def array_equal(a1, a2):
     """
     True if two arrays have the same shape and elements, False otherwise.
@@ -2538,6 +2534,7 @@ def array_equal(a1, a2):
     if a1.shape != a2.shape:
         return False
     return bool(asarray(a1 == a2).all())
+
 
 def array_equiv(a1, a2):
     """
@@ -2597,6 +2594,7 @@ _errdict_rev = {}
 for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
 del key
+
 
 def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
@@ -2748,6 +2746,7 @@ def geterr():
     res['invalid'] = _errdict_rev[val]
     return res
 
+
 def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
@@ -2771,6 +2770,7 @@ def setbufsize(size):
     umath.seterrobj(pyvals)
     return old
 
+
 def getbufsize():
     """
     Return the size of the buffer used in ufuncs.
@@ -2782,6 +2782,7 @@ def getbufsize():
 
     """
     return umath.geterrobj()[0]
+
 
 def seterrcall(func):
     """
@@ -2874,6 +2875,7 @@ def seterrcall(func):
     umath.seterrobj(pyvals)
     return old
 
+
 def geterrcall():
     """
     Return the current callback function used on floating-point errors.
@@ -2918,9 +2920,11 @@ def geterrcall():
     """
     return umath.geterrobj()[2]
 
+
 class _unspecified(object):
     pass
 _Unspecified = _unspecified()
+
 
 class errstate(object):
     """
@@ -3003,6 +3007,7 @@ class errstate(object):
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     umath.seterrobj(defval)
+
 
 # set the default values
 _setdef()
