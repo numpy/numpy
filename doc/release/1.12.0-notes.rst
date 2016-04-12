@@ -128,7 +128,7 @@ file that will remain empty (bar a docstring) in the standard numpy source,
 but that can be overwritten by people making binary distributions of numpy.
 
 New nanfunctions ``nancumsum`` and ``nancumprod`` added
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
 compute ``cumsum`` and ``cumprod`` by ignoring nans.
 
@@ -136,6 +136,13 @@ compute ``cumsum`` and ``cumprod`` by ignoring nans.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``np.lib.interp(x, xp, fp)`` now allows the interpolated array ``fp``
 to be complex and will interpolate at ``complex128`` precision.
+
+New polynomial evaluation function ``polyvalfromroots`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``polyvalfromroots`` evaluates a polynomial at given points
+from the roots of the polynomial. This is useful for higher order polynomials,
+where expansion into polynomial coefficients is inaccurate at machine
+precision.
 
 Improvements
 ============
