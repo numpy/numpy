@@ -15,7 +15,7 @@
 
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
-#include <xlocale.h>
+/* #include <xlocale.h> */
 #endif
 
 
