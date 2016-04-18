@@ -30,8 +30,8 @@ import subprocess
 import textwrap
 
 
-if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
-    raise RuntimeError("Python version 2.6, 2.7 or >= 3.2 required.")
+if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[0:2] < (3, 4):
+    raise RuntimeError("Python version 2.7 or >= 3.4 required.")
 
 if sys.version_info[0] >= 3:
     import builtins
@@ -47,11 +47,8 @@ License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2.6
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: Implementation :: CPython
@@ -317,7 +314,7 @@ def parse_setuppy_commands():
         flake8="`setup.py flake8` is not supported, use flake8 standalone",
         )
     bad_commands['nosetests'] = bad_commands['test']
-    for commands in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
+    for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
                      'register', 'check', 'install_data', 'install_headers',
                      'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command

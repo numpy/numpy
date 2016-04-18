@@ -3614,6 +3614,9 @@ class TestLexsort(TestCase):
             u, v = np.array(u, dtype='object'), np.array(v, dtype='object')
             assert_array_equal(idx, np.lexsort((u, v)))
 
+    def test_invalid_axis(self): # gh-7528
+        x = np.linspace(0., 1., 42*3).reshape(42, 3)
+        assert_raises(ValueError, np.lexsort, x, axis=2)
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""

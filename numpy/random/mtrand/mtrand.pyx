@@ -23,6 +23,7 @@
 
 include "Python.pxi"
 include "numpy.pxd"
+include "cpython/pycapsule.pxd"
 
 from libc cimport string
 
@@ -594,7 +595,7 @@ def _rand_bool(low, high, size, rngstate):
     cdef npy_bool *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_bool>(high - low)
     off = <npy_bool>(low)
@@ -621,7 +622,7 @@ def _rand_int8(low, high, size, rngstate):
     cdef npy_uint8 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint8>(high - low)
     off = <npy_uint8>(<npy_int8>low)
@@ -648,7 +649,7 @@ def _rand_int16(low, high, size, rngstate):
     cdef npy_uint16 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint16>(high - low)
     off = <npy_uint16>(<npy_int16>low)
@@ -699,7 +700,7 @@ def _rand_int32(low, high, size, rngstate):
     cdef npy_uint32 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint32>(high - low)
     off = <npy_uint32>(<npy_int32>low)
@@ -726,7 +727,7 @@ def _rand_int64(low, high, size, rngstate):
     cdef npy_uint64 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint64>(high - low)
     off = <npy_uint64>(<npy_int64>low)
@@ -752,7 +753,7 @@ def _rand_uint8(low, high, size, rngstate):
     cdef npy_uint8 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint8>(high - low)
     off = <npy_uint8>(low)
@@ -779,7 +780,7 @@ def _rand_uint16(low, high, size, rngstate):
     cdef npy_uint16 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint16>(high - low)
     off = <npy_uint16>(low)
@@ -806,7 +807,7 @@ def _rand_uint32(low, high, size, rngstate):
     cdef npy_uint32 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint32>(high - low)
     off = <npy_uint32>(low)
@@ -833,7 +834,7 @@ def _rand_uint64(low, high, size, rngstate):
     cdef npy_uint64 *out
     cdef ndarray array "arrayObject"
     cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>NpyCapsule_AsVoidPtr(rngstate)
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     rng = <npy_uint64>(high - low)
     off = <npy_uint64>(low)
@@ -914,7 +915,7 @@ cdef class RandomState:
 
     def __init__(self, seed=None):
         self.internal_state = <rk_state*>PyMem_Malloc(sizeof(rk_state))
-        self.state_address = NpyCapsule_FromVoidPtr(self.internal_state, NULL)
+        self.state_address = PyCapsule_New(self.internal_state, NULL, NULL)
         self.lock = Lock()
         self.seed(seed)
 
