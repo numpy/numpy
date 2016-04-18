@@ -53,6 +53,16 @@ class shmarray(np.ndarray):
     Doesn't actually handle allocation of the shared memory - this is done in
     empty, and zeros, ones, (or create_copy) are the functions
     which should be used for creating a new shared memory array.
+
+    .. warning::
+
+        The array can't be pickled to a file (or to a string)
+        using the :mod:`pickle` module. This is the trade-off
+        for being shareable among processes.
+
+        Cast it to a normal ``numpy`` array using :func:`numpy.array`
+        and pickle that one instead.
+
     """
     def __new__(cls, shape, dtype=float, buffer=None,
                 offset=0, strides=None, order=None):
@@ -69,9 +79,10 @@ class shmarray(np.ndarray):
         obj = np.ndarray.__new__(cls, shape, dtype, buffer,
                                  offset, strides, order)
 
-        # keep track of the underlying storage
-        # this may not be strictly necessary
-        # as the same info should be stored in .base
+        # Keep track of the underlying storage
+        # This is not strictly necessary on Unixes
+        # as the same info should be stored in .base,
+        # but we need this on Windows.
         obj.ctypesArray = buffer
 
         return obj
@@ -82,13 +93,25 @@ class shmarray(np.ndarray):
         self.ctypesArray = getattr(obj, 'ctypesArray', None)
 
     def __reduce_ex__(self, protocol):
-        '''delegate pickling of the data to the underlying storage, but keep copies
+        """
+        delegate pickling of the data to the underlying storage, but keep copies
         of shape, dtype & strides.
 
-        TODO - find how to get at the offset and order parameters and keep track of them as well.'''
-        return shmarray, (self.shape, self.dtype, self.ctypesArray, 0, self.strides, None)
+        This method is neccessary on MS Windows, where the array has is passed
+        to the child process by pickling and the information about
+        our special buffer ``ctypesArray`` has to be carefuly preserved.
+
+        TODO - find how to get at the offset and order parameters
+        and keep track of them as well.
+        """
+        return shmarray, (self.shape, self.dtype, self.ctypesArray,
+                          0, self.strides, None)
 
     def __reduce__(self):
+        """
+        This method is needed on Windows and it probably breaks
+        the ndarray pickle
+        """
         return self.__reduce_ex__(0)
 
 

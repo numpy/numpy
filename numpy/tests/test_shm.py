@@ -1,8 +1,11 @@
 import multiprocessing
 
 import numpy as np
+import concurrent.futures as futures
 from numpy.testing import TestCase, assert_equal, run_module_suite
 from nose.exc import SkipTest
+
+import shm_pool as pool
 
 
 numtypes = [np.float64, np.int32, np.float32, np.uint8, np.complex]
@@ -55,6 +58,17 @@ class TestCreation(TestCase):
 
 
 class TestModification(TestCase):
+    def test_processpool(self):
+        raise SkipTest("This is even not supposed to work.")
+        orig = np.zeros(4, float) + 8
+        arr = np.shm.copy(orig)
+
+        pool = futures.ProcessPoolExecutor()
+        pool.map(_modify_array_normal, (arr,) * 2, (4, 1))
+        pool.shutdown()
+
+        assert_equal(arr, np.array([1, 2, 8, 8], dtype=float))
+
     def test_two_subprocesses_no_pickle(self):
         orig = np.zeros(4, float) + 8
         arr = np.shm.copy(orig)
@@ -81,6 +95,11 @@ class TestModification(TestCase):
         pool.join()
 
         assert_equal(arr, np.array([0, 1, 4, 9], dtype=float))
+
+    def test_doc_example(self):
+        in_array = np.array((9, 19, 88, 1949, 99999, 18, 23, -9, -919, 9e99))
+        result = pool.carry_out_computation(in_array, update_period=0.1)
+        assert_equal(result, np.array([1, 1, 0, 2, 5, 0, 0, 1, 2, 3], dtype=int))
 
 
 if __name__ == "__main__":
