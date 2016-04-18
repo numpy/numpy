@@ -12,7 +12,7 @@ OUT_ARRAY = None
 COUNTER = None
 
 
-# We define the function
+# We define the function whose execution we  want to parallelize
 def howmany9(num):
     """
     Given a number, return how many 9's are in it.
@@ -22,7 +22,6 @@ def howmany9(num):
     return result
 
 
-# Module's top-level function
 def _pool_init(in_array, out_array, counter):
     global IN_ARRAY, OUT_ARRAY, COUNTER
     IN_ARRAY = in_array
@@ -33,8 +32,7 @@ def _pool_init(in_array, out_array, counter):
 # Different from the threading version since here,
 # referring to local variables wouldn't work, so the parameter is an
 # index and we access the input and output via a global variable.
-# Also module's top-level function
-def wrapped_for_pool(index):
+def _wrapped_for_pool(index):
     """
     Wrapped function, saves the result to the corresponding element of the
     output array and increments the counter.
@@ -47,7 +45,6 @@ def wrapped_for_pool(index):
         COUNTER.value = COUNTER.value + 1
 
 
-# DEFINITIONS END HERE, now comes the computation.
 def carry_out_computation(in_array, out_array=None, update_period=2):
     """
     Given the input, output array and a function, iterate through the input
@@ -56,11 +53,15 @@ def carry_out_computation(in_array, out_array=None, update_period=2):
     """
     arr_size = in_array.size
     if out_array is None:
-        out_array = np.shm.empty(in_array.shape, int) + float("NaN")
+        out_array = np.shm.zeros(arr_size, int)
+        # Initialize to -1, so it is obvious if some return values are skipped
+        out_array -= 1
+        # vvv TODO: This doesn't work vvv
+        # out_array = np.shm.zeros(arr_size, int) - 1
     counter = multiprocessing.Value("i")
     pool = multiprocessing.Pool(None, _pool_init,
                                 (in_array, out_array, counter))
-    result = pool.map_async(wrapped_for_pool, range(arr_size))
+    result = pool.map_async(_wrapped_for_pool, range(arr_size))
     pool.close()
 
     while not result.ready():

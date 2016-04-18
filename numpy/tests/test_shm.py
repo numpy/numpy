@@ -5,8 +5,6 @@ import concurrent.futures as futures
 from numpy.testing import TestCase, assert_equal, run_module_suite
 from nose.exc import SkipTest
 
-import shm_pool as pool
-
 
 numtypes = [np.float64, np.int32, np.float32, np.uint8, np.complex]
 
@@ -97,6 +95,11 @@ class TestModification(TestCase):
         assert_equal(arr, np.array([0, 1, 4, 9], dtype=float))
 
     def test_doc_example(self):
+        try:
+            import shm_pool as pool
+        except ImportError:
+            raise SkipTest("Couldn't import the auxiliary module 'shm_pool'"
+                           "(located in the tests directory).")
         in_array = np.array((9, 19, 88, 1949, 99999, 18, 23, -9, -919, 9e99))
         result = pool.carry_out_computation(in_array, update_period=0.1)
         assert_equal(result, np.array([1, 1, 0, 2, 5, 0, 0, 1, 2, 3], dtype=int))
