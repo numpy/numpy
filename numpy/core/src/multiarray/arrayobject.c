@@ -52,6 +52,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "array_assign.h"
 #include "alloc.h"
 #include "mem_overlap.h"
+#include "numpyos.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -880,18 +881,13 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 
 #define SMALL_STRING 2048
 
-#if defined(isspace)
-#undef isspace
-#define isspace(c)  ((c==' ')||(c=='\t')||(c=='\n')||(c=='\r')||(c=='\v')||(c=='\f'))
-#endif
-
 static void _rstripw(char *s, int n)
 {
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         int c = s[i];
 
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -905,7 +901,7 @@ static void _unistripw(npy_ucs4 *s, int n)
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         npy_ucs4 c = s[i];
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
