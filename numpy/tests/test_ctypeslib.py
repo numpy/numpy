@@ -8,7 +8,14 @@ from numpy.distutils.misc_util import get_shared_lib_extension
 from numpy.testing import TestCase, run_module_suite, dec
 
 try:
-    cdll = load_library('multiarray', np.core.multiarray.__file__)
+    cdll = None
+    if hasattr(sys, 'gettotalrefcount'):
+        try:
+            cdll = load_library('multiarray_d', np.core.multiarray.__file__)
+        except OSError:
+            pass
+    if cdll is None:
+        cdll = load_library('multiarray', np.core.multiarray.__file__)
     _HAS_CTYPE = True
 except ImportError:
     _HAS_CTYPE = False
