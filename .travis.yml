@@ -87,11 +87,7 @@ before_install:
   - source venv/bin/activate
   - python -V
   - pip install --upgrade pip setuptools
-  - pip install nose
-  - pip install pytz
-  # pip install coverage
-  # Speed up install by not compiling Cython
-  - pip install --install-option="--no-cython-compile" Cython
+  - pip install nose pytz cython
   - if [ -n "$USE_ASV" ]; then pip install asv; fi
   - popd
 
