@@ -75,15 +75,22 @@
   SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val)
   {
     PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
-    if (PyInt_Check(obj)) {
+    %#if PY_VERSION_HEX < 0x03000000
+    if (PyInt_Check(obj)) 
+    {
       long v = PyInt_AsLong(obj);
-      if (v >= 0) {
-	if (val) *val = v;
-	return SWIG_OK;
-      } else {
-	return SWIG_OverflowError;
+      if (v >= 0) 
+      {
+        if (val) *val = v;
+	    return SWIG_OK;
+      } 
+      else 
+      {
+	    return SWIG_OverflowError;
       }
-    } else if (PyLong_Check(obj)) {
+    } else 
+    %#endif
+    if (PyLong_Check(obj)) {
       unsigned long v = PyLong_AsUnsignedLong(obj);
       if (!PyErr_Occurred()) {
 	if (val) *val = v;
