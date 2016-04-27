@@ -129,9 +129,13 @@ import warnings
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError, RawConfigParser
+    from ConfigParser import NoOptionError
+    from ConfigParser import RawConfigParser as ConfigParser
 else:
-    from configparser import NoOptionError, RawConfigParser
+    from configparser import NoOptionError
+    from configparser import RawConfigParser as ConfigParser
+    # It seems that some people are importing ConfigParser from here so is good to keep its class name
+    # Use of RawConfigParser is needed in order to be able to load path names with percent in them, like `feature%2Fcool` (git flow branch names)
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -479,8 +483,7 @@ class system_info(object):
                     'src_dirs': os.pathsep.join(default_src_dirs),
                     'search_static_first': str(self.search_static_first),
                     'extra_compile_args': '', 'extra_link_args': ''}
-        # Use of RawConfigParser is needed in order to be able to load path names with percent in them, like `feature%2Fcool` (git flow branch names)
-        self.cp = RawConfigParser(defaults)
+        self.cp = ConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
