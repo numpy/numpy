@@ -90,6 +90,12 @@ class TestRegression(TestCase):
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+    def test_norm_object_array(self):
+        # gh-7575
+        norm = linalg.norm(np.array([np.array([0, 1]), 0, 0], dtype=object))
+        assert_array_equal(norm, [0, 1])
+        self.assertEqual(norm.dtype, np.dtype('float64'))
+
 
 if __name__ == '__main__':
     run_module_suite()

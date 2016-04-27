@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, isscalar
+    broadcast, atleast_2d, intp, asanyarray, isscalar, object_
     )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -2112,7 +2112,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     """
     x = asarray(x)
 
-    if not issubclass(x.dtype.type, inexact):
+    if not issubclass(x.dtype.type, (inexact, object_)):
         x = x.astype(float)
 
     # Immediately handle some default, simple, fast, and common cases.
