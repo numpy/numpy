@@ -461,7 +461,7 @@ here, the **Parameters** section of the docstring details the constructors
 parameters.
 
 An **Attributes** section, located below the **Parameters** section,
-may be used to describe class variables::
+may be used to describe non-method attributes of the class::
 
   Attributes
   ----------
