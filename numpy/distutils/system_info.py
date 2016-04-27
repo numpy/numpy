@@ -128,9 +128,9 @@ import warnings
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError, ConfigParser
+    from ConfigParser import NoOptionError, RawConfigParser
 else:
-    from configparser import NoOptionError, ConfigParser
+    from configparser import NoOptionError, RawConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -477,7 +477,8 @@ class system_info(object):
                     'src_dirs': os.pathsep.join(default_src_dirs),
                     'search_static_first': str(self.search_static_first),
                     'extra_compile_args': '', 'extra_link_args': ''}
-        self.cp = ConfigParser(defaults)
+        # Use of RawConfigParser is needed in order to be able to load path names with percent in them, like `feature%2Fcool` (git flow branch names)
+        self.cp = RawConfigParser(defaults)
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
