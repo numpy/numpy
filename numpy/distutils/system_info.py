@@ -129,9 +129,13 @@ import warnings
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError, ConfigParser
+    from ConfigParser import NoOptionError
+    from ConfigParser import RawConfigParser as ConfigParser
 else:
-    from configparser import NoOptionError, ConfigParser
+    from configparser import NoOptionError
+    from configparser import RawConfigParser as ConfigParser
+    # It seems that some people are importing ConfigParser from here so is good to keep its class name
+    # Use of RawConfigParser is needed in order to be able to load path names with percent in them, like `feature%2Fcool` (git flow branch names)
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
