@@ -328,6 +328,13 @@ class TestRecord(TestCase):
         # https://github.com/numpy/numpy/issues/4806
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
+        
+    def test_ref_count(self):
+        # https://github.com/numpy/numpy/issues/7581
+        arr = np.recarray(2, dtype=[('x', int)])
+        assert_equal(sys.getrefcount(arr), 2)
+        assert_raises(IndexError, lambda: arr[20])
+        assert_equal(sys.getrefcount(arr), 2)
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
