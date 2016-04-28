@@ -5610,9 +5610,10 @@ class MaskedArray(ndarray):
         maskindices = getattr(indices, '_mask', nomask)
         if maskindices is not nomask:
             indices = indices.filled(0)
-        # Get the data
+        # Get the data, promoting scalars to 0d arrays with [...] so that
+        # .view works correctly
         if out is None:
-            out = _data.take(indices, axis=axis, mode=mode).view(cls)
+            out = _data.take(indices, axis=axis, mode=mode)[...].view(cls)
         else:
             np.take(_data, indices, axis=axis, mode=mode, out=out)
         # Get the mask
@@ -5623,7 +5624,8 @@ class MaskedArray(ndarray):
                 outmask = _mask.take(indices, axis=axis, mode=mode)
                 outmask |= maskindices
             out.__setmask__(outmask)
-        return out
+        # demote 0d arrays back to scalars, for consistency with ndarray.take
+        return out[()]
 
     # Array methods
     copy = _arraymethod('copy')
