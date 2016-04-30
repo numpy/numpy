@@ -8,6 +8,7 @@
 # will also be checked for the file ~/.numpy-site.cfg .
 
 # The format of the file is that of the standard library's ConfigParser module.
+# No interpolation is allowed, RawConfigParser class being used to load it.
 #
 #   http://docs.python.org/3/library/configparser.html
 #
