@@ -662,6 +662,19 @@ class TestMedian(TestCase):
         assert_equal(np.ma.median(np.arange(9)), 4.)
         assert_equal(np.ma.median(range(9)), 4)
 
+    def test_masked_1d(self):
+        "test the examples given in the docstring of ma.median"
+        x = array(np.arange(8), mask=[0]*4 + [1]*4)
+        assert_equal(np.ma.median(x), 1.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        x = array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
+        assert_equal(np.ma.median(x), 2.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+
+    def test_1d_shape_consistency(self):
+        assert_equal(np.ma.median(array([1,2,3],mask=[0,0,0])).shape,
+                     np.ma.median(array([1,2,3],mask=[0,1,0])).shape )
+
     def test_2d(self):
         # Tests median w/ 2D
         (n, p) = (101, 30)

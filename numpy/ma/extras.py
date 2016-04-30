@@ -27,7 +27,7 @@ import warnings
 
 from . import core as ma
 from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled,
+    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
     nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
     mask_rowcols
@@ -652,6 +652,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         axis = 0
     elif axis < 0:
         axis += a.ndim
+
+    if asorted.ndim == 1:
+        idx, odd = divmod(count(asorted), 2)
+        return asorted[idx - (not odd) : idx + 1].mean()
 
     counts = asorted.shape[axis] - (asorted.mask).sum(axis=axis)
     h = counts // 2
