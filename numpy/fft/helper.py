@@ -6,12 +6,12 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.compat import integer_types
 from numpy.core import (
-        asarray, concatenate, arange, take, integer, empty
+        asarray, concatenate, arange, take, integer, empty, zeros
         )
 
 # Created by Pearu Peterson, September 2002
 
-__all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
+__all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq', 'ifftpad']
 
 integer_types = integer_types + (integer,)
 
@@ -222,3 +222,46 @@ def rfftfreq(n, d=1.0):
     N = n//2 + 1
     results = arange(0, N, dtype=int)
     return results * val
+
+
+def ifftpad(a, n, scale=True):
+    """
+    Pad the spectrum at high frequencies.
+
+    The padding done by the `ifft` function appends zeros to the end of the
+    spectrum which shifts the frequencies and can make the resulting signal
+    differ from the non-padded version. This function pads the spectrum
+    by putting the zeros in the middle where the highest frequencies are.
+    Taking the `ifft` of this padded version result in a signal that is
+    an interpolated version of the unpadded signal, which is what is expected.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array, can be complex.
+    n : int
+        Length of the padded spectrum.
+        `n` should be larger than the length of the input.
+    scale : bool, optional
+        Whether to scale the spectrum or not. The `ifft` function
+        divides by the input length which will be the incorrect length
+        for a padded spectrum. Setting this parameter will pre-scale
+        the spectrum so that dividing by the padded length will be correct.
+
+    Returns
+    -------
+    out : ndarray
+        The spectrum padded to length `n`. Possibly scaled as well.
+
+    Examples
+    --------
+    >>> spectrum = np.array([0, 1, 2, -3, -2, -1])
+    >>> np.fft.ifftpad(spectrum, 10, scale=False)
+    array([ 0.,  1.,  2.,  0.,  0.,  0.,  0., -3., -2., -1.])
+    """
+    spectrum = concatenate((a[:len(a) // 2],
+                            zeros(n - len(a)),
+                            a[len(a) // 2:]))
+    if scale:
+        spectrum *= (n / len(a))
+    return spectrum

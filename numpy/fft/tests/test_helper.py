@@ -7,7 +7,7 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_array_almost_equal
+from numpy.testing import TestCase, run_module_suite, assert_array_almost_equal, assert_raises
 from numpy import fft
 from numpy import pi
 
@@ -72,6 +72,26 @@ class TestIRFFTN(TestCase):
 
         # Should not raise error
         fft.irfftn(a, axes=axes)
+
+
+class TestIFFTPad(TestCase):
+
+    def helper(self, length):
+        spectrum = np.random.random(length) + 1j * np.random.random(length)
+        signal = fft.ifft(spectrum)
+        signal_padded_incorrect = fft.ifft(spectrum, length * 2)
+        signal_padded_correct = fft.ifft(fft.ifftpad(spectrum, length * 2))
+
+        assert_array_almost_equal(signal, signal_padded_correct[::2])
+
+        with assert_raises(AssertionError):
+            assert_array_almost_equal(signal, signal_padded_incorrect[::2])
+
+    def test_even(self):
+        self.helper(12)
+
+    def test_odd(self):
+        self.helper(11)
 
 
 if __name__ == "__main__":

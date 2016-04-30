@@ -250,13 +250,15 @@ def ifft(a, n=None, axis=-1, norm=None):
     fft : The one-dimensional (forward) FFT, of which `ifft` is the inverse
     ifft2 : The two-dimensional inverse FFT.
     ifftn : The n-dimensional inverse FFT.
+    ifftpad : Pad the spectrum preserving low frequencies
 
     Notes
     -----
     If the input parameter `n` is larger than the size of the input, the input
     is padded by appending zeros at the end.  Even though this is the common
     approach, it might lead to surprising results.  If a different padding is
-    desired, it must be performed before calling `ifft`.
+    desired, it must be performed before calling `ifft` (e.g. by using the
+    `ifftpad` function).
 
     Examples
     --------
