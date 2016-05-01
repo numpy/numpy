@@ -437,6 +437,15 @@ class TestPower(TestCase):
         arr = np.arange(-10, 10)
         assert_equal(np.power(1, arr), np.ones_like(arr))
 
+    def test_integer_zero_to_negative_power(self):
+        dtypes = ['i1', 'i2', 'i4', 'i8']
+        for dt in dtypes:
+            a = np.array([0, 1, 2, 3], dtype=dt)
+            barray = np.array([0, 1, 2, -3], dtype=dt)
+            bscalar = barray[-1]
+            assert_raises(ZeroDivisionError, np.power, a[:, None], barray)
+            assert_raises(ZeroDivisionError, np.power, a, bscalar)
+
 
 class TestLog2(TestCase):
     def test_log2_values(self):
