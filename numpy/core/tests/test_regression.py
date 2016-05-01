@@ -1239,19 +1239,6 @@ class TestRegression(TestCase):
         "Ticket #947."
         self.assertRaises(ValueError, lambda: np.array([1], ndmin=33))
 
-    def test_errobj_reference_leak(self, level=rlevel):
-        # Ticket #955
-        with np.errstate(all="ignore"):
-            z = int(0)
-            p = np.int32(-1)
-
-            gc.collect()
-            n_before = len(gc.get_objects())
-            z**p  # this shouldn't leak a reference to errobj
-            gc.collect()
-            n_after = len(gc.get_objects())
-            assert_(n_before >= n_after, (n_before, n_after))
-
     def test_void_scalar_with_titles(self, level=rlevel):
         # No ticket
         data = [('john', 4), ('mary', 5)]
