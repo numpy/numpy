@@ -967,7 +967,16 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = 1;
             continue;
         }
-        if (in2 < 0 || in1 == 0) {
+        if (in1 == 0 && in2 < 0) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            PyErr_SetString(PyExc_ZeroDivisionError,
+                    "0 cannot be raised to a negative power.");
+            NPY_DISABLE_C_API;
+            return;
+        }
+
+        if (in2 < 0) {
             *((@type@ *)op1) = 0;
             continue;
         }
