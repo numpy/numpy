@@ -2955,6 +2955,10 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(x.take([[0, 1], [0, 1]]),
                      masked_array([[10, 20], [10, 20]], [[0, 1], [0, 1]]))
 
+        # assert_equal crashes when passed np.ma.mask
+        self.assertTrue(x[1] is np.ma.masked)
+        self.assertTrue(x.take(1) is np.ma.masked)
+
         x = array([[10, 20, 30], [40, 50, 60]], mask=[[0, 0, 1], [1, 0, 0, ]])
         assert_equal(x.take([0, 2], axis=1),
                      array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
