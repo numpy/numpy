@@ -836,5 +836,19 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
+@dec.slow
+def test_large_archive():
+    a = np.empty((2 ** 30, 2), dtype=np.uint8)
+    fname = os.path.join(tempdir, "large_archive")
+
+    with open(fname, "wb") as f:
+        np.savez(f, arr=a)
+
+    with open(fname, "rb") as f:
+        new_a = np.load(f)["arr"]
+
+    assert a.shape == new_a.shape
+
+
 if __name__ == "__main__":
     run_module_suite()
