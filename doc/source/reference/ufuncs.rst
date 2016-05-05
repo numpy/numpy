@@ -649,8 +649,6 @@ single operation.
 
 .. autosummary::
 
-    isreal
-    iscomplex
     isfinite
     isinf
     isnan
