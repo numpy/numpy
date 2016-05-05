@@ -2016,7 +2016,7 @@ cdef class RandomState:
         ----------
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
                Random Signal Principles", 4th ed, 2001, p. 57.
-        .. [2] Wikipedia, "Poisson process", 
+        .. [2] Wikipedia, "Poisson process",
                http://en.wikipedia.org/wiki/Poisson_process
         .. [3] Wikipedia, "Exponential distribution",
                http://en.wikipedia.org/wiki/Exponential_distribution
@@ -2216,7 +2216,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> shape, scale = 2., 2. # mean and dispersion
+        >>> shape, scale = 2., 2. # mean=4, std=2*sqrt(2)
         >>> s = np.random.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
