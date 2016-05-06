@@ -947,6 +947,11 @@ class TestStructured(TestCase):
         assert_equal(x['S'], [b'', b'', b'', b''])
         assert_equal(x['I'], [0, 0, 0, 0])
 
+        # Allow zero-width dtypes in ndarray constructor
+        y = np.ndarray(4, dtype=x['S'].dtype)
+        assert_equal(y.itemsize, 0)
+        assert_equal(x['S'], y)
+
         # More tests for indexing an array with zero-width fields
         assert_equal(np.zeros(4, dtype=[('a', 'S0,S0'),
                                         ('b', 'u1')])['a'].itemsize, 0)

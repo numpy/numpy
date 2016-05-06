@@ -1652,11 +1652,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     itemsize = descr->elsize;
-    if (itemsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data-type with unspecified variable length");
-        goto fail;
-    }
 
     if (strides.ptr != NULL) {
         npy_intp nb, off;
@@ -1690,10 +1685,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     if (buffer.ptr == NULL) {
         ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, descr,
-                                 (int)dims.len,
-                                 dims.ptr,
-                                 strides.ptr, NULL, is_f_order, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     (int)dims.len,
+                                     dims.ptr,
+                                     strides.ptr, NULL, is_f_order, NULL,
+                                     0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1726,11 +1722,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
-            PyArray_NewFromDescr(subtype, descr,
-                                 dims.len, dims.ptr,
-                                 strides.ptr,
-                                 offset + (char *)buffer.ptr,
-                                 buffer.flags, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     dims.len, dims.ptr,
+                                     strides.ptr,
+                                     offset + (char *)buffer.ptr,
+                                     buffer.flags, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
