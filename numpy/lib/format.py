@@ -558,8 +558,11 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         warnings.warn("Stored array in format 2.0. It can only be"
                       "read by NumPy >= 1.9", UserWarning)
 
-    # Set buffer size to 16 MiB to hide the Python loop overhead.
-    buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
+    if array.itemsize == 0:
+        buffersize = 0
+    else:
+        # Set buffer size to 16 MiB to hide the Python loop overhead.
+        buffersize = max(16 * 1024 ** 2 // array.itemsize, 1)
 
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data
@@ -655,15 +658,21 @@ def read_array(fp, allow_pickle=True, pickle_kwargs=None):
             # of the read. In non-chunked case count < max_read_count, so
             # only one read is performed.
 
-            max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
+            # Use np.ndarray instead of np.empty since the latter does
+            # not correctly instantiate zero-width string dtypes; see
+            # https://github.com/numpy/numpy/pull/6430
+            array = numpy.ndarray(count, dtype=dtype)
 
-            array = numpy.empty(count, dtype=dtype)
-            for i in range(0, count, max_read_count):
-                read_count = min(max_read_count, count - i)
-                read_size = int(read_count * dtype.itemsize)
-                data = _read_bytes(fp, read_size, "array data")
-                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
-                                                         count=read_count)
+            if dtype.itemsize > 0:
+                # If dtype.itemsize == 0 then there's nothing more to read
+                max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
+
+                for i in range(0, count, max_read_count):
+                    read_count = min(max_read_count, count - i)
+                    read_size = int(read_count * dtype.itemsize)
+                    data = _read_bytes(fp, read_size, "array data")
+                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                                                             count=read_count)
 
         if fortran_order:
             array.shape = shape[::-1]

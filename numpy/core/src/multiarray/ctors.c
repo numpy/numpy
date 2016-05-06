@@ -3391,10 +3391,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         return NULL;
     }
     if (dtype->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "The elements are 0-sized.");
-        Py_DECREF(dtype);
-        return NULL;
+        /* Nothing to read, just create an empty array of the requested type */
+        return PyArray_NewFromDescr_int(&PyArray_Type,
+                                        dtype,
+                                        1, &num,
+                                        NULL, NULL,
+                                        0, NULL, 0, 1);
     }
     if ((sep == NULL) || (strlen(sep) == 0)) {
         ret = array_fromfile_binary(fp, dtype, num, &nread);
