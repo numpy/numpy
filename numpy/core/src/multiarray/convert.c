@@ -133,6 +133,10 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     "cannot write object arrays to a file in binary mode");
             return -1;
         }
+        if (PyArray_DESCR(self)->elsize == 0) {
+            /* For zero-width data types there's nothing to write */
+            return 0;
+        }
         if (npy_fallocate(PyArray_NBYTES(self), fp) != 0) {
             return -1;
         }
