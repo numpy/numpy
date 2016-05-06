@@ -255,12 +255,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(PyArray_DESCR(self));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(Py_TYPE(self),
                                        PyArray_DESCR(self),
                                        ndim, dimensions,
                                        strides,
                                        PyArray_DATA(self),
-                                       flags, (PyObject *)self);
+                                       flags, (PyObject *)self, 0, 1);
 
     if (ret == NULL) {
         goto fail;
