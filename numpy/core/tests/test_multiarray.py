@@ -928,24 +928,34 @@ class TestStructured(TestCase):
 
         dt = np.dtype([('I', int), ('S', 'S0')])
 
-        x = np.zeros(3, dtype=dt)
+        x = np.zeros(4, dtype=dt)
 
-        assert_equal(x['S'], [b'', b'', b''])
+        assert_equal(x['S'], [b'', b'', b'', b''])
         assert_equal(x['S'].itemsize, 0)
 
-        x['S'] = ['a', 'b', 'c']
-        assert_equal(x['S'], [b'', b'', b''])
-        assert_equal(x['I'], [0, 0, 0])
+        x['S'] = ['a', 'b', 'c', 'd']
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
 
         # Variation on test case from #4955
         x['S'][x['I'] == 0] = 'hello'
-        assert_equal(x['S'], [b'', b'', b''])
-        assert_equal(x['I'], [0, 0, 0])
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
 
         # Variation on test case from #2585
         x['S'] = 'A'
-        assert_equal(x['S'], [b'', b'', b''])
-        assert_equal(x['I'], [0, 0, 0])
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
+
+        # More tests for indexing an array with zero-width fields
+        assert_equal(np.zeros(4, dtype=[('a', 'S0,S0'),
+                                        ('b', 'u1')])['a'].itemsize, 0)
+        assert_equal(np.empty(3, dtype='S0,S0').itemsize, 0)
+        assert_equal(np.zeros(4, dtype='S0,u1')['f0'].itemsize, 0)
+
+        xx = x['S'].reshape((2, 2))
+        assert_equal(xx.itemsize, 0)
+        assert_equal(xx, [[b'', b''], [b'', b'']])
 
 
 class TestBool(TestCase):

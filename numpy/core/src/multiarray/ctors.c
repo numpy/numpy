@@ -933,11 +933,11 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     /* Check datatype element size */
     nbytes = descr->elsize;
     if (nbytes == 0) {
-        if (!PyDataType_ISSTRING(descr)) {
+        if (!PyDataType_ISFLEXIBLE(descr)) {
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
-        } else if (!allow_emptystring) {
+        } else if (PyDataType_ISSTRING(descr) && !allow_emptystring) {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;
