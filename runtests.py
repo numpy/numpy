@@ -109,6 +109,9 @@ def main(argv):
     parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
                         help=("Compare benchmark results to COMMIT. "
                               "Note that you need to commit your changes first!"))
+    parser.add_argument("--raise-warnings", default=None, type=str,
+                        choices=('develop', 'release'),
+                        help="if 'develop', some warnings are treated as errors")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -289,6 +292,7 @@ def main(argv):
                       verbose=args.verbose,
                       extra_argv=extra_argv,
                       doctests=args.doctests,
+                      raise_warnings=args.raise_warnings,
                       coverage=args.coverage)
     finally:
         os.chdir(cwd)
