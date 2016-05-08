@@ -244,7 +244,7 @@ def broadcast_arrays(*args, **kwargs):
     subok = kwargs.pop('subok', False)
     if kwargs:
         raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {}'.format(kwargs.pop()))
+                        'argument {!r}'.format(kwargs.keys()[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
