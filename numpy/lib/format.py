@@ -623,7 +623,7 @@ def read_array(fp, allow_pickle=True, pickle_kwargs=None):
     if len(shape) == 0:
         count = 1
     else:
-        count = numpy.multiply.reduce(shape)
+        count = numpy.multiply.reduce(shape, dtype=numpy.int64)
 
     # Now read the actual data.
     if dtype.hasobject:
