@@ -363,10 +363,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             argv = shlex.split(command)
 
+    # `spawn*p` family with path (vp, vpe, ...) are not available on windows.
+    # Also prefer spawn{v,vp} in favor of spawn{ve,vpe} if no env
+    # modification is actually requested as the *e* functions are not thread
+    # safe on windows (https://bugs.python.org/issue6476)
     if hasattr(os, 'spawnvpe'):
-        spawn_command = os.spawnvpe
+        spawn_command = os.spawnvpe if env else os.spawnvp
     else:
-        spawn_command = os.spawnve
+        spawn_command = os.spawnve if env else os.spawnv
         argv[0] = find_executable(argv[0]) or argv[0]
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
@@ -395,7 +399,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
 
-    if sys.version_info[0] >= 3 and os.name == 'nt':
+    if env and sys.version_info[0] >= 3 and os.name == 'nt':
         # Pre-encode os.environ, discarding un-encodable entries,
         # to avoid it failing during encoding as part of spawn. Failure
         # is possible if the environment contains entries that are not
@@ -431,7 +435,11 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             os.dup2(fout.fileno(), se_fileno)
     try:
-        status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
+        # Use spawnv in favor of spawnve, unless necessary
+        if env:
+            status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
+        else:
+            status = spawn_command(os.P_WAIT, argv0, argv)
     except Exception:
         errmess = str(get_exception())
         status = 999
