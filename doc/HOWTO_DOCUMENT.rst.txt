@@ -178,6 +178,8 @@ The sections of the docstring are:
      ----------
      x : type
          Description of parameter `x`.
+     y
+         Description of parameter `y` (with type not specified)
 
    Enclose variables in single backticks.  The colon must be preceded
    by a space, or omitted if the type is absent.
