@@ -4233,6 +4233,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"interp_complex", (PyCFunction)arr_interp_complex,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"ravel_multi_index", (PyCFunction)arr_ravel_multi_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unravel_index", (PyCFunction)arr_unravel_index,

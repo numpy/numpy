@@ -132,6 +132,11 @@ New nanfunctions ``nancumsum`` and ``nancumprod`` added
 Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
 compute ``cumsum`` and ``cumprod`` by ignoring nans.
 
+``np.interp`` can now interpolate complex values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.lib.interp(x, xp, fp)`` now allows the interpolated array ``fp``
+to be complex and will interpolate at ``complex128`` precision.
+
 Improvements
 ============
 
