@@ -1410,9 +1410,10 @@ def gradient(f, *varargs, **kwargs):
 
     Returns
     -------
-    gradient : list of ndarray
-        Each element of `list` has the same shape as `f` giving the derivative
-        of `f` with respect to each dimension.
+    gradient : ndarray or list of ndarray
+        A set of ndarrays (or a single ndarray if there is only one dimension)
+        correposnding to the derivatives of f with respect to each dimension.
+        Each derivative has the same shape as f.
 
     Examples
     --------
@@ -1432,9 +1433,8 @@ def gradient(f, *varargs, **kwargs):
             [ 1. ,  1. ,  1. ]])]
 
     >>> x = np.array([0, 1, 2, 3, 4])
-    >>> dx = np.gradient(x)
     >>> y = x**2
-    >>> np.gradient(y, dx, edge_order=2)
+    >>> np.gradient(y, edge_order=2)
     array([-0.,  2.,  4.,  6.,  8.])
 
     The axis keyword can be used to specify a subset of axes of which the gradient is calculated
@@ -1472,6 +1472,8 @@ def gradient(f, *varargs, **kwargs):
     else:
         raise SyntaxError(
             "invalid number of arguments")
+    if any([not np.isscalar(dxi) for dxi in dx]):
+        raise ValueError("distances must be scalars")
 
     edge_order = kwargs.pop('edge_order', 1)
     if kwargs:
