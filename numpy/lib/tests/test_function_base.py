@@ -2235,6 +2235,28 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
+        
+    def test_complex_interp(self):
+        # test complex interpolation
+        x = np.linspace(0, 1, 5)
+        y = np.linspace(0, 1, 5) + (1 + np.linspace(0, 1, 5))*1.0j
+        x0 = 0.3
+        y0 = x0 + (1+x0)*1.0j
+        assert_almost_equal(np.interp(x0, x, y), y0)
+        # test complex left and right
+        x0 = -1
+        left = 2 + 3.0j
+        assert_almost_equal(np.interp(x0, x, y, left=left), left)
+        x0 = 2.0
+        right = 2 + 3.0j
+        assert_almost_equal(np.interp(x0, x, y, right=right), right)
+        # test complex periodic
+        x = [-180, -170, -185, 185, -10, -5, 0, 365]
+        xp = [190, -190, 350, -350]
+        fp = [5+1.0j, 10+2j, 3+3j, 4+4j]
+        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j, 
+             3.5+3.5j, 3.75+3.75j]
+        assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
     def test_zero_dimensional_interpolation_point(self):
         x = np.linspace(0, 1, 5)
