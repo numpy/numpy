@@ -1682,7 +1682,7 @@ class blas_opt_info(system_info):
 class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
-    _lib_names = ['blas']
+    _lib_names = ['blas', 'cblas']
     notfounderror = BlasNotFoundError
 
     def calc_info(self):
