@@ -666,6 +666,9 @@ class TestGradient(TestCase):
         assert_raises(SyntaxError, gradient, x, np.array([1., 1.]),
                       np.array([1., 1.]), np.array([1., 1.]))
 
+        # disallow arrays as distances, see gh-6847
+        assert_raises(ValueError, gradient, np.arange(5), np.ones(5))
+
     def test_masked(self):
         # Make sure that gradient supports subclasses like masked arrays
         x = np.ma.array([[1, 1], [3, 4]],
