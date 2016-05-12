@@ -393,9 +393,9 @@ def _info(obj, output=sys.stdout):
 
     Parameters
     ----------
-    obj: ndarray
+    obj : ndarray
         Must be ndarray, not checked.
-    output:
+    output
         Where printed output goes.
 
     Notes
