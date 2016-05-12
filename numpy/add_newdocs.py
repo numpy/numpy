@@ -262,7 +262,7 @@ add_newdoc('numpy.core', 'nditer',
     has_multi_index : bool
         If True, the iterator was created with the "multi_index" flag,
         and the property `multi_index` can be used to retrieve it.
-    index :
+    index
         When the "c_index" or "f_index" flag was used, this property
         provides access to the index. Raises a ValueError if accessed
         and `has_index` is False.
@@ -273,10 +273,10 @@ add_newdoc('numpy.core', 'nditer',
         An index which matches the order of iteration.
     itersize : int
         Size of the iterator.
-    itviews :
+    itviews
         Structured view(s) of `operands` in memory, matching the reordered
         and optimized iterator access pattern.
-    multi_index :
+    multi_index
         When the "multi_index" flag was used, this property
         provides access to the index. Raises a ValueError if accessed
         accessed and `has_multi_index` is False.
@@ -288,7 +288,7 @@ add_newdoc('numpy.core', 'nditer',
         The array(s) to be iterated over.
     shape : tuple of ints
         Shape tuple, the shape of the iterator.
-    value :
+    value
         Value of `operands` at current iteration. Normally, this is a
         tuple of array scalars, but if the flag "external_loop" is used,
         it is a tuple of one dimensional arrays.
@@ -480,6 +480,11 @@ add_newdoc('numpy.core', 'broadcast',
         return an object that encapsulates the result.
         Amongst others, it has ``shape`` and ``nd`` properties, and
         may be used as an iterator.
+
+    See Also
+    --------
+    broadcast_arrays
+    broadcast_to
 
     Examples
     --------
