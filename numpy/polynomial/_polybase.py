@@ -223,13 +223,13 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        coef:
+        coef
             The coefficients of`other` if it is a compatible instance,
             of ABCPolyBase, otherwise `other`.
 
         Raises
         ------
-        TypeError:
+        TypeError
             When `other` is an incompatible instance of ABCPolyBase.
 
         """

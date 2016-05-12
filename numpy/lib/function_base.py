@@ -57,7 +57,7 @@ def flip(m, axis):
     ----------
     m : array_like
         Input array.
-    axis: integer
+    axis : integer
         Axis in array, which entries are reversed.
 
 

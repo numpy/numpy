@@ -439,7 +439,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         Polynomial coefficients, highest power first.  If `y` was 2-D, the
         coefficients for `k`-th data set are in ``p[:,k]``.
 
-    residuals, rank, singular_values, rcond :
+    residuals, rank, singular_values, rcond
         Present only if `full` = True.  Residuals of the least-squares fit,
         the effective rank of the scaled Vandermonde coefficient matrix,
         its singular values, and the specified value of `rcond`. For more
