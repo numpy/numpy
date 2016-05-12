@@ -533,8 +533,6 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
-        tup = PyTuple_New((title == NULL ? 2 : 3));
-        PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
             int _align;
 
@@ -544,9 +542,9 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
+        tup = PyTuple_New((title == NULL ? 2 : 3));
+        PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
-
-        PyDict_SetItem(fields, name, tup);
 
         /*
          * Title can be "meta-data".  Only insert it
@@ -556,6 +554,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         if (title != NULL) {
             Py_INCREF(title);
             PyTuple_SET_ITEM(tup, 2, title);
+            PyDict_SetItem(fields, name, tup);
 #if defined(NPY_PY3K)
             if (PyUString_Check(title)) {
 #else
@@ -570,6 +569,10 @@ _convert_from_array_descr(PyObject *obj, int align)
                 PyDict_SetItem(fields, title, tup);
             }
         }
+        else {
+            PyDict_SetItem(fields, name, tup);
+        }
+
         totalsize += conv->elsize;
         Py_DECREF(tup);
     }
