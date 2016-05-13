@@ -23,8 +23,10 @@ from numpy.core.fromnumeric import (
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
-from numpy.core.multiarray import _insert, add_docstring
-from numpy.core.multiarray import digitize, bincount, interp as compiled_interp
+from numpy.core.multiarray import (
+    _insert, add_docstring, digitize, bincount, 
+    interp as compiled_interp, interp_complex as compiled_interp_complex
+    )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 from numpy.compat.py3k import basestring
@@ -1663,13 +1665,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         `period` is not specified. Otherwise, `xp` is internally sorted after
         normalizing the periodic boundaries with ``xp = xp % period``.
 
-    fp : 1-D sequence of floats
+    fp : 1-D sequence of float or complex
         The y-coordinates of the data points, same length as `xp`.
 
-    left : float, optional
+    left : optional float or complex corresponding to fp
         Value to return for `x < xp[0]`, default is `fp[0]`.
 
-    right : float, optional
+    right : optional float or complex corresponding to fp
         Value to return for `x > xp[-1]`, default is `fp[-1]`.
 
     period : None or float, optional
@@ -1681,7 +1683,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Returns
     -------
-    y : float or ndarray
+    y : float or complex (corresponding to fp) or ndarray 
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1732,14 +1734,31 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     >>> np.interp(x, xp, fp, period=360)
     array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
 
+    Complex interpolation
+    >>> x = [1.5, 4.0]
+    >>> xp = [2,3,5]
+    >>> fp = [1.0j, 0, 2+3j]
+    >>> np.interp(x, xp, fp)
+    array([ 0.+1.j ,  1.+1.5j])
+
     """
+
+    fp = np.asarray(fp)
+
+    if np.iscomplexobj(fp):
+        interp_func = compiled_interp_complex
+        input_dtype = np.complex128
+    else:
+        interp_func = compiled_interp
+        input_dtype = np.float64
+
     if period is None:
         if isinstance(x, (float, int, number)):
-            return compiled_interp([x], xp, fp, left, right).item()
+            return interp_func([x], xp, fp, left, right).item()
         elif isinstance(x, np.ndarray) and x.ndim == 0:
-            return compiled_interp([x], xp, fp, left, right).item()
+            return interp_func([x], xp, fp, left, right).item()
         else:
-            return compiled_interp(x, xp, fp, left, right)
+            return interp_func(x, xp, fp, left, right)
     else:
         if period == 0:
             raise ValueError("period must be a non-zero value")
@@ -1752,7 +1771,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
             x = [x]
         x = np.asarray(x, dtype=np.float64)
         xp = np.asarray(xp, dtype=np.float64)
-        fp = np.asarray(fp, dtype=np.float64)
+        fp = np.asarray(fp, dtype=input_dtype)
+
         if xp.ndim != 1 or fp.ndim != 1:
             raise ValueError("Data points must be 1-D sequences")
         if xp.shape[0] != fp.shape[0]:
@@ -1765,12 +1785,12 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         fp = fp[asort_xp]
         xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
+
         if return_array:
-            return compiled_interp(x, xp, fp, left, right)
+            return interp_func(x, xp, fp, left, right)
         else:
-            return compiled_interp(x, xp, fp, left, right).item()
-
-
+            return interp_func(x, xp, fp, left, right).item()
+                
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
