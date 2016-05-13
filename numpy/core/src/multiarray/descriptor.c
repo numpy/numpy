@@ -29,7 +29,9 @@
 #define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
                 (((offset) + (alignment) - 1) & (-(alignment)))
 
+#ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
+#endif
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
