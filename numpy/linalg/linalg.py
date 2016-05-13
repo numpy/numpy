@@ -2346,12 +2346,12 @@ def _multi_dot_three(A, B, C):
     than `_multi_dot_matrix_chain_order`
 
     """
-    # cost1 = cost((AB)C)
-    cost1 = (A.shape[0] * A.shape[1] * B.shape[1] +  # (AB)
-             A.shape[0] * B.shape[1] * C.shape[1])   # (--)C
-    # cost2 = cost((AB)C)
-    cost2 = (B.shape[0] * B.shape[1] * C.shape[1] +  #  (BC)
-             A.shape[0] * A.shape[1] * C.shape[1])   # A(--)
+    a0, a1b0 = A.shape
+    b1c0, c1 = C.shape
+    # cost1 = cost((AB)C) = a0*a1b0*b1c0 + a0*b1c0*c1
+    cost1 = a0 * b1c0 * (a1b0 + c1)
+    # cost2 = cost(A(BC)) = a1b0*b1c0*c1 + a0*a1b0*c1
+    cost2 = a1b0 * c1 * (a0 + b1c0)
 
     if cost1 < cost2:
         return dot(dot(A, B), C)
