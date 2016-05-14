@@ -1146,9 +1146,6 @@ def assert_raises(*args,**kwargs):
     return nose.tools.assert_raises(*args,**kwargs)
 
 
-assert_raises_regex_impl = None
-
-
 def assert_raises_regex(exception_class, expected_regexp,
                         callable_obj=None, *args, **kwargs):
     """
@@ -1159,70 +1156,22 @@ def assert_raises_regex(exception_class, expected_regexp,
     Name of this function adheres to Python 3.2+ reference, but should work in
     all versions down to 2.6.
 
+    Notes
+    -----
+    .. versionadded:: 1.9.0
+
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     nose = import_nose()
 
-    global assert_raises_regex_impl
-    if assert_raises_regex_impl is None:
-        try:
-            # Python 3.2+
-            assert_raises_regex_impl = nose.tools.assert_raises_regex
-        except AttributeError:
-            try:
-                # 2.7+
-                assert_raises_regex_impl = nose.tools.assert_raises_regexp
-            except AttributeError:
-                # 2.6
+    if sys.version_info.major >= 3:
+        funcname = nose.tools.assert_raises_regex
+    else:
+        # Only present in Python 2.7, missing from unittest in 2.6
+            funcname = nose.tools.assert_raises_regexp
 
-                # This class is copied from Python2.7 stdlib almost verbatim
-                class _AssertRaisesContext(object):
-                    """A context manager used to implement TestCase.assertRaises* methods."""
-
-                    def __init__(self, expected, expected_regexp=None):
-                        self.expected = expected
-                        self.expected_regexp = expected_regexp
-
-                    def failureException(self, msg):
-                        return AssertionError(msg)
-
-                    def __enter__(self):
-                        return self
-
-                    def __exit__(self, exc_type, exc_value, tb):
-                        if exc_type is None:
-                            try:
-                                exc_name = self.expected.__name__
-                            except AttributeError:
-                                exc_name = str(self.expected)
-                            raise self.failureException(
-                                "{0} not raised".format(exc_name))
-                        if not issubclass(exc_type, self.expected):
-                            # let unexpected exceptions pass through
-                            return False
-                        self.exception = exc_value  # store for later retrieval
-                        if self.expected_regexp is None:
-                            return True
-
-                        expected_regexp = self.expected_regexp
-                        if isinstance(expected_regexp, basestring):
-                            expected_regexp = re.compile(expected_regexp)
-                        if not expected_regexp.search(str(exc_value)):
-                            raise self.failureException(
-                                '"%s" does not match "%s"' %
-                                (expected_regexp.pattern, str(exc_value)))
-                        return True
-
-                def impl(cls, regex, callable_obj, *a, **kw):
-                    mgr = _AssertRaisesContext(cls, regex)
-                    if callable_obj is None:
-                        return mgr
-                    with mgr:
-                        callable_obj(*a, **kw)
-                assert_raises_regex_impl = impl
-
-    return assert_raises_regex_impl(exception_class, expected_regexp,
-                                    callable_obj, *args, **kwargs)
+    return funcname(exception_class, expected_regexp, callable_obj,
+                    *args, **kwargs)
 
 
 def decorate_methods(cls, decorator, testmatch=None):
