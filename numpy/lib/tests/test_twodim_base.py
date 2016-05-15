@@ -5,7 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
     TestCase, run_module_suite, assert_equal, assert_array_equal,
-    assert_array_max_ulp, assert_array_almost_equal, assert_raises, rand,
+    assert_array_max_ulp, assert_array_almost_equal, assert_raises
     )
 
 from numpy import (
@@ -254,7 +254,7 @@ class TestHistogram2d(TestCase):
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
-        r = rand(100) + 1. + 1e6  # histogramdd rounds by decimal=6
+        r = np.random.rand(100) + 1. + 1e6  # histogramdd rounds by decimal=6
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0, 1], [0, 1]))
         assert_array_equal(H, 0)
 
@@ -267,10 +267,10 @@ class TestHistogram2d(TestCase):
 
     def test_binparameter_combination(self):
         x = array(
-            [0, 0.09207008,  0.64575234,  0.12875982,  0.47390599,  
+            [0, 0.09207008,  0.64575234,  0.12875982,  0.47390599,
              0.59944483, 1])
         y = array(
-            [0, 0.14344267,  0.48988575,  0.30558665,  0.44700682,  
+            [0, 0.14344267,  0.48988575,  0.30558665,  0.44700682,
              0.15886423, 1])
         edges = (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
         H, xe, ye = histogram2d(x, y, (edges, 4))
