@@ -1276,7 +1276,18 @@ class TestHistogram(TestCase):
         histogram(vals, range=[0.25,0.75])
         assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
         assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
-        
+
+    def test_bin_edge_cases(self):
+        # Ensure that floating-point computations correctly place edge cases.
+        arr = np.array([337, 404, 739, 806, 1007, 1811, 2012])
+        hist, edges = np.histogram(arr, bins=8296, range=(2, 2280))
+        mask = hist > 0
+        left_edges = edges[:-1][mask]
+        right_edges = edges[1:][mask]
+        for x, left, right in zip(arr, left_edges, right_edges):
+            self.assertGreaterEqual(x, left)
+            self.assertLess(x, right)
+
 
 class TestHistogramOptimBinNums(TestCase):
     """
