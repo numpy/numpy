@@ -133,9 +133,9 @@ if sys.version_info[0] < 3:
 else:
     from configparser import NoOptionError
     from configparser import RawConfigParser as ConfigParser
-# It seems that some people are importing ConfigParser from here so is 
-# good to keep its class name. Use of RawConfigParser is needed in 
-# order to be able to load path names with percent in them, like 
+# It seems that some people are importing ConfigParser from here so is
+# good to keep its class name. Use of RawConfigParser is needed in
+# order to be able to load path names with percent in them, like
 # `feature%2Fcool` which is common on git flow branch names.
 
 from distutils.errors import DistutilsError
@@ -1694,6 +1694,7 @@ class blas_info(system_info):
         # cblas or blas
         res = False
         c = distutils.ccompiler.new_compiler()
+        c.customize('')
         tmpdir = tempfile.mkdtemp()
         s = """#include <cblas.h>
         int main(int argc, const char *argv[])
@@ -1774,6 +1775,7 @@ class openblas_lapack_info(openblas_info):
     def check_embedded_lapack(self, info):
         res = False
         c = distutils.ccompiler.new_compiler()
+        c.customize('')
         tmpdir = tempfile.mkdtemp()
         s = """void zungqr();
         int main(int argc, const char *argv[])
