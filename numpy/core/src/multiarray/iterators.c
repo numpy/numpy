@@ -1692,7 +1692,7 @@ static PyMemberDef arraymultiter_members[] = {
         T_INT,
         offsetof(PyArrayMultiIterObject, numiter),
         READONLY, NULL},
-    {"nd",
+    {"ndim",
         T_INT,
         offsetof(PyArrayMultiIterObject, nd),
         READONLY, NULL},
