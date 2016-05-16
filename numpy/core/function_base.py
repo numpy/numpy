@@ -58,7 +58,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
         There are `num` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``
         (depending on whether `endpoint` is True or False).
-    step : float
+    step : float, optional
         Only returned if `retstep` is True
 
         Size of spacing between samples.
