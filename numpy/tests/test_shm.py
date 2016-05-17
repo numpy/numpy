@@ -1,8 +1,15 @@
 import multiprocessing
 
 import numpy as np
-import concurrent.futures as futures
-from numpy.testing import TestCase, assert_equal, run_module_suite
+
+try:
+    import concurrent.futures as futures
+except ImportError:
+    # We are on Python2, moreover the associated test
+    # doesn't (and can't) work on Python3 either
+    pass
+
+from numpy.testing import TestCase, assert_equal, run_module_suite, dec
 from nose.exc import SkipTest
 
 
@@ -56,8 +63,9 @@ class TestCreation(TestCase):
 
 
 class TestModification(TestCase):
+    @dec.knownfailureif(True, "This is supposed to always fail since a "
+                        "ProcessPoolExecutor doesn't have an innitializer.")
     def test_processpool(self):
-        raise SkipTest("This is even not supposed to work.")
         orig = np.zeros(4, float) + 8
         arr = np.shm.copy(orig)
 
@@ -70,6 +78,34 @@ class TestModification(TestCase):
     def test_two_subprocesses_no_pickle(self):
         orig = np.zeros(4, float) + 8
         arr = np.shm.copy(orig)
+
+        p = multiprocessing.Process(target=_modify_array_normal,
+                                    args=(arr, 1))
+        p.start()
+        p.join()
+
+        assert_equal(arr, np.array([8, 2, 8, 8], dtype=float))
+
+    def test_two_subprocesses_no_pickle_view(self):
+        # Force the shm array to make a view of itself
+        orig = np.zeros(4, float) + 8
+        arr = np.shm.copy(orig)
+        subarr = arr[2:]
+        subarr[:] = 3
+
+        p = multiprocessing.Process(target=_modify_array_normal,
+                                    args=(arr[:2], 1))
+        p.start()
+        p.join()
+
+        assert_equal(arr, np.array([8, 2, 3, 3], dtype=float))
+
+    def test_two_subprocesses_no_pickle_copy(self):
+        # Force the shm array to make a copy of itself
+        orig = np.zeros(4, float) - 1
+        arr = np.shm.copy(orig)
+        # vvv This destroys everything
+        arr = arr + 9
 
         p = multiprocessing.Process(target=_modify_array_normal,
                                     args=(arr, 1))
@@ -103,7 +139,6 @@ class TestModification(TestCase):
         in_array = np.array((9, 19, 88, 1949, 99999, 18, 23, -9, -919, 9e99))
         result = pool.carry_out_computation(in_array, update_period=0.1)
         assert_equal(result, np.array([1, 1, 0, 2, 5, 0, 0, 1, 2, 3], dtype=int))
-
 
 if __name__ == "__main__":
     run_module_suite()

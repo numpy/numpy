@@ -92,6 +92,10 @@ class shmarray(np.ndarray):
             return
         self.ctypesArray = getattr(obj, 'ctypesArray', None)
 
+    def copy(self):
+        ret = copy(self)
+        return ret
+
     def __reduce_ex__(self, protocol):
         """
         delegate pickling of the data to the underlying storage, but keep copies
