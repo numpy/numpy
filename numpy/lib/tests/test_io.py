@@ -19,9 +19,8 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
     assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal,temppath
+    assert_array_equal, temppath, dec
 )
-from numpy.testing.utils import tempdir
 
 
 class TextIO(BytesIO):
@@ -158,6 +157,7 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
+    @dec.slow
     def test_format_2_0(self):
         dt = [(("%d" % i) * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
@@ -1869,7 +1869,7 @@ class TestPathUsage(TestCase):
             data = np.load(path)
             assert_array_equal(data['lab'], 'place holder')
             data.close()
-    
+
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_genfromtxt(self):
         with temppath(suffix='.txt') as path:
@@ -1878,49 +1878,52 @@ class TestPathUsage(TestCase):
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-    
+
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_ndfromtxt(self):
         # Test outputing a standard ndarray
         with temppath(suffix='.txt') as path:
             path = Path(path)
             with path.open('w') as f:
-                f.write('1 2\n3 4')
+                f.write(u'1 2\n3 4')
+
             control = np.array([[1, 2], [3, 4]], dtype=int)
             test = np.ndfromtxt(path, dtype=int)
             assert_array_equal(test, control)
-    
+
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_mafromtxt(self):
         # From `test_fancy_dtype_alt` above
         with temppath(suffix='.txt') as path:
             path = Path(path)
             with path.open('w') as f:
-                f.write('1,2,3.0\n4,5,6.0\n')
-                
+                f.write(u'1,2,3.0\n4,5,6.0\n')
+
             test = np.mafromtxt(path, delimiter=',')
             control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
             assert_equal(test, control)
-    
+
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
             with path.open('w') as f:
-                f.write('A,B\n0,1\n2,3')
+                f.write(u'A,B\n0,1\n2,3')
+
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
             test = np.recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', np.int), ('B', np.int)])
             self.assertTrue(isinstance(test, np.recarray))
             assert_equal(test, control)
-    
+
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromcsv(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
             with path.open('w') as f:
-                f.write('A,B\n0,1\n2,3')
+                f.write(u'A,B\n0,1\n2,3')
+
             kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
             test = np.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
