@@ -434,6 +434,10 @@ class TestPower(TestCase):
         arr = np.arange(-10, 10)
         assert_equal(np.power(arr, 0), np.ones_like(arr))
 
+    def test_integer_power_of_1(self):
+        arr = np.arange(-10, 10)
+        assert_equal(np.power(1, arr), np.ones_like(arr))
+
 
 class TestLog2(TestCase):
     def test_log2_values(self):

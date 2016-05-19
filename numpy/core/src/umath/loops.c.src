@@ -921,6 +921,10 @@ NPY_NO_EXPORT void
           *((@type@ *)op1) = 1;
           continue;
         }
+        if (in1 == 1) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
         if (in2 < 0 || in1 == 0) {
             *((@type@ *)op1) = 0;
             continue;
