@@ -665,10 +665,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
     # insert indices of low and high median
     ind.insert(axis, h - 1)
-    low = asorted[ind]
+    low = asorted[tuple(ind)]
     low._sharedmask = False
     ind[axis] = h
-    high = asorted[ind]
+    high = asorted[tuple(ind)]
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     if asorted.ndim == 1:
