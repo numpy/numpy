@@ -2698,8 +2698,11 @@ class MaskedArray(ndarray):
     _defaultmask = nomask
     _defaulthardmask = False
     _baseclass = ndarray
-    # Maximum number of elements per axis used when printing an array.
+
+    # Maximum number of elements per axis used when printing an array. The
+    # 1d case is handled separately because we need more values in this case.
     _print_width = 100
+    _print_width_1d = 1500
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None, keep_mask=True,
@@ -3776,9 +3779,11 @@ class MaskedArray(ndarray):
                     mask = m
                     # For big arrays, to avoid a costly conversion to the
                     # object dtype, extract the corners before the conversion.
+                    print_width = (self._print_width if self.ndim > 1
+                                   else self._print_width_1d)
                     for axis in range(self.ndim):
-                        if data.shape[axis] > self._print_width:
-                            ind = self._print_width // 2
+                        if data.shape[axis] > print_width:
+                            ind = print_width // 2
                             arr = np.split(data, (ind, -ind), axis=axis)
                             data = np.concatenate((arr[0], arr[2]), axis=axis)
                             arr = np.split(mask, (ind, -ind), axis=axis)
