@@ -5954,7 +5954,14 @@ class mvoid(MaskedArray):
             return self._data.__str__()
         printopt = masked_print_option
         rdtype = _recursive_make_descr(self._data.dtype, "O")
-        res = np.array([self._data]).astype(rdtype)
+
+        # temporary hack to fix gh-7493. A more permanent fix
+        # is proposed in gh-6053, after which the next two
+        # lines should be changed to
+        # res = np.array([self._data], dtype=rdtype)
+        res = np.empty(1, rdtype)
+        res[:1] = self._data
+
         _recursive_printoption(res, self._mask, printopt)
         return str(res[0])
 
