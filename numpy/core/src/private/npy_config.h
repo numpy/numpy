@@ -75,7 +75,7 @@
 
 #if defined(HAVE_FEATURES_H)
 #include <features.h>
-#define TRIG_OK __GLIBC_PREREQ(2, 16)
+#define TRIG_OK __GLIBC_PREREQ(2, 18)
 #else
 #define TRIG_OK 0
 #endif
@@ -93,6 +93,12 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
 #endif
 #undef TRIG_OK
 
