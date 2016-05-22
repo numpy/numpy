@@ -757,6 +757,10 @@ class TestMaskedArray(TestCase):
         finally:
             masked_print_option.set_display(ini_display)
 
+        # also check if there are object datatypes (see gh-7493)
+        mx = array([(1,), (2,)], dtype=[('a', 'O')])
+        assert_equal(str(mx[0]), "(1,)")
+
     def test_mvoid_multidim_print(self):
 
         # regression test for gh-6019
