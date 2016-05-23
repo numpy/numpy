@@ -1083,7 +1083,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val;
+    int val, cast = 0;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
@@ -1095,9 +1095,13 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
 #else
+        cast = 1;
+#endif  /* define(NPY_PY3K) */
+    }
+    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
-            PyArray_DESCR(other)->type_num == NPY_UNICODE) {
+                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
             unicode->elsize = PyArray_DESCR(self)->elsize << 2;
             new = PyArray_FromAny((PyObject *)self, unicode,
@@ -1108,10 +1112,17 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
-        else if (PyArray_TYPE(self) == NPY_UNICODE &&
-                 PyArray_DESCR(other)->type_num == NPY_STRING) {
+        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
+                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
+                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-            unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+
+            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
+                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+            }
+            else {
+                unicode->elsize = PyArray_DESCR(other)->elsize;
+            }
             new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
@@ -1126,7 +1137,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
-#endif
     }
     else {
         Py_INCREF(self);
