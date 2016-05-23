@@ -126,7 +126,7 @@ PyArray_GetStridedCopySwapPairFn(int aligned,
  * Returns NPY_SUCCEED or NPY_FAIL
  */
 NPY_NO_EXPORT int
-PyArray_GetStridedZeroPadCopyFn(int aligned,
+PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
                             PyArray_StridedUnaryOp **outstransfer,
