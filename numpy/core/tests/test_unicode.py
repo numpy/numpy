@@ -317,7 +317,7 @@ class byteorder_values:
         # Check byteorder of single-dimensional objects
         ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        self.assertTrue(ua[0] != ua2[0])
+        self.assertTrue((ua != ua2).all())
         self.assertTrue(ua[-1] != ua2[-1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
@@ -326,13 +326,42 @@ class byteorder_values:
     def test_valuesMD(self):
         # Check byteorder of multi-dimensional objects
         ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4,
-                   dtype='U%s' % self.ulen)
+                      dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        self.assertTrue(ua[0, 0, 0] != ua2[0, 0, 0])
+        self.assertTrue((ua != ua2).all())
         self.assertTrue(ua[-1, -1, -1] != ua2[-1, -1, -1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
+
+    def test_values_cast(self):
+        # Check byteorder of when casting the array for a strided and
+        # contiguous array:
+        test1 = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
+        test2 = np.repeat(test1, 2)[::2]
+        for ua in (test1, test2):
+            ua2 = ua.astype(dtype=ua.dtype.newbyteorder())
+            self.assertTrue((ua == ua2).all())
+            self.assertTrue(ua[-1] == ua2[-1])
+            ua3 = ua2.astype(dtype=ua.dtype)
+            # Arrays must be equal after the round-trip
+            assert_equal(ua, ua3)
+
+    def test_values_updowncast(self):
+        # Check byteorder of when casting the array to a longer and shorter
+        # string length for strided and contiguous arrays
+        test1 = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
+        test2 = np.repeat(test1, 2)[::2]
+        for ua in (test1, test2):
+            # Cast to a longer type with zero padding
+            longer_type = np.dtype('U%s' % (self.ulen+1)).newbyteorder()
+            ua2 = ua.astype(dtype=longer_type)
+            self.assertTrue((ua == ua2).all())
+            self.assertTrue(ua[-1] == ua2[-1])
+            # Cast back again with truncating:
+            ua3 = ua2.astype(dtype=ua.dtype)
+            # Arrays must be equal after the round-trip
+            assert_equal(ua, ua3)
 
 
 class test_byteorder_1_ucs2(byteorder_values, TestCase):
