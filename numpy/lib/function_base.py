@@ -639,6 +639,9 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # Pre-compute histogram scaling factor
         norm = bins / (mx - mn)
 
+        # Compute the bin edges for potential correction.
+        bin_edges = linspace(mn, mx, bins + 1, endpoint=True)
+
         # We iterate over blocks here for two reasons: the first is that for
         # large arrays, it is actually faster (for example for a 10^8 array it
         # is 2x as fast) and it results in a memory footprint 3x lower in the
@@ -657,14 +660,22 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
                     tmp_w = tmp_w[keep]
-            tmp_a = tmp_a.astype(float)
-            tmp_a -= mn
+            tmp_a_data = tmp_a.astype(float)
+            tmp_a = tmp_a_data - mn
             tmp_a *= norm
 
             # Compute the bin indices, and for values that lie exactly on mx we
             # need to subtract one
             indices = tmp_a.astype(np.intp)
-            indices[indices == bins] -= 1
+            equals_endpoint = (indices == bins)
+            indices[equals_endpoint] -= 1
+
+            # The index computation is not guaranteed to give exactly
+            # consistent results within ~1 ULP of the bin edges.
+            decrement = tmp_a_data < bin_edges[indices]
+            indices[decrement] -= 1
+            increment = (tmp_a_data >= bin_edges[indices + 1]) & ~equals_endpoint
+            indices[increment] += 1
 
             # We now compute the histogram using bincount
             if ntype.kind == 'c':
@@ -673,8 +684,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             else:
                 n += np.bincount(indices, weights=tmp_w, minlength=bins).astype(ntype)
 
-        # We now compute the bin edges since these are returned
-        bins = linspace(mn, mx, bins + 1, endpoint=True)
+        # Rename the bin edges for return.
+        bins = bin_edges
     else:
         bins = asarray(bins)
         if (np.diff(bins) < 0).any():
