@@ -1285,8 +1285,8 @@ class TestHistogram(TestCase):
         left_edges = edges[:-1][mask]
         right_edges = edges[1:][mask]
         for x, left, right in zip(arr, left_edges, right_edges):
-            self.assertGreaterEqual(x, left)
-            self.assertLess(x, right)
+            assert_(x >= left)
+            assert_(x < right)
 
 
 class TestHistogramOptimBinNums(TestCase):
