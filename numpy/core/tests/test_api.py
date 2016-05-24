@@ -64,7 +64,7 @@ def test_array_array():
                      np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
-    assert_(isinstance(builtins, dict))
+    assert_(hasattr(builtins, 'get'))
 
     # test buffer
     _buffer = builtins.get("buffer")
