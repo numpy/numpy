@@ -1129,7 +1129,9 @@ array_assign_boolean_subscript(PyArrayObject *self,
             return -1;
         }
 
-        NPY_BEGIN_THREADS_NDITER(iter);
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_NDITER(iter);
+        }
 
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1153,7 +1155,9 @@ array_assign_boolean_subscript(PyArrayObject *self,
             }
         } while (iternext(iter));
 
-        NPY_END_THREADS;
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
 
         NPY_AUXDATA_FREE(transferdata);
         NpyIter_Deallocate(iter);

@@ -220,6 +220,20 @@ class TestIndexing(TestCase):
         assert_raises(ValueError, f, a, [1, 2, 3])
         assert_raises(ValueError, f, a[:1], [1, 2, 3])
 
+    def test_boolean_assignment_needs_api(self):
+        # See also gh-7666
+        # This caused a segfault on Python 2 due to the GIL not being
+        # held when the iterator does not need it, but the transfer function
+        # does
+        arr = np.zeros(1000)
+        indx = np.zeros(1000, dtype=bool)
+        indx[:100] = True
+        arr[indx] = np.ones(100, dtype=object)
+
+        expected = np.zeros(1000)
+        expected[:100] = 1
+        assert_array_equal(arr, expected)
+
     def test_boolean_indexing_twodim(self):
         # Indexing a 2-dimensional array with
         # 2-dimensional boolean array
