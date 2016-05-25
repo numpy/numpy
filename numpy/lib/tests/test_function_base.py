@@ -1288,6 +1288,11 @@ class TestHistogram(TestCase):
             assert_(x >= left)
             assert_(x < right)
 
+    def test_last_bin_inclusive_range(self):
+        arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
+        hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
+        self.assertEqual(hist[-1], 1)
+
 
 class TestHistogramOptimBinNums(TestCase):
     """

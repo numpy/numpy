@@ -593,14 +593,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             # Compute the bin indices, and for values that lie exactly on mx we
             # need to subtract one
             indices = tmp_a.astype(np.intp)
-            equals_endpoint = (indices == bins)
-            indices[equals_endpoint] -= 1
+            indices[indices == bins] -= 1
 
             # The index computation is not guaranteed to give exactly
             # consistent results within ~1 ULP of the bin edges.
             decrement = tmp_a_data < bin_edges[indices]
             indices[decrement] -= 1
-            increment = (tmp_a_data >= bin_edges[indices + 1]) & ~equals_endpoint
+            # The last bin includes the right edge. The other bins do not.
+            increment = (tmp_a_data >= bin_edges[indices + 1]) & (indices != bins - 1)
             indices[increment] += 1
 
             # We now compute the histogram using bincount
