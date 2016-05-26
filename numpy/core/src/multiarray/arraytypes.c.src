@@ -3763,6 +3763,12 @@ static void
         }
     }
     else {
+// Visual Studio 2015 loop vectorizer handles NaN in an unexpected manner, see:
+// https://github.com/numpy/numpy/issues/7601
+// https://connect.microsoft.com/VisualStudio/feedback/details/2723801/unexpected-nan-handling-in-vectorized-loop
+#if (_MSC_VER == 1900)
+#pragma loop( no_vector )
+#endif
         for (i = 0; i < ni; i++) {
             if (@lt@(in[i], min_val)) {
                 out[i]   = min_val;
