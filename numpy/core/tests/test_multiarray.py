@@ -3396,6 +3396,12 @@ class TestClip(TestCase):
         x = val.clip(max=4)
         assert_(np.all(x <= 4))
 
+    def test_nan(self):
+        input_arr = np.array([-2., np.nan, 0.5, 3., 0.25, np.nan])
+        result = input_arr.clip(-1, 1)
+        expected = np.array([-1., np.nan, 0.5, 1., 0.25, np.nan])
+        assert_array_equal(result, expected)
+
 
 class TestCompress(TestCase):
     def test_axis(self):
