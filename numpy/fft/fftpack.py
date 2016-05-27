@@ -38,9 +38,10 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
 from . import fftpack_lite as fftpack
+from .helper import _FFTCache
 
-_fft_cache = {}
-_real_fft_cache = {}
+_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
+_real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 
 
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,

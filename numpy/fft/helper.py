@@ -4,6 +4,8 @@ Discrete Fourier Transforms - helper.py
 """
 from __future__ import division, absolute_import, print_function
 
+from collections import OrderedDict
+
 from numpy.compat import integer_types
 from numpy.core import (
         asarray, concatenate, arange, take, integer, empty
@@ -222,3 +224,63 @@ def rfftfreq(n, d=1.0):
     N = n//2 + 1
     results = arange(0, N, dtype=int)
     return results * val
+
+
+class _FFTCache(object):
+    """
+    Cache for the FFT init functions as an LRU (least recently used) cache.
+
+    Parameters
+    ----------
+    max_size_in_mb : int
+        Maximum memory usage of the cache before items are being evicted.
+    max_item_count : int
+        Maximum item count of the cache before items are being evicted.
+
+    Notes
+    -----
+    Items will be evicted if either limit has been reached upon getting and
+    setting. The maximum memory usages is not strictly the given
+    ``max_size_in_mb`` but rather
+    ``max(max_size_in_mb, 1.5 * size_of_largest_item)``. Thus the cache will
+    never be completely cleared - at least one item will remain and a single
+    large item can cause the cache to retain several smaller items even if the
+    given maximum cache size has been exceeded.
+    """
+    def __init__(self, max_size_in_mb, max_item_count):
+        self._max_size_in_bytes = max_size_in_mb * 1024 ** 2
+        self._max_item_count = max_item_count
+        # Much simpler than inheriting from it and having to work around
+        # recursive behaviour.
+        self._dict = OrderedDict()
+
+    def setdefault(self, key, value):
+        return self._dict.setdefault(key, value)
+
+    def __getitem__(self, key):
+        # pop + add to move it to the end.
+        value = self._dict.pop(key)
+        self._dict[key] = value
+        self._prune_dict()
+        return value
+
+    def __setitem__(self, key, value):
+        # Just setting is it not enough to move it to the end if it already
+        # exists.
+        try:
+            del self._dict[key]
+        except:
+            pass
+        self._dict[key] = value
+        self._prune_dict()
+
+    def _prune_dict(self):
+        # Always keep at least one item.
+        while len(self._dict) > 1 and (
+                len(self._dict) > self._max_item_count or self._check_size()):
+            self._dict.popitem(last=False)
+
+    def _check_size(self):
+        item_sizes = [_i[0].nbytes for _i in self._dict.values() if _i]
+        max_size = max(self._max_size_in_bytes, 1.5 * max(item_sizes))
+        return sum(item_sizes) > max_size
