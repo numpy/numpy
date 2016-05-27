@@ -19,7 +19,7 @@ other faster and simpler functions like :func:`~numpy.loadtxt` cannot.
    When giving examples, we will use the following conventions::
 
        >>> import numpy as np
-       >>> from StringIO import StringIO
+       >>> from io import BytesIO
 
 
 
@@ -59,7 +59,7 @@ example, comma-separated files (CSV) use a comma (``,``) or a semicolon
 (``;``) as delimiter::
 
    >>> data = "1, 2, 3\n4, 5, 6"
-   >>> np.genfromtxt(StringIO(data), delimiter=",")
+   >>> np.genfromtxt(BytesIO(data), delimiter=",")
    array([[ 1.,  2.,  3.],
           [ 4.,  5.,  6.]])
 
@@ -75,12 +75,12 @@ defined as a given number of characters.  In that case, we need to set
 size) or to a sequence of integers (if columns can have different sizes)::
 
    >>> data = "  1  2  3\n  4  5 67\n890123  4"
-   >>> np.genfromtxt(StringIO(data), delimiter=3)
+   >>> np.genfromtxt(BytesIO(data), delimiter=3)
    array([[   1.,    2.,    3.],
           [   4.,    5.,   67.],
           [ 890.,  123.,    4.]])
    >>> data = "123456789\n   4  7 9\n   4567 9"
-   >>> np.genfromtxt(StringIO(data), delimiter=(4, 3, 2))
+   >>> np.genfromtxt(BytesIO(data), delimiter=(4, 3, 2))
    array([[ 1234.,   567.,    89.],
           [    4.,     7.,     9.],
           [    4.,   567.,     9.]])
@@ -96,12 +96,12 @@ This behavior can be overwritten by setting the optional argument
 
    >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
-   >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|S5")
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|S5")
    array([['1', ' abc ', ' 2'],
           ['3', ' xxx', ' 4']],
          dtype='|S5')
    >>> # With autostrip
-   >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|S5", autostrip=True)
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|S5", autostrip=True)
    array([['1', 'abc', '2'],
           ['3', 'xxx', '4']],
          dtype='|S5')
@@ -126,7 +126,7 @@ marker(s) is simply ignored::
    ... # And here comes the last line
    ... 9, 0
    ... """
-   >>> np.genfromtxt(StringIO(data), comments="#", delimiter=",")
+   >>> np.genfromtxt(BytesIO(data), comments="#", delimiter=",")
    [[ 1.  2.]
     [ 3.  4.]
     [ 5.  6.]
@@ -154,9 +154,9 @@ performed.  Similarly, we can skip the last ``n`` lines of the file by
 using the :keyword:`skip_footer` attribute and giving it a value of ``n``::
 
    >>> data = "\n".join(str(i) for i in range(10))
-   >>> np.genfromtxt(StringIO(data),)
+   >>> np.genfromtxt(BytesIO(data),)
    array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
-   >>> np.genfromtxt(StringIO(data),
+   >>> np.genfromtxt(BytesIO(data),
    ...               skip_header=3, skip_footer=5)
    array([ 3.,  4.])
 
@@ -178,7 +178,7 @@ For example, if we want to import only the first and the last columns, we
 can use ``usecols=(0, -1)``::
 
    >>> data = "1 2 3\n4 5 6"
-   >>> np.genfromtxt(StringIO(data), usecols=(0, -1))
+   >>> np.genfromtxt(BytesIO(data), usecols=(0, -1))
    array([[ 1.,  3.],
           [ 4.,  6.]])
 
@@ -187,11 +187,11 @@ giving their name to the :keyword:`usecols` argument, either as a sequence
 of strings or a comma-separated string::
 
    >>> data = "1 2 3\n4 5 6"
-   >>> np.genfromtxt(StringIO(data),
+   >>> np.genfromtxt(BytesIO(data),
    ...               names="a, b, c", usecols=("a", "c"))
    array([(1.0, 3.0), (4.0, 6.0)],
          dtype=[('a', '<f8'), ('c', '<f8')])
-   >>> np.genfromtxt(StringIO(data),
+   >>> np.genfromtxt(BytesIO(data),
    ...               names="a, b, c", usecols=("a, c"))
        array([(1.0, 3.0), (4.0, 6.0)],
              dtype=[('a', '<f8'), ('c', '<f8')])
@@ -249,7 +249,7 @@ A natural approach when dealing with tabular data is to allocate a name to
 each column.  A first possibility is to use an explicit structured dtype,
 as mentioned previously::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=[(_, int) for _ in "abc"])
    array([(1, 2, 3), (4, 5, 6)],
          dtype=[('a', '<i8'), ('b', '<i8'), ('c', '<i8')])
@@ -257,7 +257,7 @@ as mentioned previously::
 Another simpler possibility is to use the :keyword:`names` keyword with a
 sequence of strings or a comma-separated string::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, names="A, B, C")
    array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
          dtype=[('A', '<f8'), ('B', '<f8'), ('C', '<f8')])
@@ -271,7 +271,7 @@ that case, we must use the :keyword:`names` keyword with a value of
 ``True``.  The names will then be read from the first line (after the
 ``skip_header`` ones), even if the line is commented out::
 
-   >>> data = StringIO("So it goes\n#a b c\n1 2 3\n 4 5 6")
+   >>> data = BytesIO("So it goes\n#a b c\n1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, skip_header=1, names=True)
    array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
          dtype=[('a', '<f8'), ('b', '<f8'), ('c', '<f8')])
@@ -280,7 +280,7 @@ The default value of :keyword:`names` is ``None``.  If we give any other
 value to the keyword, the new names will overwrite the field names we may
 have defined with the dtype::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> ndtype=[('a',int), ('b', float), ('c', int)]
    >>> names = ["A", "B", "C"]
    >>> np.genfromtxt(data, names=names, dtype=ndtype)
@@ -295,7 +295,7 @@ If ``names=None`` but a structured dtype is expected, names are defined
 with the standard NumPy default of ``"f%i"``, yielding names like ``f0``,
 ``f1`` and so forth::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int))
    array([(1, 2.0, 3), (4, 5.0, 6)],
          dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', '<i8')])
@@ -303,7 +303,7 @@ with the standard NumPy default of ``"f%i"``, yielding names like ``f0``,
 In the same way, if we don't give enough names to match the length of the
 dtype, the missing names will be defined with this default template::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), names="a")
    array([(1, 2.0, 3), (4, 5.0, 6)],
          dtype=[('a', '<i8'), ('f0', '<f8'), ('f1', '<i8')])
@@ -311,7 +311,7 @@ dtype, the missing names will be defined with this default template::
 We can overwrite this default with the :keyword:`defaultfmt` argument, that
 takes any format string::
 
-   >>> data = StringIO("1 2 3\n 4 5 6")
+   >>> data = BytesIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), defaultfmt="var_%02i")
    array([(1, 2.0, 3), (4, 5.0, 6)],
          dtype=[('var_00', '<i8'), ('var_01', '<f8'), ('var_02', '<i8')])
@@ -377,7 +377,7 @@ representing a percentage to a float between 0 and 1::
    >>> data = "1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
-   >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", names=names)
    array([(1.0, nan, 45.0), (6.0, nan, 0.0)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
@@ -387,7 +387,7 @@ and ``' 78.9%'`` cannot be converted to float and we end up having
 ``np.nan`` instead.  Let's now use a converter::
 
    >>> # Converted case ...
-   >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", names=names,
    ...               converters={1: convertfunc})
    array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
@@ -396,7 +396,7 @@ The same results can be obtained by using the name of the second column
 (``"p"``) as key instead of its index (1)::
 
    >>> # Using a name for the converter ...
-   >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", names=names,
    ...               converters={"p": convertfunc})
    array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
@@ -410,8 +410,8 @@ by default::
 
    >>> data = "1, , 3\n 4, 5, 6"
    >>> convert = lambda x: float(x.strip() or -999)
-   >>> np.genfromtxt(StringIO(data), delimiter=",",
-   ...               converter={1: convert})
+   >>> np.genfromtxt(BytesIO(data), delimiter=",",
+   ...               converters={1: convert})
    array([[   1., -999.,    3.],
           [   4.,    5.,    6.]])
 
@@ -492,7 +492,7 @@ and second column, and to -999 if they occur in the last column::
     ...               names="a,b,c",
     ...               missing_values={0:"N/A", 'b':" ", 2:"???"},
     ...               filling_values={0:0, 'b':0, 2:-999})
-    >>> np.genfromtxt(StringIO.StringIO(data), **kwargs)
+    >>> np.genfromtxt(BytesIO(data), **kwargs)
     array([(0, 2, 3), (4, 0, -999)],
           dtype=[('a', '<i8'), ('b', '<i8'), ('c', '<i8')])
 
