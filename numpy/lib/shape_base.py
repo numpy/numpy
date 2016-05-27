@@ -379,14 +379,13 @@ def _replace_zero_by_x_arrays(sub_arys):
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
     return sub_arys
 
-def array_split(ary, indices_or_sections, axis=0):
+def array_split(ary, chunks=None, axis=0):
     """
     Split an array into multiple sub-arrays.
 
     Please refer to the ``split`` documentation.  The only difference
     between these functions is that ``array_split`` allows
-    `indices_or_sections` to be an integer that does *not* equally
-    divide the axis.
+    `chunks` to be an integer that does *not* equally divide the axis.
 
     See Also
     --------
@@ -405,18 +404,23 @@ def array_split(ary, indices_or_sections, axis=0):
         Ntotal = len(ary)
     try:
         # handle scalar case.
-        Nsections = len(indices_or_sections) + 1
-        div_points = [0] + list(indices_or_sections) + [Ntotal]
+        Nsections = len(chunks) + 1
+        div_points = [0] + list(chunks) + [Ntotal]
     except TypeError:
-        # indices_or_sections is a scalar, not an array.
-        Nsections = int(indices_or_sections)
-        if Nsections <= 0:
-            raise ValueError('number sections must be larger than 0.')
-        Neach_section, extras = divmod(Ntotal, Nsections)
-        section_sizes = ([0] +
-                         extras * [Neach_section+1] +
-                         (Nsections-extras) * [Neach_section])
-        div_points = _nx.array(section_sizes).cumsum()
+        # chunks is not iterable
+        try:
+            Nsections = int(chunks)
+        except TypeError:
+            # chunks cannot be converted to int
+            Nsections = Ntotal
+        finally:
+            if Nsections <= 0:
+                raise ValueError('number sections must be larger than 0.')
+            Neach_section, extras = divmod(Ntotal, Nsections)
+            section_sizes = ([0] +
+                             extras * [Neach_section+1] +
+                             (Nsections-extras) * [Neach_section])
+            div_points = _nx.array(section_sizes).cumsum()
 
     sub_arys = []
     sary = _nx.swapaxes(ary, axis, 0)
@@ -428,7 +432,7 @@ def array_split(ary, indices_or_sections, axis=0):
     return sub_arys
 
 
-def split(ary,indices_or_sections,axis=0):
+def split(ary, chunks=None, axis=0):
     """
     Split an array into multiple sub-arrays.
 
@@ -436,12 +440,12 @@ def split(ary,indices_or_sections,axis=0):
     ----------
     ary : ndarray
         Array to be divided into sub-arrays.
-    indices_or_sections : int or 1-D array
-        If `indices_or_sections` is an integer, N, the array will be divided
+    chunks : int or 1-D array
+        If `chunks` is an integer, N, the array will be divided
         into N equal arrays along `axis`.  If such a split is not possible,
         an error is raised.
 
-        If `indices_or_sections` is a 1-D array of sorted integers, the entries
+        If `chunks` is a 1-D array of sorted integers, the entries
         indicate where along `axis` the array is split.  For example,
         ``[2, 3]`` would, for ``axis=0``, result in
 
@@ -462,7 +466,7 @@ def split(ary,indices_or_sections,axis=0):
     Raises
     ------
     ValueError
-        If `indices_or_sections` is given as an integer, but
+        If `chunks` is given as an integer, but
         a split does not result in equal division.
 
     See Also
@@ -495,17 +499,17 @@ def split(ary,indices_or_sections,axis=0):
 
     """
     try:
-        len(indices_or_sections)
+        len(chunks)
     except TypeError:
-        sections = indices_or_sections
+        sections = chunks
         N = ary.shape[axis]
         if N % sections:
             raise ValueError(
                 'array split does not result in an equal division')
-    res = array_split(ary, indices_or_sections, axis)
+    res = array_split(ary, chunks, axis)
     return res
 
-def hsplit(ary, indices_or_sections):
+def hsplit(ary, chunks=None):
     """
     Split an array into multiple sub-arrays horizontally (column-wise).
 
@@ -563,11 +567,11 @@ def hsplit(ary, indices_or_sections):
     if len(_nx.shape(ary)) == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
     if len(ary.shape) > 1:
-        return split(ary, indices_or_sections, 1)
+        return split(ary, chunks, 1)
     else:
-        return split(ary, indices_or_sections, 0)
+        return split(ary, chunks, 0)
 
-def vsplit(ary, indices_or_sections):
+def vsplit(ary, chunks=None):
     """
     Split an array into multiple sub-arrays vertically (row-wise).
 
@@ -616,9 +620,9 @@ def vsplit(ary, indices_or_sections):
     """
     if len(_nx.shape(ary)) < 2:
         raise ValueError('vsplit only works on arrays of 2 or more dimensions')
-    return split(ary, indices_or_sections, 0)
+    return split(ary, chunks, 0)
 
-def dsplit(ary, indices_or_sections):
+def dsplit(ary, chunks=None):
     """
     Split array into multiple sub-arrays along the 3rd axis (depth).
 
@@ -661,7 +665,7 @@ def dsplit(ary, indices_or_sections):
     """
     if len(_nx.shape(ary)) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
-    return split(ary, indices_or_sections, 2)
+    return split(ary, chunks, 2)
 
 def get_array_prepare(*args):
     """Find the wrapper for the array with the highest priority.
