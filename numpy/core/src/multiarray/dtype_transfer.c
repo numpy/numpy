@@ -3521,8 +3521,13 @@ PyArray_GetDTypeCopySwapFn(int aligned,
                                     itemsize);
         *outtransferdata = NULL;
     }
+    else if (dtype->kind == 'U') {
+        return wrap_copy_swap_function(aligned,
+                                       src_stride, dst_stride, dtype, 1,
+                                       outstransfer, outtransferdata);
+    }
     /* If it's not complex, one swap */
-    else if(dtype->kind != 'c') {
+    else if (dtype->kind != 'c') {
         *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
                                     src_stride, dst_stride,
                                     itemsize);
