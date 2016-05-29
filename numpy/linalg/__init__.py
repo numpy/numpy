@@ -15,6 +15,7 @@ pinv            Pseudo-inverse (Moore-Penrose) calculated using a singular
                 value decomposition
 matrix_power    Integer power of a square matrix
 matrix_rank     Calculate matrix rank using an SVD-based method
+inner_prods     Computes many inner products.
 =============== ==========================================================
 
 =============== ==========================================================
