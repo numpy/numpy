@@ -2266,11 +2266,11 @@ def inner_prods(X, A=None):
     >>> inner_fast = inner_prods(X, A) # I see about a 9x speedup here
     >>> assert np.allclose(inner_slow, inner_fast)
     """
-    X = np.asarray(X)
+    X = asarray(X)
     assert X.ndim == 2, "Pass a matrix of feature vectors in"
     if A is None:
         return norm(X, axis=1)**2
-    A = np.asarray(A)
+    A = asarray(A)
     return (X.T * A.dot(X.T)).sum(axis=0)
 
 
