@@ -2224,6 +2224,56 @@ def norm(x, ord=None, axis=None, keepdims=False):
         raise ValueError("Improper number of dimensions to norm.")
 
 
+def inner_prods(X, A=None):
+    r"""
+    This function computes many inner products of the form :math:`x_i^T A x_i`
+
+    Parameters
+    ----------
+    X : array_like
+        The matrix of feature vectors. Every row in this ndarray is a feature
+        vector. This array must be 2-D.
+    A : array_like, optional.
+        To be used when computing :math:`x_i^T A x_i`. If this parameter is not
+        specified (default), this function returns :math:`[x_1^T x_1, \ldots,
+        x_n^T x_n]`. When it is specified, it returns :math:`[x_1^T A x_1, \ldots,
+        x_n^T A x_n]`.
+
+    Returns
+    -------
+    inner_products :  a vector of inner products. Each element in this vector is an
+        inner product corresponding to a row in ``X``. The return value is of the form
+
+    .. math::
+
+        [x_1^T\cdot A \cdot x_1, x_2^T \cdot A \cdot x_2, \ldots,
+        x_n^T \cdot A \cdot xn]
+
+
+    when X is of the form ``np.ndarray([x1, x2, ..., xn])`` and each element
+    ``xi`` is a 1D ndarray (of the same length).
+
+    Example
+    -------
+    >>> # compute p inner products
+    >>> p, n = 300, 100
+    >>> A = np.random.randn(n, n)
+    >>> # every row of X is a vector
+    >>> X = np.random.randn(p, n)
+    >>>
+    >>> # computing the inner products with a for-loop
+    >>> inner_slow = np.array([np.inner(x, A.dot(x)) for x in X])
+    >>> inner_fast = inner_prods(X, A) # I see about a 9x speedup here
+    >>> assert np.allclose(inner_slow, inner_fast)
+    """
+    X = np.asarray(X)
+    assert X.ndim == 2, "Pass a matrix of feature vectors in"
+    if A is None:
+        return norm(X, axis=1)**2
+    A = np.asarray(A)
+    return (X.T * A.dot(X.T)).sum(axis=0)
+
+
 # multi_dot
 
 def multi_dot(arrays):
