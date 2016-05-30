@@ -776,7 +776,11 @@ def polyval(x, c, tensor=True):
 
     c0 = c[-1] + x*0
     for i in range(2, len(c) + 1):
-        c0 = c[-i] + c0*x
+        # separate out the Horner operation c0 = c[-i] + c0*x,
+        # so there are fewer memory allocations
+        c0 *= x
+        c0 += c[-i]
+
     return c0
 
 

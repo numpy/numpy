@@ -678,7 +678,10 @@ def polyval(p, x):
         x = NX.asarray(x)
         y = NX.zeros_like(x)
     for i in range(len(p)):
-        y = y * x + p[i]
+        # separate out the Horner operation y = y*x + p[i],
+        # so there are fewer memory allocations
+        y *= x
+        y += p[i]
     return y
 
 def polyadd(a1, a2):
