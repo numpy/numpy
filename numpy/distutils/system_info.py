@@ -729,69 +729,59 @@ class system_info(object):
 
         return info
 
-    def _lib_list(self, lib_dir, libs, exts):
+    def _find_lib(self, lib_dir, lib, exts):
         assert is_string(lib_dir)
-        liblist = []
         # under windows first try without 'lib' prefix
         if sys.platform == 'win32':
             lib_prefixes = ['', 'lib']
         else:
             lib_prefixes = ['lib']
         # for each library name, see if we can find a file for it.
-        for l in libs:
-            for ext in exts:
-                for prefix in lib_prefixes:
-                    p = self.combine_paths(lib_dir, prefix + l + ext)
-                    if p:
-                        break
+        for ext in exts:
+            for prefix in lib_prefixes:
+                p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    assert len(p) == 1
-                    # ??? splitext on p[0] would do this for cygwin
-                    # doesn't seem correct
-                    if ext == '.dll.a':
-                        l += '.dll'
-                    liblist.append(l)
                     break
+            if p:
+                assert len(p) == 1
+                # ??? splitext on p[0] would do this for cygwin
+                # doesn't seem correct
+                if ext == '.dll.a':
+                    lib += '.dll'
+                return lib
 
-        return liblist
+        return False
+
+    def _find_libs(self, lib_dirs, libs, exts):
+        # make sure we preserve the order of libs, as it can be important
+        found_dirs, found_libs = [], []
+        for lib in libs:
+            for lib_dir in lib_dirs:
+                found_lib = self._find_lib(lib_dir, lib, exts)
+                if found_lib:
+                    found_libs.append(found_lib)
+                    if lib_dir not in found_dirs:
+                        found_dirs.append(lib_dir)
+                    break
+        return found_dirs, found_libs
 
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
         """Find mandatory and optional libs in expected paths.
 
         Missing optional libraries are silently forgotten.
         """
+        if not is_sequence(lib_dirs):
+            lib_dirs = [lib_dirs]
         # First, try to find the mandatory libraries
-        if is_sequence(lib_dirs):
-            found_libs, found_dirs = [], []
-            for dir_ in lib_dirs:
-                found_libs1 = self._lib_list(dir_, libs, exts)
-                # It's possible that we'll find the same library in multiple
-                # directories. It's also possible that we'll find some
-                # libraries on in directory, and some in another. So the
-                # obvious thing would be to use a set instead of a list, but I
-                # don't know if preserving order matters (does it?).
-                for found_lib in found_libs1:
-                    if found_lib not in found_libs:
-                        found_libs.append(found_lib)
-                        if dir_ not in found_dirs:
-                            found_dirs.append(dir_)
-        else:
-            found_libs = self._lib_list(lib_dirs, libs, exts)
-            found_dirs = [lib_dirs]
+        found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts)
         if len(found_libs) > 0 and len(found_libs) == len(libs):
-            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             # Now, check for optional libraries
-            if is_sequence(lib_dirs):
-                for dir_ in lib_dirs:
-                    opt_found_libs = self._lib_list(dir_, opt_libs, exts)
-                    if opt_found_libs:
-                        if dir_ not in found_dirs:
-                            found_dirs.extend(dir_)
-                        found_libs.extend(opt_found_libs)
-            else:
-                opt_found_libs = self._lib_list(lib_dirs, opt_libs, exts)
-                if opt_found_libs:
-                    found_libs.extend(opt_found_libs)
+            opt_found_dirs, opt_found_libs = self._find_libs(lib_dirs, opt_libs, exts)
+            found_libs.extend(opt_found_libs)
+            for lib_dir in opt_found_dirs:
+                if lib_dir not in found_dirs:
+                    found_dirs.append(lib_dir)
+            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             return info
         else:
             return None
