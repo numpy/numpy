@@ -142,6 +142,7 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
     }
 }
 
+
 /************************** ZERO-PADDED COPY ******************************/
 
 /* Does a zero-padded copy */
@@ -209,14 +210,49 @@ _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
     }
 }
 
+/*
+ * Does a strided to strided zero-padded or truncated copy for the case where
+ * unicode swapping is needed.
+ */
+static void
+_strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        NpyAuxData *data)
+{
+    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
+    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_intp zero_size = dst_itemsize - src_itemsize;
+    npy_intp copy_size = zero_size > 0 ? src_itemsize : dst_itemsize;
+    char *_dst;
+    npy_intp characters = dst_itemsize / 4;
+    int i;
+
+    while (N > 0) {
+        memcpy(dst, src, copy_size);
+        if (zero_size > 0) {
+            memset(dst + src_itemsize, 0, zero_size);
+        }
+        _dst = dst;
+        for (i=0; i < characters; i++) {
+            npy_bswap4_unaligned(_dst);
+            _dst += 4;
+        }
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+}
+
+
 NPY_NO_EXPORT int
-PyArray_GetStridedZeroPadCopyFn(int aligned,
+PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
                             PyArray_StridedUnaryOp **out_stransfer,
                             NpyAuxData **out_transferdata)
 {
-    if (src_itemsize == dst_itemsize) {
+    if ((src_itemsize == dst_itemsize) && !unicode_swap) {
         *out_stransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
                                 dst_stride, src_itemsize);
         *out_transferdata = NULL;
@@ -233,7 +269,10 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
         d->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
         d->base.clone = &_strided_zero_pad_data_clone;
 
-        if (src_itemsize < dst_itemsize) {
+        if (unicode_swap) {
+            *out_stransfer = &_strided_to_strided_unicode_copyswap;
+        }
+        else if (src_itemsize < dst_itemsize) {
             *out_stransfer = &_strided_to_strided_zero_pad_copy;
         }
         else {
@@ -518,7 +557,7 @@ _strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
     d->copyswapn(dst, dst_stride, src, src_stride, N, d->swap, d->arr);
 }
 
-/* This only gets used for custom data types */
+/* This only gets used for custom data types and for Unicode when swapping */
 static int
 wrap_copy_swap_function(int aligned,
                 npy_intp src_stride, npy_intp dst_stride,
@@ -3482,8 +3521,13 @@ PyArray_GetDTypeCopySwapFn(int aligned,
                                     itemsize);
         *outtransferdata = NULL;
     }
+    else if (dtype->kind == 'U') {
+        return wrap_copy_swap_function(aligned,
+                                       src_stride, dst_stride, dtype, 1,
+                                       outstransfer, outtransferdata);
+    }
     /* If it's not complex, one swap */
-    else if(dtype->kind != 'c') {
+    else if (dtype->kind != 'c') {
         *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
                                     src_stride, dst_stride,
                                     itemsize);
@@ -3628,11 +3672,19 @@ PyArray_GetDTypeTransferFunction(int aligned,
             }
         }
 
-        /* The special types, which have no byte-order */
+        /* The special types, which have no or subelement byte-order */
         switch (src_type_num) {
+            case NPY_UNICODE:
+                /* Wrap the copy swap function when swapping is necessary */
+                if (PyArray_ISNBO(src_dtype->byteorder) !=
+                        PyArray_ISNBO(dst_dtype->byteorder)) {
+                    return wrap_copy_swap_function(aligned,
+                                    src_stride, dst_stride,
+                                    src_dtype, 1,
+                                    out_stransfer, out_transferdata);
+                }
             case NPY_VOID:
             case NPY_STRING:
-            case NPY_UNICODE:
                 *out_stransfer = PyArray_GetStridedCopyFn(0,
                                     src_stride, dst_stride,
                                     src_itemsize);
@@ -3705,10 +3757,17 @@ PyArray_GetDTypeTransferFunction(int aligned,
     /* Check for different-sized strings, unicodes, or voids */
     if (src_type_num == dst_type_num) {
         switch (src_type_num) {
-        case NPY_STRING:
         case NPY_UNICODE:
+            if (PyArray_ISNBO(src_dtype->byteorder) !=
+                                 PyArray_ISNBO(dst_dtype->byteorder)) {
+                return PyArray_GetStridedZeroPadCopyFn(0, 1,
+                                        src_stride, dst_stride,
+                                        src_dtype->elsize, dst_dtype->elsize,
+                                        out_stransfer, out_transferdata);
+            }
+        case NPY_STRING:
         case NPY_VOID:
-            return PyArray_GetStridedZeroPadCopyFn(0,
+            return PyArray_GetStridedZeroPadCopyFn(0, 0,
                                     src_stride, dst_stride,
                                     src_dtype->elsize, dst_dtype->elsize,
                                     out_stransfer, out_transferdata);
