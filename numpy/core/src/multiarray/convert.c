@@ -14,6 +14,7 @@
 #include "npy_pycompat.h"
 
 #include "arrayobject.h"
+#include "ctors.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
@@ -131,6 +132,10 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyErr_SetString(PyExc_IOError,
                     "cannot write object arrays to a file in binary mode");
             return -1;
+        }
+        if (PyArray_DESCR(self)->elsize == 0) {
+            /* For zero-width data types there's nothing to write */
+            return 0;
         }
         if (npy_fallocate(PyArray_NBYTES(self), fp) != 0) {
             return -1;
@@ -600,13 +605,13 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(subtype,
                                dtype,
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
                                flags,
-                               (PyObject *)self);
+                               (PyObject *)self, 0, 1);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

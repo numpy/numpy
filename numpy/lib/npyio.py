@@ -89,7 +89,7 @@ class BagObj(object):
 def zipfile_factory(file, *args, **kwargs):
     """
     Create a ZipFile.
-    
+
     Allows for Zip64, and the `file` argument can accept file, str, or
     pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
     constructor.
@@ -399,7 +399,9 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         _ZIP_PREFIX = asbytes('PK\x03\x04')
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
-        fid.seek(-N, 1)  # back-up
+        # If the file size is less than N, we need to make sure not
+        # to seek past the beginning of the file
+        fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith(_ZIP_PREFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
@@ -741,12 +743,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Skip the first `skiprows` lines; default: 0.
 
     usecols : int or sequence, optional
-        Which columns to read, with 0 being the first. For example, 
+        Which columns to read, with 0 being the first. For example,
         usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
-        
+
         .. versionadded:: 1.11.0
-        
+
         Also when a single column has to be read it is possible to use
         an integer instead of a tuple. E.g ``usecols = 3`` reads the
         third column the same way as `usecols = (3,)`` would.

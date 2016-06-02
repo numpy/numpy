@@ -23,13 +23,13 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
     test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-    test_inplace_increment, get_buffer_info, test_as_c_array
+    test_inplace_increment, get_buffer_info, test_as_c_array,
     )
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose,
-    assert_array_less, runstring, dec, SkipTest
+    assert_array_less, runstring, dec, SkipTest, temppath
     )
 
 # Need to test an object that does not fully implement math interface
@@ -922,6 +922,59 @@ class TestStructured(TestCase):
             c[0]['x'] = np.arange(3)
 
         assert_raises(ValueError, testassign)
+
+    def test_zero_width_string(self):
+        # Test for PR #6430 / issues #473, #4955, #2585
+
+        dt = np.dtype([('I', int), ('S', 'S0')])
+
+        x = np.zeros(4, dtype=dt)
+
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['S'].itemsize, 0)
+
+        x['S'] = ['a', 'b', 'c', 'd']
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
+
+        # Variation on test case from #4955
+        x['S'][x['I'] == 0] = 'hello'
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
+
+        # Variation on test case from #2585
+        x['S'] = 'A'
+        assert_equal(x['S'], [b'', b'', b'', b''])
+        assert_equal(x['I'], [0, 0, 0, 0])
+
+        # Allow zero-width dtypes in ndarray constructor
+        y = np.ndarray(4, dtype=x['S'].dtype)
+        assert_equal(y.itemsize, 0)
+        assert_equal(x['S'], y)
+
+        # More tests for indexing an array with zero-width fields
+        assert_equal(np.zeros(4, dtype=[('a', 'S0,S0'),
+                                        ('b', 'u1')])['a'].itemsize, 0)
+        assert_equal(np.empty(3, dtype='S0,S0').itemsize, 0)
+        assert_equal(np.zeros(4, dtype='S0,u1')['f0'].itemsize, 0)
+
+        xx = x['S'].reshape((2, 2))
+        assert_equal(xx.itemsize, 0)
+        assert_equal(xx, [[b'', b''], [b'', b'']])
+
+        b = io.BytesIO()
+        np.save(b, xx)
+
+        b.seek(0)
+        yy = np.load(b)
+        assert_equal(yy.itemsize, 0)
+        assert_equal(xx, yy)
+
+        with temppath(suffix='.npy') as tmp:
+            np.save(tmp, xx)
+            yy = np.load(tmp)
+            assert_equal(yy.itemsize, 0)
+            assert_equal(xx, yy)
 
 
 class TestBool(TestCase):

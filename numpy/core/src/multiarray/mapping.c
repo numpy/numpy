@@ -14,6 +14,7 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "ctors.h"
 #include "iterators.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
@@ -1291,7 +1292,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
 
         /* view the array at the new offset+dtype */
         Py_INCREF(fieldtype);
-        *view = (PyArrayObject*)PyArray_NewFromDescr(
+        *view = (PyArrayObject*)PyArray_NewFromDescr_int(
                                     Py_TYPE(arr),
                                     fieldtype,
                                     PyArray_NDIM(arr),
@@ -1299,7 +1300,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_BYTES(arr) + offset,
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr);
+                                    (PyObject *)arr, 0, 1);
         if (*view == NULL) {
             return 0;
         }
@@ -1397,7 +1398,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         view_dtype->fields = fields;
         view_dtype->flags = PyArray_DESCR(arr)->flags;
 
-        *view = (PyArrayObject*)PyArray_NewFromDescr(
+        *view = (PyArrayObject*)PyArray_NewFromDescr_int(
                                     Py_TYPE(arr),
                                     view_dtype,
                                     PyArray_NDIM(arr),
@@ -1405,7 +1406,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_DATA(arr),
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr);
+                                    (PyObject *)arr, 0, 1);
         if (*view == NULL) {
             return 0;
         }
