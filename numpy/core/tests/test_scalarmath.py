@@ -156,6 +156,19 @@ class TestPower(TestCase):
                 else:
                     assert_almost_equal(result, 9, err_msg=msg)
 
+    def test_mixed_integer_types_negative_power(self):
+        # should always result in a floating type
+        signed_int_types = [np.int8, np.int16, np.int32, np.int64, int]
+        all_int_types = signed_int_types + [np.uint8, np.uint16, np.uint32, np.uint64]
+        for base_type in all_int_types:
+            for exponent_type in signed_int_types:
+                result = base_type(4) ** exponent_type(-4)
+                msg = "4 ** -4 == {} using {} ** {} -> {}".format(result,
+                        base_type.__name__, exponent_type.__name__,
+                        result.__class__.__name__)
+                assert_(isinstance(result, (np.floating, float)), msg)
+                assert_almost_equal(result, 0.00390625)
+
 
 class TestModulus(TestCase):
 
@@ -523,6 +536,14 @@ class TestAbs(TestCase):
 
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
+
+def test_longdouble_inf_loop():
+    mul = lambda x, y: x * y
+    assert_raises(TypeError, mul, np.longdouble(3), None)
+    assert_raises(TypeError, mul, None, np.longdouble(3))
+
+    assert_raises(TypeError, mul, np.clongdouble(3), None)
+    assert_raises(TypeError, mul, None, np.clongdouble(3))
 
 
 if __name__ == "__main__":

@@ -587,20 +587,24 @@ static void
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong,
- *         half, float, longdouble,
+ *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_longdouble,
+ *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
  * #Name = Byte, UByte, Short, UShort, Int, UInt,
  *         Long, ULong, LongLong, ULongLong,
- *         Half, Float, LongDouble,
+ *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
  * #TYPE = NPY_BYTE, NPY_UBYTE, NPY_SHORT, NPY_USHORT, NPY_INT, NPY_UINT,
  *         NPY_LONG, NPY_ULONG, NPY_LONGLONG, NPY_ULONGLONG,
- *         NPY_HALF, NPY_FLOAT, NPY_LONGDOUBLE,
+ *         NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
  *         NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
+ * #HasExact = 0*12, 1, 0*4#
+ * #PYCHECKEXACT = 0*12, PyFloat_CheckExact, 0*4#
+ * #PYEXTRACTCTYPE = 0*12, PyFloat_AS_DOUBLE, 0*4#
+ *
  */
 
 static int
@@ -608,62 +612,12 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 {
     PyObject *temp;
 
-    if (PyArray_IsScalar(a, @Name@)) {
-        *arg1 = PyArrayScalar_VAL(a, @Name@);
-        return 0;
-    }
-    else if (PyArray_IsScalar(a, Generic)) {
-        PyArray_Descr *descr1;
-
-        if (!PyArray_IsScalar(a, Number)) {
-            return -1;
-        }
-        descr1 = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
-        if (PyArray_CanCastSafely(descr1->type_num, @TYPE@)) {
-            PyArray_CastScalarDirect(a, descr1, arg1, @TYPE@);
-            Py_DECREF(descr1);
-            return 0;
-        }
-        else {
-            Py_DECREF(descr1);
-            return -1;
-        }
-    }
-    else if (PyArray_GetPriority(a, NPY_PRIORITY) > NPY_PRIORITY) {
-        return -2;
-    }
-    else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-        int retval = _@name@_convert_to_ctype(temp, arg1);
-
-        Py_DECREF(temp);
-        return retval;
-    }
-    return -2;
-}
-
-/**end repeat**/
-
-
-/* Same as above but added exact checks against known python types for speed */
-
-/**begin repeat
- * #name = double#
- * #type = npy_double#
- * #Name = Double#
- * #TYPE = NPY_DOUBLE#
- * #PYCHECKEXACT = PyFloat_CheckExact#
- * #PYEXTRACTCTYPE = PyFloat_AS_DOUBLE#
- */
-
-static int
-_@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
-{
-    PyObject *temp;
-
+#if @HasExact@
     if (@PYCHECKEXACT@(a)){
         *arg1 = @PYEXTRACTCTYPE@(a);
         return 0;
     }
+#endif
 
     if (PyArray_IsScalar(a, @Name@)) {
         *arg1 = PyArrayScalar_VAL(a, @Name@);
@@ -682,8 +636,9 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
             return 0;
         }
         else {
+            int retval = descr1->type_num;
             Py_DECREF(descr1);
-            return -1;
+            return retval;
         }
     }
     else if (PyArray_GetPriority(a, NPY_PRIORITY) > NPY_PRIORITY) {
@@ -697,65 +652,125 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
     }
     return -2;
 }
-
 /**end repeat**/
-
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong,
- *         half, float, double, cfloat, cdouble#
+ *         half, float, double, longdouble, cfloat, cdouble, clongdouble#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_cfloat, npy_cdouble#
+ *         npy_half, npy_float, npy_double, npy_longdouble, npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #islongdouble = 0*13, 1, 0*2, 1#
  */
 static int
 _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
                            PyObject *b, @type@ *arg2)
 {
-    int ret;
-    ret = _@name@_convert_to_ctype(a, arg1);
-    if (ret < 0) {
+    int ret_a;
+    ret_a = _@name@_convert_to_ctype(a, arg1);
+#if @islongdouble@
+    if (ret_a == -2) {
+        ret_a = -3;
+    }
+#endif
+    if (ret_a < 0) {
+        return ret_a;
+    }
+    else if (ret_a == 0) {
+        int ret_b;
+        ret_b = _@name@_convert_to_ctype(b, arg2);
+#if @islongdouble@
+        if (ret_b == -2) {
+            ret_b = -3;
+        }
+#endif
+        if (ret_b <= 0) {
+            return ret_b;
+        }
+        else {
+            /* couldn't cast b to @name@ but it is a numeric scalar.  Since
+             * converting a returned 0, it is convertable to @name@. See if
+             * instead we can convert it to b then defer the operator call to
+             * that type.
+             */
+            PyArray_Descr *descr_a;
+            int ret = -1;
+            descr_a = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
+            if (PyArray_CanCastSafely(descr_a->type_num, ret_b)) {
+                ret = ret_b;
+            }
+            else {
+                /* neither of a and b can be safely converted to the type of the
+                 * other.  Since they are both numeric scalars, use the type
+                 * promotion table to find the correct type to use.
+                 */
+                PyArray_Descr *descr_b, *descr_result;
+                descr_b = PyArray_DescrFromType(ret_b);
+                descr_result = PyArray_PromoteTypes(descr_a, descr_b);
+                ret = descr_result->type_num;
+                Py_DECREF(descr_b);
+                Py_DECREF(descr_result);
+            }
+            Py_DECREF(descr_a);
+            return ret;
+        }
+    }
+    else {
+        /* couldn't cast a to @name@ but it is a numeric scalar and ret_a
+         * contains its typenum. If b is a also a numeric scalar, check if
+         * we could instead cast a to the type of b. If so, return b's
+         * type_num and defer the operator call to that type's.
+         */
+        int ret = -1;
+        if (PyArray_IsScalar(b, Number)) {
+            PyArray_Descr * descr_b;
+            descr_b = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(b));
+            if (PyArray_CanCastSafely(ret_a, descr_b->type_num)) {
+                ret = descr_b->type_num;
+            }
+            else {
+                /* neither of a and b can be safely converted to the type of the
+                 * other.  Since they are both numeric scalars, use the type
+                 * promotion table to find the correct type to use.
+                 */
+                PyArray_Descr *descr_a, *descr_result;
+                descr_a = PyArray_DescrFromType(ret_a);
+                descr_result = PyArray_PromoteTypes(descr_a, descr_b);
+                ret = descr_result->type_num;
+                Py_DECREF(descr_a);
+                Py_DECREF(descr_result);
+            }
+            Py_DECREF(descr_b);
+        }
         return ret;
     }
-    ret = _@name@_convert_to_ctype(b, arg2);
-    if (ret < 0) {
-        return ret;
-    }
-    return 0;
+    return -2;
 }
-/**end repeat**/
-
-/**begin repeat
- * #name = longdouble, clongdouble#
- * #type = npy_longdouble, npy_clongdouble#
- */
-
-static int
-_@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
-                           PyObject *b, @type@ *arg2)
-{
-    int ret;
-    ret = _@name@_convert_to_ctype(a, arg1);
-    if (ret < 0) {
-        return ret;
-    }
-    ret = _@name@_convert_to_ctype(b, arg2);
-    if (ret == -2) {
-        ret = -3;
-    }
-    if (ret < 0) {
-        return ret;
-    }
-    return 0;
-}
 
 /**end repeat**/
-
 
 #if defined(NPY_PY3K)
 #define CODEGEN_SKIP_divide_FLAG
 #endif
+/**begin repeat
+ *
+ * #name = (byte, ubyte, short, ushort, int, uint,
+ *             long, ulong, longlong, ulonglong)*13,
+ *         (half, float, double, longdouble,
+ *             cfloat, cdouble, clongdouble)*6,
+ *         (half, float, double, longdouble)*2#
+ *
+ * #oper = add*10, subtract*10, multiply*10, divide*10, remainder*10,
+ *         divmod*10, floor_divide*10, lshift*10, rshift*10, and*10,
+ *         or*10, xor*10, true_divide*10,
+ *         add*7, subtract*7, multiply*7, divide*7, floor_divide*7, true_divide*7,
+ *         divmod*4, remainder*4#
+ */
+
+ static PyObject* @name@_@oper@(PyObject*, PyObject*);
+
+/**end repeat**/
 
 /**begin repeat
  *
@@ -799,6 +814,8 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
  *          (Half, Float, Double, LongDouble,
  *              CFloat, CDouble, CLongDouble)*6,
  *          (Half, Float, Double, LongDouble)*2#
+ * #float_oper = 1*70, 0*50, 1*60#
+ * #complex_oper = 1*40, 0*20, 1*10, 0*50, 1*52, 0*8#
  */
 
 #if !defined(CODEGEN_SKIP_@oper@_FLAG)
@@ -826,7 +843,6 @@ static PyObject *
     int retstatus;
     int first;
 #endif
-
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -846,7 +862,61 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
-    }
+        case NPY_BYTE:
+            return byte_@oper@(a, b);
+        case NPY_UBYTE:
+            return ubyte_@oper@(a, b);
+        case NPY_SHORT:
+            return short_@oper@(a, b);
+        case NPY_USHORT:
+            return ushort_@oper@(a, b);
+        case NPY_INT:
+            return int_@oper@(a, b);
+        case NPY_UINT:
+            return uint_@oper@(a, b);
+        case NPY_LONG:
+            return long_@oper@(a, b);
+        case NPY_ULONG:
+            return ulong_@oper@(a, b);
+        case NPY_LONGLONG:
+            return longlong_@oper@(a, b);
+        case NPY_ULONGLONG:
+            return ulonglong_@oper@(a, b);
+#if @float_oper@
+        case NPY_HALF:
+            return half_@oper@(a, b);
+        case NPY_FLOAT:
+            return float_@oper@(a, b);
+        case NPY_DOUBLE:
+            return double_@oper@(a, b);
+        case NPY_LONGDOUBLE:
+            return longdouble_@oper@(a, b);
+#else
+        case NPY_HALF:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case NPY_FLOAT:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case NPY_DOUBLE:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case NPY_LONGDOUBLE:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+#endif
+#if @complex_oper@
+        case NPY_CFLOAT:
+            return cfloat_@oper@(a, b);
+        case NPY_CDOUBLE:
+            return cdouble_@oper@(a, b);
+        case NPY_CLONGDOUBLE:
+            return clongdouble_@oper@(a, b);
+#else
+        case NPY_CFLOAT:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case NPY_CDOUBLE:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case NPY_CLONGDOUBLE:
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+#endif
+     }
 
 #if @fperr@
     PyUFunc_clearfperr();
@@ -917,6 +987,18 @@ static PyObject *
 
 #undef CODEGEN_SKIP_divide_FLAG
 
+/**begin repeat
+ *
+ * #name = byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ */
+
+static PyObject* @name@_power(PyObject *a, PyObject* b, PyObject *c);
+
+/**end repeat**/
+
 #define _IS_ZERO(x) (x == 0)
 
 /**begin repeat
@@ -956,7 +1038,7 @@ static PyObject *
 
 #if @cmplx@
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *c)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -983,7 +1065,15 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
-    }
+
+        /* All cases don't need to be listed here since complex types
+         * can only be safely cast upward to other complex types.
+         */
+        case NPY_CDOUBLE:
+            return cdouble_power(a, b, c);
+        case NPY_CLONGDOUBLE:
+            return clongdouble_power(a, b, c);
+     }
 
     PyUFunc_clearfperr();
 
@@ -1029,7 +1119,7 @@ static PyObject *
 #elif @isint@
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *c)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -1057,6 +1147,21 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+
+/**begin repeat1
+ *
+ * #name1 = byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type1 = NPY_BYTE, NPY_UBYTE, NPY_SHORT, NPY_USHORT, NPY_INT, NPY_UINT,
+ *          NPY_LONG, NPY_ULONG, NPY_LONGLONG, NPY_ULONGLONG,
+ *          NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+ *          NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
+ */
+        case @type1@:
+            return @name1@_power(a, b, c);
+/**end repeat1**/
     }
 
     PyUFunc_clearfperr();
@@ -1114,7 +1219,7 @@ static PyObject *
 #else
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *c)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -1141,7 +1246,22 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
-    }
+
+/**begin repeat1
+ *
+ * #name1 = byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type1 = NPY_BYTE, NPY_UBYTE, NPY_SHORT, NPY_USHORT, NPY_INT, NPY_UINT,
+ *          NPY_LONG, NPY_ULONG, NPY_LONGLONG, NPY_ULONGLONG,
+ *          NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+ *          NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
+ */
+        case @type1@:
+            return @name1@_power(a, b, c);
+/**end repeat1**/
+     }
 
     PyUFunc_clearfperr();
 
@@ -1537,6 +1657,8 @@ static PyObject*
          */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
+    default:
+        return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
     }
 
     /* here we do the actual calculation with arg1 and arg2 */
