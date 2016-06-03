@@ -455,10 +455,10 @@ For example::
 
   scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
 
-Update PyPi
+Update PyPI
 -----------
 
-The wheels and source should be uploaded to PyPi.
+The wheels and source should be uploaded to PyPI.
 
 You should upload the wheels first, and the source formats last, to make sure
 that pip users don't accidentally get a source install when they were
@@ -466,7 +466,7 @@ expecting a binary wheel.
 
 You can do this automatically using the ``wheel-uploader`` script from
 https://github.com/MacPython/terryfy.  Here is the recommended incantation for
-downloading all the Windows, Manylinux, OSX wheels and uploading to pypi.
+downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI.
 
 ::
 
@@ -482,7 +482,7 @@ The ``-v`` flag gives verbose feedback, ``-s`` causes the script to sign the
 wheels with your GPG key before upload.
 
 You may well find that these uploads break at some point, with error messages
-from the pypi server.  In this case you'll have to continue the uploads by
+from the PyPI server.  In this case you'll have to continue the uploads by
 hand using `twine <https://pypi.python.org/pypi/twine>`_, using something
 like::
 
@@ -491,11 +491,12 @@ like::
 Do this for the wheel files that ``wheel-uploader`` downloaded, but for which
 the upload failed.
 
-It may be that the upcoming ``warehouse`` pypi server will be more reliable in
-receiving wheel uploads.  You can set the repository to upload to with the
-``-r`` flag to ``wheel-uploader`` and ``twine``.
+The ``warehouse`` PyPI server seems to be more reliable in receiving automated
+wheel uploads.  You can set the repository to upload to with the ``-r`` flag
+to ``wheel-uploader`` and ``twine``.  The warehouse repository URL for your
+``~/.pypirc`` file is https://upload.pypi.io/legacy/
 
-There are two ways to update the source release on PyPi, the first one is::
+There are two ways to update the source release on PyPI, the first one is::
 
     $ git clean -fxd  # to be safe
     $ python setup.py sdist --formats=gztar,zip  # to check
@@ -505,10 +506,10 @@ This will ask for your key PGP passphrase, in order to sign the built source
 packages.
 
 The second way is to upload the PKG_INFO file inside the sdist dir in the
-web interface of PyPi. The source tarball can also be uploaded through this
+web interface of PyPI. The source tarball can also be uploaded through this
 interface.
 
-To push the travis-ci OSX wheels up to pypi see :
+To push the travis-ci OSX wheels up to PyPI see :
 https://github.com/MacPython/numpy-wheels#uploading-the-built-wheels-to-pypi
 
 .. _push-tag-and-commit:
