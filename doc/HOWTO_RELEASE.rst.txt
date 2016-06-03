@@ -387,6 +387,58 @@ Trigger a build by doing an empty (or otherwise) commit to the repository::
 
 The wheels, once built, appear in http://wheels.scipy.org
 
+Trigger Windows builds on Appveyor
+----------------------------------
+
+See: `build Windows wheels`_
+
+* Clone / update the https://github.com/numpy/windows-wheel-builder repository;
+* Check the ``appveyor.yml`` file in that repository;
+* Edit the line starting ``NP_VERSION:`` to give the numpy tag that you want
+  to build;
+* Push up to github to trigger a build.
+
+The wheels appear in a Rackspace CDN container at:
+
+* http://58688808cd85529d4031-38dee5dca2544308e91131f21428d924.r12.cf2.rackcdn.com
+* https://84c1a9a06db6836f5a98-38dee5dca2544308e91131f21428d924.ssl.cf2.rackcdn.com
+
+The contents via the HTTPS URL seems to get updated more slowly than via the
+HTTP URL, so if you need the binaries quickly, prefer the HTTP URL.
+
+.. _build Windows wheels: https://github.com/numpy/windows-wheel-builder
+
+Trigger Manylinux builds on travis-ci
+-------------------------------------
+
+.. note::
+
+    Until we move the manylinux build scripts, you'll need to ask
+    ``@matthew-brett`` to make you a collaborator on the manylinux repos.
+
+* Clone / update the repository at
+  https://github.com/matthew-brett/manylinux-builds
+* Edit the line in ``.travis.yml`` starting ``NUMPY_VERSIONS=`` to set the
+  numpy tag to build;
+* Push your edits to ``.travis.yml`` up to github to trigger a mass manylinux
+  build;
+* Clone / update the repository at
+  https://github.com/matthew-brett/manylinux-testing;
+* Push an empty commit to the ``manylinux-testing`` repo to trigger a test run
+  of the newly-built numpy wheels with a range of dependent libraries, as well
+  as numpy's own unit tests.  The tests will take several hours.
+
+The built wheels will be available from a Rackspace CDN container at:
+
+* http://ccdd0ebb5a931e58c7c5-aae005c4999d7244ac63632f8b80e089.r77.cf2.rackcdn.com
+* https://d9a97980b71d47cde94d-aae005c4999d7244ac63632f8b80e089.ssl.cf2.rackcdn.com
+
+As for the other Rackspace containers, the HTTP address may update first, and
+you should wait 15 minutes after the build finishes before fetching the
+binaries.  For the manylinux wheels, the time to run ``manylinux-testing`` is
+much greater than 15 minutes, so waiting for the tests to pass will be enough
+time for the binaries to refresh on Rackspace.
+
 Make the release
 ----------------
 
@@ -403,11 +455,48 @@ For example::
 
   scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
 
-Update PyPi
+Update PyPI
 -----------
 
-The final release (not betas or release candidates) should be uploaded to PyPi.
-There are two ways to update PyPi, the first one is::
+The wheels and source should be uploaded to PyPI.
+
+You should upload the wheels first, and the source formats last, to make sure
+that pip users don't accidentally get a source install when they were
+expecting a binary wheel.
+
+You can do this automatically using the ``wheel-uploader`` script from
+https://github.com/MacPython/terryfy.  Here is the recommended incantation for
+downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI.
+
+::
+
+    cd ~/wheelhouse   # local directory to cache wheel downloads
+    MANYLINUX_URL=http://ccdd0ebb5a931e58c7c5-aae005c4999d7244ac63632f8b80e089.r77.cf2.rackcdn.com
+    WINDOWS_URL=http://58688808cd85529d4031-38dee5dca2544308e91131f21428d924.r12.cf2.rackcdn.com
+    OSX_URL=http://wheels.scipy.org
+    wheel-uploader -u $MANYLINUX_URL -v -s -t manylinux1 numpy 1.11.1rc1
+    wheel-uploader -u $WINDOWS_URL -v -s -t win numpy 1.11.1rc1
+    wheel-uploader -u $OSX_URL -v -s -t macosx numpy 1.11.1rc1
+
+The ``-v`` flag gives verbose feedback, ``-s`` causes the script to sign the
+wheels with your GPG key before upload.
+
+You may well find that these uploads break at some point, with error messages
+from the PyPI server.  In this case you'll have to continue the uploads by
+hand using `twine <https://pypi.python.org/pypi/twine>`_, using something
+like::
+
+    twine upload -s numpy-1.11.1rc1-cp34-*.whl
+
+Do this for the wheel files that ``wheel-uploader`` downloaded, but for which
+the upload failed.
+
+The ``warehouse`` PyPI server seems to be more reliable in receiving automated
+wheel uploads.  You can set the repository to upload to with the ``-r`` flag
+to ``wheel-uploader`` and ``twine``.  The warehouse repository URL for your
+``~/.pypirc`` file is https://upload.pypi.io/legacy/
+
+There are two ways to update the source release on PyPI, the first one is::
 
     $ git clean -fxd  # to be safe
     $ python setup.py sdist --formats=gztar,zip  # to check
@@ -417,10 +506,10 @@ This will ask for your key PGP passphrase, in order to sign the built source
 packages.
 
 The second way is to upload the PKG_INFO file inside the sdist dir in the
-web interface of PyPi. The source tarball can also be uploaded through this
+web interface of PyPI. The source tarball can also be uploaded through this
 interface.
 
-To push the travis-ci OSX wheels up to pypi see :
+To push the travis-ci OSX wheels up to PyPI see :
 https://github.com/MacPython/numpy-wheels#uploading-the-built-wheels-to-pypi
 
 .. _push-tag-and-commit:
