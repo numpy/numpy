@@ -30,6 +30,8 @@ class finfo(object):
 
     Attributes
     ----------
+    bits : int
+        The number of bits occupied by the type.
     eps : float
         The smallest representable positive number such that
         ``1.0 + eps != 1.0``.  Type of `eps` is an appropriate floating
@@ -157,6 +159,7 @@ class finfo(object):
             setattr(self, word, getattr(machar, word))
         for word in ['tiny', 'resolution', 'epsneg']:
             setattr(self, word, getattr(machar, word).flat[0])
+        self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
         self.min = -self.max
         self.eps = machar.eps.flat[0]
@@ -174,12 +177,12 @@ class finfo(object):
         fmt = (
             'Machine parameters for %(dtype)s\n'
             '---------------------------------------------------------------\n'
-            'precision=%(precision)3s   resolution= %(_str_resolution)s\n'
-            'machep=%(machep)6s   eps=        %(_str_eps)s\n'
-            'negep =%(negep)6s   epsneg=     %(_str_epsneg)s\n'
-            'minexp=%(minexp)6s   tiny=       %(_str_tiny)s\n'
-            'maxexp=%(maxexp)6s   max=        %(_str_max)s\n'
-            'nexp  =%(nexp)6s   min=        -max\n'
+            'precision = %(precision)3s   resolution = %(_str_resolution)s\n'
+            'machep = %(machep)6s   eps =        %(_str_eps)s\n'
+            'negep =  %(negep)6s   epsneg =     %(_str_epsneg)s\n'
+            'minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n'
+            'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
+            'nexp =   %(nexp)6s   min =        -max\n'
             '---------------------------------------------------------------\n'
             )
         return fmt % self.__dict__
@@ -200,6 +203,8 @@ class iinfo(object):
 
     Attributes
     ----------
+    bits : int
+        The number of bits occupied by the type.
     min : int
         The smallest integer expressible by the type.
     max : int
