@@ -433,6 +433,7 @@ def array2string(a, max_line_width=None, precision=None,
     '[0x0L 0x1L 0x2L]'
 
     """
+
     if isinstance(a, numpy.mat):
         #use __repr__ if it's a matrix or subclassed from matrix
         return repr(a)
