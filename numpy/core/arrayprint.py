@@ -434,6 +434,14 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
+    if (repr(type(a))=="<class 'numpy.matrixlib.defmatrix.matrix'>") and style is repr:
+        #use premade stringification if it's a matrix
+        return a.__str__()
+
+    if (repr(type(a))=="<class 'numpy.matrixlib.defmatrix.matrix'>") and style is repr:
+        
+        #use __repr__ if it's a matrix or subclassed from matrix
+        return a.__str__
     if a.shape == ():
         x = a.item()
         if isinstance(x, tuple):
