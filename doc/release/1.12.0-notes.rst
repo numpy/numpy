@@ -185,6 +185,13 @@ Add ``bits`` attribute to ``np.finfo``
 This makes ``np.finfo`` consistent with ``np.iinfo`` which already has that
 attribute.
 
+Caches in `np.fft` are now bounded in total size and item count
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The caches in `np.fft` that speed up successive FFTs of the same length can no
+longer grow without bounds. They have been replaced with LRU (least recently
+used) caches that automatically evict no longer needed items if either the
+memory size or item count limit has been reached.
+
 
 Changes
 =======
