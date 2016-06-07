@@ -281,6 +281,7 @@ class _FFTCache(object):
             self._dict.popitem(last=False)
 
     def _check_size(self):
-        item_sizes = [_i[0].nbytes for _i in self._dict.values() if _i]
+        item_sizes = [sum(_j.nbytes for _j in _i)
+                      for _i in self._dict.values() if _i]
         max_size = max(self._max_size_in_bytes, 1.5 * max(item_sizes))
         return sum(item_sizes) > max_size
