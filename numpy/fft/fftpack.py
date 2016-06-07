@@ -35,6 +35,8 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
+import threading
+
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
 from . import fftpack_lite as fftpack
@@ -42,6 +44,7 @@ from .helper import _FFTCache
 
 _fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 _real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
+_cache_lock = threading.Lock()
 
 
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
@@ -56,10 +59,13 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
                          % n)
 
     try:
-        # Thread-safety note: We rely on list.pop() here to atomically
-        # retrieve-and-remove a wsave from the cache.  This ensures that no
-        # other thread can get the same wsave while we're using it.
-        wsave = fft_cache.setdefault(n, []).pop()
+        # We have to ensure that only a single thread can access a wsave array
+        # at any given time. Thus we remove it from the cache and insert it
+        # again after it has been used. Multiple threads might create multiple
+        # copies of the wsave array. This is intentional and a limitation of
+        # the current C code.
+        with _cache_lock:
+            wsave = fft_cache.setdefault(n, []).pop()
     except (IndexError):
         wsave = init_function(n)
 
@@ -86,7 +92,8 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     # As soon as we put wsave back into the cache, another thread could pick it
     # up and start using it, so we must not do this until after we're
     # completely done using it ourselves.
-    fft_cache[n].append(wsave)
+    with _cache_lock:
+        fft_cache[n].append(wsave)
 
     return r
 
