@@ -79,86 +79,78 @@ class TestFFTCache(TestCase):
 
     def test_basic_behaviour(self):
         c = _FFTCache(max_size_in_mb=1, max_item_count=4)
-        # Setting
-        c[1] = [np.ones(2, dtype=np.float32)]
-        c[2] = [np.zeros(2, dtype=np.float32)]
-        # Getting
-        assert_array_almost_equal(c[1][0], np.ones(2, dtype=np.float32))
-        assert_array_almost_equal(c[2][0], np.zeros(2, dtype=np.float32))
-        # Setdefault
-        c.setdefault(1, [np.array([1, 2], dtype=np.float32)])
-        assert_array_almost_equal(c[1][0], np.ones(2, dtype=np.float32))
-        c.setdefault(3, [np.array([1, 2], dtype=np.float32)])
-        assert_array_almost_equal(c[3][0], np.array([1, 2], dtype=np.float32))
 
-        self.assertEqual(len(c._dict), 3)
+        # Put
+        c.put_twiddle_factors(1, np.ones(2, dtype=np.float32))
+        c.put_twiddle_factors(2, np.zeros(2, dtype=np.float32))
+
+        # Get
+        assert_array_almost_equal(c.pop_twiddle_factors(1),
+                                  np.ones(2, dtype=np.float32))
+        assert_array_almost_equal(c.pop_twiddle_factors(2),
+                                  np.zeros(2, dtype=np.float32))
+
+        # Nothing should be left.
+        self.assertEqual(len(c._dict), 0)
+
+        # Now put everything in twice so it can be retrieved once and each will
+        # still have one item left.
+        for _ in range(2):
+            c.put_twiddle_factors(1, np.ones(2, dtype=np.float32))
+            c.put_twiddle_factors(2, np.zeros(2, dtype=np.float32))
+        assert_array_almost_equal(c.pop_twiddle_factors(1),
+                                  np.ones(2, dtype=np.float32))
+        assert_array_almost_equal(c.pop_twiddle_factors(2),
+                                  np.zeros(2, dtype=np.float32))
+        self.assertEqual(len(c._dict), 2)
 
     def test_automatic_pruning(self):
-        # Thats around 2600 single precision samples.
+        # That's around 2600 single precision samples.
         c = _FFTCache(max_size_in_mb=0.01, max_item_count=4)
-        c[1] = [np.ones(200, dtype=np.float32)]
-        c[2] = [np.ones(200, dtype=np.float32)]
 
-        # Don't raise errors.
-        c[1], c[2], c[1], c[2]
+        c.put_twiddle_factors(1, np.ones(200, dtype=np.float32))
+        c.put_twiddle_factors(2, np.ones(200, dtype=np.float32))
+        self.assertEqual(list(c._dict.keys()), [1, 2])
 
         # This is larger than the limit but should still be kept.
-        c[3] = [np.ones(3000, dtype=np.float32)]
-        # Should exist.
-        c[1], c[2], c[3]
+        c.put_twiddle_factors(3, np.ones(3000, dtype=np.float32))
+        self.assertEqual(list(c._dict.keys()), [1, 2, 3])
         # Add one more.
-        c[4] = [np.ones(3000, dtype=np.float32)]
-
+        c.put_twiddle_factors(4, np.ones(3000, dtype=np.float32))
         # The other three should no longer exist.
-        with self.assertRaises(KeyError):
-            c[1]
-        with self.assertRaises(KeyError):
-            c[2]
-        with self.assertRaises(KeyError):
-            c[3]
+        self.assertEqual(list(c._dict.keys()), [4])
 
         # Now test the max item count pruning.
         c = _FFTCache(max_size_in_mb=0.01, max_item_count=2)
-        c[1] = [np.empty(2)]
-        c[2] = [np.empty(2)]
+        c.put_twiddle_factors(2, np.empty(2))
+        c.put_twiddle_factors(1, np.empty(2))
         # Can still be accessed.
-        c[2], c[1]
+        self.assertEqual(list(c._dict.keys()), [2, 1])
 
-        c[3] = [np.empty(2)]
-
+        c.put_twiddle_factors(3, np.empty(2))
         # 1 and 3 can still be accessed - c[2] has been touched least recently
         # and is thus evicted.
-        c[1], c[3]
-
-        with self.assertRaises(KeyError):
-            c[2]
-
-        c[1], c[3]
+        self.assertEqual(list(c._dict.keys()), [1, 3])
 
         # One last test. We will add a single large item that is slightly
         # bigger then the cache size. Some small items can still be added.
         c = _FFTCache(max_size_in_mb=0.01, max_item_count=5)
-        c[1] = [np.ones(3000, dtype=np.float32)]
-        c[1]
-        c[2] = [np.ones(2, dtype=np.float32)]
-        c[3] = [np.ones(2, dtype=np.float32)]
-        c[4] = [np.ones(2, dtype=np.float32)]
-        c[1], c[2], c[3], c[4]
+        c.put_twiddle_factors(1, np.ones(3000, dtype=np.float32))
+        c.put_twiddle_factors(2, np.ones(2, dtype=np.float32))
+        c.put_twiddle_factors(3, np.ones(2, dtype=np.float32))
+        c.put_twiddle_factors(4, np.ones(2, dtype=np.float32))
+        self.assertEqual(list(c._dict.keys()), [1, 2, 3, 4])
 
-        # One more big item.
-        c[5] = [np.ones(3000, dtype=np.float32)]
-
-        # c[1] no longer in the cache. Rest still in the cache.
-        c[2], c[3], c[4], c[5]
-        with self.assertRaises(KeyError):
-            c[1]
+        # One more big item. This time it is 6 smaller ones but they are
+        # counted as one big item.
+        for _ in range(6):
+            c.put_twiddle_factors(5, np.ones(500, dtype=np.float32))
+        # '1' no longer in the cache. Rest still in the cache.
+        self.assertEqual(list(c._dict.keys()), [2, 3, 4, 5])
 
         # Another big item - should now be the only item in the cache.
-        c[6] = [np.ones(4000, dtype=np.float32)]
-        for _i in range(1, 6):
-            with self.assertRaises(KeyError):
-                c[_i]
-        c[6]
+        c.put_twiddle_factors(6, np.ones(4000, dtype=np.float32))
+        self.assertEqual(list(c._dict.keys()), [6])
 
 
 if __name__ == "__main__":
