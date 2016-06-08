@@ -375,6 +375,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         } else {
             Py_XDECREF(values);
             Py_XDECREF(mask);
+            Py_XDECREF(array);
             Py_RETURN_NONE;
         }
     }
