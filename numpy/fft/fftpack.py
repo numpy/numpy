@@ -55,12 +55,13 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
 
-    try:
-        # Thread-safety note: We rely on list.pop() here to atomically
-        # retrieve-and-remove a wsave from the cache.  This ensures that no
-        # other thread can get the same wsave while we're using it.
-        wsave = fft_cache.setdefault(n, []).pop()
-    except (IndexError):
+    # We have to ensure that only a single thread can access a wsave array
+    # at any given time. Thus we remove it from the cache and insert it
+    # again after it has been used. Multiple threads might create multiple
+    # copies of the wsave array. This is intentional and a limitation of
+    # the current C code.
+    wsave = fft_cache.pop_twiddle_factors(n)
+    if wsave is None:
         wsave = init_function(n)
 
     if a.shape[axis] != n:
@@ -86,7 +87,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     # As soon as we put wsave back into the cache, another thread could pick it
     # up and start using it, so we must not do this until after we're
     # completely done using it ourselves.
-    fft_cache[n].append(wsave)
+    fft_cache.put_twiddle_factors(n, wsave)
 
     return r
 
