@@ -4999,7 +4999,11 @@ cdef class RandomState:
             x_ptr = <char*><size_t>x.ctypes.data
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
-            buf = np.empty_like(x[0])  # GC'd at function exit
+            # As the array x could contain python objects we use a buffer
+            # of bytes for the swaps to avoid leaving one of the objects
+            # within the buffer and erroneously decrementing it's refcount
+            # when the function exits.
+            buf = np.empty(itemsize, dtype=np.int8) # GC'd at function exit
             buf_ptr = <char*><size_t>buf.ctypes.data
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
