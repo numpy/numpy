@@ -113,5 +113,34 @@ class TestRegression(TestCase):
             assert_(c in a)
             assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
 
+    def test_shuffle_of_array_of_different_length_strings(self):
+        # Test that permuting an array of different length strings
+        # will not cause a segfault on garbage collection
+        # Tests gh-7710
+        np.random.seed(1234)
+
+        a = np.array(['a', 'a' * 1000])
+
+        for _ in range(100):
+            np.random.shuffle(a)
+
+        # Force Garbage Collection - should not segfault.
+        import gc
+        gc.collect()
+
+    def test_shuffle_of_array_of_objects(self):
+        # Test that permuting an array of objects will not cause
+        # a segfault on garbage collection.
+        # See gh-7719
+        np.random.seed(1234)
+        a = np.array([np.arange(1), np.arange(4)])
+
+        for _ in range(1000):
+            np.random.shuffle(a)
+
+        # Force Garbage Collection - should not segfault.
+        import gc
+        gc.collect()
+
 if __name__ == "__main__":
     run_module_suite()
