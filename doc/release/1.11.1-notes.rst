@@ -26,3 +26,6 @@ Fixes Merged
 - #7671 BUG: Boolean assignment no GIL release when transfer needs API.
 - #7676 BUG: Fix handling of right edge of final histogram bin.
 - #7680 BUG: Fix np.clip bug NaN handling for Visual Studio 2015.
+- #7724 BUG: Fix segfaults in np.random.shuffle.
+- #7731 MAINT: Change mkl_info.dir_env_var from MKL to MKLROOT.
+- #7737 BUG: Fix issue on OS X with Python 3.x, npymath.ini not installed.
