@@ -960,7 +960,7 @@ class djbfft_info(system_info):
 
 class mkl_info(system_info):
     section = 'mkl'
-    dir_env_var = 'MKL'
+    dir_env_var = 'MKLROOT'
     _lib_mkl = ['mkl', 'vml', 'guide']
 
     def get_mkl_rootdir(self):
