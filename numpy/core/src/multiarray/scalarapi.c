@@ -617,6 +617,20 @@ PyArray_TypeObjectFromType(int type)
     return obj;
 }
 
+NPY_INLINE PyObject *
+alloc_obj(PyTypeObject * type, int itemsize)
+{
+    PyObject * obj;
+    if (type->tp_itemsize != 0) {
+        /* String type */
+        obj = type->tp_alloc(type, itemsize);
+    }
+    else {
+        obj = type->tp_alloc(type, 0);
+    }
+    return obj;
+}
+
 /* Does nothing with descr (cannot be NULL) */
 /*NUMPY_API
   Get scalar-equivalent to a region of memory described by a descriptor.
@@ -625,7 +639,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 {
     PyTypeObject *type;
-    PyObject *obj;
+    PyObject *obj = NULL;
     void *destptr;
     PyArray_CopySwapFunc *copyswap;
     int type_num;
@@ -688,22 +702,16 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         return obj;
     }
 #endif
-    if (type->tp_itemsize != 0) {
-        /* String type */
-        obj = type->tp_alloc(type, itemsize);
-    }
-    else {
-        obj = type->tp_alloc(type, 0);
-    }
-    if (obj == NULL) {
-        return NULL;
-    }
     if (PyTypeNum_ISDATETIME(type_num)) {
         /*
          * We need to copy the resolution information over to the scalar
          * Get the void * from the metadata dictionary
          */
         PyArray_DatetimeMetaData *dt_data;
+        obj = alloc_obj(type, itemsize);    
+        if (obj == NULL) {
+            return NULL;
+        }
 
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
         memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
@@ -711,7 +719,16 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
+            /* 
+            replace one hack with another, this used to be:
+            obj = alloc_obj(type, itemsize);
             destptr = PyString_AS_STRING(obj);
+            but note that the return value from PyString_AS_STRING
+            is read-only UNLESS it is allocated exactly this way
+            */ 
+            PyObject * obj = PyString_FromStringAndSize(NULL, itemsize);
+            destptr = PyString_AsString(obj);
+            obj->ob_type = type;
             ((PyStringObject *)obj)->ob_shash = -1;
 #if !defined(NPY_PY3K)
             ((PyStringObject *)obj)->ob_sstate = SSTATE_NOT_INTERNED;
@@ -721,6 +738,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
 #if PY_VERSION_HEX < 0x03030000
         else if (type_num == NPY_UNICODE) {
+            obj = alloc_obj(type, itemsize);
+            if (obj == NULL) {
+                return NULL;
+            }
             /* tp_alloc inherited from Python PyBaseObject_Type */
             PyUnicodeObject *uni = (PyUnicodeObject*)obj;
             size_t length = itemsize >> 2;
@@ -793,6 +814,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
 #endif /* PY_VERSION_HEX < 0x03030000 */
         else {
+            obj = alloc_obj(type, itemsize);
+            if (obj == NULL) {
+                return NULL;
+            }
             PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
             vobj->base = NULL;
             vobj->descr = descr;
@@ -829,6 +854,11 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
     }
     else {
+        if (obj == NULL)
+            obj = alloc_obj(type, itemsize);
+        if (obj == NULL) {
+            return NULL;
+        }
         destptr = scalar_value(obj, descr);
     }
     /* copyswap for OBJECT increments the reference count */
