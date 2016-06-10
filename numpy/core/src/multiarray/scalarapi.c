@@ -673,7 +673,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             itemsize = (((itemsize - 1) >> 2) + 1) << 2;
         }
     }
-#if PY_VERSION_HEX >= 0x03030000
     if (type_num == NPY_UNICODE) {
         PyObject *u, *args;
         int byteorder;
@@ -701,7 +700,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         Py_DECREF(args);
         return obj;
     }
-#endif
     if (PyTypeNum_ISDATETIME(type_num)) {
         /*
          * We need to copy the resolution information over to the scalar
@@ -727,7 +725,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             is read-only UNLESS it is allocated exactly this way
             */ 
             PyObject * obj = PyString_FromStringAndSize(NULL, itemsize);
-            destptr = PyString_AsString(obj);
+            destptr = PyString_AS_STRING(obj);
             obj->ob_type = type;
             ((PyStringObject *)obj)->ob_shash = -1;
 #if !defined(NPY_PY3K)
@@ -736,83 +734,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             memcpy(destptr, data, itemsize);
             return obj;
         }
-#if PY_VERSION_HEX < 0x03030000
-        else if (type_num == NPY_UNICODE) {
-            obj = alloc_obj(type, itemsize);
-            if (obj == NULL) {
-                return NULL;
-            }
-            /* tp_alloc inherited from Python PyBaseObject_Type */
-            PyUnicodeObject *uni = (PyUnicodeObject*)obj;
-            size_t length = itemsize >> 2;
-            Py_UNICODE *dst;
-#ifndef Py_UNICODE_WIDE
-            char *buffer;
-            Py_UNICODE *tmp;
-            int alloc = 0;
-
-            length *= 2;
-#endif
-            /* Set uni->str so that object can be deallocated on failure */
-            uni->str = NULL;
-            uni->defenc = NULL;
-            uni->hash = -1;
-            dst = PyObject_MALLOC(sizeof(Py_UNICODE) * (length + 1));
-            if (dst == NULL) {
-                Py_DECREF(obj);
-                PyErr_NoMemory();
-                return NULL;
-            }
-#ifdef Py_UNICODE_WIDE
-            memcpy(dst, data, itemsize);
-            if (swap) {
-                byte_swap_vector(dst, length, 4);
-            }
-            uni->str = dst;
-            uni->str[length] = 0;
-            uni->length = length;
-#else
-            /* need aligned data buffer */
-            if ((swap) || ((((npy_intp)data) % descr->alignment) != 0)) {
-                buffer = malloc(itemsize);
-                if (buffer == NULL) {
-                    PyObject_FREE(dst);
-                    Py_DECREF(obj);
-                    PyErr_NoMemory();
-                }
-                alloc = 1;
-                memcpy(buffer, data, itemsize);
-                if (swap) {
-                    byte_swap_vector(buffer, itemsize >> 2, 4);
-                }
-            }
-            else {
-                buffer = data;
-            }
-
-            /*
-             * Allocated enough for 2-characters per itemsize.
-             * Now convert from the data-buffer
-             */
-            length = PyUCS2Buffer_FromUCS4(dst,
-                    (npy_ucs4 *)buffer, itemsize >> 2);
-            if (alloc) {
-                free(buffer);
-            }
-            /* Resize the unicode result */
-            tmp = PyObject_REALLOC(dst, sizeof(Py_UNICODE)*(length + 1));
-            if (tmp == NULL) {
-                PyObject_FREE(dst);
-                Py_DECREF(obj);
-                return NULL;
-            }
-            uni->str = tmp;
-            uni->str[length] = 0;
-            uni->length = length;
-#endif
-            return obj;
-        }
-#endif /* PY_VERSION_HEX < 0x03030000 */
         else {
             obj = alloc_obj(type, itemsize);
             if (obj == NULL) {
