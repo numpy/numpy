@@ -177,9 +177,9 @@ And here are the time units:
 ======== ================ ======================= ==========================
    h       hour             +/- 1.0e15 years        [1.0e15 BC, 1.0e15 AD]
    m       minute           +/- 1.7e13 years        [1.7e13 BC, 1.7e13 AD]
-   s       second           +/- 2.9e12 years        [ 2.9e9 BC,  2.9e9 AD]
-   ms      millisecond      +/- 2.9e9 years         [ 2.9e6 BC,  2.9e6 AD]
-   us      microsecond      +/- 2.9e6 years         [290301 BC, 294241 AD]
+   s       second           +/- 2.9e11 years        [2.9e11 BC, 2.9e11 AD]
+   ms      millisecond      +/- 2.9e8 years         [ 2.9e8 BC,  2.9e8 AD]
+   us      microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    ns      nanosecond       +/- 292 years           [  1678 AD,   2262 AD]
    ps      picosecond       +/- 106 days            [  1969 AD,   1970 AD]
    fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]
