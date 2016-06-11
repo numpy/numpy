@@ -28,8 +28,10 @@ Basics
    chebval
    chebval2d
    chebval3d
+   chebvalnd
    chebgrid2d
    chebgrid3d
+   chebgridnd
    chebroots
    chebfromroots
 
@@ -40,9 +42,12 @@ Fitting
    :toctree: generated/
 
    chebfit
+   chebfitnd
+   chebfitfunc
    chebvander
    chebvander2d
    chebvander3d
+   chebvandernd
 
 Calculus
 --------

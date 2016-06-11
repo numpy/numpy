@@ -228,6 +228,8 @@ New Features
   been added to the npy_math library.
 
 
+* numpy.polynomial.chebyshev now supports N-dimensional fitting and evaluation for N>1 and N>3, respectively.
+
 Improvements
 ============
 
