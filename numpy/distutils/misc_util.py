@@ -126,13 +126,13 @@ def allpath(name):
     return os.path.join(*splitted)
 
 def rel_path(path, parent_path):
-    """Return path relative to parent_path.
-    """
-    pd = os.path.abspath(parent_path)
-    apath = os.path.abspath(path)
-    if len(apath)<len(pd):
+    """Return path relative to parent_path."""
+    # Use realpath to avoid issues with symlinked dirs (see gh-7707)
+    pd = os.path.realpath(os.path.abspath(parent_path))
+    apath = os.path.realpath(os.path.abspath(path))
+    if len(apath) < len(pd):
         return path
-    if apath==pd:
+    if apath == pd:
         return ''
     if pd == apath[:len(pd)]:
         assert apath[len(pd)] in [os.sep], repr((path, apath[len(pd)]))

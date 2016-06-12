@@ -4,7 +4,7 @@ from __future__ import division, absolute_import, print_function
 from os.path import join, sep, dirname
 
 from numpy.distutils.misc_util import (
-    appendpath, minrelpath, gpaths, get_shared_lib_extension
+    appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
 )
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal
@@ -74,6 +74,13 @@ class TestSharedExtension(TestCase):
             assert_equal(ext, '.dll')
         # just check for no crash
         assert_(get_shared_lib_extension(is_python_ext=True))
+
+
+def test_installed_npymath_ini():
+    # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
+    # will give an error.
+    info = get_info('npymath')
+
 
 if __name__ == "__main__":
     run_module_suite()
