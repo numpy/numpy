@@ -136,6 +136,70 @@ class TestEvaluation(TestCase):
             assert_equal(poly.polyval(x, [1, 0]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0, 0]).shape, dims)
 
+    def test_polyvalfromroots(self):
+        # check exception for broadcasting x values over root array with
+        # too few dimensions
+        assert_raises(ValueError, poly.polyvalfromroots,
+                      [1], [1], tensor=False)
+
+        # check empty input
+        assert_equal(poly.polyvalfromroots([], [1]).size, 0)
+        assert_(poly.polyvalfromroots([], [1]).shape == (0,))
+
+        # check empty input + multidimensional roots
+        assert_equal(poly.polyvalfromroots([], [[1] * 5]).size, 0)
+        assert_(poly.polyvalfromroots([], [[1] * 5]).shape == (5, 0))
+
+        # check scalar input
+        assert_equal(poly.polyvalfromroots(1, 1), 0)
+        assert_(poly.polyvalfromroots(1, np.ones((3, 3))).shape == (3,))
+
+        # check normal input)
+        x = np.linspace(-1, 1)
+        y = [x**i for i in range(5)]
+        for i in range(1, 5):
+            tgt = y[i]
+            res = poly.polyvalfromroots(x, [0]*i)
+            assert_almost_equal(res, tgt)
+        tgt = x*(x - 1)*(x + 1)
+        res = poly.polyvalfromroots(x, [-1, 0, 1])
+        assert_almost_equal(res, tgt)
+
+        # check that shape is preserved
+        for i in range(3):
+            dims = [2]*i
+            x = np.zeros(dims)
+            assert_equal(poly.polyvalfromroots(x, [1]).shape, dims)
+            assert_equal(poly.polyvalfromroots(x, [1, 0]).shape, dims)
+            assert_equal(poly.polyvalfromroots(x, [1, 0, 0]).shape, dims)
+
+        # check compatibility with factorization
+        ptest = [15, 2, -16, -2, 1]
+        r = poly.polyroots(ptest)
+        x = np.linspace(-1, 1)
+        assert_almost_equal(poly.polyval(x, ptest),
+                            poly.polyvalfromroots(x, r))
+
+        # check multidimensional arrays of roots and values
+        # check tensor=False
+        rshape = (3, 5)
+        x = np.arange(-3, 2)
+        r = np.random.randint(-5, 5, size=rshape)
+        res = poly.polyvalfromroots(x, r, tensor=False)
+        tgt = np.empty(r.shape[1:])
+        for ii in range(tgt.size):
+            tgt[ii] = poly.polyvalfromroots(x[ii], r[:, ii])
+        assert_equal(res, tgt)
+
+        # check tensor=True
+        x = np.vstack([x, 2*x])
+        res = poly.polyvalfromroots(x, r, tensor=True)
+        tgt = np.empty(r.shape[1:] + x.shape)
+        for ii in range(r.shape[1]):
+            for jj in range(x.shape[0]):
+                tgt[ii, jj, :] = poly.polyvalfromroots(x[jj], r[:, ii])
+        assert_equal(res, tgt)
+
     def test_polyval2d(self):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
