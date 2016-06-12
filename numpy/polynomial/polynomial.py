@@ -856,15 +856,16 @@ def polyvalfromroots(x, r, tensor=True):
     >>> polyvalfromroots(b, r, tensor=False)
     array([-0.,  0.])
     """
-    r = np.array(r, ndmin=1, copy=0) + 0.0
-    if r.size == 0:
-        return np.ones_like(x)
-    if np.isscalar(x) or isinstance(x, (tuple, list)):
-        x = np.array(x, ndmin=1, copy=0) + 0.0
-    if isinstance(x, np.ndarray) and tensor:
-        if x.size == 0:
-            return x.reshape(r.shape[1:]+x.shape)
-        r = r.reshape(r.shape + (1,)*x.ndim)
+    r = np.array(r, ndmin=1, copy=0)
+    if r.dtype.char in '?bBhHiIlLqQpP':
+        r = r.astype(np.double)
+    if isinstance(x, (tuple, list)):
+        x = np.asarray(x)
+    if isinstance(x, np.ndarray):
+        if tensor:
+            r = r.reshape(r.shape + (1,)*x.ndim)
+        elif x.ndim >= r.ndim:
+            raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
 
 
