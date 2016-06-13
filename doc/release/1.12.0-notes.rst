@@ -199,6 +199,14 @@ longer grow without bounds. They have been replaced with LRU (least recently
 used) caches that automatically evict no longer needed items if either the
 memory size or item count limit has been reached.
 
+Improved handling of zero-width string/unicode dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed several interfaces that explicitly disallowed arrays with zero-width
+string dtypes (i.e. ``dtype('S0')`` or ``dtype('U0')``, and fixed several
+bugs where such dtypes were not handled properly.  In particular, changed
+``ndarray.__new__`` to not implicitly convert ``dtype('S0')`` to
+``dtype('S1')`` (and likewise for unicode) when creating new arrays.
+
 
 Changes
 =======
