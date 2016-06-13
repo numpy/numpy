@@ -144,7 +144,7 @@ def poly(seq_of_zeros):
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
-        roots = NX.asarray(seq_of_zeros, complex)
+        roots = NX.asanyarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
         neg_roots = NX.conjugate(sort_complex(
                                         NX.compress(roots.imag < 0, roots)))
@@ -318,7 +318,7 @@ def polyint(p, m=1, k=None):
               "k must be a scalar or a rank-1 array of length 1 or >m.")
 
     truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     if m == 0:
         if truepoly:
             return poly1d(p)
@@ -388,7 +388,7 @@ def polyder(p, m=1):
         raise ValueError("Order of derivative must be positive (see polyint)")
 
     truepoly = isinstance(p, poly1d)
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     n = len(p) - 1
     y = p[:-1] * NX.arange(n, 0, -1)
     if m == 0:
@@ -547,8 +547,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     """
     order = int(deg) + 1
-    x = NX.asarray(x) + 0.0
-    y = NX.asarray(y) + 0.0
+    x = NX.asanyarray(x) + 0.0
+    y = NX.asanyarray(y) + 0.0
 
     # check arguments.
     if deg < 0:
@@ -572,7 +572,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     # apply weighting
     if w is not None:
-        w = NX.asarray(w) + 0.0
+        w = NX.asanyarray(w) + 0.0
         if w.ndim != 1:
             raise TypeError("expected a 1-d array for weights")
         if w.shape[0] != y.shape[0]:
@@ -671,11 +671,11 @@ def polyval(p, x):
     poly1d([ 76.])
 
     """
-    p = NX.asarray(p)
+    p = NX.asanyarray(p)
     if isinstance(x, poly1d):
         y = 0
     else:
-        x = NX.asarray(x)
+        x = NX.asanyarray(x)
         y = NX.zeros_like(x)
     for i in range(len(p)):
         y = y * x + p[i]
@@ -1009,7 +1009,7 @@ class poly1d(object):
     >>> (p**3 + 4) / p
     (poly1d([  1.,   4.,  10.,  12.,   9.]), poly1d([ 4.]))
 
-    ``asarray(p)`` gives the coefficient array, so polynomials can be
+    ``asanyarray(p)`` gives the coefficient array, so polynomials can be
     used in all functions that accept arrays:
 
     >>> p**2 # square of polynomial
@@ -1065,9 +1065,9 @@ class poly1d(object):
 
     def __array__(self, t=None):
         if t:
-            return NX.asarray(self.coeffs, t)
+            return NX.asanyarray(self.coeffs, t)
         else:
-            return NX.asarray(self.coeffs)
+            return NX.asanyarray(self.coeffs)
 
     def __repr__(self):
         vals = repr(self.coeffs)
