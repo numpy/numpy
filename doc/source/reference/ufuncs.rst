@@ -521,7 +521,6 @@ Math operations
     sqrt
     square
     reciprocal
-    ones_like
 
 .. tip::
 
