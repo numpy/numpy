@@ -1083,18 +1083,13 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True) #doctest: +SKIP
     """
+    from numpy.compat import npy_load_module
     import doctest
-    import imp
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    path = [os.path.dirname(filename)]
-    file, pathname, description = imp.find_module(name, path)
-    try:
-        m = imp.load_module(name, file, pathname, description)
-    finally:
-        file.close()
+    m = npy_load_module(name, filename)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)
