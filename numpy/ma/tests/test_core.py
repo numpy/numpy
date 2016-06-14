@@ -1004,8 +1004,7 @@ class TestMaskedArrayArithmetic(TestCase):
         res = count(ott, 0)
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
-
-        assert_raises(IndexError, ott.count, 1)
+        assert_raises(IndexError, ott.count, axis=1)
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
@@ -1278,6 +1277,16 @@ class TestMaskedArrayArithmetic(TestCase):
             result = xmmeth(axis=0, out=output)
             assert_(result is output)
             assert_(output[0] is masked)
+
+    def test_count_mean_with_matrix(self):
+        m = np.ma.array(np.matrix([[1,2],[3,4]]), mask=np.zeros((2,2)))
+
+        assert_equal(m.count(axis=0).shape, (1,2))
+        assert_equal(m.count(axis=1).shape, (2,1))
+
+        #make sure broadcasting inside mean and var work
+        assert_equal(m.mean(axis=0), [[2., 3.]])
+        assert_equal(m.mean(axis=1), [[1.5], [3.5]])
 
     def test_eq_on_structured(self):
         # Test the equality of structured arrays
@@ -4223,6 +4232,85 @@ class TestMaskedView(TestCase):
         assert_equal(test, data)
         self.assertTrue(isinstance(test, np.matrix))
         self.assertTrue(not isinstance(test, MaskedArray))
+
+class TestOptionalArgs(TestCase):
+    def test_ndarrayfuncs(self):
+        # test axis arg behaves the same as ndarray (including mutliple axes)
+
+        d = np.arange(24.0).reshape((2,3,4))
+        m = np.zeros(24, dtype=bool).reshape((2,3,4))
+        # mask out last element of last dimension
+        m[:,:,-1] = True
+        a = np.ma.array(d, mask=m)
+
+        def testaxis(f, a, d):
+            numpy_f = numpy.__getattribute__(f)
+            ma_f = np.ma.__getattribute__(f)
+
+            # test axis arg
+            assert_equal(ma_f(a, axis=1)[...,:-1], numpy_f(d[...,:-1], axis=1))
+            assert_equal(ma_f(a, axis=(0,1))[...,:-1],
+                         numpy_f(d[...,:-1], axis=(0,1)))
+
+        def testkeepdims(f, a, d):
+            numpy_f = numpy.__getattribute__(f)
+            ma_f = np.ma.__getattribute__(f)
+
+            # test keepdims arg
+            assert_equal(ma_f(a, keepdims=True).shape,
+                         numpy_f(d, keepdims=True).shape)
+            assert_equal(ma_f(a, keepdims=False).shape,
+                         numpy_f(d, keepdims=False).shape)
+
+            # test both at once
+            assert_equal(ma_f(a, axis=1, keepdims=True)[...,:-1],
+                         numpy_f(d[...,:-1], axis=1, keepdims=True))
+            assert_equal(ma_f(a, axis=(0,1), keepdims=True)[...,:-1],
+                         numpy_f(d[...,:-1], axis=(0,1), keepdims=True))
+
+        for f in ['sum', 'prod', 'mean', 'var', 'std']:
+            testaxis(f, a, d)
+            testkeepdims(f, a, d)
+
+        for f in ['min', 'max']:
+            testaxis(f, a, d)
+
+        d = (np.arange(24).reshape((2,3,4))%2 == 0)
+        a = np.ma.array(d, mask=m)
+        for f in ['all', 'any']:
+            testaxis(f, a, d)
+            testkeepdims(f, a, d)
+
+    def test_count(self):
+        # test np.ma.count specially
+
+        d = np.arange(24.0).reshape((2,3,4))
+        m = np.zeros(24, dtype=bool).reshape((2,3,4))
+        m[:,0,:] = True
+        a = np.ma.array(d, mask=m)
+
+        assert_equal(count(a), 16)
+        assert_equal(count(a, axis=1), 2*ones((2,4)))
+        assert_equal(count(a, axis=(0,1)), 4*ones((4,)))
+        assert_equal(count(a, keepdims=True), 16*ones((1,1,1)))
+        assert_equal(count(a, axis=1, keepdims=True), 2*ones((2,1,4)))
+        assert_equal(count(a, axis=(0,1), keepdims=True), 4*ones((1,1,4)))
+
+        # check the 'nomask' path
+        a = np.ma.array(d, mask=nomask)
+
+        assert_equal(count(a), 24)
+        assert_equal(count(a, axis=1), 3*ones((2,4)))
+        assert_equal(count(a, axis=(0,1)), 6*ones((4,)))
+        assert_equal(count(a, keepdims=True), 24*ones((1,1,1)))
+        assert_equal(count(a, axis=1, keepdims=True), 3*ones((2,1,4)))
+        assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
+
+        # check the 'masked' singleton
+        assert_equal(count(np.ma.masked), 0)
+
+        # check 0-d arrays do not allow axis > 0
+        assert_raises(ValueError, count, np.ma.array(1), axis=1)
 
 
 def test_masked_array():
