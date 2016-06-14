@@ -1545,8 +1545,7 @@ finish:
                     Py_ssize_t len = 0;
                     char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
                                        "Object0", "String0", "Timedelta64",
-                                       "Unicode0", "UInt", "Unicode0",
-                                       "Void0"};
+                                       "Unicode0", "UInt", "Void0"};
                     int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
                     int i;
 

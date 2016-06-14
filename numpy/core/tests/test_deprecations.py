@@ -198,7 +198,7 @@ class _DeprecationTestCase(object):
                         (warning.category,))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [w.category for w in self.log]
+            lst = [str(w.category) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
@@ -619,13 +619,17 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
     _add_aliases in numerictypes.py.
     """
     def test_all_dtypes(self):
-        deprecated_types = ['Bool', 'Complex32', 'Complex64', 'Float16',
-                            'Float32', 'Float64', 'Int8', 'Int16', 'Int32',
-                            'Int64' 'Object0', 'String0', 'Timedelta64',
-                            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Unicode0',
-                            'Void0']
-        for deprecated_type in deprecated_types:
-            self.assert_deprecated(np.dtype, args=(deprecated_type,))
+        deprecated_types = [
+            'Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
+            'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
+            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
+            ]
+        if sys.version_info[0] < 3:
+            deprecated_types.extend(['Unicode0', 'String0'])
+
+        for dt in deprecated_types:
+            self.assert_deprecated(np.dtype, exceptions=(TypeError,),
+                                   args=(dt,))
 
 
 class TestTestDeprecated(object):
