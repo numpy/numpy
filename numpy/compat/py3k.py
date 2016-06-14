@@ -7,7 +7,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
-           'integer_types', 'is_pathlib_path', 'Path']
+           'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path']
 
 import sys
 try:
@@ -91,9 +91,66 @@ def asunicode_nested(x):
     else:
         return asunicode(x)
 
-
 def is_pathlib_path(obj):
     """
     Check whether obj is a pathlib.Path object.
     """
     return Path is not None and isinstance(obj, Path)
+
+if sys.version_info[0] >= 3 and sys.version_info[1] >= 4:
+    def npy_load_module(name, fn, info=None):
+        """
+        Load a module.
+
+        .. versionadded:: 1.11.2
+
+        Parameters
+        ----------
+        name : str
+            Full module name.
+        fn : str
+            Path to module file.
+        info : tuple, optional
+            Only here for backward compatibility with Python 2.*.
+
+        Returns
+        -------
+        mod : module
+
+        """
+        import importlib
+        return importlib.machinery.SourceFileLoader(name, fn).load_module()
+else:
+    def npy_load_module(name, fn, info=None):
+        """
+        Load a module.
+
+        .. versionadded:: 1.11.2
+
+        Parameters
+        ----------
+        name : str
+            Full module name.
+        fn : str
+            Path to module file.
+        info : tuple, optional
+            Information as returned by `imp.find_module`
+            (suffix, mode, type).
+
+        Returns
+        -------
+        mod : module
+
+        """
+        import imp
+        import os
+        if info is None:
+            path = os.path.dirname(fn)
+            fo, fn, info = imp.find_module(name, [path])
+        else:
+            fo = open(fn, info[1])
+        try:
+            mod = imp.load_module(name, fo, fn, info)
+        finally:
+            fo.close()
+        return mod
