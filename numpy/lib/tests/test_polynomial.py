@@ -81,7 +81,7 @@ poly1d([ 2.])
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, rundocs
+    assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
     )
 
 
@@ -134,6 +134,12 @@ class TestDocs(TestCase):
         y = np.polyval(c, x)
         err = [1, -1, 1, -1, 1, -1, 1]
         weights = np.arange(8, 1, -1)**2/7.0
+
+        # Check exception when too few points for variance estimate. Note that
+        # the Bayesian estimate requires the number of data points to exceed
+        # degree + 3.
+        assert_raises(ValueError, np.polyfit,
+                      [0, 1, 3], [0, 1, 3], deg=0, cov=True)
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
