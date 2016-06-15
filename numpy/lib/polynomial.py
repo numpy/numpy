@@ -15,7 +15,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.lib.twodim_base import diag, vander
-from numpy.lib.function_base import trim_zeros, sort_complex
+from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
@@ -145,11 +145,7 @@ def poly(seq_of_zeros):
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
         roots = NX.asarray(seq_of_zeros, complex)
-        pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
-        neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0, roots)))
-        if (len(pos_roots) == len(neg_roots) and
-                NX.alltrue(neg_roots == pos_roots)):
+        if NX.all(NX.sort(roots) == NX.sort(roots.conjugate())):
             a = a.real.copy()
 
     return a

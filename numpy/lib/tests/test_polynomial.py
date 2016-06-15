@@ -81,13 +81,37 @@ poly1d([ 2.])
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, rundocs
+    assert_almost_equal, assert_array_almost_equal, rundocs
     )
 
 
 class TestDocs(TestCase):
     def test_doctests(self):
         return rundocs()
+
+    def test_poly(self):
+        assert_array_almost_equal(np.poly([3, -np.sqrt(2), np.sqrt(2)]),
+                                  [1, -3, -2, 6])
+
+        # From matlab docs
+        A = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+        assert_array_almost_equal(np.poly(A), [1, -6, -72, -27])
+
+        # Should produce real output for perfect conjugates
+        assert_(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
+        assert_(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
+                                      1-2j, 1.+3.5j, 1-3.5j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
+        assert_(np.isrealobj(np.poly([1j, -1j])))
+        assert_(np.isrealobj(np.poly([1, -1])))
+
+        assert_(np.iscomplexobj(np.poly([1j, -1.0000001j])))
+
+        np.random.seed(42)
+        a = np.random.randn(100) + 1j*np.random.randn(100)
+        assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
