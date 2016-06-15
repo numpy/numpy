@@ -599,9 +599,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         #  it is included here because the covariance of Multivariate Student-T
         #  (which is implied by a Bayesian uncertainty analysis) includes it.
         #  Plus, it gives a slightly more conservative estimate of uncertainty.
-        if (len(x) - order - 2.0) < 1:
-            raise ValueError("the number of data points must exceed "
-                             "the degree + 3 for covariance matrix")
+        if len(x) <= order + 2:
+            raise ValueError("the number of data points must exceed order + 2 "
+                             "for Bayesian estimate the covariance matrix")
         fac = resids / (len(x) - order - 2.0)
         if y.ndim == 1:
             return c, Vbase * fac
