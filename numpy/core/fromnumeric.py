@@ -2844,7 +2844,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     >>> a[0, :] = 1.0
     >>> a[1, :] = 0.1
     >>> np.mean(a)
-    0.546875
+    0.54999924
 
     Computing the mean in float64 is more accurate:
 
