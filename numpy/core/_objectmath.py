@@ -1,6 +1,6 @@
 """
 Pure python implementations of ufuncs for Object type.
-Makes use of math and cmath module for some ufuncs.
+Makes use of math module for some ufuncs.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -135,7 +135,7 @@ def _ones_like(x):
 
 def sign(x):
     if isint(x):
-        return cmp(x, 0)
+        return (x > 0) - (x < 0)
     raise TypeError(_notimplemented_msg('sign', type(x)))
 
 def hypot(x, y):
