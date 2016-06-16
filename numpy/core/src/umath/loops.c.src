@@ -2772,7 +2772,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
 
         in1 = in1 ? in1 : Py_None;
 
-        if ( PyArray_CheckScalar(in1) ){
+        if ( PyArray_CheckScalar(in1) || PyArray_Check(in1) ){
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
         }
         else if (_is_float_complex(in1)) {
@@ -2852,7 +2852,8 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
                 Py_XDECREF(arr);
             }
         }
-        else if (PyArray_CheckScalar(in1) || PyArray_CheckScalar(in2) ) {
+        else if (PyArray_CheckScalar(in1) || PyArray_CheckScalar(in2) ||
+                 PyArray_Check(in1) || PyArray_Check(in2) ) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, in2, NULL);
         }
         else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 

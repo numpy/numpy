@@ -43,31 +43,32 @@ def logical_not(x):
     return bool(not x)
 
 def maximum(x, y):
+    # get nan and complex right when casting
     if isint(y) and float_or_complex(x):
-        return np.maximum(x, float(y))
+        return np.maximum(x, float(y)).item()
     if isint(x) and float_or_complex(y):
-        return np.maximum(float(x), y)
+        return np.maximum(float(x), y).item()
     return max(x, y)
 
 def minimum(x, y):
     if isint(y) and float_or_complex(x):
-        return np.minimum(x, float(y))
+        return np.minimum(x, float(y)).item()
     if isint(x) and float_or_complex(y):
-        return np.minimum(float(x), y)
+        return np.minimum(float(x), y).item()
     return min(x, y)
 
 def fmax(x, y):
     if isint(y) and float_or_complex(x):
-        return np.fmax(x, float(y))
+        return np.fmax(x, float(y)).item()
     if isint(x) and float_or_complex(y):
-        return np.fmax(float(x), y)
+        return np.fmax(float(x), y).item()
     return max(x, y)
 
 def fmin(x, y):
     if isint(y) and float_or_complex(x):
-        return np.fmin(x, float(y))
+        return np.fmin(x, float(y)).item()
     if isint(x) and float_or_complex(y):
-        return np.fmin(float(x), y)
+        return np.fmin(float(x), y).item()
     return min(x, y)
 
 def iscomplex(x): # not actually a ufunc (yet)
@@ -134,13 +135,7 @@ def _ones_like(x):
 
 def sign(x):
     if isint(x):
-        if x > 0:
-            return 1
-        if x < 0:
-            return -1
-        if x == 0:
-            return 0
-        return x
+        return cmp(x, 0)
     raise TypeError(_notimplemented_msg('sign', type(x)))
 
 def hypot(x, y):
@@ -149,7 +144,7 @@ def hypot(x, y):
             x = float(x)
         if isint(y):
             y = float(y)
-        return np.hypot(x, y)
+        return np.hypot(x, y).item()
     raise TypeError(_notimplemented_msg('hypot', type(x), type(y)))
 
 def signbit(x):
@@ -163,7 +158,7 @@ def nextafter(x, y):
             x = float(x)
         if isint(y):
             y = float(y)
-        return np.nextafter(x, y)
+        return np.nextafter(x, y).item()
     raise TypeError(_notimplemented_msg('nextafter', type(x), type(y)))
 
 def copysign(x, y):
@@ -177,7 +172,7 @@ def logaddexp(x, y):
             x = float(x)
         if isint(y):
             y = float(y)
-        return np.logaddexp(x, y)
+        return np.logaddexp(x, y).item()
     raise TypeError(_notimplemented_msg('logaddexp', type(x), type(y)))
 
 def logaddexp2(x, y):
@@ -186,15 +181,15 @@ def logaddexp2(x, y):
             x = float(x)
         if isint(y):
             y = float(y)
-        return np.logaddexp2(x, y)
+        return np.logaddexp2(x, y).item()
     raise TypeError(_notimplemented_msg('logaddexp2', type(x), type(y)))
 
 def fmod(x, y): #needs work
     if isint(x) or isint(y):
         if isint(y) and float_or_complex(x):
-            return np.fmod(x, float(y))
+            return np.fmod(x, float(y)).item()
         if isint(x) and float_or_complex(y):
-            return np.fmod(float(x), y)
+            return np.fmod(float(x), y).item()
         if isint(x) and isint(y):
             if y == 0:
                 return 0
@@ -205,9 +200,9 @@ def fmod(x, y): #needs work
 def remainder(x, y): #needs work
     if isint(x) or isint(y):
         if isint(y) and float_or_complex(x):
-            return np.remainder(x, float(y))
+            return np.remainder(x, float(y)).item()
         if isint(x) and float_or_complex(y):
-            return np.remainder(float(x), y)
+            return np.remainder(float(x), y).item()
         if isint(x) and isint(y):
             if y == 0:
                 return 0
