@@ -554,7 +554,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
 
 add_newdoc('numpy.core', 'broadcast', ('ndim',
     """
-    Number of dimensions of broadcasted result.
+    Number of dimensions of broadcasted result. Alias for `nd`.
 
     .. versionadded:: 1.12.0
 
@@ -570,7 +570,8 @@ add_newdoc('numpy.core', 'broadcast', ('ndim',
 
 add_newdoc('numpy.core', 'broadcast', ('nd',
     """
-    Number of dimensions of broadcasted result. Alias for `ndim`.
+    Number of dimensions of broadcasted result. For code intended for Numpy
+    1.12.0 and later the more consistent `ndim` is preferred.
 
     Examples
     --------
