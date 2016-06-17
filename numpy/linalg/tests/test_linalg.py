@@ -1214,6 +1214,80 @@ class TestNorm_NonSystematic(object):
         d = d.astype(np.complex64)
         old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
 
+    def test_nested_arrays(self):
+        testvector = np.array([np.array([0, 4]), 0, 3], dtype=object)
+
+        norm = linalg.norm(testvector)
+        assert_array_equal(norm, [3, 5])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=1)
+        assert_array_equal(norm, [3, 7])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=2)
+        assert_array_equal(norm, [3, 5])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=np.inf)
+        assert_array_equal(norm, [3, 4])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=-np.inf)
+        assert_array_equal(norm, [0, 0])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=0)
+        assert_array_equal(norm, [1, 2])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        # Invalid norm order for vectors:
+        assert_raises(ValueError, linalg.norm, testvector, ord='fro')
+        assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
+
+        testmatrix = np.array([[np.array([0, 4]), 0, 0],
+                               [0,                3, 0]], dtype=object)
+
+        norm = linalg.norm(testmatrix)
+        assert_array_equal(norm, [3, 5])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord='fro')
+        assert_array_equal(norm, [3, 5])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord='nuc')
+        assert_array_equal(norm, [3, 7])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=np.inf)
+        assert_array_equal(norm, [3, 4])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=-np.inf)
+        assert_array_equal(norm, [0, 3])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=1)
+        assert_array_equal(norm, [3, 4])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=-1)
+        assert_array_equal(norm, [0, 0])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=2)
+        assert_array_equal(norm, [3, 4])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord=-2)
+        assert_array_equal(norm, [0, 3])
+        assert_equal(norm.dtype, np.dtype('float64'))
+
+        # Invalid norm order for matrices:
+        assert_raises(ValueError, linalg.norm, testmatrix, ord=0)
+        assert_raises(ValueError, linalg.norm, testmatrix, ord=3)
+
 
 class TestNormDouble(_TestNorm):
     dt = np.double

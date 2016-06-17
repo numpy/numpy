@@ -94,17 +94,7 @@ class TestRegression(TestCase):
 
     def test_norm_object_array(self):
         # gh-7575
-        testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)
-
-        norm = linalg.norm(testvector)
-        assert_array_equal(norm, [0, 1])
-        self.assertEqual(norm.dtype, np.dtype('float64'))
-
-        norm = linalg.norm(testvector, ord=1)
-        assert_array_equal(norm, [0, 1])
-        self.assertNotEqual(norm.dtype, np.dtype('float64'))
-
-        norm = linalg.norm(testvector, ord=2)
+        norm = linalg.norm(np.array([np.array([0, 1]), 0, 0], dtype=object))
         assert_array_equal(norm, [0, 1])
         self.assertEqual(norm.dtype, np.dtype('float64'))
 
