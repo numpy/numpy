@@ -2496,6 +2496,7 @@ class TestBroadcast(TestCase):
         for mit in mits:
             assert_equal(mit.shape, (5, 6, 7))
             assert_equal(mit.ndim, 3)
+            assert_equal(mit.nd, 3)
             assert_equal(mit.numiter, 4)
             for a, ia in zip(arrs, mit.iters):
                 assert_(a is ia.base)
@@ -2506,6 +2507,7 @@ class TestBroadcast(TestCase):
         mit = np.broadcast(*arrs)
         assert_equal(mit.shape, (5, 6, 7))
         assert_equal(mit.ndim, 3)
+        assert_equal(mit.nd, 3)
         assert_equal(mit.numiter, 1)
         assert_(arrs[0] is mit.iters[0].base)
 
