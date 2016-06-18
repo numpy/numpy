@@ -424,11 +424,14 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test is equivalent to ``abs(desired-actual) < 0.5 * 10**(-decimal)``.
+    The test verifies that the elements of ``actual`` and ``desired`` satisfy.
 
-    Given two objects (numbers or ndarrays), check that all elements of these
-    objects are almost equal. An exception is raised at conflicting values.
-    For ndarrays this delegates to assert_array_almost_equal
+        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+
+    That is a looser test than originally documented, but agrees with what the
+    actual implementation in `assert_array_almost_equal` did up to rounding
+    vagaries. An exception is raised at conflicting values. For ndarrays this
+    delegates to assert_array_almost_equal
 
     Parameters
     ----------
@@ -529,7 +532,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if round(abs(desired - actual), decimal) != 0:
+    if abs(desired - actual) >= 1.5 * 10.0**(-decimal):
         raise AssertionError(_build_err_msg())
 
 
@@ -819,14 +822,16 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test verifies identical shapes and verifies values with
-    ``abs(desired-actual) < 0.5 * 10**(-decimal)``.
+    The test verifies identical shapes and that the elements of ``actual`` and
+    ``desired`` satisfy.
 
-    Given two array_like objects, check that the shape is equal and all
-    elements of these objects are almost equal. An exception is raised at
-    shape mismatch or conflicting values. In contrast to the standard usage
-    in numpy, NaNs are compared like numbers, no assertion is raised if
-    both objects have NaNs in the same positions.
+        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+
+    That is a looser test than originally documented, but agrees with what the
+    actual implementation did up to rounding vagaries. An exception is raised
+    at shape mismatch or conflicting values. In contrast to the standard usage
+    in numpy, NaNs are compared like numbers, no assertion is raised if both
+    objects have NaNs in the same positions.
 
     Parameters
     ----------
@@ -903,12 +908,12 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         # casting of x later.
         dtype = result_type(y, 1.)
         y = array(y, dtype=dtype, copy=False, subok=True)
-        z = abs(x-y)
+        z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
             z = z.astype(float_)  # handle object arrays
 
-        return around(z, decimal) <= 10.0**(-decimal)
+        return z < 1.5 * 10.0**(-decimal)
 
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
              header=('Arrays are not almost equal to %d decimals' % decimal),
