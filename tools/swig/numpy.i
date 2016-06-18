@@ -81,6 +81,7 @@
 %#define array_descr(a)         (((PyArrayObject*)a)->descr)
 %#define array_flags(a)         (((PyArrayObject*)a)->flags)
 %#define array_enableflags(a,f) (((PyArrayObject*)a)->flags) = f
+%#define array_is_fortran(a)    (PyArray_ISFORTRAN((PyArrayObject*)a))
 %#else
 %#define is_array(a)            ((a) && PyArray_Check(a))
 %#define array_type(a)          PyArray_TYPE((PyArrayObject*)a)
@@ -93,10 +94,10 @@
 %#define array_descr(a)         PyArray_DESCR((PyArrayObject*)a)
 %#define array_flags(a)         PyArray_FLAGS((PyArrayObject*)a)
 %#define array_enableflags(a,f) PyArray_ENABLEFLAGS((PyArrayObject*)a,f)
+%#define array_is_fortran(a)    (PyArray_IS_F_CONTIGUOUS((PyArrayObject*)a))
 %#endif
 %#define array_is_contiguous(a) (PyArray_ISCONTIGUOUS((PyArrayObject*)a))
 %#define array_is_native(a)     (PyArray_ISNOTSWAPPED((PyArrayObject*)a))
-%#define array_is_fortran(a)    (PyArray_IS_F_CONTIGUOUS((PyArrayObject*)a))
 }
 
 /**********************************************************************/
@@ -295,7 +296,11 @@
       Py_INCREF(array_descr(ary));
       result = (PyArrayObject*) PyArray_FromArray(ary,
                                                   array_descr(ary),
+%#if NPY_API_VERSION < 0x00000007
+                                                  NPY_FORTRANORDER);
+%#else
                                                   NPY_ARRAY_F_CONTIGUOUS);
+%#endif
       *is_new_object = 1;
     }
     return result;
