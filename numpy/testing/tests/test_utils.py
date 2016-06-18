@@ -11,7 +11,7 @@ from numpy.testing import (
     assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath, 
+    assert_string_equal, assert_, tempdir, temppath,
     )
 import unittest
 
@@ -246,6 +246,23 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
+    def test_closeness(self):
+        # Note that in the course of time we ended up with
+        #     `abs(x - y) < 1.5 * 10**(-decimal)`
+        # instead of the previously documented
+        #     `abs(x - y) < 0.5 * 10**(-decimal)`
+        # so this check serves to preserve the wrongness.
+
+        # test scalars
+        self._assert_func(1.499999, 0.0, decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(1.5, 0.0, decimal=0))
+
+        # test arrays
+        self._assert_func([1.499999], [0.0], decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func([1.5], [0.0], decimal=0))
+
     def test_simple(self):
         x = np.array([1234.2222])
         y = np.array([1234.2223])
@@ -287,6 +304,23 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
     def setUp(self):
         self._assert_func = assert_almost_equal
+
+    def test_closeness(self):
+        # Note that in the course of time we ended up with
+        #     `abs(x - y) < 1.5 * 10**(-decimal)`
+        # instead of the previously documented
+        #     `abs(x - y) < 0.5 * 10**(-decimal)`
+        # so this check serves to preserve the wrongness.
+
+        # test scalars
+        self._assert_func(1.499999, 0.0, decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(1.5, 0.0, decimal=0))
+
+        # test arrays
+        self._assert_func([1.499999], [0.0], decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func([1.5], [0.0], decimal=0))
 
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
