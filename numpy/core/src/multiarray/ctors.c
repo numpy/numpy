@@ -892,7 +892,8 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
  * Generic new array creation routine.
  * Internal variant with calloc argument for PyArray_Zeros.
  *
- * steals a reference to descr (even on failure)
+ * steals a reference to descr. On failure or descr->subarray, descr will
+ * be decrefed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
@@ -1128,7 +1129,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 /*NUMPY_API
  * Generic new array creation routine.
  *
- * steals a reference to descr (even on failure)
+ * steals a reference to descr. On failure or when dtype->subarray is
+ * true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
@@ -1153,7 +1155,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  * subok     - If 1, use the prototype's array subtype, otherwise
  *             always create a base-class array.
  *
- * NOTE: If dtype is not NULL, steals the dtype reference.
+ * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
+ * dtype->subarray is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
@@ -2842,7 +2845,8 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 /*NUMPY_API
  * Zeros
  *
- * steal a reference
+ * steals a reference to type. On failure or when dtype->subarray is
+ * true, dtype will be decrefed.
  * accepts NULL type
  */
 NPY_NO_EXPORT PyObject *
@@ -3260,17 +3264,21 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         }
         num = numbytes / dtype->elsize;
     }
-    r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                              dtype,
-                                              1, &num,
-                                              NULL, NULL,
-                                              0, NULL);
+    /*
+     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
+     * even on success, so make sure it stays around until exit.
+     */
+    Py_INCREF(dtype);
+    r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
+                                              NULL, NULL, 0, NULL);
     if (r == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     NPY_BEGIN_ALLOW_THREADS;
     *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
     NPY_END_ALLOW_THREADS;
+    Py_DECREF(dtype);
     return r;
 }
 
@@ -3293,13 +3301,17 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     npy_intp bytes, totalbytes;
 
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
+
+    /*
+     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
+     * even on success, so make sure it stays around until exit.
+     */
+    Py_INCREF(dtype);
     r = (PyArrayObject *)
-        PyArray_NewFromDescr(&PyArray_Type,
-                             dtype,
-                             1, &size,
-                             NULL, NULL,
-                             0, NULL);
+        PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
+                             NULL, NULL, 0, NULL);
     if (r == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     clean_sep = swab_separator(sep);
@@ -3348,6 +3360,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     free(clean_sep);
 
 fail:
+    Py_DECREF(dtype);
     if (err == 1) {
         PyErr_NoMemory();
     }
@@ -3365,7 +3378,8 @@ fail:
  * array corresponding to the data encoded in that file.
  *
  * If the dtype is NULL, the default array type is used (double).
- * If non-null, the reference is stolen.
+ * If non-null, the reference is stolen and if dtype->subarray is true dtype
+ * will be decrefed even on success.
  *
  * The number of elements to read is given as ``num``; if it is < 0, then
  * then as many as possible are read.
