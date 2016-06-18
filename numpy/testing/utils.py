@@ -477,7 +477,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import ndarray
+    from numpy.core import around, ndarray
     from numpy.lib import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
@@ -529,7 +529,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if round(abs(desired - actual), decimal) != 0:
+    if around(abs(desired - actual), decimal) >= 10.0**(-decimal):
         raise AssertionError(_build_err_msg())
 
 

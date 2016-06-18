@@ -347,6 +347,11 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
             # remove anything that's not the array string
             self.assertEqual(str(e).split('%)\n ')[1], b)
 
+    def test_decimal(self):
+        self._assert_func(0.123, 0.129, decimal=2)
+        self.assertRaises(AssertionError,
+                self._assert_func(0.123, 0.129, decimal=3))
+
 
 class TestApproxEqual(unittest.TestCase):
 
