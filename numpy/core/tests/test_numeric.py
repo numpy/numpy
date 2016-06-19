@@ -12,7 +12,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec, HAS_REFCOUNT
+    assert_array_almost_equal, dec, HAS_REFCOUNT, suppress_warnings
 )
 
 
@@ -1976,27 +1976,26 @@ class TestCreationFuncs(TestCase):
         fill_kwarg = {}
         if fill_value is not None:
             fill_kwarg = {'fill_value': fill_value}
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            for size, ndims, order, dtype in itertools.product(*par):
-                shape = ndims * [size]
 
-                # do not fill void type
-                if fill_kwarg and dtype.str.startswith('|V'):
-                    continue
+        for size, ndims, order, dtype in itertools.product(*par):
+            shape = ndims * [size]
 
-                arr = func(shape, order=order, dtype=dtype,
-                           **fill_kwarg)
+            # do not fill void type
+            if fill_kwarg and dtype.str.startswith('|V'):
+                continue
 
-                assert_equal(arr.dtype, dtype)
-                assert_(getattr(arr.flags, self.orders[order]))
+            arr = func(shape, order=order, dtype=dtype,
+                       **fill_kwarg)
 
-                if fill_value is not None:
-                    if dtype.str.startswith('|S'):
-                        val = str(fill_value)
-                    else:
-                        val = fill_value
-                    assert_equal(arr, dtype.type(val))
+            assert_equal(arr.dtype, dtype)
+            assert_(getattr(arr.flags, self.orders[order]))
+
+            if fill_value is not None:
+                if dtype.str.startswith('|S'):
+                    val = str(fill_value)
+                else:
+                    val = fill_value
+                assert_equal(arr, dtype.type(val))
 
     def test_zeros(self):
         self.check_function(np.zeros)

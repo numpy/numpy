@@ -15,7 +15,7 @@ import numpy as np
 from numpy.testing import (
         run_module_suite, TestCase, assert_, assert_equal,
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec
+        assert_raises, assert_warns, dec, suppress_warnings
         )
 from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
 from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
@@ -138,8 +138,8 @@ class TestRegression(TestCase):
         self.assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
         # This should return true for now, but will eventually raise an error:
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning)
             self.assertTrue(b != 'auto')
         self.assertTrue(b[0] != 'auto')
 
@@ -811,9 +811,9 @@ class TestRegression(TestCase):
         # This might seem odd as compared to the value error below. This
         # is due to the fact that the new code always uses "nonzero" logic
         # and the boolean special case is not taken.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning)
+            sup.filter(np.VisibleDeprecationWarning)
             self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
             self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
         # Old special case (different code path):
@@ -1518,19 +1518,17 @@ class TestRegression(TestCase):
         dtypes = [x for x in np.typeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
-        a = np.array([], dtypes[0])
+        a = np.array([], np.bool_)  # not x[0] because it is unordered
         failures = []
-        # ignore complex warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', np.ComplexWarning)
-            for x in dtypes:
-                b = a.astype(x)
-                for y in dtypes:
-                    c = a.astype(y)
-                    try:
-                        np.dot(b, c)
-                    except TypeError:
-                        failures.append((x, y))
+
+        for x in dtypes:
+            b = a.astype(x)
+            for y in dtypes:
+                c = a.astype(y)
+                try:
+                    np.dot(b, c)
+                except TypeError:
+                    failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
@@ -1621,8 +1619,8 @@ class TestRegression(TestCase):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
             assert_warns(np.ComplexWarning, float, x)
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
+            with suppress_warnings() as sup:
+                sup.filter(np.ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):

@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
@@ -9,7 +8,7 @@ from numpy.compat import asbytes, sixu
 from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, dec, HAS_REFCOUNT
+    assert_raises, dec, HAS_REFCOUNT, suppress_warnings
     )
 
 
@@ -1624,8 +1623,8 @@ def test_iter_buffered_cast_byteswapped():
 
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
-    try:
-        warnings.simplefilter("ignore", np.ComplexWarning)
+    with suppress_warnings() as sup:
+        sup.filter(np.ComplexWarning)
 
         a = np.arange(10, dtype='f8').newbyteorder().byteswap()
         i = nditer(a, ['buffered', 'external_loop'],
@@ -1637,8 +1636,6 @@ def test_iter_buffered_cast_byteswapped():
             v[...] *= 2
 
         assert_equal(a, 2*np.arange(10, dtype='f8'))
-    finally:
-        warnings.simplefilter("default", np.ComplexWarning)
 
 def test_iter_buffered_cast_byteswapped_complex():
     # Test that buffering can handle a cast which requires swap->cast->copy
