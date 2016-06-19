@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    dec, assert_allclose, assert_no_warnings
+    dec, assert_allclose, assert_no_warnings, suppress_warnings
 )
 
 
@@ -300,9 +300,8 @@ class TestRemainder(TestCase):
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        with warnings.catch_warnings():
-            warnings.simplefilter('always')
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)

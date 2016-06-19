@@ -4,7 +4,7 @@ from numpy import (logspace, linspace, geomspace, dtype, array, finfo,
                    typecodes, arange, isnan, ndarray, sqrt)
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_allclose
+    assert_array_equal, assert_allclose, suppress_warnings
 )
 
 
@@ -205,8 +205,10 @@ class TestLinspace(TestCase):
     def test_corner(self):
         y = list(linspace(0, 1, 1))
         assert_(y == [0.0], y)
-        y = list(linspace(0, 1, 2.5))
-        assert_(y == [0.0, 1.0])
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, ".*safely interpreted as an integer")
+            y = list(linspace(0, 1, 2.5))
+            assert_(y == [0.0, 1.0])
 
     def test_type(self):
         t1 = linspace(0, 1, 0).dtype
