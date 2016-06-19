@@ -20,7 +20,7 @@ from functools import reduce
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import (array, format_longfloat, datetime_as_string,
-                         datetime_data)
+                         datetime_data, dtype)
 from .fromnumeric import ravel
 from .numeric import asarray
 
@@ -734,7 +734,9 @@ class TimedeltaFormat(object):
     def __init__(self, data):
         if data.dtype.kind == 'm':
             nat_value = array(['NaT'], dtype=data.dtype)[0]
-            v = data[not_equal(data, nat_value)].view('i8')
+            int_dtype = dtype(data.dtype.byteorder + 'i8')
+            int_view = data.view(int_dtype)
+            v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
             if len(v) > 0:
                 # Max str length of non-NaT elements
                 max_str_len = max(len(str(maximum.reduce(v))),
@@ -748,7 +750,8 @@ class TimedeltaFormat(object):
             self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
-        if x + 1 == x:
+        # TODO: After NAT == NAT deprecation should be simplified:
+        if (x + 1).view('i8') == x.view('i8'):
             return self._nat
         else:
             return self.format % x.astype('i8')
