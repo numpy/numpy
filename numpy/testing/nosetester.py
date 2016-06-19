@@ -12,6 +12,8 @@ import warnings
 from numpy.compat import basestring
 import numpy as np
 
+from .utils import import_nose, suppress_warnings
+
 
 def get_package_name(filepath):
     """
@@ -52,27 +54,6 @@ def get_package_name(filepath):
         pkg_name.pop(0)
 
     return '.'.join(pkg_name)
-
-def import_nose():
-    """ Import nose only when needed.
-    """
-    fine_nose = True
-    minimum_nose_version = (1, 0, 0)
-    try:
-        import nose
-    except ImportError:
-        fine_nose = False
-    else:
-        if nose.__versioninfo__ < minimum_nose_version:
-            fine_nose = False
-
-    if not fine_nose:
-        msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://somethingaboutorange.com/mrl/projects/nose' %
-               minimum_nose_version)
-        raise ImportError(msg)
-
-    return nose
 
 def run_module_suite(file_to_run=None, argv=None):
     """
