@@ -112,6 +112,18 @@ change in implementation some very delicate tests may fail that did not
 fail before.
 
 
+``assert_warns`` and ``deprecated`` decorator more specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``assert_warns`` function and context manager are now more specific
+to the given warning category. This increased specificity leads to them
+being handled according to the outer warning settings. This means that
+no warning may be raised in cases where a wrong category warning is given
+and ignored outside the context. Alternatively the increased specificity
+may mean that warnings that were incorrectly ignored will now be shown
+or raised. See also the new ``suppress_warnings`` context manager.
+The same is true for the ``deprecated`` decorator.
+
+
 C API
 ~~~~~
 

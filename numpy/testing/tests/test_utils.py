@@ -503,23 +503,21 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo", DeprecationWarning)
 
         failed = False
-        filters = sys.modules['warnings'].filters[:]
-        try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
             try:
-                # Should raise an AssertionError
+                # Should raise a DeprecationWarning
                 assert_warns(UserWarning, f)
                 failed = True
-            except AssertionError:
+            except DeprecationWarning:
                 pass
-        finally:
-            sys.modules['warnings'].filters = filters
 
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
 
 
 class TestAssertAllclose(unittest.TestCase):
-    
+
     def test_simple(self):
         x = 1e-3
         y = 1e-9
