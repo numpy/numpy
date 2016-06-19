@@ -5,7 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
     TestCase, run_module_suite, assert_equal, assert_array_equal,
-    assert_array_max_ulp, assert_array_almost_equal, assert_raises
+    assert_array_max_ulp, assert_array_almost_equal, assert_raises,
     )
 
 from numpy import (

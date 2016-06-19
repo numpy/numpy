@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
-    assert_warns, assert_no_warnings, assert_raises, assert_array_equal
+    assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
     )
 
 
@@ -317,26 +317,30 @@ class SharedNanFunctionsTestsMixin(object):
         codes = 'efdgFDG'
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
             for c in codes:
-                tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
-                res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
-                assert_(res is tgt)
-                # scalar case
-                tgt = rf(mat, dtype=np.dtype(c), axis=None).dtype.type
-                res = nf(mat, dtype=np.dtype(c), axis=None).dtype.type
-                assert_(res is tgt)
+                with suppress_warnings() as sup:
+                    sup.filter(np.ComplexWarning)
+                    tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
+                    res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
+                    assert_(res is tgt)
+                    # scalar case
+                    tgt = rf(mat, dtype=np.dtype(c), axis=None).dtype.type
+                    res = nf(mat, dtype=np.dtype(c), axis=None).dtype.type
+                    assert_(res is tgt)
 
     def test_dtype_from_char(self):
         mat = np.eye(3)
         codes = 'efdgFDG'
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
             for c in codes:
-                tgt = rf(mat, dtype=c, axis=1).dtype.type
-                res = nf(mat, dtype=c, axis=1).dtype.type
-                assert_(res is tgt)
-                # scalar case
-                tgt = rf(mat, dtype=c, axis=None).dtype.type
-                res = nf(mat, dtype=c, axis=None).dtype.type
-                assert_(res is tgt)
+                with suppress_warnings() as sup:
+                    sup.filter(np.ComplexWarning)
+                    tgt = rf(mat, dtype=c, axis=1).dtype.type
+                    res = nf(mat, dtype=c, axis=1).dtype.type
+                    assert_(res is tgt)
+                    # scalar case
+                    tgt = rf(mat, dtype=c, axis=None).dtype.type
+                    res = nf(mat, dtype=c, axis=None).dtype.type
+                    assert_(res is tgt)
 
     def test_dtype_from_input(self):
         codes = 'efdgFDG'
@@ -524,16 +528,16 @@ class TestNanFunctions_MeanVarStd(TestCase, SharedNanFunctionsTestsMixin):
         dsize = [len(d) for d in _rdat]
         for nf, rf in zip(nanfuncs, stdfuncs):
             for ddof in range(5):
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
+                with suppress_warnings() as sup:
+                    sup.record(RuntimeWarning)
+                    sup.filter(np.ComplexWarning)
                     tgt = [ddof >= d for d in dsize]
                     res = nf(_ndat, axis=1, ddof=ddof)
                     assert_equal(np.isnan(res), tgt)
                     if any(tgt):
-                        assert_(len(w) == 1)
-                        assert_(issubclass(w[0].category, RuntimeWarning))
+                        assert_(len(sup.log) == 1)
                     else:
-                        assert_(len(w) == 0)
+                        assert_(len(sup.log) == 0)
 
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
@@ -642,22 +646,20 @@ class TestNanFunctions_Median(TestCase):
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
         for axis in [None, 0, 1]:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter('always')
-                warnings.simplefilter('ignore', FutureWarning)
+            with suppress_warnings() as sup:
+                sup.record(RuntimeWarning)
+
                 assert_(np.isnan(np.nanmedian(mat, axis=axis)).all())
                 if axis is None:
-                    assert_(len(w) == 1)
+                    assert_(len(sup.log) == 1)
                 else:
-                    assert_(len(w) == 3)
-                assert_(issubclass(w[0].category, RuntimeWarning))
+                    assert_(len(sup.log) == 3)
                 # Check scalar
                 assert_(np.isnan(np.nanmedian(np.nan)))
                 if axis is None:
-                    assert_(len(w) == 2)
+                    assert_(len(sup.log) == 2)
                 else:
-                    assert_(len(w) == 4)
-                assert_(issubclass(w[0].category, RuntimeWarning))
+                    assert_(len(sup.log) == 4)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
@@ -686,7 +688,7 @@ class TestNanFunctions_Median(TestCase):
 
     def test_float_special(self):
         with warnings.catch_warnings(record=True):
-            warnings.simplefilter('ignore', RuntimeWarning)
+            warnings.simplefilter('always', RuntimeWarning)
             a = np.array([[np.inf,  np.nan], [np.nan, np.nan]])
             assert_equal(np.nanmedian(a, axis=0), [np.inf,  np.nan])
             assert_equal(np.nanmedian(a, axis=1), [np.inf,  np.nan])
