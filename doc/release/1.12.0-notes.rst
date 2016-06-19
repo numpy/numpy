@@ -111,6 +111,13 @@ previous implementation used in ``assert_array_almost_equal``. Due to the
 change in implementation some very delicate tests may fail that did not
 fail before.
 
+``NoseTester`` behaviour of warnings during testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When ``raise_warnings="develop"`` is given, all uncaught warnings will now
+be considered a test failure. Previously only selected ones were raised.
+Warnings which are not caught or raised (mostly when in release mode)
+will be shown once during the test cycle similar to the default python
+settings.
 
 ``assert_warns`` and ``deprecated`` decorator more specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,8 +200,8 @@ precision.
 New array creation function ``geomspace`` added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The new function ``geomspace`` generates a geometric sequence.  It is similar
-to ``logspace``, but with start and stop specified directly: 
-``geomspace(start, stop)`` behaves the same as 
+to ``logspace``, but with start and stop specified directly:
+``geomspace(start, stop)`` behaves the same as
 ``logspace(log10(start), log10(stop))``.
 
 New context manager for testing warnings
