@@ -396,8 +396,12 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         pass
 
     # Explicitly use __eq__ for comparison, ticket #2552
-    if not (desired == actual):
-        raise AssertionError(msg)
+    with suppress_warnings() as sup:
+        # TODO: Better handling will to needed when change happens!
+        sup.filter(DeprecationWarning, ".*NAT ==")
+        sup.filter(FutureWarning, ".*NAT ==")
+        if not (desired == actual):
+            raise AssertionError(msg)
 
 
 def print_assert_equal(test_string, actual, desired):
@@ -687,8 +691,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # pass (or maybe eventually catch the errors and return False, I
         # dunno, that's a little trickier and we can figure that out when the
         # time comes).
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, ".*==")
+            sup.filter(FutureWarning, ".*==")
             return comparison(*args, **kwargs)
 
     def isnumber(x):
