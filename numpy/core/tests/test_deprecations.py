@@ -644,6 +644,8 @@ class TestTestDeprecated(object):
             warnings.warn("foo", category=DeprecationWarning)
 
         test_case_instance.assert_deprecated(foo)
+        test_case_instance.tearDown()
+
 
 if __name__ == "__main__":
     run_module_suite()
