@@ -1041,7 +1041,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
                 like `' (%s+%sj)' % (fmt, fmt)`
             b) a full string specifying every real and imaginary part, e.g.
-                `' %.4e %+.4j %.4e %+.4j %.4e %+.4j'` for 3 columns
+                `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
             c) a list of specifiers, one per column - in this case, the real
                 and imaginary part must have separate specifiers,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns

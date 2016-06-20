@@ -198,7 +198,7 @@ class _DeprecationTestCase(object):
                         (warning.category,))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [w.category for w in self.log]
+            lst = [str(w.category) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
@@ -607,6 +607,29 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
         self.message = ("Insufficient bit width provided. This behavior "
                         "will raise an error in the future.")
         self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
+
+
+class TestNumericStyleTypecodes(_DeprecationTestCase):
+    """
+    Deprecate the old numeric-style dtypes, which are especially
+    confusing for complex types, e.g. Complex32 -> complex64. When the
+    deprecation cycle is complete, the check for the strings should be
+    removed from PyArray_DescrConverter in descriptor.c, and the
+    deprecated keys should not be added as capitalized aliases in
+    _add_aliases in numerictypes.py.
+    """
+    def test_all_dtypes(self):
+        deprecated_types = [
+            'Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
+            'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
+            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
+            ]
+        if sys.version_info[0] < 3:
+            deprecated_types.extend(['Unicode0', 'String0'])
+
+        for dt in deprecated_types:
+            self.assert_deprecated(np.dtype, exceptions=(TypeError,),
+                                   args=(dt,))
 
 
 class TestTestDeprecated(object):

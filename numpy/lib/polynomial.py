@@ -15,7 +15,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.lib.twodim_base import diag, vander
-from numpy.lib.function_base import trim_zeros, sort_complex
+from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
@@ -145,11 +145,7 @@ def poly(seq_of_zeros):
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
         roots = NX.asarray(seq_of_zeros, complex)
-        pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
-        neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0, roots)))
-        if (len(pos_roots) == len(neg_roots) and
-                NX.alltrue(neg_roots == pos_roots)):
+        if NX.all(NX.sort(roots) == NX.sort(roots.conjugate())):
             a = a.real.copy()
 
     return a
@@ -603,6 +599,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         #  it is included here because the covariance of Multivariate Student-T
         #  (which is implied by a Bayesian uncertainty analysis) includes it.
         #  Plus, it gives a slightly more conservative estimate of uncertainty.
+        if len(x) <= order + 2:
+            raise ValueError("the number of data points must exceed order + 2 "
+                             "for Bayesian estimate the covariance matrix")
         fac = resids / (len(x) - order - 2.0)
         if y.ndim == 1:
             return c, Vbase * fac

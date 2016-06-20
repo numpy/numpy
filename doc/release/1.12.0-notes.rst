@@ -18,6 +18,9 @@ Future Changes
 
 * In 1.13 NAT will always compare False except for ``NAT != NAT``,
   which will be True.  In short, NAT will behave like NaN
+* In 1.13 np.average will preserve subclasses, to match the behavior of most
+  other numpy functions such as np.mean. In particular, this means calls which
+  returned a scalar may return a 0-d subclass object instead.
 
 
 Compatibility notes
@@ -86,6 +89,9 @@ FutureWarning to changed behavior
 
 * ``np.full`` now returns an array of the fill-value's dtype if no dtype is
   given, instead of defaulting to float.
+* np.average will emit a warning if the argument is a subclass of ndarray,
+  as the subclass will be preserved starting in 1.13. (see Future Changes)
+
 
 C API
 ~~~~~
@@ -128,7 +134,7 @@ file that will remain empty (bar a docstring) in the standard numpy source,
 but that can be overwritten by people making binary distributions of numpy.
 
 New nanfunctions ``nancumsum`` and ``nancumprod`` added
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
 compute ``cumsum`` and ``cumprod`` by ignoring nans.
 
@@ -136,6 +142,13 @@ compute ``cumsum`` and ``cumprod`` by ignoring nans.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``np.lib.interp(x, xp, fp)`` now allows the interpolated array ``fp``
 to be complex and will interpolate at ``complex128`` precision.
+
+New polynomial evaluation function ``polyvalfromroots`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``polyvalfromroots`` evaluates a polynomial at given points
+from the roots of the polynomial. This is useful for higher order polynomials,
+where expansion into polynomial coefficients is inaccurate at machine
+precision.
 
 Improvements
 ============
@@ -164,8 +177,8 @@ Generalized Ufuncs will now unlock the GIL
 Generalized Ufuncs, including most of the linalg module, will now unlock
 the Python global interpreter lock.
 
-np.roll can now roll multiple axes at the same time
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.roll can now roll multiple axes at the same time``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``shift`` and ``axis`` arguments to ``roll`` are now broadcast against each
 other, and each specified axis is shifted accordingly.
 
@@ -179,6 +192,26 @@ complex.
 The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
 functions can now take ``pathlib.Path`` objects as an argument instead of a
 filename or open file object.
+
+Add ``bits`` attribute to ``np.finfo``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This makes ``np.finfo`` consistent with ``np.iinfo`` which already has that
+attribute.
+
+Caches in `np.fft` are now bounded in total size and item count
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The caches in `np.fft` that speed up successive FFTs of the same length can no
+longer grow without bounds. They have been replaced with LRU (least recently
+used) caches that automatically evict no longer needed items if either the
+memory size or item count limit has been reached.
+
+Improved handling of zero-width string/unicode dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed several interfaces that explicitly disallowed arrays with zero-width
+string dtypes (i.e. ``dtype('S0')`` or ``dtype('U0')``, and fixed several
+bugs where such dtypes were not handled properly.  In particular, changed
+``ndarray.__new__`` to not implicitly convert ``dtype('S0')`` to
+``dtype('S1')`` (and likewise for unicode) when creating new arrays.
 
 
 Changes
