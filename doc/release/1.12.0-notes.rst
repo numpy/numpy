@@ -92,6 +92,18 @@ FutureWarning to changed behavior
 * np.average will emit a warning if the argument is a subclass of ndarray,
   as the subclass will be preserved starting in 1.13. (see Future Changes)
 
+Greater consistancy in ``assert_almost_equal``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The precision check for scalars has been changed to match that for arrays. It
+is now
+
+    abs(actual - desired) < 1.5 * 10**(-decimal)
+
+Note that this is looser than previously documented, but agrees with the
+previous implementation used in ``assert_array_almost_equal``. Due to the
+change in implementation some very delicate tests may fail that did not
+fail before.
+
 
 C API
 ~~~~~
@@ -261,4 +273,5 @@ If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
 represent the number in base 2 (positive) or 2's complement (negative) form,
 the function used to silently ignore the parameter and return a representation
 using the minimal number of bits needed for the form in question. Such behavior
-is now considered unsafe from a user perspective and will raise an error in the future.
+is now considered unsafe from a user perspective and will raise an error in the
+future.
