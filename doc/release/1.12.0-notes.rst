@@ -162,6 +162,23 @@ from the roots of the polynomial. This is useful for higher order polynomials,
 where expansion into polynomial coefficients is inaccurate at machine
 precision.
 
+New context manager for testing warnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A new context manager ``suppress_warnings`` has been added to the testing
+utils. This context manager is designed to help reliably test warnings.
+Specifically to reliably filter/ignore warnings. Ignoring warnings
+by using an "ignore" filter in Python versions before 3.4.x can quickly
+result in these (or similar) warnings not being tested reliably.
+
+The context manager allows to filter (as well as record) warnings similar
+to the ``catch_warnings`` context, but allows for easier specificity.
+Also printing warnings that have not been filtered or nesting the
+context manager will work as expected. Additionally, it is possible
+to use the context manager as a decorator which can be useful when
+multiple tests give need to hide the same warning.
+
+
 Improvements
 ============
 
