@@ -150,6 +150,13 @@ from the roots of the polynomial. This is useful for higher order polynomials,
 where expansion into polynomial coefficients is inaccurate at machine
 precision.
 
+New array creation function ``geomspace`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``geomspace`` generates a geometric sequence.  It is similar
+to ``logspace``, but with start and stop specified directly: 
+``geomspace(start, stop)`` behaves the same as 
+``logspace(log10(start), log10(stop))``.
+
 Improvements
 ============
 
