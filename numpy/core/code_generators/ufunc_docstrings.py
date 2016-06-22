@@ -55,7 +55,7 @@ add_newdoc('numpy.core.umath', 'absolute',
     Plot the function over the complex plane:
 
     >>> xx = x + 1j * x[:, np.newaxis]
-    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10])
+    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
     """)
@@ -1115,12 +1115,12 @@ add_newdoc('numpy.core.umath', 'exp',
 
     >>> plt.subplot(121)
     >>> plt.imshow(np.abs(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='gray')
     >>> plt.title('Magnitude of exp(x)')
 
     >>> plt.subplot(122)
     >>> plt.imshow(np.angle(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='hsv')
     >>> plt.title('Phase (angle) of exp(x)')
     >>> plt.show()
 
