@@ -184,6 +184,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
              endpoint may or may not be included.
     linspace : Similar to logspace, but with the samples uniformly distributed
                in linear space, instead of log space.
+    geomspace : Similar to logspace, but with endpoints specified directly.
 
     Notes
     -----
