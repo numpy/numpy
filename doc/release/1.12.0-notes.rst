@@ -119,6 +119,12 @@ keyword argument. It can be set to False when no write operation
 to the returned array is expected to avoid accidental
 unpredictable writes.
 
+
+``axes`` keyword argument for ``rot90``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axes`` keyword argument in ``rot90`` determines the plane in which the
+array is rotated. It defaults to ``axes=(0,1)`` as in the originial function.
+
 Generalized ``flip``
 ~~~~~~~~~~~~~~~~~~~~
 ``flipud`` and ``fliplr`` reverse the elements of an array along axis=0 and
