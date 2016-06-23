@@ -760,7 +760,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
     skipfun : function, optional
-        Lines of the file where skipfun returns false are not appended.
+        Lines of the file where skipfun returns True are not appended.
 
         .. versionadded:: 1.6.0
 
@@ -985,7 +985,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
             if skipfun is not None:
-                if skipfun(items):
+                if not skipfun(items):
                     X.append(items)
             else:
                 X.append(items)
