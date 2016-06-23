@@ -2442,7 +2442,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     a low-level method (`ndarray(...)`) for instantiating an array.
 
     For more information, refer to the `numpy` module and examine the
-    the methods and attributes of an array.
+    methods and attributes of an array.
 
     Parameters
     ----------
