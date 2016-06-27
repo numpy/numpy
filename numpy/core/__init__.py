@@ -8,13 +8,17 @@ from numpy.version import version as __version__
 import os
 env_added = []
 for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
+    env_added.append((envkey, os.environ.get(envkey)))
     if envkey not in os.environ:
         os.environ[envkey] = '1'
-        env_added.append(envkey)
 from . import multiarray
-for envkey in env_added:
-    del os.environ[envkey]
+for envkey, envvalue in env_added:
+    if envvalue is None:
+        del os.environ[envkey]
+    else:
+        os.environ[envkey] = envvalue
 del envkey
+del envvalue
 del env_added
 del os
 
