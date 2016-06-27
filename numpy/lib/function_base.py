@@ -263,7 +263,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     normed : bool, optional
         If False, returns the number of samples in each bin. If True,
         returns the bin density ``bin_count / sample_count / bin_volume``.
-    weights : array_like (N,), optional
+    weights : (N,) array_like, optional
         An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
         Weights are normalized to 1 if normed is True. If normed is False,
         the values of the returned histogram are equal to the sum of the
@@ -461,7 +461,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     Returns
     -------
-    average, [sum_of_weights] : {array_type, double}
+    average, [sum_of_weights] : array_type or double
         Return the average along the specified axis. When returned is `True`,
         return a tuple with the average as the first element and the sum
         of the weights as the second element. The return type is `Float`
@@ -886,9 +886,9 @@ def copy(a, order='K'):
 def gradient(f, *varargs, **kwargs):
     """
     Return the gradient of an N-dimensional array.
-    
+
     The gradient is computed using second order accurate central differences
-    in the interior and either first differences or second order accurate 
+    in the interior and either first differences or second order accurate
     one-sides (forward or backwards) differences at the boundaries. The
     returned gradient hence has the same shape as the input array.
 
@@ -902,7 +902,7 @@ def gradient(f, *varargs, **kwargs):
     edge_order : {1, 2}, optional
         Gradient is calculated using N\ :sup:`th` order accurate differences
         at the boundaries. Default: 1.
-      
+
         .. versionadded:: 1.9.1
 
     Returns
@@ -1140,7 +1140,7 @@ def interp(x, xp, fp, left=None, right=None):
 
     Returns
     -------
-    y : {float, ndarray}
+    y : float or ndarray
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1204,7 +1204,7 @@ def angle(z, deg=0):
 
     Returns
     -------
-    angle : {ndarray, scalar}
+    angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
 
@@ -1932,7 +1932,7 @@ def corrcoef(x, y=None, rowvar=1, bias=0, ddof=None):
         observations (unbiased estimate). If `bias` is 1, then
         normalization is by ``N``. These values can be overridden by using
         the keyword ``ddof`` in numpy versions >= 1.5.
-    ddof : {None, int}, optional
+    ddof : int, optional
         .. versionadded:: 1.5
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by

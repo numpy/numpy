@@ -4983,7 +4983,7 @@ class MaskedArray(ndarray):
 
         Returns
         -------
-        {ndarray, scalar}
+        ndarray or scalar
             If multi-dimension input, returns a new ndarray of indices to the
             minimum values along the given axis.  Otherwise, returns a scalar
             of index to the minimum values along the given axis.

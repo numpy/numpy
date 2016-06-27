@@ -355,7 +355,7 @@ def repeat(a, repeats, axis=None):
     ----------
     a : array_like
         Input array.
-    repeats : {int, array of ints}
+    repeats : int or array of ints
         The number of repetitions for each element.  `repeats` is broadcasted
         to fit the shape of the given axis.
     axis : int, optional

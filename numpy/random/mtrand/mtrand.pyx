@@ -1923,7 +1923,7 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : ndarray or scalar
             Samples from the Fisher distribution.
 
         See Also
@@ -2756,7 +2756,7 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : ndarray or scalar
             The returned samples lie in [0, 1].
 
         Raises
@@ -3099,7 +3099,7 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : ndarray or scalar
                   where the values are all integers in  [0, n].
 
         See Also
@@ -3567,7 +3567,7 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : ndarray or scalar
                   where the values are all integers in  [0, n].
 
         See Also
@@ -4127,7 +4127,7 @@ cdef class RandomState:
 
         Returns
         -------
-        samples : {ndarray, scalar}
+        samples : ndarray or scalar
                   where the values are all integers in  [0, n].
 
         See Also

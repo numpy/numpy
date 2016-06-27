@@ -686,7 +686,7 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The ceiling of each element in `x`, with `float` dtype.
 
     See Also
@@ -716,7 +716,7 @@ add_newdoc('numpy.core.umath', 'trunc',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The truncated value of each element in `x`.
 
     See Also
@@ -931,7 +931,7 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The quotient `x1/x2`, element-wise. Returns a scalar if
         both  `x1` and `x2` are scalars.
 
@@ -999,7 +999,7 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : {ndarray, bool}
+    out : ndarray or bool
         Output array of bools, or a single bool if x1 and x2 are scalars.
 
     See Also
@@ -1172,7 +1172,7 @@ add_newdoc('numpy.core.umath', 'fabs',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The absolute values of `x`, the returned values are always floats.
 
     See Also
@@ -1202,7 +1202,7 @@ add_newdoc('numpy.core.umath', 'floor',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The floor of each element in `x`.
 
     See Also
@@ -1632,7 +1632,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         For scalar input, the result is a new boolean with value True if
         the input is NaN; otherwise the value is False.
 
@@ -2046,7 +2046,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         AND operation on corresponding elements of `x1` and `x2`.
 
@@ -2112,7 +2112,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
 
     Returns
     -------
-    y : {ndarray, bool}
+    y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         OR operation on elements of `x1` and `x2`.
 
@@ -2193,7 +2193,7 @@ add_newdoc('numpy.core.umath', 'maximum',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The maximum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2251,7 +2251,7 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2309,7 +2309,7 @@ add_newdoc('numpy.core.umath', 'fmax',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2366,7 +2366,7 @@ add_newdoc('numpy.core.umath', 'fmin',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray or scalar
         The minimum of `x1` and `x2`, element-wise.  Returns scalar if
         both  `x1` and `x2` are scalars.
 
@@ -2780,7 +2780,7 @@ add_newdoc('numpy.core.umath', 'rint',
 
     Returns
     -------
-    out : {ndarray, scalar}
+    out : ndarray or scalar
         Output array is same shape and type as `x`.
 
     See Also

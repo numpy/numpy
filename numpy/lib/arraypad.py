@@ -1105,7 +1105,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
-    mode : {str, function}
+    mode : str or function
         One of the following string values or a user supplied function.
 
         'constant'
@@ -1140,7 +1140,7 @@ def pad(array, pad_width, mode=None, **kwargs):
             end values are used to pad the beginning.
         <function>
             Padding function, see Notes.
-    stat_length : {sequence, int}, optional
+    stat_length : sequence or int, optional
         Used in 'maximum', 'mean', 'median', and 'minimum'.  Number of
         values at edge of each axis used to calculate the statistic value.
 
@@ -1154,7 +1154,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         length for all axes.
 
         Default is ``None``, to use the entire axis.
-    constant_values : {sequence, int}, optional
+    constant_values : sequence or int, optional
         Used in 'constant'.  The values to set the padded values for each
         axis.
 
@@ -1168,7 +1168,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         all axes.
 
         Default is 0.
-    end_values : {sequence, int}, optional
+    end_values : sequence or int, optional
         Used in 'linear_ramp'.  The values used for the ending value of the
         linear_ramp and that will form the edge of the padded array.
 
@@ -1182,7 +1182,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         all axes.
 
         Default is 0.
-    reflect_type : str {'even', 'odd'}, optional
+    reflect_type : {'even', 'odd'}, optional
         Used in 'reflect', and 'symmetric'.  The 'even' style is the
         default with an unaltered reflection around the edge value.  For
         the 'odd' style, the extented part of the array is created by

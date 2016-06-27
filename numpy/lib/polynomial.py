@@ -247,12 +247,12 @@ def polyint(p, m=1, k=None):
 
     Parameters
     ----------
-    p : {array_like, poly1d}
+    p : array_like or poly1d
         Polynomial to differentiate.
         A sequence is interpreted as polynomial coefficients, see `poly1d`.
     m : int, optional
         Order of the antiderivative. (Default: 1)
-    k : {None, list of `m` scalars, scalar}, optional
+    k : list of `m` scalars or scalar, optional
         Integration constants. They are given in the order of integration:
         those corresponding to highest-order terms come first.
 

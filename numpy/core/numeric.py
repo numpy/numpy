@@ -1120,7 +1120,7 @@ def tensordot(a, b, axes=2):
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-    axes : variable type
+    axes : int or (2,) array_like
         * integer_like scalar
           Number of axes to sum over (applies to both arrays); or
         * (2,) array_like, both elements array_like of the same length
