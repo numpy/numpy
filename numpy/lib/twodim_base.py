@@ -75,8 +75,8 @@ def fliplr(m):
 
     """
     m = asanyarray(m)
-    if m.ndim < 2:
-        raise ValueError("Input must be >= 2-d.")
+    if m.ndim < 1:
+        raise ValueError("Input must be >= 1-d.")        
     return m[:, ::-1]
 
 
