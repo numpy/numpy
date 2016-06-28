@@ -91,11 +91,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         build_import_library()
 
         # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
-        msvcr_success = build_msvcr_library()
-        msvcr_dbg_success = build_msvcr_library(debug=True)
-        if msvcr_success or msvcr_dbg_success:
-            # add preprocessor statement for using customized msvcr lib
-            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
+        #msvcr_success = build_msvcr_library()
+        #msvcr_dbg_success = build_msvcr_library(debug=True)
+        #if msvcr_success or msvcr_dbg_success:
+        #    # add preprocessor statement for using customized msvcr lib
+        #    self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
         msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
