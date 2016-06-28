@@ -3427,6 +3427,12 @@ def delete(arr, obj, axis=None):
 
     """
     wrap = None
+
+    if isinstance(obj, ndarray) and obj.dtype == bool:
+        warnings.warn("beginning with numpy version 1.8. delete will treat "
+                      "boolean arrays like a boolean index instead of "
+                      "casting it to integer", FutureWarning)
+
     if type(arr) is not ndarray:
         try:
             wrap = arr.__array_wrap__
@@ -3442,6 +3448,9 @@ def delete(arr, obj, axis=None):
         ndim = arr.ndim;
         axis = ndim-1;
     if ndim == 0:
+        warnings.warn("the special handleing of scalars will be removed from "
+                      "delete with numpy version 1.8. and raise an error",
+                      FutureWarning)
         if wrap:
             return wrap(arr)
         else:
@@ -3572,6 +3581,12 @@ def insert(arr, obj, values, axis=None):
 
     """
     wrap = None
+    
+    if isinstance(obj, ndarray) and obj.dtype == bool:
+        warnings.warn("beginning with numpy version 1.8. insert will treat "
+                      "boolean arrays like a boolean index instead of "
+                      "casting it to integer", FutureWarning)
+    
     if type(arr) is not ndarray:
         try:
             wrap = arr.__array_wrap__
@@ -3586,6 +3601,9 @@ def insert(arr, obj, values, axis=None):
         ndim = arr.ndim
         axis = ndim-1
     if (ndim == 0):
+        warnings.warn("the special handleing of scalars will be removed from "
+                      "insert with numpy version 1.8. and raise an error",
+                      FutureWarning)
         arr = arr.copy()
         arr[...] = values
         if wrap:
