@@ -212,6 +212,11 @@ class TestMaskedArray(TestCase):
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
         self.assertTrue(data.mask is nomask)
 
+    def test_creation_from_ndarray_with_padding(self):
+        x = np.array([('A', 0)], dtype={'names':['f0','f1'], 'formats':['S4','i8'], 'offsets':[0,8]})
+        data = array(x)
+        self.assertTrue(data.mask is nomask)
+
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         xm.fill_value = -9999

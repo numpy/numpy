@@ -411,7 +411,8 @@ def _check_fill_value(fill_value, ndtype):
     fields = ndtype.fields
     if fill_value is None:
         if fields:
-            descr = ndtype.descr
+            # skip unnamed fields; they don't have corresponding entries in ndtype
+            descr = [pair for pair in ndtype.descr if pair[0]]
             fill_value = np.array(_recursive_set_default_fill_value(descr),
                                   dtype=ndtype,)
         else:
