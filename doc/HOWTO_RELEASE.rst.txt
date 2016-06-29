@@ -53,11 +53,10 @@ this `OSX wheel building summary
 Windows
 -------
 
-32-bit Python 2.7, 3.4, 3.5 are the versions for which we provide binary
-installers. Windows XP, Vista, 7, 8 and 10 are supported.  We build numpy
-using the MSVC compilers on Appveyor, but we are hoping to update to a
-`mingw-w64 toolchain <https://github.com/numpy/numpy/wiki/Mingw-w64-faq>`_
-soon.
+We build 32- and 64-bit wheels for Python 2.7, 3.4, 3.5 on Windows. Windows
+XP, Vista, 7, 8 and 10 are supported.  We build numpy using the MSVC compilers
+on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
+<http://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
 
 Linux
 -----
