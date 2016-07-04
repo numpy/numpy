@@ -1299,7 +1299,6 @@ def piecewise(x, condlist, funclist, *args, **kw):
                                    isinstance(condlist[0], ndarray))):
         condlist = [condlist]
     condlist = array(condlist, dtype=bool)
-    n = len(condlist)
     # This is a hack to work around problems with NumPy's
     #  handling of 0-d arrays and boolean indexing with
     #  numpy.bool_ scalars
@@ -1309,6 +1308,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         zerod = True
         if condlist.shape[-1] != 1:
             condlist = condlist.T
+    n = len(condlist)
     if n == n2 - 1:  # compute the "otherwise" condition.
         totlist = np.logical_or.reduce(condlist, axis=0)
         # Only able to stack vertically if the array is 1d or less

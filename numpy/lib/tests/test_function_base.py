@@ -2129,6 +2129,16 @@ class TestPiecewise(TestCase):
         x = piecewise(3, [True, False, False], [4, 2, 0])
         assert_equal(x, 4)
 
+        x = piecewise(3, [False, True, False], [4, 2, 0])
+        assert_equal(x, 2)
+
+    def test_scalar_domains_with_default(self):
+        x = piecewise(3, [False, False, False], [4, 2, 0, 1])
+        assert_equal(x, 1)
+
+        x = piecewise(3, [False, True, False], [4, 2, 0, 1])
+        assert_equal(x, 2)
+
     def test_default(self):
         # No value specified for x[1], should be 0
         x = piecewise([1, 2], [True, False], [2])
