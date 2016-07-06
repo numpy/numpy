@@ -592,7 +592,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     'Doane'
         .. math:: n_h = 1 + \log_{2}(n) +
-                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1})}
+                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1}})
 
             g_1 = mean[(\frac{x - \mu}{\sigma})^3]
 
