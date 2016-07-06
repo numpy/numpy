@@ -24,12 +24,12 @@ from numpy.ma.core import (
     nomask, ones, zeros, count
     )
 from numpy.ma.extras import (
-    atleast_1d, atleast_2d, atleast_3d, mr_, dot, polyfit, cov, corrcoef,
-    median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
-    ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
-    mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, stack, vstack, hstack
+    apply_along_axis, apply_over_axes, atleast_1d, atleast_2d, atleast_3d,
+    atleast_nd, average, clump_masked, clump_unmasked, compress_nd,
+    compress_rowcols, corrcoef, cov, diagflat, dot, ediff1d,
+    flatnotmasked_contiguous, in1d, intersect1d, isin, mask_rowcols, masked_all,
+    masked_all_like, median, mr_, notmasked_contiguous, notmasked_edges,
+    polyfit, setxor1d, setdiff1d, stack, union1d, unique, vstack
     )
 import numpy.ma.extras as mae
 
@@ -1553,6 +1553,25 @@ class TestShapeBase(object):
         assert_equal(a.mask.shape, a.data.shape)
         assert_equal(b.mask.shape, b.data.shape)
 
+    def test_atleast_nd(self):
+        # Test atleast_nd
+        a = masked_array([0, 1, 2], mask=[0, 1, 0])
+        b = atleast_nd(a, 4)
+        c = atleast_nd(a, 4, pos=-1)
+        d = atleast_nd(a, 4, pos=1)
+        assert_equal(a.shape, (3,))
+        assert_equal(a.data.shape, a.shape)
+        assert_equal(a.mask.shape, a.shape)
+        assert_equal(b.shape, (1, 1, 1, 3))
+        assert_equal(b.data.shape, b.shape)
+        assert_equal(b.mask.shape, b.shape)
+        assert_equal(c.shape, (3, 1, 1, 1))
+        assert_equal(c.data.shape, c.shape)
+        assert_equal(c.mask.shape, c.shape)
+        assert_equal(d.shape, (3, 1, 1, 1))
+        assert_equal(d.data.shape, d.shape)
+        assert_equal(d.mask.shape, d.shape)
+
     def test_shape_scalar(self):
         # the atleast and diagflat function should work with scalars
         # GitHub issue #3367
@@ -1591,6 +1610,12 @@ class TestShapeBase(object):
             assert_equal(a.mask.shape, a.shape)
             assert_equal(a.data.shape, a.shape)
 
+        b = atleast_nd(1.0, 4)
+        c = atleast_nd(1.0, 4, -1)
+        assert_equal(b.shape, (1, 1, 1, 1))
+        assert_equal(b.mask.shape, b.data.shape)
+        assert_equal(c.shape, (1, 1, 1, 1))
+        assert_equal(c.mask.shape, c.data.shape)
 
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))

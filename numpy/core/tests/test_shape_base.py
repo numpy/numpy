@@ -3,8 +3,8 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 from numpy.core import (
-    array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
-    newaxis, concatenate, stack
+    array, arange, atleast_1d, atleast_2d, atleast_3d, atleast_nd, block,
+    concatenate, hstack, newaxis, stack, vstack,
     )
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
@@ -123,6 +123,59 @@ class TestAtleast3d(object):
         res = [atleast_3d(a), atleast_3d(b)]
         desired = [a, b]
         assert_array_equal(res, desired)
+
+
+class TestAtleastNd(object):
+    def test_0D_arrays(self):
+        arrays = [array(1), array(2)]
+        dims = [3, 2]
+        expected = [array([[[1]]]), array([[2]])]
+
+        for x, y, d in zip(arrays, expected, dims):
+            assert_array_equal(atleast_nd(x, d), y)
+            assert_array_equal(atleast_nd(x, d, -1), y)
+
+    def test_nD_arrays(self):
+        a = array([1])
+        b = array([4, 5, 6])
+        c = array([[2, 3]])
+        d = array([[[2], [3]], [[2], [3]]])
+        e = ((((1, 2), (3, 4)), ((5, 6), (7, 8))))
+        arrays = (a, b, c, d, e)
+        expected_before = (array([[[1]]]),
+                           array([[[4, 5, 6]]]),
+                           array([[[2, 3]]]),
+                           d,
+                           array(e))
+        expected_after = (array([[[1]]]),
+                          array([[[4]], [[5]], [[6]]]),
+                          array([[[2], [3]]]),
+                          d,
+                          array(e))
+
+        for x, y in zip(arrays, expected_before):
+            assert_array_equal(atleast_nd(x, 3), y)
+        for x, y in zip(arrays, expected_after):
+            assert_array_equal(atleast_nd(x, 3, pos=-1), y)
+
+    def test_nocopy(self):
+        a = arange(12.0).reshape(4, 3)
+        res = atleast_nd(a, 5)
+        desired_shape = (1, 1, 1, 4, 3)
+        desired_base = a.base  # a was reshaped
+        assert_equal(res.shape, desired_shape)
+        assert_(res.base is desired_base)
+
+    def test_passthough(self):
+        a = array([1, 2, 3])
+        assert_(atleast_nd(a, 0) is a)
+        assert_(atleast_nd(a, 1) is a)
+
+    def test_other_pos(self):
+        a = arange(12.0).reshape(4, 3)
+        res = atleast_nd(a, 4, pos=1)
+        assert_equal(res.shape, (4, 1, 1, 3))
+        assert_raises(ValueError, atleast_nd, a, 4, pos=5)
 
 
 class TestHstack(object):
