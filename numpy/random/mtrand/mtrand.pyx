@@ -1290,7 +1290,7 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=None, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None, axis=0):
         """
         choice(a, size=None, replace=True, p=None)
 
@@ -1313,6 +1313,9 @@ cdef class RandomState:
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
+        axis : int, optional
+            axis along which the selection is performed. The default, 0, will
+            select by row.
 
         Returns
         --------
@@ -1322,11 +1325,10 @@ cdef class RandomState:
         Raises
         -------
         ValueError
-            If a is an int and less than zero, if a or p are not 1-dimensional,
-            if a is an array-like of size 0, if p is not a vector of
-            probabilities, if a and p have different lengths, or if
-            replace=False and the sample size is greater than the population
-            size
+            If a is an int and less than zero, if p is not 1-dimensional, if a
+            is an array-like of size 0, if p is not a vector of probabilities,
+            if a and p have different lengths, or if replace=False and the
+            sample size is greater than the population size
 
         See Also
         ---------
@@ -1378,11 +1380,9 @@ cdef class RandomState:
                 raise ValueError("a must be 1-dimensional or an integer")
             if pop_size <= 0:
                 raise ValueError("a must be greater than 0")
-        elif a.ndim != 1:
-            raise ValueError("a must be 1-dimensional")
         else:
-            pop_size = a.shape[0]
-            if pop_size is 0:
+            pop_size = a.shape[axis]
+            if pop_size == 0:
                 raise ValueError("a must be non-empty")
 
         if p is not None:
@@ -1455,7 +1455,7 @@ cdef class RandomState:
             # In most cases a scalar will have been made an array
             idx = idx.item(0)
 
-        #Use samples as indices for a if a is array-like
+        # Use samples as indices for a if a is array-like
         if a.ndim == 0:
             return idx
 
@@ -1469,7 +1469,7 @@ cdef class RandomState:
             res[()] = a[idx]
             return res
 
-        return a[idx]
+        return a.take(idx, axis=axis)
 
 
     def uniform(self, low=0.0, high=1.0, size=None):
