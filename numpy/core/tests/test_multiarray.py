@@ -5690,6 +5690,12 @@ class TestPEP3118Dtype(object):
 
         self._check('(3)T{ix}', ({'f0': ('i', 0), '': (VV(1), 4)}, (3,)))
 
+    def test_char_vs_string(self):
+        dt = np.dtype('c')
+        self._check('c', dt)
+
+        dt = np.dtype([('f0', 'S1', (4,)), ('f1', 'S4')])
+        self._check('4c4s', dt)
 
 class TestNewBufferProtocol(object):
     def _check_roundtrip(self, obj):
