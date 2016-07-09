@@ -2197,7 +2197,7 @@ class TestRegression(TestCase):
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
 
-    def test_zeros_segfault(self)
+    def test_zeros_segfault(self):
         # gh-7813
         try:
             a = np.zeros((0, 2**31 - 1))
