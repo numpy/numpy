@@ -6005,8 +6005,10 @@ class TestArrayAttributeDeletion(object):
         """ticket #2046, should not seqfault, raise AttributeError"""
         a = np.ones(2)
         attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
-        for s in attr:
-            assert_raises(AttributeError, delattr, a, s)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
 
     def test_multiarray_not_writable_attributes_deletion(self):
         a = np.ones(2)
