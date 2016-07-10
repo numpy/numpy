@@ -900,7 +900,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                          int flags, PyObject *obj, int zeroed)
 {
     PyArrayObject_fields *fa;
-    int i;
+    int i, is_empty;
     npy_intp nbytes;
 
     if (descr->subarray) {
@@ -949,6 +949,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     /* Check dimensions and multiply them to nbytes */
+    is_empty = 0;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -957,13 +958,13 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * Compare to PyArray_OverflowMultiplyList that
              * returns 0 in this case.
              */
+            is_empty = 1;
             continue;
         }
 
         if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "negative dimensions "  \
-                            "are not allowed");
+                "negative dimensions are not allowed");
             Py_DECREF(descr);
             return NULL;
         }
@@ -1037,8 +1038,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
+         * Could probably just allocate a few bytes here. -- Chuck
          */
-        if (nbytes == 0) {
+        if (is_empty) {
             nbytes = descr->elsize;
         }
         /*
