@@ -564,6 +564,21 @@ class TestCreation(TestCase):
         arr = np.array([], dtype='V')
         assert_equal(arr.dtype.kind, 'V')
 
+    def test_too_big_error(self):
+        # 45341 is the smallest integer greater than sqrt(2**31 - 1).
+        # 3037000500 is the smallest integer greater than sqrt(2**63 - 1).
+        # We want to make sure that the square byte array with those dimensions
+        # is too big on 32 or 64 bit systems respectively.
+        if np.iinfo('intp').max == 2**31 - 1:
+            shape = (46341, 46341)
+        elif np.iinfo('intp').max == 2**63 - 1:
+            shape = (3037000500, 3037000500)
+        else:
+            return
+        assert_raises(ValueError, np.empty, shape, dtype=np.int8)
+        assert_raises(ValueError, np.zeros, shape, dtype=np.int8)
+        assert_raises(ValueError, np.ones, shape, dtype=np.int8)
+
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         for dt in types:
