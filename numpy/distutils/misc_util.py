@@ -24,11 +24,12 @@ _tdata = tlocal()
 # store all created temporary directories so they can be deleted on exit
 _tmpdirs = []
 def clean_up_temporary_directory():
-    for d in _tmpdirs:
-        try:
-            shutil.rmtree(d)
-        except OSError:
-            pass
+    if _tmpdirs is not None:
+        for d in _tmpdirs:
+            try:
+                shutil.rmtree(d)
+            except OSError:
+                pass
 
 atexit.register(clean_up_temporary_directory)
 
