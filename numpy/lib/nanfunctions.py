@@ -17,6 +17,7 @@ Functions
 - `nanstd` -- standard deviation of non-NaN values
 - `nanmedian` -- median of non-NaN values
 - `nanpercentile` -- qth percentile of non-NaN values
+- `nancov` -- covariance matrix of non-Nan values
 
 """
 from __future__ import division, absolute_import, print_function
@@ -29,7 +30,7 @@ from numpy.lib import function_base
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
     'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
-    'nancumsum', 'nancumprod'
+    'nancumsum', 'nancumprod', 'nancov'
     ]
 
 
@@ -1441,3 +1442,245 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     else:
         std = var.dtype.type(np.sqrt(var))
     return std
+
+
+def nancov(m, y=None, rowvar=1, ddof=1, fweights=None, aweights=None,
+           pairwise=False):
+    """
+    Estimate a covariance matrix, given data, ignoring observations containing
+    NaN values.
+
+    Covariance indicates the level to which two variables vary together.
+    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
+    then the covariance matrix element :math:`C_{ij}` is the covariance of
+    :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
+    of :math:`x_i`.
+
+    .. versionadded:: 1.14.0
+
+    Parameters
+    ----------
+    m : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
+    y : array_like, optional
+        An additional set of variables and observations. `y` has the same
+        form as that of `m`.
+    rowvar : int, optional
+        If `rowvar` is non-zero (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+    ddof : int, optional
+        Normalization is by ``(N - ddof)``, where ``N`` is
+        the number of observations. The default value is ``1``.
+    fweights : array_like, int, optional
+        1-D array of integer freguency weights; the number of times each
+        observation vector should be repeated.
+    aweights : array_like, optional
+        1-D array of observation vector weights. These relative weights are
+        typically large for observations considered "important" and smaller for
+        observations considered less "important". If ``ddof=0`` the array of
+        weights can be used to assign probabilities to observation vectors.
+    pairwise : bool, optional
+        If ``False`` then a NaN value causes that observation to be eliminated
+        across all variables.  If ``True`` then each pair of variables is
+        compared separately.  Observations with NaN values in the pair are
+        removed, but do not affect other pairs.  The returned covariance matrix
+        may no longer be positive semi-definite in this case.  False is
+        equivalent to the ``na.or.complete`` use flag for cov in R, while
+        ``True`` is equivalent to ``pairwise.complete.obs``.
+
+    Returns
+    -------
+    out : ndarray
+        The covariance matrix of the variables.
+
+    See Also
+    --------
+    corrcoef : Normalized covariance matrix
+
+    Examples
+    --------
+    Consider two variables, :math:`x_0` and :math:`x_1`, which
+    correlate perfectly, but in opposite directions:
+
+    >>> x = np.array([[0, 2], [1, 1], [np.nan, 1], [2, 0]]).T
+    >>> x
+    array([[0, 1, nan, 2],
+           [2, 1,   1, 0]])
+
+    Note how :math:`x_0` increases while :math:`x_1` decreases. The covariance
+    matrix shows this clearly:
+
+    >>> np.nancov(x)
+    array([[ 1., -1.],
+           [-1.,  1.]])
+
+    Note that element :math:`C_{0,1}`, which shows the correlation between
+    :math:`x_0` and :math:`x_1`, is negative.
+
+    Further, note how `x` and `y` are combined:
+
+    >>> x = [-2.1, -1,  np.nan, 4.3]
+    >>> y = [3,  1.1,  1, 0.12]
+    >>> X = np.vstack((x,y))
+    >>> print np.nancov(X)
+    [[ 11.71        -4.286     ]
+     [ -4.286        2.14413333]]
+    >>> print np.nancov(x, y)
+    [[ 11.71        -4.286     ]
+     [ -4.286        2.14413333]]
+    >>> print np.nancov(x)
+    11.71
+
+    Finally it can be seen how the pairwise option handles nan values
+    differently than when when the pairwise option is disabled (default).
+
+    >>> X = np.array([[ 1., 4.,     8., np.nan, 16.],
+    ...               [ 0., 2.,     4.,     6.,  4.],
+    ...               [-1., 3., np.nan, np.nan,  4.]])
+    >>> np.nancov(X)
+    array([[ 63. ,  15. ,  16.5],
+           [ 15. ,   4. ,   5. ],
+           [ 16.5,   5. ,   7. ]])
+    >>> np.nancov(X, pairwise=True)
+    array([[ 42.25,  10.5 ,  16.5 ],
+           [ 10.5 ,   5.2 ,   5.  ],
+           [ 16.5 ,   5.  ,   7.  ]])
+    """
+    # Check inputs
+    if ddof is not None and ddof != int(ddof):
+        raise ValueError(
+            "ddof must be integer")
+
+    m = np.asarray(m)
+    if m.ndim > 2:
+        raise ValueError("m has more than 2 dimensions")
+
+    if y is None:
+        dtype = np.result_type(m, np.float64)
+    else:
+        y = np.asarray(y)
+        if y.ndim > 2:
+            raise ValueError("y has more than 2 dimensions")
+        dtype = np.result_type(m, y, np.float64)
+    X = np.array(m, ndmin=2, dtype=dtype)
+
+    if X.shape[0] == 1:
+        rowvar = 1
+    if rowvar:
+        axis = 0
+    else:
+        axis = 1
+
+    if y is not None:
+        y = np.array(y, copy=False, ndmin=2, dtype=dtype)
+        X = np.concatenate((X, y), axis)
+
+    if axis:
+        n = X.shape[0]
+    else:
+        n = X.shape[1]
+
+    # Get the product of frequencies and weights
+    if fweights is not None:
+        fweights = np.asarray(fweights, dtype=np.float64)
+        if not np.all(fweights == np.around(fweights)):
+            raise TypeError(
+                "fweights must be integer")
+        if fweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional fweights")
+        if fweights.shape[0] != n:
+            raise RuntimeError(
+                "incompatible numbers of samples and fweights")
+        if any(fweights < 0):
+            raise ValueError(
+                "fweights cannot be negative")
+    if aweights is not None:
+        aweights = np.asarray(aweights, dtype=np.float64)
+        if aweights.ndim > 1:
+            raise RuntimeError(
+                "cannot handle multidimensional aweights")
+        if aweights.shape[0] != n:
+            raise RuntimeError(
+                "incompatible numbers of samples and aweights")
+        if any(aweights < 0):
+            raise ValueError(
+                "aweights cannot be negative")
+
+    if pairwise:
+        w = None
+        if fweights is not None:
+            w = fweights
+        if aweights is not None:
+            if w is None:
+                w = aweights
+            else:
+                w *= aweights
+
+        nan_vals = np.isnan(X)
+        if axis:
+            one_array = np.ones(X.T.shape)
+            one_array[nan_vals.T] = np.nan
+        else:
+            one_array = np.ones(X.shape)
+            one_array[nan_vals] = np.nan
+        # each pair may cause a unique mean for the variable, so we create
+        # pair_array which has the correctly nan-ed values.
+        if axis:
+            pair_array = X[:, None, :].swapaxes(0, 2) * one_array[None, :, :]
+        else:
+            pair_array = X[:, None, :] * one_array[None, :, :]
+
+        if w is None:
+            pair_means = nanmean(pair_array, axis=2)
+            pair_w_sum = nansum(~np.isnan(pair_array), axis=2)
+        else:
+            pair_w = w[None, None, :] * ~np.isnan(pair_array)
+            pair_w_sum = np.nansum(pair_w, axis=2)
+            pair_means = nansum(w[None, None, :] * pair_array,
+                                axis=2) / pair_w_sum
+        pair_array -= pair_means[:, :, None]
+
+        if w is None:
+            dotted = pair_array * pair_array.swapaxes(0, 1).conj()
+        else:
+            dotted = pair_array * \
+                (w[None, None, :] * pair_array).swapaxes(0, 1).conj()
+
+        c = nansum(dotted, axis=2)
+
+        if aweights is None:
+            fact = pair_w_sum - ddof
+        else:
+            ddof_weight = nansum(aweights[None, None, :] * pair_w, axis=2)
+            fact = pair_w_sum - ddof * ddof_weight / pair_w_sum
+
+        if np.any(fact <= 0):
+            warnings.warn("Degrees of freedom <= 0 for a slice",
+                          RuntimeWarning, stacklevel=2)
+            fact[fact <= 0] = 0.0
+
+        c *= 1. / fact.astype(np.float64)
+        return c
+    else:
+        # "Complete" version for handling nans where a nan value in any
+        # variable causes the observation to be removed from all variables.
+
+        # Find observations with nans
+        nan_obvs = np.any(np.isnan(X), axis=axis)
+
+        if fweights is not None:
+            fweights = fweights[~nan_obvs]
+        if aweights is not None:
+            aweights = aweights[~nan_obvs]
+
+        if axis:
+            X_nonan = X[~nan_obvs, :]
+        else:
+            X_nonan = X[:, ~nan_obvs]
+        return np.cov(X_nonan, rowvar=rowvar, ddof=ddof, fweights=fweights,
+                      aweights=aweights)

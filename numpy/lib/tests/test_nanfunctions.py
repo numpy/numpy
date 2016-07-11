@@ -5,7 +5,8 @@ import warnings
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
+    assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings,
+    assert_allclose,
     )
 
 
@@ -887,6 +888,87 @@ class TestNanFunctions_Percentile(object):
         megamat = np.ones((3, 4, 5, 6))
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
+
+class TestNanFunctions_Cov(object):
+    x = np.array([[1, 2, 10, 3]])
+    y = np.array([[0, 1, np.nan, 0]])
+    X = np.vstack((x, y))
+    X_no_nan_complete = X[:, (0, 1, 3)]
+
+    fweights = np.array([1, 2, 3, 1])
+    aweights = np.array([0.9, 1, 0.8, 1.1])
+    mask = ~np.isnan(y).reshape(-1,)
+    fweights_no_nan_complete = fweights[mask]
+    aweights_no_nan_complete = aweights[mask]
+
+    def test_basic(self):
+        assert_equal(np.nancov(self.X), np.cov(self.X_no_nan_complete))
+        assert_equal(np.nancov(self.X.T, rowvar=0),
+                     np.cov(self.X_no_nan_complete))
+
+    def test_xy(self):
+        assert_equal(np.nancov(self.x, self.y),
+                     np.cov(self.X_no_nan_complete))
+
+    def test_complex(self):
+        x = np.array([[1, 2, 10, 3], [1j, 2j, np.nan, 3j]])
+        assert_allclose(np.nancov(x), np.array([[1., -1.j], [1.j, 1.]]))
+
+    def test_weights(self):
+        val = np.nancov(self.X,
+                        fweights=self.fweights,
+                        aweights=self.aweights)
+        nonan_val = np.cov(self.X_no_nan_complete,
+                           fweights=self.fweights_no_nan_complete,
+                           aweights=self.aweights_no_nan_complete)
+        assert_equal(val, nonan_val)
+
+    def test_empty(self):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter('always', RuntimeWarning)
+            assert_array_equal(np.nancov(np.array([])), np.nan)
+            assert_array_equal(np.nancov(np.array([]).reshape(0, 2)),
+                               np.array([]).reshape(0, 0))
+            assert_array_equal(np.nancov(np.array([]).reshape(2, 0)),
+                               np.array([[np.nan, np.nan], [np.nan, np.nan]]))
+
+    def test_wrong_ddof(self):
+        x = np.array([[0, 2], [np.nan, 1], [2, 0]]).T
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            assert_(np.isinf(np.nancov(x, ddof=3)).all())
+            assert_(len(w) == 2)
+            # Degree of freedom <= 0
+            assert_(issubclass(w[0].category, RuntimeWarning))
+            # Divide by zero error
+            assert_(issubclass(w[1].category, RuntimeWarning))
+
+    def test_pairwise(self):
+        x = np.array([[ 1.,  2.,     10., np.nan,   5.],
+                      [ 4., 10.,     13., np.nan,   8.],
+                      [-1., -2., np.nan, np.nan, -5.]])
+        fweights = np.array([1, 2, 3, 1, 1])
+        aweights = np.array([0.9, 1.0, 0.8, 1.1, 1.0])
+        val_weight = np.zeros((3, 3))
+        val = np.zeros((3, 3))
+        for ii in range(3):
+            for jj in range(ii, 3):
+                val[ii, jj] = np.nancov(x[ii, :], x[jj, :])[0, 1]
+                val[jj, ii] = val[ii, jj]
+                val_weight[ii, jj] = np.nancov(x[ii, :], x[jj, :],
+                                               fweights=fweights,
+                                               aweights=aweights)[0, 1]
+                val_weight[jj, ii] = val_weight[ii, jj]
+        assert_allclose(val, np.nancov(x, pairwise=True))
+        assert_allclose(val_weight, np.nancov(x,
+                        fweights=fweights,
+                        aweights=aweights,
+                        pairwise=True))
+        assert_allclose(val_weight, np.nancov(x.T,
+                        rowvar=0,
+                        fweights=fweights,
+                        aweights=aweights,
+                        pairwise=True))
 
 if __name__ == "__main__":
     run_module_suite()

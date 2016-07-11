@@ -43,6 +43,7 @@ Correlating
    corrcoef
    correlate
    cov
+   nancov
 
 Histograms
 ----------

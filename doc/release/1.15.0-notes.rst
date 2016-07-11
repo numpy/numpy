@@ -58,6 +58,9 @@ These compute the greatest common divisor, and lowest common multiple,
 respectively. These work on all the numpy integer types, as well as the
 builtin arbitrary-precision `Decimal` and `long` types.
 
+New nanfunction ``nancov`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Nanfunction ``nancov`` has been added to compute ``cov`` by ignoring nans.
 
 Improvements
 ============
