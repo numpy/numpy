@@ -146,7 +146,7 @@ def atleast_3d(*arys):
     >>> x = np.arange(12.0).reshape(4,3)
     >>> np.atleast_3d(x).shape
     (4, 3, 1)
-    >>> np.atleast_3d(x).base is x
+    >>> np.atleast_3d(x).base is x.base  # x is a reshape, so not base itself
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
