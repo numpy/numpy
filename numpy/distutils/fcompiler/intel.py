@@ -104,7 +104,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
 
     version_match = intel_version_match('EM64T-based|Intel\\(R\\) 64|64|IA-64|64-bit')
 
-    possible_executables = ['ifort', 'efort', 'efc']
+    possible_executables = ['ifort']
 
     executables = {
         'version_cmd'  : None,
@@ -120,7 +120,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
         return ['-fPIC']
 
     def get_flags_opt(self):  # Scipy test failures with -O2
-        return ['-openmp -fp-model strict -O1']
+        return ['-xhost -openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
         return ['']
