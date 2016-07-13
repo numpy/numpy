@@ -184,6 +184,14 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             self._setup_compile(output_dir, macros, include_dirs, sources,
                                 depends, extra_postargs)
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+    # CPython doesn't have this options.
+    # Pyston add this option for strict check to avoid some potiential errors.
+    # But it will prevent SciPy build from Cython generated C files.
+    # Removed this option for Pyston implementation.
+    try:
+        cc_args.remove("-Werror=implicit-function-declaration")
+    except ValueError:
+        pass
     display = "compile options: '%s'" % (' '.join(cc_args))
     if extra_postargs:
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
