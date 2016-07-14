@@ -381,6 +381,8 @@ def repeat(a, repeats, axis=None):
 
     Examples
     --------
+    >>> np.repeat(3, 4)
+    array([3, 3, 3, 3])
     >>> x = np.array([[1,2],[3,4]])
     >>> np.repeat(x, 2)
     array([1, 1, 2, 2, 3, 3, 4, 4])
