@@ -4080,6 +4080,7 @@ initialize_numeric_types(void)
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
+     * also fill array_type_as_number struct with reasonable defaults
      */
 
     /**begin repeat
@@ -4088,6 +4089,7 @@ initialize_numeric_types(void)
      * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort,
      *         UInt, ULong, ULongLong#
      */
+    @name@_arrtype_as_number = gentype_as_number;
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
     Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
 
