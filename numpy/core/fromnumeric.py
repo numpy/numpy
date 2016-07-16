@@ -2157,7 +2157,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         Axis or axes along which to operate.  By default, flattened input is
         used.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, the maximum is selected over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2258,7 +2258,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         Axis or axes along which to operate.  By default, flattened input is
         used.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, the minimum is selected over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2794,7 +2794,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Axis or axes along which the means are computed. The default is to
         compute the mean of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a mean is performed over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2896,7 +2896,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         Axis or axes along which the standard deviation is computed. The
         default is to compute the standard deviation of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a standard deviation is performed over
         multiple axes, instead of a single axis or all the axes as before.
@@ -3015,7 +3015,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         Axis or axes along which the variance is computed.  The default is to
         compute the variance of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a variance is performed over multiple axes,
         instead of a single axis or all the axes as before.

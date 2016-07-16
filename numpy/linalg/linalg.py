@@ -1666,7 +1666,7 @@ def slogdet(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    .. versionadded:: 1.6.0.
+    .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
