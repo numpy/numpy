@@ -145,14 +145,17 @@ def main(argv):
     if args.python:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings")
-        import warnings; warnings.filterwarnings("always")
+        import warnings
+        import types
+
+        warnings.filterwarnings("always")
         if extra_argv:
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
             sys.argv = extra_argv
             with open(extra_argv[0], 'r') as f:
                 script = f.read()
-            sys.modules['__main__'] = imp.new_module('__main__')
+            sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
                       __file__=extra_argv[0])
             exec_(script, ns)
