@@ -126,8 +126,13 @@ class GnuFCompiler(FCompiler):
                 # from it.
                 import distutils.sysconfig as sc
                 g = {}
-                filename = sc.get_makefile_filename()
-                sc.parse_makefile(filename, g)
+                try:
+                    get_makefile_filename = sc.get_makefile_filename
+                except AttributeError:
+                    pass # i.e. PyPy
+                else: 
+                    filename = get_makefile_filename()
+                    sc.parse_makefile(filename, g)
                 target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
                 os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
                 if target == '10.3':
