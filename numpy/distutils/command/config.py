@@ -418,6 +418,51 @@ int main (void)
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
 
+    def get_output(self, body, headers=None, include_dirs=None,
+                   libraries=None, library_dirs=None,
+                   lang="c", use_tee=None):
+        """Try to compile, link to an executable, and run a program
+        built from 'body' and 'headers'. Returns the exit status code
+        of the program and its output.
+        """
+        # 2008-11-16, RemoveMe
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
+                      "Usage of get_output is deprecated: please do not \n" \
+                      "use it anymore, and avoid configuration checks \n" \
+                      "involving running executable on the target machine.\n" \
+                      "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
+                      DeprecationWarning)
+        from distutils.ccompiler import CompileError, LinkError
+        self._check_compiler()
+        exitcode, output = 255, ''
+        try:
+            grabber = GrabStdout()
+            try:
+                src, obj, exe = self._link(body, headers, include_dirs,
+                                           libraries, library_dirs, lang)
+                grabber.restore()
+            except:
+                output = grabber.data
+                grabber.restore()
+                raise
+            exe = os.path.join('.', exe)
+            exitstatus, output = exec_command(exe, execute_in='.',
+                                              use_tee=use_tee)
+            if hasattr(os, 'WEXITSTATUS'):
+                exitcode = os.WEXITSTATUS(exitstatus)
+                if os.WIFSIGNALED(exitstatus):
+                    sig = os.WTERMSIG(exitstatus)
+                    log.error('subprocess exited with signal %d' % (sig,))
+                    if sig == signal.SIGINT:
+                        # control-C
+                        raise KeyboardInterrupt
+            else:
+                exitcode = exitstatus
+            log.info("success!")
+        except (CompileError, LinkError):
+            log.info("failure.")
+        self._clean()
+        return exitcode, output
 
 class GrabStdout(object):
 
