@@ -292,7 +292,7 @@ int
 {
     npy_intp low  = 0;
     npy_intp high = num - 1;
-    npy_intp depth_limit;
+    int depth_limit;
 
     if (npiv == NULL)
         pivots = NULL;
@@ -338,15 +338,7 @@ int
         return 0;
     }
 
-    /* dumb integer msb, float npy_log2 too slow for small parititions */
-    {
-        npy_uintp unum = num;
-        depth_limit = 0;
-        while (unum >>= 1)  {
-            depth_limit++;
-        }
-        depth_limit *= 2;
-    }
+    depth_limit = npy_get_msb(num) * 2;
 
     /* guarantee three elements */
     for (;low + 1 < high;) {

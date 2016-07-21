@@ -9,6 +9,14 @@
 #define NPY_ENOMEM 1
 #define NPY_ECOMP 2
 
+static NPY_INLINE int npy_get_msb(npy_uintp unum)
+{
+    int depth_limit = 0;
+    while (unum >>= 1)  {
+        depth_limit++;
+    }
+    return depth_limit;
+}
 
 int quicksort_bool(void *vec, npy_intp cnt, void *null);
 int heapsort_bool(void *vec, npy_intp cnt, void *null);
