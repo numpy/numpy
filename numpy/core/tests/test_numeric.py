@@ -2027,6 +2027,12 @@ class TestLikeFuncs(TestCase):
     def test_empty_like(self):
         self.check_like_function(np.empty_like, None)
 
+        # see gh-7854
+        arr = np.empty_like([None])
+        exp = np.array([None])
+        assert_array_equal(arr, exp)
+        self.assertEqual(bytes(arr.data), bytes(exp.data))
+
     def test_filled_like(self):
         self.check_like_function(np.full_like, 0, True)
         self.check_like_function(np.full_like, 1, True)
