@@ -7,7 +7,7 @@ import sys
 import numpy as np
 from numpy.compat import sixu
 from numpy.testing import (
-     TestCase, run_module_suite, assert_, assert_equal
+     TestCase, run_module_suite, assert_, assert_equal, assert_raises
 )
 
 class TestArrayRepr(object):
@@ -156,6 +156,10 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
+
+    def test_type_check(self):
+        d = {}
+        assert_raises(TypeError, np.set_printoptions, d)
 
 def test_unicode_object_array():
     import sys

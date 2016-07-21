@@ -59,6 +59,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ----------
     precision : int, optional
         Number of digits of precision for floating point output (default 8).
+        We type check this argument, as it is the first argument and we wish to
+        catch the common mistake of passing an unpacked dict (which will later
+        cause print() to fail with an opaque error).
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
@@ -161,6 +164,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     if edgeitems is not None:
         _summaryEdgeItems = edgeitems
     if precision is not None:
+        if not isinstance(precision, int):
+            raise TypeError("set_printoptions requires the argument 'precision' to be of type int")
         _float_output_precision = precision
     if suppress is not None:
         _float_output_suppress_small = not not suppress
