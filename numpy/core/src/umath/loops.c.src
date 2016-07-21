@@ -766,13 +766,21 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 /**end repeat**/
 
 NPY_NO_EXPORT void
-BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+
+BOOL_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     OUTPUT_LOOP {
         *((npy_bool *)op1) = 1;
     }
 }
 
+NPY_NO_EXPORT void
+BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    OUTPUT_LOOP {
+        *((npy_bool *)op1) = 1;
+    }
+}
 
 /*
  *****************************************************************************
@@ -799,6 +807,14 @@ NPY_NO_EXPORT void
 {
     OUTPUT_LOOP {
         *((@type@ *)op1) = 1;
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    OUTPUT_LOOP {
+        *((npy_bool *)op1) = 1;
     }
 }
 
@@ -1180,6 +1196,15 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
  * #type = npy_datetime, npy_timedelta#
  * #TYPE = DATETIME, TIMEDELTA#
  */
+
+NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *((@type@ *) ip1);
+        *((npy_bool *) op1) = (in1 != NPY_DATETIME_NAT);
+    }
+}
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))

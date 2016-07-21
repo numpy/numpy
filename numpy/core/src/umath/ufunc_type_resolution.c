@@ -365,6 +365,114 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
     return 0;
 }
 
+/*
+ * This function applies special type resolution rules for the case
+ * where all the functions have the pattern X->bool, copying
+ * the input descr directly so that metadata is maintained.
+ *
+ * Note that a simpler linear search through the functions loop
+ * is still done, but switching to a simple array lookup for
+ * built-in types would be better at some point.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_UnaryPredicateTypeResolver(PyUFuncObject *ufunc,
+                                   NPY_CASTING casting,
+                                   PyArrayObject **operands,
+                                   PyObject *type_tup,
+                                   PyArray_Descr **out_dtypes)
+{
+    int input_typenum;
+    const char *ufunc_name;
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    if (ufunc->nin != 1 || ufunc->nout != 1) {
+        PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
+                "to use unary predicate type resolution but has "
+                "the wrong number of inputs or outputs",
+                ufunc_name);
+        return -1;
+    }
+
+    input_typenum = PyArray_DESCR(operands[0])->type_num;
+
+    /*
+     * Use the default type resolution if there's a custom data type
+     * or object arrays.
+     */
+    if (input_typenum >= NPY_NTYPES || input_typenum == NPY_OBJECT) {
+        return PyUFunc_DefaultTypeResolver(ufunc,
+                                           casting,
+                                           operands,
+                                           type_tup,
+                                           out_dtypes);
+    }
+
+    if (type_tup == NULL) {
+        out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+    }
+    else {
+        PyObject *item;
+        PyArray_Descr *dtype = NULL;
+
+        /*
+         * If the type tuple isn't a single-element tuple, let the
+         * default type resolution handle this one.
+         */
+        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+            return PyUFunc_DefaultTypeResolver(ufunc,
+                                               casting,
+                                               operands,
+                                               type_tup,
+                                               out_dtypes);
+        }
+
+        item = PyTuple_GET_ITEM(type_tup, 0);
+
+        if (item == Py_None) {
+            /* PyArray_DescrConverter produces a (probably incorrect) default
+             * value if passed None, so check for None explicitly before
+             * continuing.*/
+            PyErr_SetString(PyExc_ValueError,
+                            "expected a dtype in tuple during "
+                            "type resolution, but got None.");
+            return -1;
+        }
+        else if (!PyArray_DescrConverter(item, &dtype)) {
+            return -1;
+        }
+
+        out_dtypes[0] = ensure_dtype_nbo(dtype);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+    }
+
+    /* Output dtype is always bool for ufuncs dispatched here.*/
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+    if (out_dtypes[1] == NULL) {
+        goto fail_clear_first;
+    }
+
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0){
+        goto fail_clear_both;
+    }
+    return 0;
+
+fail_clear_both:
+    /* Both output dtypes have been allocated. */
+    Py_DECREF(out_dtypes[1]);
+    out_dtypes[1] = NULL;
+
+fail_clear_first:
+    /* First output dtype has been allocated, but not the second. */
+    Py_DECREF(out_dtypes[0]);
+    out_dtypes[0] = NULL;
+    return -1;
+}
 
 NPY_NO_EXPORT int
 PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
@@ -1518,7 +1626,6 @@ ufunc_loop_matches(PyUFuncObject *self,
      */
     for (i = 0; i < nin; ++i) {
         PyArray_Descr *tmp;
-
         /*
          * If no inputs are objects and there are more than one
          * loop, don't allow conversion to object.  The rationale

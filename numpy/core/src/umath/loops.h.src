@@ -29,7 +29,7 @@
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, absolute, logical_not#
+ *         logical_and, logical_or, absolute, logical_not, isfinite#
  **/
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
@@ -60,6 +60,9 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 
 NPY_NO_EXPORT void
 @S@@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat2
  * #isa = , _avx2#
@@ -403,6 +406,8 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 /**begin repeat
  * #TYPE = DATETIME, TIMEDELTA#
  */
+NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));

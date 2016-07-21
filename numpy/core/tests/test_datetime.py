@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+from itertools import product
 import pickle
 
 import numpy
@@ -18,12 +19,26 @@ try:
 except ImportError:
     _has_pytz = False
 
+ALL_DATETIME_UNITS = [
+    'Y',
+    'M',
+    'W',
+    'D',
+    'h',
+    'm',
+    's',
+    'ms',
+    'us',
+    'ns',
+    'ps',
+    'fs',
+    'as',
+]
+
 
 class TestDateTime(TestCase):
     def test_datetime_dtype_creation(self):
-        for unit in ['Y', 'M', 'W', 'D',
-                     'h', 'm', 's', 'ms', 'us',
-                     'ns', 'ps', 'fs', 'as']:
+        for unit in ALL_DATETIME_UNITS:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
             dt2 = np.dtype('m8[%s]' % unit)
@@ -1912,6 +1927,24 @@ class TestDateTime(TestCase):
         # Test parsing a date after Y2038
         a = np.datetime64('2038-01-20T13:21:14')
         assert_equal(str(a), '2038-01-20T13:21:14')
+
+    def test_datetime_isfinite(self):
+
+        for type_, unit in product([np.datetime64, np.timedelta64],
+                                   ALL_DATETIME_UNITS):
+            nat = type_('NaT', unit)
+            self.assertFalse(
+                np.isfinite(nat),
+                "isfinite(NaT) should be False",
+            )
+
+            for i in range(5):
+                notnat = type_(i, unit)
+                self.assertTrue(
+                    np.isfinite(notnat),
+                    "isfinite(non-NaT) should be True",
+                )
+
 
 class TestDateTimeData(TestCase):
 

@@ -116,6 +116,7 @@ class Ufunc(object):
     nout : number of output arguments
     identity : identity element for a two-argument function
     docstring : docstring for the ufunc
+    typereso : type resolver used to dispatch the ufunc
     type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
@@ -794,8 +795,8 @@ defdict = {
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
-          None,
-          TD(inexact, out='?'),
+          'PyUFunc_UnaryPredicateTypeResolver',
+          TD(noobj, out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
