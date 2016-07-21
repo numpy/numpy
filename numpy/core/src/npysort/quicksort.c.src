@@ -69,8 +69,13 @@ quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
     @type@ *stack[PYA_QS_STACK];
     @type@ **sptr = stack;
     @type@ *pm, *pi, *pj, *pk;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     for (;;) {
+        if (depth_limit-- < 0) {
+            heapsort_@suff@(pl, pr - pl + 1, NULL);
+            goto stack_pop;
+        }
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
@@ -114,6 +119,7 @@ quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
             }
             *pj = vp;
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }
@@ -135,9 +141,14 @@ aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *NOT_USED)
     npy_intp *stack[PYA_QS_STACK];
     npy_intp **sptr = stack;
     npy_intp *pm, *pi, *pj, *pk, vi;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     for (;;) {
         while ((pr - pl) > SMALL_QUICKSORT) {
+            if (depth_limit-- < 0) {
+                aheapsort_@suff@(vv, pl, pr - pl + 1, NULL);
+                goto stack_pop;
+            }
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
             if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm, *pl);
@@ -181,6 +192,7 @@ aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *NOT_USED)
             }
             *pj = vi;
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }
@@ -217,12 +229,17 @@ quicksort_@suff@(void *start, npy_intp num, void *varr)
     @type@ *pl = start;
     @type@ *pr = pl + (num - 1)*len;
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
 
     for (;;) {
+        if (depth_limit-- < 0) {
+            heapsort_@suff@(pl, (pr - pl) / len + 1, varr);
+            goto stack_pop;
+        }
         while ((size_t)(pr - pl) > SMALL_QUICKSORT*len) {
             /* quicksort partition */
             pm = pl + (((pr - pl)/len) >> 1)*len;
@@ -268,6 +285,7 @@ quicksort_@suff@(void *start, npy_intp num, void *varr)
             }
             @TYPE@_COPY(pj, vp, len);
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }
@@ -292,8 +310,13 @@ aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *varr)
     npy_intp *stack[PYA_QS_STACK];
     npy_intp **sptr=stack;
     npy_intp *pm, *pi, *pj, *pk, vi;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     for (;;) {
+        if (depth_limit-- < 0) {
+            aheapsort_@suff@(vv, pl, pr - pl + 1, varr);
+            goto stack_pop;
+        }
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
@@ -338,6 +361,7 @@ aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *varr)
             }
             *pj = vi;
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }
@@ -370,12 +394,17 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     char *stack[PYA_QS_STACK];
     char **sptr = stack;
     char *pm, *pi, *pj, *pk;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
 
     for (;;) {
+        if (depth_limit-- < 0) {
+            npy_heapsort(pl, (pr - pl) / elsize + 1, varr);
+            goto stack_pop;
+        }
         while(pr - pl > SMALL_QUICKSORT*elsize) {
             /* quicksort partition */
             pm = pl + (((pr - pl) / elsize) >> 1) * elsize;
@@ -431,6 +460,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
             }
             GENERIC_COPY(pj, vp, elsize);
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }
@@ -456,8 +486,13 @@ npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
     npy_intp *stack[PYA_QS_STACK];
     npy_intp **sptr = stack;
     npy_intp *pm, *pi, *pj, *pk, vi;
+    npy_intp depth_limit = npy_get_msb(num) * 2;
 
     for (;;) {
+        if (depth_limit-- < 0) {
+            npy_aheapsort(vv, pl, pr - pl + 1, varr);
+            goto stack_pop;
+        }
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
@@ -512,6 +547,7 @@ npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
             }
             *pj = vi;
         }
+stack_pop:
         if (sptr == stack) {
             break;
         }

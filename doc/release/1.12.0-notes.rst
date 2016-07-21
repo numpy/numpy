@@ -266,6 +266,12 @@ numpy.sctypes now includes bytes on Python3 too
 Previously, it included str (bytes) and unicode on Python2, but only str
 (unicode) on Python3.
 
+quicksort has been changed to an introsort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The quicksort kind of ``np.sort`` and ``np.argsort`` is now an introsort which
+is regular quicksort but changing to a heapsort when not enough progress is
+made. This retains the good quicksort performance while changing the worst case
+runtime from ``O(N^2)`` to ``O(N*log(N))``.
 
 Deprecations
 ============

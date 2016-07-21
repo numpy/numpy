@@ -1349,6 +1349,21 @@ class TestMethods(TestCase):
         msg = 'test empty array sort with axis=None'
         assert_equal(np.sort(a, axis=None), a.ravel(), msg)
 
+    def test_sort_degraded(self):
+        # test degraded dataset would take minutes to run with normal qsort
+        d = np.arange(1000000)
+        do = d.copy()
+        x = d
+        # create a median of 3 killer where each median is the sorted second
+        # last element of the quicksort partition
+        while x.size > 3:
+            mid = x.size // 2
+            x[mid], x[-2] = x[-2], x[mid]
+            x = x[:-2]
+
+        assert_equal(np.sort(d), do)
+        assert_equal(d[np.argsort(d)], do)
+
     def test_copy(self):
         def assert_fortran(arr):
             assert_(arr.flags.fortran)
