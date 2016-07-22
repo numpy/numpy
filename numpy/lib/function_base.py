@@ -24,7 +24,7 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount, 
+    _insert, add_docstring, digitize, bincount,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -660,7 +660,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if mn > mx:
         raise ValueError(
             'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([mn, mx])):
+    if not np.all(np.isfinite(np.hstack([mn, mx]))):
         raise ValueError(
             'range parameter must be finite.')
     if mn == mx:
@@ -1792,7 +1792,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Returns
     -------
-    y : float or complex (corresponding to fp) or ndarray 
+    y : float or complex (corresponding to fp) or ndarray
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1899,7 +1899,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
             return interp_func(x, xp, fp, left, right)
         else:
             return interp_func(x, xp, fp, left, right).item()
-                
+
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
