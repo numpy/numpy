@@ -32,6 +32,13 @@ This builds Numpy first, so the first time it may take a few minutes.  If
 you specify ``-n``, the tests are run against the version of NumPy (if
 any) found on current PYTHONPATH.
 
+When specifying a target using ``-s``, ``-t``, or ``--python``, additional
+arguments may be forwarded to the target embedded by ``runtests.py`` by passing
+the extra arguments after a bare ``--``. For example, to run a test method with
+the ``--pdb`` flag forwarded to nose, run the following::
+
+    $ python runtests.py -t numpy/core/tests/test_ufunc.py:TestUfunc.test_sum -- --pdb
+
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
