@@ -1315,8 +1315,8 @@ class TestSpecialMethods(TestCase):
         func, args, i = x.context
         self.assertTrue(func is ncu.minimum)
         self.assertEqual(len(args), 2)
-        assert_equal(args[0], a)
-        assert_equal(args[1], a)
+        self.assertTrue(args[0] is a)
+        self.assertTrue(args[1] is a)
         self.assertEqual(i, 0)
 
     def test_wrap_with_iterable(self):

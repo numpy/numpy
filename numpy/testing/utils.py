@@ -366,6 +366,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         try:
             assert_equal(actualr, desiredr)
             assert_equal(actuali, desiredi)
+            return
         except AssertionError:
             raise AssertionError(msg)
 
@@ -388,9 +389,13 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
                 if not desired == actual:
                     raise AssertionError(msg)
             return
-        elif desired == 0 and actual == 0:
-            if not signbit(desired) == signbit(actual):
-                raise AssertionError(msg)
+
+        # For inexact types (float and complexfloat), 0.0 and -0.0 are distinct
+        # values, but they compare equal. Explicitly assert that signbits match
+        # to catch this case.
+        if signbit(desired) != signbit(actual):
+            raise AssertionError(msg)
+
     # If TypeError or ValueError raised while using isnan and co, just handle
     # as before
     except (TypeError, ValueError, NotImplementedError):
