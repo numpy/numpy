@@ -313,7 +313,6 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
-        /* Input types are the result type */
         out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
         if (out_dtypes[0] == NULL) {
             return -1;
