@@ -1677,8 +1677,14 @@ get_functions(PyObject * mm)
     funcdata = ((PyUFuncObject *)obj)->data;
     signatures = ((PyUFuncObject *)obj)->types;
 
-    i = 0;
-    j = 0;
+    /*
+     * pow ufunc is specialized for double and float loops in
+     * generate_umath.py, the first to go into FLOAT/DOUBLE_power
+     * they have the same signature as the scalar variants so we need to skip
+     * over them
+     */
+    i = 6;
+    j = 2;
     while (signatures[i] != NPY_FLOAT) {
         i += 3;
         j++;

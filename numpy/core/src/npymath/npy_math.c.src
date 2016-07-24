@@ -498,7 +498,7 @@ double npy_log2(double x)
     @vtype2@ v = _mm256_set1_p@vsuf@(x);
     v = _ZGVdN@vsz2@v_@kind@@c@(v);
     return v[0];
-#elif @vsz@ > 0 &&  defined HAVE__ZGVBN@vsz@V_@KIND@@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+#elif @vsz@ > 0 && defined HAVE__ZGVBN@vsz@V_@KIND@@C@ && defined NPY_HAVE_SSE2_INTRINSICS
     @vtype@ v = _mm_set1_p@vsuf@(x);
     v = _ZGVbN@vsz@v_@kind@@c@(v);
     return v[0];
@@ -510,9 +510,37 @@ double npy_log2(double x)
 
 /**end repeat1**/
 
+#ifdef HAVE_POW@C@
+
+#if @vsz@ > 0 && defined NPY_HAVE_SSE2_INTRINSICS
+#include <xmmintrin.h>
+@vtype@ _ZGVbN@vsz@vv_pow@c@(@vtype@);
+#endif
+#if @vsz@ > 0 && defined NPY_HAVE_AVX2_INTRINSICS
+#include <immintrin.h>
+@vtype2@ _ZGVdN@vsz2@vv_pow@c@(@vtype2@);
+#endif
+
+@type@ npy_pow@c@(@type@ x, @type@ y)
+{
+#if @vsz@ > 0 && defined HAVE__ZGVDN@vsz2@VV_POW@C@ && defined NPY_HAVE_AVX2_INTRINSICS
+    @vtype2@ v = _mm256_set1_p@vsuf@(x);
+    v = _ZGVdN@vsz2@vv_pow@c@(v);
+    return v[0];
+#elif @vsz@ > 0 && defined HAVE__ZGVBN@vsz@VV_POW@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+    @vtype@ v = _mm_set1_p@vsuf@(x);
+    v = _ZGVbN@vsz@vv_pow@c@(v);
+    return v[0];
+#else
+    return pow@c@(x, y);
+#endif
+}
+
+#endif
+
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,FMOD,COPYSIGN#
  */
 #ifdef HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@type@ x, @type@ y)

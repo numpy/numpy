@@ -1472,6 +1472,86 @@ NPY_NO_EXPORT void
     }
 }
 
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+@vtype@ _ZGVbN@vsz@vv_pow@c@(@vtype@, @vtype@);
+#endif
+#ifdef NPY_HAVE_AVX2_INTRINSICS
+@vtype2@ _ZGVdN@vsz2@vv_pow@c@(@vtype2@, @vtype2@);
+#endif
+
+NPY_NO_EXPORT void
+@TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    /* use vector math functions when there is no aliasing */
+    if (
+#if (!defined HAVE__ZGVDN@vsz2@VV_POW@C@ || !defined NPY_HAVE_AVX2_INTRINSICS) && \
+        (!defined HAVE__ZGVBN@vsz@VV_POW@C@ || !defined NPY_HAVE_SSE2_INTRINSICS)
+        1 ||
+#endif
+        steps[0] != sizeof(@type@) || steps[2] != sizeof(@type@) ||
+        steps[1] > sizeof(@type@) ||
+        (abs_intp(args[2] - args[0]) <= (@vsz2@) &&
+         (args[2] - args[0]) != 0 &&
+         abs_intp(args[2] - args[1]) <= (@vsz2@))) {
+        BINARY_LOOP {
+            @type@ in1 = *(@type@ *)ip1;
+            @type@ in2 = *(@type@ *)ip2;
+            *(@type@ *)op1 = npy_pow@c@(in1, in2);
+        }
+    }
+    else {
+        @type@ *ip1 = (@type@ *)args[0];
+        @type@ *ip2 = (@type@ *)args[1], *op1 = (@type@ *)args[2];
+        npy_intp n = dimensions[0];
+        if (steps[1] == 0) {
+            npy_intp i;
+            @type@ expo = ip2[0];
+            for(i = 0; i < n - (n % @vsz2@); i+=@vsz2@) {
+#if defined HAVE__ZGVDN@vsz2@VV_POW@C@ && defined NPY_HAVE_AVX2_INTRINSICS
+                @vtype2@ vexp = _mm256_set1_p@vsuf@(expo);
+                @vtype2@ v = _mm256_loadu_p@vsuf@(&ip1[i]);
+                v = _ZGVdN@vsz2@vv_pow@c@(v, vexp);
+                _mm256_storeu_p@vsuf@(&op1[i], v);
+#elif defined HAVE__ZGVBN@vsz@VV_POW@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+                @vtype@ vexp = _mm_set1_p@vsuf@(expo);
+                @vtype@ v = _mm_loadu_p@vsuf@(&ip1[i]);
+                v = _ZGVbN@vsz@vv_pow@c@(v, vexp);
+                _mm_storeu_p@vsuf@(&op1[i], v);
+                v = _mm_loadu_p@vsuf@(&ip1[i + @vsz@]);
+                v = _ZGVbN@vsz@vv_pow@c@(v, vexp);
+                _mm_storeu_p@vsuf@(&op1[i + @vsz@], v);
+#endif
+            }
+            for(; i < n; i++) {
+                op1[i] = npy_pow@c@(ip1[i], expo);
+            }
+        }
+        else {
+            npy_intp i;
+            for(i = 0; i < n - (n % @vsz2@); i+=@vsz2@) {
+#if defined HAVE__ZGVDN@vsz2@VV_POW@C@ && defined NPY_HAVE_AVX2_INTRINSICS
+                @vtype2@ v = _mm256_loadu_p@vsuf@(&ip1[i]);
+                @vtype2@ vexp = _mm256_loadu_p@vsuf@(&ip2[i]);
+                v = _ZGVdN@vsz2@vv_pow@c@(v, vexp);
+                _mm256_storeu_p@vsuf@(&op1[i], v);
+#elif defined HAVE__ZGVBN@vsz@VV_POW@C@ && defined NPY_HAVE_SSE2_INTRINSICS
+                @vtype@ vexp = _mm_loadu_p@vsuf@(&ip2[i]);
+                @vtype@ v = _mm_loadu_p@vsuf@(&ip1[i]);
+                v = _ZGVbN@vsz@vv_pow@c@(v, vexp);
+                _mm_storeu_p@vsuf@(&op1[i], v);
+                vexp = _mm_loadu_p@vsuf@(&ip2[i + @vsz@]);
+                v = _mm_loadu_p@vsuf@(&ip1[i + @vsz@]);
+                v = _ZGVbN@vsz@vv_pow@c@(v, vexp);
+                _mm_storeu_p@vsuf@(&op1[i + @vsz@], v);
+#endif
+            }
+            for(; i < n; i++) {
+                op1[i] = npy_pow@c@(ip1[i], ip2[i]);
+            }
+        }
+    }
+}
+
 /**begin repeat1
  * Float types
  *  #f = sin, cos, exp, log#
@@ -1495,7 +1575,7 @@ NPY_NO_EXPORT void
         1 ||
 #endif
         steps[0] != sizeof(@type@) || steps[1] != sizeof(@type@) ||
-            (abs_intp(args[1] - args[0]) <= (@vsz@) &&
+            (abs_intp(args[1] - args[0]) < (@vsz2@) &&
             (args[1] - args[0]) != 0)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;

@@ -158,6 +158,9 @@ U@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+@TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 /**begin repeat1
  * Float types
  *  #f = sin, cos, exp, log#

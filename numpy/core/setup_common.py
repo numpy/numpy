@@ -108,12 +108,14 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
 
 # vector math based on OpenMP vector function abi
-for f in ('sin', 'cos', 'exp', 'log'):
-    for t, sz in (('f', 4), ('', 2)):
+for t, sz in (('f', 4), ('', 2)):
+    for f in ('sin', 'cos', 'exp', 'log'):
         # SSE vector math
         OPTIONAL_STDFUNCS.append("_ZGVbN%dv_%s%s" % (sz, f, t))
         # AVX2 vector math
         OPTIONAL_STDFUNCS.append("_ZGVdN%dv_%s%s" % (sz * 2, f, t))
+    OPTIONAL_STDFUNCS.append("_ZGVbN%dvv_pow%s" % (sz, t))
+    OPTIONAL_STDFUNCS.append("_ZGVdN%dvv_pow%s" % (sz * 2, t))
 
 
 OPTIONAL_HEADERS = [
