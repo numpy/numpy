@@ -9,6 +9,7 @@ Examples::
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
     $ python runtests.py -t {SAMPLE_TEST}
+    $ python runtests.py -t {SAMPLE_TEST} -- {SAMPLE_NOSE_ARGUMENTS}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -35,6 +36,7 @@ PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
+SAMPLE_NOSE_ARGUMENTS = "--pdb"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
               '/usr/local/lib/ccache', '/usr/local/lib/f90cache']
