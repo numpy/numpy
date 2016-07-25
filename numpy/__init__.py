@@ -107,8 +107,21 @@ Exceptions to this rule are documented.
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
+
+# Disallow reloading numpy. Doing that does nothing to change previously
+# loaded modules, which would need to be reloaded separately, but it does
+# change the identity of the warnings and sentinal classes defined below
+# with dire consequences when checking for identity.
+if '_is_loaded' in globals():
+    raise RuntimeError('Reloading numpy is not supported')
+_is_loaded = True
 
 
+# Define some global warnings and the _NoValue sentinal. Defining them here
+# means that their identity will change if numpy is reloaded, hence if that is
+# to be allowed they should be moved into their own, non-reloadable module.
+# Note that these should be defined (or imported) before the other imports.
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
 
@@ -135,9 +148,8 @@ class VisibleDeprecationWarning(UserWarning):
 class _NoValue:
     """Special keyword value.
 
-    This class may be used as the default value assigned to a
-    deprecated keyword in order to check if it has been given a user
-    defined value.
+    This class may be used as the default value assigned to a deprecated
+    keyword in order to check if it has been given a user defined value.
     """
     pass
 
@@ -155,11 +167,8 @@ try:
 except NameError:
     __NUMPY_SETUP__ = False
 
-
 if __NUMPY_SETUP__:
-    import sys as _sys
-    _sys.stderr.write('Running from numpy source directory.\n')
-    del _sys
+    sys.stderr.write('Running from numpy source directory.\n')
 else:
     try:
         from numpy.__config__ import show as show_config
@@ -209,7 +218,7 @@ else:
     from .compat import long
 
     # Make these accessible from numpy name-space
-    #  but not imported in from numpy import *
+    # but not imported in from numpy import *
     if sys.version_info[0] >= 3:
         from builtins import bool, int, float, complex, object, str
         unicode = str
@@ -225,8 +234,8 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+
     # Filter annoying Cython warnings that serve no good purpose.
-    import warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
