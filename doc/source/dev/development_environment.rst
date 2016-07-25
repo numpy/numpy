@@ -37,7 +37,7 @@ arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
 the ``--pdb`` flag forwarded to nose, run the following::
 
-    $ python runtests.py -t numpy/core/tests/test_ufunc.py:TestUfunc.test_sum -- --pdb
+    $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
