@@ -776,6 +776,12 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
 
+    .. versionadded:: 1.12.0
+
+    quicksort has been changed to an introsort which will switch
+    heapsort when it does not make enough progress. This makes its
+    worst case O(n*log(n)).
+
     Examples
     --------
     >>> a = np.array([[1,4],[3,1]])
