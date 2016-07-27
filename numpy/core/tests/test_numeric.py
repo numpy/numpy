@@ -1571,6 +1571,30 @@ class TestClip(TestCase):
         assert_equal(d.clip(min=-2, max=np.nan), d)
         assert_equal(d.clip(min=np.nan, max=10), d)
 
+    def test_clip_with_out_order_c_to_f(self):
+        # Ensure that the clip() function takes an out with different order from input.
+        a = self._generate_data(self.nr, self.nc)
+        out = a.copy(order='F')
+        out2 = a.copy(order='F')
+        m = -0.5
+        M = 0.6
+        np.clip(a, m, M, out=out)
+        self.clip(a, m, M, out=out2)
+
+        assert_array_strict_equal(out, out2)
+
+    def test_clip_with_out_order_f_to_c(self):
+        # Ensure that the clip() function takes an out with different order from input.
+        a = self._generate_data(self.nr, self.nc).copy(order='F')
+        out = a.copy(order='C')
+        out2 = a.copy(order='C')
+        m = -0.5
+        M = 0.6
+        np.clip(a, m, M, out=out)
+        self.clip(a, m, M, out=out2)
+
+        assert_array_strict_equal(out, out2)
+
 
 class TestAllclose(object):
     rtol = 1e-5
