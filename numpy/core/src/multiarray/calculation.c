@@ -891,6 +891,11 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
 NPY_NO_EXPORT PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
+    if (out == NULL) {
+        return PyObject_CallFunction(n_ops.clip, "OOO", self, min, max);
+    }
+    return PyObject_CallFunction(n_ops.clip, "OOOO", self, min, max, out);
+
     PyArray_FastClipFunc *func;
     int outgood = 0, ingood = 0;
     PyArrayObject *maxa = NULL;

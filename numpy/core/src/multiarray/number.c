@@ -115,6 +115,7 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(minimum);
     SET(rint);
     SET(conjugate);
+    SET(clip);
     return 0;
 }
 
@@ -168,6 +169,7 @@ PyArray_GetNumericOps(void)
     GET(minimum);
     GET(rint);
     GET(conjugate);
+    GET(clip);
     return dict;
 
  fail:

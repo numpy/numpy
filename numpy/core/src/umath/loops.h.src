@@ -29,7 +29,7 @@
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, absolute, logical_not#
+ *         logical_and, logical_or, absolute, logical_not, clip#
  **/
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
@@ -142,6 +142,9 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @S@@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+U@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**end repeat1**/
 
@@ -262,6 +265,9 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 #define @TYPE@_true_divide @TYPE@_divide
 
 /**end repeat**/
@@ -374,6 +380,10 @@ NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
 
+
+NPY_NO_EXPORT void
+C@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 #define C@TYPE@_true_divide C@TYPE@_divide
 
 /**end repeat**/
@@ -429,6 +439,8 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
 NPY_NO_EXPORT void

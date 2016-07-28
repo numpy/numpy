@@ -877,6 +877,12 @@ defdict = {
           TypeDescription('d', None, 'd', 'di'),
           TypeDescription('g', None, 'g', 'gi'),
           ],
+          ),
+'clip' :
+    Ufunc(3, 1, None,
+          docstrings.get('numpy.core.umath.clip'),
+          None,
+          TD(noobj),
           )
 }
 
@@ -910,6 +916,17 @@ chartotype2 = {'e': 'ee_e',
                'G': 'GG_G',
                'O': 'OO_O',
                'P': 'OO_O_method'}
+
+chartotype3 = {'e': 'eee_e',
+               'f': 'fff_f',
+               'd': 'ddd_d',
+               'g': 'ggg_g',
+               'F': 'FFF_F',
+               'D': 'DDD_D',
+               'G': 'GGG_G',
+               'O': 'OOO_O',
+               'P': 'OOO_O_method'}
+
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
@@ -930,9 +947,11 @@ def make_arrays(funcdict):
         k = 0
         sub = 0
 
-        if uf.nin > 1:
-            assert uf.nin == 2
-            thedict = chartotype2  # two inputs and one output
+        if uf.nin > 2:
+            assert uf.nin == 3
+            thedict = chartotype3  # three inputs and one output
+        elif uf.nin == 2:
+            thedict = chartotype2
         else:
             thedict = chartotype1  # one input and one output
 
