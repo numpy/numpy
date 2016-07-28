@@ -549,6 +549,22 @@ class TestMisc(TestCase):
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+        # Test covariance matrix
+        # 1d
+        x = np.linspace(0, 2, 7)
+        c = np.array([1., 2., 3.])
+        err = [1, -1, 1, -1, 1, -1, 1]
+        y = poly.polyval(x, c)
+        _, V = poly.polyfit(x, y + err, 2, cov=True)
+        cov = [[2.322, -4.2449, 1.6327],
+               [-4.2449, 12.7347, -5.8776],
+               [1.6327, -5.8776, 2.9388]]
+        assert_almost_equal(V, cov, decimal=4)
+
+        # 2d
+        _, V = poly.polyfit(x, np.array([y, y]).T + np.array(err)[:, np.newaxis], 2, cov=True)
+        assert_almost_equal(cov, V[:, :, 1], decimal=4)
+
     def test_polytrim(self):
         coef = [2, -1, 1, 0]
 

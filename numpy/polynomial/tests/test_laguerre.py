@@ -439,6 +439,20 @@ class TestFitting(TestCase):
         assert_almost_equal(lag.lagfit(x, x, 1), [1, -1])
         assert_almost_equal(lag.lagfit(x, x, [0, 1]), [1, -1])
 
+        # Test covariance matrix
+        # 1d
+        x = np.linspace(0, 2, 6)
+        y = f(x)
+        _, V = lag.lagfit(x, y, 2, cov=True)
+        cov = np.array([[0.1232, -0.2962, 0.2962],
+                        [-0.2962, 1.2057, -1.1109],
+                        [0.2962, -1.1109, 1.1109]])
+        assert_almost_equal(V, cov, decimal=4)
+
+        # 2d
+        _, V = lag.lagfit(x, np.array([y, y]).T, 2, cov=True)
+        assert_almost_equal(V[:, :, 1], cov, decimal=4)
+
 
 class TestCompanion(TestCase):
 

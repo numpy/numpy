@@ -458,6 +458,20 @@ class TestFitting(TestCase):
         assert_almost_equal(herme.hermeval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+        # Test covariance matrix
+        # 1d
+        x = np.linspace(0, 2, 6)
+        y = f(x)
+        _, V = herme.hermefit(x, y, 2, cov=True)
+        cov = np.array([[0.792, -0.9465, 0.4258],
+                        [-0.9465, 1.2057, -0.5554],
+                        [0.4258, -0.5554, 0.2777]])
+        assert_almost_equal(V, cov, decimal=4)
+
+        # 2d
+        _, V = herme.hermefit(x, np.array([y, y]).T, 2, cov=True)
+        assert_almost_equal(V[:, :, 1], cov, decimal=4)
+
 
 class TestCompanion(TestCase):
 

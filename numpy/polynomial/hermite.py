@@ -1365,7 +1365,7 @@ def hermvander3d(x, y, z, deg):
     return v.reshape(v.shape[:-3] + (-1,))
 
 
-def hermfit(x, y, deg, rcond=None, full=False, w=None):
+def hermfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Least squares fit of Hermite series to data.
 
@@ -1407,6 +1407,9 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
+    cov : bool, optional
+        Return the estimate and the covariance matrix of the estimate
+        If full is True, then cov is not returned.
 
     Returns
     -------
@@ -1422,6 +1425,13 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         rank -- the numerical rank of the scaled Vandermonde matrix
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
+
+    V : ndarray, shape (M,M) or (M,M,K)
+        Present only if `full` = False and `cov`=True.  The covariance
+        matrix of the polynomial coefficient estimates.  The diagonal of
+        this matrix are the variance estimates for each coefficient.  If y
+        is a 2-D array, then the covariance matrix for the `k`-th data set
+        are in ``V[:,:,k]``
 
         For more details, see `linalg.lstsq`.
 
@@ -1562,6 +1572,19 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     if full:
         return c, [resids, rank, s, rcond]
+    elif cov:
+        lhs = lhs.T / scl
+        Vbase = la.inv(np.dot(lhs.T, lhs))
+        Vbase /= np.outer(scl, scl)
+        # Some literature ignores the extra -2.0 factor in the denominator, but
+        #  it is included here because the covariance of Multivariate Student-T
+        #  (which is implied by a Bayesian uncertainty analysis) includes it.
+        #  Plus, it gives a slightly more conservative estimate of uncertainty.
+        fac = resids / (len(x) - order - 2.0)
+        if y.ndim == 1:
+            return c, Vbase * fac
+        else:
+            return c, Vbase[:, :, np.newaxis] * fac
     else:
         return c
 

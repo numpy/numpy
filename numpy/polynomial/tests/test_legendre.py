@@ -458,6 +458,19 @@ class TestFitting(TestCase):
         assert_almost_equal(leg.legval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+        # Test covariance matrix
+        # 1d
+        x = np.linspace(0, 2, 6)
+        y = f(x)
+        _, V = leg.legfit(x, y, 2, cov=True)
+        cov = np.array([[0.3476, -0.5762, 0.1605],
+                        [-0.5762, 1.2057, -0.3703],
+                        [0.1605, -0.3703, 0.1234]])
+        assert_almost_equal(V, cov, decimal=4)
+
+        # 2d
+        _, V = leg.legfit(x, np.array([y, y]).T, 2, cov=True)
+        assert_almost_equal(V[:, :, 1], cov, decimal=4)
 
 class TestCompanion(TestCase):
 
