@@ -751,7 +751,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         Also when a single column has to be read it is possible to use
         an integer instead of a tuple. E.g ``usecols = 3`` reads the
-        third column the same way as `usecols = (3,)`` would.
+        fourth column the same way as `usecols = (3,)`` would.
 
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
