@@ -1761,6 +1761,16 @@ class TestHistogramdd(TestCase):
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
 
+    def test_type(self):
+        vals = np.random.random((10, 3))
+        w = np.ones(10, float)
+        assert_(np.issubdtype(np.histogramdd(vals)[0].dtype, int))
+        assert_(np.issubdtype(np.histogramdd(vals, weights=w)[0].dtype, float))
+        w = np.ones(10, int)
+        assert_(np.issubdtype(np.histogramdd(vals, weights=w)[0].dtype, int))
+        assert_(np.issubdtype(np.histogramdd(vals, normed=True)[0].dtype, float))
+        assert_(np.issubdtype(np.histogramdd(vals, weights=w, normed=True)[0].dtype, float))
+
 
 class TestUnique(TestCase):
 

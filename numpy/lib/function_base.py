@@ -878,10 +878,15 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         N, D = sample.shape
 
     nbin = empty(D, int)
+    ntype = np.dtype(np.intp)
     edges = D*[None]
     dedges = D*[None]
     if weights is not None:
+        ntype = weights.dtype
         weights = asarray(weights)
+
+    if normed:
+        ntype = np.dtype(np.float64)
 
     try:
         M = len(bins)
@@ -970,7 +975,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
     # will raise an error.
-    hist = zeros(nbin, float).reshape(-1)
+    hist = zeros(nbin, ntype).reshape(-1)
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
