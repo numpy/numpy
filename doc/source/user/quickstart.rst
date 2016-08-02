@@ -1268,7 +1268,7 @@ times the number of vectors.
 Indexing with strings
 ---------------------
 
-See `RecordArrays <RecordArrays.html>`__.
+See `RecordArrays <basics.rec.html#record-arrays>`__.
 
 Linear Algebra
 ==============
