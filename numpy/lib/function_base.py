@@ -3900,7 +3900,41 @@ def percentile(a, q, axis=None, out=None,
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
 
+    Selected methods for percentile estimation and their use in popular
+    software.
+    --------
+    Method A: p(n+1)
+        Method A, cited for example by Altman1
+        and CLSI2, calculates an index p(n+1). This method is attributed to
+        Gumbel and Weibull and is widely available in software packages such
+        as JMP (SAS Institute Inc, Cary, NC) (only method), NCSS (NCSS,
+        Kaysville, UT) (recommended method), Minitab (Minitab Inc.,
+        State CollegePA), SAS (SAS Institute Inc, Cary, NC) Statistica
+        (StatSoft, Inc., Tulsa, OK) and SPSS (IBM Corp., Somers, NY).
+
+    Method B: 0.5+pn
+        Method B, cited for example by Armitage et al. and Lentner calculates
+        an index 0.5+pn, and is attributed to Hazen Method B is used in the
+        software programs Mathematica (Wolfram Research Inc., Champaign, IL)
+        and MedCalc (MedCalc Software bvba, Mariakerke, Belgium)
+        (only method, except for reference interval estimation)
+
+    Method C: p(n-1)+1
+        Method C uses p(n-1)+1 and is attributed to Gumbel.4
+        This method is implemented in both Microsoft Excel 200318 and 2007
+        (Microsoft Corp., Redmond, WA)19 as well as in the Calc program,
+        part of the OpenOffice suite by Sun Microsystems (Oracle Corp., Redwood
+        Shores, CA), although this does not seem to be documented. Method C is
+        the default value in R20 and is also among the methods available in
+        Statistica(StatSoft, Inc., Tulsa, OK)
+
+    Method D: p(n+1/3)+1/3
+        Method D uses p(n+1/3)+1/3 and is proposed by Hyndman and Fan as the
+        best choice among many othermethods including the above. We are not
+        aware of any available software implementations of this method.
+        
     """
+
     q = array(q, dtype=np.float64, copy=True)
     r, k = _ureduce(a, func=_percentile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
