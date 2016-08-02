@@ -114,7 +114,7 @@ class TestDocs(TestCase):
         assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
-        assert_array_equal(np.roots([1, 0, 0]), [0, 0])
+        assert_array_equal(np.roots([1, 0, 0]), [0])
 
     def test_str_leading_zeros(self):
         p = np.poly1d([4, 3, 2, 1])

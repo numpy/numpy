@@ -230,8 +230,10 @@ def roots(p):
     else:
         roots = NX.array([])
 
-    # tack any zeros onto the back of the array
-    roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtype)))
+    # append the zero solution to the back of the array
+    if trailing_zeros > 0:
+        roots = hstack((roots, NX.zeros(1, roots.dtype)))
+
     return roots
 
 def polyint(p, m=1, k=None):
