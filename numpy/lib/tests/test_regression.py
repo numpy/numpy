@@ -60,7 +60,7 @@ class TestRegression(TestCase):
     def test_poly1d_nan_roots(self, level=rlevel):
         # Ticket #396
         p = np.poly1d([np.nan, np.nan, 1], r=0)
-        self.assertRaises(np.linalg.LinAlgError, getattr, p, "r")
+        self.assertRaises(ValueError, getattr, p, "r")
 
     def test_mem_polymul(self, level=rlevel):
         # Ticket #448

@@ -9,6 +9,7 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polyfit', 'RankWarning']
 
 import re
+import math
 import warnings
 import numpy.core.numeric as NX
 
@@ -150,6 +151,75 @@ def poly(seq_of_zeros):
 
     return a
 
+def _roots_linear(p):
+    """Return the root of a linear polynomial of the form
+
+        p[0] * x + p[1].
+
+    Parameters
+    ----------
+    p : array_like
+        Rank-1 array of polynomial coefficients.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the complex roots of the polynomial.
+
+    """
+    if p[0] == 0:
+        return NX.array([])
+    else:
+        return NX.array([complex(-p[1] / p[0], 0)])
+
+def _roots_quadratic(p):
+    """Return the root of a quadratic polynomial of the form
+
+        p[0] * x**2 + p[1] * x + p[2].
+
+    Parameters
+    ----------
+    p : array_like
+        Rank-1 array of polynomial coefficients.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the complex roots of the polynomial.
+
+    """
+    a = p[0]
+    if a == 0:
+        return _roots_linear(p[1:])
+
+    b = p[1]
+    c = p[2]
+    if b == 0 and c == 0:
+        return NX.array([complex(0, 0)])
+
+    d = b * b - 4 * a * c
+    if d >= 0:
+        # stable quadratic roots according to Berthold K.P. Horn:
+        # http://people.csail.mit.edu/bkph/articles/Quadratics.pdf
+        sqrt_d = math.sqrt(d)
+        if b >= 0:
+            return NX.array([
+                complex((-b - sqrt_d) / (2 * a), 0),
+                complex((2 * c) / (-b - sqrt_d), 0),
+            ])
+        else:
+            return NX.array([
+                complex((2 * c) / (-b + sqrt_d), 0),
+                complex((-b + sqrt_d) / (2 * a), 0),
+            ])
+    else:
+        # use the normal quadratic formula for the complex case
+        sqrt_d = math.sqrt(-d)
+        return NX.array([
+            complex(-b / (2 * a), sqrt_d / (2 * a)),
+            complex(-b / (2 * a), -sqrt_d / (2 * a)),
+        ])
+
 def roots(p):
     """
     Return the roots of a polynomial with coefficients given in p.
@@ -204,18 +274,30 @@ def roots(p):
     if len(p.shape) != 1:
         raise ValueError("Input must be a rank-1 array.")
 
+    if NX.any(NX.isnan(p)):
+        raise ValueError("Input contains NaN values.")
+
     # find non-zero array entries
     non_zero = NX.nonzero(NX.ravel(p))[0]
 
-    # Return an empty array if polynomial is all zeros
+    # return an empty array if polynomial is all zeros
     if len(non_zero) == 0:
         return NX.array([])
 
     # find the number of trailing zeros -- this is the number of roots at 0.
     trailing_zeros = len(p) - non_zero[-1] - 1
 
-    # strip leading and trailing zeros
-    p = p[int(non_zero[0]):int(non_zero[-1])+1]
+    # remove the leading zeros
+    p = p[int(non_zero[0]):]
+
+    # find the direct solution for lower degree polynomials
+    if len(p) == 2:
+        return _roots_linear(p)
+    elif len(p) == 3:
+        return _roots_quadratic(p)
+
+    # remove the trailing zeros
+    p = p[:len(p) - trailing_zeros]
 
     # casting: if incoming array isn't floating point, make it floating point.
     if not issubclass(p.dtype.type, (NX.floating, NX.complexfloating)):
