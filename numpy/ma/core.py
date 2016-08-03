@@ -373,17 +373,17 @@ def maximum_fill_value(obj):
 
 def _recursive_set_default_fill_value(dt):
     """
-    Creates the default fill value for structured dtypes
+    Create the default fill value for a structured dtype.
 
     Parameters
     ----------
     dt: dtype
-        structured dtype
+        The structured dtype for which to create the fill value.
 
     Returns
     -------
     val: tuple
-        tuple of values corresponding to the default structured fill value
+        A tuple of values corresponding to the default structured fill value.
 
     """
     deflist = []
@@ -402,20 +402,20 @@ def _recursive_set_default_fill_value(dt):
 
 def _recursive_set_fill_value(fillvalue, dt):
     """
-    Creates a fill value for structured dtypes
+    Create a fill value for a structured dtype.
 
     Parameters
     ----------
     fillvalue: scalar or array_like
-        scalar or array representing the fill value. If it is of shorter
+        Scalar or array representing the fill value. If it is of shorter
         length than the number of fields in dt, it will be resized.
     dt: dtype
-        structured dtype
+        The structured dtype for which to create the fill value.
 
     Returns
     -------
     val: tuple
-        tuple of values corresponding to the structured fill value
+        A tuple of values corresponding to the structured fill value.
 
     """
     fillvalue = np.resize(fillvalue, len(dt.names))
