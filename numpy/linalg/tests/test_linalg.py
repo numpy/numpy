@@ -877,11 +877,11 @@ class _TestNorm(object):
 
             an = norm(at, 2)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, 2.0**(1.0/2.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
 
             an = norm(at, 4)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, 2.0**(1.0/4.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
 
             an = norm(at, np.inf)
             assert_(issubclass(an.dtype.type, np.floating))

@@ -1701,9 +1701,10 @@ get_functions(PyObject * mm)
      * generate_umath.py, the first to go into FLOAT/DOUBLE_sqrt
      * they have the same signature as the scalar variants so we need to skip
      * over them
+     * also skip float16 copy placed before
      */
-    i = 4;
-    j = 2;
+    i = 6;
+    j = 3;
     while (signatures[i] != NPY_FLOAT) {
         i += 2; j++;
     }

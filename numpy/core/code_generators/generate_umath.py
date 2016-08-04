@@ -695,6 +695,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sqrt'),
           None,
+          TD('e', f='sqrt', astype={'e':'f'}),
           TD(inexactvec),
           TD(inexact, f='sqrt', astype={'e':'f'}),
           TD(P, f='sqrt'),
