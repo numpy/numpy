@@ -453,11 +453,11 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         'auto'
             Maximum of the 'sturges' and 'fd' estimators. Provides good
-            all round performance
+            all around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
-            account data variability and data size .
+            account data variability and data size.
 
         'doane'
             An improved version of Sturges' estimator that works better
