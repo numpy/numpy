@@ -106,3 +106,27 @@ class CorrConv(Benchmark):
 
     def time_convolve(self, size1, size2, mode):
         np.convolve(self.x1, self.x2, mode=mode)
+
+
+class CountNonzero(Benchmark):
+    param_names = ['numaxes', 'size', 'dtype']
+    params = [
+        [1, 2, 3],
+        [100, 10000, 1000000],
+        [bool, int, str, object]
+    ]
+
+    def setup(self, numaxes, size, dtype):
+        self.x = np.empty(shape=(
+            numaxes, size), dtype=dtype)
+
+    def time_count_nonzero(self, numaxes, size, dtype):
+        np.count_nonzero(self.x)
+
+    def time_count_nonzero_axis(self, numaxes, size, dtype):
+        np.count_nonzero(self.x, axis=self.x.ndim - 1)
+
+    def time_count_nonzero_multi_axis(self, numaxes, size, dtype):
+        if self.x.ndim >= 2:
+            np.count_nonzero(self.x, axis=(
+                self.x.ndim - 1, self.x.ndim - 2))
