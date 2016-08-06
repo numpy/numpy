@@ -3279,12 +3279,13 @@ class MaskedArray(ndarray):
             # We want to remove the unshare logic from this place in the
             # future. Note that _sharedmask has lots of false positives.
             if not self._isfield:
+                notthree = getattr(sys, 'getrefcount', False) and (sys.getrefcount(_mask) != 3)
                 if self._sharedmask and not (
                         # If no one else holds a reference (we have two
                         # references (_mask and self._mask) -- add one for
                         # getrefcount) and the array owns its own data
                         # copying the mask should do nothing.
-                        (sys.getrefcount(_mask) == 3) and _mask.flags.owndata):
+                        (not notthree) and _mask.flags.owndata):
                     # 2016.01.15 -- v1.11.0
                     warnings.warn(
                        "setting an item on a masked array which has a shared "

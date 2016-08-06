@@ -10,6 +10,7 @@ from numpy.testing import (
     assert_allclose, assert_array_max_ulp, assert_warns,
     assert_raises_regex, dec, clear_and_catch_warnings
 )
+from numpy.testing.utils import HAS_REFCOUNT
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
@@ -17,7 +18,7 @@ from numpy.lib import (
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize,
+    unwrap, unique, vectorize
 )
 
 from numpy.compat import long
@@ -2232,6 +2233,7 @@ class TestBincount(TestCase):
                             "minlength must be positive",
                             lambda: np.bincount(x, minlength=0))
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_dtype_reference_leaks(self):
         # gh-6805
         intp_refcount = sys.getrefcount(np.dtype(np.intp))
