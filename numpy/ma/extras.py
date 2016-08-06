@@ -630,7 +630,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         m = np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input,
                       keepdims=keepdims)
-        if isinstance(m, np.ndarray) and 2 <= m.ndim:
+        if isinstance(m, np.ndarray) and 1 <= m.ndim:
             return masked_array(m, copy=False)
         else:
             return m
