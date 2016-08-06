@@ -185,6 +185,12 @@ class TestAny(TestCase):
         assert_array_equal(np.sometrue(y1, axis=0), [1, 1, 0])
         assert_array_equal(np.sometrue(y1, axis=1), [0, 1, 1])
 
+    def test_bool(self):
+        y1 = [0, 0, 0, 1]
+        assert_equal(True, np.any(y1))
+        y2 = [0, 0, 0, 0]
+        assert_equal(False, np.any(y2))
+
 
 class TestAll(TestCase):
 
@@ -202,6 +208,12 @@ class TestAll(TestCase):
         assert_(not np.all(y1))
         assert_array_equal(np.alltrue(y1, axis=0), [0, 0, 1])
         assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
+
+    def test_bool(self):
+        y1 = [0, 1, 1, 0]
+        assert_equal(False, np.all(y1))
+        y2 = [1, 1, 1, 1]
+        assert_equal(True, np.all(y2))
 
 
 class TestCopy(TestCase):
