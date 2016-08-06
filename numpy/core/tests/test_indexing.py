@@ -10,7 +10,7 @@ from numpy.core.multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns
+    assert_array_equal, assert_warns, HAS_REFCOUNT
 )
 
 
@@ -411,7 +411,8 @@ class TestIndexing(TestCase):
     def test_small_regressions(self):
         # Reference count of intp for index checks
         a = np.array([0])
-        refcount = sys.getrefcount(np.dtype(np.intp))
+        if HAS_REFCOUNT:
+            refcount = sys.getrefcount(np.dtype(np.intp))
         # item setting always checks indices in separate function:
         a[np.array([0], dtype=np.intp)] = 1
         a[np.array([0], dtype=np.uint8)] = 1
@@ -420,7 +421,8 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__setitem__,
                       np.array([1], dtype=np.uint8), 1)
 
-        assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
+        if HAS_REFCOUNT:
+            assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
     def test_unaligned(self):
         v = (np.zeros(64, dtype=np.int8) + ord('a'))[1:-7]
@@ -972,10 +974,12 @@ class TestMultiIndexingAutomated(TestCase):
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
         except Exception:
-            prev_refcount = sys.getrefcount(arr)
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -994,10 +998,12 @@ class TestMultiIndexingAutomated(TestCase):
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
         except Exception:
-            prev_refcount = sys.getrefcount(arr)
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -1013,11 +1019,12 @@ class TestMultiIndexingAutomated(TestCase):
         if indexed_arr.size != 0 and indexed_arr.ndim != 0:
             assert_(np.may_share_memory(indexed_arr, arr) == no_copy)
             # Check reference count of the original array
-            if no_copy:
-                # refcount increases by one:
-                assert_equal(sys.getrefcount(arr), 3)
-            else:
-                assert_equal(sys.getrefcount(arr), 2)
+            if HAS_REFCOUNT:
+                if no_copy:
+                    # refcount increases by one:
+                    assert_equal(sys.getrefcount(arr), 3)
+                else:
+                    assert_equal(sys.getrefcount(arr), 2)
 
         # Test non-broadcast setitem:
         b = arr.copy()

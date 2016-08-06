@@ -32,7 +32,8 @@ __all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
            'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
-           'SkipTest', 'KnownFailureException', 'temppath', 'tempdir']
+           'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
+           'HAS_REFCOUNT']
 
 
 class KnownFailureException(Exception):
@@ -43,6 +44,8 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+IS_PYPY = '__pypy__' in sys.modules
+HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
 
 def assert_(val, msg=''):
     """
@@ -1274,6 +1277,8 @@ def _assert_valid_refcount(op):
     Check that ufuncs don't mishandle refcount of object `1`.
     Used in a few regression tests.
     """
+    if not HAS_REFCOUNT:
+        return True
     import numpy as np
 
     b = np.arange(100*100).reshape(100, 100)

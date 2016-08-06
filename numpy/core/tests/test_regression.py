@@ -17,7 +17,7 @@ from numpy.testing import (
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
         assert_raises, assert_warns, dec
         )
-from numpy.testing.utils import _assert_valid_refcount
+from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
 from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
 
 rlevel = 1
@@ -706,12 +706,14 @@ class TestRegression(TestCase):
         # Issue gh-3001
         d = 123.
         a = np.array([d, 1], dtype=object)
-        ref_d = sys.getrefcount(d)
+        if HAS_REFCOUNT:
+            ref_d = sys.getrefcount(d)
         try:
             a.take([0, 100])
         except IndexError:
             pass
-        assert_(ref_d == sys.getrefcount(d))
+        if HAS_REFCOUNT:
+            assert_(ref_d == sys.getrefcount(d))
 
     def test_array_str_64bit(self, level=rlevel):
         # Ticket #501
@@ -1458,6 +1460,7 @@ class TestRegression(TestCase):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1572,6 +1575,7 @@ class TestRegression(TestCase):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=np.float)
@@ -1745,7 +1749,8 @@ class TestRegression(TestCase):
         # causing segmentation faults (gh-3787)
         a = np.array(object(), dtype=object)
         np.copyto(a, a)
-        assert_equal(sys.getrefcount(a[()]), 2)
+        if HAS_REFCOUNT:
+            assert_(sys.getrefcount(a[()]) == 2)
         a[()].__class__  # will segfault if object was deleted
 
     def test_zerosize_accumulate(self):
@@ -1948,6 +1953,7 @@ class TestRegression(TestCase):
             a = np.empty((100000000,), dtype='i1')
             del a
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -2152,6 +2158,7 @@ class TestRegression(TestCase):
         assert_equal(uf(a), ())
         assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),

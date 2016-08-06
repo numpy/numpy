@@ -9,7 +9,7 @@ import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal
+    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -454,16 +454,18 @@ class TestRepr(object):
             yield self._test_type_repr, t
 
 
-class TestSizeOf(TestCase):
+if not IS_PYPY:
+    # sys.getsizeof() is not valid on PyPy
+    class TestSizeOf(TestCase):
 
-    def test_equal_nbytes(self):
-        for type in types:
-            x = type(0)
-            assert_(sys.getsizeof(x) > x.nbytes)
+        def test_equal_nbytes(self):
+            for type in types:
+                x = type(0)
+                assert_(sys.getsizeof(x) > x.nbytes)
 
-    def test_error(self):
-        d = np.float32()
-        assert_raises(TypeError, d.__sizeof__, "a")
+        def test_error(self):
+            d = np.float32()
+            assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestMultiply(TestCase):

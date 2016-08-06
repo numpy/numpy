@@ -9,7 +9,7 @@ from numpy.compat import asbytes, sixu
 from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, dec
+    assert_raises, dec, HAS_REFCOUNT
     )
 
 
@@ -34,6 +34,7 @@ def iter_iterindices(i):
         i.iternext()
     return ret
 
+@dec.skipif(not HAS_REFCOUNT, "python does not have sys.getrefcount")
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
@@ -1000,17 +1001,20 @@ def test_iter_object_arrays_basic():
 
     obj = {'a':3,'b':'d'}
     a = np.array([[1, 2, 3], None, obj, None], dtype='O')
-    rc = sys.getrefcount(obj)
+    if HAS_REFCOUNT:
+        rc = sys.getrefcount(obj)
 
     # Need to allow references for object arrays
     assert_raises(TypeError, nditer, a)
-    assert_equal(sys.getrefcount(obj), rc)
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(obj), rc)
 
     i = nditer(a, ['refs_ok'], ['readonly'])
     vals = [x_[()] for x_ in i]
     assert_equal(np.array(vals, dtype='O'), a)
     vals, i, x = [None]*3
-    assert_equal(sys.getrefcount(obj), rc)
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(obj), rc)
 
     i = nditer(a.reshape(2, 2).T, ['refs_ok', 'buffered'],
                         ['readonly'], order='C')
@@ -1018,14 +1022,16 @@ def test_iter_object_arrays_basic():
     vals = [x_[()] for x_ in i]
     assert_equal(np.array(vals, dtype='O'), a.reshape(2, 2).ravel(order='F'))
     vals, i, x = [None]*3
-    assert_equal(sys.getrefcount(obj), rc)
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(obj), rc)
 
     i = nditer(a.reshape(2, 2).T, ['refs_ok', 'buffered'],
                         ['readwrite'], order='C')
     for x in i:
         x[...] = None
     vals, i, x = [None]*3
-    assert_equal(sys.getrefcount(obj), rc-1)
+    if HAS_REFCOUNT:
+        assert_(sys.getrefcount(obj) == rc-1)
     assert_equal(a, np.array([None]*4, dtype='O'))
 
 def test_iter_object_arrays_conversions():
@@ -1061,10 +1067,12 @@ def test_iter_object_arrays_conversions():
     i = nditer(a, ['refs_ok', 'buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
     ob = i[0][()]
-    rc = sys.getrefcount(ob)
+    if HAS_REFCOUNT:
+        rc = sys.getrefcount(ob)
     for x in i:
         x[...] += 1
-    assert_equal(sys.getrefcount(ob), rc-1)
+    if HAS_REFCOUNT:
+        assert_(sys.getrefcount(ob) == rc-1)
     assert_equal(a, np.arange(6)+98172489)
 
 def test_iter_common_dtype():
@@ -1704,7 +1712,8 @@ def test_iter_buffered_cast_structured_type():
     a[0] = (0.5, 0.5, [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]], 0.5)
     a[1] = (1.5, 1.5, [[1.5, 1.5, 1.5], [1.5, 1.5, 1.5]], 1.5)
     a[2] = (2.5, 2.5, [[2.5, 2.5, 2.5], [2.5, 2.5, 2.5]], 2.5)
-    rc = sys.getrefcount(a[0])
+    if HAS_REFCOUNT:
+        rc = sys.getrefcount(a[0])
     i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
                     casting='unsafe',
                     op_dtypes=sdt)
@@ -1719,7 +1728,8 @@ def test_iter_buffered_cast_structured_type():
     assert_equal(vals[1]['d'], 1.5)
     assert_equal(vals[0].dtype, np.dtype(sdt))
     vals, i, x = [None]*3
-    assert_equal(sys.getrefcount(a[0]), rc)
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(a[0]), rc)
 
     # struct type -> simple (takes the first value)
     sdt = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
