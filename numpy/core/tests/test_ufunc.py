@@ -7,8 +7,8 @@ from numpy.compat import asbytes
 from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings
+    assert_raises_regex, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_no_warnings
 )
 
 
@@ -1197,6 +1197,7 @@ class TestUfunc(TestCase):
         assert_raises(TypeError, f, d, axis="invalid")
         assert_raises(TypeError, f, d, axis="invalid", dtype=None,
                       keepdims=True)
+        assert_raises_regex(TypeError, "integer or tuple", f, d, axis=[0])
         # invalid dtype
         assert_raises(TypeError, f, d, 0, "invalid")
         assert_raises(TypeError, f, d, dtype="invalid")
@@ -1212,7 +1213,7 @@ class TestUfunc(TestCase):
         assert_raises(TypeError, f, d, 0, keepdims="invalid", dtype="invalid",
                      out=None)
 
-        # invalid keyord
+        # invalid keyword
         assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
         assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",

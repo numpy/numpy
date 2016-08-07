@@ -289,7 +289,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         memset(out_axis_flags, 0, ndim);
 
         axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
-                                   "an integer is required for the axis");
+                               "an integer or tuple is required for the axis");
         axis_orig = axis;
 
         if (error_converting(axis)) {
