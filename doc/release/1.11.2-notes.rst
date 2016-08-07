@@ -1,0 +1,33 @@
+NumPy 1.11.2 Release Notes
+**************************
+
+Numpy 1.11.2 supports Python 2.6 - 2.7 and 3.2 - 3.5. It fixes bugs and
+regressions found in Numpy 1.11.1 and includes several build related
+improvements. Wheels for Linux, Windows, and OS X can be found on PyPI.
+
+Fixes Merged
+============
+
+Fixes overridden by later merges are omitted.
+
+- #7736 BUG: many functions silently drop `keepdims` kwarg.
+- #7738 ENH: add extra kwargs and update doc of many MA methods.
+- #7778 DOC: Update Numpy 1.11.1 release notes.
+- #7793 BUG: MaskedArray.count treats negative axes incorrectly.
+- #7816 BUG: fix array too big error for wide dtypes.
+- #7821 BUG: Make sure npy_mul_with_overflow_<type> detects overflow.
+- #7824 MAINT: Allocate fewer bytes for empty arrays.
+- #7847 MAINT,DOC: Fix some imp module uses and update f2py.compile docstring.
+- #7849 MAINT: Fix remaining uses of deprecated Python imp module.
+- #7851 BLD: Fix ATLAS version detection.
+- #7896 BUG: construct ma.array from np.array which contains padding.
+- #7904 BUG: fix float16 type not being called due to wrong ordering.
+- #7917 BUG: Production install of numpy should not require nose.
+- #7919 BLD: Fixed MKL detection for recent versions of this library.
+- #7920 BUG: fix for issue #7835 (ma.median of 1d).
+- #7932 BUG: Monkey-patch _msvccompile.gen_lib_option like other compilers.
+- #7939 BUG: Check for HAVE_LDOUBLE_DOUBLE_DOUBLE_LE in npy_math_complex.
+- #7953 BUG: Guard against buggy comparisons in generic quicksort.
+- #7954 BUG: Use keyword arguments to initialize Extension base class.
+- #7955 BUG: Make sure numpy globals keep identity after reload.
+- #7972 BUG: MSVCCompiler grows 'lib' & 'include' env strings exponentially.
