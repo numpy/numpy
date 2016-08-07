@@ -51,8 +51,10 @@ except ImportError:
         import nose
         SkipTest = nose.SkipTest
     except (ImportError, AttributeError):
-        # if nose is not available, testing won't work anyway
-        pass
+        # If nose is not available, testing won't work anyway,
+        # but we need something to import in numpy/testing/decorators.py.
+        # See gh-7498.
+        SkipTest = None
 
 verbose = 0
 
