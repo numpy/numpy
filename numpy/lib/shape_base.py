@@ -112,7 +112,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         Ntot = product(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
-        outshape[axis] = len(res)
+        outshape[axis] = len(res) if res.shape != () else 1
         outarr = zeros(outshape, asarray(res).dtype)
         outarr = res.__array_wrap__(outarr)
         outarr[tuple(i.tolist())] = res
@@ -129,6 +129,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
             outarr[tuple(i.tolist())] = res
             k += 1
+        if res.shape == ():
+            outarr = outarr.squeeze(axis)
         return outarr
 
 

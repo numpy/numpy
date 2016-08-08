@@ -50,6 +50,14 @@ class TestApplyAlongAxis(TestCase):
             apply_along_axis(minimal_function, 0, a), np.array([1, 1, 1])
         )
 
+    def test_scalar_array(self):
+        class MinimalSubclass(np.ndarray):
+            pass
+        a = np.ones((6, 3)).view(MinimalSubclass)
+        res = apply_along_axis(np.sum, 0, a)
+        assert isinstance(res, MinimalSubclass)
+        assert_array_equal(res, np.array([6, 6, 6]).view(MinimalSubclass))
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
