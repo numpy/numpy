@@ -27,6 +27,27 @@ class TestApplyAlongAxis(TestCase):
         assert_array_equal(apply_along_axis(np.sum, 0, a),
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
+    def test_preserve_subclass(self):
+        m = np.matrix(np.ones((4, 3)))
+        result = apply_along_axis(np.sum, 0, m)
+        assert isinstance(result, np.matrix)
+        assert_array_equal(
+            result, np.matrix([4, 4, 4])
+        )
+
+    def test_subclass(self):
+        class MinimalSubclass(np.ndarray):
+            data = 1
+
+        def minimal_function(array):
+            return array.data
+
+        a = np.zeros((6, 3)).view(MinimalSubclass)
+
+        assert_array_equal(
+            apply_along_axis(minimal_function, 0, a), np.array([1, 1, 1])
+        )
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
