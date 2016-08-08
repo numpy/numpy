@@ -961,7 +961,7 @@ class djbfft_info(system_info):
 class mkl_info(system_info):
     section = 'mkl'
     dir_env_var = 'MKLROOT'
-    _lib_mkl = ['mkl', 'vml', 'guide']
+    _lib_mkl = ['mkl_rt']
 
     def get_mkl_rootdir(self):
         mklroot = os.environ.get('MKLROOT', None)
@@ -996,15 +996,12 @@ class mkl_info(system_info):
             system_info.__init__(self)
         else:
             from .cpuinfo import cpu
-            l = 'mkl'  # use shared library
             if cpu.is_Itanium():
                 plt = '64'
-            elif cpu.is_Xeon():
+            elif cpu.is_Intel() and cpu.is_64bit():
                 plt = 'intel64'
             else:
                 plt = '32'
-            if l not in self._lib_mkl:
-                self._lib_mkl.insert(0, l)
             system_info.__init__(
                 self,
                 default_lib_dirs=[os.path.join(mklroot, 'lib', plt)],
@@ -1029,20 +1026,7 @@ class mkl_info(system_info):
 
 
 class lapack_mkl_info(mkl_info):
-
-    def calc_info(self):
-        mkl = get_info('mkl')
-        if not mkl:
-            return
-        if sys.platform == 'win32':
-            lapack_libs = self.get_libs('lapack_libs', ['mkl_lapack'])
-        else:
-            lapack_libs = self.get_libs('lapack_libs',
-                                        ['mkl_lapack32', 'mkl_lapack64'])
-
-        info = {'libraries': lapack_libs}
-        dict_append(info, **mkl)
-        self.set_info(**info)
+    pass
 
 
 class blas_mkl_info(mkl_info):
