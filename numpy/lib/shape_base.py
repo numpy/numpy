@@ -107,13 +107,14 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
             outarr[tuple(ind)] = res
             k += 1
-        return arr.__array_wrap__(outarr)
+        return outarr
     else:
         Ntot = product(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = len(res)
         outarr = zeros(outshape, asarray(res).dtype)
+        outarr = res.__array_wrap__(outarr)
         outarr[tuple(i.tolist())] = res
         k = 1
         while k < Ntot:
@@ -128,7 +129,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
             outarr[tuple(i.tolist())] = res
             k += 1
-        return arr.__array_wrap__(outarr)
+        return outarr
 
 
 def apply_over_axes(func, a, axes):

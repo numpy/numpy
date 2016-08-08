@@ -28,11 +28,13 @@ class TestApplyAlongAxis(TestCase):
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
     def test_preserve_subclass(self):
-        m = np.matrix(np.ones((4, 3)))
-        result = apply_along_axis(np.sum, 0, m)
+        def double(row):
+            return row * 2
+        m = np.matrix(np.arange(4).reshape((2, 2)))
+        result = apply_along_axis(double, 0, m)
         assert isinstance(result, np.matrix)
         assert_array_equal(
-            result, np.matrix([4, 4, 4])
+            result, np.matrix([0, 2, 4, 6]).reshape((2, 2))
         )
 
     def test_subclass(self):
