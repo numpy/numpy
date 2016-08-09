@@ -109,11 +109,12 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             k += 1
         return outarr
     else:
+        res = asanyarray(res)
         Ntot = product(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
-        outshape[axis] = len(res) if res.shape != () else 1
-        outarr = zeros(outshape, asarray(res).dtype)
+        outshape[axis] = res.size
+        outarr = zeros(outshape, res.dtype)
         outarr = res.__array_wrap__(outarr)
         outarr[tuple(i.tolist())] = res
         k = 1
