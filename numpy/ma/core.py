@@ -56,10 +56,10 @@ __all__ = [
     'argmax', 'argmin', 'argsort', 'around', 'array', 'asanyarray',
     'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
-    'concatenate', 'conjugate', 'copy', 'cos', 'cosh', 'count', 'cumprod',
-    'cumsum', 'default_fill_value', 'diag', 'diagonal', 'diff', 'divide',
-    'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
-    'fabs', 'filled', 'fix_invalid', 'flatten_mask',
+    'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
+    'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
+    'diff', 'divide', 'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp',
+    'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
@@ -7364,6 +7364,79 @@ def outer(a, b):
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")
 outerproduct = outer
+
+
+def _convolve_or_correlate(f, a, v, mode, contagious):
+    if contagious:
+        # results which are contributed to by either item in any pair being invalid
+        mask = (
+            f(getmaskarray(a), np.ones(v.shape, dtype=np.bool), mode=mode)
+          | f(np.ones(a.shape, dtype=np.bool), getmaskarray(v), mode=mode)
+        )
+        data = f(getdata(a), getdata(v), mode=mode)
+    else:
+        # results which are not contributed to by any pair of valid elements
+        mask = ~f(~getmaskarray(a), ~getmaskarray(v))
+        data = f(filled(a, 0), filled(v, 0), mode=mode)
+
+    return masked_array(data, mask=mask)
+
+
+def correlate(a, v, mode='valid', contagious=True):
+    """
+    Cross-correlation of two 1-dimensional sequences.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `np.convolve` docstring.  Note that the default
+        is 'valid', unlike `convolve`, which uses 'full'.
+    contagious : bool
+        If True, then if any masked element is included in the sum for a result
+        element, then the result is masked.
+        If False, then the result element is only masked if no non-masked cells
+        contribute towards it
+
+    Returns
+    -------
+    out : ndarray
+        Discrete cross-correlation of `a` and `v`.
+
+    See Also
+    --------
+    numpy.correlate : Equivalent function in the top-level NumPy module.
+    """
+    return _convolve_or_correlate(np.correlate, a, v, mode, contagious)
+
+
+def convolve(a, v, mode='full', contagious=True):
+    """
+    Returns the discrete, linear convolution of two one-dimensional sequences.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `np.convolve` docstring.
+    contagious : bool
+        If True, then if any masked element is included in the sum for a result
+        element, then the result is masked.
+        If False, then the result element is only masked if no non-masked cells
+        contribute towards it
+
+    Returns
+    -------
+    out : ndarray
+        Discrete, linear convolution of `a` and `v`.
+
+    See Also
+    --------
+    numpy.convolve : Equivalent function in the top-level NumPy module.
+    """
+    return _convolve_or_correlate(np.convolve, a, v, mode, contagious)
 
 
 def allequal(a, b, fill_value=True):
