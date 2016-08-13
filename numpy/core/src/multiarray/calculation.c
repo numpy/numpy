@@ -891,19 +891,7 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
 NPY_NO_EXPORT PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
-    if (out == NULL) {
-        return PyObject_CallFunction(n_ops.clip, "OOO", self, min, max);
-    }
-    return PyObject_CallFunction(n_ops.clip, "OOOO", self, min, max, out);
-
-    PyArray_FastClipFunc *func;
-    int outgood = 0, ingood = 0;
-    PyArrayObject *maxa = NULL;
-    PyArrayObject *mina = NULL;
-    PyArrayObject *newout = NULL, *newin = NULL;
-    PyArray_Descr *indescr = NULL, *newdescr = NULL;
-    char *max_data, *min_data;
-    PyObject *zero;
+    PyObject *res = NULL;
 
     /* Treat None the same as NULL */
     if (min == Py_None) {
@@ -913,262 +901,23 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         max = NULL;
     }
 
-    if ((max == NULL) && (min == NULL)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "array_clip: must set either max or min");
-        return NULL;
+    /* Handle missing arguments */
+    if (min == NULL && max == NULL) {
+        res = (PyObject *)self;
+        Py_INCREF(res);
+        return res;
+    }
+    if (min == NULL) {
+        return _GenericBinaryOutFunction(self, max, out, n_ops.minimum);
+    }
+    if (max == NULL) {
+        return _GenericBinaryOutFunction(self, min, out, n_ops.maximum);
     }
 
-    func = PyArray_DESCR(self)->f->fastclip;
-    if (func == NULL
-        || (min != NULL && !PyArray_CheckAnyScalar(min))
-        || (max != NULL && !PyArray_CheckAnyScalar(max))
-        || PyArray_ISBYTESWAPPED(self)
-        || (out && PyArray_ISBYTESWAPPED(out))) {
-        return _slow_array_clip(self, min, max, out);
-    }
-    /* Use the fast scalar clip function */
-
-    /* First we need to figure out the correct type */
-    if (min != NULL) {
-        indescr = PyArray_DescrFromObject(min, NULL);
-        if (indescr == NULL) {
-            goto fail;
-        }
-    }
-    if (max != NULL) {
-        newdescr = PyArray_DescrFromObject(max, indescr);
-        Py_XDECREF(indescr);
-        indescr = NULL;
-        if (newdescr == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        /* Steal the reference */
-        newdescr = indescr;
-        indescr = NULL;
-    }
-
-
-    /*
-     * Use the scalar descriptor only if it is of a bigger
-     * KIND than the input array (and then find the
-     * type that matches both).
-     */
-    if (PyArray_ScalarKind(newdescr->type_num, NULL) >
-        PyArray_ScalarKind(PyArray_DESCR(self)->type_num, NULL)) {
-        indescr = PyArray_PromoteTypes(newdescr, PyArray_DESCR(self));
-        if (indescr == NULL) {
-            goto fail;
-        }
-        func = indescr->f->fastclip;
-        if (func == NULL) {
-            Py_DECREF(indescr);
-            return _slow_array_clip(self, min, max, out);
-        }
-    }
-    else {
-        indescr = PyArray_DESCR(self);
-        Py_INCREF(indescr);
-    }
-    Py_DECREF(newdescr);
-    newdescr = NULL;
-
-    if (!PyDataType_ISNOTSWAPPED(indescr)) {
-        PyArray_Descr *descr2;
-        descr2 = PyArray_DescrNewByteorder(indescr, '=');
-        Py_DECREF(indescr);
-        indescr = NULL;
-        if (descr2 == NULL) {
-            goto fail;
-        }
-        indescr = descr2;
-    }
-
-    /* Convert max to an array */
-    if (max != NULL) {
-        Py_INCREF(indescr);
-        maxa = (PyArrayObject *)PyArray_FromAny(max, indescr, 0, 0,
-                                 NPY_ARRAY_DEFAULT, NULL);
-        if (maxa == NULL) {
-            goto fail;
-        }
-    }
-
-    /*
-     * If we are unsigned, then make sure min is not < 0
-     * This is to match the behavior of _slow_array_clip
-     *
-     * We allow min and max to go beyond the limits
-     * for other data-types in which case they
-     * are interpreted as their modular counterparts.
-    */
-    if (min != NULL) {
-        if (PyArray_ISUNSIGNED(self)) {
-            int cmp;
-            zero = PyInt_FromLong(0);
-            cmp = PyObject_RichCompareBool(min, zero, Py_LT);
-            if (cmp == -1) {
-                Py_DECREF(zero);
-                goto fail;
-            }
-            if (cmp == 1) {
-                min = zero;
-            }
-            else {
-                Py_DECREF(zero);
-                Py_INCREF(min);
-            }
-        }
-        else {
-            Py_INCREF(min);
-        }
-
-        /* Convert min to an array */
-        Py_INCREF(indescr);
-        mina = (PyArrayObject *)PyArray_FromAny(min, indescr, 0, 0,
-                                 NPY_ARRAY_DEFAULT, NULL);
-        Py_DECREF(min);
-        if (mina == NULL) {
-            goto fail;
-        }
-    }
-
-    /*
-     * Check to see if input is single-segment, aligned,
-     * and in native byteorder
-     */
-    if (PyArray_ISONESEGMENT(self) &&
-                            PyArray_CHKFLAGS(self, NPY_ARRAY_ALIGNED) &&
-                            PyArray_ISNOTSWAPPED(self) &&
-                            (PyArray_DESCR(self) == indescr)) {
-        ingood = 1;
-    }
-    if (!ingood) {
-        int flags;
-
-        if (PyArray_ISFORTRAN(self)) {
-            flags = NPY_ARRAY_FARRAY;
-        }
-        else {
-            flags = NPY_ARRAY_CARRAY;
-        }
-        Py_INCREF(indescr);
-        newin = (PyArrayObject *)PyArray_FromArray(self, indescr, flags);
-        if (newin == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        newin = self;
-        Py_INCREF(newin);
-    }
-
-    /*
-     * At this point, newin is a single-segment, aligned, and correct
-     * byte-order array of the correct type
-     *
-     * if ingood == 0, then it is a copy, otherwise,
-     * it is the original input.
-     */
-
-    /*
-     * If we have already made a copy of the data, then use
-     * that as the output array
-     */
-    if (out == NULL && !ingood) {
-        out = newin;
-    }
-
-    /*
-     * Now, we know newin is a usable array for fastclip,
-     * we need to make sure the output array is available
-     * and usable
-     */
     if (out == NULL) {
-        Py_INCREF(indescr);
-        out = (PyArrayObject*)PyArray_NewFromDescr(Py_TYPE(self),
-                                            indescr, PyArray_NDIM(self),
-                                            PyArray_DIMS(self),
-                                            NULL, NULL,
-                                            PyArray_ISFORTRAN(self),
-                                            (PyObject *)self);
-        if (out == NULL) {
-            goto fail;
-        }
-
-        outgood = 1;
+        return PyObject_CallFunction(n_ops.clip, "OOO", self, min, max);
     }
-    else Py_INCREF(out);
-    /* Input is good at this point */
-    if (out == newin) {
-        outgood = 1;
-    }
-    if (!outgood && PyArray_ISONESEGMENT(out) &&
-                        PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
-                        PyArray_ISNOTSWAPPED(out) &&
-                        PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
-        outgood = 1;
-    }
-
-    /*
-     * Do we still not have a suitable output array?
-     * Create one, now
-     */
-    if (!outgood) {
-        int oflags;
-        if (PyArray_ISFORTRAN(out))
-            oflags = NPY_ARRAY_FARRAY;
-        else
-            oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST;
-        Py_INCREF(indescr);
-        newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
-        if (newout == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        newout = out;
-        Py_INCREF(newout);
-    }
-
-    /* make sure the shape of the output array is the same */
-    if (!PyArray_SAMESHAPE(newin, newout)) {
-        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
-                        "same shape as the input.");
-        goto fail;
-    }
-
-    /* Now we can call the fast-clip function */
-    min_data = max_data = NULL;
-    if (mina != NULL) {
-        min_data = PyArray_DATA(mina);
-    }
-    if (maxa != NULL) {
-        max_data = PyArray_DATA(maxa);
-    }
-    func(PyArray_DATA(newin), PyArray_SIZE(newin), min_data, max_data, PyArray_DATA(newout));
-
-    /* Clean up temporary variables */
-    Py_XDECREF(indescr);
-    Py_XDECREF(newdescr);
-    Py_XDECREF(mina);
-    Py_XDECREF(maxa);
-    Py_DECREF(newin);
-    /* Copy back into out if out was not already a nice array. */
-    Py_DECREF(newout);
-    return (PyObject *)out;
-
- fail:
-    Py_XDECREF(indescr);
-    Py_XDECREF(newdescr);
-    Py_XDECREF(maxa);
-    Py_XDECREF(mina);
-    Py_XDECREF(newin);
-    PyArray_XDECREF_ERR(newout);
-    return NULL;
+    return PyObject_CallFunction(n_ops.clip, "OOOO", self, min, max, out);
 }
 
 

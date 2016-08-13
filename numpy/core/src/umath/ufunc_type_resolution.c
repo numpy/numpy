@@ -511,6 +511,132 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
     return 0;
 }
 
+
+
+/*
+ * This function applies special type resolution rules for the case
+ * where all the functions have the pattern XXX->X, using
+ * PyArray_ResultType instead of a linear search to get the best
+ * loop.
+ *
+ * Note that a simpler linear search through the functions loop
+ * is still done, but switching to a simple array lookup for
+ * built-in types would be better at some point.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_SimpleTernaryOperationTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int i, type_num1, type_num2, type_num3;
+    const char *ufunc_name;
+
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+
+    if (ufunc->nin != 3 || ufunc->nout != 1) {
+        PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
+                "to use ternary operation type resolution but has "
+                "the wrong number of inputs or outputs",
+                ufunc_name);
+        return -1;
+    }
+
+    /*
+     * Use the default type resolution if there's a custom data type
+     * or object arrays.
+     */
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num3 = PyArray_DESCR(operands[2])->type_num;
+    if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
+            type_num3 >= NPY_NTYPES || type_num1 == NPY_OBJECT ||
+            type_num2 == NPY_OBJECT || type_num3 == NPY_OBJECT) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                type_tup, out_dtypes);
+    }
+
+    if (type_tup == NULL) {
+        /* Input types are the result type */
+        out_dtypes[0] = PyArray_ResultType(3, operands, 0, NULL);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = out_dtypes[0];
+        Py_INCREF(out_dtypes[2]);
+        out_dtypes[3] = out_dtypes[0];
+        Py_INCREF(out_dtypes[3]);
+    }
+    else {
+        PyObject *item;
+        PyArray_Descr *dtype = NULL;
+
+        /*
+         * If the type tuple isn't a single-element tuple, let the
+         * default type resolution handle this one.
+         */
+        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+            return PyUFunc_DefaultTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
+        }
+
+        item = PyTuple_GET_ITEM(type_tup, 0);
+
+        if (item == Py_None) {
+            PyErr_SetString(PyExc_ValueError,
+                    "require data type in the type tuple");
+            return -1;
+        }
+        else if (!PyArray_DescrConverter(item, &dtype)) {
+            return -1;
+        }
+
+        out_dtypes[0] = ensure_dtype_nbo(dtype);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = out_dtypes[0];
+        Py_INCREF(out_dtypes[2]);
+        out_dtypes[3] = out_dtypes[0];
+        Py_INCREF(out_dtypes[3]);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 4; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * This function applies special type resolution rules for the clip
+ * ufunc. For legacy reasons, allow float -> int.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_ClipTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    casting = NPY_UNSAFE_CASTING;
+    return PyUFunc_SimpleTernaryOperationTypeResolver(ufunc, casting, operands, type_tup, out_dtypes);
+}
+
 /*
  * This function applies special type resolution rules for the absolute
  * ufunc. This ufunc converts complex -> float, so isn't covered

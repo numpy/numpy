@@ -1695,11 +1695,17 @@ class TestClip(TestCase):
 
     def test_clip_nan(self):
         d = np.arange(7.)
-        assert_equal(d.clip(min=np.nan), d)
-        assert_equal(d.clip(max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=np.nan), d)
-        assert_equal(d.clip(min=-2, max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=10), d)
+        assert_array_equal(d.clip(min=np.nan), d)
+        assert_array_equal(d.clip(max=np.nan), d)
+        assert_array_equal(d.clip(min=np.nan, max=np.nan), d)
+        assert_array_equal(d.clip(min=-2, max=np.nan), d)
+        assert_array_equal(d.clip(min=np.nan, max=10), d)
+
+    def test_clip_nan2(self):
+        a = np.array([np.NaN])
+        assert_array_equal(a.clip(min=2), a)
+        assert_array_equal(a.clip(max=2), a)
+        assert_array_equal(a.clip(min=2, max=2), a)
 
     def test_clip_with_out_order_c_to_f(self):
         # Ensure that the clip() function takes an out with different order from input.

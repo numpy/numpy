@@ -231,13 +231,6 @@
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
 
-#define TERNARY_LOOP\
-    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op1 = args[3];\
-    npy_intp is1 = steps[0], is2 = steps[1], is3 = steps[2], os1 = steps[3];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, ip3 += is3, op1 += os1)
-
 /******************************************************************************
  **                          GENERIC FLOAT LOOPS                             **
  *****************************************************************************/
@@ -811,26 +804,6 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
     }
 }
 
-NPY_NO_EXPORT void
-BOOL_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const npy_bool in = *((npy_bool *)ip1) != 0;
-        const npy_bool min = *((npy_bool *)ip2) != 0;
-        const npy_bool max = *((npy_bool *)ip3) != 0;
-
-        if (in < min) {
-            *((npy_bool *)op1) = min;
-        }
-        else if (in > max) {
-            *((npy_bool *)op1) = max;
-        }
-        else {
-            *((npy_bool *)op1) = in;
-        }
-    }
-}
-
 
 /*
  *****************************************************************************
@@ -1070,26 +1043,6 @@ NPY_NO_EXPORT void
             *((@type@ *)op1)= in1 % in2;
         }
 
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const @type@ in = *((@type@ *)ip1);
-        const @type@ min = *((@type@ *)ip2);
-        const @type@ max = *((@type@ *)ip3);
-
-        if (in < min) {
-            *((@type@ *)op1) = min;
-        }
-        else if (in > max) {
-            *((@type@ *)op1) = max;
-        }
-        else {
-            *((@type@ *)op1) = in;
-        }
     }
 }
 
@@ -1412,27 +1365,6 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
-
-
-NPY_NO_EXPORT void
-@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const @type@ in = *((@type@ *)ip1);
-        const @type@ min = *((@type@ *)ip2);
-        const @type@ max = *((@type@ *)ip3);
-
-        if (in < min) {
-            *((@type@ *)op1) = min;
-        }
-        else if (in > max) {
-            *((@type@ *)op1) = max;
-        }
-        else {
-            *((@type@ *)op1) = in;
-        }
-    }
-}
 
 /**end repeat**/
 
@@ -2110,26 +2042,6 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
-@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const @type@ in = *((@type@ *)ip1);
-        const @type@ min = *((@type@ *)ip2);
-        const @type@ max = *((@type@ *)ip3);
-
-        if (in < min) {
-            *((@type@ *)op1) = min;
-        }
-        else if (in > max) {
-            *((@type@ *)op1) = max;
-        }
-        else {
-            *((@type@ *)op1) = in;
-        }
-    }
-}
-
 #define @TYPE@_true_divide @TYPE@_divide
 
 /**end repeat**/
@@ -2453,26 +2365,6 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
             else {
                 *((npy_half *)op1) = npy_float_to_half(npy_ldexpf(in1, NPY_MIN_INT));
             }
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-HALF_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const npy_half in = *((npy_half *)ip1);
-        const npy_half min = *((npy_half *)ip2);
-        const npy_half max = *((npy_half *)ip3);
-
-        if (npy_half_lt(in, min)) {
-            *((npy_half *)op1) = min;
-        }
-        else if (npy_half_gt(in, max)) {
-            *((npy_half *)op1) = max;
-        }
-        else {
-            *((npy_half *)op1) = in;
         }
     }
 }
@@ -2884,32 +2776,6 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
-NPY_NO_EXPORT void
-@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    TERNARY_LOOP {
-        const @ftype@ inr = ((@ftype@ *)ip1)[0];
-        const @ftype@ ini = ((@ftype@ *)ip1)[1];
-        const @ftype@ minr = ((@ftype@ *)ip2)[0];
-        const @ftype@ mini = ((@ftype@ *)ip2)[1];
-        const @ftype@ maxr = ((@ftype@ *)ip3)[0];
-        const @ftype@ maxi = ((@ftype@ *)ip3)[1];
-
-        if (CLT(inr, ini, minr, mini)) {
-            ((@ftype@ *)op1)[0] = minr;
-            ((@ftype@ *)op1)[1] = mini;
-        }
-        else if (CGT(inr, ini, maxr, maxi)) {
-            ((@ftype@ *)op1)[0] = maxr;
-            ((@ftype@ *)op1)[1] = maxi;
-        }
-        else {
-            ((@ftype@ *)op1)[0] = inr;
-            ((@ftype@ *)op1)[1] = ini;
-        }
-    }
-}
-
 #define @TYPE@_true_divide @TYPE@_divide
 
 /**end repeat**/
@@ -3008,3 +2874,131 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  **                              END LOOPS                                  **
  *****************************************************************************
  */
+
+
+
+/*
+ *****************************************************************************
+ **                              CLIP LOOPS                                 **
+ *****************************************************************************
+ */
+
+
+
+#define TERNARY_LOOP\
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op1 = args[3];\
+    npy_intp is1 = steps[0], is2 = steps[1], is3 = steps[2], os1 = steps[3];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, ip3 += is3, op1 += os1)
+
+#define _LESS_THAN(a, b) ((a) < (b))
+#define _GREATER_THAN(a, b) ((a) > (b))
+
+/*
+ * In fastclip, 'b' was already checked for NaN, so the half comparison
+ * only needs to check 'a' for NaN.
+ */
+
+#define _HALF_LESS_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(a, b))
+#define _HALF_GREATER_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(b, a))
+
+/**begin repeat
+ *
+ * #TYPE = BOOL,
+ *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         DATETIME, TIMEDELTA#
+ * #type = npy_bool,
+ *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_half, npy_float, npy_double, npy_longdouble,
+ *         npy_datetime, npy_timedelta#
+ * #isfloat = 0*11, 1*4, 0*2#
+ * #isnan = nop*11, npy_half_isnan, npy_isnan*3, nop*2#
+ * #lt = _LESS_THAN*11, _HALF_LESS_THAN, _LESS_THAN*5#
+ * #gt = _GREATER_THAN*11, _HALF_GREATER_THAN, _GREATER_THAN*5#
+ */
+
+NPY_NO_EXPORT void
+@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    TERNARY_LOOP {
+        const @type@ in = *((@type@ *)ip1);
+        const @type@ min = *((@type@ *)ip2);
+        const @type@ max = *((@type@ *)ip3);
+        if (@lt@(in, min)) {
+            *((@type@ *)op1) = min;
+        }
+        else if (@gt@(in, max)) {
+            *((@type@ *)op1) = max;
+        }
+        else {
+            *((@type@ *)op1) = in;
+        }        
+    }
+}
+
+/**end repeat**/
+
+#undef _LESS_THAN
+#undef _GREATER_THAN
+#undef _HALF_LESS_THAN
+#undef _HALF_GREATER_THAN
+
+
+#define CGE(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi >= yi))
+#define CLE(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi <= yi))
+#define CGT(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi > yi))
+#define CLT(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && xi < yi))
+#define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
+#define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
+
+
+/**begin repeat
+ * complex types
+ * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #ftype = npy_float, npy_double, npy_longdouble#
+ * #c = f, , l#
+ * #C = F, , L#
+ */
+
+NPY_NO_EXPORT void
+@TYPE@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    TERNARY_LOOP {
+        const @ftype@ inr = ((@ftype@ *)ip1)[0];
+        const @ftype@ ini = ((@ftype@ *)ip1)[1];
+        const @ftype@ minr = ((@ftype@ *)ip2)[0];
+        const @ftype@ mini = ((@ftype@ *)ip2)[1];
+        const @ftype@ maxr = ((@ftype@ *)ip3)[0];
+        const @ftype@ maxi = ((@ftype@ *)ip3)[1];
+
+        if (CLT(inr, ini, minr, mini)) {
+            ((@ftype@ *)op1)[0] = minr;
+            ((@ftype@ *)op1)[1] = mini;
+        }
+        else if (CGT(inr, ini, maxr, maxi)) {
+            ((@ftype@ *)op1)[0] = maxr;
+            ((@ftype@ *)op1)[1] = maxi;
+        }
+        else {
+            ((@ftype@ *)op1)[0] = inr;
+            ((@ftype@ *)op1)[1] = ini;
+        }
+    }
+}
+
+
+/**end repeat**/
+#undef CGE
+#undef CLE
+#undef CGT
+#undef CLT
+#undef CEQ
+#undef CNE

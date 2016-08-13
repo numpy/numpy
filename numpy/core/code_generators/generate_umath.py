@@ -881,7 +881,7 @@ defdict = {
 'clip' :
     Ufunc(3, 1, None,
           docstrings.get('numpy.core.umath.clip'),
-          None,
+          'PyUFunc_ClipTypeResolver',
           TD(noobj),
           )
 }
