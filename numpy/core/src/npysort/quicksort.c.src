@@ -464,13 +464,17 @@ npy_quicksort(void *start, npy_intp num, void *varr)
             pi = pl;
             pj = pr - elsize;
             GENERIC_SWAP(pm, pj, elsize);
+            /*
+             * Generic comparisons may be buggy, so don't rely on the sentinals
+             * to keep the pointers from going out of bounds.
+             */
             for (;;) {
                 do {
                     pi += elsize;
-                } while (cmp(pi, vp, arr) < 0);
+                } while (cmp(pi, vp, arr) < 0 && pi < pj);
                 do {
                     pj -= elsize;
-                } while (cmp(vp, pj, arr) < 0);
+                } while (cmp(vp, pj, arr) < 0 && pi < pj);
                 if (pi >= pj) {
                     break;
                 }
@@ -559,10 +563,10 @@ npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
             for (;;) {
                 do {
                     ++pi;
-                } while (cmp(v + (*pi)*elsize, vp, arr) < 0);
+                } while (cmp(v + (*pi)*elsize, vp, arr) < 0 && pi < pj);
                 do {
                     --pj;
-                } while (cmp(vp, v + (*pj)*elsize, arr) < 0);
+                } while (cmp(vp, v + (*pj)*elsize, arr) < 0 && pi < pj);
                 if (pi >= pj) {
                     break;
                 }
