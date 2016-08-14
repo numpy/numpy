@@ -1296,6 +1296,17 @@ class TestMethods(TestCase):
         msg = 'test empty array sort with axis=None'
         assert_equal(np.sort(a, axis=None), a.ravel(), msg)
 
+        # test generic class with bogus ordering,
+        # should not segfault.
+        class Boom(object):
+            def __lt__(self, other):
+                return True
+
+        a = np.array([Boom()]*100, dtype=object)
+        for kind in ['q', 'm', 'h']:
+            msg = "bogus comparison object sort, kind=%s" % kind
+            c.sort(kind=kind)
+
     def test_copy(self):
         def assert_fortran(arr):
             assert_(arr.flags.fortran)
