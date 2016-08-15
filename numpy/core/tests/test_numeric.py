@@ -12,7 +12,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec
+    assert_array_almost_equal, dec, HAS_REFCOUNT
 )
 
 
@@ -2011,6 +2011,7 @@ class TestCreationFuncs(TestCase):
         self.check_function(np.full, 0)
         self.check_function(np.full, 1)
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_for_reference_leak(self):
         # Make sure we have an object for reference
         dim = 1

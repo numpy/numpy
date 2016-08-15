@@ -28,7 +28,7 @@ from numpy.core.multiarray_tests import (
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises,
     assert_equal, assert_almost_equal, assert_array_equal,
-    assert_array_almost_equal, assert_allclose,
+    assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
     assert_array_less, runstring, dec, SkipTest, temppath
     )
 
@@ -2326,10 +2326,12 @@ class TestMethods(TestCase):
     def test_diagonal_memleak(self):
         # Regression test for a bug that crept in at one point
         a = np.zeros((100, 100))
-        assert_(sys.getrefcount(a) < 50)
+        if HAS_REFCOUNT:
+            assert_(sys.getrefcount(a) < 50)
         for i in range(100):
             a.diagonal()
-        assert_(sys.getrefcount(a) < 50)
+        if HAS_REFCOUNT:
+            assert_(sys.getrefcount(a) < 50)
 
     def test_trace(self):
         a = np.arange(12).reshape((3, 4))
@@ -4723,7 +4725,8 @@ class TestDot(TestCase):
         r = np.empty((1024, 32))
         for i in range(12):
             dot(f, v, r)
-        assert_equal(sys.getrefcount(r), 2)
+        if HAS_REFCOUNT:
+            assert_equal(sys.getrefcount(r), 2)
         r2 = dot(f, v, out=None)
         assert_array_equal(r2, r)
         assert_(r is dot(f, v, out=r))
@@ -5967,11 +5970,13 @@ class TestNewBufferProtocol(object):
             self._check_roundtrip(x)
 
     def test_reference_leak(self):
-        count_1 = sys.getrefcount(np.core._internal)
+        if HAS_REFCOUNT:
+            count_1 = sys.getrefcount(np.core._internal)
         a = np.zeros(4)
         b = memoryview(a)
         c = np.asarray(b)
-        count_2 = sys.getrefcount(np.core._internal)
+        if HAS_REFCOUNT:
+            count_2 = sys.getrefcount(np.core._internal)
         assert_equal(count_1, count_2)
         del c  # avoid pyflakes unused variable warning.
 
@@ -6355,50 +6360,52 @@ class TestWhere(TestCase):
         assert_equal(np.where(False, b, a), "abcd")
 
 
-class TestSizeOf(TestCase):
+if not IS_PYPY:
+    # sys.getsizeof() is not valid on PyPy
+    class TestSizeOf(TestCase):
 
-    def test_empty_array(self):
-        x = np.array([])
-        assert_(sys.getsizeof(x) > 0)
+        def test_empty_array(self):
+            x = np.array([])
+            assert_(sys.getsizeof(x) > 0)
 
-    def check_array(self, dtype):
-        elem_size = dtype(0).itemsize
+        def check_array(self, dtype):
+            elem_size = dtype(0).itemsize
 
-        for length in [10, 50, 100, 500]:
-            x = np.arange(length, dtype=dtype)
-            assert_(sys.getsizeof(x) > length * elem_size)
+            for length in [10, 50, 100, 500]:
+                x = np.arange(length, dtype=dtype)
+                assert_(sys.getsizeof(x) > length * elem_size)
 
-    def test_array_int32(self):
-        self.check_array(np.int32)
+        def test_array_int32(self):
+            self.check_array(np.int32)
 
-    def test_array_int64(self):
-        self.check_array(np.int64)
+        def test_array_int64(self):
+            self.check_array(np.int64)
 
-    def test_array_float32(self):
-        self.check_array(np.float32)
+        def test_array_float32(self):
+            self.check_array(np.float32)
 
-    def test_array_float64(self):
-        self.check_array(np.float64)
+        def test_array_float64(self):
+            self.check_array(np.float64)
 
-    def test_view(self):
-        d = np.ones(100)
-        assert_(sys.getsizeof(d[...]) < sys.getsizeof(d))
+        def test_view(self):
+            d = np.ones(100)
+            assert_(sys.getsizeof(d[...]) < sys.getsizeof(d))
 
-    def test_reshape(self):
-        d = np.ones(100)
-        assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
+        def test_reshape(self):
+            d = np.ones(100)
+            assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
 
-    def test_resize(self):
-        d = np.ones(100)
-        old = sys.getsizeof(d)
-        d.resize(50)
-        assert_(old > sys.getsizeof(d))
-        d.resize(150)
-        assert_(old < sys.getsizeof(d))
+        def test_resize(self):
+            d = np.ones(100)
+            old = sys.getsizeof(d)
+            d.resize(50)
+            assert_(old > sys.getsizeof(d))
+            d.resize(150)
+            assert_(old < sys.getsizeof(d))
 
-    def test_error(self):
-        d = np.ones(100)
-        assert_raises(TypeError, d.__sizeof__, "a")
+        def test_error(self):
+            d = np.ones(100)
+            assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestHashing(TestCase):

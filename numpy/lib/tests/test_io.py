@@ -19,7 +19,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
     assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, dec
+    assert_array_equal, temppath, dec, IS_PYPY
 )
 
 
@@ -266,6 +266,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
                 fp.seek(0)
                 assert_(not fp.closed)
 
+    @np.testing.dec.skipif(IS_PYPY, "context manager required on PyPy")
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
