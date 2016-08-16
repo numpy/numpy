@@ -512,7 +512,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     opposite case: here the signal has Hermitian symmetry in the time domain
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
-    ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+    ``ihfft(hfft(a, len(a))) == a``, within numerical accuracy.
 
     Examples
     --------
@@ -583,7 +583,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     opposite case: here the signal has Hermitian symmetry in the time domain
     and is real in the frequency domain. So here it's `hfft` for which
     you must supply the length of the result if it is to be odd:
-    ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+    ``ihfft(hfft(a, len(a))) == a``, within numerical accuracy.
 
     Examples
     --------
