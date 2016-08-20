@@ -109,56 +109,8 @@ from __future__ import division, absolute_import, print_function
 import sys
 import warnings
 
-# Disallow reloading numpy. Doing that does nothing to change previously
-# loaded modules, which would need to be reloaded separately, but it does
-# change the identity of the warnings and sentinal classes defined below
-# with dire consequences when checking for identity.
-if '_is_loaded' in globals():
-    raise RuntimeError('Reloading numpy is not supported')
-_is_loaded = True
-
-
-# Define some global warnings and the _NoValue sentinal. Defining them here
-# means that their identity will change if numpy is reloaded, hence if that is
-# to be allowed they should be moved into their own, non-reloadable module.
-# Note that these should be defined (or imported) before the other imports.
-class ModuleDeprecationWarning(DeprecationWarning):
-    """Module deprecation warning.
-
-    The nose tester turns ordinary Deprecation warnings into test failures.
-    That makes it hard to deprecate whole modules, because they get
-    imported by default. So this is a special Deprecation warning that the
-    nose tester will let pass without making tests fail.
-
-    """
-    pass
-
-
-class VisibleDeprecationWarning(UserWarning):
-    """Visible deprecation warning.
-
-    By default, python will not show deprecation warnings, so this class
-    can be used when a very visible warning is helpful, for example because
-    the usage is most likely a user bug.
-
-    """
-    pass
-
-
-class _NoValue:
-    """Special keyword value.
-
-    This class may be used as the default value assigned to a deprecated
-    keyword in order to check if it has been given a user defined value.
-    """
-    pass
-
-
-# oldnumeric and numarray were removed in 1.9. In case some packages import
-# but do not use them, we define them here for backward compatibility.
-oldnumeric = 'removed'
-numarray = 'removed'
-
+from ._globals import ModuleDeprecationWarning, VisibleDeprecationWarning
+from ._globals import _NoValue
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -177,6 +129,7 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
         raise ImportError(msg)
+
     from .version import git_revision as __git_revision__
     from .version import version as __version__
 
@@ -239,3 +192,8 @@ else:
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
+
+    # oldnumeric and numarray were removed in 1.9. In case some packages import
+    # but do not use them, we define them here for backward compatibility.
+    oldnumeric = 'removed'
+    numarray = 'removed'
