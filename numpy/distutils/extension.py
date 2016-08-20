@@ -20,36 +20,39 @@ cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 
 class Extension(old_Extension):
-    def __init__ (self, name, sources,
-                  include_dirs=None,
-                  define_macros=None,
-                  undef_macros=None,
-                  library_dirs=None,
-                  libraries=None,
-                  runtime_library_dirs=None,
-                  extra_objects=None,
-                  extra_compile_args=None,
-                  extra_link_args=None,
-                  export_symbols=None,
-                  swig_opts=None,
-                  depends=None,
-                  language=None,
-                  f2py_options=None,
-                  module_dirs=None,
-                  extra_f77_compile_args=None,
-                  extra_f90_compile_args=None,
-                 ):
-        old_Extension.__init__(self, name, [],
-                               include_dirs,
-                               define_macros,
-                               undef_macros,
-                               library_dirs,
-                               libraries,
-                               runtime_library_dirs,
-                               extra_objects,
-                               extra_compile_args,
-                               extra_link_args,
-                               export_symbols)
+    def __init__ (
+            self, name, sources,
+            include_dirs=None,
+            define_macros=None,
+            undef_macros=None,
+            library_dirs=None,
+            libraries=None,
+            runtime_library_dirs=None,
+            extra_objects=None,
+            extra_compile_args=None,
+            extra_link_args=None,
+            export_symbols=None,
+            swig_opts=None,
+            depends=None,
+            language=None,
+            f2py_options=None,
+            module_dirs=None,
+            extra_f77_compile_args=None,
+            extra_f90_compile_args=None,):
+
+        old_Extension.__init__(
+                self, name, [],
+                include_dirs=include_dirs,
+                define_macros=define_macros,
+                undef_macros=undef_macros,
+                library_dirs=library_dirs,
+                libraries=libraries,
+                runtime_library_dirs=runtime_library_dirs,
+                extra_objects=extra_objects,
+                extra_compile_args=extra_compile_args,
+                extra_link_args=extra_link_args,
+                export_symbols=export_symbols)
+
         # Avoid assert statements checking that sources contains strings:
         self.sources = sources
 
