@@ -913,9 +913,33 @@ NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @ftype@ in1 = (@ftype@)*(@type@ *)ip1;
-        const @ftype@ in2 = (@ftype@)*(@type@ *)ip2;
-        *((@type@ *)op1) = (@type@) pow(in1, in2);
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ in2 = *(@type@ *)ip2;
+        @type@ out;
+
+        if (in2 == 0) {
+          *((@type@ *)op1) = 1;
+          continue;
+        }
+        if (in1 == 1) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+        if (in2 < 0 || in1 == 0) {
+            *((@type@ *)op1) = 0;
+            continue;
+        }
+
+        out = in2 & 1 ? in1 : 1;
+        in2 >>= 1;
+        while (in2 > 0) {
+            in1 *= in1;
+            if (in2 & 1) {
+                out *= in1;
+            }
+            in2 >>= 1;
+        }
+        *((@type@ *) op1) = out;
     }
 }
 
@@ -1117,8 +1141,8 @@ NPY_NO_EXPORT void
 }
 
 /**begin repeat1
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
- * #OP =  ==, !=, >, >=, <, <=#
+ * #kind = equal, greater, greater_equal, less, less_equal#
+ * #OP =  ==, >, >=, <, <=#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -1126,10 +1150,48 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 @OP@ in2;
+        const npy_bool res = in1 @OP@ in2;
+        *((npy_bool *)op1) = res;
+
+        if ((in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) && res) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            /* 2016-01-18, 1.11 */
+            if (DEPRECATE_FUTUREWARNING(
+                    "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
+                    "will always be False.") < 0) {
+                NPY_DISABLE_C_API;
+                return;
+            }
+            NPY_DISABLE_C_API;
+        }
     }
 }
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((npy_bool *)op1) = in1 != in2;
+
+        if (in1 == NPY_DATETIME_NAT && in1 == NPY_DATETIME_NAT) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            /* 2016-01-18, 1.11 */
+            if (DEPRECATE_FUTUREWARNING(
+                    "In the future, NAT != NAT will be True "
+                    "rather than False.") < 0) {
+                NPY_DISABLE_C_API;
+                return;
+            }
+            NPY_DISABLE_C_API;
+        }
+    }
+}
+
 
 /**begin repeat1
  * #kind = maximum, minimum#
@@ -1444,6 +1506,8 @@ pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
         r[7] = @trf@(a[7 * stride]);
 
         for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
             r[0] += @trf@(a[(i + 0) * stride]);
             r[1] += @trf@(a[(i + 1) * stride]);
             r[2] += @trf@(a[(i + 2) * stride]);
@@ -1556,14 +1620,11 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
  * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
- * #isnan = 1, 0*3#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    char * margs[] = {args[0], args[0], args[1]};
-    npy_intp msteps[] = {steps[0], steps[0], steps[1]};
-    if (!@isnan@ || !run_binary_simd_not_equal_@TYPE@(margs, dimensions, msteps)) {
+    if (!run_@kind@_simd_@TYPE@(args, dimensions, steps)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             *((npy_bool *)op1) = @func@(in1) != 0;
@@ -1659,7 +1720,8 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_floor@c@(in1/in2);
+        @type@ mod;
+        *((@type@ *)op1) = npy_divmod@c@(in1, in2, &mod);
     }
 }
 
@@ -1669,13 +1731,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const @type@ res = npy_fmod@c@(in1,in2);
-        if (res && ((in2 < 0) != (res < 0))) {
-            *((@type@ *)op1) = res + in2;
-        }
-        else {
-            *((@type@ *)op1) = res;
-        }
+        npy_divmod@c@(in1, in2, (@type@ *)op1);
     }
 }
 
@@ -1979,9 +2035,10 @@ NPY_NO_EXPORT void
 HALF_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        const float in2 = npy_half_to_float(*(npy_half *)ip2);
-        *((npy_half *)op1) = npy_float_to_half(npy_floorf(in1/in2));
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        npy_half mod;
+        *((npy_half *)op1) = npy_half_divmod(in1, in2, &mod);
     }
 }
 
@@ -1989,15 +2046,9 @@ NPY_NO_EXPORT void
 HALF_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        const float in2 = npy_half_to_float(*(npy_half *)ip2);
-        const float res = npy_fmodf(in1,in2);
-        if (res && ((in2 < 0) != (res < 0))) {
-            *((npy_half *)op1) = npy_float_to_half(res + in2);
-        }
-        else {
-            *((npy_half *)op1) = npy_float_to_half(res);
-        }
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        npy_half_divmod(in1, in2, (npy_half *)op1);
     }
 }
 
@@ -2190,6 +2241,8 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
         r[7] = a[6 * stride + 1];
 
         for (i = 8; i < n - (n % 8); i += 8) {
+            /* small blocksizes seems to mess with hardware prefetch */
+            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
             r[0] += a[(i + 0) * stride];
             r[1] += a[(i + 0) * stride + 1];
             r[2] += a[(i + 2) * stride];

@@ -18,7 +18,7 @@ as follows::
     paver bootstrap && source bootstrap/bin/activate
     # Installing numpy is necessary to build the correct documentation (because
     # of autodoc)
-    python setupegg.py install
+    python setup.py install
     paver dmg
 
 Building a simple (no-superpack) windows installer from wine
@@ -54,7 +54,7 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division, print_function
 
 # What need to be installed to build everything on mac os x:
 #   - wine: python 2.6 and 2.5 + makensis + cpuid plugin + mingw, all in the PATH
@@ -99,10 +99,10 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/1.11.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.12.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'v1.10.0b1'
+LOG_START = 'maintenance/1.11.x'
 LOG_END = 'master'
 
 
@@ -440,7 +440,7 @@ def _build_mpkg(pyver):
         ldflags = "-undefined dynamic_lookup -bundle -arch i386 -arch ppc -Wl,-search_paths_first"
 
     ldflags += " -L%s" % os.path.join(os.path.dirname(__file__), "build")
-    sh("LDFLAGS='%s' %s setupegg.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
+    sh("LDFLAGS='%s' %s setup.py bdist_mpkg" % (ldflags, " ".join(MPKG_PYTHON[pyver])))
 
 @task
 def simple_dmg():
@@ -617,8 +617,9 @@ SHA256
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
-            ['git', 'log',  '%s..%s' % (LOG_START, LOG_END)],
-            stdout=subprocess.PIPE)
+        ['git', 'log', '--no-merges', '--use-mailmap',
+         '%s..%s' % (LOG_START, LOG_END)],
+        stdout=subprocess.PIPE)
 
     out = st.communicate()[0]
     a = open(filename, 'w')

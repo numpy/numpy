@@ -114,13 +114,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Floating point precision can be set:
 
     >>> np.set_printoptions(precision=4)
-    >>> print np.array([1.123456789])
+    >>> print(np.array([1.123456789]))
     [ 1.1235]
 
     Long arrays can be summarised:
 
     >>> np.set_printoptions(threshold=5)
-    >>> print np.arange(10)
+    >>> print(np.arange(10))
     [0 1 2 ..., 7 8 9]
 
     Small results can be suppressed:
@@ -420,8 +420,8 @@ def array2string(a, max_line_width=None, precision=None,
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
-    >>> print np.array2string(x, precision=2, separator=',',
-    ...                       suppress_small=True)
+    >>> print(np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True))
     [ 0., 1., 2., 3.]
 
     >>> x  = np.arange(3.)
@@ -708,9 +708,9 @@ class ComplexFormat(object):
             i = i + 'j'
         return r + i
 
+
 class DatetimeFormat(object):
-    def __init__(self, x, unit=None,
-                timezone=None, casting='same_kind'):
+    def __init__(self, x, unit=None, timezone=None, casting='same_kind'):
         # Get the unit from the dtype
         if unit is None:
             if x.dtype.kind == 'M':
@@ -718,15 +718,9 @@ class DatetimeFormat(object):
             else:
                 unit = 's'
 
-        # If timezone is default, make it 'local' or 'UTC' based on the unit
         if timezone is None:
-            # Date units -> UTC, time units -> local
-            if unit in ('Y', 'M', 'W', 'D'):
-                self.timezone = 'UTC'
-            else:
-                self.timezone = 'local'
-        else:
-            self.timezone = timezone
+            timezone = 'naive'
+        self.timezone = timezone
         self.unit = unit
         self.casting = casting
 

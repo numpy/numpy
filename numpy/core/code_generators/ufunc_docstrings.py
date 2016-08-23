@@ -1225,8 +1225,10 @@ add_newdoc('numpy.core.umath', 'floor',
 
 add_newdoc('numpy.core.umath', 'floor_divide',
     """
-    Return the largest integer smaller or equal to the division of the
-    inputs.
+    Return the largest integer smaller or equal to the division of the inputs.
+    It is equivalent to the Python ``//`` operator and pairs with the
+    Python ``%`` (`remainder`), function so that ``b = a % b + b * (a // b)``
+    up to roundoff.
 
     Parameters
     ----------
@@ -1243,6 +1245,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
 
     See Also
     --------
+    remainder : Remainder complementary to floor_divide.
     divide : Standard division.
     floor : Round a number to the nearest integer toward minus infinity.
     ceil : Round a number to the nearest integer toward infinity.
@@ -2393,11 +2396,11 @@ add_newdoc('numpy.core.umath', 'fmin',
     Examples
     --------
     >>> np.fmin([2, 3, 4], [1, 5, 2])
-    array([2, 5, 4])
+    array([1, 3, 2])
 
     >>> np.fmin(np.eye(2), [0.5, 2])
-    array([[ 1. ,  2. ],
-           [ 0.5,  2. ]])
+    array([[ 0.5,  0. ],
+           [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([  0.,   0.,  NaN])
@@ -2689,9 +2692,9 @@ add_newdoc('numpy.core.umath', 'remainder',
     """
     Return element-wise remainder of division.
 
-    Computes ``x1 - floor(x1 / x2) * x2``, the result has the same sign as
-    the divisor `x2`. It is equivalent to the Python modulus operator
-    ``x1 % x2`` and should not be confused with the Matlab(TM) ``rem``
+    Computes the remainder complementary to the `floor_divide` function.  It is
+    equivalent to the Python modulus operator``x1 % x2`` and has the same sign
+    as the divisor `x2`. It should not be confused with the Matlab(TM) ``rem``
     function.
 
     Parameters
@@ -2707,11 +2710,12 @@ add_newdoc('numpy.core.umath', 'remainder',
     Returns
     -------
     y : ndarray
-        The remainder of the quotient ``x1/x2``, element-wise. Returns a
-        scalar if both  `x1` and `x2` are scalars.
+        The element-wise remainder of the quotient ``floor_divide(x1, x2)``.
+        Returns a scalar if both  `x1` and `x2` are scalars.
 
     See Also
     --------
+    floor_divide : Equivalent of Python ``//`` operator.
     fmod : Equivalent of the Matlab(TM) ``rem`` function.
     divide, floor
 

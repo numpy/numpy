@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, squares_
+from .common import Benchmark, get_squares_
 
 import numpy as np
 
@@ -39,7 +39,7 @@ class Broadcast(Benchmark):
 class UFunc(Benchmark):
     params = [ufuncs]
     param_names = ['ufunc']
-    timeout = 2
+    timeout = 10
 
     def setup(self, ufuncname):
         np.seterr(all='ignore')
@@ -48,7 +48,7 @@ class UFunc(Benchmark):
         except AttributeError:
             raise NotImplementedError()
         self.args = []
-        for t, a in squares_.items():
+        for t, a in get_squares_().items():
             arg = (a,) * self.f.nin
             try:
                 self.f(*arg)
@@ -66,9 +66,6 @@ class Custom(Benchmark):
 
     def time_nonzero(self):
         np.nonzero(self.b)
-
-    def time_count_nonzero(self):
-        np.count_nonzero(self.b)
 
     def time_not_bool(self):
         (~self.b)

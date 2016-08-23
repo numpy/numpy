@@ -78,7 +78,7 @@ affect the relationship between the byte ordering of the array and the
 underlying memory it is looking at:
 
 * Change the byte-ordering information in the array dtype so that it
-  interprets the undelying data as being in a different byte order.
+  interprets the underlying data as being in a different byte order.
   This is the role of ``arr.newbyteorder()``
 * Change the byte-ordering of the underlying data, leaving the dtype
   interpretation as it was.  This is what ``arr.byteswap()`` does.
@@ -108,7 +108,7 @@ the correct endianness:
 >>> fixed_end_dtype_arr[0]
 1
 
-Note the the array has not changed in memory:
+Note the array has not changed in memory:
 
 >>> fixed_end_dtype_arr.tobytes() == big_end_str
 True

@@ -120,6 +120,9 @@ class TestAtleast3d(TestCase):
 
 
 class TestHstack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, hstack, 1)
+
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -143,6 +146,9 @@ class TestHstack(TestCase):
 
 
 class TestVstack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, vstack, 1)
+
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -265,6 +271,9 @@ class TestConcatenate(TestCase):
 
 
 def test_stack():
+    # non-iterable input
+    assert_raises(TypeError, stack, 1)
+
     # 0d input
     for input_ in [(1, 2, 3),
                    [np.int32(1), np.int32(2), np.int32(3)],
@@ -295,8 +304,8 @@ def test_stack():
     for axis, expected_shape in zip(axes, expected_shapes):
         assert_equal(np.stack(arrays, axis).shape, expected_shape)
     # empty arrays
-    assert stack([[], [], []]).shape == (3, 0)
-    assert stack([[], [], []], axis=1).shape == (0, 3)
+    assert_(stack([[], [], []]).shape == (3, 0))
+    assert_(stack([[], [], []], axis=1).shape == (0, 3))
     # edge cases
     assert_raises_regex(ValueError, 'need at least one array', stack, [])
     assert_raises_regex(ValueError, 'must have the same shape',

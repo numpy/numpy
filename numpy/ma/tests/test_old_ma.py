@@ -423,7 +423,7 @@ class TestMa(TestCase):
         assert_(eq(z, [99, 1, 1, 99, 99, 99]))
 
     def test_testMinMax2(self):
-        # Test of minumum, maximum.
+        # Test of minimum, maximum.
         assert_(eq(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3]))
         assert_(eq(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9]))
         x = arange(5)
@@ -522,11 +522,6 @@ class TestMa(TestCase):
         self.assertTrue(str(masked) == '--')
         self.assertTrue(xx[1] is masked)
         self.assertEqual(filled(xx[1], 0), 0)
-        # don't know why these should raise an exception...
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, masked)
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, 2)
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, xx)
-        #self.assertRaises(Exception, lambda x,y: x+y, xx, masked)
 
     def test_testAverage1(self):
         # Test of average.
@@ -681,9 +676,7 @@ class TestUfuncs(TestCase):
                   'arccosh',
                   'arctanh',
                   'absolute', 'fabs', 'negative',
-                  # 'nonzero', 'around',
                   'floor', 'ceil',
-                  # 'sometrue', 'alltrue',
                   'logical_not',
                   'add', 'subtract', 'multiply',
                   'divide', 'true_divide', 'floor_divide',
@@ -754,7 +747,6 @@ class TestArrayMethods(TestCase):
 
         self.d = (x, X, XX, m, mx, mX, mXX)
 
-    #------------------------------------------------------
     def test_trace(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         mXdiag = mX.diagonal()
@@ -824,56 +816,6 @@ def eqmask(m1, m2):
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
-
-#def timingTest():
-#    for f in [testf, testinplace]:
-#        for n in [1000,10000,50000]:
-#            t = testta(n, f)
-#            t1 = testtb(n, f)
-#            t2 = testtc(n, f)
-#            print f.test_name
-#            print """\
-#n = %7d
-#numpy time (ms) %6.1f
-#MA maskless ratio %6.1f
-#MA masked ratio %6.1f
-#""" % (n, t*1000.0, t1/t, t2/t)
-
-#def testta(n, f):
-#    x=np.arange(n) + 1.0
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testtb(n, f):
-#    x=arange(n) + 1.0
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testtc(n, f):
-#    x=arange(n) + 1.0
-#    x[0] = masked
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testf(x):
-#    for i in range(25):
-#        y = x **2 +  2.0 * x - 1.0
-#        w = x **2 +  1.0
-#        z = (y / w) ** 2
-#    return z
-#testf.test_name = 'Simple arithmetic'
-
-#def testinplace(x):
-#    for i in range(25):
-#        y = x**2
-#        y += 2.0*x
-#        y -= 1.0
-#        y /= x
-#    return y
-#testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
     run_module_suite()

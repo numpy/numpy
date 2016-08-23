@@ -26,6 +26,7 @@ Transpose-like operations
 .. autosummary::
    :toctree: generated/
 
+   moveaxis
    rollaxis
    swapaxes
    ndarray.T
@@ -108,6 +109,7 @@ Rearranging elements
 .. autosummary::
    :toctree: generated/
 
+   flip
    fliplr
    flipud
    reshape

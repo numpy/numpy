@@ -22678,7 +22678,7 @@ L160:
     ===============
 
     The algorithm used in this program is basically backward (forward)
-    substitution, with scaling to make the the code robust against
+    substitution, with scaling to make the code robust against
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
@@ -61663,7 +61663,7 @@ L180:
     ===============
 
     The algorithm used in this program is basically backward (forward)
-    substitution, with scaling to make the the code robust against
+    substitution, with scaling to make the code robust against
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
@@ -99417,7 +99417,7 @@ L180:
     ===============
 
     The algorithm used in this program is basically backward (forward)
-    substitution, with scaling to make the the code robust against
+    substitution, with scaling to make the code robust against
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest

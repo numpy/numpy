@@ -32,6 +32,13 @@ This builds Numpy first, so the first time it may take a few minutes.  If
 you specify ``-n``, the tests are run against the version of NumPy (if
 any) found on current PYTHONPATH.
 
+When specifying a target using ``-s``, ``-t``, or ``--python``, additional
+arguments may be forwarded to the target embedded by ``runtests.py`` by passing
+the extra arguments after a bare ``--``. For example, to run a test method with
+the ``--pdb`` flag forwarded to nose, run the following::
+
+    $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
+
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
@@ -62,9 +69,9 @@ test and use your changes (in ``.py`` files), by simply restarting the
 interpreter.
 
 Note that another way to do an inplace build visible outside the repo base dir
-is with ``python setup.py develop``.  This doesn't work for NumPy, because
-NumPy builds don't use ``setuptools`` by default.  ``python setupegg.py
-develop`` will work though.
+is with ``python setup.py develop``.  Instead of adjusting ``PYTHONPATH``, this
+installs a ``.egg-link`` file into your site-packages as well as adjusts the
+``easy-install.pth`` there, so its a more permanent (and magical) operation.
 
 
 Other build options
@@ -137,6 +144,9 @@ run the test suite with Python 3.4, use::
 For more extensive info on running and writing tests, see
 https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt .
 
+*Note: do not run the tests from the root directory of your numpy git repo,
+that will result in strange test errors.*
+
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -200,3 +210,18 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
 
 .. _Waf: https://code.google.com/p/waf/
+
+Understanding the code & getting started
+----------------------------------------
+
+The best strategy to better understand the code base is to pick something you
+want to change and start reading the code to figure out how it works. When in 
+doubt, you can ask questions on the mailing list. It is perfectly okay if your
+pull requests aren't perfect, the community is always happy to help. As a 
+volunteer project, things do sometimes get dropped and it's totally fine to 
+ping us if something has sat without a response for about two to four weeks.
+
+So go ahead and pick something that annoys or confuses you about numpy, 
+experiment with the code, hang around for discussions or go through the 
+reference documents to try to fix it. Things will fall in place and soon 
+you'll have a pretty good understanding of the project as a whole. Good Luck!

@@ -379,13 +379,13 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         Py_DECREF(safe);
     }
 
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               typed,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_BYTES(self) + offset,
-                               PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
-                               (PyObject *)self);
+    ret = PyArray_NewFromDescr_int(Py_TYPE(self),
+                                   typed,
+                                   PyArray_NDIM(self), PyArray_DIMS(self),
+                                   PyArray_STRIDES(self),
+                                   PyArray_BYTES(self) + offset,
+                                   PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
+                                   (PyObject *)self, 0, 1);
     if (ret == NULL) {
         return NULL;
     }
@@ -583,8 +583,6 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
     if (fd == NULL) {
-        PyErr_SetString(PyExc_IOError,
-                "first argument must be a string or open file");
         goto fail;
     }
     if (PyArray_ToFile(self, fd, sep, format) < 0) {
@@ -2310,6 +2308,76 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 }
 
+static PyObject *
+array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
+{
+    PyArrayObject *arr;
+    PyArray_Descr *dtype;
+    PyObject *c;
+    if (PyArray_SIZE(self) != 1) {
+        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
+                        "be converted to Python scalars");
+        return NULL;
+    }
+
+    dtype = PyArray_DescrFromType(NPY_CDOUBLE);
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
+            !(PyArray_TYPE(self) == NPY_OBJECT)) {
+        PyObject *err, *msg_part;
+        Py_DECREF(dtype);
+        err = PyString_FromString("unable to convert ");
+        if (err == NULL) {
+            return NULL;
+        }
+        msg_part = PyObject_Repr((PyObject*)PyArray_DESCR(self));
+        if (msg_part == NULL) {
+            Py_DECREF(err);
+            return NULL;
+        }
+        PyString_ConcatAndDel(&err, msg_part);
+        if (err == NULL) {
+            return NULL;
+        }
+        msg_part = PyString_FromString(", to complex.");
+        if (msg_part == NULL) {
+            Py_DECREF(err);
+            return NULL;
+        }
+        PyString_ConcatAndDel(&err, msg_part);
+        if (err == NULL) {
+            return NULL;
+        }
+        PyErr_SetObject(PyExc_TypeError, err);
+        Py_DECREF(err);
+        return NULL;
+    }
+
+    if (PyArray_TYPE(self) == NPY_OBJECT) {
+        /* let python try calling __complex__ on the object. */
+        PyObject *args, *res;
+        Py_DECREF(dtype);
+        args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
+        if (args == NULL) {
+            return NULL;
+        }
+        res = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+        Py_DECREF(args);
+        return res;
+    }
+
+    arr = (PyArrayObject *)PyArray_CastToType(self, dtype, 0);
+    if (arr == NULL) {
+        return NULL;
+    }
+    c = PyComplex_FromCComplex(*((Py_complex*)PyArray_DATA(arr)));
+    Py_DECREF(arr);
+    return c;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2348,6 +2416,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dump",
         (PyCFunction) array_dump,
+        METH_VARARGS, NULL},
+
+    {"__complex__",
+        (PyCFunction) array_complex,
         METH_VARARGS, NULL},
 
     /* Original and Extended methods added 2005 */

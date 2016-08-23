@@ -4,14 +4,14 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
-    where, int8, int16, int32, int64, empty, promote_types, diagonal,
+    absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
+    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     )
-from numpy.core import iinfo
+from numpy.core import iinfo, transpose
 
 
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
 
@@ -57,7 +57,7 @@ def fliplr(m):
 
     Notes
     -----
-    Equivalent to A[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
 
     Examples
     --------
@@ -72,7 +72,7 @@ def fliplr(m):
            [ 3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
-    >>> np.all(np.fliplr(A)==A[:,::-1,...])
+    >>> np.all(np.fliplr(A) == A[:,::-1,...])
     True
 
     """
@@ -107,7 +107,7 @@ def flipud(m):
 
     Notes
     -----
-    Equivalent to ``A[::-1,...]``.
+    Equivalent to ``m[::-1,...]``.
     Does not require the array to be two-dimensional.
 
     Examples
@@ -123,7 +123,7 @@ def flipud(m):
            [ 1.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
-    >>> np.all(np.flipud(A)==A[::-1,...])
+    >>> np.all(np.flipud(A) == A[::-1,...])
     True
 
     >>> np.flipud([1,2])
@@ -134,59 +134,6 @@ def flipud(m):
     if m.ndim < 1:
         raise ValueError("Input must be >= 1-d.")
     return m[::-1, ...]
-
-
-def rot90(m, k=1):
-    """
-    Rotate an array by 90 degrees in the counter-clockwise direction.
-
-    The first two dimensions are rotated; therefore, the array must be at
-    least 2-D.
-
-    Parameters
-    ----------
-    m : array_like
-        Array of two or more dimensions.
-    k : integer
-        Number of times the array is rotated by 90 degrees.
-
-    Returns
-    -------
-    y : ndarray
-        Rotated array.
-
-    See Also
-    --------
-    fliplr : Flip an array horizontally.
-    flipud : Flip an array vertically.
-
-    Examples
-    --------
-    >>> m = np.array([[1,2],[3,4]], int)
-    >>> m
-    array([[1, 2],
-           [3, 4]])
-    >>> np.rot90(m)
-    array([[2, 4],
-           [1, 3]])
-    >>> np.rot90(m, 2)
-    array([[4, 3],
-           [2, 1]])
-
-    """
-    m = asanyarray(m)
-    if m.ndim < 2:
-        raise ValueError("Input must >= 2-d.")
-    k = k % 4
-    if k == 0:
-        return m
-    elif k == 1:
-        return fliplr(m).swapaxes(0, 1)
-    elif k == 2:
-        return fliplr(flipud(m))
-    else:
-        # k == 3
-        return fliplr(m.swapaxes(0, 1))
 
 
 def eye(N, M=None, k=0, dtype=float):
@@ -649,7 +596,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
 
-    Construct a 2D-histogram with variable bin width. First define the bin
+    Construct a 2-D histogram with variable bin width. First define the bin
     edges:
 
     >>> xedges = [0, 1, 1.5, 3, 5]
@@ -664,7 +611,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     Or we fill the histogram H with a determined bin content:
 
     >>> H = np.ones((4, 4)).cumsum().reshape(4, 4)
-    >>> print H[::-1]  # This shows the bin content in the order as plotted
+    >>> print(H[::-1])  # This shows the bin content in the order as plotted
     [[ 13.  14.  15.  16.]
      [  9.  10.  11.  12.]
      [  5.   6.   7.   8.]
@@ -676,7 +623,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     >>> ax = fig.add_subplot(131)
     >>> ax.set_title('imshow: equidistant')
     >>> im = plt.imshow(H, interpolation='nearest', origin='low',
-                    extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+    ...            extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
 
     pcolormesh can display exact bin edges:
 

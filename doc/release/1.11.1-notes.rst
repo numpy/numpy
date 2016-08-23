@@ -1,0 +1,31 @@
+NumPy 1.11.1 Release Notes
+**************************
+
+Numpy 1.11.1 supports Python 2.6 - 2.7 and 3.2 - 3.5. It fixes bugs and
+regressions found in Numpy 1.11.0 and includes several build related
+improvements. Wheels for Linux, Windows, and OSX can be found on pypi.
+
+Fixes Merged
+============
+
+- #7506 BUG: Make sure numpy imports on python 2.6 when nose is unavailable.
+- #7530 BUG: Floating exception with invalid axis in np.lexsort.
+- #7535 BUG: Extend glibc complex trig functions blacklist to glibc < 2.18.
+- #7551 BUG: Allow graceful recovery for no compiler.
+- #7558 BUG: Constant padding expected wrong type in constant_values.
+- #7578 BUG: Fix OverflowError in Python 3.x. in swig interface.
+- #7590 BLD: Fix configparser.InterpolationSyntaxError.
+- #7597 BUG: Make np.ma.take work on scalars.
+- #7608 BUG: linalg.norm(): Don't convert object arrays to float.
+- #7638 BLD: Correct C compiler customization in system_info.py.
+- #7654 BUG: ma.median of 1d array should return a scalar.
+- #7656 BLD: Remove hardcoded Intel compiler flag -xSSE4.2.
+- #7660 BUG: Temporary fix for str(mvoid) for object field types.
+- #7665 BUG: Fix incorrect printing of 1D masked arrays.
+- #7670 BUG: Correct initial index estimate in histogram.
+- #7671 BUG: Boolean assignment no GIL release when transfer needs API.
+- #7676 BUG: Fix handling of right edge of final histogram bin.
+- #7680 BUG: Fix np.clip bug NaN handling for Visual Studio 2015.
+- #7724 BUG: Fix segfaults in np.random.shuffle.
+- #7731 MAINT: Change mkl_info.dir_env_var from MKL to MKLROOT.
+- #7737 BUG: Fix issue on OS X with Python 3.x, npymath.ini not installed.

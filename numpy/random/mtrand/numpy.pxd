@@ -71,7 +71,17 @@ cdef extern from "numpy/arrayobject.h":
         double real
         double imag
 
+    ctypedef int npy_int
     ctypedef int npy_intp
+    ctypedef int npy_int64
+    ctypedef int npy_uint64
+    ctypedef int npy_int32
+    ctypedef int npy_uint32
+    ctypedef int npy_int16
+    ctypedef int npy_uint16
+    ctypedef int npy_int8
+    ctypedef int npy_uint8
+    ctypedef int npy_bool
 
     ctypedef extern class numpy.dtype [object PyArray_Descr]: pass
 

@@ -7,7 +7,7 @@ from shutil import rmtree
 
 from numpy.compat import asbytes
 from numpy.testing import (
-    run_module_suite, TestCase, assert_
+    run_module_suite, TestCase, assert_, SkipTest
     )
 import numpy.lib._datasource as datasource
 
@@ -137,8 +137,7 @@ class TestDataSourceOpen(TestCase):
             import gzip
         except ImportError:
             # We don't have the gzip capabilities to test.
-            import nose
-            raise nose.SkipTest
+            raise SkipTest
         # Test datasource's internal file_opener for Gzip files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
         fp = gzip.open(filepath, 'w')
@@ -154,8 +153,7 @@ class TestDataSourceOpen(TestCase):
             import bz2
         except ImportError:
             # We don't have the bz2 capabilities to test.
-            import nose
-            raise nose.SkipTest
+            raise SkipTest
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')

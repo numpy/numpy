@@ -4,7 +4,7 @@ import sys
 import gzip
 import os
 import threading
-from tempfile import mkstemp, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 import time
 import warnings
 import gc
@@ -14,14 +14,13 @@ from datetime import datetime
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode
+from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
     assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal,
+    assert_array_equal, temppath, dec, IS_PYPY
 )
-from numpy.testing.utils import tempdir
 
 
 class TextIO(BytesIO):
@@ -158,6 +157,7 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
+    @dec.slow
     def test_format_2_0(self):
         dt = [(("%d" % i) * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
@@ -194,8 +194,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
-        with tempdir(prefix="numpy_test_big_arrays_") as tmpdir:
-            tmp = os.path.join(tmpdir, "file.npz")
+        with temppath(prefix="numpy_test_big_arrays_", suffix=".npz") as tmp:
             np.savez(tmp, a=a)
             del a
             npfile = np.load(tmp)
@@ -234,16 +233,12 @@ class TestSavezLoad(RoundtripTest, TestCase):
         # and savez functions in multithreaded environment
 
         def writer(error_list):
-            fd, tmp = mkstemp(suffix='.npz')
-            os.close(fd)
-            try:
+            with temppath(suffix='.npz') as tmp:
                 arr = np.random.randn(500, 500)
                 try:
                     np.savez(tmp, arr=arr)
                 except OSError as err:
                     error_list.append(err)
-            finally:
-                os.remove(tmp)
 
         errors = []
         threads = [threading.Thread(target=writer, args=(errors,))
@@ -259,40 +254,27 @@ class TestSavezLoad(RoundtripTest, TestCase):
     def test_not_closing_opened_fid(self):
         # Test that issue #2178 is fixed:
         # verify could seek on 'loaded' file
+        with temppath(suffix='.npz') as tmp:
+            with open(tmp, 'wb') as fp:
+                np.savez(fp, data='LOVELY LOAD')
+            with open(tmp, 'rb', 10000) as fp:
+                fp.seek(0)
+                assert_(not fp.closed)
+                np.load(fp)['data']
+                # fp must not get closed by .load
+                assert_(not fp.closed)
+                fp.seek(0)
+                assert_(not fp.closed)
 
-        fd, tmp = mkstemp(suffix='.npz')
-        os.close(fd)
-        try:
-            fp = open(tmp, 'wb')
-            np.savez(fp, data='LOVELY LOAD')
-            fp.close()
-
-            fp = open(tmp, 'rb', 10000)
-            fp.seek(0)
-            assert_(not fp.closed)
-            np.load(fp)['data']
-            # fp must not get closed by .load
-            assert_(not fp.closed)
-            fp.seek(0)
-            assert_(not fp.closed)
-
-        finally:
-            fp.close()
-            os.remove(tmp)
-
+    @np.testing.dec.skipif(IS_PYPY, "context manager required on PyPy")
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
         # e.g. Debian sid of 2012 Jul 05 but was reported to
         # trigger the failure on Ubuntu 10.04:
         # http://projects.scipy.org/numpy/ticket/1517#comment:2
-        fd, tmp = mkstemp(suffix='.npz')
-        os.close(fd)
-
-        try:
-            fp = open(tmp, 'wb')
-            np.savez(fp, data='LOVELY LOAD')
-            fp.close()
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, data='LOVELY LOAD')
             # We need to check if the garbage collector can properly close
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
@@ -308,16 +290,14 @@ class TestSavezLoad(RoundtripTest, TestCase):
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
-        finally:
-            os.remove(tmp)
 
     def test_closing_zipfile_after_load(self):
-        # Check that zipfile owns file and can close it.
-        # This needs to pass a file name to load for the
-        # test.
-        with tempdir(prefix="numpy_test_closing_zipfile_after_load_") as tmpdir:
-            fd, tmp = mkstemp(suffix='.npz', dir=tmpdir)
-            os.close(fd)
+        # Check that zipfile owns file and can close it.  This needs to
+        # pass a file name to load for the test. On windows failure will
+        # cause a second error will be raised when the attempt to remove
+        # the open file is made.
+        prefix = 'numpy_test_closing_zipfile_after_load_'
+        with temppath(suffix='.npz', prefix=prefix) as tmp:
             np.savez(tmp, lab='place holder')
             data = np.load(tmp)
             fp = data.zip.fp
@@ -425,15 +405,11 @@ class TestSaveTxt(TestCase):
                      asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
 
     def test_file_roundtrip(self):
-        f, name = mkstemp()
-        os.close(f)
-        try:
+        with temppath() as name:
             a = np.array([(1, 2), (3, 4)])
             np.savetxt(name, a)
             b = np.loadtxt(name)
             assert_array_equal(a, b)
-        finally:
-            os.unlink(name)
 
     def test_complex_arrays(self):
         ncols = 2
@@ -633,6 +609,29 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=float, usecols=np.array([1, 2]))
         assert_array_equal(x, a[:, 1:])
 
+        # Testing with an integer instead of a sequence
+        for int_type in [int, np.int8, np.int16,
+                         np.int32, np.int64, np.uint8, np.uint16,
+                         np.uint32, np.uint64]:
+            to_read = int_type(1)
+            c.seek(0)
+            x = np.loadtxt(c, dtype=float, usecols=to_read)
+            assert_array_equal(x, a[:, 1])
+
+        # Testing with some crazy custom integer type
+        class CrazyInt(object):
+            def __index__(self):
+                return 1
+
+        crazy_int = CrazyInt()
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=crazy_int)
+        assert_array_equal(x, a[:, 1])
+
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=(crazy_int,))
+        assert_array_equal(x, a[:, 1])
+
         # Checking with dtypes defined converters.
         data = '''JOE 70.1 25.3
                 BOB 60.5 27.9
@@ -643,6 +642,21 @@ class TestLoadTxt(TestCase):
         arr = np.loadtxt(c, usecols=(0, 2), dtype=list(zip(names, dtypes)))
         assert_equal(arr['stid'], [b"JOE", b"BOB"])
         assert_equal(arr['temp'], [25.3, 27.9])
+
+        # Testing non-ints in usecols
+        c.seek(0)
+        bogus_idx = 1.5
+        assert_raises_regex(
+            TypeError,
+            '^usecols must be.*%s' % type(bogus_idx),
+            np.loadtxt, c, usecols=bogus_idx
+            )
+
+        assert_raises_regex(
+            TypeError,
+            '^usecols must be.*%s' % type(bogus_idx),
+            np.loadtxt, c, usecols=[0, bogus_idx, 0]
+            )
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -748,15 +762,11 @@ class TestLoadTxt(TestCase):
         assert_equal(res, tgt)
 
     def test_universal_newline(self):
-        f, name = mkstemp()
-        os.write(f, b'1 21\r3 42\r')
-        os.close(f)
-
-        try:
+        with temppath() as name:
+            with open(name, 'w') as f:
+                f.write('1 21\r3 42\r')
             data = np.loadtxt(name)
-            assert_array_equal(data, [[1, 21], [3, 42]])
-        finally:
-            os.unlink(name)
+        assert_array_equal(data, [[1, 21], [3, 42]])
 
     def test_empty_field_after_tab(self):
         c = TextIO()
@@ -1769,8 +1779,9 @@ M   33  21.99
         assert_equal(test, control)
 
     def test_gft_using_filename(self):
-        # Test that we can load data from a filename as well as a file object
-        wanted = np.arange(6).reshape((2, 3))
+        # Test that we can load data from a filename as well as a file
+        # object
+        tgt = np.arange(6).reshape((2, 3))
         if sys.version_info[0] >= 3:
             # python 3k is known to fail for '\r'
             linesep = ('\n', '\r\n')
@@ -1779,15 +1790,11 @@ M   33  21.99
 
         for sep in linesep:
             data = '0 1 2' + sep + '3 4 5'
-            f, name = mkstemp()
-            # We can't use NamedTemporaryFile on windows, because we cannot
-            # reopen the file.
-            try:
-                os.write(f, asbytes(data))
-                assert_array_equal(np.genfromtxt(name), wanted)
-            finally:
-                os.close(f)
-                os.unlink(name)
+            with temppath() as name:
+                with open(name, 'w') as f:
+                    f.write(data)
+                res = np.genfromtxt(name)
+            assert_array_equal(res, tgt)
 
     def test_gft_using_generator(self):
         # gft doesn't work with unicode.
@@ -1815,13 +1822,116 @@ M   33  21.99
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
-        assert test.dtype['f0'] == np.float
-        assert test.dtype['f1'] == np.int64
-        assert test.dtype['f2'] == np.integer
+        assert_(test.dtype['f0'] == np.float)
+        assert_(test.dtype['f1'] == np.int64)
+        assert_(test.dtype['f2'] == np.integer)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
+
+
+class TestPathUsage(TestCase):
+    # Test that pathlib.Path can be used
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_loadtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            a = np.array([[1.1, 2], [3, 4]])
+            np.savetxt(path, a)
+            x = np.loadtxt(path)
+            assert_array_equal(x, a)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_save_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            data = np.load(path)
+            assert_array_equal(data, a)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_savez_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npz') as path:
+            path = Path(path)
+            np.savez(path, lab='place holder')
+            with np.load(path) as data:
+                assert_array_equal(data['lab'], 'place holder')
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_savez_compressed_load(self):
+        # Test that pathlib.Path instances can be used with savez.
+        with temppath(suffix='.npz') as path:
+            path = Path(path)
+            np.savez_compressed(path, lab='place holder')
+            data = np.load(path)
+            assert_array_equal(data['lab'], 'place holder')
+            data.close()
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_genfromtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            a = np.array([(1, 2), (3, 4)])
+            np.savetxt(path, a)
+            data = np.genfromtxt(path)
+            assert_array_equal(a, data)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_ndfromtxt(self):
+        # Test outputing a standard ndarray
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write(u'1 2\n3 4')
+
+            control = np.array([[1, 2], [3, 4]], dtype=int)
+            test = np.ndfromtxt(path, dtype=int)
+            assert_array_equal(test, control)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_mafromtxt(self):
+        # From `test_fancy_dtype_alt` above
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write(u'1,2,3.0\n4,5,6.0\n')
+
+            test = np.mafromtxt(path, delimiter=',')
+            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
+            assert_equal(test, control)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_recfromtxt(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write(u'A,B\n0,1\n2,3')
+
+            kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+            test = np.recfromtxt(path, **kwargs)
+            control = np.array([(0, 1), (2, 3)],
+                               dtype=[('A', np.int), ('B', np.int)])
+            self.assertTrue(isinstance(test, np.recarray))
+            assert_equal(test, control)
+
+    @np.testing.dec.skipif(Path is None, "No pathlib.Path")
+    def test_recfromcsv(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            with path.open('w') as f:
+                f.write(u'A,B\n0,1\n2,3')
+
+            kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
+            test = np.recfromcsv(path, dtype=None, **kwargs)
+            control = np.array([(0, 1), (2, 3)],
+                               dtype=[('A', np.int), ('B', np.int)])
+            self.assertTrue(isinstance(test, np.recarray))
+            assert_equal(test, control)
+
 
 def test_gzip_load():
     a = np.random.random((5, 5))
@@ -1847,16 +1957,15 @@ def test_gzip_loadtxt():
     g = gzip.GzipFile(fileobj=s, mode='w')
     g.write(b'1 2 3\n')
     g.close()
-    s.seek(0)
 
-    f, name = mkstemp(suffix='.gz')
-    try:
-        os.write(f, s.read())
-        s.close()
-        assert_array_equal(np.loadtxt(name), [1, 2, 3])
-    finally:
-        os.close(f)
-        os.unlink(name)
+    s.seek(0)
+    with temppath(suffix='.gz') as name:
+        with open(name, 'wb') as f:
+            f.write(s.read())
+        res = np.loadtxt(name)
+    s.close()
+
+    assert_array_equal(res, [1, 2, 3])
 
 
 def test_gzip_loadtxt_from_string():

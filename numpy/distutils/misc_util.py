@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import re
 import sys
-import imp
 import copy
 import glob
 import atexit
@@ -18,12 +17,29 @@ try:
 except ImportError:
     from dummy_threading import local as tlocal
 
+# stores temporary directory of each thread to only create one per thread
+_tdata = tlocal()
+
+# store all created temporary directories so they can be deleted on exit
+_tmpdirs = []
+def clean_up_temporary_directory():
+    if _tmpdirs is not None:
+        for d in _tmpdirs:
+            try:
+                shutil.rmtree(d)
+            except OSError:
+                pass
+
+atexit.register(clean_up_temporary_directory)
+
 try:
     set
 except NameError:
     from sets import Set as set
 
 from numpy.distutils.compat import get_exception
+from numpy.compat import basestring
+from numpy.compat import npy_load_module
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
@@ -111,13 +127,13 @@ def allpath(name):
     return os.path.join(*splitted)
 
 def rel_path(path, parent_path):
-    """Return path relative to parent_path.
-    """
-    pd = os.path.abspath(parent_path)
-    apath = os.path.abspath(path)
-    if len(apath)<len(pd):
+    """Return path relative to parent_path."""
+    # Use realpath to avoid issues with symlinked dirs (see gh-7707)
+    pd = os.path.realpath(os.path.abspath(parent_path))
+    apath = os.path.realpath(os.path.abspath(path))
+    if len(apath) < len(pd):
         return path
-    if apath==pd:
+    if apath == pd:
         return ''
     if pd == apath[:len(pd)]:
         assert apath[len(pd)] in [os.sep], repr((path, apath[len(pd)]))
@@ -283,26 +299,13 @@ def gpaths(paths, local_path='', include_non_existing=True):
         paths = (paths,)
     return _fix_paths(paths, local_path, include_non_existing)
 
-
-def clean_up_temporary_directory():
-    tdata = tlocal()
-    _temporary_directory = getattr(tdata, 'tempdir', None)
-    if not _temporary_directory:
-        return
-    try:
-        shutil.rmtree(_temporary_directory)
-    except OSError:
-        pass
-    _temporary_directory = None
-
 def make_temp_file(suffix='', prefix='', text=True):
-    tdata = tlocal()
-    if not hasattr(tdata, 'tempdir'):
-        tdata.tempdir = tempfile.mkdtemp()
-        atexit.register(clean_up_temporary_directory)
+    if not hasattr(_tdata, 'tempdir'):
+        _tdata.tempdir = tempfile.mkdtemp()
+        _tmpdirs.append(_tdata.tempdir)
     fid, name = tempfile.mkstemp(suffix=suffix,
                                  prefix=prefix,
-                                 dir=tdata.tempdir,
+                                 dir=_tdata.tempdir,
                                  text=text)
     fo = os.fdopen(fid, 'w')
     return fo, name
@@ -428,7 +431,7 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, str)
+    return isinstance(s, basestring)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
@@ -873,14 +876,11 @@ class Configuration(object):
         # In case setup_py imports local modules:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
-            fo_setup_py = open(setup_py, 'U')
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = imp.load_module('_'.join(n.split('.')),
-                                           fo_setup_py,
+            setup_module = npy_load_module('_'.join(n.split('.')),
                                            setup_py,
                                            ('.py', 'U', 1))
-            fo_setup_py.close()
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1910,11 +1910,12 @@ class Configuration(object):
         for f in files:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
-                info = (open(fn), fn, ('.py', 'U', 1))
+                info = ('.py', 'U', 1)
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = imp.load_module('_'.join(n.split('.')),*info)
+                    version_module = npy_load_module('_'.join(n.split('.')),
+                                                     fn, info)
                 except ImportError:
                     msg = get_exception()
                     self.warn(str(msg))

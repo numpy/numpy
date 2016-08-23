@@ -905,7 +905,7 @@ Routines
     * ``PyArrayObject* ary``, a NumPy array.
 
     Require the given ``PyArrayObject`` to to be Fortran ordered.  If
-    the the ``PyArrayObject`` is already Fortran ordered, do nothing.
+    the ``PyArrayObject`` is already Fortran ordered, do nothing.
     Else, set the Fortran ordering flag and recompute the strides.
 
 

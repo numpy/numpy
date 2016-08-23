@@ -9,6 +9,7 @@ Examples::
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
     $ python runtests.py -t {SAMPLE_TEST}
+    $ python runtests.py -t {SAMPLE_TEST} -- {SAMPLE_NOSE_ARGUMENTS}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -24,6 +25,7 @@ Generate C code coverage listing under build/lcov/:
     $ python runtests.py --lcov-html
 
 """
+from __future__ import division, print_function
 
 #
 # This is a generic test runner script for projects using Numpy's test
@@ -34,6 +36,7 @@ PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
+SAMPLE_NOSE_ARGUMENTS = "--pdb"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
               '/usr/local/lib/ccache', '/usr/local/lib/f90cache']
@@ -108,6 +111,9 @@ def main(argv):
     parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
                         help=("Compare benchmark results to COMMIT. "
                               "Note that you need to commit your changes first!"))
+    parser.add_argument("--raise-warnings", default=None, type=str,
+                        choices=('develop', 'release'),
+                        help="if 'develop', some warnings are treated as errors")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -144,14 +150,17 @@ def main(argv):
     if args.python:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings")
-        import warnings; warnings.filterwarnings("always")
+        import warnings
+        import types
+
+        warnings.filterwarnings("always")
         if extra_argv:
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
             sys.argv = extra_argv
             with open(extra_argv[0], 'r') as f:
                 script = f.read()
-            sys.modules['__main__'] = imp.new_module('__main__')
+            sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
                       __file__=extra_argv[0])
             exec_(script, ns)
@@ -288,6 +297,7 @@ def main(argv):
                       verbose=args.verbose,
                       extra_argv=extra_argv,
                       doctests=args.doctests,
+                      raise_warnings=args.raise_warnings,
                       coverage=args.coverage)
     finally:
         os.chdir(cwd)
@@ -343,7 +353,18 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    cmd += ['install', '--prefix=' + dst_dir]
+    # Install; avoid producing eggs so numpy can be imported from dst_dir.
+    cmd += ['install', '--prefix=' + dst_dir,
+            '--single-version-externally-managed',
+            '--record=' + dst_dir + 'tmp_install_log.txt']
+
+    from distutils.sysconfig import get_python_lib
+    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
+    # easy_install won't install to a path that Python by default cannot see
+    # and isn't on the PYTHONPATH.  Plus, it has to exist.
+    if not os.path.exists(site_dir):
+        os.makedirs(site_dir)
+    env['PYTHONPATH'] = site_dir
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
@@ -382,9 +403,6 @@ def build_project(args):
             print("Build failed!")
         sys.exit(1)
 
-    from distutils.sysconfig import get_python_lib
-    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
-
     return site_dir
 
 
@@ -420,8 +438,8 @@ def lcov_generate():
                      '--output-file', LCOV_OUTPUT_FILE])
 
     print("Generating lcov HTML output...")
-    ret = subprocess.call(['genhtml', '-q', LCOV_OUTPUT_FILE, 
-                           '--output-directory', LCOV_HTML_DIR, 
+    ret = subprocess.call(['genhtml', '-q', LCOV_OUTPUT_FILE,
+                           '--output-directory', LCOV_HTML_DIR,
                            '--legend', '--highlight'])
     if ret != 0:
         print("genhtml failed!")

@@ -5,11 +5,11 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
     TestCase, run_module_suite, assert_equal, assert_array_equal,
-    assert_array_max_ulp, assert_array_almost_equal, assert_raises, rand,
+    assert_array_max_ulp, assert_array_almost_equal, assert_raises
     )
 
 from numpy import (
-    arange, rot90, add, fliplr, flipud, zeros, ones, eye, array, diag,
+    arange, add, fliplr, flipud, zeros, ones, eye, array, diag,
     histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
     tril_indices, tril_indices_from, vander,
     )
@@ -169,37 +169,6 @@ class TestFlipud(TestCase):
         assert_equal(flipud(a), b)
 
 
-class TestRot90(TestCase):
-    def test_basic(self):
-        self.assertRaises(ValueError, rot90, ones(4))
-
-        a = [[0, 1, 2],
-             [3, 4, 5]]
-        b1 = [[2, 5],
-              [1, 4],
-              [0, 3]]
-        b2 = [[5, 4, 3],
-              [2, 1, 0]]
-        b3 = [[3, 0],
-              [4, 1],
-              [5, 2]]
-        b4 = [[0, 1, 2],
-              [3, 4, 5]]
-
-        for k in range(-3, 13, 4):
-            assert_equal(rot90(a, k=k), b1)
-        for k in range(-2, 13, 4):
-            assert_equal(rot90(a, k=k), b2)
-        for k in range(-1, 13, 4):
-            assert_equal(rot90(a, k=k), b3)
-        for k in range(0, 13, 4):
-            assert_equal(rot90(a, k=k), b4)
-
-    def test_axes(self):
-        a = ones((50, 40, 3))
-        assert_equal(rot90(a).shape, (40, 50, 3))
-
-
 class TestHistogram2d(TestCase):
     def test_simple(self):
         x = array(
@@ -254,7 +223,7 @@ class TestHistogram2d(TestCase):
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
-        r = rand(100) + 1. + 1e6  # histogramdd rounds by decimal=6
+        r = np.random.rand(100) + 1. + 1e6  # histogramdd rounds by decimal=6
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0, 1], [0, 1]))
         assert_array_equal(H, 0)
 
@@ -267,10 +236,10 @@ class TestHistogram2d(TestCase):
 
     def test_binparameter_combination(self):
         x = array(
-            [0, 0.09207008,  0.64575234,  0.12875982,  0.47390599,  
+            [0, 0.09207008,  0.64575234,  0.12875982,  0.47390599,
              0.59944483, 1])
         y = array(
-            [0, 0.14344267,  0.48988575,  0.30558665,  0.44700682,  
+            [0, 0.14344267,  0.48988575,  0.30558665,  0.44700682,
              0.15886423, 1])
         edges = (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
         H, xe, ye = histogram2d(x, y, (edges, 4))

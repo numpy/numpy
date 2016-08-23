@@ -11,7 +11,7 @@
   by
 
   Travis Oliphant,  oliphant@ee.byu.edu
-  Brigham Young Univeristy
+  Brigham Young University
 
 
 maintainer email:  oliphant.travis@ieee.org
@@ -52,6 +52,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "array_assign.h"
 #include "alloc.h"
 #include "mem_overlap.h"
+#include "numpyos.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -96,7 +97,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     }
 
     /*
-     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * Any writes to 'arr' will magically turn into writes to 'base', so we
      * should warn if necessary.
      */
     if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
@@ -880,18 +881,13 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 
 #define SMALL_STRING 2048
 
-#if defined(isspace)
-#undef isspace
-#define isspace(c)  ((c==' ')||(c=='\t')||(c=='\n')||(c=='\r')||(c=='\v')||(c=='\f'))
-#endif
-
 static void _rstripw(char *s, int n)
 {
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         int c = s[i];
 
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -905,7 +901,7 @@ static void _unistripw(npy_ucs4 *s, int n)
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         npy_ucs4 c = s[i];
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -1087,7 +1083,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val;
+    int val, cast = 0;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
@@ -1099,9 +1095,13 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
 #else
+        cast = 1;
+#endif  /* define(NPY_PY3K) */
+    }
+    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
-            PyArray_DESCR(other)->type_num == NPY_UNICODE) {
+                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
             unicode->elsize = PyArray_DESCR(self)->elsize << 2;
             new = PyArray_FromAny((PyObject *)self, unicode,
@@ -1112,10 +1112,17 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
-        else if (PyArray_TYPE(self) == NPY_UNICODE &&
-                 PyArray_DESCR(other)->type_num == NPY_STRING) {
+        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
+                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
+                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-            unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+
+            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
+                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+            }
+            else {
+                unicode->elsize = PyArray_DESCR(other)->elsize;
+            }
             new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
@@ -1130,7 +1137,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
-#endif
     }
     else {
         Py_INCREF(self);
@@ -1656,11 +1662,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     itemsize = descr->elsize;
-    if (itemsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data-type with unspecified variable length");
-        goto fail;
-    }
 
     if (strides.ptr != NULL) {
         npy_intp nb, off;
@@ -1694,10 +1695,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     if (buffer.ptr == NULL) {
         ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, descr,
-                                 (int)dims.len,
-                                 dims.ptr,
-                                 strides.ptr, NULL, is_f_order, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     (int)dims.len,
+                                     dims.ptr,
+                                     strides.ptr, NULL, is_f_order, NULL,
+                                     0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1730,11 +1732,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
-            PyArray_NewFromDescr(subtype, descr,
-                                 dims.len, dims.ptr,
-                                 strides.ptr,
-                                 offset + (char *)buffer.ptr,
-                                 buffer.flags, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     dims.len, dims.ptr,
+                                     strides.ptr,
+                                     offset + (char *)buffer.ptr,
+                                     buffer.flags, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;

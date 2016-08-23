@@ -1,5 +1,5 @@
 #####################
-Contributing to Numpy
+NumPy governance
 #####################
 
 .. toctree::

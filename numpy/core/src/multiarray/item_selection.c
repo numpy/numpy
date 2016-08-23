@@ -842,7 +842,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized buffer, or leak a reference to each
+                 * an uninitialized buffer, or leak a reference to each
                  * object if initialized.
                  *
                  * So, first do the copy with no refcounting...
@@ -1003,7 +1003,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized valbuffer, or leak a reference to
+                 * an uninitialized valbuffer, or leak a reference to
                  * each object item if initialized.
                  *
                  * So, first do the copy with no refcounting...
@@ -1441,11 +1441,6 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             && PyDataType_FLAGCHK(PyArray_DESCR(mps[i]), NPY_NEEDS_PYAPI)) {
             object = 1;
         }
-        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
-                (PyObject *)mps[i], &axis);
-        if (its[i] == NULL) {
-            goto fail;
-        }
     }
 
     /* Now we can check the axis */
@@ -1470,6 +1465,14 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         PyErr_Format(PyExc_ValueError,
                 "axis(=%d) out of bounds", axis);
         goto fail;
+    }
+
+    for (i = 0; i < n; i++) {
+        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)mps[i], &axis);
+        if (its[i] == NULL) {
+            goto fail;
+        }
     }
 
     /* Now do the sorting */
@@ -1813,7 +1816,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
     int i, idim, ndim = PyArray_NDIM(self);
     npy_intp *strides;
-    npy_intp stride1, stride2;
+    npy_intp stride1, stride2, offset_stride;
     npy_intp *shape, dim1, dim2;
 
     char *data;
@@ -1860,35 +1863,21 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* Compute the data pointers and diag_size for the view */
     data = PyArray_DATA(self);
-    if (offset > 0) {
-        if (offset >= dim2) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride2;
-
-            diag_size = dim2 - offset;
-            if (dim1 < diag_size) {
-                diag_size = dim1;
-            }
-        }
-    }
-    else if (offset < 0) {
-        offset = -offset;
-        if (offset >= dim1) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride1;
-
-            diag_size = dim1 - offset;
-            if (dim2 < diag_size) {
-                diag_size = dim2;
-            }
-        }
+    if (offset >= 0) {
+        offset_stride = stride2;
+        dim2 -= offset;
     }
     else {
-        diag_size = dim1 < dim2 ? dim1 : dim2;
+        offset = -offset;
+        offset_stride = stride1;
+        dim1 -= offset;
+    }
+    diag_size = dim2 < dim1 ? dim2 : dim1;
+    if (diag_size < 0) {
+        diag_size = 0;
+    }
+    else {
+        data += offset * offset_stride;
     }
 
     /* Build the new shape and strides for the main data */

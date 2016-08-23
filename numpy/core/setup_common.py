@@ -36,6 +36,7 @@ C_ABI_VERSION = 0x01000009
 # 0x00000009 - 1.8.x
 # 0x00000009 - 1.9.x
 # 0x0000000a - 1.10.x
+# 0x0000000a - 1.11.x
 C_API_VERSION = 0x0000000a
 
 class MismatchCAPIWarning(Warning):
@@ -104,7 +105,7 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l",]
+        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
 
 
 OPTIONAL_HEADERS = [
@@ -125,7 +126,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
+                       ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
+                        "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
+                       ("__builtin_prefetch", "(float*)0, 0, 3"),
                        ]
 
 # function attributes
@@ -189,7 +193,7 @@ def check_long_double_representation(cmd):
     if sys.platform == "win32" and not mingw32():
         try:
             cmd.compiler.compile_options.remove("/GL")
-        except ValueError:
+        except (AttributeError, ValueError):
             pass
 
     # We need to use _compile because we need the object filename

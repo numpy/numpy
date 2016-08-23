@@ -10,9 +10,10 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-from numpy._build_utils.apple_accelerate import (uses_accelerate_framework,
-                                                 get_sgemv_fix)
-
+from numpy._build_utils.apple_accelerate import (
+    uses_accelerate_framework, get_sgemv_fix
+    )
+from numpy.compat import npy_load_module
 from setup_common import *
 
 # Set to True to enable relaxed strides checking. This (mostly) means
@@ -272,6 +273,10 @@ def check_types(config_cmd, ext, build_dir):
     if res:
         private_defines.append(('HAVE_ENDIAN_H', 1))
         public_defines.append(('NPY_HAVE_ENDIAN_H', 1))
+    res = config_cmd.check_header("sys/endian.h")
+    if res:
+        private_defines.append(('HAVE_SYS_ENDIAN_H', 1))
+        public_defines.append(('NPY_HAVE_SYS_ENDIAN_H', 1))
 
     # Check basic types sizes
     for type in ('short', 'int', 'long'):
@@ -386,9 +391,8 @@ def configuration(parent_package='',top_path=None):
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
-    generate_umath = imp.load_module('_'.join(n.split('.')),
-                                     open(generate_umath_py, 'U'), generate_umath_py,
-                                     ('.py', 'U', 1))
+    generate_umath = npy_load_module('_'.join(n.split('.')),
+                                     generate_umath_py, ('.py', 'U', 1))
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
@@ -896,6 +900,8 @@ def configuration(parent_package='',top_path=None):
 
     umath_deps = [
             generate_umath_py,
+            join('include', 'numpy', 'npy_math.h'),
+            join('include', 'numpy', 'halffloat.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),

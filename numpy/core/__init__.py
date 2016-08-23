@@ -11,7 +11,18 @@ for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
     if envkey not in os.environ:
         os.environ[envkey] = '1'
         env_added.append(envkey)
-from . import multiarray
+
+try:
+    from . import multiarray
+except ImportError:
+    msg = """
+Importing the multiarray numpy extension module failed.  Most
+likely you are trying to import a failed build of numpy.
+If you're working with a numpy git repo, try `git clean -xdf` (removes all
+files not under version control).  Otherwise reinstall numpy.
+"""
+    raise ImportError(msg)
+
 for envkey in env_added:
     del os.environ[envkey]
 del envkey
@@ -55,9 +66,9 @@ __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 
 
-from numpy.testing import Tester
-test = Tester().test
-bench = Tester().bench
+from numpy.testing.nosetester import _numpy_tester
+test = _numpy_tester().test
+bench = _numpy_tester().bench
 
 # Make it possible so that ufuncs can be pickled
 #  Here are the loading and unloading functions

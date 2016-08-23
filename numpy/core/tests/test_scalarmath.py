@@ -1,12 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import itertools
+import warnings
+import operator
 
 import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal
+    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -119,6 +122,24 @@ class TestPower(TestCase):
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
+    def test_negative_power(self):
+        typelist = [np.int8, np.int16, np.int32, np.int64]
+        for t in typelist:
+            a = t(2)
+            b = t(-4)
+            result = a**b
+            msg = ("error with %r:"
+                   "got %r, expected %r") % (t, result, 0.0625)
+            assert_(result == 0.0625, msg)
+
+            c = t(4)
+            d = t(-15)
+            result = c**d
+            expected = 4.0**-15.0
+            msg = ("error with %r:"
+                   "got %r, expected %r") % (t, result, expected)
+            assert_almost_equal(result, expected, err_msg=msg)
+
     def test_mixed_types(self):
         typelist = [np.int8, np.int16, np.float16,
                     np.float32, np.float64, np.int8,
@@ -134,6 +155,107 @@ class TestPower(TestCase):
                     assert_(result == 9, msg)
                 else:
                     assert_almost_equal(result, 9, err_msg=msg)
+
+
+class TestModulus(TestCase):
+
+    floordiv = operator.floordiv
+    mod = operator.mod
+
+    def test_modulus_basic(self):
+        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
+                    continue
+                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
+                    continue
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*71, dtype=dt1)[()]
+                b = np.array(sg2*19, dtype=dt2)[()]
+                div = self.floordiv(a, b)
+                rem = self.mod(a, b)
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_modulus_exact(self):
+        # test that float results are exact for small integers. This also
+        # holds for the same integers scaled by powers of two.
+        nlst = list(range(-127, 0))
+        plst = list(range(1, 128))
+        dividend = nlst + [0] + plst
+        divisor = nlst + plst
+        arg = list(itertools.product(dividend, divisor))
+        tgt = list(divmod(*t) for t in arg)
+
+        a, b = np.array(arg, dtype=int).T
+        # convert exact integer results from Python to float so that
+        # signed zero can be used, it is checked.
+        tgtdiv, tgtrem = np.array(tgt, dtype=float).T
+        tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
+        tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
+
+        for dt in np.typecodes['Float']:
+            msg = 'dtype: %s' % (dt,)
+            fa = a.astype(dt)
+            fb = b.astype(dt)
+            # use list comprehension so a_ and b_ are scalars
+            div = [self.floordiv(a_, b_) for  a_, b_ in zip(fa, fb)]
+            rem = [self.mod(a_, b_) for a_, b_ in zip(fa, fb)]
+            assert_equal(div, tgtdiv, err_msg=msg)
+            assert_equal(rem, tgtrem, err_msg=msg)
+
+    def test_float_modulus_roundoff(self):
+        # gh-6127
+        dt = np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*78*6e-8, dtype=dt1)[()]
+                b = np.array(sg2*6e-8, dtype=dt2)[()]
+                div = self.floordiv(a, b)
+                rem = self.mod(a, b)
+                # Equal assertion should hold when fmod is used
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_modulus_corner_cases(self):
+        # Check remainder magnitude.
+        for dt in np.typecodes['Float']:
+            b = np.array(1.0, dtype=dt)
+            a = np.nextafter(np.array(0.0, dtype=dt), -b)
+            rem = self.mod(a, b)
+            assert_(rem <= b, 'dt: %s' % dt)
+            rem = self.mod(-a, -b)
+            assert_(rem >= -b, 'dt: %s' % dt)
+
+        # Check nans, inf
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warnings.simplefilter('ignore', RuntimeWarning)
+            for dt in np.typecodes['Float']:
+                fone = np.array(1.0, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
+                rem = self.mod(fone, fzer)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+                # MSVC 2008 returns NaN here, so disable the check.
+                #rem = self.mod(fone, finf)
+                #assert_(rem == fone, 'dt: %s' % dt)
+                rem = self.mod(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+                rem = self.mod(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
+
 
 class TestComplexDivision(TestCase):
     def test_zero_division(self):
@@ -152,6 +274,59 @@ class TestComplexDivision(TestCase):
                 assert_(np.isnan(b/a))
                 b = t(0.)
                 assert_(np.isnan(b/a))
+
+    def test_signed_zeros(self):
+        with np.errstate(all="ignore"):
+            for t in [np.complex64, np.complex128]:
+                # tupled (numerator, denominator, expected)
+                # for testing as expected == numerator/denominator
+                data = (
+                    (( 0.0,-1.0), ( 0.0, 1.0), (-1.0,-0.0)),
+                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                    (( 0.0,-1.0), (-0.0,-1.0), ( 1.0, 0.0)),
+                    (( 0.0,-1.0), (-0.0, 1.0), (-1.0, 0.0)),
+                    (( 0.0, 1.0), ( 0.0,-1.0), (-1.0, 0.0)),
+                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                    ((-0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                    ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
+                )
+                for cases in data:
+                    n = cases[0]
+                    d = cases[1]
+                    ex = cases[2]
+                    result = t(complex(n[0], n[1])) / t(complex(d[0], d[1]))
+                    # check real and imag parts separately to avoid comparison
+                    # in array context, which does not account for signed zeros
+                    assert_equal(result.real, ex[0])
+                    assert_equal(result.imag, ex[1])
+
+    def test_branches(self):
+        with np.errstate(all="ignore"):
+            for t in [np.complex64, np.complex128]:
+                # tupled (numerator, denominator, expected)
+                # for testing as expected == numerator/denominator
+                data = list()
+
+                # trigger branch: real(fabs(denom)) > imag(fabs(denom))
+                # followed by else condition as neither are == 0
+                data.append((( 2.0, 1.0), ( 2.0, 1.0), (1.0, 0.0)))
+
+                # trigger branch: real(fabs(denom)) > imag(fabs(denom))
+                # followed by if condition as both are == 0
+                # is performed in test_zero_division(), so this is skipped
+
+                # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
+                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+
+                for cases in data:
+                    n = cases[0]
+                    d = cases[1]
+                    ex = cases[2]
+                    result = t(complex(n[0], n[1])) / t(complex(d[0], d[1]))
+                    # check real and imag parts separately to avoid comparison
+                    # in array context, which does not account for signed zeros
+                    assert_equal(result.real, ex[0])
+                    assert_equal(result.imag, ex[1])
 
 
 class TestConversion(TestCase):
@@ -279,16 +454,56 @@ class TestRepr(object):
             yield self._test_type_repr, t
 
 
-class TestSizeOf(TestCase):
+if not IS_PYPY:
+    # sys.getsizeof() is not valid on PyPy
+    class TestSizeOf(TestCase):
 
-    def test_equal_nbytes(self):
-        for type in types:
-            x = type(0)
-            assert_(sys.getsizeof(x) > x.nbytes)
+        def test_equal_nbytes(self):
+            for type in types:
+                x = type(0)
+                assert_(sys.getsizeof(x) > x.nbytes)
 
-    def test_error(self):
-        d = np.float32()
-        assert_raises(TypeError, d.__sizeof__, "a")
+        def test_error(self):
+            d = np.float32()
+            assert_raises(TypeError, d.__sizeof__, "a")
+
+
+class TestMultiply(TestCase):
+    def test_seq_repeat(self):
+        # Test that basic sequences get repeated when multiplied with
+        # numpy integers. And errors are raised when multiplied with others.
+        # Some of this behaviour may be controversial and could be open for
+        # change.
+        for seq_type in (list, tuple):
+            seq = seq_type([1, 2, 3])
+            for numpy_type in np.typecodes["AllInteger"]:
+                i = np.dtype(numpy_type).type(2)
+                assert_equal(seq * i, seq * int(i))
+                assert_equal(i * seq, int(i) * seq)
+
+            for numpy_type in np.typecodes["All"].replace("V", ""):
+                if numpy_type in np.typecodes["AllInteger"]:
+                    continue
+                i = np.dtype(numpy_type).type()
+                assert_raises(TypeError, operator.mul, seq, i)
+                assert_raises(TypeError, operator.mul, i, seq)
+
+    def test_no_seq_repeat_basic_array_like(self):
+        # Test that an array-like which does not know how to be multiplied
+        # does not attempt sequence repeat (raise TypeError).
+        # See also gh-7428.
+        class ArrayLike(object):
+            def __init__(self, arr):
+                self.arr = arr
+            def __array__(self):
+                return self.arr
+
+        # Test for simple ArrayLike above and memoryviews (original report)
+        for arr_like in (ArrayLike(np.ones(3)), memoryview(np.ones(3))):
+            assert_array_equal(arr_like * np.float32(3.), np.full(3, 3.))
+            assert_array_equal(np.float32(3.) * arr_like, np.full(3, 3.))
+            assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
+            assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
 class TestAbs(TestCase):

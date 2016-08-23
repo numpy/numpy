@@ -27,7 +27,7 @@
 /*
  * Allocates a result array for a reduction operation, with
  * dimensions matching 'arr' except set to 1 with 0 stride
- * whereever axis_flags is True. Dropping the reduction axes
+ * wherever axis_flags is True. Dropping the reduction axes
  * from the result must be done later by the caller once the
  * computation is complete.
  *

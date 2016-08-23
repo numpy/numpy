@@ -150,7 +150,7 @@ def atleast_3d(*arys):
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
-    ...     print arr, arr.shape
+    ...     print(arr, arr.shape)
     ...
     [[[1]
       [2]]] (1, 2, 1)
@@ -183,6 +183,10 @@ def vstack(tup):
 
     Take a sequence of arrays and stack them vertically to make a single
     array. Rebuild arrays divided by `vsplit`.
+
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------
@@ -235,6 +239,10 @@ def hstack(tup):
 
     Take a sequence of arrays and stack them horizontally to make
     a single array. Rebuild arrays divided by `hsplit`.
+
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------

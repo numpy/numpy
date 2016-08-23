@@ -10,12 +10,19 @@ from numpy.core.multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns
+    assert_array_equal, assert_warns, HAS_REFCOUNT
 )
 
 
 try:
-    cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
+    cdll = None
+    if hasattr(sys, 'gettotalrefcount'):
+        try:
+            cdll = np.ctypeslib.load_library('multiarray_d', np.core.multiarray.__file__)
+        except OSError:
+            pass
+    if cdll is None:
+        cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
     _HAS_CTYPE = True
 except ImportError:
     _HAS_CTYPE = False
@@ -52,38 +59,38 @@ class TestIndexing(TestCase):
         a = np.array([[5]])
 
         # start as float.
-        assert_raises(IndexError, lambda: a[0.0:])
-        assert_raises(IndexError, lambda: a[0:, 0.0:2])
-        assert_raises(IndexError, lambda: a[0.0::2, :0])
-        assert_raises(IndexError, lambda: a[0.0:1:2,:])
-        assert_raises(IndexError, lambda: a[:, 0.0:])
+        assert_raises(TypeError, lambda: a[0.0:])
+        assert_raises(TypeError, lambda: a[0:, 0.0:2])
+        assert_raises(TypeError, lambda: a[0.0::2, :0])
+        assert_raises(TypeError, lambda: a[0.0:1:2,:])
+        assert_raises(TypeError, lambda: a[:, 0.0:])
         # stop as float.
-        assert_raises(IndexError, lambda: a[:0.0])
-        assert_raises(IndexError, lambda: a[:0, 1:2.0])
-        assert_raises(IndexError, lambda: a[:0.0:2, :0])
-        assert_raises(IndexError, lambda: a[:0.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4.0:2])
+        assert_raises(TypeError, lambda: a[:0.0])
+        assert_raises(TypeError, lambda: a[:0, 1:2.0])
+        assert_raises(TypeError, lambda: a[:0.0:2, :0])
+        assert_raises(TypeError, lambda: a[:0.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4.0:2])
         # step as float.
-        assert_raises(IndexError, lambda: a[::1.0])
-        assert_raises(IndexError, lambda: a[0:, :2:2.0])
-        assert_raises(IndexError, lambda: a[1::4.0, :0])
-        assert_raises(IndexError, lambda: a[::5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4:2.0])
+        assert_raises(TypeError, lambda: a[::1.0])
+        assert_raises(TypeError, lambda: a[0:, :2:2.0])
+        assert_raises(TypeError, lambda: a[1::4.0, :0])
+        assert_raises(TypeError, lambda: a[::5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4:2.0])
         # mixed.
-        assert_raises(IndexError, lambda: a[1.0:2:2.0])
-        assert_raises(IndexError, lambda: a[1.0::2.0])
-        assert_raises(IndexError, lambda: a[0:, :2.0:2.0])
-        assert_raises(IndexError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(IndexError, lambda: a[1.0:5.0:5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0.4:4.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:2:2.0])
+        assert_raises(TypeError, lambda: a[1.0::2.0])
+        assert_raises(TypeError, lambda: a[0:, :2.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:1:4.0, :0])
+        assert_raises(TypeError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
-        assert_raises(IndexError, lambda: a[::0.0])
+        assert_raises(TypeError, lambda: a[::0.0])
 
     def test_index_no_array_to_index(self):
         # No non-scalar arrays.
         a = np.array([[[1]]])
 
-        assert_raises(IndexError, lambda: a[a:a:a])
+        assert_raises(TypeError, lambda: a[a:a:a])
 
     def test_none_index(self):
         # `None` index adds newaxis
@@ -212,6 +219,20 @@ class TestIndexing(TestCase):
         assert_raises(ValueError, f, a, [])
         assert_raises(ValueError, f, a, [1, 2, 3])
         assert_raises(ValueError, f, a[:1], [1, 2, 3])
+
+    def test_boolean_assignment_needs_api(self):
+        # See also gh-7666
+        # This caused a segfault on Python 2 due to the GIL not being
+        # held when the iterator does not need it, but the transfer function
+        # does
+        arr = np.zeros(1000)
+        indx = np.zeros(1000, dtype=bool)
+        indx[:100] = True
+        arr[indx] = np.ones(100, dtype=object)
+
+        expected = np.zeros(1000)
+        expected[:100] = 1
+        assert_array_equal(arr, expected)
 
     def test_boolean_indexing_twodim(self):
         # Indexing a 2-dimensional array with
@@ -390,7 +411,8 @@ class TestIndexing(TestCase):
     def test_small_regressions(self):
         # Reference count of intp for index checks
         a = np.array([0])
-        refcount = sys.getrefcount(np.dtype(np.intp))
+        if HAS_REFCOUNT:
+            refcount = sys.getrefcount(np.dtype(np.intp))
         # item setting always checks indices in separate function:
         a[np.array([0], dtype=np.intp)] = 1
         a[np.array([0], dtype=np.uint8)] = 1
@@ -399,7 +421,8 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__setitem__,
                       np.array([1], dtype=np.uint8), 1)
 
-        assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
+        if HAS_REFCOUNT:
+            assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
     def test_unaligned(self):
         v = (np.zeros(64, dtype=np.int8) + ord('a'))[1:-7]
@@ -895,10 +918,7 @@ class TestMultiIndexingAutomated(TestCase):
                                     + arr.shape[ax + len(indx[1:]):]))
 
                 # Check if broadcasting works
-                if len(indx[1:]) != 1:
-                    res = np.broadcast(*indx[1:])  # raises ValueError...
-                else:
-                    res = indx[1]
+                res = np.broadcast(*indx[1:])
                 # unfortunately the indices might be out of bounds. So check
                 # that first, and use mode='wrap' then. However only if
                 # there are any indices...
@@ -954,10 +974,12 @@ class TestMultiIndexingAutomated(TestCase):
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
         except Exception:
-            prev_refcount = sys.getrefcount(arr)
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -976,10 +998,12 @@ class TestMultiIndexingAutomated(TestCase):
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
         except Exception:
-            prev_refcount = sys.getrefcount(arr)
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -995,11 +1019,12 @@ class TestMultiIndexingAutomated(TestCase):
         if indexed_arr.size != 0 and indexed_arr.ndim != 0:
             assert_(np.may_share_memory(indexed_arr, arr) == no_copy)
             # Check reference count of the original array
-            if no_copy:
-                # refcount increases by one:
-                assert_equal(sys.getrefcount(arr), 3)
-            else:
-                assert_equal(sys.getrefcount(arr), 2)
+            if HAS_REFCOUNT:
+                if no_copy:
+                    # refcount increases by one:
+                    assert_equal(sys.getrefcount(arr), 3)
+                else:
+                    assert_equal(sys.getrefcount(arr), 2)
 
         # Test non-broadcast setitem:
         b = arr.copy()
@@ -1137,7 +1162,6 @@ class TestBooleanArgumentErrors(TestCase):
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
         assert_raises(TypeError, np.take, args=(a, [0], False))
-        assert_raises(IndexError, lambda: a[False:True:True])
         assert_raises(IndexError, lambda: a[False, 0])
         assert_raises(IndexError, lambda: a[False, 0, 0])
 

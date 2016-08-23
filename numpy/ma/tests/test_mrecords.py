@@ -15,7 +15,7 @@ import numpy.ma as ma
 from numpy import recarray
 from numpy.compat import asbytes, asbytes_nested
 from numpy.ma import masked, nomask
-from numpy.testing import TestCase, run_module_suite
+from numpy.testing import TestCase, run_module_suite, temppath
 from numpy.core.records import (
     fromrecords as recfromrecords, fromarrays as recfromarrays
     )
@@ -209,7 +209,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.a.mask, [0, 0, 1, 1, 0])
         assert_equal(mbase.b.mask, [1, 1, 0, 0, 0])
         assert_equal(mbase.c.mask, [0, 0, 1, 1, 0])
-        # Reinitalizes and redo
+        # Reinitialize and redo
         mbase.mask = False
         mbase.fieldmask = nmask
         assert_equal(mbase.a.mask, [0, 0, 1, 1, 0])
@@ -476,7 +476,7 @@ class TestMRecordsImport(TestCase):
 
     def test_fromtextfile(self):
         # Tests reading from a text file.
-        fcontent = asbytes(
+        fcontent = (
 """#
 'One (S)','Two (I)','Three (F)','Four (M)','Five (-)','Six (C)'
 'strings',1,1.0,'mixed column',,1
@@ -484,14 +484,10 @@ class TestMRecordsImport(TestCase):
 'strings',3,3.0E5,3,,1
 'strings',4,-1e-10,,,1
 """)
-        import os
-        import tempfile
-        (tmp_fd, tmp_fl) = tempfile.mkstemp()
-        os.write(tmp_fd, fcontent)
-        os.close(tmp_fd)
-        mrectxt = fromtextfile(tmp_fl, delimitor=',', varnames='ABCDEFG')
-        os.remove(tmp_fl)
-
+        with temppath() as path:
+            with open(path, 'w') as f:
+                f.write(fcontent)
+            mrectxt = fromtextfile(path, delimitor=',', varnames='ABCDEFG')
         self.assertTrue(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1, 1, 1, 1])
         assert_equal(mrectxt.E._mask, [1, 1, 1, 1])

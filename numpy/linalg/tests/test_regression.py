@@ -90,6 +90,52 @@ class TestRegression(TestCase):
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+    def test_norm_object_array(self):
+        # gh-7575
+        testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)
+
+        norm = linalg.norm(testvector)
+        assert_array_equal(norm, [0, 1])
+        self.assertEqual(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=1)
+        assert_array_equal(norm, [0, 1])
+        self.assertNotEqual(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testvector, ord=2)
+        assert_array_equal(norm, [0, 1])
+        self.assertEqual(norm.dtype, np.dtype('float64'))
+
+        self.assertRaises(ValueError, linalg.norm, testvector, ord='fro')
+        self.assertRaises(ValueError, linalg.norm, testvector, ord='nuc')
+        self.assertRaises(ValueError, linalg.norm, testvector, ord=np.inf)
+        self.assertRaises(ValueError, linalg.norm, testvector, ord=-np.inf)
+        self.assertRaises((AttributeError, DeprecationWarning),
+                          linalg.norm, testvector, ord=0)
+        self.assertRaises(ValueError, linalg.norm, testvector, ord=-1)
+        self.assertRaises(ValueError, linalg.norm, testvector, ord=-2)
+
+        testmatrix = np.array([[np.array([0, 1]), 0, 0],
+                               [0,                0, 0]], dtype=object)
+
+        norm = linalg.norm(testmatrix)
+        assert_array_equal(norm, [0, 1])
+        self.assertEqual(norm.dtype, np.dtype('float64'))
+
+        norm = linalg.norm(testmatrix, ord='fro')
+        assert_array_equal(norm, [0, 1])
+        self.assertEqual(norm.dtype, np.dtype('float64'))
+
+        self.assertRaises(TypeError, linalg.norm, testmatrix, ord='nuc')
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=np.inf)
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=-np.inf)
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=0)
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=1)
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=-1)
+        self.assertRaises(TypeError, linalg.norm, testmatrix, ord=2)
+        self.assertRaises(TypeError, linalg.norm, testmatrix, ord=-2)
+        self.assertRaises(ValueError, linalg.norm, testmatrix, ord=3)
+
 
 if __name__ == '__main__':
     run_module_suite()

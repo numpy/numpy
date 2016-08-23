@@ -120,7 +120,7 @@ This is a very flexible function.
     array of the type to be created (so the ``__array_finalize__`` method
     must handle an array argument. But, it can be anything...)
 
-Note: The returned array object will be unitialized unless the type is
+Note: The returned array object will be uninitialized unless the type is
 ``PyArray_OBJECT`` in which case the memory will be set to ``NULL``.
 
 ``PyArray_SimpleNew(nd, dims, typenum)`` is a drop-in replacement for

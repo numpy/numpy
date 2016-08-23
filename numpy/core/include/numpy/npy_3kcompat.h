@@ -53,6 +53,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
  */
 #endif /* NPY_PY3K */
 
+/* Py3 changes PySlice_GetIndicesEx' first argument's type to PyObject* */
+#ifdef NPY_PY3K
+#  define NpySlice_GetIndicesEx PySlice_GetIndicesEx
+#else
+#  define NpySlice_GetIndicesEx(op, nop, start, end, step, slicelength) \
+    PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
+#endif
+
 /*
  * PyString -> PyBytes
  */
@@ -320,7 +328,13 @@ static NPY_INLINE FILE *
 npy_PyFile_Dup2(PyObject *file,
                 const char *NPY_UNUSED(mode), npy_off_t *NPY_UNUSED(orig_pos))
 {
-    return PyFile_AsFile(file);
+    FILE * fp = PyFile_AsFile(file);
+    if (fp == NULL) {
+        PyErr_SetString(PyExc_IOError,
+                        "first argument must be an open file");
+        return NULL;
+    }
+    return fp;
 }
 
 static NPY_INLINE int

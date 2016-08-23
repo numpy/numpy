@@ -538,26 +538,26 @@ class TestCompressFunctions(TestCase):
         m = [1, 0, 0, 0, 0, 0]
         a = masked_array(n, mask=m).reshape(2, 3)
         b = masked_array(n, mask=m).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 1], [1, 0]])
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[1, 1, 1], [1, 0, 0], [1, 0, 0]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0, 0, 0, 0, 0, 1]
         a = masked_array(n, mask=m).reshape(2, 3)
         b = masked_array(n, mask=m).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[0, 1], [1, 1]])
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [0, 0, 1], [1, 1, 1]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
         assert_equal(c, dot(a, b))
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0, 0, 0, 0, 0, 0]
@@ -570,36 +570,52 @@ class TestCompressFunctions(TestCase):
         #
         a = masked_array(n, mask=[1, 0, 0, 0, 0, 0]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 0, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 1], [0, 0]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[1, 0, 0], [1, 0, 0], [1, 0, 0]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         a = masked_array(n, mask=[0, 0, 0, 0, 0, 1]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 0, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[0, 0], [1, 1]])
         c = dot(a, b)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [0, 0, 1], [0, 0, 1]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         a = masked_array(n, mask=[0, 0, 0, 0, 0, 1]).reshape(2, 3)
         b = masked_array(n, mask=[0, 0, 1, 0, 0, 0]).reshape(3, 2)
-        c = dot(a, b, True)
+        c = dot(a, b, strict=True)
         assert_equal(c.mask, [[1, 0], [1, 1]])
-        c = dot(a, b, False)
+        c = dot(a, b, strict=False)
         assert_equal(c, np.dot(a.filled(0), b.filled(0)))
-        c = dot(b, a, True)
+        c = dot(b, a, strict=True)
         assert_equal(c.mask, [[0, 0, 1], [1, 1, 1], [0, 0, 1]])
-        c = dot(b, a, False)
+        c = dot(b, a, strict=False)
         assert_equal(c, np.dot(b.filled(0), a.filled(0)))
+
+    def test_dot_returns_maskedarray(self):
+        # See gh-6611
+        a = np.eye(3)
+        b = array(a)
+        assert_(type(dot(a, a)) is MaskedArray)
+        assert_(type(dot(a, b)) is MaskedArray)
+        assert_(type(dot(b, a)) is MaskedArray)
+        assert_(type(dot(b, b)) is MaskedArray)
+
+    def test_dot_out(self):
+        a = array(np.eye(3))
+        out = array(np.zeros((3, 3)))
+        res = dot(a, a, out=out)
+        assert_(res is out)
+        assert_equal(a, res)
 
 
 class TestApplyAlongAxis(TestCase):
@@ -643,8 +659,52 @@ class TestMedian(TestCase):
         assert_equal(r, np.inf)
 
     def test_non_masked(self):
-        assert_equal(np.ma.median(np.arange(9)), 4.)
-        assert_equal(np.ma.median(range(9)), 4)
+        x = np.arange(9)
+        assert_equal(np.ma.median(x), 4.)
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        x = range(9)
+        assert_equal(np.ma.median(x), 4.)
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        x = 5
+        assert_equal(np.ma.median(x), 5.)
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+
+    def test_docstring_examples(self):
+        "test the examples given in the docstring of ma.median"
+        x = array(np.arange(8), mask=[0]*4 + [1]*4)
+        assert_equal(np.ma.median(x), 1.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        x = array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
+        assert_equal(np.ma.median(x), 2.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        ma_x = np.ma.median(x, axis=-1, overwrite_input=True)
+        assert_equal(ma_x, [2., 5.])
+        assert_equal(ma_x.shape, (2,), "shape mismatch")
+        assert_(type(ma_x) is MaskedArray)
+
+    def test_masked_1d(self):
+        x = array(np.arange(5), mask=True)
+        assert_equal(np.ma.median(x), np.ma.masked)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is np.ma.core.MaskedConstant)
+        x = array(np.arange(5), mask=False)
+        assert_equal(np.ma.median(x), 2.)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        x = array(np.arange(5), mask=[0,1,0,0,0])
+        assert_equal(np.ma.median(x), 2.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        x = array(np.arange(5), mask=[0,1,1,1,1])
+        assert_equal(np.ma.median(x), 0.)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+
+    def test_1d_shape_consistency(self):
+        assert_equal(np.ma.median(array([1,2,3],mask=[0,0,0])).shape,
+                     np.ma.median(array([1,2,3],mask=[0,1,0])).shape )
 
     def test_2d(self):
         # Tests median w/ 2D
@@ -667,8 +727,11 @@ class TestMedian(TestCase):
         x = masked_array(np.arange(30).reshape(10, 3))
         x[:3] = x[-3:] = masked
         assert_equal(median(x), 14.5)
+        assert_(type(np.ma.median(x)) is not MaskedArray)
         assert_equal(median(x, axis=0), [13.5, 14.5, 15.5])
+        assert_(type(np.ma.median(x, axis=0)) is MaskedArray)
         assert_equal(median(x, axis=1), [0, 0, 0, 10, 13, 16, 19, 0, 0, 0])
+        assert_(type(np.ma.median(x, axis=1)) is MaskedArray)
         assert_equal(median(x, axis=1).mask, [1, 1, 1, 0, 0, 0, 0, 1, 1, 1])
 
     def test_3d(self):
@@ -982,7 +1045,7 @@ class TestArraySetOps(TestCase):
         control = array([1, 1, 1, 4], mask=[1, 0, 0, 1])
         test = ediff1d(x)
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin(self):
@@ -991,13 +1054,13 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_begin=masked)
         control = array([0, 1, 1, 1, 4], mask=[1, 1, 0, 0, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_begin=[1, 2, 3])
         control = array([1, 2, 3, 1, 1, 1, 4], mask=[0, 0, 0, 1, 0, 0, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_toend(self):
@@ -1006,13 +1069,13 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_end=masked)
         control = array([1, 1, 1, 4, 0], mask=[1, 0, 0, 1, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=[1, 2, 3])
         control = array([1, 1, 1, 4, 1, 2, 3], mask=[1, 0, 0, 1, 0, 0, 0])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_tobegin_toend(self):
@@ -1021,14 +1084,14 @@ class TestArraySetOps(TestCase):
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 4, 0], mask=[1, 1, 0, 0, 1, 1])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=[1, 2, 3], to_begin=masked)
         control = array([0, 1, 1, 1, 4, 1, 2, 3],
                         mask=[1, 1, 0, 0, 1, 0, 0, 0])
         assert_equal(test, control)
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_ndarray(self):
@@ -1038,13 +1101,13 @@ class TestArraySetOps(TestCase):
         control = array([1, 1, 1, 1], mask=[0, 0, 0, 0])
         assert_equal(test, control)
         self.assertTrue(isinstance(test, MaskedArray))
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
         #
         test = ediff1d(x, to_end=masked, to_begin=masked)
         control = array([0, 1, 1, 1, 1, 0], mask=[1, 0, 0, 0, 0, 1])
         self.assertTrue(isinstance(test, MaskedArray))
-        assert_equal(test.data, control.data)
+        assert_equal(test.filled(0), control.filled(0))
         assert_equal(test.mask, control.mask)
 
     def test_intersect1d(self):

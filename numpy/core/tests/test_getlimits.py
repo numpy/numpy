@@ -42,6 +42,19 @@ class TestLongdouble(TestCase):
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
+class TestFinfo(TestCase):
+    def test_basic(self):
+        dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
+                       [np.float16, np.float32, np.float64, np.complex64,
+                        np.complex128]))
+        for dt1, dt2 in dts:
+            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machar', 'machep',
+                         'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
+                         'nmant', 'precision', 'resolution', 'tiny'):
+                assert_equal(getattr(finfo(dt1), attr),
+                             getattr(finfo(dt2), attr), attr)
+        self.assertRaises(ValueError, finfo, 'i4')
+
 class TestIinfo(TestCase):
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
@@ -49,8 +62,9 @@ class TestIinfo(TestCase):
                   [np.int8, np.int16, np.int32, np.int64,
                    np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
-            assert_equal(iinfo(dt1).min, iinfo(dt2).min)
-            assert_equal(iinfo(dt1).max, iinfo(dt2).max)
+            for attr in ('bits', 'min', 'max'):
+                assert_equal(getattr(iinfo(dt1), attr),
+                             getattr(iinfo(dt2), attr), attr)
         self.assertRaises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):

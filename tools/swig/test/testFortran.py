@@ -24,16 +24,6 @@ class FortranTestCase(unittest.TestCase):
         self.typeStr  = "double"
         self.typeCode = "d"
 
-    # This test used to work before the update to avoid deprecated code.  Now it
-    # doesn't work.  As best I can tell, it never should have worked, so I am
-    # commenting it out.  --WFS
-    # def testSecondElementContiguous(self):
-    #     "Test Fortran matrix initialized from reshaped default array"
-    #     print >>sys.stderr, self.typeStr, "... ",
-    #     second = Fortran.__dict__[self.typeStr + "SecondElement"]
-    #     matrix = np.arange(9).reshape(3, 3).astype(self.typeCode)
-    #     self.assertEquals(second(matrix), 3)
-
     # Test (type* IN_FARRAY2, int DIM1, int DIM2) typemap
     def testSecondElementFortran(self):
         "Test Fortran matrix initialized from reshaped NumPy fortranarray"

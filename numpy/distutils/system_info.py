@@ -20,6 +20,7 @@ classes are available:
   blas_info
   lapack_info
   openblas_info
+  blis_info
   blas_opt_info       # usage recommended
   lapack_opt_info     # usage recommended
   fftw_info,dfftw_info,sfftw_info
@@ -72,7 +73,7 @@ The file 'site.cfg' is looked for in
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
 section ALL has options that are the default for each section. The
-available sections are fftw, atlas, and x11. Appropiate defaults are
+available sections are fftw, atlas, and x11. Appropriate defaults are
 used if nothing is specified.
 
 The order of finding the locations of resources is the following:
@@ -128,9 +129,15 @@ import warnings
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError, ConfigParser
+    from ConfigParser import NoOptionError
+    from ConfigParser import RawConfigParser as ConfigParser
 else:
-    from configparser import NoOptionError, ConfigParser
+    from configparser import NoOptionError
+    from configparser import RawConfigParser as ConfigParser
+# It seems that some people are importing ConfigParser from here so is
+# good to keep its class name. Use of RawConfigParser is needed in
+# order to be able to load path names with percent in them, like
+# `feature%2Fcool` which is common on git flow branch names.
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
@@ -323,6 +330,7 @@ def get_info(name, notfound_action=0):
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
           'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -482,6 +490,7 @@ class system_info(object):
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
+
         if self.section is not None:
             self.search_static_first = self.cp.getboolean(
                 self.section, 'search_static_first')
@@ -497,7 +506,7 @@ class system_info(object):
         libs = self.get_libraries()
         dirs = self.get_lib_dirs()
         # The extensions use runtime_library_dirs
-        r_dirs = self.get_runtime_lib_dirs() 
+        r_dirs = self.get_runtime_lib_dirs()
         # Intrinsic distutils use rpath, we simply append both entries
         # as though they were one entry
         r_dirs.extend(self.get_runtime_lib_dirs(key='rpath'))
@@ -508,17 +517,20 @@ class system_info(object):
                 dict_append(info, **i)
             else:
                 log.info('Library %s was not found. Ignoring' % (lib))
-            i = self.check_libs(r_dirs, [lib])
-            if i is not None:
-                # Swap library keywords found to runtime_library_dirs
-                # the libraries are insisting on the user having defined
-                # them using the library_dirs, and not necessarily by
-                # runtime_library_dirs
-                del i['libraries']
-                i['runtime_library_dirs'] = i.pop('library_dirs')
-                dict_append(info, **i)
-            else:
-                log.info('Runtime library %s was not found. Ignoring' % (lib))
+
+            if r_dirs:
+                i = self.check_libs(r_dirs, [lib])
+                if i is not None:
+                    # Swap library keywords found to runtime_library_dirs
+                    # the libraries are insisting on the user having defined
+                    # them using the library_dirs, and not necessarily by
+                    # runtime_library_dirs
+                    del i['libraries']
+                    i['runtime_library_dirs'] = i.pop('library_dirs')
+                    dict_append(info, **i)
+                else:
+                    log.info('Runtime library %s was not found. Ignoring' % (lib))
+
         return info
 
     def set_info(self, **info):
@@ -629,7 +641,7 @@ class system_info(object):
         dirs.extend(default_dirs)
         ret = []
         for d in dirs:
-            if not os.path.isdir(d):
+            if len(d) > 0 and not os.path.isdir(d):
                 warnings.warn('Specified path %s is invalid.' % d)
                 continue
 
@@ -643,7 +655,10 @@ class system_info(object):
         return self.get_paths(self.section, key)
 
     def get_runtime_lib_dirs(self, key='runtime_library_dirs'):
-        return self.get_paths(self.section, key)
+        path = self.get_paths(self.section, key)
+        if path == ['']:
+            path = []
+        return path
 
     def get_include_dirs(self, key='include_dirs'):
         return self.get_paths(self.section, key)
@@ -663,7 +678,10 @@ class system_info(object):
         return [b for b in [a.strip() for a in libs.split(',')] if b]
 
     def get_libraries(self, key='libraries'):
-        return self.get_libs(key, '')
+        if hasattr(self, '_lib_names'):
+            return self.get_libs(key, default=self._lib_names)
+        else:
+            return self.get_libs(key, '')
 
     def library_extensions(self):
         static_exts = ['.a']
@@ -677,11 +695,6 @@ class system_info(object):
             exts.append('.dll.a')
         if sys.platform == 'darwin':
             exts.append('.dylib')
-        # Debian and Ubuntu added a g3f suffix to shared library to deal with
-        # g77 -> gfortran ABI transition
-        # XXX: disabled, it hides more problem than it solves.
-        #if sys.platform[:5] == 'linux':
-        #    exts.append('.so.3gf')
         return exts
 
     def check_libs(self, lib_dirs, libs, opt_libs=[]):
@@ -713,70 +726,62 @@ class system_info(object):
         if not info:
             log.info('  libraries %s not found in %s', ','.join(libs),
                      lib_dirs)
+
         return info
 
-    def _lib_list(self, lib_dir, libs, exts):
+    def _find_lib(self, lib_dir, lib, exts):
         assert is_string(lib_dir)
-        liblist = []
         # under windows first try without 'lib' prefix
         if sys.platform == 'win32':
             lib_prefixes = ['', 'lib']
         else:
             lib_prefixes = ['lib']
         # for each library name, see if we can find a file for it.
-        for l in libs:
-            for ext in exts:
-                for prefix in lib_prefixes:
-                    p = self.combine_paths(lib_dir, prefix + l + ext)
-                    if p:
-                        break
+        for ext in exts:
+            for prefix in lib_prefixes:
+                p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    assert len(p) == 1
-                    # ??? splitext on p[0] would do this for cygwin
-                    # doesn't seem correct
-                    if ext == '.dll.a':
-                        l += '.dll'
-                    liblist.append(l)
                     break
-        return liblist
+            if p:
+                assert len(p) == 1
+                # ??? splitext on p[0] would do this for cygwin
+                # doesn't seem correct
+                if ext == '.dll.a':
+                    lib += '.dll'
+                return lib
+
+        return False
+
+    def _find_libs(self, lib_dirs, libs, exts):
+        # make sure we preserve the order of libs, as it can be important
+        found_dirs, found_libs = [], []
+        for lib in libs:
+            for lib_dir in lib_dirs:
+                found_lib = self._find_lib(lib_dir, lib, exts)
+                if found_lib:
+                    found_libs.append(found_lib)
+                    if lib_dir not in found_dirs:
+                        found_dirs.append(lib_dir)
+                    break
+        return found_dirs, found_libs
 
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
         """Find mandatory and optional libs in expected paths.
 
         Missing optional libraries are silently forgotten.
         """
+        if not is_sequence(lib_dirs):
+            lib_dirs = [lib_dirs]
         # First, try to find the mandatory libraries
-        if is_sequence(lib_dirs):
-            found_libs, found_dirs = [], []
-            for dir_ in lib_dirs:
-                found_libs1 = self._lib_list(dir_, libs, exts)
-                # It's possible that we'll find the same library in multiple
-                # directories. It's also possible that we'll find some
-                # libraries on in directory, and some in another. So the
-                # obvious thing would be to use a set instead of a list, but I
-                # don't know if preserving order matters (does it?).
-                for found_lib in found_libs1:
-                    if found_lib not in found_libs:
-                        found_libs.append(found_lib)
-                        if dir_ not in found_dirs:
-                            found_dirs.append(dir_)
-        else:
-            found_libs = self._lib_list(lib_dirs, libs, exts)
-            found_dirs = [lib_dirs]
+        found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts)
         if len(found_libs) > 0 and len(found_libs) == len(libs):
-            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             # Now, check for optional libraries
-            if is_sequence(lib_dirs):
-                for dir_ in lib_dirs:
-                    opt_found_libs = self._lib_list(dir_, opt_libs, exts)
-                    if opt_found_libs:
-                        if dir_ not in found_dirs:
-                            found_dirs.extend(dir_)
-                        found_libs.extend(opt_found_libs)
-            else:
-                opt_found_libs = self._lib_list(lib_dirs, opt_libs, exts)
-                if opt_found_libs:
-                    found_libs.extend(opt_found_libs)
+            opt_found_dirs, opt_found_libs = self._find_libs(lib_dirs, opt_libs, exts)
+            found_libs.extend(opt_found_libs)
+            for lib_dir in opt_found_dirs:
+                if lib_dir not in found_dirs:
+                    found_dirs.append(lib_dir)
+            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             return info
         else:
             return None
@@ -956,8 +961,8 @@ class djbfft_info(system_info):
 
 class mkl_info(system_info):
     section = 'mkl'
-    dir_env_var = 'MKL'
-    _lib_mkl = ['mkl', 'vml', 'guide']
+    dir_env_var = 'MKLROOT'
+    _lib_mkl = ['mkl_rt']
 
     def get_mkl_rootdir(self):
         mklroot = os.environ.get('MKLROOT', None)
@@ -992,18 +997,12 @@ class mkl_info(system_info):
             system_info.__init__(self)
         else:
             from .cpuinfo import cpu
-            l = 'mkl'  # use shared library
             if cpu.is_Itanium():
                 plt = '64'
-                #l = 'mkl_ipf'
-            elif cpu.is_Xeon():
+            elif cpu.is_Intel() and cpu.is_64bit():
                 plt = 'intel64'
-                #l = 'mkl_intel64'
             else:
                 plt = '32'
-                #l = 'mkl_ia32'
-            if l not in self._lib_mkl:
-                self._lib_mkl.insert(0, l)
             system_info.__init__(
                 self,
                 default_lib_dirs=[os.path.join(mklroot, 'lib', plt)],
@@ -1028,20 +1027,7 @@ class mkl_info(system_info):
 
 
 class lapack_mkl_info(mkl_info):
-
-    def calc_info(self):
-        mkl = get_info('mkl')
-        if not mkl:
-            return
-        if sys.platform == 'win32':
-            lapack_libs = self.get_libs('lapack_libs', ['mkl_lapack'])
-        else:
-            lapack_libs = self.get_libs('lapack_libs',
-                                        ['mkl_lapack32', 'mkl_lapack64'])
-
-        info = {'libraries': lapack_libs}
-        dict_append(info, **mkl)
-        self.set_info(**info)
+    pass
 
 
 class blas_mkl_info(mkl_info):
@@ -1243,8 +1229,6 @@ class atlas_3_10_blas_info(atlas_3_10_info):
 class atlas_3_10_threads_info(atlas_3_10_info):
     dir_env_var = ['PTATLAS', 'ATLAS']
     _lib_names = ['tatlas']
-    #if sys.platfcorm[:7] == 'freebsd':
-        ## I don't think freebsd supports 3.10 at this time - 2014
     _lib_atlas = _lib_names
     _lib_lapack = _lib_names
 
@@ -1486,14 +1470,14 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
 
-        openblas_info = get_info('openblas_lapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
         lapack_mkl_info = get_info('lapack_mkl')
         if lapack_mkl_info:
             self.set_info(**lapack_mkl_info)
+            return
+
+        openblas_info = get_info('openblas_lapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
             return
 
         atlas_info = get_info('atlas_3_10_threads')
@@ -1535,7 +1519,6 @@ class lapack_opt_info(system_info):
                                              ('HAVE_CBLAS', None)])
                 return
 
-        #atlas_info = {} ## uncomment for testing
         need_lapack = 0
         need_blas = 0
         info = {}
@@ -1567,7 +1550,6 @@ class lapack_opt_info(system_info):
 
         if need_blas:
             blas_info = get_info('blas')
-            #blas_info = {} ## uncomment for testing
             if blas_info:
                 dict_append(info, **blas_info)
             else:
@@ -1591,6 +1573,11 @@ class blas_opt_info(system_info):
         blas_mkl_info = get_info('blas_mkl')
         if blas_mkl_info:
             self.set_info(**blas_mkl_info)
+            return
+
+        blis_info = get_info('blis')
+        if blis_info:
+            self.set_info(**blis_info)
             return
 
         openblas_info = get_info('openblas')
@@ -1678,8 +1665,64 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
-        info['language'] = 'f77'  # XXX: is it generally true?
+        if platform.system() == 'Windows':
+            # The check for windows is needed because has_cblas uses the
+            # same compiler that was used to compile Python and msvc is
+            # often not installed when mingw is being used. This rough
+            # treatment is not desirable, but windows is tricky.
+            info['language'] = 'f77'  # XXX: is it generally true?
+        else:
+            lib = self.has_cblas(info)
+            if lib is not None:
+                info['language'] = 'c'
+                info['libraries'] = [lib]
+                info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
+
+    def has_cblas(self, info):
+        # primitive cblas check by looking for the header and trying to link
+        # cblas or blas
+        res = False
+        c = distutils.ccompiler.new_compiler()
+        c.customize('')
+        tmpdir = tempfile.mkdtemp()
+        s = """#include <cblas.h>
+        int main(int argc, const char *argv[])
+        {
+            double a[4] = {1,2,3,4};
+            double b[4] = {5,6,7,8};
+            return cblas_ddot(4, a, 1, b, 1) > 10;
+        }"""
+        src = os.path.join(tmpdir, 'source.c')
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+
+            try:
+                # check we can compile (find headers)
+                obj = c.compile([src], output_dir=tmpdir,
+                                include_dirs=self.get_include_dirs())
+
+                # check we can link (find library)
+                # some systems have separate cblas and blas libs. First
+                # check for cblas lib, and if not present check for blas lib.
+                try:
+                    c.link_executable(obj, os.path.join(tmpdir, "a.out"),
+                                      libraries=["cblas"],
+                                      library_dirs=info['library_dirs'],
+                                      extra_postargs=info.get('extra_link_args', []))
+                    res = "cblas"
+                except distutils.ccompiler.LinkError:
+                    c.link_executable(obj, os.path.join(tmpdir, "a.out"),
+                                      libraries=["blas"],
+                                      library_dirs=info['library_dirs'],
+                                      extra_postargs=info.get('extra_link_args', []))
+                    res = "blas"
+            except distutils.ccompiler.CompileError:
+                res = None
+        finally:
+            shutil.rmtree(tmpdir)
+        return res
 
 
 class openblas_info(blas_info):
@@ -1722,6 +1765,7 @@ class openblas_lapack_info(openblas_info):
     def check_embedded_lapack(self, info):
         res = False
         c = distutils.ccompiler.new_compiler()
+        c.customize('')
         tmpdir = tempfile.mkdtemp()
         s = """void zungqr();
         int main(int argc, const char *argv[])
@@ -1750,6 +1794,31 @@ class openblas_lapack_info(openblas_info):
         finally:
             shutil.rmtree(tmpdir)
         return res
+
+
+class blis_info(blas_info):
+    section = 'blis'
+    dir_env_var = 'BLIS'
+    _lib_names = ['blis']
+    notfounderror = BlasNotFoundError
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        blis_libs = self.get_libs('libraries', self._lib_names)
+        if blis_libs == self._lib_names:
+            blis_libs = self.get_libs('blis_libs', self._lib_names)
+
+        info = self.check_libs2(lib_dirs, blis_libs, [])
+        if info is None:
+            return
+
+        # Add include dirs
+        incl_dirs = self.get_include_dirs()
+        dict_append(info,
+                    language='c',
+                    define_macros=[('HAVE_CBLAS', None)],
+                    include_dirs=incl_dirs)
+        self.set_info(**info)
 
 
 class blas_src_info(system_info):
@@ -1886,13 +1955,6 @@ class _numpy_info(system_info):
                       '"\\"%s\\""' % (vrs)),
                       (self.modulename.upper(), None)]
             break
-##         try:
-##             macros.append(
-##                 (self.modulename.upper()+'_VERSION_HEX',
-##                  hex(vstr2hex(module.__version__))),
-##                 )
-##         except Exception as msg:
-##             print msg
         dict_append(info, define_macros=macros)
         include_dirs = self.get_include_dirs()
         inc_dir = None
@@ -2267,17 +2329,6 @@ class umfpack_info(system_info):
         self.set_info(**info)
         return
 
-## def vstr2hex(version):
-##     bits = []
-##     n = [24,16,8,4,0]
-##     r = 0
-##     for s in version.split('.'):
-##         r |= int(s) << n[0]
-##         del n[0]
-##     return r
-
-#--------------------------------------------------------------------
-
 
 def combine_paths(*args, **kws):
     """ Return a list of existing paths composed by all combinations of
@@ -2317,7 +2368,7 @@ def dict_append(d, **kws):
             languages.append(v)
             continue
         if k in d:
-            if k in ['library_dirs', 'include_dirs', 
+            if k in ['library_dirs', 'include_dirs',
                      'extra_compile_args', 'extra_link_args',
                      'runtime_library_dirs', 'define_macros']:
                 [d[k].append(vv) for vv in v if vv not in d[k]]

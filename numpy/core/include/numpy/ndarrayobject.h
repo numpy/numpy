@@ -27,7 +27,7 @@ extern "C" CONFUSE_EMACS
 #include "__multiarray_api.h"
 
 
-/* C-API that requries previous API to be defined */
+/* C-API that requires previous API to be defined */
 
 #define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
 
@@ -96,7 +96,7 @@ extern "C" CONFUSE_EMACS
                                                       NULL)
 
 #define PyArray_FROM_OT(m,type) PyArray_FromAny(m,                            \
-                                PyArray_DescrFromType(type), 0, 0, 0, NULL);
+                                PyArray_DescrFromType(type), 0, 0, 0, NULL)
 
 #define PyArray_FROM_OTF(m, type, flags) \
         PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, \

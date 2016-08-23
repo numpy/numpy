@@ -37,17 +37,17 @@ class TestUfuncKwargs(TestCase):
 class TestUfunc(TestCase):
     def test_pickle(self):
         import pickle
-        assert pickle.loads(pickle.dumps(np.sin)) is np.sin
+        assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
 
         # Check that ufunc not defined in the top level numpy namespace such as
         # numpy.core.test_rational.test_add can also be pickled
-        assert pickle.loads(pickle.dumps(test_add)) is test_add
+        assert_(pickle.loads(pickle.dumps(test_add)) is test_add)
 
     def test_pickle_withstring(self):
         import pickle
         astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
                 "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
-        assert pickle.loads(astring) is np.cos
+        assert_(pickle.loads(astring) is np.cos)
 
     def test_reduceat_shifting_sum(self):
         L = 6
@@ -648,6 +648,41 @@ class TestUfunc(TestCase):
         assert_equal(np.min(a), False)
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
+
+    def test_object_array_accumulate_inplace(self):
+        # Checks that in-place accumulates work, see also gh-7402
+        arr = np.ones(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        # Twice reproduced also for tuples:
+        np.add.accumulate(arr, out=arr)
+        np.add.accumulate(arr, out=arr)
+        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        np.add.accumulate(arr, out=arr, axis=-1)
+        np.add.accumulate(arr, out=arr, axis=-1)
+        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+
+    def test_object_array_reduceat_inplace(self):
+        # Checks that in-place reduceats work, see also gh-7465
+        arr = np.empty(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        out = np.empty(4, dtype=object)
+        out[:] = [[1] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        assert_array_equal(arr, out)
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        out = np.ones((2, 4), dtype=object)
+        out[0, :] = [[2] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        assert_array_equal(arr, out)
 
     def test_object_scalar_multiply(self):
         # Tickets #2469 and #4482

@@ -477,6 +477,19 @@ class TestConstant(TestCase):
             )
         assert_allclose(test, expected)
 
+    def test_check_constant_pad_2d(self):
+        arr = np.arange(4).reshape(2, 2)
+        test = np.lib.pad(arr, ((1, 2), (1, 3)), mode='constant',
+                          constant_values=((1, 2), (3, 4)))
+        expected = np.array(
+            [[3, 1, 1, 4, 4, 4],
+             [3, 0, 1, 4, 4, 4],
+             [3, 2, 3, 4, 4, 4],
+             [3, 2, 2, 4, 4, 4],
+             [3, 2, 2, 4, 4, 4]]
+        )
+        assert_allclose(test, expected)
+
 
 class TestLinearRamp(TestCase):
     def test_check_simple(self):
@@ -950,6 +963,17 @@ class TestNdarrayPadWidth(TestCase):
              [9,  9,  9,    9, 10, 11,   11, 11],
              [9,  9,  9,    9, 10, 11,   11, 11]]
             )
+        assert_array_equal(a, b)
+
+
+class TestUnicodeInput(TestCase):
+    def test_unicode_mode(self):
+        try:
+            constant_mode = unicode('constant')
+        except NameError:
+            constant_mode = 'constant'
+        a = np.pad([1], 2, mode=constant_mode)
+        b = np.array([0, 0, 1, 0, 0])
         assert_array_equal(a, b)
 
 

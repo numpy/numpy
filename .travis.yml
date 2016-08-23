@@ -20,25 +20,34 @@ cache:
   directories:
     - $HOME/.cache/pip
 
+env:
+  global:
+    - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
+    # The following is generated with the command:
+    # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
+    - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9Tr\
+               XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
+               iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
+               ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
+
 python:
-  - 2.6
   - 2.7
-  - 3.2
-  - 3.3
   - 3.4
   - 3.5
 matrix:
   include:
-    - python: 3.3
-      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=3.4
+    - python: 2.7
+      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=2.7
       sudo: true
+      dist: trusty
       addons:
         apt:
           packages:
-            - *common_packages
             - debootstrap
-    - python: 3.2
+    - python: 3.4
       env: USE_DEBUG=1
+      sudo: true
+      dist: trusty
       addons:
         apt:
           packages:
@@ -46,12 +55,19 @@ matrix:
             - python3-dbg
             - python3-dev
             - python3-nose
+            - python3-setuptools
     - python: 2.7
       env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
     - python: 2.7
       env: USE_WHEEL=1
+    - python: 3.5
+      env: USE_WHEEL=1
+    - python: 3.5
+      env: USE_SDIST=1
     - python: 2.7
-      env: PYTHONOPTIMIZE=2
+      env:
+       - PYTHONOPTIMIZE=2
+       - USE_ASV=1
 before_install:
   - uname -a
   - free -m
@@ -61,15 +77,22 @@ before_install:
   - pushd builds
   # Build into own virtualenv
   # We therefore control our own environment, avoid travis' numpy
+  #
+  # Some change in virtualenv 14.0.5 caused `test_f2py` to fail. So, we have
+  # pinned `virtualenv` to the last known working version to avoid this failure.
+  # Appears we had some issues with certificates on Travis. It looks like
+  # bumping to 14.0.6 will help.
+  - pip install -U 'virtualenv==14.0.6'
   - virtualenv --python=python venv
   - source venv/bin/activate
   - python -V
   - pip install --upgrade pip setuptools
-  - pip install nose
-  # pip install coverage
-  # Speed up install by not compiling Cython
-  - pip install --install-option="--no-cython-compile" Cython
+  - pip install nose pytz cython
+  - if [ -n "$USE_ASV" ]; then pip install asv; fi
   - popd
 
 script:
   - ./tools/travis-test.sh
+
+after_success:
+  - ./tools/travis-upload-wheel.sh

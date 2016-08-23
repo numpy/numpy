@@ -305,7 +305,7 @@ for these files are:
    equivalent to #name=item1, item2, item1, item2, item1, item2, item1,
    item2#
 
-4. "\*/ "on a line by itself marks the end of the the variable expansion
+4. "\*/ "on a line by itself marks the end of the variable expansion
    naming. The next line is the first line that will be repeated using
    the named rules.
 

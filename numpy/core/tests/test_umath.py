@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 import warnings
+import itertools
 
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
@@ -222,6 +223,102 @@ class TestDivision(TestCase):
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
 
+class TestRemainder(TestCase):
+
+    def test_remainder_basic(self):
+        dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
+                    continue
+                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
+                    continue
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*71, dtype=dt1)
+                b = np.array(sg2*19, dtype=dt2)
+                div = np.floor_divide(a, b)
+                rem = np.remainder(a, b)
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_remainder_exact(self):
+        # test that float results are exact for small integers. This also
+        # holds for the same integers scaled by powers of two.
+        nlst = list(range(-127, 0))
+        plst = list(range(1, 128))
+        dividend = nlst + [0] + plst
+        divisor = nlst + plst
+        arg = list(itertools.product(dividend, divisor))
+        tgt = list(divmod(*t) for t in arg)
+
+        a, b = np.array(arg, dtype=int).T
+        # convert exact integer results from Python to float so that
+        # signed zero can be used, it is checked.
+        tgtdiv, tgtrem = np.array(tgt, dtype=float).T
+        tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
+        tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
+
+        for dt in np.typecodes['Float']:
+            msg = 'dtype: %s' % (dt,)
+            fa = a.astype(dt)
+            fb = b.astype(dt)
+            div = np.floor_divide(fa, fb)
+            rem = np.remainder(fa, fb)
+            assert_equal(div, tgtdiv, err_msg=msg)
+            assert_equal(rem, tgtrem, err_msg=msg)
+
+    def test_float_remainder_roundoff(self):
+        # gh-6127
+        dt = np.typecodes['Float']
+        for dt1, dt2 in itertools.product(dt, dt):
+            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                msg = fmt % (dt1, dt2, sg1, sg2)
+                a = np.array(sg1*78*6e-8, dtype=dt1)
+                b = np.array(sg2*6e-8, dtype=dt2)
+                div = np.floor_divide(a, b)
+                rem = np.remainder(a, b)
+                # Equal assertion should hold when fmod is used
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+    def test_float_remainder_corner_cases(self):
+        # Check remainder magnitude.
+        for dt in np.typecodes['Float']:
+            b = np.array(1.0, dtype=dt)
+            a = np.nextafter(np.array(0.0, dtype=dt), -b)
+            rem = np.remainder(a, b)
+            assert_(rem <= b, 'dt: %s' % dt)
+            rem = np.remainder(-a, -b)
+            assert_(rem >= -b, 'dt: %s' % dt)
+
+        # Check nans, inf
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warnings.simplefilter('ignore', RuntimeWarning)
+            for dt in np.typecodes['Float']:
+                fone = np.array(1.0, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
+                rem = np.remainder(fone, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                # MSVC 2008 returns NaN here, so disable the check.
+                #rem = np.remainder(fone, finf)
+                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+
+
 class TestCbrt(TestCase):
     def test_cbrt_scalar(self):
         assert_almost_equal((np.cbrt(np.float32(-2.5)**3)), -2.5)
@@ -327,6 +424,19 @@ class TestPower(TestCase):
         # Check that the fast path ignores 1-element not 0-d arrays
         res = x ** np.array([[[2]]])
         assert_equal(res.shape, (1, 1, 3))
+
+    def test_integer_power(self):
+        a = np.array([15, 15], 'i8')
+        b = a ** a
+        assert_equal(b, [437893890380859375, 437893890380859375])
+
+    def test_integer_power_with_zero_exponent(self):
+        arr = np.arange(-10, 10)
+        assert_equal(np.power(arr, 0), np.ones_like(arr))
+
+    def test_integer_power_of_1(self):
+        arr = np.arange(-10, 10)
+        assert_equal(np.power(1, arr), np.ones_like(arr))
 
 
 class TestLog2(TestCase):
@@ -894,6 +1004,91 @@ class TestBool(TestCase):
         assert_equal(np.bitwise_xor(arg1, arg2), out)
 
 
+class TestBitwiseUFuncs(TestCase):
+
+    bitwise_types = [np.dtype(c) for c in '?' + 'bBhHiIlLqQ' + 'O']
+
+    def test_values(self):
+        for dt in self.bitwise_types:
+            zeros = np.array([0], dtype=dt)
+            ones = np.array([-1], dtype=dt)
+            msg = "dt = '%s'" % dt.char
+
+            assert_equal(np.bitwise_not(zeros), ones, err_msg=msg)
+            assert_equal(np.bitwise_not(ones), zeros, err_msg=msg)
+
+            assert_equal(np.bitwise_or(zeros, zeros), zeros, err_msg=msg)
+            assert_equal(np.bitwise_or(zeros, ones), ones, err_msg=msg)
+            assert_equal(np.bitwise_or(ones, zeros), ones, err_msg=msg)
+            assert_equal(np.bitwise_or(ones, ones), ones, err_msg=msg)
+
+            assert_equal(np.bitwise_xor(zeros, zeros), zeros, err_msg=msg)
+            assert_equal(np.bitwise_xor(zeros, ones), ones, err_msg=msg)
+            assert_equal(np.bitwise_xor(ones, zeros), ones, err_msg=msg)
+            assert_equal(np.bitwise_xor(ones, ones), zeros, err_msg=msg)
+
+            assert_equal(np.bitwise_and(zeros, zeros), zeros, err_msg=msg)
+            assert_equal(np.bitwise_and(zeros, ones), zeros, err_msg=msg)
+            assert_equal(np.bitwise_and(ones, zeros), zeros, err_msg=msg)
+            assert_equal(np.bitwise_and(ones, ones), ones, err_msg=msg)
+
+    def test_types(self):
+        for dt in self.bitwise_types:
+            zeros = np.array([0], dtype=dt)
+            ones = np.array([-1], dtype=dt)
+            msg = "dt = '%s'" % dt.char
+
+            assert_(np.bitwise_not(zeros).dtype == dt, msg)
+            assert_(np.bitwise_or(zeros, zeros).dtype == dt, msg)
+            assert_(np.bitwise_xor(zeros, zeros).dtype == dt, msg)
+            assert_(np.bitwise_and(zeros, zeros).dtype == dt, msg)
+
+
+    def test_identity(self):
+        assert_(np.bitwise_or.identity == 0, 'bitwise_or')
+        assert_(np.bitwise_xor.identity == 0, 'bitwise_xor')
+        assert_(np.bitwise_and.identity == -1, 'bitwise_and')
+
+    def test_reduction(self):
+        binary_funcs = (np.bitwise_or, np.bitwise_xor, np.bitwise_and)
+
+        for dt in self.bitwise_types:
+            zeros = np.array([0], dtype=dt)
+            ones = np.array([-1], dtype=dt)
+            for f in binary_funcs:
+                msg = "dt: '%s', f: '%s'" % (dt, f)
+                assert_equal(f.reduce(zeros), zeros, err_msg=msg)
+                assert_equal(f.reduce(ones), ones, err_msg=msg)
+
+        # Test empty reduction, no object dtype
+        for dt in self.bitwise_types[:-1]:
+            # No object array types
+            empty = np.array([], dtype=dt)
+            for f in binary_funcs:
+                msg = "dt: '%s', f: '%s'" % (dt, f)
+                tgt = np.array(f.identity, dtype=dt)
+                res = f.reduce(empty)
+                assert_equal(res, tgt, err_msg=msg)
+                assert_(res.dtype == tgt.dtype, msg)
+
+        # Empty object arrays use the identity.  Note that the types may
+        # differ, the actual type used is determined by the assign_identity
+        # function and is not the same as the type returned by the identity
+        # method.
+        for f in binary_funcs:
+            msg = "dt: '%s'" % (f,)
+            empty = np.array([], dtype=object)
+            tgt = f.identity
+            res = f.reduce(empty)
+            assert_equal(res, tgt, err_msg=msg)
+
+        # Non-empty object arrays do not use the identity
+        for f in binary_funcs:
+            msg = "dt: '%s'" % (f,)
+            btype = np.array([True], dtype=object)
+            assert_(type(f.reduce(btype)) is bool, msg)
+
+
 class TestInt(TestCase):
     def test_logical_not(self):
         x = np.ones(10, dtype=np.int16)
@@ -1215,7 +1410,24 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
+    def test_ufunc_override_disabled(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        # This test should be removed when __numpy_ufunc__ is re-enabled.
+
+        class MyArray(object):
+            def __numpy_ufunc__(self, *args, **kwargs):
+                self._numpy_ufunc_called = True
+
+        my_array = MyArray()
+        real_array = np.ones(10)
+        assert_raises(TypeError, lambda: real_array + my_array)
+        assert_raises(TypeError, np.add, real_array, my_array)
+        assert not hasattr(my_array, "_numpy_ufunc_called")
+
+
     def test_ufunc_override(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         class A(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
@@ -1241,6 +1453,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res1[5], {})
 
     def test_ufunc_override_mro(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         # Some multi arg functions for testing.
         def tres_mul(a, b, c):
@@ -1332,6 +1546,8 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
     def test_ufunc_override_methods(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1436,6 +1652,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1470,6 +1688,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][1], 'out1')
 
     def test_ufunc_override_exception(self):
+        # 2016-01-29: NUMPY_UFUNC_DISABLED
+        return
 
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):
@@ -1924,6 +2144,16 @@ def test_complex_nan_comparisons():
                 assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
                 assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
+
+
+def test_rint_big_int():
+    # np.rint bug for large integer values on Windows 32-bit and MKL
+    # https://github.com/numpy/numpy/issues/6685
+    val = 4607998452777363968
+    # This is exactly representable in floating point
+    assert_equal(val, int(float(val)))
+    # Rint should not change the value
+    assert_equal(val, np.rint(val))
 
 
 if __name__ == "__main__":

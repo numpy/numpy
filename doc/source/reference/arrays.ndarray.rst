@@ -45,8 +45,8 @@ objects implementing the :class:`buffer` or :ref:`array
 
    The array can be indexed using Python container-like syntax:
 
-   >>> x[1,2] # i.e., the element of x in the *second* row, *third*
-   column, namely, 6.
+   >>> # The element of x in the *second* row, *third* column, namely, 6.
+   >>> x[1, 2]
 
    For example :ref:`slicing <arrays.indexing>` can produce views of
    the array:
@@ -142,7 +142,7 @@ different. This can happen in two cases:
        index and the strides are never used. Any array with no elements may be
        considered C-style and Fortran-style contiguous.
 
-Point 1. means that ``self``and ``self.squeeze()`` always have the same
+Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and :term:`aligned` flags value. This also means that even a high
 dimensional array could be C-style and Fortran-style contiguous at the same
 time.
@@ -467,7 +467,7 @@ Truth value of an array (:func:`bool()`):
 
    Truth-value testing of an array invokes
    :meth:`ndarray.__nonzero__`, which raises an error if the number of
-   elements in the the array is larger than 1, because the truth value
+   elements in the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
    in such cases. (If the number of elements is 0, the array evaluates

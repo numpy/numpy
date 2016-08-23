@@ -1052,7 +1052,7 @@ def _normalize_shape(ndarray, shape, cast_to_int=True):
             arr = arr.repeat(2, axis=1)
         elif arr.shape[0] == ndims:
             # Input correctly formatted, pass it on as `arr`
-            arr = shape
+            pass
         else:
             fmt = "Unable to create correctly shaped tuple from %s"
             raise ValueError(fmt % (shape,))
@@ -1337,7 +1337,7 @@ def pad(array, pad_width, mode, **kwargs):
         'reflect_type': 'even',
         }
 
-    if isinstance(mode, str):
+    if isinstance(mode, np.compat.basestring):
         # Make sure have allowed kwargs appropriate for mode
         for key in kwargs:
             if key not in allowedkwargs[mode]:

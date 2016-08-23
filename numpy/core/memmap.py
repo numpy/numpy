@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from .numeric import uint8, ndarray, dtype
-from numpy.compat import long, basestring
+from numpy.compat import long, basestring, is_pathlib_path
 
 __all__ = ['memmap']
 
@@ -39,7 +39,7 @@ class memmap(ndarray):
 
     Parameters
     ----------
-    filename : str or file-like object
+    filename : str, file-like object, or pathlib.Path instance
         The file name or file object to be used as the array data buffer.
     dtype : data-type, optional
         The data-type used to interpret the file contents.
@@ -82,7 +82,7 @@ class memmap(ndarray):
 
     Attributes
     ----------
-    filename : str
+    filename : str or pathlib.Path instance
         Path to the mapped file.
     offset : int
         Offset position in the file.
@@ -213,6 +213,9 @@ class memmap(ndarray):
         if hasattr(filename, 'read'):
             fid = filename
             own_file = False
+        elif is_pathlib_path(filename):
+            fid = filename.open((mode == 'c' and 'r' or mode)+'b')
+            own_file = True
         else:
             fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
             own_file = True
@@ -267,6 +270,8 @@ class memmap(ndarray):
 
         if isinstance(filename, basestring):
             self.filename = os.path.abspath(filename)
+        elif is_pathlib_path(filename):
+            self.filename = filename.resolve()
         # py3 returns int for TemporaryFile().name
         elif (hasattr(filename, "name") and
               isinstance(filename.name, basestring)):
@@ -309,3 +314,24 @@ class memmap(ndarray):
         """
         if self.base is not None and hasattr(self.base, 'flush'):
             self.base.flush()
+
+    def __array_wrap__(self, arr, context=None):
+        arr = super(memmap, self).__array_wrap__(arr, context)
+
+        # Return a memmap if a memmap was given as the output of the
+        # ufunc. Leave the arr class unchanged if self is not a memmap
+        # to keep original memmap subclasses behavior
+        if self is arr or type(self) is not memmap:
+            return arr
+        # Return scalar instead of 0d memmap, e.g. for np.sum with
+        # axis=None
+        if arr.shape == ():
+            return arr[()]
+        # Return ndarray otherwise
+        return arr.view(np.ndarray)
+
+    def __getitem__(self, index):
+        res = super(memmap, self).__getitem__(index)
+        if type(res) is memmap and res._mmap is None:
+            return res.view(type=ndarray)
+        return res

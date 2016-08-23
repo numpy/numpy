@@ -29,6 +29,6 @@ NPY_NO_EXPORT int
 NumPyOS_ascii_ftoLf(FILE *fp, long double *value);
 
 NPY_NO_EXPORT int
-NumPyOS_ascii_isspace(char c);
+NumPyOS_ascii_isspace(int c);
 
 #endif

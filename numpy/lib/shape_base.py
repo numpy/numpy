@@ -35,7 +35,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         Input array.
     args : any
         Additional arguments to `func1d`.
-    kwargs: any
+    kwargs : any
         Additional named arguments to `func1d`.
 
         .. versionadded:: 1.9.0
@@ -324,6 +324,10 @@ def dstack(tup):
     to make a single array. Rebuilds arrays divided by `dsplit`.
     This is a simple way to stack 2D arrays (images) into a single
     3D array for processing.
+
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------
@@ -799,6 +803,9 @@ def tile(A, reps):
     Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
     (1, 1, 2, 2).
 
+    Note : Although tile may be used for broadcasting, it is strongly
+    recommended to use numpy's broadcasting operations and functions.
+
     Parameters
     ----------
     A : array_like
@@ -814,6 +821,7 @@ def tile(A, reps):
     See Also
     --------
     repeat : Repeat elements of an array.
+    broadcast_to : Broadcast an array to a new shape
 
     Examples
     --------
@@ -837,6 +845,12 @@ def tile(A, reps):
            [1, 2],
            [3, 4]])
 
+    >>> c = np.array([1,2,3,4])
+    >>> np.tile(c,(4,1))
+    array([[1, 2, 3, 4],
+           [1, 2, 3, 4],
+           [1, 2, 3, 4],
+           [1, 2, 3, 4]])
     """
     try:
         tup = tuple(reps)

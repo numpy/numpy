@@ -55,8 +55,8 @@ class IntelFCompiler(BaseIntelFCompiler):
     def get_flags(self):
         return ['-fPIC']
 
-    def get_flags_opt(self):
-        return ['-xhost -openmp -fp-model strict']
+    def get_flags_opt(self):  # Scipy test failures with -O2
+        return ['-xhost -openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
         return []
@@ -119,11 +119,11 @@ class IntelEM64TFCompiler(IntelFCompiler):
     def get_flags(self):
         return ['-fPIC']
 
-    def get_flags_opt(self):
-        return ['-openmp -fp-model strict']
+    def get_flags_opt(self):  # Scipy test failures with -O2
+        return ['-openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
-        return ['-xSSE4.2']
+        return ['']
 
 # Is there no difference in the version string between the above compilers
 # and the Visual compilers?
@@ -205,7 +205,7 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     version_match = simple_version_match(start='Intel\(R\).*?64,')
 
     def get_flags_arch(self):
-        return ['/QaxSSE4.2']
+        return ['']
 
 
 if __name__ == '__main__':

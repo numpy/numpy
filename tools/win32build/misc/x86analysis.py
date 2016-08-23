@@ -132,8 +132,6 @@ def cntset(seq):
     return cnt
 
 def main():
-    #parser = optparse.OptionParser()
-    #parser.add_option("-f", "--filename
     args = sys.argv[1:]
     filename = args[0]
     analyse(filename)
@@ -146,11 +144,6 @@ def analyse(filename):
     sse = has_sse(inst)
     sse2 = has_sse2(inst)
     sse3 = has_sse3(inst)
-    #mmx = has_mmx(inst)
-    #ppro = has_ppro(inst)
-    #print sse
-    #print sse2
-    #print sse3
     print("SSE3 inst %d" % cntset(sse3))
     print("SSE2 inst %d" % cntset(sse2))
     print("SSE inst %d" % cntset(sse))
@@ -158,5 +151,3 @@ def analyse(filename):
 
 if __name__ == '__main__':
     main()
-    #filename = "/usr/lib/sse2/libatlas.a"
-    ##filename = "/usr/lib/sse2/libcblas.a"

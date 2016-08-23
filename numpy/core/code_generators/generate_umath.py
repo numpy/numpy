@@ -13,6 +13,7 @@ sys.path.pop(0)
 Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
+AllOnes = "PyUFunc_MinusOne"
 ReorderableNone = "PyUFunc_ReorderableNone"
 
 # Sentinel value to specify using the full type description in the
@@ -493,7 +494,7 @@ defdict = {
           TD(flts, f="logaddexp2", astype={'e':'f'})
           ),
 'bitwise_and':
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, AllOnes,
           docstrings.get('numpy.core.umath.bitwise_and'),
           None,
           TD(bints),
@@ -507,7 +508,7 @@ defdict = {
           TD(O, f='PyNumber_Or'),
           ),
 'bitwise_xor':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.bitwise_xor'),
           None,
           TD(bints),
@@ -695,6 +696,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sqrt'),
           None,
+          TD('e', f='sqrt', astype={'e':'f'}),
           TD(inexactvec),
           TD(inexact, f='sqrt', astype={'e':'f'}),
           TD(P, f='sqrt'),
@@ -975,7 +977,7 @@ r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
                                                 uf.nin, uf.nout,
                                                 uf.identity,
                                                 name, docstring))
-        if uf.typereso != None:
+        if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)

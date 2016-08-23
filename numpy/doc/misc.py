@@ -86,7 +86,7 @@ Examples
  >>> np.sqrt(np.array([-1.]))
  FloatingPointError: invalid value encountered in sqrt
  >>> def errorhandler(errstr, errflag):
- ...      print "saw stupid error!"
+ ...      print("saw stupid error!")
  >>> np.seterrcall(errorhandler)
  <function err_handler at 0x...>
  >>> j = np.seterr(all='call')
@@ -138,7 +138,7 @@ Only a survey of the choices. Little detail on how each works.
    - Can write code in non-standard form which may become obsolete
    - Not as flexible as manual wrapping
 
-4) ctypes
+3) ctypes
 
  - Plusses:
 
@@ -160,7 +160,7 @@ Only a survey of the choices. Little detail on how each works.
    - can't use for writing code to be turned into C extensions, only a wrapper
      tool.
 
-5) SWIG (automatic wrapper generator)
+4) SWIG (automatic wrapper generator)
 
  - Plusses:
 
@@ -178,7 +178,7 @@ Only a survey of the choices. Little detail on how each works.
    - doesn't necessarily avoid reference counting issues or needing to know
      API's
 
-7) scipy.weave
+5) scipy.weave
 
  - Plusses:
 
@@ -192,7 +192,7 @@ Only a survey of the choices. Little detail on how each works.
    - Future very uncertain: it's the only part of Scipy not ported to Python 3
      and is effectively deprecated in favor of Cython.
 
-8) Psyco
+6) Psyco
 
  - Plusses:
 

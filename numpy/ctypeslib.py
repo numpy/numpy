@@ -178,7 +178,7 @@ class _ndptr(_ndptr_base):
 
     def _check_retval_(self):
         """This method is called when this class is used as the .restype
-        asttribute for a shared-library function.   It constructs a numpy
+        attribute for a shared-library function.   It constructs a numpy
         array from a void pointer."""
         return array(self)
 
@@ -315,7 +315,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[dtype] = klass
+    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
     return klass
 
 if ctypes is not None:

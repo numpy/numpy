@@ -156,7 +156,7 @@ def matrix_power(M, n):
     >>> q = np.zeros((4, 4))
     >>> q[0:2, 0:2] = -i
     >>> q[2:4, 2:4] = i
-    >>> q # one of the three quarternion units not equal to 1
+    >>> q # one of the three quaternion units not equal to 1
     array([[ 0., -1.,  0.,  0.],
            [ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.],
@@ -233,7 +233,7 @@ class matrix(N.ndarray):
     Examples
     --------
     >>> a = np.matrix('1 2; 3 4')
-    >>> print a
+    >>> print(a)
     [[1 2]
      [3 4]]
 
@@ -277,9 +277,9 @@ class matrix(N.ndarray):
         elif ndim == 1:
             shape = (1, shape[0])
 
-        order = False
+        order = 'C'
         if (ndim == 2) and arr.flags.fortran:
-            order = True
+            order = 'F'
 
         if not (order or arr.flags.contiguous):
             arr = arr.copy()
@@ -519,10 +519,12 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        order : {'C', 'F', 'A'}, optional
-            Whether to flatten in C (row-major), Fortran (column-major) order,
-            or preserve the C/Fortran ordering from `m`.
-            The default is 'C'.
+        order : {'C', 'F', 'A', 'K'}, optional
+            'C' means to flatten in row-major (C-style) order. 'F' means to
+            flatten in column-major (Fortran-style) order. 'A' means to
+            flatten in column-major order if `m` is Fortran *contiguous* in
+            memory, row-major order otherwise. 'K' means to flatten `m` in
+            the order the elements occur in memory. The default is 'C'.
 
         Returns
         -------
@@ -781,7 +783,11 @@ class matrix(N.ndarray):
 
     def argmax(self, axis=None, out=None):
         """
-        Indices of the maximum values along an axis.
+        Indexes of the maximum values along an axis.
+
+        Return the indexes of the first occurrences of the maximum values
+        along the specified axis.  If axis is None, the index is for the
+        flattened matrix.
 
         Parameters
         ----------
@@ -851,7 +857,11 @@ class matrix(N.ndarray):
 
     def argmin(self, axis=None, out=None):
         """
-        Return the indices of the minimum values along an axis.
+        Indexes of the minimum values along an axis.
+
+        Return the indexes of the first occurrences of the minimum values
+        along the specified axis.  If axis is None, the index is for the
+        flattened matrix.
 
         Parameters
         ----------

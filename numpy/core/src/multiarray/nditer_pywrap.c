@@ -2,7 +2,7 @@
  * This file implements the CPython wrapper of the new NumPy iterator.
  *
  * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
- * The Univerity of British Columbia
+ * The University of British Columbia
  *
  * See LICENSE.txt for the license.
  */
@@ -2227,14 +2227,6 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
     return 0;
 }
 
-/* Py3 changes PySlice_GetIndices' first argument's type to PyObject* */
-#ifdef NPY_PY3K
-#  define slice_getindices PySlice_GetIndices
-#else
-#  define slice_getindices(op, nop, start, end, step) \
-        PySlice_GetIndices((PySliceObject *)op, nop, start, end, step)
-#endif
-
 static PyObject *
 npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
 {
@@ -2260,9 +2252,9 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         return npyiter_seq_item(self, i);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (slice_getindices(op, NpyIter_GetNOp(self->iter),
-                            &istart, &iend, &istep) < 0) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength;
+        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                  &istart, &iend, &istep, &islicelength) < 0) {
             return NULL;
         }
         if (istep != 1) {
@@ -2309,9 +2301,9 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
         return npyiter_seq_ass_item(self, i, value);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (slice_getindices(op, NpyIter_GetNOp(self->iter),
-                            &istart, &iend, &istep) < 0) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;
+        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                  &istart, &iend, &istep, &islicelength) < 0) {
             return -1;
         }
         if (istep != 1) {

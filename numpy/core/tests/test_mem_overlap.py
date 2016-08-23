@@ -79,7 +79,8 @@ def _check_assignment(srcidx, dstidx):
     cpy[dstidx] = arr[srcidx]
     arr[dstidx] = arr[srcidx]
 
-    assert np.all(arr == cpy), 'assigning arr[%s] = arr[%s]' % (dstidx, srcidx)
+    assert_(np.all(arr == cpy),
+            'assigning arr[%s] = arr[%s]' % (dstidx, srcidx))
 
 
 def test_overlapping_assignments():
@@ -109,17 +110,19 @@ def test_diophantine_fuzz():
         numbers = []
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
-            A_max = 1 + rng.randint(0, 11)**6
-            U_max = rng.randint(0, 11)**6
+            A_max = 1 + rng.randint(0, 11, dtype=np.intp)**6
+            U_max = rng.randint(0, 11, dtype=np.intp)**6
 
             A_max = min(max_int, A_max)
             U_max = min(max_int-1, U_max)
 
-            A = tuple(rng.randint(1, A_max+1) for j in range(ndim))
-            U = tuple(rng.randint(0, U_max+2) for j in range(ndim))
+            A = tuple(int(rng.randint(1, A_max+1, dtype=np.intp))
+                      for j in range(ndim))
+            U = tuple(int(rng.randint(0, U_max+2, dtype=np.intp))
+                      for j in range(ndim))
 
             b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = rng.randint(-1, b_ub+2)
+            b = rng.randint(-1, b_ub+2, dtype=np.intp)
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0
@@ -129,7 +132,7 @@ def test_diophantine_fuzz():
             if X is None:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert X_simplified is None, (A, U, b, X_simplified)
+                assert_(X_simplified is None, (A, U, b, X_simplified))
 
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
@@ -149,7 +152,7 @@ def test_diophantine_fuzz():
             else:
                 # Check the simplified decision problem agrees
                 X_simplified = solve_diophantine(A, U, b, simplify=1)
-                assert X_simplified is not None, (A, U, b, X_simplified)
+                assert_(X_simplified is not None, (A, U, b, X_simplified))
 
                 # Check validity
                 assert_(sum(a*x for a, x in zip(A, X)) == b)
@@ -257,9 +260,9 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1)
-        stop = rng.randint(start, n+1)
-        if rng.randint(0, 2) == 0:
+        start = rng.randint(0, n+1, dtype=np.intp)
+        stop = rng.randint(start, n+1, dtype=np.intp)
+        if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
@@ -268,12 +271,14 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     infeasible = 0
 
     while min(feasible, infeasible) < min_count:
-        steps = tuple(rng.randint(1, 11) if rng.randint(0, 5) == 0 else 1
+        steps = tuple(rng.randint(1, 11, dtype=np.intp)
+                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
         if same_steps:
             steps2 = steps
         else:
-            steps2 = tuple(rng.randint(1, 11) if rng.randint(0, 5) == 0 else 1
+            steps2 = tuple(rng.randint(1, 11, dtype=np.intp)
+                           if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                            for j in range(x.ndim))
 
         t1 = np.arange(x.ndim)
@@ -373,9 +378,9 @@ def test_internal_overlap_slices():
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1)
-        stop = rng.randint(start, n+1)
-        if rng.randint(0, 2) == 0:
+        start = rng.randint(0, n+1, dtype=np.intp)
+        stop = rng.randint(start, n+1, dtype=np.intp)
+        if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
@@ -384,14 +389,15 @@ def test_internal_overlap_slices():
     min_count = 5000
 
     while cases < min_count:
-        steps = tuple(rng.randint(1, 11) if rng.randint(0, 5) == 0 else 1
+        steps = tuple(rng.randint(1, 11, dtype=np.intp)
+                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
         t1 = np.arange(x.ndim)
         rng.shuffle(t1)
         s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
         a = x[s1].transpose(t1)
 
-        assert not internal_overlap(a)
+        assert_(not internal_overlap(a))
         cases += 1
 
 
@@ -468,10 +474,12 @@ def test_internal_overlap_fuzz():
     rng = np.random.RandomState(1234)
 
     while min(overlap, no_overlap) < min_count:
-        ndim = rng.randint(1, 4)
+        ndim = rng.randint(1, 4, dtype=np.intp)
 
-        strides = tuple(rng.randint(-1000, 1000) for j in range(ndim))
-        shape = tuple(rng.randint(1, 30) for j in range(ndim))
+        strides = tuple(rng.randint(-1000, 1000, dtype=np.intp)
+                        for j in range(ndim))
+        shape = tuple(rng.randint(1, 30, dtype=np.intp)
+                      for j in range(ndim))
 
         a = as_strided(x, strides=strides, shape=shape)
         result = check_internal_overlap(a)
@@ -480,6 +488,34 @@ def test_internal_overlap_fuzz():
             overlap += 1
         else:
             no_overlap += 1
+
+
+def test_non_ndarray_inputs():
+    # Regression check for gh-5604
+
+    class MyArray(object):
+        def __init__(self, data):
+            self.data = data
+
+        @property
+        def __array_interface__(self):
+            return self.data.__array_interface__
+
+    class MyArray2(object):
+        def __init__(self, data):
+            self.data = data
+
+        def __array__(self):
+            return self.data
+
+    for cls in [MyArray, MyArray2]:
+        x = np.arange(5)
+
+        assert_(np.may_share_memory(cls(x[::2]), x[1::2]))
+        assert_(not np.shares_memory(cls(x[::2]), x[1::2]))
+
+        assert_(np.shares_memory(cls(x[1::3]), x[::2]))
+        assert_(np.may_share_memory(cls(x[1::3]), x[::2]))
 
 
 if __name__ == "__main__":

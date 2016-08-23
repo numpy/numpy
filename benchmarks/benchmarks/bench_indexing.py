@@ -1,11 +1,14 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, squares_, indexes_, indexes_rand_
+from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
 
+from os.path import join as pjoin
+import shutil
 import sys
 import six
 from numpy import memmap, float32, array
 import numpy as np
+from tempfile import mkdtemp
 
 
 class Indexing(Benchmark):
@@ -17,10 +20,10 @@ class Indexing(Benchmark):
     def setup(self, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': squares_,
+        ns = {'squares_': get_squares_(),
               'np': np,
-              'indexes_': indexes_,
-              'indexes_rand_': indexes_rand_}
+              'indexes_': get_indexes_(),
+              'indexes_rand_': get_indexes_rand_()}
 
         if sys.version_info[0] >= 3:
             code = "def run():\n    for a in squares_.values(): a[%s]%s"
@@ -37,8 +40,14 @@ class Indexing(Benchmark):
 
 class IndexingSeparate(Benchmark):
     def setup(self):
-        self.fp = memmap('tmp.dat', dtype=float32, mode='w+', shape=(50, 60))
+        self.tmp_dir = mkdtemp()
+        self.fp = memmap(pjoin(self.tmp_dir, 'tmp.dat'),
+                         dtype=float32, mode='w+', shape=(50, 60))
         self.indexes = array([3, 4, 6, 10, 20])
+
+    def teardown(self):
+        del self.fp
+        shutil.rmtree(self.tmp_dir)
 
     def time_mmap_slicing(self):
         for i in range(1000):

@@ -175,6 +175,7 @@ static void
 }
 
 #define @name@_ctype_floor_divide @name@_ctype_divide
+
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     if (a == 0 || b == 0) {
@@ -268,20 +269,40 @@ static void
 /**begin repeat
  * #name = float, double, longdouble#
  * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f, , l#
  */
-static @type@ (*_basic_@name@_floor)(@type@);
 static @type@ (*_basic_@name@_sqrt)(@type@);
 static @type@ (*_basic_@name@_fmod)(@type@, @type@);
-#define @name@_ctype_add(a, b, outp) *(outp) = a + b
-#define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
-#define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
-#define @name@_ctype_divide(a, b, outp) *(outp) = a / b
+
+#define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
+#define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
+#define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
+#define @name@_ctype_divide(a, b, outp) *(outp) = (a) / (b)
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp)   \
-    *(outp) = _basic_@name@_floor((a) / (b))
+
+
+static void
+@name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
+    @type@ mod;
+
+    *out = npy_divmod@c@(a, b, &mod);
+}
+
+
+static void
+@name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
+    npy_divmod@c@(a, b, out);
+}
+
+
+static void
+@name@_ctype_divmod(@type@ a, @type@ b, @type@ *out1, @type@ *out2) {
+    *out1 = npy_divmod@c@(a, b, out2);
+}
+
+
 /**end repeat**/
 
-static npy_half (*_basic_half_floor)(npy_half);
 static npy_half (*_basic_half_sqrt)(npy_half);
 static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
@@ -294,9 +315,26 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 #define half_ctype_divide(a, b, outp) *(outp) = \
         npy_float_to_half(npy_half_to_float(a) / npy_half_to_float(b))
 #define half_ctype_true_divide half_ctype_divide
-#define half_ctype_floor_divide(a, b, outp)   \
-        *(outp) = npy_float_to_half(_basic_float_floor(npy_half_to_float(a) / \
-        npy_half_to_float(b)))
+
+
+static void
+half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out) {
+    npy_half mod;
+
+    *out = npy_half_divmod(a, b, &mod);
+}
+
+
+static void
+half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
+    npy_half_divmod(a, b, out);
+}
+
+
+static void
+half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
+    *out1 = npy_half_divmod(a, b, out2);
+}
 
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
@@ -316,63 +354,58 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
     (outp)->real = (a).real * (b).real - (a).imag * (b).imag;   \
     (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;   \
     } while(0)
-/* Note: complex division by zero must yield some complex inf */
+/* Algorithm identical to that in loops.c.src, for consistency */
 #define @name@_ctype_divide(a, b, outp) do{                         \
-    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;              \
-    if (d != 0) {                                                   \
-        (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;   \
-        (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;   \
+    @rtype@ in1r = (a).real;                                        \
+    @rtype@ in1i = (a).imag;                                        \
+    @rtype@ in2r = (b).real;                                        \
+    @rtype@ in2i = (b).imag;                                        \
+    @rtype@ in2r_abs = npy_fabs@c@(in2r);                           \
+    @rtype@ in2i_abs = npy_fabs@c@(in2i);                           \
+    if (in2r_abs >= in2i_abs) {                                     \
+        if (in2r_abs == 0 && in2i_abs == 0) {                       \
+            /* divide by zero should yield a complex inf or nan */  \
+            (outp)->real = in1r/in2r_abs;                           \
+            (outp)->imag = in1i/in2i_abs;                           \
+        }                                                           \
+        else {                                                      \
+            @rtype@ rat = in2i/in2r;                                \
+            @rtype@ scl = 1.0@c@/(in2r + in2i*rat);                 \
+            (outp)->real = (in1r + in1i*rat)*scl;                   \
+            (outp)->imag = (in1i - in1r*rat)*scl;                   \
+        }                                                           \
     }                                                               \
     else {                                                          \
-        (outp)->real = (a).real/d;                                  \
-        (outp)->imag = (a).imag/d;                                  \
+        @rtype@ rat = in2r/in2i;                                    \
+        @rtype@ scl = 1.0@c@/(in2i + in2r*rat);                     \
+        (outp)->real = (in1r*rat + in1i)*scl;                       \
+        (outp)->imag = (in1i*rat - in1r)*scl;                       \
     }                                                               \
     } while(0)
+
 #define @name@_ctype_true_divide @name@_ctype_divide
+
 #define @name@_ctype_floor_divide(a, b, outp) do {      \
-    (outp)->real = _basic_@rname@_floor                 \
-    (((a).real*(b).real + (a).imag*(b).imag) /          \
-     ((b).real*(b).real + (b).imag*(b).imag));          \
+    @rname@_ctype_floor_divide(                         \
+        ((a).real*(b).real + (a).imag*(b).imag),        \
+        ((b).real*(b).real + (b).imag*(b).imag),        \
+        &((outp)->real));                               \
     (outp)->imag = 0;                                   \
     } while(0)
 /**end repeat**/
 
-/**begin repeat
- * #name = float, double, longdouble#
- * #type = npy_float, npy_double, npy_longdouble#
- */
-static void
-@name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    @type@ mod;
-    mod = _basic_@name@_fmod(a, b);
-    if (mod && (((b < 0) != (mod < 0)))) {
-        mod += b;
-    }
-    *out = mod;
-}
-/**end repeat**/
-
-static void
-half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
-    float mod, fa = npy_half_to_float(a), fb = npy_half_to_float(b);
-    mod = _basic_float_fmod(fa, fb);
-    if (mod && (((fb < 0) != (mod < 0)))) {
-        mod += fb;
-    }
-    *out = npy_float_to_half(mod);
-}
 
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
+ *         longlong, ulonglong, cfloat, cdouble, clongdouble#
  */
 #define @name@_ctype_divmod(a, b, out, out2) {  \
     @name@_ctype_floor_divide(a, b, out);       \
     @name@_ctype_remainder(a, b, out2);         \
     }
 /**end repeat**/
+
 
 /**begin repeat
  * #name = float, double, longdouble#
@@ -903,6 +936,9 @@ static PyObject *
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
  *
+ * #oname = float*4, double*6, half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *
  * #otype = npy_float*4, npy_double*6, npy_half, npy_float,
  *          npy_double, npy_longdouble,
  *          npy_cfloat, npy_cdouble, npy_clongdouble#
@@ -1033,8 +1069,7 @@ static PyObject *
         out1 = out = @one@;
     }
     else if (arg2 < 0) {
-        @name@_ctype_power(arg1, -arg2, &out);
-        out1 = (@otype@) (1.0 / out);
+        @oname@_ctype_power(arg1, arg2, &out1);
     }
     else {
         @name@_ctype_power(arg1, arg2, &out);
@@ -1656,25 +1691,6 @@ get_functions(PyObject * mm)
     _basic_clongdouble_pow = funcdata[j + 5];
     Py_DECREF(obj);
 
-    /* Get the floor functions */
-    obj = PyObject_GetAttrString(mm, "floor");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while(signatures[i] != NPY_FLOAT) {
-        i += 2;
-        j++;
-    }
-    _basic_half_floor = funcdata[j - 1];
-    _basic_float_floor = funcdata[j];
-    _basic_double_floor = funcdata[j + 1];
-    _basic_longdouble_floor = funcdata[j + 2];
-    Py_DECREF(obj);
-
     /* Get the sqrt functions */
     obj = PyObject_GetAttrString(mm, "sqrt");
     if (obj == NULL) {
@@ -1687,9 +1703,10 @@ get_functions(PyObject * mm)
      * generate_umath.py, the first to go into FLOAT/DOUBLE_sqrt
      * they have the same signature as the scalar variants so we need to skip
      * over them
+     * also skip float16 copy placed before
      */
-    i = 4;
-    j = 2;
+    i = 6;
+    j = 3;
     while (signatures[i] != NPY_FLOAT) {
         i += 2; j++;
     }

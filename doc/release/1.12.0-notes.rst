@@ -1,0 +1,306 @@
+NumPy 1.12.0 Release Notes
+**************************
+
+This release supports Python 2.7 and 3.4 - 3.5.
+
+Highlights
+==========
+
+
+Dropped Support
+===============
+
+* Support for Python 2.6, 3.2, and 3.3 has been dropped.
+
+
+Build System Changes
+====================
+
+* Library order is preserved, instead of being reordered to match that of
+  the directories.
+
+
+Future Changes
+==============
+
+* In 1.13 NAT will always compare False except for ``NAT != NAT``,
+  which will be True.  In short, NAT will behave like NaN
+* In 1.13 np.average will preserve subclasses, to match the behavior of most
+  other numpy functions such as np.mean. In particular, this means calls which
+  returned a scalar may return a 0-d subclass object instead.
+
+
+Compatibility notes
+===================
+
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Indexing with floats raises ``IndexError``,
+  e.g., a[0, 0.0].
+* Indexing with non-integer array_like raises ``IndexError``,
+  e.g., ``a['1', '2']``
+* Indexing with multiple ellipsis raises ``IndexError``,
+  e.g., ``a[..., ...]``.
+* Non-integers used as index values raise ``TypeError``,
+  e.g., in ``reshape``, ``take``, and specifying reduce axis.
+
+Relaxed stride checking is the default
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This will have some impact on code that assumed that ``F_CONTIGUOUS`` and
+``C_CONTIGUOUS`` were mutually exclusive and could be set to determine the
+default order for arrays that are now both.
+
+``MaskedArray`` takes view of data **and** mask when slicing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+XXX
+
+
+``np.percentile`` 'midpoint' interpolation method fixed for exact indices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'midpoint' interpolator now gives the same result as 'lower' and 'higher' when
+the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
+
+
+``keepdims`` kwarg is passed through to user-class methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+numpy functions that take a ``keepdims`` kwarg now pass the value
+through to the corresponding methods on ndarray sub-classes.  Previously the
+``keepdims`` keyword would be silently dropped.  These functions now have
+the following behavior:
+
+1. If user does not provide ``keepdims``, no keyword is passed to the underlying
+   method.
+2. Any user-provided value of ``keepdims`` is passed through as a keyword
+   argument to the method.
+
+This will raise in the case where the method does not support a
+``keepdims`` kwarg and the user explicitly passes in ``keepdims``.
+
+
+The following functions are changed: ``sum``, ``product``,
+``sometrue``, ``alltrue``, ``any``, ``all``, ``amax``, ``amin``,
+``prod``, ``mean``, ``std``, ``var``, ``nanmin``, ``nanmax``,
+``nansum``, ``nanprod``, ``nanmean``, ``nanmedian``, ``nanvar``,
+``nanstd``
+
+``bitwise_and`` identity changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous identity was 1, it is now -1. See entry in `Improvements`_ for
+more explanation.
+
+FutureWarning to changed behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``np.full`` now returns an array of the fill-value's dtype if no dtype is
+  given, instead of defaulting to float.
+* np.average will emit a warning if the argument is a subclass of ndarray,
+  as the subclass will be preserved starting in 1.13. (see Future Changes)
+
+Greater consistancy in ``assert_almost_equal``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The precision check for scalars has been changed to match that for arrays. It
+is now
+
+    abs(actual - desired) < 1.5 * 10**(-decimal)
+
+Note that this is looser than previously documented, but agrees with the
+previous implementation used in ``assert_array_almost_equal``. Due to the
+change in implementation some very delicate tests may fail that did not
+fail before.
+
+
+C API
+~~~~~
+
+
+New Features
+============
+
+Writeable keyword argument for ``as_strided``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.lib.stride_tricks.as_strided`` now has a ``writeable``
+keyword argument. It can be set to False when no write operation
+to the returned array is expected to avoid accidental
+unpredictable writes.
+
+
+``axes`` keyword argument for ``rot90``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axes`` keyword argument in ``rot90`` determines the plane in which the
+array is rotated. It defaults to ``axes=(0,1)`` as in the originial function.
+
+Generalized ``flip``
+~~~~~~~~~~~~~~~~~~~~
+``flipud`` and ``fliplr`` reverse the elements of an array along axis=0 and
+axis=1 respectively. The newly added ``flip`` function reverses the elements of
+an array along any given axis.
+
+* ``np.count_nonzero`` now has an ``axis`` parameter, allowing
+  non-zero counts to be generated on more than just a flattened
+  array object.
+
+BLIS support in ``numpy.distutils``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building against the BLAS implementation provided by the BLIS library is now
+supported.  See the ``[blis]`` section in ``site.cfg.example`` (in the root of
+the numpy repo or source distribution).
+
+Hook in ``numpy/__init__.py`` to run distribution-specific checks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Binary distributions of numpy may need to run specific hardware checks or load
+specific libraries during numpy initialization.  For example, if we are
+distributing numpy with a BLAS library that requires SSE2 instructions, we
+would like to check the machine on which numpy is running does have SSE2 in
+order to give an informative error.
+
+Add a hook in ``numpy/__init__.py`` to import a ``numpy/_distributor_init.py``
+file that will remain empty (bar a docstring) in the standard numpy source,
+but that can be overwritten by people making binary distributions of numpy.
+
+New nanfunctions ``nancumsum`` and ``nancumprod`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
+compute ``cumsum`` and ``cumprod`` by ignoring nans.
+
+``np.interp`` can now interpolate complex values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.lib.interp(x, xp, fp)`` now allows the interpolated array ``fp``
+to be complex and will interpolate at ``complex128`` precision.
+
+New polynomial evaluation function ``polyvalfromroots`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``polyvalfromroots`` evaluates a polynomial at given points
+from the roots of the polynomial. This is useful for higher order polynomials,
+where expansion into polynomial coefficients is inaccurate at machine
+precision.
+
+New array creation function ``geomspace`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``geomspace`` generates a geometric sequence.  It is similar
+to ``logspace``, but with start and stop specified directly: 
+``geomspace(start, stop)`` behaves the same as 
+``logspace(log10(start), log10(stop))``.
+
+Improvements
+============
+
+``np.loadtxt`` now supports a single integer as ``usecol`` argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of using ``usecol=(n,)`` to read the nth column of a file
+it is now allowed to use ``usecol=n``. Also the error message is
+more user friendly when a non-integer is passed as a column index.
+
+Improved automated bin estimators for ``histogram``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins``
+argument. Added support for range-restricted histograms with automated
+bin estimation.
+
+``bitwise_and`` identity changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous identity was 1 with the result that all bits except the LSB were
+masked out when the reduce method was used.  The new identity is -1, which
+should work properly on twos complement machines as all bits will be set to
+one.
+
+Generalized Ufuncs will now unlock the GIL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generalized Ufuncs, including most of the linalg module, will now unlock
+the Python global interpreter lock.
+
+``np.roll can now roll multiple axes at the same time``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``shift`` and ``axis`` arguments to ``roll`` are now broadcast against each
+other, and each specified axis is shifted accordingly.
+
+The *__complex__* method has been implemented on the ndarray object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Calling ``complex()`` on a size 1 array will now cast to a python
+complex.
+
+``pathlib.Path`` objects now supported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
+functions can now take ``pathlib.Path`` objects as an argument instead of a
+filename or open file object.
+
+Add ``bits`` attribute to ``np.finfo``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This makes ``np.finfo`` consistent with ``np.iinfo`` which already has that
+attribute.
+
+Caches in `np.fft` are now bounded in total size and item count
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The caches in `np.fft` that speed up successive FFTs of the same length can no
+longer grow without bounds. They have been replaced with LRU (least recently
+used) caches that automatically evict no longer needed items if either the
+memory size or item count limit has been reached.
+
+Improved handling of zero-width string/unicode dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed several interfaces that explicitly disallowed arrays with zero-width
+string dtypes (i.e. ``dtype('S0')`` or ``dtype('U0')``, and fixed several
+bugs where such dtypes were not handled properly.  In particular, changed
+``ndarray.__new__`` to not implicitly convert ``dtype('S0')`` to
+``dtype('S1')`` (and likewise for unicode) when creating new arrays.
+
+
+Changes
+=======
+
+All array-like methods are now called with keyword arguments in fromnumeric.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Internally, many array-like methods in fromnumeric.py were being called with
+positional arguments instead of keyword arguments as their external signatures
+were doing. This caused a complication in the downstream 'pandas' library
+that encountered an issue with 'numpy' compatibility. Now, all array-like
+methods in this module are called with keyword arguments instead.
+
+Operations on np.memmap objects return numpy arrays in most cases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously operations on a memmap object would misleadingly return a memmap
+instance even if the result was actually not memmapped.  For example,
+``arr + 1`` or ``arr + arr`` would return memmap instances, although no memory
+from the output array is memmaped. Version 1.12 returns ordinary numpy arrays
+from these operations.
+
+Also, reduction of a memmap (e.g.  ``.sum(axis=None``) now returns a numpy
+scalar instead of a 0d memmap.
+
+numpy.sctypes now includes bytes on Python3 too
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, it included str (bytes) and unicode on Python2, but only str
+(unicode) on Python3.
+
+quicksort has been changed to an introsort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The quicksort kind of ``np.sort`` and ``np.argsort`` is now an introsort which
+is regular quicksort but changing to a heapsort when not enough progress is
+made. This retains the good quicksort performance while changing the worst case
+runtime from ``O(N^2)`` to ``O(N*log(N))``.
+
+Deprecations
+============
+
+Assignment of ndarray object's ``data`` attribute
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Assigning the 'data' attribute is an inherently unsafe operation as pointed
+out in gh-7083. Such a capability will be removed in the future.
+
+Unsafe int casting of the num attribute in ``linspace``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.linspace`` now raises DeprecationWarning when num cannot be safely
+interpreted as an integer.
+
+Insufficient bit width parameter to ``binary_repr``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
+represent the number in base 2 (positive) or 2's complement (negative) form,
+the function used to silently ignore the parameter and return a representation
+using the minimal number of bits needed for the form in question. Such behavior
+is now considered unsafe from a user perspective and will raise an error in the
+future.

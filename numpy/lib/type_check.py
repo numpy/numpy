@@ -266,7 +266,15 @@ def iscomplexobj(x):
     True
 
     """
-    return issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    try:
+        dtype = x.dtype
+    except AttributeError:
+        dtype = asarray(x).dtype
+    try:
+        return issubclass(dtype.type, _nx.complexfloating)
+    except AttributeError:
+        return False
+
 
 def isrealobj(x):
     """
@@ -300,7 +308,7 @@ def isrealobj(x):
     False
 
     """
-    return not issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    return not iscomplexobj(x)
 
 #-----------------------------------------------------------------------------
 
@@ -424,7 +432,7 @@ def real_if_close(a,tol=100):
         from numpy.core import getlimits
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
-    if _nx.allclose(a.imag, 0, atol=tol):
+    if _nx.all(_nx.absolute(a.imag) < tol):
         a = a.real
     return a
 
@@ -501,7 +509,7 @@ def typename(char):
     >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
     ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
     >>> for typechar in typechars:
-    ...     print typechar, ' : ', np.typename(typechar)
+    ...     print(typechar, ' : ', np.typename(typechar))
     ...
     S1  :  character
     ?  :  bool

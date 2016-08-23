@@ -430,9 +430,6 @@ def isintent_nothide(var):
 def isintent_c(var):
     return 'c' in var.get('intent', [])
 
-# def isintent_f(var):
-#     return not isintent_c(var)
-
 
 def isintent_cache(var):
     return 'cache' in var.get('intent', [])
@@ -673,7 +670,6 @@ def getcallprotoargument(rout, cb_map={}):
     proto_args = ','.join(arg_types + arg_types2)
     if not proto_args:
         proto_args = 'void'
-    # print proto_args
     return proto_args
 
 

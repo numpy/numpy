@@ -288,6 +288,7 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
 
     /* If we get a NaT, just return it */
     if (date == NPY_DATETIME_NAT) {
+        *out = NPY_DATETIME_NAT;
         return 0;
     }
 
@@ -889,7 +890,7 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
                     break;
                 case 'p':
                     if (strcmp(str, "modifiedpreceding") == 0) {
-                        *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
+                        *roll = NPY_BUSDAY_MODIFIEDPRECEDING;
                         goto finish;
                     }
                     break;

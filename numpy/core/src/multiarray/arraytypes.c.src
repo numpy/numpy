@@ -18,6 +18,7 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
@@ -575,7 +576,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     }
     memcpy(ov, ptr, PyArray_MIN(PyArray_DESCR(ap)->elsize,len));
     /*
-     * If string lenth is smaller than room in array
+     * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
      */
     if (PyArray_DESCR(ap)->elsize > len) {
@@ -2284,21 +2285,19 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         }
     }
 
-    n *= itemsize;
     if (swap) {
-        char *a, *b, c;
+        int i;
+        char *_dst;
+        itemsize = itemsize / 4;
 
-        /* n is the number of unicode characters to swap */
-        n >>= 2;
-        for (a = (char *)dst; n > 0; n--) {
-            b = a + 3;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            a += 2;
+        while (n > 0) {
+            _dst = dst;
+            for (i=0; i < itemsize; i++) {
+                npy_bswap4_unaligned(_dst);
+                _dst += 4;
+            }
+            dst += dstride;
+            --n;
         }
     }
 }
@@ -2326,17 +2325,14 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
     }
 
     if (swap) {
-        char *a, *b, c;
-        itemsize >>= 2;
-        for (a = (char *)dst; itemsize>0; itemsize--) {
-            b = a + 3;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            a += 2;
+        int i;
+        char *_dst;
+        itemsize = itemsize / 4;
+
+        _dst = dst;       
+        for (i=0; i < itemsize; i++) {
+            npy_bswap4_unaligned(_dst);
+            _dst += 4;
         }
     }
 }
@@ -2866,7 +2862,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                 if (nip1 == NULL) {
                     goto finish;
                 }
-                new->f->copyswap(nip1, ip1 + offset, swap, dummy);
+                memcpy(nip1, ip1 + offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip1, NULL, swap, dummy);
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
                 /* create buffer and copy */
@@ -2877,7 +2875,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     }
                     goto finish;
                 }
-                new->f->copyswap(nip2, ip2 + offset, swap, dummy);
+                memcpy(nip2, ip2 + offset, new->elsize);
+                if (swap)
+                    new->f->copyswap(nip2, NULL, swap, dummy);
             }
         }
         res = new->f->compare(nip1, nip2, dummy);
@@ -3759,6 +3759,13 @@ static void
         }
     }
     else {
+        /*
+         * Visual Studio 2015 loop vectorizer handles NaN in an unexpected
+         * manner, see: https://github.com/numpy/numpy/issues/7601
+         */
+        #if (_MSC_VER == 1900)
+        #pragma loop( no_vector )
+        #endif
         for (i = 0; i < ni; i++) {
             if (@lt@(in[i], min_val)) {
                 out[i]   = min_val;

@@ -33,8 +33,6 @@ def _makenames_list(adict, align):
         if (num < 0):
             raise ValueError("invalid offset.")
         format = dtype(obj[0], align=align)
-        if (format.itemsize == 0):
-            raise ValueError("all itemsizes must be fixed.")
         if (n > 2):
             title = obj[2]
         else:
@@ -372,6 +370,7 @@ def _view_is_safe(oldtype, newtype):
 
 _pep3118_native_map = {
     '?': '?',
+    'c': 'S1',
     'b': 'b',
     'B': 'B',
     'h': 'h',
@@ -398,6 +397,7 @@ _pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
 
 _pep3118_standard_map = {
     '?': '?',
+    'c': 'S1',
     'b': 'b',
     'B': 'B',
     'h': 'i2',
