@@ -3635,7 +3635,6 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     PyArrayMultiIterObject* in_iter = NULL;
     PyArrayObject* result = NULL;
     PyArrayIterObject* out_iter = NULL;
-    PyObject* args_tuple = NULL;
     Py_ssize_t i, n, nargs;
 
     nargs = PySequence_Size(args) + 1;
@@ -3672,18 +3671,18 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
         goto err;
     }
 
-    args_tuple = PyTuple_New(n);
-    if (args_tuple == NULL) {
-        goto err;
-    }
-
     while (PyArray_MultiIter_NOTDONE(in_iter)) {
         PyObject* item_result;
+        PyObject* args_tuple = PyTuple_New(n);
+        if (args_tuple == NULL) {
+            goto err;
+        }
 
         for (i = 0; i < n; i++) {
             PyArrayIterObject* it = in_iter->iters[i];
             PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
             if (arg == NULL) {
+                Py_DECREF(args_tuple);
                 goto err;
             }
             /* Steals ref to arg */
@@ -3691,6 +3690,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
         }
 
         item_result = PyObject_CallObject(method, args_tuple);
+        Py_DECREF(args_tuple);
         if (item_result == NULL) {
             goto err;
         }
@@ -3709,14 +3709,12 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 
     Py_DECREF(in_iter);
     Py_DECREF(out_iter);
-    Py_DECREF(args_tuple);
 
     return (PyObject*)result;
 
  err:
     Py_XDECREF(in_iter);
     Py_XDECREF(out_iter);
-    Py_XDECREF(args_tuple);
     Py_XDECREF(result);
 
     return 0;
