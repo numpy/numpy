@@ -8,12 +8,14 @@ from .system_info import platform_bits
 
 
 class MSVCCompiler(distutils.msvccompiler.MSVCCompiler):
+    done_var_expansions = False
     def __init__(self, verbose=0, dry_run=0, force=0):
         distutils.msvccompiler.MSVCCompiler.__init__(self, verbose, dry_run, force)
 
     def initialize(self, plat_name=None):
-        environ_lib = os.getenv('lib')
-        environ_include = os.getenv('include')
+        environ_lib = os.getenv('lib') if not MSVCCompiler.done_var_expansions else None
+        environ_include = os.getenv('include') if not MSVCCompiler.done_var_expansions else None
+        MSVCCompiler.done_var_expansions = True
         distutils.msvccompiler.MSVCCompiler.initialize(self, plat_name)
         if environ_lib is not None:
             os.environ['lib'] = environ_lib + os.environ['lib']
