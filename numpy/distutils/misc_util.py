@@ -1512,8 +1512,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
@@ -1565,8 +1565,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
