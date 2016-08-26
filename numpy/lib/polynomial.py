@@ -431,7 +431,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     Returns
     -------
-    p : ndarray, shape (M,) or (M, K)
+    p : ndarray, shape (deg + 1,) or (deg + 1, K)
         Polynomial coefficients, highest power first.  If `y` was 2-D, the
         coefficients for `k`-th data set are in ``p[:,k]``.
 
