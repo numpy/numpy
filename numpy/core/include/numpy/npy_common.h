@@ -28,6 +28,13 @@
 #define NPY_GCC_OPT_3
 #endif
 
+/* compile target attributes */
+#ifdef HAVE_ATTRIBUTE_TARGET_AVX2
+#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
+#else
+#define NPY_GCC_TARGET_AVX2
+#endif
+
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -77,6 +84,16 @@
 #else
 #define NPY_PREFETCH(x, rw,loc)
 #endif
+#endif
+
+#ifdef HAVE___BUILTIN_CPU_SUPPORTS
+  #ifdef HAVE_ATTRIBUTE_TARGET_AVX2
+    #define NPY_CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
+  #else
+    #define NPY_CPU_SUPPORTS_AVX2 0
+  #endif
+#else
+  #define NPY_CPU_SUPPORTS_AVX2 0
 #endif
 
 #if defined(_MSC_VER)
