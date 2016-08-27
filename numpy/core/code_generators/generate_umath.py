@@ -44,8 +44,11 @@ class TypeDescription(object):
     astype : dict or None, optional
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
+    simd: list
+        Available SIMD ufunc loops, dispatched at runtime in specified order
+        Currently only supported for simples types (see make_arrays)
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -57,6 +60,7 @@ class TypeDescription(object):
         if out is not None:
             out = out.replace('P', type)
         self.out = out
+        self.simd = simd
 
     def finish_signature(self, nin, nout):
         if self.in_ is None:
@@ -76,7 +80,7 @@ def build_func_data(types, f):
         func_data.append(d)
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None):
+def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -95,7 +99,12 @@ def TD(types, f=None, astype=None, in_=None, out=None):
         out = (None,) * len(types)
     tds = []
     for t, fd, i, o in zip(types, func_data, in_, out):
-        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype))
+        # [(simd-name, list of types)]
+        if simd is not None:
+            simdt = [k for k, v in simd if t in v]
+        else:
+            simdt = []
+        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
     return tds
 
 class Ufunc(object):
@@ -932,6 +941,15 @@ def make_arrays(funcdict):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
                 funclist.append('%s_%s' % (tname, name))
+                if t.simd is not None:
+                    for vt in t.simd:
+                        code2list.append("""\
+#ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
+if (NPY_CPU_SUPPORTS_{ISA}) {{
+    {fname}_functions[{idx}] = {type}_{fname}_{isa};
+}}
+#endif
+""".format(ISA=vt.upper(), isa=vt, fname=name, type=tname, idx=k))
 
             for x in t.in_ + t.out:
                 siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
