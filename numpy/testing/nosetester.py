@@ -55,6 +55,7 @@ def get_package_name(filepath):
 
     return '.'.join(pkg_name)
 
+
 def run_module_suite(file_to_run=None, argv=None):
     """
     Run a test module.
@@ -488,6 +489,7 @@ class NoseTester(object):
         add_plugins = [Unplugger('doctest')]
 
         return nose.run(argv=argv, addplugins=add_plugins)
+
 
 def _numpy_tester():
     if hasattr(np, "__version__") and ".dev0" in np.__version__:
