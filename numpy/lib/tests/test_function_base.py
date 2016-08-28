@@ -16,9 +16,9 @@ from numpy.random import rand
 from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
-    piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize
+    histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, meshgridify,
+    msort, piecewise, place, rot90, select, setxor1d, sinc, split, trapz,
+    trim_zeros, unwrap, unique, vectorize
 )
 
 from numpy.compat import long
@@ -2089,6 +2089,43 @@ class TestMeshgrid(TestCase):
         # https://github.com/numpy/numpy/issues/4755
         assert_raises(TypeError, meshgrid,
                       [1, 2, 3], [4, 5, 6, 7], indices='ij')
+
+
+class TestMeshgridify(TestCase):
+
+    def test_simple(self):
+        [X, Y, Z] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
+        assert_array_equal(X, np.array([[1, 2],
+                                        [1, 2]]))
+        assert_array_equal(Y, np.array([[3, 3],
+                                        [4, 4]]))
+        assert_array_equal(Z, np.array([[0, 2],
+                                        [1, 3]]))
+
+    def test_only_meshgrid(self):
+        [X, Y] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4])
+        assert_array_equal(X, np.array([[1, 2],
+                                        [1, 2]]))
+        assert_array_equal(Y, np.array([[3, 3],
+                                        [4, 4]]))
+
+    def test_missing_value(self):
+        [X, Y, Z] = meshgridify([1, 1, 2], [3, 4, 3], f=[0, 1, 2])
+        assert_array_equal(X, np.array([[1, 2],
+                                        [1, 2]]))
+        assert_array_equal(Y, np.array([[3, 3],
+                                        [4, 4]]))
+        assert_array_equal(Z, np.array([[0, 2],
+                                        [1, np.nan]]))
+
+    def test_single_coordinate(self):
+        [X, Z] = meshgridify([1, 2, 3, 4], f=[4, 3, 2, 1])
+        assert_array_equal(X, np.array([1, 2, 3, 4]))
+        assert_array_equal(Z, np.array([4, 3, 2, 1]))
+
+    def test_invalid_arguments(self):
+        assert_raises(ValueError, meshgridify,
+                      [1, 2, 3], f=[4, 5, 6, 7])
 
 
 class TestPiecewise(TestCase):
