@@ -779,6 +779,7 @@ class TestULP(unittest.TestCase):
                                   lambda: assert_array_max_ulp(nan, nzero,
                                                                maxulp=maxulp))
 
+
 class TestStringEqual(unittest.TestCase):
     def test_simple(self):
         assert_string_equal("hello", "hello")
@@ -804,7 +805,7 @@ def assert_warn_len_equal(mod, n_in_context, py3_n_in_context=None):
     if 'version' in mod_warns:
         if py3_n_in_context is None:
             py3_n_in_context = n_in_context
-        assert_equal(len(mod_warns)-1, py3_n_in_context)
+        assert_equal(len(mod_warns) - 1, py3_n_in_context)
     else:
         assert_equal(len(mod_warns), n_in_context)
 
@@ -1036,7 +1037,6 @@ def test_tempdir():
         raised = True
     assert_(raised)
     assert_(not os.path.isdir(tdir))
-
 
 
 def test_temppath():

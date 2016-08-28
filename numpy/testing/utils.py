@@ -48,6 +48,7 @@ verbose = 0
 IS_PYPY = '__pypy__' in sys.modules
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
 
+
 def import_nose():
     """ Import nose only when needed.
     """
