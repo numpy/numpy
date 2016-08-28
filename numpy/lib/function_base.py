@@ -4327,7 +4327,7 @@ def meshgrid(*xi, **kwargs):
             return np.broadcast_arrays(*output)
 
 
-def meshgridify(*xi, f=None, **kwargs):
+def meshgridify(*xi, **kwargs):
     """
     Converts tabular data to meshgrid format.
 
@@ -4346,7 +4346,8 @@ def meshgridify(*xi, f=None, **kwargs):
     X1, X2,..., Xn, Z : ndarray
         Returns meshgrid arrays X1, X2, ..., Xn with dimensions n, created from
         the coordinate vectors `x1`, `x2`, ..., `xn`. When `f` is given, an
-        array fitting to the coordinates given in X1, X2, ..., Xn is also returned.
+        array fitting to the coordinates given in X1, X2, ..., Xn is also
+        returned.
 
     See Also
     --------
@@ -4356,7 +4357,8 @@ def meshgridify(*xi, f=None, **kwargs):
     --------
     If there is no function to apply to a meshgrid to obtain the according
     function values, but only a table of coordinate-value pairs is given, the
-    conventional `meshgrid` function is not applicable and meshgridify is very useful.
+    conventional `meshgrid` function is not applicable and meshgridify is very
+    useful.
 
     >>> [X, Y, Z] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
 
@@ -4367,6 +4369,7 @@ def meshgridify(*xi, f=None, **kwargs):
     >>> z = np.array(0, 1, 2, 1, 2, 3, 2, 3, 4)
     >>> h = plt.contourf(*meshgridify(x, y, f=z))
     """
+    f = kwargs.pop('f', None)
     nvalues = [len(x) for x in xi]
     if f is not None:
         nvalues.append(len(f))
@@ -4382,7 +4385,9 @@ def meshgridify(*xi, f=None, **kwargs):
     raveled_mgrid = [m.ravel() for m in mgrid]
     value_dict = dict(zip(zip(*xi), f))
     result = [value_dict.get(key, np.nan) for key in zip(*raveled_mgrid)]
-    return [*mgrid, np.array(result).reshape(mgrid[0].shape)]
+    # return [*mgrid, np.array(result).reshape(mgrid[0].shape)]
+    # return mgrid.append(np.array(result).reshape(mgrid[0].shape))
+    return mgrid + [np.array(result).reshape(mgrid[0].shape)]
 
 
 def delete(arr, obj, axis=None):
