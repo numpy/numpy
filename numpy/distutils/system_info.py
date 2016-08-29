@@ -242,7 +242,7 @@ else:
         # tests are run in debug mode Python 3.
         tmp = open(os.devnull, 'w')
         p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
-                stderr=tmp)
+                     stderr=tmp)
     except (OSError, DistutilsError):
         # OSError if gcc is not installed, or SandboxViolation (DistutilsError
         # subclass) if an old setuptools bug is triggered (see gh-3160).
@@ -971,10 +971,11 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            for d in open(ld_so_conf, 'r'):
-                d = d.strip()
-                if d:
-                    paths.append(d)
+            with open(ld_so_conf, 'r') as f:
+                for d in f:
+                    d = d.strip()
+                    if d:
+                        paths.append(d)
         intel_mkl_dirs = []
         for path in paths:
             path_atoms = path.split(os.sep)
