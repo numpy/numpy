@@ -364,6 +364,7 @@ def _can_target(cmd, arch):
     """Return true if the architecture supports the -arch flag"""
     newcmd = cmd[:]
     fid, filename = tempfile.mkstemp(suffix=".f")
+    fid.close()
     try:
         d = os.path.dirname(filename)
         output = os.path.splitext(filename)[0] + ".o"
