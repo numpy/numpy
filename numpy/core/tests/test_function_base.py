@@ -260,6 +260,42 @@ class TestLinspace(TestCase):
         assert type(ls) is PhysicalQuantity2
         assert_equal(ls, linspace(0.0, 1.0, 1))
 
+    def test_array_interface(self):
+        # Regression test for https://github.com/numpy/numpy/pull/6659
+        # Ensure that start/stop can be objects that implement
+        # __array_interface__ and are convertible to numeric scalars
+
+        class Arrayish(object):
+            """
+            A generic object that supports the __array_interface__ and hence
+            can in principle be converted to a numeric scalar, but is not
+            otherwise recognized as numeric, but also happens to support
+            multiplication by floats.
+
+            Data should be an object that implements the buffer interface,
+            and contains at least 4 bytes.
+            """
+
+            def __init__(self, data):
+                self._data = data
+
+            @property
+            def __array_interface__(self):
+                # Ideally should be `'shape': ()` but the current interface
+                # does not allow that
+                return {'shape': (1,), 'typestr': '<i4', 'data': self._data,
+                        'version': 3}
+
+            def __mul__(self, other):
+                # For the purposes of this test any multiplication is an
+                # identity operation :)
+                return self
+
+        one = Arrayish(array(1, dtype='<i4'))
+        five = Arrayish(array(5, dtype='<i4'))
+
+        assert_equal(linspace(one, five), linspace(1, 5))
+
     def test_denormal_numbers(self):
         # Regression test for gh-5437. Will probably fail when compiled
         # with ICC, which flushes denormals to zero
