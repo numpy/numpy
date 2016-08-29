@@ -508,6 +508,7 @@ Math operations
     mod
     fmod
     absolute
+    fabs
     rint
     sign
     conj
@@ -520,6 +521,7 @@ Math operations
     log1p
     sqrt
     square
+    cbrt
     reciprocal
 
 .. tip::
@@ -651,9 +653,11 @@ single operation.
     isfinite
     isinf
     isnan
+    fabs
     signbit
     copysign
     nextafter
+    spacing
     modf
     ldexp
     frexp
