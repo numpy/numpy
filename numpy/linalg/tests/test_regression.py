@@ -2,6 +2,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
+
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
 from numpy.testing import (
@@ -110,8 +112,10 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, linalg.norm, testvector, ord='nuc')
         self.assertRaises(ValueError, linalg.norm, testvector, ord=np.inf)
         self.assertRaises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        self.assertRaises((AttributeError, DeprecationWarning),
-                          linalg.norm, testvector, ord=0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            self.assertRaises((AttributeError, DeprecationWarning),
+                              linalg.norm, testvector, ord=0)
         self.assertRaises(ValueError, linalg.norm, testvector, ord=-1)
         self.assertRaises(ValueError, linalg.norm, testvector, ord=-2)
 
