@@ -139,7 +139,7 @@ class TestRegression(TestCase):
         b = np.linspace(0, 10, 11)
         # This should return true for now, but will eventually raise an error:
         with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning)
+            sup.filter(FutureWarning)
             self.assertTrue(b != 'auto')
         self.assertTrue(b[0] != 'auto')
 
@@ -813,6 +813,7 @@ class TestRegression(TestCase):
         # and the boolean special case is not taken.
         with suppress_warnings() as sup:
             sup.filter(DeprecationWarning)
+            sup.filter(FutureWarning)
             sup.filter(np.VisibleDeprecationWarning)
             self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
             self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
