@@ -2304,12 +2304,7 @@ PyArray_FromInterface(PyObject *origin)
 
     /* Case for data access through buffer */
     else if (attr) {
-        if (n == 0) {
-            PyErr_SetString(PyExc_ValueError,
-                    "__array_interface__ shape must be at least size 1");
-            goto fail;
-        }
-        if (attr && (attr != Py_None)) {
+        if (attr != Py_None) {
             base = attr;
         }
         else {
