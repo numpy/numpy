@@ -595,11 +595,11 @@ class TestMaskedArray(TestCase):
         atest[idx] = btest[idx]
         assert_equal(atest, [20])
 
-    def test_filled_w_object_dtype(self):
+    def test_filled_with_object_dtype(self):
         a = np.ma.masked_all(1, dtype='O')
         assert_equal(a.filled('x')[0], 'x')
 
-    def test_filled_w_flexible_dtype(self):
+    def test_filled_with_flexible_dtype(self):
         # Test filled w/ flexible dtype
         flexi = array([(1, 1, 1)],
                       dtype=[('i', int), ('s', '|S8'), ('f', float)])
@@ -612,7 +612,7 @@ class TestMaskedArray(TestCase):
         assert_equal(flexi.filled(1),
                      np.array([(1, '1', 1.)], dtype=flexi.dtype))
 
-    def test_filled_w_mvoid(self):
+    def test_filled_with_mvoid(self):
         # Test filled w/ mvoid
         ndtype = [('a', int), ('b', float)]
         a = mvoid((1, 2.), mask=[(0, 1)], dtype=ndtype)
@@ -626,7 +626,7 @@ class TestMaskedArray(TestCase):
         a.fill_value = (-999, -999)
         assert_equal(tuple(a.filled()), (1, -999))
 
-    def test_filled_w_nested_dtype(self):
+    def test_filled_with_nested_dtype(self):
         # Test filled w/ nested dtype
         ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
         a = array([(1, (1, 1)), (2, (2, 2))],
@@ -646,7 +646,7 @@ class TestMaskedArray(TestCase):
         assert_equal(Z.mask.dtype, numpy.dtype([('A', [('f0', '?', (2, 2)),
                                           ('f1', '?', (2, 2))], (2, 2))]))
 
-    def test_filled_w_f_order(self):
+    def test_filled_with_f_order(self):
         # Test filled w/ F-contiguous array
         a = array(np.array([(0, 1, 2), (4, 5, 6)], order='F'),
                   mask=np.array([(0, 0, 1), (1, 0, 0)], order='F'),
@@ -1341,7 +1341,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, [False, True])
         assert_equal(test.mask, [False, False])
 
-    def test_eq_w_None(self):
+    def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
         # anyway. Note that pep8 will flag these tests.
         # Deprecation is in place for arrays, and when it happens this
@@ -1367,7 +1367,7 @@ class TestMaskedArrayArithmetic(TestCase):
             a = masked
             assert_equal(a == None, masked)
 
-    def test_eq_w_scalar(self):
+    def test_eq_with_scalar(self):
         a = array(1)
         assert_equal(a == 1, True)
         assert_equal(a == 0, False)
@@ -3682,7 +3682,7 @@ class TestMaskedArrayFunctions(TestCase):
         assert_almost_equal(x, y)
         assert_almost_equal(x._data, y._data)
 
-    def test_power_w_broadcasting(self):
+    def test_power_with_broadcasting(self):
         # Test power w/ broadcasting
         a2 = np.array([[1., 2., 3.], [4., 5., 6.]])
         a2m = array(a2, mask=[[1, 0, 0], [0, 0, 1]])

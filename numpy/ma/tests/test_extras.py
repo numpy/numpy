@@ -764,7 +764,7 @@ class TestCov(TestCase):
     def setUp(self):
         self.data = array(np.random.rand(12))
 
-    def test_1d_wo_missing(self):
+    def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
         x = self.data
         assert_almost_equal(np.cov(x), cov(x))
@@ -772,7 +772,7 @@ class TestCov(TestCase):
         assert_almost_equal(np.cov(x, rowvar=False, bias=True),
                             cov(x, rowvar=False, bias=True))
 
-    def test_2d_wo_missing(self):
+    def test_2d_without_missing(self):
         # Test cov on 1 2D variable w/o missing values
         x = self.data.reshape(3, 4)
         assert_almost_equal(np.cov(x), cov(x))
@@ -780,7 +780,7 @@ class TestCov(TestCase):
         assert_almost_equal(np.cov(x, rowvar=False, bias=True),
                             cov(x, rowvar=False, bias=True))
 
-    def test_1d_w_missing(self):
+    def test_1d_with_missing(self):
         # Test cov 1 1D variable w/missing values
         x = self.data
         x[-1] = masked
@@ -804,7 +804,7 @@ class TestCov(TestCase):
         assert_almost_equal(np.cov(nx, nx[::-1], rowvar=False, bias=True),
                             cov(x, x[::-1], rowvar=False, bias=True))
 
-    def test_2d_w_missing(self):
+    def test_2d_with_missing(self):
         # Test cov on 2D variable w/ missing value
         x = self.data
         x[-1] = masked
@@ -861,7 +861,7 @@ class TestCorrcoef(TestCase):
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(x, bias=1), expected)
 
-    def test_1d_wo_missing(self):
+    def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
         x = self.data
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
@@ -872,7 +872,7 @@ class TestCorrcoef(TestCase):
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
 
-    def test_2d_wo_missing(self):
+    def test_2d_without_missing(self):
         # Test corrcoef on 1 2D variable w/o missing values
         x = self.data.reshape(3, 4)
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
@@ -883,7 +883,7 @@ class TestCorrcoef(TestCase):
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
 
-    def test_1d_w_missing(self):
+    def test_1d_with_missing(self):
         # Test corrcoef 1 1D variable w/missing values
         x = self.data
         x[-1] = masked
@@ -913,7 +913,7 @@ class TestCorrcoef(TestCase):
             assert_almost_equal(np.corrcoef(nx, nx[::-1]),
                                 corrcoef(x, x[::-1], ddof=2))
 
-    def test_2d_w_missing(self):
+    def test_2d_with_missing(self):
         # Test corrcoef on 2D variable w/ missing value
         x = self.data
         x[-1] = masked
