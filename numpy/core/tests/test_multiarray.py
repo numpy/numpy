@@ -2743,8 +2743,9 @@ class TestBinop(object):
         #    d = input.copy() # refcount 1
         #    return d, d + d # PyNumber_Add without increasing refcount
         from numpy.core.multiarray_tests import incref_elide
-        d = np.ones(5)
+        d = np.ones(100000)
         orig, res = incref_elide(d)
+        d + d
         # the return original should not be changed to an inplace operation
         assert_array_equal(orig, d)
         assert_array_equal(res, d + d)
@@ -2758,11 +2759,51 @@ class TestBinop(object):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
         from numpy.core.multiarray_tests import incref_elide_l
         # padding with 1 makes sure the object on the stack is not overwriten
-        l = [1, 1, 1, 1, np.ones(5)]
+        l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
         # the return original should not be changed to an inplace operation
-        assert_array_equal(l[4], np.ones(5))
+        assert_array_equal(l[4], np.ones(100000))
         assert_array_equal(res, l[4] + l[4])
+
+    def test_temporary_with_cast(self):
+        # check that we don't elide into a temporary which would need casting
+        d = np.ones(200000, dtype=np.int64)
+        assert_equal(((d + d) + 2**222).dtype, np.dtype('O'))
+
+        r = ((d + d) / 2)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = np.true_divide((d + d), 2)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = ((d + d) / 2.)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = ((d + d) // 2)
+        assert_equal(r.dtype, np.dtype(np.int64))
+
+        # commutative elision into the astype result
+        f = np.ones(100000, dtype=np.float32)
+        assert_equal(((f + f) + f.astype(np.float64)).dtype, np.dtype('f8'))
+
+        # no elision into f + f
+        d = f.astype(np.float64)
+        assert_equal(((f + f) + d).dtype, np.dtype('f8'))
+
+    def test_elide_broadcast(self):
+        # test no elision on broadcast to higher dimension
+        # only triggers elision code path in debug mode as triggering it in
+        # normal mode needs 256kb large matching dimension, so a lot of memory
+        d = np.ones((2000, 1), dtype=int)
+        b = np.ones((2000), dtype=np.bool)
+        r = (1 - d) + b
+        assert_equal(r, 1)
+        assert_equal(r.shape, (2000, 2000))
+
+    def test_elide_scalar(self):
+        # check inplace op does not create ndarray from scalars
+        a = np.bool_()
+        assert_(type(~(a & a)) is np.bool_)
 
     def test_ufunc_override_rop_precedence(self):
         # 2016-01-29: NUMPY_UFUNC_DISABLED

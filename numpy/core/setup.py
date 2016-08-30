@@ -824,6 +824,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.c'),
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
+            join('src', 'multiarray', 'temp_elide.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
