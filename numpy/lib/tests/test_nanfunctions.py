@@ -318,7 +318,9 @@ class SharedNanFunctionsTestsMixin(object):
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
             for c in codes:
                 with suppress_warnings() as sup:
-                    sup.filter(np.ComplexWarning)
+                    if nf in {np.nanstd, np.nanvar} and c in 'FDG':
+                        # Giving the warning is a small bug, see gh-8000
+                        sup.filter(np.ComplexWarning)
                     tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
                     assert_(res is tgt)
@@ -333,7 +335,9 @@ class SharedNanFunctionsTestsMixin(object):
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
             for c in codes:
                 with suppress_warnings() as sup:
-                    sup.filter(np.ComplexWarning)
+                    if nf in {np.nanstd, np.nanvar} and c in 'FDG':
+                        # Giving the warning is a small bug, see gh-8000
+                        sup.filter(np.ComplexWarning)
                     tgt = rf(mat, dtype=c, axis=1).dtype.type
                     res = nf(mat, dtype=c, axis=1).dtype.type
                     assert_(res is tgt)
