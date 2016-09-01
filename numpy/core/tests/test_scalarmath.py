@@ -73,7 +73,7 @@ class TestBaseMath(TestCase):
                 inp1[...] = np.ones_like(inp1)
                 inp2[...] = np.zeros_like(inp2)
                 assert_almost_equal(np.add(inp1, inp2), exp1, err_msg=msg)
-                assert_almost_equal(np.add(inp1, 1), exp1 + 1, err_msg=msg)
+                assert_almost_equal(np.add(inp1, 2), exp1 + 2, err_msg=msg)
                 assert_almost_equal(np.add(1, inp2), exp1, err_msg=msg)
 
                 np.add(inp1, inp2, out=out)
@@ -88,11 +88,11 @@ class TestBaseMath(TestCase):
                                         np.divide(1, inp2),  err_msg=msg)
 
                 inp1[...] = np.ones_like(inp1)
-                inp2[...] = np.zeros_like(inp2)
-                np.add(inp1, 1, out=out)
-                assert_almost_equal(out, exp1 + 1, err_msg=msg)
-                np.add(1, inp2, out=out)
-                assert_almost_equal(out, exp1, err_msg=msg)
+                np.add(inp1, 2, out=out)
+                assert_almost_equal(out, exp1 + 2, err_msg=msg)
+                inp2[...] = np.ones_like(inp2)
+                np.add(2, inp2, out=out)
+                assert_almost_equal(out, exp1 + 2, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size

@@ -1794,7 +1794,8 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp(), ufmt % (o, o, s, dtype, 'out of place')
-                yield inp(), inp(), ufmt % (o, o, s, dtype, 'in place')
+                d = inp()
+                yield d, d, ufmt % (o, o, s, dtype, 'in place')
                 yield out[1:], inp()[:-1], ufmt % \
                     (o + 1, o, s - 1, dtype, 'out of place')
                 yield out[:-1], inp()[1:], ufmt % \
@@ -1809,9 +1810,11 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp1(), inp2(),  bfmt % \
                     (o, o, o, s, dtype, 'out of place')
-                yield inp1(), inp1(), inp2(), bfmt % \
+                d = inp1()
+                yield d, d, inp2(), bfmt % \
                     (o, o, o, s, dtype, 'in place1')
-                yield inp2(), inp1(), inp2(), bfmt % \
+                d = inp2()
+                yield d, inp1(), d, bfmt % \
                     (o, o, o, s, dtype, 'in place2')
                 yield out[1:], inp1()[:-1], inp2()[:-1], bfmt % \
                     (o + 1, o, o, s - 1, dtype, 'out of place')

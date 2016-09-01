@@ -1202,8 +1202,9 @@ class TestAbsoluteNegative(TestCase):
                             assert_array_equal(out, d, err_msg=msg)
 
                             assert_array_equal(-inp, -1*inp, err_msg=msg)
+                            d = -1 * inp
                             np.negative(inp, out=out)
-                            assert_array_equal(out, -1*inp, err_msg=msg)
+                            assert_array_equal(out, d, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size
