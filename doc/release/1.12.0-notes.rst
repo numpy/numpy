@@ -319,6 +319,19 @@ is regular quicksort but changing to a heapsort when not enough progress is
 made. This retains the good quicksort performance while changing the worst case
 runtime from ``O(N^2)`` to ``O(N*log(N))``.
 
+stacklevel of warnings increased
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The stacklevel for python based warnings was increased so that most warnings
+will report the offending line of the user code instead of the line the
+warning itself is given. Passing of stacklevel is now tested to ensure that
+new warnings will recieve the ``stacklevel`` argument.
+
+This causes warnings with the "default" or "module" filter to be shown once
+for every offending user code line or user module instead of only once. On
+python versions before 3.4, this can cause warnings to appear that were falsly
+ignored before, which may be surprising especially in test suits.
+
+
 Deprecations
 ============
 
