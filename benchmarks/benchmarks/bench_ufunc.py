@@ -77,6 +77,45 @@ class Custom(Benchmark):
         (self.b | self.b)
 
 
+class CustomInplace(Benchmark):
+    def setup(self):
+        self.c = np.ones(500000, dtype=np.int8)
+        self.i = np.ones(150000, dtype=np.int32)
+        self.f = np.zeros(150000, dtype=np.float32)
+        self.d = np.zeros(75000, dtype=np.float64)
+        # fault memory
+        self.f *= 1.
+        self.d *= 1.
+
+    def time_char_or(self):
+        np.bitwise_or(self.c, 0, out=self.c)
+        np.bitwise_or(0, self.c, out=self.c)
+
+    def time_char_or_temp(self):
+        0 | self.c | 0
+
+    def time_int_or(self):
+        np.bitwise_or(self.i, 0, out=self.i)
+        np.bitwise_or(0, self.i, out=self.i)
+
+    def time_int_or_temp(self):
+        0 | self.i | 0
+
+    def time_float_add(self):
+        np.add(self.f, 1., out=self.f)
+        np.add(1., self.f, out=self.f)
+
+    def time_float_add_temp(self):
+        1. + self.f + 1.
+
+    def time_double_add(self):
+        np.add(self.d, 1., out=self.d)
+        np.add(1., self.d, out=self.d)
+
+    def time_double_add_temp(self):
+        1. + self.d + 1.
+
+
 class CustomScalar(Benchmark):
     params = [np.float32, np.float64]
     param_names = ['dtype']
