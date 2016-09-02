@@ -588,7 +588,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         msg = "Polyfit may be poorly conditioned"
-        warnings.warn(msg, RankWarning)
+        warnings.warn(msg, RankWarning, stacklevel=2)
 
     if full:
         return c, resids, rank, s, rcond

@@ -2647,7 +2647,7 @@ def rank(a):
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning)
+        VisibleDeprecationWarning, stacklevel=2)
     try:
         return a.ndim
     except AttributeError:

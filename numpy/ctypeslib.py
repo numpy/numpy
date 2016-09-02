@@ -119,7 +119,7 @@ else:
         if ctypes.__version__ < '1.0.1':
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
-                          "with ctypes < 1.0.1")
+                          "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
         if not ext:

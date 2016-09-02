@@ -96,7 +96,7 @@ class _Deprecate(object):
 
         def newfunc(*args,**kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
-            warnings.warn(depdoc, DeprecationWarning)
+            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
         newfunc = _set_function_name(newfunc, old_name)
@@ -152,7 +152,7 @@ def deprecate(*args, **kwargs):
     >>> olduint(6)
     /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
     DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning)
+      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -1016,7 +1016,7 @@ class SafeEval(object):
     def __init__(self):
         # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
 
     def visit(self, node):
         cls = node.__class__

@@ -2206,7 +2206,7 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
                   'deprecated default_config_dict(%r,%r,%r)'
                   % (name, parent_name, local_path,
                      name, parent_name, local_path,
-                     ))
+                     ), stacklevel=2)
     c = Configuration(name, parent_name, local_path)
     return c.todict()
 
