@@ -372,6 +372,8 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     try:
         # isscalar test to check cases such as [np.nan] != np.nan
         if isscalar(desired) != isscalar(actual):
+            if desired == actual:
+                return
             raise AssertionError(msg)
 
         # If one of desired/actual is not finite, handle it specially here:
