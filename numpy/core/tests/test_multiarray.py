@@ -29,7 +29,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
-    assert_array_less, runstring, dec, SkipTest, temppath
+    assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
     )
 
 # Need to test an object that does not fully implement math interface
@@ -826,8 +826,8 @@ class TestStructured(TestCase):
         # This comparison invokes deprecated behaviour, and will probably
         # start raising an error eventually. What we really care about in this
         # test is just that it doesn't return True.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, "elementwise == comparison failed")
             assert_equal(x == y, False)
 
         x = np.zeros((1,), dtype=[('a', ('f4', (2, 1))), ('b', 'i1')])
@@ -835,8 +835,8 @@ class TestStructured(TestCase):
         # This comparison invokes deprecated behaviour, and will probably
         # start raising an error eventually. What we really care about in this
         # test is just that it doesn't return True.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, "elementwise == comparison failed")
             assert_equal(x == y, False)
 
         # Check that structured arrays that are different only in
@@ -3818,11 +3818,11 @@ class TestIO(object):
         def fail(*args, **kwargs):
             raise io.IOError('Can not tell or seek')
 
-        f = io.open(self.filename, 'rb', buffering=0)
-        f.seek = fail
-        f.tell = fail
-        y = np.fromfile(self.filename, dtype=self.dtype)
-        assert_array_equal(y, self.x.flat)
+        with io.open(self.filename, 'rb', buffering=0) as f:
+            f.seek = fail
+            f.tell = fail
+            y = np.fromfile(self.filename, dtype=self.dtype)
+            assert_array_equal(y, self.x.flat)
 
     def test_largish_file(self):
         # check the fallocate path on files > 16MB
@@ -6039,11 +6039,11 @@ class TestNewBufferProtocol(object):
 class TestArrayAttributeDeletion(object):
 
     def test_multiarray_writable_attributes_deletion(self):
-        """ticket #2046, should not seqfault, raise AttributeError"""
+        # ticket #2046, should not seqfault, raise AttributeError
         a = np.ones(2)
         attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 

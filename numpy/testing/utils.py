@@ -396,8 +396,12 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         pass
 
     # Explicitly use __eq__ for comparison, ticket #2552
-    if not (desired == actual):
-        raise AssertionError(msg)
+    with suppress_warnings() as sup:
+        # TODO: Better handling will to needed when change happens!
+        sup.filter(DeprecationWarning, ".*NAT ==")
+        sup.filter(FutureWarning, ".*NAT ==")
+        if not (desired == actual):
+            raise AssertionError(msg)
 
 
 def print_assert_equal(test_string, actual, desired):
@@ -687,8 +691,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # pass (or maybe eventually catch the errors and return False, I
         # dunno, that's a little trickier and we can figure that out when the
         # time comes).
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, ".*==")
+            sup.filter(FutureWarning, ".*==")
             return comparison(*args, **kwargs)
 
     def isnumber(x):
@@ -1658,16 +1663,12 @@ class WarningManager(object):
 @contextlib.contextmanager
 def _assert_warns_context(warning_class, name=None):
     __tracebackhide__ = True  # Hide traceback for py.test
-    with warnings.catch_warnings(record=True) as l:
-        warnings.simplefilter('always')
+    with suppress_warnings() as sup:
+        l = sup.record(warning_class)
         yield
         if not len(l) > 0:
             name_str = " when calling %s" % name if name is not None else ""
             raise AssertionError("No warning raised" + name_str)
-        if not l[0].category is warning_class:
-            name_str = "%s " % name if name is not None else ""
-            raise AssertionError("First warning %sis not a %s (is %s)"
-                                 % (name_str, warning_class, l[0]))
 
 
 def assert_warns(warning_class, *args, **kwargs):
@@ -1676,8 +1677,7 @@ def assert_warns(warning_class, *args, **kwargs):
 
     A warning of class warning_class should be thrown by the callable when
     invoked with arguments args and keyword arguments kwargs.
-    If a different type of warning is thrown, it will not be caught, and the
-    test case will be deemed to have suffered an error.
+    If a different type of warning is thrown, it will not be caught.
 
     If called with all arguments other than the warning class omitted, may be
     used as a context manager:

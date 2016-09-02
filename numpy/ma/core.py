@@ -1032,12 +1032,7 @@ class _MaskedBinaryOperation:
         if m is not nomask and m.any():
             # any errors, just abort; impossible to guarantee masked values
             try:
-                np.copyto(result, 0, casting='unsafe', where=m)
-                # avoid using "*" since this may be overlaid
-                masked_da = umath.multiply(m, da)
-                # only add back if it can be cast safely
-                if np.can_cast(masked_da.dtype, result.dtype, casting='safe'):
-                    result += masked_da
+                np.copyto(result, da, casting='unsafe', where=m)
             except:
                 pass
 

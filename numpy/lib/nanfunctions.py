@@ -130,7 +130,7 @@ def _divide_by_count(a, b, out=None):
         in place. If `a` is a numpy scalar, the division preserves its type.
 
     """
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
                 return np.divide(a, b, out=a, casting='unsafe')
@@ -815,12 +815,9 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
 
-    # The warning context speeds things up.
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims)
-        tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-        avg = _divide_by_count(tot, cnt, out=out)
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims)
+    tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    avg = _divide_by_count(tot, cnt, out=out)
 
     isbad = (cnt == 0)
     if isbad.any():
@@ -1288,38 +1285,35 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+    # Compute mean
+    if type(arr) is np.matrix:
+        _keepdims = np._NoValue
+    else:
+        _keepdims = True
+    # we need to special case matrix for reverse compatibility
+    # in order for this to work, these sums need to be called with
+    # keepdims=True, however matrix now raises an error in this case, but
+    # the reason that it drops the keepdims kwarg is to force keepdims=True
+    # so this used to work by serendipity.
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims)
+    avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims)
+    avg = _divide_by_count(avg, cnt)
 
-        # Compute mean
-        if type(arr) is np.matrix:
-            _keepdims = np._NoValue
-        else:
-            _keepdims = True
-        # we need to special case matrix for reverse compatibility
-        # in order for this to work, these sums need to be called with
-        # keepdims=True, however matrix now raises an error in this case, but
-        # the reason that it drops the keepdims kwarg is to force keepdims=True
-        # so this used to work by serendipity.
-        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims)
-        avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims)
-        avg = _divide_by_count(avg, cnt)
+    # Compute squared deviation from mean.
+    np.subtract(arr, avg, out=arr, casting='unsafe')
+    arr = _copyto(arr, 0, mask)
+    if issubclass(arr.dtype.type, np.complexfloating):
+        sqr = np.multiply(arr, arr.conj(), out=arr).real
+    else:
+        sqr = np.multiply(arr, arr, out=arr)
 
-        # Compute squared deviation from mean.
-        np.subtract(arr, avg, out=arr, casting='unsafe')
-        arr = _copyto(arr, 0, mask)
-        if issubclass(arr.dtype.type, np.complexfloating):
-            sqr = np.multiply(arr, arr.conj(), out=arr).real
-        else:
-            sqr = np.multiply(arr, arr, out=arr)
-
-        # Compute variance.
-        var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-        if var.ndim < cnt.ndim:
-            # Subclasses of ndarray may ignore keepdims, so check here.
-            cnt = cnt.squeeze(axis)
-        dof = cnt - ddof
-        var = _divide_by_count(var, dof)
+    # Compute variance.
+    var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    if var.ndim < cnt.ndim:
+        # Subclasses of ndarray may ignore keepdims, so check here.
+        cnt = cnt.squeeze(axis)
+    dof = cnt - ddof
+    var = _divide_by_count(var, dof)
 
     isbad = (dof <= 0)
     if np.any(isbad):

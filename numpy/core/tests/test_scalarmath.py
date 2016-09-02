@@ -2,14 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import itertools
-import warnings
 import operator
 
 import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY
+    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
+    suppress_warnings
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -240,9 +240,8 @@ class TestModulus(TestCase):
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        with warnings.catch_warnings():
-            warnings.simplefilter('always')
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)

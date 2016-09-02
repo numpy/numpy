@@ -19,7 +19,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     TestCase, run_module_suite, assert_warns, assert_,
     assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, dec, IS_PYPY
+    assert_array_equal, temppath, dec, IS_PYPY, suppress_warnings
 )
 
 
@@ -282,8 +282,8 @@ class TestSavezLoad(RoundtripTest, TestCase):
             # collector, so we catch the warnings.  Because ResourceWarning
             # is unknown in Python < 3.x, we take the easy way out and
             # catch all warnings.
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            with suppress_warnings() as sup:
+                sup.filter(Warning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
@@ -687,9 +687,8 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
     def test_empty_file(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",
-                                    message="loadtxt: Empty input file:")
+        with suppress_warnings() as sup:
+            sup.filter(message="loadtxt: Empty input file:")
             c = TextIO()
             x = np.loadtxt(c)
             assert_equal(x.shape, (0,))
@@ -826,9 +825,8 @@ class TestLoadTxt(TestCase):
         assert_(x.shape == (3,))
 
         # Test ndmin kw with empty file.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",
-                                    message="loadtxt: Empty input file:")
+        with suppress_warnings() as sup:
+            sup.filter(message="loadtxt: Empty input file:")
             f = TextIO()
             assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
@@ -974,8 +972,8 @@ class TestFromTxt(TestCase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
+        with suppress_warnings() as sup:
+            sup.filter(ConversionWarning)
             basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
             # Footer too small to get rid of all invalid values
             assert_raises(ValueError, np.genfromtxt,
@@ -1302,9 +1300,8 @@ M   33  21.99
 
     def test_empty_file(self):
         # Test that an empty file raises the proper warning.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",
-                                    message="genfromtxt: Empty input file:")
+        with suppress_warnings() as sup:
+            sup.filter(message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
             assert_equal(test, np.array([]))
@@ -1751,8 +1748,8 @@ M   33  21.99
         assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
 
         # Test with invalid not raise
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
+        with suppress_warnings() as sup:
+            sup.filter(ConversionWarning)
 
             test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
             control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])

@@ -8,7 +8,7 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns,
-    assert_raises_regex, dec, clear_and_catch_warnings
+    assert_raises_regex, dec, suppress_warnings
 )
 from numpy.testing.utils import HAS_REFCOUNT
 import numpy.lib.function_base as nfb
@@ -320,7 +320,11 @@ class TestAverage(TestCase):
         a = np.array([[1,2],[3,4]]).view(subclass)
         w = np.array([[1,2],[3,4]]).view(subclass)
 
-        assert_equal(type(np.average(a, weights=w)), subclass)
+        with suppress_warnings() as sup:
+            # Note that the warning is spurious, because the test checks
+            # for weights while a is ignored.
+            sup.filter(FutureWarning, "np.average currently does not preserve")
+            assert_equal(type(np.average(a, weights=w)), subclass)
 
         # also test matrices
         a = np.matrix([[1,2],[3,4]])
@@ -1457,12 +1461,12 @@ class TestHistogram(TestCase):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
-        
+
     def test_error_binnum_type (self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
-        assert_raises(TypeError, histogram, vals, 2.4)   
+        assert_raises(TypeError, histogram, vals, 2.4)
 
     def test_finite_range(self):
         # Normal ranges should be fine
@@ -1792,15 +1796,6 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
-class catch_warn_nfb(clear_and_catch_warnings):
-
-    """
-    Context manager to catch, reset warnings in function_base module
-
-    """
-    class_modules = (nfb,)
-
-
 class TestCorrCoef(TestCase):
     A = np.array(
         [[0.15391142, 0.18045767, 0.14197213],
@@ -1837,10 +1832,10 @@ class TestCorrCoef(TestCase):
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
-        with catch_warn_nfb():
+        with suppress_warnings() as sup:
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            warnings.simplefilter("ignore")
+            sup.filter(DeprecationWarning)
             # ddof has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
             assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
@@ -1849,11 +1844,11 @@ class TestCorrCoef(TestCase):
 
     def test_bias(self):
         # bias raises DeprecationWarning
-        with catch_warn_nfb():
+        with suppress_warnings() as sup:
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
             assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            warnings.simplefilter("ignore")
+            sup.filter(DeprecationWarning)
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
@@ -2316,7 +2311,7 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
-        
+
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
@@ -2335,7 +2330,7 @@ class TestInterp(TestCase):
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
         fp = [5+1.0j, 10+2j, 3+3j, 4+4j]
-        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j, 
+        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j,
              3.5+3.5j, 3.75+3.75j]
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
