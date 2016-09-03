@@ -384,3 +384,8 @@ def setup_package():
 
 if __name__ == '__main__':
     setup_package()
+    # This may avoid problems where numpy is installed via ``*_requires`` by
+    # setuptools, the global namespace isn't reset properly, and then numpy is
+    # imported later (which will then fail to load numpy extension modules).
+    # See gh-7956 for details
+    del builtins.__NUMPY_SETUP__
