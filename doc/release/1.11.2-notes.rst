@@ -5,12 +5,12 @@ Numpy 1.11.2 supports Python 2.6 - 2.7 and 3.2 - 3.5. It fixes bugs and
 regressions found in Numpy 1.11.1 and includes several build related
 improvements. Wheels for Linux, Windows, and OS X can be found on PyPI.
 
-Fixes Merged
-============
+Pull Requests Merged
+====================
 
-Fixes overridden by later merges are omitted.
+Fixes overridden by later merges and release notes updates are omitted.
 
-- #7736 BUG: many functions silently drop `keepdims` kwarg.
+- #7736 BUG: many functions silently drop 'keepdims' kwarg.
 - #7738 ENH: add extra kwargs and update doc of many MA methods.
 - #7778 DOC: Update Numpy 1.11.1 release notes.
 - #7793 BUG: MaskedArray.count treats negative axes incorrectly.
@@ -31,3 +31,4 @@ Fixes overridden by later merges are omitted.
 - #7954 BUG: Use keyword arguments to initialize Extension base class.
 - #7955 BUG: Make sure numpy globals keep identity after reload.
 - #7972 BUG: MSVCCompiler grows 'lib' & 'include' env strings exponentially.
+- #8005 BLD: Remove __NUMPY_SETUP__ from builtins at end of setup.py.
