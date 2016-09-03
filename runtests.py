@@ -60,7 +60,6 @@ sys.path.pop(0)
 import shutil
 import subprocess
 import time
-import imp
 from argparse import ArgumentParser, REMAINDER
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))

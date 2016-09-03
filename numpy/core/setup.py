@@ -1,6 +1,5 @@
 from __future__ import division, print_function
 
-import imp
 import os
 import sys
 import pickle
