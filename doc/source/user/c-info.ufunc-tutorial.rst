@@ -70,7 +70,7 @@ Example Non-ufunc extension
 .. index::
    pair: ufunc; adding new
 
-For comparison and general edificaiton of the reader we provide
+For comparison and general edification of the reader we provide
 a simple implementation of a C extension of logit that uses no
 numpy.
 
@@ -278,7 +278,7 @@ the primary thing that must be changed to create your own ufunc.
          * In this code we only define the ufunc for
          * a single dtype. The computations that must
          * be replaced to create a ufunc for
-         * a different funciton are marked with BEGIN
+         * a different function are marked with BEGIN
          * and END.
          *
          * Details explaining the Python-C API can be found under
@@ -480,7 +480,7 @@ the primary thing that must be changed to create your own ufunc.
          * of these functions must be modified when you
          * create your own ufunc. The computations that must
          * be replaced to create a ufunc for
-         * a different funciton are marked with BEGIN
+         * a different function are marked with BEGIN
          * and END.
          *
          * Details explaining the Python-C API can be found under
