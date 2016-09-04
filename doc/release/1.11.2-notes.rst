@@ -32,3 +32,4 @@ Fixes overridden by later merges and release notes updates are omitted.
 - #7955 BUG: Make sure numpy globals keep identity after reload.
 - #7972 BUG: MSVCCompiler grows 'lib' & 'include' env strings exponentially.
 - #8005 BLD: Remove __NUMPY_SETUP__ from builtins at end of setup.py.
+- #8010 MAINT: Remove leftover imp module imports.
