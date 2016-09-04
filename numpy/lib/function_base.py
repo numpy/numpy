@@ -4360,9 +4360,9 @@ def meshgridify(*xi, **kwargs):
     conventional `meshgrid` function is not applicable and meshgridify is very
     useful.
 
-    >>> [X, Y, Z] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
+    >>> X, Y, Z = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
 
-    For example, for direct controuplotting of tabular data.
+    For example, for direct contourplotting of tabular data.
 
     >>> x = np.array(0, 0, 0, 1, 1, 1, 2, 2, 2)
     >>> y = np.array(0, 1, 2, 0, 1, 2, 0, 1, 2)
@@ -4385,8 +4385,6 @@ def meshgridify(*xi, **kwargs):
     raveled_mgrid = [m.ravel() for m in mgrid]
     value_dict = dict(zip(zip(*xi), f))
     result = [value_dict.get(key, np.nan) for key in zip(*raveled_mgrid)]
-    # return [*mgrid, np.array(result).reshape(mgrid[0].shape)]
-    # return mgrid.append(np.array(result).reshape(mgrid[0].shape))
     return mgrid + [np.array(result).reshape(mgrid[0].shape)]
 
 

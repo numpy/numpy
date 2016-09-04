@@ -2094,7 +2094,7 @@ class TestMeshgrid(TestCase):
 class TestMeshgridify(TestCase):
 
     def test_simple(self):
-        [X, Y, Z] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
+        X, Y, Z = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
         assert_array_equal(X, np.array([[1, 2],
                                         [1, 2]]))
         assert_array_equal(Y, np.array([[3, 3],
@@ -2103,14 +2103,14 @@ class TestMeshgridify(TestCase):
                                         [1, 3]]))
 
     def test_only_meshgrid(self):
-        [X, Y] = meshgridify([1, 1, 2, 2], [3, 4, 3, 4])
+        X, Y = meshgridify([1, 1, 2, 2], [3, 4, 3, 4])
         assert_array_equal(X, np.array([[1, 2],
                                         [1, 2]]))
         assert_array_equal(Y, np.array([[3, 3],
                                         [4, 4]]))
 
     def test_missing_value(self):
-        [X, Y, Z] = meshgridify([1, 1, 2], [3, 4, 3], f=[0, 1, 2])
+        X, Y, Z = meshgridify([1, 1, 2], [3, 4, 3], f=[0, 1, 2])
         assert_array_equal(X, np.array([[1, 2],
                                         [1, 2]]))
         assert_array_equal(Y, np.array([[3, 3],
@@ -2119,7 +2119,7 @@ class TestMeshgridify(TestCase):
                                         [1, np.nan]]))
 
     def test_single_coordinate(self):
-        [X, Z] = meshgridify([1, 2, 3, 4], f=[4, 3, 2, 1])
+        X, Z = meshgridify([1, 2, 3, 4], f=[4, 3, 2, 1])
         assert_array_equal(X, np.array([1, 2, 3, 4]))
         assert_array_equal(Z, np.array([4, 3, 2, 1]))
 
