@@ -1482,7 +1482,7 @@ iterator_loop(PyUFuncObject *ufunc,
             baseptrs[i] = PyArray_BYTES(op_it[i]);
         }
         for (i = nin; i < nop; ++i) {
-            baseptrs[i] = PyArray_BYTES(op[i]);
+            baseptrs[i] = PyArray_BYTES(op_it[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
