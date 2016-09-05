@@ -148,6 +148,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                             flag = NPY_ITER_C_INDEX;
                         }
                         break;
+                    case 'i':
+                        if (strcmp(str, "copy_if_overlap") == 0) {
+                            flag = NPY_ITER_COPY_IF_OVERLAP;
+                        }
+                        break;
                     case 'n':
                         if (strcmp(str, "common_dtype") == 0) {
                             flag = NPY_ITER_COMMON_DTYPE;
