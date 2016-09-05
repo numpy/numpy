@@ -4,9 +4,11 @@ import sys
 import itertools
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_raises, assert_equal
+from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal, assert_array_equal,
+                           assert_allclose)
 
 from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
+from numpy.core import umath_tests
 from numpy.lib.stride_tricks import as_strided
 from numpy.compat import long
 
@@ -107,7 +109,6 @@ def test_diophantine_fuzz():
 
         min_count = 500//(ndim + 1)
 
-        numbers = []
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
             A_max = 1 + rng.randint(0, 11, dtype=np.intp)**6
@@ -252,12 +253,11 @@ def test_may_share_memory_manual():
     check_may_share_memory_exact(x, x.copy())
 
 
-def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
-    # Check that overlap problems with common strides are solved with
-    # little work.
-    x = np.zeros([17,34,71,97], dtype=np.int16)
-
+def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     rng = np.random.RandomState(1234)
+
+    if equal_size and same_steps:
+        raise ValueError()
 
     def random_slice(n, step):
         start = rng.randint(0, n+1, dtype=np.intp)
@@ -267,30 +267,70 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
             step *= -1
         return slice(start, stop, step)
 
-    feasible = 0
-    infeasible = 0
+    def random_slice_fixed_size(n, step, size):
+        start = rng.randint(0, n+1 - size*step)
+        stop = start + (size-1)*step + 1
+        if rng.randint(0, 2) == 0:
+            stop, start = start-1, stop-1
+            if stop < 0:
+                stop = None
+            step *= -1
+        return slice(start, stop, step)
 
-    while min(feasible, infeasible) < min_count:
+    while True:
         steps = tuple(rng.randint(1, 11, dtype=np.intp)
                       if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
-        if same_steps:
+        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
+
+        t1 = np.arange(x.ndim)
+        rng.shuffle(t1)
+
+        if equal_size:
+            t2 = t1
+        else:
+            t2 = np.arange(x.ndim)
+            rng.shuffle(t2)
+
+        a = x[s1]
+
+        if equal_size:
+            if a.size == 0:
+                continue
+
+            steps2 = tuple(rng.randint(1, max(2, p//(1+pa)))
+                           if rng.randint(0, 5) == 0 else 1
+                           for p, s, pa in zip(x.shape, s1, a.shape))
+            s2 = tuple(random_slice_fixed_size(p, s, pa)
+                       for p, s, pa in zip(x.shape, steps2, a.shape))
+        elif same_steps:
             steps2 = steps
         else:
             steps2 = tuple(rng.randint(1, 11, dtype=np.intp)
                            if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                            for j in range(x.ndim))
 
-        t1 = np.arange(x.ndim)
-        rng.shuffle(t1)
+        if not equal_size:
+            s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
 
-        t2 = np.arange(x.ndim)
-        rng.shuffle(t2)
-
-        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
-        s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
-        a = x[s1].transpose(t1)
+        a = a.transpose(t1)
         b = x[s2].transpose(t2)
+
+        yield a, b
+
+
+def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
+    # Check that overlap problems with common strides are solved with
+    # little work.
+    x = np.zeros([17,34,71,97], dtype=np.int16)
+
+    feasible = 0
+    infeasible = 0
+
+    pair_iter = iter_random_view_pairs(x, same_steps)
+
+    while min(feasible, infeasible) < min_count:
+        a, b = next(pair_iter)
 
         bounds_overlap = np.may_share_memory(a, b)
         may_share_answer = np.may_share_memory(a, b)
@@ -299,11 +339,10 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
 
         if easy_answer != exact_answer:
             # assert_equal is slow...
-            assert_equal(easy_answer, exact_answer, err_msg=repr((s1, s2)))
+            assert_equal(easy_answer, exact_answer)
 
         if may_share_answer != bounds_overlap:
-            assert_equal(may_share_answer, bounds_overlap,
-                         err_msg=repr((s1, s2)))
+            assert_equal(may_share_answer, bounds_overlap)
 
         if bounds_overlap:
             if exact_answer:
@@ -522,6 +561,219 @@ def test_non_ndarray_inputs():
 
         assert_(np.shares_memory(cls(x[1::3]), x[::2]))
         assert_(np.may_share_memory(cls(x[1::3]), x[::2]))
+
+
+def view_element_first_byte(x):
+    """Construct an array viewing the first byte of each element of `x`"""
+    from numpy.lib.stride_tricks import DummyArray
+    interface = dict(x.__array_interface__)
+    interface['typestr'] = '|b1'
+    interface['descr'] = [('', '|b1')]
+    return np.asarray(DummyArray(interface, x))
+
+
+class TestUFuncGenericFunction(object):
+    """
+    Test ufunc call memory overlap handling
+    """
+
+    def test_overlapping_unary_ufunc_fuzz(self):
+        shapes = [7, 13, 8, 21, 29, 32]
+        ufunc = np.invert
+
+        rng = np.random.RandomState(1234)
+
+        for ndim in range(1, 6):
+            x = rng.randint(0, 2**16, size=shapes[:ndim]).astype(np.int16)
+
+            it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
+
+            min_count = 5000 // (ndim + 1)**2
+
+            overlapping = 0
+            while overlapping < min_count:
+                a, b = next(it)
+
+                if np.shares_memory(a, b):
+                    overlapping += 1
+
+                bx = b.copy()
+                cx = ufunc(a, out=bx)
+                c = ufunc(a, out=b)
+
+                if (c != cx).any():
+                    assert_equal(c, cx)
+
+    def test_overlapping_unary_gufunc_fuzz(self):
+        shapes = [7, 13, 8, 21, 29, 32]
+        gufunc = umath_tests.euclidean_pdist
+
+        rng = np.random.RandomState(1234)
+
+        for ndim in range(2, 6):
+            x = rng.rand(*shapes[:ndim])
+
+            it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
+
+            min_count = 500 // (ndim + 1)**2
+
+            overlapping = 0
+            while overlapping < min_count:
+                a, b = next(it)
+
+                if min(a.shape[-2:]) < 2 or min(b.shape[-2:]) < 2 or a.shape[-1] < 2:
+                    continue
+
+                if np.shares_memory(a, b):
+                    overlapping += 1
+
+                # Ensure the shapes are so that euclidean_pdist is happy
+                if b.shape[-1] > b.shape[-2]:
+                    b = b[...,0,:]
+                else:
+                    b = b[...,:,0]
+
+                n = a.shape[-2]
+                p = n * (n - 1) // 2
+                if p <= b.shape[-1] and p > 0:
+                    b = b[...,:p]
+                else:
+                    n = max(2, int(np.sqrt(b.shape[-1]))//2)
+                    p = n * (n - 1) // 2
+                    a = a[...,:n,:]
+                    b = b[...,:p]
+
+                # Call
+                bx = b.copy()
+                cx = gufunc(a, out=bx)
+                c = gufunc(a, out=b)
+
+                if (c != cx).any():
+                    assert_equal(c, cx)
+
+    def test_overlapping_unary_ufunc_1d_manual(self):
+        # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
+
+        def check(a, b):
+            a_orig = a.copy()
+            b_orig = b.copy()
+
+            b0 = b.copy()
+            c1 = ufunc(a, out=b0)
+            c2 = ufunc(a, out=b)
+            assert_array_equal(c1, c2)
+
+            # Trigger "fancy ufunc loop" code path
+            mask = view_element_first_byte(b).view(np.bool_)
+
+            a[...] = a_orig
+            b[...] = b_orig
+            c1 = ufunc(a, out=b.copy(), where=mask.copy()).copy()
+
+            a[...] = a_orig
+            b[...] = b_orig
+            c2 = ufunc(a, out=b, where=mask.copy()).copy()
+
+            # Also, mask overlapping with output
+            a[...] = a_orig
+            b[...] = b_orig
+            c3 = ufunc(a, out=b, where=mask).copy()
+
+            assert_array_equal(c1, c2)
+            assert_array_equal(c1, c3)
+
+        dtypes = [np.int8, np.int16, np.int32, np.int64, np.float32,
+                  np.float64, np.complex64, np.complex128]
+        dtypes = [np.dtype(x) for x in dtypes]
+
+        for dtype in dtypes:
+            if np.issubdtype(dtype, np.integer):
+                ufunc = np.invert
+            else:
+                ufunc = np.reciprocal
+
+            n = 1000
+            k = 10
+            indices = [
+                (np.index_exp[:n], np.index_exp[k:k+n]),
+                (np.index_exp[:n], np.index_exp[k:k+2*n:2]),
+            ]
+
+            for ab in indices:
+                for x, y in itertools.permutations(ab):
+                    v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                    x = v[x]
+                    y = v[y]
+
+                    with np.errstate(all='ignore'):
+                        check(x, y)
+                        check(x[::-1], y)
+                        check(x, y[::-1])
+                        check(x[::-1], y[::-1])
+
+                        # Scalar cases
+                        check(x[:1], y)
+                        check(x[-1:], y)
+                        check(x[:1], y[::-1])
+                        check(x[-1:], y[::-1])
+                        check(x[:1].reshape([]), y)
+                        check(x[-1:].reshape([]), y)
+                        check(x[:1].reshape([]), y[::-1])
+                        check(x[-1:].reshape([]), y[::-1])
+
+    def test_overlapping_binary_ufunc_1d_manual(self):
+        ufunc = np.add
+
+        def check(a, b, c):
+            c1 = ufunc(a, b)
+            c2 = ufunc(a, b, out=c)
+            assert_array_equal(c1, c2)
+
+        for dtype in [np.int8, np.int16, np.int32, np.int64,
+                      np.float32, np.float64, np.complex64, np.complex128]:
+            for ub in [4, 400, 40000]:
+                x = np.arange(ub).astype(dtype)
+                check(x, x, x)
+                for j in range(1, min(x.size-1, 2*x.dtype.itemsize)):
+                    # Check different data dependency orders
+                    x = np.arange(ub).astype(dtype)
+                    check(x[j:], x[:-j], x[:-j])
+                    check(x[j:], x[:-j], x[j:])
+                    check(x[j:], x[:-j], x[:-j][::-1])
+                    check(x[j:], x[:-j][::-1], x[:-j])
+                    check(x[j:][::-1], x[:-j], x[:-j])
+                    check(x[j:][::-1], x[:-j][::-1], x[:-j])
+                    check(x[j:][::-1], x[:-j], x[:-j][::-1])
+                    check(x[j:][::-1], x[:-j][::-1], x[:-j][::-1])
+
+            n = 1000
+            k = 10
+            abcs = [
+                (np.index_exp[:n], np.index_exp[k:k+n], np.index_exp[2*k:2*k+2*n:2]),
+                (np.index_exp[:n], np.index_exp[k:k+2*n:2], np.index_exp[2*k:2*k+n])
+            ]
+            for abc in abcs:
+                for x, y, z in itertools.permutations(abc):
+                    v = np.arange(6*n).astype(dtype)
+                    x = v[x]
+                    y = v[y]
+                    z = v[z]
+
+                    check(x, y, z)
+                    check(x[::-1], y, z)
+                    check(x, y[::-1], z)
+                    check(x, y, z[::-1])
+                    check(x[::-1], y[::-1], z)
+                    check(x[::-1], y, z[::-1])
+                    check(x, y[::-1], z[::-1])
+                    check(x[::-1], y[::-1], z[::-1])
+
+    def test_inplace_op_simple_manual(self):
+        rng = np.random.RandomState(1234)
+        x = rng.rand(200, 200)  # bigger than bufsize
+
+        x += x.T
+        assert_array_equal(x - x.T, 0)
 
 
 if __name__ == "__main__":
