@@ -1440,7 +1440,8 @@ iterator_loop(PyUFuncObject *ufunc,
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
                  NPY_ITER_GROWINNER |
-                 NPY_ITER_DELAY_BUFALLOC;
+                 NPY_ITER_DELAY_BUFALLOC |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1755,7 +1756,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
-                 NPY_ITER_GROWINNER;
+                 NPY_ITER_GROWINNER |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -2294,7 +2296,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_REDUCE_OK |
-                 NPY_ITER_ZEROSIZE_OK;
+                 NPY_ITER_ZEROSIZE_OK |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,
