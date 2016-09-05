@@ -4364,6 +4364,7 @@ class TestOptionalArgs(TestCase):
         assert_equal(count(a, axis=1), 3*ones((2,4)))
         assert_equal(count(a, axis=(0,1)), 6*ones((4,)))
         assert_equal(count(a, keepdims=True), 24*ones((1,1,1)))
+        assert_equal(np.ndim(count(a, keepdims=True)), 3)
         assert_equal(count(a, axis=1, keepdims=True), 3*ones((2,1,4)))
         assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
         assert_equal(count(a, axis=-2), 3*ones((2,4)))
