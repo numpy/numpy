@@ -1581,7 +1581,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             }
             else if (op[1] != NULL &&
                         PyArray_NDIM(op[1]) >= PyArray_NDIM(op[0]) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[1],
@@ -1598,7 +1600,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
         else if (nin == 2 && nout == 1) {
             if (op[2] == NULL &&
                         (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ)) {
                 PyArrayObject *tmp;
                 /*
                  * Have to choose the input with more dimensions to clone, as
@@ -1637,7 +1641,10 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             else if (op[2] != NULL &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[0]) &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[1]) &&
-                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2])) {
+                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2],
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[2],
