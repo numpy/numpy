@@ -17,6 +17,8 @@
 
 #include "arrayobject.h"
 #include "templ_common.h"
+#include "mem_overlap.h"
+
 
 /* Internal helper functions private to this file */
 static int
@@ -2711,6 +2713,73 @@ npyiter_allocate_arrays(NpyIter *iter,
         bufferdata = NIT_BUFFERDATA(iter);
     }
 
+    if (flags & NPY_ITER_COPY_IF_OVERLAP) {
+        /* Perform operand memory overlap checks if requested */
+        for (iop = 0; iop < nop; ++iop) {
+            int may_share_memory = 0;
+            int iother;
+
+            if (op[iop] == NULL) {
+                /* Iterator will always allocate */
+                continue;
+            }
+
+            if (!(op_itflags[iop] & NPY_OP_ITFLAG_WRITE)) {
+                /*
+                 * Copy output operands only, not inputs.
+                 * A more sophisticated heuristic could be
+                 * substituted here later.
+                 */
+                continue;
+            }
+
+            for (iother = 0; iother < nop; ++iother) {
+                if (iother == iop || op[iother] == NULL) {
+                    continue;
+                }
+
+                if (!(op_itflags[iother] & NPY_OP_ITFLAG_READ)) {
+                    /* No data dependence for arrays not read from */
+                    continue;
+                }
+
+                if (op_itflags[iother] & NPY_OP_ITFLAG_FORCECOPY) {
+                    /* Already copied */
+                    continue;
+                }
+
+                /*
+                 * If the arrays are views to exactly the same data, no need
+                 * to make copies, because ufunc inner loops are assumed to
+                 * deal with that
+                 */
+                if (PyArray_BYTES(op[iop]) == PyArray_BYTES(op[iother]) &&
+                    PyArray_NDIM(op[iop]) == PyArray_NDIM(op[iother]) &&
+                    PyArray_CompareLists(PyArray_DIMS(op[iop]),
+                                         PyArray_DIMS(op[iother]),
+                                         PyArray_NDIM(op[iop])) &&
+                    PyArray_CompareLists(PyArray_STRIDES(op[iop]),
+                                         PyArray_STRIDES(op[iother]),
+                                         PyArray_NDIM(op[iop])) &&
+                    PyArray_DESCR(op[iop]) == PyArray_DESCR(op[iother])) {
+                    continue;
+                }
+
+                /*
+                 * Use max work = 1. If the arrays are large, it might
+                 * make sense to go further.
+                 */
+                may_share_memory = solve_may_share_memory(
+                    op[iop], op[iother], 1);
+
+                if (may_share_memory) {
+                    op_itflags[iop] |= NPY_OP_ITFLAG_FORCECOPY;
+                    break;
+                }
+            }
+        }
+    }
+
     for (iop = 0; iop < nop; ++iop) {
         /*
          * Check whether there are any WRITEMASKED REDUCE operands
@@ -2800,9 +2869,15 @@ npyiter_allocate_arrays(NpyIter *iter,
                 NBF_STRIDES(bufferdata)[iop] = 0;
             }
         }
-        /* If casting is required and permitted */
-        else if ((op_itflags[iop] & NPY_OP_ITFLAG_CAST) &&
-                   (op_flags[iop] & (NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) {
+        /*
+         * Make a temporary copy if,
+         * 1. If casting is required and permitted, or,
+         * 2. If force-copy is requested
+         */
+        else if (((op_itflags[iop] & NPY_OP_ITFLAG_CAST) &&
+                        (op_flags[iop] &
+                        (NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) ||
+                 (op_itflags[iop] & NPY_OP_ITFLAG_FORCECOPY)) {
             PyArrayObject *temp;
             int ondim = PyArray_NDIM(op[iop]);
 
