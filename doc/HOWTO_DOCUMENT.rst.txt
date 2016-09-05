@@ -141,7 +141,7 @@ The sections of the docstring are:
    A section (use if applicable) to warn users that the object is deprecated.
    Section contents should include:
 
-   * In what Numpy version the object was deprecated, and when it will be
+   * In what NumPy version the object was deprecated, and when it will be
      removed.
 
    * Reason for deprecation if this is useful information (e.g., object
@@ -154,8 +154,8 @@ The sections of the docstring are:
 
    ::
 
-     .. note:: Deprecated in Numpy 1.6
-               `ndobj_old` will be removed in Numpy 2.0, it is replaced by
+     .. note:: Deprecated in NumPy 1.6
+               `ndobj_old` will be removed in NumPy 2.0, it is replaced by
                `ndobj_new` because the latter works also with array subclasses.
 
 3. **Extended Summary**
@@ -529,7 +529,7 @@ as appropriate.
 
 Documenting class instances
 ---------------------------
-Instances of classes that are part of the Numpy API (for example `np.r_`
+Instances of classes that are part of the NumPy API (for example `np.r_`
 `np,c_`, `np.index_exp`, etc.) may require some care. To give these
 instances a useful docstring, we do the following:
 

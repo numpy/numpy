@@ -189,7 +189,7 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'Numpy Documentation', _stdauthor, 'Numpy',
+  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
    "NumPy: array processing for numbers, strings, records, and objects.",
    'Programming',
    1),
@@ -203,7 +203,7 @@ intersphinx_mapping = {'http://docs.python.org/dev': None}
 
 
 # -----------------------------------------------------------------------------
-# Numpy extensions
+# NumPy extensions
 # -----------------------------------------------------------------------------
 
 # If we want to do a phantom import from an XML file for all autodocs

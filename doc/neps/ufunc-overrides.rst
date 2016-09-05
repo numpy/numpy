@@ -176,7 +176,7 @@ The ``__numpy_ufunc__`` mechanism is fully independent of Python's
 standard operator override mechanism, and the two do not interact
 directly.
 
-They however have indirect interactions, because Numpy's ``ndarray``
+They however have indirect interactions, because NumPy's ``ndarray``
 type implements its binary operations via Ufuncs. Effectively, we have::
 
     class ndarray(object):
@@ -208,14 +208,14 @@ undesirable behavior.
 
 The reason why this occurs is: because ``MyObject`` is not an ndarray
 subclass, Python resolves the expression ``b * a`` by calling first
-``b.__mul__``. Since Numpy implements this via an Ufunc, the call is
+``b.__mul__``. Since NumPy implements this via an Ufunc, the call is
 forwarded to ``__numpy_ufunc__`` and not to ``__rmul__``.  Note that if
 ``MyObject`` is a subclass of ``ndarray``, Python calls ``a.__rmul__``
 first. The issue is therefore that ``__numpy_ufunc__`` implements
 "virtual subclassing" of ndarray behavior, without actual subclassing.
 
 This issue can be resolved by a modification of the binary operation
-methods in Numpy::
+methods in NumPy::
 
     class ndarray(object):
         ...

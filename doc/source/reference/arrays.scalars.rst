@@ -94,7 +94,7 @@ Python Boolean scalar.
    :class:`int` built-in under Python 3, because type :class:`int` is no
    longer a fixed-width integer type.
 
-.. tip:: The default data type in Numpy is :class:`float_`.
+.. tip:: The default data type in NumPy is :class:`float_`.
 
 In the tables below, ``platform?`` means that the type may not be
 available on all platforms. Compatibility with different C or Python
@@ -288,4 +288,4 @@ the built-in scalar types): One way is to simply subclass the
 a degree, but internally certain behaviors are fixed by the data type of 
 the array.  To fully customize the data type of an array you need to 
 define a new data-type, and register it with NumPy. Such new types can only 
-be defined in C, using the :ref:`Numpy C-API <c-api>`.
+be defined in C, using the :ref:`NumPy C-API <c-api>`.

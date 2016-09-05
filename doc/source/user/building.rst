@@ -47,8 +47,8 @@ Building NumPy requires the following software installed:
 
 4) Cython
 
-   To build development versions of Numpy, you'll need a recent version of
-   Cython.  Released Numpy sources on PyPi include the C files generated from
+   To build development versions of NumPy, you'll need a recent version of
+   Cython.  Released NumPy sources on PyPi include the C files generated from
    Cython code, so for released versions having Cython installed isn't needed.
 
 Basic Installation
@@ -121,7 +121,7 @@ is almost always a very bad idea.
 Disabling ATLAS and other accelerated libraries
 -----------------------------------------------
 
-Usage of ATLAS and other accelerated libraries in Numpy can be disabled
+Usage of ATLAS and other accelerated libraries in NumPy can be disabled
 via::
 
     BLAS=None LAPACK=None ATLAS=None python setup.py build
