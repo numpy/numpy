@@ -1923,7 +1923,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                  * Either they are equivalent, or the values must
                  * be a scalar
                  */
-                (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr) ||
+                (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr,
+                                               PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                               PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
                         PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
                 /* Check if the type is equivalent to INTP */
