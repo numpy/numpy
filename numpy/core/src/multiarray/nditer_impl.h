@@ -122,6 +122,8 @@
 #define NPY_OP_ITFLAG_WRITEMASKED  0x0080
 /* The operand's data pointer is pointing into its buffer */
 #define NPY_OP_ITFLAG_USINGBUFFER  0x0100
+/* The operand must be copied (with UPDATEIFCOPY if also ITFLAG_WRITE) */
+#define NPY_OP_ITFLAG_FORCECOPY    0x0200
 
 /*
  * The data layout of the iterator is fully specified by
