@@ -1,5 +1,5 @@
 #####################
-Contributing to Numpy
+Contributing to NumPy
 #####################
 
 .. toctree::

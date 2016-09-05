@@ -382,5 +382,5 @@ Tests on random data are good, but since test failures are meant to expose
 new bugs or regressions, a test that passes most of the time but fails
 occasionally with no code changes is not helpful. Make the random data
 deterministic by setting the random number seed before generating it.  Use
-either Python's ``random.seed(some_number)`` or Numpy's
+either Python's ``random.seed(some_number)`` or NumPy's
 ``numpy.random.seed(some_number)``, depending on the source of random numbers.

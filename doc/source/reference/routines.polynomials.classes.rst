@@ -39,7 +39,7 @@ All of the classes have the same methods, and especially they implement the
 Python numeric operators +, -, \*, //, %, divmod, \*\*, ==,
 and !=. The last two can be a bit problematic due to floating point
 roundoff errors. We now give a quick demonstration of the various
-operations using Numpy version 1.7.0.
+operations using NumPy version 1.7.0.
 
 Basics
 ------

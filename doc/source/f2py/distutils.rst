@@ -2,7 +2,7 @@
 Using via `numpy.distutils`
 =============================
 
-:mod:`numpy.distutils` is part of Numpy extending standard Python ``distutils``
+:mod:`numpy.distutils` is part of NumPy extending standard Python ``distutils``
 to deal with Fortran sources and F2PY signature files, e.g. compile Fortran
 sources, call F2PY to construct extension modules, etc.
 

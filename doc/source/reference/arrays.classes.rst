@@ -37,14 +37,14 @@ Special attributes and methods
 
 .. seealso:: :ref:`Subclassing ndarray <basics.subclassing>`
 
-Numpy provides several hooks that classes can customize:
+NumPy provides several hooks that classes can customize:
 
 .. method:: class.__numpy_ufunc__(ufunc, method, i, inputs, **kwargs)
 
    .. versionadded:: 1.11
 
    Any class (ndarray subclass or not) can define this method to
-   override behavior of Numpy's ufuncs. This works quite similarly to
+   override behavior of NumPy's ufuncs. This works quite similarly to
    Python's ``__mul__`` and other binary operation routines.
 
    - *ufunc* is the ufunc object that was called.
@@ -336,7 +336,7 @@ Record arrays (:mod:`numpy.rec`)
 .. seealso:: :ref:`routines.array-creation.rec`, :ref:`routines.dtype`,
              :ref:`arrays.dtypes`.
 
-Numpy provides the :class:`recarray` class which allows accessing the
+NumPy provides the :class:`recarray` class which allows accessing the
 fields of a structured array as attributes, and a corresponding
 scalar data type object :class:`record`.
 

@@ -29,14 +29,14 @@ following aspects of the data:
    pair: dtype; scalar
 
 To describe the type of scalar data, there are several :ref:`built-in
-scalar types <arrays.scalars.built-in>` in Numpy for various precision
+scalar types <arrays.scalars.built-in>` in NumPy for various precision
 of integers, floating-point numbers, *etc*. An item extracted from an
 array, *e.g.*, by indexing, will be a Python object whose type is the
 scalar type associated with the data type of the array.
 
 Note that the scalar types are not :class:`dtype` objects, even though
 they can be used in place of one whenever a data type specification is
-needed in Numpy.
+needed in NumPy.
 
 .. index::
    pair: dtype; field
@@ -459,7 +459,7 @@ Type strings
 :class:`dtype`
 ==============
 
-Numpy data type descriptions are instances of the :class:`dtype` class.
+NumPy data type descriptions are instances of the :class:`dtype` class.
 
 Attributes
 ----------

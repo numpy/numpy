@@ -2291,7 +2291,7 @@ an element copier function as a primitive.::
 Array Iterators
 ---------------
 
-As of Numpy 1.6, these array iterators are superceded by
+As of NumPy 1.6, these array iterators are superceded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an

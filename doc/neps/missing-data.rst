@@ -884,7 +884,7 @@ a few different access patterns people use to get ahold of the numpy array data,
 here we examine a few of them to see what numpy can do. These examples are
 found from doing google searches of numpy C API array access.
 
-Numpy Documentation - How to extend NumPy
+NumPy Documentation - How to extend NumPy
 -----------------------------------------
 
 http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects

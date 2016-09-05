@@ -302,7 +302,7 @@ to public keyservers, with a command such as::
 
 Apply patch to fix bogus strides
 --------------------------------
-NPY_RELAXED_STRIDE_CHECKING was made the default in Numpy 1.10 and bogus
+NPY_RELAXED_STRIDE_CHECKING was made the default in NumPy 1.10 and bogus
 strides are used in the development branch to smoke out problems. The
 `patch <https://github.com/numpy/numpy/pull/5996>`_ should be updated if
 necessary and applied to the release branch to rationalize the strides.

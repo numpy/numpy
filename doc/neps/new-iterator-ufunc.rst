@@ -51,7 +51,7 @@ NumPy defaults to returning C-contiguous arrays from UFuncs.  This can
 result in extremely poor memory access patterns when dealing with data
 that is structured differently.  A simple timing example illustrates
 this with a more than eight times performance hit from adding
-Fortran-contiguous arrays together.  All timings are done using Numpy
+Fortran-contiguous arrays together.  All timings are done using NumPy
 2.0dev (Nov 22, 2010) on an Athlon 64 X2 4200+, with a 64-bit OS.::
 
     In [1]: import numpy as np

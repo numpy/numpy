@@ -32,7 +32,7 @@ Memory ranges
    shares_memory
    may_share_memory
 
-Numpy version comparison
+NumPy version comparison
 ------------------------
 .. autosummary::
    :toctree: generated/

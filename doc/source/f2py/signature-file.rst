@@ -348,9 +348,9 @@ The following attributes are used by F2PY:
   + ``inout``
       The argument is considered as an input/output or *in situ*
       output argument. ``intent(inout)`` arguments can be only
-      "contiguous" Numpy arrays with proper type and size.  Here
+      "contiguous" NumPy arrays with proper type and size.  Here
       "contiguous" can be either in Fortran or C sense. The latter one
-      coincides with the contiguous concept used in Numpy and is
+      coincides with the contiguous concept used in NumPy and is
       effective only if ``intent(c)`` is used. Fortran contiguity
       is assumed by default.
 
@@ -360,7 +360,7 @@ The following attributes are used by F2PY:
   + ``inplace``
       The argument is considered as an input/output or *in situ*
       output argument. ``intent(inplace)`` arguments must be
-      Numpy arrays with proper size. If the type of an array is
+      NumPy arrays with proper size. If the type of an array is
       not "proper" or the array is non-contiguous then the array
       will be changed in-place to fix the type and make it contiguous.
 

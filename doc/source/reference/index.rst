@@ -11,7 +11,7 @@ NumPy Reference
 .. module:: numpy
 
 This reference manual details functions, modules, and objects
-included in Numpy, describing what they are and what they do.
+included in NumPy, describing what they are and what they do.
 For learning how to use NumPy, see also :ref:`user`.
 
 
@@ -31,11 +31,11 @@ Acknowledgements
 ================
 
 Large parts of this manual originate from Travis E. Oliphant's book
-`Guide to Numpy <http://www.tramy.us/>`__ (which generously entered
+`Guide to NumPy <http://www.tramy.us/>`__ (which generously entered
 Public Domain in August 2008). The reference documentation for many of
 the functions are written by numerous contributors and developers of
-Numpy, both prior to and during the
-`Numpy Documentation Marathon
+NumPy, both prior to and during the
+`NumPy Documentation Marathon
 <http://scipy.org/Developer_Zone/DocMarathon2008>`__.
 
 Please help to improve NumPy's documentation! Instructions on how to

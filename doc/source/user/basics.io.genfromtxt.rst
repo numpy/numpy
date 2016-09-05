@@ -4,7 +4,7 @@
 Importing data with :func:`~numpy.genfromtxt`
 *********************************************
 
-Numpy provides several functions to create arrays from tabular data.
+NumPy provides several functions to create arrays from tabular data.
 We focus here on the :func:`~numpy.genfromtxt` function.
 
 In a nutshell, :func:`~numpy.genfromtxt` runs two main loops.  The first
@@ -325,7 +325,7 @@ takes any format string::
 Validating names
 ----------------
 
-Numpy arrays with a structured dtype can also be viewed as
+NumPy arrays with a structured dtype can also be viewed as
 :class:`~numpy.recarray`, where a field can be accessed as if it were an
 attribute.  For that reason, we may need to make sure that the field name
 doesn't contain any space or invalid character, or that it does not

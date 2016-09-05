@@ -1,5 +1,5 @@
 *************
-Numpy License
+NumPy License
 *************
 
 Copyright (c) 2005, NumPy Developers
