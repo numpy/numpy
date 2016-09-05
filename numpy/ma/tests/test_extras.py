@@ -10,6 +10,7 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import itertools
 
 import numpy as np
 from numpy.testing import (
@@ -683,6 +684,37 @@ class TestMedian(TestCase):
         assert_equal(ma_x, [2., 5.])
         assert_equal(ma_x.shape, (2,), "shape mismatch")
         assert_(type(ma_x) is MaskedArray)
+
+    def test_axis_argument_errors(self):
+        msg = "mask = %s, ndim = %s, axis = %s, overwrite_input = %s"
+        for ndmin in range(5):
+            for mask in [False, True]:
+                x = array(1, ndmin=ndmin, mask=mask)
+
+                # Valid axis values should not raise exception
+                args = itertools.product(range(-ndmin, ndmin), [False, True])
+                for axis, over in args:
+                    try:
+                        np.ma.median(x, axis=axis, overwrite_input=over)
+                    except:
+                        raise AssertionError(msg % (mask, ndmin, axis, over))
+
+                # Invalid axis values should raise exception
+                args = itertools.product([-(ndmin + 1), ndmin], [False, True])
+                for axis, over in args:
+                    try:
+                        np.ma.median(x, axis=axis, overwrite_input=over)
+                    except IndexError:
+                        pass
+                    else:
+                        raise AssertionError(msg % (mask, ndmin, axis, over))
+
+    def test_masked_0d(self):
+        # Check values
+        x = array(1, mask=False)
+        assert_equal(np.ma.median(x), 1)
+        x = array(1, mask=True)
+        assert_equal(np.ma.median(x), np.ma.masked)
 
     def test_masked_1d(self):
         x = array(np.arange(5), mask=True)
