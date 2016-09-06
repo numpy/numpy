@@ -97,7 +97,7 @@ Implications for subclassing
 
 If we subclass ndarray, we need to deal not only with explicit
 construction of our array type, but also :ref:`view-casting` or
-:ref:`new-from-template`.  Numpy has the machinery to do this, and this
+:ref:`new-from-template`.  NumPy has the machinery to do this, and this
 machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
@@ -523,7 +523,7 @@ Extra gotchas - custom ``__del__`` methods and ndarray.base
 One of the problems that ndarray solves is keeping track of memory
 ownership of ndarrays and their views.  Consider the case where we have
 created an ndarray, ``arr`` and have taken a slice with ``v = arr[1:]``.
-The two objects are looking at the same memory.  Numpy keeps track of
+The two objects are looking at the same memory.  NumPy keeps track of
 where the data came from for a particular array or view, with the
 ``base`` attribute:
 

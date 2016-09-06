@@ -1,4 +1,4 @@
-"""Utility to compare (Numpy) version strings.
+"""Utility to compare (NumPy) version strings.
 
 The NumpyVersion class allows properly comparing numpy version strings.
 The LooseVersion and StrictVersion classes that distutils provides don't
@@ -18,7 +18,7 @@ __all__ = ['NumpyVersion']
 class NumpyVersion():
     """Parse and compare numpy version strings.
 
-    Numpy has the following versioning scheme (numbers given are examples; they
+    NumPy has the following versioning scheme (numbers given are examples; they
     can be > 9) in principle):
 
     - Released version: '1.8.0', '1.8.1', etc.
@@ -40,7 +40,7 @@ class NumpyVersion():
     Parameters
     ----------
     vstring : str
-        Numpy version string (``np.__version__``).
+        NumPy version string (``np.__version__``).
 
     Examples
     --------
