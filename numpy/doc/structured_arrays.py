@@ -6,7 +6,7 @@ Structured Arrays
 Introduction
 ============
 
-Numpy provides powerful capabilities to create arrays of structured datatype.
+NumPy provides powerful capabilities to create arrays of structured datatype.
 These arrays permit one to manipulate the data by named fields. A simple 
 example will show what is meant.: ::
 
@@ -79,7 +79,7 @@ The type specifiers can take 4 different forms: ::
      Don't use these in new code!
   d) Single character type specifiers (e.g H for unsigned short ints).
      Avoid using these unless you must. Details can be found in the
-     Numpy book
+     NumPy book
 
 These different styles can be mixed within the same string (but why would you
 want to do that?). Furthermore, each type specifier can be prefixed

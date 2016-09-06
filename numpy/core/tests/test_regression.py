@@ -1734,7 +1734,7 @@ class TestRegression(TestCase):
         b = np.array(a, dtype=object)
         a[()] = b
         assert_raises(TypeError, int, a)
-        # Numpy has no tp_traverse currently, so circular references
+        # NumPy has no tp_traverse currently, so circular references
         # cannot be detected. So resolve it:
         a[()] = 0
 
@@ -1983,7 +1983,7 @@ class TestRegression(TestCase):
     def test_string_truncation_ucs2(self):
         # Ticket #2081. Python compiled with two byte unicode
         # can lead to truncation if itemsize is not properly
-        # adjusted for Numpy's four byte unicode.
+        # adjusted for NumPy's four byte unicode.
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:

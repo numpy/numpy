@@ -471,8 +471,8 @@ def swapaxes(a, axis1, axis2):
     Returns
     -------
     a_swapped : ndarray
-        For Numpy >= 1.10, if `a` is an ndarray, then a view of `a` is
-        returned; otherwise a new array is created. For earlier Numpy
+        For NumPy >= 1.10, if `a` is an ndarray, then a view of `a` is
+        returned; otherwise a new array is created. For earlier NumPy
         versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
@@ -1059,7 +1059,7 @@ def searchsorted(a, v, side='left', sorter=None):
     -----
     Binary search is used to find the required insertion points.
 
-    As of Numpy 1.4.0 `searchsorted` works with real/complex arrays containing
+    As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
     Examples
@@ -2631,7 +2631,7 @@ def rank(a):
     Notes
     -----
     In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in Numpy `ndim` is used instead.
+    dimensions, but in NumPy `ndim` is used instead.
 
     Examples
     --------
@@ -2737,7 +2737,7 @@ def around(a, decimals=0, out=None):
 
     Notes
     -----
-    For values exactly halfway between rounded decimal values, Numpy
+    For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
     -0.5 and 0.5 round to 0.0, etc. Results may also be surprising due
     to the inexact representation of decimal fractions in the IEEE

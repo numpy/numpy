@@ -296,7 +296,7 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
 
     def test_scalar_array_bool(self):
-        # Numpy bools can be used as boolean index (python ones as of yet not)
+        # NumPy bools can be used as boolean index (python ones as of yet not)
         a = np.array(1)
         assert_equal(a[np.bool_(True)], a[np.array(True)])
         assert_equal(a[np.bool_(False)], a[np.array(False)])
@@ -1133,7 +1133,7 @@ class TestFloatNonIntegerArgument(TestCase):
         assert_raises(TypeError, np.take, a, [0], np.float64(1.))
 
     def test_non_integer_sequence_multiplication(self):
-        # Numpy scalar sequence multiply should not work with non-integers
+        # NumPy scalar sequence multiply should not work with non-integers
         def mult(a, b):
             return a * b
 

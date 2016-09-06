@@ -6,7 +6,7 @@ Array basics
 Array types and conversions between types
 =========================================
 
-Numpy supports a much greater variety of numerical types than Python does.
+NumPy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
 ==========  ==========================================================
@@ -43,7 +43,7 @@ complex128  Complex number, represented by two 64-bit floats (real
 Additionally to ``intc`` the platform dependent C integer types ``short``,
 ``long``, ``longlong`` and their unsigned versions are defined.
 
-Numpy numerical types are instances of ``dtype`` (data-type) objects, each
+NumPy numerical types are instances of ``dtype`` (data-type) objects, each
 having unique characteristics.  Once you have imported NumPy using
 
   ::
@@ -124,7 +124,7 @@ properties of the type, such as whether it is an integer::
 Array Scalars
 =============
 
-Numpy generally returns elements of arrays as array scalars (a scalar
+NumPy generally returns elements of arrays as array scalars (a scalar
 with an associated dtype).  Array scalars differ from Python scalars, but
 for the most part they can be used interchangeably (the primary
 exception is for versions of Python older than v2.x, where integer array
@@ -152,12 +152,12 @@ is possible in numpy depends on the hardware and on the development
 environment: specifically, x86 machines provide hardware floating-point
 with 80-bit precision, and while most C compilers provide this as their
 ``long double`` type, MSVC (standard for Windows builds) makes
-``long double`` identical to ``double`` (64 bits). Numpy makes the
+``long double`` identical to ``double`` (64 bits). NumPy makes the
 compiler's ``long double`` available as ``np.longdouble`` (and
 ``np.clongdouble`` for the complex numbers). You can find out what your
 numpy provides with``np.finfo(np.longdouble)``.
 
-Numpy does not provide a dtype with more precision than C
+NumPy does not provide a dtype with more precision than C
 ``long double``s; in particular, the 128-bit IEEE quad precision
 data type (FORTRAN's ``REAL*16``) is not available.
 

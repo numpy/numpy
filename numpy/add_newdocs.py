@@ -296,7 +296,7 @@ add_newdoc('numpy.core', 'nditer',
     Notes
     -----
     `nditer` supersedes `flatiter`.  The iterator implementation behind
-    `nditer` is also exposed by the Numpy C API.
+    `nditer` is also exposed by the NumPy C API.
 
     The Python exposure supplies two iteration interfaces, one which follows
     the Python iterator protocol, and another which mirrors the C-style
@@ -570,7 +570,7 @@ add_newdoc('numpy.core', 'broadcast', ('ndim',
 
 add_newdoc('numpy.core', 'broadcast', ('nd',
     """
-    Number of dimensions of broadcasted result. For code intended for Numpy
+    Number of dimensions of broadcasted result. For code intended for NumPy
     1.12.0 and later the more consistent `ndim` is preferred.
 
     Examples
@@ -2014,7 +2014,7 @@ add_newdoc('numpy.core', 'matmul',
       were elements.
 
     .. warning::
-       This function is preliminary and included in Numpy 1.10 for testing
+       This function is preliminary and included in NumPy 1.10 for testing
        and documentation. Its semantics will not change, but the number and
        order of the optional arguments will.
 
@@ -4841,7 +4841,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     """
     frompyfunc(func, nin, nout)
 
-    Takes an arbitrary Python function and returns a Numpy ufunc.
+    Takes an arbitrary Python function and returns a NumPy ufunc.
 
     Can be used, for example, to add broadcasting to a built-in Python
     function (see Examples section).
@@ -4858,7 +4858,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     Returns
     -------
     out : ufunc
-        Returns a Numpy universal function (``ufunc``) object.
+        Returns a NumPy universal function (``ufunc``) object.
 
     See Also
     --------
@@ -4888,7 +4888,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     Return the current object that defines floating-point error handling.
 
     The error object contains all information that defines the error handling
-    behavior in Numpy. `geterrobj` is used internally by the other
+    behavior in NumPy. `geterrobj` is used internally by the other
     functions that get and set error handling behavior (`geterr`, `seterr`,
     `geterrcall`, `seterrcall`).
 
@@ -4952,7 +4952,7 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     Set the object that defines floating-point error handling.
 
     The error object contains all information that defines the error handling
-    behavior in Numpy. `seterrobj` is used internally by the other
+    behavior in NumPy. `seterrobj` is used internally by the other
     functions that set error handling behavior (`seterr`, `seterrcall`).
 
     Parameters
@@ -5028,7 +5028,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     Parameters
     ----------
     x : array_like
-        Input array to be binned. Prior to Numpy 1.10.0, this array had to
+        Input array to be binned. Prior to NumPy 1.10.0, this array had to
         be 1-dimensional, but can now have any shape.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
@@ -6235,7 +6235,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     2  if the dtype is for a user-defined numpy type
        A user-defined type uses the numpy C-API machinery to extend
        numpy to handle a new array type. See
-       :ref:`user.user-defined-data-types` in the Numpy manual.
+       :ref:`user.user-defined-data-types` in the NumPy manual.
     =  ========================================================================
 
     Examples
@@ -7623,7 +7623,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 ##############################################################################
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
-    """Numpy's Boolean type.  Character code: ``?``.  Alias: bool8""")
+    """NumPy's Boolean type.  Character code: ``?``.  Alias: bool8""")
 
 add_newdoc('numpy.core.numerictypes', 'complex64',
     """

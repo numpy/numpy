@@ -10,7 +10,7 @@
 /*
  * struct_ufunc_test.c
  * This is the C code for creating your own
- * Numpy ufunc for a structured array dtype.
+ * NumPy ufunc for a structured array dtype.
  *
  * Details explaining the Python-C API can be found under
  * 'Extending and Embedding' and 'Python/C API' at

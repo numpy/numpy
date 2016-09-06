@@ -19,7 +19,7 @@ This section will not cover means of replicating, joining, or otherwise
 expanding or mutating existing arrays. Nor will it cover creating object
 arrays or structured arrays. Both of those are covered in their own sections.
 
-Converting Python array_like Objects to Numpy Arrays
+Converting Python array_like Objects to NumPy Arrays
 ====================================================
 
 In general, numerical data arranged in an array-like structure in Python can
@@ -38,10 +38,10 @@ Examples: ::
      and types
  >>> x = np.array([[ 1.+0.j, 2.+0.j], [ 0.+0.j, 0.+0.j], [ 1.+1.j, 3.+0.j]])
 
-Intrinsic Numpy Array Creation
+Intrinsic NumPy Array Creation
 ==============================
 
-Numpy has built-in functions for creating arrays from scratch:
+NumPy has built-in functions for creating arrays from scratch:
 
 zeros(shape) will create an array filled with 0 values with the specified
 shape. The default dtype is float64.

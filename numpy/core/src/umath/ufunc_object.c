@@ -2047,7 +2047,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Validate the core dimensions of all the operands, and collect all of
      * the labelled core dimensions into 'core_dim_sizes'.
      *
-     * The behavior has been changed in Numpy 1.10.0, and the following
+     * The behavior has been changed in NumPy 1.10.0, and the following
      * requirements must be fulfilled or an error will be raised:
      *  * Arguments, both input and output, must have at least as many
      *    dimensions as the corresponding number of core dimensions. In

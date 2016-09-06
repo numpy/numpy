@@ -21,7 +21,7 @@ class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
 
     Memory-mapped files are used for accessing small segments of large files
-    on disk, without reading the entire file into memory.  Numpy's
+    on disk, without reading the entire file into memory.  NumPy's
     memmap's are array-like objects.  This differs from Python's ``mmap``
     module, which uses file-like objects.
 

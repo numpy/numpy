@@ -151,7 +151,7 @@ void *PyArray_API[] = {
 
 c_api_header = """
 ===========
-Numpy C-API
+NumPy C-API
 ===========
 """
 
