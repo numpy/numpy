@@ -84,7 +84,7 @@ def _check_assignment(srcidx, dstidx):
 
 
 def test_overlapping_assignments():
-    """Test automatically generated assignments which overlap in memory."""
+    # Test automatically generated assignments which overlap in memory.
 
     inds = _indices(ndims)
 
