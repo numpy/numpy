@@ -1,4 +1,4 @@
-NumPy.i: a SWIG Interface File for NumPy
+numpy.i: a SWIG Interface File for NumPy
 ========================================
 
 Introduction
