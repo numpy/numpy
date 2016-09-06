@@ -71,7 +71,7 @@ setup_chroot()
   #   linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   #
-  # Numpy may not distinguish between 64 and 32 bit ATLAS in the
+  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
   # configuration stage.
   DIR=$1
   set -u

@@ -28,7 +28,7 @@ Generate C code coverage listing under build/lcov/:
 from __future__ import division, print_function
 
 #
-# This is a generic test runner script for projects using Numpy's test
+# This is a generic test runner script for projects using NumPy's test
 # framework. Change the following values to adapt to your project:
 #
 

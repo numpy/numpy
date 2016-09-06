@@ -255,18 +255,18 @@ def parse_setuppy_commands():
 
               - `pip install .`       (from a git repo or downloaded source
                                        release)
-              - `pip install numpy`   (last Numpy release on PyPi)
+              - `pip install numpy`   (last NumPy release on PyPi)
 
             """))
         return True
 
     if '--help' in sys.argv[1:] or '-h' in sys.argv[1]:
         print(textwrap.dedent("""
-            Numpy-specific help
+            NumPy-specific help
             -------------------
 
-            To install Numpy from here with reliable uninstall, we recommend
-            that you use `pip install .`. To install the latest Numpy release
+            To install NumPy from here with reliable uninstall, we recommend
+            that you use `pip install .`. To install the latest NumPy release
             from PyPi, use `pip install numpy`.
 
             For help with build/installation issues, please ask on the

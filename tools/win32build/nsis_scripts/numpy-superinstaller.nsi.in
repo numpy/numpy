@@ -15,7 +15,7 @@ SetCompressor /Solid LZMA ; Useful to disable compression under development
 ;General
 
 ;Name and file
-Name "Numpy super installer"
+Name "NumPy super installer"
 OutFile "@NUMPY_INSTALLER_NAME@"
 
 ;Default installation folder

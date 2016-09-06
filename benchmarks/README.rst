@@ -4,7 +4,7 @@
 NumPy benchmarks
 ================
 
-Benchmarking Numpy with Airspeed Velocity.
+Benchmarking NumPy with Airspeed Velocity.
 
 
 Usage
@@ -12,11 +12,11 @@ Usage
 
 Airspeed Velocity manages building and Python virtualenvs by itself,
 unless told otherwise. Some of the benchmarking features in
-``runtests.py`` also tell ASV to use the Numpy compiled by
+``runtests.py`` also tell ASV to use the NumPy compiled by
 ``runtests.py``. To run the benchmarks, you do not need to install a
-development version of Numpy to your current Python environment.
+development version of NumPy to your current Python environment.
 
-Run a benchmark against currently checked out Numpy version (don't
+Run a benchmark against currently checked out NumPy version (don't
 record the result)::
 
     python runtests.py --bench bench_core
@@ -46,9 +46,9 @@ See `ASV documentation`_ for basics on how to write benchmarks.
 
 Some things to consider:
 
-- The benchmark suite should be importable with any Numpy version.
+- The benchmark suite should be importable with any NumPy version.
 
-- The benchmark parameters etc. should not depend on which Numpy version
+- The benchmark parameters etc. should not depend on which NumPy version
   is installed.
 
 - Try to keep the runtime of the benchmark reasonable.
