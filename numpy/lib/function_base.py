@@ -489,8 +489,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         based on the actual data within `range`, the bin count will fill
         the entire range including portions containing no data.
     normed : bool, optional
-        This keyword is deprecated in NumPy 1.6 due to confusing/buggy
-        behavior. It will be removed in NumPy 2.0. Use the ``density``
+        This keyword is deprecated in NumPy 1.6.0 due to confusing/buggy
+        behavior. It will be removed in NumPy 2.0.0. Use the ``density``
         keyword instead. If ``False``, the result will contain the
         number of samples in each bin. If ``True``, the result is the
         value of the probability *density* function at the bin,
@@ -809,7 +809,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         else:
             return n, bins
     else:
-        # deprecated, buggy behavior. Remove for NumPy 2.0
+        # deprecated, buggy behavior. Remove for NumPy 2.0.0
         if normed:
             db = array(np.diff(bins), float)
             return n/(n*db).sum(), bins

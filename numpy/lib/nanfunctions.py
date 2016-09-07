@@ -453,7 +453,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Return the sum of array elements over a given axis treating Not a
     Numbers (NaNs) as zero.
 
-    In NumPy versions <= 1.8 Nan is returned for slices that are all-NaN or
+    In NumPy versions <= 1.8.0 Nan is returned for slices that are all-NaN or
     empty. In later versions zero is returned.
 
     Parameters
