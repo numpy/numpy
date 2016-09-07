@@ -138,6 +138,7 @@ def main(argv):
               "version; remove -g flag ***")
 
     if not args.no_build:
+        # we need the noarch path in case the package is pure python.
         site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
