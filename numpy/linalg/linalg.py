@@ -677,7 +677,7 @@ def qr(a, mode='reduced'):
     `a` is of type `matrix`, all the return values will be matrices too.
 
     New 'reduced', 'complete', and 'raw' options for mode were added in
-    NumPy 1.8 and the old option 'full' was made an alias of 'reduced'.  In
+    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.  In
     addition the options 'full' and 'economic' were deprecated.  Because
     'full' was the previous default and 'reduced' is the new default,
     backward compatibility can be maintained by letting `mode` default.

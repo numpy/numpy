@@ -759,7 +759,7 @@ def isfortran(a):
 
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
-    of NumPy >= 1.10 and previous versions. If you only want to check if an
+    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
     array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
@@ -1170,7 +1170,7 @@ def alterdot():
     arrays with larger dimensionalities use the built in functions and are
     not accelerated.
 
-    .. note:: Deprecated in NumPy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and alterdot now longer does anything. It will be
               removed in NumPy 1.11.0.
@@ -1195,7 +1195,7 @@ def restoredot():
     an accelerated BLAS, or when being very careful about benchmarking
     linear algebra operations.
 
-    .. note:: Deprecated in NumPy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and restoredot now longer does anything. It will be
               removed in NumPy 1.11.0.

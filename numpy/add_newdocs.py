@@ -2014,7 +2014,7 @@ add_newdoc('numpy.core', 'matmul',
       were elements.
 
     .. warning::
-       This function is preliminary and included in NumPy 1.10 for testing
+       This function is preliminary and included in NumPy 1.10.0 for testing
        and documentation. Its semantics will not change, but the number and
        order of the optional arguments will.
 
