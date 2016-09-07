@@ -790,6 +790,15 @@ class TestMedian(TestCase):
         assert_equal(r, out)
         assert_(type(r) == MaskedArray)
 
+    def test_single_non_masked_value_on_axis(self):
+        data = [[1., 0.],
+                [0., 3.],
+                [0., 0.]]
+        masked_arr = np.ma.masked_equal(data, 0)
+        expected = [1., 3.]
+        assert_array_equal(np.ma.median(masked_arr, axis=0),
+                           expected)
+
 
 class TestCov(TestCase):
 
