@@ -1505,7 +1505,7 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        For NumPy >= 1.10 a view of `a` is always returned. For earlier
+        For NumPy >= 1.10.0 a view of `a` is always returned. For earlier
         NumPy versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
