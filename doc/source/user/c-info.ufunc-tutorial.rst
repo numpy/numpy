@@ -18,7 +18,7 @@ Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
 of `Extending and Embedding the Python Interpreter
 <http://docs.python.org/extending/index.html>`_ and in `How to extend
-Numpy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
+NumPy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
 
 The umath module is a computer-generated C-module that creates many
 ufuncs. It provides a great many examples of how to create a universal
@@ -245,9 +245,9 @@ logit ufuncs constructed below, the logit ufuncs were almost exactly
 depending on the nature of the function.
 
 
-.. _`sec:Numpy-one-loop`:
+.. _`sec:NumPy-one-loop`:
 
-Example Numpy ufunc for one dtype
+Example NumPy ufunc for one dtype
 =================================
 
 .. index::
@@ -273,7 +273,7 @@ the primary thing that must be changed to create your own ufunc.
         /*
          * single_type_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a logit function.
+         * NumPy ufunc for a logit function.
          *
          * In this code we only define the ufunc for
          * a single dtype. The computations that must
@@ -443,9 +443,9 @@ array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
 
-.. _`sec:Numpy-many-loop`:
+.. _`sec:NumPy-many-loop`:
 
-Example Numpy ufunc with multiple dtypes
+Example NumPy ufunc with multiple dtypes
 ========================================
 
 .. index::
@@ -473,7 +473,7 @@ the primary thing that must be changed to create your own ufunc.
         /*
          * multi_type_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a logit function.
+         * NumPy ufunc for a logit function.
          *
          * Each function of the form type_logit defines the
          * logit function for a different numpy dtype. Each
@@ -728,9 +728,9 @@ array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
 
-.. _`sec:Numpy-many-arg`:
+.. _`sec:NumPy-many-arg`:
 
-Example Numpy ufunc with multiple arguments/return values
+Example NumPy ufunc with multiple arguments/return values
 =========================================================
 
 Our final example is a ufunc with multiple arguments. It is a modification
@@ -738,7 +738,7 @@ of the code for a logit ufunc for data with a single dtype. We
 compute (A*B, logit(A*B)).
 
 We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example Numpy ufunc for one dtype`_, except that
+the setup.py file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -767,7 +767,7 @@ as well as all other properties of a ufunc.
         /*
          * multi_arg_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a multiple argument, multiple
+         * NumPy ufunc for a multiple argument, multiple
          * return value ufunc. The places where the
          * ufunc computation is carried out are marked
          * with comments.
@@ -885,9 +885,9 @@ as well as all other properties of a ufunc.
         #endif
 
 
-.. _`sec:Numpy-struct-dtype`:
+.. _`sec:NumPy-struct-dtype`:
 
-Example Numpy ufunc with structured array dtype arguments
+Example NumPy ufunc with structured array dtype arguments
 =========================================================
 
 This example shows how to create a ufunc for a structured array dtype.
@@ -898,7 +898,7 @@ custom dtypes and structured array dtypes. We need to also call
 PyUFunc_RegisterLoopForDescr to finish setting up the ufunc.
 
 We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example Numpy ufunc for one dtype`_, except that
+the setup.py file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -925,7 +925,7 @@ The C file is given below.
         /*
          * add_triplet.c
          * This is the C code for creating your own
-         * Numpy ufunc for a structured array dtype.
+         * NumPy ufunc for a structured array dtype.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at

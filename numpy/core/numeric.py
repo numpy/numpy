@@ -759,7 +759,7 @@ def isfortran(a):
 
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
-    of Numpy >= 1.10 and previous versions. If you only want to check if an
+    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
     array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
@@ -1158,11 +1158,11 @@ def alterdot():
     """
     Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
 
-    Typically, as a user of Numpy, you do not explicitly call this
-    function. If Numpy is built with an accelerated BLAS, this function is
-    automatically called when Numpy is imported.
+    Typically, as a user of NumPy, you do not explicitly call this
+    function. If NumPy is built with an accelerated BLAS, this function is
+    automatically called when NumPy is imported.
 
-    When Numpy is built with an accelerated BLAS like ATLAS, these
+    When NumPy is built with an accelerated BLAS like ATLAS, these
     functions are replaced to make use of the faster implementations.  The
     faster implementations only affect float32, float64, complex64, and
     complex128 arrays. Furthermore, the BLAS API only includes
@@ -1170,10 +1170,10 @@ def alterdot():
     arrays with larger dimensionalities use the built in functions and are
     not accelerated.
 
-    .. note:: Deprecated in Numpy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and alterdot now longer does anything. It will be
-              removed in Numpy 1.11.0.
+              removed in NumPy 1.11.0.
 
     See Also
     --------
@@ -1195,10 +1195,10 @@ def restoredot():
     an accelerated BLAS, or when being very careful about benchmarking
     linear algebra operations.
 
-    .. note:: Deprecated in Numpy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and restoredot now longer does anything. It will be
-              removed in Numpy 1.11.0.
+              removed in NumPy 1.11.0.
 
     See Also
     --------
@@ -1505,8 +1505,8 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        For Numpy >= 1.10 a view of `a` is always returned. For earlier
-        Numpy versions a view of `a` is returned only if the order of the
+        For NumPy >= 1.10.0 a view of `a` is always returned. For earlier
+        NumPy versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
     See Also

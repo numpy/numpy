@@ -204,7 +204,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
@@ -311,7 +311,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
@@ -453,7 +453,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Return the sum of array elements over a given axis treating Not a
     Numbers (NaNs) as zero.
 
-    In Numpy versions <= 1.8 Nan is returned for slices that are all-NaN or
+    In NumPy versions <= 1.8.0 Nan is returned for slices that are all-NaN or
     empty. In later versions zero is returned.
 
     Parameters

@@ -1,6 +1,6 @@
 .. _routines.help:
 
-Numpy-specific help functions
+NumPy-specific help functions
 =============================
 
 .. currentmodule:: numpy

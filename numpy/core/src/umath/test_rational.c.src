@@ -731,7 +731,7 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_version_tag */
 };
 
-/* Numpy support */
+/* NumPy support */
 
 static PyObject*
 npyrational_getitem(void* data, void* arr) {

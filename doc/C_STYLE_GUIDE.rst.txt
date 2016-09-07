@@ -6,7 +6,7 @@ The NumPy C coding conventions are based on Python PEP-0007 by Guido van
 Rossum with a few added strictures. There are many C coding conventions and
 it must be emphasized that the primary goal of the NumPy conventions isn't
 to choose the 'best', about which there is certain to be disagreement, but
-to achieve uniformity. Because the Numpy conventions are very close to
+to achieve uniformity. Because the NumPy conventions are very close to
 those in PEP-0007, that PEP is used as a template below with the NumPy
 additions and variations in the appropriate spots.
 
@@ -17,7 +17,7 @@ Introduction
 ------------
 
 This document gives coding conventions for the C code comprising
-the C implementation of Numpy. Note, rules are there to be broken.
+the C implementation of NumPy. Note, rules are there to be broken.
 Two good reasons to break a particular rule:
 
 1. When applying the rule would make the code less readable, even
@@ -53,7 +53,7 @@ C dialect
   Note: this will change with the proposed transition to C++.
 
 * No compiler warnings with major compilers (gcc, VC++, a few others).
-  Note: Numpy still produces compiler warnings that need to be addressed.
+  Note: NumPy still produces compiler warnings that need to be addressed.
 
 
 Code lay-out
@@ -195,7 +195,7 @@ Code lay-out
 Naming conventions
 ------------------
 
-* There has been no consistent prefix for Numpy public functions, but
+* There has been no consistent prefix for NumPy public functions, but
   they all begin with a prefix of some sort, followed by an underscore, and
   are in camel case: ``PyArray_DescrAlignConverter``, ``NpyIter_GetIterNext``.
   In the future the names should be of the form ``Npy*_PublicFunction``,
@@ -213,7 +213,7 @@ Naming conventions
 Function documentation
 ----------------------
 
-Numpy doesn't have a C function documentation standard at this time, but
+NumPy doesn't have a C function documentation standard at this time, but
 needs one. Most numpy functions are not documented in the code and that
 should change. One possibility is Doxygen with a plugin so that the same
 NumPy style used for Python functions can also be used for documenting

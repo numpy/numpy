@@ -2547,7 +2547,7 @@ cdef class RandomState:
         Parameters
         ----------
         df : int or array_like of ints
-            Degrees of freedom, should be > 0 as of Numpy 1.10,
+            Degrees of freedom, should be > 0 as of NumPy 1.10.0,
             should be > 1 for earlier versions.
         nonc : float or array_like of floats
             Non-centrality, should be non-negative.

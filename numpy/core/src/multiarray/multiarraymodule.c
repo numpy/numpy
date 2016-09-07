@@ -1895,7 +1895,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         }
         else {
 #if defined(NPY_PY3K)
-            /* Backward compatibility with Python 2 Numpy pickles */
+            /* Backward compatibility with Python 2 NumPy pickles */
             if (PyUnicode_Check(obj)) {
                 tmpobj = PyUnicode_AsLatin1String(obj);
                 obj = tmpobj;

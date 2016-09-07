@@ -241,10 +241,10 @@ def byte_bounds(a):
 
 def who(vardict=None):
     """
-    Print the Numpy arrays in the given dictionary.
+    Print the NumPy arrays in the given dictionary.
 
     If there is no dictionary passed in or `vardict` is None then returns
-    Numpy arrays in the globals() dictionary (all Numpy arrays in the
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
     namespace).
 
     Parameters
@@ -646,7 +646,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
 def source(object, output=sys.stdout):
     """
-    Print or write to a file the source code for a Numpy object.
+    Print or write to a file the source code for a NumPy object.
 
     The source code is only returned for objects written in Python. Many
     functions and classes are defined in C and will therefore not return

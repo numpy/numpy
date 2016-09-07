@@ -11,7 +11,7 @@ Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
 development headers installed - see :ref:`building-from-source`.
 
-Having compiled code also means that importing Numpy from the development
+Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
@@ -28,7 +28,7 @@ do one of::
     $ python runtests.py --bench
     $ python runtests.py -g -m full
 
-This builds Numpy first, so the first time it may take a few minutes.  If
+This builds NumPy first, so the first time it may take a few minutes.  If
 you specify ``-n``, the tests are run against the version of NumPy (if
 any) found on current PYTHONPATH.
 
@@ -169,7 +169,7 @@ repo, use one of::
 Debugging
 ---------
 
-Another frequently asked question is "How do I debug C code inside Numpy?".
+Another frequently asked question is "How do I debug C code inside NumPy?".
 The easiest way to do this is to first write a Python script that invokes the C
 code whose execution you want to debug. For instance ``mytest.py``::
 
