@@ -563,7 +563,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     FILE *fd;
     char *sep = "";
     char *format = "";
-    npy_off_t orig_pos;
+    npy_off_t orig_pos = 0;
     static char *kwlist[] = {"file", "sep", "format", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ss:tofile", kwlist,
