@@ -2108,9 +2108,9 @@ add_newdoc('numpy.core', 'matmul',
     """)
 
 
-add_newdoc('numpy.core', 'einsum',
+add_newdoc('numpy.core', 'c_einsum',
     """
-    einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
+    c_einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
 
     Evaluates the Einstein summation convention on the operands.
 
@@ -2120,6 +2120,8 @@ add_newdoc('numpy.core', 'einsum',
     function is to try the examples below, which show how many common NumPy
     functions can be implemented as calls to `einsum`.
 
+    This is the core C function.
+
     Parameters
     ----------
     subscripts : str
@@ -2128,10 +2130,10 @@ add_newdoc('numpy.core', 'einsum',
         These are the arrays for the operation.
     out : ndarray, optional
         If provided, the calculation is done into this array.
-    dtype : data-type, optional
+    dtype : {data-type, None}, optional
         If provided, forces the calculation to use the data type specified.
         Note that you may have to also give a more liberal `casting`
-        parameter to allow the conversions.
+        parameter to allow the conversions. Default is None.
     order : {'C', 'F', 'A', 'K'}, optional
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
@@ -2150,6 +2152,8 @@ add_newdoc('numpy.core', 'einsum',
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
+        Default is 'safe'.
+
     Returns
     -------
     output : ndarray
@@ -2157,7 +2161,7 @@ add_newdoc('numpy.core', 'einsum',
 
     See Also
     --------
-    dot, inner, outer, tensordot
+    einsum, dot, inner, outer, tensordot
 
     Notes
     -----

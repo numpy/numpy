@@ -4139,7 +4139,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"matmul",
         (PyCFunction)array_matmul,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"einsum",
+    {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"_fastCopyAndTranspose",
