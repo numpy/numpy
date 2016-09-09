@@ -1738,8 +1738,12 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         }
     }
     for (i = nin; i < nop; ++i) {
+        /*
+         * Because we don't write to all elements, the output arrays
+         * must be considered READWRITE by the iterator.
+         */
         op_flags[i] = default_op_out_flags |
-                      NPY_ITER_WRITEONLY |
+                      NPY_ITER_READWRITE |
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
@@ -1777,22 +1781,30 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
-    /* Copy any allocated outputs */
+    /* Call the __array_prepare__ functions where necessary */
     op_it = NpyIter_GetOperandArray(iter);
     for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
+        PyArrayObject *op_tmp;
 
-    /* Call the __array_prepare__ functions where necessary */
-    for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
+        /* Prepare_ufunc_output may decref & replace pointer */
+        op_tmp = op_it[i];
+        Py_INCREF(op_tmp);
+
+        if (prepare_ufunc_output(ufunc, &op_tmp,
+                                 arr_prep[i], arr_prep_args, i) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op_it[i])) {
+            PyErr_SetString(PyExc_ValueError,
+                        "The __array_prepare__ functions modified the data "
+                        "pointer addresses in an invalid fashion");
+            Py_DECREF(op_tmp);
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+        Py_DECREF(op_tmp);
     }
 
     /* Only do the loop if the iteration size is non-zero */
@@ -1802,17 +1814,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         npy_intp fixed_strides[2*NPY_MAXARGS];
         PyArray_Descr **iter_dtypes;
         NPY_BEGIN_THREADS_DEF;
-
-        /* Validate that the prepare_ufunc_output didn't mess with pointers */
-        for (i = nin; i < nop; ++i) {
-            if (PyArray_BYTES(op[i]) != PyArray_BYTES(op_it[i])) {
-                PyErr_SetString(PyExc_ValueError,
-                        "The __array_prepare__ functions modified the data "
-                        "pointer addresses in an invalid fashion");
-                NpyIter_Deallocate(iter);
-                return -1;
-            }
-        }
 
         /*
          * Get the inner loop, with the possibility of specialization
