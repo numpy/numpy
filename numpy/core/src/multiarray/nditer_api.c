@@ -2334,7 +2334,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 }
                 else {
                     /* It's all in one stride in the reduce outer loop */
-                    if ((reduce_outerdim > 0) &&
+                    if ((reduce_outerdim == 1) &&
                                     (transfersize/reduce_innersize <=
                                             NAD_SHAPE(reduce_outeraxisdata) -
                                             NAD_INDEX(reduce_outeraxisdata))) {

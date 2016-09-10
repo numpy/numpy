@@ -2367,6 +2367,22 @@ def test_iter_buffering_reduction():
     it.reset()
     assert_equal(it[0], [1, 2, 1, 2])
 
+    # Iterator inner loop should take argument contiguity into account
+    x = np.ones((7, 13, 8), np.int8)[4:6,1:11:6,1:5].transpose(1, 2, 0)
+    x[...] = np.arange(x.size).reshape(x.shape)
+    y_base = np.arange(4*4, dtype=np.int8).reshape(4, 4)
+    y_base_copy = y_base.copy()
+    y = y_base[::2,:,None]
+
+    it = np.nditer([y, x],
+                   ['buffered', 'external_loop', 'reduce_ok'],
+                   [['readwrite'], ['readonly']])
+    for a, b in it:
+        a.fill(2)
+
+    assert_equal(y_base[1::2], y_base_copy[1::2])
+    assert_equal(y_base[::2], 2)
+
 def test_iter_buffering_reduction_reuse_reduce_loops():
     # There was a bug triggering reuse of the reduce loop inappropriately,
     # which caused processing to happen in unnecessarily small chunks
