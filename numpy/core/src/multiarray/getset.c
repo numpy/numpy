@@ -963,72 +963,22 @@ array_transpose_get(PyArrayObject *self)
     return PyArray_Transpose(self, NULL);
 }
 
-static int
-_check_method_is_base(PyArrayObject *self, char *method) {
-    PyObject *methodobj = NULL, *objclass = NULL;
-    int res;
-
-    methodobj = PyObject_GetAttrString((PyObject *)self, method);
-    if (methodobj == NULL) {
-        return 0;
-    }
-
-    /* TODO: Maybe there is a nicer way to figure this out!? */
-    objclass = PyObject_GetAttrString(methodobj, "__objclass__");
-    if (objclass == NULL) {
-        Py_DECREF(methodobj);
-        return 0;
-    }
-
-    res = ((PyTypeObject *)objclass == &PyArray_Type);
-    Py_DECREF(methodobj);
-    Py_DECREF(objclass);
-    return res;
-}
-
 static PyObject *
 array_oindex_get(PyArrayObject *self)
 {
-    if (PyArray_CheckExact(self) ||
-            (_check_method_is_base(self, "__getitem__") &&
-             _check_method_is_base(self, "__setitem__"))) {
-        return PyArray_AttributeIndexerNew(self, OUTER_INDEXING);
-    }
-
-    PyErr_SetString(PyExc_AttributeError,
-                    "'oindex' attribute is not implemented (but at least one "
-                    "of '__getitem__' or '__setitem__' is).");
-    return NULL;
+    return PyArray_AttributeIndexerNew(self, OUTER_INDEXING);
 }
 
 static PyObject *
 array_vindex_get(PyArrayObject *self)
 {
-    if (PyArray_CheckExact(self) ||
-            (_check_method_is_base(self, "__getitem__") &&
-             _check_method_is_base(self, "__setitem__"))) {
-        return PyArray_AttributeIndexerNew(self, VECTOR_INDEXING);
-    }
-
-    PyErr_SetString(PyExc_AttributeError,
-                    "'vindex' attribute is not implemented but at least one "
-                    "of '__getitem__' or '__setitem__' is.");
-    return NULL;
+    return PyArray_AttributeIndexerNew(self, VECTOR_INDEXING);
 }
 
 static PyObject *
 array_lindex_get(PyArrayObject *self)
 {
-    if (PyArray_CheckExact(self) ||
-            (_check_method_is_base(self, "__getitem__") &&
-             _check_method_is_base(self, "__setitem__"))) {
-        return PyArray_AttributeIndexerNew(self, FANCY_INDEXING);
-    }
-
-    PyErr_SetString(PyExc_AttributeError,
-                    "'lindex' attribute is not implemented but at least one "
-                    "of '__getitem__' or '__setitem__' is.");
-    return NULL;
+    return PyArray_AttributeIndexerNew(self, FANCY_INDEXING);
 }
 
 /* If this is None, no function call is made

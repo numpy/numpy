@@ -42,6 +42,38 @@
 static int
 _nonzero_indices(PyObject *myBool, PyArrayObject **arrays);
 
+
+/*
+ * checks if a method is overriden by the subclass or not.
+ * This Method is insane, probably does not even work (at least for
+ * extension type subclasses).
+ * WARNING: THIS IS JUST A TESTING VERSION.
+ */
+static NPY_INLINE int _check_method_is_base(PyArrayObject *self, char *method) {
+    PyObject *methodobj = NULL, *objclass = NULL;
+    int res;
+
+    methodobj = PyObject_GetAttrString((PyObject *)self, method);
+    if (methodobj == NULL) {
+        return 0;
+    }
+
+    /* TODO: Maybe there is a nicer way to figure this out!? */
+    objclass = PyObject_GetAttrString(methodobj, "__objclass__");
+    if (objclass == NULL) {
+        PyErr_Clear();
+        res = PyObject_HasAttrString(methodobj, "im_class") == 0;
+        Py_DECREF(methodobj);
+        return res;
+    }
+
+    res = ((PyTypeObject *)objclass == &PyArray_Type);
+    Py_DECREF(methodobj);
+    Py_DECREF(objclass);
+    return res;
+}
+
+
 /******************************************************************************
  ***                    IMPLEMENT MAPPING PROTOCOL                          ***
  *****************************************************************************/
@@ -1825,8 +1857,40 @@ array_subscript(PyArrayObject *self, PyObject *op, int indexing_method)
 NPY_NO_EXPORT PyObject *
 array_subscript_fancy(PyArrayObject *self, PyObject *op)
 {
+    if (PyArray_CheckExact(self)) {
+        return array_subscript(self, op, PLAIN_INDEXING);
+    }
+    /* Call back into python if numpy getitem is defined */
+    if (!_check_method_is_base(self, "__numpy_getitem__")) {
+        PyObject *meth, *result, *args;
+        static PyObject *kwargs = NULL;
+
+        if (kwargs == NULL) {
+            kwargs = Py_BuildValue(
+                "{s:s}", "indexing_method", "plain");
+            if (kwargs == NULL) {
+                return NULL;
+            }
+        }
+        args = PyTuple_Pack(1, op);
+        if (args == NULL) {
+            return NULL;
+        }
+        
+        meth = PyObject_GetAttrString((PyObject *)self, "__numpy_getitem__");
+        if (meth == NULL) {
+            Py_DECREF(args);
+            return NULL;
+        }
+        result = PyObject_Call(meth, args, kwargs); 
+        Py_DECREF(args);
+        Py_DECREF(meth);
+        return result;      
+    }
+    /* The subclass does not define anything, so we can just index */
     return array_subscript(self, op, PLAIN_INDEXING);
 }
+
 
 /*
  * Python C-Api level item assignment (implementation for PySequence_SetItem)
@@ -1890,9 +1954,9 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
 /*
  * General assignment with python indexing objects.
  */
-static int
+NPY_NO_EXPORT int
 array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
-                       int indexing_method)
+                       int indexing_method, int allow_getitem_hack)
 {
     int index_type;
     int index_num;
@@ -2004,7 +2068,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
      *          Many subclasses should probably call __setitem__
      *          with a base class ndarray view to avoid this.
      */
-    else if (!(index_type & (HAS_FANCY | HAS_SCALAR_ARRAY))
+    else if (allow_getitem_hack &&
+                !(index_type & (HAS_FANCY | HAS_SCALAR_ARRAY))
                 && !PyArray_CheckExact(self)) {
         view = (PyArrayObject *)PyObject_GetItem((PyObject *)self, ind);
         if (view == NULL) {
@@ -2184,7 +2249,40 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
 static int
 array_assign_subscript_fancy(PyArrayObject *self, PyObject *ind, PyObject *op)
 {
-    return array_assign_subscript(self, ind, op, PLAIN_INDEXING);
+    if (PyArray_CheckExact(self)) {
+        return array_assign_subscript(self, ind, op, PLAIN_INDEXING, 0);
+    }
+    /* Call back into python if numpy setitem is defined */
+    if (!_check_method_is_base(self, "__numpy_setitem__")) {
+        PyObject *meth, *args, *result;
+        static PyObject *kwargs = NULL;
+        int failure;
+
+        if (kwargs == NULL) {
+            kwargs = Py_BuildValue(
+                "{s:s}", "indexing_method", "plain");
+            if (kwargs == NULL) {
+                return NULL;
+            }
+        }
+        args = PyTuple_Pack(2, ind, op);
+        if (args == NULL) {
+            return NULL;
+        }
+        meth = PyObject_GetAttrString((PyObject *)self, "__numpy_setitem__");
+        if (meth == NULL) {
+            Py_DECREF(op);
+            return NULL;
+        }
+        result = PyObject_Call(meth, args, kwargs);   
+        Py_DECREF(op); 
+        Py_DECREF(meth);
+        failure = result == NULL;
+        Py_XDECREF(result);
+        return failure;
+    }
+    /* The subclass does not define anything, so we can just index */
+    return array_assign_subscript(self, ind, op, PLAIN_INDEXING, 1);
 }
 
 
@@ -3983,14 +4081,70 @@ PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method)
 }
 
 
-
 NPY_NO_EXPORT PyObject *
 arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
                                 PyObject *op)
 {
-    return array_subscript(
-        attr_indexer->array, op, attr_indexer->indexing_method);
+    if (PyArray_CheckExact(attr_indexer->array)) {
+        return array_subscript(
+            attr_indexer->array, op, attr_indexer->indexing_method);
+    }
+    if (!_check_method_is_base(attr_indexer->array, "__numpy_getitem__")) {
+        PyObject *meth, *args, *kwargs, *result;
+        static PyObject *okwargs = NULL, *vkwargs = NULL, *lkwargs = NULL;
+        switch (attr_indexer->indexing_method) {
+            case OUTER_INDEXING:
+                if (okwargs == NULL) {
+                    okwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "outer");
+                }
+                kwargs = okwargs;
+                break;
+            case VECTOR_INDEXING:
+                if (vkwargs == NULL) {
+                    vkwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "vector");
+                }
+                kwargs = vkwargs;
+                break;
+            case FANCY_INDEXING:
+                if (lkwargs == NULL) {
+                    lkwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "legacy");
+                }
+                kwargs = lkwargs;
+                break;
+        }
+        if (kwargs == NULL) {
+            return NULL;
+        }
+        args = PyTuple_Pack(1, op);
+        if (args == NULL) {
+            return NULL;
+        }
+        meth = PyObject_GetAttrString(
+            (PyObject *)attr_indexer->array, "__numpy_getitem__");
+        if (meth == NULL) {
+            Py_DECREF(args);
+            return NULL;
+        }
+        result = PyObject_Call(meth, args, kwargs);
+        printf("blah: %ld\n", (npy_intp)result);
+        Py_DECREF(args);
+        return result;    
+    }
+    if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
+                _check_method_is_base(attr_indexer->array, "__setitem__")) {
+        return array_subscript(
+            attr_indexer->array, op, attr_indexer->indexing_method);
+    }
 
+    PyErr_SetString(PyExc_AttributeError,
+                    "to use the special indexing attributes `oindex`, "
+                    "`vindex`, or `legacy_index` an ndarray subclass needs "
+                    "to implement `__numpy_setitem__` or not define "
+                    "`__getitem__` and `__setitem__`.");
+    return NULL;
 }
 
 
@@ -3998,8 +4152,69 @@ NPY_NO_EXPORT int
 arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
                                        PyObject *op, PyObject *vals)
 {
-    return array_assign_subscript(
-        attr_indexer->array, op, vals, attr_indexer->indexing_method);
+    if (PyArray_CheckExact(attr_indexer->array)) {
+        return array_assign_subscript(
+            attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
+    }
+    if (!_check_method_is_base(attr_indexer->array, "__numpy_setitem__")) {
+        PyObject *meth, *args, *kwargs, *result;
+        int failure;
+        static PyObject *okwargs = NULL, *vkwargs = NULL, *lkwargs = NULL;
+        switch (attr_indexer->indexing_method) {
+            case OUTER_INDEXING:
+                if (okwargs == NULL) {
+                    okwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "outer");
+                }
+                kwargs = okwargs;
+                break;
+            case VECTOR_INDEXING:
+                if (vkwargs == NULL) {
+                    vkwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "vector");
+                }
+                kwargs = vkwargs;
+                break;
+            case FANCY_INDEXING:
+                if (lkwargs == NULL) {
+                    lkwargs = Py_BuildValue(
+                        "{s:s}", "indexing_method", "legacy");
+                }
+                kwargs = lkwargs;
+                break;
+        }
+        if (kwargs == NULL) {
+            return -1;
+        }
+        args = PyTuple_Pack(2, op, vals);
+        if (args == NULL) {
+            return -1;
+        }
+        meth = PyObject_GetAttrString(
+            (PyObject *)attr_indexer->array, "__numpy_setitem__");
+        if (meth == NULL) {
+            Py_DECREF(args);
+            return -1;
+        }
+        result = PyObject_Call(meth, args, kwargs);
+        Py_DECREF(args);
+        Py_DECREF(meth);
+        failure = result == NULL;
+        Py_XDECREF(result);
+        return failure;      
+    }
+    if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
+                _check_method_is_base(attr_indexer->array, "__setitem__")) {
+        return array_assign_subscript(
+            attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
+    }
+
+    PyErr_SetString(PyExc_AttributeError,
+                    "to use the special indexing attributes `oindex`, "
+                    "`vindex`, or `legacy_index` an ndarray subclass needs "
+                    "to implement `__numpy_setitem__` or not define "
+                    "`__getitem__` and `__setitem__`.");
+    return -1;
 }
 
 
