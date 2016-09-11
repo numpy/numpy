@@ -19,6 +19,7 @@
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
+#include "mem_overlap.h"
 
 
 #define HAS_INTEGER 1
@@ -700,6 +701,38 @@ prepare_index(PyArrayObject *self, PyObject *index,
         Py_DECREF(index);
     }
     return -1;
+}
+
+
+/**
+ * Check if self has memory overlap with one of the index arrays, or with extra_op.
+ *
+ * @returns 1 if memory overlap found, 0 if not.
+ */
+NPY_NO_EXPORT int
+index_has_memory_overlap(PyArrayObject *self,
+                         int index_type, npy_index_info *indices, int num,
+                         PyObject *extra_op)
+{
+    int i;
+
+    if (index_type & (HAS_FANCY | HAS_BOOL)) {
+        for (i = 0; i < num; ++i) {
+            if (indices[i].object != NULL && PyArray_Check(indices[i].object) &&
+                solve_may_share_memory(self, (PyArrayObject *)indices[i].object,
+                                       1) != 0) {
+
+                return 1;
+            }
+        }
+    }
+
+    if (extra_op != NULL && PyArray_Check(extra_op) &&
+        solve_may_share_memory(self, (PyArrayObject *)extra_op, 1) != 0) {
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -3132,25 +3165,53 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
 /*NUMPY_API
  *
- * Use advanced indexing to iterate an array. Please note
- * that most of this public API is currently not guaranteed
- * to stay the same between versions. If you plan on using
- * it, please consider adding more utility functions here
- * to accommodate new features.
+ * Same as PyArray_MapIterArray, but:
+ *
+ * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
+ * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
+ * to avoid problems if `a` is modified during the iteration.
+ * `iter->array` may contain a copied array (with UPDATEIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
+PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
+                                  int copy_if_overlap, PyArrayObject *extra_op)
 {
     PyArrayMapIterObject * mit = NULL;
     PyArrayObject *subspace = NULL;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
     int i, index_num, ndim, fancy_ndim, index_type;
+    int need_copy = 0;
+    PyArrayObject *a_copy = NULL;
 
     index_type = prepare_index(a, index, indices, &index_num,
                                &ndim, &fancy_ndim, 0);
 
     if (index_type < 0) {
         return NULL;
+    }
+
+    if (copy_if_overlap && index_has_memory_overlap(a, index_type, indices,
+                                                    index_num,
+                                                    (PyObject *)extra_op)) {
+        /* Make a copy of the input array */
+        a_copy = (PyArrayObject *)PyArray_NewLikeArray(a, NPY_ANYORDER,
+                                                       NULL, 0);
+        if (a_copy == NULL) {
+            goto fail;
+        }
+
+        if (PyArray_CopyInto(a_copy, a) != 0) {
+            Py_DECREF(a_copy);
+            goto fail;
+        }
+
+        Py_INCREF(a);
+        if (PyArray_SetUpdateIfCopyBase(a_copy, a) < 0) {
+            Py_DECREF(a);
+            goto fail;
+        }
+
+        a = a_copy;
     }
 
     /* If it is not a pure fancy index, need to get the subspace */
@@ -3180,6 +3241,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         goto fail;
     }
 
+    Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     PyArray_MapIterReset(mit);
 
@@ -3190,12 +3252,28 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     return (PyObject *)mit;
 
  fail:
+    Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     Py_XDECREF((PyObject *)mit);
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
     return NULL;
+}
+
+
+/*NUMPY_API
+ *
+ * Use advanced indexing to iterate an array. Please note
+ * that most of this public API is currently not guaranteed
+ * to stay the same between versions. If you plan on using
+ * it, please consider adding more utility functions here
+ * to accommodate new features.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
+{
+    return PyArray_MapIterArrayCopyIfOverlap(a, index, 0, NULL);
 }
 
 
