@@ -3627,7 +3627,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                       NPY_ITER_ALIGNED;
         op_flags[1] = NPY_ITER_READONLY|
                       NPY_ITER_COPY|
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_OVERLAP_NOT_SAME;
         op_flags[2] = NPY_ITER_READONLY;
 
         op_dtypes[1] = op_dtypes[0];

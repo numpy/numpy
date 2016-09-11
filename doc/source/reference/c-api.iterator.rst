@@ -474,7 +474,8 @@ Construction and Destruction
               via *different* index/dtype/shape combinations.
 
             - In particular, unless the arrays have the same shape, dtype,
-              strides, and start address, any shared common data byte accessible
+              strides, start address, and NPY_ITER_OVERLAP_NOT_SAME is not specified,
+              any shared common data byte accessible
               by indexing implies overlap.
 
             Because exact overlap detection has exponential runtime
@@ -617,6 +618,15 @@ Construction and Destruction
             elements in the buffer for which :c:func:`NpyMask_IsExposed`
             returns true from the corresponding element in the ARRAYMASK
             operand.
+
+        .. c:var:: NPY_ITER_OVERLAP_NOT_SAME
+
+            In the memory overlap checks done when ``NPY_ITER_COPY_IF_OVERLAP``
+            is specified, consider this array as overlapping even if it is
+            exactly the same as another array.
+
+            This flag should be set on arrays that are not accessed in the
+            iterator order.
 
 .. c:function:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
