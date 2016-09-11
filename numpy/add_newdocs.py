@@ -4445,7 +4445,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     Examples
     --------
     >>> a = np.array([3, 4, 2, 1])
-    >>> a.partition(a, 3)
+    >>> a.partition(3)
     >>> a
     array([2, 1, 3, 4])
 
