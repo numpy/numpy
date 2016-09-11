@@ -10,6 +10,7 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import itertools
 
 import numpy as np
 from numpy.testing import (
@@ -684,6 +685,37 @@ class TestMedian(TestCase):
         assert_equal(ma_x.shape, (2,), "shape mismatch")
         assert_(type(ma_x) is MaskedArray)
 
+    def test_axis_argument_errors(self):
+        msg = "mask = %s, ndim = %s, axis = %s, overwrite_input = %s"
+        for ndmin in range(5):
+            for mask in [False, True]:
+                x = array(1, ndmin=ndmin, mask=mask)
+
+                # Valid axis values should not raise exception
+                args = itertools.product(range(-ndmin, ndmin), [False, True])
+                for axis, over in args:
+                    try:
+                        np.ma.median(x, axis=axis, overwrite_input=over)
+                    except:
+                        raise AssertionError(msg % (mask, ndmin, axis, over))
+
+                # Invalid axis values should raise exception
+                args = itertools.product([-(ndmin + 1), ndmin], [False, True])
+                for axis, over in args:
+                    try:
+                        np.ma.median(x, axis=axis, overwrite_input=over)
+                    except IndexError:
+                        pass
+                    else:
+                        raise AssertionError(msg % (mask, ndmin, axis, over))
+
+    def test_masked_0d(self):
+        # Check values
+        x = array(1, mask=False)
+        assert_equal(np.ma.median(x), 1)
+        x = array(1, mask=True)
+        assert_equal(np.ma.median(x), np.ma.masked)
+
     def test_masked_1d(self):
         x = array(np.arange(5), mask=True)
         assert_equal(np.ma.median(x), np.ma.masked)
@@ -757,6 +789,15 @@ class TestMedian(TestCase):
         r = median(x, axis=1, out=out)
         assert_equal(r, out)
         assert_(type(r) == MaskedArray)
+
+    def test_single_non_masked_value_on_axis(self):
+        data = [[1., 0.],
+                [0., 3.],
+                [0., 0.]]
+        masked_arr = np.ma.masked_equal(data, 0)
+        expected = [1., 3.]
+        assert_array_equal(np.ma.median(masked_arr, axis=0),
+                           expected)
 
 
 class TestCov(TestCase):

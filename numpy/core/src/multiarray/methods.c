@@ -1646,7 +1646,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         Py_INCREF(rawdata);
 
 #if defined(NPY_PY3K)
-        /* Backward compatibility with Python 2 Numpy pickles */
+        /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
             PyObject *tmp;
             tmp = PyUnicode_AsLatin1String(rawdata);

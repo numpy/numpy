@@ -1,7 +1,7 @@
 .. currentmodule:: numpy
 
 *************************
-Numpy C Code Explanations
+NumPy C Code Explanations
 *************************
 
     Fanaticism consists of redoubling your efforts when you have forgotten

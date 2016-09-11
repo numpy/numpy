@@ -1,4 +1,4 @@
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. _ufuncs:
 
@@ -20,7 +20,7 @@ is, a ufunc is a ":term:`vectorized`" wrapper for a function that
 takes a fixed number of scalar inputs and produces a fixed number of
 scalar outputs.
 
-In Numpy, universal functions are instances of the
+In NumPy, universal functions are instances of the
 :class:`numpy.ufunc` class. Many of the built-in functions are
 implemented in compiled C code, but :class:`ufunc` instances can also
 be produced using the :func:`frompyfunc` factory function.

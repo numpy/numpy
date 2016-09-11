@@ -90,7 +90,7 @@
 # Atlas
 # -----
 # Atlas is an open source optimized implementation of the BLAS and Lapack
-# routines. Numpy will try to build against Atlas by default when available in
+# routines. NumPy will try to build against Atlas by default when available in
 # the system library dirs. To build numpy against a custom installation of
 # Atlas you can add an explicit section such as the following. Here we assume
 # that Atlas was configured with ``prefix=/opt/atlas``.
@@ -135,14 +135,14 @@
 # ----
 # BLIS (https://github.com/flame/blis) also provides a BLAS interface.  It's a
 # relatively new library, its performance in some cases seems to match that of
-# MKL and OpenBLAS, but it hasn't been benchmarked with Numpy or Scipy yet.
+# MKL and OpenBLAS, but it hasn't been benchmarked with NumPy or Scipy yet.
 #
 # Notes on compiling BLIS itself:
-#   - the CBLAS interface (needed by Numpy) isn't built by default; define
+#   - the CBLAS interface (needed by NumPy) isn't built by default; define
 #     BLIS_ENABLE_CBLAS to build it.
 #   - ``./configure auto`` doesn't support 32-bit builds, see gh-7294 for
 #     details.
-# Notes on compiling Numpy against BLIS:
+# Notes on compiling NumPy against BLIS:
 #   - ``include_dirs`` below should be the directory where the BLIS cblas.h
 #     header is installed.
 #

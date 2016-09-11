@@ -366,7 +366,7 @@ def _view_is_safe(oldtype, newtype):
     return
 
 # Given a string containing a PEP 3118 format specifier,
-# construct a Numpy dtype
+# construct a NumPy dtype
 
 _pep3118_native_map = {
     '?': '?',

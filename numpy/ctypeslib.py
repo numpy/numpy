@@ -95,7 +95,7 @@ else:
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.  
-        Numpy supplies the load_library function as a convenience.
+        NumPy supplies the load_library function as a convenience.
 
         Parameters
         ----------
