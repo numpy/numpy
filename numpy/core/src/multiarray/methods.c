@@ -2518,7 +2518,10 @@ array_numpy_setitem(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(PyExc_ValueError, "invalid `indexing_method` passed.");
         return NULL;
     }
-    return array_assign_subscript(self, op, vals, indexing_method_int, 0);
+    if (array_assign_subscript(self, op, vals, indexing_method_int, 0) == 0) {
+        Py_RETURN_NONE;
+    }
+    return NULL;
 }
 
 

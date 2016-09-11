@@ -3162,11 +3162,15 @@ class MaskedArray(ndarray):
         Return the item described by i, as a masked array.
 
         """
+        return self.__numpy_getitem__(indx)
+
+    def __numpy_getitem__(self, indx, indexing_method="plain"):
         # We could directly use ndarray.__getitem__ on self.
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet
         # So it's easier to stick to the current version
-        dout = self.data[indx]
+        dout = self.data.__numpy_getitem__(
+                                        indx, indexing_method=indexing_method)
         _mask = self._mask
 
         def _is_scalar(m):
@@ -3198,7 +3202,8 @@ class MaskedArray(ndarray):
         if _mask is not nomask:
             # _mask cannot be a subclass, so it tells us whether we should
             # expect a scalar. It also cannot be of dtype object.
-            mout = _mask[indx]
+            mout = _mask.__numpy_getitem__(
+                                    indx, indexing_method=indexing_method)
             scalar_expected = _is_scalar(mout)
 
         else:
@@ -3244,7 +3249,8 @@ class MaskedArray(ndarray):
             # Check the fill_value
             if isinstance(indx, basestring):
                 if self._fill_value is not None:
-                    dout._fill_value = self._fill_value[indx]
+                    dout._fill_value = self._fill_value.__numpy_getitem__(
+                                        indx, indexing_method=indexing_method)
 
                     # If we're indexing a multidimensional field in a
                     # structured array (such as dtype("(2,)i2,(2,)i1")),
@@ -3283,15 +3289,20 @@ class MaskedArray(ndarray):
         locations.
 
         """
+        self.__numpy_setitem__(indx, value)
+
+    def __numpy_setitem__(self, indx, value, indexing_method="plain"):
         if self is masked:
             raise MaskError('Cannot alter the masked element.')
         _data = self._data
         _mask = self._mask
         if isinstance(indx, basestring):
-            _data[indx] = value
+            _data.__numpy_setitem__(indx, value,
+                                    indexing_method=indexing_method)
             if _mask is nomask:
                 self._mask = _mask = make_mask_none(self.shape, self.dtype)
-            _mask[indx] = getmask(value)
+            _mask.__numpy_setitem__(indx, getmask(value),
+                                    indexing_method=indexing_method)
             return
 
         _dtype = _data.dtype
@@ -3303,9 +3314,11 @@ class MaskedArray(ndarray):
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
             # Now, set the mask to its value.
             if nbfields:
-                _mask[indx] = tuple([True] * nbfields)
+                _mask.__numpy_setitem__(indx, tuple([True] * nbfields),
+                                        indexing_method=indexing_method)
             else:
-                _mask[indx] = True
+                _mask.__numpy_setitem__(indx, True,
+                                        indexing_method=indexing_method)
             return
 
         # Get the _data part of the new value
@@ -3316,29 +3329,61 @@ class MaskedArray(ndarray):
             mval = tuple([False] * nbfields)
         if _mask is nomask:
             # Set the data, then the mask
-            _data[indx] = dval
+            _data.__numpy_setitem__(indx, dval,
+                                    indexing_method=indexing_method)
             if mval is not nomask:
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
-                _mask[indx] = mval
+                _mask.__numpy_setitem__(indx, mval,
+                                        indexing_method=indexing_method)
         elif not self._hardmask:
+            # Unshare the mask if necessary to avoid propagation
+            # We want to remove the unshare logic from this place in the
+            # future. Note that _sharedmask has lots of false positives.
+            if not self._isfield:
+                notthree = getattr(sys, 'getrefcount', False) and (sys.getrefcount(_mask) != 3)
+                if self._sharedmask and not (
+                        # If no one else holds a reference (we have two
+                        # references (_mask and self._mask) -- add one for
+                        # getrefcount) and the array owns its own data
+                        # copying the mask should do nothing.
+                        (not notthree) and _mask.flags.owndata):
+                    # 2016.01.15 -- v1.11.0
+                    warnings.warn(
+                       "setting an item on a masked array which has a shared "
+                       "mask will not copy the mask and also change the "
+                       "original mask array in the future.\n"
+                       "Check the NumPy 1.11 release notes for more "
+                       "information.",
+                       MaskedArrayFutureWarning, stacklevel=2)
+                self.unshare_mask()
+                _mask = self._mask
+
             # Set the data, then the mask
-            _data[indx] = dval
-            _mask[indx] = mval
+            _data.__numpy_setitem__(indx, dval,
+                                    indexing_method=indexing_method)
+            _mask.__numpy_setitem__(indx, mval,
+                                    indexing_method=indexing_method)
         elif hasattr(indx, 'dtype') and (indx.dtype == MaskType):
             indx = indx * umath.logical_not(_mask)
-            _data[indx] = dval
+            _data.__numpy_setitem__(indx, dval,
+                                    indexing_method=indexing_method)
         else:
             if nbfields:
                 err_msg = "Flexible 'hard' masks are not yet supported."
                 raise NotImplementedError(err_msg)
-            mindx = mask_or(_mask[indx], mval, copy=True)
-            dindx = self._data[indx]
+            mindx = mask_or(_mask.__numpy_getitem__(
+                                indx, indexing_method=indexing_method),
+                            mval, copy=True)
+            dindx = self._data.__numpy_getitem__(
+                                indx, indexing_method=indexing_method)
             if dindx.size > 1:
                 np.copyto(dindx, dval, where=~mindx)
             elif mindx is nomask:
                 dindx = dval
-            _data[indx] = dindx
-            _mask[indx] = mindx
+            _data.__numpy_setitem__(indx, dindx,
+                                    indexing_method=indexing_method)
+            _mask.__numpy_setitem__(indx, mindx,
+                                    indexing_method=indexing_method)
         return
 
     # Define so that we can overwrite the setter.
