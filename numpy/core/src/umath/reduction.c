@@ -83,7 +83,8 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
  */
 static PyArrayObject *
 conform_reduce_result(int ndim, npy_bool *axis_flags,
-                    PyArrayObject *out, int keepdims, const char *funcname)
+                      PyArrayObject *out, int keepdims, const char *funcname,
+                      int need_copy)
 {
     npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
     npy_intp *strides_out = PyArray_STRIDES(out);
@@ -151,6 +152,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     /* Allocate the view */
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
+
     ret = (PyArrayObject_fields *)PyArray_NewFromDescr(&PyArray_Type,
                                dtype,
                                ndim, shape,
@@ -161,13 +163,40 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     if (ret == NULL) {
         return NULL;
     }
+
     Py_INCREF(out);
     if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)out) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
 
-    return (PyArrayObject *)ret;
+    if (need_copy) {
+        PyArrayObject *ret_copy;
+
+        ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
+            (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
+        if (ret_copy == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        if (PyArray_CopyInto(ret_copy, (PyArrayObject *)ret) != 0) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_copy);
+            return NULL;
+        }
+
+        Py_INCREF(ret);
+        if (PyArray_SetUpdateIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        return ret_copy;
+    }
+    else {
+        return (PyArrayObject *)ret;
+    }
 }
 
 /*
@@ -201,11 +230,16 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
         result = allocate_reduce_result(operand, axis_flags, dtype, subok);
     }
     else {
+        int need_copy = 0;
+
+        if (solve_may_share_memory(operand, out, 1) != 0) {
+            need_copy = 1;
+        }
+
         /* Steal the dtype reference */
         Py_XDECREF(dtype);
-
         result = conform_reduce_result(PyArray_NDIM(operand), axis_flags,
-                                        out, keepdims, funcname);
+                                       out, keepdims, funcname, need_copy);
     }
 
     return result;
@@ -445,6 +479,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     /*
      * This either conforms 'out' to the ndim of 'operand', or allocates
      * a new array appropriate for this reduction.
+     *
+     * A new array with UPDATEIFCOPY is allocated if operand and out have memory
+     * overlap.
      */
     Py_INCREF(result_dtype);
     result = PyArray_CreateReduceResult(operand, out,
