@@ -41,6 +41,7 @@
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
 #include "reduction.h"
+#include "mem_overlap.h"
 
 #include "ufunc_object.h"
 #include "ufunc_override.h"
@@ -3185,11 +3186,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
              !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(out)))) {
         need_outer_iterator = 1;
     }
+    /* If input and output overlap in memory, use iterator to figure it out */
+    else if (out != NULL && solve_may_share_memory(out, arr, NPY_MAY_SHARE_BOUNDS) != 0) {
+        need_outer_iterator = 1;
+    }
 
     if (need_outer_iterator) {
         int ndim_iter = 0;
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
-                           NPY_ITER_REFS_OK;
+                           NPY_ITER_REFS_OK|
+                           NPY_ITER_COPY_IF_OVERLAP;
         PyArray_Descr **op_dtypes_param = NULL;
 
         /*
@@ -3603,7 +3609,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     if (need_outer_iterator) {
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
                            NPY_ITER_REFS_OK|
-                           NPY_ITER_MULTI_INDEX;
+                           NPY_ITER_MULTI_INDEX|
+                           NPY_ITER_COPY_IF_OVERLAP;
 
         /*
          * The way reduceat is set up, we can't do buffering,
@@ -3646,6 +3653,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         /* In case COPY or UPDATEIFCOPY occurred */
         op[0] = NpyIter_GetOperandArray(iter)[0];
         op[1] = NpyIter_GetOperandArray(iter)[1];
+        op[2] = NpyIter_GetOperandArray(iter)[2];
 
         if (out == NULL) {
             out = op[0];
