@@ -1531,12 +1531,12 @@ def rollaxis(a, axis, start=0):
         axis += n
     if start < 0:
         start += n
-    msg = 'rollaxis: %s (%d) must be >=0 and < %d'
+    msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
     if not (0 <= axis < n):
-        raise ValueError(msg % ('axis', axis, n))
+        raise ValueError(msg % ('axis', -n, 'axis', n, axis))
     if not (0 <= start < n + 1):
-        raise ValueError(msg % ('start', start, n + 1))
-    if (axis < start):
+        raise ValueError(msg % ('start', -n, 'start', n + 1, start))
+    if axis < start:
         # it's been removed
         start -= 1
     if axis == start:
