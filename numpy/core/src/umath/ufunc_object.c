@@ -5278,11 +5278,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = (PyArrayObject *)op1;
 
-    iter = (PyArrayMapIterObject *)PyArray_MapIterArray(op1_array, idx);
-    if (iter == NULL) {
-        goto fail;
-    }
-
     /* Create second operand from number array if needed. */
     if (op2 != NULL) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL,
@@ -5290,7 +5285,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if (op2_array == NULL) {
             goto fail;
         }
+    }
 
+    /* Create map iterator */
+    iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
+        op1_array, idx, 1, op2_array);
+    if (iter == NULL) {
+        goto fail;
+    }
+    op1_array = iter->array;  /* May be updateifcopied on overlap */
+
+    if (op2 != NULL) {
         /*
          * May need to swap axes so that second operand is
          * iterated over correctly

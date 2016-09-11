@@ -750,6 +750,30 @@ class TestUFunc(object):
                 if (c != cx).any():
                     assert_equal(c, cx)
 
+    def test_ufunc_at_manual(self):
+        def check(ufunc, a, ind, b=None):
+            a0 = a.copy()
+            if b is None:
+                ufunc.at(a0, ind.copy())
+                c1 = a0.copy()
+                ufunc.at(a, ind)
+                c2 = a.copy()
+            else:
+                ufunc.at(a0, ind.copy(), b.copy())
+                c1 = a0.copy()
+                ufunc.at(a, ind, b)
+                c2 = a.copy()
+            assert_array_equal(c1, c2)
+
+        # Overlap with index
+        a = np.arange(10000, dtype=np.int16)
+        check(np.invert, a[::-1], a)
+
+        # Overlap with second data array
+        a = np.arange(100, dtype=np.int16)
+        ind = np.arange(0, 100, 2, dtype=np.int16)
+        check(np.add, a, ind, a[25:75])
+
     def test_unary_ufunc_1d_manual(self):
         # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
 
