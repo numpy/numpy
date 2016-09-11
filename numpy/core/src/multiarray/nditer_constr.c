@@ -2750,7 +2750,9 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * to make copies, because ufunc inner loops are assumed to
                  * deal with that
                  */
-                if (PyArray_BYTES(op[iop]) == PyArray_BYTES(op[iother]) &&
+                if (!(op_flags[iop] & NPY_ITER_OVERLAP_NOT_SAME) &&
+                    !(op_flags[iother] & NPY_ITER_OVERLAP_NOT_SAME) &&
+                    PyArray_BYTES(op[iop]) == PyArray_BYTES(op[iother]) &&
                     PyArray_NDIM(op[iop]) == PyArray_NDIM(op[iother]) &&
                     PyArray_CompareLists(PyArray_DIMS(op[iop]),
                                          PyArray_DIMS(op[iother]),

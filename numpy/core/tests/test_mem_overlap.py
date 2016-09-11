@@ -703,6 +703,20 @@ class TestUFunc(object):
         self.check_unary_fuzz(do_reduceat, get_out_axis_size,
                               dtype=np.int16, count=500)
 
+    def test_binary_ufunc_reduceat_manual(self):
+        def check(ufunc, a, ind, out):
+            c1 = ufunc.reduceat(a.copy(), ind.copy(), out=out.copy())
+            c2 = ufunc.reduceat(a, ind, out=out)
+            assert_array_equal(c1, c2)
+
+        # Exactly same input/output arrays
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1].copy(), a)
+
+        # Overlap with index
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1], a)
+
     def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]
         gufunc = umath_tests.euclidean_pdist
@@ -843,6 +857,21 @@ class TestUFunc(object):
                         check(x[-1:].reshape([]), y)
                         check(x[:1].reshape([]), y[::-1])
                         check(x[-1:].reshape([]), y[::-1])
+
+    def test_unary_ufunc_where_same(self):
+        # Check behavior at wheremask overlap
+        ufunc = np.invert
+
+        def check(a, out, mask):
+            c1 = ufunc(a, out=out.copy(), where=mask.copy())
+            c2 = ufunc(a, out=out, where=mask)
+            assert_array_equal(c1, c2)
+
+        # Check behavior with same input and output arrays
+        x = np.arange(100).astype(np.bool_)
+        check(x, x, x)
+        check(x, x.copy(), x)
+        check(x, x, x.copy())
 
     def test_binary_ufunc_1d_manual(self):
         ufunc = np.add
