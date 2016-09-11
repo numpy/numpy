@@ -3180,7 +3180,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
     PyArrayObject *subspace = NULL;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
     int i, index_num, ndim, fancy_ndim, index_type;
-    int need_copy = 0;
     PyArrayObject *a_copy = NULL;
 
     index_type = prepare_index(a, index, indices, &index_num,
