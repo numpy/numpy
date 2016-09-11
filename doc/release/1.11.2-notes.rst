@@ -36,3 +36,4 @@ Fixes overridden by later merges and release notes updates are omitted.
 - #8020 BUG: Fix return of np.ma.count if keepdims is True and axis is None.
 - #8024 BUG: Fix numpy.ma.median.
 - #8031 BUG: Fix np.ma.median with only one non-masked value.
+- #8044 BUG: Fix bug in NpyIter buffering with discontinuous arrays.
