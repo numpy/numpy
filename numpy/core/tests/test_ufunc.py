@@ -1238,6 +1238,27 @@ class TestUfunc(TestCase):
         for f in binary_funcs:
             assert_raises(TypeError, f, a, b)
 
+    def test_reduce_noncontig_output(self):
+        # Check that reduction deals with non-contiguous output arrays
+        # appropriately.
+        #
+        # gh-8036
+
+        x = np.arange(7*13*8, dtype=np.int16).reshape(7, 13, 8)
+        x = x[4:6,1:11:6,1:5].transpose(1, 2, 0)
+        y_base = np.arange(4*4, dtype=np.int16).reshape(4, 4)
+        y = y_base[::2,:]
+
+        y_base_copy = y_base.copy()
+
+        r0 = np.add.reduce(x, out=y.copy(), axis=2)
+        r1 = np.add.reduce(x, out=y, axis=2)
+
+        # The results should match, and y_base shouldn't get clobbered
+        assert_equal(r0, r1)
+        assert_equal(y_base[1,:], y_base_copy[1,:])
+        assert_equal(y_base[3,:], y_base_copy[3,:])
+
 
 if __name__ == "__main__":
     run_module_suite()
