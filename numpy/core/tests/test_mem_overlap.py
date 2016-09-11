@@ -277,6 +277,13 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
             step *= -1
         return slice(start, stop, step)
 
+    # First a few regular views
+    yield x, x
+    for j in range(1, 7, 3):
+        yield x[j:], x[:-j]
+        yield x[...,j:], x[...,:-j]
+
+    # Then discontiguous views
     while True:
         steps = tuple(rng.randint(1, 11, dtype=np.intp)
                       if rng.randint(0, 5, dtype=np.intp) == 0 else 1
@@ -572,39 +579,131 @@ def view_element_first_byte(x):
     return np.asarray(DummyArray(interface, x))
 
 
-class TestUFuncGenericFunction(object):
+class TestUFunc(object):
     """
     Test ufunc call memory overlap handling
     """
 
-    def test_overlapping_unary_ufunc_fuzz(self):
+    def check_unary_fuzz(self, operation, get_out_axis_size, dtype=np.int16,
+                             count=5000):
         shapes = [7, 13, 8, 21, 29, 32]
-        ufunc = np.invert
 
         rng = np.random.RandomState(1234)
 
         for ndim in range(1, 6):
-            x = rng.randint(0, 2**16, size=shapes[:ndim]).astype(np.int16)
+            x = rng.randint(0, 2**16, size=shapes[:ndim]).astype(dtype)
 
             it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
 
-            min_count = 5000 // (ndim + 1)**2
+            min_count = count // (ndim + 1)**2
 
             overlapping = 0
             while overlapping < min_count:
                 a, b = next(it)
 
-                if np.shares_memory(a, b):
-                    overlapping += 1
+                a_orig = a.copy()
+                b_orig = b.copy()
 
-                bx = b.copy()
-                cx = ufunc(a, out=bx)
-                c = ufunc(a, out=b)
+                if get_out_axis_size is None:
+                    bx = b.copy()
+                    cx = operation(a, out=bx)
+                    c = operation(a, out=b)
 
-                if (c != cx).any():
-                    assert_equal(c, cx)
+                    if (c != cx).any():
+                        assert_equal(c, cx)
 
-    def test_overlapping_unary_gufunc_fuzz(self):
+                    if np.shares_memory(a, b):
+                        overlapping += 1
+                else:
+                    for axis in itertools.chain(range(ndim), [None]):
+                        a[...] = a_orig
+                        b[...] = b_orig
+
+                        # Determine size for reduction axis (None if scalar)
+                        outsize, scalarize = get_out_axis_size(a, b, axis)
+                        if outsize == 'skip':
+                            continue
+
+                        # Slice b to get an output array of the correct size
+                        sl = [slice(None)] * ndim
+                        if axis is None:
+                            if outsize is None:
+                                sl = [slice(0, 1)] + [0]*(ndim - 1)
+                            else:
+                                sl = [slice(0, outsize)] + [0]*(ndim - 1)
+                        else:
+                            if outsize is None:
+                                k = b.shape[axis]//2
+                                if ndim == 1:
+                                    sl[axis] = slice(k, k + 1)
+                                else:
+                                    sl[axis] = k
+                            else:
+                                assert b.shape[axis] >= outsize
+                                sl[axis] = slice(0, outsize)
+                        b_out = b[tuple(sl)]
+
+                        if scalarize:
+                            b_out = b_out.reshape([])
+
+                        if np.shares_memory(a, b_out):
+                            overlapping += 1
+
+                        # Check result
+                        bx = b_out.copy()
+                        cx = operation(a, out=bx, axis=axis)
+                        c = operation(a, out=b_out, axis=axis)
+
+                        if (c != cx).any():
+                            assert_equal(c, cx)
+
+    def test_unary_ufunc_call_fuzz(self):
+        self.check_unary_fuzz(np.invert, None, np.int16)
+
+    def test_binary_ufunc_accumulate_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            if axis is None:
+                if a.ndim == 1:
+                    return a.size, False
+                else:
+                    return 'skip', False  # accumulate doesn't support this
+            else:
+                return a.shape[axis], False
+
+        self.check_unary_fuzz(np.add.accumulate, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_reduce_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            return None, (axis is None or a.ndim == 1)
+
+        self.check_unary_fuzz(np.add.reduce, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_reduceat_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            if axis is None:
+                if a.ndim == 1:
+                    return a.size, False
+                else:
+                    return 'skip', False  # reduceat doesn't support this
+            else:
+                return a.shape[axis], False
+
+        def do_reduceat(a, out, axis):
+            if axis is None:
+                size = len(a)
+                step = size//len(out)
+            else:
+                size = a.shape[axis]
+                step = a.shape[axis] // out.shape[axis]
+            idx = np.arange(0, size, step)
+            return np.add.reduceat(a, idx, out=out, axis=axis)
+
+        self.check_unary_fuzz(do_reduceat, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]
         gufunc = umath_tests.euclidean_pdist
 
@@ -651,7 +750,7 @@ class TestUFuncGenericFunction(object):
                 if (c != cx).any():
                     assert_equal(c, cx)
 
-    def test_overlapping_unary_ufunc_1d_manual(self):
+    def test_unary_ufunc_1d_manual(self):
         # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
 
         def check(a, b):
@@ -721,7 +820,7 @@ class TestUFuncGenericFunction(object):
                         check(x[:1].reshape([]), y[::-1])
                         check(x[-1:].reshape([]), y[::-1])
 
-    def test_overlapping_binary_ufunc_1d_manual(self):
+    def test_binary_ufunc_1d_manual(self):
         ufunc = np.add
 
         def check(a, b, c):
