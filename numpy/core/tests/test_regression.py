@@ -13,7 +13,7 @@ from itertools import chain
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, TestCase, assert_, assert_equal,
+        run_module_suite, TestCase, assert_, assert_equal, IS_PYPY,
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
         assert_raises, assert_warns, dec, suppress_warnings
         )
@@ -1293,9 +1293,15 @@ class TestRegression(TestCase):
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    x.resize((m, 0))
+                    if IS_PYPY:
+                        x.resize((m, 0), refcheck=False)
+                    else:
+                        x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    y.resize((0, n))
+                    if IS_PYPY:
+                        y.resize((0, n),refcheck=False)
+                    else:
+                        y.resize((0, n))
 
                     # `dot` should just return zero (m,n) matrix
                     z = np.dot(x, y)
