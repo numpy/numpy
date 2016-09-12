@@ -4123,6 +4123,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     ValueError
         If `a` does not own its own data or references or views to it exist,
         and the data memory must be changed.
+        PyPy only: will always raise if the data memory must be changed, since
+        there is no reliable way to determine if references or views to it
+        exist.
 
     SystemError
         If the `order` keyword argument is specified. This behaviour is a

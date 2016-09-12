@@ -10,6 +10,7 @@ import io
 import itertools
 import ctypes
 import os
+import gc
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -4080,7 +4081,10 @@ class TestFlat(TestCase):
 class TestResize(TestCase):
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        x.resize((5, 5))
+        if IS_PYPY:
+            x.resize((5, 5), refcheck=False)
+        else:
+            x.resize((5, 5))
         assert_array_equal(x.flat[:9],
                 np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat, 0)
@@ -4093,7 +4097,10 @@ class TestResize(TestCase):
 
     def test_int_shape(self):
         x = np.eye(3)
-        x.resize(3)
+        if IS_PYPY:
+            x.resize(3, refcheck=False)
+        else:    
+            x.resize(3)
         assert_array_equal(x, np.eye(3)[0,:])
 
     def test_none_shape(self):
@@ -4111,19 +4118,28 @@ class TestResize(TestCase):
 
     def test_freeform_shape(self):
         x = np.eye(3)
-        x.resize(3, 2, 1)
+        if IS_PYPY:
+            x.resize(3, 2, 1, refcheck=False)
+        else:
+            x.resize(3, 2, 1)
         assert_(x.shape == (3, 2, 1))
 
     def test_zeros_appended(self):
         x = np.eye(3)
-        x.resize(2, 3, 3)
+        if IS_PYPY:
+            x.resize(2, 3, 3, refcheck=False)
+        else:    
+            x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
     def test_obj_obj(self):
         # check memory is initialized on resize, gh-4857
         a = np.ones(10, dtype=[('k', object, 2)])
-        a.resize(15,)
+        if IS_PYPY:
+            a.resize(15, refcheck=False)
+        else:
+            a.resize(15,)
         assert_equal(a.shape, (15,))
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
@@ -5988,7 +6004,7 @@ class TestNewBufferProtocol(object):
         c = np.asarray(b)
         if HAS_REFCOUNT:
             count_2 = sys.getrefcount(np.core._internal)
-        assert_equal(count_1, count_2)
+            assert_equal(count_1, count_2)
         del c  # avoid pyflakes unused variable warning.
 
     def test_padded_struct_array(self):
@@ -6141,6 +6157,7 @@ class TestMemEventHook(TestCase):
         # needs to be larger then limit of small memory cacher in ctors.c
         a = np.zeros(1000)
         del a
+        gc.collect()
         test_pydatamem_seteventhook_end()
 
 class TestMapIter(TestCase):
