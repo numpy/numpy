@@ -2156,5 +2156,11 @@ def test_rint_big_int():
     assert_equal(val, np.rint(val))
 
 
+def test_signaling_nan_exceptions():
+    with assert_no_warnings():
+        a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
+        np.isnan(a)
+
+
 if __name__ == "__main__":
     run_module_suite()

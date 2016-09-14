@@ -643,8 +643,6 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
     LOOP_BLOCKED_END {
         op[i] = npy_@kind@(ip1[i]) != 0;
     }
-    /* silence exceptions from comparisons */
-    npy_clear_floatstatus();
 }
 
 /**end repeat1**/
