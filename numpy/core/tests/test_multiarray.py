@@ -26,7 +26,7 @@ from numpy.core.multiarray_tests import (
     test_inplace_increment, get_buffer_info, test_as_c_array,
     )
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_raises,
+    TestCase, run_module_suite, assert_, assert_raises, assert_raises_regex,
     assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose,
     assert_array_less, runstring, dec, SkipTest, temppath
@@ -1174,6 +1174,8 @@ class TestMethods(TestCase):
         assert_equal(a.squeeze(axis=(0,)), [[1], [2], [3]])
         assert_raises(ValueError, a.squeeze, axis=(1,))
         assert_equal(a.squeeze(axis=(2,)), [[1, 2, 3]])
+        assert_raises_regex(ValueError, "integer or tuple",
+                            a.squeeze, axis=[2])
 
     def test_transpose(self):
         a = np.array([[1, 2], [3, 4]])
