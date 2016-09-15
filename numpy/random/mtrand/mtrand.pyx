@@ -4775,9 +4775,9 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, npy_intp n, object pvals, size=None):
+    def multinomial(self, npy_intp n, object pvals, size=None, tol=1e-12):
         """
-        multinomial(n, pvals, size=None)
+        multinomial(n, pvals, size=None, tol=1e-12)
 
         Draw samples from a multinomial distribution.
 
@@ -4802,6 +4802,9 @@ cdef class RandomState:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
+        tol : float, optional
+            Tolerance for `pvals`. Sum of `pvals` must be less than or equal to 
+            `1 + tol`.
 
         Returns
         -------
@@ -4811,6 +4814,13 @@ cdef class RandomState:
 
             In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
             value drawn from the distribution.
+            
+        Raises
+        ------
+        ValueError
+            If sum of `pvals` is greater than `1 + tol`
+            
+            If `tol` < 0
 
         Examples
         --------
@@ -4860,8 +4870,11 @@ cdef class RandomState:
         d = len(pvals)
         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)
         pix = <double*>PyArray_DATA(parr)
+        
+        if tol < 0:
+              raise ValueError("tol (%f) must be non-negative" % (tol,))
 
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
+        if kahan_sum(pix, d-1) > (1.0 + tol):
             raise ValueError("sum(pvals[:-1]) > 1.0")
 
         shape = _shape_from_size(size, d)
