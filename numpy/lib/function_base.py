@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
-import sys
 import collections
 import operator
+import re
+import sys
+import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
@@ -24,7 +25,7 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount, 
+    _insert, add_docstring, digitize, bincount,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -1792,7 +1793,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Returns
     -------
-    y : float or complex (corresponding to fp) or ndarray 
+    y : float or complex (corresponding to fp) or ndarray
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1899,7 +1900,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
             return interp_func(x, xp, fp, left, right)
         else:
             return interp_func(x, xp, fp, left, right).item()
-                
+
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
@@ -2242,17 +2243,116 @@ def disp(mesg, device=None, linefeed=True):
     return
 
 
+# See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
+_DIMENSION_NAME = r'\w+'
+_CORE_DIMENSION_LIST = '(?:%s(?:,%s)*)?' % (_DIMENSION_NAME, _DIMENSION_NAME)
+_ARGUMENT = r'\(%s\)' % _CORE_DIMENSION_LIST
+_ARGUMENT_LIST = '%s(?:,%s)*' % (_ARGUMENT, _ARGUMENT)
+_SIGNATURE = '^%s->%s$' % (_ARGUMENT_LIST, _ARGUMENT_LIST)
+
+
+def _parse_gufunc_signature(signature):
+    """
+    Parse string signatures for a generalized universal function.
+
+    Arguments
+    ---------
+    signature : string
+        Generalized universal function signature, e.g., ``(m,n),(n,p)->(m,p)``
+        for ``np.matmul``.
+
+    Returns
+    -------
+    Tuple of input and output core dimensions parsed from the signature, each
+    of the form List[Tuple[str, ...]].
+    """
+    if not re.match(_SIGNATURE, signature):
+        raise ValueError(
+            'not a valid gufunc signature: {}'.format(signature))
+    return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
+                  for arg in re.findall(_ARGUMENT, arg_list)]
+                 for arg_list in signature.split('->'))
+
+
+def _update_dim_sizes(dim_sizes, arg, core_dims):
+    """
+    Incrementally check and update core dimension sizes for a single argument.
+
+    Arguments
+    ---------
+    dim_sizes : Dict[str, int]
+        Sizes of existing core dimensions. Will be updated in-place.
+    arg : ndarray
+        Argument to examine.
+    core_dims : Tuple[str, ...]
+        Core dimensions for this argument.
+    """
+    if not core_dims:
+        return
+
+    num_core_dims = len(core_dims)
+    if arg.ndim < num_core_dims:
+        raise ValueError(
+            '%d-dimensional argument does not have enough '
+            'dimensions for all core dimensions %r'
+            % (arg.ndim, core_dims))
+
+    core_shape = arg.shape[-num_core_dims:]
+    for dim, size in zip(core_dims, core_shape):
+        if dim in dim_sizes:
+            if size != dim_sizes[dim]:
+                raise ValueError(
+                    'inconsistent size for core dimension %r: %r vs %r'
+                    % (dim, size, dim_sizes[dim]))
+        else:
+            dim_sizes[dim] = size
+
+
+def _parse_input_dimensions(args, input_core_dims):
+    """
+    Parse broadcast and core dimensions for vectorize with a signature.
+
+    Arguments
+    ---------
+    args : Tuple[ndarray, ...]
+        Tuple of input arguments to examine.
+    input_core_dims : List[Tuple[str, ...]]
+        List of core dimensions corresponding to each input.
+
+    Returns
+    -------
+    broadcast_shape : Tuple[int, ...]
+        Common shape to broadcast all non-core dimensions to.
+    dim_sizes : Dict[str, int]
+        Common sizes for named core dimensions.
+    """
+    broadcast_args = []
+    dim_sizes = {}
+    for arg, core_dims in zip(args, input_core_dims):
+        _update_dim_sizes(dim_sizes, arg, core_dims)
+        broadcast_args.append(arg[(Ellipsis,) + len(core_dims) * (0,)])
+    broadcast_shape = np.lib.stride_tricks._broadcast_shape(*broadcast_args)
+    return broadcast_shape, dim_sizes
+
+
+def _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims):
+    """Helper for calculating broadcast shapes with core dimensions."""
+    return [broadcast_shape + tuple(dim_sizes[dim] for dim in core_dims)
+            for core_dims in list_of_core_dims]
+
+
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None, excluded=None, cache=False)
+    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
+              signature=None)
 
     Generalized function class.
 
-    Define a vectorized function which takes a nested sequence
-    of objects or numpy arrays as inputs and returns a
-    numpy array as output. The vectorized function evaluates `pyfunc` over
-    successive tuples of the input arrays like the python map function,
-    except it uses the broadcasting rules of numpy.
+    Define a vectorized function which takes a nested sequence of objects or
+    numpy arrays as inputs and returns an single or tuple of numpy array as
+    output. The vectorized function evaluates `pyfunc` over successive tuples
+    of the input arrays like the python map function, except it uses the
+    broadcasting rules of numpy.
 
     The data type of the output of `vectorized` is determined by calling
     the function with the first element of the input.  This can be avoided
@@ -2282,6 +2382,15 @@ class vectorize(object):
 
         .. versionadded:: 1.7.0
 
+    signature : string, optional
+        Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
+        vectorized matrix-vector multiplication. If provided, ``pyfunc`` will
+        be called with (and expected to return) arrays with shapes given by the
+        size of corresponding core dimensions. By default, ``pyfunc`` is
+        assumed to take scalars as input and output.
+
+        .. versionadded:: 1.12.0
+
     Returns
     -------
     vectorized : callable
@@ -2301,7 +2410,7 @@ class vectorize(object):
     array([3, 4, 1, 2])
 
     The docstring is taken from the input function to `vectorize` unless it
-    is specified
+    is specified:
 
     >>> vfunc.__doc__
     'Return a-b if a>b, otherwise return a+b'
@@ -2310,7 +2419,7 @@ class vectorize(object):
     'Vectorized `myfunc`'
 
     The output type is determined by evaluating the first element of the input,
-    unless it is specified
+    unless it is specified:
 
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
@@ -2340,6 +2449,25 @@ class vectorize(object):
     >>> vpolyval([1, 2, 3], x=[0, 1])
     array([3, 6])
 
+    The `signature` argument allows for vectorizing functions that act on
+    non-scalar arrays of fixed length. For example, you can use it for a
+    vectorized calculation of Pearson correlation coefficient and its p-value:
+
+    >>> import scipy.stats
+    >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
+    ...                         signature='(n),(n)->(),()')
+    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
+    (array([ 1., -1.]), array([ 0.,  0.]))
+
+    Or for a vectorized convolution:
+
+    >>> convolve = np.vectorize(np.convolve, signature='(n),(m)->(k)')
+    >>> convolve(np.eye(4), [1, 2, 1])
+    array([[ 1.,  2.,  1.,  0.,  0.,  0.],
+           [ 0.,  1.,  2.,  1.,  0.,  0.],
+           [ 0.,  0.,  1.,  2.,  1.,  0.],
+           [ 0.,  0.,  0.,  1.,  2.,  1.]])
+
     See Also
     --------
     frompyfunc : Takes an arbitrary Python function and returns a ufunc
@@ -2359,12 +2487,17 @@ class vectorize(object):
     The new keyword argument interface and `excluded` argument support
     further degrades performance.
 
+    References
+    ----------
+    .. [1] NumPy Reference, section `Generalized Universal Function API
+           <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
-    def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
-                 cache=False):
+    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
+                 cache=False, signature=None):
         self.pyfunc = pyfunc
         self.cache = cache
+        self.signature = signature
         self._ufunc = None    # Caching to improve default performance
 
         if doc is None:
@@ -2373,21 +2506,24 @@ class vectorize(object):
             self.__doc__ = doc
 
         if isinstance(otypes, str):
-            self.otypes = otypes
-            for char in self.otypes:
+            for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError(
-                        "Invalid otype specified: %s" % (char,))
+                    raise ValueError( "Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
-            self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
-        else:
-            raise ValueError(
-                "Invalid otype specification")
+            otypes = ''.join([_nx.dtype(x).char for x in otypes])
+        elif otypes is not None:
+            raise ValueError("Invalid otype specification")
+        self.otypes = otypes
 
         # Excluded variable support
         if excluded is None:
             excluded = set()
         self.excluded = set(excluded)
+
+        if signature is not None:
+            self._in_and_out_core_dims = _parse_gufunc_signature(signature)
+        else:
+            self._in_and_out_core_dims = None
 
     def __call__(self, *args, **kwargs):
         """
@@ -2425,7 +2561,7 @@ class vectorize(object):
         if not args:
             raise ValueError('args can not be empty')
 
-        if self.otypes:
+        if self.otypes is not None:
             otypes = self.otypes
             nout = len(otypes)
 
@@ -2477,24 +2613,78 @@ class vectorize(object):
 
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
-        if not args:
-            _res = func()
+        if self.signature is not None:
+            res = self._vectorize_call_with_signature(func, args)
+        elif not args:
+            res = func()
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object)
-                      for _a in args]
+            inputs = [array(a, copy=False, subok=True, dtype=object)
+                      for a in args]
 
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                _res = array(outputs,
-                             copy=False, subok=True, dtype=otypes[0])
+                res = array(outputs, copy=False, subok=True, dtype=otypes[0])
             else:
-                _res = tuple([array(_x, copy=False, subok=True, dtype=_t)
-                              for _x, _t in zip(outputs, otypes)])
-        return _res
+                res = tuple([array(x, copy=False, subok=True, dtype=t)
+                             for x, t in zip(outputs, otypes)])
+        return res
+
+    def _vectorize_call_with_signature(self, func, args):
+        """Vectorized call over positional argument with a signature."""
+        input_core_dims, output_core_dims = self._in_and_out_core_dims
+
+        if len(args) != len(input_core_dims):
+            raise TypeError('wrong number of positional arguments: '
+                            'expected %r, got %r'
+                            % (len(input_core_dims), len(args)))
+        args = tuple(asanyarray(arg) for arg in args)
+
+        # consider checking for size 0 inputs?
+        broadcast_shape, dim_sizes = _parse_input_dimensions(
+            args, input_core_dims)
+        input_shapes = _calculate_shapes(broadcast_shape, dim_sizes,
+                                         input_core_dims)
+        args = [np.broadcast_to(arg, shape, subok=True)
+                for arg, shape in zip(args, input_shapes)]
+
+        outputs = None
+        otypes = self.otypes
+        nout = len(output_core_dims)
+
+        for index in np.ndindex(*broadcast_shape):
+            results = func(*(arg[index] for arg in args))
+
+            n_results = len(results) if isinstance(results, tuple) else 1
+
+            if nout != n_results:
+                raise ValueError(
+                    'wrong number of outputs from pyfunc: expected %r, got %r'
+                    % (nout, n_results))
+
+            if nout == 1:
+                results = (results,)
+
+            if outputs is None:
+                for result, core_dims in zip(results, output_core_dims):
+                    _update_dim_sizes(dim_sizes, result, core_dims)
+
+                output_shapes = _calculate_shapes(
+                    broadcast_shape, dim_sizes, output_core_dims)
+
+                if otypes is None:
+                    otypes = [asarray(result).dtype for result in results]
+
+                outputs = tuple(np.empty(shape, dtype=dtype)
+                                for shape, dtype in zip(output_shapes, otypes))
+
+            for output, result in zip(outputs, results):
+                output[index] = result
+
+        return outputs[0] if nout == 1 else outputs
 
 
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
