@@ -37,6 +37,7 @@ cdef extern from "math.h":
 
 cdef extern from "numpy/npy_math.h":
     int npy_isfinite(double x)
+    long NPY_MAX_LONG
 
 cdef extern from "mtrand_py_helper.h":
     object empty_py_bytes(npy_intp length, void **bytes)
@@ -84,7 +85,7 @@ cdef extern from "randomkit.h":
 
 
 cdef extern from "distributions.h":
-    # do not need the GIL, but they do need a lock on the state !! */
+    # do not need the GIL, but they do need a lock on the state !!
 
     double rk_normal(rk_state *state, double loc, double scale) nogil
     double rk_standard_exponential(rk_state *state) nogil
@@ -122,6 +123,32 @@ cdef extern from "distributions.h":
     long rk_geometric(rk_state *state, double p) nogil
     long rk_hypergeometric(rk_state *state, long good, long bad, long sample) nogil
     long rk_logseries(rk_state *state, double p) nogil
+
+
+cdef extern from "util.h":
+
+    long safe_sum_nonneg_long(npy_intp num_colors, long *colors) nogil
+
+
+cdef extern from "mvhg_count.h":
+
+    # This functions need a lock on the state:
+    int mvhg_count(rk_state *state,
+                   long total,
+                   npy_intp num_colors, long *colors,
+                   long nsample,
+                   npy_intp num_sample, long *sample) nogil
+
+
+cdef extern from "mvhg_marginals.h":
+
+    # This functions need a lock on the state:
+    int mvhg_marginals(rk_state *state,
+                       long total,
+                       npy_intp num_colors, long *colors,
+                       long nsample,
+                       npy_intp num_sample, long *sample) nogil
+
 
 ctypedef double (* rk_cont0)(rk_state *state) nogil
 ctypedef double (* rk_cont1)(rk_state *state, double a) nogil
@@ -4193,6 +4220,8 @@ cdef class RandomState:
         --------
         scipy.stats.hypergeom : probability density function, distribution or
             cumulative density function, etc.
+        multivariate_hypergeometric : Draw samples from the multivariate
+            hypergeometric distribution
 
         Notes
         -----
@@ -4651,6 +4680,194 @@ cdef class RandomState:
 
         return multin
 
+    def multivariate_hypergeometric(self, object colors, npy_intp nsample,
+                                    size=None, method='marginals'):
+        """
+        multivariate_hypergeometric(colors, nsample, size=None,
+                                    method='marginals')
+
+        Draw samples from a multivariate hypergeometric distribution.
+
+        The multivariate hypergeometric distribution is a generalization
+        of the hypergeometric distribution.
+
+        Choose ``nsample`` items at random without replacement from a
+        collection with ``k`` distinct types.  ``k`` is the length of
+        ``colors``, and the values in ``colors`` are the number of
+        occurrences of that type in the collection.
+
+        The name ``colors`` comes from a common description of the
+        distribution: it is the probability distribution of the number of
+        marbles of each color selected without replacement from an urn
+        containing marbles of different colors; ``colors[i]`` is the number
+        of marbles in the urn with color ``i``.
+
+        Parameters
+        ----------
+        colors : sequence of integers
+            The number of each type of item in the collection from which
+            a sample is drawn.  The values in ``colors`` must be nonnegative.
+            To avoid loss of precision in the algorithm, ``sum(colors)``
+            must be less than 1000000000 when `method` is "marginals".
+        nsample : int
+            The number of items selected.  ``nsample`` must not be greater
+            than ``sum(colors)``.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``,
+            then ``m * n * k`` samples are drawn, and the return value has
+            shape ``(m, n, k, len(colors))``.  If `size` is an integer,
+            the output has shape ``(size, len(colors))``.  Default is None,
+            in which case a single sample is returned as an array with shape
+            ``(len(colors),)``.
+        method : string, optional
+            Specify the algorithm that is used to generate the sample.
+            Must be 'count' or 'marginals' (the default).  See the Notes
+            for a description of the methods.
+
+        Returns
+        -------
+        sample : ndarray
+            Sample drawn from the multivariate hypergeometric distribution.
+
+        See Also
+        --------
+        hypergeometric : Draw samples from the (univariate) hypergeometric
+            distribution.
+
+        Notes
+        -----
+        The two methods do not return the same sequence of samples.
+
+        The "count" algorithm is roughly equivalent to the following numpy
+        code::
+
+            choices = np.repeat(np.arange(len(colors)), colors)
+            selection = np.random.choice(choices, nsample, replace=False)
+            sample = np.bincount(selection, minlength=len(colors))
+
+        The "count" algorithm uses a temporary array of integers with length
+        ``sum(colors)``.
+
+        The "marginals" algorithm generates a single sample by using repeated
+        calls to the univariate hypergeometric sampler.  It is roughly
+        equivalent to::
+
+            sample = np.zeros(len(colors), dtype=np.int)
+            # `remaining` is the cumulative sum of `colors` from the last
+            # element to the first; e.g. if `colors` is [3, 1, 5], then
+            # `remaining` is [9, 6, 5].
+            remaining = np.cumsum(colors[::-1])[::-1]
+            for i in range(len(colors)-1):
+                if nsample < 1:
+                    break
+                sample[i] = np.random.hypergeometric(colors[i], remaining[i+1],
+                                                     nsample)
+                nsample -= sample[i]
+            sample[-1] = nsample
+
+        The default method is "marginals".  For some cases (e.g. when
+        `colors` contains relatively small integers), the "count" method
+        can be significantly faster than the "marginals" method.  If
+        performance of the algorithm is important, test the two methods
+        with typical inputs to decide which works best.
+
+        .. versionadded:: 1.16.0
+
+        Examples
+        --------
+        >>> colors = [16, 8, 4]
+        >>> np.random.seed(123)
+        >>> np.random.multivariate_hypergeometric(colors, 6)
+        array([4, 1, 1])
+        >>> np.random.multivariate_hypergeometric(colors, 6, size=3)
+        array([[3, 1, 2],
+               [3, 2, 1],
+               [2, 3, 1]])
+        >>> np.random.multivariate_hypergeometric(colors, 6, size=(2, 2))
+        array([[[4, 1, 1],
+                [4, 2, 0]],
+               [[3, 1, 2],
+                [4, 2, 0]]])
+
+        """
+        cdef npy_intp num_colors, sample_size
+        cdef long total
+        cdef long *colors_ptr
+        cdef int result
+
+        if method not in ['count', 'marginals']:
+            raise ValueError('method must be "count" or "marginals".')
+
+        if nsample < 0:
+            raise ValueError("nsample must be nonnegative.")
+
+        # Validation of colors, a 1-d sequence of nonnegative long integers.
+        invalid_colors = False
+        try:
+            colors = np.asarray(colors)
+            if colors.ndim != 1:
+                invalid_colors = True
+            elif colors.size > 0 and not np.issubdtype(colors.dtype,
+                                                       np.integer):
+                invalid_colors = True
+            elif np.any((colors < 0) | (colors > NPY_MAX_LONG)):
+                invalid_colors = True
+        except ValueError:
+            invalid_colors = True
+        if invalid_colors:
+            raise ValueError('colors must be a one-dimensional sequence '
+                             'of nonnegative integers less than %d.' %
+                             NPY_MAX_LONG)
+
+        colors = np.ascontiguousarray(colors, dtype=np.int_)
+        num_colors = colors.size
+
+        colors_ptr = <long*> PyArray_DATA(colors)
+
+        total = safe_sum_nonneg_long(num_colors, colors_ptr)
+        if total == -1:
+            raise ValueError("sum(colors) must not exceed the maximum value "
+                             "of a long integer (%d)" % NPY_MAX_LONG)
+
+        if method == 'marginals' and total >= 1000000000:
+            raise ValueError('When method is "marginals", sum(colors) must '
+                             'be less than 1000000000.')
+
+        # The C code that implements the 'count' method will malloc an
+        # array of size total*sizeof(npy_intp). Here we ensure that that
+        # product does not overflow.
+        max_long_index = NPY_MAX_LONG / sizeof(npy_intp)
+        if method == 'count' and total > max_long_index:
+            raise ValueError("When method is 'count', sum(colors) must not "
+                             "exceed %d" % max_long_index)
+        if nsample > total:
+            raise ValueError("nsample > sum(colors)")
+
+        shape = _shape_from_size(size, num_colors)
+        if num_colors == 0:
+            return np.empty(shape, dtype=np.int_)
+
+        sample = np.zeros(shape, dtype=np.int_)
+        sample_ptr = <long*> PyArray_DATA(sample)
+        sample_size = sample.size
+
+        if method == 'count':
+            with self.lock, nogil:
+                result = mvhg_count(self.internal_state, total,
+                                    num_colors, colors_ptr, nsample,
+                                    sample_size, sample_ptr)
+            if result == -1:
+                raise MemoryError("Insufficent memory for multivariate_"
+                                  "hypergeometric with method='count' and "
+                                  "sum(colors)=%d" % total)
+        else:
+            with self.lock, nogil:
+                result = mvhg_marginals(self.internal_state, total,
+                                        num_colors, colors_ptr, nsample,
+                                        sample_size, sample_ptr)
+        return sample
+
+
     def dirichlet(self, object alpha, size=None):
         """
         dirichlet(alpha, size=None)
@@ -4965,6 +5182,7 @@ logseries = _rand.logseries
 
 multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
+multivariate_hypergeometric = _rand.multivariate_hypergeometric
 dirichlet = _rand.dirichlet
 
 shuffle = _rand.shuffle

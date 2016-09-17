@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
+        assert_allclose, suppress_warnings
         )
 from numpy import random
 import sys
@@ -953,6 +953,135 @@ class TestRandomDist(object):
                             [1, 1],
                             [3, 13]])
         assert_array_equal(actual, desired)
+
+
+class TestMultivariateHypergeometric(object):
+
+    def test_repeatability(self):
+        np.random.seed(1234567890)
+        sample = np.random.multivariate_hypergeometric([3, 4, 5], 5, size=5,
+                                                       method='count')
+        expected = np.array([[2, 2, 1],
+                             [0, 3, 2],
+                             [2, 2, 1],
+                             [1, 1, 3],
+                             [1, 1, 3]])
+        assert_array_equal(sample, expected)
+
+        np.random.seed(1234567890)
+        sample = np.random.multivariate_hypergeometric([20, 30, 50], 50,
+                                                       size=5,
+                                                       method='marginals')
+        expected = np.array([[11, 18, 21],
+                             [10, 17, 23],
+                             [ 6, 15, 29],
+                             [11, 16, 23],
+                             [ 7, 10, 33]])
+        assert_array_equal(sample, expected)
+
+        np.random.seed(1234567890)
+        sample = np.random.multivariate_hypergeometric([20, 30, 50], 12,
+                                                       size=5,
+                                                       method='marginals')
+        expected = np.array([[3, 4, 5],
+                             [2, 3, 7],
+                             [0, 5, 7],
+                             [1, 4, 7],
+                             [3, 4, 5]])
+        assert_array_equal(sample, expected)
+
+    def test_argument_validation(self):
+        # Error cases...
+
+        # `colors` must be a 1-d sequence
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      10, 4)
+
+        # Negative nsample
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [2, 3, 4], -1)
+
+        # Negative color
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [-1, 2, 3], 2)
+
+        # nsample exceeds sum(colors)
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [2, 3, 4], 10)
+
+        # nsample exceeds sum(colors) (edge case of empty colors)
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [], 1)
+
+        # Validation errors associated with very large values in colors.
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [999999999, 101], 5, 1, 'marginals')
+        long_info = np.iinfo(np.int_)
+        max_long = long_info.max
+        max_long_index = max_long // long_info.dtype.itemsize
+        assert_raises(ValueError, np.random.multivariate_hypergeometric,
+                      [max_long_index - 100, 101], 5, 1, 'count')
+
+    def test_edge_cases(self):
+        for method in ['count', 'marginals']:
+            sample = np.random.multivariate_hypergeometric([0, 0, 0], 0,
+                                                           method=method)
+            assert_array_equal(sample, [0, 0, 0])
+
+            sample = np.random.multivariate_hypergeometric([], 0,
+                                                           method=method)
+            assert_array_equal(sample, [])
+
+            sample = np.random.multivariate_hypergeometric([], 0, size=1,
+                                                           method=method)
+            assert_array_equal(sample, np.empty((1, 0), dtype=np.int_))
+
+            sample = np.random.multivariate_hypergeometric([1, 2, 3], 0,
+                                                           method=method)
+            assert_array_equal(sample, [0, 0, 0])
+
+            sample = np.random.multivariate_hypergeometric([9, 0, 0], 3,
+                                                           method=method)
+            assert_array_equal(sample, [3, 0, 0])
+
+            sample = np.random.multivariate_hypergeometric([1, 1, 0, 1, 1], 4,
+                                                           method=method)
+            assert_array_equal(sample, [1, 1, 0, 1, 1])
+
+            sample = np.random.multivariate_hypergeometric([3, 4, 5], 12,
+                                                           size=3,
+                                                           method=method)
+            assert_array_equal(sample, [[3, 4, 5]]*3)
+
+    def test_typical_cases(self):
+        mvhypergeom = np.random.multivariate_hypergeometric
+        np.random.seed(20920107)
+        colors = np.array([10, 5, 20, 25])
+        # Cases for nsample:
+        #     nsample < 10
+        #     10 <= nsample < colors.sum()/2
+        #     colors.sum()/2 < nsample < colors.sum() - 10
+        #     colors.sum() - 10 < nsample < colors.sum()
+        for nsample in [8, 25, 45, 55]:
+            for method in ['count', 'marginals']:
+                for size in [5, (2, 3), 100000]:
+                    sample = mvhypergeom(colors, nsample, size, method=method)
+                    if isinstance(size, int):
+                        expected_shape = (size,) + colors.shape
+                    else:
+                        expected_shape = size + colors.shape
+                    assert_equal(sample.shape, expected_shape)
+                    assert_((sample >= 0).all())
+                    assert_((sample <= colors).all())
+                    assert_array_equal(sample.sum(axis=-1),
+                                       np.full(size, fill_value=nsample,
+                                               dtype=int))
+                    if isinstance(size, int) and size >= 100000:
+                        # This sample is large enough to compare its mean to
+                        # the expected values.
+                        assert_allclose(sample.mean(axis=0),
+                                        nsample * colors / colors.sum(),
+                                        rtol=1e-3, atol=0.005)
 
 
 class TestBroadcast(object):

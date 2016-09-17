@@ -50,6 +50,7 @@ Distributions
    logseries
    multinomial
    multivariate_normal
+   multivariate_hypergeometric
    negative_binomial
    noncentral_chisquare
    noncentral_f
