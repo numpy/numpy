@@ -914,6 +914,24 @@ class TestEdge(TestCase):
             )
         assert_array_equal(a, b)
 
+    def test_check_width_shape_1_2(self):
+        # Check a pad_width of the form ((1, 2),).
+        # Regression test for issue gh-7808.
+        a = np.array([1, 2, 3])
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = np.array([1, 1, 2, 3, 3, 3])
+        assert_array_equal(padded, expected)
+
+        a = np.array([[1, 2, 3], [4, 5, 6]])
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = pad(a, ((1, 2), (1, 2)), 'edge')
+        assert_array_equal(padded, expected)
+
+        a = np.arange(24).reshape(2, 3, 4)
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
+        assert_array_equal(padded, expected)
+
 
 class TestZeroPadWidth(TestCase):
     def test_zero_pad_width(self):
