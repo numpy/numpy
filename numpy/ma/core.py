@@ -6390,12 +6390,7 @@ class _frommethod:
             arr = args[0]
             args[0] = a
             a = arr
-        # Get the method from the array (if possible)
         method_name = self.__name__
-        method = getattr(a, method_name, None)
-        if method is not None:
-            return method(*args, **params)
-        # Still here ? Then a is not a MaskedArray
         method = getattr(MaskedArray, method_name, None)
         if method is not None:
             return method(MaskedArray(a), *args, **params)
