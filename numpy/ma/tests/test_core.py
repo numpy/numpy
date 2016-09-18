@@ -433,6 +433,11 @@ class TestMaskedArray(TestCase):
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
+    def test_copy_on_python_builtins(self):
+        # Tests copy works on python builtins (issue#8019)
+        self.assertTrue(isMaskedArray(np.ma.copy([1,2,3])))
+        self.assertTrue(isMaskedArray(np.ma.copy((1,2,3))))
+
     def test_copy_immutable(self):
         # Tests that the copy method is immutable, GitHub issue #5247
         a = np.ma.array([1, 2, 3])
@@ -1031,6 +1036,11 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
         assert_raises(ValueError, ott.count, axis=1)
+
+    def test_count_on_python_builtins(self):
+        # Tests count works on python builtins (issue#8019)
+        assert_equal(3, count([1,2,3]))
+        assert_equal(2, count((1,2)))
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
