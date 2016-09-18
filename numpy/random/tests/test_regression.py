@@ -55,15 +55,6 @@ class TestRegression(TestCase):
         b = np.random.permutation(long(12))
         assert_array_equal(a, b)
 
-    def test_randint_range(self):
-        # Test for ticket #1690
-        lmax = np.iinfo('l').max
-        lmin = np.iinfo('l').min
-        try:
-            random.randint(lmin, lmax)
-        except:
-            raise AssertionError
-
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
         for t in [[1, 2, 3, None],

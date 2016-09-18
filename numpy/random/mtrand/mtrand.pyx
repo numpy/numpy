@@ -22,6 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
+include "randint_helpers.pxi"
 include "numpy.pxd"
 include "cpython/pycapsule.pxd"
 
@@ -572,283 +573,6 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
-
-# Set up dictionary of integer types and relevant functions.
-#
-# The dictionary is keyed by dtype(...).name and the values
-# are a tuple (low, high, function), where low and high are
-# the bounds of the largest half open interval `[low, high)`
-# and the function is the relevant function to call for
-# that precision.
-#
-# The functions are all the same except for changed types in
-# a few places. It would be easy to template them.
-
-def _rand_bool(low, high, size, rngstate):
-    """
-    _rand_bool(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_bool off, rng, buf
-    cdef npy_bool *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_bool>(high - low)
-    off = <npy_bool>(low)
-    if size is None:
-        rk_random_bool(off, rng, 1, &buf, state)
-        return np.bool_(<npy_bool>buf)
-    else:
-        array = <ndarray>np.empty(size, np.bool_)
-        cnt = PyArray_SIZE(array)
-        out = <npy_bool *>PyArray_DATA(array)
-        with nogil:
-            rk_random_bool(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int8(low, high, size, rngstate):
-    """
-    _rand_int8(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint8 off, rng, buf
-    cdef npy_uint8 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint8>(high - low)
-    off = <npy_uint8>(<npy_int8>low)
-    if size is None:
-        rk_random_uint8(off, rng, 1, &buf, state)
-        return np.int8(<npy_int8>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int8)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint8 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint8(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int16(low, high, size, rngstate):
-    """
-    _rand_int16(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint16 off, rng, buf
-    cdef npy_uint16 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint16>(high - low)
-    off = <npy_uint16>(<npy_int16>low)
-    if size is None:
-        rk_random_uint16(off, rng, 1, &buf, state)
-        return np.int16(<npy_int16>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int16)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint16 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint16(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int32(low, high, size, rngstate):
-    """
-    _rand_int32(self, low, high, size, rngstate)
-
-    Return random np.int32 integers between `low` and `high`, inclusive.
-
-    Return random integers from the "discrete uniform" distribution in the
-    closed interval [`low`, `high`]. On entry the arguments are presumed
-    to have been validated for size and order for the np.int32 type.
-
-    Parameters
-    ----------
-    low : int
-        Lowest (signed) integer to be drawn from the distribution.
-    high : int
-        Highest (signed) integer to be drawn from the distribution.
-    size : int or tuple of ints
-        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-        ``m * n * k`` samples are drawn.  Default is None, in which case a
-        single value is returned.
-    rngstate : encapsulated pointer to rk_state
-        The specific type depends on the python version. In Python 2 it is
-        a PyCObject, in Python 3 a PyCapsule object.
-
-    Returns
-    -------
-    out : python scalar or ndarray of np.int32
-          `size`-shaped array of random integers from the appropriate
-          distribution, or a single such random int if `size` not provided.
-
-    """
-    cdef npy_uint32 off, rng, buf
-    cdef npy_uint32 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint32>(high - low)
-    off = <npy_uint32>(<npy_int32>low)
-    if size is None:
-        rk_random_uint32(off, rng, 1, &buf, state)
-        return np.int32(<npy_int32>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int32)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint32 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint32(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int64(low, high, size, rngstate):
-    """
-    _rand_int64(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint64 off, rng, buf
-    cdef npy_uint64 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint64>(high - low)
-    off = <npy_uint64>(<npy_int64>low)
-    if size is None:
-        rk_random_uint64(off, rng, 1, &buf, state)
-        return np.int64(<npy_int64>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int64)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint64 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint64(off, rng, cnt, out, state)
-        return array
-
-def _rand_uint8(low, high, size, rngstate):
-    """
-    _rand_uint8(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint8 off, rng, buf
-    cdef npy_uint8 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint8>(high - low)
-    off = <npy_uint8>(low)
-    if size is None:
-        rk_random_uint8(off, rng, 1, &buf, state)
-        return np.uint8(<npy_uint8>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint8)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint8 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint8(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint16(low, high, size, rngstate):
-    """
-    _rand_uint16(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint16 off, rng, buf
-    cdef npy_uint16 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint16>(high - low)
-    off = <npy_uint16>(low)
-    if size is None:
-        rk_random_uint16(off, rng, 1, &buf, state)
-        return np.uint16(<npy_uint16>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint16)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint16 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint16(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint32(low, high, size, rngstate):
-    """
-    _rand_uint32(self, low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint32 off, rng, buf
-    cdef npy_uint32 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint32>(high - low)
-    off = <npy_uint32>(low)
-    if size is None:
-        rk_random_uint32(off, rng, 1, &buf, state)
-        return np.uint32(<npy_uint32>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint32)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint32 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint32(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint64(low, high, size, rngstate):
-    """
-    _rand_uint64(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint64 off, rng, buf
-    cdef npy_uint64 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint64>(high - low)
-    off = <npy_uint64>(low)
-    if size is None:
-        rk_random_uint64(off, rng, 1, &buf, state)
-        return np.uint64(<npy_uint64>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint64)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint64 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint64(off, rng, cnt, out, state)
-        return array
-
 # Look up table for randint functions keyed by type name. The stored data
 # is a tuple (lbnd, ubnd, func), where lbnd is the smallest value for the
 # type, ubnd is one greater than the largest value, and func is the
@@ -1190,13 +914,15 @@ cdef class RandomState:
 
         Parameters
         ----------
-        low : int
+        low : int or array_like of ints
             Lowest (signed) integer to be drawn from the distribution (unless
             ``high=None``, in which case this parameter is the *highest* such
-            integer).
-        high : int, optional
+            integer). Note that if `low` is array_like, all elements must be
+            integers.
+        high : int or array_like of ints, optional
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
+            Note that if `high` is array_like, all elements must be integers.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -1235,31 +961,77 @@ cdef class RandomState:
         array([[4, 0, 2, 1],
                [3, 2, 2, 0]])
 
+        Generate a 1 x 3 array with 3 different upper bounds:
+        >>> np.random.randint(1, [3, 5, 10])
+        array([2, 2, 9])
+
+        Generate a 1 x 3 array with 3 different lower bounds:
+        >>> np.random.randint([1, 5, 7], 10)
+        array([9, 8, 7])
+
+        Generate a 1 x 3 array with 3 different lower and upper bounds:
+        >>> np.random.randint([1, 5, 7], [13, 30, 45])
+        array([12,  5, 18])
+
+        Generate a 2 x 4 array of ints of the data type np.uint8:
+        >>>> np.random.randint(np.iinfo(np.uint8).min,
+                           np.iinfo(np.uint8).max + 1,
+                           size=(2, 4), dtype=np.uint8)
+        array([[ 35, 252,  90, 214],
+               [ 47,  23, 214, 185]], dtype=uint8)
+
         """
         if high is None:
             high = low
             low = 0
 
+        # '_randint_type' is defined in
+        # 'generate_randint_helpers.py'
         key = np.dtype(dtype).name
         if not key in _randint_type:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
-        lowbnd, highbnd, randfunc = _randint_type[key]
 
-        if low < lowbnd:
-            raise ValueError("low is out of bounds for %s" % (key,))
-        if high > highbnd:
-            raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
-            raise ValueError("low >= high")
+        lowbnd, highbnd, func = _randint_type[key]
 
-        with self.lock:
-            ret = randfunc(low, high - 1, size, self.state_address)
+        low = np.array(low)
+        high = np.array(high)
 
-            if size is None:
-                if dtype in (np.bool, np.int, np.long):
-                    return dtype(ret)
+        if low.shape == high.shape == ():
+            ilow = int(low)
+            ihigh = int(high)
 
-            return ret
+            if ilow < lowbnd:
+                raise ValueError("low is out of bounds for %s" % (key,))
+            if ihigh > highbnd:
+                raise ValueError("high is out of bounds for %s" % (key,))
+            if ilow >= ihigh:
+                raise ValueError("low >= high")
+
+            with self.lock:
+                ret = func(ilow, ihigh - 1, size, self.state_address)
+
+                if size is None:
+                    if dtype in (np.bool, np.int, np.long):
+                        return dtype(ret)
+
+                return ret
+        else:
+            if np.any(np.less(low, lowbnd)):
+                raise ValueError("low is out of bounds for %s" % (key,))
+            if np.any(np.greater(high, highbnd)):
+                raise ValueError("high is out of bounds for %s" % (key,))
+
+            # We have to check whether `low` >= `high` in both ways
+            # to avoid issues of overflow and rounding when comparing
+            # an np.uint64 against np.iinfo(np.int64).max
+            if np.any(np.less(high - 1 - low, 0)) and \
+                    np.any(np.greater_equal(low, high)):
+                raise ValueError("low >= high")
+
+            with self.lock:
+                return func(low, high - np.ones(
+                        high.shape, dtype=high.dtype), size,
+                            self.state_address)
 
     def bytes(self, npy_intp length):
         """

@@ -1,0 +1,117 @@
+"""
+Template for each `dtype` helper function in `np.random.randint`.
+"""
+
+{{py:
+
+dtypes = (
+    ('bool', 'bool', 'bool_'),
+    ('int8', 'uint8', 'int8'),
+    ('int16', 'uint16', 'int16'),
+    ('int32', 'uint32', 'int32'),
+    ('int64', 'uint64', 'int64'),
+    ('uint8', 'uint8', 'uint8'),
+    ('uint16', 'uint16', 'uint16'),
+    ('uint32', 'uint32', 'uint32'),
+    ('uint64', 'uint64', 'uint64'),
+)
+
+def get_dispatch(dtypes):
+    for npy_dt, npy_udt, np_dt in dtypes:
+        yield npy_dt, npy_udt, np_dt
+}}
+
+{{for npy_dt, npy_udt, np_dt in get_dispatch(dtypes)}}
+
+def _rand_{{npy_dt}}(low, high, size, rngstate):
+    """
+    _rand_{{npy_dt}}(low, high, size, rngstate)
+
+    Return an array of random np.{{np_dt}} integers between ``lo`` and ``hi``
+    inclusive for each ``lo``, ``hi`` pair in ``low`` and ``high``, where
+    the `low` and `high` arguments are broadcast.
+
+    Return random integers from the "discrete uniform" distribution in the
+    closed interval [``lo``, ``hi``) for each ``lo``, ``hi`` pair in
+    `low` and `high`. On entry the arguments are presumed to have been
+    validated for size and order for the np.int32 type.
+
+    Parameters
+    ----------
+    low : array_like
+        An array of integers, each of which serves as the lowest (signed)
+        integer to be drawn from the distribution.
+    high : array_like
+        An array of integers, each of which serves as the highest (signed)
+        integer to be drawn from the distribution.
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn, so as long as the shape is compatible
+        with the size of `low` and `high`.  Default is None, in which case an
+        array corresponding to the shape of the `low` and `high` is returned.
+    rngstate : encapsulated pointer to rk_state
+        The specific type depends on the python version. In Python 2 it is
+        a PyCObject, in Python 3 a PyCapsule object.
+
+    Returns
+    -------
+    out : python integer or ndarray of np.{{np_dt}}
+          `size`-shaped array of random integers from the appropriate
+          distribution, or an array corresponding to the shapes of
+          `low` and `high`.
+
+    """
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
+    cdef ndarray array "arrayObject"
+    cdef npy_{{npy_udt}} off, rng, buf
+    cdef npy_{{npy_udt}} *array_data
+
+    cdef ndarray lo, hi
+    cdef npy_intp i, cnt
+    cdef broadcast multi
+
+    lo = <ndarray>np.array(low)
+    hi = <ndarray>np.array(high)
+
+    if lo.shape == hi.shape == ():
+        low = int(low)
+        high = int(high)
+
+        rng = <npy_{{npy_udt}}>(high - low)
+        off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low)
+
+        if size is None:
+            rk_random_{{npy_udt}}(off, rng, 1, &buf, state)
+            return np.{{np_dt}}(<npy_{{npy_dt}}>buf)
+        else:
+            array = <ndarray>np.empty(size, np.{{np_dt}})
+            cnt = PyArray_SIZE(array)
+            array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
+            with nogil:
+                rk_random_{{npy_udt}}(off, rng, cnt, array_data, state)
+            return array
+    else:
+        i = 0
+
+        if size is None:
+            multi = <broadcast>np.broadcast(lo, hi, [0])
+            array = <ndarray>np.empty(multi.shape, dtype=np.{{np_dt}})
+        else:
+            array = <ndarray>np.empty(size, dtype=np.{{np_dt}})
+            multi = <broadcast>np.broadcast(lo, hi, array)
+            if multi.shape != array.shape:
+                raise ValueError("size is not compatible with inputs")
+
+        array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
+
+        for low_data, high_data, array_elt in multi:
+            rng = <npy_{{npy_udt}}>(int(high_data) - int(low_data))
+            off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low_data)
+
+            rk_random_{{npy_udt}}(off, rng, 1, &buf, state)
+            array_data[i] = buf
+            i += 1
+
+        return array
+
+{{endfor}}
