@@ -1645,6 +1645,7 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = @func@(in1) != 0;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -1982,6 +1983,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
+    npy_clear_floatstatus();
 }
 /**end repeat**/
 
@@ -2464,6 +2466,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
