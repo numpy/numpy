@@ -207,7 +207,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     """
     when = _convert_when(when)
-    (rate, nper, pv, fv, when) = map(np.asarray, [rate, nper, pv, fv, when])
+    (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
     mask = (rate == 0.0)
     np.copyto(rate, 1.0, where=mask)
