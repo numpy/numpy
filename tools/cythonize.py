@@ -82,46 +82,22 @@ def process_pyx(fromfile, tofile):
     except OSError:
         raise OSError('Cython needs to be installed')
 
-def process_tempita_pyx(fromfile, tofile):
-    try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
-    except ImportError:
-        raise Exception('Building %s requires Tempita: '
-                        'pip install --user Tempita' % VENDOR)
-    assert fromfile.endswith('.pyx.in')
-    with open(fromfile, "r") as f:
-        tmpl = f.read()
-    pyxcontent = tempita.sub(tmpl)
-    pyxfile = fromfile[:-len('.pyx.in')] + '.pyx'
-    with open(pyxfile, "w") as f:
-        f.write(pyxcontent)
-    process_pyx(pyxfile, tofile)
 
-
-def process_tempita_pxi(fromfile, tofile):
+def process_tempita(fromfile, tofile):
     try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
+        r = subprocess.call(['python', '-m', 'tempita'] +
+                            flags + ["-o", tofile, fromfile])
+        if r != 0:
+            raise Exception('tempita failed')
     except ImportError:
-        raise Exception('Building %s requires Tempita: '
-                        'pip install --user Tempita' % VENDOR)
-    assert fromfile.endswith('.pxi.in')
-    assert tofile.endswith('.pxi')
-    with open(fromfile, "r") as f:
-        tmpl = f.read()
-    pyxcontent = tempita.sub(tmpl)
-    with open(tofile, "w") as f:
-        f.write(pyxcontent)
+        raise Exception('Building %s requires tempita: '
+                        'pip install --user tempita' % VENDOR)
+
 
 rules = {
     # fromext : function
     '.pyx' : process_pyx,
-    '.pyx.in' : process_tempita_pyx
+    '.pyx.in' : process_tempita
     }
 #
 # Hash db
@@ -202,7 +178,7 @@ def find_process_files(root_dir):
                 toext = '.pxi'
                 fromext = '.pxi.in'
                 fromfile = filename
-                function = process_tempita_pxi
+                function = process_tempita
                 tofile = filename[:-len(fromext)] + toext
                 process(cur_dir, fromfile, tofile, function, hash_db)
                 save_hashes(hash_db, HASH_FILE)
