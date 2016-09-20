@@ -91,10 +91,10 @@ def process_tempita_pyx(fromfile, tofile):
     except ImportError:
         raise Exception('Building %s requires Tempita: '
                         'pip install --user Tempita' % VENDOR)
+    assert fromfile.endswith('.pyx.in')
     with open(fromfile, "r") as f:
         tmpl = f.read()
     pyxcontent = tempita.sub(tmpl)
-    assert fromfile.endswith('.pyx.in')
     pyxfile = fromfile[:-len('.pyx.in')] + '.pyx'
     with open(pyxfile, "w") as f:
         f.write(pyxcontent)
