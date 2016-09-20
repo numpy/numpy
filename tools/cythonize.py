@@ -86,7 +86,7 @@ def process_pyx(fromfile, tofile):
 def process_tempita(fromfile, tofile):
     try:
         r = subprocess.call(['python', '-m', 'tempita'] +
-                            flags + ["-o", tofile, fromfile])
+                            ["-o", tofile, fromfile])
         if r != 0:
             raise Exception('tempita failed')
     except ImportError:
