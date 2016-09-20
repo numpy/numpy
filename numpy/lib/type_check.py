@@ -342,7 +342,7 @@ def nan_to_num(x):
 
     See Also
     --------
-    isinf : Shows which elements are negative or negative infinity.
+    isinf : Shows which elements are positive or negative infinity.
     isneginf : Shows which elements are negative infinity.
     isposinf : Shows which elements are positive infinity.
     isnan : Shows which elements are Not a Number (NaN).
