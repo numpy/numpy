@@ -93,9 +93,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "Use the resize function or refcheck=False");
              
             return NULL;
-#else            
+#else
             refcnt = PyArray_REFCOUNT(self);
-#endif            
+#endif /* PYPY_VERSION */
         }
         else {
             refcnt = 1;
