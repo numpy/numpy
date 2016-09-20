@@ -22,6 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
+include "randint_helpers.pxi"
 include "numpy.pxd"
 include "cpython/pycapsule.pxd"
 
