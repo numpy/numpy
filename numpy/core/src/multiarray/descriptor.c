@@ -1071,8 +1071,19 @@ _convert_from_dict(PyObject *obj, int align)
             if (!off) {
                 goto fail;
             }
-            offset = PyInt_AsLong(off);
-            PyTuple_SET_ITEM(tup, 1, off);
+            offset = PyArray_PyIntAsInt(off);
+            if (offset == -1 && PyErr_Occurred()) {
+                Py_DECREF(off);
+                goto fail;
+            }
+            Py_DECREF(off);
+            if (offset < 0) {
+                PyErr_Format(PyExc_ValueError, "offset %d cannot be negative",
+                             (int)offset);
+                goto fail;
+            }
+
+            PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(offset));
             /* Flag whether the fields are specified out of order */
             if (offset < totalsize) {
                 has_out_of_order_fields = 1;
@@ -1186,7 +1197,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
-        itemsize = (int)PyInt_AsLong(tmp);
+        itemsize = (int)PyArray_PyIntAsInt(tmp);
         if (itemsize == -1 && PyErr_Occurred()) {
             Py_DECREF(new);
             return NULL;

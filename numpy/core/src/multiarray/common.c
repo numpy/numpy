@@ -867,6 +867,7 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
         *offset = PyLong_AsSsize_t(off);
     }
     else {
+        PyErr_SetString(PyExc_IndexError, "can't convert offset");
         return -1;
     }
 
