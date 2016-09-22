@@ -210,9 +210,10 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
     mask = (rate == 0.0)
-    np.copyto(rate, 1.0, where=mask)
-    z = np.zeros(np.broadcast(rate, nper, pv, fv, when).shape)
-    fact = np.where(mask != z, nper + z, (1 + rate*when)*(temp - 1)/rate + z)
+    masked_rate = np.where(mask, 1.0, rate)
+    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
+    fact = np.where(mask != z, nper + z,
+                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
