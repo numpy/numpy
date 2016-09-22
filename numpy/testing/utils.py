@@ -64,7 +64,7 @@ def import_nose():
 
     if not nose_is_good:
         msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://somethingaboutorange.com/mrl/projects/nose' %
+               'http://nose.readthedocs.io' %
                minimum_nose_version)
         raise ImportError(msg)
 
