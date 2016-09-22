@@ -34,7 +34,7 @@ Building NumPy requires the following software installed:
    This is required for testing numpy, but not for using it.
 
 Python__ http://www.python.org
-nose__ http://somethingaboutorange.com/mrl/projects/nose/
+nose__ http://nose.readthedocs.io
 
 
 .. note:: 

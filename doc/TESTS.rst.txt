@@ -9,7 +9,7 @@ Introduction
 ''''''''''''
 
 SciPy uses the `Nose testing system
-<http://www.somethingaboutorange.com/mrl/projects/nose>`__, with some
+<http://nose.readthedocs.io>`__, with some
 minor convenience features added.  Nose is an extension of the unit
 testing framework offered by `unittest.py
 <http://docs.python.org/lib/module-unittest.html>`__. Our goal is that
