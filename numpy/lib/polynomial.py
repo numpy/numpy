@@ -167,7 +167,7 @@ def roots(p):
     Returns
     -------
     out : ndarray
-        An array containing the complex roots of the polynomial.
+        An array containing the roots of the polynomial.
 
     Raises
     ------
