@@ -930,7 +930,11 @@ def eigvalsh(a, UPLO='L'):
         computed.
     UPLO : {'L', 'U'}, optional
         Same as `lower`, with 'L' for lower and 'U' for upper triangular.
-        Deprecated.
+        Deprecated. 
+        Irrespective of this value only the real parts of the diagonal will
+        be considered in the computation to preserve the notion of a Hermitian
+        matrix. It therefore follows that the imaginary part of the diagonal
+        will always be treated as zero.
 
     Returns
     -------
@@ -966,6 +970,23 @@ def eigvalsh(a, UPLO='L'):
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
     array([ 0.17157288,  5.82842712])
+    
+    >>> # demonstrate the treatment of the imaginary part of the diagonal
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a
+    array([[ 5.+2.j,  9.-2.j],
+           [ 0.+2.j,  2.-1.j]])
+    >>> # with UPLO='L' this is numerically equivalent to using LA.eigvals()
+    >>> # with:
+    >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
+    >>> b
+    array([[ 5.+0.j,  0.-2.j],
+           [ 0.+2.j,  2.+0.j]])
+    >>> wa = LA.eigvalsh(a)
+    >>> wb = LA.eigvals(b)
+    >>> wa; wb
+    array([ 1.,  6.])
+    array([ 6.+0.j,  1.+0.j])
 
     """
     UPLO = UPLO.upper()
@@ -1154,6 +1175,10 @@ def eigh(a, UPLO='L'):
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
         part of `a` ('L', default) or the upper triangular part ('U').
+        Irrespective of this value only the real parts of the diagonal will
+        be considered in the computation to preserve the notion of a Hermitian
+        matrix. It therefore follows that the imaginary part of the diagonal
+        will always be treated as zero.
 
     Returns
     -------
@@ -1225,6 +1250,26 @@ def eigh(a, UPLO='L'):
     matrix([[-0.92387953+0.j        , -0.38268343+0.j        ],
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
+    >>> # demonstrate the treatment of the imaginary part of the diagonal
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a
+    array([[ 5.+2.j,  9.-2.j],
+           [ 0.+2.j,  2.-1.j]])
+    >>> # with UPLO='L' this is numerically equivalent to using LA.eig() with:
+    >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
+    >>> b
+    array([[ 5.+0.j,  0.-2.j],
+           [ 0.+2.j,  2.+0.j]])
+    >>> wa, va = LA.eigh(a)
+    >>> wb, vb = LA.eig(b)
+    >>> wa; wb
+    array([ 1.,  6.])
+    array([ 6.+0.j,  1.+0.j])
+    >>> va; vb
+    array([[-0.44721360-0.j        , -0.89442719+0.j        ],
+           [ 0.00000000+0.89442719j,  0.00000000-0.4472136j ]])
+    array([[ 0.89442719+0.j       ,  0.00000000-0.4472136j],
+           [ 0.00000000-0.4472136j,  0.89442719+0.j       ]])
     """
     UPLO = UPLO.upper()
     if UPLO not in ('L', 'U'):
