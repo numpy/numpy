@@ -3982,7 +3982,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     /* Try to interpret axis as an integer */
     else {
-        int axis = PyArray_PyIntAsInt(axes_in);
+        int axis = PyArray_PyIntAsInt_ErrMsg(axes_in,
+                               "an integer or tuple is required for the axis");
+
         /* TODO: PyNumber_Index would be good to use here */
         if (axis == -1 && PyErr_Occurred()) {
             Py_XDECREF(otype);
