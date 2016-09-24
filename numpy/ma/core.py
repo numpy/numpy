@@ -6392,7 +6392,7 @@ class _frommethod:
             a = arr
         marr = asanyarray(a)
         method_name = self.__name__
-        method = getattr(MaskedArray, method_name, None)
+        method = getattr(type(marr), method_name, None)
         if method is not None:
             return method(marr, *args, **params)
         # Still here ? OK, let's call the corresponding np function
