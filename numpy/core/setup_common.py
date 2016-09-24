@@ -142,6 +142,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_optimize_opt_3'),
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
+                                ('__attribute__((target ("avx")))',
+                                 'attribute_target_avx'),
                                 ('__attribute__((target ("avx2")))',
                                  'attribute_target_avx2'),
                                 ]

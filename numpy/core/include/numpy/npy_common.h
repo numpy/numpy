@@ -29,6 +29,11 @@
 #endif
 
 /* compile target attributes */
+#ifdef HAVE_ATTRIBUTE_TARGET_AVX
+#define NPY_GCC_TARGET_AVX __attribute__((target("avx")))
+#else
+#define NPY_GCC_TARGET_AVX
+#endif
 #ifdef HAVE_ATTRIBUTE_TARGET_AVX2
 #define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
 #else
@@ -92,7 +97,13 @@
   #else
     #define NPY_CPU_SUPPORTS_AVX2 0
   #endif
+  #ifdef HAVE_ATTRIBUTE_TARGET_AVX
+    #define NPY_CPU_SUPPORTS_AVX __builtin_cpu_supports("avx")
+  #else
+    #define NPY_CPU_SUPPORTS_AVX 0
+  #endif
 #else
+  #define NPY_CPU_SUPPORTS_AVX 0
   #define NPY_CPU_SUPPORTS_AVX2 0
 #endif
 
