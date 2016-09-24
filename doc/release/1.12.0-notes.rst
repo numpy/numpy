@@ -248,6 +248,10 @@ bugs where such dtypes were not handled properly.  In particular, changed
 ``ndarray.__new__`` to not implicitly convert ``dtype('S0')`` to
 ``dtype('S1')`` (and likewise for unicode) when creating new arrays.
 
+Integer ufuncs vectorized with AVX2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the cpu supports it at runtime the basic integer ufuncs now use AVX2
+instructions. This feature is currently only available when compiled with GCC.
 
 Changes
 =======
