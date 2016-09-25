@@ -962,11 +962,11 @@ end_while:
 NPY_NO_EXPORT PyObject *
 arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    int i, s;
+    int i;
     PyObject *mode0=NULL, *coords0=NULL;
     PyArrayObject *ret = NULL;
     PyArray_Dims dimensions={0,0};
-    npy_intp ravel_strides[NPY_MAXDIMS];
+    npy_intp s, ravel_strides[NPY_MAXDIMS];
     NPY_ORDER order = NPY_CORDER;
     NPY_CLIPMODE modes[NPY_MAXDIMS];
 
