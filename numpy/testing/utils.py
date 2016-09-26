@@ -1149,9 +1149,10 @@ def raises(*args,**kwargs):
     return nose.tools.raises(*args,**kwargs)
 
 
-def assert_raises(*args,**kwargs):
+def assert_raises(*args, **kwargs):
     """
     assert_raises(exception_class, callable, *args, **kwargs)
+    assert_raises(exception_class)
 
     Fail unless an exception of class exception_class is thrown
     by callable when invoked with arguments args and keyword
@@ -1164,12 +1165,12 @@ def assert_raises(*args,**kwargs):
 
     >>> from numpy.testing import assert_raises
     >>> with assert_raises(ZeroDivisionError):
-    ...   1 / 0
+    ...     1 / 0
 
     is equivalent to
 
     >>> def div(x, y):
-    ...    return x / y
+    ...     return x / y
     >>> assert_raises(ZeroDivisionError, div, 1, 0)
 
     """
@@ -1178,12 +1179,17 @@ def assert_raises(*args,**kwargs):
     return nose.tools.assert_raises(*args,**kwargs)
 
 
-def assert_raises_regex(exception_class, expected_regexp,
-                        callable_obj=None, *args, **kwargs):
+def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     """
+    assert_raises_regex(exception_class, expected_regexp, callable, *args,
+                        **kwargs)
+    assert_raises_regex(exception_class, expected_regexp)
+
     Fail unless an exception of class exception_class and with message that
     matches expected_regexp is thrown by callable when invoked with arguments
     args and keyword arguments kwargs.
+
+    Alternatively, can be used as a context manager like `assert_raises`.
 
     Name of this function adheres to Python 3.2+ reference, but should work in
     all versions down to 2.6.
@@ -1200,10 +1206,9 @@ def assert_raises_regex(exception_class, expected_regexp,
         funcname = nose.tools.assert_raises_regex
     else:
         # Only present in Python 2.7, missing from unittest in 2.6
-            funcname = nose.tools.assert_raises_regexp
+        funcname = nose.tools.assert_raises_regexp
 
-    return funcname(exception_class, expected_regexp, callable_obj,
-                    *args, **kwargs)
+    return funcname(exception_class, expected_regexp, *args, **kwargs)
 
 
 def decorate_methods(cls, decorator, testmatch=None):

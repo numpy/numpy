@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 from numpy.core import arange
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, dec
+    run_module_suite, assert_, assert_equal, assert_raises_regex, dec
     )
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
@@ -60,6 +60,11 @@ def test_byte_bounds():
     a = arange(12).reshape(3, 4)
     low, high = utils.byte_bounds(a)
     assert_equal(high - low, a.size * a.itemsize)
+
+
+def test_assert_raises_regex_context_manager():
+    with assert_raises_regex(ValueError, 'no deprecation warning'):
+        raise ValueError('no deprecation warning')
 
 
 if __name__ == "__main__":
