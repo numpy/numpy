@@ -169,6 +169,7 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
     from .compat import long
+    from . import shm
 
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
