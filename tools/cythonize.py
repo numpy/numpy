@@ -84,10 +84,7 @@ def process_pyx(fromfile, tofile):
 
 def process_tempita_pyx(fromfile, tofile):
     try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
+        import tempita
     except ImportError:
         raise Exception('Building %s requires Tempita: '
                         'pip install --user Tempita' % VENDOR)
@@ -103,10 +100,7 @@ def process_tempita_pyx(fromfile, tofile):
 
 def process_tempita_pxi(fromfile, tofile):
     try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
+        import tempita
     except ImportError:
         raise Exception('Building %s requires Tempita: '
                         'pip install --user Tempita' % VENDOR)

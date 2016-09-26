@@ -29,7 +29,10 @@ Building NumPy requires the following software installed:
 
 2) Cython >= 0.19 (for development versions of numpy, not for released
                    versions)
-3) nose__ (optional) 1.0 or later
+3) Tempita >= 0.5.1 (for development versions of numpy, not for released
+                     versions; while this library comes with Cython, it is
+                     discouraged to rely on such availability in the long-run)
+4) nose__ (optional) 1.0 or later
 
    This is required for testing numpy, but not for using it.
 
