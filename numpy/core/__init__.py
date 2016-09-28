@@ -50,6 +50,8 @@ from . import getlimits
 from .getlimits import *
 from . import shape_base
 from .shape_base import *
+from . import einsumfunc
+from .einsumfunc import *
 del nt
 
 from .fromnumeric import amax as max, amin as min, round_ as round
@@ -64,6 +66,7 @@ __all__ += function_base.__all__
 __all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += shape_base.__all__
+__all__ += einsumfunc.__all__
 
 
 from numpy.testing.nosetester import _numpy_tester

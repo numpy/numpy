@@ -6,6 +6,7 @@ This release supports Python 2.7 and 3.4 - 3.5.
 Highlights
 ==========
 
+* Order of operations in ``np.einsum`` now can be optimized for large speed improvements.
 
 Dropped Support
 ===============
@@ -315,6 +316,17 @@ Integer ufuncs vectorized with AVX2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If the cpu supports it at runtime the basic integer ufuncs now use AVX2
 instructions. This feature is currently only available when compiled with GCC.
+
+Order of operations optimization in ``np.einsum``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.einsum`` now supports the ``optimize`` argument which will optimize the
+order of contraction. For example, ``np.einsum`` would complete the chain dot
+example ``np.einsum(‘ij,jk,kl->il’, a, b, c)`` in a single pass which would
+scale like ``N^4``; however, when ``optimize=True`` ``np.einsum`` will create
+an intermediate array to reduce this scaling to ``N^3`` or effectively
+``np.dot(a, b).dot(c)``. Usage of intermediate tensors to reduce scaling has
+been applied to the general einsum summation notation. See ``np.einsum_path``
+for more details.
 
 Changes
 =======
