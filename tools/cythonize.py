@@ -83,14 +83,8 @@ def process_pyx(fromfile, tofile):
         raise OSError('Cython needs to be installed')
 
 def process_tempita_pyx(fromfile, tofile):
-    try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
-    except ImportError:
-        raise Exception('Building %s requires Tempita: '
-                        'pip install --user Tempita' % VENDOR)
+    import npy_tempita as tempita
+
     assert fromfile.endswith('.pyx.in')
     with open(fromfile, "r") as f:
         tmpl = f.read()
@@ -102,14 +96,8 @@ def process_tempita_pyx(fromfile, tofile):
 
 
 def process_tempita_pxi(fromfile, tofile):
-    try:
-        try:
-            from Cython import Tempita as tempita
-        except ImportError:
-            import tempita
-    except ImportError:
-        raise Exception('Building %s requires Tempita: '
-                        'pip install --user Tempita' % VENDOR)
+    import npy_tempita as tempita
+
     assert fromfile.endswith('.pxi.in')
     assert tofile.endswith('.pxi')
     with open(fromfile, "r") as f:
