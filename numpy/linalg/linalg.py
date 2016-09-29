@@ -741,7 +741,7 @@ def qr(a, mode='reduced'):
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
-            msg = "The 'economic' option is deprecated.",
+            msg = "The 'economic' option is deprecated."
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'economic'
         else:
