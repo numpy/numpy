@@ -2837,6 +2837,15 @@ static PyObject *
 }
 /**end repeat**/
 
+/**begin repeat
+ *  #name = half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *  #NAME = Half, Float, Double, LongDouble,
+ *          CFloat, CDouble, CLongDouble#
+ */
+static PyNumberMethods @name@_arrtype_as_number;
+/**end repeat**/
+
 static PyObject *
 bool_index(PyObject *a)
 {
@@ -4094,6 +4103,18 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
 
     /**end repeat**/
+
+    /**begin repeat
+     *  #name = half, float, double, longdouble,
+     *          cfloat, cdouble, clongdouble#
+     *  #NAME = Half, Float, Double, LongDouble,
+     *          CFloat, CDouble, CLongDouble#
+     */
+    @name@_arrtype_as_number = gentype_as_number;
+    Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
+
+    /**end repeat**/
+
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
     PyStringArrType_Type.tp_alloc = NULL;
