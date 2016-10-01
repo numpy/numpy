@@ -626,9 +626,12 @@ class FloatFormat(object):
 
 
 def _digits(x, precision, format):
-    s = format % x
-    z = s.rstrip('0')
-    return precision - len(s) + len(z)
+    if precision > 0:
+        s = format % x
+        z = s.rstrip('0')
+        return precision - len(s) + len(z)
+    else:
+        return 0
 
 
 class IntegerFormat(object):
