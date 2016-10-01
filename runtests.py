@@ -138,9 +138,11 @@ def main(argv):
               "version; remove -g flag ***")
 
     if not args.no_build:
-        site_dir = build_project(args)
+        # we need the noarch path in case the package is pure python.
+        site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
-        os.environ['PYTHONPATH'] = site_dir
+        sys.path.insert(0, site_dir_noarch)
+        os.environ['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -359,11 +361,14 @@ def build_project(args):
 
     from distutils.sysconfig import get_python_lib
     site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
+    site_dir_noarch = get_python_lib(prefix=dst_dir, plat_specific=False)
     # easy_install won't install to a path that Python by default cannot see
     # and isn't on the PYTHONPATH.  Plus, it has to exist.
     if not os.path.exists(site_dir):
         os.makedirs(site_dir)
-    env['PYTHONPATH'] = site_dir
+    if not os.path.exists(site_dir_noarch):
+        os.makedirs(site_dir_noarch)
+    env['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
@@ -402,7 +407,7 @@ def build_project(args):
             print("Build failed!")
         sys.exit(1)
 
-    return site_dir
+    return site_dir, site_dir_noarch
 
 
 #
