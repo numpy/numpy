@@ -47,11 +47,24 @@ class TestRavelUnravelIndex(TestCase):
             [[3, 6, 6], [4, 5, 1]])
         assert_equal(np.unravel_index(1621, (6, 7, 8, 9)), [3, 1, 4, 1])
 
-        # ravel_multi_index for big indices (issue#7546)
+    def test_big_indices(self):
+        # ravel_multi_index for big indices (issue #7546)
         arr = ([1, 29], [3, 5], [3, 117], [19, 2], [2379, 1284], [2, 2], [0, 1])
         assert_equal(
             np.ravel_multi_index(arr, (41, 7, 120, 36, 2706, 8, 6)),
             [5627771580, 117259570957])
+
+        # test overflow checking for too big array (issue #7546)
+        dummy_arr = ([0],[0])
+        half_max = np.iinfo(np.intp).max // 2
+        assert_equal(
+            np.ravel_multi_index(dummy_arr, (half_max, 2)), [0])
+        assert_raises(ValueError,
+            np.ravel_multi_index, dummy_arr, (half_max+1, 2))
+        assert_equal(
+            np.ravel_multi_index(dummy_arr, (half_max, 2), order='F'), [0])
+        assert_raises(ValueError,
+            np.ravel_multi_index, dummy_arr, (half_max+1, 2), order='F')
 
     def test_dtypes(self):
         # Test with different data types
