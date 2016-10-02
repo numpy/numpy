@@ -49,10 +49,12 @@ class TestRavelUnravelIndex(TestCase):
 
     def test_big_indices(self):
         # ravel_multi_index for big indices (issue #7546)
-        arr = ([1, 29], [3, 5], [3, 117], [19, 2], [2379, 1284], [2, 2], [0, 1])
-        assert_equal(
-            np.ravel_multi_index(arr, (41, 7, 120, 36, 2706, 8, 6)),
-            [5627771580, 117259570957])
+        if np.intp == np.int64:
+            arr = ([1, 29], [3, 5], [3, 117], [19, 2],
+                   [2379, 1284], [2, 2], [0, 1])
+            assert_equal(
+                np.ravel_multi_index(arr, (41, 7, 120, 36, 2706, 8, 6)),
+                [5627771580, 117259570957])
 
         # test overflow checking for too big array (issue #7546)
         dummy_arr = ([0],[0])
