@@ -348,6 +348,12 @@ def test_shares_memory_api():
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=long(1))
 
 
+def test_may_share_memory_bad_max_work():
+    x = np.zeros([1])
+    assert_raises(OverflowError, np.may_share_memory, x, x, max_work=10**100)
+    assert_raises(OverflowError, np.shares_memory, x, x, max_work=10**100)
+
+
 def test_internal_overlap_diophantine():
     def check(A, U, exists=None):
         X = solve_diophantine(A, U, 0, require_ub_nontrivial=1)
