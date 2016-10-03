@@ -2245,10 +2245,10 @@ def disp(mesg, device=None, linefeed=True):
 
 # See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = '(?:%s(?:,%s)*)?' % (_DIMENSION_NAME, _DIMENSION_NAME)
-_ARGUMENT = r'\(%s\)' % _CORE_DIMENSION_LIST
-_ARGUMENT_LIST = '%s(?:,%s)*' % (_ARGUMENT, _ARGUMENT)
-_SIGNATURE = '^%s->%s$' % (_ARGUMENT_LIST, _ARGUMENT_LIST)
+_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
+_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
+_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
+_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
 
 
 def _parse_gufunc_signature(signature):
@@ -2634,7 +2634,7 @@ class vectorize(object):
         return res
 
     def _vectorize_call_with_signature(self, func, args):
-        """Vectorized call over positional argument with a signature."""
+        """Vectorized call over positional arguments with a signature."""
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
