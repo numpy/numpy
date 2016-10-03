@@ -257,7 +257,7 @@ def tensorsolve(a, b, axes=None):
 
     See Also
     --------
-    tensordot, tensorinv, einsum
+    numpy.tensordot, tensorinv, numpy.einsum
 
     Examples
     --------
@@ -416,7 +416,7 @@ def tensorinv(a, ind=2):
 
     See Also
     --------
-    tensordot, tensorsolve
+    numpy.tensordot, tensorsolve
 
     Examples
     --------
