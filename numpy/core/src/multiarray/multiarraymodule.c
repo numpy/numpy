@@ -3981,6 +3981,9 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (PyLong_Check(max_work_obj)) {
         max_work = PyLong_AsSsize_t(max_work_obj);
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
     }
 #if !defined(NPY_PY3K)
     else if (PyInt_Check(max_work_obj)) {
