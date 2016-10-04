@@ -476,13 +476,15 @@ class TestMaskedArray(TestCase):
 
     def test_pickling(self):
         # Tests pickling
-        a = arange(10)
-        a[::3] = masked
-        a.fill_value = 999
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled._data, a._data)
-        assert_equal(a_pickled.fill_value, 999)
+        for dtype in (int, float, str, object):
+            a = arange(10).astype(dtype)
+            a[::3] = masked
+            a.fill_value = 999
+            a_pickled = pickle.loads(a.dumps())
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled._data, a._data)
+            if dtype is not object:
+                assert_equal(a_pickled.fill_value, dtype(999))
 
     def test_pickling_subbaseclass(self):
         # Test pickling w/ a subclass of ndarray
