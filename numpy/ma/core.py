@@ -5860,12 +5860,12 @@ class MaskedArray(ndarray):
 
         """
         cf = 'CF'[self.flags.fnc]
+        is_obj = self.dtype.kind == 'O'
         state = (1,
                  self.shape,
                  self.dtype,
                  self.flags.fnc,
-                 self._data.tobytes(cf),
-                 # self._data.tolist(),
+                 (self._data.tolist() if is_obj else self._data.tobytes(cf)),
                  getmaskarray(self).tobytes(cf),
                  # getmaskarray(self).tolist(),
                  self._fill_value,
