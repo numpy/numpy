@@ -178,6 +178,17 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         display = '\n'.join(display)
     else:
         ccomp = self.compiler_so
+
+        from .cpuinfo import cpu
+        if cpu.is_power8() or cpu.is_power7():
+            # Avoid IBM extended double as machar algorithm doesn't converge.
+            # See https://gcc.gnu.org/wiki/Ieee128PowerPC for more info.
+            ldbl_as_dbl = ('-mlong-double-64',)
+            if (len(set(ccomp) & set(ldbl_as_dbl)) == 0):
+                # Only add if not already there
+                ccomp.extend(ldbl_as_dbl)
+                self.compiler_so = ccomp
+
         display = "C compiler: %s\n" % (' '.join(ccomp),)
     log.info(display)
     macros, objects, extra_postargs, pp_opts, build = \
