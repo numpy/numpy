@@ -489,7 +489,9 @@ class TestMaskedArray(TestCase):
                 a_pickled = pickle.loads(a.dumps())
                 assert_equal(a_pickled._mask, a._mask)
                 assert_equal(a_pickled._data, a._data)
-                if dtype is not object:
+                if dtype in (object, int):
+                    assert_equal(a_pickled.fill_value, 999)
+                else:
                     assert_equal(a_pickled.fill_value, dtype(999))
                 assert_array_equal(a_pickled.mask, mask)
 
