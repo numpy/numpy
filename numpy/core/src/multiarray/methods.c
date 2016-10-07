@@ -1407,17 +1407,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args)
 {
-    PyArrayObject* copied_array;
-    PyObject* visit;
-
-    NpyIter* iter;
-    NpyIter_IterNextFunc* iternext;
-
-    char* data;
-    char** dataptr;
-    npy_intp* strideptr,* innersizeptr;
+    PyArrayObject *copied_array;
+    PyObject *visit;
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    char *data;
+    char **dataptr;
+    npy_intp *strideptr, *innersizeptr;
     npy_intp stride, count;
-
     PyObject *copy, *deepcopy;
 
     if (!PyArg_ParseTuple(args, "O", &visit)) {
@@ -1468,7 +1465,6 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
             data = *dataptr;
             stride = *strideptr;
             count = *innersizeptr;
-
             while (count--) {
                 _deepcopy_call(data, data, PyArray_DESCR(copied_array),
                                deepcopy, visit);
