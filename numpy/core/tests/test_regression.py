@@ -457,7 +457,7 @@ class TestRegression(TestCase):
 
     def test_object_array_from_list(self, level=rlevel):
         # Ticket #270
-        np.array([1, 'A', None])  # Should succeed
+        self.assertEqual(np.array([1, 'A', None]).shape, (3,))
 
     def test_multiple_assign(self, level=rlevel):
         # Ticket #273
@@ -2090,6 +2090,22 @@ class TestRegression(TestCase):
         assert_equal(int(arr), int(arr_cp))
         self.assertTrue(arr is not arr_cp)
         self.assertTrue(isinstance(arr_cp, type(arr)))
+
+    def test_deepcopy_F_order_object_array(self):
+        # Ticket #6456.
+        a = {'a': 1}
+        b = {'b': 2}
+        arr = np.array([[a, b], [a, b]], order='F')
+        arr_cp = copy.deepcopy(arr)
+
+        assert_equal(arr, arr_cp)
+        self.assertTrue(arr is not arr_cp)
+        # Ensure that we have actually copied the item.
+        self.assertTrue(arr[0, 1] is not arr_cp[1, 1])
+        # Ensure we are allowed to have references to the same object.
+        self.assertTrue(arr[0, 1] is arr[1, 1])
+        # Check the references hold for the copied objects.
+        self.assertTrue(arr_cp[0, 1] is arr_cp[1, 1])
 
     def test_bool_subscript_crash(self):
         # gh-4494
