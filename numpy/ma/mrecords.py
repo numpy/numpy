@@ -654,13 +654,13 @@ def _guessvartypes(arr):
     for f in arr:
         try:
             int(f)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 float(f)
-            except ValueError:
+            except (ValueError, TypeError):
                 try:
                     complex(f)
-                except ValueError:
+                except (ValueError, TypeError):
                     vartypes.append(arr.dtype)
                 else:
                     vartypes.append(np.dtype(complex))
