@@ -73,17 +73,23 @@ DeprecationWarning to error
 * Non-integers used as index values raise ``TypeError``,
   e.g., in ``reshape``, ``take``, and specifying reduce axis.
 
+``power`` and ``**`` raise errors for integer to negative integer powers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous behavior was
+
+* zero to negative integer powers returned least integral value.
+* 1, -1 to negative integer powers returned correct values
+* all remaining integers returned zero when raised to negative integer powers.
+
+All of these cases now raise a ``ValueError``. It was felt that a simple rule
+was the best way to go rather than have special exceptions for the units. If
+you need negative powers, use an inexact type.
+
 Relaxed stride checking is the default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 This will have some impact on code that assumed that ``F_CONTIGUOUS`` and
 ``C_CONTIGUOUS`` were mutually exclusive and could be set to determine the
 default order for arrays that are now both.
-
-``MaskedArray`` takes view of data **and** mask when slicing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-XXX
-
 
 ``np.percentile`` 'midpoint' interpolation method fixed for exact indices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +99,6 @@ the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
 
 ``keepdims`` kwarg is passed through to user-class methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 numpy functions that take a ``keepdims`` kwarg now pass the value
 through to the corresponding methods on ndarray sub-classes.  Previously the
 ``keepdims`` keyword would be silently dropped.  These functions now have
