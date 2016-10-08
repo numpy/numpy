@@ -787,6 +787,7 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
  *          npy_double, npy_double, npy_double, npy_double#
+ * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -959,25 +960,22 @@ NPY_NO_EXPORT void
         @type@ in2 = *(@type@ *)ip2;
         @type@ out;
 
-        if (in2 == 0) {
-          *((@type@ *)op1) = 1;
-          continue;
-        }
-        if (in1 == 1) {
-            *((@type@ *)op1) = 1;
-            continue;
-        }
-        if (in1 == 0 && in2 < 0) {
+#if @SIGNED@
+        if (in2 < 0) {
             NPY_ALLOW_C_API_DEF
             NPY_ALLOW_C_API;
-            PyErr_SetString(PyExc_ZeroDivisionError,
-                    "0 cannot be raised to a negative power.");
+            PyErr_SetString(PyExc_ValueError,
+                    "Integers to negative integer powers are not allowed.");
             NPY_DISABLE_C_API;
             return;
         }
-
-        if (in2 < 0) {
-            *((@type@ *)op1) = 0;
+#endif
+        if (in2 == 0) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+        if (in1 == 1) {
+            *((@type@ *)op1) = 1;
             continue;
         }
 
