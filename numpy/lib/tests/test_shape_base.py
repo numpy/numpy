@@ -27,6 +27,24 @@ class TestApplyAlongAxis(TestCase):
         assert_array_equal(apply_along_axis(np.sum, 0, a),
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
+    def test_function_returning_array(self):
+        a = np.ones(4)
+        assert_array_equal(apply_along_axis(np.sqrt, 0, a), [1, 1, 1, 1])
+
+    def test_function_returning_non_scalar(self):
+        def return_none(x):
+            pass
+        a = np.ones(4)
+        assert_array_equal(apply_along_axis(return_none, 0, a), [None, None, None, None])
+
+    def test_return_object(self):
+        class NotAScalar():
+            def __eq__(this, other):
+                return isinstance(other, NotAScalar)
+        a = np.arange(27).reshape((3, 3, 3))
+        assert_array_equal(apply_along_axis(lambda x: NotAScalar(), 0, a),
+                           np.full((3, 3), NotAScalar(), np.object))
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):

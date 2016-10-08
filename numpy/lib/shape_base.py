@@ -90,7 +90,13 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     i.put(indlist, ind)
     res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
     #  if res is a number, then we have a smaller output array
-    if isscalar(res):
+    asscalar = isscalar(res)
+    if not asscalar:
+        try:
+            len(res)
+        except (TypeError, AttributeError):
+            asscalar = True
+    if asscalar:
         outarr = zeros(outshape, asarray(res).dtype)
         outarr[tuple(ind)] = res
         Ntot = product(outshape)

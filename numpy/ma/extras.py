@@ -399,7 +399,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     if not asscalar:
         try:
             len(res)
-        except TypeError:
+        except (TypeError, AttributeError):
             asscalar = True
     # Note: we shouldn't set the dtype of the output from the first result
     # so we force the type to object, and build a list of dtypes.  We'll
