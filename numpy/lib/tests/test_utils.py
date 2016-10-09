@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import inspect
 import sys
 import pytest
 
@@ -38,6 +39,32 @@ def old_func3(self, x):
 new_func3 = deprecate(old_func3, old_name="old_func3", new_name="new_func3")
 
 
+def old_func4(self, x):
+    """Summary.
+
+    Further info.
+    """
+    return x
+new_func4 = deprecate(old_func4)
+
+
+def old_func5(self, x):
+    """Summary.
+
+        Bizarre indentation.
+    """
+    return x
+new_func5 = deprecate(old_func5)
+
+
+def old_func6(self, x):
+    """
+    Also in PEP-257.
+    """
+    return x
+new_func6 = deprecate(old_func6)
+
+
 def test_deprecate_decorator():
     assert_('deprecated' in old_func.__doc__)
 
@@ -49,6 +76,25 @@ def test_deprecate_decorator_message():
 def test_deprecate_fn():
     assert_('old_func3' in new_func3.__doc__)
     assert_('new_func3' in new_func3.__doc__)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="-OO discards docstrings")
+def test_deprecate_help_indentation():
+    _compare_docs(old_func4, new_func4)
+    _compare_docs(old_func5, new_func5)
+    _compare_docs(old_func6, new_func6)
+
+
+def _compare_docs(old_func, new_func):
+    old_doc = inspect.getdoc(old_func)
+    new_doc = inspect.getdoc(new_func)
+    index = new_doc.index('\n\n') + 2
+    assert_equal(new_doc[index:], old_doc)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="-OO discards docstrings")
+def test_deprecate_preserve_whitespace():
+    assert_('\n        Bizarre' in new_func5.__doc__)
 
 
 def test_safe_eval_nameconstant():
