@@ -3463,7 +3463,7 @@ def meshgrid(*xi, **kwargs):
 
     if not sparse and len(output) > 0:
         # Return the full N-D matrix (not only the 1-D vector)
-        output = np.broadcast_arrays(*output)
+        output = np.broadcast_arrays(*output, subok=True)
 
     return output
 
