@@ -3340,6 +3340,22 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_almost_equal(z.filled(0), [[1, 0], [15, 16]])
         assert_almost_equal(z.mask, [[0, 1], [0, 0]])
 
+    def test_varmean_nomask(self):
+        # gh-5769
+        foo = array([1,2,3,4], dtype='f8')
+        bar = array([1,2,3,4], dtype='f8')
+        assert_equal(type(foo.mean()), np.float64)
+        assert_equal(type(foo.var()), np.float64)
+        assert((foo.mean() == bar.mean()) is np.bool_(True))
+
+        # check array type is preserved and out works
+        foo = array(np.arange(16).reshape((4,4)), dtype='f8')
+        bar = empty(4, dtype='f4')
+        assert_equal(type(foo.mean(axis=1)), MaskedArray)
+        assert_equal(type(foo.var(axis=1)), MaskedArray)
+        assert_(foo.mean(axis=1, out=bar) is bar)
+        assert_(foo.var(axis=1, out=bar) is bar)
+
     def test_varstd(self):
         # Tests var & std on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
