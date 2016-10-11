@@ -116,7 +116,7 @@ OPTIONAL_HEADERS = [
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
-# required header
+# required header and definition name (HAVE_ prepended)
 # call arguments are required as the compiler will do strict signature checking
 OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_isinf", '5.'),
@@ -131,6 +131,11 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
                        ("__builtin_prefetch", "(float*)0, 0, 3"),
+                       # check that the linker can handle avx
+                       ("__asm__ volatile", '"vpand %xmm1, %xmm2, %xmm3"',
+                        "stdio.h", "LINK_AVX"),
+                       ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
+                        "stdio.h", "LINK_AVX2"),
                        ]
 
 # function attributes
