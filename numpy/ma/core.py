@@ -5057,7 +5057,7 @@ class MaskedArray(ndarray):
 
         if self._mask is nomask:
             result = super(MaskedArray, self).mean(axis=axis,
-                                                   dtype=dtype, **kwargs)
+                                                   dtype=dtype, **kwargs)[()]
         else:
             dsum = self.sum(axis=axis, dtype=dtype, **kwargs)
             cnt = self.count(axis=axis, **kwargs)
@@ -5134,8 +5134,14 @@ class MaskedArray(ndarray):
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:
-            return self._data.var(axis=axis, dtype=dtype, out=out,
-                                  ddof=ddof, **kwargs)
+            ret = super(MaskedArray, self).var(axis=axis, dtype=dtype, out=out,
+                                               ddof=ddof, **kwargs)[()]
+            if out is not None:
+                if isinstance(out, MaskedArray):
+                    out.__setmask__(nomask)
+                return out
+            return ret
+
         # Some data are masked, yay!
         cnt = self.count(axis=axis, **kwargs) - ddof
         danom = self - self.mean(axis, dtype, keepdims=True)
