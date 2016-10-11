@@ -125,7 +125,9 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       ("__builtin_cpu_supports", '"sse"'),
+                       # broken on OSX 10.11, make sure its not optimized away
+                       ("volatile int r = __builtin_cpu_supports", '"sse"',
+                        "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
                        ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
                         "xmmintrin.h"),  # SSE
