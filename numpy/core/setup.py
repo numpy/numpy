@@ -152,12 +152,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for tup in OPTIONAL_INTRINSICS:
         headers = None
         if len(tup) == 2:
-            f, args = tup
+            f, args, m = tup[0], tup[1], fname2def(tup[0])
+        elif len(tup) == 3:
+            f, args, headers, m = tup[0], tup[1], [tup[2]], fname2def(tup[0])
         else:
-            f, args, headers = tup[0], tup[1], [tup[2]]
+            f, args, headers, m = tup[0], tup[1], [tup[2]], fname2def(tup[3])
         if config.check_func(f, decl=False, call=True, call_args=args,
                              headers=headers):
-            moredefs.append((fname2def(f), 1))
+            moredefs.append((m, 1))
 
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
