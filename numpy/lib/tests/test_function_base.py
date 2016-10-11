@@ -1104,7 +1104,7 @@ class TestVectorize(TestCase):
         r = f([0, 3, 6, 9], [1, 3, 5, 7])
         assert_array_equal(r, [1, 6, 1, 2])
 
-    def test_siganture_mean_last(self):
+    def test_signature_mean_last(self):
         def mean(a):
             return a.mean()
 
@@ -1112,7 +1112,7 @@ class TestVectorize(TestCase):
         r = f([[1, 3], [2, 4]])
         assert_array_equal(r, [2, 3])
 
-    def test_siganture_center(self):
+    def test_signature_center(self):
         def center(a):
             return a - a.mean()
 
@@ -1120,14 +1120,14 @@ class TestVectorize(TestCase):
         r = f([[1, 3], [2, 4]])
         assert_array_equal(r, [[-1, 1], [-1, 1]])
 
-    def test_siganture_two_outputs(self):
+    def test_signature_two_outputs(self):
         f = vectorize(lambda x: (x, x), signature='()->(),()')
         r = f([1, 2, 3])
         assert_(isinstance(r, tuple) and len(r) == 2)
         assert_array_equal(r[0], [1, 2, 3])
         assert_array_equal(r[1], [1, 2, 3])
 
-    def test_siganture_outer(self):
+    def test_signature_outer(self):
         f = vectorize(np.outer, signature='(a),(b)->(a,b)')
         r = f([1, 2], [1, 2, 3])
         assert_array_equal(r, [[1, 2, 3], [2, 4, 6]])
@@ -1143,7 +1143,7 @@ class TestVectorize(TestCase):
         assert_array_equal(r, [[[1, 2, 3], [2, 4, 6]],
                                [[0, 0, 0], [0, 0, 0]]])
 
-    def test_siganture_computed_size(self):
+    def test_signature_computed_size(self):
         f = vectorize(lambda x: x[:-1], signature='(n)->(m)')
         r = f([1, 2, 3])
         assert_array_equal(r, [1, 2])
