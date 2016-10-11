@@ -30,11 +30,11 @@ class TestApplyAlongAxis(TestCase):
     def test_preserve_subclass(self):
         def double(row):
             return row * 2
-        m = np.matrix(np.arange(4).reshape((2, 2)))
+        m = np.matrix([[0, 1], [2, 3]])
         result = apply_along_axis(double, 0, m)
         assert isinstance(result, np.matrix)
         assert_array_equal(
-            result, np.matrix([0, 2, 4, 6]).reshape((2, 2))
+            result, np.matrix([[0, 2], [4, 6]])
         )
 
     def test_subclass(self):
