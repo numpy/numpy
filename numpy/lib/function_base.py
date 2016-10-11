@@ -32,9 +32,12 @@ from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 from numpy.compat.py3k import basestring
 
-# Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
+    # Force range to be a generator, for np.delete's usage.
     range = xrange
+    import __builtin__ as builtins
+else:
+    import builtins
 
 
 __all__ = [
@@ -2330,7 +2333,9 @@ def _parse_input_dimensions(args, input_core_dims):
     dim_sizes = {}
     for arg, core_dims in zip(args, input_core_dims):
         _update_dim_sizes(dim_sizes, arg, core_dims)
-        broadcast_args.append(arg[(Ellipsis,) + len(core_dims) * (0,)])
+        ndim = arg.ndim - len(core_dims)
+        dummy_array = np.lib.stride_tricks.as_strided(0, arg.shape[:ndim])
+        broadcast_args.append(dummy_array)
     broadcast_shape = np.lib.stride_tricks._broadcast_shape(*broadcast_args)
     return broadcast_shape, dim_sizes
 
@@ -2339,6 +2344,14 @@ def _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims):
     """Helper for calculating broadcast shapes with core dimensions."""
     return [broadcast_shape + tuple(dim_sizes[dim] for dim in core_dims)
             for core_dims in list_of_core_dims]
+
+
+def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
+    """Helper for creating output arrays in vectorize."""
+    shapes = _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims)
+    arrays = tuple(np.empty(shape, dtype=dtype)
+                   for shape, dtype in zip(shapes, dtypes))
+    return arrays
 
 
 class vectorize(object):
@@ -2508,7 +2521,7 @@ class vectorize(object):
         if isinstance(otypes, str):
             for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError( "Invalid otype specified: %s" % (char,))
+                    raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
             otypes = ''.join([_nx.dtype(x).char for x in otypes])
         elif otypes is not None:
@@ -2577,7 +2590,12 @@ class vectorize(object):
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            inputs = [asarray(_a).flat[0] for _a in args]
+            args = [asarray(arg) for arg in args]
+            if builtins.any(arg.size == 0 for arg in args):
+                raise ValueError('cannot call `vectorize` on size 0 inputs '
+                                 'unless `otypes` is set')
+
+            inputs = [arg.flat[0] for arg in args]
             outputs = func(*inputs)
 
             # Performance note: profiling indicates that -- for simple
@@ -2672,17 +2690,28 @@ class vectorize(object):
                 for result, core_dims in zip(results, output_core_dims):
                     _update_dim_sizes(dim_sizes, result, core_dims)
 
-                output_shapes = _calculate_shapes(
-                    broadcast_shape, dim_sizes, output_core_dims)
-
                 if otypes is None:
                     otypes = [asarray(result).dtype for result in results]
 
-                outputs = tuple(np.empty(shape, dtype=dtype)
-                                for shape, dtype in zip(output_shapes, otypes))
+                outputs = _create_arrays(broadcast_shape, dim_sizes,
+                                         output_core_dims, otypes)
 
             for output, result in zip(outputs, results):
                 output[index] = result
+
+        if outputs is None:
+            # did not call the function even once
+            if otypes is None:
+                raise ValueError('cannot call `vectorize` on size 0 inputs '
+                                 'unless `otypes` is set')
+            if builtins.any(dim not in dim_sizes
+                            for dims in output_core_dims
+                            for dim in dims):
+                raise ValueError('cannot call `vectorize` with a signature '
+                                 'including new output dimensions on size 0 '
+                                 'inputs')
+            outputs = _create_arrays(broadcast_shape, dim_sizes,
+                                     output_core_dims, otypes)
 
         return outputs[0] if nout == 1 else outputs
 
