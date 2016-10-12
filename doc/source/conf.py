@@ -199,7 +199,10 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
-intersphinx_mapping = {'http://docs.python.org/dev': None}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'matplotlib': ('http://matplotlib.org', None)
+}
 
 
 # -----------------------------------------------------------------------------
