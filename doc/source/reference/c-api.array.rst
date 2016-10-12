@@ -1921,6 +1921,7 @@ Calculation
 
     Equivalent to :meth:`ndarray.max` (*self*, *axis*). Return the largest
     element of *self* along the given *axis*.
+    If it return only 1 element, return a numpy scalar, not an ndarray.
 
 .. c:function:: PyObject* PyArray_Min(PyArrayObject* self, int axis, PyArrayObject* out)
 
@@ -2098,7 +2099,7 @@ Array Functions
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
 
-.. c:function:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyObject* out)
+.. c:function:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyArrayObject* out)
 
     .. versionadded:: 1.6
 
