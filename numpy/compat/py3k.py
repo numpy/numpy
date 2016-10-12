@@ -118,7 +118,7 @@ if sys.version_info[0] >= 3 and sys.version_info[1] >= 4:
         mod : module
 
         """
-        import importlib
+        import importlib.machinery
         return importlib.machinery.SourceFileLoader(name, fn).load_module()
 else:
     def npy_load_module(name, fn, info=None):
