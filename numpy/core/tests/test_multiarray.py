@@ -994,6 +994,11 @@ class TestStructured(TestCase):
             assert_equal(yy.itemsize, 0)
             assert_equal(xx, yy)
 
+    def test_base_attr(self):
+        a = np.zeros(3, dtype='i4,f4')
+        b = a[0]
+        assert_(b.base is a)
+
 
 class TestBool(TestCase):
     def test_test_interning(self):
