@@ -554,6 +554,18 @@ class TestAssertAllclose(unittest.TestCase):
             msg = exc.args[0]
         self.assertTrue("mismatch 25.0%" in msg)
 
+    def test_equal_nan(self):
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        # Should not raise:
+        assert_allclose(a, b, equal_nan=True)
+
+    def test_not_equal_nan(self):
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        self.assertRaises(AssertionError, assert_allclose, a, b,
+                          equal_nan=False)
+
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
 
