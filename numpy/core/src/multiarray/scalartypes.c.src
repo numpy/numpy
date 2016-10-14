@@ -1303,6 +1303,18 @@ gentype_base_get(PyObject *NPY_UNUSED(self))
     Py_RETURN_NONE;
 }
 
+static PyObject *
+voidtype_base_get(PyVoidScalarObject *self)
+{
+    if (self->base == NULL) {
+        Py_RETURN_NONE;
+    }
+    else {
+        Py_INCREF(self->base);
+        return self->base;
+    }
+}
+
 
 static PyArray_Descr *
 _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
@@ -2098,6 +2110,11 @@ static PyGetSetDef voidtype_getsets[] = {
         (getter)voidtype_dtypedescr_get,
         (setter)0,
         "dtype object",
+        NULL},
+    {"base",
+        (getter)voidtype_base_get,
+        (setter)0,
+        "base object",
         NULL},
     {NULL, NULL, NULL, NULL, NULL}
 };
