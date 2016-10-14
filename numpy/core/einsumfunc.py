@@ -863,6 +863,9 @@ def einsum(*operands, **kwargs):
     >>> np.einsum('..., ...', 3, c)
     array([[ 0,  3,  6],
            [ 9, 12, 15]])
+    >>> np.einsum(',ij', 3, C)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
     >>> np.einsum(3, [Ellipsis], c, [Ellipsis])
     array([[ 0,  3,  6],
            [ 9, 12, 15]])
