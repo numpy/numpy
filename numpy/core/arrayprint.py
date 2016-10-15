@@ -434,6 +434,9 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
+    if isinstance(a, numpy.mat):
+        #use __repr__ if it's a matrix or subclassed from matrix
+        return repr(a)
     if a.shape == ():
         x = a.item()
         if isinstance(x, tuple):
