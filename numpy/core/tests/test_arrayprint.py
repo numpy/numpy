@@ -113,6 +113,21 @@ class TestArray2String(TestCase):
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
+    def test_structure_format(self):
+        dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+        x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
+        assert_equal(np.array2string(x),
+                "[('Sarah', array([ 8.,  7.])) ('John', array([ 6.,  7.]))]")
+
+        # for issue #5692
+        A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
+        A[5:].fill(np.nan)
+        assert_equal(np.array2string(A),
+                "[('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) " +
+                "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
+                "('1970-01-01T00:00:00',) ('NaT',) ('NaT',)\n " +
+                "('NaT',) ('NaT',) ('NaT',)]")
+
 
 class TestPrintOptions:
     """Test getting and setting global print options."""
