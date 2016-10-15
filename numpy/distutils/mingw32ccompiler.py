@@ -60,7 +60,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            import re
             p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
@@ -100,7 +99,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
-        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
+        v = int(re.sub(r'[^\d]+','',msvc_runtime_library()))
+        msvcr_version = '0x%03i0' % v
         self.define_macro('__MSVCRT_VERSION__', msvcr_version)
 
         # MS_WIN64 should be defined when building for amd64 on windows,
@@ -179,6 +179,12 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             if not libraries:
                 libraries = []
             libraries.append(runtime_library)
+            
+            # Starting with VS 2015 the CRT was split
+            # The referenced library is compiler dependent, ucrtbase is not
+            if runtime_library.startswith('vcruntime'):
+                libraries.append('ucrtbase')
+                
         args = (self,
                 target_desc,
                 objects,
@@ -326,7 +332,8 @@ def build_msvcr_library(debug=False):
     msvcr_name = msvc_runtime_library()
 
     # Skip using a custom library for versions < MSVC 8.0
-    if int(msvcr_name.lstrip('msvcr')) < 80:
+    msvcr_ver = int(re.sub(r'[^\d]+','',msvcr_name))
+    if msvcr_ver < 80:
         log.debug('Skip building msvcr library:'
                   ' custom functionality not present')
         return False
@@ -534,10 +541,11 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     msvcv = msvc_runtime_library()
     if msvcv:
-        assert msvcv.startswith("msvcr"), msvcv
+        assert (msvcv.startswith("msvcr")
+                or msvcv.startswith("vcruntime")), msvcv
         # Dealing with something like "mscvr90" or "mscvr100", the last
         # last digit is the minor release, want int("9") or int("10"):
-        maj = int(msvcv[5:-1])
+        maj = int(re.sub(r'[^\d]+','',msvcr_name[:-1]))
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \
