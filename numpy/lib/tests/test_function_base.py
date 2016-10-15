@@ -1069,6 +1069,21 @@ class TestVectorize(TestCase):
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
+    def test_zero_size_array(self):
+        # gh-5868
+
+        def f(x):
+            return x + 1
+        wrapped_f = np.vectorize(f)
+        for shape in (5, 0), (5, 1), (5,), ():
+            x = np.ones(shape)
+            desired_y = f(x)
+            if not x.size:
+                actual_y = assert_warns(RuntimeWarning, wrapped_f, x)
+            else:
+                actual_y = wrapped_f(x)
+            assert_array_equal(actual_y, desired_y)
+
 
 class TestDigitize(TestCase):
 
