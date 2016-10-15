@@ -186,7 +186,8 @@ def test_scalar_format():
             ('{0:g}', 1.5, np.float16),
             ('{0:g}', 1.5, np.float32),
             ('{0:g}', 1.5, np.float64),
-            ('{0:g}', 1.5, np.longdouble)]
+            ('{0:g}', 1.5, np.longdouble),
+            ('{0}', b'A', np.void)]
     # Python 2.6 doesn't implement complex.__format__
     if sys.version_info[:2] > (2, 6):
         tests += [('{0:g}', 1.5+0.5j, np.complex64),
