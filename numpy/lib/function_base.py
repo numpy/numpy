@@ -2661,7 +2661,6 @@ class vectorize(object):
                             % (len(input_core_dims), len(args)))
         args = tuple(asanyarray(arg) for arg in args)
 
-        # consider checking for size 0 inputs?
         broadcast_shape, dim_sizes = _parse_input_dimensions(
             args, input_core_dims)
         input_shapes = _calculate_shapes(broadcast_shape, dim_sizes,
