@@ -1919,20 +1919,24 @@ Calculation
 
 .. c:function:: PyObject* PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out)
 
-    Equivalent to :meth:`ndarray.max` (*self*, *axis*). Return the largest
-    element of *self* along the given *axis*.
-    If it return only 1 element, return a numpy scalar, not an ndarray.
+    Equivalent to :meth:`ndarray.max` (*self*, *axis*). Returns the largest
+    element of *self* along the given *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
 
 .. c:function:: PyObject* PyArray_Min(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.min` (*self*, *axis*). Return the smallest
-    element of *self* along the given *axis*.
+    element of *self* along the given *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
+
 
 .. c:function:: PyObject* PyArray_Ptp(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.ptp` (*self*, *axis*). Return the difference
     between the largest element of *self* along *axis* and the
-    smallest element of *self* along *axis*.
+    smallest element of *self* along *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
+
 
 
 
