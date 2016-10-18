@@ -611,9 +611,12 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'npysort'))
 
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
-    config.add_define_macros([("_FILE_OFFSET_BITS", "64")])
-    config.add_define_macros([('_LARGEFILE_SOURCE', '1')])
-    config.add_define_macros([('_LARGEFILE64_SOURCE', '1')])
+    if sys.platform[:3] == "aix":
+        config.add_define_macros([("_LARGE_FILES", None)])
+    else:
+        config.add_define_macros([("_FILE_OFFSET_BITS", "64")])
+        config.add_define_macros([('_LARGEFILE_SOURCE', '1')])
+        config.add_define_macros([('_LARGEFILE64_SOURCE', '1')])
 
     config.numpy_include_dirs.extend(config.paths('include'))
 

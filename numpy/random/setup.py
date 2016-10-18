@@ -31,7 +31,10 @@ def configuration(parent_package='',top_path=None):
 
     # enable unix large file support on 32 bit systems
     # (64 bit off_t, lseek -> lseek64 etc.)
-    defs = [('_FILE_OFFSET_BITS', '64'),
+    if sys.platform[:3] == "aix":
+        defs = [('_LARGE_FILES', None)]
+    else:
+        defs = [('_FILE_OFFSET_BITS', '64'),
             ('_LARGEFILE_SOURCE', '1'),
             ('_LARGEFILE64_SOURCE', '1')]
     if needs_mingw_ftime_workaround():
