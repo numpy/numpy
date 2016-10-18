@@ -1329,7 +1329,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Mote
+        extension is `.gz` or `.bz2`, the file is first decompressed. Note
         that generators must return byte strings in Python 3k.  The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
