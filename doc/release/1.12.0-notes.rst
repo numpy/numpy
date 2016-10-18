@@ -7,6 +7,7 @@ Highlights
 ==========
 
 * Order of operations in ``np.einsum`` now can be optimized for large speed improvements.
+* New ``signature`` argument to ``np.vectorize`` for vectorizing with core dimensions.
 
 Dropped Support
 ===============
@@ -327,6 +328,16 @@ an intermediate array to reduce this scaling to ``N^3`` or effectively
 ``np.dot(a, b).dot(c)``. Usage of intermediate tensors to reduce scaling has
 been applied to the general einsum summation notation. See ``np.einsum_path``
 for more details.
+
+New ``signature`` argument to ``np.vectorize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This argument allows for vectorizing user defined functions with core
+dimensions, in the style of NumPy's
+:ref:`generalized universal functions<c-api.generalized-ufuncs>`. This allows
+for vectorizing a much broader class of functions. For example, an arbitrary
+distance metric that combines two vectors to produce a scalar could be
+vectorized with ``signature='(n),(n)->()'``. See ``np.vectorize`` for full
+details.
 
 Changes
 =======

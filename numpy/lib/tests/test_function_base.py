@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import operator
 import warnings
 import sys
 
@@ -1013,7 +1014,11 @@ class TestVectorize(TestCase):
 
     def test_assigning_docstring(self):
         def foo(x):
+            """Original documentation"""
             return x
+
+        f = vectorize(foo)
+        assert_equal(f.__doc__, foo.__doc__)
 
         doc = "Provided documentation"
         f = vectorize(foo, doc=doc)
@@ -1068,6 +1073,155 @@ class TestVectorize(TestCase):
         f.otypes = 'i'
         x = np.arange(5)
         assert_array_equal(f(x), x)
+
+    def test_parse_gufunc_signature(self):
+        assert_equal(nfb._parse_gufunc_signature('(x)->()'), ([('x',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x,y)->()'),
+                     ([('x', 'y')], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x),(y)->()'),
+                     ([('x',), ('y',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x)->(y)'),
+                     ([('x',)], [('y',)]))
+        assert_equal(nfb._parse_gufunc_signature('(x)->(y),()'),
+                     ([('x',)], [('y',), ()]))
+        assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
+                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('(x)(y)->()')
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('(x),(y)->')
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('((x))->(x)')
+
+    def test_signature_simple(self):
+        def addsubtract(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        f = vectorize(addsubtract, signature='(),()->()')
+        r = f([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
+    def test_signature_mean_last(self):
+        def mean(a):
+            return a.mean()
+
+        f = vectorize(mean, signature='(n)->()')
+        r = f([[1, 3], [2, 4]])
+        assert_array_equal(r, [2, 3])
+
+    def test_signature_center(self):
+        def center(a):
+            return a - a.mean()
+
+        f = vectorize(center, signature='(n)->(n)')
+        r = f([[1, 3], [2, 4]])
+        assert_array_equal(r, [[-1, 1], [-1, 1]])
+
+    def test_signature_two_outputs(self):
+        f = vectorize(lambda x: (x, x), signature='()->(),()')
+        r = f([1, 2, 3])
+        assert_(isinstance(r, tuple) and len(r) == 2)
+        assert_array_equal(r[0], [1, 2, 3])
+        assert_array_equal(r[1], [1, 2, 3])
+
+    def test_signature_outer(self):
+        f = vectorize(np.outer, signature='(a),(b)->(a,b)')
+        r = f([1, 2], [1, 2, 3])
+        assert_array_equal(r, [[1, 2, 3], [2, 4, 6]])
+
+        r = f([[[1, 2]]], [1, 2, 3])
+        assert_array_equal(r, [[[[1, 2, 3], [2, 4, 6]]]])
+
+        r = f([[1, 0], [2, 0]], [1, 2, 3])
+        assert_array_equal(r, [[[1, 2, 3], [0, 0, 0]],
+                               [[2, 4, 6], [0, 0, 0]]])
+
+        r = f([1, 2], [[1, 2, 3], [0, 0, 0]])
+        assert_array_equal(r, [[[1, 2, 3], [2, 4, 6]],
+                               [[0, 0, 0], [0, 0, 0]]])
+
+    def test_signature_computed_size(self):
+        f = vectorize(lambda x: x[:-1], signature='(n)->(m)')
+        r = f([1, 2, 3])
+        assert_array_equal(r, [1, 2])
+
+        r = f([[1, 2, 3], [2, 3, 4]])
+        assert_array_equal(r, [[1, 2], [2, 3]])
+
+    def test_signature_excluded(self):
+
+        def foo(a, b=1):
+            return a + b
+
+        f = vectorize(foo, signature='()->()', excluded={'b'})
+        assert_array_equal(f([1, 2, 3]), [2, 3, 4])
+        assert_array_equal(f([1, 2, 3], b=0), [1, 2, 3])
+
+    def test_signature_otypes(self):
+        f = vectorize(lambda x: x, signature='(n)->(n)', otypes=['float64'])
+        r = f([1, 2, 3])
+        assert_equal(r.dtype, np.dtype('float64'))
+        assert_array_equal(r, [1, 2, 3])
+
+    def test_signature_invalid_inputs(self):
+        f = vectorize(operator.add, signature='(n),(n)->(n)')
+        with assert_raises_regex(TypeError, 'wrong number of positional'):
+            f([1, 2])
+        with assert_raises_regex(
+                ValueError, 'does not have enough dimensions'):
+            f(1, 2)
+        with assert_raises_regex(
+                ValueError, 'inconsistent size for core dimension'):
+            f([1, 2], [1, 2, 3])
+
+        f = vectorize(operator.add, signature='()->()')
+        with assert_raises_regex(TypeError, 'wrong number of positional'):
+            f(1, 2)
+
+    def test_signature_invalid_outputs(self):
+
+        f = vectorize(lambda x: x[:-1], signature='(n)->(n)')
+        with assert_raises_regex(
+                ValueError, 'inconsistent size for core dimension'):
+            f([1, 2, 3])
+
+        f = vectorize(lambda x: x, signature='()->(),()')
+        with assert_raises_regex(ValueError, 'wrong number of outputs'):
+            f(1)
+
+        f = vectorize(lambda x: (x, x), signature='()->()')
+        with assert_raises_regex(ValueError, 'wrong number of outputs'):
+            f([1, 2])
+
+    def test_size_zero_output(self):
+        # see issue 5868
+        f = np.vectorize(lambda x: x)
+        x = np.zeros([0, 5], dtype=int)
+        with assert_raises_regex(ValueError, 'otypes'):
+            f(x)
+
+        f.otypes = 'i'
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='()->()')
+        with assert_raises_regex(ValueError, 'otypes'):
+            f(x)
+
+        f = np.vectorize(lambda x: x, signature='()->()', otypes='i')
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='(n)->(n)', otypes='i')
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='(n)->(n)')
+        assert_array_equal(f(x.T), x.T)
+
+        f = np.vectorize(lambda x: [x], signature='()->(n)', otypes='i')
+        with assert_raises_regex(ValueError, 'new output dimensions'):
+            f(x)
 
 
 class TestDigitize(TestCase):

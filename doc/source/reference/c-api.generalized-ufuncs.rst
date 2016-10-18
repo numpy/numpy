@@ -1,3 +1,5 @@
+.. _c-api.generalized-ufuncs:
+
 ==================================
 Generalized Universal Function API
 ==================================
