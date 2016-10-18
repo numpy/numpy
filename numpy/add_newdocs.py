@@ -6171,11 +6171,13 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('char',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     """
-    Array-interface compliant full description of the data-type.
+    PEP3118 interface description of the data-type.
 
     The format is that required by the 'descr' key in the
-    `__array_interface__` attribute.
+    PEP3118 `__array_interface__` attribute.
 
+    Warning: This attribute exists specifically for PEP3118 compliance, and
+    is not a datatype description compatible with `np.dtype`.
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
