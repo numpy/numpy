@@ -169,6 +169,12 @@ class TestSetOps(TestCase):
         assert_array_equal([-1, 0], ediff1d(zero_elem, to_begin=-1, to_end=0))
         assert_array_equal([], ediff1d(one_elem))
         assert_array_equal([1], ediff1d(two_elem))
+        assert_array_equal([7,1,9], ediff1d(two_elem, to_begin=7, to_end=9))
+        assert_array_equal([5,6,1,7,8], ediff1d(two_elem, to_begin=[5,6], to_end=[7,8]))
+        assert_array_equal([1,9], ediff1d(two_elem, to_end=9))
+        assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
+        assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
+        assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
 
     def test_in1d(self):
         # we use two different sizes for the b array here to test the
