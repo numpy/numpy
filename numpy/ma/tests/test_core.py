@@ -4092,7 +4092,7 @@ class TestMaskedArrayFunctions(TestCase):
         test = np.ma.convolve(a, b)
         assert_equal(test, masked_equal([0, 1, -1, -1, 7, 4], -1))
 
-        test = np.ma.convolve(a, b, contagious=False)
+        test = np.ma.convolve(a, b, propagate_mask=False)
         assert_equal(test, masked_equal([0, 1, 1, 3, 7, 4], -1))
 
 

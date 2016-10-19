@@ -7366,8 +7366,8 @@ outer.__doc__ = doc_note(np.outer.__doc__,
 outerproduct = outer
 
 
-def _convolve_or_correlate(f, a, v, mode, contagious):
-    if contagious:
+def _convolve_or_correlate(f, a, v, mode, propagate_mask):
+    if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
             f(getmaskarray(a), np.ones(v.shape, dtype=np.bool), mode=mode)
@@ -7382,7 +7382,7 @@ def _convolve_or_correlate(f, a, v, mode, contagious):
     return masked_array(data, mask=mask)
 
 
-def correlate(a, v, mode='valid', contagious=True):
+def correlate(a, v, mode='valid', propagate_mask=True):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -7393,10 +7393,9 @@ def correlate(a, v, mode='valid', contagious=True):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `np.convolve` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
-    contagious : bool
-        If True, then if any masked element is included in the sum for a result
-        element, then the result is masked.
-        If False, then the result element is only masked if no non-masked cells
+    propagate_mask : bool
+        If True, then a result element is masked if any masked element contributes towards it.
+        If False, then a result element is only masked if no non-masked element
         contribute towards it
 
     Returns
@@ -7408,10 +7407,10 @@ def correlate(a, v, mode='valid', contagious=True):
     --------
     numpy.correlate : Equivalent function in the top-level NumPy module.
     """
-    return _convolve_or_correlate(np.correlate, a, v, mode, contagious)
+    return _convolve_or_correlate(np.correlate, a, v, mode, propagate_mask)
 
 
-def convolve(a, v, mode='full', contagious=True):
+def convolve(a, v, mode='full', propagate_mask=True):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -7421,7 +7420,7 @@ def convolve(a, v, mode='full', contagious=True):
         Input sequences.
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `np.convolve` docstring.
-    contagious : bool
+    propagate_mask : bool
         If True, then if any masked element is included in the sum for a result
         element, then the result is masked.
         If False, then the result element is only masked if no non-masked cells
@@ -7436,7 +7435,7 @@ def convolve(a, v, mode='full', contagious=True):
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
     """
-    return _convolve_or_correlate(np.convolve, a, v, mode, contagious)
+    return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
 
 def allequal(a, b, fill_value=True):
