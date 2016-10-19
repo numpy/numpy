@@ -7373,8 +7373,8 @@ def _convolve_or_correlate(f, a, v, mode, propagate_mask):
     if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
-            f(getmaskarray(a), np.ones(v.shape, dtype=np.bool), mode=mode)
-          | f(np.ones(a.shape, dtype=np.bool), getmaskarray(v), mode=mode)
+            f(getmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
+          | f(np.ones(np.shape(a), dtype=np.bool), getmaskarray(v), mode=mode)
         )
         data = f(getdata(a), getdata(v), mode=mode)
     else:

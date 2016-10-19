@@ -4095,6 +4095,16 @@ class TestMaskedArrayFunctions(TestCase):
         test = np.ma.convolve(a, b, propagate_mask=False)
         assert_equal(test, masked_equal([0, 1, 1, 3, 7, 4], -1))
 
+        test = np.ma.convolve([1, 1], [1, 1, 1])
+        assert_equal(test, masked_equal([1, 2, 2, 1], -1))
+
+        a = [1, 1]
+        b = masked_equal([1, -1, -1, 1], -1)
+        test = np.ma.convolve(a, b, propagate_mask=False)
+        assert_equal(test, masked_equal([1, 1, -1, 1, 1], -1))
+        test = np.ma.convolve(a, b, propagate_mask=True)
+        assert_equal(test, masked_equal([-1, -1, -1, -1, -1], -1))
+
 
 class TestMaskedFields(TestCase):
 
