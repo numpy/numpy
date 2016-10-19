@@ -65,10 +65,20 @@ def get_authors(revision_range):
 
 
 def get_prs(repo, revision_range):
-    merges = this_repo.git.log('--oneline', '--merges', revision_range)
+    # get pull request numbers from merges
+    merges = this_repo.git.log(
+        '--oneline', '--merges', revision_range)
     issues = re.findall(u"Merge pull request \#(\d*)", merges)
-    prnums = [int(s) for s in issues]
-    prs =  [repo.get_pull(n) for n in sorted(prnums)]
+    merge_prnums = [int(s) for s in issues]
+
+    # get pull request numbers from fast forward squash-merges
+    commits = this_repo.git.log(
+        '--oneline', '--no-merges', '--first-parent', revision_range)
+    issues = re.findall(u'.*\(\#(\d+)\)\n', commits)
+    squash_prnums = [int(s) for s in issues]
+
+    # get PR data from github repo
+    prs = [repo.get_pull(n) for n in sorted(merge_prnums + squash_prnums)]
     return prs
 
 
