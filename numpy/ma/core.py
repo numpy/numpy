@@ -7367,6 +7367,9 @@ outerproduct = outer
 
 
 def _convolve_or_correlate(f, a, v, mode, propagate_mask):
+    """
+    Helper function for ma.correlate and ma.convolve
+    """
     if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
@@ -7400,7 +7403,7 @@ def correlate(a, v, mode='valid', propagate_mask=True):
 
     Returns
     -------
-    out : ndarray
+    out : MaskedArray
         Discrete cross-correlation of `a` and `v`.
 
     See Also
@@ -7428,7 +7431,7 @@ def convolve(a, v, mode='full', propagate_mask=True):
 
     Returns
     -------
-    out : ndarray
+    out : MaskedArray
         Discrete, linear convolution of `a` and `v`.
 
     See Also
