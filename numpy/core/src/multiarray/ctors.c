@@ -2895,20 +2895,27 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
     PyArrayObject *ret;
 
     if (!type) type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+
+    /*
+     * PyArray_NewFromDescr steals a ref,
+     * but we need to look at type later. 
+     * */
+    Py_INCREF(type);
+
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type, nd, dims,
                                                 NULL, NULL,
                                                 is_f_order, NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    if (PyDataType_REFCHK(type)) {
+    if (ret != NULL && PyDataType_REFCHK(type)) {
         PyArray_FillObjectArray(ret, Py_None);
         if (PyErr_Occurred()) {
             Py_DECREF(ret);
+            Py_DECREF(type);
             return NULL;
         }
     }
+
+    Py_DECREF(type);
     return (PyObject *)ret;
 }
 
