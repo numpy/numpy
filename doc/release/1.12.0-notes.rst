@@ -249,6 +249,13 @@ context manager will work as expected. Additionally, it is possible
 to use the context manager as a decorator which can be useful when
 multiple tests give need to hide the same warning.
 
+New masked array functions ``ma.convolve`` and ``ma.correlate`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These functions wrapped the non-masked versions, but propagate through masked
+values. There are two different propagation modes. The default causes masked
+values to contaminate the result with masks, but the other mode only outputs
+masks if there is no alternative.
+
 
 Improvements
 ============
