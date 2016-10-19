@@ -72,6 +72,7 @@ def have_compiler():
         p = Popen(cmd, stdout=PIPE, stderr=PIPE)
         p.stdout.close()
         p.stderr.close()
+        p.wait()
     except OSError:
         return False
     return True
