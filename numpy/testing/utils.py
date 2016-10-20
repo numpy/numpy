@@ -1330,7 +1330,7 @@ def _assert_valid_refcount(op):
     del d  # for pyflakes
 
 
-def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=False,
+def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                     err_msg='', verbose=True):
     """
     Raises an AssertionError if two objects are not equal up to desired
