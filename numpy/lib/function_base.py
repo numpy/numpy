@@ -54,7 +54,8 @@ __all__ = [
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'rescale',
     ]
 
 
@@ -4397,3 +4398,76 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
+
+
+def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
+    """Linearly scale non-NaN values in array to the specified interval.
+
+    .. versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    arr : array_like
+        Input array.
+    out_min : scalar or array_like, optional
+        The minimum value in the output array (default: 0). If array-like,
+        its shape must be broadcastable to `arr`.
+    out_max : scalar or array_like, optional
+        The maximum value in the output array (default: 1). If array-like,
+        its shape must be broadcastable to `arr`.
+    in_min : scalar or array_like, optional
+        The minimum value in the input array to map to `out_min` (default
+        is `axis`-respecting minimum of `arr`). If array-like, its shape
+        must be broadcastable to `arr`.
+    in_max : scalar or array_like, optional
+        The maximum value in the input array to map to `out_max` (default
+        is `axis`-respecting maximum of `arr`). If array-like, its shape
+        must be broadcastable to `arr`.
+    axis : int, optional
+        Axis along which to scale `arr`. If `None`, scaling is done over
+        all axes.
+    out : array_like, optional
+        Array of the same shape as `arr`, in which to store the result.
+
+    Returns
+    -------
+    scaled_array : ndarray
+        Output array with the same shape as `arr` and all non-NaN values
+        scaled from interval [in_min, in_max] to [out_min, out_max].
+
+    Raises
+    ------
+    ValueError
+        When parameters are incompatible / unbroadcastable.
+
+    Examples
+    --------
+    >>> a = np.arange(6).reshape((2, 3))
+    >>> np.rescale(a)
+    array([[ 0. ,  0.2,  0.4],
+           [ 0.6,  0.8,  1. ]])
+    >>> np.rescale(a, -1, 1, axis=1)
+    array([[-1.,  0.,  1.],
+           [-1.,  0.,  1.]])
+    >>> np.rescale(a, -1, a.max(axis=1, keepdims=True), axis=1)
+    array([[-1. ,  0.5,  2. ],
+           [-1. ,  2. ,  5. ]])
+    >>> np.rescale(a, 0, 1, 1, 3)
+    array([[-0.5,  0. ,  0.5],
+           [ 1. ,  1.5,  2. ]])
+    """
+    arr = asanyarray(arr)
+    out_min = asanyarray(out_min)
+    out_max = asanyarray(out_max)
+
+    if in_min is None:
+        in_min = np.nanmin(arr, axis=axis, keepdims=True)
+    if in_max is None:
+        in_max = np.nanmax(arr, axis=axis, keepdims=True)
+
+    res = (arr - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
+
+    if out is None:
+        return res
+    out[...] = res
+    return out

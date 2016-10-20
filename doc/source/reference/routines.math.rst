@@ -168,3 +168,4 @@ Miscellaneous
    real_if_close
 
    interp
+   rescale

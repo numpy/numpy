@@ -20,7 +20,7 @@ from numpy.lib import (
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize
+    unwrap, unique, vectorize, rescale
 )
 
 from numpy.compat import long
@@ -2973,6 +2973,84 @@ class TestMedian(object):
                      (1, 1, 1, 1))
         assert_equal(np.median(d, axis=(0, 1, 3), keepdims=True).shape,
                      (1, 1, 7, 1))
+
+
+class TestRescale(object):
+    def setup(self):
+        self.arr = np.array([[0, 1, 2, 3],
+                             [5, 4, 3, 2]], dtype=float)
+        self.arr3d = np.arange(8, dtype=float).reshape((2, 2, 2))
+
+    def test_basic(self):
+        assert_equal(rescale(self.arr),
+                     [[0, .2, .4, .6],
+                      [1, .8, .6, .4]])
+        assert_equal(rescale(self.arr, self.arr.min(), self.arr.max()),
+                     self.arr)
+
+    def test_min_max(self):
+        assert_almost_equal(rescale(self.arr, -1, 2),
+                            [[-1, -.4, .2, .8],
+                             [2, 1.4, .8, .2]])
+        assert_almost_equal(rescale(self.arr, 1, 0),
+                            [[1, .8, .6, .4],
+                             [0, .2, .4, .6]])
+        assert_equal(rescale(self.arr, [1, 0, 1, 2], [2, 1, 1, 3], axis=0),
+                     [[1, 0, 1, 3],
+                      [2, 1, 1, 2]])
+        assert_equal(rescale(self.arr, [[0], [0]], [[1], [1]], axis=1),
+                     [[0, 1/3, 2/3, 1],
+                      [1, 2/3, 1/3, 0]])
+        assert_equal(rescale(self.arr3d, out_max=3.5),
+                     (self.arr3d / 2).reshape((2, 2, 2)))
+
+        assert_equal(rescale(self.arr, in_min=1, in_max=2, axis=1),
+                     [[-1, 0, 1, 2],
+                      [ 4, 3, 2, 1]])
+
+    def test_axis(self):
+        assert_equal(rescale(self.arr, axis=0),
+                     [[0, 0, 0, 1],
+                      [1, 1, 1, 0]])
+        assert_equal(rescale(self.arr, axis=1),
+                     [[0, 1/3, 2/3, 1],
+                      [1, 2/3, 1/3, 0]])
+        assert_equal(rescale(self.arr3d, axis=2),
+                     [[[0, 1],
+                       [0, 1]],
+                      [[0, 1],
+                       [0, 1]]])
+
+    def test_out(self):
+        out = np.zeros_like(self.arr)
+        assert_equal(rescale(self.arr, self.arr.min(), self.arr.max(), out=out),
+                     self.arr)
+
+    def test_nan(self):
+        arr = np.array([[1, 2],
+                        [1, 1]])
+        with np.errstate(all='ignore'):
+            assert_equal(rescale(arr, axis=0),
+                         [[np.nan, 1],
+                          [np.nan, 0]])
+            assert_equal(rescale(arr, axis=1),
+                         [[0, 1],
+                          [np.nan, np.nan]])
+
+        with np.errstate(all='warn'):
+            assert_warns(RuntimeWarning,
+                         lambda: rescale(arr, axis=0))
+
+        arr = np.array([0, np.nan, 2])
+        assert_equal(rescale(arr), [0, np.nan, 1])
+
+    def test_exceptions(self):
+        assert_raises(ValueError,
+                      lambda: rescale(self.arr, [0, 1], [1, 2]))
+        assert_raises(ValueError,
+                      lambda: rescale(self.arr, [0, 1], [1, 2], axis=0))
+        assert_raises(ValueError,
+                      lambda: rescale(self.arr, axis=2))
 
 
 class TestAdd_newdoc_ufunc(object):

@@ -24,6 +24,10 @@ New functions
 
   * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
     without needing to calculate the histogram.
+* New ``np.rescale(arr, out_min, out_max, in_min, in_max, axis)`` function
+  linearly scales the values of the array from interval ``[in_min, in_max]``
+  to ``[out_min, out_max]``.
+
 
 Deprecations
 ============
