@@ -429,6 +429,10 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     PyObject *ret = NULL;
     int retval = 0;
 
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
+        return -1;
+    }
+
     /* getfield returns a view we can write to */
     ret = PyArray_GetField(self, dtype, offset);
     if (ret == NULL) {

@@ -300,6 +300,15 @@ class TestRecord(TestCase):
 
         self.assertRaises(AttributeError, assign_invalid_column, a)
 
+    def test_nonwriteable_setfield(self):
+        # gh-8171
+        r = np.rec.array([(0,), (1,)], dtype=[('f', 'i4')])
+        r.flags.writeable = False
+        with assert_raises(ValueError):
+            r.f = [2, 3]
+        with assert_raises(ValueError):
+            r.setfield([2,3], *r.dtype.fields['f'])
+
     def test_out_of_order_fields(self):
         """Ticket #1431."""
         # this test will be invalid in 1.13
