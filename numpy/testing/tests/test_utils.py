@@ -7,8 +7,9 @@ import os
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, build_err_msg, raises, assert_raises,
-    assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
+    assert_array_almost_equal, assert_array_less, build_err_msg,
+    raises, assert_raises, assert_warns, assert_no_warnings,
+    assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, run_module_suite,
     assert_string_equal, assert_, tempdir, temppath,
@@ -565,6 +566,17 @@ class TestAssertAllclose(unittest.TestCase):
         b = np.array([np.nan])
         self.assertRaises(AssertionError, assert_allclose, a, b,
                           equal_nan=False)
+
+    def test_equal_nan_default(self):
+        # Make sure equal_nan default behavior remains unchanged. (All
+        # of these functions use assert_array_compare under the hood.)
+        # None of these should raise.
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        assert_array_equal(a, b)
+        assert_array_almost_equal(a, b)
+        assert_array_less(a, b)
+        assert_allclose(a, b)
 
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
