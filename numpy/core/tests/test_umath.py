@@ -426,16 +426,43 @@ class TestPower(TestCase):
 
     def test_integer_power(self):
         a = np.array([15, 15], 'i8')
-        b = a ** a
+        b = np.power(a, a)
         assert_equal(b, [437893890380859375, 437893890380859375])
 
-    def test_integer_power_with_zero_exponent(self):
-        arr = np.arange(-10, 10)
-        assert_equal(np.power(arr, 0), np.ones_like(arr))
+    def test_integer_power_with_integer_zero_exponent(self):
+        dtypes = np.typecodes['Integer']
+        for dt in dtypes:
+            arr = np.arange(-10, 10, dtype=dt)
+            assert_equal(np.power(arr, 0), np.ones_like(arr))
+
+        dtypes = np.typecodes['UnsignedInteger']
+        for dt in dtypes:
+            arr = np.arange(10, dtype=dt)
+            assert_equal(np.power(arr, 0), np.ones_like(arr))
 
     def test_integer_power_of_1(self):
-        arr = np.arange(-10, 10)
-        assert_equal(np.power(1, arr), np.ones_like(arr))
+        dtypes = np.typecodes['AllInteger']
+        for dt in dtypes:
+            arr = np.arange(10, dtype=dt)
+            assert_equal(np.power(1, arr), np.ones_like(arr))
+
+    def test_integer_power_of_zero(self):
+        dtypes = np.typecodes['AllInteger']
+        for dt in dtypes:
+            arr = np.arange(1, 10, dtype=dt)
+            assert_equal(np.power(0, arr), np.zeros_like(arr))
+
+    def test_integer_to_negative_power(self):
+        dtypes = np.typecodes['Integer']
+        for dt in dtypes:
+            a = np.array([0, 1, 2, 3], dtype=dt)
+            b = np.array([0, 1, 2, -3], dtype=dt)
+            one = np.array(1, dtype=dt)
+            minusone = np.array(-1, dtype=dt)
+            assert_raises(ValueError, np.power, a, b)
+            assert_raises(ValueError, np.power, a, minusone)
+            assert_raises(ValueError, np.power, one, b)
+            assert_raises(ValueError, np.power, one, minusone)
 
 
 class TestLog2(TestCase):
