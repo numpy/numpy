@@ -916,8 +916,8 @@ cdef class RandomState:
         ----------
         low : int
             Lowest (signed) integer to be drawn from the distribution (unless
-            ``high=None``, in which case this parameter is the *highest* such
-            integer).
+            ``high=None``, in which case this parameter is one above the
+            *highest* such integer).
         high : int, optional
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
