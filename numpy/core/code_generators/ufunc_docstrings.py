@@ -2543,7 +2543,8 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
+    integer type raised to a negative integer power will raise a ValueError.
 
     Parameters
     ----------
@@ -2556,6 +2557,10 @@ add_newdoc('numpy.core.umath', 'power',
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    float_power : power function that promotes integers to float
 
     Examples
     --------
@@ -2582,6 +2587,63 @@ add_newdoc('numpy.core.umath', 'power',
     >>> np.power(x1, x2)
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'float_power',
+    """
+    First array elements raised to powers from second array, element-wise.
+
+    Raise each base in `x1` to the positionally-corresponding power in `x2`.
+    `x1` and `x2` must be broadcastable to the same shape. This differs from
+    the power function in that integers, float16, and float32  are promoted to
+    floats with a minimum precision of float64 so that the result is always
+    inexact.  The intent is that the function will return a usable result for
+    negative powers and seldom overflow for positive powers.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    x1 : array_like
+        The bases.
+    x2 : array_like
+        The exponents.
+
+    Returns
+    -------
+    y : ndarray
+        The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    power : power function that preserves type
+
+    Examples
+    --------
+    Cube each element in a list.
+
+    >>> x1 = range(6)
+    >>> x1
+    [0, 1, 2, 3, 4, 5]
+    >>> np.float_power(x1, 3)
+    array([   0.,    1.,    8.,   27.,   64.,  125.])
+
+    Raise the bases to different exponents.
+
+    >>> x2 = [1.0, 2.0, 3.0, 3.0, 2.0, 1.0]
+    >>> np.float_power(x1, x2)
+    array([  0.,   1.,   8.,  27.,  16.,   5.])
+
+    The effect of broadcasting.
+
+    >>> x2 = np.array([[1, 2, 3, 3, 2, 1], [1, 2, 3, 3, 2, 1]])
+    >>> x2
+    array([[1, 2, 3, 3, 2, 1],
+           [1, 2, 3, 3, 2, 1]])
+    >>> np.float_power(x1, x2)
+    array([[  0.,   1.,   8.,  27.,  16.,   5.],
+           [  0.,   1.,   8.,  27.,  16.,   5.]])
 
     """)
 

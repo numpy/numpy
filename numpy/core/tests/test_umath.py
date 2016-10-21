@@ -465,6 +465,17 @@ class TestPower(TestCase):
             assert_raises(ValueError, np.power, one, minusone)
 
 
+class TestFloat_power(TestCase):
+    def test_type_conversion(self):
+        arg_type = '?bhilBHILefdgFDG'
+        res_type = 'ddddddddddddgDDG'
+        for dtin, dtout in zip(arg_type, res_type):
+            msg = "dtin: %s, dtout: %s" % (dtin, dtout)
+            arg = np.ones(1, dtype=dtin)
+            res = np.float_power(arg, arg)
+            assert_(res.dtype.name == np.dtype(dtout).name, msg)
+
+
 class TestLog2(TestCase):
     def test_log2_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
