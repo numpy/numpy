@@ -1225,9 +1225,9 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Parameters
     ----------
-    x : ndarray
+    x : ndarray or scalar
         The input domain.
-    condlist : list of bool arrays
+    condlist : list of bool arrays or bool scalars
         Each boolean array corresponds to a function in `funclist`.  Wherever
         `condlist[i]` is True, `funclist[i](x)` is used as the output value.
 
@@ -1296,12 +1296,21 @@ def piecewise(x, condlist, funclist, *args, **kw):
     >>> np.piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
     array([ 2.5,  1.5,  0.5,  0.5,  1.5,  2.5])
 
+    Apply the same function to a scalar value.
+
+    >>> y = -2
+    >>> np.piecewise(y, [y < 0, y >= 0], [lambda x: -x, lambda x: x])
+    array(2)
+
     """
     x = asanyarray(x)
     n2 = len(funclist)
     if (isscalar(condlist) or not (isinstance(condlist[0], list) or
                                    isinstance(condlist[0], ndarray))):
-        condlist = [condlist]
+        if not isscalar(condlist) and x.size == 1 and x.ndim == 0:
+            condlist = [[c] for c in condlist]
+        else:
+            condlist = [condlist]
     condlist = array(condlist, dtype=bool)
     n = len(condlist)
     # This is a hack to work around problems with NumPy's
@@ -1311,8 +1320,6 @@ def piecewise(x, condlist, funclist, *args, **kw):
     if x.ndim == 0:
         x = x[None]
         zerod = True
-        if condlist.shape[-1] != 1:
-            condlist = condlist.T
     if n == n2 - 1:  # compute the "otherwise" condition.
         totlist = np.logical_or.reduce(condlist, axis=0)
         # Only able to stack vertically if the array is 1d or less

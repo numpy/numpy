@@ -2324,9 +2324,19 @@ class TestPiecewise(TestCase):
         assert_(y.ndim == 0)
         assert_(y == 1)
 
+        # With 3 ranges (It was failing, before)
+        y = piecewise(x, [False, False, True], [1, 2, 3])
+        assert_array_equal(y, 3)
+
     def test_0d_comparison(self):
         x = 3
-        piecewise(x, [x <= 3, x > 3], [4, 0])  # Should succeed.
+        y = piecewise(x, [x <= 3, x > 3], [4, 0])  # Should succeed.
+        assert_equal(y, 4)
+
+        # With 3 ranges (It was failing, before)
+        x = 4
+        y = piecewise(x, [x <= 3, (x > 3) * (x <= 5), x > 5], [1, 2, 3])
+        assert_array_equal(y, 2)
 
     def test_multidimensional_extrafunc(self):
         x = np.array([[-2.5, -1.5, -0.5],
