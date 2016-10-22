@@ -631,6 +631,15 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
 
+class TestAccumulateKeepDims(_DeprecationTestCase):
+    """
+    Deprecate the keepdims argument to np.ufunc.accumulate, which was never used or documented
+    """
+    def test_keepdims(self):
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_warns(FutureWarning, np.add.accumulate, [1], keepdims=True)
+
 
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
