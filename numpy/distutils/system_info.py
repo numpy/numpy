@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
@@ -145,10 +145,10 @@ import distutils.sysconfig
 from distutils import log
 from distutils.util import get_platform
 
-from numpy.distutils.exec_command import \
-    find_executable, exec_command, get_pythonexe
-from numpy.distutils.misc_util import is_sequence, is_string, \
-                                      get_shared_lib_extension
+from numpy.distutils.exec_command import (
+    find_executable, exec_command, get_pythonexe)
+from numpy.distutils.misc_util import (is_sequence, is_string,
+                                       get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 import distutils.ccompiler
@@ -825,7 +825,6 @@ class fftw_info(system_info):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        incl_dir = None
         libs = self.get_libs(self.section + '_libs', ver_param['libs'])
         info = self.check_libs(lib_dirs, libs)
         if info is not None:
@@ -2354,7 +2353,6 @@ def combine_paths(*args, **kws):
                 result.extend(glob(os.path.join(a0, a1)))
     else:
         result = combine_paths(*(combine_paths(args[0], args[1]) + args[2:]))
-    verbosity = kws.get('verbosity', 1)
     log.debug('(paths: %s)', ','.join(result))
     return result
 
