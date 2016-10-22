@@ -5896,7 +5896,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
     """
-    outer(A, B)
+    outer(A, B, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
@@ -5919,6 +5919,8 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         First array
     B : array_like
         Second array
+    kwargs : any
+        Arguments to pass on to the ufunc. Typically `dtype` or `out`.
 
     Returns
     -------
