@@ -8,6 +8,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 
 
 /*
@@ -962,11 +963,11 @@ end_while:
 NPY_NO_EXPORT PyObject *
 arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    int i, s;
+    int i;
     PyObject *mode0=NULL, *coords0=NULL;
     PyArrayObject *ret = NULL;
     PyArray_Dims dimensions={0,0};
-    npy_intp ravel_strides[NPY_MAXDIMS];
+    npy_intp s, ravel_strides[NPY_MAXDIMS];
     NPY_ORDER order = NPY_CORDER;
     NPY_CLIPMODE modes[NPY_MAXDIMS];
 
@@ -1005,14 +1006,24 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
             s = 1;
             for (i = dimensions.len-1; i >= 0; --i) {
                 ravel_strides[i] = s;
-                s *= dimensions.ptr[i];
+                if (npy_mul_with_overflow_intp(&s, s, dimensions.ptr[i])) {
+                    PyErr_SetString(PyExc_ValueError,
+                        "invalid dims: array size defined by dims is larger "
+                        "than the maximum possible size.");
+                    goto fail;
+                }
             }
             break;
         case NPY_FORTRANORDER:
             s = 1;
             for (i = 0; i < dimensions.len; ++i) {
                 ravel_strides[i] = s;
-                s *= dimensions.ptr[i];
+                if (npy_mul_with_overflow_intp(&s, s, dimensions.ptr[i])) {
+                    PyErr_SetString(PyExc_ValueError,
+                        "invalid dims: array size defined by dims is larger "
+                        "than the maximum possible size.");
+                    goto fail;
+                }
             }
             break;
         default:
