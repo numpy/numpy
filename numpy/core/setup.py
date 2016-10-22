@@ -267,9 +267,12 @@ def check_types(config_cmd, ext, build_dir):
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
     if not result:
+        python = 'python'
+        if '__pypy__' in sys.builtin_module_names:
+            python = 'pypy'
         raise SystemError(
                 "Cannot compile 'Python.h'. Perhaps you need to "
-                "install python-dev|python-devel.")
+                "install {0}-dev|{0}-devel.".format(python))
     res = config_cmd.check_header("endian.h")
     if res:
         private_defines.append(('HAVE_ENDIAN_H', 1))
