@@ -137,6 +137,11 @@ class TestArray2String(TestCase):
         assert_equal(np.array2string(struct_2dint),
                 "[([[ 0,  1], [ 2,  3]],) ([[12,  0], [ 0,  0]],)]")
 
+        # See #8172
+        array_scalar = np.array(
+                (1., 2.1234567890123456789, 3.), dtype=('f8,f8,f8'))
+        assert_equal(np.array2string(array_scalar), "( 1.,  2.12345679,  3.)")
+
 
 class TestPrintOptions:
     """Test getting and setting global print options."""
