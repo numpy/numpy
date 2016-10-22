@@ -117,7 +117,7 @@ class TestArray2String(TestCase):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
         assert_equal(np.array2string(x),
-                "[('Sarah', array([ 8.,  7.])) ('John', array([ 6.,  7.]))]")
+                "[('Sarah', [ 8.,  7.]) ('John', [ 6.,  7.])]")
 
         # for issue #5692
         A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
@@ -127,6 +127,15 @@ class TestArray2String(TestCase):
                 "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
                 "('1970-01-01T00:00:00',) ('NaT',) ('NaT',)\n " +
                 "('NaT',) ('NaT',) ('NaT',)]")
+
+        # See #8160
+        struct_int = np.array([([1, -1],), ([123, 1],)], dtype=[('B', 'i4', 2)])
+        assert_equal(np.array2string(struct_int),
+                "[([  1,  -1],) ([123,   1],)]")
+        struct_2dint = np.array([([[0, 1], [2, 3]],), ([[12, 0], [0, 0]],)],
+                dtype=[('B', 'i4', (2, 2))])
+        assert_equal(np.array2string(struct_2dint),
+                "[([[ 0,  1], [ 2,  3]],) ([[12,  0], [ 0,  0]],)]")
 
 
 class TestPrintOptions:
