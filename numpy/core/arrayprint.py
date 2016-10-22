@@ -316,18 +316,6 @@ def _get_format_function(data, precision, suppress_small, formatter):
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
 
-    if max_line_width is None:
-        max_line_width = _line_width
-
-    if precision is None:
-        precision = _float_output_precision
-
-    if suppress_small is None:
-        suppress_small = _float_output_suppress_small
-
-    if formatter is None:
-        formatter = _formatter
-
     if a.size > _summaryThreshold:
         summary_insert = "..., "
         data = _leading_trailing(a)
@@ -458,11 +446,27 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
+    if max_line_width is None:
+        max_line_width = _line_width
+
+    if precision is None:
+        precision = _float_output_precision
+
+    if suppress_small is None:
+        suppress_small = _float_output_suppress_small
+
+    if formatter is None:
+        formatter = _formatter
+
     if a.shape == ():
         x = a.item()
-        if isinstance(x, tuple):
-            x = _convert_arrays(x)
-        lst = style(x)
+        if a.dtype.fields is not None:
+            arr = asarray([x], dtype=a.dtype)
+            format_function = _get_format_function(
+                    arr, precision, suppress_small, formatter)
+            lst = format_function(arr[0])
+        else:
+            lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
@@ -470,6 +474,7 @@ def array2string(a, max_line_width=None, precision=None,
         lst = _array2string(a, max_line_width, precision, suppress_small,
                             separator, prefix, formatter=formatter)
     return lst
+
 
 def _extendLine(s, line, word, max_line_len, next_line_prefix):
     if len(line.rstrip()) + len(word.rstrip()) >= max_line_len:
