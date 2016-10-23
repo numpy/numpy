@@ -5719,7 +5719,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=0, dtype=None, out=None, keepdims=None)
+    accumulate(array, axis=0, dtype=None, out=None)
 
     Accumulate the result of applying the operator to all elements.
 
@@ -5756,8 +5756,6 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
         .. versionchanged:: 1.13.0
            Tuples are allowed for keyword argument.
-    keepdims : bool
-        Has no effect. Deprecated, and will be removed in future.
 
     Returns
     -------
