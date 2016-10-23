@@ -60,7 +60,7 @@ Overview
 
 ::
 
-   git clone git@github.com:your-user-name/numpy.git
+   git clone https://github.com/your-user-name/numpy.git
    cd numpy
    git remote add upstream git://github.com/numpy/numpy.git
 
@@ -71,7 +71,7 @@ Clone your fork
 ---------------
 
 #. Clone your fork to the local computer with ``git clone
-   git@github.com:your-user-name/numpy.git``
+   https://github.com/your-user-name/numpy.git``
 #. Investigate.  Change directory to your new repo: ``cd numpy``. Then
    ``git branch -a`` to show you all branches.  You'll get something
    like::
@@ -100,7 +100,7 @@ Linking your repository to the upstream repo
 ``upstream`` here is just the arbitrary name we're using to refer to the
 main NumPy_ repository at `NumPy github`_.
 
-Note that we've used ``git://`` for the URL rather than ``git@``.  The
+Note that we've used ``git://`` for the URL rather than ``https://``.  The
 ``git://`` URL is read only.  This means we that we can't accidentally
 (or deliberately) write to the upstream repo, and we are only going to
 use it to merge into our own code.
@@ -110,7 +110,39 @@ Just for your own satisfaction, show yourself that you now have a new
 
    upstream	git://github.com/numpy/numpy.git (fetch)
    upstream	git://github.com/numpy/numpy.git (push)
-   origin	git@github.com:your-user-name/numpy.git (fetch)
-   origin	git@github.com:your-user-name/numpy.git (push)
+   origin	https://github.com/your-user-name/numpy.git (fetch)
+   origin	https://github.com/your-user-name/numpy.git (push)
+
+To keep in sync with changes in NumPy, you want to set up your repository
+so it pulls from ``upstream`` by default.  This can be done with::
+
+   git config branch.master.remote upstream
+   git config branch.master.merge refs/heads/master
+
+You may also want to have easy access to all pull requests sent to the
+NumPy repository::
+
+   git config --add remote.upstream.fetch '+refs/pull//head:refs/remotes/upstream/pr/'
+
+Your config file should now look something like (from
+``$ cat .git/config``)::
+
+   [core]
+           repositoryformatversion = 0
+           filemode = true
+           bare = false
+           logallrefupdates = true
+           ignorecase = true
+           precomposeunicode = false
+   [remote "origin"]
+           url = https://github.com/your-user-name/numpy.git
+           fetch = +refs/heads/*:refs/remotes/origin/*
+   [remote "upstream"]
+           url = git://github.com/numpy/numpy.git
+           fetch = +refs/heads/*:refs/remotes/upstream/*
+           fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
+   [branch "master"]
+           remote = upstream
+           merge = refs/heads/master
 
 .. include:: git_links.inc
