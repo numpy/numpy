@@ -3900,7 +3900,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     static char *reduce_kwlist[] = {
             "array", "axis", "dtype", "out", "keepdims", NULL};
     static char *accumulate_kwlist[] = {
-            "array", "axis", "dtype", "out", "keepdims", NULL};
+            "array", "axis", "dtype", "out", NULL};
     static char *reduceat_kwlist[] = {
             "array", "indices", "axis", "dtype", "out", NULL};
 
@@ -3962,25 +3962,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        PyObject *bad_keepdimarg = NULL;
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O:accumulate",
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
                                         accumulate_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out,
-                                        &bad_keepdimarg)) {
+                                        PyArray_OutputConverter, &out)) {
             Py_XDECREF(otype);
             return NULL;
-        }
-        /* Until removed outright by https://github.com/numpy/numpy/pull/8187 */
-        if (bad_keepdimarg != NULL) {
-            if (DEPRECATE_FUTUREWARNING(
-                    "keepdims argument has no effect on accumulate, and will be "
-                    "removed in future") < 0) {
-                Py_XDECREF(otype);
-                return NULL;
-            }
         }
     }
     else {
