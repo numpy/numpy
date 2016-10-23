@@ -5720,7 +5720,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=0, dtype=None, out=None)
+    accumulate(array, axis=0, dtype=None, out=None, keepdims=None)
 
     Accumulate the result of applying the operator to all elements.
 
@@ -5752,6 +5752,8 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
     out : ndarray, optional
         A location into which the result is stored. If not provided a
         freshly-allocated array is returned.
+    keepdims : bool
+        Has no effect. Deprecated, and will be removed in future.
 
     Returns
     -------
