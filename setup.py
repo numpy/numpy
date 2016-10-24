@@ -208,7 +208,13 @@ def generate_cython():
                           'numpy/random'],
                          cwd=cwd)
     if p != 0:
-        raise RuntimeError("Running cythonize failed!")
+        raise RuntimeError("Running cythonize on numpy/random failed!")
+    p = subprocess.call([sys.executable,
+                          os.path.join(cwd, 'tools', 'cythonize.py'),
+                          'numpy/random_intel'],
+                         cwd=cwd)
+    if p != 0:
+        raise RuntimeError("Running cythonize on numpy/random_intel failed!")
 
 
 def parse_setuppy_commands():

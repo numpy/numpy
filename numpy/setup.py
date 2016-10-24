@@ -18,6 +18,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('matrixlib')
     config.add_subpackage('polynomial')
     config.add_subpackage('random')
+    config.add_subpackage('random_intel')
     config.add_subpackage('testing')
     config.add_data_dir('doc')
     config.add_data_dir('tests')
