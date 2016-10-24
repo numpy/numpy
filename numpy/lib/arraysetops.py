@@ -78,20 +78,33 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2, -3,  5, 18])
 
     """
-    ary = np.asanyarray(ary).flat
-    ed = ary[1:] - ary[:-1]
-    arrays = [ed]
-    if to_begin is not None:
-        arrays.insert(0, to_begin)
-    if to_end is not None:
-        arrays.append(to_end)
+    # force a 1d array
+    ary = np.asanyarray(ary).ravel()
 
-    if len(arrays) != 1:
-        # We'll save ourselves a copy of a potentially large array in
-        # the common case where neither to_begin or to_end was given.
-        ed = np.hstack(arrays)
+    # get the length of the diff'd values
+    l = len(ary) - 1
+    if l < 0:
+        # force length to be non negative, match previous API
+        # should this be an warning or deprecated?
+        l = 0
 
-    return ed
+    if to_begin is None:
+        to_begin = np.array([])
+    else:
+        to_begin = np.asanyarray(to_begin).ravel()
+
+    if to_end is None:
+        to_end = np.array([])
+    else:
+        to_end = np.asanyarray(to_end).ravel()
+
+    # do the calculation in place and copy to_begin and to_end
+    result = np.empty(l + len(to_begin) + len(to_end), dtype=ary.dtype)
+    result[:len(to_begin)] = to_begin
+    result[len(to_begin) + l:] = to_end
+    np.subtract(ary[1:], ary[:-1], result[len(to_begin):len(to_begin) + l])
+    return result
+
 
 def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     """
