@@ -45,9 +45,10 @@ __all__ = [
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+     'covcorr', 'covtocorr', 'msort', 'median', 'sinc', 'hamming', 'hanning',
+     'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
+     'add_docstring', 'meshgrid', 'delete', 'insert', 'append', 'interp',
+     'add_newdoc_ufunc'
     ]
 
 
@@ -2776,6 +2777,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     See Also
     --------
     corrcoef : Normalized covariance matrix
+    covcorr : Covariance matrix and normalized covariance matrix
 
     Notes
     -----
@@ -2966,6 +2968,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     See Also
     --------
     cov : Covariance matrix
+    covcorr : Covariance matrix and normalized covariance matrix
 
     Notes
     -----
@@ -2985,26 +2988,93 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=2)
-    c = cov(x, y, rowvar)
+    covmat = cov(x, y, rowvar)
+
+    
+    return covtocorr(covmat)
+
+def covcorr(x, y=None, rowvar=1):
+    """
+    Return both the covariance matrix and the Pearson product-moment correlation coefficients.
+
+    Please refer to the documentation for `cov` and `corrcoef` for more detail. 
+
+    Parameters
+    ----------
+    x : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `x` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
+    y : array_like, optional
+        An additional set of variables and observations. `y` has the same
+        shape as `x`.
+    rowvar : int, optional
+        If `rowvar` is non-zero (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+
+    Returns
+    -------
+    covmat, R : ndarray
+        Return a tuple containing the covariance matrix covmat
+        and the correlation coefficient matrix R of the variables.
+
+    See Also
+    --------
+    cov : Covariance matrix
+    corrcoef : Normalized covariance matrix
+
+
+    """
+    covmat = cov(x, y, rowvar)
+
+    
+    return covmat, covtocorr(covmat.copy())
+
+
+def covtocorr(covmat):
+    """
+    Return the Pearson product-moment correlation coefficients given a covariance matrix.
+
+    Please refer to the documentation for `cov` and `corrcoef` for more detail. 
+
+    Parameters
+    ----------
+    covmat : array_like
+        A 2-D array containing a covariance matrix
+        
+    Returns
+    -------
+    R : ndarray
+        The correlation coefficient matrix of the variables.
+
+    See Also
+    --------
+    cov : Covariance matrix from observations
+    corrcoef : Normalized covariance matrix from observations
+
+
+    """
+
     try:
-        d = diag(c)
+        d = diag(covmat)
     except ValueError:
         # scalar covariance
         # nan if incorrect value (nan, inf, 0), 1 otherwise
-        return c / c
+        return covmat / covmat
     stddev = sqrt(d.real)
-    c /= stddev[:, None]
-    c /= stddev[None, :]
+    covmat /= stddev[:, None]
+    covmat /= stddev[None, :]
 
     # Clip real and imaginary parts to [-1, 1].  This does not guarantee
     # abs(a[i,j]) <= 1 for complex arrays, but is the best we can do without
     # excessive work.
-    np.clip(c.real, -1, 1, out=c.real)
-    if np.iscomplexobj(c):
-        np.clip(c.imag, -1, 1, out=c.imag)
+    np.clip(covmat.real, -1, 1, out=covmat.real)
+    if np.iscomplexobj(covmat):
+        np.clip(covmat.imag, -1, 1, out=covmat.imag)
 
-    return c
-
+    return covmat
 
 def blackman(M):
     """
