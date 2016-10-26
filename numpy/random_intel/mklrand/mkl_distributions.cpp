@@ -18,21 +18,26 @@ vrk_double_vec(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+            d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 
 void
-vrk_uniform_vec(vrk_state *state, const int len, double *res, const double low, const double high)
+vrk_uniform_vec(vrk_state *state, const int len, double *res,
+    const double low, const double high)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, low, high);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+        low, high);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -47,20 +52,25 @@ vrk_standard_normal_vec_ICDF(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res, d_zero, d_one);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_normal_vec_ICDF(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_normal_vec_ICDF(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res, loc, scale);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res,
+        loc, scale);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -75,20 +85,25 @@ vrk_standard_normal_vec_BM1(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, state->stream, len, res, d_zero, d_one);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_normal_vec_BM1(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_normal_vec_BM1(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, state->stream, len, res, loc, scale);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, state->stream, len, res,
+        loc, scale);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -103,20 +118,25 @@ vrk_standard_normal_vec_BM2(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER2, state->stream, len, res, d_zero, d_one);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_BOXMULLER2, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_normal_vec_BM2(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_normal_vec_BM2(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER2, state->stream, len, res, loc, scale);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_BOXMULLER2, state->stream, len, res,
+        loc, scale);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -131,13 +151,16 @@ vrk_standard_exponential_vec(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngExponential(
+        VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_exponential_vec(vrk_state *state, const int len, double *res, const double scale)
+vrk_exponential_vec(vrk_state *state, const int len, double *res,
+    const double scale)
 {
     int err;
     const double d_zero = 0.0;
@@ -145,7 +168,9 @@ vrk_exponential_vec(vrk_state *state, const int len, double *res, const double s
     if(len < 1)
         return;
 
-    err = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res, d_zero, scale);
+    err = vdRngExponential(
+        VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res,
+        d_zero, scale);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -160,13 +185,16 @@ vrk_standard_cauchy_vec(vrk_state *state, const int len, double *res)
     if(len < 1)
         return;
 
-    err = vdRngCauchy(VSL_RNG_METHOD_CAUCHY_ICDF, state->stream, len, res, d_zero, d_one);
+    err = vdRngCauchy(
+        VSL_RNG_METHOD_CAUCHY_ICDF, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_standard_gamma_vec(vrk_state *state, const int len, double *res, const double shape)
+vrk_standard_gamma_vec(vrk_state *state, const int len, double *res,
+    const double shape)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -174,13 +202,16 @@ vrk_standard_gamma_vec(vrk_state *state, const int len, double *res, const doubl
     if(len < 1)
         return;
 
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, d_one);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+        shape, d_zero, d_one);
 
     assert(err == VSL_STATUS_OK);
 }
 
 void
-vrk_gamma_vec(vrk_state *state, const int len, double *res, const double shape, const double scale)
+vrk_gamma_vec(vrk_state *state, const int len, double *res,
+    const double shape, const double scale)
 {
     int err;
     const double d_zero = 0.0;
@@ -188,7 +219,9 @@ vrk_gamma_vec(vrk_state *state, const int len, double *res, const double shape, 
     if(len < 1)
         return;
 
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, scale);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+        shape, d_zero, scale);
 
     assert(err == VSL_STATUS_OK);
 
@@ -197,7 +230,8 @@ vrk_gamma_vec(vrk_state *state, const int len, double *res, const double shape, 
 
 /*  X ~ Z * (G*(2/df))**-0.5 */
 void
-vrk_standard_t_vec(vrk_state *state, const int len, double *res, const double df)
+vrk_standard_t_vec(vrk_state *state, const int len, double *res,
+    const double df)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -207,7 +241,9 @@ vrk_standard_t_vec(vrk_state *state, const int len, double *res, const double df
     if(len < 1)
         return;
 
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, 1.0/shape);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+        shape, d_zero, 1.0/shape);
     assert(err == VSL_STATUS_OK);
 
     vmdInvSqrt(len, res, res, VML_HA);
@@ -215,7 +251,9 @@ vrk_standard_t_vec(vrk_state *state, const int len, double *res, const double df
     sn = (double *) mkl_malloc(len*sizeof(double), 64);
     assert(sn != NULL);
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, sn, d_zero, d_one);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, sn,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     vmdMul(len, res, sn, res, VML_HA);
@@ -225,7 +263,8 @@ vrk_standard_t_vec(vrk_state *state, const int len, double *res, const double df
 
 /* chisquare(df) ~ G(df/2, 2) */
 void
-vrk_chisquare_vec(vrk_state *state, const int len, double *res, const double df)
+vrk_chisquare_vec(vrk_state *state, const int len, double *res,
+    const double df)
 {
     int err;
     const double d_zero = 0.0, d_two = 2.0;
@@ -234,7 +273,9 @@ vrk_chisquare_vec(vrk_state *state, const int len, double *res, const double df)
     if(len < 1)
         return;
 
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, d_two);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+        shape, d_zero, d_two);
     assert(err == VSL_STATUS_OK);
 
 }
@@ -250,7 +291,9 @@ vrk_pareto_vec(vrk_state *state, const int len, double *res, const double alp)
     if (len<1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     /* res[i] = pow(res[i], neg_rec_alp) */
@@ -272,7 +315,9 @@ vrk_weibull_vec(vrk_state *state, const int len, double *res, const double alp)
     if (len<1)
         return;
 
-    err = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngExponential(
+        VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     vmdPowx(len, res, rec_alp, res, VML_HA);
@@ -290,7 +335,9 @@ vrk_power_vec(vrk_state *state, const int len, double *res, const double alp)
     if (len<1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     /* res[i] = pow(res[i], rec_alp) */
@@ -300,7 +347,8 @@ vrk_power_vec(vrk_state *state, const int len, double *res, const double alp)
 
 /*  scale * sqrt(2.0 * E(1))  */
 void
-vrk_rayleigh_vec(vrk_state *state, const int len, double *res, const double scale)
+vrk_rayleigh_vec(vrk_state *state, const int len, double *res,
+    const double scale)
 {
     int i, err;
     const double d_zero = 0.0, d_two = 2.0;
@@ -308,7 +356,9 @@ vrk_rayleigh_vec(vrk_state *state, const int len, double *res, const double scal
     if (len<1)
         return;
 
-    err = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res, d_zero, d_two);
+    err = vdRngExponential(
+        VSL_RNG_METHOD_EXPONENTIAL_ICDF_ACCURATE, state->stream, len, res,
+        d_zero, d_two);
     assert(err == VSL_STATUS_OK);
 
     vmdSqrt(len, res, res, VML_HA);
@@ -319,7 +369,8 @@ vrk_rayleigh_vec(vrk_state *state, const int len, double *res, const double scal
 }
 
 void
-vrk_beta_vec(vrk_state *state, const int len, double *res, const double a, const double b)
+vrk_beta_vec(vrk_state *state, const int len, double *res,
+    const double a, const double b)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -327,14 +378,17 @@ vrk_beta_vec(vrk_state *state, const int len, double *res, const double a, const
     if(len < 1)
         return;
 
-    err = vdRngBeta(VSL_RNG_METHOD_BETA_CJA_ACCURATE, state->stream, len, res, a, b, d_zero, d_one);
+    err = vdRngBeta(
+        VSL_RNG_METHOD_BETA_CJA_ACCURATE, state->stream, len, res,
+        a, b, d_zero, d_one);
 
     assert(err == VSL_STATUS_OK);
 }
 
 /*  F(df_num, df_den) ~ G( df_num/2, 2/df_num) / G(df_den/2, 2/df_den))  */
 void
-vrk_f_vec(vrk_state *state, const int len, double *res, const double df_num, const double df_den)
+vrk_f_vec(vrk_state *state, const int len, double *res,
+    const double df_num, const double df_den)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -344,7 +398,9 @@ vrk_f_vec(vrk_state *state, const int len, double *res, const double df_num, con
     if(len < 1)
         return;
 
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, scale);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+        shape, d_zero, scale);
     assert(err == VSL_STATUS_OK);
 
     den = (double *) mkl_malloc(len*sizeof(double), 64);
@@ -352,7 +408,9 @@ vrk_f_vec(vrk_state *state, const int len, double *res, const double df_num, con
 
     shape = 0.5*df_den;
     scale = 2.0/df_den;
-    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, den, shape, d_zero, scale);
+    err = vdRngGamma(
+        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, den,
+        shape, d_zero, scale);
     assert(err == VSL_STATUS_OK);
 
     vmdDiv(len, res, den, res, VML_HA);
@@ -365,7 +423,8 @@ vrk_f_vec(vrk_state *state, const int len, double *res, const double df_num, con
    for df <=1, X ~ Chi2( df + 2*I), where I ~ Poisson( nonc/2.0)
 */
 void
-vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const double df, const double nonc)
+vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res,
+    const double df, const double nonc)
 {
     int i, err;
     const double d_zero = 0.0, d_one = 1.0, d_two = 2.0;
@@ -379,13 +438,17 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
 
         shape = 0.5*(df - 1.0);
         /* res has chi^2 with (df - 1) */
-        err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res, shape, d_zero, d_two);
+        err = vdRngGamma(
+            VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, len, res,
+            shape, d_zero, d_two);
 
         nvec = (double *) mkl_malloc(len*sizeof(double), 64);
         assert(nvec != NULL);
 
         loc = sqrt(nonc);
-        err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, nvec, loc, d_one);
+        err = vdRngGaussian(
+            VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, nvec,
+            loc, d_one);
         assert(err == VSL_STATUS_OK);
 
         /* squaring could result in an overflow */
@@ -399,14 +462,15 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
             return vrk_chisquare_vec(state, len, res, df);
         }
         if(df < 1) {
-            /* noncentral_chisquare(df, nonc) ~ G( df/2 + Poisson(nonc/2), 2) */
+            /* noncentral_chisquare(df, nonc) ~ G(df/2 + Poisson(nonc/2), 2) */
             double lambda;
             int *pvec = (int *) mkl_malloc(len*sizeof(int), 64);
 
             assert(pvec != NULL);
 
             lambda = 0.5*nonc;
-            err = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, state->stream, len, pvec, lambda);
+            err = viRngPoisson(
+                VSL_RNG_METHOD_POISSON_PTPE, state->stream, len, pvec, lambda);
             assert(err == VSL_STATUS_OK);
 
             shape = 0.5*df;
@@ -421,10 +485,13 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
                 #pragma ivdep
                 for(i=0; i <len; i++) idx[i] = i;
 
-                std::sort(idx, idx + len, [pvec](int i1, int i2){ return pvec[i1] < pvec[i2]; } );
-                /* idx now contains original indexes of ordered Poisson outputs */
+                /* argsort via sort with comparator */
+                std::sort(idx, idx + len,
+                    [pvec](int i1, int i2){ return pvec[i1] < pvec[i2]; } );
+                /* idx now contains original indexes of ordered Poisson vars */
 
-                /* allocate workspace to store samples of gamma, enough to hold entire output */
+                /* allocate workspace to store samples of gamma,
+                   enough to hold entire output */
                 tmp = (double *) mkl_malloc( len * sizeof(double), 64);
                 assert( tmp != NULL );
 
@@ -435,8 +502,10 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
                     for(j=i+1; (j < len) && (pvec[idx[j]] == cv); j++) {}
 
                     assert(j > i);
-                    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, j - i, tmp,
-                                shape + cv, d_zero, d_two);
+                    err = vdRngGamma(
+                        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream,
+                        j - i, tmp,
+                        shape + cv, d_zero, d_two);
                     assert(err == VSL_STATUS_OK);
 
                     #pragma ivdep
@@ -451,7 +520,8 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
             } else {
 
                 for(i=0; i<len; i++) {
-                    err = vdRngGamma(VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, 1,
+                    err = vdRngGamma(
+                        VSL_RNG_METHOD_GAMMA_GNORM_ACCURATE, state->stream, 1,
                         res + i, shape + pvec[i], d_zero, d_two);
                     assert(err == VSL_STATUS_OK);
                 }
@@ -462,13 +532,17 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
             float *fuvec = NULL;
 
             /* noncentral_chisquare(1, nonc) ~ sqrt(nonc)*(-1)^[U<0.5] + Z */
-            err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res, d_zero, d_one);
+            err = vdRngGaussian(
+                VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res,
+                d_zero, d_one);
             loc = sqrt(nonc);
 
             fuvec = (float *) mkl_malloc(len*sizeof(float), 64);
             assert(fuvec != NULL);
 
-            err = vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, fuvec, (const float) d_zero, (const float) d_one);
+            err = vsRngUniform(
+                VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, fuvec,
+                (const float) d_zero, (const float) d_one);
             assert(err == VSL_STATUS_OK);
 
             #pragma ivdep
@@ -481,35 +555,42 @@ vrk_noncentral_chisquare_vec(vrk_state *state, const int len, double *res, const
 }
 
 void
-vrk_laplace_vec(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_laplace_vec(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngLaplace(VSL_RNG_METHOD_LAPLACE_ICDF, state->stream, len, res, loc, scale);
+    err = vdRngLaplace(
+        VSL_RNG_METHOD_LAPLACE_ICDF, state->stream, len, res,
+        loc, scale);
     assert(err == VSL_STATUS_OK);
 
 }
 
 
 void
-vrk_gumbel_vec(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_gumbel_vec(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = vdRngGumbel(VSL_RNG_METHOD_GUMBEL_ICDF, state->stream, len, res, loc, scale);
+    err = vdRngGumbel(
+        VSL_RNG_METHOD_GUMBEL_ICDF, state->stream, len, res,
+        loc, scale);
     assert(err == VSL_STATUS_OK);
 
 }
 
 /*   Logistic(loc, scale) ~ loc + scale * log(u/(1.0 - u)) */
 void
-vrk_logistic_vec(vrk_state *state, const int len, double *res, const double loc, const double scale)
+vrk_logistic_vec(vrk_state *state, const int len, double *res,
+    const double loc, const double scale)
 {
     int i, err;
     const double d_one = 1.0, d_mone = -1.0, d_zero = 0.0;
@@ -517,10 +598,13 @@ vrk_logistic_vec(vrk_state *state, const int len, double *res, const double loc,
     if(len < 1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
-    /* can MKL optimize computation of the logit function  p \mapsto \ln(p/(1-p)) */
+    /* can MKL optimize computation of the logit function
+       p \mapsto \ln(p/(1-p))                             */
     #pragma ivdep
     for(i=0; i<len; i++) res[i] = log(res[i]/(1.0 - res[i]));
 
@@ -529,7 +613,8 @@ vrk_logistic_vec(vrk_state *state, const int len, double *res, const double loc,
 }
 
 void
-vrk_lognormal_vec_ICDF(vrk_state *state, const int len, double *res, const double mean, const double sigma)
+vrk_lognormal_vec_ICDF(vrk_state *state, const int len, double *res,
+    const double mean, const double sigma)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -537,13 +622,16 @@ vrk_lognormal_vec_ICDF(vrk_state *state, const int len, double *res, const doubl
     if(len < 1)
         return;
 
-    err = vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_ICDF_ACCURATE, state->stream, len, res, mean, sigma, d_zero, d_one);
+    err = vdRngLognormal(
+        VSL_RNG_METHOD_LOGNORMAL_ICDF_ACCURATE, state->stream, len, res,
+        mean, sigma, d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_lognormal_vec_BM(vrk_state *state, const int len, double *res, const double mean, const double sigma)
+vrk_lognormal_vec_BM(vrk_state *state, const int len, double *res,
+    const double mean, const double sigma)
 {
     int err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -551,21 +639,26 @@ vrk_lognormal_vec_BM(vrk_state *state, const int len, double *res, const double 
     if(len < 1)
         return;
 
-    err = vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2_ACCURATE, state->stream, len, res, mean, sigma, d_zero, d_one);
+    err = vdRngLognormal(
+        VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2_ACCURATE, state->stream, len, res,
+        mean, sigma, d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
 }
 
 /* direct transformation method */
 void
-vrk_wald_vec(vrk_state *state, const int len, double *res, const double mean, const double scale)
+vrk_wald_vec(vrk_state *state, const int len, double *res,
+    const double mean, const double scale)
 {
     int i, err;
     const double d_zero = 0., d_one = 1.0;
     double *uvec = NULL;
     double gsc = 0.5*sqrt(mean / scale);
 
-    err = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res, d_zero, gsc);
+    err = vdRngGaussian(
+        VSL_RNG_METHOD_GAUSSIAN_ICDF, state->stream, len, res,
+        d_zero, gsc);
     assert(err == VSL_STATUS_OK);
 
     /* Y = mean/(4 scale) * Z^2 */
@@ -583,7 +676,9 @@ vrk_wald_vec(vrk_state *state, const int len, double *res, const double mean, co
     uvec = (double *) mkl_malloc(len*sizeof(double), 64);
     assert(uvec != NULL);
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, uvec, d_zero, d_one);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, uvec,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -611,7 +706,8 @@ vrk_wald_vec(vrk_state *state, const int len, double *res, const double mean, co
    (but corrected to match the algorithm in R and Python)
 */
 static void
-vrk_vonmises_vec_small_kappa(vrk_state *state, const int len, double *res, const double mu, const double kappa)
+vrk_vonmises_vec_small_kappa(vrk_state *state, const int len, double *res,
+    const double mu, const double kappa)
 {
     int i, err, n, size;
     double rho_over_kappa, rho, r, s_kappa, Z, W, Y, V;
@@ -636,9 +732,14 @@ vrk_vonmises_vec_small_kappa(vrk_state *state, const int len, double *res, const
     for(n = 0; n < len; )
     {
         size = len - n;
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, size, Uvec, d_zero, M_PI);
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, size, Uvec,
+            d_zero, M_PI);
         assert(err == VSL_STATUS_OK);
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, size, Vvec, d_zero, d_one);
+
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, size, Vvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
 
         for(i = 0; i < size; i++ ) {
@@ -654,7 +755,9 @@ vrk_vonmises_vec_small_kappa(vrk_state *state, const int len, double *res, const
     mkl_free(Uvec);
 
     VFvec = (float *) Vvec;
-    err = vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, VFvec, (float) d_zero, (float) d_one);
+    err = vsRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, VFvec,
+        (float) d_zero, (float) d_one);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -672,11 +775,13 @@ vrk_vonmises_vec_small_kappa(vrk_state *state, const int len, double *res, const
 }
 
 static void
-vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res, const double mu, const double kappa)
+vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res,
+    const double mu, const double kappa)
 {
     int i, err, n, size;
     double r_over_two_kappa, recip_two_kappa;
-    double s_minus_one, hpt, r_over_two_kappa_minus_one, rho_minus_one, neg_W_minus_one;
+    double s_minus_one, hpt, r_over_two_kappa_minus_one,
+           rho_minus_one, neg_W_minus_one;
     double *Uvec = NULL, *Vvec = NULL;
     float *VFvec = NULL;
     const double d_zero = 0.0, d_one = 1.0;
@@ -687,9 +792,16 @@ vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res, const
 
     /* variables here are dwindling to zero as kappa grows */
     hpt = sqrt(1 + recip_two_kappa * recip_two_kappa);
-    r_over_two_kappa_minus_one = recip_two_kappa * (1 + recip_two_kappa / (1 + hpt));
+
+    r_over_two_kappa_minus_one =
+        recip_two_kappa * (1 + recip_two_kappa / (1 + hpt));
+
     r_over_two_kappa = 1 + r_over_two_kappa_minus_one;
-    rho_minus_one = r_over_two_kappa_minus_one - sqrt(2 * r_over_two_kappa * recip_two_kappa);
+
+    rho_minus_one =
+        r_over_two_kappa_minus_one -
+        sqrt(2 * r_over_two_kappa * recip_two_kappa);
+
     s_minus_one = rho_minus_one*(0.5 * rho_minus_one/(1 + rho_minus_one));
 
     Uvec = (double *) mkl_malloc(len * sizeof(double), 64);
@@ -700,31 +812,35 @@ vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res, const
     for(n = 0; n < len; )
     {
         size = len - n;
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, size, Uvec, d_zero, 0.5*M_PI);
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, size, Uvec,
+            d_zero, 0.5*M_PI);
         assert(err == VSL_STATUS_OK);
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, size, Vvec, d_zero, d_one);
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, size, Vvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
         for(i = 0; i < size; i++ ) {
-	    double sn, cn, sn2, cn2;
-	    double neg_W_minus_one, V, Y;
+           double sn, cn, sn2, cn2;
+           double neg_W_minus_one, V, Y;
 
-	    sn = sin(Uvec[i]);  cn = cos(Uvec[i]); V = Vvec[i];
-	    sn2 = sn*sn;  cn2 = cn*cn;
+           sn = sin(Uvec[i]);  cn = cos(Uvec[i]); V = Vvec[i];
+           sn2 = sn*sn;  cn2 = cn*cn;
 
             neg_W_minus_one = s_minus_one * sn2 / (0.5*s_minus_one + cn2);
             Y = kappa * (s_minus_one + neg_W_minus_one);
 
             if ((Y*(2 - Y) >= V) || (log(Y/V) + 1 >= Y)) {
-	        Y = neg_W_minus_one * (2 - neg_W_minus_one);
-		if (Y < 0)
-		    Y = 0.;
-		else
-		    if (Y > 1.0)
-		        Y = 1.0;
+                Y = neg_W_minus_one * (2 - neg_W_minus_one);
+                if (Y < 0)
+                    Y = 0.;
+                else
+                    if (Y > 1.0)
+                        Y = 1.0;
 
-	        res[n++] = asin(sqrt(Y));
+                resi[n++] = asin(sqrt(Y));
             }
         }
     }
@@ -732,7 +848,9 @@ vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res, const
     mkl_free(Uvec);
 
     VFvec = (float *) Vvec;
-    err = vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, VFvec, (float) d_zero, (float) d_one);
+    err = vsRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, VFvec,
+        (float) d_zero, (float) d_one);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -749,7 +867,8 @@ vrk_vonmises_vec_large_kappa(vrk_state *state, const int len, double *res, const
 }
 
 void
-vrk_vonmises_vec(vrk_state *state, const int len, double *res, const double mu, const double kappa)
+vrk_vonmises_vec(vrk_state *state, const int len, double *res,
+    const double mu, const double kappa)
 {
     if(len < 1)
         return;
@@ -762,7 +881,8 @@ vrk_vonmises_vec(vrk_state *state, const int len, double *res, const double mu, 
 }
 
 void
-vrk_noncentral_f_vec(vrk_state *state, const int len, double *res, const double df_num, const double df_den, const double nonc)
+vrk_noncentral_f_vec(vrk_state *state, const int len, double *res,
+    const double df_num, const double df_den, const double nonc)
 {
     int i;
     double *den = NULL, fctr;
@@ -794,7 +914,8 @@ vrk_noncentral_f_vec(vrk_state *state, const int len, double *res, const double 
 
 
 void
-vrk_triangular_vec(vrk_state *state, const int len, double *res, const double x_min, const double x_mode, const double x_max)
+vrk_triangular_vec(vrk_state *state, const int len, double *res,
+    const double x_min, const double x_mode, const double x_max)
 {
     int i, err;
     const double d_zero = 0.0, d_one = 1.0;
@@ -803,7 +924,9 @@ vrk_triangular_vec(vrk_state *state, const int len, double *res, const double x_
     if (len < 1)
         return;
 
-    err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res, d_zero, d_one);
+    err = vdRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, len, res,
+        d_zero, d_one);
     assert(err == VSL_STATUS_OK);
 
     {
@@ -835,13 +958,17 @@ vrk_triangular_vec(vrk_state *state, const int len, double *res, const double x_
         #pragma ivdep
         for(i = 0; i < len; i++) {
             double ui = res[i];
-            res[i] = (ui > ratio) ? x_max - sqrt((1.0 - ui) * rpr) : x_min + sqrt(ui*lpr);
+
+            res[i] = (ui > ratio) ?
+                x_max - sqrt((1.0 - ui) * rpr) :
+                x_min + sqrt(ui*lpr);
         }
     }
 }
 
 void
-vrk_binomial_vec(vrk_state *state, const int len, int *res, const int n, const double p)
+vrk_binomial_vec(vrk_state *state, const int len, int *res,
+    const int n, const double p)
 {
     int err;
 
@@ -855,7 +982,8 @@ vrk_binomial_vec(vrk_state *state, const int len, int *res, const int n, const d
         for(i=0; i < len; i++) res[i] = 0;
     }
     else {
-        err = viRngBinomial(VSL_RNG_METHOD_BINOMIAL_BTPE, state->stream, len, res, n, p);
+        err = viRngBinomial(
+            VSL_RNG_METHOD_BINOMIAL_BTPE, state->stream, len, res, n, p);
         assert(err == VSL_STATUS_OK);
     }
 }
@@ -868,83 +996,99 @@ vrk_geometric_vec(vrk_state *state, const int len, int *res, const double p)
     if(len < 1)
         return;
 
-    err = viRngGeometric(VSL_RNG_METHOD_GEOMETRIC_ICDF, state->stream, len, res, p);
+    err = viRngGeometric(
+        VSL_RNG_METHOD_GEOMETRIC_ICDF, state->stream, len, res, p);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_negbinomial_vec(vrk_state *state, const int len, int *res, const double a, const double p)
+vrk_negbinomial_vec(vrk_state *state, const int len, int *res,
+    const double a, const double p)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = viRngNegbinomial(VSL_RNG_METHOD_NEGBINOMIAL_NBAR, state->stream, len, res, a, p);
+    err = viRngNegbinomial(
+        VSL_RNG_METHOD_NEGBINOMIAL_NBAR, state->stream, len, res, a, p);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_hypergeometric_vec(vrk_state *state, const int len, int *res, const int lot_s,
-        const int sampling_s, const int marked_s)
+vrk_hypergeometric_vec(vrk_state *state, const int len, int *res,
+    const int lot_s, const int sampling_s, const int marked_s)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = viRngHypergeometric(VSL_RNG_METHOD_HYPERGEOMETRIC_H2PE, state->stream, len, res,
-                lot_s, sampling_s, marked_s);
+    err = viRngHypergeometric(
+        VSL_RNG_METHOD_HYPERGEOMETRIC_H2PE, state->stream, len, res,
+        lot_s, sampling_s, marked_s);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_poisson_vec_PTPE(vrk_state *state, const int len, int *res, const double lambda)
+vrk_poisson_vec_PTPE(vrk_state *state, const int len, int *res,
+    const double lambda)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, state->stream, len, res, lambda);
+    err = viRngPoisson(
+        VSL_RNG_METHOD_POISSON_PTPE, state->stream, len, res,
+        lambda);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_poisson_vec_POISNORM(vrk_state *state, const int len, int *res, const double lambda)
+vrk_poisson_vec_POISNORM(vrk_state *state, const int len, int *res,
+    const double lambda)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = viRngPoisson(VSL_RNG_METHOD_POISSON_POISNORM, state->stream, len, res, lambda);
+    err = viRngPoisson(
+        VSL_RNG_METHOD_POISSON_POISNORM, state->stream, len, res,
+        lambda);
     assert(err == VSL_STATUS_OK);
 
 }
 
+/* MKL provides a way to efficiently sample from product distribution
+   of Poisson distributions with given vector of rates, *lambdas */
 void
-vrk_poisson_vec_V(vrk_state *state, const int len, int *res, double *lambdas)
+vrk_poisson_vec_V(vrk_state *state, const int len, int *res,
+    double *lambdas)
 {
     int err;
 
     if(len < 1)
         return;
 
-    err = viRngPoissonV(VSL_RNG_METHOD_POISSONV_POISNORM, state->stream, len, res, lambdas);
+    err = viRngPoissonV(
+        VSL_RNG_METHOD_POISSONV_POISNORM, state->stream, len, res,
+        lambdas);
     assert(err == VSL_STATUS_OK);
 
 }
 
 
 void
-vrk_zipf_long_vec(vrk_state *state, const int len, long *res, const double a)
+vrk_zipf_long_vec(vrk_state *state, const int len, long *res,
+    const double a)
 {
-    int i, err, n_accepted, batch_size;
+    int i, err, n_accepted, batch_s;
     double T, U, V, am1, b;
     double *Uvec = NULL, *Vvec = NULL;
     long X;
@@ -961,22 +1105,27 @@ vrk_zipf_long_vec(vrk_state *state, const int len, long *res, const double a)
     Vvec = (double *) mkl_malloc(len * sizeof(double), 64);
     assert(Vvec != NULL);
 
-    for(n_accepted=0; n_accepted < len; ) {
-        batch_size = len - n_accepted;
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, batch_size, Uvec, d_zero, d_one);
+    for(n_accepted = 0; n_accepted < len; ) {
+        batch_s = len - n_accepted;
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, batch_s, Uvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, batch_size, Vvec, d_zero, d_one);
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, batch_s, Vvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
-        for(i = 0; i < batch_size; i++) {
+        for(i = 0; i < batch_s; i++) {
             U = d_one - Uvec[i]; V = Vvec[i];
             X = (long)floor(pow(U, (-1.0)/am1));
             /* The real result may be above what can be represented in a signed
              * long. It will get casted to -sys.maxint-1. Since this is
-             * a straightforward rejection algorithm, we can just reject this value
-             * in the rejection condition below. This function then models a Zipf
-             * distribution truncated to sys.maxint.
+             * a straightforward rejection algorithm, we can just reject this
+             * value in the rejection condition below.
+             * This function then models a Zipf  distribution truncated to
+             * sys.maxint.
              */
             T = pow(d_one + d_one/X, am1);
             if ( (X > 0) && ( (V * X) * (T - d_one)/(b - d_one) <= T/b) ) {
@@ -991,9 +1140,10 @@ vrk_zipf_long_vec(vrk_state *state, const int len, long *res, const double a)
 }
 
 void
-vrk_logseries_vec(vrk_state *state, const int len, int *res, const double theta)
+vrk_logseries_vec(vrk_state *state, const int len, int *res,
+    const double theta)
 {
-    int i, err, n_accepted, batch_size;
+    int i, err, n_accepted, batch_s;
     double q, r, V;
     double *Uvec = NULL, *Vvec = NULL;
     int result;
@@ -1010,14 +1160,19 @@ vrk_logseries_vec(vrk_state *state, const int len, int *res, const double theta)
     assert(Vvec != NULL);
 
     for(n_accepted=0; n_accepted < len; ) {
-        batch_size = len - n_accepted;
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, batch_size, Uvec, d_zero, d_one);
+        batch_s = len - n_accepted;
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, batch_s, Uvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
-        err = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, batch_size, Vvec, d_zero, d_one);
+        err = vdRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD_ACCURATE, state->stream, batch_s, Vvec,
+            d_zero, d_one);
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
-        for(i = 0; i < batch_size; i++) {
+        for(i = 0; i < batch_s; i++) {
+
             V = Vvec[i];
             if (V >= theta) {
                 res[n_accepted++] = 1;
@@ -1052,20 +1207,24 @@ vrk_logseries_vec(vrk_state *state, const int len, int *res, const double theta)
 
 /* samples discrete uniforms from [low, high) */
 void
-vrk_discrete_uniform_vec(vrk_state *state, const int len, int *res, const int low, const int high)
+vrk_discrete_uniform_vec(vrk_state *state, const int len, int *res,
+    const int low, const int high)
 {
     int err;
 
     if (len  < 1)
         return;
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, res, low, high);
+    err = viRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, res,
+        low, high);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_discrete_uniform_long_vec(vrk_state *state, const int len, long *res, const long low, const long high)
+vrk_discrete_uniform_long_vec(vrk_state *state, const int len, long *res,
+    const long low, const long high)
 {
     int err;
     unsigned long max;
@@ -1087,7 +1246,9 @@ vrk_discrete_uniform_long_vec(vrk_state *state, const int len, long *res, const 
         int *buf = (int*) mkl_malloc( len*sizeof(int), 64);
         assert(buf != NULL);
 
-        err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, -1, (const int) max);
+        err = viRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+            -1, (const int) max);
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
@@ -1117,7 +1278,9 @@ vrk_discrete_uniform_long_vec(vrk_state *state, const int len, long *res, const 
         while(n_accepted < len) {
             int k, batchSize = len - n_accepted;
 
-            err = viRngUniformBits64(VSL_RNG_METHOD_UNIFORM_STD, state->stream, batchSize, (unsigned MKL_INT64 *) buf);
+            err = viRngUniformBits64(
+                VSL_RNG_METHOD_UNIFORM_STD, state->stream, batchSize,
+                (unsigned MKL_INT64 *) buf);
             assert(err == VSL_STATUS_OK);
 
             for(k=0; k < batchSize; k++) {
@@ -1139,9 +1302,13 @@ vrk_ulong_vec(vrk_state *state, const int len, unsigned long *res)
     int err;
 
 #if ULONG_MAX <= 0xffffffffUL
-    err = viRngUniformBits32(VSL_RNG_METHOD_UNIFORMBITS32_STD, state->stream, len, (unsigned MKL_INT*) res);
+    err = viRngUniformBits32(
+        VSL_RNG_METHOD_UNIFORMBITS32_STD, state->stream, len,
+        (unsigned MKL_INT*) res);
 #else
-    err = viRngUniformBits64(VSL_RNG_METHOD_UNIFORMBITS64_STD, state->stream, len, (unsigned MKL_INT64*) res);
+    err = viRngUniformBits64(
+        VSL_RNG_METHOD_UNIFORMBITS64_STD, state->stream, len,
+        (unsigned MKL_INT64*) res);
 #endif
 
     assert(err == VSL_STATUS_OK);
@@ -1162,7 +1329,8 @@ vrk_long_vec(vrk_state *state, const int len, long *res)
 }
 
 void
-vrk_rand_bool_vec(vrk_state *state, const int len, npy_bool *res, const npy_bool lo, const npy_bool hi)
+vrk_rand_bool_vec(vrk_state *state, const int len, npy_bool *res,
+    const npy_bool lo, const npy_bool hi)
 {
     int err, i;
     int *buf = NULL;
@@ -1181,7 +1349,9 @@ vrk_rand_bool_vec(vrk_state *state, const int len, npy_bool *res, const npy_bool
     buf = (int *) mkl_malloc(len * sizeof(int), 64);
     assert( buf != NULL);
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, (const int) lo, (const int) hi + 1);
+    err = viRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+        (const int) lo, (const int) hi + 1);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -1191,7 +1361,8 @@ vrk_rand_bool_vec(vrk_state *state, const int len, npy_bool *res, const npy_bool
 }
 
 void
-vrk_rand_uint8_vec(vrk_state *state, const int len, npy_uint8 *res, const npy_uint8 lo, const npy_uint8 hi)
+vrk_rand_uint8_vec(vrk_state *state, const int len, npy_uint8 *res,
+    const npy_uint8 lo, const npy_uint8 hi)
 {
     int err, i;
     int *buf = NULL;
@@ -1210,7 +1381,9 @@ vrk_rand_uint8_vec(vrk_state *state, const int len, npy_uint8 *res, const npy_ui
     buf = (int *) mkl_malloc(len * sizeof(int), 64);
     assert( buf != NULL);
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, (const int) lo, (const int) hi + 1);
+    err = viRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+        (const int) lo, (const int) hi + 1);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -1221,7 +1394,8 @@ vrk_rand_uint8_vec(vrk_state *state, const int len, npy_uint8 *res, const npy_ui
 }
 
 void
-vrk_rand_int8_vec(vrk_state *state, const int len, npy_int8 *res, const npy_int8 lo, const npy_int8 hi)
+vrk_rand_int8_vec(vrk_state *state, const int len, npy_int8 *res,
+    const npy_int8 lo, const npy_int8 hi)
 {
     int err, i;
     int *buf = NULL;
@@ -1240,7 +1414,8 @@ vrk_rand_int8_vec(vrk_state *state, const int len, npy_int8 *res, const npy_int8
     buf = (int *) mkl_malloc(len * sizeof(int), 64);
     assert( buf != NULL);
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, (const int) lo, (const int) hi + 1);
+    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+        (const int) lo, (const int) hi + 1);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -1250,7 +1425,8 @@ vrk_rand_int8_vec(vrk_state *state, const int len, npy_int8 *res, const npy_int8
 }
 
 void
-vrk_rand_uint16_vec(vrk_state *state, const int len, npy_uint16 *res, const npy_uint16 lo, const npy_uint16 hi)
+vrk_rand_uint16_vec(vrk_state *state, const int len, npy_uint16 *res,
+    const npy_uint16 lo, const npy_uint16 hi)
 {
     int err, i;
     int *buf = NULL;
@@ -1269,7 +1445,9 @@ vrk_rand_uint16_vec(vrk_state *state, const int len, npy_uint16 *res, const npy_
     buf = (int *) mkl_malloc(len * sizeof(int), 64);
     assert( buf != NULL);
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, (const int) lo, (const int) hi + 1);
+    err = viRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+        (const int) lo, (const int) hi + 1);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -1279,7 +1457,8 @@ vrk_rand_uint16_vec(vrk_state *state, const int len, npy_uint16 *res, const npy_
 }
 
 void
-vrk_rand_int16_vec(vrk_state *state, const int len, npy_int16 *res, const npy_int16 lo, const npy_int16 hi)
+vrk_rand_int16_vec(vrk_state *state, const int len, npy_int16 *res,
+    const npy_int16 lo, const npy_int16 hi)
 {
     int err, i;
     int *buf = NULL;
@@ -1298,7 +1477,9 @@ vrk_rand_int16_vec(vrk_state *state, const int len, npy_int16 *res, const npy_in
     buf = (int *) mkl_malloc(len * sizeof(int), 64);
     assert( buf != NULL);
 
-    err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, (const int) lo, (const int) hi + 1);
+    err = viRngUniform(
+        VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+        (const int) lo, (const int) hi + 1);
     assert(err == VSL_STATUS_OK);
 
     #pragma ivdep
@@ -1308,7 +1489,8 @@ vrk_rand_int16_vec(vrk_state *state, const int len, npy_int16 *res, const npy_in
 }
 
 void
-vrk_rand_uint32_vec(vrk_state *state, const int len, npy_uint32 *res, const npy_uint32 lo, const npy_uint32 hi)
+vrk_rand_uint32_vec(vrk_state *state, const int len, npy_uint32 *res,
+    const npy_uint32 lo, const npy_uint32 hi)
 {
     int err;
     unsigned int intm = INT_MAX;
@@ -1318,7 +1500,9 @@ vrk_rand_uint32_vec(vrk_state *state, const int len, npy_uint32 *res, const npy_
 
     /* optimization for lo = 0 and hi = 2**32-1 */
     if (!(lo || ~hi)) {
-        err = viRngUniformBits32(VSL_RNG_METHOD_UNIFORMBITS32_STD, state->stream, len, (unsigned MKL_INT *) res);
+        err = viRngUniformBits32(
+            VSL_RNG_METHOD_UNIFORMBITS32_STD, state->stream, len,
+            (unsigned MKL_INT *) res);
         assert(err == VSL_STATUS_OK);
 
         return;
@@ -1332,20 +1516,25 @@ vrk_rand_uint32_vec(vrk_state *state, const int len, npy_uint32 *res, const npy_
         /* if lo is non-zero, shift one more to accommodate possibility of hi being ULONG_MAX */
         if (lo) shft++;
 
-        err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res, (const int) (lo - shft), (const int) (hi - shft + 1U));
+        err = viRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res,
+            (const int) (lo - shft), (const int) (hi - shft + 1U));
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
         for(i=0; i < len; i++) res[i] += shft;
 
     } else {
-        err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res, (const int) lo, (const int) hi + 1);
+        err = viRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res,
+            (const int) lo, (const int) hi + 1);
         assert(err == VSL_STATUS_OK);
     }
 }
 
 void
-vrk_rand_int32_vec(vrk_state *state, const int len, npy_int32 *res, const npy_int32 lo, const npy_int32 hi)
+vrk_rand_int32_vec(vrk_state *state, const int len, npy_int32 *res,
+    const npy_int32 lo, const npy_int32 hi)
 {
     int err;
     int intm = INT_MAX;
@@ -1356,19 +1545,23 @@ vrk_rand_int32_vec(vrk_state *state, const int len, npy_int32 *res, const npy_in
     if(hi >= intm) {
         int i;
 
-        vrk_rand_uint32_vec(state, len, (npy_uint32 *) res, 0U, (npy_uint32) (hi - lo));
+        vrk_rand_uint32_vec(state, len, (npy_uint32 *) res,
+            0U, (npy_uint32) (hi - lo));
 
         #pragma ivdep
         for(i=0; i < len; i++) res[i] += lo;
 
     } else {
-        err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res, (const int) lo, (const int) hi + 1);
+        err = viRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, (int *) res,
+            (const int) lo, (const int) hi + 1);
         assert(err == VSL_STATUS_OK);
     }
 }
 
 void
-vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res, const npy_uint64 lo, const npy_uint64 hi)
+vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res,
+    const npy_uint64 lo, const npy_uint64 hi)
 {
     npy_uint64 rng;
     int i, err;
@@ -1378,7 +1571,9 @@ vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res, const npy_
 
     /* optimization for lo = 0 and hi = 2**64-1 */
     if (!(lo || ~hi)) {
-        err = viRngUniformBits64(VSL_RNG_METHOD_UNIFORMBITS64_STD, state->stream, len, (unsigned MKL_INT64 *) res);
+        err = viRngUniformBits64(
+            VSL_RNG_METHOD_UNIFORMBITS64_STD, state->stream, len,
+            (unsigned MKL_INT64 *) res);
         assert(err == VSL_STATUS_OK);
 
         return;
@@ -1398,7 +1593,9 @@ vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res, const npy_
         int *buf = (int*) mkl_malloc(len * sizeof(int), 64);
         assert(buf != NULL);
 
-        err = viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf, 0, (const int) rng);
+        err = viRngUniform(
+            VSL_RNG_METHOD_UNIFORM_STD, state->stream, len, buf,
+            0, (const int) rng);
         assert(err == VSL_STATUS_OK);
 
         #pragma ivdep
@@ -1424,7 +1621,9 @@ vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res, const npy_
         while(n_accepted < len) {
             int k, batchSize = len - n_accepted;
 
-            err = viRngUniformBits64(VSL_RNG_METHOD_UNIFORM_STD, state->stream, batchSize, (unsigned MKL_INT64 *) buf);
+            err = viRngUniformBits64(
+                VSL_RNG_METHOD_UNIFORM_STD, state->stream, batchSize,
+                (unsigned MKL_INT64 *) buf);
             assert(err == VSL_STATUS_OK);
 
             for(k=0; k < batchSize; k++) {
@@ -1440,7 +1639,8 @@ vrk_rand_uint64_vec(vrk_state *state, const int len, npy_uint64 *res, const npy_
 }
 
 void
-vrk_rand_int64_vec(vrk_state *state, const int len, npy_int64 *res, const npy_int64 lo, const npy_int64 hi)
+vrk_rand_int64_vec(vrk_state *state, const int len, npy_int64 *res,
+    const npy_int64 lo, const npy_int64 hi)
 {
     npy_uint64 rng;
     int i, err;
@@ -1457,15 +1657,17 @@ vrk_rand_int64_vec(vrk_state *state, const int len, npy_int64 *res, const npy_in
 
 }
 
+
 const MKL_INT cholesky_storage_flags[3] = {
     VSL_MATRIX_STORAGE_FULL,
     VSL_MATRIX_STORAGE_PACKED,
     VSL_MATRIX_STORAGE_DIAGONAL
 };
 
+
 void
-vrk_multinormal_vec_ICDF(vrk_state *state, const int len, double *res, const int dim, double * mean_vec, double *ch,
-    const ch_st_enum storage_flag)
+vrk_multinormal_vec_ICDF(vrk_state *state, const int len, double *res,
+    const int dim, double *mean_vec, double *ch, const ch_st_enum storage_flag)
 {
     int err;
     const MKL_INT storage_mode = cholesky_storage_flags[storage_flag];
@@ -1476,31 +1678,36 @@ vrk_multinormal_vec_ICDF(vrk_state *state, const int len, double *res, const int
 }
 
 void
-vrk_multinormal_vec_BM1(vrk_state *state, const int len, double *res, const int dim, double * mean_vec, double *ch,
-    const ch_st_enum storage_flag)
+vrk_multinormal_vec_BM1(vrk_state *state, const int len, double *res,
+    const int dim, double *mean_vec, double *ch, const ch_st_enum storage_flag)
 {
     int err;
     const MKL_INT storage_mode = cholesky_storage_flags[storage_flag];
 
-    err = vdRngGaussianMV(VSL_RNG_METHOD_GAUSSIANMV_BOXMULLER, state->stream, len, res, dim, storage_mode, mean_vec, ch);
+    err = vdRngGaussianMV(
+        VSL_RNG_METHOD_GAUSSIANMV_BOXMULLER, state->stream, len, res,
+        dim, storage_mode, mean_vec, ch);
     assert(err == VSL_STATUS_OK);
 
 }
 
 void
-vrk_multinormal_vec_BM2(vrk_state *state, const int len, double *res, const int dim, double * mean_vec, double *ch,
-    const ch_st_enum storage_flag)
+vrk_multinormal_vec_BM2(vrk_state *state, const int len, double *res,
+    const int dim, double *mean_vec, double *ch, const ch_st_enum storage_flag)
 {
     int err;
     const MKL_INT storage_mode = cholesky_storage_flags[storage_flag];
 
-    err = vdRngGaussianMV(VSL_RNG_METHOD_GAUSSIANMV_BOXMULLER2, state->stream, len, res, dim, storage_mode, mean_vec, ch);
+    err = vdRngGaussianMV(
+        VSL_RNG_METHOD_GAUSSIANMV_BOXMULLER2, state->stream, len, res,
+        dim, storage_mode, mean_vec, ch);
     assert(err == VSL_STATUS_OK);
 
 }
 
-/* This code is taken from distribution.c, and is currently unused. It is retained here for
-   possible future optimization of sampling from multinomial */
+/* This code is taken from distribution.c, and is currently unused.
+   It is retained here for possible future optimization of sampling
+   from multinomial */
 
 static double vrk_double(vrk_state *state) {
     double res;
