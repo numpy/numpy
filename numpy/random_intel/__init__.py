@@ -96,31 +96,30 @@ if get_info('mkl'):
     # To get sub-modules
     from .info import __doc__, __all__
 
-
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
         from .mklrand import *
 
-        # Some aliases:
-        ranf = random = sample = random_sample
-        __all__.extend(['ranf', 'random', 'sample'])
+    # Some aliases:
+    ranf = random = sample = random_sample
+    __all__.extend(['ranf', 'random', 'sample'])
 
 
-        def __RandomState_ctor():
-            """Return a RandomState instance.
+    def __RandomState_ctor():
+        """Return a RandomState instance.
             
-            This function exists solely to assist (un)pickling.
+        This function exists solely to assist (un)pickling.
             
-            Note that the state of the RandomState returned here is irrelevant, as this function's
-            entire purpose is to return a newly allocated RandomState whose state pickle can set.
-            Consequently the RandomState returned by this function is a freshly allocated copy
-            with a seed=0.
+        Note that the state of the RandomState returned here is irrelevant, as this function's
+        entire purpose is to return a newly allocated RandomState whose state pickle can set.
+        Consequently the RandomState returned by this function is a freshly allocated copy
+        with a seed=0.
             
-            See https://github.com/numpy/numpy/issues/4763 for a detailed discussion
+        See https://github.com/numpy/numpy/issues/4763 for a detailed discussion
             
-            """
-            return RandomState(seed=0)
+        """
+        return RandomState(seed=0)
             
-        from numpy.testing.nosetester import _numpy_tester
-        test = _numpy_tester().test
-        bench = _numpy_tester().bench
+    from numpy.testing.nosetester import _numpy_tester
+    test = _numpy_tester().test
+    bench = _numpy_tester().bench

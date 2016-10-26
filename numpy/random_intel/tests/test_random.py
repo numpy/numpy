@@ -4,13 +4,21 @@ import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
         assert_warns)
+from numpy.testing.decorators import skipif
 from numpy import random_intel as rnd
 from numpy.compat import asbytes
 import sys
 import warnings
 
+from numpy.distutils.system_info import get_info
+if get_info('mkl'):
+    skip_test = False
+else:
+    skip_test = True
+
 
 class TestSeed_Intel(TestCase):
+    @skipif(skip_test)
     def test_scalar(self):
         evs_zero_seed = {
             'MT19937' : 844, 'SFMT19937' : 857,
@@ -31,6 +39,7 @@ class TestSeed_Intel(TestCase):
             assert_equal(s.get_state()[0], brng_algo)
             assert_equal(s.randint(1000), evs_max_seed[brng_algo])
 
+    @skipif(skip_test)
     def test_array(self):
         s = rnd.RandomState(range(10), brng='MT19937')
         assert_equal(s.randint(1000), 410)
@@ -41,11 +50,13 @@ class TestSeed_Intel(TestCase):
         s = rnd.RandomState([4294967295], brng='MT19937')
         assert_equal(s.randint(1000), 635)
 
+    @skipif(skip_test)
     def test_invalid_scalar(self):
         # seed must be an unsigned 32 bit integers
         assert_raises(TypeError, rnd.RandomState, -0.5)
         assert_raises(ValueError, rnd.RandomState, -1)
 
+    @skipif(skip_test)
     def test_invalid_array(self):
         # seed must be an unsigned 32 bit integers
         assert_raises(TypeError, rnd.RandomState, [-0.5])
@@ -55,6 +66,7 @@ class TestSeed_Intel(TestCase):
         assert_raises(ValueError, rnd.RandomState, [1, -2, 4294967296])
 
 class TestBinomial_Intel(TestCase):
+    @skipif(skip_test)
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -64,24 +76,29 @@ class TestBinomial_Intel(TestCase):
             assert_(rnd.binomial(0, p) == 0)
             np.testing.assert_array_equal(rnd.binomial(zeros, p), zeros)
 
+    @skipif(skip_test)
     def test_p_is_nan(self):
         # Issue #4571.
         assert_raises(ValueError, rnd.binomial, 1, np.nan)
 
 
 class TestMultinomial_Intel(TestCase):
+    @skipif(skip_test)
     def test_basic(self):
         rnd.multinomial(100, [0.2, 0.8])
 
+    @skipif(skip_test)
     def test_zero_probability(self):
         rnd.multinomial(100, [0.2, 0.8, 0.0, 0.0, 0.0])
 
+    @skipif(skip_test)
     def test_int_negative_interval(self):
         assert_(-5 <= rnd.randint(-5, -1) < -1)
         x = rnd.randint(-5, -1, 5)
         assert_(np.all(-5 <= x))
         assert_(np.all(x < -1))
 
+    @skipif(skip_test)
     def test_size(self):
         # gh-3173
         p = [0.5, 0.5]
@@ -98,17 +115,20 @@ class TestMultinomial_Intel(TestCase):
 
 
 class TestSetState_Intel(TestCase):
+    @skipif(skip_test)
     def setUp(self):
         self.seed = 1234567890
         self.prng = rnd.RandomState(self.seed)
         self.state = self.prng.get_state()
 
+    @skipif(skip_test)
     def test_basic(self):
         old = self.prng.tomaxint(16)
         self.prng.set_state(self.state)
         new = self.prng.tomaxint(16)
         assert_(np.all(old == new))
 
+    @skipif(skip_test)
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
         old = self.prng.standard_normal(size=3)
@@ -116,6 +136,7 @@ class TestSetState_Intel(TestCase):
         new = self.prng.standard_normal(size=3)
         assert_(np.all(old == new))
 
+    @skipif(skip_test)
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
@@ -126,6 +147,7 @@ class TestSetState_Intel(TestCase):
         new = self.prng.standard_normal(size=3)
         assert_(np.all(old == new))
 
+    @skipif(skip_test)
     def test_backwards_compatibility(self):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
@@ -139,22 +161,25 @@ class TestSetState_Intel(TestCase):
             assert_(np.all(x1 == x2))
             assert_(np.all(x1 == x3))
 
+    @skipif(skip_test)
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
 class TestRandint_Intel(TestCase):
+    @skipif(skip_test)
+    def setUp(self):
+        self.rfunc = rnd.randint
+        # valid integer/boolean types
+        self.itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+                      np.int32, np.uint32, np.int64, np.uint64]
 
-    rfunc = rnd.randint
-
-    # valid integer/boolean types
-    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
-             np.int32, np.uint32, np.int64, np.uint64]
-
+    @skipif(skip_test)
     def test_unsupported_type(self):
         assert_raises(TypeError, self.rfunc, 1, dtype=np.float)
 
+    @skipif(skip_test)
     def test_bounds_checking(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
@@ -164,6 +189,7 @@ class TestRandint_Intel(TestCase):
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
 
+    @skipif(skip_test)
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
@@ -175,6 +201,7 @@ class TestRandint_Intel(TestCase):
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
+    @skipif(skip_test)
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
         rnd.seed()
@@ -187,6 +214,7 @@ class TestRandint_Intel(TestCase):
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
+    @skipif(skip_test)
     def test_repeatability(self):
         import hashlib
         # We use a md5 hash of generated sequences of 1000 samples
@@ -221,6 +249,7 @@ class TestRandint_Intel(TestCase):
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
 
+    @skipif(skip_test)
     def test_respect_dtype_singleton(self):
         # See gh-7203
         for dt in self.itype:
@@ -247,10 +276,12 @@ class TestRandomDist_Intel(TestCase):
     # random variates can vary across platforms, yet be statistically indistinguishable to the end user,
     # that is no computationally feasible statistical experiment can detect the difference.
 
+    @skipif(skip_test)
     def setUp(self):
         self.seed = 1234567890
         self.brng = 'SFMT19937'
 
+    @skipif(skip_test)
     def test_rand(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.rand(3, 2)
@@ -259,6 +290,7 @@ class TestRandomDist_Intel(TestCase):
                             [0.518550637178123, 0.98780936631374061]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+    @skipif(skip_test)
     def test_randn(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.randn(3, 2)
@@ -267,18 +299,21 @@ class TestRandomDist_Intel(TestCase):
                             [0.04651632135517459, 2.2510674226058036]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+    @skipif(skip_test)
     def test_randint(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.randint(-99, 99, size=(3, 2))
         desired = np.array([[95, -96], [-65, 41], [3, 96]])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_random_integers(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.random_integers(-99, 99, size=(3, 2))
         desired = np.array([[96, -96], [-64, 42], [4, 97]])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_random_integers_max_int(self):
         # Tests whether random_integers can generate the
         # maximum allowed Python int that can be converted
@@ -290,6 +325,7 @@ class TestRandomDist_Intel(TestCase):
         desired = np.iinfo('l').max
         np.testing.assert_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_random_integers_deprecated(self):
         with warnings.catch_warnings():
             warnings.simplefilter("error", DeprecationWarning)
@@ -304,6 +340,7 @@ class TestRandomDist_Intel(TestCase):
                           rnd.random_integers,
                           np.iinfo('l').max, np.iinfo('l').max)
 
+    @skipif(skip_test)
     def test_random_sample(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.random_sample((3, 2))
@@ -312,24 +349,28 @@ class TestRandomDist_Intel(TestCase):
                             [0.518550637178123, 0.9878093663137406]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+    @skipif(skip_test)
     def test_choice_uniform_replace(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.choice(4, 4)
         desired = np.array([3, 0, 0, 2])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_choice_nonuniform_replace(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
         desired = np.array([3, 0, 0, 1])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_choice_uniform_noreplace(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.choice(4, 3, replace=False)
         desired = np.array([2, 1, 3])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_choice_nonuniform_noreplace(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.choice(4, 3, replace=False,
@@ -337,12 +378,14 @@ class TestRandomDist_Intel(TestCase):
         desired = np.array([3, 0, 1])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_choice_noninteger(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.choice(['a', 'b', 'c', 'd'], 4)
         desired = np.array(['d', 'a', 'a', 'c'])
         np.testing.assert_array_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_choice_exceptions(self):
         sample = rnd.choice
         assert_raises(ValueError, sample, -1, 3)
@@ -358,6 +401,7 @@ class TestRandomDist_Intel(TestCase):
         assert_raises(ValueError, sample, [1, 2, 3], 2, replace=False,
                                           p=[1, 0, 0])
 
+    @skipif(skip_test)
     def test_choice_return_shape(self):
         p = [0.1, 0.9]
         # Check scalar
@@ -394,12 +438,14 @@ class TestRandomDist_Intel(TestCase):
         assert_(rnd.choice(6, s, replace=False, p=p).shape, s)
         assert_(rnd.choice(np.arange(6), s, replace=True).shape, s)
 
+    @skipif(skip_test)
     def test_bytes(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.bytes(10)
         desired = asbytes('\xa4\xde\xde{\xb4\x88\xe6\x84*2')
         np.testing.assert_equal(actual, desired)
 
+    @skipif(skip_test)
     def test_shuffle(self):
         # Test lists, arrays (of various dtypes), and multidimensional versions
         # of both, c-contiguous or not:
@@ -424,6 +470,7 @@ class TestRandomDist_Intel(TestCase):
             np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_shuffle_masked(self):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5,4)) % 3 - 1, -1)
@@ -439,6 +486,7 @@ class TestRandomDist_Intel(TestCase):
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
 
+    @skipif(skip_test)
     def test_beta(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.beta(.1, .9, size=(3, 2))
@@ -449,6 +497,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_binomial(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.binomial(100.123, .456, size=(3, 2))
@@ -456,6 +505,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_chisquare(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.chisquare(50, size=(3, 2))
@@ -465,6 +515,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_dirichlet(self):
         rnd.seed(self.seed, self.brng)
         alpha = np.array([51.72840233779265162, 39.74494232180943953])
@@ -478,6 +529,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_dirichlet_size(self):
         # gh-3173
         p = np.array([51.72840233779265162, 39.74494232180943953])
@@ -491,6 +543,7 @@ class TestRandomDist_Intel(TestCase):
         assert_raises(TypeError, rnd.dirichlet, p, np.float(1))
 
 
+    @skipif(skip_test)
     def test_exponential(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.exponential(1.1234, size=(3, 2))
@@ -500,6 +553,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_f(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.f(12, 77, size=(3, 2))
@@ -509,6 +563,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=9)
 
 
+    @skipif(skip_test)
     def test_gamma(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.gamma(5, 3, size=(3, 2))
@@ -518,6 +573,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_geometric(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.geometric(.123456789, size=(3, 2))
@@ -525,6 +581,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_gumbel(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.gumbel(loc=.123456789, scale=2.0, size=(3, 2))
@@ -534,6 +591,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_hypergeometric(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.hypergeometric(10.1, 5.5, 14, size=(3, 2))
@@ -559,6 +617,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_laplace(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.laplace(loc=.123456789, scale=2.0, size=(3, 2))
@@ -568,6 +627,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_logistic(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.logistic(loc=.123456789, scale=2.0, size=(3, 2))
@@ -577,6 +637,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_lognormal(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.lognormal(mean=.123456789, sigma=2.0, size=(3, 2))
@@ -592,6 +653,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_logseries(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.logseries(p=.923456789, size=(3, 2))
@@ -599,6 +661,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_multinomial(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.multinomial(20, [1/6.]*6, size=(3, 2))
@@ -608,6 +671,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_multivariate_normal(self):
         rnd.seed(self.seed, self.brng)
         mean = (.123456789, 10)
@@ -634,6 +698,7 @@ class TestRandomDist_Intel(TestCase):
         assert_warns(RuntimeWarning, rnd.multivariate_normal, mean, cov)
 
 
+    @skipif(skip_test)
     def test_multinormal_cholesky(self):
         rnd.seed(self.seed, self.brng)
         mean = (.123456789, 10)
@@ -650,6 +715,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
 
+    @skipif(skip_test)
     def test_negative_binomial(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.negative_binomial(n=100, p=.12345, size=(3, 2))
@@ -657,6 +723,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_equal(actual, desired)
 
 
+    @skipif(skip_test)
     def test_noncentral_chisquare(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.noncentral_chisquare(df=5, nonc=5, size=(3, 2))
@@ -672,6 +739,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_noncentral_f(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.noncentral_f(dfnum=5, dfden=2, nonc=1,
@@ -681,6 +749,8 @@ class TestRandomDist_Intel(TestCase):
                             [0.3489618249246971, 1.5035633972571092]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
+
+    @skipif(skip_test)
     def test_normal(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.normal(loc=.123456789, scale=2.0, size=(3, 2))
@@ -704,6 +774,7 @@ class TestRandomDist_Intel(TestCase):
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
 
+    @skipif(skip_test)
     def test_pareto(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.pareto(a=.123456789, size=(3, 2))
@@ -719,6 +790,8 @@ class TestRandomDist_Intel(TestCase):
         # tolerance on this test:
         np.testing.assert_array_almost_equal_nulp(actual, desired, nulp=30)
 
+
+    @skipif(skip_test)
     def test_poisson(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.poisson(lam=.123456789, size=(3, 2))
@@ -730,6 +803,8 @@ class TestRandomDist_Intel(TestCase):
         desired = np.array([[1310, 1162], [1202, 1254], [1236, 1314]])
         np.testing.assert_array_equal(actual, desired)
 
+
+    @skipif(skip_test)
     def test_poisson_exceptions(self):
         lambig = np.iinfo('l').max
         lamneg = -1
@@ -738,6 +813,8 @@ class TestRandomDist_Intel(TestCase):
         assert_raises(ValueError, rnd.poisson, lambig)
         assert_raises(ValueError, rnd.poisson, [lambig]*10)
 
+
+    @skipif(skip_test)
     def test_power(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.power(a=.123456789, size=(3, 2))
@@ -746,6 +823,8 @@ class TestRandomDist_Intel(TestCase):
                             [0.004895628723087296, 0.9054248959192386]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_rayleigh(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.rayleigh(scale=10, size=(3, 2))
@@ -754,6 +833,8 @@ class TestRandomDist_Intel(TestCase):
                             [11.460520015934597, 1.5662406536967712]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
+
+    @skipif(skip_test)
     def test_standard_cauchy(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.standard_cauchy(size=(3, 2))
@@ -762,6 +843,8 @@ class TestRandomDist_Intel(TestCase):
                             [0.058344614106131, 26.09825325697747]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=9)
 
+
+    @skipif(skip_test)
     def test_standard_exponential(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.standard_exponential(size=(3, 2))
@@ -770,6 +853,8 @@ class TestRandomDist_Intel(TestCase):
                             [0.6567175951781875, 0.012265548926462446]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_standard_gamma(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.standard_gamma(shape=3, size=(3, 2))
@@ -778,6 +863,8 @@ class TestRandomDist_Intel(TestCase):
                             [3.2630929395548147, 2.772756340265377]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
+
+    @skipif(skip_test)
     def test_standard_normal(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.standard_normal(size=(3, 2))
@@ -793,6 +880,8 @@ class TestRandomDist_Intel(TestCase):
                             [-0.08769719991267745, 1.1426917236242171]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=7)
 
+
+    @skipif(skip_test)
     def test_standard_t(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.standard_t(df=10, size=(3, 2))
@@ -801,6 +890,8 @@ class TestRandomDist_Intel(TestCase):
                             [-1.2657694296239195, 0.307870906117017]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_triangular(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.triangular(left=5.12, mode=10.23, right=20.34,
@@ -810,6 +901,8 @@ class TestRandomDist_Intel(TestCase):
                             [11.732872979633328, 18.970392754850423]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_uniform(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.uniform(low=1.23, high=10.54, size=(3, 2))
@@ -818,6 +911,8 @@ class TestRandomDist_Intel(TestCase):
                             [6.057706432128325, 10.426505200380925]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_uniform_range_bounds(self):
         fmin = np.finfo('float').min
         fmax = np.finfo('float').max
@@ -832,6 +927,8 @@ class TestRandomDist_Intel(TestCase):
         # (fmax / 1e17) - fmin is within range, so this should not throw
         rnd.uniform(low=fmin, high=fmax / 1e17)
 
+
+    @skipif(skip_test)
     def test_vonmises(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.vonmises(mu=1.23, kappa=1.54, size=(3, 2))
@@ -840,12 +937,16 @@ class TestRandomDist_Intel(TestCase):
                             [0.9510301598100863, 2.0284972823322818]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_vonmises_small(self):
         # check infinite loop, gh-4720
         rnd.seed(self.seed, self.brng)
         r = rnd.vonmises(mu=0., kappa=1.1e-8, size=10**6)
         np.testing.assert_(np.isfinite(r).all())
 
+
+    @skipif(skip_test)
     def test_wald(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.wald(mean=1.23, scale=1.54, size=(3, 2))
@@ -854,6 +955,8 @@ class TestRandomDist_Intel(TestCase):
                             [1.1943709105062374, 0.3273455943060196]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+
+    @skipif(skip_test)
     def test_weibull(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.weibull(a=1.23, size=(3, 2))
@@ -862,6 +965,7 @@ class TestRandomDist_Intel(TestCase):
                             [0.710439924774508, 0.02793103204502023]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=10)
 
+    @skipif(skip_test)
     def test_zipf(self):
         rnd.seed(self.seed, self.brng)
         actual = rnd.zipf(a=1.23, size=(3, 2))
@@ -871,9 +975,12 @@ class TestRandomDist_Intel(TestCase):
 
 class TestThread_Intel(object):
     # make sure each state produces the same sequence even in threads
+    @skipif(skip_test)
     def setUp(self):
         self.seeds = range(4)
 
+
+    @skipif(skip_test)
     def check_function(self, function, sz):
         from threading import Thread
 
@@ -896,16 +1003,22 @@ class TestThread_Intel(object):
         else:
             np.testing.assert_array_equal(out1, out2)
 
+
+    @skipif(skip_test)
     def test_normal(self):
         def gen_random(state, out):
             out[...] = state.normal(size=10000)
         self.check_function(gen_random, sz=(10000,))
 
+
+    @skipif(skip_test)
     def test_exp(self):
         def gen_random(state, out):
             out[...] = state.exponential(scale=np.ones((100, 1000)))
         self.check_function(gen_random, sz=(100, 1000))
 
+
+    @skipif(skip_test)
     def test_multinomial(self):
         def gen_random(state, out):
             out[...] = state.multinomial(10, [1/6.]*6, size=10000)

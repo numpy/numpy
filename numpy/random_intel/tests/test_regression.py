@@ -3,13 +3,21 @@ from __future__ import division, absolute_import, print_function
 import sys
 from numpy.testing import (TestCase, run_module_suite, assert_,
                            assert_array_equal, assert_raises)
+from numpy.testing.decorators import skipif
 from numpy import random_intel as rnd
 from numpy.compat import long
 import numpy as np
 
+from numpy.distutils.system_info import get_info
+if get_info('mkl'):
+    skip_test = False
+else:
+    skip_test = True
+
 
 class TestRegression_Intel(TestCase):
 
+    @skipif(skip_test)
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
@@ -17,6 +25,8 @@ class TestRegression_Intel(TestCase):
             r = rnd.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
+
+    @skipif(skip_test)
     def test_hypergeometric_range(self):
         # Test for ticket #921
         assert_(np.all(rnd.hypergeometric(3, 18, 11, size=10) < 4))
@@ -30,6 +40,8 @@ class TestRegression_Intel(TestCase):
         for arg in args:
             assert_(rnd.hypergeometric(*arg) > 0)
 
+
+    @skipif(skip_test)
     def test_logseries_convergence(self):
         # Test for ticket #923
         N = 1000
@@ -46,6 +58,8 @@ class TestRegression_Intel(TestCase):
         msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
 
+
+    @skipif(skip_test)
     def test_permutation_longs(self):
         rnd.seed(1234)
         a = rnd.permutation(12)
@@ -53,6 +67,8 @@ class TestRegression_Intel(TestCase):
         b = rnd.permutation(long(12))
         assert_array_equal(a, b)
 
+
+    @skipif(skip_test)
     def test_randint_range(self):
         # Test for ticket #1690
         lmax = np.iinfo('l').max
@@ -62,6 +78,8 @@ class TestRegression_Intel(TestCase):
         except:
             raise AssertionError
 
+
+    @skipif(skip_test)
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
         for t in [[1, 2, 3, None],
@@ -73,6 +91,8 @@ class TestRegression_Intel(TestCase):
             rnd.shuffle(shuffled)
             assert_array_equal(shuffled, [t[0], t[2], t[1], t[3]])
 
+
+    @skipif(skip_test)
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
         m = rnd.RandomState()
@@ -83,6 +103,8 @@ class TestRegression_Intel(TestCase):
             # If m.state is not honored, the result will change
             assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
 
+
+    @skipif(skip_test)
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
         # Check that the multivariate_normal size argument can be a
@@ -91,6 +113,8 @@ class TestRegression_Intel(TestCase):
         rnd.multivariate_normal([0], [[0]], size=np.int_(1))
         rnd.multivariate_normal([0], [[0]], size=np.int64(1))
 
+
+    @skipif(skip_test)
     def test_beta_small_parameters(self):
         # Test that beta with small a and b parameters does not produce
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
@@ -98,6 +122,8 @@ class TestRegression_Intel(TestCase):
         x = rnd.beta(0.0001, 0.0001, size=100)
         assert_(not np.any(np.isnan(x)), 'Nans in rnd.beta')
 
+
+    @skipif(skip_test)
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
         # For low precision dtypes the tolerance was too tight.
@@ -111,6 +137,8 @@ class TestRegression_Intel(TestCase):
             assert_(c in a)
             assert_raises(ValueError, rnd.choice, a, p=probs*0.9)
 
+
+    @skipif(skip_test)
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
         # will not cause a segfault on garbage collection
@@ -127,6 +155,7 @@ class TestRegression_Intel(TestCase):
         gc.collect()
 
 
+    @skipif(skip_test)
     def test_shuffle_of_array_of_objects(self):
         # Test that permuting an array of objects will not cause
         # a segfault on garbage collection.
