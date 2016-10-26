@@ -20,7 +20,6 @@ cdef extern from "Python.h":
 
     # Memory API
     void* PyMem_Malloc(size_t n)
-    void* PyMem_Calloc(size_t s, size_t n)
     void* PyMem_Realloc(void* buf, size_t n)
     void PyMem_Free(void* buf)
 
@@ -28,20 +27,6 @@ cdef extern from "Python.h":
     void Py_XDECREF(object obj)
     void Py_INCREF(object obj)
     void Py_XINCREF(object obj)
-
-    # CObject API
-# If this is uncommented it needs to be fixed to use PyCapsule
-# for Python >= 3.0
-#
-#    ctypedef void (*destructor1)(void* cobj)
-#    ctypedef void (*destructor2)(void* cobj, void* desc)
-#    int PyCObject_Check(object p)
-#    object PyCObject_FromVoidPtr(void* cobj, destructor1 destr)
-#    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc,
-#        destructor2 destr)
-#    void* PyCObject_AsVoidPtr(object self)
-#    void* PyCObject_GetDesc(object self)
-#    int PyCObject_SetVoidPtr(object self, void* cobj)
 
     # TypeCheck API
     int PyFloat_Check(object obj)
