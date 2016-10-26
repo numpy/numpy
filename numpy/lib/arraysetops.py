@@ -81,6 +81,10 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
+    # fast track default case
+    if to_begin is None and to_end is None:
+        return ary[1:] - ary[:-1]
+
     # get the length of the diff'd values
     l = len(ary) - 1
     if l < 0:
