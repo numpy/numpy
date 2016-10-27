@@ -201,6 +201,7 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('http://matplotlib.org', None)
 }
 
