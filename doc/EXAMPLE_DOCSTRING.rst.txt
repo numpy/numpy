@@ -42,9 +42,8 @@ out : ndarray
 See Also
 --------
 normal
-scipy.stats.distributions.norm : Provides random variates, as well as
-                                 probability density function, cumulative
-                                 density function, etc.
+scipy.stats.norm : Provides random variates, as well as probability density
+                   function, cumulative density function, etc.
 
 Notes
 -----
