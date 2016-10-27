@@ -1126,7 +1126,7 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
-        Start reading the buffer from this offset; default: 0.
+        Start reading the buffer from this offset (in bytes); default: 0.
 
     Notes
     -----
