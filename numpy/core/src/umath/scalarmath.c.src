@@ -954,6 +954,33 @@ static PyObject *
  * #one = 1*10, NPY_HALF_ONE, 1*6#
  */
 
+static PyObject *
+@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+{
+    PyObject *ret;
+    @type@ arg1, arg2;
+
+    switch (_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        case 0:
+        case -1:
+            return PyArray_Type.tp_as_number->nb_power(a, b, NULL);
+        case -2:
+            /* use default handling */
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
+            return PyGenericArrType_Type.tp_as_number->nb_power(a, b, NULL);
+        case -3:
+            /*
+             * special case for longdouble and clongdouble
+             * because they have a recursive getitem in their dtype
+             */
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+    }
+}
+
+#if 0
 #if @cmplx@
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
@@ -1183,6 +1210,7 @@ static PyObject *
     return ret;
 }
 
+#endif
 #endif
 
 /**end repeat**/
