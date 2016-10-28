@@ -218,6 +218,7 @@ static void
  * #upc = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *        LONG, ULONG, LONGLONG, ULONGLONG#
  */
+#if 0
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
     @type@ temp, ix, mult;
@@ -242,6 +243,7 @@ static void
     }
     *out = ix;
 }
+#endif
 /**end repeat**/
 
 
@@ -413,12 +415,17 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
  */
 static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
+#if 0
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = _basic_@name@_pow(a, b);
 }
+#endif
+
 /**end repeat**/
+
+#if 0
 static void
 half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
@@ -427,6 +434,7 @@ half_ctype_power(npy_half a, npy_half b, npy_half *out)
     const npy_float outf = _basic_float_pow(af,bf);
     *out = npy_float_to_half(outf);
 }
+#endif
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
@@ -499,11 +507,14 @@ static void
 
 static void (*_basic_@name@_pow)(@type@ *, @type@ *, @type@ *);
 
+#if 0
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     _basic_@name@_pow(&a, &b, out);
 }
+#endif
+
 /**end repeat**/
 
 
@@ -957,7 +968,6 @@ static PyObject *
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
 {
-    PyObject *ret;
     @type@ arg1, arg2;
 
     switch (_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
@@ -971,10 +981,12 @@ static PyObject *
             }
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, NULL);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
+
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
     }
