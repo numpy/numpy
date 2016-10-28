@@ -2672,10 +2672,10 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.lomax.pdf : probability density function, distribution or
+        scipy.stats.lomax : probability density function, distribution or
             cumulative density function, etc.
-        scipy.stats.genpareto.pdf : probability density function, distribution
-            or cumulative density function, etc.
+        scipy.stats.genpareto : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
