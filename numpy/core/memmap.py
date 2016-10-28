@@ -97,6 +97,10 @@ class memmap(ndarray):
         changes to disk before removing the object.
 
 
+    See also
+    --------
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
+
     Notes
     -----
     The memmap object can be used anywhere an ndarray is accepted.
