@@ -175,6 +175,8 @@ class TestSetOps(TestCase):
         assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
         assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
+        assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
+        assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
 
     def test_in1d(self):
         # we use two different sizes for the b array here to test the

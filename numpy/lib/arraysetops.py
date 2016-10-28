@@ -81,28 +81,31 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
-    # get the length of the diff'd values
-    l = len(ary) - 1
-    if l < 0:
-        # force length to be non negative, match previous API
-        # should this be an warning or deprecated?
-        l = 0
+    # fast track default case
+    if to_begin is None and to_end is None:
+        return ary[1:] - ary[:-1]
 
     if to_begin is None:
-        to_begin = np.array([])
+        l_begin = 0
     else:
         to_begin = np.asanyarray(to_begin).ravel()
+        l_begin = len(to_begin)
 
     if to_end is None:
-        to_end = np.array([])
+        l_end = 0
     else:
         to_end = np.asanyarray(to_end).ravel()
+        l_end = len(to_end)
 
     # do the calculation in place and copy to_begin and to_end
-    result = np.empty(l + len(to_begin) + len(to_end), dtype=ary.dtype)
-    result[:len(to_begin)] = to_begin
-    result[len(to_begin) + l:] = to_end
-    np.subtract(ary[1:], ary[:-1], result[len(to_begin):len(to_begin) + l])
+    l_diff = max(len(ary) - 1, 0)
+    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)
+    result = ary.__array_wrap__(result)
+    if l_begin > 0:
+        result[:l_begin] = to_begin
+    if l_end > 0:
+        result[l_begin + l_diff:] = to_end
+    np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])
     return result
 
 
