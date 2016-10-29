@@ -4530,6 +4530,11 @@ class TestStats(TestCase):
                 res = _mean(mat, axis=axis) * np.prod(mat.shape)
                 assert_almost_equal(res, tgt)
 
+    def test_mean_float16(self):
+        # This fail if the sum inside mean is done in float16 instead
+        # of float32.
+        assert _mean(np.ones(100000, dtype='float16')) == 1
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:

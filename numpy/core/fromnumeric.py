@@ -2790,6 +2790,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Returns the average of the array elements.  The average is taken over
     the flattened array by default, otherwise over the specified axis.
     `float64` intermediate and return values are used for integer inputs.
+    `float32` intermediate are used for `float16` inputs for extra
+    precision.
 
     Parameters
     ----------
