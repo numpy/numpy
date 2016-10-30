@@ -809,6 +809,8 @@ class TestRandomDist(TestCase):
         assert_raises(OverflowError, func, -np.inf, 0)
         assert_raises(OverflowError, func,  0,      np.inf)
         assert_raises(OverflowError, func,  fmin,   fmax)
+        assert_raises(OverflowError, func, [-np.inf], [0])
+        assert_raises(OverflowError, func, [0], [np.inf])
 
         # (fmax / 1e17) - fmin is within range, so this should not throw
         np.random.uniform(low=fmin, high=fmax / 1e17)
