@@ -53,8 +53,8 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
+    is_float16_result = False
     rcount = _count_reduce_items(arr, axis)
-    orig_dtype = dtype
     # Make this warning show up first
     if rcount == 0:
         warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
@@ -65,16 +65,17 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
             dtype = mu.dtype('f8')
         elif issubclass(arr.dtype.type, nt.float16):
             dtype = mu.dtype('f4')
+            is_float16_result = True
 
     ret = umr_sum(arr, axis, dtype, out, keepdims)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
-        if orig_dtype is None and issubclass(arr.dtype.type, nt.float16):
+        if is_float16_result and out is None:
             ret = a.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        if orig_dtype is None and issubclass(arr.dtype.type, nt.float16):
-            ret = a.dtype.type(ret / rcount)
+        if is_float16_result:
+            ret = nt.float16(ret / rcount)
         else:
             ret = ret.dtype.type(ret / rcount)
     else:
