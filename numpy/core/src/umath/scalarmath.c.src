@@ -220,27 +220,27 @@ static void
  */
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
-    @type@ temp, ix, mult;
-    /* code from Python's intobject.c, with overflow checking removed. */
-    temp = a;
-    ix = 1;
-    while (b > 0) {
-        if (b & 1) {
-            @name@_ctype_multiply(ix, temp, &mult);
-            ix = mult;
-            if (temp == 0) {
-                break;
-            }
-        }
-        b >>= 1;        /* Shift exponent down by 1 bit */
-        if (b==0) {
-            break;
-        }
-        /* Square the value of temp */
-        @name@_ctype_multiply(temp, temp, &mult);
-        temp = mult;
+    @type@ tmp;
+
+    if (b == 0) {
+        *out = 1;
+        return;
     }
-    *out = ix;
+    if (a == 1) {
+        *out = 1;
+        return;
+    }
+
+    tmp = b & 1 ? a : 1;
+    b >>= 1;
+    while (b > 0) {
+        a *= a;
+        if (b & 1) {
+            tmp *= a;
+        }
+        b >>= 1;
+    }
+    *out = tmp;
 }
 /**end repeat**/
 
@@ -977,6 +977,7 @@ static PyObject *
             }
             return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
@@ -1032,11 +1033,7 @@ static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
 {
     PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-    @type@ out = @zero@;
-    @otype@ out1 = @zero@;
+    @type@ arg1, arg2, out;
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
@@ -1051,6 +1048,7 @@ static PyObject *
             }
             return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
@@ -1058,55 +1056,24 @@ static PyObject *
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
     }
-
     PyUFunc_clearfperr();
 
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
-    if (@iszero@(arg2)) {
-        out1 = out = @one@;
-    }
-    else if (arg2 < 0) {
-        @oname@_ctype_power(arg1, arg2, &out1);
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
-    if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
-            return NULL;
-        }
-        first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
-    }
-
     if (arg2 < 0) {
-        ret = PyArrayScalar_New(@OName@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @OName@, out1);
+        PyErr_SetString(PyExc_ValueError,
+                "Integers to negative integer powers are not allowed.");
+        return NULL;
     }
-    else {
-        ret = PyArrayScalar_New(@Name@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @Name@, out);
+    @name@_ctype_power(arg1, arg2, &out);
+
+    ret = PyArrayScalar_New(@Name@);
+    if (ret == NULL) {
+        return NULL;
     }
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 
     return ret;
 }
@@ -1135,6 +1102,7 @@ static PyObject *
             }
             return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
