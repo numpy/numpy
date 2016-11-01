@@ -21,6 +21,11 @@ if [ -n "$PYTHON_OO" ]; then
   PYTHON="${PYTHON} -OO"
 fi
 
+
+if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
+  PYTHON="${PYTHON} -3"
+fi
+
 # make some warnings fatal, mostly to match windows compilers
 werrors="-Werror=declaration-after-statement -Werror=vla "
 werrors+="-Werror=nonnull -Werror=pointer-arith"

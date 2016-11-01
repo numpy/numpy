@@ -655,6 +655,27 @@ class TestTestDeprecated(object):
         test_case_instance.assert_deprecated(foo)
         test_case_instance.tearDown()
 
+class TestClassicIntDivision(_DeprecationTestCase):
+    """
+    See #7949. Deprecate the numeric-style dtypes with -3 flag in python 2 
+    if used for division
+    List of data types: http://docs.scipy.org/doc/numpy/user/basics.types.html
+    """
+    def test_int_dtypes(self):
+        #scramble types and do some mix and match testing
+        deprecated_types = [
+           'bool_', 'int_', 'intc', 'uint8', 'int8', 'uint64', 'int32', 'uint16',
+           'intp', 'int64', 'uint32', 'int16'
+            ]
+        if sys.version_info[0] < 3 and sys.py3kwarning:
+            import operator as op
+            dt2 = 'bool_'
+            for dt1 in deprecated_types:
+                a = np.array([1,2,3], dtype=dt1)    
+                b = np.array([1,2,3], dtype=dt2)    
+                self.assert_deprecated(op.div, args=(a,b)) 
+                dt2 = dt1
+
 
 if __name__ == "__main__":
     run_module_suite()

@@ -351,6 +351,20 @@ distance metric that combines two vectors to produce a scalar could be
 vectorized with ``signature='(n),(n)->()'``. See ``np.vectorize`` for full
 details.
 
+Emit py3kwarnings for division of integer arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To help people migrate their code bases from Python 2 to Python 3, the 
+python interpreter has a handy option -3, which issues warnings at runtime. 
+One of its warnings is for integer division:
+    $ python -3 -c "2/3"
+    
+    -c:1: DeprecationWarning: classic int division
+In Python 3, the new integer division semantics also apply to numpy arrays.
+With this version, numpy will emit a similar warning:
+    $ python -3 -c "import numpy as np; np.array(2)/np.array(3)"
+    
+    -c:1: DeprecationWarning: numpy: classic int division
+
 Changes
 =======
 

@@ -2118,7 +2118,9 @@ class TestRegression(TestCase):
         for f in [op.lt, op.le, op.gt, op.ge]:
             if sys.version_info[0] >= 3:
                 assert_raises(TypeError, f, lhs, rhs)
-            else:
+            elif not sys.py3kwarning:
+                # With -3 switch in python 2, DeprecationWarning is raised
+                # which we are not interested in
                 f(lhs, rhs)
         assert_(not op.eq(lhs, rhs))
         assert_(op.ne(lhs, rhs))
