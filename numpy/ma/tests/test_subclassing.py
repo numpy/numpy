@@ -176,7 +176,7 @@ class TestSubclassing(TestCase):
     # Test suite for masked subclasses of ndarray.
 
     def setUp(self):
-        x = np.arange(5)
+        x = np.arange(5, dtype='float')
         mx = mmatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
 

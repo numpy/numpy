@@ -292,7 +292,7 @@ defdict = {
 'divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.divide'),
-          'PyUFunc_DivisionTypeResolver',
+          'PyUFunc_MixedDivisionTypeResolver',
           TD(intfltcmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
