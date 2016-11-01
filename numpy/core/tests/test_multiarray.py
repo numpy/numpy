@@ -6484,7 +6484,9 @@ class TestArrayPriority(TestCase):
         op.ge, op.lt, op.le, op.ne, op.eq
         ]
 
-    if sys.version_info[0] < 3:
+    # See #7949. Dont use "/" operator With -3 switch, since python reports it
+    # as a DeprecationWarning
+    if sys.version_info[0] < 3 and not sys.py3kwarning:
         binary_ops.append(op.div)
 
     class Foo(np.ndarray):
