@@ -279,10 +279,9 @@ def _get_format_function(data, precision, suppress_small, formatter):
         format_functions = []
         for field_name in dtype_.names:
             field_values = data[field_name]
-            is_array_field = 1 < field_values.ndim
             format_function = _get_format_function(
                     ravel(field_values), precision, suppress_small, formatter)
-            if is_array_field:
+            if dtype_[field_name].shape != ():
                 format_function = SubArrayFormat(format_function)
             format_functions.append(format_function)
         return StructureFormat(format_functions)
@@ -336,17 +335,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                        next_line_prefix, separator,
                        _summaryEdgeItems, summary_insert)[:-1]
     return lst
-
-def _convert_arrays(obj):
-    from . import numeric as _nc
-    newtup = []
-    for k in obj:
-        if isinstance(k, _nc.ndarray):
-            k = k.tolist()
-        elif isinstance(k, tuple):
-            k = _convert_arrays(k)
-        newtup.append(k)
-    return tuple(newtup)
 
 
 def array2string(a, max_line_width=None, precision=None,
@@ -461,7 +449,7 @@ def array2string(a, max_line_width=None, precision=None,
     if a.shape == ():
         x = a.item()
         if a.dtype.fields is not None:
-            arr = asarray([x], dtype=a.dtype)
+            arr = array([x], dtype=a.dtype)
             format_function = _get_format_function(
                     arr, precision, suppress_small, formatter)
             lst = format_function(arr[0])
@@ -494,10 +482,7 @@ def _formatArray(a, format_function, rank, max_line_len,
 
     """
     if rank == 0:
-        obj = a.item()
-        if isinstance(obj, tuple):
-            obj = _convert_arrays(obj)
-        return str(obj)
+        raise ValueError("rank shouldn't be zero.")
 
     if summary_insert and 2*edge_items < len(a):
         leading_items = edge_items
