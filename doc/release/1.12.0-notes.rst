@@ -76,15 +76,29 @@ DeprecationWarning to error
 
 ``power`` and ``**`` raise errors for integer to negative integer powers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The previous behavior was
+The previous behavior depended on whether numpy scalar integers or numpy
+integer arrays were involved.
 
-* zero to negative integer powers returned least integral value.
-* 1, -1 to negative integer powers returned correct values
-* all remaining integers returned zero when raised to negative integer powers.
+For arrays
 
-All of these cases now raise a ``ValueError``. It was felt that a simple rule
-was the best way to go rather than have special exceptions for the units. If
-you need negative powers, use an inexact type.
+* Zero to negative integer powers returned least integral value.
+* Both 1, -1 to negative integer powers returned correct values.
+* The remaining integers returned zero when raised to negative integer powers.
+
+For scalars
+
+* Zero to negative integer powers returned least integral value.
+* Both 1, -1 to negative integer powers returned correct values.
+* The remaining integers sometimes returned zero, sometimes the
+  correct float depending on the integer type combination.
+
+All of these cases now raise a ``ValueError`` except for those integer
+combinations whose common type is float, for instance uint64 and int8. It was
+felt that a simple rule was the best way to go rather than have special
+exceptions for the integer units. If you need negative powers, use an inexact
+type.
+
+
 
 Relaxed stride checking is the default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
