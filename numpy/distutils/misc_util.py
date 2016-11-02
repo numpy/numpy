@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import re
 import sys
-import imp
 import copy
 import glob
 import atexit
@@ -24,11 +23,12 @@ _tdata = tlocal()
 # store all created temporary directories so they can be deleted on exit
 _tmpdirs = []
 def clean_up_temporary_directory():
-    for d in _tmpdirs:
-        try:
-            shutil.rmtree(d)
-        except OSError:
-            pass
+    if _tmpdirs is not None:
+        for d in _tmpdirs:
+            try:
+                shutil.rmtree(d)
+            except OSError:
+                pass
 
 atexit.register(clean_up_temporary_directory)
 
@@ -39,6 +39,7 @@ except NameError:
 
 from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
+from numpy.compat import npy_load_module
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
@@ -875,14 +876,11 @@ class Configuration(object):
         # In case setup_py imports local modules:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
-            fo_setup_py = open(setup_py, 'U')
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = imp.load_module('_'.join(n.split('.')),
-                                           fo_setup_py,
+            setup_module = npy_load_module('_'.join(n.split('.')),
                                            setup_py,
                                            ('.py', 'U', 1))
-            fo_setup_py.close()
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1514,8 +1512,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
@@ -1567,8 +1565,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
@@ -1912,11 +1910,12 @@ class Configuration(object):
         for f in files:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
-                info = (open(fn), fn, ('.py', 'U', 1))
+                info = ('.py', 'U', 1)
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = imp.load_module('_'.join(n.split('.')),*info)
+                    version_module = npy_load_module('_'.join(n.split('.')),
+                                                     fn, info)
                 except ImportError:
                     msg = get_exception()
                     self.warn(str(msg))
@@ -2207,7 +2206,7 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
                   'deprecated default_config_dict(%r,%r,%r)'
                   % (name, parent_name, local_path,
                      name, parent_name, local_path,
-                     ))
+                     ), stacklevel=2)
     c = Configuration(name, parent_name, local_path)
     return c.todict()
 

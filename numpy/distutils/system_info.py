@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
@@ -145,10 +145,10 @@ import distutils.sysconfig
 from distutils import log
 from distutils.util import get_platform
 
-from numpy.distutils.exec_command import \
-    find_executable, exec_command, get_pythonexe
-from numpy.distutils.misc_util import is_sequence, is_string, \
-                                      get_shared_lib_extension
+from numpy.distutils.exec_command import (
+    find_executable, exec_command, get_pythonexe)
+from numpy.distutils.misc_util import (is_sequence, is_string,
+                                       get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 import distutils.ccompiler
@@ -242,7 +242,7 @@ else:
         # tests are run in debug mode Python 3.
         tmp = open(os.devnull, 'w')
         p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
-                stderr=tmp)
+                     stderr=tmp)
     except (OSError, DistutilsError):
         # OSError if gcc is not installed, or SandboxViolation (DistutilsError
         # subclass) if an old setuptools bug is triggered (see gh-3160).
@@ -573,7 +573,7 @@ class system_info(object):
             if notfound_action:
                 if not self.has_info():
                     if notfound_action == 1:
-                        warnings.warn(self.notfounderror.__doc__)
+                        warnings.warn(self.notfounderror.__doc__, stacklevel=2)
                     elif notfound_action == 2:
                         raise self.notfounderror(self.notfounderror.__doc__)
                     else:
@@ -642,7 +642,7 @@ class system_info(object):
         ret = []
         for d in dirs:
             if len(d) > 0 and not os.path.isdir(d):
-                warnings.warn('Specified path %s is invalid.' % d)
+                warnings.warn('Specified path %s is invalid.' % d, stacklevel=2)
                 continue
 
             if d not in ret:
@@ -729,69 +729,59 @@ class system_info(object):
 
         return info
 
-    def _lib_list(self, lib_dir, libs, exts):
+    def _find_lib(self, lib_dir, lib, exts):
         assert is_string(lib_dir)
-        liblist = []
         # under windows first try without 'lib' prefix
         if sys.platform == 'win32':
             lib_prefixes = ['', 'lib']
         else:
             lib_prefixes = ['lib']
         # for each library name, see if we can find a file for it.
-        for l in libs:
-            for ext in exts:
-                for prefix in lib_prefixes:
-                    p = self.combine_paths(lib_dir, prefix + l + ext)
-                    if p:
-                        break
+        for ext in exts:
+            for prefix in lib_prefixes:
+                p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    assert len(p) == 1
-                    # ??? splitext on p[0] would do this for cygwin
-                    # doesn't seem correct
-                    if ext == '.dll.a':
-                        l += '.dll'
-                    liblist.append(l)
                     break
+            if p:
+                assert len(p) == 1
+                # ??? splitext on p[0] would do this for cygwin
+                # doesn't seem correct
+                if ext == '.dll.a':
+                    lib += '.dll'
+                return lib
 
-        return liblist
+        return False
+
+    def _find_libs(self, lib_dirs, libs, exts):
+        # make sure we preserve the order of libs, as it can be important
+        found_dirs, found_libs = [], []
+        for lib in libs:
+            for lib_dir in lib_dirs:
+                found_lib = self._find_lib(lib_dir, lib, exts)
+                if found_lib:
+                    found_libs.append(found_lib)
+                    if lib_dir not in found_dirs:
+                        found_dirs.append(lib_dir)
+                    break
+        return found_dirs, found_libs
 
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
         """Find mandatory and optional libs in expected paths.
 
         Missing optional libraries are silently forgotten.
         """
+        if not is_sequence(lib_dirs):
+            lib_dirs = [lib_dirs]
         # First, try to find the mandatory libraries
-        if is_sequence(lib_dirs):
-            found_libs, found_dirs = [], []
-            for dir_ in lib_dirs:
-                found_libs1 = self._lib_list(dir_, libs, exts)
-                # It's possible that we'll find the same library in multiple
-                # directories. It's also possible that we'll find some
-                # libraries on in directory, and some in another. So the
-                # obvious thing would be to use a set instead of a list, but I
-                # don't know if preserving order matters (does it?).
-                for found_lib in found_libs1:
-                    if found_lib not in found_libs:
-                        found_libs.append(found_lib)
-                        if dir_ not in found_dirs:
-                            found_dirs.append(dir_)
-        else:
-            found_libs = self._lib_list(lib_dirs, libs, exts)
-            found_dirs = [lib_dirs]
+        found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts)
         if len(found_libs) > 0 and len(found_libs) == len(libs):
-            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             # Now, check for optional libraries
-            if is_sequence(lib_dirs):
-                for dir_ in lib_dirs:
-                    opt_found_libs = self._lib_list(dir_, opt_libs, exts)
-                    if opt_found_libs:
-                        if dir_ not in found_dirs:
-                            found_dirs.extend(dir_)
-                        found_libs.extend(opt_found_libs)
-            else:
-                opt_found_libs = self._lib_list(lib_dirs, opt_libs, exts)
-                if opt_found_libs:
-                    found_libs.extend(opt_found_libs)
+            opt_found_dirs, opt_found_libs = self._find_libs(lib_dirs, opt_libs, exts)
+            found_libs.extend(opt_found_libs)
+            for lib_dir in opt_found_dirs:
+                if lib_dir not in found_dirs:
+                    found_dirs.append(lib_dir)
+            info = {'libraries': found_libs, 'library_dirs': found_dirs}
             return info
         else:
             return None
@@ -835,7 +825,6 @@ class fftw_info(system_info):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        incl_dir = None
         libs = self.get_libs(self.section + '_libs', ver_param['libs'])
         info = self.check_libs(lib_dirs, libs)
         if info is not None:
@@ -972,7 +961,7 @@ class djbfft_info(system_info):
 class mkl_info(system_info):
     section = 'mkl'
     dir_env_var = 'MKLROOT'
-    _lib_mkl = ['mkl', 'vml', 'guide']
+    _lib_mkl = ['mkl_rt']
 
     def get_mkl_rootdir(self):
         mklroot = os.environ.get('MKLROOT', None)
@@ -981,10 +970,11 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            for d in open(ld_so_conf, 'r'):
-                d = d.strip()
-                if d:
-                    paths.append(d)
+            with open(ld_so_conf, 'r') as f:
+                for d in f:
+                    d = d.strip()
+                    if d:
+                        paths.append(d)
         intel_mkl_dirs = []
         for path in paths:
             path_atoms = path.split(os.sep)
@@ -1007,15 +997,12 @@ class mkl_info(system_info):
             system_info.__init__(self)
         else:
             from .cpuinfo import cpu
-            l = 'mkl'  # use shared library
             if cpu.is_Itanium():
                 plt = '64'
-            elif cpu.is_Xeon():
+            elif cpu.is_Intel() and cpu.is_64bit():
                 plt = 'intel64'
             else:
                 plt = '32'
-            if l not in self._lib_mkl:
-                self._lib_mkl.insert(0, l)
             system_info.__init__(
                 self,
                 default_lib_dirs=[os.path.join(mklroot, 'lib', plt)],
@@ -1040,20 +1027,7 @@ class mkl_info(system_info):
 
 
 class lapack_mkl_info(mkl_info):
-
-    def calc_info(self):
-        mkl = get_info('mkl')
-        if not mkl:
-            return
-        if sys.platform == 'win32':
-            lapack_libs = self.get_libs('lapack_libs', ['mkl_lapack'])
-        else:
-            lapack_libs = self.get_libs('lapack_libs',
-                                        ['mkl_lapack32', 'mkl_lapack64'])
-
-        info = {'libraries': lapack_libs}
-        dict_append(info, **mkl)
-        self.set_info(**info)
+    pass
 
 
 class blas_mkl_info(mkl_info):
@@ -1129,7 +1103,7 @@ class atlas_info(system_info):
     Could not find lapack library within the ATLAS installation.
 *********************************************************************
 """
-            warnings.warn(message)
+            warnings.warn(message, stacklevel=2)
             self.set_info(**info)
             return
 
@@ -1160,7 +1134,7 @@ class atlas_info(system_info):
     numpy/INSTALL.txt.
 *********************************************************************
 """ % (lapack_lib, sz / 1024)
-                warnings.warn(message)
+                warnings.warn(message, stacklevel=2)
             else:
                 info['language'] = 'f77'
 
@@ -1445,7 +1419,7 @@ Linkage with ATLAS requires gfortran. Use
 when building extension libraries that use ATLAS.
 Make sure that -lgfortran is used for C++ extensions.
 *****************************************************
-""")
+""", stacklevel=2)
                 dict_append(info, language='f90',
                             define_macros=[('ATLAS_REQUIRES_GFORTRAN', None)])
     except Exception:  # failed to get version from file -- maybe on Windows
@@ -1556,7 +1530,7 @@ class lapack_opt_info(system_info):
             info = atlas_info
 
         else:
-            warnings.warn(AtlasNotFoundError.__doc__)
+            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
             need_blas = 1
             need_lapack = 1
             dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
@@ -1567,10 +1541,10 @@ class lapack_opt_info(system_info):
             if lapack_info:
                 dict_append(info, **lapack_info)
             else:
-                warnings.warn(LapackNotFoundError.__doc__)
+                warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
                 lapack_src_info = get_info('lapack_src')
                 if not lapack_src_info:
-                    warnings.warn(LapackSrcNotFoundError.__doc__)
+                    warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('flapack_src', lapack_src_info)])
 
@@ -1579,10 +1553,10 @@ class lapack_opt_info(system_info):
             if blas_info:
                 dict_append(info, **blas_info)
             else:
-                warnings.warn(BlasNotFoundError.__doc__)
+                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
                 blas_src_info = get_info('blas_src')
                 if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('fblas_src', blas_src_info)])
 
@@ -1659,7 +1633,7 @@ class blas_opt_info(system_info):
         if atlas_info:
             info = atlas_info
         else:
-            warnings.warn(AtlasNotFoundError.__doc__)
+            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
             need_blas = 1
             dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
@@ -1668,10 +1642,10 @@ class blas_opt_info(system_info):
             if blas_info:
                 dict_append(info, **blas_info)
             else:
-                warnings.warn(BlasNotFoundError.__doc__)
+                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
                 blas_src_info = get_info('blas_src')
                 if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
                     return
                 dict_append(info, libraries=[('fblas_src', blas_src_info)])
 
@@ -2379,7 +2353,6 @@ def combine_paths(*args, **kws):
                 result.extend(glob(os.path.join(a0, a1)))
     else:
         result = combine_paths(*(combine_paths(args[0], args[1]) + args[2:]))
-    verbosity = kws.get('verbosity', 1)
     log.debug('(paths: %s)', ','.join(result))
     return result
 

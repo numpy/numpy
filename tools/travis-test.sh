@@ -11,17 +11,19 @@ if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
 fi
 
+source builds/venv/bin/activate
+
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
-# explicit python version needed here
-if [ -n "$USE_DEBUG" ]; then
-  PYTHON="python3-dbg"
-fi
-
 if [ -n "$PYTHON_OO" ]; then
   PYTHON="${PYTHON} -OO"
+fi
+
+
+if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
+  PYTHON="${PYTHON} -3"
 fi
 
 # make some warnings fatal, mostly to match windows compilers
@@ -71,7 +73,7 @@ setup_chroot()
   #   linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   #
-  # Numpy may not distinguish between 64 and 32 bit ATLAS in the
+  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
   # configuration stage.
   DIR=$1
   set -u
@@ -117,7 +119,11 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
-  $PYTHON ../tools/test-installed-numpy.py
+  if [ -n "$RUN_FULL_TESTS" ]; then
+    $PYTHON ../tools/test-installed-numpy.py --mode=full
+  else
+    $PYTHON ../tools/test-installed-numpy.py
+  fi
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis

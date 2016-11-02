@@ -12,6 +12,7 @@
 *.iws
 *.org
 .project
+pmip
 *.rej
 .settings/
 .*.sw[nop]
@@ -149,3 +150,4 @@ benchmarks/numpy
 # cythonized files
 cythonize.dat
 numpy/random/mtrand/mtrand.c
+numpy/random/mtrand/randint_helpers.pxi

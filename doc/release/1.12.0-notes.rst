@@ -6,11 +6,20 @@ This release supports Python 2.7 and 3.4 - 3.5.
 Highlights
 ==========
 
+* Order of operations in ``np.einsum`` now can be optimized for large speed improvements.
+* New ``signature`` argument to ``np.vectorize`` for vectorizing with core dimensions.
 
 Dropped Support
 ===============
 
 * Support for Python 2.6, 3.2, and 3.3 has been dropped.
+
+
+Build System Changes
+====================
+
+* Library order is preserved, instead of being reordered to match that of
+  the directories.
 
 
 Future Changes
@@ -21,6 +30,33 @@ Future Changes
 * In 1.13 np.average will preserve subclasses, to match the behavior of most
   other numpy functions such as np.mean. In particular, this means calls which
   returned a scalar may return a 0-d subclass object instead.
+
+Multiple-field manipulation of structured arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In 1.13 the behavior of structured arrays involving multiple fields will change
+in two ways:
+
+First, indexing a structured array with multiple fields (eg,
+``arr[['f1', 'f3']]``) will return a view into the original array in 1.13,
+instead of a copy. Note the returned view will have extra padding bytes
+corresponding to intervening fields in the original array, unlike the copy in
+1.12, which will affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
+
+Second, for numpy versions 1.6 to 1.12 assignment between structured arrays
+occurs "by field name": Fields in the dst array are set to the
+identically-named field in the src or to 0 if the src does not have a field:
+
+    >>> a = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> b = np.ones(2, dtype=[('z', 'i4'), ('y', 'i4'), ('x', 'i4')])
+    >>> b[:] = a
+    >>> b
+    array([(0, 2, 1), (0, 4, 3)],
+          dtype=[('z', '<i4'), ('y', '<i4'), ('x', '<i4')])
+
+In 1.13 assignment will instead occur "by position": The Nth field of the dst
+will be set to the Nth field of the src, regardless of field name. The old
+behavior can be obtained by using indexing to reorder the fields before
+assignment, eg ``b[['x', 'y']] = a[['y', 'x']]``.
 
 
 Compatibility notes
@@ -38,17 +74,23 @@ DeprecationWarning to error
 * Non-integers used as index values raise ``TypeError``,
   e.g., in ``reshape``, ``take``, and specifying reduce axis.
 
+``power`` and ``**`` raise errors for integer to negative integer powers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous behavior was
+
+* zero to negative integer powers returned least integral value.
+* 1, -1 to negative integer powers returned correct values
+* all remaining integers returned zero when raised to negative integer powers.
+
+All of these cases now raise a ``ValueError``. It was felt that a simple rule
+was the best way to go rather than have special exceptions for the units. If
+you need negative powers, use an inexact type.
+
 Relaxed stride checking is the default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 This will have some impact on code that assumed that ``F_CONTIGUOUS`` and
 ``C_CONTIGUOUS`` were mutually exclusive and could be set to determine the
 default order for arrays that are now both.
-
-``MaskedArray`` takes view of data **and** mask when slicing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-XXX
-
 
 ``np.percentile`` 'midpoint' interpolation method fixed for exact indices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +100,6 @@ the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
 
 ``keepdims`` kwarg is passed through to user-class methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 numpy functions that take a ``keepdims`` kwarg now pass the value
 through to the corresponding methods on ndarray sub-classes.  Previously the
 ``keepdims`` keyword would be silently dropped.  These functions now have
@@ -92,6 +133,37 @@ FutureWarning to changed behavior
 * np.average will emit a warning if the argument is a subclass of ndarray,
   as the subclass will be preserved starting in 1.13. (see Future Changes)
 
+Greater consistancy in ``assert_almost_equal``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The precision check for scalars has been changed to match that for arrays. It
+is now
+
+    abs(actual - desired) < 1.5 * 10**(-decimal)
+
+Note that this is looser than previously documented, but agrees with the
+previous implementation used in ``assert_array_almost_equal``. Due to the
+change in implementation some very delicate tests may fail that did not
+fail before.
+
+``NoseTester`` behaviour of warnings during testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When ``raise_warnings="develop"`` is given, all uncaught warnings will now
+be considered a test failure. Previously only selected ones were raised.
+Warnings which are not caught or raised (mostly when in release mode)
+will be shown once during the test cycle similar to the default python
+settings.
+
+``assert_warns`` and ``deprecated`` decorator more specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``assert_warns`` function and context manager are now more specific
+to the given warning category. This increased specificity leads to them
+being handled according to the outer warning settings. This means that
+no warning may be raised in cases where a wrong category warning is given
+and ignored outside the context. Alternatively the increased specificity
+may mean that warnings that were incorrectly ignored will now be shown
+or raised. See also the new ``suppress_warnings`` context manager.
+The same is true for the ``deprecated`` decorator.
+
 
 C API
 ~~~~~
@@ -107,12 +179,21 @@ keyword argument. It can be set to False when no write operation
 to the returned array is expected to avoid accidental
 unpredictable writes.
 
+
+``axes`` keyword argument for ``rot90``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``axes`` keyword argument in ``rot90`` determines the plane in which the
+array is rotated. It defaults to ``axes=(0,1)`` as in the originial function.
+
 Generalized ``flip``
 ~~~~~~~~~~~~~~~~~~~~
 ``flipud`` and ``fliplr`` reverse the elements of an array along axis=0 and
 axis=1 respectively. The newly added ``flip`` function reverses the elements of
 an array along any given axis.
 
+* ``np.count_nonzero`` now has an ``axis`` parameter, allowing
+  non-zero counts to be generated on more than just a flattened
+  array object.
 
 BLIS support in ``numpy.distutils``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,6 +230,37 @@ The new function ``polyvalfromroots`` evaluates a polynomial at given points
 from the roots of the polynomial. This is useful for higher order polynomials,
 where expansion into polynomial coefficients is inaccurate at machine
 precision.
+
+New array creation function ``geomspace`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``geomspace`` generates a geometric sequence.  It is similar
+to ``logspace``, but with start and stop specified directly:
+``geomspace(start, stop)`` behaves the same as
+``logspace(log10(start), log10(stop))``.
+
+New context manager for testing warnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A new context manager ``suppress_warnings`` has been added to the testing
+utils. This context manager is designed to help reliably test warnings.
+Specifically to reliably filter/ignore warnings. Ignoring warnings
+by using an "ignore" filter in Python versions before 3.4.x can quickly
+result in these (or similar) warnings not being tested reliably.
+
+The context manager allows to filter (as well as record) warnings similar
+to the ``catch_warnings`` context, but allows for easier specificity.
+Also printing warnings that have not been filtered or nesting the
+context manager will work as expected. Additionally, it is possible
+to use the context manager as a decorator which can be useful when
+multiple tests give need to hide the same warning.
+
+New masked array functions ``ma.convolve`` and ``ma.correlate`` added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These functions wrapped the non-masked versions, but propagate through masked
+values. There are two different propagation modes. The default causes masked
+values to contaminate the result with masks, but the other mode only outputs
+masks if there is no alternative.
+
 
 Improvements
 ============
@@ -213,6 +325,45 @@ bugs where such dtypes were not handled properly.  In particular, changed
 ``ndarray.__new__`` to not implicitly convert ``dtype('S0')`` to
 ``dtype('S1')`` (and likewise for unicode) when creating new arrays.
 
+Integer ufuncs vectorized with AVX2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the cpu supports it at runtime the basic integer ufuncs now use AVX2
+instructions. This feature is currently only available when compiled with GCC.
+
+Order of operations optimization in ``np.einsum``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.einsum`` now supports the ``optimize`` argument which will optimize the
+order of contraction. For example, ``np.einsum`` would complete the chain dot
+example ``np.einsum(‘ij,jk,kl->il’, a, b, c)`` in a single pass which would
+scale like ``N^4``; however, when ``optimize=True`` ``np.einsum`` will create
+an intermediate array to reduce this scaling to ``N^3`` or effectively
+``np.dot(a, b).dot(c)``. Usage of intermediate tensors to reduce scaling has
+been applied to the general einsum summation notation. See ``np.einsum_path``
+for more details.
+
+New ``signature`` argument to ``np.vectorize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This argument allows for vectorizing user defined functions with core
+dimensions, in the style of NumPy's
+:ref:`generalized universal functions<c-api.generalized-ufuncs>`. This allows
+for vectorizing a much broader class of functions. For example, an arbitrary
+distance metric that combines two vectors to produce a scalar could be
+vectorized with ``signature='(n),(n)->()'``. See ``np.vectorize`` for full
+details.
+
+Emit py3kwarnings for division of integer arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To help people migrate their code bases from Python 2 to Python 3, the 
+python interpreter has a handy option -3, which issues warnings at runtime. 
+One of its warnings is for integer division:
+    $ python -3 -c "2/3"
+    
+    -c:1: DeprecationWarning: classic int division
+In Python 3, the new integer division semantics also apply to numpy arrays.
+With this version, numpy will emit a similar warning:
+    $ python -3 -c "import numpy as np; np.array(2)/np.array(3)"
+    
+    -c:1: DeprecationWarning: numpy: classic int division
 
 Changes
 =======
@@ -241,6 +392,25 @@ numpy.sctypes now includes bytes on Python3 too
 Previously, it included str (bytes) and unicode on Python2, but only str
 (unicode) on Python3.
 
+quicksort has been changed to an introsort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The quicksort kind of ``np.sort`` and ``np.argsort`` is now an introsort which
+is regular quicksort but changing to a heapsort when not enough progress is
+made. This retains the good quicksort performance while changing the worst case
+runtime from ``O(N^2)`` to ``O(N*log(N))``.
+
+stacklevel of warnings increased
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The stacklevel for python based warnings was increased so that most warnings
+will report the offending line of the user code instead of the line the
+warning itself is given. Passing of stacklevel is now tested to ensure that
+new warnings will recieve the ``stacklevel`` argument.
+
+This causes warnings with the "default" or "module" filter to be shown once
+for every offending user code line or user module instead of only once. On
+python versions before 3.4, this can cause warnings to appear that were falsly
+ignored before, which may be surprising especially in test suits.
+
 
 Deprecations
 ============
@@ -261,4 +431,5 @@ If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
 represent the number in base 2 (positive) or 2's complement (negative) form,
 the function used to silently ignore the parameter and return a representation
 using the minimal number of bits needed for the form in question. Such behavior
-is now considered unsafe from a user perspective and will raise an error in the future.
+is now considered unsafe from a user perspective and will raise an error in the
+future.

@@ -139,6 +139,7 @@ Miscellaneous
    clip
 
    sqrt
+   cbrt
    square
 
    absolute

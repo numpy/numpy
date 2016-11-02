@@ -113,6 +113,35 @@ class TestArray2String(TestCase):
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
+    def test_structure_format(self):
+        dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+        x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
+        assert_equal(np.array2string(x),
+                "[('Sarah', [ 8.,  7.]) ('John', [ 6.,  7.])]")
+
+        # for issue #5692
+        A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
+        A[5:].fill(np.nan)
+        assert_equal(np.array2string(A),
+                "[('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) " +
+                "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
+                "('1970-01-01T00:00:00',) ('NaT',) ('NaT',)\n " +
+                "('NaT',) ('NaT',) ('NaT',)]")
+
+        # See #8160
+        struct_int = np.array([([1, -1],), ([123, 1],)], dtype=[('B', 'i4', 2)])
+        assert_equal(np.array2string(struct_int),
+                "[([  1,  -1],) ([123,   1],)]")
+        struct_2dint = np.array([([[0, 1], [2, 3]],), ([[12, 0], [0, 0]],)],
+                dtype=[('B', 'i4', (2, 2))])
+        assert_equal(np.array2string(struct_2dint),
+                "[([[ 0,  1], [ 2,  3]],) ([[12,  0], [ 0,  0]],)]")
+
+        # See #8172
+        array_scalar = np.array(
+                (1., 2.1234567890123456789, 3.), dtype=('f8,f8,f8'))
+        assert_equal(np.array2string(array_scalar), "( 1.,  2.12345679,  3.)")
+
 
 class TestPrintOptions:
     """Test getting and setting global print options."""
@@ -128,6 +157,16 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([ 1.5       ,  0.        ,  1.23456789])")
         np.set_printoptions(precision=4)
         assert_equal(repr(x), "array([ 1.5   ,  0.    ,  1.2346])")
+
+    def test_precision_zero(self):
+        np.set_printoptions(precision=0)
+        for values, string in (
+                ([0.], " 0."), ([.3], " 0."), ([-.3], "-0."), ([.7], " 1."),
+                ([1.5], " 2."), ([-1.5], "-2."), ([-15.34], "-15."),
+                ([100.], " 100."), ([.2, -1, 122.51], "   0.,   -1.,  123."),
+                ([0], "0"), ([-12], "-12"), ([complex(.3, -.7)], " 0.-1.j")):
+            x = np.array(values)
+            assert_equal(repr(x), "array([%s])" % string)
 
     def test_formatter(self):
         x = np.arange(3)

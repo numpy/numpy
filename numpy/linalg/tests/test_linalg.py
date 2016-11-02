@@ -18,7 +18,7 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, run_module_suite,
-    dec, SkipTest
+    dec, SkipTest, suppress_warnings
 )
 
 
@@ -861,8 +861,8 @@ class _TestNorm(object):
             assert_(issubclass(an.dtype.type, np.floating))
             assert_almost_equal(an, 0.0)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
                 assert_(issubclass(an.dtype.type, np.floating))
                 assert_almost_equal(an, 0.0)
@@ -877,11 +877,11 @@ class _TestNorm(object):
 
             an = norm(at, 2)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, 2.0**(1.0/2.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
 
             an = norm(at, 4)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, 2.0**(1.0/4.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
 
             an = norm(at, np.inf)
             assert_(issubclass(an.dtype.type, np.floating))
@@ -906,8 +906,8 @@ class _TestNorm(object):
             assert_(issubclass(an.dtype.type, np.floating))
             assert_almost_equal(an, 2.0)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
                 assert_(issubclass(an.dtype.type, np.floating))
                 assert_almost_equal(an, 1.0)

@@ -10,7 +10,7 @@ class egg_info(_egg_info):
             import warnings
             warnings.warn("`build_src` is being run, this may lead to missing "
                           "files in your sdist!  See numpy issue gh-7127 for "
-                          "details", UserWarning)
+                          "details", UserWarning, stacklevel=2)
 
         # We need to ensure that build_src has been executed in order to give
         # setuptools' egg_info command real filenames instead of functions which

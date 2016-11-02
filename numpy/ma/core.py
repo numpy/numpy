@@ -26,6 +26,11 @@ import sys
 import warnings
 from functools import reduce
 
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
 import numpy as np
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
@@ -51,10 +56,10 @@ __all__ = [
     'argmax', 'argmin', 'argsort', 'around', 'array', 'asanyarray',
     'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
-    'concatenate', 'conjugate', 'copy', 'cos', 'cosh', 'count', 'cumprod',
-    'cumsum', 'default_fill_value', 'diag', 'diagonal', 'diff', 'divide',
-    'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
-    'fabs', 'filled', 'fix_invalid', 'flatten_mask',
+    'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
+    'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
+    'diff', 'divide', 'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp',
+    'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
@@ -371,24 +376,61 @@ def maximum_fill_value(obj):
         raise TypeError(errmsg)
 
 
-def _recursive_set_default_fill_value(dtypedescr):
+def _recursive_set_default_fill_value(dt):
+    """
+    Create the default fill value for a structured dtype.
+
+    Parameters
+    ----------
+    dt: dtype
+        The structured dtype for which to create the fill value.
+
+    Returns
+    -------
+    val: tuple
+        A tuple of values corresponding to the default structured fill value.
+
+    """
     deflist = []
-    for currentdescr in dtypedescr:
-        currenttype = currentdescr[1]
-        if isinstance(currenttype, list):
+    for name in dt.names:
+        currenttype = dt[name]
+        if currenttype.subdtype:
+            currenttype = currenttype.subdtype[0]
+
+        if currenttype.names:
             deflist.append(
                 tuple(_recursive_set_default_fill_value(currenttype)))
         else:
-            deflist.append(default_fill_value(np.dtype(currenttype)))
+            deflist.append(default_fill_value(currenttype))
     return tuple(deflist)
 
 
-def _recursive_set_fill_value(fillvalue, dtypedescr):
-    fillvalue = np.resize(fillvalue, len(dtypedescr))
+def _recursive_set_fill_value(fillvalue, dt):
+    """
+    Create a fill value for a structured dtype.
+
+    Parameters
+    ----------
+    fillvalue: scalar or array_like
+        Scalar or array representing the fill value. If it is of shorter
+        length than the number of fields in dt, it will be resized.
+    dt: dtype
+        The structured dtype for which to create the fill value.
+
+    Returns
+    -------
+    val: tuple
+        A tuple of values corresponding to the structured fill value.
+
+    """
+    fillvalue = np.resize(fillvalue, len(dt.names))
     output_value = []
-    for (fval, descr) in zip(fillvalue, dtypedescr):
-        cdtype = descr[1]
-        if isinstance(cdtype, list):
+    for (fval, name) in zip(fillvalue, dt.names):
+        cdtype = dt[name]
+        if cdtype.subdtype:
+            cdtype = cdtype.subdtype[0]
+
+        if cdtype.names:
             output_value.append(tuple(_recursive_set_fill_value(fval, cdtype)))
         else:
             output_value.append(np.array(fval, dtype=cdtype).item())
@@ -411,9 +453,8 @@ def _check_fill_value(fill_value, ndtype):
     fields = ndtype.fields
     if fill_value is None:
         if fields:
-            descr = ndtype.descr
-            fill_value = np.array(_recursive_set_default_fill_value(descr),
-                                  dtype=ndtype,)
+            fill_value = np.array(_recursive_set_default_fill_value(ndtype),
+                                  dtype=ndtype)
         else:
             fill_value = default_fill_value(ndtype)
     elif fields:
@@ -425,9 +466,8 @@ def _check_fill_value(fill_value, ndtype):
                 err_msg = "Unable to transform %s to dtype %s"
                 raise ValueError(err_msg % (fill_value, fdtype))
         else:
-            descr = ndtype.descr
             fill_value = np.asarray(fill_value, dtype=object)
-            fill_value = np.array(_recursive_set_fill_value(fill_value, descr),
+            fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
     else:
         if isinstance(fill_value, basestring) and (ndtype.char not in 'OSVU'):
@@ -997,12 +1037,7 @@ class _MaskedBinaryOperation:
         if m is not nomask and m.any():
             # any errors, just abort; impossible to guarantee masked values
             try:
-                np.copyto(result, 0, casting='unsafe', where=m)
-                # avoid using "*" since this may be overlaid
-                masked_da = umath.multiply(m, da)
-                # only add back if it can be cast safely
-                if np.can_cast(masked_da.dtype, result.dtype, casting='safe'):
-                    result += masked_da
+                np.copyto(result, da, casting='unsafe', where=m)
             except:
                 pass
 
@@ -3180,7 +3215,8 @@ class MaskedArray(ndarray):
                                 "of fill_value at 0. Discarding "
                                 "heterogeneous fill_value and setting "
                                 "all to {fv!s}.".format(indx=indx,
-                                    fv=dout._fill_value[0]))
+                                    fv=dout._fill_value[0]),
+                                stacklevel=2)
                         dout._fill_value = dout._fill_value.flat[0]
                 dout._isfield = True
             # Update the mask if needed
@@ -3244,12 +3280,13 @@ class MaskedArray(ndarray):
             # We want to remove the unshare logic from this place in the
             # future. Note that _sharedmask has lots of false positives.
             if not self._isfield:
+                notthree = getattr(sys, 'getrefcount', False) and (sys.getrefcount(_mask) != 3)
                 if self._sharedmask and not (
                         # If no one else holds a reference (we have two
                         # references (_mask and self._mask) -- add one for
                         # getrefcount) and the array owns its own data
                         # copying the mask should do nothing.
-                        (sys.getrefcount(_mask) == 3) and _mask.flags.owndata):
+                        (not notthree) and _mask.flags.owndata):
                     # 2016.01.15 -- v1.11.0
                     warnings.warn(
                        "setting an item on a masked array which has a shared "
@@ -4164,7 +4201,7 @@ class MaskedArray(ndarray):
             raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
-            warnings.warn("Warning: converting a masked element to nan.")
+            warnings.warn("Warning: converting a masked element to nan.", stacklevel=2)
             return np.nan
         return float(self.item())
 
@@ -4324,13 +4361,15 @@ class MaskedArray(ndarray):
                     raise ValueError("'axis' entry is out of bounds")
                 return 1
             elif axis is None:
+                if kwargs.get('keepdims', False):
+                    return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
             axes = axis if isinstance(axis, tuple) else (axis,)
             axes = tuple(a if a >= 0 else self.ndim + a for a in axes)
             if len(axes) != len(set(axes)):
                 raise ValueError("duplicate value in 'axis'")
-            if np.any([a < 0 or a >= self.ndim for a in axes]):
+            if builtins.any(a < 0 or a >= self.ndim for a in axes):
                 raise ValueError("'axis' entry is out of bounds")
             items = 1
             for ax in axes:
@@ -4341,7 +4380,8 @@ class MaskedArray(ndarray):
                 for a in axes:
                     out_dims[a] = 1
             else:
-                out_dims = [d for n,d in enumerate(self.shape) if n not in axes]
+                out_dims = [d for n, d in enumerate(self.shape)
+                            if n not in axes]
             # make sure to return a 0-d array if axis is supplied
             return np.full(out_dims, items, dtype=np.intp)
 
@@ -5017,7 +5057,7 @@ class MaskedArray(ndarray):
 
         if self._mask is nomask:
             result = super(MaskedArray, self).mean(axis=axis,
-                                                   dtype=dtype, **kwargs)
+                                                   dtype=dtype, **kwargs)[()]
         else:
             dsum = self.sum(axis=axis, dtype=dtype, **kwargs)
             cnt = self.count(axis=axis, **kwargs)
@@ -5094,8 +5134,14 @@ class MaskedArray(ndarray):
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:
-            return self._data.var(axis=axis, dtype=dtype, out=out,
-                                  ddof=ddof, **kwargs)
+            ret = super(MaskedArray, self).var(axis=axis, dtype=dtype, out=out,
+                                               ddof=ddof, **kwargs)[()]
+            if out is not None:
+                if isinstance(out, MaskedArray):
+                    out.__setmask__(nomask)
+                return out
+            return ret
+
         # Some data are masked, yay!
         cnt = self.count(axis=axis, **kwargs) - ddof
         danom = self - self.mean(axis, dtype, keepdims=True)
@@ -5820,17 +5866,8 @@ class MaskedArray(ndarray):
 
         """
         cf = 'CF'[self.flags.fnc]
-        state = (1,
-                 self.shape,
-                 self.dtype,
-                 self.flags.fnc,
-                 self._data.tobytes(cf),
-                 # self._data.tolist(),
-                 getmaskarray(self).tobytes(cf),
-                 # getmaskarray(self).tolist(),
-                 self._fill_value,
-                 )
-        return state
+        data_state = super(MaskedArray, self).__reduce__()[2]
+        return data_state + (getmaskarray(self).tobytes(cf), self._fill_value)
 
     def __setstate__(self, state):
         """Restore the internal state of the masked array, for
@@ -6878,7 +6915,7 @@ def rank(obj):
     # 2015-04-12, 1.10.0
     warnings.warn(
         "`rank` is deprecated; use the `ndim` function instead. ",
-        np.VisibleDeprecationWarning)
+        np.VisibleDeprecationWarning, stacklevel=2)
     return np.ndim(getdata(obj))
 
 rank.__doc__ = np.rank.__doc__
@@ -7327,6 +7364,81 @@ def outer(a, b):
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")
 outerproduct = outer
+
+
+def _convolve_or_correlate(f, a, v, mode, propagate_mask):
+    """
+    Helper function for ma.correlate and ma.convolve
+    """
+    if propagate_mask:
+        # results which are contributed to by either item in any pair being invalid
+        mask = (
+            f(getmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
+          | f(np.ones(np.shape(a), dtype=np.bool), getmaskarray(v), mode=mode)
+        )
+        data = f(getdata(a), getdata(v), mode=mode)
+    else:
+        # results which are not contributed to by any pair of valid elements
+        mask = ~f(~getmaskarray(a), ~getmaskarray(v))
+        data = f(filled(a, 0), filled(v, 0), mode=mode)
+
+    return masked_array(data, mask=mask)
+
+
+def correlate(a, v, mode='valid', propagate_mask=True):
+    """
+    Cross-correlation of two 1-dimensional sequences.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `np.convolve` docstring.  Note that the default
+        is 'valid', unlike `convolve`, which uses 'full'.
+    propagate_mask : bool
+        If True, then a result element is masked if any masked element contributes towards it.
+        If False, then a result element is only masked if no non-masked element
+        contribute towards it
+
+    Returns
+    -------
+    out : MaskedArray
+        Discrete cross-correlation of `a` and `v`.
+
+    See Also
+    --------
+    numpy.correlate : Equivalent function in the top-level NumPy module.
+    """
+    return _convolve_or_correlate(np.correlate, a, v, mode, propagate_mask)
+
+
+def convolve(a, v, mode='full', propagate_mask=True):
+    """
+    Returns the discrete, linear convolution of two one-dimensional sequences.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `np.convolve` docstring.
+    propagate_mask : bool
+        If True, then if any masked element is included in the sum for a result
+        element, then the result is masked.
+        If False, then the result element is only masked if no non-masked cells
+        contribute towards it
+
+    Returns
+    -------
+    out : MaskedArray
+        Discrete, linear convolution of `a` and `v`.
+
+    See Also
+    --------
+    numpy.convolve : Equivalent function in the top-level NumPy module.
+    """
+    return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
 
 def allequal(a, b, fill_value=True):

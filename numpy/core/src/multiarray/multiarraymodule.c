@@ -1895,7 +1895,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         }
         else {
 #if defined(NPY_PY3K)
-            /* Backward compatibility with Python 2 Numpy pickles */
+            /* Backward compatibility with Python 2 NumPy pickles */
             if (PyUnicode_Check(obj)) {
                 tmpobj = PyUnicode_AsLatin1String(obj);
                 obj = tmpobj;
@@ -1980,16 +1980,10 @@ fail:
 static PyObject *
 array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *array_in;
     PyArrayObject *array;
     npy_intp count;
 
-    if (!PyArg_ParseTuple(args, "O", &array_in)) {
-        return NULL;
-    }
-
-    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
-    if (array == NULL) {
+    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &array)) {
         return NULL;
     }
 
@@ -3641,7 +3635,6 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     PyArrayMultiIterObject* in_iter = NULL;
     PyArrayObject* result = NULL;
     PyArrayIterObject* out_iter = NULL;
-    PyObject* args_tuple = NULL;
     Py_ssize_t i, n, nargs;
 
     nargs = PySequence_Size(args) + 1;
@@ -3678,18 +3671,18 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
         goto err;
     }
 
-    args_tuple = PyTuple_New(n);
-    if (args_tuple == NULL) {
-        goto err;
-    }
-
     while (PyArray_MultiIter_NOTDONE(in_iter)) {
         PyObject* item_result;
+        PyObject* args_tuple = PyTuple_New(n);
+        if (args_tuple == NULL) {
+            goto err;
+        }
 
         for (i = 0; i < n; i++) {
             PyArrayIterObject* it = in_iter->iters[i];
             PyObject* arg = PyArray_ToScalar(PyArray_ITER_DATA(it), it->ao);
             if (arg == NULL) {
+                Py_DECREF(args_tuple);
                 goto err;
             }
             /* Steals ref to arg */
@@ -3697,6 +3690,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
         }
 
         item_result = PyObject_CallObject(method, args_tuple);
+        Py_DECREF(args_tuple);
         if (item_result == NULL) {
             goto err;
         }
@@ -3715,14 +3709,12 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
 
     Py_DECREF(in_iter);
     Py_DECREF(out_iter);
-    Py_DECREF(args_tuple);
 
     return (PyObject*)result;
 
  err:
     Py_XDECREF(in_iter);
     Py_XDECREF(out_iter);
-    Py_XDECREF(args_tuple);
     Py_XDECREF(result);
 
     return 0;
@@ -3989,6 +3981,9 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (PyLong_Check(max_work_obj)) {
         max_work = PyLong_AsSsize_t(max_work_obj);
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
     }
 #if !defined(NPY_PY3K)
     else if (PyInt_Check(max_work_obj)) {
@@ -4147,7 +4142,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"matmul",
         (PyCFunction)array_matmul,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"einsum",
+    {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"_fastCopyAndTranspose",

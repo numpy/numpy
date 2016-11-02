@@ -25,7 +25,7 @@ The Basics
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In Numpy dimensions are called *axes*. The
+tuple of positive integers. In NumPy dimensions are called *axes*. The
 number of axes is *rank*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` is an
@@ -39,7 +39,7 @@ length of 3.
     [[ 1., 0., 0.],
      [ 0., 1., 2.]]
 
-Numpy's array class is called ``ndarray``. It is also known by the alias
+NumPy's array class is called ``ndarray``. It is also known by the alias
 ``array``. Note that ``numpy.array`` is not the same as the Standard
 Python Library class ``array.array``, which only handles one-dimensional
 arrays and offers less functionality. The more important attributes of
@@ -612,7 +612,7 @@ The shape of an array can be changed with various commands:
 The order of the elements in the array resulting from ravel() is
 normally "C-style", that is, the rightmost index "changes the fastest",
 so the element after a[0,0] is a[0,1]. If the array is reshaped to some
-other shape, again the array is treated as "C-style". Numpy normally
+other shape, again the array is treated as "C-style". NumPy normally
 creates arrays stored in this order, so ravel() will usually not need to
 copy its argument, but if the array was made by taking slices of another
 array or created with unusual options, it may need to be copied. The
@@ -1268,7 +1268,7 @@ times the number of vectors.
 Indexing with strings
 ---------------------
 
-See `RecordArrays <RecordArrays.html>`__.
+See `RecordArrays <basics.rec.html#record-arrays>`__.
 
 Linear Algebra
 ==============

@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import operator
 import warnings
 import sys
 
@@ -8,16 +9,17 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns,
-    assert_raises_regex, dec, clear_and_catch_warnings
+    assert_raises_regex, dec, suppress_warnings
 )
+from numpy.testing.utils import HAS_REFCOUNT
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
-    piecewise, place, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize,
+    piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
+    unwrap, unique, vectorize
 )
 
 from numpy.compat import long
@@ -29,7 +31,76 @@ def get_mat(n):
     return data
 
 
+class TestRot90(TestCase):
+    def test_basic(self):
+        self.assertRaises(ValueError, rot90, np.ones(4))
+        assert_raises(ValueError, rot90, np.ones((2,2,2)), axes=(0,1,2))
+        assert_raises(ValueError, rot90, np.ones((2,2)), axes=(0,2))
+        assert_raises(ValueError, rot90, np.ones((2,2)), axes=(1,1))
+        assert_raises(ValueError, rot90, np.ones((2,2,2)), axes=(-2,1))
+
+        a = [[0, 1, 2],
+             [3, 4, 5]]
+        b1 = [[2, 5],
+              [1, 4],
+              [0, 3]]
+        b2 = [[5, 4, 3],
+              [2, 1, 0]]
+        b3 = [[3, 0],
+              [4, 1],
+              [5, 2]]
+        b4 = [[0, 1, 2],
+              [3, 4, 5]]
+
+        for k in range(-3, 13, 4):
+            assert_equal(rot90(a, k=k), b1)
+        for k in range(-2, 13, 4):
+            assert_equal(rot90(a, k=k), b2)
+        for k in range(-1, 13, 4):
+            assert_equal(rot90(a, k=k), b3)
+        for k in range(0, 13, 4):
+            assert_equal(rot90(a, k=k), b4)
+
+        assert_equal(rot90(rot90(a, axes=(0,1)), axes=(1,0)), a)
+        assert_equal(rot90(a, k=1, axes=(1,0)), rot90(a, k=-1, axes=(0,1)))
+
+    def test_axes(self):
+        a = np.ones((50, 40, 3))
+        assert_equal(rot90(a).shape, (40, 50, 3))
+        assert_equal(rot90(a, axes=(0,2)), rot90(a, axes=(0,-1)))
+        assert_equal(rot90(a, axes=(1,2)), rot90(a, axes=(-2,-1)))
+
+    def test_rotation_axes(self):
+        a = np.arange(8).reshape((2,2,2))
+
+        a_rot90_01 = [[[2, 3],
+                       [6, 7]],
+                      [[0, 1],
+                       [4, 5]]]
+        a_rot90_12 = [[[1, 3],
+                       [0, 2]],
+                      [[5, 7],
+                       [4, 6]]]
+        a_rot90_20 = [[[4, 0],
+                       [6, 2]],
+                      [[5, 1],
+                       [7, 3]]]
+        a_rot90_10 = [[[4, 5],
+                       [0, 1]],
+                      [[6, 7],
+                       [2, 3]]]
+
+        assert_equal(rot90(a, axes=(0, 1)), a_rot90_01)
+        assert_equal(rot90(a, axes=(1, 0)), a_rot90_10)
+        assert_equal(rot90(a, axes=(1, 2)), a_rot90_12)
+
+        for k in range(1,5):
+            assert_equal(rot90(a, k=k, axes=(2, 0)),
+                    rot90(a_rot90_20, k=k-1, axes=(2, 0)))
+
+
 class TestFlip(TestCase):
+
     def test_axes(self):
         self.assertRaises(ValueError, np.flip, np.ones(4), axis=1)
         self.assertRaises(ValueError, np.flip, np.ones((4, 4)), axis=2)
@@ -58,13 +129,11 @@ class TestFlip(TestCase):
     def test_3d_swap_axis0(self):
         a = np.array([[[0, 1],
                        [2, 3]],
-
                       [[4, 5],
                        [6, 7]]])
 
         b = np.array([[[4, 5],
                        [6, 7]],
-
                       [[0, 1],
                        [2, 3]]])
 
@@ -73,13 +142,11 @@ class TestFlip(TestCase):
     def test_3d_swap_axis1(self):
         a = np.array([[[0, 1],
                        [2, 3]],
-
                       [[4, 5],
                        [6, 7]]])
 
         b = np.array([[[2, 3],
                        [0, 1]],
-
                       [[6, 7],
                        [4, 5]]])
 
@@ -87,16 +154,14 @@ class TestFlip(TestCase):
 
     def test_3d_swap_axis2(self):
         a = np.array([[[0, 1],
-                      [2, 3]],
-
-                     [[4, 5],
-                      [6, 7]]])
+                       [2, 3]],
+                      [[4, 5],
+                       [6, 7]]])
 
         b = np.array([[[1, 0],
-                    [3, 2]],
-
-                   [[5, 4],
-                    [7, 6]]])
+                       [3, 2]],
+                      [[5, 4],
+                       [7, 6]]])
 
         assert_equal(np.flip(a, 2), b)
 
@@ -256,7 +321,11 @@ class TestAverage(TestCase):
         a = np.array([[1,2],[3,4]]).view(subclass)
         w = np.array([[1,2],[3,4]]).view(subclass)
 
-        assert_equal(type(np.average(a, weights=w)), subclass)
+        with suppress_warnings() as sup:
+            # Note that the warning is spurious, because the test checks
+            # for weights while a is ignored.
+            sup.filter(FutureWarning, "np.average currently does not preserve")
+            assert_equal(type(np.average(a, weights=w)), subclass)
 
         # also test matrices
         a = np.matrix([[1,2],[3,4]])
@@ -945,7 +1014,11 @@ class TestVectorize(TestCase):
 
     def test_assigning_docstring(self):
         def foo(x):
+            """Original documentation"""
             return x
+
+        f = vectorize(foo)
+        assert_equal(f.__doc__, foo.__doc__)
 
         doc = "Provided documentation"
         f = vectorize(foo, doc=doc)
@@ -1000,6 +1073,155 @@ class TestVectorize(TestCase):
         f.otypes = 'i'
         x = np.arange(5)
         assert_array_equal(f(x), x)
+
+    def test_parse_gufunc_signature(self):
+        assert_equal(nfb._parse_gufunc_signature('(x)->()'), ([('x',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x,y)->()'),
+                     ([('x', 'y')], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x),(y)->()'),
+                     ([('x',), ('y',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x)->(y)'),
+                     ([('x',)], [('y',)]))
+        assert_equal(nfb._parse_gufunc_signature('(x)->(y),()'),
+                     ([('x',)], [('y',), ()]))
+        assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
+                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('(x)(y)->()')
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('(x),(y)->')
+        with assert_raises(ValueError):
+            nfb._parse_gufunc_signature('((x))->(x)')
+
+    def test_signature_simple(self):
+        def addsubtract(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        f = vectorize(addsubtract, signature='(),()->()')
+        r = f([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
+    def test_signature_mean_last(self):
+        def mean(a):
+            return a.mean()
+
+        f = vectorize(mean, signature='(n)->()')
+        r = f([[1, 3], [2, 4]])
+        assert_array_equal(r, [2, 3])
+
+    def test_signature_center(self):
+        def center(a):
+            return a - a.mean()
+
+        f = vectorize(center, signature='(n)->(n)')
+        r = f([[1, 3], [2, 4]])
+        assert_array_equal(r, [[-1, 1], [-1, 1]])
+
+    def test_signature_two_outputs(self):
+        f = vectorize(lambda x: (x, x), signature='()->(),()')
+        r = f([1, 2, 3])
+        assert_(isinstance(r, tuple) and len(r) == 2)
+        assert_array_equal(r[0], [1, 2, 3])
+        assert_array_equal(r[1], [1, 2, 3])
+
+    def test_signature_outer(self):
+        f = vectorize(np.outer, signature='(a),(b)->(a,b)')
+        r = f([1, 2], [1, 2, 3])
+        assert_array_equal(r, [[1, 2, 3], [2, 4, 6]])
+
+        r = f([[[1, 2]]], [1, 2, 3])
+        assert_array_equal(r, [[[[1, 2, 3], [2, 4, 6]]]])
+
+        r = f([[1, 0], [2, 0]], [1, 2, 3])
+        assert_array_equal(r, [[[1, 2, 3], [0, 0, 0]],
+                               [[2, 4, 6], [0, 0, 0]]])
+
+        r = f([1, 2], [[1, 2, 3], [0, 0, 0]])
+        assert_array_equal(r, [[[1, 2, 3], [2, 4, 6]],
+                               [[0, 0, 0], [0, 0, 0]]])
+
+    def test_signature_computed_size(self):
+        f = vectorize(lambda x: x[:-1], signature='(n)->(m)')
+        r = f([1, 2, 3])
+        assert_array_equal(r, [1, 2])
+
+        r = f([[1, 2, 3], [2, 3, 4]])
+        assert_array_equal(r, [[1, 2], [2, 3]])
+
+    def test_signature_excluded(self):
+
+        def foo(a, b=1):
+            return a + b
+
+        f = vectorize(foo, signature='()->()', excluded={'b'})
+        assert_array_equal(f([1, 2, 3]), [2, 3, 4])
+        assert_array_equal(f([1, 2, 3], b=0), [1, 2, 3])
+
+    def test_signature_otypes(self):
+        f = vectorize(lambda x: x, signature='(n)->(n)', otypes=['float64'])
+        r = f([1, 2, 3])
+        assert_equal(r.dtype, np.dtype('float64'))
+        assert_array_equal(r, [1, 2, 3])
+
+    def test_signature_invalid_inputs(self):
+        f = vectorize(operator.add, signature='(n),(n)->(n)')
+        with assert_raises_regex(TypeError, 'wrong number of positional'):
+            f([1, 2])
+        with assert_raises_regex(
+                ValueError, 'does not have enough dimensions'):
+            f(1, 2)
+        with assert_raises_regex(
+                ValueError, 'inconsistent size for core dimension'):
+            f([1, 2], [1, 2, 3])
+
+        f = vectorize(operator.add, signature='()->()')
+        with assert_raises_regex(TypeError, 'wrong number of positional'):
+            f(1, 2)
+
+    def test_signature_invalid_outputs(self):
+
+        f = vectorize(lambda x: x[:-1], signature='(n)->(n)')
+        with assert_raises_regex(
+                ValueError, 'inconsistent size for core dimension'):
+            f([1, 2, 3])
+
+        f = vectorize(lambda x: x, signature='()->(),()')
+        with assert_raises_regex(ValueError, 'wrong number of outputs'):
+            f(1)
+
+        f = vectorize(lambda x: (x, x), signature='()->()')
+        with assert_raises_regex(ValueError, 'wrong number of outputs'):
+            f([1, 2])
+
+    def test_size_zero_output(self):
+        # see issue 5868
+        f = np.vectorize(lambda x: x)
+        x = np.zeros([0, 5], dtype=int)
+        with assert_raises_regex(ValueError, 'otypes'):
+            f(x)
+
+        f.otypes = 'i'
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='()->()')
+        with assert_raises_regex(ValueError, 'otypes'):
+            f(x)
+
+        f = np.vectorize(lambda x: x, signature='()->()', otypes='i')
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='(n)->(n)', otypes='i')
+        assert_array_equal(f(x), x)
+
+        f = np.vectorize(lambda x: x, signature='(n)->(n)')
+        assert_array_equal(f(x.T), x.T)
+
+        f = np.vectorize(lambda x: [x], signature='()->(n)', otypes='i')
+        with assert_raises_regex(ValueError, 'new output dimensions'):
+            f(x)
 
 
 class TestDigitize(TestCase):
@@ -1393,12 +1615,12 @@ class TestHistogram(TestCase):
         a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
-        
+
     def test_error_binnum_type (self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
-        assert_raises(TypeError, histogram, vals, 2.4)   
+        assert_raises(TypeError, histogram, vals, 2.4)
 
     def test_finite_range(self):
         # Normal ranges should be fine
@@ -1728,15 +1950,6 @@ class TestCheckFinite(TestCase):
         assert_(a.dtype == np.float64)
 
 
-class catch_warn_nfb(clear_and_catch_warnings):
-
-    """
-    Context manager to catch, reset warnings in function_base module
-
-    """
-    class_modules = (nfb,)
-
-
 class TestCorrCoef(TestCase):
     A = np.array(
         [[0.15391142, 0.18045767, 0.14197213],
@@ -1773,10 +1986,10 @@ class TestCorrCoef(TestCase):
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
-        with catch_warn_nfb():
+        with suppress_warnings() as sup:
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            warnings.simplefilter("ignore")
+            sup.filter(DeprecationWarning)
             # ddof has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
             assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
@@ -1785,11 +1998,11 @@ class TestCorrCoef(TestCase):
 
     def test_bias(self):
         # bias raises DeprecationWarning
-        with catch_warn_nfb():
+        with suppress_warnings() as sup:
             warnings.simplefilter("always")
             assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
             assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            warnings.simplefilter("ignore")
+            sup.filter(DeprecationWarning)
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
@@ -2169,6 +2382,7 @@ class TestBincount(TestCase):
                             "minlength must be positive",
                             lambda: np.bincount(x, minlength=0))
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_dtype_reference_leaks(self):
         # gh-6805
         intp_refcount = sys.getrefcount(np.dtype(np.intp))
@@ -2251,7 +2465,7 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
-        
+
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
@@ -2270,7 +2484,7 @@ class TestInterp(TestCase):
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
         fp = [5+1.0j, 10+2j, 3+3j, 4+4j]
-        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j, 
+        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j,
              3.5+3.5j, 3.75+3.75j]
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 

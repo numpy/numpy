@@ -2047,7 +2047,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Validate the core dimensions of all the operands, and collect all of
      * the labelled core dimensions into 'core_dim_sizes'.
      *
-     * The behavior has been changed in Numpy 1.10.0, and the following
+     * The behavior has been changed in NumPy 1.10.0, and the following
      * requirements must be fulfilled or an error will be raised:
      *  * Arguments, both input and output, must have at least as many
      *    dimensions as the corresponding number of core dimensions. In
@@ -3842,10 +3842,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyArray_Descr *otype = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
-    static char *kwlist1[] = {"array", "axis", "dtype",
-                                "out", "keepdims", NULL};
-    static char *kwlist2[] = {"array", "indices", "axis",
-                                "dtype", "out", NULL};
+    static char *reduce_kwlist[] = {
+            "array", "axis", "dtype", "out", "keepdims", NULL};
+    static char *accumulate_kwlist[] = {
+            "array", "axis", "dtype", "out", "keepdims", NULL};
+    static char *reduceat_kwlist[] = {
+            "array", "indices", "axis", "dtype", "out", NULL};
+
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
 
     if (ufunc == NULL) {
@@ -3874,7 +3877,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&", kwlist2,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&", reduceat_kwlist,
                                         &op,
                                         &obj_ind,
                                         &axes_in,
@@ -3891,18 +3894,29 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
+        PyObject *bad_keepdimarg = NULL;
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O", accumulate_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
-                                        &keepdims)) {
+                                        &bad_keepdimarg)) {
             Py_XDECREF(otype);
             return NULL;
         }
+        /* Until removed outright by https://github.com/numpy/numpy/pull/8187 */
+        if (bad_keepdimarg != NULL) {
+            Py_DECREF(bad_keepdimarg);
+            if (DEPRECATE_FUTUREWARNING(
+                    "keepdims argument has no effect on accumulate, and will be "
+                    "removed in future") < 0) {
+                Py_XDECREF(otype);
+                return NULL;
+            }
+        }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,

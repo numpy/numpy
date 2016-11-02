@@ -272,6 +272,21 @@ class TestRecord(TestCase):
         for n in d.names:
             assert_equal(d.fields[n][0], np.dtype('?'))
 
+    def test_nonint_offsets(self):
+        # gh-8059
+        def make_dtype(off):
+            return np.dtype({'names': ['A'], 'formats': ['i4'], 
+                             'offsets': [off]})
+        
+        assert_raises(TypeError, make_dtype, 'ASD')
+        assert_raises(OverflowError, make_dtype, 2**70)
+        assert_raises(TypeError, make_dtype, 2.3)
+        assert_raises(ValueError, make_dtype, -10)
+
+        # no errors here:
+        dt = make_dtype(np.uint32(0))
+        np.zeros(1, dtype=dt)[0].item()
+
 
 class TestSubarray(TestCase):
     def test_single_subarray(self):

@@ -22,6 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
+include "randint_helpers.pxi"
 include "numpy.pxd"
 include "cpython/pycapsule.pxd"
 
@@ -572,283 +573,6 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
-
-# Set up dictionary of integer types and relevant functions.
-#
-# The dictionary is keyed by dtype(...).name and the values
-# are a tuple (low, high, function), where low and high are
-# the bounds of the largest half open interval `[low, high)`
-# and the function is the relevant function to call for
-# that precision.
-#
-# The functions are all the same except for changed types in
-# a few places. It would be easy to template them.
-
-def _rand_bool(low, high, size, rngstate):
-    """
-    _rand_bool(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_bool off, rng, buf
-    cdef npy_bool *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_bool>(high - low)
-    off = <npy_bool>(low)
-    if size is None:
-        rk_random_bool(off, rng, 1, &buf, state)
-        return np.bool_(<npy_bool>buf)
-    else:
-        array = <ndarray>np.empty(size, np.bool_)
-        cnt = PyArray_SIZE(array)
-        out = <npy_bool *>PyArray_DATA(array)
-        with nogil:
-            rk_random_bool(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int8(low, high, size, rngstate):
-    """
-    _rand_int8(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint8 off, rng, buf
-    cdef npy_uint8 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint8>(high - low)
-    off = <npy_uint8>(<npy_int8>low)
-    if size is None:
-        rk_random_uint8(off, rng, 1, &buf, state)
-        return np.int8(<npy_int8>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int8)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint8 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint8(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int16(low, high, size, rngstate):
-    """
-    _rand_int16(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint16 off, rng, buf
-    cdef npy_uint16 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint16>(high - low)
-    off = <npy_uint16>(<npy_int16>low)
-    if size is None:
-        rk_random_uint16(off, rng, 1, &buf, state)
-        return np.int16(<npy_int16>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int16)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint16 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint16(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int32(low, high, size, rngstate):
-    """
-    _rand_int32(self, low, high, size, rngstate)
-
-    Return random np.int32 integers between `low` and `high`, inclusive.
-
-    Return random integers from the "discrete uniform" distribution in the
-    closed interval [`low`, `high`]. On entry the arguments are presumed
-    to have been validated for size and order for the np.int32 type.
-
-    Parameters
-    ----------
-    low : int
-        Lowest (signed) integer to be drawn from the distribution.
-    high : int
-        Highest (signed) integer to be drawn from the distribution.
-    size : int or tuple of ints
-        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-        ``m * n * k`` samples are drawn.  Default is None, in which case a
-        single value is returned.
-    rngstate : encapsulated pointer to rk_state
-        The specific type depends on the python version. In Python 2 it is
-        a PyCObject, in Python 3 a PyCapsule object.
-
-    Returns
-    -------
-    out : python scalar or ndarray of np.int32
-          `size`-shaped array of random integers from the appropriate
-          distribution, or a single such random int if `size` not provided.
-
-    """
-    cdef npy_uint32 off, rng, buf
-    cdef npy_uint32 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint32>(high - low)
-    off = <npy_uint32>(<npy_int32>low)
-    if size is None:
-        rk_random_uint32(off, rng, 1, &buf, state)
-        return np.int32(<npy_int32>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int32)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint32 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint32(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_int64(low, high, size, rngstate):
-    """
-    _rand_int64(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint64 off, rng, buf
-    cdef npy_uint64 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint64>(high - low)
-    off = <npy_uint64>(<npy_int64>low)
-    if size is None:
-        rk_random_uint64(off, rng, 1, &buf, state)
-        return np.int64(<npy_int64>buf)
-    else:
-        array = <ndarray>np.empty(size, np.int64)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint64 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint64(off, rng, cnt, out, state)
-        return array
-
-def _rand_uint8(low, high, size, rngstate):
-    """
-    _rand_uint8(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint8 off, rng, buf
-    cdef npy_uint8 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint8>(high - low)
-    off = <npy_uint8>(low)
-    if size is None:
-        rk_random_uint8(off, rng, 1, &buf, state)
-        return np.uint8(<npy_uint8>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint8)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint8 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint8(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint16(low, high, size, rngstate):
-    """
-    _rand_uint16(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint16 off, rng, buf
-    cdef npy_uint16 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint16>(high - low)
-    off = <npy_uint16>(low)
-    if size is None:
-        rk_random_uint16(off, rng, 1, &buf, state)
-        return np.uint16(<npy_uint16>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint16)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint16 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint16(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint32(low, high, size, rngstate):
-    """
-    _rand_uint32(self, low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint32 off, rng, buf
-    cdef npy_uint32 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint32>(high - low)
-    off = <npy_uint32>(low)
-    if size is None:
-        rk_random_uint32(off, rng, 1, &buf, state)
-        return np.uint32(<npy_uint32>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint32)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint32 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint32(off, rng, cnt, out, state)
-        return array
-
-
-def _rand_uint64(low, high, size, rngstate):
-    """
-    _rand_uint64(low, high, size, rngstate)
-
-    See `_rand_int32` for documentation, only the return type changes.
-
-    """
-    cdef npy_uint64 off, rng, buf
-    cdef npy_uint64 *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_uint64>(high - low)
-    off = <npy_uint64>(low)
-    if size is None:
-        rk_random_uint64(off, rng, 1, &buf, state)
-        return np.uint64(<npy_uint64>buf)
-    else:
-        array = <ndarray>np.empty(size, np.uint64)
-        cnt = PyArray_SIZE(array)
-        out = <npy_uint64 *>PyArray_DATA(array)
-        with nogil:
-            rk_random_uint64(off, rng, cnt, out, state)
-        return array
-
 # Look up table for randint functions keyed by type name. The stored data
 # is a tuple (lbnd, ubnd, func), where lbnd is the smallest value for the
 # type, ubnd is one greater than the largest value, and func is the
@@ -1192,8 +916,8 @@ cdef class RandomState:
         ----------
         low : int
             Lowest (signed) integer to be drawn from the distribution (unless
-            ``high=None``, in which case this parameter is the *highest* such
-            integer).
+            ``high=None``, in which case this parameter is one above the
+            *highest* such integer).
         high : int, optional
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
@@ -1840,8 +1564,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.norm : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.norm : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -1903,15 +1627,13 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
-
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_normal, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_normal, size, oloc, oscale,
                            self.lock)
 
@@ -2029,14 +1751,13 @@ cdef class RandomState:
 
         if oscale.shape == ():
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont1_array_sc(self.internal_state, rk_exponential, size,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont1_array(self.internal_state, rk_exponential, size, oscale,
                            self.lock)
 
@@ -2097,8 +1818,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.gamma : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.gamma : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2147,14 +1868,13 @@ cdef class RandomState:
 
         if oshape.shape == ():
             fshape = PyFloat_AsDouble(shape)
-
-            if fshape <= 0:
-                raise ValueError("shape <= 0")
+            if np.signbit(fshape):
+                raise ValueError("shape < 0")
             return cont1_array_sc(self.internal_state, rk_standard_gamma,
                                   size, fshape, self.lock)
 
-        if np.any(np.less_equal(oshape, 0.0)):
-            raise ValueError("shape <= 0")
+        if np.any(np.signbit(oshape)):
+            raise ValueError("shape < 0")
         return cont1_array(self.internal_state, rk_standard_gamma, size,
                            oshape, self.lock)
 
@@ -2188,8 +1908,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.gamma : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.gamma : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2240,18 +1960,17 @@ cdef class RandomState:
         if oshape.shape == oscale.shape == ():
             fshape = PyFloat_AsDouble(shape)
             fscale = PyFloat_AsDouble(scale)
-
-            if fshape <= 0:
-                raise ValueError("shape <= 0")
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fshape):
+                raise ValueError("shape < 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_gamma, size, fshape,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oshape, 0.0)):
-            raise ValueError("shape <= 0")
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oshape)):
+            raise ValueError("shape < 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_gamma, size, oshape, oscale,
                            self.lock)
 
@@ -2290,8 +2009,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.f : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.f : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2552,7 +2271,7 @@ cdef class RandomState:
         Parameters
         ----------
         df : int or array_like of ints
-            Degrees of freedom, should be > 0 as of Numpy 1.10,
+            Degrees of freedom, should be > 0 as of NumPy 1.10.0,
             should be > 1 for earlier versions.
         nonc : float or array_like of floats
             Non-centrality, should be non-negative.
@@ -2847,8 +2566,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.vonmises : probability density function,
-            distribution, or cumulative density function, etc.
+        scipy.stats.vonmises : probability density function, distribution, or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2953,10 +2672,10 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.lomax.pdf : probability density function,
-            distribution or cumulative density function, etc.
-        scipy.stats.distributions.genpareto.pdf : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.lomax : probability density function, distribution or
+            cumulative density function, etc.
+        scipy.stats.genpareto : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -3055,9 +2774,9 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.weibull_max
-        scipy.stats.distributions.weibull_min
-        scipy.stats.distributions.genextreme
+        scipy.stats.weibull_max
+        scipy.stats.weibull_min
+        scipy.stats.genextreme
         gumbel
 
         Notes
@@ -3122,14 +2841,13 @@ cdef class RandomState:
 
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
-
-            if fa <= 0:
-                raise ValueError("a <= 0")
+            if np.signbit(fa):
+                raise ValueError("a < 0")
             return cont1_array_sc(self.internal_state, rk_weibull, size, fa,
                                   self.lock)
 
-        if np.any(np.less_equal(oa, 0.0)):
-            raise ValueError("a <= 0")
+        if np.any(np.signbit(oa)):
+            raise ValueError("a < 0")
         return cont1_array(self.internal_state, rk_weibull, size, oa,
                            self.lock)
 
@@ -3235,14 +2953,13 @@ cdef class RandomState:
 
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
-
-            if fa <= 0:
-                raise ValueError("a <= 0")
+            if np.signbit(fa):
+                raise ValueError("a < 0")
             return cont1_array_sc(self.internal_state, rk_power, size, fa,
                                   self.lock)
 
-        if np.any(np.less_equal(oa, 0.0)):
-            raise ValueError("a <= 0")
+        if np.any(np.signbit(oa)):
+            raise ValueError("a < 0")
         return cont1_array(self.internal_state, rk_power, size, oa, self.lock)
 
     def laplace(self, loc=0.0, scale=1.0, size=None):
@@ -3333,14 +3050,13 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_laplace, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_laplace, size, oloc, oscale,
                            self.lock)
 
@@ -3465,14 +3181,13 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_gumbel, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_gumbel, size, oloc, oscale,
                            self.lock)
 
@@ -3505,8 +3220,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.logistic : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.logistic : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -3559,14 +3274,13 @@ cdef class RandomState:
         if oloc.shape == oscale.shape == ():
             floc = PyFloat_AsDouble(loc)
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont2_array_sc(self.internal_state, rk_logistic, size, floc,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0")
         return cont2_array(self.internal_state, rk_logistic, size, oloc,
                            oscale, self.lock)
 
@@ -3684,14 +3398,13 @@ cdef class RandomState:
         if omean.shape == osigma.shape == ():
             fmean = PyFloat_AsDouble(mean)
             fsigma = PyFloat_AsDouble(sigma)
-
-            if fsigma <= 0:
-                raise ValueError("sigma <= 0")
+            if np.signbit(fsigma):
+                raise ValueError("sigma < 0")
             return cont2_array_sc(self.internal_state, rk_lognormal, size,
                                   fmean, fsigma, self.lock)
 
-        if np.any(np.less_equal(osigma, 0.0)):
-            raise ValueError("sigma <= 0.0")
+        if np.any(np.signbit(osigma)):
+            raise ValueError("sigma < 0.0")
         return cont2_array(self.internal_state, rk_lognormal, size, omean,
                            osigma, self.lock)
 
@@ -3764,14 +3477,13 @@ cdef class RandomState:
 
         if oscale.shape == ():
             fscale = PyFloat_AsDouble(scale)
-
-            if fscale <= 0:
-                raise ValueError("scale <= 0")
+            if np.signbit(fscale):
+                raise ValueError("scale < 0")
             return cont1_array_sc(self.internal_state, rk_rayleigh, size,
                                   fscale, self.lock)
 
-        if np.any(np.less_equal(oscale, 0.0)):
-            raise ValueError("scale <= 0.0")
+        if np.any(np.signbit(oscale)):
+            raise ValueError("scale < 0.0")
         return cont1_array(self.internal_state, rk_rayleigh, size, oscale,
                            self.lock)
 
@@ -3988,8 +3700,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.binom : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.binom : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4292,8 +4004,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.zipf : probability density function,
-            distribution, or cumulative density function, etc.
+        scipy.stats.zipf : probability density function, distribution, or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4454,8 +4166,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.hypergeom : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.hypergeom : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4568,8 +4280,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.logser : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.logser : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----

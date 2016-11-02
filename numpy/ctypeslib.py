@@ -95,7 +95,7 @@ else:
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.  
-        Numpy supplies the load_library function as a convenience.
+        NumPy supplies the load_library function as a convenience.
 
         Parameters
         ----------
@@ -119,7 +119,7 @@ else:
         if ctypes.__version__ < '1.0.1':
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
-                          "with ctypes < 1.0.1")
+                          "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -178,7 +178,7 @@ class _ndptr(_ndptr_base):
 
     def _check_retval_(self):
         """This method is called when this class is used as the .restype
-        asttribute for a shared-library function.   It constructs a numpy
+        attribute for a shared-library function.   It constructs a numpy
         array from a void pointer."""
         return array(self)
 

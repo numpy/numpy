@@ -5,7 +5,8 @@ from functools import reduce
 import numpy as np
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
-from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, suppress_warnings)
 from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
@@ -257,62 +258,73 @@ class TestMa(TestCase):
 
     def test_testCopySize(self):
         # Tests of some subtle points of copying and sizing.
-        n = [0, 0, 1, 0, 0]
-        m = make_mask(n)
-        m2 = make_mask(m)
-        self.assertTrue(m is m2)
-        m3 = make_mask(m, copy=1)
-        self.assertTrue(m is not m3)
+        with suppress_warnings() as sup:
+            sup.filter(
+                np.ma.core.MaskedArrayFutureWarning,
+                "setting an item on a masked array which has a "
+                "shared mask will not copy")
 
-        x1 = np.arange(5)
-        y1 = array(x1, mask=m)
-        self.assertTrue(y1._data is not x1)
-        self.assertTrue(allequal(x1, y1._data))
-        self.assertTrue(y1.mask is m)
+            n = [0, 0, 1, 0, 0]
+            m = make_mask(n)
+            m2 = make_mask(m)
+            self.assertTrue(m is m2)
+            m3 = make_mask(m, copy=1)
+            self.assertTrue(m is not m3)
 
-        y1a = array(y1, copy=0)
-        self.assertTrue(y1a.mask is y1.mask)
+            x1 = np.arange(5)
+            y1 = array(x1, mask=m)
+            self.assertTrue(y1._data is not x1)
+            self.assertTrue(allequal(x1, y1._data))
+            self.assertTrue(y1.mask is m)
 
-        y2 = array(x1, mask=m, copy=0)
-        self.assertTrue(y2.mask is m)
-        self.assertTrue(y2[2] is masked)
-        y2[2] = 9
-        self.assertTrue(y2[2] is not masked)
-        self.assertTrue(y2.mask is not m)
-        self.assertTrue(allequal(y2.mask, 0))
+            y1a = array(y1, copy=0)
+            self.assertTrue(y1a.mask is y1.mask)
 
-        y3 = array(x1 * 1.0, mask=m)
-        self.assertTrue(filled(y3).dtype is (x1 * 1.0).dtype)
+            y2 = array(x1, mask=m, copy=0)
+            self.assertTrue(y2.mask is m)
+            self.assertTrue(y2[2] is masked)
+            y2[2] = 9
+            self.assertTrue(y2[2] is not masked)
+            self.assertTrue(y2.mask is not m)
+            self.assertTrue(allequal(y2.mask, 0))
 
-        x4 = arange(4)
-        x4[2] = masked
-        y4 = resize(x4, (8,))
-        self.assertTrue(eq(concatenate([x4, x4]), y4))
-        self.assertTrue(eq(getmask(y4), [0, 0, 1, 0, 0, 0, 1, 0]))
-        y5 = repeat(x4, (2, 2, 2, 2), axis=0)
-        self.assertTrue(eq(y5, [0, 0, 1, 1, 2, 2, 3, 3]))
-        y6 = repeat(x4, 2, axis=0)
-        self.assertTrue(eq(y5, y6))
+            y3 = array(x1 * 1.0, mask=m)
+            self.assertTrue(filled(y3).dtype is (x1 * 1.0).dtype)
+
+            x4 = arange(4)
+            x4[2] = masked
+            y4 = resize(x4, (8,))
+            self.assertTrue(eq(concatenate([x4, x4]), y4))
+            self.assertTrue(eq(getmask(y4), [0, 0, 1, 0, 0, 0, 1, 0]))
+            y5 = repeat(x4, (2, 2, 2, 2), axis=0)
+            self.assertTrue(eq(y5, [0, 0, 1, 1, 2, 2, 3, 3]))
+            y6 = repeat(x4, 2, axis=0)
+            self.assertTrue(eq(y5, y6))
 
     def test_testPut(self):
         # Test of put
-        d = arange(5)
-        n = [0, 0, 0, 1, 1]
-        m = make_mask(n)
-        x = array(d, mask=m)
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is masked)
-        x[[1, 4]] = [10, 40]
-        self.assertTrue(x.mask is not m)
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is not masked)
-        self.assertTrue(eq(x, [0, 10, 2, -1, 40]))
+        with suppress_warnings() as sup:
+            sup.filter(
+                np.ma.core.MaskedArrayFutureWarning,
+                "setting an item on a masked array which has a "
+                "shared mask will not copy")
+            d = arange(5)
+            n = [0, 0, 0, 1, 1]
+            m = make_mask(n)
+            x = array(d, mask=m)
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is masked)
+            x[[1, 4]] = [10, 40]
+            self.assertTrue(x.mask is not m)
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is not masked)
+            self.assertTrue(eq(x, [0, 10, 2, -1, 40]))
 
-        x = array(d, mask=m)
-        x.put([0, 1, 2], [-1, 100, 200])
-        self.assertTrue(eq(x, [-1, 100, 200, 0, 0]))
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is masked)
+            x = array(d, mask=m)
+            x.put([0, 1, 2], [-1, 100, 200])
+            self.assertTrue(eq(x, [-1, 100, 200, 0, 0]))
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is masked)
 
     def test_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d

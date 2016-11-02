@@ -87,7 +87,15 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         if (refcheck) {
+#ifdef PYPY_VERSION
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array with refcheck=True on PyPy.\n"
+                    "Use the resize function or refcheck=False");
+             
+            return NULL;
+#else
             refcnt = PyArray_REFCOUNT(self);
+#endif /* PYPY_VERSION */
         }
         else {
             refcnt = 1;
@@ -96,8 +104,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "\
-                    "references or is referenced\n"\
+                    "cannot resize an array that "
+                    "references or is referenced\n"
                     "by another array in this way.  Use the resize function");
             return NULL;
         }

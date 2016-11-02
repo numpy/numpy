@@ -257,7 +257,7 @@ def tensorsolve(a, b, axes=None):
 
     See Also
     --------
-    tensordot, tensorinv, einsum
+    numpy.tensordot, tensorinv, numpy.einsum
 
     Examples
     --------
@@ -416,7 +416,7 @@ def tensorinv(a, ind=2):
 
     See Also
     --------
-    tensordot, tensorsolve
+    numpy.tensordot, tensorsolve
 
     Examples
     --------
@@ -677,7 +677,7 @@ def qr(a, mode='reduced'):
     `a` is of type `matrix`, all the return values will be matrices too.
 
     New 'reduced', 'complete', and 'raw' options for mode were added in
-    Numpy 1.8 and the old option 'full' was made an alias of 'reduced'.  In
+    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.  In
     addition the options 'full' and 'economic' were deprecated.  Because
     'full' was the previous default and 'reduced' is the new default,
     backward compatibility can be maintained by letting `mode` default.
@@ -737,12 +737,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
-            msg = "The 'economic' option is deprecated.",
-            warnings.warn(msg, DeprecationWarning)
+            msg = "The 'economic' option is deprecated."
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'economic'
         else:
             raise ValueError("Unrecognized mode '%s'" % mode)
@@ -1666,7 +1666,7 @@ def slogdet(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    .. versionadded:: 1.6.0.
+    .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.

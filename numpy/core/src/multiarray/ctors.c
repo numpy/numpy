@@ -902,7 +902,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                          int allow_emptystring)
 {
     PyArrayObject_fields *fa;
-    int i;
+    int i, is_empty;
     npy_intp nbytes;
 
     if (descr->subarray) {
@@ -953,6 +953,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     /* Check dimensions and multiply them to nbytes */
+    is_empty = 0;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -961,13 +962,13 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * Compare to PyArray_OverflowMultiplyList that
              * returns 0 in this case.
              */
+            is_empty = 1;
             continue;
         }
 
         if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "negative dimensions "  \
-                            "are not allowed");
+                "negative dimensions are not allowed");
             Py_DECREF(descr);
             return NULL;
         }
@@ -1041,8 +1042,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
+         * Could probably just allocate a few bytes here. -- Chuck
          */
-        if (nbytes == 0) {
+        if (is_empty) {
             nbytes = descr->elsize;
         }
         /*
@@ -2893,20 +2895,27 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
     PyArrayObject *ret;
 
     if (!type) type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+
+    /*
+     * PyArray_NewFromDescr steals a ref,
+     * but we need to look at type later. 
+     * */
+    Py_INCREF(type);
+
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type, nd, dims,
                                                 NULL, NULL,
                                                 is_f_order, NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    if (PyDataType_REFCHK(type)) {
+    if (ret != NULL && PyDataType_REFCHK(type)) {
         PyArray_FillObjectArray(ret, Py_None);
         if (PyErr_Occurred()) {
             Py_DECREF(ret);
+            Py_DECREF(type);
             return NULL;
         }
     }
+
+    Py_DECREF(type);
     return (PyObject *)ret;
 }
 

@@ -3,7 +3,7 @@
 Indexing
 ========
 
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. currentmodule:: numpy
 

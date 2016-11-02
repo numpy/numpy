@@ -4,14 +4,14 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones, asarray,
-    where, int8, int16, int32, int64, empty, promote_types, diagonal,
+    absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
+    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     )
-from numpy.core import iinfo
+from numpy.core import iinfo, transpose
 
 
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'rot90', 'tri', 'triu',
+    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
 
@@ -134,59 +134,6 @@ def flipud(m):
     if m.ndim < 1:
         raise ValueError("Input must be >= 1-d.")
     return m[::-1, ...]
-
-
-def rot90(m, k=1):
-    """
-    Rotate an array by 90 degrees in the counter-clockwise direction.
-
-    The first two dimensions are rotated; therefore, the array must be at
-    least 2-D.
-
-    Parameters
-    ----------
-    m : array_like
-        Array of two or more dimensions.
-    k : integer
-        Number of times the array is rotated by 90 degrees.
-
-    Returns
-    -------
-    y : ndarray
-        Rotated array.
-
-    See Also
-    --------
-    fliplr : Flip an array horizontally.
-    flipud : Flip an array vertically.
-
-    Examples
-    --------
-    >>> m = np.array([[1,2],[3,4]], int)
-    >>> m
-    array([[1, 2],
-           [3, 4]])
-    >>> np.rot90(m)
-    array([[2, 4],
-           [1, 3]])
-    >>> np.rot90(m, 2)
-    array([[4, 3],
-           [2, 1]])
-
-    """
-    m = asanyarray(m)
-    if m.ndim < 2:
-        raise ValueError("Input must >= 2-d.")
-    k = k % 4
-    if k == 0:
-        return m
-    elif k == 1:
-        return fliplr(m).swapaxes(0, 1)
-    elif k == 2:
-        return fliplr(flipud(m))
-    else:
-        # k == 3
-        return fliplr(m.swapaxes(0, 1))
 
 
 def eye(N, M=None, k=0, dtype=float):
@@ -652,52 +599,40 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     Construct a 2-D histogram with variable bin width. First define the bin
     edges:
 
-    >>> xedges = [0, 1, 1.5, 3, 5]
+    >>> xedges = [0, 1, 3, 5]
     >>> yedges = [0, 2, 3, 4, 6]
 
     Next we create a histogram H with random bin content:
 
-    >>> x = np.random.normal(3, 1, 100)
+    >>> x = np.random.normal(2, 1, 100)
     >>> y = np.random.normal(1, 1, 100)
-    >>> H, xedges, yedges = np.histogram2d(y, x, bins=(xedges, yedges))
+    >>> H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges))
+    >>> H = H.T  # Let each row list bins with common y range.
 
-    Or we fill the histogram H with a determined bin content:
-
-    >>> H = np.ones((4, 4)).cumsum().reshape(4, 4)
-    >>> print(H[::-1])  # This shows the bin content in the order as plotted
-    [[ 13.  14.  15.  16.]
-     [  9.  10.  11.  12.]
-     [  5.   6.   7.   8.]
-     [  1.   2.   3.   4.]]
-
-    Imshow can only do an equidistant representation of bins:
+    :func:`imshow <matplotlib.pyplot.imshow>` can only display square bins:
 
     >>> fig = plt.figure(figsize=(7, 3))
-    >>> ax = fig.add_subplot(131)
-    >>> ax.set_title('imshow: equidistant')
-    >>> im = plt.imshow(H, interpolation='nearest', origin='low',
-    ...            extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+    >>> ax = fig.add_subplot(131, title='imshow: square bins')
+    >>> plt.imshow(H, interpolation='nearest', origin='low',
+    ...         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
 
-    pcolormesh can display exact bin edges:
+    :func:`pcolormesh <matplotlib.pyplot.pcolormesh>` can display actual edges:
 
-    >>> ax = fig.add_subplot(132)
-    >>> ax.set_title('pcolormesh: exact bin edges')
+    >>> ax = fig.add_subplot(132, title='pcolormesh: actual edges',
+    ...         aspect='equal')
     >>> X, Y = np.meshgrid(xedges, yedges)
     >>> ax.pcolormesh(X, Y, H)
-    >>> ax.set_aspect('equal')
 
-    NonUniformImage displays exact bin edges with interpolation:
+    :class:`NonUniformImage <matplotlib.image.NonUniformImage>` can be used to
+    display actual bin edges with interpolation:
 
-    >>> ax = fig.add_subplot(133)
-    >>> ax.set_title('NonUniformImage: interpolated')
+    >>> ax = fig.add_subplot(133, title='NonUniformImage: interpolated',
+    ...         aspect='equal', xlim=xedges[[0, -1]], ylim=yedges[[0, -1]])
     >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
-    >>> xcenters = xedges[:-1] + 0.5 * (xedges[1:] - xedges[:-1])
-    >>> ycenters = yedges[:-1] + 0.5 * (yedges[1:] - yedges[:-1])
+    >>> xcenters = (xedges[:-1] + xedges[1:]) / 2
+    >>> ycenters = (yedges[:-1] + yedges[1:]) / 2
     >>> im.set_data(xcenters, ycenters, H)
     >>> ax.images.append(im)
-    >>> ax.set_xlim(xedges[0], xedges[-1])
-    >>> ax.set_ylim(yedges[0], yedges[-1])
-    >>> ax.set_aspect('equal')
     >>> plt.show()
 
     """
