@@ -1,8 +1,8 @@
 Building and installing NumPy
 +++++++++++++++++++++++++++++
 
-**IMPORTANT**: the below notes are about building Numpy, which for most users
-is *not* the recommended way to install Numpy.  Instead, use either a complete
+**IMPORTANT**: the below notes are about building NumPy, which for most users
+is *not* the recommended way to install NumPy.  Instead, use either a complete
 scientific Python distribution (recommended) or a binary installer - see
 http://scipy.org/install.html.
 
@@ -34,18 +34,18 @@ Building NumPy requires the following software installed:
    This is required for testing numpy, but not for using it.
 
 Python__ http://www.python.org
-nose__ http://somethingaboutorange.com/mrl/projects/nose/
+nose__ http://nose.readthedocs.io
 
 
 .. note:: 
 
-   If you want to build Numpy in order to work on Numpy itself, use
+   If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
    http://docs.scipy.org/doc/numpy-dev/dev/development_environment.html
 
 .. note::
 
-   More extensive information on building Numpy (and Scipy) is maintained at
+   More extensive information on building NumPy (and Scipy) is maintained at
    http://scipy.org/scipylib/building/index.html
 
 
@@ -68,8 +68,8 @@ NPY_NUM_BUILD_JOBS.
 Choosing compilers
 ==================
 
-Numpy needs a C compiler, and for development versions also Cython.  A Fortran
-compiler isn't needed to build Numpy itself; the ``numpy.f2py`` tests will be
+NumPy needs a C compiler, and for development versions also Cython.  A Fortran
+compiler isn't needed to build NumPy itself; the ``numpy.f2py`` tests will be
 skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
 on Fortran compilers in the rest of this section.
@@ -91,7 +91,7 @@ good `application note <https://software.intel.com/en-us/articles/numpyscipy-wit
 on this.
 
 If you want to use a free compiler toolchain, the recommended compiler is MingwPy__.
-The older MinGW32 compiler set used to produce older .exe installers for Numpy
+The older MinGW32 compiler set used to produce older .exe installers for NumPy
 itself is still available at https://github.com/numpy/numpy-vendor, but not
 recommended for use anymore.
 
@@ -103,7 +103,7 @@ Building with optimized BLAS support
 
 Configuring which BLAS/LAPACK is used if you have multiple libraries installed,
 or you have only one installed but in a non-standard location, is done via a
-``site.cfg`` file.  See the ``site.cfg.example`` shipped with Numpy for more
+``site.cfg`` file.  See the ``site.cfg.example`` shipped with NumPy for more
 details.
 
 Windows
@@ -117,7 +117,7 @@ For an overview of the state of BLAS/LAPACK libraries on Windows, see
 OS X
 ----
 
-OS X ships the Accelerate framework, which Numpy can build against without any
+OS X ships the Accelerate framework, which NumPy can build against without any
 manual configuration.  Other BLAS/LAPACK implementations (OpenBLAS, Intel MKL,
 ATLAS) will also work.
 
@@ -149,7 +149,7 @@ Or by preloading a specific BLAS library with::
 Build issues
 ============
 
-If you run into build issues and need help, the Numpy
+If you run into build issues and need help, the NumPy
 `mailing list <http://scipy.org/scipylib/mailing-lists.html>`_ is the best
-place to ask.  If the issue is clearly a bug in Numpy, please file an issue (or
+place to ask.  If the issue is clearly a bug in NumPy, please file an issue (or
 even better, a pull request) at https://github.com/numpy/numpy.

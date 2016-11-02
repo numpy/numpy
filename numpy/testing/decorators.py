@@ -15,10 +15,10 @@ function name, setup and teardown functions and so on - see
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
 import collections
 
-from .utils import SkipTest
+from .utils import SkipTest, assert_warns
+
 
 def slow(t):
     """
@@ -251,15 +251,8 @@ def deprecated(conditional=True):
 
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement
-            with warnings.catch_warnings(record=True) as l:
-                warnings.simplefilter('always')
+            with assert_warns(DeprecationWarning):
                 f(*args, **kwargs)
-                if not len(l) > 0:
-                    raise AssertionError("No warning raised when calling %s"
-                            % f.__name__)
-                if not l[0].category is DeprecationWarning:
-                    raise AssertionError("First warning for %s is not a "
-                            "DeprecationWarning( is %s)" % (f.__name__, l[0]))
 
         if isinstance(conditional, collections.Callable):
             cond = conditional()

@@ -28,6 +28,18 @@
 #define NPY_GCC_OPT_3
 #endif
 
+/* compile target attributes */
+#if defined HAVE_ATTRIBUTE_TARGET_AVX && defined HAVE_LINK_AVX
+#define NPY_GCC_TARGET_AVX __attribute__((target("avx")))
+#else
+#define NPY_GCC_TARGET_AVX
+#endif
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
+#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
+#else
+#define NPY_GCC_TARGET_AVX2
+#endif
+
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -77,6 +89,22 @@
 #else
 #define NPY_PREFETCH(x, rw,loc)
 #endif
+#endif
+
+#ifdef HAVE___BUILTIN_CPU_SUPPORTS
+  #ifdef HAVE_ATTRIBUTE_TARGET_AVX2
+    #define NPY_CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
+  #else
+    #define NPY_CPU_SUPPORTS_AVX2 0
+  #endif
+  #ifdef HAVE_ATTRIBUTE_TARGET_AVX
+    #define NPY_CPU_SUPPORTS_AVX __builtin_cpu_supports("avx")
+  #else
+    #define NPY_CPU_SUPPORTS_AVX 0
+  #endif
+#else
+  #define NPY_CPU_SUPPORTS_AVX 0
+  #define NPY_CPU_SUPPORTS_AVX2 0
 #endif
 
 #if defined(_MSC_VER)
@@ -372,21 +400,21 @@ typedef struct {npy_longdouble real, imag;} npy_clongdouble;
 #endif
 #if NPY_SIZEOF_COMPLEX_DOUBLE != 2 * NPY_SIZEOF_DOUBLE
 #error npy_cdouble definition is not compatible with C99 complex definition ! \
-        Please contact Numpy maintainers and give detailed information about your \
+        Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
 typedef struct { double real, imag; } npy_cdouble;
 
 #if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
 #error npy_cfloat definition is not compatible with C99 complex definition ! \
-        Please contact Numpy maintainers and give detailed information about your \
+        Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
 typedef struct { float real, imag; } npy_cfloat;
 
 #if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
 #error npy_clongdouble definition is not compatible with C99 complex definition ! \
-        Please contact Numpy maintainers and give detailed information about your \
+        Please contact NumPy maintainers and give detailed information about your \
         compiler and platform
 #endif
 typedef struct { npy_longdouble real, imag; } npy_clongdouble;

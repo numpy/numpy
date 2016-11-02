@@ -96,7 +96,7 @@ class _Deprecate(object):
 
         def newfunc(*args,**kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
-            warnings.warn(depdoc, DeprecationWarning)
+            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
         newfunc = _set_function_name(newfunc, old_name)
@@ -152,7 +152,7 @@ def deprecate(*args, **kwargs):
     >>> olduint(6)
     /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
     DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning)
+      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -241,10 +241,10 @@ def byte_bounds(a):
 
 def who(vardict=None):
     """
-    Print the Numpy arrays in the given dictionary.
+    Print the NumPy arrays in the given dictionary.
 
     If there is no dictionary passed in or `vardict` is None then returns
-    Numpy arrays in the globals() dictionary (all Numpy arrays in the
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
     namespace).
 
     Parameters
@@ -646,7 +646,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
 def source(object, output=sys.stdout):
     """
-    Print or write to a file the source code for a Numpy object.
+    Print or write to a file the source code for a NumPy object.
 
     The source code is only returned for objects written in Python. Many
     functions and classes are defined in C and will therefore not return
@@ -1016,7 +1016,7 @@ class SafeEval(object):
     def __init__(self):
         # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
 
     def visit(self, node):
         cls = node.__class__

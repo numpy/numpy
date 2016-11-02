@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    dec, assert_allclose, assert_no_warnings
+    dec, assert_allclose, assert_no_warnings, suppress_warnings
 )
 
 
@@ -300,9 +300,8 @@ class TestRemainder(TestCase):
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        with warnings.catch_warnings():
-            warnings.simplefilter('always')
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -427,16 +426,43 @@ class TestPower(TestCase):
 
     def test_integer_power(self):
         a = np.array([15, 15], 'i8')
-        b = a ** a
+        b = np.power(a, a)
         assert_equal(b, [437893890380859375, 437893890380859375])
 
-    def test_integer_power_with_zero_exponent(self):
-        arr = np.arange(-10, 10)
-        assert_equal(np.power(arr, 0), np.ones_like(arr))
+    def test_integer_power_with_integer_zero_exponent(self):
+        dtypes = np.typecodes['Integer']
+        for dt in dtypes:
+            arr = np.arange(-10, 10, dtype=dt)
+            assert_equal(np.power(arr, 0), np.ones_like(arr))
+
+        dtypes = np.typecodes['UnsignedInteger']
+        for dt in dtypes:
+            arr = np.arange(10, dtype=dt)
+            assert_equal(np.power(arr, 0), np.ones_like(arr))
 
     def test_integer_power_of_1(self):
-        arr = np.arange(-10, 10)
-        assert_equal(np.power(1, arr), np.ones_like(arr))
+        dtypes = np.typecodes['AllInteger']
+        for dt in dtypes:
+            arr = np.arange(10, dtype=dt)
+            assert_equal(np.power(1, arr), np.ones_like(arr))
+
+    def test_integer_power_of_zero(self):
+        dtypes = np.typecodes['AllInteger']
+        for dt in dtypes:
+            arr = np.arange(1, 10, dtype=dt)
+            assert_equal(np.power(0, arr), np.zeros_like(arr))
+
+    def test_integer_to_negative_power(self):
+        dtypes = np.typecodes['Integer']
+        for dt in dtypes:
+            a = np.array([0, 1, 2, 3], dtype=dt)
+            b = np.array([0, 1, 2, -3], dtype=dt)
+            one = np.array(1, dtype=dt)
+            minusone = np.array(-1, dtype=dt)
+            assert_raises(ValueError, np.power, a, b)
+            assert_raises(ValueError, np.power, a, minusone)
+            assert_raises(ValueError, np.power, one, b)
+            assert_raises(ValueError, np.power, one, minusone)
 
 
 class TestLog2(TestCase):
@@ -1202,8 +1228,9 @@ class TestAbsoluteNegative(TestCase):
                             assert_array_equal(out, d, err_msg=msg)
 
                             assert_array_equal(-inp, -1*inp, err_msg=msg)
+                            d = -1 * inp
                             np.negative(inp, out=out)
-                            assert_array_equal(out, -1*inp, err_msg=msg)
+                            assert_array_equal(out, d, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size
@@ -2154,6 +2181,12 @@ def test_rint_big_int():
     assert_equal(val, int(float(val)))
     # Rint should not change the value
     assert_equal(val, np.rint(val))
+
+
+def test_signaling_nan_exceptions():
+    with assert_no_warnings():
+        a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
+        np.isnan(a)
 
 
 if __name__ == "__main__":

@@ -495,7 +495,7 @@ def dmg(options):
     user = os.path.join(options.doc.destdir_pdf, "userguide.pdf")
     if (not os.path.exists(ref)) or (not os.path.exists(user)):
         import warnings
-        warnings.warn("Docs need to be built first! Can't find them.")
+        warnings.warn("Docs need to be built first! Can't find them.", stacklevel=2)
 
     # Build the mpkg package
     call_task("clean")

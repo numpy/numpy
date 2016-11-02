@@ -22,7 +22,7 @@
 
 # Version 9 (NumPy 1.8) Added interface for partition functions,
 # PyArray_NEW_ZEROED, commented out as the hash changed in
-# Numpy 1.9 due to annotation.
+# NumPy 1.9.0 due to annotation.
 #0x00000009 = 327bd114df09c2eb7a0bcc6901e2a3ed
 
 # Version 9 (NumPy 1.9) Added function annotations.

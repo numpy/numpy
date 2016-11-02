@@ -1,17 +1,18 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
-import sys
 import collections
 import operator
+import re
+import sys
+import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import linspace, atleast_1d, atleast_2d
+from numpy.core import linspace, atleast_1d, atleast_2d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar
+    integer, isscalar, absolute
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -24,27 +25,116 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount, 
+    _insert, add_docstring, digitize, bincount,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 from numpy.compat.py3k import basestring
 
-# Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
+    # Force range to be a generator, for np.delete's usage.
     range = xrange
+    import __builtin__ as builtins
+else:
+    import builtins
 
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
-    'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
+    'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
     ]
+
+
+def rot90(m, k=1, axes=(0,1)):
+    """
+    Rotate an array by 90 degrees in the plane specified by axes.
+
+    Rotation direction is from the first towards the second axis.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    m : array_like
+        Array of two or more dimensions.
+    k : integer
+        Number of times the array is rotated by 90 degrees.
+    axes: (2,) array_like
+        The array is rotated in the plane defined by the axes.
+        Axes must be different.
+
+    Returns
+    -------
+    y : ndarray
+        A rotated view of `m`.
+
+    See Also
+    --------
+    flip : Reverse the order of elements in an array along the given axis.
+    fliplr : Flip an array horizontally.
+    flipud : Flip an array vertically.
+
+    Notes
+    -----
+    rot90(m, k=1, axes=(1,0)) is the reverse of rot90(m, k=1, axes=(0,1))
+    rot90(m, k=1, axes=(1,0)) is equivalent to rot90(m, k=-1, axes=(0,1))
+
+    Examples
+    --------
+    >>> m = np.array([[1,2],[3,4]], int)
+    >>> m
+    array([[1, 2],
+           [3, 4]])
+    >>> np.rot90(m)
+    array([[2, 4],
+           [1, 3]])
+    >>> np.rot90(m, 2)
+    array([[4, 3],
+           [2, 1]])
+    >>> m = np.arange(8).reshape((2,2,2))
+    >>> np.rot90(m, 1, (1,2))
+    array([[[1, 3],
+            [0, 2]],
+
+          [[5, 7],
+           [4, 6]]])
+
+    """
+    axes = tuple(axes)
+    if len(axes) != 2:
+        raise ValueError("len(axes) must be 2.")
+
+    m = asanyarray(m)
+
+    if axes[0] == axes[1] or absolute(axes[0] - axes[1]) == m.ndim:
+        raise ValueError("Axes must be different.")
+
+    if (axes[0] >= m.ndim or axes[0] < -m.ndim
+        or axes[1] >= m.ndim or axes[1] < -m.ndim):
+        raise ValueError("Axes={} out of range for array of ndim={}."
+            .format(axes, m.ndim))
+
+    k %= 4
+
+    if k == 0:
+        return m[:]
+    if k == 2:
+        return flip(flip(m, axes[0]), axes[1])
+
+    axes_list = arange(0, m.ndim)
+    axes_list[axes[0]], axes_list[axes[1]] = axes_list[axes[1]], axes_list[axes[0]]
+
+    if k == 1:
+        return transpose(flip(m,axes[1]), axes_list)
+    else:
+        # k == 3
+        return flip(transpose(m, axes_list), axes[1])
 
 
 def flip(m, axis):
@@ -367,11 +457,11 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         'auto'
             Maximum of the 'sturges' and 'fd' estimators. Provides good
-            all round performance
+            all around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
-            account data variability and data size .
+            account data variability and data size.
 
         'doane'
             An improved version of Sturges' estimator that works better
@@ -403,8 +493,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         based on the actual data within `range`, the bin count will fill
         the entire range including portions containing no data.
     normed : bool, optional
-        This keyword is deprecated in Numpy 1.6 due to confusing/buggy
-        behavior. It will be removed in Numpy 2.0. Use the ``density``
+        This keyword is deprecated in NumPy 1.6.0 due to confusing/buggy
+        behavior. It will be removed in NumPy 2.0.0. Use the ``density``
         keyword instead. If ``False``, the result will contain the
         number of samples in each bin. If ``True``, the result is the
         value of the probability *density* function at the bin,
@@ -506,7 +596,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     'Doane'
         .. math:: n_h = 1 + \log_{2}(n) +
-                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1})}
+                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1}})
 
             g_1 = mean[(\frac{x - \mu}{\sigma})^3]
 
@@ -723,7 +813,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         else:
             return n, bins
     else:
-        # deprecated, buggy behavior. Remove for Numpy 2.0
+        # deprecated, buggy behavior. Remove for NumPy 2.0.0
         if normed:
             db = array(np.diff(bins), float)
             return n/(n*db).sum(), bins
@@ -1161,8 +1251,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     kw : dict, optional
         Keyword arguments used in calling `piecewise` are passed to the
         functions upon execution, i.e., if called
-        ``piecewise(..., ..., lambda=1)``, then each function is called as
-        ``f(x, lambda=1)``.
+        ``piecewise(..., ..., alpha=1)``, then each function is called as
+        ``f(x, alpha=1)``.
 
     Returns
     -------
@@ -1297,7 +1387,7 @@ def select(condlist, choicelist, default=0):
         # 2014-02-24, 1.9
         warnings.warn("select with an empty condition list is not possible"
                       "and will be deprecated",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
         return np.asarray(default)[()]
 
     choicelist = [np.asarray(choice) for choice in choicelist]
@@ -1332,7 +1422,7 @@ def select(condlist, choicelist, default=0):
         msg = "select condlists containing integer ndarrays is deprecated " \
             "and will be removed in the future. Use `.astype(bool)` to " \
             "convert to bools."
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -1706,7 +1796,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Returns
     -------
-    y : float or complex (corresponding to fp) or ndarray 
+    y : float or complex (corresponding to fp) or ndarray
         The interpolated values, same shape as `x`.
 
     Raises
@@ -1813,7 +1903,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
             return interp_func(x, xp, fp, left, right)
         else:
             return interp_func(x, xp, fp, left, right).item()
-                
+
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
@@ -2156,17 +2246,126 @@ def disp(mesg, device=None, linefeed=True):
     return
 
 
+# See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
+_DIMENSION_NAME = r'\w+'
+_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
+_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
+_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
+_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
+
+
+def _parse_gufunc_signature(signature):
+    """
+    Parse string signatures for a generalized universal function.
+
+    Arguments
+    ---------
+    signature : string
+        Generalized universal function signature, e.g., ``(m,n),(n,p)->(m,p)``
+        for ``np.matmul``.
+
+    Returns
+    -------
+    Tuple of input and output core dimensions parsed from the signature, each
+    of the form List[Tuple[str, ...]].
+    """
+    if not re.match(_SIGNATURE, signature):
+        raise ValueError(
+            'not a valid gufunc signature: {}'.format(signature))
+    return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
+                  for arg in re.findall(_ARGUMENT, arg_list)]
+                 for arg_list in signature.split('->'))
+
+
+def _update_dim_sizes(dim_sizes, arg, core_dims):
+    """
+    Incrementally check and update core dimension sizes for a single argument.
+
+    Arguments
+    ---------
+    dim_sizes : Dict[str, int]
+        Sizes of existing core dimensions. Will be updated in-place.
+    arg : ndarray
+        Argument to examine.
+    core_dims : Tuple[str, ...]
+        Core dimensions for this argument.
+    """
+    if not core_dims:
+        return
+
+    num_core_dims = len(core_dims)
+    if arg.ndim < num_core_dims:
+        raise ValueError(
+            '%d-dimensional argument does not have enough '
+            'dimensions for all core dimensions %r'
+            % (arg.ndim, core_dims))
+
+    core_shape = arg.shape[-num_core_dims:]
+    for dim, size in zip(core_dims, core_shape):
+        if dim in dim_sizes:
+            if size != dim_sizes[dim]:
+                raise ValueError(
+                    'inconsistent size for core dimension %r: %r vs %r'
+                    % (dim, size, dim_sizes[dim]))
+        else:
+            dim_sizes[dim] = size
+
+
+def _parse_input_dimensions(args, input_core_dims):
+    """
+    Parse broadcast and core dimensions for vectorize with a signature.
+
+    Arguments
+    ---------
+    args : Tuple[ndarray, ...]
+        Tuple of input arguments to examine.
+    input_core_dims : List[Tuple[str, ...]]
+        List of core dimensions corresponding to each input.
+
+    Returns
+    -------
+    broadcast_shape : Tuple[int, ...]
+        Common shape to broadcast all non-core dimensions to.
+    dim_sizes : Dict[str, int]
+        Common sizes for named core dimensions.
+    """
+    broadcast_args = []
+    dim_sizes = {}
+    for arg, core_dims in zip(args, input_core_dims):
+        _update_dim_sizes(dim_sizes, arg, core_dims)
+        ndim = arg.ndim - len(core_dims)
+        dummy_array = np.lib.stride_tricks.as_strided(0, arg.shape[:ndim])
+        broadcast_args.append(dummy_array)
+    broadcast_shape = np.lib.stride_tricks._broadcast_shape(*broadcast_args)
+    return broadcast_shape, dim_sizes
+
+
+def _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims):
+    """Helper for calculating broadcast shapes with core dimensions."""
+    return [broadcast_shape + tuple(dim_sizes[dim] for dim in core_dims)
+            for core_dims in list_of_core_dims]
+
+
+def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
+    """Helper for creating output arrays in vectorize."""
+    shapes = _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims)
+    arrays = tuple(np.empty(shape, dtype=dtype)
+                   for shape, dtype in zip(shapes, dtypes))
+    return arrays
+
+
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None, excluded=None, cache=False)
+    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
+              signature=None)
 
     Generalized function class.
 
-    Define a vectorized function which takes a nested sequence
-    of objects or numpy arrays as inputs and returns a
-    numpy array as output. The vectorized function evaluates `pyfunc` over
-    successive tuples of the input arrays like the python map function,
-    except it uses the broadcasting rules of numpy.
+    Define a vectorized function which takes a nested sequence of objects or
+    numpy arrays as inputs and returns an single or tuple of numpy array as
+    output. The vectorized function evaluates `pyfunc` over successive tuples
+    of the input arrays like the python map function, except it uses the
+    broadcasting rules of numpy.
 
     The data type of the output of `vectorized` is determined by calling
     the function with the first element of the input.  This can be avoided
@@ -2196,6 +2395,15 @@ class vectorize(object):
 
         .. versionadded:: 1.7.0
 
+    signature : string, optional
+        Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
+        vectorized matrix-vector multiplication. If provided, ``pyfunc`` will
+        be called with (and expected to return) arrays with shapes given by the
+        size of corresponding core dimensions. By default, ``pyfunc`` is
+        assumed to take scalars as input and output.
+
+        .. versionadded:: 1.12.0
+
     Returns
     -------
     vectorized : callable
@@ -2215,7 +2423,7 @@ class vectorize(object):
     array([3, 4, 1, 2])
 
     The docstring is taken from the input function to `vectorize` unless it
-    is specified
+    is specified:
 
     >>> vfunc.__doc__
     'Return a-b if a>b, otherwise return a+b'
@@ -2224,7 +2432,7 @@ class vectorize(object):
     'Vectorized `myfunc`'
 
     The output type is determined by evaluating the first element of the input,
-    unless it is specified
+    unless it is specified:
 
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
@@ -2254,6 +2462,25 @@ class vectorize(object):
     >>> vpolyval([1, 2, 3], x=[0, 1])
     array([3, 6])
 
+    The `signature` argument allows for vectorizing functions that act on
+    non-scalar arrays of fixed length. For example, you can use it for a
+    vectorized calculation of Pearson correlation coefficient and its p-value:
+
+    >>> import scipy.stats
+    >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
+    ...                         signature='(n),(n)->(),()')
+    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
+    (array([ 1., -1.]), array([ 0.,  0.]))
+
+    Or for a vectorized convolution:
+
+    >>> convolve = np.vectorize(np.convolve, signature='(n),(m)->(k)')
+    >>> convolve(np.eye(4), [1, 2, 1])
+    array([[ 1.,  2.,  1.,  0.,  0.,  0.],
+           [ 0.,  1.,  2.,  1.,  0.,  0.],
+           [ 0.,  0.,  1.,  2.,  1.,  0.],
+           [ 0.,  0.,  0.,  1.,  2.,  1.]])
+
     See Also
     --------
     frompyfunc : Takes an arbitrary Python function and returns a ufunc
@@ -2273,12 +2500,17 @@ class vectorize(object):
     The new keyword argument interface and `excluded` argument support
     further degrades performance.
 
+    References
+    ----------
+    .. [1] NumPy Reference, section `Generalized Universal Function API
+           <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
-    def __init__(self, pyfunc, otypes='', doc=None, excluded=None,
-                 cache=False):
+    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
+                 cache=False, signature=None):
         self.pyfunc = pyfunc
         self.cache = cache
+        self.signature = signature
         self._ufunc = None    # Caching to improve default performance
 
         if doc is None:
@@ -2287,21 +2519,24 @@ class vectorize(object):
             self.__doc__ = doc
 
         if isinstance(otypes, str):
-            self.otypes = otypes
-            for char in self.otypes:
+            for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError(
-                        "Invalid otype specified: %s" % (char,))
+                    raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
-            self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
-        else:
-            raise ValueError(
-                "Invalid otype specification")
+            otypes = ''.join([_nx.dtype(x).char for x in otypes])
+        elif otypes is not None:
+            raise ValueError("Invalid otype specification")
+        self.otypes = otypes
 
         # Excluded variable support
         if excluded is None:
             excluded = set()
         self.excluded = set(excluded)
+
+        if signature is not None:
+            self._in_and_out_core_dims = _parse_gufunc_signature(signature)
+        else:
+            self._in_and_out_core_dims = None
 
     def __call__(self, *args, **kwargs):
         """
@@ -2339,7 +2574,7 @@ class vectorize(object):
         if not args:
             raise ValueError('args can not be empty')
 
-        if self.otypes:
+        if self.otypes is not None:
             otypes = self.otypes
             nout = len(otypes)
 
@@ -2355,7 +2590,12 @@ class vectorize(object):
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            inputs = [asarray(_a).flat[0] for _a in args]
+            args = [asarray(arg) for arg in args]
+            if builtins.any(arg.size == 0 for arg in args):
+                raise ValueError('cannot call `vectorize` on size 0 inputs '
+                                 'unless `otypes` is set')
+
+            inputs = [arg.flat[0] for arg in args]
             outputs = func(*inputs)
 
             # Performance note: profiling indicates that -- for simple
@@ -2391,24 +2631,88 @@ class vectorize(object):
 
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
-        if not args:
-            _res = func()
+        if self.signature is not None:
+            res = self._vectorize_call_with_signature(func, args)
+        elif not args:
+            res = func()
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object)
-                      for _a in args]
+            inputs = [array(a, copy=False, subok=True, dtype=object)
+                      for a in args]
 
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                _res = array(outputs,
-                             copy=False, subok=True, dtype=otypes[0])
+                res = array(outputs, copy=False, subok=True, dtype=otypes[0])
             else:
-                _res = tuple([array(_x, copy=False, subok=True, dtype=_t)
-                              for _x, _t in zip(outputs, otypes)])
-        return _res
+                res = tuple([array(x, copy=False, subok=True, dtype=t)
+                             for x, t in zip(outputs, otypes)])
+        return res
+
+    def _vectorize_call_with_signature(self, func, args):
+        """Vectorized call over positional arguments with a signature."""
+        input_core_dims, output_core_dims = self._in_and_out_core_dims
+
+        if len(args) != len(input_core_dims):
+            raise TypeError('wrong number of positional arguments: '
+                            'expected %r, got %r'
+                            % (len(input_core_dims), len(args)))
+        args = tuple(asanyarray(arg) for arg in args)
+
+        broadcast_shape, dim_sizes = _parse_input_dimensions(
+            args, input_core_dims)
+        input_shapes = _calculate_shapes(broadcast_shape, dim_sizes,
+                                         input_core_dims)
+        args = [np.broadcast_to(arg, shape, subok=True)
+                for arg, shape in zip(args, input_shapes)]
+
+        outputs = None
+        otypes = self.otypes
+        nout = len(output_core_dims)
+
+        for index in np.ndindex(*broadcast_shape):
+            results = func(*(arg[index] for arg in args))
+
+            n_results = len(results) if isinstance(results, tuple) else 1
+
+            if nout != n_results:
+                raise ValueError(
+                    'wrong number of outputs from pyfunc: expected %r, got %r'
+                    % (nout, n_results))
+
+            if nout == 1:
+                results = (results,)
+
+            if outputs is None:
+                for result, core_dims in zip(results, output_core_dims):
+                    _update_dim_sizes(dim_sizes, result, core_dims)
+
+                if otypes is None:
+                    otypes = [asarray(result).dtype for result in results]
+
+                outputs = _create_arrays(broadcast_shape, dim_sizes,
+                                         output_core_dims, otypes)
+
+            for output, result in zip(outputs, results):
+                output[index] = result
+
+        if outputs is None:
+            # did not call the function even once
+            if otypes is None:
+                raise ValueError('cannot call `vectorize` on size 0 inputs '
+                                 'unless `otypes` is set')
+            if builtins.any(dim not in dim_sizes
+                            for dims in output_core_dims
+                            for dim in dims):
+                raise ValueError('cannot call `vectorize` with a signature '
+                                 'including new output dimensions on size 0 '
+                                 'inputs')
+            outputs = _create_arrays(broadcast_shape, dim_sizes,
+                                     output_core_dims, otypes)
+
+        return outputs[0] if nout == 1 else outputs
 
 
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
@@ -2606,7 +2910,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         fact = w_sum - ddof*sum(w*aweights)/w_sum
 
     if fact <= 0:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2680,7 +2984,7 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar)
     try:
         d = diag(c)
@@ -3688,7 +3992,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         if rout.ndim == 0:
             if n == True:
                 warnings.warn("Invalid value encountered in median",
-                              RuntimeWarning)
+                              RuntimeWarning, stacklevel=3)
                 if out is not None:
                     out[...] = a.dtype.type(np.nan)
                     rout = out
@@ -3697,7 +4001,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         elif np.count_nonzero(n.ravel()) > 0:
             warnings.warn("Invalid value encountered in median for" +
                           " %d results" % np.count_nonzero(n.ravel()),
-                          RuntimeWarning)
+                          RuntimeWarning, stacklevel=3)
             rout[n] = np.nan
         return rout
     else:
@@ -3953,7 +4257,7 @@ def _percentile(a, q, axis=None, out=None,
 
     if np.any(n):
         warnings.warn("Invalid value encountered in percentile",
-                              RuntimeWarning)
+                      RuntimeWarning, stacklevel=3)
         if zerod:
             if ap.ndim == 1:
                 if out is not None:
@@ -4317,7 +4621,7 @@ def delete(arr, obj, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from delete and raise an error", DeprecationWarning)
+            "from delete and raise an error", DeprecationWarning, stacklevel=2)
         if wrap:
             return wrap(arr)
         else:
@@ -4384,7 +4688,7 @@ def delete(arr, obj, axis=None):
     if obj.dtype == bool:
         warnings.warn(
             "in the future insert will treat boolean arrays and array-likes "
-            "as boolean index instead of casting it to integer", FutureWarning)
+            "as boolean index instead of casting it to integer", FutureWarning, stacklevel=2)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
@@ -4412,7 +4716,7 @@ def delete(arr, obj, axis=None):
             # 2013-09-24, 1.9
             warnings.warn(
                 "using a non-integer array as obj in delete will result in an "
-                "error in the future", DeprecationWarning)
+                "error in the future", DeprecationWarning, stacklevel=2)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
@@ -4423,13 +4727,13 @@ def delete(arr, obj, axis=None):
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
             warnings.warn(
                 "in the future negative indices will not be ignored by "
-                "`numpy.delete`.", FutureWarning)
+                "`numpy.delete`.", FutureWarning, stacklevel=2)
             obj = obj[positive_indices]
 
         keep[obj, ] = False
@@ -4556,7 +4860,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from insert and raise an error", DeprecationWarning)
+            "from insert and raise an error", DeprecationWarning, stacklevel=2)
         arr = arr.copy(order=arrorder)
         arr[...] = values
         if wrap:
@@ -4578,7 +4882,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning)
+                "integer", FutureWarning, stacklevel=2)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
@@ -4628,7 +4932,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "using a non-integer array as obj in insert will result in an "
-            "error in the future", DeprecationWarning)
+            "error in the future", DeprecationWarning, stacklevel=2)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N

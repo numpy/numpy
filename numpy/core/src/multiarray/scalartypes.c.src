@@ -1303,6 +1303,18 @@ gentype_base_get(PyObject *NPY_UNUSED(self))
     Py_RETURN_NONE;
 }
 
+static PyObject *
+voidtype_base_get(PyVoidScalarObject *self)
+{
+    if (self->base == NULL) {
+        Py_RETURN_NONE;
+    }
+    else {
+        Py_INCREF(self->base);
+        return self->base;
+    }
+}
+
 
 static PyArray_Descr *
 _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
@@ -2099,6 +2111,11 @@ static PyGetSetDef voidtype_getsets[] = {
         (setter)0,
         "dtype object",
         NULL},
+    {"base",
+        (getter)voidtype_base_get,
+        (setter)0,
+        "base object",
+        NULL},
     {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -2835,6 +2852,15 @@ static PyObject *
 {
     return @type@(PyArrayScalar_VAL(self, @Name@));
 }
+/**end repeat**/
+
+/**begin repeat
+ *  #name = half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *  #NAME = Half, Float, Double, LongDouble,
+ *          CFloat, CDouble, CLongDouble#
+ */
+static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
 static PyObject *
@@ -4080,6 +4106,7 @@ initialize_numeric_types(void)
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
+     * also fill array_type_as_number struct with reasonable defaults
      */
 
     /**begin repeat
@@ -4088,10 +4115,23 @@ initialize_numeric_types(void)
      * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort,
      *         UInt, ULong, ULongLong#
      */
+    @name@_arrtype_as_number = gentype_as_number;
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
     Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
 
     /**end repeat**/
+
+    /**begin repeat
+     *  #name = half, float, double, longdouble,
+     *          cfloat, cdouble, clongdouble#
+     *  #NAME = Half, Float, Double, LongDouble,
+     *          CFloat, CDouble, CLongDouble#
+     */
+    @name@_arrtype_as_number = gentype_as_number;
+    Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
+
+    /**end repeat**/
+
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
     PyStringArrType_Type.tp_alloc = NULL;

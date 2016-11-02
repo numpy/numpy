@@ -1,5 +1,5 @@
 ************
-Numpy basics
+NumPy basics
 ************
 
 .. toctree::

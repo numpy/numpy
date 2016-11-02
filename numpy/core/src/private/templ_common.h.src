@@ -17,6 +17,10 @@
 /*
  * writes result of a * b into r
  * returns 1 if a * b overflowed else returns 0
+ * 
+ * These functions are not designed to work if either a or b is negative, but
+ * that is not checked. Could use absolute values and adjust the sign if that
+ * functionality was desired.
  */
 static NPY_INLINE int
 npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
@@ -24,17 +28,16 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
 #ifdef HAVE___BUILTIN_MUL_OVERFLOW
     return __builtin_mul_overflow(a, b, r);
 #else
-    const @type@ half_sz = (((@type@)1 << (sizeof(a) * 8 / 2)) - 1);
+    const @type@ half_sz = ((@type@)1 << ((sizeof(a) * 8 - 1 ) / 2));
 
     *r = a * b;
     /*
      * avoid expensive division on common no overflow case
      */
     if (NPY_UNLIKELY((a | b) >= half_sz) &&
-        a != 0 && b > @MAX@ / a) {
+            a != 0 && b > @MAX@ / a) {
         return 1;
     }
-
     return 0;
 #endif
 }

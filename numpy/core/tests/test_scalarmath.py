@@ -2,14 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import itertools
-import warnings
 import operator
 
 import numpy as np
 from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal
+    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
+    suppress_warnings
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -65,7 +65,7 @@ class TestBaseMath(TestCase):
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
-        for dt, sz in [(np.float32, 11), (np.float64, 7)]:
+        for dt, sz in [(np.float32, 11), (np.float64, 7), (np.int32, 11)]:
             for out, inp1, inp2, msg in _gen_alignment_data(dtype=dt,
                                                             type='binary',
                                                             max_size=sz):
@@ -73,7 +73,7 @@ class TestBaseMath(TestCase):
                 inp1[...] = np.ones_like(inp1)
                 inp2[...] = np.zeros_like(inp2)
                 assert_almost_equal(np.add(inp1, inp2), exp1, err_msg=msg)
-                assert_almost_equal(np.add(inp1, 1), exp1 + 1, err_msg=msg)
+                assert_almost_equal(np.add(inp1, 2), exp1 + 2, err_msg=msg)
                 assert_almost_equal(np.add(1, inp2), exp1, err_msg=msg)
 
                 np.add(inp1, inp2, out=out)
@@ -82,15 +82,17 @@ class TestBaseMath(TestCase):
                 inp2[...] += np.arange(inp2.size, dtype=dt) + 1
                 assert_almost_equal(np.square(inp2),
                                     np.multiply(inp2, inp2),  err_msg=msg)
-                assert_almost_equal(np.reciprocal(inp2),
-                                    np.divide(1, inp2),  err_msg=msg)
+                # skip true divide for ints
+                if dt != np.int32 or (sys.version_info.major < 3 and not sys.py3kwarning):
+                    assert_almost_equal(np.reciprocal(inp2),
+                                        np.divide(1, inp2),  err_msg=msg)
 
                 inp1[...] = np.ones_like(inp1)
-                inp2[...] = np.zeros_like(inp2)
-                np.add(inp1, 1, out=out)
-                assert_almost_equal(out, exp1 + 1, err_msg=msg)
-                np.add(1, inp2, out=out)
-                assert_almost_equal(out, exp1, err_msg=msg)
+                np.add(inp1, 2, out=out)
+                assert_almost_equal(out, exp1 + 2, err_msg=msg)
+                inp2[...] = np.ones_like(inp2)
+                np.add(2, inp2, out=out)
+                assert_almost_equal(out, exp1 + 2, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size
@@ -238,9 +240,8 @@ class TestModulus(TestCase):
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        with warnings.catch_warnings():
-            warnings.simplefilter('always')
-            warnings.simplefilter('ignore', RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -454,16 +455,18 @@ class TestRepr(object):
             yield self._test_type_repr, t
 
 
-class TestSizeOf(TestCase):
+if not IS_PYPY:
+    # sys.getsizeof() is not valid on PyPy
+    class TestSizeOf(TestCase):
 
-    def test_equal_nbytes(self):
-        for type in types:
-            x = type(0)
-            assert_(sys.getsizeof(x) > x.nbytes)
+        def test_equal_nbytes(self):
+            for type in types:
+                x = type(0)
+                assert_(sys.getsizeof(x) > x.nbytes)
 
-    def test_error(self):
-        d = np.float32()
-        assert_raises(TypeError, d.__sizeof__, "a")
+        def test_error(self):
+            d = np.float32()
+            assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestMultiply(TestCase):

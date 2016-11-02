@@ -654,13 +654,13 @@ def _guessvartypes(arr):
     for f in arr:
         try:
             int(f)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 float(f)
-            except ValueError:
+            except (ValueError, TypeError):
                 try:
                     complex(f)
-                except ValueError:
+                except (ValueError, TypeError):
                     vartypes.append(arr.dtype)
                 else:
                     vartypes.append(np.dtype(complex))
@@ -743,7 +743,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
         if len(vartypes) != nfields:
             msg = "Attempting to %i dtypes for %i fields!"
             msg += " Reverting to default."
-            warnings.warn(msg % (len(vartypes), nfields))
+            warnings.warn(msg % (len(vartypes), nfields), stacklevel=2)
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.

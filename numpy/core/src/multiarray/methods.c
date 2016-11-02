@@ -429,6 +429,10 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     PyObject *ret = NULL;
     int retval = 0;
 
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
+        return -1;
+    }
+
     /* getfield returns a view we can write to */
     ret = PyArray_GetField(self, dtype, offset);
     if (ret == NULL) {
@@ -1407,41 +1411,75 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args)
 {
-    PyObject* visit;
-    char *optr;
-    PyArrayIterObject *it;
+    PyArrayObject *copied_array;
+    PyObject *visit;
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    char *data;
+    char **dataptr;
+    npy_intp *strideptr, *innersizeptr;
+    npy_intp stride, count;
     PyObject *copy, *deepcopy;
-    PyArrayObject *ret;
 
     if (!PyArg_ParseTuple(args, "O", &visit)) {
         return NULL;
     }
-    ret = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+    copied_array = (PyArrayObject*) PyArray_NewCopy(self, NPY_KEEPORDER);
+    if (copied_array == NULL) {
+        return NULL;
+    }
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
+            Py_DECREF(copied_array);
+            Py_DECREF(copy);
             return NULL;
         }
         deepcopy = PyObject_GetAttrString(copy, "deepcopy");
         Py_DECREF(copy);
         if (deepcopy == NULL) {
+            Py_DECREF(copied_array);
             return NULL;
         }
-        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-        if (it == NULL) {
+        iter = (NpyIter *)NpyIter_New(copied_array,
+                                      (NPY_ITER_READWRITE |
+                                       NPY_ITER_EXTERNAL_LOOP |
+                                       NPY_ITER_REFS_OK),
+                                      NPY_KEEPORDER,
+                                      NPY_NO_CASTING,
+                                      NULL);
+        if (iter == NULL) {
             Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
             return NULL;
         }
-        optr = PyArray_DATA(ret);
-        while(it->index < it->size) {
-            _deepcopy_call(it->dataptr, optr, PyArray_DESCR(self), deepcopy, visit);
-            optr += PyArray_DESCR(self)->elsize;
-            PyArray_ITER_NEXT(it);
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
+            return NULL;
         }
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
+            while (count--) {
+                _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                               deepcopy, visit);
+                data += stride;
+            }
+        } while (iternext(iter));
+
+        NpyIter_Deallocate(iter);
         Py_DECREF(deepcopy);
-        Py_DECREF(it);
     }
-    return (PyObject*)ret;
+    return (PyObject*) copied_array;
 }
 
 /* Convert Array to flat list (using getitem) */
@@ -1646,7 +1684,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         Py_INCREF(rawdata);
 
 #if defined(NPY_PY3K)
-        /* Backward compatibility with Python 2 Numpy pickles */
+        /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
             PyObject *tmp;
             tmp = PyUnicode_AsLatin1String(rawdata);

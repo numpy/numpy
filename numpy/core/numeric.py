@@ -6,12 +6,13 @@ import operator
 import sys
 import warnings
 
+import numpy as np
 from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, count_nonzero, dot, dtype, einsum, empty,
+    concatenate, copyto, count_nonzero, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
@@ -52,7 +53,7 @@ __all__ = [
     'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
     'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
     'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
-    'einsum', 'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
+    'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'array2string',
     'get_printoptions', 'set_printoptions', 'array_repr', 'array_str',
     'set_string_function', 'little_endian', 'require', 'fromiter',
@@ -376,6 +377,89 @@ def extend_all(module):
             __all__.append(a)
 
 
+def count_nonzero(a, axis=None):
+    """
+    Counts the number of non-zero values in the array ``a``.
+
+    The word "non-zero" is in reference to the Python 2.x
+    built-in method ``__nonzero__()`` (renamed ``__bool__()``
+    in Python 3.x) of Python objects that tests an object's
+    "truthfulness". For example, any number is considered
+    truthful if it is nonzero, whereas any string is considered
+    truthful if it is not the empty string. Thus, this function
+    (recursively) counts how many elements in ``a`` (and in
+    sub-arrays thereof) have their ``__nonzero__()`` or ``__bool__()``
+    method evaluated to ``True``.
+
+    Parameters
+    ----------
+    a : array_like
+        The array for which to count non-zeros.
+    axis : int or tuple, optional
+        Axis or tuple of axes along which to count non-zeros.
+        Default is None, meaning that non-zeros will be counted
+        along a flattened version of ``a``.
+
+        .. versionadded:: 1.12.0
+
+    Returns
+    -------
+    count : int or array of int
+        Number of non-zero values in the array along a given axis.
+        Otherwise, the total number of non-zero values in the array
+        is returned.
+
+    See Also
+    --------
+    nonzero : Return the coordinates of all the non-zero values.
+
+    Examples
+    --------
+    >>> np.count_nonzero(np.eye(4))
+    4
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
+    5
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=0)
+    array([1, 1, 1, 1, 1])
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1)
+    array([2, 3])
+
+    """
+    if axis is None or axis == ():
+        return multiarray.count_nonzero(a)
+
+    a = asanyarray(a)
+
+    if a.dtype == bool:
+        return a.sum(axis=axis, dtype=np.intp)
+
+    if issubdtype(a.dtype, np.number):
+        return (a != 0).sum(axis=axis, dtype=np.intp)
+
+    if (issubdtype(a.dtype, np.string_) or
+            issubdtype(a.dtype, np.unicode_)):
+        nullstr = a.dtype.type('')
+        return (a != nullstr).sum(axis=axis, dtype=np.intp)
+
+    axis = asarray(_validate_axis(axis, a.ndim, 'axis'))
+    counts = np.apply_along_axis(multiarray.count_nonzero, axis[0], a)
+
+    if axis.size == 1:
+        return counts
+    else:
+        # for subsequent axis numbers, that number decreases
+        # by one in this new 'counts' array if it was larger
+        # than the first axis upon which 'count_nonzero' was
+        # applied but remains unchanged if that number was
+        # smaller than that first axis
+        #
+        # this trick enables us to perform counts on object-like
+        # elements across multiple axes very quickly because integer
+        # addition is very well optimized
+        return counts.sum(axis=tuple(axis[1:] - (
+            axis[1:] > axis[0])), dtype=np.intp)
+
+
 def asarray(a, dtype=None, order=None):
     """Convert the input to an array.
 
@@ -675,7 +759,7 @@ def isfortran(a):
 
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
-    of Numpy >= 1.10 and previous versions. If you only want to check if an
+    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
     array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
@@ -891,7 +975,7 @@ def correlate(a, v, mode='valid'):
     return multiarray.correlate2(a, v, mode)
 
 
-def convolve(a,v,mode='full'):
+def convolve(a, v, mode='full'):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -1074,11 +1158,11 @@ def alterdot():
     """
     Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
 
-    Typically, as a user of Numpy, you do not explicitly call this
-    function. If Numpy is built with an accelerated BLAS, this function is
-    automatically called when Numpy is imported.
+    Typically, as a user of NumPy, you do not explicitly call this
+    function. If NumPy is built with an accelerated BLAS, this function is
+    automatically called when NumPy is imported.
 
-    When Numpy is built with an accelerated BLAS like ATLAS, these
+    When NumPy is built with an accelerated BLAS like ATLAS, these
     functions are replaced to make use of the faster implementations.  The
     faster implementations only affect float32, float64, complex64, and
     complex128 arrays. Furthermore, the BLAS API only includes
@@ -1086,10 +1170,10 @@ def alterdot():
     arrays with larger dimensionalities use the built in functions and are
     not accelerated.
 
-    .. note:: Deprecated in Numpy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and alterdot now longer does anything. It will be
-              removed in Numpy 1.11.0.
+              removed in NumPy 1.11.0.
 
     See Also
     --------
@@ -1097,7 +1181,8 @@ def alterdot():
 
     """
     # 2014-08-13, 1.10
-    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
+    warnings.warn("alterdot no longer does anything.",
+                  DeprecationWarning, stacklevel=2)
 
 
 def restoredot():
@@ -1110,10 +1195,10 @@ def restoredot():
     an accelerated BLAS, or when being very careful about benchmarking
     linear algebra operations.
 
-    .. note:: Deprecated in Numpy 1.10
+    .. note:: Deprecated in NumPy 1.10.0
               The cblas functions have been integrated into the multarray
               module and restoredot now longer does anything. It will be
-              removed in Numpy 1.11.0.
+              removed in NumPy 1.11.0.
 
     See Also
     --------
@@ -1121,7 +1206,8 @@ def restoredot():
 
     """
     # 2014-08-13, 1.10
-    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
+    warnings.warn("restoredot no longer does anything.",
+                  DeprecationWarning, stacklevel=2)
 
 
 def tensordot(a, b, axes=2):
@@ -1419,8 +1505,8 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        For Numpy >= 1.10 a view of `a` is always returned. For earlier
-        Numpy versions a view of `a` is returned only if the order of the
+        For NumPy >= 1.10.0 a view of `a` is always returned. For earlier
+        NumPy versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
     See Also
@@ -1445,12 +1531,12 @@ def rollaxis(a, axis, start=0):
         axis += n
     if start < 0:
         start += n
-    msg = 'rollaxis: %s (%d) must be >=0 and < %d'
+    msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
     if not (0 <= axis < n):
-        raise ValueError(msg % ('axis', axis, n))
+        raise ValueError(msg % ('axis', -n, 'axis', n, axis))
     if not (0 <= start < n + 1):
-        raise ValueError(msg % ('start', start, n + 1))
-    if (axis < start):
+        raise ValueError(msg % ('start', -n, 'start', n + 1, start))
+    if axis < start:
         # it's been removed
         start -= 1
     if axis == start:
@@ -1752,7 +1838,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     return rollaxis(cp, -1, axisc)
 
 
-#Use numarray's printing function
+# Use numarray's printing function
 from .arrayprint import array2string, get_printoptions, set_printoptions
 
 
@@ -2176,8 +2262,8 @@ def binary_repr(num, width=None):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
-                "will raise an error in the future.", DeprecationWarning
-            )
+                "will raise an error in the future.", DeprecationWarning,
+                stacklevel=3)
 
     if num == 0:
         return '0' * (width or 1)
@@ -2282,6 +2368,7 @@ def load(file):
 
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
+
 
 def _maketup(descr, val):
     dt = dtype(descr)

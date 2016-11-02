@@ -556,7 +556,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     # this warning can be removed when 1.9 has aged enough
     if version != (2, 0) and used_ver == (2, 0):
         warnings.warn("Stored array in format 2.0. It can only be"
-                      "read by NumPy >= 1.9", UserWarning)
+                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
 
     if array.itemsize == 0:
         buffersize = 0
@@ -759,7 +759,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             # this warning can be removed when 1.9 has aged enough
             if version != (2, 0) and used_ver == (2, 0):
                 warnings.warn("Stored array in format 2.0. It can only be"
-                              "read by NumPy >= 1.9", UserWarning)
+                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
             offset = fp.tell()
         finally:
             fp.close()

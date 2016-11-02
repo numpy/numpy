@@ -1680,7 +1680,7 @@ class chararray(ndarray):
        `dtype` `object_`, `string_` or `unicode_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -1817,7 +1817,7 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using Numpy integer
+        # force itemsize to be a Python long, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
         itemsize = long(itemsize)
@@ -2486,7 +2486,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2552,12 +2552,12 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             if sys.maxunicode == 0xffff:
                 # On a narrow Python build, the buffer for Unicode
                 # strings is UCS2, which doesn't match the buffer for
-                # Numpy Unicode types, which is ALWAYS UCS4.
+                # NumPy Unicode types, which is ALWAYS UCS4.
                 # Therefore, we need to convert the buffer.  On Python
                 # 2.6 and later, we can use the utf_32 codec.  Earlier
                 # versions don't have that codec, so we convert to a
                 # numerical array that matches the input buffer, and
-                # then use Numpy to convert it to UCS4.  All of this
+                # then use NumPy to convert it to UCS4.  All of this
                 # should happen in native endianness.
                 if sys.hexversion >= 0x2060000:
                     obj = obj.encode('utf_32')
@@ -2593,7 +2593,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             itemsize = obj.itemsize
             # itemsize is in 8-bit chars, so for Unicode, we need
             # to divide by the size of a single Unicode character,
-            # which for Numpy is always 4
+            # which for NumPy is always 4
             if issubclass(obj.dtype.type, unicode_):
                 itemsize //= 4
 
@@ -2642,7 +2642,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Convert the input to a `chararray`, copying the data only if
     necessary.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end

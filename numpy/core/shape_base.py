@@ -21,7 +21,7 @@ def atleast_1d(*arys):
     Returns
     -------
     ret : ndarray
-        An array, or sequence of arrays, each with ``a.ndim >= 1``.
+        An array, or list of arrays, each with ``a.ndim >= 1``.
         Copies are made only if necessary.
 
     See Also
@@ -72,7 +72,7 @@ def atleast_2d(*arys):
     Returns
     -------
     res, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        An array, or list of arrays, each with ``a.ndim >= 2``.
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
@@ -124,7 +124,7 @@ def atleast_3d(*arys):
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
         avoided where possible, and views with three or more dimensions are
         returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
         of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
@@ -146,7 +146,7 @@ def atleast_3d(*arys):
     >>> x = np.arange(12.0).reshape(4,3)
     >>> np.atleast_3d(x).shape
     (4, 3, 1)
-    >>> np.atleast_3d(x).base is x
+    >>> np.atleast_3d(x).base is x.base  # x is a reshape, so not base itself
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):

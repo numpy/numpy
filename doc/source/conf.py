@@ -189,7 +189,7 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'Numpy Documentation', _stdauthor, 'Numpy',
+  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
    "NumPy: array processing for numbers, strings, records, and objects.",
    'Programming',
    1),
@@ -199,11 +199,15 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
-intersphinx_mapping = {'http://docs.python.org/dev': None}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('http://matplotlib.org', None)
+}
 
 
 # -----------------------------------------------------------------------------
-# Numpy extensions
+# NumPy extensions
 # -----------------------------------------------------------------------------
 
 # If we want to do a phantom import from an XML file for all autodocs

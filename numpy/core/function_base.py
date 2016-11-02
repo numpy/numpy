@@ -3,10 +3,12 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import operator
 
-__all__ = ['logspace', 'linspace']
-
 from . import numeric as _nx
-from .numeric import result_type, NaN, shares_memory, MAY_SHARE_BOUNDS, TooHardError
+from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
+                      TooHardError)
+
+__all__ = ['logspace', 'linspace', 'geomspace']
+
 
 def _index_deprecate(i, stacklevel=2):
     try:
@@ -73,11 +75,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     Examples
     --------
     >>> np.linspace(2.0, 3.0, num=5)
-        array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
-        array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    array([ 2. ,  2.2,  2.4,  2.6,  2.8])
     >>> np.linspace(2.0, 3.0, num=5, retstep=True)
-        (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
 
     Graphical illustration:
 
@@ -102,8 +104,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     div = (num - 1) if endpoint else num
 
     # Convert float/complex array scalars to float, gh-3504
-    start = start * 1.
-    stop = stop * 1.
+    start = start * 1.0
+    stop = stop * 1.0
 
     dt = result_type(start, stop, float(num))
     if dtype is None:
@@ -156,7 +158,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
         ``base ** stop`` is the final value of the sequence, unless `endpoint`
         is False.  In that case, ``num + 1`` values are spaced over the
         interval in log-space, of which all but the last (a sequence of
-        length ``num``) are returned.
+        length `num`) are returned.
     num : integer, optional
         Number of samples to generate.  Default is 50.
     endpoint : boolean, optional
@@ -182,6 +184,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
              endpoint may or may not be included.
     linspace : Similar to logspace, but with the samples uniformly distributed
                in linear space, instead of log space.
+    geomspace : Similar to logspace, but with endpoints specified directly.
 
     Notes
     -----
@@ -195,11 +198,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     Examples
     --------
     >>> np.logspace(2.0, 3.0, num=4)
-        array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
-        array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
-        array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
 
     Graphical illustration:
 
@@ -221,3 +224,127 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype)
+
+
+def geomspace(start, stop, num=50, endpoint=True, dtype=None):
+    """
+    Return numbers spaced evenly on a log scale (a geometric progression).
+
+    This is similar to `logspace`, but with endpoints specified directly.
+    Each output sample is a constant multiple of the previous.
+
+    Parameters
+    ----------
+    start : scalar
+        The starting value of the sequence.
+    stop : scalar
+        The final value of the sequence, unless `endpoint` is False.
+        In that case, ``num + 1`` values are spaced over the
+        interval in log-space, of which all but the last (a sequence of
+        length `num`) are returned.
+    num : integer, optional
+        Number of samples to generate.  Default is 50.
+    endpoint : boolean, optional
+        If true, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    dtype : dtype
+        The type of the output array.  If `dtype` is not given, infer the data
+        type from the other input arguments.
+
+    Returns
+    -------
+    samples : ndarray
+        `num` samples, equally spaced on a log scale.
+
+    See Also
+    --------
+    logspace : Similar to geomspace, but with endpoints specified using log
+               and base.
+    linspace : Similar to geomspace, but with arithmetic instead of geometric
+               progression.
+    arange : Similar to linspace, with the step size specified instead of the
+             number of samples.
+
+    Notes
+    -----
+    If the inputs or dtype are complex, the output will follow a logarithmic
+    spiral in the complex plane.  (There are an infinite number of spirals
+    passing through two points; the output will follow the shortest such path.)
+
+    Examples
+    --------
+    >>> np.geomspace(1, 1000, num=4)
+    array([    1.,    10.,   100.,  1000.])
+    >>> np.geomspace(1, 1000, num=3, endpoint=False)
+    array([   1.,   10.,  100.])
+    >>> np.geomspace(1, 1000, num=4, endpoint=False)
+    array([   1.        ,    5.62341325,   31.6227766 ,  177.827941  ])
+    >>> np.geomspace(1, 256, num=9)
+    array([   1.,    2.,    4.,    8.,   16.,   32.,   64.,  128.,  256.])
+
+    Note that the above may not produce exact integers:
+
+    >>> np.geomspace(1, 256, num=9, dtype=int)
+    array([  1,   2,   4,   7,  16,  32,  63, 127, 256])
+    >>> np.around(np.geomspace(1, 256, num=9)).astype(int)
+    array([  1,   2,   4,   8,  16,  32,  64, 128, 256])
+
+    Negative, decreasing, and complex inputs are allowed:
+
+    >>> geomspace(1000, 1, num=4)
+    array([ 1000.,   100.,    10.,     1.])
+    >>> geomspace(-1000, -1, num=4)
+    array([-1000.,  -100.,   -10.,    -1.])
+    >>> geomspace(1j, 1000j, num=4)  # Straight line
+    array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
+    >>> geomspace(-1+0j, 1+0j, num=5)  # Circle
+    array([-1.00000000+0.j        , -0.70710678+0.70710678j,
+            0.00000000+1.j        ,  0.70710678+0.70710678j,
+            1.00000000+0.j        ])
+
+    Graphical illustration of ``endpoint`` parameter:
+
+    >>> import matplotlib.pyplot as plt
+    >>> N = 10
+    >>> y = np.zeros(N)
+    >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=True), y + 1, 'o')
+    >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=False), y + 2, 'o')
+    >>> plt.axis([0.5, 2000, 0, 3])
+    >>> plt.grid(True, color='0.7', linestyle='-', which='both', axis='both')
+    >>> plt.show()
+
+    """
+    if start == 0 or stop == 0:
+        raise ValueError('Geometric sequence cannot include zero')
+
+    dt = result_type(start, stop, float(num))
+    if dtype is None:
+        dtype = dt
+    else:
+        # complex to dtype('complex128'), for instance
+        dtype = _nx.dtype(dtype)
+
+    # Avoid negligible real or imaginary parts in output by rotating to
+    # positive real, calculating, then undoing rotation
+    out_sign = 1
+    if start.real == stop.real == 0:
+        start, stop = start.imag, stop.imag
+        out_sign = 1j * out_sign
+    if _nx.sign(start) == _nx.sign(stop) == -1:
+        start, stop = -start, -stop
+        out_sign = -out_sign
+
+    # Promote both arguments to the same dtype in case, for instance, one is
+    # complex and another is negative and log would produce NaN otherwise
+    start = start + (stop - stop)
+    stop = stop + (start - start)
+    if _nx.issubdtype(dtype, complex):
+        start = start + 0j
+        stop = stop + 0j
+
+    log_start = _nx.log10(start)
+    log_stop = _nx.log10(stop)
+    result = out_sign * logspace(log_start, log_stop, num=num,
+                                 endpoint=endpoint, base=10.0, dtype=dtype)
+
+    return result.astype(dtype)

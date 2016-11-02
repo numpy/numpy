@@ -117,7 +117,7 @@ class LinuxCPUInfo(CPUInfoBase):
             fo = open('/proc/cpuinfo')
         except EnvironmentError:
             e = get_exception()
-            warnings.warn(str(e), UserWarning)
+            warnings.warn(str(e), UserWarning, stacklevel=2)
         else:
             for line in fo:
                 name_value = [s.strip() for s in line.split(':', 1)]
@@ -681,13 +681,13 @@ cpu = cpuinfo()
 #    cpu.is_Intel()
 #    cpu.is_Alpha()
 #
-#    print 'CPU information:',
+#    print('CPU information:'),
 #    for name in dir(cpuinfo):
 #        if name[0]=='_' and name[1]!='_':
 #            r = getattr(cpu,name[1:])()
 #            if r:
 #                if r!=1:
-#                    print '%s=%s' %(name[1:],r),
+#                    print('%s=%s' %(name[1:],r))
 #                else:
-#                    print name[1:],
-#    print
+#                    print(name[1:]),
+#    print()

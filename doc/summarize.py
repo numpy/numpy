@@ -2,7 +2,7 @@
 """
 summarize.py
 
-Show a summary about which Numpy functions are documented and which are not.
+Show a summary about which NumPy functions are documented and which are not.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -114,7 +114,7 @@ def check_numpy():
 
 def get_undocumented(documented, module, module_name=None, skip=[]):
     """
-    Find out which items in Numpy are not documented.
+    Find out which items in NumPy are not documented.
 
     Returns
     -------

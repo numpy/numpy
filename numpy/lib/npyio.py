@@ -316,6 +316,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     --------
     save, savez, savez_compressed, loadtxt
     memmap : Create a memory-map to an array stored in a file on disk.
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
 
     Notes
     -----
@@ -376,9 +377,9 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     if encoding not in ('ASCII', 'latin1', 'bytes'):
         # The 'encoding' value for pickle also affects what encoding
-        # the serialized binary data of Numpy arrays is loaded
+        # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
-        # Numpy. The unpickling code in numpy.core.multiarray is
+        # NumPy. The unpickling code in numpy.core.multiarray is
         # written to assume that unicode data appearing where binary
         # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.
         #
@@ -466,7 +467,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see the module docstring
-    of `numpy.lib.format` or the Numpy Enhancement Proposal
+    of `numpy.lib.format` or the NumPy Enhancement Proposal
     http://docs.scipy.org/doc/numpy/neps/npy-format.html
 
     Examples
@@ -552,7 +553,7 @@ def savez(file, *args, **kwds):
     variables they contain.  The archive is not compressed and each file
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see `numpy.lib.format` or the
-    Numpy Enhancement Proposal
+    NumPy Enhancement Proposal
     http://docs.scipy.org/doc/numpy/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
@@ -751,7 +752,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         Also when a single column has to be read it is possible to use
         an integer instead of a tuple. E.g ``usecols = 3`` reads the
-        third column the same way as `usecols = (3,)`` would.
+        fourth column the same way as `usecols = (3,)`` would.
 
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
@@ -944,7 +945,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -1329,7 +1330,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Mote
+        extension is `.gz` or `.bz2`, the file is first decompressed. Note
         that generators must return byte strings in Python 3k.  The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
@@ -1428,7 +1429,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     References
     ----------
-    .. [1] Numpy User Guide, section `I/O with Numpy
+    .. [1] NumPy User Guide, section `I/O with NumPy
            <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
@@ -1542,7 +1543,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # return an empty array if the datafile is empty
         first_line = asbytes('')
         first_values = []
-        warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
+        warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
     # Should we take the first values as names ?
     if names is True:
@@ -1827,7 +1828,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 raise ValueError(errmsg)
             # Issue a warning ?
             else:
-                warnings.warn(errmsg, ConversionWarning)
+                warnings.warn(errmsg, ConversionWarning, stacklevel=2)
 
     # Strip the last skip_footer data
     if skip_footer > 0:

@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
+
 from numpy.testing import (dec, assert_, assert_raises, run_module_suite,
                            SkipTest, KnownFailureException)
-import nose
+
 
 def test_slow():
     @dec.slow
@@ -172,10 +174,12 @@ def test_deprecated():
     assert_raises(AssertionError, non_deprecated_func)
     # should be silent
     deprecated_func()
-    # fails if deprecated decorator just disables test. See #1453.
-    assert_raises(ValueError, deprecated_func2)
-    # first warnings is not a DeprecationWarning
-    assert_raises(AssertionError, deprecated_func3)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")  # do not propagate unrelated warnings
+        # fails if deprecated decorator just disables test. See #1453.
+        assert_raises(ValueError, deprecated_func2)
+        # warning is not a DeprecationWarning
+        assert_raises(AssertionError, deprecated_func3)
 
 
 if __name__ == '__main__':

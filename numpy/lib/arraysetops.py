@@ -78,20 +78,36 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2, -3,  5, 18])
 
     """
-    ary = np.asanyarray(ary).flat
-    ed = ary[1:] - ary[:-1]
-    arrays = [ed]
-    if to_begin is not None:
-        arrays.insert(0, to_begin)
-    if to_end is not None:
-        arrays.append(to_end)
+    # force a 1d array
+    ary = np.asanyarray(ary).ravel()
 
-    if len(arrays) != 1:
-        # We'll save ourselves a copy of a potentially large array in
-        # the common case where neither to_begin or to_end was given.
-        ed = np.hstack(arrays)
+    # fast track default case
+    if to_begin is None and to_end is None:
+        return ary[1:] - ary[:-1]
 
-    return ed
+    if to_begin is None:
+        l_begin = 0
+    else:
+        to_begin = np.asanyarray(to_begin).ravel()
+        l_begin = len(to_begin)
+
+    if to_end is None:
+        l_end = 0
+    else:
+        to_end = np.asanyarray(to_end).ravel()
+        l_end = len(to_end)
+
+    # do the calculation in place and copy to_begin and to_end
+    l_diff = max(len(ary) - 1, 0)
+    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)
+    result = ary.__array_wrap__(result)
+    if l_begin > 0:
+        result[:l_begin] = to_begin
+    if l_end > 0:
+        result[l_begin + l_diff:] = to_end
+    np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])
+    return result
+
 
 def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     """

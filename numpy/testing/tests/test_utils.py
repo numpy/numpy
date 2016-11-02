@@ -7,11 +7,12 @@ import os
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, build_err_msg, raises, assert_raises,
-    assert_warns, assert_no_warnings, assert_allclose, assert_approx_equal,
+    assert_array_almost_equal, assert_array_less, build_err_msg,
+    raises, assert_raises, assert_warns, assert_no_warnings,
+    assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
-    clear_and_catch_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath, 
+    clear_and_catch_warnings, suppress_warnings, run_module_suite,
+    assert_string_equal, assert_, tempdir, temppath,
     )
 import unittest
 
@@ -244,6 +245,23 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def setUp(self):
         self._assert_func = assert_array_almost_equal
 
+    def test_closeness(self):
+        # Note that in the course of time we ended up with
+        #     `abs(x - y) < 1.5 * 10**(-decimal)`
+        # instead of the previously documented
+        #     `abs(x - y) < 0.5 * 10**(-decimal)`
+        # so this check serves to preserve the wrongness.
+
+        # test scalars
+        self._assert_func(1.499999, 0.0, decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(1.5, 0.0, decimal=0))
+
+        # test arrays
+        self._assert_func([1.499999], [0.0], decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func([1.5], [0.0], decimal=0))
+
     def test_simple(self):
         x = np.array([1234.2222])
         y = np.array([1234.2223])
@@ -285,6 +303,23 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
     def setUp(self):
         self._assert_func = assert_almost_equal
+
+    def test_closeness(self):
+        # Note that in the course of time we ended up with
+        #     `abs(x - y) < 1.5 * 10**(-decimal)`
+        # instead of the previously documented
+        #     `abs(x - y) < 0.5 * 10**(-decimal)`
+        # so this check serves to preserve the wrongness.
+
+        # test scalars
+        self._assert_func(1.499999, 0.0, decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(1.5, 0.0, decimal=0))
+
+        # test arrays
+        self._assert_func([1.499999], [0.0], decimal=0)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func([1.5], [0.0], decimal=0))
 
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
@@ -467,23 +502,21 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo", DeprecationWarning)
 
         failed = False
-        filters = sys.modules['warnings'].filters[:]
-        try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
             try:
-                # Should raise an AssertionError
+                # Should raise a DeprecationWarning
                 assert_warns(UserWarning, f)
                 failed = True
-            except AssertionError:
+            except DeprecationWarning:
                 pass
-        finally:
-            sys.modules['warnings'].filters = filters
 
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
 
 
 class TestAssertAllclose(unittest.TestCase):
-    
+
     def test_simple(self):
         x = 1e-3
         y = 1e-9
@@ -519,6 +552,29 @@ class TestAssertAllclose(unittest.TestCase):
         except AssertionError as exc:
             msg = exc.args[0]
         self.assertTrue("mismatch 25.0%" in msg)
+
+    def test_equal_nan(self):
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        # Should not raise:
+        assert_allclose(a, b, equal_nan=True)
+
+    def test_not_equal_nan(self):
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        self.assertRaises(AssertionError, assert_allclose, a, b,
+                          equal_nan=False)
+
+    def test_equal_nan_default(self):
+        # Make sure equal_nan default behavior remains unchanged. (All
+        # of these functions use assert_array_compare under the hood.)
+        # None of these should raise.
+        a = np.array([np.nan])
+        b = np.array([np.nan])
+        assert_array_equal(a, b)
+        assert_array_almost_equal(a, b)
+        assert_array_less(a, b)
+        assert_allclose(a, b)
 
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
@@ -743,6 +799,7 @@ class TestULP(unittest.TestCase):
                                   lambda: assert_array_max_ulp(nan, nzero,
                                                                maxulp=maxulp))
 
+
 class TestStringEqual(unittest.TestCase):
     def test_simple(self):
         assert_string_equal("hello", "hello")
@@ -759,14 +816,16 @@ class TestStringEqual(unittest.TestCase):
                           lambda: assert_string_equal("foo", "hello"))
 
 
-def assert_warn_len_equal(mod, n_in_context):
+def assert_warn_len_equal(mod, n_in_context, py3_n_in_context=None):
     mod_warns = mod.__warningregistry__
     # Python 3.4 appears to clear any pre-existing warnings of the same type,
     # when raising warnings inside a catch_warnings block. So, there is a
     # warning generated by the tests within the context manager, but no
     # previous warnings.
     if 'version' in mod_warns:
-        assert_equal(len(mod_warns), 2)  # including 'version'
+        if py3_n_in_context is None:
+            py3_n_in_context = n_in_context
+        assert_equal(len(mod_warns) - 1, py3_n_in_context)
     else:
         assert_equal(len(mod_warns), n_in_context)
 
@@ -804,7 +863,183 @@ def test_clear_and_catch_warnings():
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 2)
+    assert_warn_len_equal(my_mod, 2, 1)
+
+
+def test_suppress_warnings_module():
+    # Initial state of module, no warnings
+    my_mod = _get_fresh_mod()
+    assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
+
+    def warn_other_module():
+        # Apply along axis is implemented in python; stacklevel=2 means
+        # we end up inside its module, not ours.
+        def warn(arr):
+            warnings.warn("Some warning 2", stacklevel=2)
+            return arr
+        np.apply_along_axis(warn, 0, [0])
+
+    # Test module based warning suppression:
+    with suppress_warnings() as sup:
+        sup.record(UserWarning)
+        # suppress warning from other module (may have .pyc ending),
+        # if apply_along_axis is moved, had to be changed.
+        sup.filter(module=np.lib.shape_base)
+        warnings.warn("Some warning")
+        warn_other_module()
+    # Check that the suppression did test the file correctly (this module
+    # got filtered)
+    assert_(len(sup.log) == 1)
+    assert_(sup.log[0].message.args[0] == "Some warning")
+
+    assert_warn_len_equal(my_mod, 0)
+    sup = suppress_warnings()
+    # Will have to be changed if apply_along_axis is moved:
+    sup.filter(module=my_mod)
+    with sup:
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 0)
+    # And test repeat works:
+    sup.filter(module=my_mod)
+    with sup:
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 0)
+
+    # Without specified modules, don't clear warnings during context
+    with suppress_warnings():
+        warnings.simplefilter('ignore')
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 1)
+
+
+def test_suppress_warnings_type():
+    # Initial state of module, no warnings
+    my_mod = _get_fresh_mod()
+    assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
+
+    # Test module based warning suppression:
+    with suppress_warnings() as sup:
+        sup.filter(UserWarning)
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 0)
+    sup = suppress_warnings()
+    sup.filter(UserWarning)
+    with sup:
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 0)
+    # And test repeat works:
+    sup.filter(module=my_mod)
+    with sup:
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 0)
+
+    # Without specified modules, don't clear warnings during context
+    with suppress_warnings():
+        warnings.simplefilter('ignore')
+        warnings.warn('Some warning')
+    assert_warn_len_equal(my_mod, 1)
+
+
+def test_suppress_warnings_decorate_no_record():
+    sup = suppress_warnings()
+    sup.filter(UserWarning)
+
+    @sup
+    def warn(category):
+        warnings.warn('Some warning', category)
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        warn(UserWarning)  # should be supppressed
+        warn(RuntimeWarning)
+        assert_(len(w) == 1)
+
+
+def test_suppress_warnings_record():
+    sup = suppress_warnings()
+    log1 = sup.record()
+
+    with sup:
+        log2 = sup.record(message='Some other warning 2')
+        sup.filter(message='Some warning')
+        warnings.warn('Some warning')
+        warnings.warn('Some other warning')
+        warnings.warn('Some other warning 2')
+
+        assert_(len(sup.log) == 2)
+        assert_(len(log1) == 1)
+        assert_(len(log2) == 1)
+        assert_(log2[0].message.args[0] == 'Some other warning 2')
+
+    # Do it again, with the same context to see if some warnings survived:
+    with sup:
+        log2 = sup.record(message='Some other warning 2')
+        sup.filter(message='Some warning')
+        warnings.warn('Some warning')
+        warnings.warn('Some other warning')
+        warnings.warn('Some other warning 2')
+
+        assert_(len(sup.log) == 2)
+        assert_(len(log1) == 1)
+        assert_(len(log2) == 1)
+        assert_(log2[0].message.args[0] == 'Some other warning 2')
+
+    # Test nested:
+    with suppress_warnings() as sup:
+        sup.record()
+        with suppress_warnings() as sup2:
+            sup2.record(message='Some warning')
+            warnings.warn('Some warning')
+            warnings.warn('Some other warning')
+            assert_(len(sup2.log) == 1)
+        assert_(len(sup.log) == 1)
+
+
+def test_suppress_warnings_forwarding():
+    def warn_other_module():
+        # Apply along axis is implemented in python; stacklevel=2 means
+        # we end up inside its module, not ours.
+        def warn(arr):
+            warnings.warn("Some warning", stacklevel=2)
+            return arr
+        np.apply_along_axis(warn, 0, [0])
+
+    with suppress_warnings() as sup:
+        sup.record()
+        with suppress_warnings("always"):
+            for i in range(2):
+                warnings.warn("Some warning")
+
+        assert_(len(sup.log) == 2)
+
+    with suppress_warnings() as sup:
+        sup.record()
+        with suppress_warnings("location"):
+            for i in range(2):
+                warnings.warn("Some warning")
+                warnings.warn("Some warning")
+
+        assert_(len(sup.log) == 2)
+
+    with suppress_warnings() as sup:
+        sup.record()
+        with suppress_warnings("module"):
+            for i in range(2):
+                warnings.warn("Some warning")
+                warnings.warn("Some warning")
+                warn_other_module()
+
+        assert_(len(sup.log) == 2)
+
+    with suppress_warnings() as sup:
+        sup.record()
+        with suppress_warnings("once"):
+            for i in range(2):
+                warnings.warn("Some warning")
+                warnings.warn("Some other warning")
+                warn_other_module()
+
+        assert_(len(sup.log) == 2)
 
 
 def test_tempdir():
@@ -822,7 +1057,6 @@ def test_tempdir():
         raised = True
     assert_(raised)
     assert_(not os.path.isdir(tdir))
-
 
 
 def test_temppath():

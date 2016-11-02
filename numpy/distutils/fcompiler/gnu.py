@@ -126,13 +126,18 @@ class GnuFCompiler(FCompiler):
                 # from it.
                 import distutils.sysconfig as sc
                 g = {}
-                filename = sc.get_makefile_filename()
-                sc.parse_makefile(filename, g)
+                try:
+                    get_makefile_filename = sc.get_makefile_filename
+                except AttributeError:
+                    pass # i.e. PyPy
+                else: 
+                    filename = get_makefile_filename()
+                    sc.parse_makefile(filename, g)
                 target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
                 os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
                 if target == '10.3':
                     s = 'Env. variable MACOSX_DEPLOYMENT_TARGET set to 10.3'
-                    warnings.warn(s)
+                    warnings.warn(s, stacklevel=2)
 
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
@@ -230,7 +235,9 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        return '-Wl,-rpath="%s"' % dir
+        sep = ',' if sys.platform == 'darwin' else '='
+        return '-Wl,-rpath%s"%s"' % (sep, dir)
+
 
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
@@ -359,6 +366,7 @@ def _can_target(cmd, arch):
     """Return true if the architecture supports the -arch flag"""
     newcmd = cmd[:]
     fid, filename = tempfile.mkstemp(suffix=".f")
+    os.close(fid)
     try:
         d = os.path.dirname(filename)
         output = os.path.splitext(filename)[0] + ".o"

@@ -296,7 +296,7 @@ add_newdoc('numpy.core', 'nditer',
     Notes
     -----
     `nditer` supersedes `flatiter`.  The iterator implementation behind
-    `nditer` is also exposed by the Numpy C API.
+    `nditer` is also exposed by the NumPy C API.
 
     The Python exposure supplies two iteration interfaces, one which follows
     the Python iterator protocol, and another which mirrors the C-style
@@ -570,7 +570,7 @@ add_newdoc('numpy.core', 'broadcast', ('ndim',
 
 add_newdoc('numpy.core', 'broadcast', ('nd',
     """
-    Number of dimensions of broadcasted result. For code intended for Numpy
+    Number of dimensions of broadcasted result. For code intended for NumPy
     1.12.0 and later the more consistent `ndim` is preferred.
 
     Examples
@@ -942,34 +942,6 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'count_nonzero',
-    """
-    count_nonzero(a)
-
-    Counts the number of non-zero values in the array ``a``.
-
-    Parameters
-    ----------
-    a : array_like
-        The array for which to count non-zeros.
-
-    Returns
-    -------
-    count : int or array of int
-        Number of non-zero values in the array.
-
-    See Also
-    --------
-    nonzero : Return the coordinates of all the non-zero values.
-
-    Examples
-    --------
-    >>> np.count_nonzero(np.eye(4))
-    4
-    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
-    5
-    """)
-
 add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
 
@@ -1154,7 +1126,7 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
-        Start reading the buffer from this offset; default: 0.
+        Start reading the buffer from this offset (in bytes); default: 0.
 
     Notes
     -----
@@ -2042,7 +2014,7 @@ add_newdoc('numpy.core', 'matmul',
       were elements.
 
     .. warning::
-       This function is preliminary and included in Numpy 1.10 for testing
+       This function is preliminary and included in NumPy 1.10.0 for testing
        and documentation. Its semantics will not change, but the number and
        order of the optional arguments will.
 
@@ -2136,9 +2108,9 @@ add_newdoc('numpy.core', 'matmul',
     """)
 
 
-add_newdoc('numpy.core', 'einsum',
+add_newdoc('numpy.core', 'c_einsum',
     """
-    einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
+    c_einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
 
     Evaluates the Einstein summation convention on the operands.
 
@@ -2148,6 +2120,8 @@ add_newdoc('numpy.core', 'einsum',
     function is to try the examples below, which show how many common NumPy
     functions can be implemented as calls to `einsum`.
 
+    This is the core C function.
+
     Parameters
     ----------
     subscripts : str
@@ -2156,10 +2130,10 @@ add_newdoc('numpy.core', 'einsum',
         These are the arrays for the operation.
     out : ndarray, optional
         If provided, the calculation is done into this array.
-    dtype : data-type, optional
+    dtype : {data-type, None}, optional
         If provided, forces the calculation to use the data type specified.
         Note that you may have to also give a more liberal `casting`
-        parameter to allow the conversions.
+        parameter to allow the conversions. Default is None.
     order : {'C', 'F', 'A', 'K'}, optional
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
@@ -2178,6 +2152,8 @@ add_newdoc('numpy.core', 'einsum',
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
+        Default is 'safe'.
+
     Returns
     -------
     output : ndarray
@@ -2185,7 +2161,7 @@ add_newdoc('numpy.core', 'einsum',
 
     See Also
     --------
-    dot, inner, outer, tensordot
+    einsum, dot, inner, outer, tensordot
 
     Notes
     -----
@@ -2442,7 +2418,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     a low-level method (`ndarray(...)`) for instantiating an array.
 
     For more information, refer to the `numpy` module and examine the
-    the methods and attributes of an array.
+    methods and attributes of an array.
 
     Parameters
     ----------
@@ -4151,6 +4127,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     ValueError
         If `a` does not own its own data or references or views to it exist,
         and the data memory must be changed.
+        PyPy only: will always raise if the data memory must be changed, since
+        there is no reliable way to determine if references or views to it
+        exist.
 
     SystemError
         If the `order` keyword argument is specified. This behaviour is a
@@ -4473,7 +4452,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     Examples
     --------
     >>> a = np.array([3, 4, 2, 1])
-    >>> a.partition(a, 3)
+    >>> a.partition(3)
     >>> a
     array([2, 1, 3, 4])
 
@@ -4869,7 +4848,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     """
     frompyfunc(func, nin, nout)
 
-    Takes an arbitrary Python function and returns a Numpy ufunc.
+    Takes an arbitrary Python function and returns a NumPy ufunc.
 
     Can be used, for example, to add broadcasting to a built-in Python
     function (see Examples section).
@@ -4886,7 +4865,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
     Returns
     -------
     out : ufunc
-        Returns a Numpy universal function (``ufunc``) object.
+        Returns a NumPy universal function (``ufunc``) object.
 
     See Also
     --------
@@ -4916,7 +4895,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     Return the current object that defines floating-point error handling.
 
     The error object contains all information that defines the error handling
-    behavior in Numpy. `geterrobj` is used internally by the other
+    behavior in NumPy. `geterrobj` is used internally by the other
     functions that get and set error handling behavior (`geterr`, `seterr`,
     `geterrcall`, `seterrcall`).
 
@@ -4980,7 +4959,7 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     Set the object that defines floating-point error handling.
 
     The error object contains all information that defines the error handling
-    behavior in Numpy. `seterrobj` is used internally by the other
+    behavior in NumPy. `seterrobj` is used internally by the other
     functions that set error handling behavior (`seterr`, `seterrcall`).
 
     Parameters
@@ -5056,7 +5035,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     Parameters
     ----------
     x : array_like
-        Input array to be binned. Prior to Numpy 1.10.0, this array had to
+        Input array to be binned. Prior to NumPy 1.10.0, this array had to
         be 1-dimensional, but can now have any shape.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
@@ -5741,7 +5720,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=0, dtype=None, out=None)
+    accumulate(array, axis=0, dtype=None, out=None, keepdims=None)
 
     Accumulate the result of applying the operator to all elements.
 
@@ -5773,6 +5752,8 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
     out : ndarray, optional
         A location into which the result is stored. If not provided a
         freshly-allocated array is returned.
+    keepdims : bool
+        Has no effect. Deprecated, and will be removed in future.
 
     Returns
     -------
@@ -5917,7 +5898,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
     """
-    outer(A, B)
+    outer(A, B, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
@@ -5940,6 +5921,8 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         First array
     B : array_like
         Second array
+    kwargs : any
+        Arguments to pass on to the ufunc. Typically `dtype` or `out`.
 
     Returns
     -------
@@ -6192,11 +6175,13 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('char',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     """
-    Array-interface compliant full description of the data-type.
+    PEP3118 interface description of the data-type.
 
     The format is that required by the 'descr' key in the
-    `__array_interface__` attribute.
+    PEP3118 `__array_interface__` attribute.
 
+    Warning: This attribute exists specifically for PEP3118 compliance, and
+    is not a datatype description compatible with `np.dtype`.
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
@@ -6263,7 +6248,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     2  if the dtype is for a user-defined numpy type
        A user-defined type uses the numpy C-API machinery to extend
        numpy to handle a new array type. See
-       :ref:`user.user-defined-data-types` in the Numpy manual.
+       :ref:`user.user-defined-data-types` in the NumPy manual.
     =  ========================================================================
 
     Examples
@@ -7651,7 +7636,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 ##############################################################################
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
-    """Numpy's Boolean type.  Character code: ``?``.  Alias: bool8""")
+    """NumPy's Boolean type.  Character code: ``?``.  Alias: bool8""")
 
 add_newdoc('numpy.core.numerictypes', 'complex64',
     """

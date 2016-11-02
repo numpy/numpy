@@ -130,7 +130,7 @@ def _divide_by_count(a, b, out=None):
         in place. If `a` is a numpy scalar, the division preserves its type.
 
     """
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
                 return np.divide(a, b, out=a, casting='unsafe')
@@ -204,7 +204,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
@@ -236,7 +236,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
         # Fast, but not safe for subclasses of ndarray
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN axis encountered", RuntimeWarning)
+            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, +np.inf)
@@ -248,7 +248,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning)
+            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
     return res
 
 
@@ -311,7 +311,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
@@ -343,7 +343,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
         # Fast, but not safe for subclasses of ndarray
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning)
+            warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, -np.inf)
@@ -355,7 +355,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning)
+            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
     return res
 
 
@@ -453,7 +453,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Return the sum of array elements over a given axis treating Not a
     Numbers (NaNs) as zero.
 
-    In Numpy versions <= 1.8 Nan is returned for slices that are all-NaN or
+    In NumPy versions <= 1.8.0 Nan is returned for slices that are all-NaN or
     empty. In later versions zero is returned.
 
     Parameters
@@ -815,16 +815,13 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
 
-    # The warning context speeds things up.
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims)
-        tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-        avg = _divide_by_count(tot, cnt, out=out)
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims)
+    tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    avg = _divide_by_count(tot, cnt, out=out)
 
     isbad = (cnt == 0)
     if isbad.any():
-        warnings.warn("Mean of empty slice", RuntimeWarning)
+        warnings.warn("Mean of empty slice", RuntimeWarning, stacklevel=2)
         # NaN is the only possible bad value, so no further
         # action is needed to handle bad results.
     return avg
@@ -838,7 +835,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     c = np.isnan(arr1d)
     s = np.where(c)[0]
     if s.size == arr1d.size:
-        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         return np.nan
     elif s.size == 0:
         return np.median(arr1d, overwrite_input=overwrite_input)
@@ -890,7 +887,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     a = np.ma.masked_array(a, np.isnan(a))
     m = np.ma.median(a, axis=axis, overwrite_input=overwrite_input)
     for i in range(np.count_nonzero(m.mask.ravel())):
-        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
     if out is not None:
         out[...] = m.filled(np.nan)
         return out
@@ -1164,7 +1161,7 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     c = np.isnan(arr1d)
     s = np.where(c)[0]
     if s.size == arr1d.size:
-        warnings.warn("All-NaN slice encountered", RuntimeWarning)
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         if q.ndim == 0:
             return np.nan
         else:
@@ -1288,42 +1285,39 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+    # Compute mean
+    if type(arr) is np.matrix:
+        _keepdims = np._NoValue
+    else:
+        _keepdims = True
+    # we need to special case matrix for reverse compatibility
+    # in order for this to work, these sums need to be called with
+    # keepdims=True, however matrix now raises an error in this case, but
+    # the reason that it drops the keepdims kwarg is to force keepdims=True
+    # so this used to work by serendipity.
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims)
+    avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims)
+    avg = _divide_by_count(avg, cnt)
 
-        # Compute mean
-        if type(arr) is np.matrix:
-            _keepdims = np._NoValue
-        else:
-            _keepdims = True
-        # we need to special case matrix for reverse compatibility
-        # in order for this to work, these sums need to be called with
-        # keepdims=True, however matrix now raises an error in this case, but
-        # the reason that it drops the keepdims kwarg is to force keepdims=True
-        # so this used to work by serendipity.
-        cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims)
-        avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims)
-        avg = _divide_by_count(avg, cnt)
+    # Compute squared deviation from mean.
+    np.subtract(arr, avg, out=arr, casting='unsafe')
+    arr = _copyto(arr, 0, mask)
+    if issubclass(arr.dtype.type, np.complexfloating):
+        sqr = np.multiply(arr, arr.conj(), out=arr).real
+    else:
+        sqr = np.multiply(arr, arr, out=arr)
 
-        # Compute squared deviation from mean.
-        np.subtract(arr, avg, out=arr, casting='unsafe')
-        arr = _copyto(arr, 0, mask)
-        if issubclass(arr.dtype.type, np.complexfloating):
-            sqr = np.multiply(arr, arr.conj(), out=arr).real
-        else:
-            sqr = np.multiply(arr, arr, out=arr)
-
-        # Compute variance.
-        var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-        if var.ndim < cnt.ndim:
-            # Subclasses of ndarray may ignore keepdims, so check here.
-            cnt = cnt.squeeze(axis)
-        dof = cnt - ddof
-        var = _divide_by_count(var, dof)
+    # Compute variance.
+    var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    if var.ndim < cnt.ndim:
+        # Subclasses of ndarray may ignore keepdims, so check here.
+        cnt = cnt.squeeze(axis)
+    dof = cnt - ddof
+    var = _divide_by_count(var, dof)
 
     isbad = (dof <= 0)
     if np.any(isbad):
-        warnings.warn("Degrees of freedom <= 0 for slice.", RuntimeWarning)
+        warnings.warn("Degrees of freedom <= 0 for slice.", RuntimeWarning, stacklevel=2)
         # NaN, inf, or negative numbers are all possible bad
         # values, so explicitly replace them with NaN.
         var = _copyto(var, np.nan, isbad)
