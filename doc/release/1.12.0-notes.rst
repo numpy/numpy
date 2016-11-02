@@ -261,6 +261,15 @@ values. There are two different propagation modes. The default causes masked
 values to contaminate the result with masks, but the other mode only outputs
 masks if there is no alternative.
 
+New ``float_power`` ufunc
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The new ``float_power`` ufunc is like the ``power`` function except all
+computation is done in a minimum precision of float64. There was a long
+discussion on the numpy mailing list of how to treat integers to negative
+integer powers and a popular proposal was that the ``__pow__`` operator should
+always return results of at least float64 precision. The ``float_power``
+function implements that option. Note that it does not support object arrays.
+
 
 Improvements
 ============
