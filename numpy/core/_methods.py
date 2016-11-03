@@ -75,7 +75,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
             ret = a.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
         if is_float16_result:
-            ret = nt.float16(ret / rcount)
+            ret = a.dtype.type(ret / rcount)
         else:
             ret = ret.dtype.type(ret / rcount)
     else:
