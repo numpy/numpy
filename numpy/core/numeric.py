@@ -480,8 +480,8 @@ def asarray(a, dtype=None, order=None):
     -------
     out : ndarray
         Array interpretation of `a`.  No copy is performed if the input
-        is already an ndarray.  If `a` is a subclass of ndarray, a base
-        class ndarray is returned.
+        is already an ndarray with matching dtype and order.  If `a` is a
+        subclass of ndarray, a base class ndarray is returned.
 
     See Also
     --------
