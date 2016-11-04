@@ -27,6 +27,15 @@ Future Changes
 Compatibility notes
 ===================
 
+Tuple object dtypes
+~~~~~~~~~~~~~~~~~~~
+
+Support has been removed for certain obscure dtypes that were unintentionally
+allowed, of the form ``(old_dtype, new_dtype)``, where either of the dtypes
+is or contains the ``object`` dtype. As an exception, dtypes of the form
+``(object, [('name', object)])`` are still supported due to evidence of
+existing use.
+
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
