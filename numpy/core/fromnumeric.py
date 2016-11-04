@@ -2847,8 +2847,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     example below).  Specifying a higher-precision accumulator using the
     `dtype` keyword can alleviate this issue.
 
-    `float32` intermediate are used for `float16` inputs for extra
-    precision by default.
+    By default, `float16` results are computed using `float32` intermediates
+    for extra precision.
 
     Examples
     --------
