@@ -906,7 +906,7 @@ The ``code.c`` file also contains the function ``dfilter2d``:
        a has strides that are multiples of sizeof(double)
     */
     void
-    dfilter2d(double *a, double *b, int *astrides, int *dims)
+    dfilter2d(double *a, double *b, int *astrides, ssize_t *dims)
     {
         int i, j, M, N, S0, S1;
         int r, c, rm1, rp1, cp1, cm1;
