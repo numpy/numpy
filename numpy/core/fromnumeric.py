@@ -2847,6 +2847,9 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     example below).  Specifying a higher-precision accumulator using the
     `dtype` keyword can alleviate this issue.
 
+    By default, `float16` results are computed using `float32` intermediates
+    for extra precision.
+
     Examples
     --------
     >>> a = np.array([[1, 2], [3, 4]])
