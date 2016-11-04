@@ -929,8 +929,8 @@ def eigvalsh(a, UPLO='L'):
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
-        Same as `lower`, with 'L' for lower and 'U' for upper triangular.
-        Deprecated. 
+        Specifies whether the calculation is done with the lower triangular
+        part of `a` ('L', default) or the upper triangular part ('U').
         Irrespective of this value only the real parts of the diagonal will
         be considered in the computation to preserve the notion of a Hermitian
         matrix. It therefore follows that the imaginary part of the diagonal
