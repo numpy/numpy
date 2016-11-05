@@ -90,7 +90,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -383,7 +383,7 @@ def array2string(a, max_line_width=None, precision=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
