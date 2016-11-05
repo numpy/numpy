@@ -103,7 +103,7 @@ RELEASE_NOTES = 'doc/release/1.12.0-notes.rst'
 
 # Start/end of the log (from git)
 LOG_START = 'maintenance/1.11.x'
-LOG_END = 'master'
+LOG_END = 'maintenance/1.12.x'
 
 
 #-------------------------------------------------------
