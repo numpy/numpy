@@ -124,23 +124,41 @@ class TestPower(TestCase):
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
-    def test_negative_power(self):
-        typelist = [np.int8, np.int16, np.int32, np.int64]
-        for t in typelist:
-            a = t(2)
-            b = t(-4)
-            result = a**b
-            msg = ("error with %r:"
-                   "got %r, expected %r") % (t, result, 0.0625)
-            assert_(result == 0.0625, msg)
+    def test_integers_to_negative_integer_power(self):
+        # Note that the combination of uint64 with a signed integer
+        # has common type np.float. The other combinations should all
+        # raise a ValueError for integer ** negative integer.
+        exp = [np.array(-1, dt)[()] for dt in 'bhilq']
 
-            c = t(4)
-            d = t(-15)
-            result = c**d
-            expected = 4.0**-15.0
-            msg = ("error with %r:"
-                   "got %r, expected %r") % (t, result, expected)
-            assert_almost_equal(result, expected, err_msg=msg)
+        # 1 ** -1 possible special case
+        base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, 1.)
+
+        # -1 ** -1 possible special case
+        base = [np.array(-1, dt)[()] for dt in 'bhilq']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, -1.)
+
+        # 2 ** -1 perhaps generic
+        base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, .5)
 
     def test_mixed_types(self):
         typelist = [np.int8, np.int16, np.float16,
