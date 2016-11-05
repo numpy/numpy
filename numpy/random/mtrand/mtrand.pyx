@@ -1295,6 +1295,10 @@ cdef class RandomState:
         Py_INCREF(temp)  # needed to get around Pyrex's automatic reference-counting
                          # rules because EnsureArray steals a reference
         odiff = <ndarray>PyArray_EnsureArray(temp)
+
+        if not np.all(np.isfinite(odiff)):
+            raise OverflowError('Range exceeds valid bounds')
+
         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff,
                            self.lock)
 
