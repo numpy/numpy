@@ -597,9 +597,12 @@ def write_release_task(options, filename='NOTES.txt'):
     target = paver.path.path(filename)
     if target.exists():
         target.remove()
-    source.copy(target)
-    ftarget = open(str(target), 'a')
-    ftarget.writelines("""
+
+    tmp_target = paver.path.path(filename + '.tmp')
+    source.copy(tmp_target)
+
+    with open(str(tmp_target), 'a') as ftarget:
+        ftarget.writelines("""
 Checksums
 =========
 
@@ -615,6 +618,16 @@ SHA256
 """)
     ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
 
+    # Sign release
+    cmd = ['gpg', '--clearsign', '--armor']
+    if hasattr(options, 'gpg_key'):
+        cmd += ['--default-key', options.gpg_key]
+    cmd += ['--output', str(target), str(tmp_target)]
+    subprocess.check_call(cmd)
+    print("signed %s" % (target,))
+    tmp_target.remove()
+
+
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
         ['git', 'log', '--no-merges', '--use-mailmap',
@@ -626,16 +639,19 @@ def write_log_task(options, filename='Changelog'):
     a.writelines(out)
     a.close()
 
+
 @task
 def write_release(options):
     write_release_task(options)
+
 
 @task
 def write_log(options):
     write_log_task(options)
 
+
 @task
 def write_release_and_log(options):
     rdir = options.installers.releasedir
-    write_release_task(options, os.path.join(rdir, 'NOTES.txt'))
+    write_release_task(options, os.path.join(rdir, 'README'))
     write_log_task(options, os.path.join(rdir, 'Changelog'))
