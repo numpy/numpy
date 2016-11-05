@@ -1,13 +1,14 @@
 NumPy 1.12.0 Release Notes
 **************************
 
-This release supports Python 2.7 and 3.4 - 3.5.
+This release supports Python 2.7 and 3.4 - 3.6.
 
 Highlights
 ==========
 
 * Order of operations in ``np.einsum`` now can be optimized for large speed improvements.
 * New ``signature`` argument to ``np.vectorize`` for vectorizing with core dimensions.
+* The ``keepdims`` argument was added to many functions.
 
 Dropped Support
 ===============
@@ -43,8 +44,9 @@ corresponding to intervening fields in the original array, unlike the copy in
 1.12, which will affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
 
 Second, for numpy versions 1.6 to 1.12 assignment between structured arrays
-occurs "by field name": Fields in the dst array are set to the
-identically-named field in the src or to 0 if the src does not have a field:
+occurs "by field name": Fields in the destination array are set to the
+identically-named field in the source array or to 0 if the source does not have
+a field::
 
     >>> a = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
     >>> b = np.ones(2, dtype=[('z', 'i4'), ('y', 'i4'), ('x', 'i4')])
@@ -53,10 +55,11 @@ identically-named field in the src or to 0 if the src does not have a field:
     array([(0, 2, 1), (0, 4, 3)],
           dtype=[('z', '<i4'), ('y', '<i4'), ('x', '<i4')])
 
-In 1.13 assignment will instead occur "by position": The Nth field of the dst
-will be set to the Nth field of the src, regardless of field name. The old
-behavior can be obtained by using indexing to reorder the fields before
-assignment, eg ``b[['x', 'y']] = a[['y', 'x']]``.
+In 1.13 assignment will instead occur "by position": The Nth field of the
+destination will be set to the Nth field of the source regardless of field
+name. The old behavior can be obtained by using indexing to reorder the fields
+before
+assignment, e.g., ``b[['x', 'y']] = a[['y', 'x']]``.
 
 
 Compatibility notes
@@ -73,6 +76,14 @@ DeprecationWarning to error
   e.g., ``a[..., ...]``.
 * Non-integers used as index values raise ``TypeError``,
   e.g., in ``reshape``, ``take``, and specifying reduce axis.
+
+FutureWarning to changed behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``np.full`` now returns an array of the fill-value's dtype if no dtype is
+  given, instead of defaulting to float.
+* np.average will emit a warning if the argument is a subclass of ndarray,
+  as the subclass will be preserved starting in 1.13. (see Future Changes)
 
 ``power`` and ``**`` raise errors for integer to negative integer powers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,19 +109,16 @@ felt that a simple rule was the best way to go rather than have special
 exceptions for the integer units. If you need negative powers, use an inexact
 type.
 
-
-
 Relaxed stride checking is the default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This will have some impact on code that assumed that ``F_CONTIGUOUS`` and
 ``C_CONTIGUOUS`` were mutually exclusive and could be set to determine the
 default order for arrays that are now both.
 
-``np.percentile`` 'midpoint' interpolation method fixed for exact indices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-'midpoint' interpolator now gives the same result as 'lower' and 'higher' when
+The ``np.percentile`` 'midpoint' interpolation method fixed for exact indices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The 'midpoint' interpolator now gives the same result as 'lower' and 'higher' when
 the two coincide. Previous behavior of 'lower' + 0.5 is fixed.
-
 
 ``keepdims`` kwarg is passed through to user-class methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +135,6 @@ the following behavior:
 This will raise in the case where the method does not support a
 ``keepdims`` kwarg and the user explicitly passes in ``keepdims``.
 
-
 The following functions are changed: ``sum``, ``product``,
 ``sometrue``, ``alltrue``, ``any``, ``all``, ``amax``, ``amin``,
 ``prod``, ``mean``, ``std``, ``var``, ``nanmin``, ``nanmax``,
@@ -139,18 +146,10 @@ The following functions are changed: ``sum``, ``product``,
 The previous identity was 1, it is now -1. See entry in `Improvements`_ for
 more explanation.
 
-FutureWarning to changed behavior
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* ``np.full`` now returns an array of the fill-value's dtype if no dtype is
-  given, instead of defaulting to float.
-* np.average will emit a warning if the argument is a subclass of ndarray,
-  as the subclass will be preserved starting in 1.13. (see Future Changes)
-
 Greater consistancy in ``assert_almost_equal``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The precision check for scalars has been changed to match that for arrays. It
-is now
+is now::
 
     abs(actual - desired) < 1.5 * 10**(-decimal)
 
@@ -178,9 +177,9 @@ may mean that warnings that were incorrectly ignored will now be shown
 or raised. See also the new ``suppress_warnings`` context manager.
 The same is true for the ``deprecated`` decorator.
 
-
 C API
 ~~~~~
+No changes.
 
 
 New Features
@@ -192,7 +191,6 @@ Writeable keyword argument for ``as_strided``
 keyword argument. It can be set to False when no write operation
 to the returned array is expected to avoid accidental
 unpredictable writes.
-
 
 ``axes`` keyword argument for ``rot90``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -217,7 +215,6 @@ the numpy repo or source distribution).
 
 Hook in ``numpy/__init__.py`` to run distribution-specific checks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Binary distributions of numpy may need to run specific hardware checks or load
 specific libraries during numpy initialization.  For example, if we are
 distributing numpy with a BLAS library that requires SSE2 instructions, we
@@ -230,7 +227,7 @@ but that can be overwritten by people making binary distributions of numpy.
 
 New nanfunctions ``nancumsum`` and ``nancumprod`` added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Nanfunctions ``nancumsum`` and ``nancumprod`` have been added to
+Nan-functions ``nancumsum`` and ``nancumprod`` have been added to
 compute ``cumsum`` and ``cumprod`` by ignoring nans.
 
 ``np.interp`` can now interpolate complex values
@@ -254,7 +251,6 @@ to ``logspace``, but with start and stop specified directly:
 
 New context manager for testing warnings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 A new context manager ``suppress_warnings`` has been added to the testing
 utils. This context manager is designed to help reliably test warnings.
 Specifically to reliably filter/ignore warnings. Ignoring warnings
@@ -284,10 +280,6 @@ integer powers and a popular proposal was that the ``__pow__`` operator should
 always return results of at least float64 precision. The ``float_power``
 function implements that option. Note that it does not support object arrays.
 
-
-Improvements
-============
-
 ``np.loadtxt`` now supports a single integer as ``usecol`` argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Instead of using ``usecol=(n,)`` to read the nth column of a file
@@ -300,6 +292,63 @@ Added 'doane' and 'sqrt' estimators to ``histogram`` via the ``bins``
 argument. Added support for range-restricted histograms with automated
 bin estimation.
 
+``np.roll`` can now roll multiple axes at the same time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``shift`` and ``axis`` arguments to ``roll`` are now broadcast against each
+other, and each specified axis is shifted accordingly.
+
+The ``__complex__`` method has been implemented for the ndarrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Calling ``complex()`` on a size 1 array will now cast to a python
+complex.
+
+``pathlib.Path`` objects now supported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
+functions can now take ``pathlib.Path`` objects as an argument instead of a
+filename or open file object.
+
+New ``bits`` attribute for ``np.finfo``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This makes ``np.finfo`` consistent with ``np.iinfo`` which already has that
+attribute.
+
+New ``signature`` argument to ``np.vectorize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This argument allows for vectorizing user defined functions with core
+dimensions, in the style of NumPy's
+:ref:`generalized universal functions<c-api.generalized-ufuncs>`. This allows
+for vectorizing a much broader class of functions. For example, an arbitrary
+distance metric that combines two vectors to produce a scalar could be
+vectorized with ``signature='(n),(n)->()'``. See ``np.vectorize`` for full
+details.
+
+Emit py3kwarnings for division of integer arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To help people migrate their code bases from Python 2 to Python 3, the
+python interpreter has a handy option -3, which issues warnings at runtime.
+One of its warnings is for integer division::
+
+    $ python -3 -c "2/3"
+
+    -c:1: DeprecationWarning: classic int division
+
+In Python 3, the new integer division semantics also apply to numpy arrays.
+With this version, numpy will emit a similar warning::
+
+    $ python -3 -c "import numpy as np; np.array(2)/np.array(3)"
+
+    -c:1: DeprecationWarning: numpy: classic int division
+
+numpy.sctypes now includes bytes on Python3 too
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, it included str (bytes) and unicode on Python2, but only str
+(unicode) on Python3.
+
+
+Improvements
+============
+
 ``bitwise_and`` identity changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The previous identity was 1 with the result that all bits except the LSB were
@@ -311,27 +360,6 @@ Generalized Ufuncs will now unlock the GIL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generalized Ufuncs, including most of the linalg module, will now unlock
 the Python global interpreter lock.
-
-``np.roll can now roll multiple axes at the same time``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``shift`` and ``axis`` arguments to ``roll`` are now broadcast against each
-other, and each specified axis is shifted accordingly.
-
-The *__complex__* method has been implemented on the ndarray object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Calling ``complex()`` on a size 1 array will now cast to a python
-complex.
-
-``pathlib.Path`` objects now supported
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The standard ``np.load``, ``np.save``, ``np.loadtxt``, ``np.savez``, and similar
-functions can now take ``pathlib.Path`` objects as an argument instead of a
-filename or open file object.
-
-Add ``bits`` attribute to ``np.finfo``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This makes ``np.finfo`` consistent with ``np.iinfo`` which already has that
-attribute.
 
 Caches in `np.fft` are now bounded in total size and item count
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -364,29 +392,13 @@ an intermediate array to reduce this scaling to ``N^3`` or effectively
 been applied to the general einsum summation notation. See ``np.einsum_path``
 for more details.
 
-New ``signature`` argument to ``np.vectorize``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This argument allows for vectorizing user defined functions with core
-dimensions, in the style of NumPy's
-:ref:`generalized universal functions<c-api.generalized-ufuncs>`. This allows
-for vectorizing a much broader class of functions. For example, an arbitrary
-distance metric that combines two vectors to produce a scalar could be
-vectorized with ``signature='(n),(n)->()'``. See ``np.vectorize`` for full
-details.
+quicksort has been changed to an introsort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The quicksort kind of ``np.sort`` and ``np.argsort`` is now an introsort which
+is regular quicksort but changing to a heapsort when not enough progress is
+made. This retains the good quicksort performance while changing the worst case
+runtime from ``O(N^2)`` to ``O(N*log(N))``.
 
-Emit py3kwarnings for division of integer arrays
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To help people migrate their code bases from Python 2 to Python 3, the 
-python interpreter has a handy option -3, which issues warnings at runtime. 
-One of its warnings is for integer division:
-    $ python -3 -c "2/3"
-    
-    -c:1: DeprecationWarning: classic int division
-In Python 3, the new integer division semantics also apply to numpy arrays.
-With this version, numpy will emit a similar warning:
-    $ python -3 -c "import numpy as np; np.array(2)/np.array(3)"
-    
-    -c:1: DeprecationWarning: numpy: classic int division
 
 Changes
 =======
@@ -410,28 +422,16 @@ from these operations.
 Also, reduction of a memmap (e.g.  ``.sum(axis=None``) now returns a numpy
 scalar instead of a 0d memmap.
 
-numpy.sctypes now includes bytes on Python3 too
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Previously, it included str (bytes) and unicode on Python2, but only str
-(unicode) on Python3.
-
-quicksort has been changed to an introsort
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The quicksort kind of ``np.sort`` and ``np.argsort`` is now an introsort which
-is regular quicksort but changing to a heapsort when not enough progress is
-made. This retains the good quicksort performance while changing the worst case
-runtime from ``O(N^2)`` to ``O(N*log(N))``.
-
 stacklevel of warnings increased
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The stacklevel for python based warnings was increased so that most warnings
 will report the offending line of the user code instead of the line the
 warning itself is given. Passing of stacklevel is now tested to ensure that
-new warnings will recieve the ``stacklevel`` argument.
+new warnings will receive the ``stacklevel`` argument.
 
 This causes warnings with the "default" or "module" filter to be shown once
 for every offending user code line or user module instead of only once. On
-python versions before 3.4, this can cause warnings to appear that were falsly
+python versions before 3.4, this can cause warnings to appear that were falsely
 ignored before, which may be surprising especially in test suits.
 
 
