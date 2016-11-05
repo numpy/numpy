@@ -1,0 +1,49 @@
+NumPy 1.13.0 Release Notes
+**************************
+
+This release supports Python 2.7 and 3.4 - 3.6.
+
+Highlights
+==========
+
+
+Dropped Support
+===============
+
+
+Build System Changes
+====================
+
+
+Future Changes
+==============
+
+
+Compatibility notes
+===================
+
+DeprecationWarning to error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+FutureWarning to changed behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+C API
+~~~~~
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
+
+
+Deprecations
+============
+
