@@ -52,33 +52,51 @@ A total of %d people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 """
 
+pull_request_msg =\
+u"""
+A total of %d pull requests were merged for this release.
+"""
 
 def get_authors(revision_range):
     pat = u'.*\\t(.*)\\n'
     lst_release, cur_release = [r.strip() for r in revision_range.split('..')]
 
+    # authors, in current release and previous to current release.
     cur = set(re.findall(pat, this_repo.git.shortlog('-s', revision_range)))
     pre = set(re.findall(pat, this_repo.git.shortlog('-s', lst_release)))
+
+    # Homu is the author of auto merges, clean him out.
+    cur.discard('Homu')
+    pre.discard('Homu')
+
+    # Append '+' to new authors.
     authors = [s + u' +' for s in cur - pre] + [s for s in cur & pre]
     authors.sort()
     return authors
 
 
-def get_prs(repo, revision_range):
-    # get pull request numbers from merges
+def get_pull_requests(repo, revision_range):
+    prnums = []
+
+    # From regular merges
     merges = this_repo.git.log(
         '--oneline', '--merges', revision_range)
     issues = re.findall(u"Merge pull request \#(\d*)", merges)
-    merge_prnums = [int(s) for s in issues]
+    prnums.extend(int(s) for s in issues)
 
-    # get pull request numbers from fast forward squash-merges
+    # From Homu merges (Auto merges)
+    issues = re. findall(u"Auto merge of \#(\d*)", merges)
+    prnums.extend(int(s) for s in issues)
+
+    # From fast forward squash-merges
     commits = this_repo.git.log(
         '--oneline', '--no-merges', '--first-parent', revision_range)
     issues = re.findall(u'.*\(\#(\d+)\)\n', commits)
-    squash_prnums = [int(s) for s in issues]
+    prnums.extend(int(s) for s in issues)
 
     # get PR data from github repo
-    prs = [repo.get_pull(n) for n in sorted(merge_prnums + squash_prnums)]
+    prnums.sort()
+    prs = [repo.get_pull(n) for n in prnums]
     return prs
 
 
@@ -94,18 +112,20 @@ def main(token, revision_range):
     print()
     print(heading)
     print(u"-"*len(heading))
-    print()
-    for s in authors:
-        print(u'- ' + s)
     print(author_msg % len(authors))
 
+    for s in authors:
+        print(u'- ' + s)
+
     # document pull requests
+    pull_requests = get_pull_requests(github_repo, revision_range)
     heading = u"Pull requests merged for {0}".format(cur_release)
     print()
     print(heading)
     print(u"-"*len(heading))
-    print()
-    for pull in get_prs(github_repo, revision_range):
+    print(pull_request_msg % len(pull_requests))
+
+    for pull in pull_requests:
         pull_msg = u"- `#{0} <{1}>`__: {2}"
         title = re.sub(u"\s+", u" ", pull.title.strip())
         if len(title) > 60:
