@@ -198,12 +198,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /* Pos of each override in args */
     int with_override_pos[NPY_MAXARGS];
 
-    /* 2016-01-29: Disable for now in master -- can re-enable once details are
-     * sorted out. All commented bits are tagged NUMPY_UFUNC_DISABLED. -njs
-     */
-    result = NULL;
-    return 0;
-
     /*
      * Check inputs
      */
