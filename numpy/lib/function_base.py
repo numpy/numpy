@@ -4530,18 +4530,14 @@ def meshgrid(*xi, **kwargs):
         output[1].shape = (-1, 1) + (1,)*(ndim - 2)
         shape[0], shape[1] = shape[1], shape[0]
 
-    if sparse:
-        if copy_:
-            return [x.copy() for x in output]
-        else:
-            return output
-    else:
+    if copy_:
+        output = [x.copy() for x in output]
+
+    if not sparse and len(output) > 0:
         # Return the full N-D matrix (not only the 1-D vector)
-        if copy_:
-            mult_fact = np.ones(shape, dtype=int)
-            return [x * mult_fact for x in output]
-        else:
-            return np.broadcast_arrays(*output)
+        output = np.broadcast_arrays(*output, subok=True)
+
+    return output
 
 
 def delete(arr, obj, axis=None):
