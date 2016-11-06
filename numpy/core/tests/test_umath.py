@@ -1568,24 +1568,7 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
-    def test_ufunc_override_disabled(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        # This test should be removed when __numpy_ufunc__ is re-enabled.
-
-        class MyArray(object):
-            def __numpy_ufunc__(self, *args, **kwargs):
-                self._numpy_ufunc_called = True
-
-        my_array = MyArray()
-        real_array = np.ones(10)
-        assert_raises(TypeError, lambda: real_array + my_array)
-        assert_raises(TypeError, np.add, real_array, my_array)
-        assert not hasattr(my_array, "_numpy_ufunc_called")
-
-
     def test_ufunc_override(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
             def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
@@ -1611,8 +1594,6 @@ class TestSpecialMethods(TestCase):
         assert_equal(res1[5], {})
 
     def test_ufunc_override_mro(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         # Some multi arg functions for testing.
         def tres_mul(a, b, c):
@@ -1704,8 +1685,6 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
     def test_ufunc_override_methods(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1810,8 +1789,6 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[4], (a, [4, 2], 'b0'))
 
     def test_ufunc_override_out(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
             def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
@@ -1846,8 +1823,6 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][1], 'out1')
 
     def test_ufunc_override_exception(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
             def __numpy_ufunc__(self, *a, **kwargs):
