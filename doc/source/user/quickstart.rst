@@ -630,7 +630,16 @@ The shape of an array can be changed with various commands::
 
     >>> a.ravel() # flatten the array
     array([ 2.,  8.,  0.,  6.,  4.,  5.,  1.,  1.,  8.,  9.,  3.,  6.])
+    >>> a.shape
+    (12,)
     >>> a.shape = (6, 2)
+    >>> a
+    array([[ 2.,  8.],
+           [ 0.,  6.],
+           [ 4.,  5.],
+           [ 1.,  1.],
+           [ 8.,  9.],
+           [ 3.,  6.]])
     >>> a.T
     array([[ 2.,  0.,  4.,  1.,  8.,  3.],
            [ 8.,  6.,  5.,  1.,  9.,  6.]])
