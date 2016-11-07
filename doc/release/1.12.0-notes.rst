@@ -328,6 +328,15 @@ an intermediate array to reduce this scaling to ``N^3`` or effectively
 been applied to the general einsum summation notation. See ``np.einsum_path``
 for more details.
 
+``ediff1d`` improved performance and subclass handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ediff1d function uses an array instead on a flat iterator for the 
+subtraction.  When to_begin or to_end is not None, the subtraction
+is performed in place to eliminate a copy operation.  A side effect
+is that certain subclasses are handled better, namely astropy.Quantity,
+since the complete array is created, wrapped, and then begin and end
+values are set, instead of using concatenate.
+
 Changes
 =======
 
