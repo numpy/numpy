@@ -626,14 +626,28 @@ An array has a shape given by the number of elements along each axis::
     >>> a.shape
     (3, 4)
 
-The shape of an array can be changed with various commands::
+The shape of an array can be changed with various commands. Note that the
+following three commands all return a modified array, but does not change
+the original array::
 
-    >>> a.ravel() # flatten the array
+    >>> a.ravel()  # returns the array, flattened
     array([ 2.,  8.,  0.,  6.,  4.,  5.,  1.,  1.,  8.,  9.,  3.,  6.])
-    >>> a.shape = (6, 2)
-    >>> a.T
-    array([[ 2.,  0.,  4.,  1.,  8.,  3.],
-           [ 8.,  6.,  5.,  1.,  9.,  6.]])
+    >>> a.reshape(6,2)  # returns the array with a modified shape
+    array([[ 2.,  8.],
+           [ 0.,  6.],
+           [ 4.,  5.],
+           [ 1.,  1.],
+           [ 8.,  9.],
+           [ 3.,  6.]])
+    >>> a.T  # returns the array, transposed
+    array([[ 2.,  4.,  8.],
+           [ 8.,  5.,  9.],
+           [ 0.,  1.,  3.],
+           [ 6.,  1.,  6.]])
+    >>> a.T.shape
+    (4, 3)
+    >>> a.shape
+    (3, 4)
 
 The order of the elements in the array resulting from ravel() is
 normally "C-style", that is, the rightmost index "changes the fastest",
@@ -652,12 +666,9 @@ argument with a modified shape, whereas the
 itself::
 
     >>> a
-    array([[ 2.,  8.],
-           [ 0.,  6.],
-           [ 4.,  5.],
-           [ 1.,  1.],
-           [ 8.,  9.],
-           [ 3.,  6.]])
+    array([[ 2.,  8.,  0.,  6.],
+           [ 4.,  5.,  1.,  1.],
+           [ 8.,  9.,  3.,  6.]])
     >>> a.resize((2,6))
     >>> a
     array([[ 2.,  8.,  0.,  6.,  4.,  5.],
