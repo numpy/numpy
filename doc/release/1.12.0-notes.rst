@@ -16,6 +16,13 @@ Dropped Support
 * Support for Python 2.6, 3.2, and 3.3 has been dropped.
 
 
+Added Support
+=============
+
+* Support for PyPy 2.7 v5.6.0 has been added. While not complete (nditer 
+  ``updateifcopy`` is not supported yet), this is a milestone for PyPy's
+  C-API compatibility layer.
+
 Build System Changes
 ====================
 
