@@ -628,10 +628,18 @@ An array has a shape given by the number of elements along each axis::
 
 The shape of an array can be changed with various commands::
 
-    >>> a.ravel() # flatten the array
+    >>> a.ravel() # returns the array, flattened
     array([ 2.,  8.,  0.,  6.,  4.,  5.,  1.,  1.,  8.,  9.,  3.,  6.])
-    >>> a.shape = (6, 2)
-    >>> a.T
+    >>> a.ravel().shape
+    (12,)
+    >>> a.reshape(6,2) # returns the array with a modified shape
+    array([[ 2.,  8.],
+           [ 0.,  6.],
+           [ 4.,  5.],
+           [ 1.,  1.],
+           [ 8.,  9.],
+           [ 3.,  6.]])
+    >>> a.T # returns the array after being transposed
     array([[ 2.,  0.,  4.,  1.,  8.,  3.],
            [ 8.,  6.,  5.,  1.,  9.,  6.]])
 
