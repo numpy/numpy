@@ -83,8 +83,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
 }
 
 static PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
-    /* Keywords are ignored for now */
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 
     PyObject *function, *pyname = NULL;
     int nin, nout, i;
@@ -93,8 +92,11 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     char *fname, *str;
     Py_ssize_t fname_len = -1;
     int offset[2];
+    int identity = PyUFunc_None;
+    static char *kwlist[] = {"func", "nin", "nout", "identity", NULL};
 
-    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oii|i", kwlist,
+                &function, &nin, &nout, &identity)) {
         return NULL;
     }
     if (!PyCallable_Check(function)) {
@@ -118,7 +120,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->nin = nin;
     self->nout = nout;
     self->nargs = nin + nout;
-    self->identity = PyUFunc_None;
+    self->identity = identity;
     self->functions = pyfunc_functions;
     self->ntypes = 1;
 
