@@ -3935,7 +3935,7 @@ class MaskedArray(ndarray):
         # This emulates the logic in
         # multiarray/number.c:PyArray_GenericBinaryFunction
         if (not isinstance(other, np.ndarray)
-                and not hasattr(other, "__numpy_ufunc__")):
+                and not hasattr(other, "__array_ufunc__")):
             other_priority = getattr(other, "__array_priority__", -1000000)
             if self.__array_priority__ < other_priority:
                 return True

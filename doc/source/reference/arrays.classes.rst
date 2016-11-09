@@ -39,7 +39,7 @@ Special attributes and methods
 
 NumPy provides several hooks that classes can customize:
 
-.. method:: class.__numpy_ufunc__(ufunc, method, i, inputs, **kwargs)
+.. method:: class.__array_ufunc__(ufunc, method, i, inputs, **kwargs)
 
    .. versionadded:: 1.11
 
@@ -62,51 +62,51 @@ NumPy provides several hooks that classes can customize:
    :obj:`NotImplemented` if the operation requested is not
    implemented.
 
-   If one of the arguments has a :func:`__numpy_ufunc__` method, it is
+   If one of the arguments has a :func:`__array_ufunc__` method, it is
    executed *instead* of the ufunc.  If more than one of the input
-   arguments implements :func:`__numpy_ufunc__`, they are tried in the
+   arguments implements :func:`__array_ufunc__`, they are tried in the
    order: subclasses before superclasses, otherwise left to right. The
    first routine returning something else than :obj:`NotImplemented`
-   determines the result. If all of the :func:`__numpy_ufunc__`
+   determines the result. If all of the :func:`__array_ufunc__`
    operations return :obj:`NotImplemented`, a :exc:`TypeError` is
    raised.
 
-   If an :class:`ndarray` subclass defines the :func:`__numpy_ufunc__`
+   If an :class:`ndarray` subclass defines the :func:`__array_ufunc__`
    method, this disables the :func:`__array_wrap__`,
    :func:`__array_prepare__`, :data:`__array_priority__` mechanism
    described below.
 
-   .. note:: In addition to ufuncs, :func:`__numpy_ufunc__` also
+   .. note:: In addition to ufuncs, :func:`__array_ufunc__` also
       overrides the behavior of :func:`numpy.dot` even though it is
       not an Ufunc.
 
    .. note:: If you also define right-hand binary operator override
       methods (such as ``__rmul__``) or comparison operations (such as
       ``__gt__``) in your class, they take precedence over the
-      :func:`__numpy_ufunc__` mechanism when resolving results of
+      :func:`__array_ufunc__` mechanism when resolving results of
       binary operations (such as ``ndarray_obj * your_obj``).
 
       The technical special case is: ``ndarray.__mul__`` returns
       ``NotImplemented`` if the other object is *not* a subclass of
-      :class:`ndarray`, and defines both ``__numpy_ufunc__`` and
+      :class:`ndarray`, and defines both ``__array_ufunc__`` and
       ``__rmul__``. Similar exception applies for the other operations
       than multiplication.
 
       In such a case, when computing a binary operation such as
-      ``ndarray_obj * your_obj``, your ``__numpy_ufunc__`` method
+      ``ndarray_obj * your_obj``, your ``__array_ufunc__`` method
       *will not* be called.  Instead, the execution passes on to your
       right-hand ``__rmul__`` operation, as per standard Python
       operator override rules.
 
       Similar special case applies to *in-place operations*: If you
       define ``__rmul__``, then ``ndarray_obj *= your_obj`` *will not*
-      call your ``__numpy_ufunc__`` implementation. Instead, the
+      call your ``__array_ufunc__`` implementation. Instead, the
       default Python behavior ``ndarray_obj = ndarray_obj * your_obj``
       occurs.
 
       Note that the above discussion applies only to Python's builtin
       binary operation mechanism. ``np.multiply(ndarray_obj,
-      your_obj)`` always calls only your ``__numpy_ufunc__``, as
+      your_obj)`` always calls only your ``__array_ufunc__``, as
       expected.
 
 .. method:: class.__array_finalize__(obj)

@@ -160,11 +160,11 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 /*
- * Check a set of args for the `__numpy_ufunc__` method.  If more than one of
- * the input arguments implements `__numpy_ufunc__`, they are tried in the
+ * Check a set of args for the `__array_ufunc__` method.  If more than one of
+ * the input arguments implements `__array_ufunc__`, they are tried in the
  * order: subclasses before superclasses, otherwise left to right. The first
  * routine returning something other than `NotImplemented` determines the
- * result. If all of the `__numpy_ufunc__` operations returns `NotImplemented`,
+ * result. If all of the `__array_ufunc__` operations returns `NotImplemented`,
  * a `TypeError` is raised.
  *
  * Returns 0 on success and 1 on exception. On success, *result contains the
@@ -249,7 +249,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             _is_basic_python_type(obj)) {
             continue;
         }
-        if (PyObject_HasAttrString(obj, "__numpy_ufunc__")) {
+        if (PyObject_HasAttrString(obj, "__array_ufunc__")) {
             with_override[noa] = obj;
             with_override_pos[noa] = i;
             ++noa;
@@ -318,7 +318,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     /*
-     * Call __numpy_ufunc__ functions in correct order
+     * Call __array_ufunc__ functions in correct order
      */
     while (1) {
         PyObject *numpy_ufunc;
@@ -361,13 +361,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         if (!override_obj) {
             /* No acceptable override found. */
             PyErr_SetString(PyExc_TypeError,
-                            "__numpy_ufunc__ not implemented for this type.");
+                            "__array_ufunc__ not implemented for this type.");
             goto fail;
         }
 
         /* Call the override */
         numpy_ufunc = PyObject_GetAttrString(override_obj,
-                                             "__numpy_ufunc__");
+                                             "__array_ufunc__");
         if (numpy_ufunc == NULL) {
             goto fail;
         }
