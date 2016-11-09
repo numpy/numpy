@@ -4530,7 +4530,7 @@ intern_strings(void)
     npy_ma_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
     npy_ma_str_buffer = PyUString_InternFromString("__buffer__");
-    npy_ma_str_ufunc = PyUString_InternFromString("__numpy_ufunc__");
+    npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
     npy_ma_str_order = PyUString_InternFromString("order");
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");

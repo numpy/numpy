@@ -95,7 +95,7 @@ has_ufunc_attr(PyObject * obj) {
         return 0;
     }
     else {
-        return PyObject_HasAttrString(obj, "__numpy_ufunc__");
+        return PyObject_HasAttrString(obj, "__array_ufunc__");
     }
 }
 
@@ -105,7 +105,7 @@ has_ufunc_attr(PyObject * obj) {
  *
  * This is the case when all of the following conditions apply:
  *
- * (i) the other object defines __numpy_ufunc__
+ * (i) the other object defines __array_ufunc__
  * (ii) the other object defines the right-hand operation __r*__
  * (iii) Python hasn't already called the right-hand operation
  *       [occurs if the other object is a strict subclass provided
@@ -118,7 +118,7 @@ has_ufunc_attr(PyObject * obj) {
  *      This is needed, because CPython does not call __rmul__ if
  *      the tp_number slots of the two objects are the same.
  *
- * This always prioritizes the __r*__ routines over __numpy_ufunc__, independent
+ * This always prioritizes the __r*__ routines over __array_ufunc__, independent
  * of whether the other object is an ndarray subclass or not.
  */
 

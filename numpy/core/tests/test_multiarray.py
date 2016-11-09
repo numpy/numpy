@@ -2408,11 +2408,11 @@ class TestMethods(TestCase):
 
     def test_dot_override(self):
         class A(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
 
         class B(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return NotImplemented
 
         a = A()
@@ -2885,7 +2885,7 @@ class TestBinop(object):
 
     def test_ufunc_override_rop_precedence(self):
         # Check that __rmul__ and other right-hand operations have
-        # precedence over __numpy_ufunc__
+        # precedence over __array_ufunc__
 
         ops = {
             '__add__':      ('__radd__', np.add, True),
@@ -2913,8 +2913,8 @@ class TestBinop(object):
             pass
 
         class OtherNdarraySubclassWithOverride(np.ndarray):
-            def __numpy_ufunc__(self, *a, **kw):
-                raise AssertionError(("__numpy_ufunc__ %r %r shouldn't have "
+            def __array_ufunc__(self, *a, **kw):
+                raise AssertionError(("__array_ufunc__ %r %r shouldn't have "
                                       "been called!") % (a, kw))
 
         def check(op_name, ndsubclass):
@@ -2933,8 +2933,8 @@ class TestBinop(object):
             def __init__(self, *a, **kw):
                 pass
 
-            def __numpy_ufunc__(self, *a, **kw):
-                raise AssertionError(("__numpy_ufunc__ %r %r shouldn't have "
+            def __array_ufunc__(self, *a, **kw):
+                raise AssertionError(("__array_ufunc__ %r %r shouldn't have "
                                       "been called!") % (a, kw))
 
             def __op__(self, *other):
@@ -2949,7 +2949,7 @@ class TestBinop(object):
                 bases = (object,)
 
             dct = {'__init__': __init__,
-                   '__numpy_ufunc__': __numpy_ufunc__,
+                   '__array_ufunc__': __array_ufunc__,
                    op_name: __op__}
             if op_name != rop_name:
                 dct[rop_name] = __rop__
@@ -2989,7 +2989,7 @@ class TestBinop(object):
                         # integer-like?
                         assert_equal(iop(arr, obj), "rop", err_msg=err_msg)
 
-                # Check that ufunc call __numpy_ufunc__ normally
+                # Check that ufunc call __array_ufunc__ normally
                 if np_op is not None:
                     assert_raises(AssertionError, np_op, arr, obj,
                                   err_msg=err_msg)
@@ -3005,7 +3005,7 @@ class TestBinop(object):
         # Check parts of the binary op overriding behavior in an
         # explicit test case that is easier to understand.
         class SomeClass(object):
-            def __numpy_ufunc__(self, *a, **kw):
+            def __array_ufunc__(self, *a, **kw):
                 return "ufunc"
 
             def __mul__(self, other):
@@ -3024,7 +3024,7 @@ class TestBinop(object):
                 return "nope"
 
         class SomeClass2(SomeClass, np.ndarray):
-            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
                 if ufunc is np.multiply or ufunc is np.bitwise_and:
                     return "ufunc"
                 else:
@@ -3052,17 +3052,17 @@ class TestBinop(object):
 
         # obj is first, so should get to define outcome.
         assert_equal(obj * arr, 123)
-        # obj is second, but has __numpy_ufunc__ and defines __rmul__.
+        # obj is second, but has __array_ufunc__ and defines __rmul__.
         assert_equal(arr * obj, 321)
-        # obj is second, but has __numpy_ufunc__ and defines __rsub__.
+        # obj is second, but has __array_ufunc__ and defines __rsub__.
         assert_equal(arr - obj, "no subs for me")
-        # obj is second, but has __numpy_ufunc__ and defines __lt__.
+        # obj is second, but has __array_ufunc__ and defines __lt__.
         assert_equal(arr > obj, "nope")
-        # obj is second, but has __numpy_ufunc__ and defines __gt__.
+        # obj is second, but has __array_ufunc__ and defines __gt__.
         assert_equal(arr < obj, "yep")
-        # Called as a ufunc, obj.__numpy_ufunc__ is used.
+        # Called as a ufunc, obj.__array_ufunc__ is used.
         assert_equal(np.multiply(arr, obj), "ufunc")
-        # obj is second, but has __numpy_ufunc__ and defines __rmul__.
+        # obj is second, but has __array_ufunc__ and defines __rmul__.
         arr *= obj
         assert_equal(arr, 321)
 
@@ -3072,7 +3072,7 @@ class TestBinop(object):
         assert_equal(arr - obj2, "no subs for me")
         assert_equal(arr > obj2, "nope")
         assert_equal(arr < obj2, "yep")
-        # Called as a ufunc, obj2.__numpy_ufunc__ is called.
+        # Called as a ufunc, obj2.__array_ufunc__ is called.
         assert_equal(np.multiply(arr, obj2), "ufunc")
         # Also when the method is not overridden.
         assert_equal(arr & obj2, "ufunc")
@@ -3093,13 +3093,13 @@ class TestBinop(object):
         assert_equal(obj2 * obj3, 123)
         # And of course, here obj3.__mul__ should be called.
         assert_equal(obj3 * obj2, 123)
-        # obj3 defines __numpy_ufunc__ but obj3.__radd__ is obj2.__radd__.
+        # obj3 defines __array_ufunc__ but obj3.__radd__ is obj2.__radd__.
         # (and both are just ndarray.__radd__); see #4815.
         res = obj2 + obj3
         assert_equal(res, 46)
         assert_(isinstance(res, SomeClass2))
         # Since obj3 is a subclass, it should have precedence, like CPython
-        # would give, even though obj2 has __numpy_ufunc__ and __radd__.
+        # would give, even though obj2 has __array_ufunc__ and __radd__.
         # See gh-4815 and gh-5747.
         res = obj3 + obj2
         assert_equal(res, 46)
@@ -3108,7 +3108,7 @@ class TestBinop(object):
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
         class SomeClass(object):
-            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
                 return kw
 
         a = SomeClass()
@@ -3125,7 +3125,7 @@ class TestBinop(object):
         # Check that index is set appropriately, also if only an output
         # is passed on (latter is another regression tests for github bug 4753)
         class CheckIndex(object):
-            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
                 return i
 
         a = CheckIndex()
@@ -3161,7 +3161,7 @@ class TestBinop(object):
     def test_out_override(self):
         # regression test for github bug 4753
         class OutClass(np.ndarray):
-            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
                 if 'out' in kw:
                     tmp_kw = kw.copy()
                     tmp_kw.pop('out')
@@ -5307,14 +5307,14 @@ class MatmulCommon():
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return "A"
 
         class B(np.ndarray):
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
                 return NotImplemented
 
         a = A([1, 2])

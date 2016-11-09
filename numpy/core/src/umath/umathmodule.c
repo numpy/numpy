@@ -266,7 +266,7 @@ intern_strings(void)
     npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__");
     npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
-    npy_um_str_ufunc = PyUString_InternFromString("__numpy_ufunc__");
+    npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__");
     npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME);
 
     return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&

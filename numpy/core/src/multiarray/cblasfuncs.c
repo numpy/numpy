@@ -237,7 +237,7 @@ _bad_strides(PyArrayObject *ap)
  * This is for use by PyArray_MatrixProduct2. It is assumed on entry that
  * the arrays ap1 and ap2 have a common data type given by typenum that is
  * float, double, cfloat, or cdouble and have dimension <= 2. The
- * __numpy_ufunc__ nonsense is also assumed to have been taken care of.
+ * __array_ufunc__ nonsense is also assumed to have been taken care of.
  */
 NPY_NO_EXPORT PyObject *
 cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
