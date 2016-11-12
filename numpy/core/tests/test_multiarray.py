@@ -2408,11 +2408,11 @@ class TestMethods(TestCase):
 
     def test_dot_override(self):
         class A(object):
-            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return "A"
 
         class B(object):
-            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return NotImplemented
 
         a = A()
@@ -3024,13 +3024,12 @@ class TestBinop(object):
                 return "nope"
 
         class SomeClass2(SomeClass, np.ndarray):
-            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, inputs, **kw):
                 if ufunc is np.multiply or ufunc is np.bitwise_and:
                     return "ufunc"
                 else:
-                    inputs = list(inputs)
-                    if i < len(inputs):
-                        inputs[i] = np.asarray(self)
+                    inputs = [np.asarray(self) if i is self else i
+                              for i in inputs]
                     func = getattr(ufunc, method)
                     if ('out' in kw) and (kw['out'] is not None):
                         kw['out'] = np.asarray(kw['out'])
@@ -3108,7 +3107,7 @@ class TestBinop(object):
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
         class SomeClass(object):
-            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, inputs, **kw):
                 return kw
 
         a = SomeClass()
@@ -3125,43 +3124,46 @@ class TestBinop(object):
         # Check that index is set appropriately, also if only an output
         # is passed on (latter is another regression tests for github bug 4753)
         class CheckIndex(object):
-            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
-                return i
+            def __array_ufunc__(self, ufunc, method, inputs, **kw):
+                for i, a in enumerate(inputs):
+                    if a is self:
+                        return i
+                return None
 
         a = CheckIndex()
         dummy = np.arange(2.)
         # 1 input, 1 output
         assert_equal(np.sin(a), 0)
-        assert_equal(np.sin(dummy, a), 1)
-        assert_equal(np.sin(dummy, out=a), 1)
-        assert_equal(np.sin(dummy, out=(a,)), 1)
+        assert_equal(np.sin(dummy, a), None)
+        assert_equal(np.sin(dummy, out=a), None)
+        assert_equal(np.sin(dummy, out=(a,)), None)
         assert_equal(np.sin(a, a), 0)
         assert_equal(np.sin(a, out=a), 0)
         assert_equal(np.sin(a, out=(a,)), 0)
         # 1 input, 2 outputs
-        assert_equal(np.modf(dummy, a), 1)
-        assert_equal(np.modf(dummy, None, a), 2)
-        assert_equal(np.modf(dummy, dummy, a), 2)
-        assert_equal(np.modf(dummy, out=a), 1)
-        assert_equal(np.modf(dummy, out=(a,)), 1)
-        assert_equal(np.modf(dummy, out=(a, None)), 1)
-        assert_equal(np.modf(dummy, out=(a, dummy)), 1)
-        assert_equal(np.modf(dummy, out=(None, a)), 2)
-        assert_equal(np.modf(dummy, out=(dummy, a)), 2)
+        assert_equal(np.modf(dummy, a), None)
+        assert_equal(np.modf(dummy, None, a), None)
+        assert_equal(np.modf(dummy, dummy, a), None)
+        assert_equal(np.modf(dummy, out=a), None)
+        assert_equal(np.modf(dummy, out=(a,)), None)
+        assert_equal(np.modf(dummy, out=(a, None)), None)
+        assert_equal(np.modf(dummy, out=(a, dummy)), None)
+        assert_equal(np.modf(dummy, out=(None, a)), None)
+        assert_equal(np.modf(dummy, out=(dummy, a)), None)
         assert_equal(np.modf(a, out=(dummy, a)), 0)
         # 2 inputs, 1 output
         assert_equal(np.add(a, dummy), 0)
         assert_equal(np.add(dummy, a), 1)
-        assert_equal(np.add(dummy, dummy, a), 2)
+        assert_equal(np.add(dummy, dummy, a), None)
         assert_equal(np.add(dummy, a, a), 1)
-        assert_equal(np.add(dummy, dummy, out=a), 2)
-        assert_equal(np.add(dummy, dummy, out=(a,)), 2)
+        assert_equal(np.add(dummy, dummy, out=a), None)
+        assert_equal(np.add(dummy, dummy, out=(a,)), None)
         assert_equal(np.add(a, dummy, out=a), 0)
 
     def test_out_override(self):
         # regression test for github bug 4753
         class OutClass(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, i, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, inputs, **kw):
                 if 'out' in kw:
                     tmp_kw = kw.copy()
                     tmp_kw.pop('out')
@@ -5307,14 +5309,14 @@ class MatmulCommon():
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return "A"
 
         class B(np.ndarray):
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __array_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return NotImplemented
 
         a = A([1, 2])
