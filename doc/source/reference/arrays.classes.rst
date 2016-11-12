@@ -39,7 +39,7 @@ Special attributes and methods
 
 NumPy provides several hooks that classes can customize:
 
-.. method:: class.__array_ufunc__(ufunc, method, i, inputs, **kwargs)
+.. method:: class.__array_ufunc__(ufunc, method, inputs, **kwargs)
 
    .. versionadded:: 1.11
 
@@ -51,7 +51,6 @@ NumPy provides several hooks that classes can customize:
    - *method* is a string indicating which Ufunc method was called
      (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
      ``"accumulate"``, ``"outer"``, ``"inner"``).
-   - *i* is the index of *self* in *inputs*.
    - *inputs* is a tuple of the input arguments to the ``ufunc``
    - *kwargs* is a dictionary containing the optional input arguments
      of the ufunc. The ``out`` argument is always contained in

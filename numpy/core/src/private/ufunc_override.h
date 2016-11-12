@@ -177,7 +177,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       int nin)
 {
     int i;
-    int override_pos; /* Position of override in args.*/
     int j;
 
     int nargs;
@@ -194,9 +193,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *normal_kwds = NULL;
 
     PyObject *with_override[NPY_MAXARGS];
-
-    /* Pos of each override in args */
-    int with_override_pos[NPY_MAXARGS];
 
     /*
      * Check inputs
@@ -251,7 +247,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         }
         if (PyObject_HasAttrString(obj, "__array_ufunc__")) {
             with_override[noa] = obj;
-            with_override_pos[noa] = i;
             ++noa;
         }
     }
@@ -336,7 +331,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             }
 
             /* Get the first instance of an overriding arg.*/
-            override_pos = with_override_pos[i];
             override_obj = obj;
 
             /* Check for sub-types to the right of obj. */
@@ -372,8 +366,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             goto fail;
         }
 
-        override_args = Py_BuildValue("OOiO", ufunc, method_name,
-                                      override_pos, normal_args);
+        override_args = Py_BuildValue("OOO", ufunc, method_name, normal_args);
         if (override_args == NULL) {
             Py_DECREF(numpy_ufunc);
             goto fail;
