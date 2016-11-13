@@ -35,6 +35,11 @@ C API
 New Features
 ============
 
+``axes`` argument for ``unique``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In an N-dimensional array, the user can now choose the axis along which to look
+for duplicate N-1-dimensional elements using ``numpy.unique``. The original
+behaviour is recovered if ``axis=None`` (default).
 
 Improvements
 ============
@@ -46,4 +51,3 @@ Changes
 
 Deprecations
 ============
-
