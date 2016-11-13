@@ -79,11 +79,11 @@ class TestMemmap(TestCase):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
-        abspath = os.path.abspath(tmpname)
+        abspath = os.path.realpath(os.path.abspath(tmpname))
         fp[:] = self.data[:]
-        self.assertEqual(abspath, str(fp.filename))
+        self.assertEqual(abspath, str(fp.filename.resolve()))
         b = fp[:1]
-        self.assertEqual(abspath, str(b.filename))
+        self.assertEqual(abspath, str(b.filename.resolve()))
         del b
         del fp
 
