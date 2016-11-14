@@ -141,52 +141,32 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 
 
 /**
- * Prepare an npy_index_object from the python slicing object.
+ * Prepare an index argument into a tuple
  *
- * This function handles all index preparations with the exception
- * of field access. It fills the array of index_info structs correctly.
- * It already handles the boolean array special case for fancy indexing,
- * i.e. if the index type is boolean, it is exactly one matching boolean
- * array. If the index type is fancy, the boolean array is already
- * converted to integer arrays. There is (as before) no checking of the
- * boolean dimension.
+ * This mainly implements the following section from the advanced indexing docs:
+ * > In order to remain backward compatible with a common usage in Numeric,
+ * > basic slicing is also initiated if the selection object is any non-ndarray
+ * > sequence (such as a list) containing slice objects, the Ellipsis object,
+ * > or the newaxis object, but not for integer arrays or other embedded
+ * > sequences.
  *
- * Checks everything but the bounds.
+ * This also promotes scalars to 1-tuples, and downcasts tuple subclasses
  *
- * @param the array being indexed
- * @param the index object
- * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param number of indices found
- * @param dimension of the indexing result
- * @param dimension of the fancy/advanced indices part
- * @param whether to allow the boolean special case
+ * @param the index object, which may or may not be a tuple
  *
- * @returns the index_type or -1 on failure and fills the number of indices.
+ * @returns the index converted to a tuple, if possible, else NULL on an error
+ *          It is the caller's responsibility to call Py_DECREF on a non-null
+ *          result, even if it is the same as the input.
  */
-NPY_NO_EXPORT int
-prepare_index(PyArrayObject *self, PyObject *index,
-              npy_index_info *indices,
-              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+NPY_NO_EXPORT PyObject *
+prepare_index_tuple(PyObject *index)
 {
-    int new_ndim, fancy_ndim, used_ndim, index_ndim;
-    int curr_idx, get_idx;
-
     int i;
     npy_intp n;
-
     npy_bool make_tuple = 0;
-    PyObject *obj = NULL;
-    PyArrayObject *arr;
 
-    int index_type = 0;
-    int ellipsis_pos = -1;
+    PyObject *index_as_tuple = index;
 
-    /*
-     * The index might be a multi-dimensional index, but not yet a tuple
-     * this makes it a tuple in that case.
-     *
-     * TODO: Refactor into its own function.
-     */
     if (!PyTuple_CheckExact(index)
             /* Next three are just to avoid slow checks */
 #if !defined(NPY_PY3K)
@@ -236,28 +216,85 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         if (make_tuple) {
             /* We want to interpret it as a tuple, so make it one */
-            index = PySequence_Tuple(index);
-            if (index == NULL) {
-                return -1;
+            index_as_tuple = PySequence_Tuple(index);
+            if (index_as_tuple == NULL) {
+                return NULL;
             }
         }
     }
 
-    /* If the index is not a tuple, handle it the same as (index,) */
-    if (!PyTuple_CheckExact(index)) {
-        obj = index;
-        index_ndim = 1;
+    /* If the index is not a tuple, conver it into (index,) */
+    if (!make_tuple && !PyTuple_CheckExact(index)) {
+        make_tuple = 1;
+        index_as_tuple = Py_BuildValue("(O)", index);
     }
+    /* Otherwise, check if the tuple is too long */
     else {
-        n = PyTuple_GET_SIZE(index);
+        n = PyTuple_GET_SIZE(index_as_tuple);
         if (n > NPY_MAXDIMS * 2) {
             PyErr_SetString(PyExc_IndexError,
                             "too many indices for array");
-            goto fail;
+            if (make_tuple) {
+                Py_DECREF(index_as_tuple);
+            }
+            return NULL;
         }
-        index_ndim = (int)n;
-        obj = NULL;
     }
+
+    /* if we didn't make a tuple, then we're creating another reference */
+    if (!make_tuple) {
+        Py_INCREF(index);
+    }
+
+    return index_as_tuple;
+}
+
+/**
+ * Prepare an npy_index_object from the python slicing object.
+ *
+ * This function handles all index preparations with the exception
+ * of field access. It fills the array of index_info structs correctly.
+ * It already handles the boolean array special case for fancy indexing,
+ * i.e. if the index type is boolean, it is exactly one matching boolean
+ * array. If the index type is fancy, the boolean array is already
+ * converted to integer arrays. There is (as before) no checking of the
+ * boolean dimension.
+ *
+ * Checks everything but the bounds.
+ *
+ * @param the array being indexed
+ * @param the index object
+ * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param number of indices found
+ * @param dimension of the indexing result
+ * @param dimension of the fancy/advanced indices part
+ * @param whether to allow the boolean special case
+ *
+ * @returns the index_type or -1 on failure and fills the number of indices.
+ */
+NPY_NO_EXPORT int
+prepare_index(PyArrayObject *self, PyObject *index,
+              npy_index_info *indices,
+              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+{
+    int new_ndim, fancy_ndim, used_ndim, index_ndim;
+    int curr_idx, get_idx;
+
+    int i;
+    npy_intp n;
+
+    PyObject *obj = NULL;
+    PyArrayObject *arr;
+
+    int index_type = 0;
+    int ellipsis_pos = -1;
+
+    index = prepare_index_tuple(index);
+    if (index == NULL) {
+        return -1;
+    }
+
+    index_ndim = (int) PyTuple_GET_SIZE(index);
 
     /*
      * Parse all indices into the `indices` array of index_info structs
@@ -274,15 +311,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                             "too many indices for array");
             goto failed_building_indices;
         }
-
-        /* Check for single index. obj is already set then. */
-        if ((curr_idx != 0) || (obj == NULL)) {
-            obj = PyTuple_GET_ITEM(index, get_idx++);
-        }
-        else {
-            /* only one loop */
-            get_idx += 1;
-        }
+        obj = PyTuple_GET_ITEM(index, get_idx++);
 
         /**** Try the cascade of possible indices ****/
 
@@ -686,9 +715,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     *ndim = new_ndim + fancy_ndim;
     *out_fancy_ndim = fancy_ndim;
 
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    Py_DECREF(index);
 
     return index_type;
 
@@ -696,10 +723,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }
-  fail:
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    Py_DECREF(index);
     return -1;
 }
 
