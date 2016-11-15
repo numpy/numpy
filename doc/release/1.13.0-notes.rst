@@ -56,6 +56,15 @@ See Changes section for more detail.
 * ``array == None`` and ``array != None`` do element-wise comparison.
 * ``np.equal, np.not_equal``, object identity doesn't override comparison result.
 
+dtypes are now always true
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously ``bool(dtype)`` would fall back to the default python
+implementation, which checked if ``len(dtype) > 0``. Since ``dtype`` objects
+implement ``__len__`` as the number of record fields, ``bool`` of scalar dtypes
+would evaluate to ``False``, which was unintuitive. Now ``bool(dtype) == True``
+for all dtypes.
+
 
 C API
 ~~~~~
