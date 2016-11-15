@@ -344,6 +344,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * Single integer index, there are two cases here.
              * It could be an array, a 0-d array is handled
              * a bit weird however, so need to special case it.
+             *
+             * Check for integers first, purely for performance
              */
 #if !defined(NPY_PY3K)
             if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
