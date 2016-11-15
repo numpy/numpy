@@ -5403,6 +5403,22 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
 
     """)
 
+add_newdoc('numpy.core.multiarray', 'as_index_tuple',
+    """
+    as_index_tuple(index)
+
+    Normalizes an index argument, like that passed to `__getitem__`, into a tuple.
+    Follows the invariant that `x[index]` is identical to `x[as_index_tuple(index)].
+
+    Examples
+    --------
+    >>> as_index_tuple(1)
+    (1,)
+    >>> as_index_tuple([1, 2, None])
+    (1, 2, None)
+    >>> as_index_tuple([1, 2, 3])
+    ([1, 2, 3])
+    """)
 
 ##############################################################################
 #

@@ -285,6 +285,40 @@ prepare_index_tuple(PyObject *index, PyObject **result)
 }
 
 /**
+ * Expose prepare_index_tuple to python code
+ */
+NPY_NO_EXPORT PyObject *
+as_index_tuple(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *obj;
+    PyObject *result;
+    PyObject *prepared[NPY_MAXDIMS*2];
+    npy_intp i, n;
+
+    if (!PyArg_ParseTuple(args, "O", &obj)) {
+        return NULL;
+    }
+    n = prepare_index_tuple(obj, prepared);
+    if (n < 0) {
+        return NULL;
+    }
+
+    result = PyTuple_New(n);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < n; i++) {
+        PyObject *val = prepared[i];
+        Py_INCREF(val);
+        PyTuple_SET_ITEM(result, i, val);
+    }
+
+    return result;
+}
+
+
+/**
  * Prepare an npy_index_object from the python slicing object.
  *
  * This function handles all index preparations with the exception

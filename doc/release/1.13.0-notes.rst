@@ -159,6 +159,11 @@ being iterated over.
 For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
 for ``len(d.shape)``.
 
+``as_index_tuple`` function in ``index_tricks``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Exposes the internal normalization that happens when indexing with non-tuple
+objects to convert them into tuples. Useful for correctly overriding or
+wrapping ndarray.__getitem__
 
 Improvements
 ============
