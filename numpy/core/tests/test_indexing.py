@@ -497,6 +497,15 @@ class TestIndexing(TestCase):
         zind = np.zeros(4, dtype=np.intp)
         assert_array_equal(x2[ind, zind], x2[ind.copy(), zind])
 
+    def test_indexing_array_negative_strides(self):
+        # From gh-8264,
+        # core dumps if negative strides are used in iteration
+        arro = np.zeros((4, 4))
+        arr = arro[::-1, ::-1]
+
+        slices = [slice(None), [0, 1, 2, 3]]
+        arr[slices] = 10
+        assert_array_equal(arr, 10.)
 
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):
