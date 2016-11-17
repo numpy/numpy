@@ -1,5 +1,6 @@
+==========================
 NumPy 1.13.0 Release Notes
-**************************
+==========================
 
 This release supports Python 2.7 and 3.4 - 3.6.
 
@@ -9,6 +10,10 @@ Highlights
 
 Dropped Support
 ===============
+
+
+Deprecations
+============
 
 
 Build System Changes
@@ -41,13 +46,10 @@ In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
+
 Improvements
 ============
 
 
 Changes
 =======
-
-
-Deprecations
-============
