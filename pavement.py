@@ -601,13 +601,13 @@ MD5
 ~~~
 
 """)
-    ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
-    ftarget.writelines("""
+        ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
+        ftarget.writelines("""
 SHA256
 ~~~~~~
 
 """)
-    ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
+        ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
 
     # Sign release
     cmd = ['gpg', '--clearsign', '--armor']
