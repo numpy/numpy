@@ -321,11 +321,8 @@ class TestAverage(TestCase):
         a = np.array([[1,2],[3,4]]).view(subclass)
         w = np.array([[1,2],[3,4]]).view(subclass)
 
-        with suppress_warnings() as sup:
-            # Note that the warning is spurious, because the test checks
-            # for weights while a is ignored.
-            sup.filter(FutureWarning, "np.average currently does not preserve")
-            assert_equal(type(np.average(a, weights=w)), subclass)
+        assert_equal(type(np.average(a)), subclass)
+        assert_equal(type(np.average(a, weights=w)), subclass)
 
         # also test matrices
         a = np.matrix([[1,2],[3,4]])
