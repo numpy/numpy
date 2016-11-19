@@ -1092,19 +1092,7 @@ def average(a, axis=None, weights=None, returned=False):
     TypeError: Axis must be specified when shapes of a and weights differ.
 
     """
-    # 3/19/2016 1.12.0:
-    # replace the next few lines with "a = np.asanyarray(a)"
-    if (type(a) not in (np.ndarray, np.matrix) and
-            issubclass(type(a), np.ndarray)):
-        warnings.warn("np.average currently does not preserve subclasses, but "
-                      "will do so in the future to match the behavior of most "
-                      "other numpy functions such as np.mean. In particular, "
-                      "this means calls which returned a scalar may return a "
-                      "0-d subclass object instead.",
-                      FutureWarning, stacklevel=2)
-
-    if not isinstance(a, np.matrix):
-        a = np.asarray(a)
+    a = np.asanyarray(a)
 
     if weights is None:
         avg = a.mean(axis)

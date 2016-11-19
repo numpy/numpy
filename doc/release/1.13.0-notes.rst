@@ -33,6 +33,11 @@ DeprecationWarning to error
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* ``numpy.average`` now preserves subclasses, matching the behavior of most
+  other numpy functions such as ``mean``.  As a consequence, also calls that
+  returned a scalar may now return a subclass array scalar.
+
+
 C API
 ~~~~~
 
@@ -53,3 +58,10 @@ Improvements
 
 Changes
 =======
+
+``average`` now preserves subclasses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For ndarray subclasses, ``numpy.average`` will now return an instance of the
+subclass, matching the behavior of most other numpy functions such as ``mean``.
+As a consequence, also calls that returned a scalar may now return a subclass
+array scalar.
