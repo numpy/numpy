@@ -547,6 +547,20 @@ class TestMultiply(TestCase):
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
+class TestNegative(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.neg, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning) 
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.neg(a) + a, 0)
+
+
 class TestAbs(TestCase):
 
     def _test_abs_func(self, absfunc):

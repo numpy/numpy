@@ -1002,6 +1002,10 @@ class TestFmin(_FilterInvalids):
 
 
 class TestBool(TestCase):
+    def test_exceptions(self):
+        a = np.ones(1, dtype=np.bool_)
+        assert_raises(TypeError, np.negative, a)
+
     def test_truth_table_logical(self):
         # 2, 3 and 4 serves as true values
         input1 = [0, 0, 3, 2]
