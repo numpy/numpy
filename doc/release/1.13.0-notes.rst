@@ -39,7 +39,8 @@ existing use.
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Non-integer partition index now raises TypeError.
+* ``partition``, TypeError when non-integer partition index is used.
+* ``NpyIter_AdvancedNew``, ValueError when `oa_ndim == 0` and `op_axes` is NULL
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

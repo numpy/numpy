@@ -161,17 +161,14 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * Before 1.8, if `oa_ndim == 0`, this meant `op_axes != NULL` was an error.
      * With 1.8, `oa_ndim == -1` takes this role, while op_axes in that case
      * enforces a 0-d iterator. Using `oa_ndim == 0` with `op_axes == NULL`
-     * is thus deprecated with version 1.8.
+     * is thus an error in 1.13 after deprecation.
      */
     if ((oa_ndim == 0) && (op_axes == NULL)) {
-        char* mesg = "using `oa_ndim == 0` when `op_axes` is NULL is "
-                     "deprecated. Use `oa_ndim == -1` or the MultiNew "
-                     "iterator for NumPy <1.8 compatibility";
-        if (DEPRECATE(mesg) < 0) {
-            /* 2013-02-23, 1.8 */
-            return NULL;
-        }
-        oa_ndim = -1;
+        PyErr_Format(PyExc_ValueError,
+            "Using `oa_ndim == 0` when `op_axes` is NULL. "
+            "Use `oa_ndim == -1` or the MultiNew "
+            "iterator for NumPy <1.8 compatibility");
+        return NULL;
     }
 
     /* Error check 'oa_ndim' and 'op_axes', which must be used together */
