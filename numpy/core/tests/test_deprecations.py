@@ -307,40 +307,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # following works (and returns False) due to dtype mismatch:
         a == []
 
-    def test_none_comparison(self):
-        # Test comparison of None, which should result in element-wise
-        # comparison in the future. [1, 2] == None should be [False, False].
-        with warnings.catch_warnings():
-            warnings.filterwarnings('always', '', FutureWarning)
-            assert_warns(FutureWarning, operator.eq, np.arange(3), None)
-            assert_warns(FutureWarning, operator.ne, np.arange(3), None)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', '', FutureWarning)
-            assert_raises(FutureWarning, operator.eq, np.arange(3), None)
-            assert_raises(FutureWarning, operator.ne, np.arange(3), None)
-
-    def test_scalar_none_comparison(self):
-        # Scalars should still just return False and not give a warnings.
-        # The comparisons are flagged by pep8, ignore that.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
-            assert_(not np.float32(1) == None)
-            assert_(not np.str_('test') == None)
-            # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)
-
-            assert_(np.float32(1) != None)
-            assert_(np.str_('test') != None)
-            # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)
-        assert_(len(w) == 0)
-
-        # For documentation purposes, this is why the datetime is dubious.
-        # At the time of deprecation this was no behaviour change, but
-        # it has to be considered when the deprecations are done.
-        assert_(np.equal(np.datetime64('NaT'), None))
-
     def test_void_dtype_equality_failures(self):
         class NotArray(object):
             def __array__(self):
