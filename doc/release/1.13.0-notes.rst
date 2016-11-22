@@ -32,6 +32,7 @@ DeprecationWarning to error
 
 * ``partition``, TypeError when non-integer partition index is used.
 * ``NpyIter_AdvancedNew``, ValueError when `oa_ndim == 0` and `op_axes` is NULL
+* Negative boolean, TypeError when unary ``-`` operator applied to boolean.
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
