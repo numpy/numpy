@@ -1819,6 +1819,24 @@ class TestMethods(TestCase):
         assert_raises(ValueError, d_obj.partition, 10)
         assert_raises(ValueError, d_obj.partition, -11)
 
+    def test_argpartition_integer(self):
+        # Test non-integer values in kth raise an error/
+        d = np.arange(10)
+        assert_raises(TypeError, d.argpartition, 9.)
+        # Test also for generic type argpartition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(TypeError, d_obj.argpartition, 9.)
+
+    def test_partition_integer(self):
+        # Test out of range values in kth raise an error, gh-5469
+        d = np.arange(10)
+        assert_raises(TypeError, d.partition, 9.)
+        # Test also for generic type partition, which uses sorting
+        # and used to not bound check kth
+        d_obj = np.arange(10, dtype=object)
+        assert_raises(TypeError, d_obj.partition, 9.)
+
     def test_partition_empty_array(self):
         # check axis handling for multidimensional empty arrays
         a = np.array([])

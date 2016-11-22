@@ -39,6 +39,8 @@ existing use.
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* Non-integer partition index now raises TypeError.
+
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
