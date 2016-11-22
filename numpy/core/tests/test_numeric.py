@@ -1194,6 +1194,16 @@ class TestArrayComparisons(TestCase):
         assert_(res)
         assert_(type(res) is bool)
 
+    def test_none_compares_elementwise(self):
+        a = np.array([None, 1, None], dtype=object)
+        assert_equal(a == None, [True, False, True])
+        assert_equal(a != None, [False, True, False])
+
+        a = np.ones(3)
+        assert_equal(a == None, [False, False, False])
+        assert_equal(a != None, [True, True, True])
+
+
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
         assert_(res)

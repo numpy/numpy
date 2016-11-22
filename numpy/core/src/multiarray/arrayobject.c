@@ -1354,16 +1354,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 n_ops.less_equal);
         break;
     case Py_EQ:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.7 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_False);
-            return Py_False;
-        }
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1442,16 +1432,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_NE:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.8 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_True);
-            return Py_True;
-        }
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
