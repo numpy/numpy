@@ -17,6 +17,8 @@ typedef struct { float r, i; } f2c_complex;
 typedef struct { double r, i; } f2c_doublecomplex;
 /* typedef long int (*L_fp)(); */
 
+void FNAME(MAIN_)() { return 0; }
+
 extern int FNAME(dgelsd)(int *m, int *n, int *nrhs,
                           double a[], int *lda, double b[], int *ldb,
                           double s[], double *rcond, int *rank,

@@ -715,7 +715,7 @@ _default_compilers = (
     ('irix.*', ('mips', 'gnu', 'gnu95',)),
     ('aix.*', ('ibm', 'gnu', 'gnu95',)),
     # os.name mappings
-    ('posix', ('gnu', 'gnu95',)),
+    ('posix', ('gnu', 'gnu95', 'g95',)),
     ('nt', ('gnu', 'gnu95',)),
     ('mac', ('gnu95', 'gnu', 'pg')),
     )
