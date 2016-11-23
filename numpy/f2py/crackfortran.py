@@ -2433,18 +2433,47 @@ def get_parameters(vars, global_params={}):
                     v = v.replace(*repl)
             v = kind_re.sub(r'kind("\1")', v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)', v)
-            if isinteger(vars[n]) and not selected_kind_re.match(v):
-                v = v.split('_')[0]
+
+            # We need to act according to the data.
+            # The easy case is if the data has a kind-specifier,
+            # then we may easily remove those specifiers.
+            # However, it may be that the user uses other specifiers...(!)
+            is_replaced = False
+            if 'kindselector' in vars[n]:
+                if 'kind' in vars[n]['kindselector']:
+                    orig_v_len = len(v)
+                    v = v.replace('_' + vars[n]['kindselector']['kind'], '')
+                    # Again, this will be true if even a single specifier
+                    # has been replaced, see comment above.
+                    is_replaced = len(v) < orig_v_len
+                    
+            if not is_replaced:
+                if not selected_kind_re.match(v):
+                    v_ = v.split('_')
+                    # In case there are additive parameters
+                    v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+
+            # Currently this will not work for complex numbers.
+            # There is missing code for extracting a complex number,
+            # which may be defined in either of these:
+            #  a) (Re, Im)
+            #  b) cmplx(Re, Im)
+            #  c) dcmplx(Re, Im)
+            #  d) cmplx(Re, Im, <prec>)
+
             if isdouble(vars[n]):
                 tt = list(v)
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(
                         v[m.start():m.end()].lower().replace('d', 'e'))
                 v = ''.join(tt)
-            if iscomplex(vars[n]):
+
+            elif iscomplex(vars[n]):
+                # FIXME complex numbers may also have exponents
                 if v[0] == '(' and v[-1] == ')':
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
+
             try:
                 params[n] = eval(v, g_params, params)
             except Exception as msg:
