@@ -184,19 +184,23 @@ class TestIndexing(TestCase):
                       [4, 5, 6],
                       [7, 8, 9]])
 
-        # Python boolean converts to integer
-        # These are being deprecated (and test in test_deprecations)
-        #assert_equal(a[True], a[1])
-        #assert_equal(a[False], a[0])
+        assert_equal(a[np.array(True)], a[None])
+        assert_equal(a[np.array(False)], a[None][0:0])
 
-        # Same with NumPy boolean scalar
-        # Before DEPRECATE, this is an error (as always, but telling about
-        # future change):
-        assert_raises(IndexError, a.__getitem__, np.array(True))
-        assert_raises(IndexError, a.__getitem__, np.array(False))
-        # After DEPRECATE, this behaviour can be enabled:
-        #assert_equal(a[np.array(True)], a[None])
-        #assert_equal(a[np.array(False), a[None][0:0]])
+    def test_boolean_shape_mismatch(self):
+        arr = np.ones((5, 4, 3))
+
+        index = np.array([True])
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        index = np.array([False] * 6)
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        index = np.zeros((4, 4), dtype=bool)
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        assert_raises(IndexError, arr.__getitem__, (slice(None), index))
+
 
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
@@ -534,31 +538,22 @@ class TestBroadcastedAssignments(TestCase):
     def test_prepend_not_one(self):
         assign = self.assign
         s_ = np.s_
-
         a = np.zeros(5)
 
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
-
-        with warnings.catch_warnings():
-            # Will be a ValueError as well.
-            warnings.simplefilter("error", DeprecationWarning)
-            assert_raises(DeprecationWarning, assign, a, s_[[1, 2, 3],],
-                          np.ones((2, 1)))
-            assert_raises(DeprecationWarning, assign, a, s_[[[1], [2]],],
-                          np.ones((2,2,1)))
+        assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
 
     def test_simple_broadcasting_errors(self):
         assign = self.assign
         s_ = np.s_
-
         a = np.zeros((5, 1))
+
         assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 2)))
         assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 0)))
-
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 2)))
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
-
         assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
 
     def test_index_is_larger(self):
@@ -621,7 +616,7 @@ class TestSubclasses(TestCase):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-class TestFancingIndexingCast(TestCase):
+class TestFancyIndexingCast(TestCase):
     def test_boolean_index_cast_assign(self):
         # Setup the boolean index and float arrays.
         shape = (8, 63)
@@ -693,18 +688,24 @@ class TestFancyIndexingEquivalence(TestCase):
 
 class TestMultiIndexingAutomated(TestCase):
     """
-     These test use code to mimic the C-Code indexing for selection.
+    These tests use code to mimic the C-Code indexing for selection.
 
-     NOTE: * This still lacks tests for complex item setting.
-           * If you change behavior of indexing, you might want to modify
-             these tests to try more combinations.
-           * Behavior was written to match numpy version 1.8. (though a
-             first version matched 1.7.)
-           * Only tuple indices are supported by the mimicking code.
-             (and tested as of writing this)
-           * Error types should match most of the time as long as there
-             is only one error. For multiple errors, what gets raised
-             will usually not be the same one. They are *not* tested.
+    NOTE:
+
+        * This still lacks tests for complex item setting.
+        * If you change behavior of indexing, you might want to modify
+          these tests to try more combinations.
+        * Behavior was written to match numpy version 1.8. (though a
+          first version matched 1.7.)
+        * Only tuple indices are supported by the mimicking code.
+          (and tested as of writing this)
+        * Error types should match most of the time as long as there
+          is only one error. For multiple errors, what gets raised
+          will usually not be the same one. They are *not* tested.
+
+    Update 2016-11-30: It is probably not worth maintaining this test
+    indefinitely and it can be dropped if maintenance becomes a burden.
+
     """
 
     def setUp(self):
@@ -714,7 +715,6 @@ class TestMultiIndexingAutomated(TestCase):
             0,
             # Boolean indices, up to 3-d for some special cases of eating up
             # dimensions, also need to test all False
-            np.array(False),
             np.array([True, False, False]),
             np.array([[True, False], [False, True]]),
             np.array([[[False, False], [False, False]]]),
@@ -982,7 +982,7 @@ class TestMultiIndexingAutomated(TestCase):
         # Test item getting
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
-        except Exception:
+        except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
@@ -1006,7 +1006,7 @@ class TestMultiIndexingAutomated(TestCase):
         """
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
-        except Exception:
+        except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
@@ -1158,11 +1158,9 @@ class TestFloatNonIntegerArgument(TestCase):
         assert_raises(TypeError, np.min, d, (.2, 1.2))
 
 
-class TestBooleanArgumentErrors(TestCase):
-    """Using a boolean as integer argument/indexing is an error.
-
-    """
-    def test_bool_as_int_argument(self):
+class TestBooleanIndexing(TestCase):
+    # Using a boolean as integer argument/indexing is an error.
+    def test_bool_as_int_argument_errors(self):
         a = np.array([[[1]]])
 
         assert_raises(TypeError, np.reshape, a, (True, -1))
@@ -1171,8 +1169,13 @@ class TestBooleanArgumentErrors(TestCase):
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
         assert_raises(TypeError, np.take, args=(a, [0], False))
-        assert_raises(IndexError, lambda: a[False, 0])
-        assert_raises(IndexError, lambda: a[False, 0, 0])
+
+    def test_boolean_indexing_weirdness(self):
+        # Weird boolean indexing things
+        a = np.ones((2, 3, 4))
+        a[False, True, ...].shape == (0, 2, 3, 4)
+        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert_raises(IndexError, lambda: a[False, [0, 1], ...])
 
 
 class TestArrayToIndexDeprecation(TestCase):

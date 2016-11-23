@@ -46,6 +46,7 @@ See Changes section for more detail.
 * ``subtract(bool_, bool_)``, TypeError when subtracting boolean from boolean.
 * ``np.equal, np.not_equal``, object identity doesn't override failed comparison.
 * ``np.equal, np.not_equal``, object identity doesn't override non-boolean comparison.
+* Boolean indexing deprecated behavior dropped. See Changes below for details.
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,4 +95,20 @@ Previously, these functions always treated identical objects as equal. This had
 the effect of overriding comparison failures, comparison of objects that did
 not return booleans, such as np.arrays, and comparison of objects where the
 results differed from object identity, such as NaNs.
+
+Boolean indexing changes
+~~~~~~~~~~~~~~~~~~~~~~~~
+* Boolean array-likes (such as lists of python bools) are always treated as
+  boolean indexes.
+
+* Boolean scalars (including python ``True``) are legal boolean indexes and
+  never treated as integers.
+
+* Boolean indexes must match the dimension of the axis that they index.
+
+* Boolean indexes used on the lhs of an assigment must match the dimensions of
+  the rhs.
+
+* Boolean indexing into scalar arrays return a new 1-d array.  This means that
+  ``array(1)[array(True)]`` gives ``array([1])`` and not the original array.
 

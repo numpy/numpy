@@ -807,16 +807,9 @@ class TestRegression(TestCase):
         def ia(x, s, v):
             x[(s > 0)] = v
 
-        # After removing deprecation, the following are ValueErrors.
-        # This might seem odd as compared to the value error below. This
-        # is due to the fact that the new code always uses "nonzero" logic
-        # and the boolean special case is not taken.
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning)
-            sup.filter(FutureWarning)
-            sup.filter(np.VisibleDeprecationWarning)
-            self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
-            self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
+        self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
+        self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
+
         # Old special case (different code path):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))

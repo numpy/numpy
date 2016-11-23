@@ -443,16 +443,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             if (PyArray_NDIM(arr) == 0) {
                 /*
-                 * TODO, WARNING: This code block cannot be used due to
-                 *                FutureWarnings at this time. So instead
-                 *                just raise an IndexError.
-                 */
-                PyErr_SetString(PyExc_IndexError,
-                        "in the future, 0-d boolean arrays will be "
-                        "interpreted as a valid boolean index");
-                Py_DECREF((PyObject *)arr);
-                goto failed_building_indices;
-                /*
                  * This can actually be well defined. A new axis is added,
                  * but at the same time no axis is "used". So if we have True,
                  * we add a new axis (a bit like with np.newaxis). If it is
@@ -461,7 +451,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
-                indices[curr_idx].value = 1;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
                 if (PyObject_IsTrue((PyObject *)arr)) {
@@ -470,6 +459,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 else {
                     n = 0;
                 }
+                indices[curr_idx].value = n;
                 indices[curr_idx].object = PyArray_Zeros(1, &n,
                                             PyArray_DescrFromType(NPY_INTP), 0);
                 Py_DECREF(arr);
@@ -665,26 +655,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
         for (i = 0; i < curr_idx; i++) {
             if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
                 if (indices[i].value != PyArray_DIM(self, used_ndim)) {
-                    static PyObject *warning = NULL;
-
                     char err_msg[174];
+
                     PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
                         "dimension %d; dimension is %" NPY_INTP_FMT
                         " but corresponding boolean dimension is %" NPY_INTP_FMT,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
-
-                    npy_cache_import(
-                        "numpy", "VisibleDeprecationWarning", &warning);
-                    if (warning == NULL) {
-                        goto failed_building_indices;
-                    }
-
-                    if (PyErr_WarnEx(warning, err_msg, 1) < 0) {
-                        goto failed_building_indices;
-                    }
-                    break;
+                    PyErr_SetString(PyExc_IndexError, err_msg);
+                    goto failed_building_indices;
                 }
             }
 
@@ -1737,60 +1717,6 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
 
 
 /*
- * This fallback takes the old route of `arr.flat[index] = values`
- * for one dimensional `arr`. The route can sometimes fail slightly
- * differently (ValueError instead of IndexError), in which case we
- * warn users about the change. But since it does not actually care *at all*
- * about shapes, it should only fail for out of bound indexes or
- * casting errors.
- */
-NPY_NO_EXPORT int
-attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
-{
-    PyObject *err = PyErr_Occurred();
-    PyArrayIterObject *self_iter = NULL;
-
-    Py_INCREF(err);
-    PyErr_Clear();
-
-    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-    if (self_iter == NULL) {
-        goto fail;
-    }
-    if (iter_ass_subscript(self_iter, ind, op) < 0) {
-        goto fail;
-    }
-
-    Py_XDECREF((PyObject *)self_iter);
-    Py_DECREF(err);
-
-    /* 2014-06-12, 1.9 */
-    if (DEPRECATE(
-            "assignment will raise an error in the future, most likely "
-            "because your index result shape does not match the value array "
-            "shape. You can use `arr.flat[index] = values` to keep the old "
-            "behaviour.") < 0) {
-        return -1;
-    }
-    return 0;
-
-  fail:
-    if (!PyErr_ExceptionMatches(err)) {
-        PyObject *err, *val, *tb;
-        PyErr_Fetch(&err, &val, &tb);
-        /* 2014-06-12, 1.9 */
-        DEPRECATE_FUTUREWARNING(
-            "assignment exception type will change in the future");
-        PyErr_Restore(err, val, tb);
-    }
-
-    Py_XDECREF((PyObject *)self_iter);
-    Py_DECREF(err);
-    return -1;
-}
-
-
-/*
  * General assignment with python indexing objects.
  */
 static int
@@ -1883,17 +1809,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (array_assign_boolean_subscript(self,
                                            (PyArrayObject *)indices[0].object,
                                            tmp_arr, NPY_CORDER) < 0) {
-            /*
-             * Deprecated case. The old boolean indexing seemed to have some
-             * check to allow wrong dimensional boolean arrays in all cases.
-             */
-            if (PyArray_NDIM(tmp_arr) > 1) {
-                if (attempt_1d_fallback(self, indices[0].object,
-                                        (PyObject*)tmp_arr) < 0) {
-                    goto fail;
-                }
-                goto success;
-            }
             goto fail;
         }
         goto success;
@@ -2044,18 +1959,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                              tmp_arr, descr);
 
     if (mit == NULL) {
-        /*
-         * This is a deprecated special case to allow non-matching shapes
-         * for the index and value arrays.
-         */
-        if (index_type != HAS_FANCY || index_num != 1) {
-            /* This is not a "flat like" 1-d special case */
-            goto fail;
-        }
-        if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
-            goto fail;
-        }
-        goto success;
+        goto fail;
     }
 
     if (tmp_arr == NULL) {
@@ -2069,18 +1973,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             }
         }
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
-             /*
-              * This is a deprecated special case to allow non-matching shapes
-              * for the index and value arrays.
-              */
-              if (index_type != HAS_FANCY || index_num != 1) {
-                 /* This is not a "flat like" 1-d special case */
-                 goto fail;
-             }
-             if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
-                 goto fail;
-             }
-             goto success;
+             goto fail;
         }
     }
 
@@ -2452,6 +2345,11 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
             mit->fancy_dims[j] = 1;
             /* Does not exist */
             mit->iteraxes[j++] = -1;
+            if ((indices[i].value == 0) &&
+                    (mit->dimensions[mit->nd_fancy - 1]) > 1) {
+                goto broadcast_error;
+            }
+            mit->dimensions[mit->nd_fancy-1] *= indices[i].value;
         }
 
         /* advance curr_dim for non-fancy indices */
@@ -2489,7 +2387,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
     }
 
     for (i = 0; i < index_num; i++) {
-        if (indices[i].type != HAS_FANCY) {
+        if (!(indices[i].type & HAS_FANCY)) {
             continue;
         }
         tmp = convert_shape_to_string(
