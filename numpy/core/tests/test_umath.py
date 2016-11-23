@@ -173,6 +173,44 @@ class TestOut(TestCase):
                 assert_(w[0].category is DeprecationWarning)
 
 
+class TestComparisons(TestCase):
+    def test_ignore_object_identity_in_equal(self):
+        # Check error raised when comparing identical objects whose comparison
+        # is not a simple boolean, e.g., arrays that are compared elementwise.
+        a = np.array([np.array([1, 2, 3]), None], dtype=object)
+        assert_raises(ValueError, np.equal, a, a)
+
+        # Check error raised when comparing identical non-comparable objects.
+        class FunkyType(object):
+            def __eq__(self, other):
+                raise TypeError("I won't compare")
+
+        a = np.array([FunkyType()])
+        assert_raises(TypeError, np.equal, a, a)
+
+        # Check identity doesn't override comparison mismatch.
+        a = np.array([np.nan], dtype=object)
+        assert_equal(np.equal(a, a), [False])
+
+    def test_ignore_object_identity_in_not_equal(self):
+        # Check error raised when comparing identical objects whose comparison
+        # is not a simple boolean, e.g., arrays that are compared elementwise.
+        a = np.array([np.array([1, 2, 3]), None], dtype=object)
+        assert_raises(ValueError, np.not_equal, a, a)
+
+        # Check error raised when comparing identical non-comparable objects.
+        class FunkyType(object):
+            def __ne__(self, other):
+                raise TypeError("I won't compare")
+
+        a = np.array([FunkyType()])
+        assert_raises(TypeError, np.not_equal, a, a)
+
+        # Check identity doesn't override comparison mismatch.
+        a = np.array([np.nan], dtype=object)
+        assert_equal(np.not_equal(a, a), [True])
+
+
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should follow Python

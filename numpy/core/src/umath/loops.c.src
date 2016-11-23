@@ -2670,61 +2670,19 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         in2 = in2 ? in2 : Py_None;
 
         /*
-         * Do not use RichCompareBool because it includes an identity check
-         * (for == and !=).
-         * This is wrong for elementwise behaviour, since it means
+         * Do not use RichCompareBool because it includes an identity check for
+         * == and !=. This is wrong for elementwise behaviour, since it means
          * that NaN can be equal to NaN and an array is equal to itself.
          */
         ret_obj = PyObject_RichCompare(in1, in2, Py_@OP@);
         if (ret_obj == NULL) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The comparison error will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
         ret = PyObject_IsTrue(ret_obj);
         Py_DECREF(ret_obj);
         if (ret == -1) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The error trying to get the "
-                              "boolean value of the comparison result will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
-#if @identity@ != -1
-        if ((in1 == in2) && ((npy_bool)ret != @identity@)) {
-            /* 2014-01-26, 1.9 */
-            if (DEPRECATE_FUTUREWARNING(
-                        "numpy @kind@ will not check object identity "
-                        "in the future. The comparison did not return the "
-                        "same result as suggested by the identity (`is`)) "
-                        "and will change.") < 0) {
-                return;
-            }
-            *((npy_bool *)op1) = @identity@;
-            continue;
-        }
-#endif
         *((npy_bool *)op1) = (npy_bool)ret;
     }
 }
