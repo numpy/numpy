@@ -4,7 +4,7 @@ import os
 import math
 
 import numpy as np
-from numpy.testing import dec, assert_raises, assert_equal
+from numpy.testing import run_module_suite, dec, assert_raises, assert_equal
 
 import util
 
@@ -30,5 +30,4 @@ class TestIntentInOut(util.F2PyTest):
 
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()
