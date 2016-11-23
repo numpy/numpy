@@ -29,17 +29,22 @@ Compatibility notes
 
 DeprecationWarning to error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+See Changes section for more detail.
 
 * ``partition``, TypeError when non-integer partition index is used.
 * ``NpyIter_AdvancedNew``, ValueError when `oa_ndim == 0` and `op_axes` is NULL
 * ``negative(bool_)``, TypeError when negative applied to booleans.
 * ``subtract(bool_, bool_)``, TypeError when subtracting boolean from boolean.
+* ``np.equal, np.not_equal``, object identity doesn't override failed comparison.
+* ``np.equal, np.not_equal``, object identity doesn't override non-boolean comparison.
 
 FutureWarning to changed behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+See Changes section for more detail.
 
 * ``numpy.average`` preserves subclasses
 * ``array == None`` and ``array != None`` do element-wise comparison.
+* ``np.equal, np.not_equal``, object identity doesn't override comparison result.
 
 
 C API
@@ -73,4 +78,11 @@ array scalar.
 ``array == None`` and ``array != None`` do element-wise comparison
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Previously these operations returned scalars ``False`` and ``True`` respectively.
+
+``np.equal, np.not_equal`` for object arrays ignores object identity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, these functions always treated identical objects as equal. This had
+the effect of overriding comparison failures, comparison of objects that did
+not return booleans, such as np.arrays, and comparison of objects where the
+results differed from object identity, such as NaNs.
 
