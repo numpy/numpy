@@ -3906,7 +3906,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
         /* Until removed outright by https://github.com/numpy/numpy/pull/8187 */
         if (bad_keepdimarg != NULL) {
-            Py_DECREF(bad_keepdimarg);
             if (DEPRECATE_FUTUREWARNING(
                     "keepdims argument has no effect on accumulate, and will be "
                     "removed in future") < 0) {
