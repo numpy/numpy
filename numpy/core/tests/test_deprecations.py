@@ -226,24 +226,6 @@ class _DeprecationTestCase(object):
                         exceptions=tuple(), args=args, kwargs=kwargs)
 
 
-class TestBooleanBinaryMinusDeprecation(_DeprecationTestCase):
-    """Test deprecation of binary boolean `-`. While + and * are well
-    defined, binary  - is not and even a corrected form seems to have
-    no real uses.
-
-    The deprecation process was started in NumPy 1.9.
-    """
-    message = r"numpy boolean subtract, the `-` operator, .*"
-
-    def test_operator_deprecation(self):
-        array = np.array([True])
-        generic = np.bool_(True)
-
-        # Minus operator/subtract ufunc:
-        self.assert_deprecated(operator.sub, args=(array, array))
-        self.assert_deprecated(operator.sub, args=(generic, generic))
-
-
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.
