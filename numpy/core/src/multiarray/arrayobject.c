@@ -378,6 +378,15 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
+    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+        PyObject_GC_UnTrack(self);
+    }
+    /*
+     * prevent deeply-nested object arrays from causing stack overflows
+     * on deallocation
+     */
+    Py_TRASHCAN_SAFE_BEGIN(self);
+
     _array_dealloc_buffer_info(self);
 
     if (fa->weakreflist != NULL) {
@@ -429,6 +438,8 @@ array_dealloc(PyArrayObject *self)
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
+
+    Py_TRASHCAN_SAFE_END(self)
 }
 
 /*
@@ -1753,22 +1764,258 @@ array_iter(PyArrayObject *arr)
     return PySeqIter_New((PyObject *)arr);
 }
 
-static PyObject *
-array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
+/*
+ * traverse all objects found at this record, adapted from PyArray_Item_INCREF
+ */
+static int
+array_item_traverse(char *data, PyArray_Descr *descr, visitproc visit,
+        void *arg)
 {
-    /* nitems will always be 0 */
-    PyObject *obj = PyObject_Malloc(type->tp_basicsize);
-    PyObject_Init(obj, type);
-    return obj;
+    PyObject *temp;
+    int result;
+
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    if (descr->type_num == NPY_OBJECT) {
+        /*
+         * XXX the memcpy is only required if "data" is misaligned. Is that
+         * possible, given that this is a pointer to an object in a record
+         * array that owns its data? If not, array_item_clear can also be
+         * simplified
+         */
+        NPY_COPY_PYOBJECT_PTR(&temp, data);
+        Py_VISIT(temp);
+    }
+    else if (PyDataType_HASFIELDS(descr)) {
+        PyObject *key, *value, *title = NULL;
+        PyArray_Descr *new;
+        int offset;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+            if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+                return -1;
+            }
+            result = array_item_traverse(data + offset, new, visit, arg);
+            if (result) {
+                return result;
+            }
+        }
+    }
+    return 0;
 }
 
-static void
-array_free(PyObject * v)
+static int
+array_traverse(PyArrayObject *self, visitproc visit, void *arg)
 {
-    /* avoid same deallocator as PyBaseObject, see gentype_free */
-    PyObject_Free(v);
+    npy_intp i, n;
+    PyObject **data;
+    PyObject *temp;
+    PyArrayIterObject *it;
+    int result;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+    PyArray_Descr *descr = PyArray_DESCR(self);
+
+    /*
+     * make sure we don't traverse the array before it is fully initialized,
+     * or if it doesn't have any objects
+     */
+    if (!descr || !PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    /* if the array doesn't own its data, visiting fa->base is sufficient */
+    Py_VISIT(fa->base);
+    if (!(fa->flags & NPY_ARRAY_OWNDATA) || !(fa->data)) {
+        return 0;
+    }
+    /* visit all objects in the array, adapted from PyArray_INCREF */
+    if (descr->type_num != NPY_OBJECT) {
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            return -1;
+        }
+        while(it->index < it->size) {
+            result = array_item_traverse(it->dataptr, descr, visit, arg);
+            if (result) {
+                Py_DECREF(it);
+                return result;
+            }
+            PyArray_ITER_NEXT(it);
+        }
+        Py_DECREF(it);
+        return 0;
+    }
+
+    if (PyArray_ISONESEGMENT(self)) {
+        data = (PyObject **)PyArray_DATA(self);
+        n = PyArray_SIZE(self);
+        if (PyArray_ISALIGNED(self)) {
+            for (i = 0; i < n; i++, data++) {
+                Py_VISIT(*data);
+            }
+        }
+        else {
+            /*
+             * XXX this is only reached for misaligned object arrays that own
+             * their data - is that even possible? If not, array_clear can also
+             * be simplified
+             */
+            for (i = 0; i < n; i++, data++) {
+                NPY_COPY_PYOBJECT_PTR(&temp, data);
+                Py_VISIT(temp);
+            }
+        }
+    }
+    else { /* handles misaligned data too */
+        /*
+         * XXX this is only reached for discontiguous object arrays that own
+         * their data - is that even possible? If not, array_clear can also be
+         * simplified
+         */
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            return -1;
+        }
+        while(it->index < it->size) {
+            NPY_COPY_PYOBJECT_PTR(&temp, it->dataptr);
+            if (temp) {
+                result = visit(temp, arg);
+                if (result) {
+                    Py_DECREF(it);
+                    return result;
+                }
+            }
+            PyArray_ITER_NEXT(it);
+        }
+        Py_DECREF(it);
+    }
+    return 0;
 }
 
+/*
+ * set all objects found at this record to None, adapted from
+ * PyArray_Item_INCREF
+ */
+static int
+array_item_clear(char *data, PyArray_Descr *descr)
+{
+    PyObject *temp, *none;
+
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    if (descr->type_num == NPY_OBJECT) {
+        NPY_COPY_PYOBJECT_PTR(&temp, data);
+        /* Py_None expands to (&something), so we can't just do &Py_None */
+        none = Py_None;
+        NPY_COPY_PYOBJECT_PTR(data, &none);
+        Py_INCREF(Py_None);
+        Py_XDECREF(temp);
+    }
+    else if (PyDataType_HASFIELDS(descr)) {
+        PyObject *key, *value, *title = NULL;
+        PyArray_Descr *new;
+        int offset;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+            if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+                                  &title)) {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+            else {
+                array_item_clear(data + offset, new);
+            }
+        }
+    }
+    return 0;
+}
+
+static int
+array_clear(PyArrayObject *self)
+{
+    npy_intp i, n;
+    PyObject **data;
+    PyObject *temp, *none;
+    PyArrayIterObject *it;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+
+    /*
+     * clearing references in arrays that own their data is enough to break
+     * any reference cycles
+     */
+    if (!(fa->flags & NPY_ARRAY_OWNDATA)) {
+        return 0;
+    }
+    /* replace all objects in array with None, adapted from PyArray_INCREF */
+    if (PyArray_DESCR(self)->type_num != NPY_OBJECT) {
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+        else {
+            while(it->index < it->size) {
+                array_item_clear(it->dataptr, PyArray_DESCR(self));
+                PyArray_ITER_NEXT(it);
+            }
+            Py_DECREF(it);
+        }
+        return 0;
+    }
+
+    if (PyArray_ISONESEGMENT(self)) {
+        data = (PyObject **)PyArray_DATA(self);
+        n = PyArray_SIZE(self);
+        if (PyArray_ISALIGNED(self)) {
+            for (i = 0; i < n; i++, data++) {
+                temp = *data;
+                *data = Py_None;
+                Py_INCREF(Py_None);
+                Py_XDECREF(temp);
+            }
+        }
+        else {
+            for (i = 0; i < n; i++, data++) {
+                NPY_COPY_PYOBJECT_PTR(&temp, data);
+                *data = Py_None;
+                Py_INCREF(Py_None);
+                Py_XDECREF(temp);
+            }
+        }
+    }
+    else { /* handles misaligned data too */
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+        else {
+            while(it->index < it->size) {
+                NPY_COPY_PYOBJECT_PTR(&temp, it->dataptr);
+                /*
+                 * Py_None expands to (&something), so we can't just do
+                 * &Py_None
+                 */
+                none = Py_None;
+                NPY_COPY_PYOBJECT_PTR(it->dataptr, &none);
+                Py_INCREF(Py_None);
+                Py_XDECREF(temp);
+                PyArray_ITER_NEXT(it);
+            }
+            Py_DECREF(it);
+        }
+    }
+    return 0;
+}
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 #if defined(NPY_PY3K)
@@ -1809,11 +2056,12 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
      | Py_TPFLAGS_CHECKTYPES
      | Py_TPFLAGS_HAVE_NEWBUFFER
 #endif
-     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
+     | Py_TPFLAGS_BASETYPE
+     | Py_TPFLAGS_HAVE_GC),                     /* tp_flags */
     0,                                          /* tp_doc */
 
-    (traverseproc)0,                            /* tp_traverse */
-    (inquiry)0,                                 /* tp_clear */
+    (traverseproc)array_traverse,               /* tp_traverse */
+    (inquiry)array_clear,                       /* tp_clear */
     (richcmpfunc)array_richcompare,             /* tp_richcompare */
     offsetof(PyArrayObject_fields, weakreflist), /* tp_weaklistoffset */
     (getiterfunc)array_iter,                    /* tp_iter */
@@ -1827,9 +2075,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
     (initproc)0,                                /* tp_init */
-    (allocfunc)array_alloc,                     /* tp_alloc */
+    0,                                          /* tp_alloc */
     (newfunc)array_new,                         /* tp_new */
-    (freefunc)array_free,                       /* tp_free */
+    0,                                          /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */
     0,                                          /* tp_mro */

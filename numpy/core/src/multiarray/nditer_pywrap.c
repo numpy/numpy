@@ -751,6 +751,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         PyDimMem_FREE(itershape.ptr);
         return -1;
     }
+    if (!(flags & NPY_ITER_REFS_OK)) {
+        PyObject_GC_UnTrack(self);
+    }
 
     /* Set the dtypes and ops to all NULL to start */
     memset(op_request_dtypes, 0, sizeof(op_request_dtypes));
@@ -1160,6 +1163,7 @@ fail:
 static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
+    PyObject_GC_UnTrack(self);
     if (self->iter) {
         NpyIter_Deallocate(self->iter);
         self->iter = NULL;
@@ -1167,6 +1171,21 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
         self->nested_child = NULL;
     }
     Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static int
+npyiter_traverse(NewNpyArrayIterObject *self, visitproc visit, void *arg)
+{
+    npy_intp iop, nop;
+
+    Py_VISIT(self->nested_child);
+    if (self->iter && self->operands) {
+        nop = NpyIter_GetNOp(self->iter);
+        for (iop = 0; iop < nop; ++iop) {
+            Py_VISIT(self->operands[iop]);
+        }
+    }
+    return 0;
 }
 
 static int
@@ -2460,9 +2479,10 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    (Py_TPFLAGS_DEFAULT
+     | Py_TPFLAGS_HAVE_GC),                     /* tp_flags */
     0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
+    (traverseproc)npyiter_traverse,             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

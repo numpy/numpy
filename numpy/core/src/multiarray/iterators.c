@@ -231,6 +231,9 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
 {
     int nd, i;
 
+    if (!PyDataType_REFCHK(PyArray_DESCR(ao))) {
+        PyObject_GC_UnTrack(it);
+    }
     nd = PyArray_NDIM(ao);
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -285,9 +288,7 @@ PyArray_IterNew(PyObject *obj)
     }
     ao = (PyArrayObject *)obj;
 
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
+    it = (PyArrayIterObject *)PyArrayIter_Type.tp_alloc(&PyArrayIter_Type, 0);
     if (it == NULL) {
         return NULL;
     }
@@ -323,11 +324,10 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (!compat) {
         goto err;
     }
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
+    it = (PyArrayIterObject *)PyArrayIter_Type.tp_alloc(&PyArrayIter_Type, 0);
     if (it == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -338,6 +338,9 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     }
     Py_INCREF(ao);
     it->ao = ao;
+    if (!PyDataType_REFCHK(PyArray_DESCR(ao))) {
+        PyObject_GC_UnTrack(ao);
+    }
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
     it->factors[nd-1] = 1;
@@ -494,8 +497,17 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
+    if (PyDataType_REFCHK(PyArray_DESCR(it->ao))) {
+        PyObject_GC_UnTrack(it);
+    }
     array_iter_base_dealloc(it);
-    PyArray_free(it);
+    Py_TYPE(it)->tp_free((PyObject *)it);
+}
+
+static int
+arrayiter_traverse(PyArrayIterObject *it, visitproc visit, void *arg) {
+    Py_VISIT(it->ao);
+    return 0;
 }
 
 static Py_ssize_t
@@ -1231,9 +1243,10 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    (Py_TPFLAGS_DEFAULT
+     | Py_TPFLAGS_HAVE_GC),                     /* tp_flags */
     0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
+    (traverseproc)arrayiter_traverse,           /* tp_traverse */
     0,                                          /* tp_clear */
     (richcmpfunc)iter_richcompare,              /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1365,8 +1378,7 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     PyArrayMultiIterObject *multi;
     PyObject *current;
     PyObject *arr;
-
-    int i, ntot, err=0;
+    int i, ntot, err = 0, needs_gc_tracking = 0;
 
     ntot = n + nadd;
     if (ntot < 1 || ntot > NPY_MAXARGS) {
@@ -1375,11 +1387,11 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
                      "array objects.", NPY_MAXARGS);
         return NULL;
     }
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
+    multi = ((PyArrayMultiIterObject *)PyArrayMultiIter_Type.
+            tp_alloc(&PyArrayMultiIter_Type, 0));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
     for (i = 0; i < ntot; i++) {
         multi->iters[i] = NULL;
@@ -1401,6 +1413,9 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
             break;
         }
         else {
+            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+                needs_gc_tracking = 1;
+            }
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
             if (multi->iters[i] == NULL) {
                 err = 1;
@@ -1411,6 +1426,9 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     }
     va_end(va);
 
+    if (!needs_gc_tracking) {
+        PyObject_GC_UnTrack(multi);
+    }
     if (!err && PyArray_Broadcast(multi) < 0) {
         err = 1;
     }
@@ -1432,8 +1450,7 @@ PyArray_MultiIterNew(int n, ...)
     PyArrayMultiIterObject *multi;
     PyObject *current;
     PyObject *arr;
-
-    int i, err = 0;
+    int i, err = 0, needs_gc_tracking = 0;
 
     if (n < 1 || n > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -1444,11 +1461,11 @@ PyArray_MultiIterNew(int n, ...)
 
     /* fprintf(stderr, "multi new...");*/
 
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
+    multi = ((PyArrayMultiIterObject *)PyArrayMultiIter_Type.
+            tp_alloc(&PyArrayMultiIter_Type, 0));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
     for (i = 0; i < n; i++) {
         multi->iters[i] = NULL;
@@ -1465,6 +1482,9 @@ PyArray_MultiIterNew(int n, ...)
             break;
         }
         else {
+            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+                needs_gc_tracking = 1;
+            }
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
             if (multi->iters[i] == NULL) {
                 err = 1;
@@ -1475,6 +1495,9 @@ PyArray_MultiIterNew(int n, ...)
     }
     va_end(va);
 
+    if (!needs_gc_tracking) {
+        PyObject_GC_UnTrack(multi);
+    }
     if (!err && PyArray_Broadcast(multi) < 0) {
         err = 1;
     }
@@ -1487,13 +1510,14 @@ PyArray_MultiIterNew(int n, ...)
 }
 
 static PyObject *
-arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
+arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
 
     Py_ssize_t n = 0;
     Py_ssize_t i, j, k;
     PyArrayMultiIterObject *multi;
     PyObject *arr;
+    int needs_gc_tracking = 0;
 
     if (kwds != NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1526,11 +1550,10 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
         return NULL;
     }
 
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
+    multi = (PyArrayMultiIterObject *)subtype->tp_alloc(subtype, 0);
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
     multi->numiter = n;
     multi->index = 0;
@@ -1549,6 +1572,9 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
                 if (it == NULL) {
                     goto fail;
                 }
+                if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+                    needs_gc_tracking = 1;
+                }
                 multi->iters[i++] = it;
             }
         }
@@ -1561,11 +1587,17 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
             if (it == NULL) {
                 goto fail;
             }
+            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+                needs_gc_tracking = 1;
+            }
             multi->iters[i++] = it;
             Py_DECREF(arr);
         }
     }
     assert (i == n);
+    if (!needs_gc_tracking) {
+        PyObject_GC_UnTrack(multi);
+    }
     if (PyArray_Broadcast(multi) < 0) {
         goto fail;
     }
@@ -1607,10 +1639,25 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 {
     int i;
 
+    PyObject_GC_UnTrack(multi);
     for (i = 0; i < multi->numiter; i++) {
         Py_XDECREF(multi->iters[i]);
     }
     Py_TYPE(multi)->tp_free((PyObject *)multi);
+}
+
+static int
+arraymultiter_traverse(PyArrayMultiIterObject *multi, visitproc visit,
+        void *arg)
+{
+    int i;
+
+    if (multi->iters) {
+        for (i = 0; i < multi->numiter; i++) {
+            Py_VISIT(multi->iters[i]);
+        }
+    }
+    return 0;
 }
 
 static PyObject *
@@ -1750,9 +1797,10 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    (Py_TPFLAGS_DEFAULT
+     | Py_TPFLAGS_HAVE_GC),                     /* tp_flags */
     0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
+    (traverseproc)arraymultiter_traverse,       /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1943,11 +1991,11 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = PyArray_malloc(sizeof(*ret));
+    ret = ((PyArrayNeighborhoodIterObject *)PyArrayNeighborhoodIter_Type.
+            tp_alloc(&PyArrayNeighborhoodIter_Type, 0));
     if (ret == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
 
     array_iter_base_init((PyArrayIterObject*)ret, x->ao);
     Py_INCREF(x);
@@ -2029,14 +2077,16 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     return (PyObject*)ret;
 
 clean_x:
-    Py_DECREF(ret->_internal_iter);
-    array_iter_base_dealloc((PyArrayIterObject*)ret);
-    PyArray_free((PyArrayObject*)ret);
+    Py_DECREF(ret);
     return NULL;
 }
 
-static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
+static void
+neighiter_dealloc(PyArrayNeighborhoodIterObject *iter)
 {
+    if (PyDataType_REFCHK(PyArray_DESCR(iter->ao))) {
+        PyObject_GC_UnTrack(iter);
+    }
     if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
         if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
             Py_DECREF(*(PyObject**)iter->constant);
@@ -2046,7 +2096,20 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
-    PyArray_free((PyArrayObject*)iter);
+    Py_TYPE(iter)->tp_free((PyObject *)iter);
+}
+
+static int
+neighiter_traverse(PyArrayNeighborhoodIterObject *iter, visitproc visit,
+        void *arg)
+{
+    if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
+        if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
+            Py_VISIT(*(PyObject**)iter->constant);
+        }
+    }
+    Py_VISIT(iter->_internal_iter);
+    return 0;
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
@@ -2078,9 +2141,10 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     0,                                          /* tp_getattro*/
     0,                                          /* tp_setattro*/
     0,                                          /* tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
+    (Py_TPFLAGS_DEFAULT
+     | Py_TPFLAGS_HAVE_GC),                     /* tp_flags*/
     0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
+    (traverseproc)neighiter_traverse,           /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

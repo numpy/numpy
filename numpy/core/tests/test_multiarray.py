@@ -11,6 +11,7 @@ import itertools
 import ctypes
 import os
 import gc
+import weakref
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -6628,6 +6629,115 @@ def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
     a = np.arange(5)
     assert_raises(ValueError, a.flatten, order=u'\xe2')
+
+
+class TestGarbageCollection(TestCase):
+    @dec.slow
+    def test_trashcan(self):
+        # this code triggers a long chain of nested deallocations - a stack
+        # overflow is prevented by invoking the "trashcan mechanism" in
+        # ndarray's deallocator
+        a = None
+        for i in range(200000):
+            a = np.array((a, i), dtype=object)
+
+    # check that various kinds of reference cycles are collected correctly
+    def test_simple_cycle(self):
+        a = np.empty(1, dtype='O')
+        a[0] = a
+        r = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(r() is None)
+
+    def test_complex_cycle(self):
+        a = np.empty(2, dtype='O')
+        b = np.empty(2, dtype='O')
+        c = np.empty(2, dtype='O')
+        a[0] = b
+        b[0] = c
+        c[0] = a
+        a[1] = [a]
+        b[1] = a
+        c[1] = c
+        ra = weakref.ref(a)
+        rb = weakref.ref(b)
+        rc = weakref.ref(c)
+        del a, b, c
+        gc.collect()
+        assert_(ra() is rb() is rc() is None)
+
+    def test_slice_cycle(self):
+        a = np.empty((5, 5), dtype='O')
+        b = np.empty((5, 5), dtype='O')
+        a[0, 0] = b[0]
+        b[0, 0] = a[0]
+        ra = weakref.ref(a)
+        rb = weakref.ref(b)
+        del a, b
+        gc.collect()
+        assert_(ra() is rb() is None)
+
+    def test_subclass_cycle(self):
+        class Subclass(np.ndarray):
+            pass
+        a = Subclass(1, dtype='O')
+        a[0] = a
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_structured_cycle(self):
+        a = np.empty(1, dtype=[('a', 'O'), ('b', [('c', 'O'), ('d', 'i')])])
+        a[0]['b']['c'] = a
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_updateifcopy_cycle(self):
+        # an UPDATEIFCOPY array caught in a reference cycle is not guaranteed
+        # to update its base array, but we should at least check that it gets
+        # deallocated
+        a = np.zeros(1, dtype=([('a', 'f8'), ('b', 'O')]))
+        a['b'][0] = []
+        i = np.nditer(a, ['refs_ok'],
+                [['readwrite', 'updateifcopy']],
+                casting='same_kind',
+                op_dtypes=[np.dtype([('a', 'f4'), ('b', 'O')])])
+        a['b'][0].append(i.operands[0])
+        ra = weakref.ref(a)
+        del a, i
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_nditer_cycle(self):
+        a = np.empty(1, dtype='O')
+        b = np.nditer(a, ['refs_ok'])
+        a[0] = b
+        ra = weakref.ref(a)
+        del a, b
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_flat_cycle(self):
+        a = np.empty(1, dtype='O')
+        a[0] = a.flat
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_broadcast_cycle(self):
+        a = np.empty(1, dtype='O')
+        b = np.empty(1, dtype='O')
+        a[0] = np.broadcast(a, b)
+        ra = weakref.ref(a)
+        del a, b
+        gc.collect()
+        assert_(ra() is None)
+
 
 if __name__ == "__main__":
     run_module_suite()

@@ -4559,7 +4559,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     NpyIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
-    PyArrayMultiIter_Type.tp_free = PyArray_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
         return RETVAL;
     }
@@ -4569,7 +4568,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
         return RETVAL;
     }
-    PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
         return RETVAL;
     }
@@ -4584,7 +4582,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         return RETVAL;
     }
-    NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
         return RETVAL;
     }

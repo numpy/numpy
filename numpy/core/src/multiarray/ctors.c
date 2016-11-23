@@ -988,6 +988,13 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
+    if (!PyDataType_REFCHK(descr)) {
+        /*
+         * tp_alloc will have enabled GC tracking, but it's only necessary
+         * for object arrays
+         */
+        PyObject_GC_UnTrack(fa);
+    }
     if (fa == NULL) {
         Py_DECREF(descr);
         return NULL;
