@@ -555,10 +555,24 @@ class TestNegative(TestCase):
     def test_result(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning) 
+            sup.filter(RuntimeWarning)
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
                 assert_equal(operator.neg(a) + a, 0)
+
+
+class TestSubtract(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.sub, a, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.sub(a, a), 0)
 
 
 class TestAbs(TestCase):

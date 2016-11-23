@@ -796,12 +796,11 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
         /* The type resolver would have upcast already */
         if (out_dtypes[0]->type_num == NPY_BOOL) {
-            /* 2013-12-05, 1.9 */
-            if (DEPRECATE("numpy boolean subtract, the `-` operator, is "
-                          "deprecated, use the bitwise_xor, the `^` operator, "
-                          "or the logical_xor function instead.") < 0) {
-                return -1;
-            }
+            PyErr_Format(PyExc_TypeError,
+                "numpy boolean subtract, the `-` operator, is deprecated, "
+                "use the bitwise_xor, the `^` operator, or the logical_xor "
+                "function instead.");
+            return -1;
         }
         return ret;
     }
