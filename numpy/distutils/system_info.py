@@ -1488,7 +1488,8 @@ class lapack_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas')
 
-        if sys.platform == 'darwin' and not atlas_info:
+        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+                                             lapack_mkl_info):
             # Use the system lapack from Accelerate or vecLib under OSX
             args = []
             link_args = []
@@ -1593,7 +1594,8 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin' and not atlas_info:
+        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+                                             blas_mkl_info or blis_info):
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
