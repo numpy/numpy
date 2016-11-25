@@ -35,6 +35,12 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
+def _actual_bytes(x):
+    if not isinstance(x, np.ndarray):
+        x = np.array(x)
+    return np.sum((np.array(x.shape) - 1) * np.array(x.strides)) + x.itemsize
+
+
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     """
     Create a view into the array with the given shape and strides.
@@ -63,6 +69,11 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     Returns
     -------
     view : ndarray
+
+    Raises
+    ------
+    ValueError
+        Raised when given shape and strides lead out of bound of returned array
 
     See also
     --------
@@ -100,6 +111,9 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
         interface['strides'] = tuple(strides)
 
     array = np.asarray(DummyArray(interface, base=x))
+
+    if _actual_bytes(array) > _actual_bytes(x):
+        raise ValueError("given shape and strides exceed array bound")
 
     if array.dtype.fields is None and x.dtype.fields is not None:
         # This should only happen if x.dtype is [('', 'Vx')]
