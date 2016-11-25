@@ -67,6 +67,10 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
 
+    check_bounds : bool, optional
+        If set to True, check returned array will cause out of bounds of
+        original array, and raises ValueError on exceeding out of bounds.
+
     Returns
     -------
     view : ndarray
@@ -114,8 +118,11 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
 
     array = np.asarray(DummyArray(interface, base=x))
 
-    if check_bounds and _actual_bytes(array) > _actual_bytes(x):
-        raise ValueError("given shape and strides exceed array bound")
+    # check under/over reaching head/tail address
+    if (check_bounds and (np.any(np.array(strides) < 0) or
+                          _actual_bytes(array) > _actual_bytes(x))):
+        raise ValueError(("given shape and strides will cause"
+                          "out of bounds of original array"))
 
     if array.dtype.fields is None and x.dtype.fields is not None:
         # This should only happen if x.dtype is [('', 'Vx')]
