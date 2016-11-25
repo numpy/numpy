@@ -319,8 +319,10 @@ def test_as_strided():
 
     # Make sure that raises ValueError when shape, strides exceed bounds
     a = np.empty((4,), dtype=dt)
-    assert_raises(ValueError, as_strided, a, (5,), a.strides)
-    assert_raises(ValueError, as_strided, a, a.shape, (a.itemsize + 1,))
+    assert_raises(ValueError, as_strided,
+                  a, (5,), a.strides, check_bounds=True)
+    assert_raises(ValueError, as_strided,
+                  a, a.shape, (a.itemsize + 1,), check_bounds=True)
 
 def as_strided_writeable():
     arr = np.ones(10)

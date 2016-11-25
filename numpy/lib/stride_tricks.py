@@ -41,7 +41,8 @@ def _actual_bytes(x):
     return np.sum((np.array(x.shape) - 1) * np.array(x.strides)) + x.itemsize
 
 
-def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
+def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
+               check_bounds=False):
     """
     Create a view into the array with the given shape and strides.
 
@@ -73,7 +74,8 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     Raises
     ------
     ValueError
-        Raised when given shape and strides lead out of bound of returned array
+        Raised when check_bounds is True and given shape and strides lead
+        out of bound of returned array
 
     See also
     --------
@@ -112,7 +114,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     array = np.asarray(DummyArray(interface, base=x))
 
-    if _actual_bytes(array) > _actual_bytes(x):
+    if check_bounds and _actual_bytes(array) > _actual_bytes(x):
         raise ValueError("given shape and strides exceed array bound")
 
     if array.dtype.fields is None and x.dtype.fields is not None:
