@@ -123,16 +123,16 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
 
     array = np.asarray(DummyArray(interface, base=x))
 
+    if array.dtype.fields is None and x.dtype.fields is not None:
+        # This should only happen if x.dtype is [('', 'Vx')]
+        array.dtype = x.dtype
+
     head_orig, tail_orig = _actual_range(x)
     head_new, tail_new = _actual_range(array)
     # check under/over reaching head/tail address
     if check_bounds and (head_new < head_orig or tail_orig < tail_new):
         raise ValueError(("given shape and strides will cause"
                           "out of bounds of original array"))
-
-    if array.dtype.fields is None and x.dtype.fields is not None:
-        # This should only happen if x.dtype is [('', 'Vx')]
-        array.dtype = x.dtype
 
     view = _maybe_view_as_subclass(x, array)
 
