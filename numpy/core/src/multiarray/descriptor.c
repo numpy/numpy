@@ -287,7 +287,7 @@ _convert_from_tuple(PyObject *obj)
             type->elsize = itemsize;
         }
     }
-    else if (PyDict_Check(val) || PyDictProxy_Check(val)) {
+    else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
         /* Assume it's a metadata dictionary */
         if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);
@@ -773,6 +773,54 @@ _is_tuple_of_integers(PyObject *obj)
 }
 
 /*
+ * helper function for _use_inherit to disallow dtypes of the form
+ * (old_dtype, new_dtype) where either of the dtypes contains python
+ * objects - these dtypes are not useful and can be a source of segfaults,
+ * when an attempt is made to interpret a python object as a different dtype
+ * or vice versa
+ * an exception is made for dtypes of the form ('O', [('name', 'O')]), which
+ * people have been using to add a field to an object array without fields
+ */
+static int
+invalid_union_object_dtype(PyArray_Descr *new, PyArray_Descr *conv)
+{
+    PyObject *name, *tup;
+    PyArray_Descr *dtype;
+
+    if (!PyDataType_REFCHK(new) && !PyDataType_REFCHK(conv)) {
+        return 0;
+    }
+    if (PyDataType_HASFIELDS(new) || new->kind != 'O') {
+        goto fail;
+    }
+    if (!PyDataType_HASFIELDS(conv) || PyTuple_GET_SIZE(conv->names) != 1) {
+        goto fail;
+    }
+    name = PyTuple_GET_ITEM(conv->names, 0);
+    if (name == NULL) {
+        return -1;
+    }
+    tup = PyDict_GetItem(conv->fields, name);
+    if (tup == NULL) {
+        return -1;
+    }
+    dtype = (PyArray_Descr *)PyTuple_GET_ITEM(tup, 0);
+    if (dtype == NULL) {
+        return -1;
+    }
+    if (dtype->kind != 'O') {
+        goto fail;
+    }
+    return 0;
+
+fail:
+    PyErr_SetString(PyExc_ValueError,
+            "dtypes of the form (old_dtype, new_dtype) containing the object "
+            "dtype are not supported");
+    return -1;
+}
+
+/*
  * A tuple type would be either (generic typeobject, typesize)
  * or (fixed-length data-type, shape)
  *
@@ -807,6 +855,9 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     if (new->elsize && new->elsize != conv->elsize) {
         PyErr_SetString(PyExc_ValueError,
                 "mismatch in size of old and new data-descriptor");
+        goto fail;
+    }
+    if (new->elsize && invalid_union_object_dtype(new, conv)) {
         goto fail;
     }
     new->elsize = conv->elsize;
@@ -999,7 +1050,7 @@ _convert_from_dict(PyObject *obj, int align)
         || (offsets && (n > PyObject_Length(offsets)))
         || (titles && (n > PyObject_Length(titles)))) {
         PyErr_SetString(PyExc_ValueError,
-                "'names', 'formats', 'offsets', and 'titles' dicct "
+                "'names', 'formats', 'offsets', and 'titles' dict "
                 "entries must have the same length");
         goto fail;
     }
