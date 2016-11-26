@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 import itertools
 import operator
 
@@ -430,6 +431,27 @@ class TestConversion(TestCase):
                 assert_(np.array(-1, dtype=dt1)[()] == np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
+    def test_scalar_comparison_to_none(self):
+        # Scalars should just return False and not give a warnings.
+        # The comparisons are flagged by pep8, ignore that.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_(not np.float32(1) == None)
+            assert_(not np.str_('test') == None)
+            # This is dubious (see below):
+            assert_(not np.datetime64('NaT') == None)
+
+            assert_(np.float32(1) != None)
+            assert_(np.str_('test') != None)
+            # This is dubious (see below):
+            assert_(np.datetime64('NaT') != None)
+        assert_(len(w) == 0)
+
+        # For documentation purposes, this is why the datetime is dubious.
+        # At the time of deprecation this was no behaviour change, but
+        # it has to be considered when the deprecations are done.
+        assert_(np.equal(np.datetime64('NaT'), None))
+
 
 #class TestRepr(TestCase):
 #    def test_repr(self):
@@ -523,6 +545,34 @@ class TestMultiply(TestCase):
             assert_array_equal(np.float32(3.) * arr_like, np.full(3, 3.))
             assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
+
+
+class TestNegative(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.neg, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.neg(a) + a, 0)
+
+
+class TestSubtract(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.sub, a, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.sub(a, a), 0)
 
 
 class TestAbs(TestCase):

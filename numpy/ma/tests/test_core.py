@@ -1,4 +1,4 @@
-# pylint: disable-msg=W0401,W0511,W0611,W0612,W0614,R0201,E1102
+# pylint: disable-msg=W0400,W0511,W0611,W0612,W0614,R0201,E1102
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
@@ -1361,19 +1361,18 @@ class TestMaskedArrayArithmetic(TestCase):
         # With partial mask
         with suppress_warnings() as sup:
             sup.filter(FutureWarning, "Comparison to `None`")
-            a = array([1, 2], mask=[0, 1])
-            assert_equal(a == None, False)
-            assert_equal(a.data == None, False)
-            assert_equal(a.mask == None, False)
-            assert_equal(a != None, True)
+            a = array([None, 1], mask=[0, 1])
+            assert_equal(a == None, array([True, False], mask=[0, 1]))
+            assert_equal(a.data == None, [True, False])
+            assert_equal(a != None, array([False, True], mask=[0, 1]))
             # With nomask
-            a = array([1, 2], mask=False)
-            assert_equal(a == None, False)
-            assert_equal(a != None, True)
+            a = array([None, 1], mask=False)
+            assert_equal(a == None, [True, False])
+            assert_equal(a != None, [False, True])
             # With complete mask
-            a = array([1, 2], mask=True)
-            assert_equal(a == None, False)
-            assert_equal(a != None, True)
+            a = array([None, 2], mask=True)
+            assert_equal(a == None, array([False, True], mask=True))
+            assert_equal(a != None, array([True, False], mask=True))
             # Fully masked, even comparison to None should return "masked"
             a = masked
             assert_equal(a == None, masked)

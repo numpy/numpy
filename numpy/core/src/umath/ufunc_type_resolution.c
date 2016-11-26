@@ -368,10 +368,10 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+                             NPY_CASTING casting,
+                             PyArrayObject **operands,
+                             PyObject *type_tup,
+                             PyArray_Descr **out_dtypes)
 {
     int ret;
     ret = PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting, operands,
@@ -382,12 +382,10 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
 
     /* The type resolver would have upcast already */
     if (out_dtypes[0]->type_num == NPY_BOOL) {
-        /* 2013-12-05, 1.9 */
-        if (DEPRECATE("numpy boolean negative, the `-` operator, is "
-                      "deprecated, use the `~` operator or the logical_not "
-                      "function instead.") < 0) {
-            return -1;
-        }
+        PyErr_Format(PyExc_TypeError,
+            "The numpy boolean negative, the `-` operator, is not supported, "
+            "use the `~` operator or the logical_not function instead.");
+        return -1;
     }
 
     return ret;
@@ -798,12 +796,11 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
         /* The type resolver would have upcast already */
         if (out_dtypes[0]->type_num == NPY_BOOL) {
-            /* 2013-12-05, 1.9 */
-            if (DEPRECATE("numpy boolean subtract, the `-` operator, is "
-                          "deprecated, use the bitwise_xor, the `^` operator, "
-                          "or the logical_xor function instead.") < 0) {
-                return -1;
-            }
+            PyErr_Format(PyExc_TypeError,
+                "numpy boolean subtract, the `-` operator, is deprecated, "
+                "use the bitwise_xor, the `^` operator, or the logical_xor "
+                "function instead.");
+            return -1;
         }
         return ret;
     }
