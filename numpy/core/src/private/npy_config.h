@@ -4,6 +4,7 @@
 #include "config.h"
 #include "numpy/numpyconfig.h"
 #include "numpy/npy_cpu.h"
+#include "numpy/npy_os.h"
 
 /*
  * largest alignment the copy loops might require
@@ -69,6 +70,10 @@
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
+/* powl gives zero division warning on OS X, see gh-8307 */
+#if defined(HAVE_POWL) && defined(NPY_OS_DARWIN)
+#undef HAVE_POWL
+#endif
 
 /* Disable broken gnu trig functions */
 #if defined(HAVE_FEATURES_H)
