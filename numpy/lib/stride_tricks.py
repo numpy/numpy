@@ -46,7 +46,7 @@ def _actual_tail(x):
 
 
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
-               check_bounds=False):
+               check_bounds=True):
     """
     Create a view into the array with the given shape and strides.
 
