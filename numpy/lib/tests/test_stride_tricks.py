@@ -317,7 +317,7 @@ def test_as_strided():
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
 
-    # Make sure that raises ValueError when shape, strides exceed bounds
+    # Make sure that raises ValueError when shape, strides lead out of bounds
     a = np.empty((4,), dtype=dt)
     assert_raises(ValueError, as_strided,
                   a, (5,), a.strides, check_bounds=True)

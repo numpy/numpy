@@ -63,7 +63,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
 
     check_bounds : bool, optional
         If set to True, check returned array will cause out of bounds of
-        original array, and raises ValueError on exceeding out of bounds.
+        original array, and raises ValueError on out of bounds.
 
     Returns
     -------
@@ -121,7 +121,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         x_low, x_high = np.byte_bounds(x)
         a_low, a_high = np.byte_bounds(array)
         if a_low < x_low or x_high < a_high:
-            raise ValueError(("given shape and strides will cause"
+            raise ValueError(("given shape and strides will cause "
                               "out of bounds of original array"))
 
     view = _maybe_view_as_subclass(x, array)
