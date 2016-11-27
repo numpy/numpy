@@ -35,15 +35,14 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
-def _actual_range(x):
-    if not isinstance(x, np.ndarray):
-        x = np.array(x)
-    head = np.sum((np.array(x.shape) - 1) *
-                  np.array([s if s < 0 else 0 for s in x.strides]))
-    tail = (np.sum((np.array(x.shape) - 1) *
-                   np.array([s if s > 0 else 0 for s in x.strides])) +
-            x.itemsize)
-    return head, tail
+def _actual_head(x):
+    return sum((sh - 1) * (st if st < 0 else 0)
+               for sh, st in zip(x.shape, x.strides))
+
+
+def _actual_tail(x):
+    return sum((sh - 1) * (st if st > 0 else 0)
+               for sh, st in zip(x.shape, x.strides))
 
 
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
@@ -127,10 +126,9 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         # This should only happen if x.dtype is [('', 'Vx')]
         array.dtype = x.dtype
 
-    head_orig, tail_orig = _actual_range(x)
-    head_new, tail_new = _actual_range(array)
     # check under/over reaching head/tail address
-    if check_bounds and (head_new < head_orig or tail_orig < tail_new):
+    if check_bounds and (_actual_head(array) < _actual_head(x) or
+                         _actual_tail(x) < _actual_tail(array)):
         raise ValueError(("given shape and strides will cause"
                           "out of bounds of original array"))
 
