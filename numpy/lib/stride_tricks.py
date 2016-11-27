@@ -35,16 +35,6 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
-def _actual_head(x):
-    return sum((sh - 1) * (st if st < 0 else 0)
-               for sh, st in zip(x.shape, x.strides))
-
-
-def _actual_tail(x):
-    return sum((sh - 1) * (st if st > 0 else 0)
-               for sh, st in zip(x.shape, x.strides))
-
-
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
                check_bounds=True):
     """
@@ -127,10 +117,12 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         array.dtype = x.dtype
 
     # check under/over reaching head/tail address
-    if check_bounds and (_actual_head(array) < _actual_head(x) or
-                         _actual_tail(x) < _actual_tail(array)):
-        raise ValueError(("given shape and strides will cause"
-                          "out of bounds of original array"))
+    if check_bounds:
+        x_low, x_high = np.byte_bounds(x)
+        a_low, a_high = np.byte_bounds(array)
+        if a_low < x_low or x_high < a_high:
+            raise ValueError(("given shape and strides will cause"
+                              "out of bounds of original array"))
 
     view = _maybe_view_as_subclass(x, array)
 
