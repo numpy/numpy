@@ -1413,7 +1413,7 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
             break;
         }
         else {
-            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+            if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)arr))) {
                 needs_gc_tracking = 1;
             }
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
@@ -1482,7 +1482,7 @@ PyArray_MultiIterNew(int n, ...)
             break;
         }
         else {
-            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+            if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)arr))) {
                 needs_gc_tracking = 1;
             }
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
@@ -1572,7 +1572,7 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 if (it == NULL) {
                     goto fail;
                 }
-                if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+                if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)arr))) {
                     needs_gc_tracking = 1;
                 }
                 multi->iters[i++] = it;
@@ -1587,7 +1587,7 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             if (it == NULL) {
                 goto fail;
             }
-            if (PyDataType_REFCHK(PyArray_DESCR(arr))) {
+            if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)arr))) {
                 needs_gc_tracking = 1;
             }
             multi->iters[i++] = it;
