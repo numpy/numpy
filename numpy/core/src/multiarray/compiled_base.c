@@ -9,6 +9,7 @@
 #include "numpy/npy_math.h"
 #include "npy_config.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 
 
 /*
@@ -1475,6 +1476,9 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_RETURN_NONE;
 }
 
+#if defined NPY_HAVE_SSE2_INTRINSICS
+#include <emmintrin.h>
+#endif
 
 /*
  * This function packs boolean values in the input array into the bits of a
@@ -1497,13 +1501,41 @@ pack_inner(const char *inptr,
      *  No:  move on
      * Every 8th value, set the value of build and increment the outptr
      */
-    npy_intp index;
+    npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
+
+#if defined NPY_HAVE_SSE2_INTRINSICS && defined HAVE__M_FROM_INT64
+    if (in_stride == 1 && element_size == 1 && n_out > 2) {
+        __m128i zero = _mm_setzero_si128();
+        /* don't handle non-full 8-byte remainder */
+        npy_intp vn_out = n_out - (remain ? 1 : 0);
+        vn_out -= (vn_out & 2);
+        for (index = 0; index < vn_out; index += 2) {
+            unsigned int r;
+            /* swap as packbits is "big endian", note x86 can load unaligned */
+            npy_uint64 a = npy_bswap8(*(npy_uint64*)inptr);
+            npy_uint64 b = npy_bswap8(*(npy_uint64*)(inptr + 8));
+            __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
+            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
+            v = _mm_cmpeq_epi8(v, zero);
+            v = _mm_cmpeq_epi8(v, zero);
+            /* extract msb of 16 bytes and pack it into 16 bit */
+            r = _mm_movemask_epi8(v);
+            /* store result */
+            memcpy(outptr, &r, 1);
+            outptr += out_stride;
+            memcpy(outptr, (char*)&r + 1, 1);
+            outptr += out_stride;
+            inptr += 16;
+        }
+    }
+#endif
 
     if (remain == 0) {                  /* assumes n_in > 0 */
         remain = 8;
     }
-    for (index = 0; index < n_out; index++) {
+    /* don't reset index to handle remainder of above block */
+    for (; index < n_out; index++) {
         char build = 0;
         int i, maxi;
         npy_intp j;
