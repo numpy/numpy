@@ -5319,7 +5319,8 @@ add_newdoc('numpy.core.multiarray', 'packbits',
     Parameters
     ----------
     myarray : array_like
-        An integer type array whose elements should be packed to bits.
+        An array of integers or booleans whose elements should be packed to
+        bits.
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.

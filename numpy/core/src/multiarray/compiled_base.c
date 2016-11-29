@@ -1551,10 +1551,6 @@ pack_bits(PyObject *input, int axis)
     if (new == NULL) {
         return NULL;
     }
-    /* Handle empty array separately */
-    if (PyArray_SIZE(new) == 0) {
-        return PyArray_Copy(new);
-    }
 
     if (PyArray_NDIM(new) == 0) {
         char *optr, *iptr;
@@ -1656,10 +1652,6 @@ unpack_bits(PyObject *input, int axis)
     Py_DECREF(inp);
     if (new == NULL) {
         return NULL;
-    }
-    /* Handle zero-dim array separately */
-    if (PyArray_SIZE(new) == 0) {
-        return PyArray_Copy(new);
     }
 
     if (PyArray_NDIM(new) == 0) {
