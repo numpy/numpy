@@ -51,6 +51,17 @@ In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
+``check_bounds`` keyword argument for ``as_strided`` and ``resample`` function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A ``check_bound`` keyword argument is added to
+``numpy.lib.stride_tricks.as_strided``.
+If ``check_bounds=True`` is passed to ``as_strided``, raise ``ValueError`` when
+given shape and strides lead out of bound on NumPy array.
+Default for a ``check_bounds`` keyword argument is ``False``, without checking
+out of bounds, as same as prior version of this function.
+
+And new ``numpy.lib.stride_tricks.resample`` function, equivalent to ``as_strided``
+with ``check_bounds=True``, is available.
 
 Improvements
 ============

@@ -41,6 +41,8 @@ def resample(x, shape=None, strides=None, subok=False, writable=True):
     with checking shape and strides will lead out of bounds.
     Equivalent to `as_strided` with check_bounds=True.
 
+    .. versionadded:: 1.13.0
+
     Parameters
     ----------
     x : ndarray
@@ -100,6 +102,8 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         is advisable to set this to False if possible (see Notes).
 
     check_bounds : bool, optional
+        .. versionadded:: 1.13
+
         If set to True, check returned array will cause out of bounds of
         original array, and raises ValueError on out of bounds.
 
