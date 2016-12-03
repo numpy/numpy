@@ -36,7 +36,7 @@ def _maybe_view_as_subclass(original_array, new_array):
 
 
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
-               check_bounds=True):
+               check_bounds=False):
     """
     Create a view into the array with the given shape and strides.
 

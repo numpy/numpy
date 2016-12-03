@@ -2067,8 +2067,7 @@ def test_iter_buffered_reduce_reuse():
                     # last stride is reduced and because of that not
                     # important for this test, as it is the inner stride.
                     strides = (xs * a.itemsize, ys * a.itemsize, a.itemsize)
-                    arr = np.lib.stride_tricks.as_strided(
-                        a, (3, 3, 3), strides, check_bounds=False)
+                    arr = np.lib.stride_tricks.as_strided(a, (3, 3, 3), strides)
 
                     for skip in [0, 1]:
                         yield arr, op_axes, skip
