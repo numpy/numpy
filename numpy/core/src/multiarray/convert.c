@@ -43,10 +43,21 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
     if (nbytes < 16 * 1024 * 1024) {
         return 0;
     }
+
     /* btrfs can take a while to allocate making release worthwhile */
     NPY_BEGIN_ALLOW_THREADS;
-    r = fallocate(fileno(fp), 0, npy_ftell(fp), nbytes);
+    /*
+     * flush in case there might be some unexpected interactions between the
+     * fallocate call and unwritten data in the descriptor
+     */
+    fflush(fp);
+    /*
+     * the flag "1" (=FALLOC_FL_KEEP_SIZE) is needed for the case of files
+     * opened in append mode (issue #8329)
+     */
+    r = fallocate(fileno(fp), 1, npy_ftell(fp), nbytes);
     NPY_END_ALLOW_THREADS;
+
     /*
      * early exit on no space, other errors will also get found during fwrite
      */
