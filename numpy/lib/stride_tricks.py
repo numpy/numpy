@@ -120,7 +120,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
     if check_bounds:
         x_low, x_high = np.byte_bounds(x)
         a_low, a_high = np.byte_bounds(array)
-        if a_low < x_low or x_high < a_high:
+        if x.size == 0 or a_low < x_low or x_high < a_high:
             raise ValueError(("given shape and strides will cause "
                               "out of bounds of original array"))
 
