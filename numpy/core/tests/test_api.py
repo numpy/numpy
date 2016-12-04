@@ -106,7 +106,7 @@ def test_array_array():
              dict(__array_struct__=a.__array_struct__))
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
     ## instead we get a array([...], dtype=">V18")
-    assert_equal(str(np.array(o).data), str(a.data))
+    assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array
     o = type("o", (object,),
