@@ -1660,6 +1660,8 @@ fail:
 static PyObject *
 unpack_bits(PyObject *input, int axis)
 {
+    static int unpack_init = 0;
+    static char unpack_lookup[256][8];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1725,6 +1727,28 @@ unpack_bits(PyObject *input, int axis)
         goto fail;
     }
 
+    /* setup lookup table under GIL, big endian 0..256 as bytes */
+    if (unpack_init == 0) {
+        npy_uint64 j;
+        npy_uint64 * unpack_lookup_64 = (npy_uint64 *)unpack_lookup;
+        for (j=0; j < 256; j++) {
+            npy_uint64 v = 0;
+            v |= (npy_uint64)((j &   1) ==   1);
+            v |= (npy_uint64)((j &   2) ==   2) << 8;
+            v |= (npy_uint64)((j &   4) ==   4) << 16;
+            v |= (npy_uint64)((j &   8) ==   8) << 24;
+            v |= (npy_uint64)((j &  16) ==  16) << 32;
+            v |= (npy_uint64)((j &  32) ==  32) << 40;
+            v |= (npy_uint64)((j &  64) ==  64) << 48;
+            v |= (npy_uint64)((j & 128) == 128) << 56;
+#if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
+            v = npy_bswap8(v);
+#endif
+            unpack_lookup_64[j] = v;
+        }
+        unpack_init = 1;
+    }
+
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(new, axis));
 
     n_in = PyArray_DIM(new, axis);
@@ -1736,15 +1760,25 @@ unpack_bits(PyObject *input, int axis)
         unsigned const char *inptr = PyArray_ITER_DATA(it);
         char *outptr = PyArray_ITER_DATA(ot);
 
-        for (index = 0; index < n_in; index++) {
-            unsigned char mask = 128;
-
-            for (i = 0; i < 8; i++) {
-                *outptr = ((mask & (*inptr)) != 0);
-                outptr += out_stride;
-                mask >>= 1;
+        if (out_stride == 1) {
+            /* for unity stride we can just copy out of the lookup table */
+            for (index = 0; index < n_in; index++) {
+                memcpy(outptr, unpack_lookup[*inptr], 8);
+                outptr += 8;
+                inptr += in_stride;
             }
-            inptr += in_stride;
+        }
+        else {
+            for (index = 0; index < n_in; index++) {
+                unsigned char mask = 128;
+
+                for (i = 0; i < 8; i++) {
+                    *outptr = ((mask & (*inptr)) != 0);
+                    outptr += out_stride;
+                    mask >>= 1;
+                }
+                inptr += in_stride;
+            }
         }
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
