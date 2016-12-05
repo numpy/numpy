@@ -3724,6 +3724,15 @@ class TestIO(object):
             f.seek(d.nbytes)
             d.tofile(f)
             assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
+        # check append mode (gh-8329)
+        open(self.filename, "w").close() # delete file contents
+        with open(self.filename, "ab") as f:
+            d.tofile(f)
+        assert_array_equal(d, np.fromfile(self.filename))
+        with open(self.filename, "ab") as f:
+            d.tofile(f)
+        assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
+
 
     def test_file_position_after_fromfile(self):
         # gh-4118
@@ -3982,7 +3991,10 @@ class TestResize(TestCase):
 
     def test_int_shape(self):
         x = np.eye(3)
-        x.resize(3)
+        if IS_PYPY:
+            x.resize(3, refcheck=False)
+        else:
+            x.resize(3)
         assert_array_equal(x, np.eye(3)[0,:])
 
     def test_none_shape(self):
@@ -4005,7 +4017,10 @@ class TestResize(TestCase):
 
     def test_zeros_appended(self):
         x = np.eye(3)
-        x.resize(2, 3, 3)
+        if IS_PYPY:
+            x.resize(2, 3, 3, refcheck=False)
+        else:
+            x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
