@@ -141,10 +141,10 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__getitem__, b)
 
     def test_ellipsis_index(self):
-        # Ellipsis index does not create a view
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
+        assert_(a[...] is not a)
         assert_equal(a[...], a)
         # `a[...]` was `a` in numpy <1.9.
         assert_(a[...].base is a)
