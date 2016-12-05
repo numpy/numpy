@@ -693,18 +693,36 @@ class TestNanFunctions_Median(TestCase):
     def test_float_special(self):
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
-            a = np.array([[np.inf,  np.nan], [np.nan, np.nan]])
-            assert_equal(np.nanmedian(a, axis=0), [np.inf,  np.nan])
-            assert_equal(np.nanmedian(a, axis=1), [np.inf,  np.nan])
-            assert_equal(np.nanmedian(a), np.inf)
+            for inf in [np.inf, -np.inf]:
+                a = np.array([[inf,  np.nan], [np.nan, np.nan]])
+                assert_equal(np.nanmedian(a, axis=0), [inf,  np.nan])
+                assert_equal(np.nanmedian(a, axis=1), [inf,  np.nan])
+                assert_equal(np.nanmedian(a), inf)
 
-            # minimum fill value check
-            a = np.array([[np.nan, np.nan, np.inf], [np.nan, np.nan, np.inf]])
-            assert_equal(np.nanmedian(a, axis=1), np.inf)
+                # minimum fill value check
+                a = np.array([[np.nan, np.nan, inf],
+                             [np.nan, np.nan, inf]])
+                assert_equal(np.nanmedian(a), inf)
+                assert_equal(np.nanmedian(a, axis=0), [np.nan, np.nan, inf])
+                assert_equal(np.nanmedian(a, axis=1), inf)
 
-            # no mask path
-            a = np.array([[np.inf, np.inf], [np.inf, np.inf]])
-            assert_equal(np.nanmedian(a, axis=1), np.inf)
+                # no mask path
+                a = np.array([[inf, inf], [inf, inf]])
+                assert_equal(np.nanmedian(a, axis=1), inf)
+
+                for i in range(0, 10):
+                    for j in range(1, 10):
+                        a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
+                        assert_equal(np.nanmedian(a), inf)
+                        assert_equal(np.nanmedian(a, axis=1), inf)
+                        assert_equal(np.nanmedian(a, axis=0),
+                                     ([np.nan] * i) + [inf] * j)
+
+                        a = np.array([([np.nan] * i) + ([-inf] * j)] * 2)
+                        assert_equal(np.nanmedian(a), -inf)
+                        assert_equal(np.nanmedian(a, axis=1), -inf)
+                        assert_equal(np.nanmedian(a, axis=0),
+                                     ([np.nan] * i) + [-inf] * j)
 
 
 class TestNanFunctions_Percentile(TestCase):
