@@ -3991,10 +3991,7 @@ class TestResize(TestCase):
 
     def test_int_shape(self):
         x = np.eye(3)
-        if IS_PYPY:
-            x.resize(3, refcheck=False)
-        else:
-            x.resize(3)
+        x.resize(3)
         assert_array_equal(x, np.eye(3)[0,:])
 
     def test_none_shape(self):
@@ -4017,10 +4014,7 @@ class TestResize(TestCase):
 
     def test_zeros_appended(self):
         x = np.eye(3)
-        if IS_PYPY:
-            x.resize(2, 3, 3, refcheck=False)
-        else:
-            x.resize(2, 3, 3)
+        x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
