@@ -223,22 +223,19 @@ prepare_index_tuple(PyObject *index)
         }
     }
 
-    /* If the index is not a tuple, conver it into (index,) */
+    /* If the index is not a tuple, convert it into (index,) */
     if (!make_tuple && !PyTuple_CheckExact(index)) {
         make_tuple = 1;
         index_as_tuple = Py_BuildValue("(O)", index);
     }
     /* Otherwise, check if the tuple is too long */
-    else {
-        n = PyTuple_GET_SIZE(index_as_tuple);
-        if (n > NPY_MAXDIMS * 2) {
-            PyErr_SetString(PyExc_IndexError,
-                            "too many indices for array");
-            if (make_tuple) {
-                Py_DECREF(index_as_tuple);
-            }
-            return NULL;
+    else if (PyTuple_GET_SIZE(index_as_tuple) > NPY_MAXDIMS * 2) {
+        PyErr_SetString(PyExc_IndexError,
+                        "too many indices for array");
+        if (make_tuple) {
+            Py_DECREF(index_as_tuple);
         }
+        return NULL;
     }
 
     /* if we didn't make a tuple, then we're creating another reference */
