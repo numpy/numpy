@@ -702,9 +702,9 @@ def _getconv(dtype):
     elif issubclass(typ, np.complex):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
-        return bytes
+        return asbytes
     else:
-        return str
+        return asstr
 
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,

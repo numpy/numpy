@@ -686,6 +686,15 @@ class TestLoadTxt(TestCase):
                      dtype=dt)
         assert_array_equal(x, a)
 
+    def test_str_dtype(self):
+        # see gh-8033
+        c = ["str1", "str2"]
+
+        for dt in (str, np.bytes_):
+            a = np.array(["str1", "str2"], dtype=dt)
+            x = np.loadtxt(c, dtype=dt)
+            assert_array_equal(x, a)
+
     def test_empty_file(self):
         with suppress_warnings() as sup:
             sup.filter(message="loadtxt: Empty input file:")
