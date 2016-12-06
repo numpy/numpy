@@ -5107,7 +5107,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
-    bincount(x, weights=None, minlength=None)
+    bincount(x, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
