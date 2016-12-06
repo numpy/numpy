@@ -116,10 +116,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     else {
         minlength = PyArray_PyIntAsIntp(mlength);
-        if (minlength <= 0) {
+        if (minlength < 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
-                                "minlength must be positive");
+                                "minlength must be non-negative");
             }
             goto fail;
         }

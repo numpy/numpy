@@ -2369,10 +2369,15 @@ class TestBincount(TestCase):
         x = np.array([0, 1, 0, 1, 1])
         y = np.bincount(x, minlength=3)
         assert_array_equal(y, np.array([2, 3, 0]))
+        x = []
+        y = np.bincount(x, minlength=0)
+        assert_array_equal(y, np.array([]))
 
     def test_with_minlength_smaller_than_maxvalue(self):
         x = np.array([0, 1, 1, 2, 2, 3, 3])
         y = np.bincount(x, minlength=2)
+        assert_array_equal(y, np.array([1, 2, 2, 2]))
+        y = np.bincount(x, minlength=0)
         assert_array_equal(y, np.array([1, 2, 2, 2]))
 
     def test_with_minlength_and_weights(self):
@@ -2397,22 +2402,16 @@ class TestBincount(TestCase):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "must be positive",
+                            "must be non-negative",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError,
-                            "must be positive",
-                            lambda: np.bincount(x, minlength=0))
 
         x = np.arange(5)
         assert_raises_regex(TypeError,
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "minlength must be positive",
+                            "minlength must be non-negative",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError,
-                            "minlength must be positive",
-                            lambda: np.bincount(x, minlength=0))
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_dtype_reference_leaks(self):
