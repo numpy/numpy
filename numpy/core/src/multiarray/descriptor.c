@@ -2360,9 +2360,16 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyObject *ret, *mod, *obj;
     PyObject *state;
     char endian;
-    int elsize, alignment;
+    int elsize, alignment, builtin;
 
-    ret = PyTuple_New(3);
+    builtin = self->fields == Py_None;
+    if (builtin) {
+        /* don't need to save any state for builtin dtypes */
+        ret = PyTuple_New(2);
+    }
+    else {
+        ret = PyTuple_New(3);
+    }
     if (ret == NULL) {
         return NULL;
     }
@@ -2391,7 +2398,10 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         }
         obj = PyUString_FromFormat("%c%d",self->kind, elsize);
     }
-    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
+    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, !builtin));
+    if (builtin) {
+        return ret;
+    }
 
     /*
      * Now return the state which is at least byteorder,

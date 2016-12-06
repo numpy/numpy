@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import pickle
 
 import numpy as np
 from numpy.core.test_rational import rational
@@ -608,6 +609,29 @@ class TestDtypeAttributes(TestCase):
         class user_def_subcls(np.void):
             pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
+
+
+class TestPickling(TestCase):
+
+    def test_roundtrip(self):
+        dtypes = ['i', '<i', '>i', 'V2', [('a', 'f'), ('b', 'U')],
+                  [('a', 'f', (2, 2))], 'm', 'M']
+        for dtype in dtypes:
+            dt = np.dtype(dtype)
+            dt2 = pickle.loads(pickle.dumps(dt))
+            assert_equal(dt, dt2)
+
+    def test_builtin(self):
+        # gh-4317
+        dt = np.dtype(float)
+        dt2 = pickle.loads(pickle.dumps(dt))
+        assert_(dt2 is dt)
+        assert_equal(dt2.isbuiltin, 1)
+
+        dt = np.dtype(float, copy=True)
+        dt2 = pickle.loads(pickle.dumps(dt))
+        assert_equal(dt, dt2)
+        assert_equal(dt2.isbuiltin, 0)
 
 
 def test_rational_dtype():
