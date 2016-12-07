@@ -614,7 +614,7 @@ class TestDtypeAttributes(TestCase):
 class TestPickling(TestCase):
 
     def test_roundtrip(self):
-        dtypes = ['i', '<i', '>i', [('a', 'f'), ('b', 'b')], 'U', 'V', 'U2',
+        dtypes = ['i', '<i', '>i', [('a', 'f'), ('b', 'b')], 'U', 'U2',
                   'V2', 'O', [('a', 'f', (2, 2))], 'timedelta64[s]',
                   'datetime64[h]']
         for dtype in dtypes:

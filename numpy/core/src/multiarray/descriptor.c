@@ -2363,7 +2363,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyObject *state;
     char endian;
     int elsize, alignment, no_state;
-    static PyObject * np_dtype;
+    static PyObject *np_dtype;
 
     /* for most built-in dtypes, no extra state needs to be saved */
     no_state = self->fields == Py_None &&
