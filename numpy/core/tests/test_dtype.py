@@ -637,8 +637,7 @@ class TestPickling(TestCase):
         # check that endianness is handled correctly - this pickle was
         # generated using pickle.dumps(np.dtype('f')) in a little-endian
         # environment
-        le_pickle = (b'\x80\x03cnumpy\ndtype\nq\x00X\x03\x00\x00\x00<f4q\x01K'
-                     b'\x00K\x00\x87q\x02Rq\x03.')
+        le_pickle = (b"cnumpy\ndtype\np0\n(S'<f4'\np1\nI0\nI0\ntp2\nRp3\n.")
         # this is what would be generated in a big-endian environment
         be_pickle = le_pickle.replace(b'<', b'>')
         le_dt = pickle.loads(le_pickle)
