@@ -1071,7 +1071,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
 #if @precision@ == 3
     const npy_longdouble A_crossover = 10.0l;
     const npy_longdouble B_crossover = 0.6417l;
-#if NPy_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
     const npy_longdouble FOUR_SQRT_MIN = 5.9666725849601654e-154;
 #else
     const npy_longdouble FOUR_SQRT_MIN = 7.3344154702193886625e-2466l;
