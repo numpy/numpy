@@ -2383,6 +2383,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
+    Py_INCREF(np_dtype);
     PyTuple_SET_ITEM(ret, 0, np_dtype);
 
     endian = self->byteorder;
