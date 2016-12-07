@@ -10,8 +10,8 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "_datetime.h"
 #include "common.h"
@@ -2342,7 +2342,9 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
 }
 
 /*
- * return a tuple of (callable object, args, state).
+ * return a tuple of (callable object, args, state), or just
+ * (callable object, args) for built-in types that don't require any extra
+ * state
  *
  * TODO: This method needs to change so that unpickling doesn't
  *       use __setstate__. This is required for the dtype
@@ -2357,14 +2359,17 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
      * arraydescr_setstate.
     */
     const int version = 4;
-    PyObject *ret, *mod, *obj;
+    PyObject *ret, *obj;
     PyObject *state;
     char endian;
-    int elsize, alignment, builtin;
+    int elsize, alignment, no_state;
+    static PyObject * np_dtype;
 
-    builtin = self->fields == Py_None;
-    if (builtin) {
-        /* don't need to save any state for builtin dtypes */
+    /* for most built-in dtypes, no extra state needs to be saved */
+    no_state = self->fields == Py_None &&
+            !PyTypeNum_ISEXTENDED(self->type_num) &&
+            !PyDataType_ISDATETIME(self);
+    if (no_state) {
         ret = PyTuple_New(2);
     }
     else {
@@ -2373,18 +2378,21 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core.multiarray");
-    if (mod == NULL) {
+    npy_cache_import("numpy.core.multiarray", "dtype", &np_dtype);
+    if (np_dtype == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttrString(mod, "dtype");
-    Py_DECREF(mod);
-    if (obj == NULL) {
-        Py_DECREF(ret);
-        return NULL;
+    PyTuple_SET_ITEM(ret, 0, np_dtype);
+
+    endian = self->byteorder;
+    if (endian == '=') {
+        endian = '<';
+        if (!PyArray_IsNativeByteOrder(endian)) {
+            endian = '>';
+        }
     }
-    PyTuple_SET_ITEM(ret, 0, obj);
+
     if (PyTypeNum_ISUSERDEF(self->type_num)
             || ((self->type_num == NPY_VOID
                     && self->typeobj != &PyVoidArrType_Type))) {
@@ -2396,10 +2404,20 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
-        obj = PyUString_FromFormat("%c%d",self->kind, elsize);
+
+        if (no_state && endian != '|') {
+            /*
+             * if we aren't saving any extra state, then the endianness needs
+             * to get passed into np.dtype instead
+             */
+            obj = PyUString_FromFormat("%c%c%d", endian, self->kind, elsize);
+        }
+        else {
+            obj = PyUString_FromFormat("%c%d", self->kind, elsize);
+        }
     }
-    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, !builtin));
-    if (builtin) {
+    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, !no_state));
+    if (no_state) {
         return ret;
     }
 
@@ -2407,13 +2425,6 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
      * Now return the state which is at least byteorder,
      * subarray, and fields
      */
-    endian = self->byteorder;
-    if (endian == '=') {
-        endian = '<';
-        if (!PyArray_IsNativeByteOrder(endian)) {
-            endian = '>';
-        }
-    }
     if (PyDataType_ISDATETIME(self)) {
         PyObject *newobj;
         state = PyTuple_New(9);

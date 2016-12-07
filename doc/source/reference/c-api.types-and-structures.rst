@@ -355,9 +355,9 @@ PyArrayDescr_Type
 
 .. c:member:: PyObject *PyArray_Descr.fields
 
-    For built-in data types, this is set to ``Py_None``. Otherwise,
-    if this is non-``NULL``, then this data-type-descriptor has fields
-    described by a Python dictionary whose keys are names (and also
+    For built-in data types, this is set to ``Py_None``. For other data types
+    without fields, it is ``NULL``. Otherwise, it is a pointer to a
+    Python dictionary whose keys are names (and also
     titles if given) and whose values are tuples that describe the
     fields. Recall that a data-type-descriptor always describes a
     fixed-length set of bytes. A field is a named sub-region of that

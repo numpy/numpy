@@ -614,8 +614,9 @@ class TestDtypeAttributes(TestCase):
 class TestPickling(TestCase):
 
     def test_roundtrip(self):
-        dtypes = ['i', '<i', '>i', 'V2', [('a', 'f'), ('b', 'U')],
-                  [('a', 'f', (2, 2))], 'm', 'M']
+        dtypes = ['i', '<i', '>i', [('a', 'f'), ('b', 'b')], 'U', 'V', 'U2',
+                  'V2', 'O', [('a', 'f', (2, 2))], 'timedelta64[s]',
+                  'datetime64[h]']
         for dtype in dtypes:
             dt = np.dtype(dtype)
             dt2 = pickle.loads(pickle.dumps(dt))
@@ -632,6 +633,24 @@ class TestPickling(TestCase):
         dt2 = pickle.loads(pickle.dumps(dt))
         assert_equal(dt, dt2)
         assert_equal(dt2.isbuiltin, 0)
+
+        # check that endianness is handled correctly - this pickle was
+        # generated using pickle.dumps(np.dtype('f')) in a little-endian
+        # environment
+        le_pickle = (b'\x80\x03cnumpy\ndtype\nq\x00X\x03\x00\x00\x00<f4q\x01K'
+                     b'\x00K\x00\x87q\x02Rq\x03.')
+        # this is what would be generated in a big-endian environment
+        be_pickle = le_pickle.replace(b'<', b'>')
+        le_dt = pickle.loads(le_pickle)
+        be_dt = pickle.loads(be_pickle)
+        assert_equal(le_dt, np.dtype('<f'))
+        assert_equal(be_dt, np.dtype('>f'))
+        if sys.byteorder == 'little':
+            assert_equal(le_dt.isbuiltin, 1)
+            assert_equal(be_dt.isbuiltin, 0)
+        else:
+            assert_equal(le_dt.isbuiltin, 0)
+            assert_equal(be_dt.isbuiltin, 1)
 
 
 def test_rational_dtype():
