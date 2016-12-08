@@ -528,11 +528,7 @@ format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-#if PY_VERSION_HEX >= 0x02070000
     if (val.real == 0.0 && npy_signbit(val.real) == 0) {
-#else
-    if (val.real == 0.0) {
-#endif
         PyOS_snprintf(format, sizeof(format), _FMT1, prec);
         res = NumPyOS_ascii_format@suff@(buf, buflen - 1, format, val.imag, 0);
         if (res == NULL) {
@@ -724,12 +720,9 @@ timedeltatype_repr(PyObject *self)
     }
     else {
         /*
-         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
-         * or if HAVE_LONG_LONG is not defined
+         * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
-#if defined(HAVE_LONG_LONG) && \
-           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
-            (PY_VERSION_HEX >= 0x03020000))
+#if defined(HAVE_LONG_LONG)
         ret = PyUString_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
 #else
@@ -830,12 +823,9 @@ timedeltatype_str(PyObject *self)
     }
     else {
         /*
-         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
-         * or if HAVE_LONG_LONG is not defined
+         * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
-#if defined(HAVE_LONG_LONG) && \
-           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
-            (PY_VERSION_HEX >= 0x03020000))
+#if defined(HAVE_LONG_LONG)
         ret = PyUString_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
 #else
