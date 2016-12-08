@@ -21,19 +21,6 @@ if sys.version_info[:2] >= (3, 3):
             return len(v) * v.itemsize
         else:
             return np.prod(v.shape) * v.itemsize
-elif sys.version_info[0] >= 3:
-    import array as _array
-
-    ucs4 = (_array.array('u').itemsize == 4)
-
-    def buffer_length(arr):
-        if isinstance(arr, unicode):
-            return _array.array('u').itemsize * len(arr)
-        v = memoryview(arr)
-        if v.shape is None:
-            return len(v) * v.itemsize
-        else:
-            return np.prod(v.shape) * v.itemsize
 else:
     if len(buffer(sixu('u'))) == 4:
         ucs4 = True
