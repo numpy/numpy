@@ -12,6 +12,7 @@ import shutil
 
 import distutils
 from distutils.errors import DistutilsError
+from distutils.msvccompiler import get_build_architecture
 try:
     from threading import local as tlocal
 except ImportError:
@@ -2287,21 +2288,3 @@ def msvc_version(compiler):
         raise ValueError("Compiler instance is not msvc (%s)"\
                          % compiler.compiler_type)
     return compiler._MSVCCompiler__version
-
-if sys.version[:3] >= '2.5':
-    def get_build_architecture():
-        from distutils.msvccompiler import get_build_architecture
-        return get_build_architecture()
-else:
-    #copied from python 2.5.1 distutils/msvccompiler.py
-    def get_build_architecture():
-        """Return the processor architecture.
-
-        Possible results are "Intel", "Itanium", or "AMD64".
-        """
-        prefix = " bit ("
-        i = sys.version.find(prefix)
-        if i == -1:
-            return "Intel"
-        j = sys.version.find(")", i)
-        return sys.version[i+len(prefix):j]

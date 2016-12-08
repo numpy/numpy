@@ -553,18 +553,7 @@ def test_pickle_python2_python3():
                   'py3-objarr.npy', 'py3-objarr.npz']:
         path = os.path.join(data_dir, fname)
 
-        if (fname.endswith('.npz') and sys.version_info[0] == 2 and
-                sys.version_info[1] < 7):
-            # Reading object arrays directly from zipfile appears to fail
-            # on Py2.6, see cfae0143b4
-            continue
-
         for encoding in ['bytes', 'latin1']:
-            if (sys.version_info[0] >= 3 and sys.version_info[1] < 4 and
-                    encoding == 'bytes'):
-                # The bytes encoding is available starting from Python 3.4
-                continue
-
             data_f = np.load(path, encoding=encoding)
             if fname.endswith('.npz'):
                 data = data_f['x']

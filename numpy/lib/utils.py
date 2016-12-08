@@ -917,13 +917,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             continue
 
                         try:
-                            # Catch SystemExit, too
-                            base_exc = BaseException
-                        except NameError:
-                            # Python 2.4 doesn't have BaseException
-                            base_exc = Exception
-
-                        try:
                             old_stdout = sys.stdout
                             old_stderr = sys.stderr
                             try:
@@ -933,7 +926,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             finally:
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
-                        except base_exc:
+                        # Catch SystemExit, too
+                        except BaseException:
                             continue
 
             for n, v in _getmembers(item):
