@@ -2121,8 +2121,6 @@ class suppress_warnings(object):
             raise RuntimeError("cannot enter suppress_warnings twice.")
 
         self._orig_show = warnings.showwarning
-        if hasattr(warnings, "_showwarnmsg"):
-            self._orig_showmsg = warnings._showwarnmsg
         self._filters = warnings.filters
         warnings.filters = self._filters[:]
 
@@ -2146,25 +2144,17 @@ class suppress_warnings(object):
                     module=module_regex)
                 self._tmp_modules.add(mod)
         warnings.showwarning = self._showwarning
-        if hasattr(warnings, "_showwarnmsg"):
-            warnings._showwarnmsg = self._showwarnmsg
         self._clear_registries()
 
         return self
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        if hasattr(warnings, "_showwarnmsg"):
-            warnings._showwarnmsg = self._orig_showmsg
         warnings.filters = self._filters
         self._clear_registries()
         self._entered = False
         del self._orig_show
         del self._filters
-
-    def _showwarnmsg(self, msg):
-        self._showwarning(msg.message, msg.category, msg.filename, msg.lineno,
-                          msg.file, msg.line, use_warnmsg=msg)
 
     def _showwarning(self, message, category, filename, lineno,
                      *args, **kwargs):
