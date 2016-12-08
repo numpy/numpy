@@ -40,7 +40,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"
-#include "numpymemoryview.h"
 #include "convert_datatype.h"
 #include "conversion_utils.h"
 #include "nditer_pywrap.h"
@@ -4596,14 +4595,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     Py_DECREF(c_api);
     if (PyErr_Occurred()) {
         goto err;
-    }
-
-    /* Initialize types in numpymemoryview.c */
-    if (_numpymemoryview_init(&s) < 0) {
-        return RETVAL;
-    }
-    if (s != NULL) {
-        PyDict_SetItemString(d, "memorysimpleview", s);
     }
 
     /*

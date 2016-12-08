@@ -5721,9 +5721,6 @@ class TestMinScalarType(object):
         assert_equal(wanted, dt)
 
 
-if sys.version_info[:2] == (2, 6):
-    from numpy.core.multiarray import memorysimpleview as memoryview
-
 from numpy.core._internal import _dtype_from_pep3118
 
 
