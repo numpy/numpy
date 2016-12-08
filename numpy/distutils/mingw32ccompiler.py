@@ -241,10 +241,11 @@ def find_python_dll():
     print("Looking for %s" % dllname)
 
     # We can't do much here:
-    # - find it in python main dir
+    # - find it in the virtualenv (sys.prefix)
+    # - find it in python main dir (sys.base_prefix, if in a virtualenv)
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
-    lib_dirs = [sys.prefix, os.path.join(sys.prefix, 'lib')]
+    lib_dirs = [sys.prefix, sys.base_prefix, os.path.join(sys.prefix, 'lib')]
     try:
         lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
     except KeyError:
@@ -390,6 +391,13 @@ def _build_import_library_amd64():
                   (out_file))
         return
 
+    # didn't exist in virtualenv, maybe in base distribution?
+    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
+    if os.path.isfile(base_file):
+        log.debug('Skip building import library: "%s" exists' %
+                  (base_file))
+        return
+
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
 
@@ -409,9 +417,20 @@ def _build_import_library_x86():
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
     if not os.path.isfile(lib_file):
-        log.warn('Cannot build import library: "%s" not found' % (lib_file))
-        return
+        # didn't find library file in virtualenv, try base distribution, too,
+        # and use that instead if found there
+        base_lib = os.path.join(sys.base_prefix, 'libs', lib_name)
+        if os.path.isfile(base_lib):
+            lib_file = base_lib
+        else:
+            log.warn('Cannot build import library: "%s" not found' % (lib_file))
+            return
     if os.path.isfile(out_file):
+        log.debug('Skip building import library: "%s" exists' % (out_file))
+        return
+    # didn't find in virtualenv, try base distribution, too
+    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
+    if os.path.isfile(base_file):
         log.debug('Skip building import library: "%s" exists' % (out_file))
         return
     log.info('Building import library (ARCH=x86): "%s"' % (out_file))
