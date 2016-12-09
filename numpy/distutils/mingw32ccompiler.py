@@ -394,8 +394,7 @@ def _build_import_library_amd64():
     # didn't exist in virtualenv, maybe in base distribution?
     base_file = os.path.join(sys.base_prefix, 'libs', out_name)
     if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists' %
-                  (base_file))
+        log.debug('Skip building import library: "%s" exists', base_file)
         return
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
@@ -423,17 +422,17 @@ def _build_import_library_x86():
         if os.path.isfile(base_lib):
             lib_file = base_lib
         else:
-            log.warn('Cannot build import library: "%s" not found' % (lib_file))
+            log.warn('Cannot build import library: "%s" not found', lib_file)
             return
     if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists' % (out_file))
+        log.debug('Skip building import library: "%s" exists', out_file)
         return
     # didn't find in virtualenv, try base distribution, too
     base_file = os.path.join(sys.base_prefix, 'libs', out_name)
     if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists' % (out_file))
+        log.debug('Skip building import library: "%s" exists', out_file)
         return
-    log.info('Building import library (ARCH=x86): "%s"' % (out_file))
+    log.info('Building import library (ARCH=x86): "%s"', out_file)
 
     from numpy.distutils import lib2def
 
