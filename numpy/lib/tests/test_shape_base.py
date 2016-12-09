@@ -64,6 +64,28 @@ class TestApplyAlongAxis(TestCase):
         res = np.apply_along_axis(sample_1d, 1, np.array([[1, 2], [3, 4]]))
         assert_array_equal(res, np.array([[2, 1], [4, 3]]))
 
+    def test_var_length_strings(self):
+        # see gh-8352
+        a = [[111, 111, 0, 0, 0], [111, 111, 111, 111, 111]]
+        expected = np.array(['111 111 0 0 0', '111 111 111 111 111'])
+
+        res = np.apply_along_axis(lambda x: " ".join(map(str, x)), 1, a)
+        assert_array_equal(res, expected)
+
+        np.apply_along_axis(lambda x: b" ".join(map(
+            lambda xi: str(xi).encode('utf8'), x)), 1, a)
+        assert_array_equal(res, expected)
+
+        expected = np.array([['111 111 0 0 0'], ['111 111 111 111 111']])
+
+        res = np.apply_along_axis(lambda x: np.array(
+            [" ".join(map(str, x))]), 1, a)
+        assert_array_equal(res, expected)
+
+        np.apply_along_axis(lambda x: np.array([b" ".join(map(
+            lambda xi: str(xi).encode('utf8'), x))]), 1, a)
+        assert_array_equal(res, expected)
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):

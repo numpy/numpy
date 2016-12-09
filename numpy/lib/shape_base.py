@@ -6,6 +6,7 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, isscalar, array, asanyarray
     )
+from numpy.core.numerictypes import find_common_type
 from numpy.core.fromnumeric import product, reshape
 from numpy.core import vstack, atleast_3d
 
@@ -78,7 +79,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     nd = arr.ndim
     if axis < 0:
         axis += nd
-    if (axis >= nd):
+    if axis >= nd:
         raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
             % (axis, nd))
     ind = [0]*(nd-1)
@@ -89,9 +90,20 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     outshape = asarray(arr.shape).take(indlist)
     i.put(indlist, ind)
     res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-    #  if res is a number, then we have a smaller output array
+
+    # see gh-8363
+    _strcase = False
+    _dtypes = set()
+
+    # If res is a number, then we have a smaller output array.
     if isscalar(res):
-        outarr = zeros(outshape, asarray(res).dtype)
+        from numpy import dtype
+        if dtype(type(res)).kind in ('U', 'S'):
+            _strcase = True
+            _dtypes.add(type(res))
+            outarr = zeros(outshape, object)
+        else:
+            outarr = zeros(outshape, asarray(res).dtype)
         outarr[tuple(ind)] = res
         Ntot = product(outshape)
         k = 1
@@ -105,16 +117,22 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
                 n -= 1
             i.put(indlist, ind)
             res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
+            if _strcase:
+                _dtypes.add(type(res))
             outarr[tuple(ind)] = res
             k += 1
-        return outarr
     else:
         res = asanyarray(res)
         Ntot = product(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = res.size
-        outarr = zeros(outshape, res.dtype)
+        if res.dtype.kind in ('U', 'S'):
+            _strcase = True
+            _dtypes.add(res.dtype.type)
+            outarr = zeros(outshape, object)
+        else:
+            outarr = zeros(outshape, res.dtype)
         outarr = res.__array_wrap__(outarr)
         outarr[tuple(i.tolist())] = res
         k = 1
@@ -128,11 +146,20 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
                 n -= 1
             i.put(indlist, ind)
             res = asanyarray(func1d(arr[tuple(i.tolist())], *args, **kwargs))
+            if _strcase:
+                _dtypes.add(asanyarray(res).dtype.type)
             outarr[tuple(i.tolist())] = res
             k += 1
         if res.shape == ():
             outarr = outarr.squeeze(axis)
+    if not _strcase:
         return outarr
+    else:
+        _dtype = find_common_type(_dtypes, [])
+        if _dtype == object:
+            return outarr
+        else:
+            return outarr.astype(_dtype)
 
 
 def apply_over_axes(func, a, axes):
