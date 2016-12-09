@@ -451,14 +451,7 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
 NPY_NO_EXPORT double
 NumPyOS_ascii_strtod(const char *s, char** endptr)
 {
-    struct lconv *locale_data = localeconv();
-    const char *decimal_point = locale_data->decimal_point;
-    size_t decimal_point_len = strlen(decimal_point);
-
-    char buffer[FLOAT_FORMATBUFLEN+1];
     const char *p;
-    char *q;
-    size_t n;
     double result;
 
     while (NumPyOS_ascii_isspace(*s)) {
