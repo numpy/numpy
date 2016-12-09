@@ -403,7 +403,10 @@ def msvc_runtime_library():
     "Return name of MSVC runtime library if Python was built with MSVC >= 7"
     ver = msvc_runtime_major ()
     if ver:
-        return "msvcr%i" % ver
+        if ver < 140:
+            return "msvcr%i" % ver
+        else:
+            return "vcruntime%i" % ver
     else:
         return None
 
@@ -414,6 +417,7 @@ def msvc_runtime_major():
              1400:  80,  # MSVC 8
              1500:  90,  # MSVC 9  (aka 2008)
              1600: 100,  # MSVC 10 (aka 2010)
+             1900: 140,  # MSVC 14 (aka 2015)
     }.get(msvc_runtime_version(), None)
     return major
 
