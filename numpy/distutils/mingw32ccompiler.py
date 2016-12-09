@@ -37,6 +37,15 @@ from distutils.errors import (DistutilsExecError, CompileError,
 from numpy.distutils.misc_util import (msvc_runtime_library,
                                        get_build_architecture)
 
+def get_msvcr_replacement():
+    """Replacement for outdated version of get_msvcr from cygwinccompiler"""
+    msvcr = msvc_runtime_library()
+    return [] if msvcr is None else [msvcr]
+
+# monkey-patch cygwinccompiler with our updated version from misc_util
+# to avoid getting an exception raised on Python 3.5
+distutils.cygwinccompiler.get_msvcr = get_msvcr_replacement
+
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
 _TABLE = re.compile(r'^\s+\[([\s*[0-9]*)\] ([a-zA-Z0-9_]*)')
