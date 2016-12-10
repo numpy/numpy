@@ -430,7 +430,6 @@ static double
 NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
 {
     double result;
-#if PY_VERSION_HEX >= 0x02070000
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     result = PyOS_string_to_double(s, endptr, NULL);
@@ -441,9 +440,6 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
         PyErr_Clear();
     }
     NPY_DISABLE_C_API;
-#else
-    result = PyOS_ascii_strtod(s, endptr);
-#endif
     return result;
 }
 
@@ -455,14 +451,7 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
 NPY_NO_EXPORT double
 NumPyOS_ascii_strtod(const char *s, char** endptr)
 {
-    struct lconv *locale_data = localeconv();
-    const char *decimal_point = locale_data->decimal_point;
-    size_t decimal_point_len = strlen(decimal_point);
-
-    char buffer[FLOAT_FORMATBUFLEN+1];
     const char *p;
-    char *q;
-    size_t n;
     double result;
 
     while (NumPyOS_ascii_isspace(*s)) {
@@ -510,40 +499,6 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         return result*NPY_INFINITY;
     }
     /* End of ##1 */
-
-    /*
-     * ## 2
-     *
-     * At least Python versions <= 2.6.8
-     *
-     * Fails to do best-efforts parsing of strings of the form "1<DP>234"
-     * where <DP> is the decimal point under the foreign locale.
-     * This is because PyOS_ascii_strtod is buggy, and will completely
-     * refuse to parse the string, rather than parsing the first part "1".
-     */
-    if (decimal_point[0] != '.' || decimal_point[1] != 0) {
-        p = s;
-        if (*p == '+' || *p == '-') {
-            ++p;
-        }
-        while (*p >= '0' && *p <= '9') {
-            ++p;
-        }
-        if (strncmp(p, decimal_point, decimal_point_len) == 0) {
-            n = (size_t)(p - s);
-            if (n > FLOAT_FORMATBUFLEN) {
-                n = FLOAT_FORMATBUFLEN;
-            }
-            memcpy(buffer, s, n);
-            buffer[n] = '\0';
-            result = NumPyOS_ascii_strtod_plain(buffer, &q);
-            if (endptr != NULL) {
-                *endptr = (char*)(s + (q - buffer));
-            }
-            return result;
-        }
-    }
-    /* End of ##2 */
 
     return NumPyOS_ascii_strtod_plain(s, endptr);
 }
