@@ -420,11 +420,11 @@ class NoseTester(object):
                 sup.filter(DeprecationWarning,
                            r"sys\.exc_clear\(\) not supported in 3\.x",
                            module=threading)
-                sup.filter(DeprecationWarning, message="in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message="in 3\.x, __getslice__")
-                sup.filter(DeprecationWarning, message="buffer\(\) not supported in 3\.x")
-                sup.filter(DeprecationWarning, message="CObject type is not supported in 3\.x")
-                sup.filter(DeprecationWarning, message="comparing unequal types not supported in 3\.x")
+                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
+                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
+                sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
+                sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
+                sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
             # Filter out some deprecation warnings inside nose 1.3.7 when run
             # on python 3.5b2. See
             #     https://github.com/nose-devs/nose/issues/929
