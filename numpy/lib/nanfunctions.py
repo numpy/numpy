@@ -1134,7 +1134,7 @@ def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     See nanpercentile for parameter usage
 
     """
-    if axis is None:
+    if axis is None or a.ndim == 1:
         part = a.ravel()
         result = _nanpercentile1d(part, q, overwrite_input, interpolation)
     else:
