@@ -74,6 +74,18 @@ behaviour is recovered if ``axis=None`` (default).
 Improvements
 ============
 
+Partial support for 64-bit f2py extensions with MinGW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Extensions that incorporate Fortran libraries can now be built using the free
+MinGW_ toolset, also under Python 3.5. This works best for extensions that only
+do calculations and uses the runtime modestly (reading and writing from files,
+for instance). Note that this does not remove the need for Mingwpy; if you make
+extensive use of the runtime, you will most likely run into issues_. Instead,
+it should be regarded as a band-aid until Mingwpy is fully functional.
+
+.. _MinGW: https://sf.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.2.0/threads-win32/seh/
+
+.. _issues: https://mingwpy.github.io/issues.html
 
 Changes
 =======
