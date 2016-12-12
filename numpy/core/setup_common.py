@@ -113,6 +113,7 @@ OPTIONAL_HEADERS = [
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
+                "xlocale.h"  # see GH#8367
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
