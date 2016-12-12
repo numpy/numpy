@@ -457,7 +457,7 @@ def _build_import_library_x86():
 
     dll_name = "python%d%d.dll" % tuple(sys.version_info[:2])
     args = (dll_name, def_file, out_file)
-    cmd = 'dlltool --dllname %s --def %s --output-lib %s' % args
+    cmd = 'dlltool --dllname "%s" --def "%s" --output-lib "%s"' % args
     status = os.system(cmd)
     # for now, fail silently
     if status:
