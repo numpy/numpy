@@ -334,7 +334,7 @@ class LinalgTestCase(object):
 
 class LinalgNonsquareTestCase(object):
 
-    def test_sq_cases(self):
+    def test_nonsq_cases(self):
         _check_cases(self.do, NONSQUARE_CASES)
 
 
