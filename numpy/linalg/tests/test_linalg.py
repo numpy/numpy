@@ -591,7 +591,7 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgTestCase):
+class TestPinv(LinalgTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
