@@ -177,6 +177,11 @@ The following functions are changed: ``sum``, ``product``,
 The previous identity was 1, it is now -1. See entry in `Improvements`_ for
 more explanation.
 
+ma.median warns and returns nan when unmasked invalid values are encountered
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to unmasked median the masked median `ma.median` now emits a Runtime
+warning and returns `NaN` in slices where an unmasked `NaN` is present.
+
 Greater consistancy in ``assert_almost_equal``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The precision check for scalars has been changed to match that for arrays. It
