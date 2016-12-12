@@ -33,11 +33,11 @@ def imply(a, b):
 old_assert_almost_equal = assert_almost_equal
 
 
-def assert_almost_equal(a, b, **kw):
+def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
     if asarray(a).dtype.type in (single, csingle):
-        decimal = 6
+        decimal = single_decimal
     else:
-        decimal = 12
+        decimal = double_decimal
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
 
@@ -563,8 +563,9 @@ class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase):
     def do(self, a, b):
         c = asarray(a)  # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a), decimal=5)
+        assert_almost_equal(
+            s[..., 0] / s[..., -1], linalg.cond(a),
+            single_decimal=5, double_decimal=11)
 
     def test_stacked_arrays_explicitly(self):
         A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
@@ -576,8 +577,9 @@ class TestCond2(LinalgTestCase):
     def do(self, a, b):
         c = asarray(a)  # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a, 2), decimal=5)
+        assert_almost_equal(
+            s[..., 0] / s[..., -1], linalg.cond(a, 2),
+            single_decimal=5, double_decimal=11)
 
     def test_stacked_arrays_explicitly(self):
         A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
@@ -595,7 +597,8 @@ class TestPinv(LinalgTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
-        assert_almost_equal(dot(a, a_ginv).dot(a), a)  # a @ a_ginv == I does not hold if a is singular
+        # `a @ a_ginv == I` does not hold if a is singular
+        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
