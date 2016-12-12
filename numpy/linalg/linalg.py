@@ -1138,6 +1138,7 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
