@@ -595,7 +595,7 @@ class TestPinv(LinalgTestCase):
 
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
-        assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
+        assert_almost_equal(dot(a, a_ginv).dot(a), a)  # a @ a_ginv == I does not hold if a is singular
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
