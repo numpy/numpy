@@ -170,6 +170,12 @@ NONSQUARE_CASES = [
     LinalgCase("5x1",
                np.random.rand(5, 1),
                np.random.rand(1)),
+    LinalgCase("0x4",
+               np.random.rand(0, 4),
+               np.random.rand(4)),
+    LinalgCase("4x0",
+               np.random.rand(4, 0),
+               np.random.rand(0)),
 ]
 
 HERMITIAN_CASES = [
