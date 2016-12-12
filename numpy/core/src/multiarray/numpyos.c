@@ -15,7 +15,13 @@
 
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
-#include <xlocale.h>
+#ifdef HAVE_XLOCALE_H
+    /*
+     * the defines from xlocale.h are included in locale.h on some sytems;
+     * see gh-8367
+     */
+    #include <xlocale.h>
+#endif
 #endif
 
 
