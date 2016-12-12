@@ -805,7 +805,11 @@ class TestNanFunctions_Percentile(TestCase):
                 assert_(len(w) == 0)
 
     def test_scalar(self):
-        assert_(np.nanpercentile(0., 100) == 0.)
+        assert_equal(np.nanpercentile(0., 100), 0.)
+        a = np.arange(6)
+        r = np.nanpercentile(a, 50, axis=0)
+        assert_equal(r, 2.5)
+        assert_(np.isscalar(r))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
