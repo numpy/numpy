@@ -455,7 +455,7 @@ def _build_import_library_x86():
     dlist, flist = lib2def.parse_nm(nm_output)
     lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
 
-    dll_name = "python%d%d.dll" % tuple(sys.version_info[:2])
+    dll_name = find_python_dll ()
     args = (dll_name, def_file, out_file)
     cmd = 'dlltool --dllname "%s" --def "%s" --output-lib "%s"' % args
     status = os.system(cmd)
