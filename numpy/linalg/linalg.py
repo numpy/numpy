@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, isscalar, object_
+    broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
     )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
@@ -217,9 +217,13 @@ def _assertFinite(*arrays):
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
 
+def _isEmpty2d(arr):
+    # check size first for efficiency
+    return arr.size == 0 and product(arr.shape[-2:]) == 0
+
 def _assertNoEmpty2d(*arrays):
     for a in arrays:
-        if a.size == 0 and product(a.shape[-2:]) == 0:
+        if _isEmpty2d(a):
             raise LinAlgError("Arrays cannot be empty")
 
 
@@ -898,11 +902,12 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        return empty(a.shape[-1:], dtype=result_t)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1002,10 +1007,11 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        return empty(a.shape[-1:], dtype=result_t)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
@@ -1139,11 +1145,14 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        w = empty(a.shape[-1:], dtype=result_t)
+        vt = empty(a.shape, dtype=result_t)
+        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1280,8 +1289,11 @@ def eigh(a, UPLO='L'):
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
-    _assertNoEmpty2d(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        w = empty(a.shape[-1:], dtype=result_t)
+        vt = empty(a.shape, dtype=result_t)
+        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1660,7 +1672,9 @@ def pinv(a, rcond=1e-15 ):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
+    if _isEmpty2d(a):
+        res = empty(a.shape[:-2] + (a.shape[-1], a.shape[-2]), dtype=a.dtype)
+        return wrap(res)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]
@@ -1751,11 +1765,15 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
+    if _isEmpty2d(a):
+        # determinant of empty matrix is 1
+        sign = ones(a.shape[:-2], dtype=result_t)
+        logdet = zeros(a.shape[:-2], dtype=real_t)
+        return sign, logdet
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     if isscalar(sign):
@@ -1816,10 +1834,12 @@ def det(a):
 
     """
     a = asarray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+    # 0x0 matrices have determinant 1
+    if _isEmpty2d(a):
+        return ones(a.shape[:-2], dtype=result_t)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     if isscalar(r):

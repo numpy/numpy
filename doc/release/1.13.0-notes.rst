@@ -194,6 +194,12 @@ np.matrix with booleans elements can now be created using the string syntax
 ``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
 ``np.matrix('True')``. Now, this works as expected.
 
+More ``linalg`` operations now accept empty vectors and matrices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All of the following functions in ``np.linalg`` now work when given input
+arrays with a 0 in the last two dimensions: `det``, ``slogdet``, ``pinv``,
+``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
+
 Changes
 =======
 
