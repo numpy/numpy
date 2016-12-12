@@ -869,7 +869,7 @@ def _nanmedian(a, axis=None, out=None, overwrite_input=False):
     else:
         # for small medians use sort + indexing which is still faster than
         # apply_along_axis
-        if a.shape[axis] < 400:
+        if a.shape[axis] < 1000:
             return _nanmedian_small(a, axis, out, overwrite_input)
         result = np.apply_along_axis(_nanmedian1d, axis, a, overwrite_input)
         if out is not None:
