@@ -35,7 +35,18 @@ from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
                               UnknownFileError)
 from numpy.distutils.misc_util import (msvc_runtime_library,
+                                       msvc_runtime_version,
+                                       msvc_runtime_major,
                                        get_build_architecture)
+
+def get_msvcr_replacement():
+    """Replacement for outdated version of get_msvcr from cygwinccompiler"""
+    msvcr = msvc_runtime_library()
+    return [] if msvcr is None else [msvcr]
+
+# monkey-patch cygwinccompiler with our updated version from misc_util
+# to avoid getting an exception raised on Python 3.5
+distutils.cygwinccompiler.get_msvcr = get_msvcr_replacement
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
@@ -100,8 +111,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
-        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
-        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
+        msvcr_version = msvc_runtime_version()
+        if msvcr_version:
+            self.define_macro('__MSVCRT_VERSION__', '0x%04i' % msvcr_version)
 
         # MS_WIN64 should be defined when building for amd64 on windows,
         # but python headers define it only for MS compilers, which has all
@@ -326,7 +338,8 @@ def build_msvcr_library(debug=False):
     msvcr_name = msvc_runtime_library()
 
     # Skip using a custom library for versions < MSVC 8.0
-    if int(msvcr_name.lstrip('msvcr')) < 80:
+    msvcr_ver = msvc_runtime_major()
+    if msvcr_ver and msvcr_ver < 80:
         log.debug('Skip building msvcr library:'
                   ' custom functionality not present')
         return False
@@ -532,12 +545,8 @@ def check_embedded_msvcr_match_linked(msver):
     """msver is the ms runtime version used for the MANIFEST."""
     # check msvcr major version are the same for linking and
     # embedding
-    msvcv = msvc_runtime_library()
-    if msvcv:
-        assert msvcv.startswith("msvcr"), msvcv
-        # Dealing with something like "mscvr90" or "mscvr100", the last
-        # last digit is the minor release, want int("9") or int("10"):
-        maj = int(msvcv[5:-1])
+    maj = msvc_runtime_major()
+    if maj:
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \
