@@ -1,5 +1,6 @@
+==========================
 NumPy 1.12.0 Release Notes
-**************************
+==========================
 
 This release supports Python 2.7 and 3.4 - 3.6.
 
@@ -485,12 +486,13 @@ ignored before, which may be surprising especially in test suits.
 Contributors to maintenance/1.12.x
 ==================================
 
-A total of 133 people contributed to this release.  People with a "+" by their
+A total of 138 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 - Aditya Panchal
 - Ales Erjavec +
 - Alex Griffing
+- Alexandr Shadchin +
 - Alistair Muldal
 - Allan Haldane
 - Amit Aronovitch +
@@ -536,6 +538,7 @@ names contributed a patch for the first time.
 - Ines Wichert +
 - Irvin Probst +
 - Jaime Fernandez
+- James Sanders +
 - Jan David Mol +
 - Jan Schlüter
 - Jeremy Tuloup +
@@ -574,11 +577,13 @@ names contributed a patch for the first time.
 - Nathaniel Beaver +
 - Nathaniel J. Smith
 - Naveen Arunachalam +
+- Nick Papior
 - Nikola Forró +
 - Oleksandr Pavlyk +
 - Olivier Grisel
 - Oren Amsalem +
 - Pauli Virtanen
+- Pavel Potocek +
 - Pedro Lacerda +
 - Peter Creasey +
 - Phil Elson +
@@ -605,6 +610,7 @@ names contributed a patch for the first time.
 - Steven J Kern +
 - Stuart Archibald
 - Tadeu Manoel +
+- Takuya Akiba +
 - Thomas A Caswell
 - Tom Bird +
 - Tony Kelman +
@@ -625,7 +631,7 @@ names contributed a patch for the first time.
 Pull requests merged for maintenance/1.12.x
 ===========================================
 
-A total of 388 pull requests were merged for this release.
+A total of 402 pull requests were merged for this release.
 
 - `#4073 <https://github.com/numpy/numpy/pull/4073>`__: BUG: change real output checking to test if all imaginary parts...
 - `#4619 <https://github.com/numpy/numpy/pull/4619>`__: BUG : np.sum silently drops keepdims for sub-classes of ndarray
@@ -816,6 +822,7 @@ A total of 388 pull requests were merged for this release.
 - `#7584 <https://github.com/numpy/numpy/pull/7584>`__: BUG: fixes #7572, percent in path
 - `#7586 <https://github.com/numpy/numpy/pull/7586>`__: ENH: Make np.ma.take works on scalars
 - `#7587 <https://github.com/numpy/numpy/pull/7587>`__: BUG: linalg.norm(): Don't convert object arrays to float
+- `#7596 <https://github.com/numpy/numpy/pull/7596>`__: DOC: fix PEP8 code in example file
 - `#7598 <https://github.com/numpy/numpy/pull/7598>`__: BUG: Cast array size to int64 when loading from archive
 - `#7602 <https://github.com/numpy/numpy/pull/7602>`__: DOC: Remove isreal and iscomplex from ufunc list
 - `#7605 <https://github.com/numpy/numpy/pull/7605>`__: DOC: fix incorrect Gamma distribution parameterization comments
@@ -1015,3 +1022,16 @@ A total of 388 pull requests were merged for this release.
 - `#8246 <https://github.com/numpy/numpy/pull/8246>`__: REL: Reset strides for RELAXED_STRIDE_CHECKING for 1.12 releases.
 - `#8265 <https://github.com/numpy/numpy/pull/8265>`__: BUG: np.piecewise not working for scalars
 - `#8272 <https://github.com/numpy/numpy/pull/8272>`__: TST: Path test should resolve symlinks when comparing
+- `#8286 <https://github.com/numpy/numpy/pull/8286>`__: BUG: Fix pavement.py write_release_task.
+- `#8296 <https://github.com/numpy/numpy/pull/8296>`__: BUG: Fix iteration over reversed subspaces in mapiter_@name@.
+- `#8304 <https://github.com/numpy/numpy/pull/8304>`__: BUG: Fix PyPy crash in PyUFunc_GenericReduction.
+- `#8319 <https://github.com/numpy/numpy/pull/8319>`__: BLD: blacklist powl (longdouble power function) on OS X.
+- `#8320 <https://github.com/numpy/numpy/pull/8320>`__: BUG: do not link to Accelerate if OpenBLAS, MKL or BLIS are found.
+- `#8322 <https://github.com/numpy/numpy/pull/8322>`__: BUG: fixed kind specifications for parameters
+- `#8336 <https://github.com/numpy/numpy/pull/8336>`__: BUG: fix packbits and unpackbits to correctly handle empty arrays
+- `#8338 <https://github.com/numpy/numpy/pull/8338>`__: BUG: fix test_api test that fails intermittently in python 3
+- `#8339 <https://github.com/numpy/numpy/pull/8339>`__: BUG: Fix ndarray.tofile large file corruption in append mode.
+- `#8359 <https://github.com/numpy/numpy/pull/8359>`__: BUG: Fix suppress_warnings (again) for Python 3.6.
+- `#8372 <https://github.com/numpy/numpy/pull/8372>`__: BUG: Fixes for ma.median and nanpercentile.
+- `#8373 <https://github.com/numpy/numpy/pull/8373>`__: BUG: correct letter case
+- `#8379 <https://github.com/numpy/numpy/pull/8379>`__: DOC: Update 1.12.0-notes.rst.
