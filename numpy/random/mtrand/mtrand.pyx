@@ -2470,7 +2470,7 @@ cdef class RandomState:
         a good estimate of the true mean.
 
         The derivation of the t-distribution was first published in
-        1908 by William Gisset while working for the Guinness Brewery
+        1908 by William Gosset while working for the Guinness Brewery
         in Dublin. Due to proprietary issues, he had to publish under
         a pseudonym, and so he used the name Student.
 
