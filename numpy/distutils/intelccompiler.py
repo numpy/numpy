@@ -79,7 +79,7 @@ if platform.system() == 'Windows':
 
         def __init__(self, verbose=0, dry_run=0, force=0):
             MSVCCompiler.__init__(self, verbose, dry_run, force)
-            version_match = simple_version_match(start='Intel\(R\).*?32,')
+            version_match = simple_version_match(start=r'Intel\(R\).*?32,')
             self.__version = version_match
 
         def initialize(self, plat_name=None):
@@ -101,5 +101,5 @@ if platform.system() == 'Windows':
 
         def __init__(self, verbose=0, dry_run=0, force=0):
             MSVCCompiler.__init__(self, verbose, dry_run, force)
-            version_match = simple_version_match(start='Intel\(R\).*?64,')
+            version_match = simple_version_match(start=r'Intel\(R\).*?64,')
             self.__version = version_match

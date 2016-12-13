@@ -1045,7 +1045,7 @@ def leggrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with

@@ -12,7 +12,7 @@ else:
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']
 
-_VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
+_VAR = re.compile(r'\$\{([a-zA-Z0-9_-]+)\}')
 
 class FormatError(IOError):
     """
@@ -427,7 +427,7 @@ if __name__ == '__main__':
         section = "default"
 
     if options.define_variable:
-        m = re.search('([\S]+)=([\S]+)', options.define_variable)
+        m = re.search(r'([\S]+)=([\S]+)', options.define_variable)
         if not m:
             raise ValueError("--define-variable option should be of " \
                              "the form --define-variable=foo=bar")

@@ -432,7 +432,7 @@ class NoseTester(object):
             #       be implemented).
             warnings.filterwarnings("ignore", message=".*getargspec.*",
                                     category=DeprecationWarning,
-                                    module="nose\.")
+                                    module=r"nose\.")
 
             from .noseclasses import NumpyTestProgram
 

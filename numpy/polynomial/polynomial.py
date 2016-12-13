@@ -787,7 +787,7 @@ def polyvalfromroots(x, r, tensor=True):
 
     If `r` is of length `N`, this function returns the value
 
-    .. math:: p(x) = \prod_{n=1}^{N} (x - r_n)
+    .. math:: p(x) = \\prod_{n=1}^{N} (x - r_n)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`

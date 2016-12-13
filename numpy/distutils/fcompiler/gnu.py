@@ -15,7 +15,7 @@ from numpy.distutils.compat import get_exception
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
-TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
+TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 
 # XXX: handle cross compilation
 def is_win64():

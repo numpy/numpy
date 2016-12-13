@@ -300,7 +300,7 @@ class NameValidator(object):
     """
     #
     defaultexcludelist = ['return', 'file', 'print']
-    defaultdeletechars = set("""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
+    defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
     #
 
     def __init__(self, excludelist=None, deletechars=None,

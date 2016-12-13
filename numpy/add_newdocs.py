@@ -3722,7 +3722,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
     Parameters
     ----------
-    \*args : Arguments
+    \\*args : Arguments
         If one argument: a scalar, only used in case `a` is of size 1.
         If two arguments: the last argument is the value to be set
         and must be a scalar, the first argument specifies a single array
