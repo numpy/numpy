@@ -20,8 +20,7 @@ extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
 /* Table of constant values */
 
-static integer c__1 = 1;
-static doublecomplex c_b359 = {1.,0.};
+static doublecomplex c_b353 = {1.,0.};
 
 /* Subroutine */ int daxpy_(integer *n, doublereal *da, doublereal *dx,
 	integer *incx, doublereal *dy, integer *incy)
@@ -4306,62 +4305,6 @@ logical lsame_(char *ca, char *cb)
 
     return ret_val;
 } /* lsame_ */
-
-/* Subroutine */ int xerbla_(char *srname, integer *info)
-{
-    /* Format strings */
-    static char fmt_9999[] = "(\002 ** On entry to \002,a6,\002 parameter nu"
-	    "mber \002,i2,\002 had \002,\002an illegal value\002)";
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-    /* Subroutine */ int s_stop(char *, ftnlen);
-
-    /* Fortran I/O blocks */
-    static cilist io___147 = { 0, 6, 0, fmt_9999, 0 };
-
-
-/*
-    -- LAPACK auxiliary routine (preliminary version) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
-
-
-    Purpose
-    =======
-
-    XERBLA  is an error handler for the LAPACK routines.
-    It is called by an LAPACK routine if an input parameter has an
-    invalid value.  A message is printed and execution stops.
-
-    Installers may consider modifying the STOP statement in order to
-    call system-specific exception-handling facilities.
-
-    Arguments
-    =========
-
-    SRNAME  (input) CHARACTER*6
-            The name of the routine which called XERBLA.
-
-    INFO    (input) INTEGER
-            The position of the invalid parameter in the parameter list
-            of the calling routine.
-*/
-
-
-    s_wsfe(&io___147);
-    do_fio(&c__1, srname, (ftnlen)6);
-    do_fio(&c__1, (char *)&(*info), (ftnlen)sizeof(integer));
-    e_wsfe();
-
-    s_stop("", (ftnlen)0);
-
-
-/*     End of XERBLA */
-
-    return 0;
-} /* xerbla_ */
 
 /* Subroutine */ int zaxpy_(integer *n, doublecomplex *za, doublecomplex *zx,
 	integer *incx, doublecomplex *zy, integer *incy)
@@ -9946,7 +9889,7 @@ L20:
 /* L210: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b359, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b353, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
@@ -9997,7 +9940,7 @@ L20:
 /* L260: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b359, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b353, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
@@ -10024,11 +9967,11 @@ L20:
 		for (k = *n; k >= 1; --k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b359, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b353, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b359, &z__2);
+			    z_div(&z__1, &c_b353, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__1 = *m;
@@ -10088,11 +10031,11 @@ L20:
 		for (k = 1; k <= i__1; ++k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b359, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b353, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b359, &z__2);
+			    z_div(&z__1, &c_b353, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__2 = *m;
