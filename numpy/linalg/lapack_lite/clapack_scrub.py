@@ -4,8 +4,8 @@ from __future__ import division, absolute_import, print_function
 import sys, os
 from io import StringIO
 import re
-from Plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
-from Plex.Traditional import re as Re
+from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
+from plex.traditional import re as Re
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
