@@ -258,10 +258,9 @@ def find_python_dll():
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
     lib_dirs = [sys.prefix, sys.base_prefix, os.path.join(sys.prefix, 'lib')]
-    try:
-        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
-    except KeyError:
-        pass
+
+    if 'SYSTEMROOT' in os.environ:
+        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'System32'))
 
     for d in lib_dirs:
         dll = os.path.join(d, dllname)
