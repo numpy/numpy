@@ -2,7 +2,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys, os
-from io import StringIO
+from io import BytesIO
 import re
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
@@ -21,8 +21,8 @@ def sep_seq(sequence, sep):
     return pat
 
 def runScanner(data, scanner_class, lexicon=None):
-    info = StringIO(data)
-    outfo = StringIO()
+    info = BytesIO(data)
+    outfo = BytesIO()
     if lexicon is not None:
         scanner = scanner_class(lexicon, info)
     else:
@@ -189,7 +189,7 @@ def cleanComments(source):
             return SourceLines
 
     state = SourceLines
-    for line in StringIO(source):
+    for line in BytesIO(source):
         state = state(line)
     comments.flushTo(lines)
     return lines.getValue()
@@ -217,7 +217,7 @@ def removeHeader(source):
         return OutOfHeader
 
     state = LookingForHeader
-    for line in StringIO(source):
+    for line in BytesIO(source):
         state = state(line)
     return lines.getValue()
 
