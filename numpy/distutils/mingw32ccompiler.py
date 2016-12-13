@@ -393,45 +393,64 @@ def build_import_library():
     else:
         raise ValueError("Unhandled arch %s" % arch)
 
+def _check_for_import_lib():
+    """Check if an import library for the Python runtime already exists."""
+    major_version, minor_version = tuple(sys.version_info[:2])
+
+    # patterns for the file name of the library itself
+    patterns = ['libpython%d%d.a']
+
+    # directory trees that may contain the library
+    stems = [sys.prefix]
+    if sys.base_prefix != sys.prefix:
+        stems.append(sys.base_prefix)
+
+    # possible subdirectories within those trees where it is placed
+    sub_dirs = ['libs']
+
+    # generate a list of candidate locations
+    candidates = []
+    for pat in patterns:
+        filename = pat % (major_version, minor_version)
+        for stem_dir in stems:
+            for folder in sub_dirs:
+                candidates.append(os.path.join(stem_dir, folder, filename))
+
+    # test the filesystem to see if we can find any of these
+    for fullname in candidates:
+        if os.path.isfile(fullname):
+            # already exists, in location given
+            return (True, fullname)
+
+    # needs to be built, preferred location given first
+    return (False, candidates[0])
+
 def _build_import_library_amd64():
+    out_exists, out_file = _check_for_import_lib()
+    if out_exists:
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+
+    # get the runtime dll for which we are building import library
     dll_file = find_python_dll()
-
-    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix, 'libs', out_name)
-    if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists' %
-                  (out_file))
-        return
-
-    # didn't exist in virtualenv, maybe in base distribution?
-    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
-    if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists', base_file)
-        return
-
-    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
-    def_file = os.path.join(sys.prefix, 'libs', def_name)
-
     log.info('Building import library (arch=AMD64): "%s" (from %s)' %
              (out_file, dll_file))
 
+    # generate symbol list from this library
+    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
     generate_def(dll_file, def_file)
 
+    # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
     subprocess.Popen(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
-    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix, 'libs', out_name)
-    if os.path.isfile(out_file):
+    out_exists, out_file = _check_for_import_lib()
+    if out_exists:
         log.debug('Skip building import library: "%s" exists', out_file)
-        return
-    # didn't find in virtualenv, try base distribution, too
-    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
-    if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists', base_file)
         return
 
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
