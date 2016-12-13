@@ -1244,7 +1244,7 @@ def chebgrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1898,7 +1898,7 @@ def chebgauss(deg):
     Computes the sample points and weights for Gauss-Chebyshev quadrature.
     These sample points and weights will correctly integrate polynomials of
     degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
-    the weight function :math:`f(x) = 1/\sqrt{1 - x^2}`.
+    the weight function :math:`f(x) = 1/\\sqrt{1 - x^2}`.
 
     Parameters
     ----------
@@ -1921,9 +1921,9 @@ def chebgauss(deg):
     be problematic. For Gauss-Chebyshev there are closed form solutions for
     the sample points and weights. If n = `deg`, then
 
-    .. math:: x_i = \cos(\pi (2 i - 1) / (2 n))
+    .. math:: x_i = \\cos(\\pi (2 i - 1) / (2 n))
 
-    .. math:: w_i = \pi / n
+    .. math:: w_i = \\pi / n
 
     """
     ideg = int(deg)
@@ -1940,7 +1940,7 @@ def chebweight(x):
     """
     The weight function of the Chebyshev polynomials.
 
-    The weight function is :math:`1/\sqrt{1 - x^2}` and the interval of
+    The weight function is :math:`1/\\sqrt{1 - x^2}` and the interval of
     integration is :math:`[-1, 1]`. The Chebyshev polynomials are
     orthogonal, but not normalized, with respect to this weight function.
 
