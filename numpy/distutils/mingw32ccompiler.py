@@ -423,10 +423,19 @@ def _build_import_library_amd64():
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
-    lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
-    lib_file = os.path.join(sys.prefix, 'libs', lib_name)
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
+    if os.path.isfile(out_file):
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+    # didn't find in virtualenv, try base distribution, too
+    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
+    if os.path.isfile(base_file):
+        log.debug('Skip building import library: "%s" exists', base_file)
+        return
+
+    lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
+    lib_file = os.path.join(sys.prefix, 'libs', lib_name)
     if not os.path.isfile(lib_file):
         # didn't find library file in virtualenv, try base distribution, too,
         # and use that instead if found there
@@ -436,14 +445,6 @@ def _build_import_library_x86():
         else:
             log.warn('Cannot build import library: "%s" not found', lib_file)
             return
-    if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists', out_file)
-        return
-    # didn't find in virtualenv, try base distribution, too
-    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
-    if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists', out_file)
-        return
     log.info('Building import library (ARCH=x86): "%s"', out_file)
 
     from numpy.distutils import lib2def
