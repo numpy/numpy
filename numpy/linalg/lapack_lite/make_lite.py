@@ -21,7 +21,7 @@ HEADER = '''\
 NOTE: This is generated code. Look in Misc/lapack_lite for information on
       remaking this file.
 */
-#include "Numeric/f2c.h"
+#include "f2c.h"
 
 #ifdef HAVE_CONFIG
 #include "config.h"
