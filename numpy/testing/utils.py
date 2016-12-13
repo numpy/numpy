@@ -2048,7 +2048,7 @@ class suppress_warnings(object):
                 warnings.filterwarnings(
                     "always", category=category, message=message)
             else:
-                module_regex = module.__name__.replace('.', '\.') + '$'
+                module_regex = module.__name__.replace('.', r'\.') + '$'
                 warnings.filterwarnings(
                     "always", category=category, message=message,
                     module=module_regex)
@@ -2138,7 +2138,7 @@ class suppress_warnings(object):
                 warnings.filterwarnings(
                     "always", category=cat, message=mess)
             else:
-                module_regex = mod.__name__.replace('.', '\.') + '$'
+                module_regex = mod.__name__.replace('.', r'\.') + '$'
                 warnings.filterwarnings(
                     "always", category=cat, message=mess,
                     module=module_regex)

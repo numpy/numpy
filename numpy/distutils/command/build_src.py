@@ -18,8 +18,9 @@ from distutils.errors import DistutilsError, DistutilsSetupError
 # after it's installed
 #import numpy.f2py
 from numpy.distutils import log
-from numpy.distutils.misc_util import fortran_ext_match, \
-     appendpath, is_string, is_sequence, get_cmd
+from numpy.distutils.misc_util import (
+    fortran_ext_match, appendpath, is_string, is_sequence, get_cmd
+    )
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
 
@@ -755,9 +756,9 @@ def _find_swig_target(target_dir, name):
 #### F2PY related auxiliary functions ####
 
 _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
-                                re.I).match
-_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'\
-                                     '__user__[\w_]*)', re.I).match
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
 
 def get_f2py_modulename(source):
     name = None
