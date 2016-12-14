@@ -20485,6 +20485,363 @@ L210:
 
 } /* zlatrs_ */
 
+/* Subroutine */ int zlauu2_(char *uplo, integer *n, doublecomplex *a,
+	integer *lda, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, i__1, i__2, i__3;
+    doublereal d__1;
+    doublecomplex z__1;
+
+    /* Local variables */
+    static integer i__;
+    static doublereal aii;
+    extern logical lsame_(char *, char *);
+    extern /* Double Complex */ VOID zdotc_(doublecomplex *, integer *,
+	    doublecomplex *, integer *, doublecomplex *, integer *);
+    extern /* Subroutine */ int zgemv_(char *, integer *, integer *,
+	    doublecomplex *, doublecomplex *, integer *, doublecomplex *,
+	    integer *, doublecomplex *, doublecomplex *, integer *);
+    static logical upper;
+    extern /* Subroutine */ int xerbla_(char *, integer *), zdscal_(
+	    integer *, doublereal *, doublecomplex *, integer *), zlacgv_(
+	    integer *, doublecomplex *, integer *);
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       September 30, 1994
+
+
+    Purpose
+    =======
+
+    ZLAUU2 computes the product U * U' or L' * L, where the triangular
+    factor U or L is stored in the upper or lower triangular part of
+    the array A.
+
+    If UPLO = 'U' or 'u' then the upper triangle of the result is stored,
+    overwriting the factor U in A.
+    If UPLO = 'L' or 'l' then the lower triangle of the result is stored,
+    overwriting the factor L in A.
+
+    This is the unblocked form of the algorithm, calling Level 2 BLAS.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            Specifies whether the triangular factor stored in the array A
+            is upper or lower triangular:
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+
+    N       (input) INTEGER
+            The order of the triangular factor U or L.  N >= 0.
+
+    A       (input/output) COMPLEX*16 array, dimension (LDA,N)
+            On entry, the triangular factor U or L.
+            On exit, if UPLO = 'U', the upper triangle of A is
+            overwritten with the upper triangle of the product U * U';
+            if UPLO = 'L', the lower triangle of A is overwritten with
+            the lower triangle of the product L' * L.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            < 0: if INFO = -k, the k-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    *info = 0;
+    upper = lsame_(uplo, "U");
+    if (! upper && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*lda < max(1,*n)) {
+	*info = -4;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZLAUU2", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 0) {
+	return 0;
+    }
+
+    if (upper) {
+
+/*        Compute the product U * U'. */
+
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    i__2 = i__ + i__ * a_dim1;
+	    aii = a[i__2].r;
+	    if (i__ < *n) {
+		i__2 = i__ + i__ * a_dim1;
+		i__3 = *n - i__;
+		zdotc_(&z__1, &i__3, &a[i__ + (i__ + 1) * a_dim1], lda, &a[
+			i__ + (i__ + 1) * a_dim1], lda);
+		d__1 = aii * aii + z__1.r;
+		a[i__2].r = d__1, a[i__2].i = 0.;
+		i__2 = *n - i__;
+		zlacgv_(&i__2, &a[i__ + (i__ + 1) * a_dim1], lda);
+		i__2 = i__ - 1;
+		i__3 = *n - i__;
+		z__1.r = aii, z__1.i = 0.;
+		zgemv_("No transpose", &i__2, &i__3, &c_b60, &a[(i__ + 1) *
+			a_dim1 + 1], lda, &a[i__ + (i__ + 1) * a_dim1], lda, &
+			z__1, &a[i__ * a_dim1 + 1], &c__1);
+		i__2 = *n - i__;
+		zlacgv_(&i__2, &a[i__ + (i__ + 1) * a_dim1], lda);
+	    } else {
+		zdscal_(&i__, &aii, &a[i__ * a_dim1 + 1], &c__1);
+	    }
+/* L10: */
+	}
+
+    } else {
+
+/*        Compute the product L' * L. */
+
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    i__2 = i__ + i__ * a_dim1;
+	    aii = a[i__2].r;
+	    if (i__ < *n) {
+		i__2 = i__ + i__ * a_dim1;
+		i__3 = *n - i__;
+		zdotc_(&z__1, &i__3, &a[i__ + 1 + i__ * a_dim1], &c__1, &a[
+			i__ + 1 + i__ * a_dim1], &c__1);
+		d__1 = aii * aii + z__1.r;
+		a[i__2].r = d__1, a[i__2].i = 0.;
+		i__2 = i__ - 1;
+		zlacgv_(&i__2, &a[i__ + a_dim1], lda);
+		i__2 = *n - i__;
+		i__3 = i__ - 1;
+		z__1.r = aii, z__1.i = 0.;
+		zgemv_("Conjugate transpose", &i__2, &i__3, &c_b60, &a[i__ +
+			1 + a_dim1], lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &
+			z__1, &a[i__ + a_dim1], lda);
+		i__2 = i__ - 1;
+		zlacgv_(&i__2, &a[i__ + a_dim1], lda);
+	    } else {
+		zdscal_(&i__, &aii, &a[i__ + a_dim1], lda);
+	    }
+/* L20: */
+	}
+    }
+
+    return 0;
+
+/*     End of ZLAUU2 */
+
+} /* zlauu2_ */
+
+/* Subroutine */ int zlauum_(char *uplo, integer *n, doublecomplex *a,
+	integer *lda, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
+
+    /* Local variables */
+    static integer i__, ib, nb;
+    extern logical lsame_(char *, char *);
+    extern /* Subroutine */ int zgemm_(char *, char *, integer *, integer *,
+	    integer *, doublecomplex *, doublecomplex *, integer *,
+	    doublecomplex *, integer *, doublecomplex *, doublecomplex *,
+	    integer *), zherk_(char *, char *, integer *,
+	    integer *, doublereal *, doublecomplex *, integer *, doublereal *,
+	     doublecomplex *, integer *);
+    static logical upper;
+    extern /* Subroutine */ int ztrmm_(char *, char *, char *, char *,
+	    integer *, integer *, doublecomplex *, doublecomplex *, integer *,
+	     doublecomplex *, integer *),
+	    zlauu2_(char *, integer *, doublecomplex *, integer *, integer *), xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       September 30, 1994
+
+
+    Purpose
+    =======
+
+    ZLAUUM computes the product U * U' or L' * L, where the triangular
+    factor U or L is stored in the upper or lower triangular part of
+    the array A.
+
+    If UPLO = 'U' or 'u' then the upper triangle of the result is stored,
+    overwriting the factor U in A.
+    If UPLO = 'L' or 'l' then the lower triangle of the result is stored,
+    overwriting the factor L in A.
+
+    This is the blocked form of the algorithm, calling Level 3 BLAS.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            Specifies whether the triangular factor stored in the array A
+            is upper or lower triangular:
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+
+    N       (input) INTEGER
+            The order of the triangular factor U or L.  N >= 0.
+
+    A       (input/output) COMPLEX*16 array, dimension (LDA,N)
+            On entry, the triangular factor U or L.
+            On exit, if UPLO = 'U', the upper triangle of A is
+            overwritten with the upper triangle of the product U * U';
+            if UPLO = 'L', the lower triangle of A is overwritten with
+            the lower triangle of the product L' * L.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            < 0: if INFO = -k, the k-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    *info = 0;
+    upper = lsame_(uplo, "U");
+    if (! upper && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*lda < max(1,*n)) {
+	*info = -4;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZLAUUM", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 0) {
+	return 0;
+    }
+
+/*     Determine the block size for this environment. */
+
+    nb = ilaenv_(&c__1, "ZLAUUM", uplo, n, &c_n1, &c_n1, &c_n1, (ftnlen)6, (
+	    ftnlen)1);
+
+    if (nb <= 1 || nb >= *n) {
+
+/*        Use unblocked code */
+
+	zlauu2_(uplo, n, &a[a_offset], lda, info);
+    } else {
+
+/*        Use blocked code */
+
+	if (upper) {
+
+/*           Compute the product U * U'. */
+
+	    i__1 = *n;
+	    i__2 = nb;
+	    for (i__ = 1; i__2 < 0 ? i__ >= i__1 : i__ <= i__1; i__ += i__2) {
+/* Computing MIN */
+		i__3 = nb, i__4 = *n - i__ + 1;
+		ib = min(i__3,i__4);
+		i__3 = i__ - 1;
+		ztrmm_("Right", "Upper", "Conjugate transpose", "Non-unit", &
+			i__3, &ib, &c_b60, &a[i__ + i__ * a_dim1], lda, &a[
+			i__ * a_dim1 + 1], lda);
+		zlauu2_("Upper", &ib, &a[i__ + i__ * a_dim1], lda, info);
+		if (i__ + ib <= *n) {
+		    i__3 = i__ - 1;
+		    i__4 = *n - i__ - ib + 1;
+		    zgemm_("No transpose", "Conjugate transpose", &i__3, &ib,
+			    &i__4, &c_b60, &a[(i__ + ib) * a_dim1 + 1], lda, &
+			    a[i__ + (i__ + ib) * a_dim1], lda, &c_b60, &a[i__
+			    * a_dim1 + 1], lda);
+		    i__3 = *n - i__ - ib + 1;
+		    zherk_("Upper", "No transpose", &ib, &i__3, &c_b1015, &a[
+			    i__ + (i__ + ib) * a_dim1], lda, &c_b1015, &a[i__
+			    + i__ * a_dim1], lda);
+		}
+/* L10: */
+	    }
+	} else {
+
+/*           Compute the product L' * L. */
+
+	    i__2 = *n;
+	    i__1 = nb;
+	    for (i__ = 1; i__1 < 0 ? i__ >= i__2 : i__ <= i__2; i__ += i__1) {
+/* Computing MIN */
+		i__3 = nb, i__4 = *n - i__ + 1;
+		ib = min(i__3,i__4);
+		i__3 = i__ - 1;
+		ztrmm_("Left", "Lower", "Conjugate transpose", "Non-unit", &
+			ib, &i__3, &c_b60, &a[i__ + i__ * a_dim1], lda, &a[
+			i__ + a_dim1], lda);
+		zlauu2_("Lower", &ib, &a[i__ + i__ * a_dim1], lda, info);
+		if (i__ + ib <= *n) {
+		    i__3 = i__ - 1;
+		    i__4 = *n - i__ - ib + 1;
+		    zgemm_("Conjugate transpose", "No transpose", &ib, &i__3,
+			    &i__4, &c_b60, &a[i__ + ib + i__ * a_dim1], lda, &
+			    a[i__ + ib + a_dim1], lda, &c_b60, &a[i__ +
+			    a_dim1], lda);
+		    i__3 = *n - i__ - ib + 1;
+		    zherk_("Lower", "Conjugate transpose", &ib, &i__3, &
+			    c_b1015, &a[i__ + ib + i__ * a_dim1], lda, &
+			    c_b1015, &a[i__ + i__ * a_dim1], lda);
+		}
+/* L20: */
+	    }
+	}
+    }
+
+    return 0;
+
+/*     End of ZLAUUM */
+
+} /* zlauum_ */
+
 /* Subroutine */ int zpotf2_(char *uplo, integer *n, doublecomplex *a,
 	integer *lda, integer *info)
 {
@@ -20918,6 +21275,249 @@ L40:
 /*     End of ZPOTRF */
 
 } /* zpotrf_ */
+
+/* Subroutine */ int zpotri_(char *uplo, integer *n, doublecomplex *a,
+	integer *lda, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, i__1;
+
+    /* Local variables */
+    extern logical lsame_(char *, char *);
+    extern /* Subroutine */ int xerbla_(char *, integer *), zlauum_(
+	    char *, integer *, doublecomplex *, integer *, integer *),
+	     ztrtri_(char *, char *, integer *, doublecomplex *, integer *,
+	    integer *);
+
+
+/*
+    -- LAPACK routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       March 31, 1993
+
+
+    Purpose
+    =======
+
+    ZPOTRI computes the inverse of a complex Hermitian positive definite
+    matrix A using the Cholesky factorization A = U**H*U or A = L*L**H
+    computed by ZPOTRF.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            = 'U':  Upper triangle of A is stored;
+            = 'L':  Lower triangle of A is stored.
+
+    N       (input) INTEGER
+            The order of the matrix A.  N >= 0.
+
+    A       (input/output) COMPLEX*16 array, dimension (LDA,N)
+            On entry, the triangular factor U or L from the Cholesky
+            factorization A = U**H*U or A = L*L**H, as computed by
+            ZPOTRF.
+            On exit, the upper or lower triangle of the (Hermitian)
+            inverse of A, overwriting the input factor U or L.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+            > 0:  if INFO = i, the (i,i) element of the factor U or L is
+                  zero, and the inverse could not be computed.
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    *info = 0;
+    if (! lsame_(uplo, "U") && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*lda < max(1,*n)) {
+	*info = -4;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZPOTRI", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 0) {
+	return 0;
+    }
+
+/*     Invert the triangular Cholesky factor U or L. */
+
+    ztrtri_(uplo, "Non-unit", n, &a[a_offset], lda, info);
+    if (*info > 0) {
+	return 0;
+    }
+
+/*     Form inv(U)*inv(U)' or inv(L)'*inv(L). */
+
+    zlauum_(uplo, n, &a[a_offset], lda, info);
+
+    return 0;
+
+/*     End of ZPOTRI */
+
+} /* zpotri_ */
+
+/* Subroutine */ int zpotrs_(char *uplo, integer *n, integer *nrhs,
+	doublecomplex *a, integer *lda, doublecomplex *b, integer *ldb,
+	integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, b_dim1, b_offset, i__1;
+
+    /* Local variables */
+    extern logical lsame_(char *, char *);
+    static logical upper;
+    extern /* Subroutine */ int ztrsm_(char *, char *, char *, char *,
+	    integer *, integer *, doublecomplex *, doublecomplex *, integer *,
+	     doublecomplex *, integer *),
+	    xerbla_(char *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       September 30, 1994
+
+
+    Purpose
+    =======
+
+    ZPOTRS solves a system of linear equations A*X = B with a Hermitian
+    positive definite matrix A using the Cholesky factorization
+    A = U**H*U or A = L*L**H computed by ZPOTRF.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            = 'U':  Upper triangle of A is stored;
+            = 'L':  Lower triangle of A is stored.
+
+    N       (input) INTEGER
+            The order of the matrix A.  N >= 0.
+
+    NRHS    (input) INTEGER
+            The number of right hand sides, i.e., the number of columns
+            of the matrix B.  NRHS >= 0.
+
+    A       (input) COMPLEX*16 array, dimension (LDA,N)
+            The triangular factor U or L from the Cholesky factorization
+            A = U**H*U or A = L*L**H, as computed by ZPOTRF.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    B       (input/output) COMPLEX*16 array, dimension (LDB,NRHS)
+            On entry, the right hand side matrix B.
+            On exit, the solution matrix X.
+
+    LDB     (input) INTEGER
+            The leading dimension of the array B.  LDB >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+
+    /* Function Body */
+    *info = 0;
+    upper = lsame_(uplo, "U");
+    if (! upper && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*nrhs < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*n)) {
+	*info = -5;
+    } else if (*ldb < max(1,*n)) {
+	*info = -7;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZPOTRS", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 0 || *nrhs == 0) {
+	return 0;
+    }
+
+    if (upper) {
+
+/*
+          Solve A*X = B where A = U'*U.
+
+          Solve U'*X = B, overwriting B with X.
+*/
+
+	ztrsm_("Left", "Upper", "Conjugate transpose", "Non-unit", n, nrhs, &
+		c_b60, &a[a_offset], lda, &b[b_offset], ldb);
+
+/*        Solve U*X = B, overwriting B with X. */
+
+	ztrsm_("Left", "Upper", "No transpose", "Non-unit", n, nrhs, &c_b60, &
+		a[a_offset], lda, &b[b_offset], ldb);
+    } else {
+
+/*
+          Solve A*X = B where A = L*L'.
+
+          Solve L*X = B, overwriting B with X.
+*/
+
+	ztrsm_("Left", "Lower", "No transpose", "Non-unit", n, nrhs, &c_b60, &
+		a[a_offset], lda, &b[b_offset], ldb);
+
+/*        Solve L'*X = B, overwriting B with X. */
+
+	ztrsm_("Left", "Lower", "Conjugate transpose", "Non-unit", n, nrhs, &
+		c_b60, &a[a_offset], lda, &b[b_offset], ldb);
+    }
+
+    return 0;
+
+/*     End of ZPOTRS */
+
+} /* zpotrs_ */
 
 /* Subroutine */ int zstedc_(char *compz, integer *n, doublereal *d__,
 	doublereal *e, doublecomplex *z__, integer *ldz, doublecomplex *work,
@@ -22485,6 +23085,387 @@ L130:
 /*     End of ZTREVC */
 
 } /* ztrevc_ */
+
+/* Subroutine */ int ztrti2_(char *uplo, char *diag, integer *n,
+	doublecomplex *a, integer *lda, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, i__1, i__2;
+    doublecomplex z__1;
+
+    /* Builtin functions */
+    void z_div(doublecomplex *, doublecomplex *, doublecomplex *);
+
+    /* Local variables */
+    static integer j;
+    static doublecomplex ajj;
+    extern logical lsame_(char *, char *);
+    extern /* Subroutine */ int zscal_(integer *, doublecomplex *,
+	    doublecomplex *, integer *);
+    static logical upper;
+    extern /* Subroutine */ int ztrmv_(char *, char *, char *, integer *,
+	    doublecomplex *, integer *, doublecomplex *, integer *), xerbla_(char *, integer *);
+    static logical nounit;
+
+
+/*
+    -- LAPACK routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       September 30, 1994
+
+
+    Purpose
+    =======
+
+    ZTRTI2 computes the inverse of a complex upper or lower triangular
+    matrix.
+
+    This is the Level 2 BLAS version of the algorithm.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            Specifies whether the matrix A is upper or lower triangular.
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+
+    DIAG    (input) CHARACTER*1
+            Specifies whether or not the matrix A is unit triangular.
+            = 'N':  Non-unit triangular
+            = 'U':  Unit triangular
+
+    N       (input) INTEGER
+            The order of the matrix A.  N >= 0.
+
+    A       (input/output) COMPLEX*16 array, dimension (LDA,N)
+            On entry, the triangular matrix A.  If UPLO = 'U', the
+            leading n by n upper triangular part of the array A contains
+            the upper triangular matrix, and the strictly lower
+            triangular part of A is not referenced.  If UPLO = 'L', the
+            leading n by n lower triangular part of the array A contains
+            the lower triangular matrix, and the strictly upper
+            triangular part of A is not referenced.  If DIAG = 'U', the
+            diagonal elements of A are also not referenced and are
+            assumed to be 1.
+
+            On exit, the (triangular) inverse of the original matrix, in
+            the same storage format.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            < 0: if INFO = -k, the k-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    *info = 0;
+    upper = lsame_(uplo, "U");
+    nounit = lsame_(diag, "N");
+    if (! upper && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (! nounit && ! lsame_(diag, "U")) {
+	*info = -2;
+    } else if (*n < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*n)) {
+	*info = -5;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZTRTI2", &i__1);
+	return 0;
+    }
+
+    if (upper) {
+
+/*        Compute inverse of upper triangular matrix. */
+
+	i__1 = *n;
+	for (j = 1; j <= i__1; ++j) {
+	    if (nounit) {
+		i__2 = j + j * a_dim1;
+		z_div(&z__1, &c_b60, &a[j + j * a_dim1]);
+		a[i__2].r = z__1.r, a[i__2].i = z__1.i;
+		i__2 = j + j * a_dim1;
+		z__1.r = -a[i__2].r, z__1.i = -a[i__2].i;
+		ajj.r = z__1.r, ajj.i = z__1.i;
+	    } else {
+		z__1.r = -1., z__1.i = -0.;
+		ajj.r = z__1.r, ajj.i = z__1.i;
+	    }
+
+/*           Compute elements 1:j-1 of j-th column. */
+
+	    i__2 = j - 1;
+	    ztrmv_("Upper", "No transpose", diag, &i__2, &a[a_offset], lda, &
+		    a[j * a_dim1 + 1], &c__1);
+	    i__2 = j - 1;
+	    zscal_(&i__2, &ajj, &a[j * a_dim1 + 1], &c__1);
+/* L10: */
+	}
+    } else {
+
+/*        Compute inverse of lower triangular matrix. */
+
+	for (j = *n; j >= 1; --j) {
+	    if (nounit) {
+		i__1 = j + j * a_dim1;
+		z_div(&z__1, &c_b60, &a[j + j * a_dim1]);
+		a[i__1].r = z__1.r, a[i__1].i = z__1.i;
+		i__1 = j + j * a_dim1;
+		z__1.r = -a[i__1].r, z__1.i = -a[i__1].i;
+		ajj.r = z__1.r, ajj.i = z__1.i;
+	    } else {
+		z__1.r = -1., z__1.i = -0.;
+		ajj.r = z__1.r, ajj.i = z__1.i;
+	    }
+	    if (j < *n) {
+
+/*              Compute elements j+1:n of j-th column. */
+
+		i__1 = *n - j;
+		ztrmv_("Lower", "No transpose", diag, &i__1, &a[j + 1 + (j +
+			1) * a_dim1], lda, &a[j + 1 + j * a_dim1], &c__1);
+		i__1 = *n - j;
+		zscal_(&i__1, &ajj, &a[j + 1 + j * a_dim1], &c__1);
+	    }
+/* L20: */
+	}
+    }
+
+    return 0;
+
+/*     End of ZTRTI2 */
+
+} /* ztrti2_ */
+
+/* Subroutine */ int ztrtri_(char *uplo, char *diag, integer *n,
+	doublecomplex *a, integer *lda, integer *info)
+{
+    /* System generated locals */
+    address a__1[2];
+    integer a_dim1, a_offset, i__1, i__2, i__3[2], i__4, i__5;
+    doublecomplex z__1;
+    char ch__1[2];
+
+    /* Builtin functions */
+    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
+
+    /* Local variables */
+    static integer j, jb, nb, nn;
+    extern logical lsame_(char *, char *);
+    static logical upper;
+    extern /* Subroutine */ int ztrmm_(char *, char *, char *, char *,
+	    integer *, integer *, doublecomplex *, doublecomplex *, integer *,
+	     doublecomplex *, integer *),
+	    ztrsm_(char *, char *, char *, char *, integer *, integer *,
+	    doublecomplex *, doublecomplex *, integer *, doublecomplex *,
+	    integer *), ztrti2_(char *, char *
+	    , integer *, doublecomplex *, integer *, integer *), xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static logical nounit;
+
+
+/*
+    -- LAPACK routine (version 3.0) --
+       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+       Courant Institute, Argonne National Lab, and Rice University
+       September 30, 1994
+
+
+    Purpose
+    =======
+
+    ZTRTRI computes the inverse of a complex upper or lower triangular
+    matrix A.
+
+    This is the Level 3 BLAS version of the algorithm.
+
+    Arguments
+    =========
+
+    UPLO    (input) CHARACTER*1
+            = 'U':  A is upper triangular;
+            = 'L':  A is lower triangular.
+
+    DIAG    (input) CHARACTER*1
+            = 'N':  A is non-unit triangular;
+            = 'U':  A is unit triangular.
+
+    N       (input) INTEGER
+            The order of the matrix A.  N >= 0.
+
+    A       (input/output) COMPLEX*16 array, dimension (LDA,N)
+            On entry, the triangular matrix A.  If UPLO = 'U', the
+            leading N-by-N upper triangular part of the array A contains
+            the upper triangular matrix, and the strictly lower
+            triangular part of A is not referenced.  If UPLO = 'L', the
+            leading N-by-N lower triangular part of the array A contains
+            the lower triangular matrix, and the strictly upper
+            triangular part of A is not referenced.  If DIAG = 'U', the
+            diagonal elements of A are also not referenced and are
+            assumed to be 1.
+            On exit, the (triangular) inverse of the original matrix, in
+            the same storage format.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,N).
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            < 0: if INFO = -i, the i-th argument had an illegal value
+            > 0: if INFO = i, A(i,i) is exactly zero.  The triangular
+                 matrix is singular and its inverse can not be computed.
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    *info = 0;
+    upper = lsame_(uplo, "U");
+    nounit = lsame_(diag, "N");
+    if (! upper && ! lsame_(uplo, "L")) {
+	*info = -1;
+    } else if (! nounit && ! lsame_(diag, "U")) {
+	*info = -2;
+    } else if (*n < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*n)) {
+	*info = -5;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("ZTRTRI", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 0) {
+	return 0;
+    }
+
+/*     Check for singularity if non-unit. */
+
+    if (nounit) {
+	i__1 = *n;
+	for (*info = 1; *info <= i__1; ++(*info)) {
+	    i__2 = *info + *info * a_dim1;
+	    if (a[i__2].r == 0. && a[i__2].i == 0.) {
+		return 0;
+	    }
+/* L10: */
+	}
+	*info = 0;
+    }
+
+/*
+       Determine the block size for this environment.
+
+   Writing concatenation
+*/
+    i__3[0] = 1, a__1[0] = uplo;
+    i__3[1] = 1, a__1[1] = diag;
+    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+    nb = ilaenv_(&c__1, "ZTRTRI", ch__1, n, &c_n1, &c_n1, &c_n1, (ftnlen)6, (
+	    ftnlen)2);
+    if (nb <= 1 || nb >= *n) {
+
+/*        Use unblocked code */
+
+	ztrti2_(uplo, diag, n, &a[a_offset], lda, info);
+    } else {
+
+/*        Use blocked code */
+
+	if (upper) {
+
+/*           Compute inverse of upper triangular matrix */
+
+	    i__1 = *n;
+	    i__2 = nb;
+	    for (j = 1; i__2 < 0 ? j >= i__1 : j <= i__1; j += i__2) {
+/* Computing MIN */
+		i__4 = nb, i__5 = *n - j + 1;
+		jb = min(i__4,i__5);
+
+/*              Compute rows 1:j-1 of current block column */
+
+		i__4 = j - 1;
+		ztrmm_("Left", "Upper", "No transpose", diag, &i__4, &jb, &
+			c_b60, &a[a_offset], lda, &a[j * a_dim1 + 1], lda);
+		i__4 = j - 1;
+		z__1.r = -1., z__1.i = -0.;
+		ztrsm_("Right", "Upper", "No transpose", diag, &i__4, &jb, &
+			z__1, &a[j + j * a_dim1], lda, &a[j * a_dim1 + 1],
+			lda);
+
+/*              Compute inverse of current diagonal block */
+
+		ztrti2_("Upper", diag, &jb, &a[j + j * a_dim1], lda, info);
+/* L20: */
+	    }
+	} else {
+
+/*           Compute inverse of lower triangular matrix */
+
+	    nn = (*n - 1) / nb * nb + 1;
+	    i__2 = -nb;
+	    for (j = nn; i__2 < 0 ? j >= 1 : j <= 1; j += i__2) {
+/* Computing MIN */
+		i__1 = nb, i__4 = *n - j + 1;
+		jb = min(i__1,i__4);
+		if (j + jb <= *n) {
+
+/*                 Compute rows j+jb:n of current block column */
+
+		    i__1 = *n - j - jb + 1;
+		    ztrmm_("Left", "Lower", "No transpose", diag, &i__1, &jb,
+			    &c_b60, &a[j + jb + (j + jb) * a_dim1], lda, &a[j
+			    + jb + j * a_dim1], lda);
+		    i__1 = *n - j - jb + 1;
+		    z__1.r = -1., z__1.i = -0.;
+		    ztrsm_("Right", "Lower", "No transpose", diag, &i__1, &jb,
+			     &z__1, &a[j + j * a_dim1], lda, &a[j + jb + j *
+			    a_dim1], lda);
+		}
+
+/*              Compute inverse of current diagonal block */
+
+		ztrti2_("Lower", diag, &jb, &a[j + j * a_dim1], lda, info);
+/* L30: */
+	    }
+	}
+    }
+
+    return 0;
+
+/*     End of ZTRTRI */
+
+} /* ztrtri_ */
 
 /* Subroutine */ int zung2r_(integer *m, integer *n, integer *k,
 	doublecomplex *a, integer *lda, doublecomplex *tau, doublecomplex *
