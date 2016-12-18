@@ -1885,7 +1885,7 @@ class Configuration(object):
         -----
         This method scans files named
         __version__.py, <packagename>_version.py, version.py, and
-        __svn_version__.py for string variables version, __version\__, and
+        __svn_version__.py for string variables version, __version__, and
         <packagename>_version, until a version number is found.
         """
         version = getattr(self, 'version', None)

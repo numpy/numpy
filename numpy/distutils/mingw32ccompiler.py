@@ -65,7 +65,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
             p.stdout.close()
-            result = re.search('(\d+\.\d+)', out_string)
+            result = re.search(r'(\d+\.\d+)', out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
 

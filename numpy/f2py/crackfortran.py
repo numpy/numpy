@@ -549,16 +549,16 @@ beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
     r'\s*(?P<this>(\b(%s)\b))' + \
     r'\s*(?P<after>%s)\s*\Z'
 ##
-fortrantypes = 'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
+fortrantypes = r'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
 typespattern = re.compile(
     beforethisafter % ('', fortrantypes, fortrantypes, '.*'), re.I), 'type'
 typespattern4implicit = re.compile(beforethisafter % (
     '', fortrantypes + '|static|automatic|undefined', fortrantypes + '|static|automatic|undefined', '.*'), re.I)
 #
 functionpattern = re.compile(beforethisafter % (
-    '([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
+    r'([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
 subroutinepattern = re.compile(beforethisafter % (
-    '[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
+    r'[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
 # modulepattern=re.compile(beforethisafter%('[a-z\s]*?','module','module','.*'),re.I),'begin'
 #
 groupbegins77 = r'program|block\s*data'
@@ -570,11 +570,11 @@ beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
 groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, '[\w\s]*'), re.I), 'end'
+    beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
-endifs = '(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
+endifs = r'(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
 endifpattern = re.compile(
-    beforethisafter % ('[\w]*?', endifs, endifs, '[\w\s]*'), re.I), 'endif'
+    beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
@@ -593,9 +593,9 @@ privatepattern = re.compile(
 intrisicpattern = re.compile(
     beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
 intentpattern = re.compile(beforethisafter % (
-    '', 'intent|depend|note|check', 'intent|depend|note|check', '\s*\(.*?\).*'), re.I), 'intent'
+    '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
-    beforethisafter % ('', 'parameter', 'parameter', '\s*\(.*'), re.I), 'parameter'
+    beforethisafter % ('', 'parameter', 'parameter', r'\s*\(.*'), re.I), 'parameter'
 datapattern = re.compile(
     beforethisafter % ('', 'data', 'data', '.*'), re.I), 'data'
 callpattern = re.compile(

@@ -1243,8 +1243,8 @@ def tensordot(a, b, axes=2):
     Notes
     -----
     Three common use cases are:
-        * ``axes = 0`` : tensor product :math:`a\otimes b`
-        * ``axes = 1`` : tensor dot product :math:`a\cdot b`
+        * ``axes = 0`` : tensor product :math:`a\\otimes b`
+        * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
         * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
     When `axes` is integer_like, the sequence for evaluation will be: first
