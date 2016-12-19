@@ -2842,13 +2842,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
-    if rowvar == 0 and X.shape[0] != 1:
+    if not rowvar and X.shape[0] != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=dtype)
-        if rowvar == 0 and y.shape[0] != 1:
+        if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.vstack((X, y))
 
