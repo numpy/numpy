@@ -291,6 +291,9 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         a[0, 0] = np.inf
         self.assertRaises(AssertionError,
                 lambda: self._assert_func(a, b))
+        b[0, 0] = -np.inf
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(a, b))
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -337,6 +340,8 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         self._assert_func(-np.inf, -np.inf)
         self.assertRaises(AssertionError,
                 lambda: self._assert_func(np.inf, 1))
+        self.assertRaises(AssertionError,
+                lambda: self._assert_func(-np.inf, np.inf))
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
