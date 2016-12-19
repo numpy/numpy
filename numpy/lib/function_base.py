@@ -2918,7 +2918,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -2939,8 +2939,8 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
         shape as `x`.
-    rowvar : int, optional
-        If `rowvar` is non-zero (default), then each row represents a
+    rowvar : bool, optional
+        If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
