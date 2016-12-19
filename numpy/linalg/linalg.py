@@ -1279,6 +1279,7 @@ def eigh(a, UPLO='L'):
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
+    _assertNoEmpty2d(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
