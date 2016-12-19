@@ -432,6 +432,146 @@ class TestApproxEqual(unittest.TestCase):
                 lambda: self._assert_func(ainf, anan))
 
 
+class TestArrayAssertLess(unittest.TestCase):
+
+    def setUp(self):
+        self._assert_func = assert_array_less
+
+    def test_simple_arrays(self):
+        x = np.array([1.1, 2.2])
+        y = np.array([1.2, 2.3])
+
+        self._assert_func(x, y)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+        y = np.array([1.0, 2.3])
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, y))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+    def test_rank2(self):
+        x = np.array([[1.1, 2.2], [3.3, 4.4]])
+        y = np.array([[1.2, 2.3], [3.4, 4.5]])
+
+        self._assert_func(x, y)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+        y = np.array([[1.0, 2.3], [3.4, 4.5]])
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, y))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+    def test_rank3(self):
+        x = np.ones(shape=(2, 2, 2))
+        y = np.ones(shape=(2, 2, 2))+1
+
+        self._assert_func(x, y)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+        y[0, 0, 0] = 0
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, y))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+    def test_simple_items(self):
+        x = 1.1
+        y = 2.2
+
+        self._assert_func(x, y)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+        y = np.array([2.2, 3.3])
+
+        self._assert_func(x, y)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(y, x))
+
+        y = np.array([1.0, 3.3])
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, y))
+
+    def test_nan_noncompare(self):
+        anan = np.array(np.nan)
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+        self._assert_func(anan, anan)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(aone, anan))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(anan, aone))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(anan, ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(ainf, anan))
+
+    def test_nan_noncompare_array(self):
+        x = np.array([1.1, 2.2, 3.3])
+        anan = np.array(np.nan)
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, anan))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(anan, x))
+
+        x = np.array([1.1, 2.2, np.nan])
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, anan))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(anan, x))
+
+        y = np.array([1.0, 2.0, np.nan])
+
+        self._assert_func(y, x)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, y))
+
+    def test_inf_compare(self):
+        aone = np.array(1)
+        ainf = np.array(np.inf)
+
+        self._assert_func(aone, ainf)
+        self._assert_func(-ainf, aone)
+        self._assert_func(-ainf, ainf)
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(ainf, aone))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(aone, -ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(ainf, ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(ainf, -ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(-ainf, -ainf))
+
+    def test_inf_compare_array(self):
+        x = np.array([1.1, 2.2, np.inf])
+        ainf = np.array(np.inf)
+
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(ainf, x))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(x, -ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(-x, -ainf))
+        self.assertRaises(AssertionError,
+                          lambda: self._assert_func(-ainf, -x))
+        self._assert_func(-ainf, x)
+
+
 class TestRaises(unittest.TestCase):
 
     def setUp(self):
