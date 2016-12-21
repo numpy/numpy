@@ -221,7 +221,7 @@ prepare_index_tuple(PyObject *index)
     /* If the index is not a tuple, convert it into (index,) */
     if (!make_tuple && !PyTuple_CheckExact(index)) {
         make_tuple = 1;
-        index_as_tuple = Py_BuildValue("(O)", index);
+        index_as_tuple = PyTuple_Pack(1, index);
     }
     /* Otherwise, check if the tuple is too long */
     else if (PyTuple_GET_SIZE(index_as_tuple) > NPY_MAXDIMS * 2) {
