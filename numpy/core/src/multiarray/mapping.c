@@ -143,15 +143,20 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 /**
  * Prepare an index argument into a tuple
  *
- * The index might be a multi-dimensional index, but not yet a tuple
- * this makes it a tuple in that case. This also promotes scalars to 1-tuples.
+ * This mainly implements the following section from the advanced indexing docs:
+ * > In order to remain backward compatible with a common usage in Numeric,
+ * > basic slicing is also initiated if the selection object is any non-ndarray
+ * > sequence (such as a list) containing slice objects, the Ellipsis object,
+ * > or the newaxis object, but not for integer arrays or other embedded
+ * > sequences.
  *
- * It is the callers repsonsibility to call Py_DECREF on a non-null result,
- * even if it is the same as the input.
+ * This also promotes scalars to 1-tuples, and downcasts tuple subclasses
  *
  * @param the index object, which may or may not be a tuple
  *
  * @returns the index converted to a tuple, if possible, else NULL on an error
+ *          It is the caller's responsibility to call Py_DECREF on a non-null
+ *          result, even if it is the same as the input.
  */
 NPY_NO_EXPORT PyObject *
 prepare_index_tuple(PyObject *index)
