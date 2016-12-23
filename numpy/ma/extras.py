@@ -723,11 +723,12 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     if asorted.ndim == 1:
         counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)
-        mid = asorted[idx + odd - 1 : idx + 1]
+        mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
             # avoid inf / x = masked
             s = mid.sum(out=out)
-            np.true_divide(s, 2., casting='unsafe')
+            if not odd:
+                s = np.true_divide(s, 2., casting='safe', out=out)
             s = np.lib.utils._median_nancheck(asorted, s, axis, out)
         else:
             s = mid.mean(out=out)

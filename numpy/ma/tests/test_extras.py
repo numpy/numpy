@@ -672,10 +672,14 @@ class TestMedian(TestCase):
         x = np.arange(9)
         assert_equal(np.ma.median(x), 4.)
         assert_(type(np.ma.median(x)) is not MaskedArray)
-        x = range(9)
-        assert_equal(np.ma.median(x), 4.)
+        x = range(8)
+        assert_equal(np.ma.median(x), 3.5)
         assert_(type(np.ma.median(x)) is not MaskedArray)
         x = 5
+        assert_equal(np.ma.median(x), 5.)
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        # Regression test for gh-8409: even number of entries.
+        x = [5., 5.]
         assert_equal(np.ma.median(x), 5.)
         assert_(type(np.ma.median(x)) is not MaskedArray)
 
