@@ -1690,7 +1690,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     See Also
     --------
-    isinf, isneginf, isposinf, isfinite
+    isinf, isneginf, isposinf, isfinite, isnat
 
     Notes
     -----
@@ -1705,6 +1705,41 @@ add_newdoc('numpy.core.umath', 'isnan',
     False
     >>> np.isnan([np.log(-1.),1.,np.log(0)])
     array([ True, False, False], dtype=bool)
+
+    """)
+
+add_newdoc('numpy.core.umath', 'isnat',
+    """
+    Test element-wise for NaT (not a time) and return result as a boolean array.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array with datetime or timedelta data type.
+
+    Returns
+    -------
+    y : ndarray or bool
+        For scalar input, the result is a new boolean with value True if
+        the input is NaT; otherwise the value is False.
+
+        For array input, the result is a boolean array of the same
+        dimensions as the input and the values are True if the
+        corresponding element of the input is NaT; otherwise the values are
+        False.
+
+    See Also
+    --------
+    isnan, isinf, isneginf, isposinf, isfinite
+
+    Examples
+    --------
+    >>> np.isnat(np.datetime64("NaT"))
+    True
+    >>> np.isnat(np.datetime64("2016-01-01"))
+    False
+    >>> np.isnat(np.array(["NaT", "2016-01-01"], dtype="datetime64[ns]"))
+    array([ True, False], dtype=bool)
 
     """)
 

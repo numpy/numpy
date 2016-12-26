@@ -537,6 +537,32 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
 }
 
 /*
+ * This function applies special type resolution rules for the isnat
+ * ufunc. This ufunc converts datetime/timedelta -> bool, and is not covered
+ * by the simple unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        PyErr_SetString(PyExc_ValueError,
+                "ufunc 'isnat' is only defined for datetime and timedelta.");
+        return -1;
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
+}
+
+/*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
  *
