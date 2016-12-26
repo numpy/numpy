@@ -42,6 +42,13 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
                              PyArrayObject **operands,
                              PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
+                             
+NPY_NO_EXPORT int
+PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
 PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,

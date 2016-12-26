@@ -799,6 +799,12 @@ defdict = {
           None,
           TD(inexact, out='?'),
           ),
+'isnat':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.isnat'),
+          'PyUFunc_IsNaTTypeResolver',
+          TD(times, out='?'),
+          ),
 'isinf':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),

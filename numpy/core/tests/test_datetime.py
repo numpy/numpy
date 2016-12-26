@@ -1918,6 +1918,35 @@ class TestDateTime(TestCase):
         a = np.datetime64('2038-01-20T13:21:14')
         assert_equal(str(a), '2038-01-20T13:21:14')
 
+    def test_isnat(self):
+        assert_(np.isnat(np.datetime64('NaT', 'ms')))
+        assert_(np.isnat(np.datetime64('NaT', 'ns')))
+        assert_(not np.isnat(np.datetime64('2038-01-19T03:14:07')))
+
+        assert_(np.isnat(np.timedelta64('NaT', "ms")))
+        assert_(not np.isnat(np.timedelta64(34, "ms")))
+
+        res = np.array([False, False, True])
+        for unit in ['Y', 'M', 'W', 'D',
+                     'h', 'm', 's', 'ms', 'us',
+                     'ns', 'ps', 'fs', 'as']:
+            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+
+    def test_isnat_error(self):
+        # Test that only datetime dtype arrays are accepted
+        for t in np.typecodes["All"]:
+            if t in np.typecodes["Datetime"]:
+                continue
+            assert_raises(ValueError, np.isnat, np.zeros(10, t))
+
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):
