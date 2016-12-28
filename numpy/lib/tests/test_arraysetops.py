@@ -8,7 +8,7 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_array_equal, assert_equal, assert_raises
     )
 from numpy.lib.arraysetops import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
 
 
@@ -76,6 +76,23 @@ class TestSetOps(TestCase):
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
         assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
         assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
+
+    def test_isin(self):
+        # the tests for in1d cover most of isin's behavior
+        # if in1d is deprecated, would need to change those tests to test
+        # isin instead.
+        a = np.arange(24).reshape([2, 3, 4])
+        b = [0, 10, 20, 30, 1, 3, 11, 22, 33]
+        ec = np.zeros((2, 3, 4), dtype=bool)
+        ec[0, 0, 0] = True
+        ec[0, 0, 1] = True
+        ec[0, 0, 3] = True
+        ec[0, 2, 2] = True
+        ec[0, 2, 3] = True
+        ec[1, 2, 0] = True
+        ec[1, 2, 2] = True
+        c = isin(a, b)
+        assert_array_equal(c, ec)
 
     def test_in1d(self):
         # we use two different sizes for the b array here to test the
