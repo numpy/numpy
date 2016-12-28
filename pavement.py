@@ -591,14 +591,14 @@ def compute_sha256(idirs):
 
     return checksums
 
-def write_release_task(options, filename='NOTES.txt'):
+def write_release_task(options, filename='README'):
     idirs = options.installers.installersdir
     source = paver.path.path(RELEASE_NOTES)
     target = paver.path.path(filename)
     if target.exists():
         target.remove()
 
-    tmp_target = paver.path.path(filename + '.tmp')
+    tmp_target = paver.path.path(filename + '.md')
     source.copy(tmp_target)
 
     with open(str(tmp_target), 'a') as ftarget:
@@ -607,16 +607,16 @@ Checksums
 =========
 
 MD5
-~~~
+---
 
 """)
-        ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
+        ftarget.writelines(['    %s\n' % c for c in compute_md5(idirs)])
         ftarget.writelines("""
 SHA256
-~~~~~~
+------
 
 """)
-        ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
+        ftarget.writelines(['    %s\n' % c for c in compute_sha256(idirs)])
 
     # Sign release
     cmd = ['gpg', '--clearsign', '--armor']
@@ -625,7 +625,14 @@ SHA256
     cmd += ['--output', str(target), str(tmp_target)]
     subprocess.check_call(cmd)
     print("signed %s" % (target,))
-    tmp_target.remove()
+
+    # Change PR links for github posting, don't sign this
+    # as the signing isn't markdown compatible.
+    with open(str(tmp_target), 'r') as ftarget:
+        mdtext = ftarget.read()
+        mdtext = re.sub(r'^\* `(\#[0-9]*).*?`__', r'* \1', mdtext, flags=re.M)
+    with open(str(tmp_target), 'w') as ftarget:
+        ftarget.write(mdtext)
 
 
 def write_log_task(options, filename='Changelog'):
