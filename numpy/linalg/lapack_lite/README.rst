@@ -9,16 +9,18 @@ required by the ``LinearAlgebra`` module, and wrapped by the ``lapack_lite``
 module. The scripts in this directory can be used to create these files
 automatically from a directory of LAPACK source files.
 
-You'll need `Plex 1.1.4`_ installed to do the appropriate scrubbing.
+You'll need `plex 2.0.0dev`_, available from PyPI, installed to do the
+appropriate scrubbing. As of writing, **this is only available for python 2.7**,
+and is unlikely to ever be ported to python 3.
 
-.. _Plex 1.1.4: http://www.cosc.canterbury.ac.nz/~greg/python/Plex/
+.. _plex 2.0.0dev: https://pypi.python.org/pypi/plex/
 
 The routines that ``lapack_litemodule.c`` wraps are listed in
 ``wrapped_routines``, along with a few exceptions that aren't picked up
 properly. Assuming that you have an unpacked LAPACK source tree in
 ``~/LAPACK``, you generate the new routines in a directory ``new-lite/`` with::
 
-$ python ./make_lite.py wrapped_routines ~/LAPACK new-lite/
+$ python2 ./make_lite.py wrapped_routines ~/LAPACK new-lite/
 
 This will grab the right routines, with dependencies, put them into the
 appropriate ``blas_lite.f``, ``dlapack_lite.f``, or ``zlapack_lite.f`` files,
