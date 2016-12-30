@@ -68,6 +68,8 @@ matrix:
       env: USE_WHEEL=1 RUN_FULL_TESTS=1
     - python: 3.5
       env: USE_SDIST=1
+    - python: 3.6-dev
+      env: USE_WHEEL=1
     - python: 2.7
       env:
        - PYTHONOPTIMIZE=2
