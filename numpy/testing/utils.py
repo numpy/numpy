@@ -23,6 +23,12 @@ if sys.version_info[0] >= 3:
 else:
     from StringIO import StringIO
 
+try:
+    from threading import Lock
+except ImportError:
+    from dummy_threading import Lock
+
+
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
@@ -41,6 +47,20 @@ class KnownFailureException(Exception):
     '''Raise this exception to mark a test as a known failing test.'''
     pass
 
+
+# Warning filtering is generally not threadsafe in python, this is also
+# true for `catch_warnings` or `suppress_warinings`. In NumPy 1.12
+# however, `assert_equal` and the array comparison asserts, use this
+# to filter out some comparison warnings. Since removing this filter
+# may also affect downstream projects and skimage (and possibly more)
+# do parallel manual parallel testing using `assert_equal`, a quick fix
+# seems to be to lock the less obvious threading trap. Ideally (in
+# master this is the case), there should simply not be warning filter
+# logic in the assert functions themself.
+# While probably not perfectly safe in principle, it is sufficient
+# in the case of skimage and probably most testing scenarios and the
+# chance of deadlocks seems very unlikely.
+_assert_comparison_lock = Lock()
 
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
@@ -395,13 +415,15 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     except (TypeError, ValueError, NotImplementedError):
         pass
 
-    # Explicitly use __eq__ for comparison, ticket #2552
-    with suppress_warnings() as sup:
+    # Put lock around the warning filter, see comment at lock definition
+    with _assert_comparison_lock, suppress_warnings() as sup:
         # TODO: Better handling will to needed when change happens!
         sup.filter(DeprecationWarning, ".*NAT ==")
         sup.filter(FutureWarning, ".*NAT ==")
+        # Explicitly use __eq__ for comparison, ticket #2552
         if not (desired == actual):
             raise AssertionError(msg)
+
 
 
 def print_assert_equal(test_string, actual, desired):
@@ -691,7 +713,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # pass (or maybe eventually catch the errors and return False, I
         # dunno, that's a little trickier and we can figure that out when the
         # time comes).
-        with suppress_warnings() as sup:
+        # Note: Put a lock around warning filter (comment at lock definition)
+        with _assert_comparison_lock, suppress_warnings() as sup:
             sup.filter(DeprecationWarning, ".*==")
             sup.filter(FutureWarning, ".*==")
             return comparison(*args, **kwargs)
