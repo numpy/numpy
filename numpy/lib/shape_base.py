@@ -127,7 +127,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
                 ind[n] = 0
                 n -= 1
             i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
+            res = asanyarray(func1d(arr[tuple(i.tolist())], *args, **kwargs))
             outarr[tuple(i.tolist())] = res
             k += 1
         if res.shape == ():
