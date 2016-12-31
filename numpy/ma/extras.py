@@ -1130,7 +1130,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
-def isin(ar1, ar2, assume_unique=False, invert=False):
+def isin(elements, test_elements, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
     array.
@@ -1147,40 +1147,41 @@ def isin(ar1, ar2, assume_unique=False, invert=False):
     .. versionadded:: 1.12.0
 
     """
-    ar1 = asarray(ar1)
+    elements = asarray(elements)
     if not assume_unique:
-        flat_ar1, rev_idx = unique(ar1, return_inverse=True)
-        flat_ar2 = unique(ar2)
+        elements_flat, rev_idx = unique(elements, return_inverse=True)
+        test_elements = unique(test_elements)
     else:
-        flat_ar1 = ar1.ravel()
-        flat_ar2 = ar2.ravel()
+        elements_flat = elements.ravel()
+        test_elements = asarray(test_elements).ravel()
 
-    ar = ma.concatenate((flat_ar1, flat_ar2))
+    elements_cat = ma.concatenate((elements_flat, test_elements))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
+    order = elements_cat.argsort(kind='mergesort')
+    elements_cat_sort = elements_cat[order]
     if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+        bool_elements = (elements_cat_sort[1:] != elements_cat_sort[:-1])
     else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = ma.concatenate((bool_ar, [invert]))
-    indx = order.argsort(kind='mergesort')[:len(flat_ar1)]
+        bool_elements = (elements_cat_sort[1:] == elements_cat_sort[:-1])
+    flag = ma.concatenate((bool_elements, [invert]))
+    indx = order.argsort(kind='mergesort')[:len(elements_flat)]
 
     if assume_unique:
         result = flag[indx]
     else:
         result = flag[indx][rev_idx]
-    return result.reshape(ar1.shape)
+    return result.reshape(elements.shape)
 
 
-def in1d(ar1, ar2, **kwargs):
+def in1d(elements, test_elements, **kwargs):
     """
     Test whether each element of an array is also present in a second
     array.
 
-    The output is always a masked array. See `numpy.in1d` for more details.
+    The output is always a one-dimensional masked array. See `numpy.in1d` for
+    more details.
 
     See Also
     --------
@@ -1193,7 +1194,7 @@ def in1d(ar1, ar2, **kwargs):
 
     """
     # deprecate this eventually?
-    return isin(ar1, ar2, **kwargs).flatten()
+    return isin(elements, test_elements, **kwargs).ravel()
 
 
 def union1d(ar1, ar2):

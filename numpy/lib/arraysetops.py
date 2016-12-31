@@ -381,56 +381,55 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = flag[1:] == flag[:-1]
     return aux[flag2]
 
-def isin(ar1, ar2, assume_unique=False, invert=False):
+def isin(elements, test_elements, assume_unique=False, invert=False):
     """
     Test whether each element of an array is present in a second array.
 
-    Returns a boolean array the same shape as `ar1` that is True
-    where an element of `ar1` is in `ar2` and False otherwise.
+    Returns a boolean array of the same shape as `elements` that is True
+    where an element of `elements` is in `test_elements` and False otherwise.
 
     Parameters
     ----------
-    ar1 : array_like
+    elements : array_like
         Input array.
-    ar2 : array_like
-        The values against which to test each value of `ar1`.
+    test_elements : array_like
+        The values against which to test each value of `elements`.
     assume_unique : bool, optional
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
     invert : bool, optional
-        If True, the values in the returned array are inverted (that is,
-        False where an element of `ar1` is in `ar2` and True otherwise).
-        Default is False. ``np.isin(a, b, invert=True)`` is equivalent
-        to (but is faster than) ``np.invert(isin(a, b))``.
-
-        .. versionadded:: 1.8.0
+        If True, the values in the returned array are inverted (that is, False
+        where an element of `elements` is in `test_elements` and True
+        otherwise). Default is False. ``np.isin(a, b, invert=True)`` is
+        equivalent to (but is faster than) ``np.invert(isin(a, b))``.
 
     Returns
     -------
     isin : ndarray, bool
-        The values `ar1[isin]` are in `ar2`.
+        The values `elements[isin]` are in `test_elements`.
 
     See Also
     --------
-    in1d                  : The older, flattened version of this function
+    in1d                  : The older version of this function that acts on
+                            flat arrays only.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
 
     Notes
     -----
     `isin` can be considered as an element-wise function version of the
-    python keyword `in`. ``in1d(ar1, ar2)`` is roughly equivalent to
-    ``in1d = np.vectorize(lambda x: x in ar2); in1d(ar1)``.
-    However, this idea fails if `ar2` is a set, or similar (non-sequence)
-    container:  As ``ar2`` is converted to an array, in those cases
-    ``asarray(ar2)`` is an object array rather than the expected array of
-    contained values.
+    python keyword `in`. ``isin(a, b)`` is roughly equivalent to
+    ``np.array([item in b for item in a])`` if a is one-dimensional.
+    However, this idea fails if `b` is a set, or similar (non-sequence)
+    container:  As ``b`` is converted to an array, in those cases
+    ``asarray(b)`` is an object array containing b as its only element, 
+    rather than the expected array of contained values.
 
     .. versionadded:: 1.12.0
 
     Examples
     --------
-    >>> test = np.array([0, 2, 4, 6]).reshape([2, 2])
+    >>> test = np.array([[0, 2], [4, 6]])
     >>> states = [1, 2, 4, 8]
     >>> mask = np.isin(test, states)
     >>> mask
@@ -445,76 +444,57 @@ def isin(ar1, ar2, assume_unique=False, invert=False):
     >>> test[mask]
     array([0, 6])
     """
-    # Ravel both arrays, will reshape result later to match ar1
-    ar1 = np.asarray(ar1)
-    flat_ar1 = ar1.ravel()
-    ar2 = np.asarray(ar2).ravel()
+    # Ravel both arrays, will reshape result later to match elements
+    elements = np.asarray(elements)
+    elements_flat = elements.ravel()
+    test_elements = np.asarray(test_elements).ravel()
 
     # This code is significantly faster when the condition is satisfied.
-    if len(ar2) < 10 * len(flat_ar1) ** 0.145:
+    if len(test_elements) < 10 * len(elements_flat) ** 0.145:
         if invert:
-            mask = np.ones(len(flat_ar1), dtype=np.bool)
-            for a in ar2:
-                mask &= (flat_ar1 != a)
+            mask = np.ones(len(elements_flat), dtype=np.bool)
+            for item in test_elements:
+                mask &= (elements_flat != item)
         else:
-            mask = np.zeros(len(flat_ar1), dtype=np.bool)
-            for a in ar2:
-                mask |= (flat_ar1 == a)
-        return mask.reshape(ar1.shape)
+            mask = np.zeros(len(elements_flat), dtype=np.bool)
+            for item in test_elements:
+                mask |= (elements_flat == item)
+        return mask.reshape(elements.shape)
 
     # Otherwise use sorting
     if not assume_unique:
-        flat_ar1, rev_idx = np.unique(flat_ar1, return_inverse=True)
-        ar2 = np.unique(ar2)
+        elements_flat, rev_idx = np.unique(elements_flat, return_inverse=True)
+        test_elements = np.unique(test_elements)
 
-    ar = np.concatenate((flat_ar1, ar2))
+    elements_cat = np.concatenate((elements_flat, test_elements))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
+    order = elements_cat.argsort(kind='mergesort')
+    elements_cat_sort = elements_cat[order]
     if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+        bool_elements = (elements_cat_sort[1:] != elements_cat_sort[:-1])
     else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = np.concatenate((bool_ar, [invert]))
-    ret = np.empty(ar.shape, dtype=bool)
+        bool_elements = (elements_cat_sort[1:] == elements_cat_sort[:-1])
+    flag = np.concatenate((bool_elements, [invert]))
+    ret = np.empty(elements_cat.shape, dtype=bool)
     ret[order] = flag
 
     if assume_unique:
-        result = ret[:len(flat_ar1)]
+        result = ret[:len(elements_flat)]
     else:
         result = ret[rev_idx]
-    return result.reshape(ar1.shape)
+    return result.reshape(elements.shape)
 
-def in1d(ar1, ar2, **kwargs):
+def in1d(elements, test_elements, **kwargs):
     """
     Test whether each element of a 1-D array is also present in a second array.
+    If `elements` is multidimensional, it is flattened.
 
-    Returns a boolean array the same length as `ar1` that is True
-    where an element of `ar1` is in `ar2` and False otherwise.
+    Returns a boolean array of the same length as `elements` that is True
+    where an element of `elements` is in `test_elements` and False otherwise.
 
-    Parameters
-    ----------
-    ar1 : (M,) array_like
-        Input array.
-    ar2 : array_like
-        The values against which to test each value of `ar1`.
-    assume_unique : bool, optional
-        If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
-    invert : bool, optional
-        If True, the values in the returned array are inverted (that is,
-        False where an element of `ar1` is in `ar2` and True otherwise).
-        Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
-        to (but is faster than) ``np.invert(in1d(a, b))``.
-
-        .. versionadded:: 1.8.0
-
-    Returns
-    -------
-    in1d : (M,) ndarray, bool
-        The values `ar1[in1d]` are in `ar2`.
+    See `numpy.isin` for more details.
 
     See Also
     --------
@@ -522,36 +502,9 @@ def in1d(ar1, ar2, **kwargs):
                             multidimensional arrays
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
-
-    Notes
-    -----
-    `in1d` can be considered as an element-wise function version of the
-    python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly
-    equivalent to ``np.array([item in b for item in a])``.
-    However, this idea fails if `ar2` is a set, or similar (non-sequence)
-    container:  As ``ar2`` is converted to an array, in those cases
-    ``asarray(ar2)`` is an object array rather than the expected array of
-    contained values.
-
-    .. versionadded:: 1.4.0
-
-    Examples
-    --------
-    >>> test = np.array([0, 1, 2, 5, 0])
-    >>> states = [0, 2]
-    >>> mask = np.in1d(test, states)
-    >>> mask
-    array([ True, False,  True, False,  True], dtype=bool)
-    >>> test[mask]
-    array([0, 2, 0])
-    >>> mask = np.in1d(test, states, invert=True)
-    >>> mask
-    array([False,  True, False,  True, False], dtype=bool)
-    >>> test[mask]
-    array([1, 5])
     """
     # deprecate this eventually?
-    return isin(ar1, ar2, **kwargs).ravel()
+    return isin(elements, test_elements, **kwargs).ravel()
 
 def union1d(ar1, ar2):
     """
