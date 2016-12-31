@@ -58,6 +58,12 @@ class TestApplyAlongAxis(TestCase):
         assert isinstance(res, MinimalSubclass)
         assert_array_equal(res, np.array([6, 6, 6]).view(MinimalSubclass))
 
+    def test_tuple_func1d(self):
+        def sample_1d(x):
+            return x[1], x[0]
+        res = np.apply_along_axis(sample_1d, 1, np.array([[1, 2], [3, 4]]))
+        assert_array_equal(res, np.array([[2, 1], [4, 3]]))
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
