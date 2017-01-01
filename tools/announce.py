@@ -110,7 +110,7 @@ def main(token, revision_range):
 
     # document authors
     authors = get_authors(revision_range)
-    heading = u"Contributors to {0}".format(cur_release)
+    heading = u"Contributors"
     print()
     print(heading)
     print(u"="*len(heading))
@@ -121,7 +121,7 @@ def main(token, revision_range):
 
     # document pull requests
     pull_requests = get_pull_requests(github_repo, revision_range)
-    heading = u"Pull requests merged for {0}".format(cur_release)
+    heading = u"Pull requests merged"
     pull_msg = u"* `#{0} <{1}>`__: {2}"
 
     print()

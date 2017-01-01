@@ -495,14 +495,13 @@ python versions before 3.4, this can cause warnings to appear that were falsely
 ignored before, which may be surprising especially in test suits.
 
 
-
-Contributors to maintenance/1.12.x
-==================================
+Contributors
+============
 
 A total of 139 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
-* Aditya Panchal
+* Aditya Panchal +
 * Ales Erjavec +
 * Alex Griffing
 * Alexandr Shadchin +
@@ -642,10 +641,10 @@ names contributed a patch for the first time.
 * Yu Feng +
 * nevimov +
 
-Pull requests merged for maintenance/1.12.x
-===========================================
+Pull requests merged
+====================
 
-A total of 406 pull requests were merged for this release.
+A total of 413 pull requests were merged for this release.
 
 * `#4073 <https://github.com/numpy/numpy/pull/4073>`__: BUG: change real output checking to test if all imaginary parts...
 * `#4619 <https://github.com/numpy/numpy/pull/4619>`__: BUG : np.sum silently drops keepdims for sub-classes of ndarray
@@ -1054,3 +1053,10 @@ A total of 406 pull requests were merged for this release.
 * `#8394 <https://github.com/numpy/numpy/pull/8394>`__: DOC: create 1.11.3 release notes.
 * `#8399 <https://github.com/numpy/numpy/pull/8399>`__: BUG: Fix author search in announce.py
 * `#8402 <https://github.com/numpy/numpy/pull/8402>`__: DOC, MAINT: Update 1.12.0 notes and mailmap.
+* `#8418 <https://github.com/numpy/numpy/pull/8418>`__: BUG: Fix ma.median even elements for 1.12
+* `#8424 <https://github.com/numpy/numpy/pull/8424>`__: DOC: Fix tools and release notes to be more markdown compatible.
+* `#8427 <https://github.com/numpy/numpy/pull/8427>`__: BUG: Add a lock to assert_equal and other testing functions
+* `#8431 <https://github.com/numpy/numpy/pull/8431>`__: BUG: Fix apply_along_axis() for when func1d() returns a non-ndarray.
+* `#8432 <https://github.com/numpy/numpy/pull/8432>`__: BUG: Let linspace accept input that has an array_interface.
+* `#8437 <https://github.com/numpy/numpy/pull/8437>`__: TST: Update 3.6-dev tests to 3.6 after Python final release.
+* `#8439 <https://github.com/numpy/numpy/pull/8439>`__: DOC: Update 1.12.0 release notes.
