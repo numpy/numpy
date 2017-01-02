@@ -116,7 +116,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # insert as many axes as necessary to create the output
     outshape = arr.shape[:axis] + res.shape + arr.shape[axis+1:]
     outarr = zeros(outshape, res.dtype)
-    outarr = res.__array_wrap__(outarr)
+    outarr = res.__array_prepare__(outarr)
 
     # outarr, with inserted dimensions at the end
     # this means that outarr_view[i] = func1d(inarr_view[i])
@@ -127,6 +127,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     outarr_view[ind0] = res
     for ind in inds:
         outarr_view[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
+
+    outarr = res.__array_wrap__(outarr)
+
     return outarr
 
 
