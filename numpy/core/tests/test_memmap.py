@@ -4,6 +4,7 @@ import sys
 import os
 import shutil
 from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
+import mmap
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -188,6 +189,11 @@ class TestMemmap(TestCase):
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
         assert(fp[[0, 1]].__class__ is MemmapSubClass)
 
+    def test_mmap_offset_greater_than_allocation_granularity(self):
+        size = 5 * mmap.ALLOCATIONGRANULARITY
+        offset = mmap.ALLOCATIONGRANULARITY + 1
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        assert_(fp.offset == offset)
 
 if __name__ == "__main__":
     run_module_suite()
