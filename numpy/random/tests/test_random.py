@@ -4,8 +4,8 @@ import warnings
 import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
-        assert_warns, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings)
+        assert_warns, assert_no_warnings, assert_array_equal,
+        assert_array_almost_equal, suppress_warnings)
 from numpy import random
 from numpy.compat import asbytes
 import sys
@@ -628,28 +628,22 @@ class TestRandomDist(TestCase):
                             [[0.689515026297799, 9.880729819607714],
                              [-0.023054015651998, 9.201096623542879]]])
 
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
         actual = np.random.multivariate_normal(mean, cov)
         desired = np.array([0.895289569463708, 9.17180864067987])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
         mean = [0, 0]
-        cov = [[1, 2], [3, 4]]
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            np.random.multivariate_normal(mean, cov)
-            assert len(w) == 1
-            assert issubclass(w[0].category, RuntimeWarning)
+        cov = [[1, 2], [2, 1]]
+        assert_warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
 
         # and that it doesn't warn with RuntimeWarning check_valid='ignore'
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            np.random.multivariate_normal(mean, cov, check_valid='ignore')
-            assert len(w) == 0
+        assert_no_warnings(np.random.multivariate_normal, mean, cov,
+                           check_valid='ignore')
 
         # and that it raises with RuntimeWarning check_valid='raises'
         assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
