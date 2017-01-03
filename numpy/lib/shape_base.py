@@ -9,6 +9,7 @@ from numpy.core.numeric import (
 from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core import vstack, atleast_3d
 from numpy.lib.index_tricks import ndindex
+from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
 
 __all__ = [
@@ -116,7 +117,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # insert as many axes as necessary to create the output
     outshape = arr.shape[:axis] + res.shape + arr.shape[axis+1:]
     outarr = zeros(outshape, res.dtype)
-    outarr = res.__array_prepare__(outarr)
+    # matrices call reshape in __array_prepare__, and this is apparently ok!
+    if not isinstance(res, matrix):
+        outarr = res.__array_prepare__(outarr)
+    if outshape != outarr.shape:
+        raise ValueError('__array_prepare__ should not change the shape of the resultant array')
 
     # outarr, with inserted dimensions at the end
     # this means that outarr_view[i] = func1d(inarr_view[i])
