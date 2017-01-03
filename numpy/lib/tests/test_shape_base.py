@@ -28,14 +28,20 @@ class TestApplyAlongAxis(TestCase):
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
     def test_preserve_subclass(self):
+        # this test is particularly malicious because matrix
+        # refuses to become 1d
         def double(row):
             return row * 2
         m = np.matrix([[0, 1], [2, 3]])
+        expected = np.matrix([[0, 2], [4, 6]])
+
         result = apply_along_axis(double, 0, m)
         assert_(isinstance(result, np.matrix))
-        assert_array_equal(
-            result, np.matrix([[0, 2], [4, 6]])
-        )
+        assert_array_equal(result, expected)
+
+        result = apply_along_axis(double, 1, m)
+        assert_(isinstance(result, np.matrix))
+        assert_array_equal(result, expected)
 
     def test_subclass(self):
         class MinimalSubclass(np.ndarray):
