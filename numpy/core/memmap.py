@@ -260,11 +260,11 @@ class memmap(ndarray):
 
         start = offset - offset % mmap.ALLOCATIONGRANULARITY
         bytes -= start
-        offset -= start
+        array_offset = offset - start
         mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-            offset=offset, order=order)
+                               offset=array_offset, order=order)
         self._mmap = mm
         self.offset = offset
         self.mode = mode

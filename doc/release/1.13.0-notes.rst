@@ -144,3 +144,9 @@ Previously, ``np.testing.assert_array_less`` ignored all infinite values. This
 is not the expected behavior both according to documentation and intuitively.
 Now, -inf < x < inf is considered ``True`` for any real number x and all
 other cases fail.
+
+``offset`` attribute value in ``memmap`` objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``offset`` attribute in a ``memmap`` object is now set to the
+offset into the file. This is a behaviour change only for offsets
+greater than ``mmap.ALLOCATIONGRANULARITY``.
