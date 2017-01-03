@@ -124,3 +124,16 @@ Boolean indexing changes
 * Boolean indexing into scalar arrays return a new 1-d array.  This means that
   ``array(1)[array(True)]`` gives ``array([1])`` and not the original array.
 
+``np.random.multivariate_normal`` behavior with bad covariance matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is now possible to adjust the behavior the function will have when dealing
+with the covariance matrix by using two new keyword arguments:
+
+* ``tol`` can be used to specify a tolerance to use when checking that
+  the covariance matrix is positive semidefinite.
+
+* ``check_valid`` can be used to configure what the function will do in the
+  presence of a matrix that is not positive semidefinite. Valid options are
+  ``ignore``, ``warn`` and ``raise``. The default value, ``warn`` keeps the
+  the behavior used on previous releases.

@@ -4356,9 +4356,9 @@ cdef class RandomState:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            rtol=1e-05, atol=1e-8):
+                            tol=1e-8):
         """
-        multivariate_normal(mean, cov[, size, check_valid, rtol, atol])
+        multivariate_normal(mean, cov[, size, check_valid, tol])
 
         Draw random samples from a multivariate normal distribution.
 
@@ -4383,12 +4383,8 @@ cdef class RandomState:
             If no shape is specified, a single (`N`-D) sample is returned.
         check_valid : { 'warn', 'raise', 'ignore' }, optional
             Behavior when the covariance matrix is not positive semidefinite.
-        rtol : float, optional
-            Relative tolerance to use when checking the singular values in
-	    covariance matrix.
-	atol : float, optional
-	    Absolute tolerance to use when checking the singular values in
-	    covariance matrix
+        tol : float, optional
+            Tolerance when checking the singular values in covariance matrix.
 
         Returns
         -------
@@ -4507,7 +4503,7 @@ cdef class RandomState:
             if check_valid != 'warn' and check_valid != 'raise':
                 raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
 
-            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=rtol, atol=atol)
+            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
             if not psd:
                 if check_valid == 'warn':
                     warnings.warn("covariance is not positive-semidefinite.",
