@@ -58,8 +58,8 @@ class CompaqVisualFCompiler(FCompiler):
 
     compiler_type = 'compaqv'
     description = 'DIGITAL or Compaq Visual Fortran Compiler'
-    version_pattern = r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'\
-                      ' Version (?P<version>[^\s]*).*'
+    version_pattern = (r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'
+                       r' Version (?P<version>[^\s]*).*')
 
     compile_switch = '/compile_only'
     object_switch = '/object:'
@@ -74,7 +74,7 @@ class CompaqVisualFCompiler(FCompiler):
     fc_exe = 'DF'
 
     if sys.platform=='win32':
-        from distutils.msvccompiler import MSVCCompiler
+        from numpy.distutils.msvccompiler import MSVCCompiler
 
         try:
             m = MSVCCompiler()

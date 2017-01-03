@@ -10,6 +10,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "npy_import.h"
 #include "ufunc_override.h"
 #include "common.h"
 #include "ctors.h"
@@ -358,22 +359,33 @@ NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
     PyObject *ret = NULL;
+    PyObject *safe;
+    static PyObject *checkfunc = NULL;
 
-    if (offset < 0 || (offset + typed->elsize) > PyArray_DESCR(self)->elsize) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "
-                     "but received offset = %d",
-                     PyArray_DESCR(self)->elsize-typed->elsize, offset);
-        Py_DECREF(typed);
-        return NULL;
+    /* check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
+        npy_cache_import("numpy.core._internal", "_getfield_is_safe",
+                         &checkfunc);
+        if (checkfunc == NULL) {
+            return NULL;
+        }
+
+        /* only returns True or raises */
+        safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
+                                     typed, offset);
+        if (safe == NULL) {
+            return NULL;
+        }
+        Py_DECREF(safe);
     }
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               typed,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_BYTES(self) + offset,
-                               PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
-                               (PyObject *)self);
+
+    ret = PyArray_NewFromDescr_int(Py_TYPE(self),
+                                   typed,
+                                   PyArray_NDIM(self), PyArray_DIMS(self),
+                                   PyArray_STRIDES(self),
+                                   PyArray_BYTES(self) + offset,
+                                   PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
+                                   (PyObject *)self, 0, 1);
     if (ret == NULL) {
         return NULL;
     }
@@ -417,23 +429,16 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     PyObject *ret = NULL;
     int retval = 0;
 
-    if (offset < 0 || (offset + dtype->elsize) > PyArray_DESCR(self)->elsize) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "
-                     "but received offset = %d",
-                     PyArray_DESCR(self)->elsize-dtype->elsize, offset);
-        Py_DECREF(dtype);
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         return -1;
     }
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                           dtype, PyArray_NDIM(self), PyArray_DIMS(self),
-                           PyArray_STRIDES(self), PyArray_BYTES(self) + offset,
-                           PyArray_FLAGS(self), (PyObject *)self);
+
+    /* getfield returns a view we can write to */
+    ret = PyArray_GetField(self, dtype, offset);
     if (ret == NULL) {
         return -1;
     }
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
     retval = PyArray_CopyObject((PyArrayObject *)ret, val);
     Py_DECREF(ret);
     return retval;
@@ -452,13 +457,6 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_DescrConverter, &dtype,
                                      &offset)) {
         Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        PyErr_SetString(PyExc_RuntimeError,
-                    "cannot call setfield on an object array");
-        Py_DECREF(dtype);
         return NULL;
     }
 
@@ -589,8 +587,6 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
     if (fd == NULL) {
-        PyErr_SetString(PyExc_IOError,
-                "first argument must be a string or open file");
         goto fail;
     }
     if (PyArray_ToFile(self, fd, sep, format) < 0) {
@@ -1415,41 +1411,75 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args)
 {
-    PyObject* visit;
-    char *optr;
-    PyArrayIterObject *it;
+    PyArrayObject *copied_array;
+    PyObject *visit;
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    char *data;
+    char **dataptr;
+    npy_intp *strideptr, *innersizeptr;
+    npy_intp stride, count;
     PyObject *copy, *deepcopy;
-    PyArrayObject *ret;
 
     if (!PyArg_ParseTuple(args, "O", &visit)) {
         return NULL;
     }
-    ret = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+    copied_array = (PyArrayObject*) PyArray_NewCopy(self, NPY_KEEPORDER);
+    if (copied_array == NULL) {
+        return NULL;
+    }
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
+            Py_DECREF(copied_array);
+            Py_DECREF(copy);
             return NULL;
         }
         deepcopy = PyObject_GetAttrString(copy, "deepcopy");
         Py_DECREF(copy);
         if (deepcopy == NULL) {
+            Py_DECREF(copied_array);
             return NULL;
         }
-        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-        if (it == NULL) {
+        iter = (NpyIter *)NpyIter_New(copied_array,
+                                      (NPY_ITER_READWRITE |
+                                       NPY_ITER_EXTERNAL_LOOP |
+                                       NPY_ITER_REFS_OK),
+                                      NPY_KEEPORDER,
+                                      NPY_NO_CASTING,
+                                      NULL);
+        if (iter == NULL) {
             Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
             return NULL;
         }
-        optr = PyArray_DATA(ret);
-        while(it->index < it->size) {
-            _deepcopy_call(it->dataptr, optr, PyArray_DESCR(self), deepcopy, visit);
-            optr += PyArray_DESCR(self)->elsize;
-            PyArray_ITER_NEXT(it);
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(deepcopy);
+            Py_DECREF(copied_array);
+            return NULL;
         }
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
+            while (count--) {
+                _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                               deepcopy, visit);
+                data += stride;
+            }
+        } while (iternext(iter));
+
+        NpyIter_Deallocate(iter);
         Py_DECREF(deepcopy);
-        Py_DECREF(it);
     }
-    return (PyObject*)ret;
+    return (PyObject*) copied_array;
 }
 
 /* Convert Array to flat list (using getitem) */
@@ -1654,7 +1684,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         Py_INCREF(rawdata);
 
 #if defined(NPY_PY3K)
-        /* Backward compatibility with Python 2 Numpy pickles */
+        /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
             PyObject *tmp;
             tmp = PyUnicode_AsLatin1String(rawdata);
@@ -2316,6 +2346,76 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 }
 
+static PyObject *
+array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
+{
+    PyArrayObject *arr;
+    PyArray_Descr *dtype;
+    PyObject *c;
+    if (PyArray_SIZE(self) != 1) {
+        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
+                        "be converted to Python scalars");
+        return NULL;
+    }
+
+    dtype = PyArray_DescrFromType(NPY_CDOUBLE);
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
+            !(PyArray_TYPE(self) == NPY_OBJECT)) {
+        PyObject *err, *msg_part;
+        Py_DECREF(dtype);
+        err = PyString_FromString("unable to convert ");
+        if (err == NULL) {
+            return NULL;
+        }
+        msg_part = PyObject_Repr((PyObject*)PyArray_DESCR(self));
+        if (msg_part == NULL) {
+            Py_DECREF(err);
+            return NULL;
+        }
+        PyString_ConcatAndDel(&err, msg_part);
+        if (err == NULL) {
+            return NULL;
+        }
+        msg_part = PyString_FromString(", to complex.");
+        if (msg_part == NULL) {
+            Py_DECREF(err);
+            return NULL;
+        }
+        PyString_ConcatAndDel(&err, msg_part);
+        if (err == NULL) {
+            return NULL;
+        }
+        PyErr_SetObject(PyExc_TypeError, err);
+        Py_DECREF(err);
+        return NULL;
+    }
+
+    if (PyArray_TYPE(self) == NPY_OBJECT) {
+        /* let python try calling __complex__ on the object. */
+        PyObject *args, *res;
+        Py_DECREF(dtype);
+        args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
+        if (args == NULL) {
+            return NULL;
+        }
+        res = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+        Py_DECREF(args);
+        return res;
+    }
+
+    arr = (PyArrayObject *)PyArray_CastToType(self, dtype, 0);
+    if (arr == NULL) {
+        return NULL;
+    }
+    c = PyComplex_FromCComplex(*((Py_complex*)PyArray_DATA(arr)));
+    Py_DECREF(arr);
+    return c;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2354,6 +2454,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dump",
         (PyCFunction) array_dump,
+        METH_VARARGS, NULL},
+
+    {"__complex__",
+        (PyCFunction) array_complex,
         METH_VARARGS, NULL},
 
     /* Original and Extended methods added 2005 */

@@ -65,11 +65,6 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
-NPY_NO_EXPORT void
-offset_bounds_from_strides(const int itemsize, const int nd,
-                           const npy_intp *dims, const npy_intp *strides,
-                           npy_intp *lower_offset, npy_intp *upper_offset);
-
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 
@@ -80,6 +75,27 @@ convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+/**
+ * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ *
+ * @param "value" should be the tuple.
+ *
+ * @return "descr" will be set to the field's dtype
+ * @return "offset" will be set to the field's offset
+ *
+ * returns -1 on failure, 0 on success.
+ */
+NPY_NO_EXPORT int
+_unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
+
+/*
+ * check whether arrays with datatype dtype might have object fields. This will
+ * only happen for structured dtypes (which may have hidden objects even if the
+ * HASOBJECT flag is false), object dtypes, or subarray dtypes whose base type
+ * is either of these.
+ */
+NPY_NO_EXPORT int
+_may_have_objects(PyArray_Descr *dtype);
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for

@@ -1,5 +1,5 @@
 #####################
-Numpy manual contents
+NumPy manual contents
 #####################
 
 .. toctree::

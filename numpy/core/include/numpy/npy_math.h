@@ -87,7 +87,7 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_PI_4f     0.785398163397448309615660845819875721F /* pi/4 */
 #define NPY_1_PIf     0.318309886183790671537767526745028724F /* 1/pi */
 #define NPY_2_PIf     0.636619772367581343075535053490057448F /* 2/pi */
-#define NPY_EULERf    0.577215664901532860606512090082402431F /* Euler constan*/
+#define NPY_EULERf    0.577215664901532860606512090082402431F /* Euler constant */
 #define NPY_SQRT2f    1.414213562373095048801688724209698079F /* sqrt(2) */
 #define NPY_SQRT1_2f  0.707106781186547524400844362104849039F /* 1/sqrt(2) */
 
@@ -101,7 +101,7 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_PI_4l     0.785398163397448309615660845819875721L /* pi/4 */
 #define NPY_1_PIl     0.318309886183790671537767526745028724L /* 1/pi */
 #define NPY_2_PIl     0.636619772367581343075535053490057448L /* 2/pi */
-#define NPY_EULERl    0.577215664901532860606512090082402431L /* Euler constan*/
+#define NPY_EULERl    0.577215664901532860606512090082402431L /* Euler constant */
 #define NPY_SQRT2l    1.414213562373095048801688724209698079L /* sqrt(2) */
 #define NPY_SQRT1_2l  0.707106781186547524400844362104849039L /* 1/sqrt(2) */
 
@@ -163,7 +163,7 @@ double npy_spacing(double x);
     #ifndef NPY_HAVE_DECL_ISNAN
         #define npy_isnan(x) ((x) != (x))
     #else
-        #ifdef _MSC_VER
+        #if defined(_MSC_VER) && (_MSC_VER < 1900)
             #define npy_isnan(x) _isnan((x))
         #else
             #define npy_isnan(x) isnan(x)
@@ -194,7 +194,7 @@ double npy_spacing(double x);
     #ifndef NPY_HAVE_DECL_ISINF
         #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
     #else
-        #ifdef _MSC_VER
+        #if defined(_MSC_VER) && (_MSC_VER < 1900)
             #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
         #else
             #define npy_isinf(x) isinf((x))
@@ -309,16 +309,20 @@ double npy_deg2rad(double x);
 double npy_rad2deg(double x);
 double npy_logaddexp(double x, double y);
 double npy_logaddexp2(double x, double y);
+double npy_divmod(double x, double y, double *modulus);
 
 float npy_deg2radf(float x);
 float npy_rad2degf(float x);
 float npy_logaddexpf(float x, float y);
 float npy_logaddexp2f(float x, float y);
+float npy_divmodf(float x, float y, float *modulus);
 
 npy_longdouble npy_deg2radl(npy_longdouble x);
 npy_longdouble npy_rad2degl(npy_longdouble x);
 npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
+npy_longdouble npy_divmodl(npy_longdouble x, npy_longdouble y,
+                           npy_longdouble *modulus);
 
 #define npy_degrees npy_rad2deg
 #define npy_degreesf npy_rad2degf

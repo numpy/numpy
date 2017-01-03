@@ -1,24 +1,23 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-
 from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import errstate, array
+from numpy.testing import TestCase, run_module_suite
 
 class TestMachAr(TestCase):
     def _run_machar_highprec(self):
-        # Instanciate MachAr instance with high enough precision to cause
+        # Instantiate MachAr instance with high enough precision to cause
         # underflow
         try:
             hiprec = ntypes.float96
-            machar = MachAr(lambda v:array([v], hiprec))
+            MachAr(lambda v:array([v], hiprec))
         except AttributeError:
-            "Skipping test: no nyptes.float96 available on this platform."
+            "Skipping test: no ntypes.float96 available on this platform."
 
     def test_underlow(self):
-        """Regression testing for #759: instanciating MachAr for dtype =
-        np.float96 raises spurious warning."""
+        # Regression test for #759:
+        # instantiating MachAr for dtype = np.float96 raises spurious warning.
         with errstate(all='raise'):
             try:
                 self._run_machar_highprec()

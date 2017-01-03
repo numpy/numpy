@@ -1,29 +1,31 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 from numpy import array
 from numpy.compat import long
+from numpy.testing import run_module_suite, assert_, assert_raises, dec
 import util
 
+
 class TestReturnInteger(util.F2PyTest):
+
     def check_function(self, t):
-        assert_( t(123)==123, repr(t(123)))
-        assert_( t(123.6)==123)
-        assert_( t(long(123))==123)
-        assert_( t('123')==123)
-        assert_( t(-123)==-123)
-        assert_( t([123])==123)
-        assert_( t((123,))==123)
-        assert_( t(array(123))==123)
-        assert_( t(array([123]))==123)
-        assert_( t(array([[123]]))==123)
-        assert_( t(array([123], 'b'))==123)
-        assert_( t(array([123], 'h'))==123)
-        assert_( t(array([123], 'i'))==123)
-        assert_( t(array([123], 'l'))==123)
-        assert_( t(array([123], 'B'))==123)
-        assert_( t(array([123], 'f'))==123)
-        assert_( t(array([123], 'd'))==123)
+        assert_(t(123) == 123, repr(t(123)))
+        assert_(t(123.6) == 123)
+        assert_(t(long(123)) == 123)
+        assert_(t('123') == 123)
+        assert_(t(-123) == -123)
+        assert_(t([123]) == 123)
+        assert_(t((123,)) == 123)
+        assert_(t(array(123)) == 123)
+        assert_(t(array([123])) == 123)
+        assert_(t(array([[123]])) == 123)
+        assert_(t(array([123], 'b')) == 123)
+        assert_(t(array([123], 'h')) == 123)
+        assert_(t(array([123], 'i')) == 123)
+        assert_(t(array([123], 'l')) == 123)
+        assert_(t(array([123], 'B')) == 123)
+        assert_(t(array([123], 'f')) == 123)
+        assert_(t(array([123], 'd')) == 123)
 
         #assert_raises(ValueError, t, array([123],'S3'))
         assert_raises(ValueError, t, 'abc')
@@ -37,6 +39,7 @@ class TestReturnInteger(util.F2PyTest):
         if t.__doc__.split()[0] in ['t8', 's8']:
             assert_raises(OverflowError, t, 100000000000000000000000)
             assert_raises(OverflowError, t, 10000000011111111111111.23)
+
 
 class TestF77ReturnInteger(TestReturnInteger):
     code = """
@@ -174,5 +177,4 @@ end module f90_return_integer
             self.check_function(getattr(self.module.f90_return_integer, name))
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

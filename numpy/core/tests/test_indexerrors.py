@@ -1,8 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_raises, assert_equal, assert_
-import sys
+from numpy.testing import TestCase, run_module_suite, assert_raises
 
 class TestIndexErrors(TestCase):
     '''Tests to exercise indexerrors not covered by other tests.'''

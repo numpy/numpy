@@ -108,15 +108,6 @@ have written pre-processors to assist Sphinx_ in its task.
 The length of docstring lines should be kept to 75 characters to
 facilitate reading the docstrings in text terminals.
 
-Status
-------
-We are busy converting existing docstrings to the new format,
-expanding them where they are lacking, as well as writing new ones for
-undocumented functions.  Volunteers are welcome to join the effort on
-our new documentation system (see the `Documentation Editor
-<http://docs.scipy.org/doc/>`_ and the `Developer Zone
-<http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
-
 Sections
 --------
 The sections of the docstring are:
@@ -150,7 +141,7 @@ The sections of the docstring are:
    A section (use if applicable) to warn users that the object is deprecated.
    Section contents should include:
 
-   * In what Numpy version the object was deprecated, and when it will be
+   * In what NumPy version the object was deprecated, and when it will be
      removed.
 
    * Reason for deprecation if this is useful information (e.g., object
@@ -163,8 +154,8 @@ The sections of the docstring are:
 
    ::
 
-     .. note:: Deprecated in Numpy 1.6
-               `ndobj_old` will be removed in Numpy 2.0, it is replaced by
+     .. note:: Deprecated in NumPy 1.6.0
+               `ndobj_old` will be removed in NumPy 2.0.0, it is replaced by
                `ndobj_new` because the latter works also with array subclasses.
 
 3. **Extended Summary**
@@ -187,6 +178,8 @@ The sections of the docstring are:
      ----------
      x : type
          Description of parameter `x`.
+     y
+         Description of parameter `y` (with type not specified)
 
    Enclose variables in single backticks.  The colon must be preceded
    by a space, or omitted if the type is absent.
@@ -334,128 +327,129 @@ The sections of the docstring are:
 
 10. **Notes**
 
-   An optional section that provides additional information about the
-   code, possibly including a discussion of the algorithm. This
-   section may include mathematical equations, written in
-   `LaTeX <http://www.latex-project.org/>`_ format::
+    An optional section that provides additional information about the
+    code, possibly including a discussion of the algorithm. This
+    section may include mathematical equations, written in
+    `LaTeX <http://www.latex-project.org/>`_ format::
 
-     The FFT is a fast implementation of the discrete Fourier transform:
+      The FFT is a fast implementation of the discrete Fourier transform:
 
-     .. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+      .. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
 
-   Equations can also be typeset underneath the math directive::
+    Equations can also be typeset underneath the math directive::
 
-     The discrete-time Fourier time-convolution property states that
+      The discrete-time Fourier time-convolution property states that
 
-     .. math::
+      .. math::
 
-          x(n) * y(n) \Leftrightarrow X(e^{j\omega } )Y(e^{j\omega } )\\
-          another equation here
+           x(n) * y(n) \Leftrightarrow X(e^{j\omega } )Y(e^{j\omega } )\\
+           another equation here
 
-   Math can furthermore be used inline, i.e.
+    Math can furthermore be used inline, i.e.
 
-   ::
+    ::
 
-     The value of :math:`\omega` is larger than 5.
+      The value of :math:`\omega` is larger than 5.
 
-   Variable names are displayed in typewriter font, obtained by using
-   ``\mathtt{var}``::
+    Variable names are displayed in typewriter font, obtained by using
+    ``\mathtt{var}``::
 
-     We square the input parameter `alpha` to obtain
-     :math:`\mathtt{alpha}^2`.
+      We square the input parameter `alpha` to obtain
+      :math:`\mathtt{alpha}^2`.
 
-   Note that LaTeX is not particularly easy to read, so use equations
-   sparingly.
+    Note that LaTeX is not particularly easy to read, so use equations
+    sparingly.
 
-   Images are allowed, but should not be central to the explanation;
-   users viewing the docstring as text must be able to comprehend its
-   meaning without resorting to an image viewer.  These additional
-   illustrations are included using::
+    Images are allowed, but should not be central to the explanation;
+    users viewing the docstring as text must be able to comprehend its
+    meaning without resorting to an image viewer.  These additional
+    illustrations are included using::
 
-     .. image:: filename
+      .. image:: filename
 
-   where filename is a path relative to the reference guide source
-   directory.
+    where filename is a path relative to the reference guide source
+    directory.
 
 11. **References**
 
-   References cited in the **notes** section may be listed here,
-   e.g. if you cited the article below using the text ``[1]_``,
-   include it as in the list as follows::
+    References cited in the **notes** section may be listed here,
+    e.g. if you cited the article below using the text ``[1]_``,
+    include it as in the list as follows::
 
-     .. [1] O. McNoleg, "The integration of GIS, remote sensing,
-        expert systems and adaptive co-kriging for environmental habitat
-        modelling of the Highland Haggis using object-oriented, fuzzy-logic
-        and neural-network techniques," Computers & Geosciences, vol. 22,
-        pp. 585-588, 1996.
+      .. [1] O. McNoleg, "The integration of GIS, remote sensing,
+         expert systems and adaptive co-kriging for environmental habitat
+         modelling of the Highland Haggis using object-oriented, fuzzy-logic
+         and neural-network techniques," Computers & Geosciences, vol. 22,
+         pp. 585-588, 1996.
 
-   which renders as
+    which renders as
 
-   .. [1] O. McNoleg, "The integration of GIS, remote sensing,
-      expert systems and adaptive co-kriging for environmental habitat
-      modelling of the Highland Haggis using object-oriented, fuzzy-logic
-      and neural-network techniques," Computers & Geosciences, vol. 22,
-      pp. 585-588, 1996.
+    .. [1] O. McNoleg, "The integration of GIS, remote sensing,
+       expert systems and adaptive co-kriging for environmental habitat
+       modelling of the Highland Haggis using object-oriented, fuzzy-logic
+       and neural-network techniques," Computers & Geosciences, vol. 22,
+       pp. 585-588, 1996.
 
-   Referencing sources of a temporary nature, like web pages, is
-   discouraged.  References are meant to augment the docstring, but
-   should not be required to understand it.  References are numbered, starting
-   from one, in the order in which they are cited.
+    Referencing sources of a temporary nature, like web pages, is
+    discouraged.  References are meant to augment the docstring, but
+    should not be required to understand it.  References are numbered, starting
+    from one, in the order in which they are cited.
 
 12. **Examples**
 
-   An optional section for examples, using the `doctest
-   <http://docs.python.org/library/doctest.html>`_ format.
-   This section is meant to illustrate usage, not to provide a
-   testing framework -- for that, use the ``tests/`` directory.
-   While optional, this section is very strongly encouraged.
+    An optional section for examples, using the `doctest
+    <http://docs.python.org/library/doctest.html>`_ format.
+    This section is meant to illustrate usage, not to provide a
+    testing framework -- for that, use the ``tests/`` directory.
+    While optional, this section is very strongly encouraged.
 
-   When multiple examples are provided, they should be separated by
-   blank lines. Comments explaining the examples should have blank
-   lines both above and below them::
+    When multiple examples are provided, they should be separated by
+    blank lines. Comments explaining the examples should have blank
+    lines both above and below them::
 
-     >>> np.add(1, 2)
-     3
+      >>> np.add(1, 2)
+      3
 
-     Comment explaining the second example
+      Comment explaining the second example
 
-     >>> np.add([1, 2], [3, 4])
-     array([4, 6])
+      >>> np.add([1, 2], [3, 4])
+      array([4, 6])
 
-   For tests with a result that is random or platform-dependent, mark the
-   output as such::
+    For tests with a result that is random or platform-dependent, mark the
+    output as such::
 
-     >>> import numpy.random
-     >>> np.random.rand(2)
-     array([ 0.35773152,  0.38568979])  #random
+      >>> import numpy.random
+      >>> np.random.rand(2)
+      array([ 0.35773152,  0.38568979])  #random
 
-   You can run examples as doctests using::
+    You can run examples as doctests using::
 
-     >>> np.test(doctests=True)
-     >>> np.linalg.test(doctests=True)  # for a single module
+      >>> np.test(doctests=True)
+      >>> np.linalg.test(doctests=True)  # for a single module
 
-   In IPython it is also possible to run individual examples simply by
-   copy-pasting them in doctest mode::
+    In IPython it is also possible to run individual examples simply by
+    copy-pasting them in doctest mode::
 
-     In [1]: %doctest_mode
-     Exception reporting mode: Plain
-     Doctest mode is: ON
-     >>> %paste
-      import numpy.random
-      np.random.rand(2)
-     ## -- End pasted text --
-     array([ 0.8519522 ,  0.15492887])
+      In [1]: %doctest_mode
+      Exception reporting mode: Plain
+      Doctest mode is: ON
+      >>> %paste
+       import numpy.random
+       np.random.rand(2)
+      ## -- End pasted text --
+      array([ 0.8519522 ,  0.15492887])
 
 
-   It is not necessary to use the doctest markup ``<BLANKLINE>`` to
-   indicate empty lines in the output. Note that the option to run
-   the examples through ``numpy.test`` is provided for checking if the
-   examples work, not for making the examples part of the testing framework.
+    It is not necessary to use the doctest markup ``<BLANKLINE>`` to
+    indicate empty lines in the output. Note that the option to run
+    the examples through ``numpy.test`` is provided for checking if the
+    examples work, not for making the examples part of the testing framework.
 
-   The examples may assume that ``import numpy as np`` is executed before
-   the example code in *numpy*. Additional examples may make use of
-   *matplotlib* for plotting, but should import it explicitly, e.g.,
-   ``import matplotlib.pyplot as plt``.
+    The examples may assume that ``import numpy as np`` is executed before
+    the example code in *numpy*. Additional examples may make use of
+    *matplotlib* for plotting, but should import it explicitly, e.g.,
+    ``import matplotlib.pyplot as plt``. All other imports, including the
+    demonstrated function, must be explicit.
 
 
 Documenting classes
@@ -469,7 +463,7 @@ here, the **Parameters** section of the docstring details the constructors
 parameters.
 
 An **Attributes** section, located below the **Parameters** section,
-may be used to describe class variables::
+may be used to describe non-method attributes of the class::
 
   Attributes
   ----------
@@ -535,7 +529,7 @@ as appropriate.
 
 Documenting class instances
 ---------------------------
-Instances of classes that are part of the Numpy API (for example `np.r_`
+Instances of classes that are part of the NumPy API (for example `np.r_`
 `np,c_`, `np.index_exp`, etc.) may require some care. To give these
 instances a useful docstring, we do the following:
 
@@ -619,10 +613,6 @@ Other points to keep in mind
   Use these sparingly, as they do not look very good in text terminals
   and are not often necessary. One situation in which a warning can
   be useful is for marking a known bug that is not yet fixed.
-
-* Questions and Answers : For general questions on how to write docstrings
-  that are not answered in this document, refer to
-  `<http://docs.scipy.org/numpy/Questions+Answers/>`_.
 
 * array_like : For functions that take arguments which can have not only
   a type `ndarray`, but also types that can be converted to an ndarray

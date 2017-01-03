@@ -21,7 +21,7 @@ from .utils import *
 from .arraysetops import *
 from .npyio import *
 from .financial import *
-from .arrayterator import *
+from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
 
@@ -41,6 +41,6 @@ __all__ += npyio.__all__
 __all__ += financial.__all__
 __all__ += nanfunctions.__all__
 
-from numpy.testing import Tester
-test = Tester().test
-bench = Tester().bench
+from numpy.testing.nosetester import _numpy_tester
+test = _numpy_tester().test
+bench = _numpy_tester().bench

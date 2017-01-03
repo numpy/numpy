@@ -55,6 +55,7 @@ main()
 #if (! defined __GNUC__) || (__GNUC__ < 4)
 #error gcc >= 4 required
 #endif
+    return 0;
 }
 """
     return cmd.try_compile(body, None, None)
@@ -72,6 +73,7 @@ int %s %s(void*);
 int
 main()
 {
+    return 0;
 }
 """ % (attribute, name)
     return cmd.try_compile(body, None, None) != 0

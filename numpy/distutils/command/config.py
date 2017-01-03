@@ -35,22 +35,12 @@ class config(old_config):
         self.fcompiler = None
         old_config.initialize_options(self)
 
-    def try_run(self, body, headers=None, include_dirs=None,
-                libraries=None, library_dirs=None, lang="c"):
-        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
-                      "Usage of try_run is deprecated: please do not \n" \
-                      "use it anymore, and avoid configuration checks \n" \
-                      "involving running executable on the target machine.\n" \
-                      "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
-                      DeprecationWarning)
-        return old_config.try_run(self, body, headers, include_dirs, libraries,
-                                  library_dirs, lang)
-
     def _check_compiler (self):
         old_config._check_compiler(self)
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 
-        if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
+        if sys.platform == 'win32' and (self.compiler.compiler_type in
+                                        ('msvc', 'intelw', 'intelemw')):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
             # initialize call query_vcvarsall, which throws an IOError, and
             # causes an error along the way without much information. We try to
@@ -364,7 +354,7 @@ int main (void)
             list of header paths
         libraries : seq
             list of libraries to link the code snippet to
-        libraru_dirs : seq
+        library_dirs : seq
             list of library paths
         decl : dict
             for every (key, value), the declaration in the value will be
@@ -435,12 +425,13 @@ int main (void)
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
         """
+        # 2008-11-16, RemoveMe
         warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
                       "Usage of get_output is deprecated: please do not \n" \
                       "use it anymore, and avoid configuration checks \n" \
                       "involving running executable on the target machine.\n" \
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
         from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''

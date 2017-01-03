@@ -11,7 +11,7 @@ process_file(filename)
   All function and subroutine blocks in a source file with names that
   contain '<..>' will be replicated according to the rules in '<..>'.
 
-  The number of comma-separeted words in '<..>' will determine the number of
+  The number of comma-separated words in '<..>' will determine the number of
   replicates.
 
   '<..>' may have two different forms, named and short. For example,
@@ -93,7 +93,7 @@ def find_repl_patterns(astr):
     names = {}
     for rep in reps:
         name = rep[0].strip() or unique_key(names)
-        repl = rep[1].replace('\,', '@comma@')
+        repl = rep[1].replace(r'\,', '@comma@')
         thelist = conv(repl)
         names[name] = thelist
     return names
@@ -125,13 +125,13 @@ def unique_key(adict):
 
 template_name_re = re.compile(r'\A\s*(\w[\w\d]*)\s*\Z')
 def expand_sub(substr, names):
-    substr = substr.replace('\>', '@rightarrow@')
-    substr = substr.replace('\<', '@leftarrow@')
+    substr = substr.replace(r'\>', '@rightarrow@')
+    substr = substr.replace(r'\<', '@leftarrow@')
     lnames = find_repl_patterns(substr)
     substr = named_re.sub(r"<\1>", substr)  # get rid of definition templates
 
     def listrepl(mobj):
-        thelist = conv(mobj.group(1).replace('\,', '@comma@'))
+        thelist = conv(mobj.group(1).replace(r'\,', '@comma@'))
         if template_name_re.match(thelist):
             return "<%s>" % (thelist)
         name = None

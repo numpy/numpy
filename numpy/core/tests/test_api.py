@@ -1,40 +1,44 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import warnings
 
 import numpy as np
-from numpy.testing import *
 from numpy.compat import sixu
+from numpy.testing import (
+     run_module_suite, assert_, assert_equal, assert_array_equal,
+     assert_raises, HAS_REFCOUNT
+)
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
 
 
 def test_array_array():
-    obj = object()
     tobj = type(object)
     ones11 = np.ones((1, 1), np.float64)
     tndarray = type(ones11)
-    # Test is_ndarary
+    # Test is_ndarray
     assert_equal(np.array(ones11, dtype=np.float64), ones11)
-    old_refcount = sys.getrefcount(tndarray)
-    np.array(ones11)
-    assert_equal(old_refcount, sys.getrefcount(tndarray))
+    if HAS_REFCOUNT:
+        old_refcount = sys.getrefcount(tndarray)
+        np.array(ones11)
+        assert_equal(old_refcount, sys.getrefcount(tndarray))
 
     # test None
     assert_equal(np.array(None, dtype=np.float64),
                  np.array(np.nan, dtype=np.float64))
-    old_refcount = sys.getrefcount(tobj)
-    np.array(None, dtype=np.float64)
-    assert_equal(old_refcount, sys.getrefcount(tobj))
+    if HAS_REFCOUNT:
+        old_refcount = sys.getrefcount(tobj)
+        np.array(None, dtype=np.float64)
+        assert_equal(old_refcount, sys.getrefcount(tobj))
 
     # test scalar
     assert_equal(np.array(1.0, dtype=np.float64),
                  np.ones((), dtype=np.float64))
-    old_refcount = sys.getrefcount(np.float64)
-    np.array(np.array(1.0, dtype=np.float64), dtype=np.float64)
-    assert_equal(old_refcount, sys.getrefcount(np.float64))
+    if HAS_REFCOUNT:
+        old_refcount = sys.getrefcount(np.float64)
+        np.array(np.array(1.0, dtype=np.float64), dtype=np.float64)
+        assert_equal(old_refcount, sys.getrefcount(np.float64))
 
     # test string
     S2 = np.dtype((str, 2))
@@ -63,7 +67,7 @@ def test_array_array():
                      np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
-    assert_(isinstance(builtins, dict))
+    assert_(hasattr(builtins, 'get'))
 
     # test buffer
     _buffer = builtins.get("buffer")
@@ -102,7 +106,7 @@ def test_array_array():
              dict(__array_struct__=a.__array_struct__))
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
     ## instead we get a array([...], dtype=">V18")
-    assert_equal(str(np.array(o).data), str(a.data))
+    assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array
     o = type("o", (object,),

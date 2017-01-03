@@ -57,6 +57,7 @@ Two-dimensional arrays are tested in exactly the same manner.  The
 above description applies, but with ``Matrix`` substituted for
 ``Vector``.  For three-dimensional tests, substitute ``Tensor`` for
 ``Vector``.  For four-dimensional tests, substitute ``SuperTensor``
+for ``Vector``. For flat in-place array tests, substitute ``Flat``
 for ``Vector``.
 For the descriptions that follow, we will reference the
 ``Vector`` tests, but the same information applies to ``Matrix``,

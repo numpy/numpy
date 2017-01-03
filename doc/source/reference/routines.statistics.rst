@@ -16,6 +16,7 @@ Order statistics
    nanmax
    ptp
    percentile
+   nanpercentile
 
 Averages and variances
 ----------------------
@@ -28,6 +29,7 @@ Averages and variances
    mean
    std
    var
+   nanmedian
    nanmean
    nanstd
    nanvar

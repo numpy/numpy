@@ -3,11 +3,15 @@ from __future__ import division, print_function
 import os
 import shutil
 from tempfile import mkstemp, mkdtemp
+from subprocess import Popen, PIPE
+from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler
 from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
+from numpy.testing.decorators import skipif
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
+
 
 def get_class(name, notfound_action=1):
     """
@@ -23,7 +27,7 @@ def get_class(name, notfound_action=1):
 
 simple_site = """
 [ALL]
-library_dirs = {dir1:s}:{dir2:s}
+library_dirs = {dir1:s}{pathsep:s}{dir2:s}
 libraries = {lib1:s},{lib2:s}
 extra_compile_args = -I/fake/directory
 runtime_library_dirs = {dir1:s}
@@ -52,8 +56,33 @@ void bar(void) {
 }
 """
 
+def have_compiler():
+    """ Return True if there appears to be an executable compiler
+    """
+    compiler = ccompiler.new_compiler()
+    try:
+        cmd = compiler.compiler  # Unix compilers
+    except AttributeError:
+        try:
+            compiler.initialize()  # MSVC is different
+        except DistutilsError:
+            return False
+        cmd = [compiler.cc]
+    try:
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        p.stdout.close()
+        p.stderr.close()
+        p.wait()
+    except OSError:
+        return False
+    return True
+
+
+HAVE_COMPILER = have_compiler()
+
 
 class test_system_info(system_info):
+
     def __init__(self,
                  default_lib_dirs=default_lib_dirs,
                  default_include_dirs=default_include_dirs,
@@ -61,22 +90,21 @@ class test_system_info(system_info):
                  ):
         self.__class__.info = {}
         self.local_prefixes = []
-        defaults = {}
-        defaults['library_dirs'] = ''
-        defaults['include_dirs'] = ''
-        defaults['runtime_library_dirs'] = ''
-        defaults['rpath'] = ''
-        defaults['src_dirs'] = ''
-        defaults['search_static_first'] = "0"
-        defaults['extra_compile_args'] = ''
-        defaults['extra_link_args'] = ''
+        defaults = {'library_dirs': '',
+                    'include_dirs': '',
+                    'runtime_library_dirs': '',
+                    'rpath': '',
+                    'src_dirs': '',
+                    'search_static_first': "0",
+                    'extra_compile_args': '',
+                    'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
         # We have to parse the config files afterwards
         # to have a consistent temporary filepath
-        
+
     def _check_libs(self, lib_dirs, libs, opt_libs, exts):
         """Override _check_libs to return with all dirs """
-        info = {'libraries' : libs , 'library_dirs' : lib_dirs}
+        info = {'libraries': libs, 'library_dirs': lib_dirs}
         return info
 
 
@@ -102,11 +130,12 @@ class TestSystemInfoReading(TestCase):
         # Update local site.cfg
         global simple_site, site_cfg
         site_cfg = simple_site.format(**{
-                'dir1' : self._dir1,
-                'lib1' : self._lib1,
-                'dir2' : self._dir2,
-                'lib2' : self._lib2 
-                })
+            'dir1': self._dir1,
+            'lib1': self._lib1,
+            'dir2': self._dir2,
+            'lib2': self._lib2,
+            'pathsep': os.pathsep
+        })
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
         os.close(fd)
@@ -117,7 +146,8 @@ class TestSystemInfoReading(TestCase):
             fd.write(fakelib_c_text)
         with open(self._src2, 'w') as fd:
             fd.write(fakelib_c_text)
-        # We create all class-instances 
+        # We create all class-instances
+
         def site_and_parse(c, site_cfg):
             c.files = [site_cfg]
             c.parse_config_files()
@@ -128,15 +158,15 @@ class TestSystemInfoReading(TestCase):
 
     def tearDown(self):
         # Do each removal separately
-        try: 
+        try:
             shutil.rmtree(self._dir1)
         except:
             pass
-        try: 
+        try:
             shutil.rmtree(self._dir2)
         except:
             pass
-        try: 
+        try:
             os.remove(self._sitecfg)
         except:
             pass
@@ -165,39 +195,41 @@ class TestSystemInfoReading(TestCase):
         # Now from rpath and not runtime_library_dirs
         assert_equal(tsi.get_runtime_lib_dirs(key='rpath'), [self._dir2])
         extra = tsi.calc_extra_info()
-        assert_equal(extra['extra_link_args'], ['-Wl,-rpath='+self._lib2])
+        assert_equal(extra['extra_link_args'], ['-Wl,-rpath=' + self._lib2])
 
+    @skipif(not HAVE_COMPILER)
     def test_compile1(self):
         # Compile source and link the first source
-        tsi = self.c_temp1
         c = ccompiler.new_compiler()
+        previousDir = os.getcwd()
         try:
             # Change directory to not screw up directories
-            previousDir = os.getcwd()
             os.chdir(self._dir1)
             c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src1.replace('.c', '.o')))
+            assert_(os.path.isfile(self._src1.replace('.c', '.o')) or
+                    os.path.isfile(self._src1.replace('.c', '.obj')))
+        finally:
             os.chdir(previousDir)
-        except OSError:
-            pass
 
+    @skipif(not HAVE_COMPILER)
+    @skipif('msvc' in repr(ccompiler.new_compiler()))
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
         c = ccompiler.new_compiler()
         extra_link_args = tsi.calc_extra_info()['extra_link_args']
+        previousDir = os.getcwd()
         try:
             # Change directory to not screw up directories
-            previousDir = os.getcwd()
             os.chdir(self._dir2)
             c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
                       extra_postargs=extra_link_args)
             # Ensure that the object exists
             assert_(os.path.isfile(self._src2.replace('.c', '.o')))
+        finally:
             os.chdir(previousDir)
-        except OSError:
-            pass
-        
+
+
 if __name__ == '__main__':
     run_module_suite()

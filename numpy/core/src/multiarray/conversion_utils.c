@@ -535,11 +535,27 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         PyObject *tmp;
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
+        if (tmp == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Invalid unicode string passed in "
+                                              "for the array ordering. "
+                                              "Please pass in 'C', 'F', 'A' "
+                                              "or 'K' instead");
+            return NPY_FAIL;
+        }
         ret = PyArray_OrderConverter(tmp, val);
         Py_DECREF(tmp);
         return ret;
     }
     else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
+        /* 2015-12-14, 1.11 */
+        int ret = DEPRECATE("Non-string object detected for "
+                            "the array ordering. Please pass "
+                            "in 'C', 'F', 'A', or 'K' instead");
+
+        if (ret < 0) {
+            return -1;
+        }
+
         if (PyObject_IsTrue(object)) {
             *val = NPY_FORTRANORDER;
         }
@@ -553,6 +569,18 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     }
     else {
         str = PyBytes_AS_STRING(object);
+        if (strlen(str) != 1) {
+            /* 2015-12-14, 1.11 */
+            int ret = DEPRECATE("Non length-one string passed "
+                                "in for the array ordering. "
+                                "Please pass in 'C', 'F', 'A', "
+                                "or 'K' instead");
+
+            if (ret < 0) {
+                return -1;
+            }
+        }
+
         if (str[0] == 'C' || str[0] == 'c') {
             *val = NPY_CORDER;
         }
@@ -777,17 +805,14 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 #endif
     PyObject *obj, *err;
 
-    if (!o) {
+    /*
+     * Be a bit stricter and not allow bools.
+     * np.bool_ is also disallowed as Boolean arrays do not currently
+     * support index.
+     */
+    if (!o || PyBool_Check(o) || PyArray_IsScalar(o, Bool)) {
         PyErr_SetString(PyExc_TypeError, msg);
         return -1;
-    }
-
-    /* Be a bit stricter and not allow bools, np.bool_ is handled later */
-    if (PyBool_Check(o)) {
-        if (DEPRECATE("using a boolean instead of an integer"
-                      " will result in an error in the future") < 0) {
-            return -1;
-        }
     }
 
     /*
@@ -815,82 +840,22 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
         return (npy_intp)long_value;
     }
 
-    /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
-    if (PyArray_IsScalar(o, Bool)) {
-        if (DEPRECATE("using a boolean instead of an integer"
-                      " will result in an error in the future") < 0) {
-            return -1;
-        }
-    }
-
     /*
      * The most general case. PyNumber_Index(o) covers everything
      * including arrays. In principle it may be possible to replace
      * the whole function by PyIndex_AsSSize_t after deprecation.
      */
     obj = PyNumber_Index(o);
-    if (obj) {
-#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-        long_value = PyLong_AsLongLong(obj);
-#else
-        long_value = PyLong_AsLong(obj);
-#endif
-        Py_DECREF(obj);
-        goto finish;
-    }
-    else {
-        /*
-         * Set the TypeError like PyNumber_Index(o) would after trying
-         * the general case.
-         */
-        PyErr_Clear();
-    }
-
-    /*
-     * For backward compatibility check the number C-Api number protcol
-     * This should be removed up the finish label after deprecation.
-     */
-    if (Py_TYPE(o)->tp_as_number != NULL &&
-        Py_TYPE(o)->tp_as_number->nb_int != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
-        if (obj == NULL) {
-            return -1;
-        }
- #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-        long_value = PyLong_AsLongLong(obj);
- #else
-        long_value = PyLong_AsLong(obj);
- #endif
-        Py_DECREF(obj);
-    }
-#if !defined(NPY_PY3K)
-    else if (Py_TYPE(o)->tp_as_number != NULL &&
-             Py_TYPE(o)->tp_as_number->nb_long != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
-        if (obj == NULL) {
-            return -1;
-        }
-  #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-        long_value = PyLong_AsLongLong(obj);
-  #else
-        long_value = PyLong_AsLong(obj);
-  #endif
-        Py_DECREF(obj);
-    }
-#endif
-    else {
-        PyErr_SetString(PyExc_TypeError, msg);
+    if (obj == NULL) {
         return -1;
     }
-    /* Give a deprecation warning, unless there was already an error */
-    if (!error_converting(long_value)) {
-        if (DEPRECATE("using a non-integer number instead of an integer"
-                      " will result in an error in the future") < 0) {
-            return -1;
-        }
-    }
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+    long_value = PyLong_AsLongLong(obj);
+#else
+    long_value = PyLong_AsLong(obj);
+#endif
+    Py_DECREF(obj);
 
- finish:
     if (error_converting(long_value)) {
         err = PyErr_Occurred();
         /* Only replace TypeError's here, which are the normal errors. */
@@ -899,8 +864,9 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
         }
         return -1;
     }
+    goto overflow_check; /* silence unused warning */
 
- overflow_check:
+overflow_check:
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
   #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
@@ -1139,6 +1105,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             if (itemsize == 4 || itemsize == 8) {
                 int ret = 0;
                 if (evil_global_disable_warn_O4O8_flag) {
+                    /* 2012-02-04, 1.7, not sure when this can be removed */
                     ret = DEPRECATE("DType strings 'O4' and 'O8' are "
                             "deprecated because they are platform "
                             "specific. Use 'O' instead");

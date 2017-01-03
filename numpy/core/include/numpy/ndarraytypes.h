@@ -6,11 +6,7 @@
 #include "npy_cpu.h"
 #include "utils.h"
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
-        #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
-#else
-        #define NPY_NO_EXPORT static
-#endif
+#define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
 /* Only use thread if configured in config and python supports it */
 #if defined WITH_THREAD && !NPY_NO_SMP
@@ -156,7 +152,7 @@ typedef enum {
 
 
 typedef enum {
-        NPY_INTROSELECT=0,
+        NPY_INTROSELECT=0
 } NPY_SELECTKIND;
 #define NPY_NSELECTS (NPY_INTROSELECT + 1)
 
@@ -202,7 +198,7 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4,
+        NPY_UNSAFE_CASTING=4
 } NPY_CASTING;
 
 typedef enum {
@@ -332,9 +328,20 @@ struct NpyAuxData_tag {
 #define NPY_USE_PYMEM 1
 
 #if NPY_USE_PYMEM == 1
-#define PyArray_malloc PyMem_Malloc
-#define PyArray_free PyMem_Free
-#define PyArray_realloc PyMem_Realloc
+   /* numpy sometimes calls PyArray_malloc() with the GIL released. On Python
+      3.3 and older, it was safe to call PyMem_Malloc() with the GIL released.
+      On Python 3.4 and newer, it's better to use PyMem_RawMalloc() to be able
+      to use tracemalloc. On Python 3.6, calling PyMem_Malloc() with the GIL
+      released is now a fatal error in debug mode. */
+#  if PY_VERSION_HEX >= 0x03040000
+#    define PyArray_malloc PyMem_RawMalloc
+#    define PyArray_free PyMem_RawFree
+#    define PyArray_realloc PyMem_RawRealloc
+#  else
+#    define PyArray_malloc PyMem_Malloc
+#    define PyArray_free PyMem_Free
+#    define PyArray_realloc PyMem_Realloc
+#  endif
 #else
 #define PyArray_malloc malloc
 #define PyArray_free free
@@ -665,7 +672,7 @@ typedef struct tagPyArrayObject_fields {
      * views occur.
      *
      * For creation from buffer object it
-     * points to an object that shold be
+     * points to an object that should be
      * decref'd on deletion
      *
      * For UPDATEIFCOPY flag this is an
@@ -785,7 +792,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * An array never has the next four set; they're only used as parameter
- * flags to the the various FromAny functions
+ * flags to the various FromAny functions
  *
  * This flag may be requested in constructor functions.
  */
@@ -817,7 +824,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_ELEMENTSTRIDES  0x0080
 
 /*
- * Array data is aligned on the appropiate memory address for the type
+ * Array data is aligned on the appropriate memory address for the type
  * stored according to how the compiler would align things (e.g., an
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)
@@ -1096,27 +1103,6 @@ struct PyArrayIterObject_tag {
                 (it)->coordinates[0]++; \
                 (it)->dataptr += (it)->strides[0] - \
                         (it)->backstrides[1]; \
-        } \
-} while (0)
-
-#define _PyArray_ITER_NEXT3(it) do { \
-        if ((it)->coordinates[2] < (it)->dims_m1[2]) { \
-                (it)->coordinates[2]++; \
-                (it)->dataptr += (it)->strides[2]; \
-        } \
-        else { \
-                (it)->coordinates[2] = 0; \
-                (it)->dataptr -= (it)->backstrides[2]; \
-                if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
-                        (it)->coordinates[1]++; \
-                        (it)->dataptr += (it)->strides[1]; \
-                } \
-                else { \
-                        (it)->coordinates[1] = 0; \
-                        (it)->coordinates[0]++; \
-                        (it)->dataptr += (it)->strides[0] \
-                                (it)->backstrides[1]; \
-                } \
         } \
 } while (0)
 

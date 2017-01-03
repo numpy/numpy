@@ -1,29 +1,35 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 from numpy import array
 from numpy.compat import asbytes
+from numpy.testing import run_module_suite, assert_, dec
 import util
 
+
 class TestReturnCharacter(util.F2PyTest):
+
     def check_function(self, t):
         tname = t.__doc__.split()[0]
         if tname in ['t0', 't1', 's0', 's1']:
-            assert_( t(23)==asbytes('2'))
-            r = t('ab');assert_( r==asbytes('a'), repr(r))
-            r = t(array('ab'));assert_( r==asbytes('a'), repr(r))
-            r = t(array(77, 'u1'));assert_( r==asbytes('M'), repr(r))
+            assert_(t(23) == asbytes('2'))
+            r = t('ab')
+            assert_(r == asbytes('a'), repr(r))
+            r = t(array('ab'))
+            assert_(r == asbytes('a'), repr(r))
+            r = t(array(77, 'u1'))
+            assert_(r == asbytes('M'), repr(r))
             #assert_(_raises(ValueError, t, array([77,87])))
             #assert_(_raises(ValueError, t, array(77)))
         elif tname in ['ts', 'ss']:
-            assert_( t(23)==asbytes('23        '), repr(t(23)))
-            assert_( t('123456789abcdef')==asbytes('123456789a'))
+            assert_(t(23) == asbytes('23        '), repr(t(23)))
+            assert_(t('123456789abcdef') == asbytes('123456789a'))
         elif tname in ['t5', 's5']:
-            assert_( t(23)==asbytes('23   '), repr(t(23)))
-            assert_( t('ab')==asbytes('ab   '), repr(t('ab')))
-            assert_( t('123456789abcdef')==asbytes('12345'))
+            assert_(t(23) == asbytes('23   '), repr(t(23)))
+            assert_(t('ab') == asbytes('ab   '), repr(t('ab')))
+            assert_(t('123456789abcdef') == asbytes('12345'))
         else:
             raise NotImplementedError
+
 
 class TestF77ReturnCharacter(TestReturnCharacter):
     code = """
@@ -78,6 +84,7 @@ cf2py    intent(out) ts
     def test_all(self):
         for name in "t0,t1,t5,s0,s1,s5,ss".split(","):
             self.check_function(getattr(self.module, name))
+
 
 class TestF90ReturnCharacter(TestReturnCharacter):
     suffix = ".f90"
@@ -138,5 +145,4 @@ end module f90_return_char
             self.check_function(getattr(self.module.f90_return_char, name))
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

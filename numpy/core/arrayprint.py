@@ -19,7 +19,8 @@ import sys
 from functools import reduce
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from .multiarray import format_longfloat, datetime_as_string, datetime_data
+from .multiarray import (array, format_longfloat, datetime_as_string,
+                         datetime_data, dtype)
 from .fromnumeric import ravel
 from .numeric import asarray
 
@@ -30,10 +31,11 @@ else:
     _MAXINT = sys.maxint
     _MININT = -sys.maxint - 1
 
-def product(x, y): return x*y
+def product(x, y):
+    return x*y
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
-_summaryThreshold = 1000 # total items > triggers array summarization
+_summaryThreshold = 1000  # total items > triggers array summarization
 
 _float_output_precision = 8
 _float_output_suppress_small = False
@@ -88,7 +90,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -112,13 +114,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Floating point precision can be set:
 
     >>> np.set_printoptions(precision=4)
-    >>> print np.array([1.123456789])
+    >>> print(np.array([1.123456789]))
     [ 1.1235]
 
     Long arrays can be summarised:
 
     >>> np.set_printoptions(threshold=5)
-    >>> print np.arange(10)
+    >>> print(np.arange(10))
     [0 1 2 ..., 7 8 9]
 
     Small results can be suppressed:
@@ -148,9 +150,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... suppress=False, threshold=1000, formatter=None)
     """
 
-    global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
-           _line_width, _float_output_suppress_small, _nan_str, _inf_str, \
-           _formatter
+    global _summaryThreshold, _summaryEdgeItems, _float_output_precision
+    global _line_width, _float_output_suppress_small, _nan_str, _inf_str
+    global _formatter
+
     if linewidth is not None:
         _line_width = linewidth
     if threshold is not None:
@@ -231,39 +234,18 @@ def _boolFormatter(x):
 def repr_format(x):
     return repr(x)
 
-def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
-                  prefix="", formatter=None):
-
-    if max_line_width is None:
-        max_line_width = _line_width
-
-    if precision is None:
-        precision = _float_output_precision
-
-    if suppress_small is None:
-        suppress_small = _float_output_suppress_small
-
-    if formatter is None:
-        formatter = _formatter
-
-    if a.size > _summaryThreshold:
-        summary_insert = "..., "
-        data = _leading_trailing(a)
-    else:
-        summary_insert = ""
-        data = ravel(asarray(a))
-
-    formatdict = {'bool' : _boolFormatter,
-                  'int' : IntegerFormat(data),
-                  'float' : FloatFormat(data, precision, suppress_small),
-                  'longfloat' : LongFloatFormat(precision),
-                  'complexfloat' : ComplexFormat(data, precision,
+def _get_formatdict(data, precision, suppress_small, formatter):
+    formatdict = {'bool': _boolFormatter,
+                  'int': IntegerFormat(data),
+                  'float': FloatFormat(data, precision, suppress_small),
+                  'longfloat': LongFloatFormat(precision),
+                  'complexfloat': ComplexFormat(data, precision,
                                                  suppress_small),
-                  'longcomplexfloat' : LongComplexFormat(precision),
-                  'datetime' : DatetimeFormat(data),
-                  'timedelta' : TimedeltaFormat(data),
-                  'numpystr' : repr_format,
-                  'str' : str}
+                  'longcomplexfloat': LongComplexFormat(precision),
+                  'datetime': DatetimeFormat(data),
+                  'timedelta': TimedeltaFormat(data),
+                  'numpystr': repr_format,
+                  'str': str}
 
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
@@ -286,38 +268,63 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             if key in fkeys:
                 formatdict[key] = formatter[key]
 
-    try:
-        format_function = a._format
-        msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
-              "will be removed in 2.1. Use the `formatter` kw instead."
-        import warnings
-        warnings.warn(msg, DeprecationWarning)
-    except AttributeError:
-        # find the right formatting function for the array
-        dtypeobj = a.dtype.type
-        if issubclass(dtypeobj, _nt.bool_):
-            format_function = formatdict['bool']
-        elif issubclass(dtypeobj, _nt.integer):
-            if issubclass(dtypeobj, _nt.timedelta64):
-                format_function = formatdict['timedelta']
-            else:
-                format_function = formatdict['int']
-        elif issubclass(dtypeobj, _nt.floating):
-            if issubclass(dtypeobj, _nt.longfloat):
-                format_function = formatdict['longfloat']
-            else:
-                format_function = formatdict['float']
-        elif issubclass(dtypeobj, _nt.complexfloating):
-            if issubclass(dtypeobj, _nt.clongfloat):
-                format_function = formatdict['longcomplexfloat']
-            else:
-                format_function = formatdict['complexfloat']
-        elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
-            format_function = formatdict['numpystr']
-        elif issubclass(dtypeobj, _nt.datetime64):
-            format_function = formatdict['datetime']
+    return formatdict
+
+def _get_format_function(data, precision, suppress_small, formatter):
+    """
+    find the right formatting function for the dtype_
+    """
+    dtype_ = data.dtype
+    if dtype_.fields is not None:
+        format_functions = []
+        for field_name in dtype_.names:
+            field_values = data[field_name]
+            format_function = _get_format_function(
+                    ravel(field_values), precision, suppress_small, formatter)
+            if dtype_[field_name].shape != ():
+                format_function = SubArrayFormat(format_function)
+            format_functions.append(format_function)
+        return StructureFormat(format_functions)
+
+    dtypeobj = dtype_.type
+    formatdict = _get_formatdict(data, precision, suppress_small, formatter)
+    if issubclass(dtypeobj, _nt.bool_):
+        return formatdict['bool']
+    elif issubclass(dtypeobj, _nt.integer):
+        if issubclass(dtypeobj, _nt.timedelta64):
+            return formatdict['timedelta']
         else:
-            format_function = formatdict['numpystr']
+            return formatdict['int']
+    elif issubclass(dtypeobj, _nt.floating):
+        if issubclass(dtypeobj, _nt.longfloat):
+            return formatdict['longfloat']
+        else:
+            return formatdict['float']
+    elif issubclass(dtypeobj, _nt.complexfloating):
+        if issubclass(dtypeobj, _nt.clongfloat):
+            return formatdict['longcomplexfloat']
+        else:
+            return formatdict['complexfloat']
+    elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
+        return formatdict['numpystr']
+    elif issubclass(dtypeobj, _nt.datetime64):
+        return formatdict['datetime']
+    else:
+        return formatdict['numpystr']
+
+def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
+                  prefix="", formatter=None):
+
+    if a.size > _summaryThreshold:
+        summary_insert = "..., "
+        data = _leading_trailing(a)
+    else:
+        summary_insert = ""
+        data = ravel(asarray(a))
+
+    # find the right formatting function for the array
+    format_function = _get_format_function(data, precision,
+                                           suppress_small, formatter)
 
     # skip over "["
     next_line_prefix = " "
@@ -328,17 +335,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                        next_line_prefix, separator,
                        _summaryEdgeItems, summary_insert)[:-1]
     return lst
-
-def _convert_arrays(obj):
-    from . import numeric as _nc
-    newtup = []
-    for k in obj:
-        if isinstance(k, _nc.ndarray):
-            k = k.tolist()
-        elif isinstance(k, tuple):
-            k = _convert_arrays(k)
-        newtup.append(k)
-    return tuple(newtup)
 
 
 def array2string(a, max_line_width=None, precision=None,
@@ -387,7 +383,7 @@ def array2string(a, max_line_width=None, precision=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -424,8 +420,8 @@ def array2string(a, max_line_width=None, precision=None,
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
-    >>> print np.array2string(x, precision=2, separator=',',
-    ...                       suppress_small=True)
+    >>> print(np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True))
     [ 0., 1., 2., 3.]
 
     >>> x  = np.arange(3.)
@@ -438,18 +434,26 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
+    if max_line_width is None:
+        max_line_width = _line_width
+
+    if precision is None:
+        precision = _float_output_precision
+
+    if suppress_small is None:
+        suppress_small = _float_output_suppress_small
+
+    if formatter is None:
+        formatter = _formatter
+
     if a.shape == ():
         x = a.item()
-        try:
-            lst = a._format(x)
-            msg = "The `_format` attribute is deprecated in Numpy " \
-                  "2.0 and will be removed in 2.1. Use the " \
-                  "`formatter` kw instead."
-            import warnings
-            warnings.warn(msg, DeprecationWarning)
-        except AttributeError:
-            if isinstance(x, tuple):
-                x = _convert_arrays(x)
+        if a.dtype.fields is not None:
+            arr = array([x], dtype=a.dtype)
+            format_function = _get_format_function(
+                    arr, precision, suppress_small, formatter)
+            lst = format_function(arr[0])
+        else:
             lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
@@ -458,6 +462,7 @@ def array2string(a, max_line_width=None, precision=None,
         lst = _array2string(a, max_line_width, precision, suppress_small,
                             separator, prefix, formatter=formatter)
     return lst
+
 
 def _extendLine(s, line, word, max_line_len, next_line_prefix):
     if len(line.rstrip()) + len(word.rstrip()) >= max_line_len:
@@ -477,16 +482,16 @@ def _formatArray(a, format_function, rank, max_line_len,
 
     """
     if rank == 0:
-        obj = a.item()
-        if isinstance(obj, tuple):
-            obj = _convert_arrays(obj)
-        return str(obj)
+        raise ValueError("rank shouldn't be zero.")
 
     if summary_insert and 2*edge_items < len(a):
-        leading_items, trailing_items, summary_insert1 = \
-                       edge_items, edge_items, summary_insert
+        leading_items = edge_items
+        trailing_items = edge_items
+        summary_insert1 = summary_insert
     else:
-        leading_items, trailing_items, summary_insert1 = 0, len(a), ""
+        leading_items = 0
+        trailing_items = len(a)
+        summary_insert1 = ""
 
     if rank == 1:
         s = ""
@@ -635,9 +640,12 @@ class FloatFormat(object):
 
 
 def _digits(x, precision, format):
-    s = format % x
-    z = s.rstrip('0')
-    return precision - len(s) + len(z)
+    if precision > 0:
+        s = format % x
+        z = s.rstrip('0')
+        return precision - len(s) + len(z)
+    else:
+        return 0
 
 
 class IntegerFormat(object):
@@ -717,9 +725,9 @@ class ComplexFormat(object):
             i = i + 'j'
         return r + i
 
+
 class DatetimeFormat(object):
-    def __init__(self, x, unit=None,
-                timezone=None, casting='same_kind'):
+    def __init__(self, x, unit=None, timezone=None, casting='same_kind'):
         # Get the unit from the dtype
         if unit is None:
             if x.dtype.kind == 'M':
@@ -727,15 +735,9 @@ class DatetimeFormat(object):
             else:
                 unit = 's'
 
-        # If timezone is default, make it 'local' or 'UTC' based on the unit
         if timezone is None:
-            # Date units -> UTC, time units -> local
-            if unit in ('Y', 'M', 'W', 'D'):
-                self.timezone = 'UTC'
-            else:
-                self.timezone = 'local'
-        else:
-            self.timezone = timezone
+            timezone = 'naive'
+        self.timezone = timezone
         self.unit = unit
         self.casting = casting
 
@@ -748,10 +750,47 @@ class DatetimeFormat(object):
 class TimedeltaFormat(object):
     def __init__(self, data):
         if data.dtype.kind == 'm':
-            v = data.view('i8')
-            max_str_len = max(len(str(maximum.reduce(v))),
-                              len(str(minimum.reduce(v))))
+            nat_value = array(['NaT'], dtype=data.dtype)[0]
+            int_dtype = dtype(data.dtype.byteorder + 'i8')
+            int_view = data.view(int_dtype)
+            v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
+            if len(v) > 0:
+                # Max str length of non-NaT elements
+                max_str_len = max(len(str(maximum.reduce(v))),
+                                  len(str(minimum.reduce(v))))
+            else:
+                max_str_len = 0
+            if len(v) < len(data):
+                # data contains a NaT
+                max_str_len = max(max_str_len, 5)
             self.format = '%' + str(max_str_len) + 'd'
+            self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
-        return self.format % x.astype('i8')
+        # TODO: After NAT == NAT deprecation should be simplified:
+        if (x + 1).view('i8') == x.view('i8'):
+            return self._nat
+        else:
+            return self.format % x.astype('i8')
+
+
+class SubArrayFormat(object):
+    def __init__(self, format_function):
+        self.format_function = format_function
+
+    def __call__(self, arr):
+        if arr.ndim <= 1:
+            return "[" + ", ".join(self.format_function(a) for a in arr) + "]"
+        return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
+
+
+class StructureFormat(object):
+    def __init__(self, format_functions):
+        self.format_functions = format_functions
+        self.num_fields = len(format_functions)
+
+    def __call__(self, x):
+        s = "("
+        for field, format_function in zip(x, self.format_functions):
+            s += format_function(field) + ", "
+        return (s[:-2] if 1 < self.num_fields else s[:-1]) + ")"

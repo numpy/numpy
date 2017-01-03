@@ -1,7 +1,7 @@
 .. currentmodule:: numpy
 
 *************************
-Numpy C Code Explanations
+NumPy C Code Explanations
 *************************
 
     Fanaticism consists of redoubling your efforts when you have forgotten
@@ -41,18 +41,18 @@ called a rank-0 array), then the strides and dimensions variables are
 NULL.
 
 Besides the structural information contained in the strides and
-dimensions members of the :ctype:`PyArrayObject`, the flags contain
+dimensions members of the :c:type:`PyArrayObject`, the flags contain
 important information about how the data may be accessed. In particular,
-the :cdata:`NPY_ARRAY_ALIGNED` flag is set when the memory is on a
+the :c:data:`NPY_ARRAY_ALIGNED` flag is set when the memory is on a
 suitable boundary according to the data-type array. Even if you have
 a contiguous chunk of memory, you cannot just assume it is safe to
 dereference a data- type-specific pointer to an element. Only if the
-:cdata:`NPY_ARRAY_ALIGNED` flag is set is this a safe operation (on
+:c:data:`NPY_ARRAY_ALIGNED` flag is set is this a safe operation (on
 some platforms it will work but on others, like Solaris, it will cause
-a bus error). The :cdata:`NPY_ARRAY_WRITEABLE` should also be ensured
+a bus error). The :c:data:`NPY_ARRAY_WRITEABLE` should also be ensured
 if you plan on writing to the memory area of the array. It is also
 possible to obtain a pointer to an unwritable memory area. Sometimes,
-writing to the memory area when the :cdata:`NPY_ARRAY_WRITEABLE` flag is not
+writing to the memory area when the :c:data:`NPY_ARRAY_WRITEABLE` flag is not
 set will just be rude. Other times it can cause program crashes ( *e.g.*
 a data-area that is a read-only memory-mapped file).
 
@@ -67,8 +67,8 @@ The data-type is an important abstraction of the ndarray. Operations
 will look to the data-type to provide the key functionality that is
 needed to operate on the array. This functionality is provided in the
 list of function pointers pointed to by the 'f' member of the
-:ctype:`PyArray_Descr` structure. In this way, the number of data-types can be
-extended simply by providing a :ctype:`PyArray_Descr` structure with suitable
+:c:type:`PyArray_Descr` structure. In this way, the number of data-types can be
+extended simply by providing a :c:type:`PyArray_Descr` structure with suitable
 function pointers in the 'f' member. For built-in types there are some
 optimizations that by-pass this mechanism, but the point of the data-
 type abstraction is to allow new data-types to be added.
@@ -97,7 +97,7 @@ operation of a general-purpose N-dimensional loop is abstracted in the
 notion of an iterator object. To write an N-dimensional loop, you only
 have to create an iterator object from an ndarray, work with the
 dataptr member of the iterator object structure and call the macro
-:cfunc:`PyArray_ITER_NEXT` (it) on the iterator object to move to the next
+:c:func:`PyArray_ITER_NEXT` (it) on the iterator object to move to the next
 element. The "next" element is always in C-contiguous order. The macro
 works by first special casing the C-contiguous, 1-D, and 2-D cases
 which work very simply.
@@ -120,11 +120,11 @@ previously-described tests are executed again on the next-to-last
 dimension. In this way, the dataptr is adjusted appropriately for
 arbitrary striding.
 
-The coordinates member of the :ctype:`PyArrayIterObject` structure maintains
+The coordinates member of the :c:type:`PyArrayIterObject` structure maintains
 the current N-d counter unless the underlying array is C-contiguous in
 which case the coordinate counting is by-passed. The index member of
-the :ctype:`PyArrayIterObject` keeps track of the current flat index of the
-iterator. It is updated by the :cfunc:`PyArray_ITER_NEXT` macro.
+the :c:type:`PyArrayIterObject` keeps track of the current flat index of the
+iterator. It is updated by the :c:func:`PyArray_ITER_NEXT` macro.
 
 
 Broadcasting
@@ -136,18 +136,18 @@ Broadcasting
 In Numeric, broadcasting was implemented in several lines of code
 buried deep in ufuncobject.c. In NumPy, the notion of broadcasting has
 been abstracted so that it can be performed in multiple places.
-Broadcasting is handled by the function :cfunc:`PyArray_Broadcast`. This
-function requires a :ctype:`PyArrayMultiIterObject` (or something that is a
-binary equivalent) to be passed in. The :ctype:`PyArrayMultiIterObject` keeps
+Broadcasting is handled by the function :c:func:`PyArray_Broadcast`. This
+function requires a :c:type:`PyArrayMultiIterObject` (or something that is a
+binary equivalent) to be passed in. The :c:type:`PyArrayMultiIterObject` keeps
 track of the broadcast number of dimensions and size in each
 dimension along with the total size of the broadcast result. It also
 keeps track of the number of arrays being broadcast and a pointer to
 an iterator for each of the arrays being broadcast.
 
-The :cfunc:`PyArray_Broadcast` function takes the iterators that have already
+The :c:func:`PyArray_Broadcast` function takes the iterators that have already
 been defined and uses them to determine the broadcast shape in each
 dimension (to create the iterators at the same time that broadcasting
-occurs then use the :cfunc:`PyMultiIter_New` function). Then, the iterators are
+occurs then use the :c:func:`PyMultiIter_New` function). Then, the iterators are
 adjusted so that each iterator thinks it is iterating over an array
 with the broadcast size. This is done by adjusting the iterators
 number of dimensions, and the shape in each dimension. This works
@@ -160,9 +160,9 @@ operates over the extended dimension.
 Broadcasting was always implemented in Numeric using 0-valued strides
 for the extended dimensions. It is done in exactly the same way in
 NumPy. The big difference is that now the array of strides is kept
-track of in a :ctype:`PyArrayIterObject`, the iterators involved in a
-broadcast result are kept track of in a :ctype:`PyArrayMultiIterObject`,
-and the :cfunc:`PyArray_BroadCast` call implements the broad-casting rules.
+track of in a :c:type:`PyArrayIterObject`, the iterators involved in a
+broadcast result are kept track of in a :c:type:`PyArrayMultiIterObject`,
+and the :c:func:`PyArray_BroadCast` call implements the broad-casting rules.
 
 
 Array Scalars
@@ -196,6 +196,7 @@ Indexing
 
 All python indexing operations ``arr[index]`` are organized by first preparing
 the index and finding the index type. The supported index types are:
+
 * integer
 * newaxis
 * slice
@@ -222,7 +223,7 @@ single boolean indexing array will call specialized boolean functions.
 Indices containing an ellipsis or slice but no advanced indexing will
 always create a view into the old array by calculating the new strides and
 memory offset.  This view can then either be returned or, for assignments,
-filled using :cfunc:`PyArray_CopyObject`. Note that `PyArray_CopyObject`
+filled using :c:func:`PyArray_CopyObject`. Note that `PyArray_CopyObject`
 may also be called on temporary arrays in other branches to support
 complicated assignments when the array is of object dtype.
 
@@ -234,6 +235,7 @@ combined with typical view based indexing. Here integer indices are
 interpreted as view based. Before trying to understand this, you may want
 to make yourself familiar with its subtleties. The advanced indexing code
 has three different branches and one special case:
+
 * There is one indexing array and it, as well as the assignment array, can
   be iterated trivially. For example they may be contiguous. Also the
   indexing array must be of `intp` type and the value array in assignments
@@ -260,7 +262,7 @@ the start of the subarray, which then allows to restart the subarray
 iteration.
 
 When advanced indices are next to each other transposing may be necessary.
-All necessary transposing is handled by :cfunc:`PyArray_MapIterSwapAxes` and
+All necessary transposing is handled by :c:func:`PyArray_MapIterSwapAxes` and
 has to be handled by the caller unless `PyArray_MapIterNew` is asked to
 allocate the result.
 
@@ -385,7 +387,7 @@ Function call
 
 This section describes how the basic universal function computation loop is
 setup and executed for each of the three different kinds of execution. If
-:cdata:`NPY_ALLOW_THREADS` is defined during compilation, then as long as
+:c:data:`NPY_ALLOW_THREADS` is defined during compilation, then as long as
 no object arrays are involved, the Python Global Interpreter Lock (GIL) is
 released prior to calling the loops.  It is re-acquired if necessary to
 handle error conditions. The hardware error flags are checked only after

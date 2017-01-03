@@ -1,7 +1,7 @@
 """Python script to build windows binaries to be fed to the "superpack".
 
 The script is pretty dumb: it assumes python executables are installed the
-standard way, and the location for blas/lapack/atlas is harcoded.
+standard way, and the location for blas/lapack/atlas is hardcoded.
 
 TODO:
     - integrate the x86analysis script to check built binaries
@@ -106,7 +106,7 @@ def get_binary_name(arch):
 
 def get_windist_exec(pyver):
     """Return the name of the installer built by wininst command."""
-    # Yeah, the name logic is harcoded in distutils. We have to reproduce it
+    # Yeah, the name logic is hardcoded in distutils. We have to reproduce it
     # here
     if BUILD_MSI:
         ext = '.msi'

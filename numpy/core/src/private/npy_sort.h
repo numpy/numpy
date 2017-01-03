@@ -9,188 +9,196 @@
 #define NPY_ENOMEM 1
 #define NPY_ECOMP 2
 
+static NPY_INLINE int npy_get_msb(npy_uintp unum)
+{
+    int depth_limit = 0;
+    while (unum >>= 1)  {
+        depth_limit++;
+    }
+    return depth_limit;
+}
 
-int quicksort_bool(npy_bool *vec, npy_intp cnt, void *null);
-int heapsort_bool(npy_bool *vec, npy_intp cnt, void *null);
-int mergesort_bool(npy_bool *vec, npy_intp cnt, void *null);
-int aquicksort_bool(npy_bool *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_bool(npy_bool *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_bool(npy_bool *vec, npy_intp *ind, npy_intp cnt, void *null);
-
-
-int quicksort_byte(npy_byte *vec, npy_intp cnt, void *null);
-int heapsort_byte(npy_byte *vec, npy_intp cnt, void *null);
-int mergesort_byte(npy_byte *vec, npy_intp cnt, void *null);
-int aquicksort_byte(npy_byte *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_byte(npy_byte *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_byte(npy_byte *vec, npy_intp *ind, npy_intp cnt, void *null);
-
-
-int quicksort_ubyte(npy_ubyte *vec, npy_intp cnt, void *null);
-int heapsort_ubyte(npy_ubyte *vec, npy_intp cnt, void *null);
-int mergesort_ubyte(npy_ubyte *vec, npy_intp cnt, void *null);
-int aquicksort_ubyte(npy_ubyte *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_ubyte(npy_ubyte *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_ubyte(npy_ubyte *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_bool(void *vec, npy_intp cnt, void *null);
+int heapsort_bool(void *vec, npy_intp cnt, void *null);
+int mergesort_bool(void *vec, npy_intp cnt, void *null);
+int aquicksort_bool(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_bool(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_bool(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_short(npy_short *vec, npy_intp cnt, void *null);
-int heapsort_short(npy_short *vec, npy_intp cnt, void *null);
-int mergesort_short(npy_short *vec, npy_intp cnt, void *null);
-int aquicksort_short(npy_short *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_short(npy_short *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_short(npy_short *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_byte(void *vec, npy_intp cnt, void *null);
+int heapsort_byte(void *vec, npy_intp cnt, void *null);
+int mergesort_byte(void *vec, npy_intp cnt, void *null);
+int aquicksort_byte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_byte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_byte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_ushort(npy_ushort *vec, npy_intp cnt, void *null);
-int heapsort_ushort(npy_ushort *vec, npy_intp cnt, void *null);
-int mergesort_ushort(npy_ushort *vec, npy_intp cnt, void *null);
-int aquicksort_ushort(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_ushort(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_ushort(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_ubyte(void *vec, npy_intp cnt, void *null);
+int heapsort_ubyte(void *vec, npy_intp cnt, void *null);
+int mergesort_ubyte(void *vec, npy_intp cnt, void *null);
+int aquicksort_ubyte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_ubyte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_ubyte(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_int(npy_int *vec, npy_intp cnt, void *null);
-int heapsort_int(npy_int *vec, npy_intp cnt, void *null);
-int mergesort_int(npy_int *vec, npy_intp cnt, void *null);
-int aquicksort_int(npy_int *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_int(npy_int *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_int(npy_int *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_short(void *vec, npy_intp cnt, void *null);
+int heapsort_short(void *vec, npy_intp cnt, void *null);
+int mergesort_short(void *vec, npy_intp cnt, void *null);
+int aquicksort_short(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_short(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_short(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_uint(npy_uint *vec, npy_intp cnt, void *null);
-int heapsort_uint(npy_uint *vec, npy_intp cnt, void *null);
-int mergesort_uint(npy_uint *vec, npy_intp cnt, void *null);
-int aquicksort_uint(npy_uint *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_uint(npy_uint *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_uint(npy_uint *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_ushort(void *vec, npy_intp cnt, void *null);
+int heapsort_ushort(void *vec, npy_intp cnt, void *null);
+int mergesort_ushort(void *vec, npy_intp cnt, void *null);
+int aquicksort_ushort(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_ushort(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_ushort(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_long(npy_long *vec, npy_intp cnt, void *null);
-int heapsort_long(npy_long *vec, npy_intp cnt, void *null);
-int mergesort_long(npy_long *vec, npy_intp cnt, void *null);
-int aquicksort_long(npy_long *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_long(npy_long *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_long(npy_long *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_int(void *vec, npy_intp cnt, void *null);
+int heapsort_int(void *vec, npy_intp cnt, void *null);
+int mergesort_int(void *vec, npy_intp cnt, void *null);
+int aquicksort_int(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_int(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_int(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_ulong(npy_ulong *vec, npy_intp cnt, void *null);
-int heapsort_ulong(npy_ulong *vec, npy_intp cnt, void *null);
-int mergesort_ulong(npy_ulong *vec, npy_intp cnt, void *null);
-int aquicksort_ulong(npy_ulong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_ulong(npy_ulong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_ulong(npy_ulong *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_uint(void *vec, npy_intp cnt, void *null);
+int heapsort_uint(void *vec, npy_intp cnt, void *null);
+int mergesort_uint(void *vec, npy_intp cnt, void *null);
+int aquicksort_uint(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_uint(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_uint(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_longlong(npy_longlong *vec, npy_intp cnt, void *null);
-int heapsort_longlong(npy_longlong *vec, npy_intp cnt, void *null);
-int mergesort_longlong(npy_longlong *vec, npy_intp cnt, void *null);
-int aquicksort_longlong(npy_longlong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_longlong(npy_longlong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_longlong(npy_longlong *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_long(void *vec, npy_intp cnt, void *null);
+int heapsort_long(void *vec, npy_intp cnt, void *null);
+int mergesort_long(void *vec, npy_intp cnt, void *null);
+int aquicksort_long(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_long(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_long(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_ulonglong(npy_ulonglong *vec, npy_intp cnt, void *null);
-int heapsort_ulonglong(npy_ulonglong *vec, npy_intp cnt, void *null);
-int mergesort_ulonglong(npy_ulonglong *vec, npy_intp cnt, void *null);
-int aquicksort_ulonglong(npy_ulonglong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_ulonglong(npy_ulonglong *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_ulonglong(npy_ulonglong *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_ulong(void *vec, npy_intp cnt, void *null);
+int heapsort_ulong(void *vec, npy_intp cnt, void *null);
+int mergesort_ulong(void *vec, npy_intp cnt, void *null);
+int aquicksort_ulong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_ulong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_ulong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_half(npy_ushort *vec, npy_intp cnt, void *null);
-int heapsort_half(npy_ushort *vec, npy_intp cnt, void *null);
-int mergesort_half(npy_ushort *vec, npy_intp cnt, void *null);
-int aquicksort_half(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_half(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_half(npy_ushort *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_longlong(void *vec, npy_intp cnt, void *null);
+int heapsort_longlong(void *vec, npy_intp cnt, void *null);
+int mergesort_longlong(void *vec, npy_intp cnt, void *null);
+int aquicksort_longlong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_longlong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_longlong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_float(npy_float *vec, npy_intp cnt, void *null);
-int heapsort_float(npy_float *vec, npy_intp cnt, void *null);
-int mergesort_float(npy_float *vec, npy_intp cnt, void *null);
-int aquicksort_float(npy_float *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_float(npy_float *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_float(npy_float *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_ulonglong(void *vec, npy_intp cnt, void *null);
+int heapsort_ulonglong(void *vec, npy_intp cnt, void *null);
+int mergesort_ulonglong(void *vec, npy_intp cnt, void *null);
+int aquicksort_ulonglong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_ulonglong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_ulonglong(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_double(npy_double *vec, npy_intp cnt, void *null);
-int heapsort_double(npy_double *vec, npy_intp cnt, void *null);
-int mergesort_double(npy_double *vec, npy_intp cnt, void *null);
-int aquicksort_double(npy_double *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_double(npy_double *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_double(npy_double *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_half(void *vec, npy_intp cnt, void *null);
+int heapsort_half(void *vec, npy_intp cnt, void *null);
+int mergesort_half(void *vec, npy_intp cnt, void *null);
+int aquicksort_half(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_half(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_half(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_longdouble(npy_longdouble *vec, npy_intp cnt, void *null);
-int heapsort_longdouble(npy_longdouble *vec, npy_intp cnt, void *null);
-int mergesort_longdouble(npy_longdouble *vec, npy_intp cnt, void *null);
-int aquicksort_longdouble(npy_longdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_longdouble(npy_longdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_longdouble(npy_longdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_float(void *vec, npy_intp cnt, void *null);
+int heapsort_float(void *vec, npy_intp cnt, void *null);
+int mergesort_float(void *vec, npy_intp cnt, void *null);
+int aquicksort_float(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_float(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_float(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_cfloat(npy_cfloat *vec, npy_intp cnt, void *null);
-int heapsort_cfloat(npy_cfloat *vec, npy_intp cnt, void *null);
-int mergesort_cfloat(npy_cfloat *vec, npy_intp cnt, void *null);
-int aquicksort_cfloat(npy_cfloat *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_cfloat(npy_cfloat *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_cfloat(npy_cfloat *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_double(void *vec, npy_intp cnt, void *null);
+int heapsort_double(void *vec, npy_intp cnt, void *null);
+int mergesort_double(void *vec, npy_intp cnt, void *null);
+int aquicksort_double(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_double(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_double(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_cdouble(npy_cdouble *vec, npy_intp cnt, void *null);
-int heapsort_cdouble(npy_cdouble *vec, npy_intp cnt, void *null);
-int mergesort_cdouble(npy_cdouble *vec, npy_intp cnt, void *null);
-int aquicksort_cdouble(npy_cdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_cdouble(npy_cdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_cdouble(npy_cdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_longdouble(void *vec, npy_intp cnt, void *null);
+int heapsort_longdouble(void *vec, npy_intp cnt, void *null);
+int mergesort_longdouble(void *vec, npy_intp cnt, void *null);
+int aquicksort_longdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_longdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_longdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_clongdouble(npy_clongdouble *vec, npy_intp cnt, void *null);
-int heapsort_clongdouble(npy_clongdouble *vec, npy_intp cnt, void *null);
-int mergesort_clongdouble(npy_clongdouble *vec, npy_intp cnt, void *null);
-int aquicksort_clongdouble(npy_clongdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_clongdouble(npy_clongdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_clongdouble(npy_clongdouble *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_cfloat(void *vec, npy_intp cnt, void *null);
+int heapsort_cfloat(void *vec, npy_intp cnt, void *null);
+int mergesort_cfloat(void *vec, npy_intp cnt, void *null);
+int aquicksort_cfloat(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_cfloat(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_cfloat(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_string(npy_char *vec, npy_intp cnt, PyArrayObject *arr);
-int heapsort_string(npy_char *vec, npy_intp cnt, PyArrayObject *arr);
-int mergesort_string(npy_char *vec, npy_intp cnt, PyArrayObject *arr);
-int aquicksort_string(npy_char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int aheapsort_string(npy_char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int amergesort_string(npy_char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+int quicksort_cdouble(void *vec, npy_intp cnt, void *null);
+int heapsort_cdouble(void *vec, npy_intp cnt, void *null);
+int mergesort_cdouble(void *vec, npy_intp cnt, void *null);
+int aquicksort_cdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_cdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_cdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_unicode(npy_ucs4 *vec, npy_intp cnt, PyArrayObject *arr);
-int heapsort_unicode(npy_ucs4 *vec, npy_intp cnt, PyArrayObject *arr);
-int mergesort_unicode(npy_ucs4 *vec, npy_intp cnt, PyArrayObject *arr);
-int aquicksort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int aheapsort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int amergesort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+int quicksort_clongdouble(void *vec, npy_intp cnt, void *null);
+int heapsort_clongdouble(void *vec, npy_intp cnt, void *null);
+int mergesort_clongdouble(void *vec, npy_intp cnt, void *null);
+int aquicksort_clongdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_clongdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_clongdouble(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 
-int quicksort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
-int heapsort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
-int mergesort_datetime(npy_datetime *vec, npy_intp cnt, void *null);
-int aquicksort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_datetime(npy_datetime *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_string(void *vec, npy_intp cnt, void *arr);
+int heapsort_string(void *vec, npy_intp cnt, void *arr);
+int mergesort_string(void *vec, npy_intp cnt, void *arr);
+int aquicksort_string(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int aheapsort_string(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int amergesort_string(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
 
-int quicksort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
-int heapsort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
-int mergesort_timedelta(npy_timedelta *vec, npy_intp cnt, void *null);
-int aquicksort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_timedelta(npy_timedelta *vec, npy_intp *ind, npy_intp cnt, void *null);
+int quicksort_unicode(void *vec, npy_intp cnt, void *arr);
+int heapsort_unicode(void *vec, npy_intp cnt, void *arr);
+int mergesort_unicode(void *vec, npy_intp cnt, void *arr);
+int aquicksort_unicode(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int aheapsort_unicode(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int amergesort_unicode(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
 
-int npy_quicksort(char *vec, npy_intp cnt, PyArrayObject *arr);
-int npy_heapsort(char *vec, npy_intp cnt, PyArrayObject *arr);
-int npy_mergesort(char *vec, npy_intp cnt, PyArrayObject *arr);
-int npy_aquicksort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int npy_aheapsort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
-int npy_amergesort(char *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+int quicksort_datetime(void *vec, npy_intp cnt, void *null);
+int heapsort_datetime(void *vec, npy_intp cnt, void *null);
+int mergesort_datetime(void *vec, npy_intp cnt, void *null);
+int aquicksort_datetime(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_datetime(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_datetime(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+
+int quicksort_timedelta(void *vec, npy_intp cnt, void *null);
+int heapsort_timedelta(void *vec, npy_intp cnt, void *null);
+int mergesort_timedelta(void *vec, npy_intp cnt, void *null);
+int aquicksort_timedelta(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_timedelta(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_timedelta(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+
+int npy_quicksort(void *vec, npy_intp cnt, void *arr);
+int npy_heapsort(void *vec, npy_intp cnt, void *arr);
+int npy_mergesort(void *vec, npy_intp cnt, void *arr);
+int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
 #endif

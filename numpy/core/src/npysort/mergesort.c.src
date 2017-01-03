@@ -104,7 +104,7 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw)
 
 
 int
-mergesort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
+mergesort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl, *pr, *pw;
 
@@ -167,7 +167,7 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
 
 
 int
-amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
+amergesort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
 {
     npy_intp *pl, *pr, *pw;
 
@@ -246,8 +246,9 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
 
 
 int
-mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
+mergesort_@suff@(void *start, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     size_t elsize = PyArray_ITEMSIZE(arr);
     size_t len = elsize / sizeof(@type@);
     @type@ *pl, *pr, *pw, *vp;
@@ -321,8 +322,9 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, size_t l
 
 
 int
-amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
+amergesort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     size_t elsize = PyArray_ITEMSIZE(arr);
     size_t len = elsize / sizeof(@type@);
     npy_intp *pl, *pr, *pw;
@@ -396,8 +398,9 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 
 
 int
-npy_mergesort(char *start, npy_intp num, PyArrayObject *arr)
+npy_mergesort(void *start, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     char *pl = start;
@@ -465,8 +468,9 @@ npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
 
 
 int
-npy_amergesort(char *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
+npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
+    PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     npy_intp *pl, *pr, *pw;

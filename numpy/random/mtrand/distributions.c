@@ -188,7 +188,7 @@ double rk_beta(rk_state *state, double a, double b)
     if ((a <= 1.0) && (b <= 1.0))
     {
         double U, V, X, Y;
-        /* Use Jonk's algorithm */
+        /* Use Johnk's algorithm */
 
         while (1)
         {
@@ -231,6 +231,9 @@ double rk_chisquare(rk_state *state, double df)
 
 double rk_noncentral_chisquare(rk_state *state, double df, double nonc)
 {
+    if (nonc == 0){
+        return rk_chisquare(state, df);
+    }
     if(1 < df)
     {
         const double Chi2 = rk_chisquare(state, df - 1);
@@ -497,6 +500,11 @@ long rk_poisson_mult(rk_state *state, double lam)
     }
 }
 
+/*
+ * The transformed rejection method for generating Poisson random variables
+ * W. Hoermann
+ * Insurance: Mathematics and Economics 12, 39-45 (1993)
+ */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
 long rk_poisson_ptrs(rk_state *state, double lam)

@@ -18,7 +18,7 @@ Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
 of `Extending and Embedding the Python Interpreter
 <http://docs.python.org/extending/index.html>`_ and in `How to extend
-Numpy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
+NumPy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
 
 The umath module is a computer-generated C-module that creates many
 ufuncs. It provides a great many examples of how to create a universal
@@ -70,7 +70,7 @@ Example Non-ufunc extension
 .. index::
    pair: ufunc; adding new
 
-For comparison and general edificaiton of the reader we provide
+For comparison and general edification of the reader we provide
 a simple implementation of a C extension of logit that uses no
 numpy.
 
@@ -245,9 +245,9 @@ logit ufuncs constructed below, the logit ufuncs were almost exactly
 depending on the nature of the function.
 
 
-.. _`sec:Numpy-one-loop`:
+.. _`sec:NumPy-one-loop`:
 
-Example Numpy ufunc for one dtype
+Example NumPy ufunc for one dtype
 =================================
 
 .. index::
@@ -273,12 +273,12 @@ the primary thing that must be changed to create your own ufunc.
         /*
          * single_type_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a logit function.
+         * NumPy ufunc for a logit function.
          *
          * In this code we only define the ufunc for
          * a single dtype. The computations that must
          * be replaced to create a ufunc for
-         * a different funciton are marked with BEGIN
+         * a different function are marked with BEGIN
          * and END.
          *
          * Details explaining the Python-C API can be found under
@@ -443,9 +443,9 @@ array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
 
-.. _`sec:Numpy-many-loop`:
+.. _`sec:NumPy-many-loop`:
 
-Example Numpy ufunc with multiple dtypes
+Example NumPy ufunc with multiple dtypes
 ========================================
 
 .. index::
@@ -473,14 +473,14 @@ the primary thing that must be changed to create your own ufunc.
         /*
          * multi_type_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a logit function.
+         * NumPy ufunc for a logit function.
          *
          * Each function of the form type_logit defines the
          * logit function for a different numpy dtype. Each
          * of these functions must be modified when you
          * create your own ufunc. The computations that must
          * be replaced to create a ufunc for
-         * a different funciton are marked with BEGIN
+         * a different function are marked with BEGIN
          * and END.
          *
          * Details explaining the Python-C API can be found under
@@ -728,9 +728,9 @@ array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
 
-.. _`sec:Numpy-many-arg`:
+.. _`sec:NumPy-many-arg`:
 
-Example Numpy ufunc with multiple arguments/return values
+Example NumPy ufunc with multiple arguments/return values
 =========================================================
 
 Our final example is a ufunc with multiple arguments. It is a modification
@@ -738,7 +738,7 @@ of the code for a logit ufunc for data with a single dtype. We
 compute (A*B, logit(A*B)).
 
 We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example Numpy ufunc for one dtype`_, except that
+the setup.py file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -767,7 +767,7 @@ as well as all other properties of a ufunc.
         /*
          * multi_arg_logit.c
          * This is the C code for creating your own
-         * Numpy ufunc for a multiple argument, multiple
+         * NumPy ufunc for a multiple argument, multiple
          * return value ufunc. The places where the
          * ufunc computation is carried out are marked
          * with comments.
@@ -885,9 +885,9 @@ as well as all other properties of a ufunc.
         #endif
 
 
-.. _`sec:Numpy-struct-dtype`:
+.. _`sec:NumPy-struct-dtype`:
 
-Example Numpy ufunc with structured array dtype arguments
+Example NumPy ufunc with structured array dtype arguments
 =========================================================
 
 This example shows how to create a ufunc for a structured array dtype.
@@ -898,7 +898,7 @@ custom dtypes and structured array dtypes. We need to also call
 PyUFunc_RegisterLoopForDescr to finish setting up the ufunc.
 
 We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example Numpy ufunc for one dtype`_, except that
+the setup.py file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -925,7 +925,7 @@ The C file is given below.
         /*
          * add_triplet.c
          * This is the C code for creating your own
-         * Numpy ufunc for a structured array dtype.
+         * NumPy ufunc for a structured array dtype.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
@@ -1058,9 +1058,9 @@ What follows is the full specification of PyUFunc_FromFuncAndData, which
 automatically generates a ufunc from a C function with the correct signature.
 
 
-.. cfunction:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
    void** data, char* types, int ntypes, int nin, int nout, int identity,
-   char* name, char* doc, int check_return)
+   char* name, char* doc, int unused)
 
     *func*
 
@@ -1069,7 +1069,7 @@ automatically generates a ufunc from a C function with the correct signature.
         ``PyUFuncGenericFunction`` function. This function has the following
         signature. An example of a valid 1d loop function is also given.
 
-        .. cfunction:: void loop1d(char** args, npy_intp* dimensions,
+        .. c:function:: void loop1d(char** args, npy_intp* dimensions,
            npy_intp* steps, void* data)
 
         *args*
@@ -1120,7 +1120,7 @@ automatically generates a ufunc from a C function with the correct signature.
         every loop function defined for this ufunc. This data will be passed
         in to the 1-d loop. One common use of this data variable is to pass in
         an actual function to call to compute the result when a generic 1-d
-        loop (e.g. :cfunc:`PyUFunc_d_d`) is being used.
+        loop (e.g. :c:func:`PyUFunc_d_d`) is being used.
 
     *types*
 
@@ -1137,8 +1137,8 @@ automatically generates a ufunc from a C function with the correct signature.
 
             static char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
 
-        The bit-width names can also be used (e.g. :cdata:`NPY_INT32`,
-        :cdata:`NPY_COMPLEX128` ) if desired.
+        The bit-width names can also be used (e.g. :c:data:`NPY_INT32`,
+        :c:data:`NPY_COMPLEX128` ) if desired.
 
     *ntypes*
 
@@ -1155,8 +1155,8 @@ automatically generates a ufunc from a C function with the correct signature.
 
     *identity*
 
-        Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`,
-        :cdata:`PyUFunc_None`. This specifies what should be returned when
+        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
+        :c:data:`PyUFunc_None`. This specifies what should be returned when
         an empty array is passed to the reduce method of the ufunc.
 
     *name*
@@ -1170,10 +1170,9 @@ automatically generates a ufunc from a C function with the correct signature.
         response to ``{ufunc_name}.__doc__``). Do not include the function
         signature or the name as this is generated automatically.
 
-    *check_return*
+    *unused*
 
-        Not presently used, but this integer value does get set in the
-        structure-member of similar name.
+        Unused; kept for compatibility. Just set it to zero.
 
 .. index::
    pair: ufunc; adding new

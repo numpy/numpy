@@ -34,7 +34,7 @@ class build_ext (old_build_ext):
     user_options = old_build_ext.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
-        ('jobs=', 'j',
+        ('parallel=', 'j',
          "number of parallel jobs"),
         ]
 
@@ -46,19 +46,33 @@ class build_ext (old_build_ext):
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
-        self.jobs = None
+        self.parallel = None
 
     def finalize_options(self):
-        if self.jobs:
+        if self.parallel:
             try:
-                self.jobs = int(self.jobs)
+                self.parallel = int(self.parallel)
             except ValueError:
-                raise ValueError("--jobs/-j argument must be an integer")
-        incl_dirs = self.include_dirs
+                raise ValueError("--parallel/-j argument must be an integer")
+
+        # Ensure that self.include_dirs and self.distribution.include_dirs
+        # refer to the same list object. finalize_options will modify
+        # self.include_dirs, but self.distribution.include_dirs is used
+        # during the actual build.
+        # self.include_dirs is None unless paths are specified with
+        # --include-dirs.
+        # The include paths will be passed to the compiler in the order:
+        # numpy paths, --include-dirs paths, Python include path.
+        if isinstance(self.include_dirs, str):
+            self.include_dirs = self.include_dirs.split(os.pathsep)
+        incl_dirs = self.include_dirs or []
+        if self.distribution.include_dirs is None:
+            self.distribution.include_dirs = []
+        self.include_dirs = self.distribution.include_dirs
+        self.include_dirs.extend(incl_dirs)
+
         old_build_ext.finalize_options(self)
-        if incl_dirs is not None:
-            self.include_dirs.extend(self.distribution.include_dirs or [])
-        self.set_undefined_options('build', ('jobs', 'jobs'))
+        self.set_undefined_options('build', ('parallel', 'parallel'))
 
     def run(self):
         if not self.extensions:
@@ -406,7 +420,7 @@ class build_ext (old_build_ext):
 
         linker = self.compiler.link_shared_object
         # Always use system linker when using MSVC compiler.
-        if self.compiler.compiler_type=='msvc':
+        if self.compiler.compiler_type in ('msvc', 'intelw', 'intelemw'):
             # expand libraries with fcompiler libraries as we are
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(fcompiler, libraries, library_dirs)

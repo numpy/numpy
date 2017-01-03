@@ -53,22 +53,31 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
+    is_float16_result = False
     rcount = _count_reduce_items(arr, axis)
     # Make this warning show up first
     if rcount == 0:
-        warnings.warn("Mean of empty slice.", RuntimeWarning)
-
+        warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
-    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
-        dtype = mu.dtype('f8')
+    if dtype is None:
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+        elif issubclass(arr.dtype.type, nt.float16):
+            dtype = mu.dtype('f4')
+            is_float16_result = True
 
     ret = umr_sum(arr, axis, dtype, out, keepdims)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
+        if is_float16_result and out is None:
+            ret = a.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(ret / rcount)
+        if is_float16_result:
+            ret = a.dtype.type(ret / rcount)
+        else:
+            ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
 
@@ -80,7 +89,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     rcount = _count_reduce_items(arr, axis)
     # Make this warning show up on top.
     if ddof >= rcount:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning,
+                      stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):

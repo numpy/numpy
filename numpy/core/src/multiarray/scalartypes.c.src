@@ -264,10 +264,20 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
-    PyObject *ret = NULL;
     npy_intp repeat;
 
+    /*
+     * If the other object supports sequence repeat and not number multiply
+     * we should call sequence repeat to support e.g. list repeat by numpy
+     * scalars (they may be converted to ndarray otherwise).
+     * A python defined class will always only have the nb_multiply slot and
+     * some classes may have neither defined. For the latter we want need
+     * to give the normal case a chance to convert the object to ndarray.
+     * Probably no class has both defined, but if they do, prefer number.
+     */
     if (!PyArray_IsScalar(m1, Generic) &&
+            ((Py_TYPE(m1)->tp_as_sequence != NULL) &&
+             (Py_TYPE(m1)->tp_as_sequence->sq_repeat != NULL)) &&
             ((Py_TYPE(m1)->tp_as_number == NULL) ||
              (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m2 to an int and try sequence repeat */
@@ -276,9 +286,11 @@ gentype_multiply(PyObject *m1, PyObject *m2)
             return NULL;
         }
         /* Note that npy_intp is compatible to Py_Ssize_t */
-        ret = PySequence_Repeat(m1, repeat);
+        return PySequence_Repeat(m1, repeat);
     }
-    else if (!PyArray_IsScalar(m2, Generic) &&
+    if (!PyArray_IsScalar(m2, Generic) &&
+            ((Py_TYPE(m2)->tp_as_sequence != NULL) &&
+             (Py_TYPE(m2)->tp_as_sequence->sq_repeat != NULL)) &&
             ((Py_TYPE(m2)->tp_as_number == NULL) ||
              (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m1 to an int and try sequence repeat */
@@ -286,13 +298,11 @@ gentype_multiply(PyObject *m1, PyObject *m2)
         if (repeat == -1 && PyErr_Occurred()) {
             return NULL;
         }
-        ret = PySequence_Repeat(m2, repeat);
+        return PySequence_Repeat(m2, repeat);
     }
-    if (ret == NULL) {
-        PyErr_Clear(); /* no effect if not set */
-        ret = PyArray_Type.tp_as_number->nb_multiply(m1, m2);
-    }
-    return ret;
+
+    /* All normal cases are handled by PyArray's multiply */
+    return PyArray_Type.tp_as_number->nb_multiply(m1, m2);
 }
 
 /**begin repeat
@@ -518,11 +528,7 @@ format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-#if PY_VERSION_HEX >= 0x02070000
     if (val.real == 0.0 && npy_signbit(val.real) == 0) {
-#else
-    if (val.real == 0.0) {
-#endif
         PyOS_snprintf(format, sizeof(format), _FMT1, prec);
         res = NumPyOS_ascii_format@suff@(buf, buflen - 1, format, val.imag, 0);
         if (res == NULL) {
@@ -647,7 +653,6 @@ datetimetype_repr(PyObject *self)
     npy_datetimestruct dts;
     PyObject *ret;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
-    int local;
     NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
@@ -663,16 +668,8 @@ datetimetype_repr(PyObject *self)
         return NULL;
     }
 
-    local = (scal->obmeta.base > NPY_FR_D);
-    /*
-     * Because we're defaulting to local time, display hours with
-     * minutes precision, so that 30-minute timezone offsets can work.
-     */
     unit = scal->obmeta.base;
-    if (unit == NPY_FR_h) {
-        unit = NPY_FR_m;
-    }
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -723,12 +720,9 @@ timedeltatype_repr(PyObject *self)
     }
     else {
         /*
-         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
-         * or if HAVE_LONG_LONG is not defined
+         * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
-#if defined(HAVE_LONG_LONG) && \
-           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
-            (PY_VERSION_HEX >= 0x03020000))
+#if defined(HAVE_LONG_LONG)
         ret = PyUString_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
 #else
@@ -758,7 +752,6 @@ datetimetype_str(PyObject *self)
     PyDatetimeScalarObject *scal;
     npy_datetimestruct dts;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
-    int local;
     NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
@@ -774,16 +767,8 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    local = (scal->obmeta.base > NPY_FR_D);
-    /*
-     * Because we're defaulting to local time, display hours with
-     * minutes precision, so that 30-minute timezone offsets can work.
-     */
     unit = scal->obmeta.base;
-    if (unit == NPY_FR_h) {
-        unit = NPY_FR_m;
-    }
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
@@ -838,12 +823,9 @@ timedeltatype_str(PyObject *self)
     }
     else {
         /*
-         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
-         * or if HAVE_LONG_LONG is not defined
+         * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
-#if defined(HAVE_LONG_LONG) && \
-           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
-            (PY_VERSION_HEX >= 0x03020000))
+#if defined(HAVE_LONG_LONG)
         ret = PyUString_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
 #else
@@ -1311,6 +1293,18 @@ gentype_base_get(PyObject *NPY_UNUSED(self))
     Py_RETURN_NONE;
 }
 
+static PyObject *
+voidtype_base_get(PyVoidScalarObject *self)
+{
+    if (self->base == NULL) {
+        Py_RETURN_NONE;
+    }
+    else {
+        Py_INCREF(self->base);
+        return self->base;
+    }
+}
+
 
 static PyArray_Descr *
 _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
@@ -1651,33 +1645,13 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *ret, *newargs;
-
-    newargs = PyTuple_GetSlice(args, 0, 2);
-    if (newargs == NULL) {
-        return NULL;
-    }
-    ret = gentype_generic_method((PyObject *)self, newargs, kwds, "getfield");
-    Py_DECREF(newargs);
-    if (!ret) {
-        return ret;
-    }
-    if (PyArray_IsScalar(ret, Generic) &&   \
-            (!PyArray_IsScalar(ret, Void))) {
-        PyArray_Descr *new;
-        void *ptr;
-        if (!PyArray_ISNBO(self->descr->byteorder)) {
-            new = PyArray_DescrFromScalar(ret);
-            ptr = scalar_value(ret, new);
-            byte_swap_vector(ptr, 1, new->elsize);
-            Py_DECREF(new);
-        }
-    }
-    return ret;
+    /* Use ndarray's getfield to obtain the field safely */
+    return gentype_generic_method((PyObject *)self, args, kwds, "getfield");
 }
 
 static PyObject *
-gentype_setfield(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
+gentype_setfield(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
+                 PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
             "Can't set fields in a non-void array scalar.");
@@ -1687,59 +1661,77 @@ gentype_setfield(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObjec
 static PyObject *
 voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_Descr *typecode = NULL;
-    int offset = 0;
-    PyObject *value;
-    PyArrayObject *src;
-    int mysize;
-    char *dptr;
-    static char *kwlist[] = {"value", "dtype", "offset", 0};
+    /*
+     * We would like to use ndarray's setfield because it performs safety
+     * checks on the field datatypes and because it broadcasts properly.
+     * However, as a special case, void-scalar assignment broadcasts
+     * differently from ndarrays when assigning to an object field: Assignment
+     * to an ndarray object field broadcasts, but assignment to a void-scalar
+     * object-field should not, in order to allow nested ndarrays. 
+     * These lines should then behave identically:
+     *
+     *     b = np.zeros(1, dtype=[('x', 'O')])
+     *     b[0]['x'] = arange(3)  # uses voidtype_setfield
+     *     b['x'][0] = arange(3)  # uses ndarray setitem
+     *
+     * Ndarray's setfield would try to broadcast the lhs. Instead we use
+     * ndarray getfield to get the field safely, then setitem with an empty
+     * tuple to set the value without broadcast. Note we also want subarrays to
+     * be set properly, ie
+     *
+     *     a = np.zeros(1, dtype=[('x', 'i', 5)])
+     *     a[0]['x'] = 1
+     *
+     * sets all values to 1. "getfield + setitem with empty tuple" takes
+     * care of both object arrays and subarrays.
+     */
+    PyObject *getfield_args, *value, *arr, *meth, *arr_field, *emptytuple;
 
-    if ((self->flags & NPY_ARRAY_WRITEABLE) != NPY_ARRAY_WRITEABLE) {
-        PyErr_SetString(PyExc_RuntimeError, "Can't write to memory");
+    value = PyTuple_GetItem(args, 0);
+    if (value == NULL) {
         return NULL;
     }
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
-                &value,
-                PyArray_DescrConverter,
-                &typecode, &offset)) {
-        Py_XDECREF(typecode);
+    getfield_args = PyTuple_GetSlice(args, 1, 3);
+    if (getfield_args == NULL) {
         return NULL;
     }
 
-    mysize = Py_SIZE(self);
-
-    if (offset < 0 || (offset + typecode->elsize) > mysize) {
-        PyErr_Format(PyExc_ValueError,
-                "Need 0 <= offset <= %d for requested type "  \
-                "but received offset = %d",
-                mysize-typecode->elsize, offset);
-        Py_DECREF(typecode);
+    /* 1. Convert to 0-d array and use getfield */
+    arr = PyArray_FromScalar((PyObject*)self, NULL);
+    if (arr == NULL) {
+        Py_DECREF(getfield_args);
         return NULL;
     }
-
-    dptr = self->obval + offset;
-
-    if (typecode->type_num == NPY_OBJECT) {
-        PyObject *temp;
-        Py_INCREF(value);
-        NPY_COPY_PYOBJECT_PTR(&temp, dptr);
-        Py_XDECREF(temp);
-        NPY_COPY_PYOBJECT_PTR(dptr, &value);
-        Py_DECREF(typecode);
+    meth = PyObject_GetAttrString(arr, "getfield");
+    if (meth == NULL) {
+        Py_DECREF(getfield_args);
+        Py_DECREF(arr);
+        return NULL;
+    }
+    if (kwds == NULL) {
+        arr_field = PyObject_CallObject(meth, getfield_args);
     }
     else {
-        /* Copy data from value to correct place in dptr */
-        src = (PyArrayObject *)PyArray_FromAny(value, typecode,
-                                    0, 0, NPY_ARRAY_CARRAY, NULL);
-        if (src == NULL) {
-            return NULL;
-        }
-        typecode->f->copyswap(dptr, PyArray_DATA(src),
-                !PyArray_ISNBO(self->descr->byteorder),
-                src);
-        Py_DECREF(src);
+        arr_field = PyObject_Call(meth, getfield_args, kwds);
     }
+    Py_DECREF(getfield_args);
+    Py_DECREF(meth);
+    Py_DECREF(arr);
+
+    if(arr_field == NULL){
+        return NULL;
+    }
+
+    /* 2. Assign the value using setitem with empty tuple. */
+    emptytuple = PyTuple_New(0);
+    if (PyObject_SetItem(arr_field, emptytuple, value) < 0) {
+        Py_DECREF(arr_field);
+        Py_DECREF(emptytuple);
+        return NULL;
+    }
+    Py_DECREF(emptytuple);
+    Py_DECREF(arr_field);
+
     Py_RETURN_NONE;
 }
 
@@ -2109,6 +2101,11 @@ static PyGetSetDef voidtype_getsets[] = {
         (setter)0,
         "dtype object",
         NULL},
+    {"base",
+        (getter)voidtype_base_get,
+        (setter)0,
+        "base object",
+        NULL},
     {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -2162,10 +2159,13 @@ voidtype_length(PyVoidScalarObject *self)
 }
 
 static PyObject *
+voidtype_subscript(PyVoidScalarObject *self, PyObject *ind);
+
+static PyObject *
 voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
 {
     npy_intp m;
-    PyObject *flist=NULL, *fieldinfo;
+    PyObject *flist=NULL;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2181,18 +2181,16 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
         PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
         return NULL;
     }
-    fieldinfo = PyDict_GetItem(self->descr->fields,
-            PyTuple_GET_ITEM(flist, n));
-    return voidtype_getfield(self, fieldinfo, NULL);
-}
 
+    return voidtype_subscript(self, PyTuple_GetItem(flist, n));
+}
 
 /* get field by name or number */
 static PyObject *
 voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 {
     npy_intp n;
-    PyObject *fieldinfo;
+    PyObject *ret, *args;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2205,12 +2203,10 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 #else
     if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
 #endif
-        /* look up in fields */
-        fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldinfo) {
-            goto fail;
-        }
-        return voidtype_getfield(self, fieldinfo, NULL);
+        args = Py_BuildValue("(O)", ind);
+        ret = gentype_generic_method((PyObject *)self, args, NULL, "__getitem__");
+        Py_DECREF(args);
+        return ret;
     }
 
     /* try to convert it to a number */
@@ -2226,11 +2222,13 @@ fail:
 }
 
 static int
+voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val);
+
+static int
 voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 {
     npy_intp m;
-    PyObject *flist=NULL, *fieldinfo, *newtup;
-    PyObject *res;
+    PyObject *flist=NULL;
 
     if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
@@ -2244,24 +2242,11 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
         n += m;
     }
     if (n < 0 || n >= m) {
-        goto fail;
-    }
-    fieldinfo = PyDict_GetItem(self->descr->fields,
-            PyTuple_GET_ITEM(flist, n));
-    newtup = Py_BuildValue("(OOO)", val,
-            PyTuple_GET_ITEM(fieldinfo, 0),
-            PyTuple_GET_ITEM(fieldinfo, 1));
-    res = voidtype_setfield(self, newtup, NULL);
-    Py_DECREF(newtup);
-    if (!res) {
+        PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
         return -1;
     }
-    Py_DECREF(res);
-    return 0;
 
-fail:
-    PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
-    return -1;
+    return voidtype_ass_subscript(self, PyTuple_GetItem(flist, n), val);
 }
 
 static int
@@ -2269,8 +2254,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 {
     npy_intp n;
     char *msg = "invalid index";
-    PyObject *fieldinfo, *newtup;
-    PyObject *res;
+    PyObject *args;
 
     if (!PyDataType_HASFIELDS(self->descr)) {
         PyErr_SetString(PyExc_IndexError,
@@ -2289,20 +2273,49 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 #else
     if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
 #endif
-        /* look up in fields */
-        fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldinfo) {
-            goto fail;
-        }
-        newtup = Py_BuildValue("(OOO)", val,
-                PyTuple_GET_ITEM(fieldinfo, 0),
-                PyTuple_GET_ITEM(fieldinfo, 1));
-        res = voidtype_setfield(self, newtup, NULL);
-        Py_DECREF(newtup);
-        if (!res) {
+        /*
+         * Much like in voidtype_setfield, we cannot simply use ndarray's
+         * __setitem__ since assignment to void scalars should not broadcast
+         * the lhs. Instead we get a view through __getitem__ and then assign
+         * the value using setitem with an empty tuple (which treats both
+         * object arrays and subarrays properly).
+         *
+         * Also we do not want to use voidtype_setfield here, since we do
+         * not need to do the (slow) view safety checks, since we already
+         * know the dtype/offset are safe.
+         */
+
+        PyObject *arr, *arr_field, *meth, *emptytuple;
+
+        /* 1. Convert to 0-d array and use getitem */
+        arr = PyArray_FromScalar((PyObject*)self, NULL);
+        if (arr == NULL) {
             return -1;
         }
-        Py_DECREF(res);
+        meth = PyObject_GetAttrString(arr, "__getitem__");
+        if (meth == NULL) {
+            Py_DECREF(arr);
+            return -1;
+        }
+        args = Py_BuildValue("(O)", ind);
+        arr_field = PyObject_CallObject(meth, args);
+        Py_DECREF(meth);
+        Py_DECREF(arr);
+        Py_DECREF(args);
+
+        if(arr_field == NULL){
+            return -1;
+        }
+
+        /* 2. Assign the value using setitem with empty tuple. */
+        emptytuple = PyTuple_New(0);
+        if (PyObject_SetItem(arr_field, emptytuple, val) < 0) {
+            Py_DECREF(arr_field);
+            Py_DECREF(emptytuple);
+            return -1;
+        }
+        Py_DECREF(emptytuple);
+        Py_DECREF(arr_field);
         return 0;
     }
 
@@ -2829,6 +2842,15 @@ static PyObject *
 {
     return @type@(PyArrayScalar_VAL(self, @Name@));
 }
+/**end repeat**/
+
+/**begin repeat
+ *  #name = half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *  #NAME = Half, Float, Double, LongDouble,
+ *          CFloat, CDouble, CLongDouble#
+ */
+static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
 static PyObject *
@@ -3721,7 +3743,6 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 /**end repeat**/
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 /*
  * This table maps the built-in type numbers to their scalar
  * type numbers.  Note that signed integers are mapped to INTNEG_SCALAR,
@@ -3757,7 +3778,6 @@ _npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
  */
 NPY_NO_EXPORT signed char
 _npy_type_promotion_table[NPY_NTYPES][NPY_NTYPES];
-#endif
 
 NPY_NO_EXPORT void
 initialize_casting_tables(void)
@@ -4076,6 +4096,7 @@ initialize_numeric_types(void)
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
+     * also fill array_type_as_number struct with reasonable defaults
      */
 
     /**begin repeat
@@ -4084,10 +4105,23 @@ initialize_numeric_types(void)
      * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort,
      *         UInt, ULong, ULongLong#
      */
+    @name@_arrtype_as_number = gentype_as_number;
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
     Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
 
     /**end repeat**/
+
+    /**begin repeat
+     *  #name = half, float, double, longdouble,
+     *          cfloat, cdouble, clongdouble#
+     *  #NAME = Half, Float, Double, LongDouble,
+     *          CFloat, CDouble, CLongDouble#
+     */
+    @name@_arrtype_as_number = gentype_as_number;
+    Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
+
+    /**end repeat**/
+
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
     PyStringArrType_Type.tp_alloc = NULL;

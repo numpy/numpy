@@ -128,30 +128,6 @@ _array_find_python_scalar_type(PyObject *op)
     return NULL;
 }
 
-#if !defined(NPY_PY3K)
-static PyArray_Descr *
-_use_default_type(PyObject *op)
-{
-    int typenum, l;
-    PyObject *type;
-
-    typenum = -1;
-    l = 0;
-    type = (PyObject *)Py_TYPE(op);
-    while (l < NPY_NUMUSERTYPES) {
-        if (type == (PyObject *)(userdescrs[l]->typeobj)) {
-            typenum = l + NPY_USERDEF;
-            break;
-        }
-        l++;
-    }
-    if (typenum == -1) {
-        typenum = NPY_OBJECT;
-    }
-    return PyArray_DescrFromType(typenum);
-}
-#endif
-
 /*
  * These constants are used to signal that the recursive dtype determination in
  * PyArray_DTypeFromObject encountered a string type, and that the recursive
@@ -490,24 +466,19 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
     }
 
-    /* Not exactly sure what this is about... */
-#if !defined(NPY_PY3K)
-    if (PyInstance_Check(obj)) {
-        dtype = _use_default_type(obj);
-        if (dtype == NULL) {
-            goto fail;
-        }
-        else {
-            goto promote_types;
-        }
-    }
-#endif
-
     /*
      * If we reached the maximum recursion depth without hitting one
-     * of the above cases, the output dtype should be OBJECT
+     * of the above cases, and obj isn't a sequence-like object, the output
+     * dtype should be either OBJECT or a user-defined type.
+     *
+     * Note that some libraries define sequence-like classes but want them to
+     * be treated as objects, and they expect numpy to treat it as an object if
+     * __len__ is not defined.
      */
-    if (maxdims == 0 || !PySequence_Check(obj)) {
+    if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
+        // clear any PySequence_Size error, which corrupts further calls to it
+        PyErr_Clear();
+
         if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
             Py_XDECREF(*out_dtype);
             *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
@@ -518,20 +489,12 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /*
-     * fails if convertable to list but no len is defined which some libraries
-     * require to get object arrays
-     */
-    size = PySequence_Size(obj);
-    if (size < 0) {
-        goto fail;
-    }
-
     /* Recursive case, first check the sequence contains only one type */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+    size = PySequence_Fast_GET_SIZE(seq);
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
@@ -765,39 +728,6 @@ _IsWriteable(PyArrayObject *ap)
 }
 
 
-/* Gets a half-open range [start, end) of offsets from the data pointer */
-NPY_NO_EXPORT void
-offset_bounds_from_strides(const int itemsize, const int nd,
-                           const npy_intp *dims, const npy_intp *strides,
-                           npy_intp *lower_offset, npy_intp *upper_offset) {
-    npy_intp max_axis_offset;
-    npy_intp lower = 0;
-    npy_intp upper = 0;
-    int i;
-
-    for (i = 0; i < nd; i++) {
-        if (dims[i] == 0) {
-            /* If the array size is zero, return an empty range */
-            *lower_offset = 0;
-            *upper_offset = 0;
-            return;
-        }
-        /* Expand either upwards or downwards depending on stride */
-        max_axis_offset = strides[i] * (dims[i] - 1);
-        if (max_axis_offset > 0) {
-            upper += max_axis_offset;
-        }
-        else {
-            lower += max_axis_offset;
-        }
-    }
-    /* Return a half-open range */
-    upper += itemsize;
-    *lower_offset = lower;
-    *upper_offset = upper;
-}
-
-
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
@@ -908,4 +838,56 @@ end:
     Py_XDECREF(shape2);
     Py_XDECREF(shape1_i);
     Py_XDECREF(shape2_j);
+}
+
+/**
+ * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ *
+ * @param "value" should be the tuple.
+ *
+ * @return "descr" will be set to the field's dtype
+ * @return "offset" will be set to the field's offset
+ *
+ * returns -1 on failure, 0 on success.
+ */
+NPY_NO_EXPORT int
+_unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
+{
+    PyObject * off;
+    if (PyTuple_GET_SIZE(value) < 2) {
+        return -1;
+    }
+    *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
+    off  = PyTuple_GET_ITEM(value, 1);
+
+    if (PyInt_Check(off)) {
+        *offset = PyInt_AsSsize_t(off);
+    }
+    else if (PyLong_Check(off)) {
+        *offset = PyLong_AsSsize_t(off);
+    }
+    else {
+        PyErr_SetString(PyExc_IndexError, "can't convert offset");
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * check whether arrays with datatype dtype might have object fields. This will
+ * only happen for structured dtypes (which may have hidden objects even if the
+ * HASOBJECT flag is false), object dtypes, or subarray dtypes whose base type
+ * is either of these.
+ */
+NPY_NO_EXPORT int
+_may_have_objects(PyArray_Descr *dtype)
+{
+    PyArray_Descr *base = dtype;
+    if (PyDataType_HASSUBARRAY(dtype)) {
+        base = dtype->subarray->base;
+    }
+
+    return (PyDataType_HASFIELDS(base) ||
+            PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
 }

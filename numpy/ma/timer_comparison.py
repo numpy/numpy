@@ -5,9 +5,9 @@ from functools import reduce
 
 import numpy as np
 from numpy import float_
-import np.core.fromnumeric as fromnumeric
+import numpy.core.fromnumeric as fromnumeric
 
-from np.testing.utils import build_err_msg
+from numpy.testing.utils import build_err_msg
 
 # Fixme: this does not look right.
 np.seterr(all='ignore')
@@ -15,13 +15,12 @@ np.seterr(all='ignore')
 pi = np.pi
 
 
-class moduletester(object):
+class ModuleTester(object):
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal
         self.arange = module.arange
         self.array = module.array
-#        self.average =  module.average
         self.concatenate = module.concatenate
         self.count = module.count
         self.equal = module.equal
@@ -53,8 +52,10 @@ class moduletester(object):
 
     def assert_array_compare(self, comparison, x, y, err_msg='', header='',
                          fill_value=True):
-        """Asserts that a comparison relation between two masked arrays is satisfied
-        elementwise."""
+        """
+        Assert that a comparison of two masked arrays is satisfied elementwise.
+
+        """
         xf = self.filled(x)
         yf = self.filled(y)
         m = self.mask_or(self.getmask(x), self.getmask(y))
@@ -74,7 +75,7 @@ class moduletester(object):
             elif np.isnan(y):
                 y = 0
         try:
-            cond = (x.shape==() or y.shape==()) or x.shape == y.shape
+            cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
             if not cond:
                 msg = build_err_msg([x, y],
                                     err_msg
@@ -106,33 +107,38 @@ class moduletester(object):
             raise ValueError(msg)
 
     def assert_array_equal(self, x, y, err_msg=''):
-        """Checks the elementwise equality of two masked arrays."""
+        """
+        Checks the elementwise equality of two masked arrays.
+
+        """
         self.assert_array_compare(self.equal, x, y, err_msg=err_msg,
                                   header='Arrays are not equal')
 
     def test_0(self):
-        "Tests creation"
+        """
+        Tests creation
+
+        """
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         xm = self.masked_array(x, mask=m)
         xm[0]
 
     def test_1(self):
-        "Tests creation"
+        """
+        Tests creation
+
+        """
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
-        a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = self.masked_array(x, mask=m1)
         ym = self.masked_array(y, mask=m2)
-        z = np.array([-.5, 0., .5, .8])
-        zm = self.masked_array(z, mask=[0, 1, 0, 0])
         xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
 
         assert((xm-ym).filled(0).any())
-        #fail_if_equal(xm.mask.astype(int_), ym.mask.astype(int_))
         s = x.shape
         assert(xm.size == reduce(lambda x, y:x*y, s))
         assert(self.count(xm) == len(m1) - reduce(lambda x, y:x+y, m1))
@@ -143,51 +149,41 @@ class moduletester(object):
             xm.shape = s
             ym.shape = s
             xf.shape = s
-
             assert(self.count(xm) == len(m1) - reduce(lambda x, y:x+y, m1))
 
     def test_2(self):
-        "Tests conversions and indexing"
+        """
+        Tests conversions and indexing.
+
+        """
         x1 = np.array([1, 2, 4, 3])
         x2 = self.array(x1, mask=[1, 0, 0, 0])
         x3 = self.array(x1, mask=[0, 1, 0, 1])
         x4 = self.array(x1)
-    # test conversion to strings
-        junk, garbage = str(x2), repr(x2)
-#        assert_equal(np.sort(x1), self.sort(x2, fill_value=0))
-    # tests of indexing
+        # test conversion to strings, no errors
+        str(x2)
+        repr(x2)
+        # tests of indexing
         assert type(x2[1]) is type(x1[1])
         assert x1[1] == x2[1]
-#        assert self.allequal(x1[2],x2[2])
-#        assert self.allequal(x1[2:5],x2[2:5])
-#        assert self.allequal(x1[:],x2[:])
-#        assert self.allequal(x1[1:], x3[1:])
         x1[2] = 9
         x2[2] = 9
         self.assert_array_equal(x1, x2)
         x1[1:3] = 99
         x2[1:3] = 99
-#        assert self.allequal(x1,x2)
         x2[1] = self.masked
-#        assert self.allequal(x1,x2)
         x2[1:3] = self.masked
-#        assert self.allequal(x1,x2)
         x2[:] = x1
         x2[1] = self.masked
-#        assert self.allequal(self.getmask(x2),self.array([0,1,0,0]))
         x3[:] = self.masked_array([1, 2, 3, 4], [0, 1, 1, 0])
-#        assert self.allequal(self.getmask(x3), self.array([0,1,1,0]))
         x4[:] = self.masked_array([1, 2, 3, 4], [0, 1, 1, 0])
-#        assert self.allequal(self.getmask(x4), self.array([0,1,1,0]))
-#        assert self.allequal(x4, self.array([1,2,3,4]))
         x1 = np.arange(5)*1.0
         x2 = self.masked_values(x1, 3.0)
-#        assert self.allequal(x1,x2)
-#        assert self.allequal(self.array([0,0,0,1,0], self.MaskType), x2.mask)
         x1 = self.array([1, 'hello', 2, 3], object)
         x2 = np.array([1, 'hello', 2, 3], object)
-        s1 = x1[1]
-        s2 = x2[1]
+        # check that no error occurs.
+        x1[1]
+        x2[1]
         assert x1[1:1].shape == (0,)
         # Tests copy-size
         n = [0, 0, 1, 0, 0]
@@ -197,9 +193,11 @@ class moduletester(object):
         m3 = self.make_mask(m, copy=1)
         assert(m is not m3)
 
-
     def test_3(self):
-        "Tests resize/repeat"
+        """
+        Tests resize/repeat
+
+        """
         x4 = self.arange(4)
         x4[2] = self.masked
         y4 = self.resize(x4, (8,))
@@ -214,9 +212,11 @@ class moduletester(object):
         y8 = x4.repeat(2, 0)
         assert self.allequal(y5, y8)
 
-    #----------------------------------
     def test_4(self):
-        "Test of take, transpose, inner, outer products"
+        """
+        Test of take, transpose, inner, outer products.
+
+        """
         x = self.arange(24)
         y = np.arange(24)
         x[5:6] = self.masked
@@ -234,10 +234,12 @@ class moduletester(object):
         assert t[0] == 'abc'
         assert t[1] == 2
         assert t[2] == 3
-    #----------------------------------
-    def test_5(self):
-        "Tests inplace w/ scalar"
 
+    def test_5(self):
+        """
+        Tests inplace w/ scalar
+
+        """
         x = self.arange(10)
         y = self.arange(10)
         xm = self.arange(10)
@@ -282,15 +284,14 @@ class moduletester(object):
         x = self.arange(10).astype(float_)
         xm = self.arange(10)
         xm[2] = self.masked
-        id1 = self.id(x.raw_data())
         x += 1.
-        #assert id1 == self.id(x.raw_data())
-        assert self.allequal(x, y+1.)
-
+        assert self.allequal(x, y + 1.)
 
     def test_6(self):
-        "Tests inplace w/ array"
+        """
+        Tests inplace w/ array
 
+        """
         x = self.arange(10, dtype=float_)
         y = self.arange(10)
         xm = self.arange(10, dtype=float_)
@@ -337,7 +338,6 @@ class moduletester(object):
         x /= a
         xm /= a
 
-    #----------------------------------
     def test_7(self):
         "Tests ufunc"
         d = (self.array([1.0, 0, -1, pi/2]*2, mask=[0, 1]+[0]*6),
@@ -361,7 +361,6 @@ class moduletester(object):
 #                  'less', 'greater',
 #                  'logical_and', 'logical_or', 'logical_xor',
                   ]:
-            #print f
             try:
                 uf = getattr(self.umath, f)
             except AttributeError:
@@ -373,7 +372,6 @@ class moduletester(object):
             self.assert_array_equal(ur.filled(0), mr.filled(0), f)
             self.assert_array_equal(ur._mask, mr._mask)
 
-    #----------------------------------
     def test_99(self):
         # test average
         ott = self.array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
@@ -411,7 +409,6 @@ class moduletester(object):
         m5 = [0, 1, 1, 1, 1, 1]
         self.assert_array_equal(self.average(self.masked_array(x, m1), axis=0), 2.5)
         self.assert_array_equal(self.average(self.masked_array(x, m2), axis=0), 2.5)
-    #    assert(self.average(masked_array(x, m4),axis=0) is masked)
         self.assert_array_equal(self.average(self.masked_array(x, m5), axis=0), 0.0)
         self.assert_array_equal(self.count(self.average(self.masked_array(x, m4), axis=0)), 0)
         z = self.masked_array(y, m3)
@@ -419,41 +416,25 @@ class moduletester(object):
         self.assert_array_equal(self.average(z, axis=0), [0., 1., 99., 99., 4.0, 7.5])
         self.assert_array_equal(self.average(z, axis=1), [2.5, 5.0])
         self.assert_array_equal(self.average(z, axis=0, weights=w2), [0., 1., 99., 99., 4.0, 10.0])
-    #------------------------
+
     def test_A(self):
         x = self.arange(24)
-        y = np.arange(24)
         x[5:6] = self.masked
         x = x.reshape(2, 3, 4)
 
 
-################################################################################
 if __name__ == '__main__':
-
-    setup_base = "from __main__ import moduletester \n"\
-                 "import numpy\n" \
-                 "tester = moduletester(module)\n"
-#    setup_new = "import np.ma.core_ini as module\n"+setup_base
-    setup_cur = "import np.ma.core as module\n"+setup_base
-#    setup_alt = "import np.ma.core_alt as module\n"+setup_base
-#    setup_tmp = "import np.ma.core_tmp as module\n"+setup_base
-
+    setup_base = ("from __main__ import ModuleTester \n"
+                  "import numpy\n"
+                  "tester = ModuleTester(module)\n")
+    setup_cur = "import numpy.ma.core as module\n" + setup_base
     (nrepeat, nloop) = (10, 10)
 
     if 1:
         for i in range(1, 8):
             func = 'tester.test_%i()' % i
-#            new = timeit.Timer(func, setup_new).repeat(nrepeat, nloop*10)
             cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
-#            alt = timeit.Timer(func, setup_alt).repeat(nrepeat, nloop*10)
-#            tmp = timeit.Timer(func, setup_tmp).repeat(nrepeat, nloop*10)
-#            new = np.sort(new)
             cur = np.sort(cur)
-#            alt = np.sort(alt)
-#            tmp = np.sort(tmp)
-            print("#%i" % i +50*'.')
-            print(eval("moduletester.test_%i.__doc__" % i))
-#            print "core_ini     : %.3f - %.3f" % (new[0], new[1])
+            print("#%i" % i + 50*'.')
+            print(eval("ModuleTester.test_%i.__doc__" % i))
             print("core_current : %.3f - %.3f" % (cur[0], cur[1]))
-#            print "core_alt     : %.3f - %.3f" % (alt[0], alt[1])
-#            print "core_tmp     : %.3f - %.3f" % (tmp[0], tmp[1])

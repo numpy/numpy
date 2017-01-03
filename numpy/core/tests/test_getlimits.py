@@ -3,11 +3,12 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-
+import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
-import numpy as np
+from numpy.testing import (
+    TestCase, run_module_suite, assert_equal
+)
 
 ##################################################
 
@@ -41,6 +42,19 @@ class TestLongdouble(TestCase):
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
+class TestFinfo(TestCase):
+    def test_basic(self):
+        dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
+                       [np.float16, np.float32, np.float64, np.complex64,
+                        np.complex128]))
+        for dt1, dt2 in dts:
+            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machar', 'machep',
+                         'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
+                         'nmant', 'precision', 'resolution', 'tiny'):
+                assert_equal(getattr(finfo(dt1), attr),
+                             getattr(finfo(dt2), attr), attr)
+        self.assertRaises(ValueError, finfo, 'i4')
+
 class TestIinfo(TestCase):
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
@@ -48,8 +62,9 @@ class TestIinfo(TestCase):
                   [np.int8, np.int16, np.int32, np.int64,
                    np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
-            assert_equal(iinfo(dt1).min, iinfo(dt2).min)
-            assert_equal(iinfo(dt1).max, iinfo(dt2).max)
+            for attr in ('bits', 'min', 'max'):
+                assert_equal(getattr(iinfo(dt1), attr),
+                             getattr(iinfo(dt2), attr), attr)
         self.assertRaises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):
@@ -65,17 +80,7 @@ class TestRepr(TestCase):
     def test_finfo_repr(self):
         expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
                    " max=3.4028235e+38, dtype=float32)"
-        # Python 2.5 float formatting on Windows adds an extra 0 to the
-        # exponent.  So test for both.  Once 2.5 compatibility is dropped, this
-        # can simply use `assert_equal(repr(np.finfo(np.float32)), expected)`.
-        expected_win25 = "finfo(resolution=1e-006, min=-3.4028235e+038," + \
-                         " max=3.4028235e+038, dtype=float32)"
-
-        actual = repr(np.finfo(np.float32))
-        if not actual == expected:
-            if not actual == expected_win25:
-                msg = build_err_msg([actual, desired], verbose=True)
-                raise AssertionError(msg)
+        assert_equal(repr(np.finfo(np.float32)), expected)
 
 
 def test_instances():

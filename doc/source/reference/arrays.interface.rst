@@ -12,7 +12,7 @@ The Array Interface
 
    This page describes the numpy-specific API for accessing the contents of
    a numpy array from other C extensions. :pep:`3118` --
-   :cfunc:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
+   :c:func:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
    similar, standardized API to Python 2.6 and 3.0 for any extension
    module to use. Cython__'s buffer array support
    uses the :pep:`3118` API; see the `Cython numpy
@@ -67,7 +67,7 @@ This approach to the interface consists of the object having an
        could hold (a Python int is a C long). It is up to the code
        using this attribute to handle this appropriately; either by
        raising an error when overflow is possible, or by using
-       :cdata:`Py_LONG_LONG` as the C type for the shapes.
+       :c:data:`Py_LONG_LONG` as the C type for the shapes.
 
    **typestr** (required)
 
@@ -88,9 +88,11 @@ This approach to the interface consists of the object having an
        ``u``  Unsigned integer
        ``f``  Floating point
        ``c``  Complex floating point
-       ``O``  Object (i.e. the memory contains a pointer to :ctype:`PyObject`)
+       ``m``  Timedelta
+       ``M``  Datetime
+       ``O``  Object (i.e. the memory contains a pointer to :c:type:`PyObject`)
        ``S``  String (fixed-length sequence of char)
-       ``U``  Unicode (fixed-length sequence of :ctype:`Py_UNICODE`)
+       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UNICODE`)
        ``V``  Other (void \* -- each item is a fixed-size chunk of memory)
        =====  ================================================================
 
@@ -134,7 +136,7 @@ This approach to the interface consists of the object having an
        means the data area is read-only).
 
        This attribute can also be an object exposing the
-       :cfunc:`buffer interface <PyObject_AsCharBuffer>` which
+       :c:func:`buffer interface <PyObject_AsCharBuffer>` which
        will be used to share the data. If this key is not present (or
        returns :class:`None`), then memory sharing will be done
        through the buffer interface of the object itself.  In this
@@ -153,8 +155,8 @@ This approach to the interface consists of the object having an
        dimension. Each entry must be an integer (a Python
        :const:`int` or :const:`long`). As with shape, the values may
        be larger than can be represented by a C "int" or "long"; the
-       calling code should handle this appropiately, either by
-       raising an error, or by using :ctype:`Py_LONG_LONG` in C. The
+       calling code should handle this appropriately, either by
+       raising an error, or by using :c:type:`Py_LONG_LONG` in C. The
        default is :const:`None` which implies a C-style contiguous
        memory buffer.  In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
@@ -195,13 +197,13 @@ C-struct access
 This approach to the array interface allows for faster access to an
 array using only one attribute lookup and a well-defined C-structure.
 
-.. cvar:: __array_struct__
+.. c:var:: __array_struct__
 
-   A :ctype:`PyCObject` whose :cdata:`voidptr` member contains a
-   pointer to a filled :ctype:`PyArrayInterface` structure.  Memory
-   for the structure is dynamically created and the :ctype:`PyCObject`
+   A :c:type: `PyCObject` whose :c:data:`voidptr` member contains a
+   pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
+   for the structure is dynamically created and the :c:type:`PyCObject`
    is also created with an appropriate destructor so the retriever of
-   this attribute simply has to apply :cfunc:`Py_DECREF()` to the
+   this attribute simply has to apply :c:func:`Py_DECREF()` to the
    object returned by this attribute when it is finished.  Also,
    either the data needs to be copied out, or a reference to the
    object exposing this attribute must be held to ensure the data is
@@ -239,12 +241,12 @@ flag is present.
 .. admonition:: New since June 16, 2006:
 
    In the past most implementations used the "desc" member of the
-   :ctype:`PyCObject` itself (do not confuse this with the "descr" member of
-   the :ctype:`PyArrayInterface` structure above --- they are two separate
+   :c:type:`PyCObject` itself (do not confuse this with the "descr" member of
+   the :c:type:`PyArrayInterface` structure above --- they are two separate
    things) to hold the pointer to the object exposing the interface.
    This is now an explicit part of the interface.  Be sure to own a
-   reference to the object when the :ctype:`PyCObject` is created using
-   :ctype:`PyCObject_FromVoidPtrAndDesc`.
+   reference to the object when the :c:type:`PyCObject` is created using
+   :c:type:`PyCObject_FromVoidPtrAndDesc`.
 
 
 Type description examples
@@ -308,7 +310,7 @@ Differences with Array interface (Version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were
-largely asthetic.  In particular:
+largely aesthetic.  In particular:
 
 1. The PyArrayInterface structure had no descr member at the end
    (and therefore no flag ARR_HAS_DESCR)

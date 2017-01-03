@@ -2,6 +2,8 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include <npy_config.h>
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
@@ -12,12 +14,62 @@
 #include "npy_pycompat.h"
 
 #include "arrayobject.h"
+#include "ctors.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
 #include "array_assign.h"
 
 #include "convert.h"
+
+int
+fallocate(int fd, int mode, off_t offset, off_t len);
+
+/*
+ * allocate nbytes of diskspace for file fp
+ * this allows the filesystem to make smarter allocation decisions and gives a
+ * fast exit on not enough free space
+ * returns -1 and raises exception on no space, ignores all other errors
+ */
+static int
+npy_fallocate(npy_intp nbytes, FILE * fp)
+{
+    /*
+     * unknown behavior on non-linux so don't try it
+     * we don't want explicit zeroing to happen
+     */
+#if defined(HAVE_FALLOCATE) && defined(__linux__)
+    int r;
+    /* small files not worth the system call */
+    if (nbytes < 16 * 1024 * 1024) {
+        return 0;
+    }
+
+    /* btrfs can take a while to allocate making release worthwhile */
+    NPY_BEGIN_ALLOW_THREADS;
+    /*
+     * flush in case there might be some unexpected interactions between the
+     * fallocate call and unwritten data in the descriptor
+     */
+    fflush(fp);
+    /*
+     * the flag "1" (=FALLOC_FL_KEEP_SIZE) is needed for the case of files
+     * opened in append mode (issue #8329)
+     */
+    r = fallocate(fileno(fp), 1, npy_ftell(fp), nbytes);
+    NPY_END_ALLOW_THREADS;
+
+    /*
+     * early exit on no space, other errors will also get found during fwrite
+     */
+    if (r == -1 && errno == ENOSPC) {
+        PyErr_Format(PyExc_IOError, "Not enough free space to write "
+                     "%"NPY_INTP_FMT" bytes", nbytes);
+        return -1;
+    }
+#endif
+    return 0;
+}
 
 /*
  * Converts a subarray of 'self' into lists, with starting data pointer
@@ -90,6 +142,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
             PyErr_SetString(PyExc_IOError,
                     "cannot write object arrays to a file in binary mode");
+            return -1;
+        }
+        if (PyArray_DESCR(self)->elsize == 0) {
+            /* For zero-width data types there's nothing to write */
+            return 0;
+        }
+        if (npy_fallocate(PyArray_NBYTES(self), fp) != 0) {
             return -1;
         }
 
@@ -171,7 +230,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 /*
                  * standard writing
                  */
-                strobj = PyObject_Str(obj);
+                strobj = PyObject_Repr(obj);
                 Py_DECREF(obj);
                 if (strobj == NULL) {
                     Py_DECREF(it);
@@ -553,18 +612,33 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = Py_TYPE(self);
     }
 
+    if (type != NULL && (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
+        const char *msg =
+            "Numpy has detected that you may be viewing or writing to an array "
+            "returned by selecting multiple fields in a structured array. \n\n"
+            "This code may break in numpy 1.13 because this will return a view "
+            "instead of a copy -- see release notes for details.";
+        /* 2016-09-19, 1.12 */
+        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+            return NULL;
+        }
+        /* Only warn once per array */
+        PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
+    }
+
     flags = PyArray_FLAGS(self);
 
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(subtype,
                                dtype,
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
                                flags,
-                               (PyObject *)self);
+                               (PyObject *)self, 0, 1);
     if (ret == NULL) {
+        Py_XDECREF(type);
         return NULL;
     }
 
@@ -572,7 +646,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     Py_INCREF(self);
     if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
         Py_DECREF(ret);
-        Py_DECREF(type);
+        Py_XDECREF(type);
         return NULL;
     }
 

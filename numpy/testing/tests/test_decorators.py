@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import *
-from numpy.testing.noseclasses import KnownFailureTest
-import nose
+import warnings
+
+from numpy.testing import (dec, assert_, assert_raises, run_module_suite,
+                           SkipTest, KnownFailureException)
+
 
 def test_slow():
     @dec.slow
@@ -41,7 +42,7 @@ def test_skip_functions_hardcoded():
         f1('a')
     except DidntSkipException:
         raise Exception('Failed to skip')
-    except nose.SkipTest:
+    except SkipTest:
         pass
 
     @dec.skipif(False)
@@ -52,7 +53,7 @@ def test_skip_functions_hardcoded():
         f2('a')
     except DidntSkipException:
         pass
-    except nose.SkipTest:
+    except SkipTest:
         raise Exception('Skipped when not expected to')
 
 
@@ -69,7 +70,7 @@ def test_skip_functions_callable():
         f1('a')
     except DidntSkipException:
         raise Exception('Failed to skip')
-    except nose.SkipTest:
+    except SkipTest:
         pass
 
     @dec.skipif(skip_tester)
@@ -81,7 +82,7 @@ def test_skip_functions_callable():
         f2('a')
     except DidntSkipException:
         pass
-    except nose.SkipTest:
+    except SkipTest:
         raise Exception('Skipped when not expected to')
 
 
@@ -94,11 +95,10 @@ def test_skip_generators_hardcoded():
     try:
         for j in g1(10):
             pass
-    except KnownFailureTest:
+    except KnownFailureException:
         pass
     else:
         raise Exception('Failed to mark as known failure')
-
 
     @dec.knownfailureif(False, "This test is NOT known to fail")
     def g2(x):
@@ -109,7 +109,7 @@ def test_skip_generators_hardcoded():
     try:
         for j in g2(10):
             pass
-    except KnownFailureTest:
+    except KnownFailureException:
         raise Exception('Marked incorretly as known failure')
     except DidntSkipException:
         pass
@@ -128,11 +128,10 @@ def test_skip_generators_callable():
         skip_flag = 'skip me!'
         for j in g1(10):
             pass
-    except KnownFailureTest:
+    except KnownFailureException:
         pass
     else:
         raise Exception('Failed to mark as known failure')
-
 
     @dec.knownfailureif(skip_tester, "This test is NOT known to fail")
     def g2(x):
@@ -144,7 +143,7 @@ def test_skip_generators_callable():
         skip_flag = 'do not skip'
         for j in g2(10):
             pass
-    except KnownFailureTest:
+    except KnownFailureException:
         raise Exception('Marked incorretly as known failure')
     except DidntSkipException:
         pass
@@ -175,10 +174,12 @@ def test_deprecated():
     assert_raises(AssertionError, non_deprecated_func)
     # should be silent
     deprecated_func()
-    # fails if deprecated decorator just disables test. See #1453.
-    assert_raises(ValueError, deprecated_func2)
-    # first warnings is not a DeprecationWarning
-    assert_raises(AssertionError, deprecated_func3)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")  # do not propagate unrelated warnings
+        # fails if deprecated decorator just disables test. See #1453.
+        assert_raises(ValueError, deprecated_func2)
+        # warning is not a DeprecationWarning
+        assert_raises(AssertionError, deprecated_func3)
 
 
 if __name__ == '__main__':

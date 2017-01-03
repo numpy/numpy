@@ -9,6 +9,7 @@ values may be different by a factor). In addition, exec_command
 takes keyword arguments for (re-)defining environment variables.
 
 Provides functions:
+
   exec_command  --- execute command in a specified directory and
                     in the modified environment.
   find_executable --- locate a command using info from environment
@@ -20,29 +21,34 @@ Created: 11 January 2003
 
 Requires: Python 2.x
 
-Succesfully tested on:
-  os.name | sys.platform | comments
-  --------+--------------+----------
-  posix   | linux2       | Debian (sid) Linux, Python 2.1.3+, 2.2.3+, 2.3.3
-                           PyCrust 0.9.3, Idle 1.0.2
-  posix   | linux2       | Red Hat 9 Linux, Python 2.1.3, 2.2.2, 2.3.2
-  posix   | sunos5       | SunOS 5.9, Python 2.2, 2.3.2
-  posix   | darwin       | Darwin 7.2.0, Python 2.3
-  nt      | win32        | Windows Me
-                           Python 2.3(EE), Idle 1.0, PyCrust 0.7.2
-                           Python 2.1.1 Idle 0.8
-  nt      | win32        | Windows 98, Python 2.1.1. Idle 0.8
-  nt      | win32        | Cygwin 98-4.10, Python 2.1.1(MSC) - echo tests
-                           fail i.e. redefining environment variables may
-                           not work. FIXED: don't use cygwin echo!
-                           Comment: also `cmd /c echo` will not work
-                           but redefining environment variables do work.
-  posix   | cygwin       | Cygwin 98-4.10, Python 2.3.3(cygming special)
-  nt      | win32        | Windows XP, Python 2.3.3
+Successfully tested on:
+
+========  ============  =================================================
+os.name   sys.platform  comments
+========  ============  =================================================
+posix     linux2        Debian (sid) Linux, Python 2.1.3+, 2.2.3+, 2.3.3
+                        PyCrust 0.9.3, Idle 1.0.2
+posix     linux2        Red Hat 9 Linux, Python 2.1.3, 2.2.2, 2.3.2
+posix     sunos5        SunOS 5.9, Python 2.2, 2.3.2
+posix     darwin        Darwin 7.2.0, Python 2.3
+nt        win32         Windows Me
+                        Python 2.3(EE), Idle 1.0, PyCrust 0.7.2
+                        Python 2.1.1 Idle 0.8
+nt        win32         Windows 98, Python 2.1.1. Idle 0.8
+nt        win32         Cygwin 98-4.10, Python 2.1.1(MSC) - echo tests
+                        fail i.e. redefining environment variables may
+                        not work. FIXED: don't use cygwin echo!
+                        Comment: also `cmd /c echo` will not work
+                        but redefining environment variables do work.
+posix     cygwin        Cygwin 98-4.10, Python 2.3.3(cygming special)
+nt        win32         Windows XP, Python 2.3.3
+========  ============  =================================================
 
 Known bugs:
-- Tests, that send messages to stderr, fail when executed from MSYS prompt
+
+* Tests, that send messages to stderr, fail when executed from MSYS prompt
   because the messages are lost at some point.
+
 """
 from __future__ import division, absolute_import, print_function
 
@@ -71,12 +77,6 @@ def get_pythonexe():
         pythonexe = os.path.join(fdir, fn)
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
-
-def splitcmdline(line):
-    import warnings
-    warnings.warn('splitcmdline is deprecated; use shlex.split',
-                  DeprecationWarning)
-    return shlex.split(line)
 
 def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
@@ -154,21 +154,33 @@ def _supports_fileno(stream):
     else:
         return False
 
-def exec_command( command,
-                  execute_in='', use_shell=None, use_tee = None,
-                  _with_python = 1,
-                  **env ):
-    """ Return (status,output) of executed command.
+def exec_command(command, execute_in='', use_shell=None, use_tee=None,
+                 _with_python = 1, **env ):
+    """
+    Return (status,output) of executed command.
 
-    command is a concatenated string of executable and arguments.
-    The output contains both stdout and stderr messages.
-    The following special keyword arguments can be used:
-      use_shell - execute `sh -c command`
-      use_tee   - pipe the output of command through tee
-      execute_in - before run command `cd execute_in` and after `cd -`.
+    Parameters
+    ----------
+    command : str
+        A concatenated string of executable and arguments.
+    execute_in : str
+        Before running command ``cd execute_in`` and after ``cd -``.
+    use_shell : {bool, None}, optional
+        If True, execute ``sh -c command``. Default None (True)
+    use_tee : {bool, None}, optional
+        If True use tee. Default None (True)
 
+
+    Returns
+    -------
+    res : str
+        Both stdout and stderr messages.
+
+    Notes
+    -----
     On NT, DOS systems the returned status is correct for external commands.
     Wild cards will not work for non-posix systems or when use_shell=0.
+
     """
     log.debug('exec_command(%r,%s)' % (command,\
          ','.join(['%s=%r'%kv for kv in env.items()])))
@@ -351,10 +363,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             argv = shlex.split(command)
 
+    # `spawn*p` family with path (vp, vpe, ...) are not available on windows.
+    # Also prefer spawn{v,vp} in favor of spawn{ve,vpe} if no env
+    # modification is actually requested as the *e* functions are not thread
+    # safe on windows (https://bugs.python.org/issue6476)
     if hasattr(os, 'spawnvpe'):
-        spawn_command = os.spawnvpe
+        spawn_command = os.spawnvpe if env else os.spawnvp
     else:
-        spawn_command = os.spawnve
+        spawn_command = os.spawnve if env else os.spawnv
         argv[0] = find_executable(argv[0]) or argv[0]
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
@@ -383,6 +399,25 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
 
+    if env and sys.version_info[0] >= 3 and os.name == 'nt':
+        # Pre-encode os.environ, discarding un-encodable entries,
+        # to avoid it failing during encoding as part of spawn. Failure
+        # is possible if the environment contains entries that are not
+        # encoded using the system codepage as windows expects.
+        #
+        # This is not necessary on unix, where os.environ is encoded
+        # using the surrogateescape error handler and decoded using
+        # it as part of spawn.
+        encoded_environ = {}
+        for k, v in os.environ.items():
+            try:
+                encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
+                    sys.getfilesystemencoding())
+            except UnicodeEncodeError:
+                log.debug("ignoring un-encodable env entry %s", k)
+    else:
+        encoded_environ = os.environ
+
     argv0 = argv[0]
     if not using_command:
         argv[0] = quote_arg(argv0)
@@ -400,8 +435,12 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         else:
             os.dup2(fout.fileno(), se_fileno)
     try:
-        status = spawn_command(os.P_WAIT, argv0, argv, os.environ)
-    except OSError:
+        # Use spawnv in favor of spawnve, unless necessary
+        if env:
+            status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
+        else:
+            status = spawn_command(os.P_WAIT, argv0, argv)
+    except Exception:
         errmess = str(get_exception())
         status = 999
         sys.stderr.write('%s: %s'%(errmess, argv[0]))
@@ -410,8 +449,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     se_flush()
     if _so_has_fileno:
         os.dup2(so_dup, so_fileno)
+        os.close(so_dup)
     if _se_has_fileno:
         os.dup2(se_dup, se_fileno)
+        os.close(se_dup)
 
     fout.close()
     fout = open_latin1(outfile, 'r')

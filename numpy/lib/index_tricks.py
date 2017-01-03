@@ -80,7 +80,7 @@ def ix_(*args):
             new = new.astype(_nx.intp)
         if issubdtype(new.dtype, _nx.bool_):
             new, = new.nonzero()
-        new.shape = (1,)*k + (new.size,) + (1,)*(nd-k-1)
+        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
         out.append(new)
     return tuple(out)
 
@@ -491,7 +491,7 @@ class ndenumerate(object):
     --------
     >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
-    ...     print index, x
+    ...     print(index, x)
     (0, 0) 1
     (0, 1) 2
     (1, 0) 3
@@ -542,7 +542,7 @@ class ndindex(object):
     Examples
     --------
     >>> for index in np.ndindex(3, 2, 1):
-    ...     print index
+    ...     print(index)
     (0, 0, 0)
     (0, 1, 0)
     (1, 0, 0)
@@ -681,7 +681,7 @@ def fill_diagonal(a, val, wrap=False):
     wrap : bool
       For tall matrices in NumPy version up to 1.6.2, the
       diagonal "wrapped" after N columns. You can have this behavior
-      with this option. This affect only tall matrices.
+      with this option. This affects only tall matrices.
 
     See also
     --------
@@ -724,7 +724,9 @@ def fill_diagonal(a, val, wrap=False):
            [0, 0, 0],
            [0, 0, 4]])
 
-    # tall matrices no wrap
+    The wrap option affects only tall matrices:
+
+    >>> # tall matrices no wrap
     >>> a = np.zeros((5, 3),int)
     >>> fill_diagonal(a, 4)
     >>> a
@@ -734,7 +736,7 @@ def fill_diagonal(a, val, wrap=False):
            [0, 0, 0],
            [0, 0, 0]])
 
-    # tall matrices wrap
+    >>> # tall matrices wrap
     >>> a = np.zeros((5, 3),int)
     >>> fill_diagonal(a, 4, wrap=True)
     >>> a
@@ -744,7 +746,7 @@ def fill_diagonal(a, val, wrap=False):
            [0, 0, 0],
            [4, 0, 0]])
 
-    # wide matrices
+    >>> # wide matrices
     >>> a = np.zeros((3, 5),int)
     >>> fill_diagonal(a, 4, wrap=True)
     >>> a

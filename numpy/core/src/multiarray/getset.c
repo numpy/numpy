@@ -9,14 +9,15 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
 #include "arrayobject.h"
+#include "mem_overlap.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -320,16 +321,20 @@ array_data_get(PyArrayObject *self)
 #endif
 }
 
-/*
- * TODO: Given view semantics, I think this function is a really
- *       bad idea, and should be removed!
- */
 static int
 array_data_set(PyArrayObject *self, PyObject *op)
 {
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
+
+    /* 2016-19-02, 1.12 */
+    int ret = DEPRECATE("Assigning the 'data' attribute is an "
+                        "inherently unsafe operation and will "
+                        "be removed in the future.");
+    if (ret < 0) {
+        return -1;
+    }
 
     if (op == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -434,6 +439,9 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     npy_intp newdim;
     int i;
     char *msg = "new type not compatible with array.";
+    PyObject *safe;
+    static PyObject *checkfunc = NULL;
+
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -448,14 +456,20 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    if (PyDataType_FLAGCHK(newtype, NPY_ITEM_HASOBJECT) ||
-        PyDataType_FLAGCHK(newtype, NPY_ITEM_IS_POINTER) ||
-        PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_HASOBJECT) ||
-        PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_TypeError,
-                "Cannot change data-type for object array.");
-        Py_DECREF(newtype);
-        return -1;
+    /* check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
+        npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
+        if (checkfunc == NULL) {
+            return -1;
+        }
+
+        safe = PyObject_CallFunction(checkfunc, "OO",
+                                     PyArray_DESCR(self), newtype);
+        if (safe == NULL) {
+            Py_DECREF(newtype);
+            return -1;
+        }
+        Py_DECREF(safe);
     }
 
     if (newtype->elsize == 0) {
@@ -478,11 +492,25 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
 
     if ((newtype->elsize != PyArray_DESCR(self)->elsize) &&
-        (PyArray_NDIM(self) == 0 || !PyArray_ISONESEGMENT(self) ||
-         PyDataType_HASSUBARRAY(newtype))) {
+            (PyArray_NDIM(self) == 0 ||
+             !PyArray_ISONESEGMENT(self) ||
+             PyDataType_HASSUBARRAY(newtype))) {
         goto fail;
     }
-    if (PyArray_ISCONTIGUOUS(self)) {
+
+    /* Deprecate not C contiguous and a dimension changes */
+    if (newtype->elsize != PyArray_DESCR(self)->elsize &&
+            !PyArray_IS_C_CONTIGUOUS(self)) {
+        /* 11/27/2015 1.11.0 */
+        if (DEPRECATE("Changing the shape of non-C contiguous array by\n"
+                      "descriptor assignment is deprecated. To maintain\n"
+                      "the Fortran contiguity of a multidimensional Fortran\n"
+                      "array, use 'a.T.view(...).T' instead") < 0) {
+            return -1;
+        }
+    }
+
+    if (PyArray_IS_C_CONTIGUOUS(self)) {
         i = PyArray_NDIM(self) - 1;
     }
     else {

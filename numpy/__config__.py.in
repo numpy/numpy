@@ -1,2 +1,0 @@
-def show():
-    pass

@@ -27,7 +27,7 @@ extern "C" CONFUSE_EMACS
 #include "__multiarray_api.h"
 
 
-/* C-API that requries previous API to be defined */
+/* C-API that requires previous API to be defined */
 
 #define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
 
@@ -96,7 +96,7 @@ extern "C" CONFUSE_EMACS
                                                       NULL)
 
 #define PyArray_FROM_OT(m,type) PyArray_FromAny(m,                            \
-                                PyArray_DescrFromType(type), 0, 0, 0, NULL);
+                                PyArray_DescrFromType(type), 0, 0, 0, NULL)
 
 #define PyArray_FROM_OTF(m, type, flags) \
         PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, \
@@ -116,9 +116,10 @@ extern "C" CONFUSE_EMACS
 
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val, \
                                            PyArray_NBYTES(obj))
-
+#ifndef PYPY_VERSION
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
+#endif
 #define NPY_MAX_ELSIZE (2 * NPY_SIZEOF_LONGDOUBLE)
 
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth) \

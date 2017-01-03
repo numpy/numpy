@@ -25,17 +25,18 @@ from numpy.core.multiarray import _vec_string
 from numpy.compat import asbytes, long
 import numpy
 
-__all__ = ['chararray',
-           'equal', 'not_equal', 'greater_equal', 'less_equal', 'greater', 'less',
-           'str_len', 'add', 'multiply', 'mod', 'capitalize', 'center', 'count',
-           'decode', 'encode', 'endswith', 'expandtabs', 'find', 'format',
-           'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
-           'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip',
-           'partition', 'replace', 'rfind', 'rindex', 'rjust', 'rpartition',
-           'rsplit', 'rstrip', 'split', 'splitlines', 'startswith', 'strip',
-           'swapcase', 'title', 'translate', 'upper', 'zfill',
-           'isnumeric', 'isdecimal',
-           'array', 'asarray']
+__all__ = [
+    'chararray', 'equal', 'not_equal', 'greater_equal', 'less_equal',
+    'greater', 'less', 'str_len', 'add', 'multiply', 'mod', 'capitalize',
+    'center', 'count', 'decode', 'encode', 'endswith', 'expandtabs',
+    'find', 'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
+    'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip', 'partition',
+    'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
+    'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
+    'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
+    'array', 'asarray'
+    ]
+
 
 _globalvar = 0
 if sys.version_info[0] >= 3:
@@ -55,8 +56,8 @@ def _use_unicode(*args):
     result should be unicode.
     """
     for x in args:
-        if (isinstance(x, _unicode)
-            or issubclass(numpy.asarray(x).dtype.type, unicode_)):
+        if (isinstance(x, _unicode) or
+                issubclass(numpy.asarray(x).dtype.type, unicode_)):
             return unicode_
     return string_
 
@@ -1068,7 +1069,7 @@ def replace(a, old, new, count=None):
     """
     return _to_string_or_unicode_array(
         _vec_string(
-            a, object_, 'replace', [old, new] +_clean_args(count)))
+            a, object_, 'replace', [old, new] + _clean_args(count)))
 
 
 def rfind(a, sub, start=0, end=None):
@@ -1679,7 +1680,7 @@ class chararray(ndarray):
        `dtype` `object_`, `string_` or `unicode_`, and use the free functions
        in the `numpy.char` module for fast vectorized string operations.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -1816,7 +1817,7 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using Numpy integer
+        # force itemsize to be a Python long, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
         itemsize = long(itemsize)
@@ -1849,12 +1850,14 @@ class chararray(ndarray):
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-        if issubclass(val.dtype.type, character) and not _len(val) == 0:
+
+        if isinstance(val, character):
             temp = val.rstrip()
             if _len(temp) == 0:
                 val = ''
             else:
                 val = temp
+
         return val
 
     # IMPLEMENTATION NOTE: Most of the methods of this class are
@@ -2036,7 +2039,6 @@ class chararray(ndarray):
 
         """
         return count(self, sub, start, end)
-
 
     def decode(self, encoding=None, errors=None):
         """
@@ -2484,7 +2486,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
        in :mod:`numpy.char <numpy.core.defchararray>` for fast
        vectorized string operations instead.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2550,24 +2552,14 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             if sys.maxunicode == 0xffff:
                 # On a narrow Python build, the buffer for Unicode
                 # strings is UCS2, which doesn't match the buffer for
-                # Numpy Unicode types, which is ALWAYS UCS4.
+                # NumPy Unicode types, which is ALWAYS UCS4.
                 # Therefore, we need to convert the buffer.  On Python
                 # 2.6 and later, we can use the utf_32 codec.  Earlier
                 # versions don't have that codec, so we convert to a
                 # numerical array that matches the input buffer, and
-                # then use Numpy to convert it to UCS4.  All of this
+                # then use NumPy to convert it to UCS4.  All of this
                 # should happen in native endianness.
-                if sys.hexversion >= 0x2060000:
-                    obj = obj.encode('utf_32')
-                else:
-                    if isinstance(obj, str):
-                        ascii = numpy.frombuffer(obj, 'u1')
-                        ucs4 = numpy.array(ascii, 'u4')
-                        obj = ucs4.data
-                    else:
-                        ucs2 = numpy.frombuffer(obj, 'u2')
-                        ucs4 = numpy.array(ucs2, 'u4')
-                        obj = ucs4.data
+                obj = obj.encode('utf_32')
             else:
                 obj = _unicode(obj)
         else:
@@ -2591,7 +2583,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             itemsize = obj.itemsize
             # itemsize is in 8-bit chars, so for Unicode, we need
             # to divide by the size of a single Unicode character,
-            # which for Numpy is always 4
+            # which for NumPy is always 4
             if issubclass(obj.dtype.type, unicode_):
                 itemsize //= 4
 
@@ -2608,10 +2600,10 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
         if order is not None:
             obj = numpy.asarray(obj, order=order)
-        if (copy
-            or (itemsize != obj.itemsize)
-            or (not unicode and isinstance(obj, unicode_))
-            or (unicode and isinstance(obj, string_))):
+        if (copy or
+                (itemsize != obj.itemsize) or
+                (not unicode and isinstance(obj, unicode_)) or
+                (unicode and isinstance(obj, string_))):
             obj = obj.astype((dtype, long(itemsize)))
         return obj
 
@@ -2640,7 +2632,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     Convert the input to a `chararray`, copying the data only if
     necessary.
 
-    Versus a regular Numpy array of type `str` or `unicode`, this
+    Versus a regular NumPy array of type `str` or `unicode`, this
     class adds the following functionality:
 
       1) values automatically have whitespace removed from the end
@@ -2650,7 +2642,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
          end when comparing values
 
       3) vectorized string operations are provided as methods
-         (e.g. `str.endswith`) and infix operators (e.g. +, *, %)
+         (e.g. `str.endswith`) and infix operators (e.g. ``+``, ``*``,``%``)
 
     Parameters
     ----------

@@ -3,7 +3,7 @@
  * which provides an einstein-summation operation.
  *
  * Copyright (c) 2011 by Mark Wiebe (mwwiebe@gmail.com)
- * The Univerity of British Columbia
+ * The University of British Columbia
  *
  * See LICENSE.txt for the license.
  */
@@ -1399,28 +1399,19 @@ finish_after_unrolled_loop:
  */
         case @i@+1:
 #  if @nop@ == 1
-            *((npy_bool *)data_out + @i@) = (*((npy_bool *)data0 + @i@)) ||
-                                            (*((npy_bool *)data_out + @i@));
-            data0 += 8*sizeof(npy_bool);
-            data_out += 8*sizeof(npy_bool);
+            ((npy_bool *)data_out)[@i@] = ((npy_bool *)data0)[@i@] ||
+                                            ((npy_bool *)data_out)[@i@];
 #  elif @nop@ == 2
-            *((npy_bool *)data_out + @i@) =
-                            ((*((npy_bool *)data0 + @i@)) &&
-                             (*((npy_bool *)data1 + @i@))) ||
-                                (*((npy_bool *)data_out + @i@));
-            data0 += 8*sizeof(npy_bool);
-            data1 += 8*sizeof(npy_bool);
-            data_out += 8*sizeof(npy_bool);
+            ((npy_bool *)data_out)[@i@] =
+                            (((npy_bool *)data0)[@i@] &&
+                             ((npy_bool *)data1)[@i@]) ||
+                                ((npy_bool *)data_out)[@i@];
 #  elif @nop@ == 3
-            *((npy_bool *)data_out + @i@) =
-                           ((*((npy_bool *)data0 + @i@)) &&
-                            (*((npy_bool *)data1 + @i@)) &&
-                            (*((npy_bool *)data2 + @i@))) ||
-                                (*((npy_bool *)data_out + @i@));
-            data0 += 8*sizeof(npy_bool);
-            data1 += 8*sizeof(npy_bool);
-            data2 += 8*sizeof(npy_bool);
-            data_out += 8*sizeof(npy_bool);
+            ((npy_bool *)data_out)[@i@] =
+                           (((npy_bool *)data0)[@i@] &&
+                            ((npy_bool *)data1)[@i@] &&
+                            ((npy_bool *)data2)[@i@]) ||
+                                ((npy_bool *)data_out)[@i@];
 #  endif
 /**end repeat1**/
         case 0:
@@ -1770,14 +1761,14 @@ get_sum_of_products_function(int nop, int type_num,
     }
 
     /* Check for all contiguous */
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < nop + 1; ++iop) {
         if (fixed_strides[iop] != itemsize) {
             break;
         }
     }
 
     /* Contiguous loop */
-    if (iop == nop) {
+    if (iop == nop + 1) {
         return _allcontig_specialized_table[type_num][nop <= 3 ? nop : 0];
     }
 

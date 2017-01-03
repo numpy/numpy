@@ -61,3 +61,4 @@ Iterating over arrays
    ndenumerate
    ndindex
    flatiter
+   lib.Arrayterator

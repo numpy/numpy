@@ -95,7 +95,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
-  * When a Numpy array, that is Fortran contiguous and has a dtype
+  * When a NumPy array, that is Fortran contiguous and has a dtype
     corresponding to presumed Fortran type, is used as an input array
     argument, then its C pointer is directly passed to Fortran.
 
@@ -209,7 +209,7 @@ In Python::
   * Clearly, the signature of ``fib2.fib`` now corresponds to the
     intention of Fortran subroutine ``FIB`` more closely: given the
     number ``n``, ``fib2.fib`` returns the first ``n`` Fibonacci numbers
-    as a Numpy array. Also, the new Python signature ``fib2.fib``
+    as a NumPy array. Also, the new Python signature ``fib2.fib``
     rules out any surprises that we experienced with ``fib1.fib``.
 
   * Note that by default using single ``intent(out)`` also implies

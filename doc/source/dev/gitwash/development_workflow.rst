@@ -43,36 +43,16 @@ as clear as possible.
 Making a new feature branch
 ===========================
 
-First, update your master branch with changes that have been made in the main
-Numpy repository. In this case, the ``--ff-only`` flag ensures that a new
-commit is not created when you merge the upstream and master branches. It is
-very important to avoid merging adding new commits to ``master``.
+First, fetch new commits from the ``upstream`` repository:
 
 ::
 
-   # go to the master branch
-   git checkout master
-   # download changes from github
    git fetch upstream
-   # update the master branch
-   git merge upstream/master --ff-only
-   # Push new commits to your Github repo
-   git push
 
-.. note::
+Then, create a new branch based on the master branch of the upstream
+repository::
 
-   You could also use ``pull``, which combines ``fetch`` and ``merge``, as
-   follows::
-   
-        git pull --ff-only upstream master
-
-   However, never use ``git pull`` without explicity indicating the source
-   branch (as above); the inherent ambiguity can cause problems. This avoids a
-   common mistake if you are new to Git. 
-
-Finally create a new branch for your work and check it out::
-
-   git checkout -b my-new-feature master
+   git checkout -b my-new-feature upstream/master
 
 
 .. _editing-workflow:
@@ -91,7 +71,7 @@ Overview
    git add modified_file
    git commit 
    # push the branch to your own Github repo
-   git push
+   git push origin my-new-feature
 
 In more detail
 --------------
@@ -181,7 +161,7 @@ Commit messages should be clear and follow a few basic rules.  Example::
 
    The first line of the commit message starts with a capitalized acronym
    (options listed below) indicating what type of commit this is.  Then a blank
-   line, then more text if needed.  Lines shouldn't be longer than 80
+   line, then more text if needed.  Lines shouldn't be longer than 72
    characters.  If the commit is related to a ticket, indicate that with
    "See #3456", "See ticket 3456", "Closes #3456" or similar.
 
@@ -220,47 +200,6 @@ function, you should initiate a code review. This involves sending an email to
 the `NumPy mailing list`_ with a link to your PR along with a description of
 and a motivation for your changes.
 
-.. _pushing-to-main:
-
-Pushing changes to the main repo
-================================
-
-*This is only relevant if you have commit rights to the main Numpy repo.*
-
-When you have a set of "ready" changes in a feature branch ready for
-Numpy's ``master`` or ``maintenance`` branches, you can push
-them to ``upstream`` as follows:
-
-1. First, merge or rebase on the target branch.
-
-   a) Only a few, unrelated commits then prefer rebasing::
-
-        git fetch upstream
-        git rebase upstream/master
-
-      See :ref:`rebasing-on-master`.
-
-   b) If all of the commits are related, create a merge commit::
-
-        git fetch upstream
-        git merge --no-ff upstream/master
-
-2. Check that what you are going to push looks sensible::
-
-        git log -p upstream/master..
-        git log --oneline --graph
-
-3. Push to upstream::
-
-        git push upstream my-feature-branch:master
-
-.. note:: 
-
-    It's usually a good idea to use the ``-n`` flag to ``git push`` to check
-    first that you're about to push the changes you want to the place you
-    want.
-
-
 .. _rebasing-on-master:
 
 Rebasing on master
@@ -269,16 +208,18 @@ Rebasing on master
 This updates your feature branch with changes from the upstream `NumPy
 github`_ repo. If you do not absolutely need to do this, try to avoid doing
 it, except perhaps when you are finished. The first step will be to update
-your master branch with new commits from upstream. This is done in the same
-manner as described at the beginning of :ref:`making-a-new-feature-branch`.
+the remote repository with new commits from upstream::
+
+   git fetch upstream
+
 Next, you need to update the feature branch::
 
    # go to the feature branch
    git checkout my-new-feature
    # make a backup in case you mess up
    git branch tmp my-new-feature
-   # rebase on master
-   git rebase master
+   # rebase on upstream master branch
+   git rebase upstream/master
 
 If you have made changes to files that have changed also upstream,
 this may generate merge conflicts that you need to resolve. See
@@ -287,6 +228,13 @@ this may generate merge conflicts that you need to resolve. See
 Finally, remove the backup branch upon a successful rebase::
 
    git branch -D tmp
+
+
+.. note::
+
+   Rebasing on master is preferred over merging upstream back to your
+   branch. Using ``git merge`` and ``git pull`` is discouraged when
+   working on feature branches.
 
 .. _recovering-from-mess-up:
 
@@ -456,7 +404,7 @@ Your collaborators can then commit directly into that repo with the
 usual::
 
      git commit -am 'ENH - much better code'
-     git push origin master # pushes directly into your repo
+     git push origin my-feature-branch # pushes directly into your repo
 
 Exploring your repository
 =========================
@@ -482,34 +430,20 @@ off the branch you are backporting to, cherry pick the commits you want from
 ``numpy/master``, and then submit a pull request for the branch containing the
 backport.
 
-1. Assuming you already have a fork of NumPy on Github. We need to
-   update it from upstream::
-
-    # Add upstream.
-    git remote add upstream https://github.com/numpy/numpy.git
-
-    # Get the latest updates.
-    git fetch upstream
-
-    # Make sure you are on master.
-    git checkout master
-
-    # Apply the updates locally.
-    git rebase upstream/master
-
-    # Push the updated code to your github repo.
-    git push origin
-
-2. Next you need to make the branch you will work on. This needs to be
+1. First, you need to make the branch you will work on. This needs to be
    based on the older version of NumPy (not master)::
 
     # Make a new branch based on numpy/maintenance/1.8.x,
     # backport-3324 is our new name for the branch.
     git checkout -b backport-3324 upstream/maintenance/1.8.x
 
-3. Now you need to apply the changes from master to this branch using
+2. Now you need to apply the changes from master to this branch using
    `git cherry-pick`_::
 
+    # Update remote
+    git fetch upstream
+    # Check the commit log for commits to cherry pick
+    git log upstream/master
     # This pull request included commits aa7a047 to c098283 (inclusive)
     # so you use the .. syntax (for a range of commits), the ^ makes the
     # range inclusive.
@@ -518,17 +452,58 @@ backport.
     # Fix any conflicts, then if needed:
     git cherry-pick --continue
 
-4. You might run into some conflicts cherry picking here. These are
+3. You might run into some conflicts cherry picking here. These are
    resolved the same way as merge/rebase conflicts. Except here you can
    use `git blame`_ to see the difference between master and the
    backported branch to make sure nothing gets screwed up.
 
-5. Push the new branch to your Github repository::
+4. Push the new branch to your Github repository::
 
     git push -u origin backport-3324
 
-6. Finally make a pull request using Github. Make sure it is against the
+5. Finally make a pull request using Github. Make sure it is against the
    maintenance branch and not master, Github will usually suggest you
    make the pull request against master.
+
+.. _pushing-to-main:
+
+Pushing changes to the main repo
+================================
+
+*This is only relevant if you have commit rights to the main NumPy repo.*
+
+When you have a set of "ready" changes in a feature branch ready for
+NumPy's ``master`` or ``maintenance`` branches, you can push
+them to ``upstream`` as follows:
+
+1. First, merge or rebase on the target branch.
+
+   a) Only a few, unrelated commits then prefer rebasing::
+
+        git fetch upstream
+        git rebase upstream/master
+
+      See :ref:`rebasing-on-master`.
+
+   b) If all of the commits are related, create a merge commit::
+
+        git fetch upstream
+        git merge --no-ff upstream/master
+
+2. Check that what you are going to push looks sensible::
+
+        git log -p upstream/master..
+        git log --oneline --graph
+
+3. Push to upstream::
+
+        git push upstream my-feature-branch:master
+
+.. note:: 
+
+    It's usually a good idea to use the ``-n`` flag to ``git push`` to check
+    first that you're about to push the changes you want to the place you
+    want.
+
 
 .. include:: git_links.inc

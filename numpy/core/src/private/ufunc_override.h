@@ -180,10 +180,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     int override_pos; /* Position of override in args.*/
     int j;
 
-    int nargs = PyTuple_GET_SIZE(args);
+    int nargs;
+    int nout_kwd = 0;
+    int out_kwd_is_tuple = 0;
     int noa = 0; /* Number of overriding args.*/
 
     PyObject *obj;
+    PyObject *out_kwd_obj = NULL;
     PyObject *other_obj;
 
     PyObject *method_name = NULL;
@@ -195,6 +198,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /* Pos of each override in args */
     int with_override_pos[NPY_MAXARGS];
 
+    /* 2016-01-29: Disable for now in master -- can re-enable once details are
+     * sorted out. All commented bits are tagged NUMPY_UFUNC_DISABLED. -njs
+     */
+    result = NULL;
+    return 0;
+
     /*
      * Check inputs
      */
@@ -204,16 +213,40 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                         "with non-tuple");
         goto fail;
     }
-
-    if (PyTuple_GET_SIZE(args) > NPY_MAXARGS) {
+    nargs = PyTuple_GET_SIZE(args);
+    if (nargs > NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError,
                         "Internal Numpy error: too many arguments in call "
                         "to PyUFunc_CheckOverride");
         goto fail;
     }
 
-    for (i = 0; i < nargs; ++i) {
-        obj = PyTuple_GET_ITEM(args, i);
+    /* be sure to include possible 'out' keyword argument. */
+    if ((kwds)&& (PyDict_CheckExact(kwds))) {
+        out_kwd_obj = PyDict_GetItemString(kwds, "out");
+        if (out_kwd_obj != NULL) {
+            out_kwd_is_tuple = PyTuple_CheckExact(out_kwd_obj);
+            if (out_kwd_is_tuple) {
+                nout_kwd = PyTuple_GET_SIZE(out_kwd_obj);
+            }
+            else {
+                nout_kwd = 1;
+            }
+        }
+    }
+
+    for (i = 0; i < nargs + nout_kwd; ++i) {
+        if (i < nargs) {
+            obj = PyTuple_GET_ITEM(args, i);
+        }
+        else {
+            if (out_kwd_is_tuple) {
+                obj = PyTuple_GET_ITEM(out_kwd_obj, i-nargs);
+            }
+            else {
+                obj = out_kwd_obj;
+            }
+        }
         /*
          * TODO: could use PyArray_GetAttrString_SuppressException if it
          * weren't private to multiarray.so

@@ -1,4 +1,4 @@
-Numpy.i: a SWIG Interface File for NumPy
+numpy.i: a SWIG Interface File for NumPy
 ========================================
 
 Introduction
@@ -320,6 +320,17 @@ signatures are
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
 
+There is also a "flat" in-place array for situations in which
+you would like to modify or process each element, regardless of the
+number of dimensions. One example is a "quantization" function that
+quantizes each element of an array in-place, be it 1D, 2D or whatever.
+This form checks for continuity but allows either C or Fortran ordering.
+
+ND:
+
+ * ``(DATA_TYPE* INPLACE_ARRAY_FLAT, DIM_TYPE DIM_FLAT)``
+
+
 Argout Arrays
 `````````````
 
@@ -544,7 +555,7 @@ If you get a Python error that looks like the following::
 and the argument you are passing is an integer extracted from a
 NumPy array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
-Numpy array scalars in addition to the standard integer types.
+NumPy array scalars in addition to the standard integer types.
 Fortunately, this capabilitiy has been provided for you.  Simply copy
 the file::
 
@@ -894,7 +905,7 @@ Routines
     * ``PyArrayObject* ary``, a NumPy array.
 
     Require the given ``PyArrayObject`` to to be Fortran ordered.  If
-    the the ``PyArrayObject`` is already Fortran ordered, do nothing.
+    the ``PyArrayObject`` is already Fortran ordered, do nothing.
     Else, set the Fortran ordering flag and recompute the strides.
 
 

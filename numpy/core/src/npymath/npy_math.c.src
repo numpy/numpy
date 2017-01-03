@@ -2,7 +2,7 @@
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
- * Please keep this independant of python ! Only basic types (npy_longdouble)
+ * Please keep this independent of python ! Only basic types (npy_longdouble)
  * can be used, otherwise, pure C, without any use of Python facilities
  *
  * How to add a function to this section
@@ -29,7 +29,7 @@
  *    ii) Avoid as much as possible to declare any function here. Declaring
  *    functions is not portable: some platforms define some function inline
  *    with a non standard identifier, for example, or may put another
- *    idendifier which changes the calling convention of the function. If you
+ *    identifier which changes the calling convention of the function. If you
  *    really have to, ALWAYS declare it for the one platform you are dealing
  *    with:
  *
@@ -130,7 +130,7 @@ double npy_atan2(double y, double x)
         return npy_atan(y);
     }
 
-    m = 2 * npy_signbit(x) + npy_signbit(y);
+    m = 2 * (npy_signbit((x)) != 0) + (npy_signbit((y)) != 0);
     if (y == 0.0) {
         switch(m) {
         case 0:
@@ -221,7 +221,20 @@ double npy_hypot(double x, double y)
 #ifndef HAVE_ACOSH
 double npy_acosh(double x)
 {
-    return 2*npy_log(npy_sqrt((x + 1.0)/2) + npy_sqrt((x - 1.0)/2));
+    if (x < 1.0) {
+        return NPY_NAN;
+    }
+
+    if (npy_isfinite(x)) {
+        if (x > 1e8) {
+             return npy_log(x) + NPY_LOGE2;
+        }
+        else {
+            double u = x - 1.0;
+            return npy_log1p(u + npy_sqrt(2*u + u*u));
+        }
+    }
+    return x;
 }
 #endif
 
@@ -260,6 +273,9 @@ double npy_atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", off)
+#endif
 double npy_rint(double x)
 {
     double y, r;
@@ -280,6 +296,9 @@ double npy_rint(double x)
     }
     return y;
 }
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", on)
+#endif
 #endif
 
 #ifndef HAVE_TRUNC
@@ -587,6 +606,54 @@ double npy_log2(double x)
             return tmp;
         }
     }
+}
+
+/*
+ * Python version of divmod.
+ *
+ * The implementation is mostly copied from cpython 3.5.
+ */
+@type@
+npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
+{
+    @type@ div, mod, floordiv;
+
+    mod = npy_fmod@c@(a, b);
+
+    if (!b) {
+        /* If b == 0, return result of fmod. For IEEE is nan */
+        *modulus = mod;
+        return mod;
+    }
+
+    /* a - mod should be very nearly an integer multiple of b */
+    div = (a - mod) / b;
+
+    /* adjust fmod result to conform to Python convention of remainder */
+    if (mod) {
+        if ((b < 0) != (mod < 0)) {
+            mod += b;
+            div -= 1.0@c@;
+        }
+    }
+    else {
+        /* if mod is zero ensure correct sign */
+        mod = (b > 0) ? 0.0@c@ : -0.0@c@;
+    }
+
+    /* snap quotient to nearest integral value */
+    if (div) {
+        floordiv = npy_floor(div);
+        if (div - floordiv > 0.5@c@)
+            floordiv += 1.0@c@;
+    }
+    else {
+        /* if div is zero ensure correct sign */
+        floordiv = (a / b > 0) ?  0.0@c@ : -0.0@c@;
+    }
+
+    *modulus = mod;
+    return floordiv;
 }
 
 #undef LOGE2

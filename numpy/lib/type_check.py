@@ -266,7 +266,15 @@ def iscomplexobj(x):
     True
 
     """
-    return issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    try:
+        dtype = x.dtype
+    except AttributeError:
+        dtype = asarray(x).dtype
+    try:
+        return issubclass(dtype.type, _nx.complexfloating)
+    except AttributeError:
+        return False
+
 
 def isrealobj(x):
     """
@@ -300,7 +308,7 @@ def isrealobj(x):
     False
 
     """
-    return not issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    return not iscomplexobj(x)
 
 #-----------------------------------------------------------------------------
 
@@ -334,7 +342,7 @@ def nan_to_num(x):
 
     See Also
     --------
-    isinf : Shows which elements are negative or negative infinity.
+    isinf : Shows which elements are positive or negative infinity.
     isneginf : Shows which elements are negative infinity.
     isposinf : Shows which elements are positive infinity.
     isnan : Shows which elements are Not a Number (NaN).
@@ -342,7 +350,7 @@ def nan_to_num(x):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
 
@@ -424,7 +432,7 @@ def real_if_close(a,tol=100):
         from numpy.core import getlimits
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
-    if _nx.allclose(a.imag, 0, atol=tol):
+    if _nx.all(_nx.absolute(a.imag) < tol):
         a = a.real
     return a
 
@@ -501,7 +509,7 @@ def typename(char):
     >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
     ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
     >>> for typechar in typechars:
-    ...     print typechar, ' : ', np.typename(typechar)
+    ...     print(typechar, ' : ', np.typename(typechar))
     ...
     S1  :  character
     ?  :  bool
@@ -532,14 +540,15 @@ def typename(char):
 #-----------------------------------------------------------------------------
 
 #determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.single, _nx.double, _nx.longdouble],
-              [_nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.single: 0,
-                   _nx.double: 1,
-                   _nx.longdouble: 2,
-                   _nx.csingle: 0,
-                   _nx.cdouble: 1,
-                   _nx.clongdouble: 2}
+array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
+              [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
+array_precision = {_nx.half: 0,
+                   _nx.single: 1,
+                   _nx.double: 2,
+                   _nx.longdouble: 3,
+                   _nx.csingle: 1,
+                   _nx.cdouble: 2,
+                   _nx.clongdouble: 3}
 def common_type(*arrays):
     """
     Return a scalar type which is common to the input arrays.
@@ -583,7 +592,7 @@ def common_type(*arrays):
         if iscomplexobj(a):
             is_complex = True
         if issubclass(t, _nx.integer):
-            p = 1
+            p = 2  # array_precision[_nx.double]
         else:
             p = array_precision.get(t, None)
             if p is None:

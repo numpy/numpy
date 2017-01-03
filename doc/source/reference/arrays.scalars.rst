@@ -65,15 +65,15 @@ Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ====================
+====================  ================================
 Array scalar type     Related Python type
-====================  ====================
+====================  ================================
 :class:`int_`         :class:`IntType` (Python 2 only)
 :class:`float_`       :class:`FloatType`
 :class:`complex_`     :class:`ComplexType`
 :class:`str_`         :class:`StringType`
 :class:`unicode_`     :class:`UnicodeType`
-====================  ====================
+====================  ================================
 
 The :class:`bool_` data type is very similar to the Python
 :class:`BooleanType` but does not inherit from it because Python's
@@ -94,7 +94,7 @@ Python Boolean scalar.
    :class:`int` built-in under Python 3, because type :class:`int` is no
    longer a fixed-width integer type.
 
-.. tip:: The default data type in Numpy is :class:`float_`.
+.. tip:: The default data type in NumPy is :class:`float_`.
 
 In the tables below, ``platform?`` means that the type may not be
 available on all platforms. Compatibility with different C or Python
@@ -215,7 +215,7 @@ Attributes
 ==========
 
 The array scalar objects have an :obj:`array priority
-<__array_priority__>` of :cdata:`NPY_SCALAR_PRIORITY`
+<__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
 (-1,000,000.0). They also do not (yet) have a :attr:`ctypes <ndarray.ctypes>`
 attribute. Otherwise, they share the same attributes as arrays:
 
@@ -288,4 +288,4 @@ the built-in scalar types): One way is to simply subclass the
 a degree, but internally certain behaviors are fixed by the data type of 
 the array.  To fully customize the data type of an array you need to 
 define a new data-type, and register it with NumPy. Such new types can only 
-be defined in C, using the :ref:`Numpy C-API <c-api>`.
+be defined in C, using the :ref:`NumPy C-API <c-api>`.

@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import re
 import sys
-import imp
 import copy
 import glob
 import atexit
@@ -13,10 +12,26 @@ import shutil
 
 import distutils
 from distutils.errors import DistutilsError
+from distutils.msvccompiler import get_build_architecture
 try:
     from threading import local as tlocal
 except ImportError:
     from dummy_threading import local as tlocal
+
+# stores temporary directory of each thread to only create one per thread
+_tdata = tlocal()
+
+# store all created temporary directories so they can be deleted on exit
+_tmpdirs = []
+def clean_up_temporary_directory():
+    if _tmpdirs is not None:
+        for d in _tmpdirs:
+            try:
+                shutil.rmtree(d)
+            except OSError:
+                pass
+
+atexit.register(clean_up_temporary_directory)
 
 try:
     set
@@ -24,6 +39,8 @@ except NameError:
     from sets import Set as set
 
 from numpy.distutils.compat import get_exception
+from numpy.compat import basestring
+from numpy.compat import npy_load_module
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
@@ -68,8 +85,8 @@ class InstallableLib(object):
 
 def get_num_build_jobs():
     """
-    Get number of parallel build jobs set by the --jobs command line argument
-    of setup.py
+    Get number of parallel build jobs set by the --parallel command line
+    argument of setup.py
     If the command did not receive a setting the environment variable
     NPY_NUM_BUILD_JOBS checked and if that is unset it returns 1.
 
@@ -87,9 +104,9 @@ def get_num_build_jobs():
         return envjobs
 
     # any of these three may have the job set, take the largest
-    cmdattr = (getattr(dist.get_command_obj('build'), 'jobs', None),
-               getattr(dist.get_command_obj('build_ext'), 'jobs', None),
-               getattr(dist.get_command_obj('build_clib'), 'jobs', None))
+    cmdattr = (getattr(dist.get_command_obj('build'), 'parallel', None),
+               getattr(dist.get_command_obj('build_ext'), 'parallel', None),
+               getattr(dist.get_command_obj('build_clib'), 'parallel', None))
     if all(x is None for x in cmdattr):
         return envjobs
     else:
@@ -111,13 +128,13 @@ def allpath(name):
     return os.path.join(*splitted)
 
 def rel_path(path, parent_path):
-    """Return path relative to parent_path.
-    """
-    pd = os.path.abspath(parent_path)
-    apath = os.path.abspath(path)
-    if len(apath)<len(pd):
+    """Return path relative to parent_path."""
+    # Use realpath to avoid issues with symlinked dirs (see gh-7707)
+    pd = os.path.realpath(os.path.abspath(parent_path))
+    apath = os.path.realpath(os.path.abspath(path))
+    if len(apath) < len(pd):
         return path
-    if apath==pd:
+    if apath == pd:
         return ''
     if pd == apath[:len(pd)]:
         assert apath[len(pd)] in [os.sep], repr((path, apath[len(pd)]))
@@ -283,26 +300,13 @@ def gpaths(paths, local_path='', include_non_existing=True):
         paths = (paths,)
     return _fix_paths(paths, local_path, include_non_existing)
 
-
-def clean_up_temporary_directory():
-    tdata = tlocal()
-    _temporary_directory = getattr(tdata, 'tempdir', None)
-    if not _temporary_directory:
-        return
-    try:
-        shutil.rmtree(_temporary_directory)
-    except OSError:
-        pass
-    _temporary_directory = None
-
 def make_temp_file(suffix='', prefix='', text=True):
-    tdata = tlocal()
-    if not hasattr(tdata, 'tempdir'):
-        tdata.tempdir = tempfile.mkdtemp()
-        atexit.register(clean_up_temporary_directory)
+    if not hasattr(_tdata, 'tempdir'):
+        _tdata.tempdir = tempfile.mkdtemp()
+        _tmpdirs.append(_tdata.tempdir)
     fid, name = tempfile.mkstemp(suffix=suffix,
                                  prefix=prefix,
-                                 dir=tdata.tempdir,
+                                 dir=_tdata.tempdir,
                                  text=text)
     fo = os.fdopen(fid, 'w')
     return fo, name
@@ -387,21 +391,36 @@ def mingw32():
             return True
     return False
 
-def msvc_runtime_library():
-    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+def msvc_runtime_version():
+    "Return version of MSVC runtime library, as defined by __MSC_VER__ macro"
     msc_pos = sys.version.find('MSC v.')
     if msc_pos != -1:
-        msc_ver = sys.version[msc_pos+6:msc_pos+10]
-        lib = {'1300': 'msvcr70',    # MSVC 7.0
-               '1310': 'msvcr71',    # MSVC 7.1
-               '1400': 'msvcr80',    # MSVC 8
-               '1500': 'msvcr90',    # MSVC 9 (VS 2008)
-               '1600': 'msvcr100',   # MSVC 10 (aka 2010)
-              }.get(msc_ver, None)
+        msc_ver = int(sys.version[msc_pos+6:msc_pos+10])
     else:
-        lib = None
-    return lib
+        msc_ver = None
+    return msc_ver
 
+def msvc_runtime_library():
+    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+    ver = msvc_runtime_major ()
+    if ver:
+        if ver < 140:
+            return "msvcr%i" % ver
+        else:
+            return "vcruntime%i" % ver
+    else:
+        return None
+
+def msvc_runtime_major():
+    "Return major version of MSVC runtime coded like get_build_msvc_version"
+    major = {1300:  70,  # MSVC 7.0
+             1310:  71,  # MSVC 7.1
+             1400:  80,  # MSVC 8
+             1500:  90,  # MSVC 9  (aka 2008)
+             1600: 100,  # MSVC 10 (aka 2010)
+             1900: 140,  # MSVC 14 (aka 2015)
+    }.get(msvc_runtime_version(), None)
+    return major
 
 #########################
 
@@ -428,7 +447,7 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, str)
+    return isinstance(s, basestring)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
@@ -873,14 +892,11 @@ class Configuration(object):
         # In case setup_py imports local modules:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
-            fo_setup_py = open(setup_py, 'U')
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = imp.load_module('_'.join(n.split('.')),
-                                           fo_setup_py,
+            setup_module = npy_load_module('_'.join(n.split('.')),
                                            setup_py,
                                            ('.py', 'U', 1))
-            fo_setup_py.close()
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1512,8 +1528,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
@@ -1565,8 +1581,8 @@ class Configuration(object):
                 * macros
                 * include_dirs
                 * extra_compiler_args
-                * extra_f77_compiler_args
-                * extra_f90_compiler_args
+                * extra_f77_compile_args
+                * extra_f90_compile_args
                 * f2py_options
                 * language
 
@@ -1885,7 +1901,7 @@ class Configuration(object):
         -----
         This method scans files named
         __version__.py, <packagename>_version.py, version.py, and
-        __svn_version__.py for string variables version, __version\__, and
+        __svn_version__.py for string variables version, __version__, and
         <packagename>_version, until a version number is found.
         """
         version = getattr(self, 'version', None)
@@ -1910,11 +1926,12 @@ class Configuration(object):
         for f in files:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
-                info = (open(fn), fn, ('.py', 'U', 1))
+                info = ('.py', 'U', 1)
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = imp.load_module('_'.join(n.split('.')),*info)
+                    version_module = npy_load_module('_'.join(n.split('.')),
+                                                     fn, info)
                 except ImportError:
                     msg = get_exception()
                     self.warn(str(msg))
@@ -2205,7 +2222,7 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
                   'deprecated default_config_dict(%r,%r,%r)'
                   % (name, parent_name, local_path,
                      name, parent_name, local_path,
-                     ))
+                     ), stacklevel=2)
     c = Configuration(name, parent_name, local_path)
     return c.todict()
 
@@ -2286,21 +2303,3 @@ def msvc_version(compiler):
         raise ValueError("Compiler instance is not msvc (%s)"\
                          % compiler.compiler_type)
     return compiler._MSVCCompiler__version
-
-if sys.version[:3] >= '2.5':
-    def get_build_architecture():
-        from distutils.msvccompiler import get_build_architecture
-        return get_build_architecture()
-else:
-    #copied from python 2.5.1 distutils/msvccompiler.py
-    def get_build_architecture():
-        """Return the processor architecture.
-
-        Possible results are "Intel", "Itanium", or "AMD64".
-        """
-        prefix = " bit ("
-        i = sys.version.find(prefix)
-        if i == -1:
-            return "Intel"
-        j = sys.version.find(")", i)
-        return sys.version[i+len(prefix):j]

@@ -214,7 +214,7 @@ qsort_datetime_compare(const void *elem1, const void *elem2)
 }
 
 /*
- * Sorts the the array of dates provided in place and removes
+ * Sorts the array of dates provided in place and removes
  * NaT, duplicates and any date which is already excluded on account
  * of the weekmask.
  *

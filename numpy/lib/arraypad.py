@@ -1030,43 +1030,20 @@ def _normalize_shape(ndarray, shape, cast_to_int=True):
         return ((None, None), ) * ndims
 
     # Convert any input `info` to a NumPy array
-    arr = np.asarray(shape)
+    shape_arr = np.asarray(shape)
 
-    # Switch based on what input looks like
-    if arr.ndim <= 1:
-        if arr.shape == () or arr.shape == (1,):
-            # Single scalar input
-            #   Create new array of ones, multiply by the scalar
-            arr = np.ones((ndims, 2), dtype=ndarray.dtype) * arr
-        elif arr.shape == (2,):
-            # Apply padding (before, after) each axis
-            #   Create new axis 0, repeat along it for every axis
-            arr = arr[np.newaxis, :].repeat(ndims, axis=0)
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    elif arr.ndim == 2:
-        if arr.shape[1] == 1 and arr.shape[0] == ndims:
-            # Padded before and after by the same amount
-            arr = arr.repeat(2, axis=1)
-        elif arr.shape[0] == ndims:
-            # Input correctly formatted, pass it on as `arr`
-            arr = shape
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    else:
+    try:
+        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
+    except ValueError:
         fmt = "Unable to create correctly shaped tuple from %s"
         raise ValueError(fmt % (shape,))
 
     # Cast if necessary
     if cast_to_int is True:
-        arr = np.round(arr).astype(int)
+        shape_arr = np.round(shape_arr).astype(int)
 
     # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in arr.tolist())
+    return tuple(tuple(axis) for axis in shape_arr.tolist())
 
 
 def _validate_lengths(narray, number_elements):
@@ -1114,7 +1091,7 @@ def _validate_lengths(narray, number_elements):
 # Public functions
 
 
-def pad(array, pad_width, mode=None, **kwargs):
+def pad(array, pad_width, mode, **kwargs):
     """
     Pads an array.
 
@@ -1337,7 +1314,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         'reflect_type': 'even',
         }
 
-    if isinstance(mode, str):
+    if isinstance(mode, np.compat.basestring):
         # Make sure have allowed kwargs appropriate for mode
         for key in kwargs:
             if key not in allowedkwargs[mode]:
@@ -1355,9 +1332,6 @@ def pad(array, pad_width, mode=None, **kwargs):
             if i in ['end_values', 'constant_values']:
                 kwargs[i] = _normalize_shape(narray, kwargs[i],
                                              cast_to_int=False)
-    elif mode is None:
-        raise ValueError('Keyword "mode" must be a function or one of %s.' %
-                         (list(allowedkwargs.keys()),))
     else:
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function

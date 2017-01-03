@@ -809,7 +809,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     PyArrayIterObject *it;
     npy_intp size;
 
-    int ret = -1;
+    int ret = 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -829,6 +829,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     if (needcopy) {
         buffer = PyDataMem_NEW(N * elsize);
         if (buffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
@@ -841,7 +842,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized buffer, or leak a reference to each
+                 * an uninitialized buffer, or leak a reference to each
                  * object if initialized.
                  *
                  * So, first do the copy with no refcounting...
@@ -947,7 +948,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     PyArrayIterObject *it, *rit;
     npy_intp size;
 
-    int ret = -1;
+    int ret = 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -969,6 +970,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     rit = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)rop, &axis);
     if (it == NULL || rit == NULL) {
+        ret = -1;
         goto fail;
     }
     size = it->size;
@@ -978,6 +980,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     if (needcopy) {
         valbuffer = PyDataMem_NEW(N * elsize);
         if (valbuffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
@@ -985,6 +988,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     if (needidxbuffer) {
         idxbuffer = (npy_intp *)PyDataMem_NEW(N * sizeof(npy_intp));
         if (idxbuffer == NULL) {
+            ret = -1;
             goto fail;
         }
     }
@@ -999,7 +1003,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                 /*
                  * For dtype's with objects, copyswapn Py_XINCREF's src
                  * and Py_XDECREF's dst. This would crash if called on
-                 * an unitialized valbuffer, or leak a reference to
+                 * an uninitialized valbuffer, or leak a reference to
                  * each object item if initialized.
                  *
                  * So, first do the copy with no refcounting...
@@ -1157,10 +1161,8 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp nkth, i;
 
     if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
-        if (DEPRECATE("Calling partition with a non integer index"
-                      " will result in an error in the future") < 0) {
-            return NULL;
-        }
+        PyErr_Format(PyExc_TypeError, "Partition index must be integer");
+        return NULL;
     }
 
     if (PyArray_NDIM(ktharray) > 1) {
@@ -1426,19 +1428,15 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]) {
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]
+                && !PyArray_DESCR(mps[i])->f->compare) {
             PyErr_Format(PyExc_TypeError,
-                         "merge sort not available for item %zd", i);
+                         "item %zd type does not have compare function", i);
             goto fail;
         }
         if (!object
             && PyDataType_FLAGCHK(PyArray_DESCR(mps[i]), NPY_NEEDS_PYAPI)) {
             object = 1;
-        }
-        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
-                (PyObject *)mps[i], &axis);
-        if (its[i] == NULL) {
-            goto fail;
         }
     }
 
@@ -1464,6 +1462,14 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         PyErr_Format(PyExc_ValueError,
                 "axis(=%d) out of bounds", axis);
         goto fail;
+    }
+
+    for (i = 0; i < n; i++) {
+        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)mps[i], &axis);
+        if (its[i] == NULL) {
+            goto fail;
+        }
     }
 
     /* Now do the sorting */
@@ -1519,15 +1525,25 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
+                int rcode;
                 elsize = PyArray_DESCR(mps[j])->elsize;
                 astride = PyArray_STRIDES(mps[j])[axis];
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
+                if(argsort == NULL) {
+                    argsort = npy_amergesort;
+                }
                 _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
                                              its[j]->dataptr, astride, N, elsize);
                 if (swaps[j]) {
                     _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
                 }
-                if (argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]) < 0) {
+                rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
+#if defined(NPY_PY3K)
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+#else
+                if (rcode < 0) {
+#endif
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
                     free(swaps);
@@ -1550,9 +1566,19 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
+                int rcode;
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
-                if (argsort(its[j]->dataptr, (npy_intp *)rit->dataptr,
-                            N, mps[j]) < 0) {
+                if(argsort == NULL) {
+                    argsort = npy_amergesort;
+                }
+                rcode = argsort(its[j]->dataptr,
+                        (npy_intp *)rit->dataptr, N, mps[j]);
+#if defined(NPY_PY3K)
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+#else
+                if (rcode < 0) {
+#endif
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);
@@ -1721,7 +1747,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
 
     /* ret is a contiguous array of intp type to hold returned indexes */
-    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
+    ret = (PyArrayObject *)PyArray_New(&PyArray_Type, PyArray_NDIM(ap2),
                                        PyArray_DIMS(ap2), NPY_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)ap2);
     if (ret == NULL) {
@@ -1787,7 +1813,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
     int i, idim, ndim = PyArray_NDIM(self);
     npy_intp *strides;
-    npy_intp stride1, stride2;
+    npy_intp stride1, stride2, offset_stride;
     npy_intp *shape, dim1, dim2;
 
     char *data;
@@ -1834,35 +1860,21 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* Compute the data pointers and diag_size for the view */
     data = PyArray_DATA(self);
-    if (offset > 0) {
-        if (offset >= dim2) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride2;
-
-            diag_size = dim2 - offset;
-            if (dim1 < diag_size) {
-                diag_size = dim1;
-            }
-        }
-    }
-    else if (offset < 0) {
-        offset = -offset;
-        if (offset >= dim1) {
-            diag_size = 0;
-        }
-        else {
-            data += offset * stride1;
-
-            diag_size = dim1 - offset;
-            if (dim2 < diag_size) {
-                diag_size = dim2;
-            }
-        }
+    if (offset >= 0) {
+        offset_stride = stride2;
+        dim2 -= offset;
     }
     else {
-        diag_size = dim1 < dim2 ? dim1 : dim2;
+        offset = -offset;
+        offset_stride = stride1;
+        dim1 -= offset;
+    }
+    diag_size = dim2 < dim1 ? dim2 : dim1;
+    if (diag_size < 0) {
+        diag_size = 0;
+    }
+    else {
+        data += offset * offset_stride;
     }
 
     /* Build the new shape and strides for the main data */
@@ -2331,36 +2343,27 @@ finish:
     }
 
     /* Create views into ret, one for each dimension */
-    if (ndim == 1) {
-        /* Directly switch to one dimensions (dimension 1 is 1 anyway) */
-        ((PyArrayObject_fields *)ret)->nd = 1;
-        PyTuple_SET_ITEM(ret_tuple, 0, (PyObject *)ret);
-    }
-    else {
-        for (i = 0; i < ndim; ++i) {
-            PyArrayObject *view;
-            npy_intp stride = ndim * NPY_SIZEOF_INTP;
+    for (i = 0; i < ndim; ++i) {
+        npy_intp stride = ndim * NPY_SIZEOF_INTP;
 
-            view = (PyArrayObject *)PyArray_New(Py_TYPE(self), 1,
-                                &nonzero_count,
-                                NPY_INTP, &stride,
-                                PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
-                                0, 0, (PyObject *)self);
-            if (view == NULL) {
-                Py_DECREF(ret);
-                Py_DECREF(ret_tuple);
-                return NULL;
-            }
-            Py_INCREF(ret);
-            if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
-                Py_DECREF(ret);
-                Py_DECREF(ret_tuple);
-            }
-            PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)view);
+        PyArrayObject *view = (PyArrayObject *)PyArray_New(Py_TYPE(ret), 1,
+                                    &nonzero_count, NPY_INTP, &stride,
+                                    PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
+                                    0, PyArray_FLAGS(ret), (PyObject *)ret);
+        if (view == NULL) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_tuple);
+            return NULL;
         }
-
-        Py_DECREF(ret);
+        Py_INCREF(ret);
+        if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_tuple);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret_tuple, i, (PyObject *)view);
     }
+    Py_DECREF(ret);
 
     return ret_tuple;
 }

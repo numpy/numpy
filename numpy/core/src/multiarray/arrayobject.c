@@ -11,7 +11,7 @@
   by
 
   Travis Oliphant,  oliphant@ee.byu.edu
-  Brigham Young Univeristy
+  Brigham Young University
 
 
 maintainer email:  oliphant.travis@ieee.org
@@ -51,6 +51,8 @@ maintainer email:  oliphant.travis@ieee.org
 #include "buffer.h"
 #include "array_assign.h"
 #include "alloc.h"
+#include "mem_overlap.h"
+#include "numpyos.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -95,7 +97,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     }
 
     /*
-     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * Any writes to 'arr' will magically turn into writes to 'base', so we
      * should warn if necessary.
      */
     if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
@@ -738,6 +740,7 @@ array_might_be_written(PyArrayObject *obj)
         "The quick fix is to make an explicit copy (e.g., do\n"
         "arr.diagonal().copy() or arr[['f0','f1']].copy()).";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
+        /* 2012-07-17, 1.7 */
         if (DEPRECATE_FUTUREWARNING(msg) < 0) {
             return -1;
         }
@@ -878,18 +881,13 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 
 #define SMALL_STRING 2048
 
-#if defined(isspace)
-#undef isspace
-#define isspace(c)  ((c==' ')||(c=='\t')||(c=='\n')||(c=='\r')||(c=='\v')||(c=='\f'))
-#endif
-
 static void _rstripw(char *s, int n)
 {
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         int c = s[i];
 
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -903,7 +901,7 @@ static void _unistripw(npy_ucs4 *s, int n)
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         npy_ucs4 c = s[i];
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -1085,7 +1083,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val;
+    int val, cast = 0;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
@@ -1097,9 +1095,13 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
 #else
+        cast = 1;
+#endif  /* define(NPY_PY3K) */
+    }
+    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
-            PyArray_DESCR(other)->type_num == NPY_UNICODE) {
+                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
             unicode->elsize = PyArray_DESCR(self)->elsize << 2;
             new = PyArray_FromAny((PyObject *)self, unicode,
@@ -1110,10 +1112,17 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
-        else if (PyArray_TYPE(self) == NPY_UNICODE &&
-                 PyArray_DESCR(other)->type_num == NPY_STRING) {
+        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
+                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
+                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-            unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+
+            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
+                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+            }
+            else {
+                unicode->elsize = PyArray_DESCR(other)->elsize;
+            }
             new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
@@ -1128,7 +1137,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
-#endif
     }
     else {
         Py_INCREF(self);
@@ -1295,6 +1303,36 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;
 
+    /* Special case for string arrays (which don't and currently can't have
+     * ufunc loops defined, so there's no point in trying).
+     */
+    if (PyArray_ISSTRING(self)) {
+        array_other = (PyArrayObject *)PyArray_FromObject(other,
+                                                          NPY_NOTYPE, 0, 0);
+        if (array_other == NULL) {
+            PyErr_Clear();
+            /* Never mind, carry on, see what happens */
+        }
+        else if (!PyArray_ISSTRING(array_other)) {
+            Py_DECREF(array_other);
+            /* Never mind, carry on, see what happens */
+        }
+        else {
+            result = _strings_richcompare(self, array_other, cmp_op, 0);
+            Py_DECREF(array_other);
+            return result;
+        }
+        /* If we reach this point, it means that we are not comparing
+         * string-to-string. It's possible that this will still work out,
+         * e.g. if the other array is an object array, then both will be cast
+         * to object or something? I don't know how that works actually, but
+         * it does, b/c this works:
+         *   l = ["a", "b"]
+         *   assert np.array(l, dtype="S1") == np.array(l, dtype="O")
+         * So we fall through and see what happens.
+         */
+    }
+
     switch (cmp_op) {
     case Py_LT:
         if (needs_right_binop_forward(obj_self, other, "__gt__", 0) &&
@@ -1316,25 +1354,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 n_ops.less_equal);
         break;
     case Py_EQ:
-        if (other == Py_None) {
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_False);
-            return Py_False;
-        }
-        if (needs_right_binop_forward(obj_self, other, "__eq__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
-        if (result && result != Py_NotImplemented)
-          break;
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1350,7 +1369,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * this way.
              */
             if (array_other == NULL) {
+                /* 2015-05-07, 1.10 */
                 PyErr_Clear();
+                if (DEPRECATE(
+                        "elementwise == comparison failed and returning scalar "
+                        "instead; this will raise an error in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
@@ -1359,18 +1384,32 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
-                Py_DECREF(result);
+                /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise == comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_False);
                 return Py_False;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
             }
             Py_DECREF(array_other);
             return result;
         }
+
+        if (needs_right_binop_forward(obj_self, other, "__eq__", 0) &&
+                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        result = PyArray_GenericBinaryFunction(self,
+                (PyObject *)other,
+                n_ops.equal);
         /*
          * If the comparison results in NULL, then the
          * two array objects can not be compared together;
@@ -1381,9 +1420,10 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * Comparisons should raise errors when element-wise comparison
              * is not possible.
              */
+            /* 2015-05-14, 1.10 */
             PyErr_Clear();
-            if (DEPRECATE("elementwise comparison failed; "
-                          "this will raise the error in the future.") < 0) {
+            if (DEPRECATE("elementwise == comparison failed; "
+                          "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
@@ -1392,24 +1432,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_NE:
-        if (other == Py_None) {
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_True);
-            return Py_True;
-        }
-        if (needs_right_binop_forward(obj_self, other, "__ne__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
-        if (result && result != Py_NotImplemented)
-          break;
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1425,7 +1447,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * this way.
             */
             if (array_other == NULL) {
+                /* 2015-05-07, 1.10 */
                 PyErr_Clear();
+                if (DEPRECATE(
+                        "elementwise != comparison failed and returning scalar "
+                        "instead; this will raise an error in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
@@ -1434,27 +1462,40 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                                          PyArray_DESCR(array_other),
                                          NPY_EQUIV_CASTING);
             if (_res == 0) {
-                Py_DECREF(result);
+                /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);
+                if (DEPRECATE_FUTUREWARNING(
+                        "elementwise != comparison failed and returning scalar "
+                        "instead; this will raise an error or perform "
+                        "elementwise comparison in the future.") < 0) {
+                    return NULL;
+                }
                 Py_INCREF(Py_True);
                 return Py_True;
             }
             else {
-                Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
                 Py_DECREF(array_other);
             }
             return result;
         }
 
+        if (needs_right_binop_forward(obj_self, other, "__ne__", 0) &&
+                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
+                n_ops.not_equal);
         if (result == NULL) {
             /*
              * Comparisons should raise errors when element-wise comparison
              * is not possible.
              */
+            /* 2015-05-14, 1.10 */
             PyErr_Clear();
-            if (DEPRECATE("elementwise comparison failed; "
-                          "this will raise the error in the future.") < 0) {
+            if (DEPRECATE("elementwise != comparison failed; "
+                          "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
@@ -1483,24 +1524,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     default:
         result = Py_NotImplemented;
         Py_INCREF(result);
-    }
-    if (result == Py_NotImplemented) {
-        /* Try to handle string comparisons */
-        if (PyArray_TYPE(self) == NPY_OBJECT) {
-            return result;
-        }
-        array_other = (PyArrayObject *)PyArray_FromObject(other,
-                                                          NPY_NOTYPE, 0, 0);
-        if (array_other == NULL) {
-            PyErr_Clear();
-            return result;
-        }
-        if (PyArray_ISSTRING(self) && PyArray_ISSTRING(array_other)) {
-            Py_DECREF(result);
-            result = _strings_richcompare(self, (PyArrayObject *)
-                                          array_other, cmp_op, 0);
-        }
-        Py_DECREF(array_other);
     }
     return result;
 }
@@ -1619,11 +1642,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     itemsize = descr->elsize;
-    if (itemsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data-type with unspecified variable length");
-        goto fail;
-    }
 
     if (strides.ptr != NULL) {
         npy_intp nb, off;
@@ -1657,10 +1675,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     if (buffer.ptr == NULL) {
         ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, descr,
-                                 (int)dims.len,
-                                 dims.ptr,
-                                 strides.ptr, NULL, is_f_order, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     (int)dims.len,
+                                     dims.ptr,
+                                     strides.ptr, NULL, is_f_order, NULL,
+                                     0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1693,11 +1712,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
-            PyArray_NewFromDescr(subtype, descr,
-                                 dims.len, dims.ptr,
-                                 strides.ptr,
-                                 offset + (char *)buffer.ptr,
-                                 buffer.flags, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     dims.len, dims.ptr,
+                                     strides.ptr,
+                                     offset + (char *)buffer.ptr,
+                                     buffer.flags, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1775,7 +1794,11 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     &array_as_number,                           /* tp_as_number */
     &array_as_sequence,                         /* tp_as_sequence */
     &array_as_mapping,                          /* tp_as_mapping */
-    PyObject_HashNotImplemented,                /* tp_hash */
+    /*
+     * The tp_hash slot will be set PyObject_HashNotImplemented when the
+     * module is loaded.
+     */
+    (hashfunc)0,                                /* tp_hash */
     (ternaryfunc)0,                             /* tp_call */
     (reprfunc)array_str,                        /* tp_str */
     (getattrofunc)0,                            /* tp_getattro */
@@ -1786,7 +1809,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
      | Py_TPFLAGS_CHECKTYPES
      | Py_TPFLAGS_HAVE_NEWBUFFER
 #endif
-     | Py_TPFLAGS_BASETYPE),                  /* tp_flags */
+     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
     0,                                          /* tp_doc */
 
     (traverseproc)0,                            /* tp_traverse */

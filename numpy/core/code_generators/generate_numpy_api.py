@@ -17,15 +17,9 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
 extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
-#else
-NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
-NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
-#endif
 
 %s
 
@@ -90,13 +84,13 @@ _import_array(void)
   /* Perform runtime check of C API version */
   if (NPY_VERSION != PyArray_GetNDArrayCVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "ABI version %%x but this version of numpy is %%x", \
+             "ABI version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
       return -1;
   }
   if (NPY_FEATURE_VERSION > PyArray_GetNDArrayCFeatureVersion()) {
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-             "API version %%x but this version of numpy is %%x", \
+             "API version 0x%%x but this version of numpy is 0x%%x", \
              (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
       return -1;
   }
@@ -157,7 +151,7 @@ void *PyArray_API[] = {
 
 c_api_header = """
 ===========
-Numpy C-API
+NumPy C-API
 ===========
 """
 

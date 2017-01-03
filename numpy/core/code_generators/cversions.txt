@@ -22,10 +22,15 @@
 
 # Version 9 (NumPy 1.8) Added interface for partition functions,
 # PyArray_NEW_ZEROED, commented out as the hash changed in
-# Numpy 1.9 due to annotation.
+# NumPy 1.9.0 due to annotation.
 #0x00000009 = 327bd114df09c2eb7a0bcc6901e2a3ed
 
 # Version 9 (NumPy 1.9) Added function annotations.
 # The interface has not changed, but the hash is different due to
 # the annotations, so keep the previous version number.
 0x00000009 = 982c4ebb6e7e4c194bf46b1535b4ef1b
+
+# Version 10 (NumPy 1.10) Added PyArray_CheckAnyScalarExact
+# Version 10 (NumPy 1.11) No change.
+# Version 10 (NumPy 1.12) No change.
+0x0000000a = 9b8bce614655d3eb02acddcb508203cb

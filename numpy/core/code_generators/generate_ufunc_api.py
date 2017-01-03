@@ -11,11 +11,7 @@ from genapi import \
 h_template = r"""
 #ifdef _UMATHMODULE
 
-#ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
-#else
-NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
-#endif
 
 %s
 
@@ -37,7 +33,7 @@ static void **PyUFunc_API=NULL;
 
 %s
 
-static int
+static NPY_INLINE int
 _import_umath(void)
 {
   PyObject *numpy = PyImport_ImportModule("numpy.core.umath");
@@ -208,7 +204,7 @@ def do_generate_api(targets, sources):
     fid = open(doc_file, 'w')
     fid.write('''
 =================
-Numpy Ufunc C-API
+NumPy Ufunc C-API
 =================
 ''')
     for func in ufunc_api_list:

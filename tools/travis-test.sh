@@ -1,7 +1,8 @@
 #!/bin/bash
+
 set -ex
 
-# travis boxes give you 1.5 cpus
+# Travis legacy boxes give you 1.5 CPUs, container-based boxes give you 2 CPUs
 export NPY_NUM_BUILD_JOBS=2
 
 # setup env
@@ -10,80 +11,99 @@ if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
 fi
 
+source builds/venv/bin/activate
+
+# travis venv tests override python
+PYTHON=${PYTHON:-python}
+PIP=${PIP:-pip}
+
+if [ -n "$PYTHON_OO" ]; then
+  PYTHON="${PYTHON} -OO"
+fi
+
+
+if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
+  PYTHON="${PYTHON} -3"
+fi
+
+# make some warnings fatal, mostly to match windows compilers
+werrors="-Werror=declaration-after-statement -Werror=vla "
+werrors+="-Werror=nonnull -Werror=pointer-arith"
 
 setup_base()
 {
   # We used to use 'setup.py install' here, but that has the terrible
-  # behaviour that if a copy of the package is already installed in
-  # the install location, then the new copy just gets dropped on top
-  # of it. Travis typically has a stable numpy release pre-installed,
-  # and if we don't remove it, then we can accidentally end up
-  # e.g. running old test modules that were in the stable release but
-  # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
-  # install' also has the advantage that it tests that numpy is 'pip
-  # install' compatible, see e.g. gh-2766...
-if [ -z "$USE_DEBUG" ]; then
-  $PIP install .
-else
-  sysflags="$($PYTHON -c "from distutils import sysconfig; print (sysconfig.get_config_var('CFLAGS'))")"
-  # windows compilers have this requirement
-  CFLAGS="$sysflags -Werror=declaration-after-statement -Werror=nonnull" $PYTHON setup.py build_ext --inplace
-fi
+  # behaviour that if a copy of the package is already installed in the
+  # install location, then the new copy just gets dropped on top of it.
+  # Travis typically has a stable numpy release pre-installed, and if we
+  # don't remove it, then we can accidentally end up e.g. running old
+  # test modules that were in the stable release but have been removed
+  # from master. (See gh-2765, gh-2768.)  Using 'pip install' also has
+  # the advantage that it tests that numpy is 'pip install' compatible,
+  # see e.g. gh-2766...
+  if [ -z "$USE_DEBUG" ]; then
+    if [ -z "$IN_CHROOT" ]; then
+      $PIP install .
+    else
+      sysflags="$($PYTHON -c "from distutils import sysconfig; \
+        print (sysconfig.get_config_var('CFLAGS'))")"
+      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install . 2>&1 | tee log
+      grep -v "_configtest" log \
+        | grep -vE "ld returned 1|no previously-included files matching" \
+        | grep -E "warning\>" \
+        | tee warnings
+      # Check for an acceptable number of warnings. Some warnings are out of
+      # our control, so adjust the number as needed. At the moment a
+      # cython generated code produces a warning about '-2147483648L', but
+      # the code seems to compile OK.
+      [[ $(wc -l < warnings) -lt 2 ]]
+    fi
+  else
+    sysflags="$($PYTHON -c "from distutils import sysconfig; \
+      print (sysconfig.get_config_var('CFLAGS'))")"
+    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace
+  fi
 }
 
 setup_chroot()
 {
   # this can all be replaced with:
   # apt-get install libpython2.7-dev:i386
-  # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" linux32 python setup.py build
+  # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" \
+  #   linux32 python setup.py build
   # when travis updates to ubuntu 14.04
+  #
+  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
+  # configuration stage.
   DIR=$1
-  # speeds up setup as we don't have eatmydata during bootstrap
-  sudo mkdir -p $DIR
-  sudo mount -t tmpfs -o size=4G tmpfs $DIR
   set -u
-  sudo apt-get update
-  sudo apt-get -qq -y --force-yes install debootstrap eatmydata
-  sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=$ARCH --foreign $DIST $DIR
+  sudo debootstrap --variant=buildd --include=fakeroot,build-essential \
+    --arch=$ARCH --foreign $DIST $DIR
   sudo chroot $DIR ./debootstrap/debootstrap --second-stage
+
+  # put the numpy repo in the chroot directory
   sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
-  echo deb http://archive.ubuntu.com/ubuntu/ $DIST main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://archive.ubuntu.com/ubuntu/ $DIST-updates main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://security.ubuntu.com/ubuntu $DIST-security  main restricted universe multiverse | sudo tee -a $DIR/etc/apt/sources.list
+
+  # set up repos in the chroot directory for installing packages
+  echo deb http://archive.ubuntu.com/ubuntu/ \
+    $DIST main restricted universe multiverse \
+    | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://archive.ubuntu.com/ubuntu/ \
+    $DIST-updates main restricted universe multiverse \
+    | sudo tee -a $DIR/etc/apt/sources.list
+  echo deb http://security.ubuntu.com/ubuntu \
+    $DIST-security  main restricted universe multiverse \
+    | sudo tee -a $DIR/etc/apt/sources.list
+
+  # install needed packages
   sudo chroot $DIR bash -c "apt-get update"
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
-  echo /usr/lib/libeatmydata/libeatmydata.so | sudo tee -a $DIR/etc/ld.so.preload
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes libatlas-dev libatlas-base-dev gfortran python3-dev python3-nose python3-pip cython3 cython"
-}
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
+    eatmydata libatlas-dev libatlas-base-dev gfortran \
+    python-dev python-nose python-pip cython"
 
-setup_bento()
-{
-  export CI_ROOT=$PWD
-  cd ..
-
-  # Waf
-  wget https://raw.githubusercontent.com/numpy/numpy-vendor/master/waf-1.7.16.tar.bz2
-  tar xjvf waf-1.7.16.tar.bz2
-  cd waf-1.7.16
-  python waf-light
-  export WAFDIR=$PWD
-  cd ..
-
-  # Bento
-  wget https://github.com/cournape/Bento/archive/master.zip
-  unzip master.zip
-  cd Bento-master
-  python bootstrap.py
-  export BENTO_ROOT=$PWD
-  cd ..
-
-  cd $CI_ROOT
-
-  # In-place numpy build
-  $BENTO_ROOT/bentomaker build -v -i -j
-
-  # Prepend to PYTHONPATH so tests can be run
-  export PYTHONPATH=$PWD:$PYTHONPATH
+  # faster operation with preloaded eatmydata
+  echo /usr/lib/libeatmydata/libeatmydata.so | \
+    sudo tee -a $DIR/etc/ld.so.preload
 }
 
 run_test()
@@ -96,55 +116,66 @@ run_test()
   # of numpy in the source directory.
   mkdir -p empty
   cd empty
-  INSTALLDIR=$($PYTHON -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
+  INSTALLDIR=$($PYTHON -c \
+    "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
-  $PYTHON ../tools/test-installed-numpy.py # --mode=full
-  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which $PYTHON) ../tools/test-installed-numpy.py
-  # - coverage report --rcfile=../.coveragerc --show-missing
+  if [ -n "$RUN_FULL_TESTS" ]; then
+    $PYTHON ../tools/test-installed-numpy.py --mode=full
+  else
+    $PYTHON ../tools/test-installed-numpy.py
+  fi
+  if [ -n "$USE_ASV" ]; then
+    pushd ../benchmarks
+    $PYTHON `which asv` machine --machine travis
+    $PYTHON `which asv` dev 2>&1| tee asv-output.log
+    if grep -q Traceback asv-output.log; then
+      echo "Some benchmarks have errors!"
+      exit 1
+    fi
+    popd
+  fi
 }
-
-# travis venv tests override python
-PYTHON=${PYTHON:-python}
-PIP=${PIP:-pip}
-
-if [ -n "$USE_DEBUG" ]; then
-  sudo apt-get update
-  sudo apt-get install -qq -y --force-yes python3-dbg python3-dev python3-nose
-  PYTHON=python3-dbg
-fi
-
-if [ -n "$PYTHON_OO" ]; then
-  PYTHON="$PYTHON -OO"
-fi
 
 export PYTHON
 export PIP
+$PIP install setuptools
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Build wheel
   $PIP install wheel
+  # ensure that the pip / setuptools versions deployed inside
+  # the venv are recent enough
+  $PIP install -U virtualenv
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
-  virtualenv --python=python venv-for-wheel
+  virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  $PIP install --pre --upgrade --find-links . numpy
-  $PIP install nose
+  pip install --pre --no-index --upgrade --find-links=. numpy
+  pip install nose
   popd
   run_test
-elif [ "$USE_CHROOT" != "1" ] && [ "$USE_BENTO" != "1" ]; then
-  setup_base
+elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
+  # use an up-to-date pip / setuptools inside the venv
+  $PIP install -U virtualenv
+  $PYTHON setup.py sdist
+  # Make another virtualenv to install into
+  virtualenv --python=`which $PYTHON` venv-for-wheel
+  . venv-for-wheel/bin/activate
+  # Move out of source directory to avoid finding local numpy
+  pushd dist
+  pip install numpy*
+  pip install nose
+  popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   DIR=/chroot
   setup_chroot $DIR
   # run again in chroot with this time testing
-  sudo linux32 chroot $DIR bash -c "cd numpy && PYTHON=python3 PIP=pip3 $0 test"
-elif [ -n "$USE_BENTO" ] && [ $# -eq 0 ]; then
-  setup_bento
-  # run again this time testing
-  $0 test
+  sudo linux32 chroot $DIR bash -c \
+    "cd numpy && PYTHON=python PIP=pip IN_CHROOT=1 $0 test"
 else
+  setup_base
   run_test
 fi
 

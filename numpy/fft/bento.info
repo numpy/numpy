@@ -1,6 +1,0 @@
-HookFile: bscript
-
-Library:
-    Extension: fftpack_lite
-        Sources:
-            fftpack_litemodule.c, fftpack.c

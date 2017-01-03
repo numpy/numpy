@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, kron, tile
+    vsplit, dstack, column_stack, kron, tile
     )
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
@@ -26,6 +26,43 @@ class TestApplyAlongAxis(TestCase):
         a = np.arange(27).reshape((3, 3, 3))
         assert_array_equal(apply_along_axis(np.sum, 0, a),
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
+
+    def test_preserve_subclass(self):
+        def double(row):
+            return row * 2
+        m = np.matrix([[0, 1], [2, 3]])
+        result = apply_along_axis(double, 0, m)
+        assert isinstance(result, np.matrix)
+        assert_array_equal(
+            result, np.matrix([[0, 2], [4, 6]])
+        )
+
+    def test_subclass(self):
+        class MinimalSubclass(np.ndarray):
+            data = 1
+
+        def minimal_function(array):
+            return array.data
+
+        a = np.zeros((6, 3)).view(MinimalSubclass)
+
+        assert_array_equal(
+            apply_along_axis(minimal_function, 0, a), np.array([1, 1, 1])
+        )
+
+    def test_scalar_array(self):
+        class MinimalSubclass(np.ndarray):
+            pass
+        a = np.ones((6, 3)).view(MinimalSubclass)
+        res = apply_along_axis(np.sum, 0, a)
+        assert isinstance(res, MinimalSubclass)
+        assert_array_equal(res, np.array([6, 6, 6]).view(MinimalSubclass))
+
+    def test_tuple_func1d(self):
+        def sample_1d(x):
+            return x[1], x[0]
+        res = np.apply_along_axis(sample_1d, 1, np.array([[1, 2], [3, 4]]))
+        assert_array_equal(res, np.array([[2, 1], [4, 3]]))
 
 
 class TestApplyOverAxes(TestCase):
@@ -103,12 +140,17 @@ class TestArraySplit(TestCase):
 
     def test_integer_split_2D_rows(self):
         a = np.array([np.arange(10), np.arange(10)])
-        res = assert_warns(FutureWarning, array_split, a, 3, axis=0)
+        res = array_split(a, 3, axis=0)
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
+                   np.zeros((0, 10))]
+        compare_results(res, tgt)
+        assert_(a.dtype.type is res[-1].dtype.type)
 
-        # After removing the FutureWarning, the last should be zeros((0, 10))
-        desired = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.array([])]
-        compare_results(res, desired)
+        # Same thing for manual splits:
+        res = array_split(a, [0, 1, 2], axis=0)
+        tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
+               np.array([np.arange(10)])]
+        compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
     def test_integer_split_2D_cols(self):
@@ -123,12 +165,10 @@ class TestArraySplit(TestCase):
         """ This will fail if we change default axis
         """
         a = np.array([np.arange(10), np.arange(10)])
-        res = assert_warns(FutureWarning, array_split, a, 3)
-
-        # After removing the FutureWarning, the last should be zeros((0, 10))
-        desired = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.array([])]
-        compare_results(res, desired)
+        res = array_split(a, 3)
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
+                   np.zeros((0, 10))]
+        compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
@@ -172,8 +212,15 @@ class TestSplit(TestCase):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+class TestColumnStack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, column_stack, 1)
+
 
 class TestDstack(TestCase):
+    def test_non_iterable(self):
+        assert_raises(TypeError, dstack, 1)
+
     def test_0D_array(self):
         a = np.array(1)
         b = np.array(2)
@@ -209,6 +256,9 @@ class TestHsplit(TestCase):
     """Only testing for integer splits.
 
     """
+    def test_non_iterable(self):
+        assert_raises(ValueError, hsplit, 1, 1)
+
     def test_0D_array(self):
         a = np.array(1)
         try:
@@ -235,6 +285,13 @@ class TestVsplit(TestCase):
     """Only testing for integer splits.
 
     """
+    def test_non_iterable(self):
+        assert_raises(ValueError, vsplit, 1, 1)
+
+    def test_0D_array(self):
+        a = np.array(1)
+        assert_raises(ValueError, vsplit, a, 2)
+
     def test_1D_array(self):
         a = np.array([1, 2, 3, 4])
         try:
@@ -253,6 +310,16 @@ class TestVsplit(TestCase):
 
 class TestDsplit(TestCase):
     # Only testing for integer splits.
+    def test_non_iterable(self):
+        assert_raises(ValueError, dsplit, 1, 1)
+
+    def test_0D_array(self):
+        a = np.array(1)
+        assert_raises(ValueError, dsplit, a, 2)
+
+    def test_1D_array(self):
+        a = np.array([1, 2, 3, 4])
+        assert_raises(ValueError, dsplit, a, 2)
 
     def test_2D_array(self):
         a = np.array([[1, 2, 3, 4],
@@ -332,7 +399,10 @@ class TestTile(TestCase):
 
     def test_empty(self):
         a = np.array([[[]]])
+        b = np.array([[], []])
+        c = tile(b, 2).shape
         d = tile(a, (3, 2, 5)).shape
+        assert_equal(c, (2, 0))
         assert_equal(d, (3, 2, 0))
 
     def test_kroncompare(self):

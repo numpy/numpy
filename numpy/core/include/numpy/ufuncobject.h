@@ -20,17 +20,6 @@ typedef void (*PyUFuncGenericFunction)
 
 /*
  * The most generic one-dimensional inner loop for
- * a standard element-wise ufunc. This typedef is also
- * more consistent with the other NumPy function pointer typedefs
- * than PyUFuncGenericFunction.
- */
-typedef void (PyUFunc_StridedInnerLoopFunc)(
-                char **dataptrs, npy_intp *strides,
-                npy_intp count,
-                NpyAuxData *innerloopdata);
-
-/*
- * The most generic one-dimensional inner loop for
  * a masked standard element-wise ufunc. "Masked" here means that it skips
  * doing calculations on any items for which the maskptr array has a true
  * value.
@@ -112,13 +101,6 @@ typedef int (PyUFunc_LegacyInnerLoopSelectionFunc)(
                             PyUFuncGenericFunction *out_innerloop,
                             void **out_innerloopdata,
                             int *out_needs_api);
-typedef int (PyUFunc_InnerLoopSelectionFunc)(
-                            struct _tagPyUFuncObject *ufunc,
-                            PyArray_Descr **dtypes,
-                            npy_intp *fixed_strides,
-                            PyUFunc_StridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata,
-                            int *out_needs_api);
 typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
                             struct _tagPyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
@@ -148,8 +130,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Does not appear to be used */
-        int check_return;
+        /* Used to be unused field 'check_return' */
+        int reserved1;
 
         /* The name of the ufunc */
         const char *name;
@@ -204,11 +186,11 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
         /*
-         * A function which returns an inner loop for the new mechanism
-         * in NumPy 1.7 and later. If provided, this is used, otherwise
-         * if NULL the legacy_inner_loop_selector is used instead.
+         * This was blocked off to be the "new" inner loop selector in 1.7,
+         * but this was never implemented. (This is also why the above
+         * selector is called the "legacy" selector.)
          */
-        PyUFunc_InnerLoopSelectionFunc *inner_loop_selector;
+        void *reserved2;
         /*
          * A function which returns a masked inner loop for the ufunc.
          */
@@ -269,15 +251,21 @@ typedef struct _tagPyUFuncObject {
 #endif
 
 /*
+ * UFunc has unit of 0, and the order of operations can be reordered
+ * This case allows reduction with multiple axes at once.
+ */
+#define PyUFunc_Zero 0
+/*
  * UFunc has unit of 1, and the order of operations can be reordered
  * This case allows reduction with multiple axes at once.
  */
 #define PyUFunc_One 1
 /*
- * UFunc has unit of 0, and the order of operations can be reordered
- * This case allows reduction with multiple axes at once.
+ * UFunc has unit of -1, and the order of operations can be reordered
+ * This case allows reduction with multiple axes at once. Intended for
+ * bitwise_and reduction.
  */
-#define PyUFunc_Zero 0
+#define PyUFunc_MinusOne 2
 /*
  * UFunc has no unit, and the order of operations cannot be reordered.
  * This case does not allow reduction with multiple axes at once.

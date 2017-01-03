@@ -15,7 +15,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.lib.twodim_base import diag, vander
-from numpy.lib.function_base import trim_zeros, sort_complex
+from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
@@ -61,7 +61,7 @@ def poly(seq_of_zeros):
 
     See Also
     --------
-    polyval : Evaluate a polynomial at a point.
+    polyval : Compute polynomial values.
     roots : Return the roots of a polynomial.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
@@ -145,11 +145,7 @@ def poly(seq_of_zeros):
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
         roots = NX.asarray(seq_of_zeros, complex)
-        pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
-        neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0, roots)))
-        if (len(pos_roots) == len(neg_roots) and
-                NX.alltrue(neg_roots == pos_roots)):
+        if NX.all(NX.sort(roots) == NX.sort(roots.conjugate())):
             a = a.real.copy()
 
     return a
@@ -171,7 +167,7 @@ def roots(p):
     Returns
     -------
     out : ndarray
-        An array containing the complex roots of the polynomial.
+        An array containing the roots of the polynomial.
 
     Raises
     ------
@@ -182,7 +178,7 @@ def roots(p):
     --------
     poly : Find the coefficients of a polynomial with a given sequence
            of roots.
-    polyval : Evaluate a polynomial at a point.
+    polyval : Compute polynomial values.
     polyfit : Least squares polynomial fit.
     poly1d : A one-dimensional polynomial class.
 
@@ -427,18 +423,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        weights to apply to the y-coordinates of the sample points.
+        Weights to apply to the y-coordinates of the sample points. For
+        gaussian uncertainties, use 1/sigma (not 1/sigma**2).
     cov : bool, optional
         Return the estimate and the covariance matrix of the estimate
         If full is True, then cov is not returned.
 
     Returns
     -------
-    p : ndarray, shape (M,) or (M, K)
+    p : ndarray, shape (deg + 1,) or (deg + 1, K)
         Polynomial coefficients, highest power first.  If `y` was 2-D, the
         coefficients for `k`-th data set are in ``p[:,k]``.
 
-    residuals, rank, singular_values, rcond :
+    residuals, rank, singular_values, rcond
         Present only if `full` = True.  Residuals of the least-squares fit,
         the effective rank of the scaled Vandermonde coefficient matrix,
         its singular values, and the specified value of `rcond`. For more
@@ -465,7 +462,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     See Also
     --------
-    polyval : Computes polynomial values.
+    polyval : Compute polynomial values.
     linalg.lstsq : Computes a least-squares fit.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
@@ -591,7 +588,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         msg = "Polyfit may be poorly conditioned"
-        warnings.warn(msg, RankWarning)
+        warnings.warn(msg, RankWarning, stacklevel=2)
 
     if full:
         return c, resids, rank, s, rcond
@@ -602,6 +599,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         #  it is included here because the covariance of Multivariate Student-T
         #  (which is implied by a Bayesian uncertainty analysis) includes it.
         #  Plus, it gives a slightly more conservative estimate of uncertainty.
+        if len(x) <= order + 2:
+            raise ValueError("the number of data points must exceed order + 2 "
+                             "for Bayesian estimate the covariance matrix")
         fac = resids / (len(x) - order - 2.0)
         if y.ndim == 1:
             return c, Vbase * fac
@@ -630,7 +630,7 @@ def polyval(p, x):
        to zero) from highest degree to the constant term, or an
        instance of poly1d.
     x : array_like or poly1d object
-       A number, a 1D array of numbers, or an instance of poly1d, "at"
+       A number, an array of numbers, or an instance of poly1d, at
        which to evaluate `p`.
 
     Returns
@@ -714,12 +714,12 @@ def polyadd(a1, a2):
 
     >>> p1 = np.poly1d([1, 2])
     >>> p2 = np.poly1d([9, 5, 4])
-    >>> print p1
+    >>> print(p1)
     1 x + 2
-    >>> print p2
+    >>> print(p2)
        2
     9 x + 5 x + 4
-    >>> print np.polyadd(p1, p2)
+    >>> print(np.polyadd(p1, p2))
        2
     9 x + 6 x + 6
 
@@ -825,13 +825,13 @@ def polymul(a1, a2):
 
     >>> p1 = np.poly1d([1, 2, 3])
     >>> p2 = np.poly1d([9, 5, 1])
-    >>> print p1
+    >>> print(p1)
        2
     1 x + 2 x + 3
-    >>> print p2
+    >>> print(p2)
        2
     9 x + 5 x + 1
-    >>> print np.polymul(p1, p2)
+    >>> print(np.polymul(p1, p2))
        4      3      2
     9 x + 23 x + 38 x + 17 x + 3
 
@@ -965,7 +965,7 @@ class poly1d(object):
     Construct the polynomial :math:`x^2 + 2x + 3`:
 
     >>> p = np.poly1d([1, 2, 3])
-    >>> print np.poly1d(p)
+    >>> print(np.poly1d(p))
        2
     1 x + 2 x + 3
 
@@ -1021,7 +1021,7 @@ class poly1d(object):
     using the `variable` parameter:
 
     >>> p = np.poly1d([1,2,3], variable='z')
-    >>> print p
+    >>> print(p)
        2
     1 z + 2 z + 3
 

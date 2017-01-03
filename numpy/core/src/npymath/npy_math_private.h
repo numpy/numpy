@@ -486,8 +486,12 @@ do {                                                            \
  */
 #ifdef NPY_USE_C99_COMPLEX
 
-/* Microsoft C defines _MSC_VER */
-#ifdef _MSC_VER
+/*
+ * Microsoft C defines _MSC_VER
+ * Intel compiler does not use MSVC complex types, but defines _MSC_VER by
+ * default.
+ */
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef union {
         npy_cdouble npy_z;
         _Dcomplex c99_z;
@@ -535,5 +539,6 @@ typedef union {
         npy_clongdouble c99_z;
 } __npy_clongdouble_to_c99_cast;
 #endif /* !NPY_USE_C99_COMPLEX */
+
 
 #endif /* !_NPY_MATH_PRIVATE_H_ */

@@ -14,10 +14,8 @@
 #include "Python.h"
 
 #include "npy_config.h"
-#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
-#endif
 
 #include "npy_pycompat.h"
 
@@ -370,10 +368,10 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+                             NPY_CASTING casting,
+                             PyArrayObject **operands,
+                             PyObject *type_tup,
+                             PyArray_Descr **out_dtypes)
 {
     int ret;
     ret = PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting, operands,
@@ -384,11 +382,10 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
 
     /* The type resolver would have upcast already */
     if (out_dtypes[0]->type_num == NPY_BOOL) {
-        if (DEPRECATE("numpy boolean negative (the unary `-` operator) is "
-                      "deprecated, use the bitwise_xor (the `^` operator) "
-                      "or the logical_xor function instead.") < 0) {
-            return -1;
-        }
+        PyErr_Format(PyExc_TypeError,
+            "The numpy boolean negative, the `-` operator, is not supported, "
+            "use the `~` operator or the logical_not function instead.");
+        return -1;
     }
 
     return ret;
@@ -799,11 +796,11 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
         /* The type resolver would have upcast already */
         if (out_dtypes[0]->type_num == NPY_BOOL) {
-            if (DEPRECATE("numpy boolean subtract (the binary `-` operator) is "
-                          "deprecated, use the bitwise_xor (the `^` operator) "
-                          "or the logical_xor function instead.") < 0) {
-                return -1;
-            }
+            PyErr_Format(PyExc_TypeError,
+                "numpy boolean subtract, the `-` operator, is deprecated, "
+                "use the bitwise_xor, the `^` operator, or the logical_xor "
+                "function instead.");
+            return -1;
         }
         return ret;
     }
@@ -1090,6 +1087,7 @@ type_reso_error: {
     }
 }
 
+
 /*
  * This function applies the type resolution rules for division.
  * In particular, there are a number of special cases with datetime:
@@ -1209,6 +1207,41 @@ type_reso_error: {
         return -1;
     }
 }
+
+/*
+ * Function to check and report floor division warning when python2.x is 
+ * invoked with -3 switch 
+ * See PEP238 and #7949 for numpy
+ * This function will not be hit for py3 or when __future__ imports division. 
+ * See generate_umath.py for reason
+*/
+NPY_NO_EXPORT int
+PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+ /* Depreciation checks needed only on python 2 */
+#if !defined(NPY_PY3K)
+    int type_num1, type_num2;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* If both types are integer, warn the user, same as python does */ 
+    if (Py_DivisionWarningFlag &&
+        (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+        (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)))
+    {
+        PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
+    } 
+#endif  
+
+   return PyUFunc_DivisionTypeResolver(ufunc, casting, operands, 
+                                       type_tup, out_dtypes);
+}
+
 
 static int
 find_userloop(PyUFuncObject *ufunc,
@@ -2106,7 +2139,6 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
-        int matched = 1;
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < nop; ++j) {
@@ -2116,17 +2148,17 @@ type_tuple_type_resolver(PyUFuncObject *self,
         if (n_specified == nop) {
             for (j = 0; j < nop; ++j) {
                 if (types[j] != specified_types[j] &&
-                                specified_types[j] != NPY_NOTYPE) {
-                    matched = 0;
+                        specified_types[j] != NPY_NOTYPE) {
                     break;
                 }
             }
-        } else {
-            if (types[nin] != specified_types[0]) {
-                matched = 0;
+            if (j < nop) {
+                /* no match */
+                continue;
             }
         }
-        if (!matched) {
+        else if (types[nin] != specified_types[0]) {
+            /* no match */
             continue;
         }
 
@@ -2136,29 +2168,23 @@ type_tuple_type_resolver(PyUFuncObject *self,
                     types, NULL,
                     &no_castable_output, &err_src_typecode,
                     &err_dst_typecode)) {
-            /* Error */
             case -1:
+                /* Error */
                 return -1;
-            /* It worked */
+            case 0:
+                /* Cannot cast inputs */
+                continue;
             case 1:
+                /* Success */
                 set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
                 return 0;
-            /* Didn't work */
-            case 0:
-                PyErr_Format(PyExc_TypeError,
-                     "found a loop for ufunc '%s' "
-                     "matching the type-tuple, "
-                     "but the inputs and/or outputs could not be "
-                     "cast according to the casting rule",
-                     ufunc_name);
-                return -1;
         }
     }
 
     /* If no function was found, throw an error */
     PyErr_Format(PyExc_TypeError,
-            "No loop matching the specified signature was found "
-            "for ufunc %s", ufunc_name);
+            "No loop matching the specified signature and casting\n"
+            "was found for ufunc %s", ufunc_name);
 
     return -1;
 }

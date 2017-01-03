@@ -17,10 +17,9 @@ import textwrap
 import re
 import random
 
-import nose
-
 from numpy.compat import asbytes, asstr
 import numpy.f2py
+from numpy.testing import SkipTest, temppath
 
 try:
     from hashlib import md5
@@ -32,6 +31,7 @@ except ImportError:
 #
 
 _module_dir = None
+
 
 def _cleanup():
     global _module_dir
@@ -46,6 +46,7 @@ def _cleanup():
             pass
         _module_dir = None
 
+
 def get_module_dir():
     global _module_dir
     if _module_dir is None:
@@ -55,18 +56,21 @@ def get_module_dir():
             sys.path.insert(0, _module_dir)
     return _module_dir
 
+
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     d = get_module_dir()
     for j in range(5403, 9999999):
         name = "_test_ext_module_%d" % j
         fn = os.path.join(d, name)
-        if name not in sys.modules and not os.path.isfile(fn+'.py'):
+        if name not in sys.modules and not os.path.isfile(fn + '.py'):
             return name
     raise RuntimeError("Failed to create a temporary module name")
 
+
 def _memoize(func):
     memo = {}
+
     def wrapper(*a, **kw):
         key = repr((a, kw))
         if key not in memo:
@@ -85,6 +89,7 @@ def _memoize(func):
 #
 # Building modules
 #
+
 
 @_memoize
 def build_module(source_files, options=[], skip=[], only=[], module_name=None):
@@ -144,6 +149,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     __import__(module_name)
     return sys.modules[module_name]
 
+
 @_memoize
 def build_code(source_code, options=[], skip=[], only=[], suffix=None,
                module_name=None):
@@ -153,22 +159,19 @@ def build_code(source_code, options=[], skip=[], only=[], suffix=None,
     """
     if suffix is None:
         suffix = '.f'
-
-    fd, tmp_fn = tempfile.mkstemp(suffix=suffix)
-    os.write(fd, asbytes(source_code))
-    os.close(fd)
-
-    try:
-        return build_module([tmp_fn], options=options, skip=skip, only=only,
+    with temppath(suffix=suffix) as path:
+        with open(path, 'w') as f:
+            f.write(source_code)
+        return build_module([path], options=options, skip=skip, only=only,
                             module_name=module_name)
-    finally:
-        os.unlink(tmp_fn)
 
 #
 # Check if compilers are available at all...
 #
 
 _compiler_status = None
+
+
 def _get_compiler_status():
     global _compiler_status
     if _compiler_status is not None:
@@ -201,30 +204,30 @@ sys.exit(99)
 """
     code = code % dict(syspath=repr(sys.path))
 
-    fd, script = tempfile.mkstemp(suffix='.py')
-    os.write(fd, asbytes(code))
-    os.close(fd)
+    with temppath(suffix='.py') as script:
+        with open(script, 'w') as f:
+            f.write(code)
 
-    try:
         cmd = [sys.executable, script, 'config']
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
-        m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
-        if m:
-            _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
-                                bool(int(m.group(3))))
-    finally:
-        os.unlink(script)
 
+    m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
+    if m:
+        _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
+                            bool(int(m.group(3))))
     # Finished
     return _compiler_status
+
 
 def has_c_compiler():
     return _get_compiler_status()[0]
 
+
 def has_f77_compiler():
     return _get_compiler_status()[1]
+
 
 def has_f90_compiler():
     return _get_compiler_status()[2]
@@ -232,6 +235,7 @@ def has_f90_compiler():
 #
 # Building with distutils
 #
+
 
 @_memoize
 def build_module_distutils(source_files, config_code, module_name, **kw):
@@ -270,7 +274,7 @@ def configuration(parent_name='',top_path=None):
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     setup(configuration=configuration)
-""" % dict(config_code=config_code, syspath = repr(sys.path))
+""" % dict(config_code=config_code, syspath=repr(sys.path))
 
     script = os.path.join(d, get_temp_module_name() + '.py')
     dst_sources.append(script)
@@ -304,6 +308,7 @@ if __name__ == "__main__":
 # Unittest convenience
 #
 
+
 class F2PyTest(object):
     code = None
     sources = None
@@ -320,7 +325,7 @@ class F2PyTest(object):
 
         # Check compiler availability first
         if not has_c_compiler():
-            raise nose.SkipTest("No C compiler available")
+            raise SkipTest("No C compiler available")
 
         codes = []
         if self.sources:
@@ -336,9 +341,9 @@ class F2PyTest(object):
             elif fn.endswith('.f90'):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
-            raise nose.SkipTest("No Fortran 77 compiler available")
+            raise SkipTest("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
-            raise nose.SkipTest("No Fortran 90 compiler available")
+            raise SkipTest("No Fortran 90 compiler available")
 
         # Build the module
         if self.code is not None:

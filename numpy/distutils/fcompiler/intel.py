@@ -10,6 +10,7 @@ compilers = ['IntelFCompiler', 'IntelVisualFCompiler',
              'IntelItaniumFCompiler', 'IntelItaniumVisualFCompiler',
              'IntelEM64VisualFCompiler', 'IntelEM64TFCompiler']
 
+
 def intel_version_match(type):
     # Match against the important stuff in the version string
     return simple_version_match(start=r'Intel.*?Fortran.*?(?:%s).*?Version' % (type,))
@@ -45,18 +46,17 @@ class IntelFCompiler(BaseIntelFCompiler):
         }
 
     pic_flags = ['-fPIC']
-    module_dir_switch = '-module ' # Don't remove ending space!
+    module_dir_switch = '-module '  # Don't remove ending space!
     module_include_switch = '-I'
 
     def get_flags_free(self):
-        return ["-FR"]
+        return ['-FR']
 
     def get_flags(self):
         return ['-fPIC']
 
-    def get_flags_opt(self):
-        #return ['-i8 -xhost -openmp -fp-model strict']
-        return ['-xhost -openmp -fp-model strict']
+    def get_flags_opt(self):  # Scipy test failures with -O2
+        return ['-xhost -openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
         return []
@@ -119,12 +119,11 @@ class IntelEM64TFCompiler(IntelFCompiler):
     def get_flags(self):
         return ['-fPIC']
 
-    def get_flags_opt(self):
-        #return ['-i8 -xhost -openmp -fp-model strict']
-        return ['-xhost -openmp -fp-model strict']
+    def get_flags_opt(self):  # Scipy test failures with -O2
+        return ['-openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
-        return []
+        return ['']
 
 # Is there no difference in the version string between the above compilers
 # and the Visual compilers?
@@ -145,18 +144,18 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
 
     executables = {
         'version_cmd'  : None,
-        'compiler_f77' : [None, "-FI", "-w90", "-w95"],
-        'compiler_fix' : [None, "-FI", "-4L72", "-w"],
+        'compiler_f77' : [None],
+        'compiler_fix' : [None],
         'compiler_f90' : [None],
-        'linker_so'    : ['<F90>', "-shared"],
+        'linker_so'    : [None],
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None
         }
 
     compile_switch = '/c '
-    object_switch = '/Fo'     #No space after /Fo!
-    library_switch = '/OUT:'  #No space after /OUT:!
-    module_dir_switch = '/module:' #No space after /module:
+    object_switch = '/Fo'     # No space after /Fo!
+    library_switch = '/OUT:'  # No space after /OUT:!
+    module_dir_switch = '/module:'  # No space after /module:
     module_include_switch = '/I'
 
     def get_flags(self):
@@ -164,7 +163,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return opt
 
     def get_flags_free(self):
-        return ["-FR"]
+        return []
 
     def get_flags_debug(self):
         return ['/4Yb', '/d2']
@@ -173,7 +172,7 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/O1']  # Scipy test failures with /O2
 
     def get_flags_arch(self):
-        return ["/arch:IA-32", "/QaxSSE3"]
+        return ["/arch:IA32", "/QaxSSE3"]
 
     def runtime_library_dir_option(self, dir):
         raise NotImplementedError
@@ -185,7 +184,7 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
 
     version_match = intel_version_match('Itanium')
 
-    possible_executables = ['efl'] # XXX this is a wild guess
+    possible_executables = ['efl']  # XXX this is a wild guess
     ar_exe = IntelVisualFCompiler.ar_exe
 
     executables = {
@@ -203,10 +202,10 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     compiler_type = 'intelvem'
     description = 'Intel Visual Fortran Compiler for 64-bit apps'
 
-    version_match = simple_version_match(start='Intel\(R\).*?64,')
+    version_match = simple_version_match(start=r'Intel\(R\).*?64,')
 
     def get_flags_arch(self):
-        return ["/arch:SSE2"]
+        return ['']
 
 
 if __name__ == '__main__':

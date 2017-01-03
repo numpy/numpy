@@ -317,6 +317,22 @@ def test_as_strided():
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
 
+def as_strided_writeable():
+    arr = np.ones(10)
+    view = as_strided(arr, writeable=False)
+    assert_(not view.flags.writeable)
+
+    # Check that writeable also is fine:
+    view = as_strided(arr, writeable=True)
+    assert_(view.flags.writeable)
+    view[...] = 3
+    assert_array_equal(arr, np.full_like(arr, 3))
+
+    # Test that things do not break down for readonly:
+    arr.flags.writeable = False
+    view = as_strided(arr, writeable=False)
+    view = as_strided(arr, writeable=True)
+    assert_(not view.flags.writeable)
 
 
 class VerySimpleSubClass(np.ndarray):
@@ -390,6 +406,14 @@ def test_writeable():
     original.flags.writeable = False
     _, result = broadcast_arrays(0, original)
     assert_equal(result.flags.writeable, False)
+
+    # regresssion test for GH6491
+    shape = (2,)
+    strides = [0]
+    tricky_array = as_strided(np.array(0), shape, strides)
+    other = np.zeros((1,))
+    first, second = broadcast_arrays(tricky_array, other)
+    assert_(first.shape == second.shape)
 
 
 def test_reference_types():

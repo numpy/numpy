@@ -6,7 +6,7 @@ Structured Arrays
 Introduction
 ============
 
-Numpy provides powerful capabilities to create arrays of structured datatype.
+NumPy provides powerful capabilities to create arrays of structured datatype.
 These arrays permit one to manipulate the data by named fields. A simple 
 example will show what is meant.: ::
 
@@ -27,7 +27,7 @@ position we get the second structure: ::
 Conveniently, one can access any field of the array by indexing using the
 string that names that field. ::
 
- >>> y = x['foo']
+ >>> y = x['bar']
  >>> y
  array([ 2.,  3.], dtype=float32)
  >>> y[:] = 2*y
@@ -79,7 +79,7 @@ The type specifiers can take 4 different forms: ::
      Don't use these in new code!
   d) Single character type specifiers (e.g H for unsigned short ints).
      Avoid using these unless you must. Details can be found in the
-     Numpy book
+     NumPy book
 
 These different styles can be mixed within the same string (but why would you
 want to do that?). Furthermore, each type specifier can be prefixed
@@ -258,6 +258,19 @@ appropriate :ref:`view`: ::
  >>> recordarr = arr.view(dtype=dtype((np.record, arr.dtype)), 
  ...                      type=np.recarray)
 
+For convenience, viewing an ndarray as type `np.recarray` will automatically
+convert to `np.record` datatype, so the dtype can be left out of the view: ::
+
+ >>> recordarr = arr.view(np.recarray)
+ >>> recordarr.dtype
+ dtype((numpy.record, [('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')]))
+
+To get back to a plain ndarray both the dtype and type must be reset. The
+following view does so, taking into account the unusual case that the
+recordarr was not a structured type: ::
+
+ >>> arr2 = recordarr.view(recordarr.dtype.fields or recordarr.dtype, np.ndarray)
+
 Record array fields accessed by index or by attribute are returned as a record
 array if the field has a structured type but as a plain ndarray otherwise. ::
 
@@ -272,33 +285,6 @@ Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but
 may still be accessed by index.
 
-Partial Attribute Access
-------------------------
-
-The differences between record arrays and plain structured arrays induce a
-small performance penalty. It is possible to apply one or the other view
-independently if desired. To allow field access by attribute only on the array
-object it is sufficient to view an array as a recarray: ::
-
- >>> recarr = arr.view(np.recarray)
-
-This type of view is commonly used, for example in np.npyio and
-np.recfunctions. Note that unlike full record arrays the individual elements of
-such a view do not have field attributes::
-
- >>> recarr[0].foo
- AttributeError: 'numpy.void' object has no attribute 'foo'
-
-To use the np.record dtype only, convert the dtype using the (base_class,
-dtype) form described in numpy.dtype.  This type of view is rarely used. ::
-
- >>> arr_records = arr.view(dtype((np.record, arr.dtype)))
-
-In documentation, the term 'structured array' will refer to objects of type
-np.ndarray with structured dtype, 'record array' will refer to structured
-arrays subclassed as np.recarray and whose dtype is of type np.record, and
-'recarray' will refer to arrays subclassed as np.recarray but whose dtype is
-not of type np.record.
 
 """
 from __future__ import division, absolute_import, print_function

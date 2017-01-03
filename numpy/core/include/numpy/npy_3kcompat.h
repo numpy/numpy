@@ -53,6 +53,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
  */
 #endif /* NPY_PY3K */
 
+/* Py3 changes PySlice_GetIndicesEx' first argument's type to PyObject* */
+#ifdef NPY_PY3K
+#  define NpySlice_GetIndicesEx PySlice_GetIndicesEx
+#else
+#  define NpySlice_GetIndicesEx(op, nop, start, end, step, slicelength) \
+    PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
+#endif
+
 /*
  * PyString -> PyBytes
  */
@@ -147,8 +155,8 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
 static NPY_INLINE FILE*
 npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
-    int fd, fd2;
-    PyObject *ret, *os;
+    int fd, fd2, unbuf;
+    PyObject *ret, *os, *io, *io_raw;
     npy_off_t pos;
     FILE *handle;
 
@@ -193,9 +201,30 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     /* Record the original raw file handle position */
     *orig_pos = npy_ftell(handle);
     if (*orig_pos == -1) {
-        PyErr_SetString(PyExc_IOError, "obtaining file position failed");
-        fclose(handle);
-        return NULL;
+        /* The io module is needed to determine if buffering is used */
+        io = PyImport_ImportModule("io");
+        if (io == NULL) {
+            fclose(handle);
+            return NULL;
+        }
+        /* File object instances of RawIOBase are unbuffered */
+        io_raw = PyObject_GetAttrString(io, "RawIOBase");
+        Py_DECREF(io);
+        if (io_raw == NULL) {
+            fclose(handle);
+            return NULL;
+        }
+        unbuf = PyObject_IsInstance(file, io_raw);
+        Py_DECREF(io_raw);
+        if (unbuf == 1) {
+            /* Succeed if the IO is unbuffered */
+            return handle;
+        }
+        else {
+            PyErr_SetString(PyExc_IOError, "obtaining file position failed");
+            fclose(handle);
+            return NULL;
+        }
     }
 
     /* Seek raw handle to the Python-side position */
@@ -224,8 +253,8 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 static NPY_INLINE int
 npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
 {
-    int fd;
-    PyObject *ret;
+    int fd, unbuf;
+    PyObject *ret, *io, *io_raw;
     npy_off_t position;
 
     position = npy_ftell(handle);
@@ -241,9 +270,30 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     if (fd == -1) {
         return -1;
     }
+
     if (npy_lseek(fd, orig_pos, SEEK_SET) == -1) {
-        PyErr_SetString(PyExc_IOError, "seeking file failed");
-        return -1;
+
+        /* The io module is needed to determine if buffering is used */
+        io = PyImport_ImportModule("io");
+        if (io == NULL) {
+            return -1;
+        }
+        /* File object instances of RawIOBase are unbuffered */
+        io_raw = PyObject_GetAttrString(io, "RawIOBase");
+        Py_DECREF(io);
+        if (io_raw == NULL) {
+            return -1;
+        }
+        unbuf = PyObject_IsInstance(file, io_raw);
+        Py_DECREF(io_raw);
+        if (unbuf == 1) {
+            /* Succeed if the IO is unbuffered */
+            return 0;
+        }
+        else {
+            PyErr_SetString(PyExc_IOError, "seeking file failed");
+            return -1;
+        }
     }
 
     if (position == -1) {
@@ -272,40 +322,19 @@ npy_PyFile_Check(PyObject *file)
     return 1;
 }
 
-/*
- * DEPRECATED DO NOT USE
- * use npy_PyFile_DupClose2 instead
- * this function will mess ups python3 internal file object buffering
- * Close the dup-ed file handle, and seek the Python one to the current position
- */
-static NPY_INLINE int
-npy_PyFile_DupClose(PyObject *file, FILE* handle)
-{
-    PyObject *ret;
-    Py_ssize_t position;
-    position = npy_ftell(handle);
-    fclose(handle);
-
-    ret = PyObject_CallMethod(file, "seek", NPY_SSIZE_T_PYFMT "i", position, 0);
-    if (ret == NULL) {
-        return -1;
-    }
-    Py_DECREF(ret);
-    return 0;
-}
-
-
 #else
 
-/* DEPRECATED, DO NOT USE */
-#define npy_PyFile_DupClose(f, h) npy_PyFile_DupClose2((f), (h), 0)
-
-/* use these */
 static NPY_INLINE FILE *
 npy_PyFile_Dup2(PyObject *file,
                 const char *NPY_UNUSED(mode), npy_off_t *NPY_UNUSED(orig_pos))
 {
-    return PyFile_AsFile(file);
+    FILE * fp = PyFile_AsFile(file);
+    if (fp == NULL) {
+        PyErr_SetString(PyExc_IOError,
+                        "first argument must be an open file");
+        return NULL;
+    }
+    return fp;
 }
 
 static NPY_INLINE int
@@ -318,24 +347,6 @@ npy_PyFile_DupClose2(PyObject *NPY_UNUSED(file), FILE* NPY_UNUSED(handle),
 #define npy_PyFile_Check PyFile_Check
 
 #endif
-
-/*
- * DEPRECATED, DO NOT USE
- * Use npy_PyFile_Dup2 instead.
- * This function will mess up python3 internal file object buffering.
- * Get a FILE* handle to the file represented by the Python object.
- */
-static NPY_INLINE FILE*
-npy_PyFile_Dup(PyObject *file, char *mode)
-{
-    npy_off_t orig;
-    if (DEPRECATE("npy_PyFile_Dup is deprecated, use "
-                  "npy_PyFile_Dup2") < 0) {
-        return NULL;
-    }
-
-    return npy_PyFile_Dup2(file, mode, &orig);
-}
 
 static NPY_INLINE PyObject*
 npy_PyFile_OpenFile(PyObject *filename, const char *mode)
@@ -370,7 +381,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
 {
     int v;
     v = PyObject_RichCompareBool(i1, i2, Py_LT);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = -1;
         return 1;
     }
@@ -379,7 +390,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
     }
 
     v = PyObject_RichCompareBool(i1, i2, Py_GT);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = 1;
         return 1;
     }
@@ -388,7 +399,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
     }
 
     v = PyObject_RichCompareBool(i1, i2, Py_EQ);
-    if (v == 0) {
+    if (v == 1) {
         *cmp = 0;
         return 1;
     }

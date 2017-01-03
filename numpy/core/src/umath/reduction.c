@@ -13,10 +13,8 @@
 #include <Python.h>
 
 #include "npy_config.h"
-#ifdef ENABLE_SEPARATE_COMPILATION
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
-#endif
 
 #include <numpy/arrayobject.h>
 
@@ -29,7 +27,7 @@
 /*
  * Allocates a result array for a reduction operation, with
  * dimensions matching 'arr' except set to 1 with 0 stride
- * whereever axis_flags is True. Dropping the reduction axes
+ * wherever axis_flags is True. Dropping the reduction axes
  * from the result must be done later by the caller once the
  * computation is complete.
  *

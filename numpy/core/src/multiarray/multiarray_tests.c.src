@@ -1,6 +1,9 @@
+/* -*-c-*- */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
+#include "mem_overlap.h"
+#include "npy_extint128.h"
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -775,7 +778,7 @@ static PyObject *
 test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyArrayObject *array_obj;
-    npy_intp dims[3];   // max 3-dim
+    npy_intp dims[3];   /* max 3-dim */
     npy_intp i=0, j=0, k=0;
     npy_intp num_dims = 0;
     PyArray_Descr *descr = NULL;
@@ -947,6 +950,607 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
 }
 
 
+static PyObject *
+array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyObject *A = NULL;
+    PyObject *U = NULL;
+    Py_ssize_t b_input = 0;
+    Py_ssize_t max_work = -1;
+    int simplify = 0;
+    int require_ub_nontrivial = 0;
+    static char *kwlist[] = {"A", "U", "b", "max_work", "simplify",
+                             "require_ub_nontrivial", NULL};
+
+    diophantine_term_t terms[2*NPY_MAXDIMS+2];
+    npy_int64 x[2*NPY_MAXDIMS+2];
+    npy_int64 b;
+    unsigned int nterms, j;
+    mem_overlap_t result = MEM_OVERLAP_YES;
+    PyObject *retval = NULL;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!n|nii", kwlist,
+                                     &PyTuple_Type, &A,
+                                     &PyTuple_Type, &U,
+                                     &b_input, &max_work, &simplify,
+                                     &require_ub_nontrivial)) {
+        return NULL;
+    }
+
+    if (PyTuple_GET_SIZE(A) > sizeof(terms) / sizeof(diophantine_term_t)) {
+        PyErr_SetString(PyExc_ValueError, "too many terms in equation");
+        goto fail;
+    }
+
+    nterms = PyTuple_GET_SIZE(A);
+
+    if (PyTuple_GET_SIZE(U) != nterms) {
+        PyErr_SetString(PyExc_ValueError, "A, U must be tuples of equal length");
+        goto fail;
+    }
+
+    for (j = 0; j < nterms; ++j) {
+        terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
+        if (terms[j].a == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+        terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
+        if (terms[j].ub == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+    }
+
+    b = b_input;
+
+    NPY_BEGIN_THREADS;
+    if (simplify && !require_ub_nontrivial) {
+        if (diophantine_simplify(&nterms, terms, b)) {
+            result = MEM_OVERLAP_OVERFLOW;
+        }
+    }
+    if (result == MEM_OVERLAP_YES) {
+        result = solve_diophantine(nterms, terms, b, max_work, require_ub_nontrivial, x);
+    }
+    NPY_END_THREADS;
+
+    if (result == MEM_OVERLAP_YES) {
+        retval = PyTuple_New(nterms);
+        if (retval == NULL) {
+            goto fail;
+        }
+
+        for (j = 0; j < nterms; ++j) {
+            PyObject *obj;
+#if defined(NPY_PY3K)
+            obj = PyLong_FromSsize_t(x[j]);
+#else
+            obj = PyInt_FromSsize_t(x[j]);
+#endif
+            if (obj == NULL) {
+                goto fail;
+            }
+            PyTuple_SET_ITEM(retval, j, obj);
+        }
+    }
+    else if (result == MEM_OVERLAP_NO) {
+        retval = Py_None;
+        Py_INCREF(retval);
+    }
+    else if (result == MEM_OVERLAP_ERROR) {
+        PyErr_SetString(PyExc_ValueError, "Invalid arguments");
+    }
+    else if (result == MEM_OVERLAP_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError, "Integer overflow");
+    }
+    else if (result == MEM_OVERLAP_TOO_HARD) {
+        PyErr_SetString(PyExc_RuntimeError, "Too much work done");
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown error");
+    }
+
+    return retval;
+
+fail:
+    Py_XDECREF(retval);
+    return NULL;
+}
+
+
+static PyObject *
+array_internal_overlap(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyArrayObject * self = NULL;
+    static char *kwlist[] = {"self", "max_work", NULL};
+
+    mem_overlap_t result;
+    Py_ssize_t max_work = NPY_MAY_SHARE_EXACT;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|n", kwlist,
+                                     PyArray_Converter, &self,
+                                     &max_work)) {
+        return NULL;
+    }
+
+    if (max_work < -2) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for max_work");
+        goto fail;
+    }
+
+    NPY_BEGIN_THREADS;
+    result = solve_may_have_internal_overlap(self, max_work);
+    NPY_END_THREADS;
+
+    Py_XDECREF(self);
+
+    if (result == MEM_OVERLAP_NO) {
+        Py_RETURN_FALSE;
+    }
+    else if (result == MEM_OVERLAP_YES) {
+        Py_RETURN_TRUE;
+    }
+    else if (result == MEM_OVERLAP_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "Integer overflow in computing overlap");
+        return NULL;
+    }
+    else if (result == MEM_OVERLAP_TOO_HARD) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Exceeded max_work");
+        return NULL;
+    }
+    else {
+        /* Doesn't happen usually */
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Error in computing overlap");
+        return NULL;
+    }
+
+fail:
+    Py_XDECREF(self);
+    return NULL;
+}
+
+
+static PyObject *
+pylong_from_int128(npy_extint128_t value)
+{
+    PyObject *val_64 = NULL, *val = NULL, *tmp = NULL, *tmp2 = NULL;
+
+    val_64 = PyLong_FromLong(64);
+    if (val_64 == NULL) {
+        goto fail;
+    }
+
+    val = PyLong_FromUnsignedLongLong(value.hi);
+    if (val == NULL) {
+        goto fail;
+    }
+
+    tmp = PyNumber_Lshift(val, val_64);
+    if (tmp == NULL) {
+        goto fail;
+    }
+
+    Py_DECREF(val);
+    val = tmp;
+
+    tmp = PyLong_FromUnsignedLongLong(value.lo);
+    if (tmp == NULL) {
+        goto fail;
+    }
+
+    tmp2 = PyNumber_Or(val, tmp);
+    if (tmp2 == NULL) {
+        goto fail;
+    }
+
+    Py_DECREF(val);
+    Py_DECREF(tmp);
+
+    val = NULL;
+    tmp = NULL;
+
+    if (value.sign < 0) {
+        val = PyNumber_Negative(tmp2);
+        if (val == NULL) {
+            goto fail;
+        }
+        Py_DECREF(tmp2);
+        return val;
+    }
+    else {
+        val = tmp2;
+    }
+    return val;
+
+fail:
+    Py_XDECREF(val_64);
+    Py_XDECREF(tmp);
+    Py_XDECREF(tmp2);
+    Py_XDECREF(val);
+    return NULL;
+}
+
+
+static int
+int128_from_pylong(PyObject *obj, npy_extint128_t *result)
+{
+    PyObject *long_obj = NULL, *val_64 = NULL, *val_0 = NULL,
+        *mask_64 = NULL, *max_128 = NULL, *hi_bits = NULL,
+        *lo_bits = NULL, *tmp = NULL;
+    int cmp;
+    int negative_zero = 0;
+
+    if (PyBool_Check(obj)) {
+        /* False means negative zero */
+        negative_zero = 1;
+    }
+
+    long_obj = PyObject_CallFunction((PyObject*)&PyLong_Type, "O", obj);
+    if (long_obj == NULL) {
+        goto fail;
+    }
+
+    val_0 = PyLong_FromLong(0);
+    if (val_0 == NULL) {
+        goto fail;
+    }
+
+    val_64 = PyLong_FromLong(64);
+    if (val_64 == NULL) {
+        goto fail;
+    }
+
+    mask_64 = PyLong_FromUnsignedLongLong(0xffffffffffffffffULL);
+    if (mask_64 == NULL) {
+        goto fail;
+    }
+
+    tmp = PyNumber_Lshift(mask_64, val_64);
+    if (tmp == NULL) {
+        goto fail;
+    }
+    max_128 = PyNumber_Or(tmp, mask_64);
+    if (max_128 == NULL) {
+        goto fail;
+    }
+    Py_DECREF(tmp);
+    tmp = NULL;
+
+    cmp = PyObject_RichCompareBool(long_obj, val_0, Py_LT);
+    if (cmp == -1) {
+        goto fail;
+    }
+    else if (cmp == 1) {
+        tmp = PyNumber_Negative(long_obj);
+        if (tmp == NULL) {
+            goto fail;
+        }
+        Py_DECREF(long_obj);
+        long_obj = tmp;
+        tmp = NULL;
+        result->sign = -1;
+    }
+    else {
+        result->sign = 1;
+    }
+
+    cmp = PyObject_RichCompareBool(long_obj, max_128, Py_GT);
+    if (cmp == 1) {
+        PyErr_SetString(PyExc_OverflowError, "");
+        goto fail;
+    }
+    else if (cmp == -1) {
+        goto fail;
+    }
+
+    hi_bits = PyNumber_Rshift(long_obj, val_64);
+    if (hi_bits == NULL) {
+        goto fail;
+    }
+
+    lo_bits = PyNumber_And(long_obj, mask_64);
+    if (lo_bits == NULL) {
+        goto fail;
+    }
+
+    result->hi = PyLong_AsUnsignedLongLong(hi_bits);
+    if (result->hi == (unsigned PY_LONG_LONG)-1 && PyErr_Occurred()) {
+        goto fail;
+    }
+
+    result->lo = PyLong_AsUnsignedLongLong(lo_bits);
+    if (result->lo == (unsigned PY_LONG_LONG)-1 && PyErr_Occurred()) {
+        goto fail;
+    }
+
+    if (negative_zero && result->hi == 0 && result->lo == 0) {
+        result->sign = -1;
+    }
+
+    Py_XDECREF(long_obj);
+    Py_XDECREF(val_64);
+    Py_XDECREF(val_0);
+    Py_XDECREF(mask_64);
+    Py_XDECREF(max_128);
+    Py_XDECREF(hi_bits);
+    Py_XDECREF(lo_bits);
+    Py_XDECREF(tmp);
+    return 0;
+
+fail:
+    Py_XDECREF(long_obj);
+    Py_XDECREF(val_64);
+    Py_XDECREF(val_0);
+    Py_XDECREF(mask_64);
+    Py_XDECREF(max_128);
+    Py_XDECREF(hi_bits);
+    Py_XDECREF(lo_bits);
+    Py_XDECREF(tmp);
+    return -1;
+}
+
+
+static PyObject *
+extint_safe_binop(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PY_LONG_LONG a, b, c;
+    int op;
+    char overflow = 0;
+    if (!PyArg_ParseTuple(args, "LLi", &a, &b, &op)) {
+        return NULL;
+    }
+    if (op == 1) {
+        c = safe_add(a, b, &overflow);
+    }
+    else if (op == 2) {
+        c = safe_sub(a, b, &overflow);
+    }
+    else if (op == 3) {
+        c = safe_mul(a, b, &overflow);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "invalid op");
+        return NULL;
+    }
+    if (overflow) {
+        PyErr_SetString(PyExc_OverflowError, "");
+        return NULL;
+    }
+    return PyLong_FromLongLong(c);
+}
+
+
+static PyObject *
+extint_to_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PY_LONG_LONG a;
+    if (!PyArg_ParseTuple(args, "L", &a)) {
+        return NULL;
+    }
+    return pylong_from_int128(to_128(a));
+}
+
+
+static PyObject *
+extint_to_64(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a;
+    PY_LONG_LONG r;
+    char overflow = 0;
+    if (!PyArg_ParseTuple(args, "O", &a_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    r = to_64(a, &overflow);
+    if (overflow) {
+        PyErr_SetString(PyExc_OverflowError, "");
+        return NULL;
+    }
+    return PyLong_FromLongLong(r);
+}
+
+
+static PyObject *
+extint_mul_64_64(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PY_LONG_LONG a, b;
+    npy_extint128_t c;
+    if (!PyArg_ParseTuple(args, "LL", &a, &b)) {
+        return NULL;
+    }
+    c = mul_64_64(a, b);
+    return pylong_from_int128(c);
+}
+
+
+static PyObject *
+extint_add_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj, *b_obj;
+    npy_extint128_t a, b, c;
+    char overflow = 0;
+    if (!PyArg_ParseTuple(args, "OO", &a_obj, &b_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a) || int128_from_pylong(b_obj, &b)) {
+        return NULL;
+    }
+    c = add_128(a, b, &overflow);
+    if (overflow) {
+        PyErr_SetString(PyExc_OverflowError, "");
+        return NULL;
+    }
+    return pylong_from_int128(c);
+}
+
+
+static PyObject *
+extint_sub_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj, *b_obj;
+    npy_extint128_t a, b, c;
+    char overflow = 0;
+    if (!PyArg_ParseTuple(args, "OO", &a_obj, &b_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a) || int128_from_pylong(b_obj, &b)) {
+        return NULL;
+    }
+    c = sub_128(a, b, &overflow);
+    if (overflow) {
+        PyErr_SetString(PyExc_OverflowError, "");
+        return NULL;
+    }
+    return pylong_from_int128(c);
+}
+
+
+static PyObject *
+extint_neg_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a, b;
+    if (!PyArg_ParseTuple(args, "O", &a_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    b = neg_128(a);
+    return pylong_from_int128(b);
+}
+
+
+static PyObject *
+extint_shl_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a, b;
+    if (!PyArg_ParseTuple(args, "O", &a_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    b = shl_128(a);
+    return pylong_from_int128(b);
+}
+
+
+static PyObject *
+extint_shr_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a, b;
+    if (!PyArg_ParseTuple(args, "O", &a_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    b = shr_128(a);
+    return pylong_from_int128(b);
+}
+
+
+static PyObject *
+extint_gt_128(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj, *b_obj;
+    npy_extint128_t a, b;
+    if (!PyArg_ParseTuple(args, "OO", &a_obj, &b_obj)) {
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a) || int128_from_pylong(b_obj, &b)) {
+        return NULL;
+    }
+    if (gt_128(a, b)) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
+extint_divmod_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj, *ret = NULL, *tmp = NULL;
+    npy_extint128_t a, c;
+    PY_LONG_LONG b;
+    npy_int64 mod;
+    if (!PyArg_ParseTuple(args, "OL", &a_obj, &b)) {
+        goto fail;
+    }
+    if (b <= 0) {
+        PyErr_SetString(PyExc_ValueError, "");
+        goto fail;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        goto fail;
+    }
+
+    c = divmod_128_64(a, b, &mod);
+
+    ret = PyTuple_New(2);
+
+    tmp = pylong_from_int128(c);
+    if (tmp == NULL) {
+        goto fail;
+    }
+    PyTuple_SET_ITEM(ret, 0, tmp);
+
+    tmp = PyLong_FromLongLong(mod);
+    if (tmp == NULL) {
+        goto fail;
+    }
+    PyTuple_SET_ITEM(ret, 1, tmp);
+    return ret;
+
+fail:
+    Py_XDECREF(ret);
+    Py_XDECREF(tmp);
+    return NULL;
+}
+
+
+static PyObject *
+extint_floordiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a, c;
+    PY_LONG_LONG b;
+    if (!PyArg_ParseTuple(args, "OL", &a_obj, &b)) {
+        return NULL;
+    }
+    if (b <= 0) {
+        PyErr_SetString(PyExc_ValueError, "");
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    c = floordiv_128_64(a, b);
+    return pylong_from_int128(c);
+}
+
+
+static PyObject *
+extint_ceildiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *a_obj;
+    npy_extint128_t a, c;
+    PY_LONG_LONG b;
+    if (!PyArg_ParseTuple(args, "OL", &a_obj, &b)) {
+        return NULL;
+    }
+    if (b <= 0) {
+        PyErr_SetString(PyExc_ValueError, "");
+        return NULL;
+    }
+    if (int128_from_pylong(a_obj, &a)) {
+        return NULL;
+    }
+    c = ceildiv_128_64(a, b);
+    return pylong_from_int128(c);
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -988,6 +1592,51 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"test_nditer_too_large",
         test_nditer_too_large,
+        METH_VARARGS, NULL},
+    {"solve_diophantine",
+        (PyCFunction)array_solve_diophantine,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"internal_overlap",
+        (PyCFunction)array_internal_overlap,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"extint_safe_binop",
+        extint_safe_binop,
+        METH_VARARGS, NULL},
+    {"extint_to_128",
+        extint_to_128,
+        METH_VARARGS, NULL},
+    {"extint_to_64",
+        extint_to_64,
+        METH_VARARGS, NULL},
+    {"extint_mul_64_64",
+        extint_mul_64_64,
+        METH_VARARGS, NULL},
+    {"extint_add_128",
+        extint_add_128,
+        METH_VARARGS, NULL},
+    {"extint_sub_128",
+        extint_sub_128,
+        METH_VARARGS, NULL},
+    {"extint_neg_128",
+        extint_neg_128,
+        METH_VARARGS, NULL},
+    {"extint_shl_128",
+        extint_shl_128,
+        METH_VARARGS, NULL},
+    {"extint_shr_128",
+        extint_shr_128,
+        METH_VARARGS, NULL},
+    {"extint_gt_128",
+        extint_gt_128,
+        METH_VARARGS, NULL},
+    {"extint_divmod_128_64",
+        extint_divmod_128_64,
+        METH_VARARGS, NULL},
+    {"extint_floordiv_128_64",
+        extint_floordiv_128_64,
+        METH_VARARGS, NULL},
+    {"extint_ceildiv_128_64",
+        extint_ceildiv_128_64,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

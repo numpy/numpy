@@ -203,7 +203,9 @@
 #define MAX_UINTP NPY_MAX_UINTP
 #define INTP_FMT NPY_INTP_FMT
 
+#ifndef PYPY_VERSION
 #define REFCOUNT PyArray_REFCOUNT
 #define MAX_ELSIZE NPY_MAX_ELSIZE
+#endif
 
 #endif

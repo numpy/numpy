@@ -1,11 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
-import numpy as np
-from numpy.testing import *
+import sys
+import locale
 import nose
 
-import locale
-import sys
+import numpy as np
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal, SkipTest
+)
+
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -16,7 +19,7 @@ _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
 
 def check_float_type(tp):
-    for x in [0, 1, -1, 1e20] :
+    for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
 
@@ -36,7 +39,7 @@ def test_float_types():
         python float precision.
 
     """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type, t
 
 def check_nan_inf_float(tp):
@@ -52,11 +55,11 @@ def test_nan_inf_float():
         python float precision.
 
     """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_nan_inf_float, t
 
 def check_complex_type(tp):
-    for x in [0, 1, -1, 1e20] :
+    for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x*1j)), str(complex(x*1j)),
@@ -80,7 +83,7 @@ def test_complex_types():
         python float precision.
 
     """
-    for t in [np.complex64, np.cdouble, np.clongdouble] :
+    for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type, t
 
 def test_complex_inf_nan():
@@ -160,12 +163,12 @@ def check_complex_type_print(tp):
 
 def test_float_type_print():
     """Check formatting when using print """
-    for t in [np.float32, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type_print, t
 
 def test_complex_type_print():
     """Check formatting when using print """
-    for t in [np.complex64, np.cdouble, np.clongdouble] :
+    for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type_print, t
 
 def test_scalar_format():
@@ -183,12 +186,10 @@ def test_scalar_format():
             ('{0:g}', 1.5, np.float16),
             ('{0:g}', 1.5, np.float32),
             ('{0:g}', 1.5, np.float64),
-            ('{0:g}', 1.5, np.longdouble)]
-    # Python 2.6 doesn't implement complex.__format__
-    if sys.version_info[:2] > (2, 6):
-        tests += [('{0:g}', 1.5+0.5j, np.complex64),
-                ('{0:g}', 1.5+0.5j, np.complex128),
-                ('{0:g}', 1.5+0.5j, np.clongdouble)]
+            ('{0:g}', 1.5, np.longdouble),
+            ('{0:g}', 1.5+0.5j, np.complex64),
+            ('{0:g}', 1.5+0.5j, np.complex128),
+            ('{0:g}', 1.5+0.5j, np.clongdouble)]
 
     for (fmat, val, valtype) in tests:
         try:
@@ -204,7 +205,7 @@ def test_scalar_format():
 def in_foreign_locale(func):
     """
     Swap LC_NUMERIC locale to one in which the decimal point is ',' and not '.'
-    If not possible, raise nose.SkipTest
+    If not possible, raise SkipTest
 
     """
     if sys.platform == 'win32':
@@ -222,8 +223,8 @@ def in_foreign_locale(func):
                 except locale.Error:
                     pass
             else:
-                raise nose.SkipTest("Skipping locale test, because "
-                                    "French locale not found")
+                raise SkipTest("Skipping locale test, because "
+                                "French locale not found")
             return func(*args, **kwargs)
         finally:
             locale.setlocale(locale.LC_NUMERIC, locale=curloc)

@@ -136,7 +136,8 @@ PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
     /* produce PyUnicode object */
 #ifdef Py_UNICODE_WIDE
     {
-        ret = (PyUnicodeObject *)PyUnicode_FromUnicode(buf, (Py_ssize_t) ucs4len);
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode((Py_UNICODE*)buf,
+                                                       (Py_ssize_t) ucs4len);
         if (ret == NULL) {
             goto fail;
         }

@@ -35,7 +35,18 @@ from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
                               UnknownFileError)
 from numpy.distutils.misc_util import (msvc_runtime_library,
+                                       msvc_runtime_version,
+                                       msvc_runtime_major,
                                        get_build_architecture)
+
+def get_msvcr_replacement():
+    """Replacement for outdated version of get_msvcr from cygwinccompiler"""
+    msvcr = msvc_runtime_library()
+    return [] if msvcr is None else [msvcr]
+
+# monkey-patch cygwinccompiler with our updated version from misc_util
+# to avoid getting an exception raised on Python 3.5
+distutils.cygwinccompiler.get_msvcr = get_msvcr_replacement
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
@@ -65,7 +76,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
             p.stdout.close()
-            result = re.search('(\d+\.\d+)', out_string)
+            result = re.search(r'(\d+\.\d+)', out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
 
@@ -87,34 +98,22 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         elif self.linker_dll == 'gcc':
             self.linker = 'g++'
 
-        p = subprocess.Popen(['gcc', '--version'], shell=True,
-                             stdout=subprocess.PIPE)
-        out_string = p.stdout.read()
-        p.stdout.close()
+        # **changes: eric jones 4/11/01
+        # 1. Check for import library on Windows.  Build if it doesn't exist.
 
-        # Before build with MinGW-W64 generate the python import library
-        # with gendef and dlltool according to the MingW-W64 FAQ.
-        # Use the MinGW-W64 provided msvc runtime import libraries.
-        # Don't call build_import_library() and build_msvcr_library.
+        build_import_library()
 
-        if 'MinGW-W64' not in str(out_string):
-
-            # **changes: eric jones 4/11/01
-            # 1. Check for import library on Windows.  Build if it doesn't
-            # exist.
-            build_import_library()
-
-            # Check for custom msvc runtime library on Windows. Build if it
-            # doesn't exist.
-            msvcr_success = build_msvcr_library()
-            msvcr_dbg_success = build_msvcr_library(debug=True)
-            if msvcr_success or msvcr_dbg_success:
-                # add preprocessor statement for using customized msvcr lib
-                self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
+        # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
+        msvcr_success = build_msvcr_library()
+        msvcr_dbg_success = build_msvcr_library(debug=True)
+        if msvcr_success or msvcr_dbg_success:
+            # add preprocessor statement for using customized msvcr lib
+            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
-        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
-        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
+        msvcr_version = msvc_runtime_version()
+        if msvcr_version:
+            self.define_macro('__MSVCRT_VERSION__', '0x%04i' % msvcr_version)
 
         # MS_WIN64 should be defined when building for amd64 on windows,
         # but python headers define it only for MS compilers, which has all
@@ -131,12 +130,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(
-                    compiler='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
-                             ' -O2 -msse2 -Wall',
-                    compiler_so='gcc -march=x86-64 -mtune=generic -DMS_WIN64'
-                                ' -O2 -msse2 -Wall -Wstrict-prototypes',
-                    linker_exe='gcc',
-                    linker_so='gcc -shared -Wl,-gc-sections -Wl,-s')
+                    compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
+                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
+                    linker_exe='gcc -g',
+                    linker_so='gcc -g -shared')
         else:
             if self.gcc_version <= "3.0.0":
                 self.set_executables(
@@ -154,21 +151,13 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                     linker_exe='g++ -mno-cygwin',
                     linker_so='g++ -mno-cygwin -shared')
             else:
-                # gcc-4 series releases do not support -mno-cygwin option i686
-                # build needs '-mincoming-stack-boundary=2' due to ABI
-                # incompatibility to Win32 ABI
-                self.set_executables(
-                    compiler='gcc -O2 -march=core2 -mtune=generic'
-                             ' -mfpmath=sse -msse2'
-                             ' -mincoming-stack-boundary=2 -Wall',
-                    compiler_so='gcc -O2 -march=core2 -mtune=generic'
-                                ' -mfpmath=sse -msse2'
-                                ' -mincoming-stack-boundary=2 -Wall'
-                                ' -Wstrict-prototypes',
-                    linker_exe='g++ ',
-                    linker_so='g++ -shared -Wl,-gc-sections -Wl,-s')
-        # added for python2.3 support we can't pass it through set_executables
-        # because pre 2.2 would fail
+                # gcc-4 series releases do not support -mno-cygwin option
+                self.set_executables(compiler='gcc -O2 -Wall',
+                                     compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
+                                     linker_exe='g++ ',
+                                     linker_so='g++ -shared')
+        # added for python2.3 support
+        # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
 
         # Maybe we should also append -mthreads, but then the finished dlls
@@ -195,7 +184,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
              extra_postargs=None,
              build_temp=None,
              target_lang=None):
-        # Include the appropiate MSVC runtime library if Python was built
+        # Include the appropriate MSVC runtime library if Python was built
         # with MSVC >= 7.0 (MinGW standard is msvcrt)
         runtime_library = msvc_runtime_library()
         if runtime_library:
@@ -264,12 +253,11 @@ def find_python_dll():
     print("Looking for %s" % dllname)
 
     # We can't do much here:
-    # - find it in python main dir
+    # - find it in the virtualenv (sys.prefix)
+    # - find it in python main dir (sys.base_prefix, if in a virtualenv)
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
-    lib_dirs = []
-    lib_dirs.append(sys.prefix)
-    lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    lib_dirs = [sys.prefix, sys.base_prefix, os.path.join(sys.prefix, 'lib')]
     try:
         lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
     except KeyError:
@@ -351,7 +339,8 @@ def build_msvcr_library(debug=False):
     msvcr_name = msvc_runtime_library()
 
     # Skip using a custom library for versions < MSVC 8.0
-    if int(msvcr_name.lstrip('msvcr')) < 80:
+    msvcr_ver = msvc_runtime_major()
+    if msvcr_ver and msvcr_ver < 80:
         log.debug('Skip building msvcr library:'
                   ' custom functionality not present')
         return False
@@ -415,6 +404,12 @@ def _build_import_library_amd64():
                   (out_file))
         return
 
+    # didn't exist in virtualenv, maybe in base distribution?
+    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
+    if os.path.isfile(base_file):
+        log.debug('Skip building import library: "%s" exists', base_file)
+        return
+
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
 
@@ -434,12 +429,23 @@ def _build_import_library_x86():
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
     if not os.path.isfile(lib_file):
-        log.warn('Cannot build import library: "%s" not found' % (lib_file))
-        return
+        # didn't find library file in virtualenv, try base distribution, too,
+        # and use that instead if found there
+        base_lib = os.path.join(sys.base_prefix, 'libs', lib_name)
+        if os.path.isfile(base_lib):
+            lib_file = base_lib
+        else:
+            log.warn('Cannot build import library: "%s" not found', lib_file)
+            return
     if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists' % (out_file))
+        log.debug('Skip building import library: "%s" exists', out_file)
         return
-    log.info('Building import library (ARCH=x86): "%s"' % (out_file))
+    # didn't find in virtualenv, try base distribution, too
+    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
+    if os.path.isfile(base_file):
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+    log.info('Building import library (ARCH=x86): "%s"', out_file)
 
     from numpy.distutils import lib2def
 
@@ -557,12 +563,8 @@ def check_embedded_msvcr_match_linked(msver):
     """msver is the ms runtime version used for the MANIFEST."""
     # check msvcr major version are the same for linking and
     # embedding
-    msvcv = msvc_runtime_library()
-    if msvcv:
-        assert msvcv.startswith("msvcr"), msvcv
-        # Dealing with something like "mscvr90" or "mscvr100", the last
-        # last digit is the minor release, want int("9") or int("10"):
-        maj = int(msvcv[5:-1])
+    maj = msvc_runtime_major()
+    if maj:
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \

@@ -112,7 +112,7 @@ Test the header writing.
     >>> for arr in basic_arrays + record_arrays:
     ...     f = BytesIO()
     ...     format.write_array_header_1_0(f, arr)   # XXX: arr is not a dict, items gets called on it
-    ...     print repr(f.getvalue())
+    ...     print(repr(f.getvalue()))
     ...
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (0,)}              \n"
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': ()}                \n"
@@ -287,7 +287,7 @@ import numpy as np
 from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec
+    dec, SkipTest
     )
 from numpy.lib import format
 
@@ -553,18 +553,7 @@ def test_pickle_python2_python3():
                   'py3-objarr.npy', 'py3-objarr.npz']:
         path = os.path.join(data_dir, fname)
 
-        if (fname.endswith('.npz') and sys.version_info[0] == 2 and
-                sys.version_info[1] < 7):
-            # Reading object arrays directly from zipfile appears to fail
-            # on Py2.6, see cfae0143b4
-            continue
-
         for encoding in ['bytes', 'latin1']:
-            if (sys.version_info[0] >= 3 and sys.version_info[1] < 4 and
-                    encoding == 'bytes'):
-                # The bytes encoding is available starting from Python 3.4
-                continue
-
             data_f = np.load(path, encoding=encoding)
             if fname.endswith('.npz'):
                 data = data_f['x']
@@ -635,6 +624,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
+@dec.slow
 def test_version_2_0_memmap():
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -812,7 +802,6 @@ def test_bad_header():
 
 
 def test_large_file_support():
-    from nose import SkipTest
     if (sys.platform == 'win32' or sys.platform == 'cygwin'):
         raise SkipTest("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
@@ -835,6 +824,27 @@ def test_large_file_support():
         f.seek(5368709120)
         r = np.load(f)
     assert_array_equal(r, d)
+
+
+@dec.slow
+@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
+def test_large_archive():
+    # Regression test for product of saving arrays with dimensions of array
+    # having a product that doesn't fit in int32.  See gh-7598 for details.
+    try:
+        a = np.empty((2**30, 2), dtype=np.uint8)
+    except MemoryError:
+        raise SkipTest("Could not create large file")
+
+    fname = os.path.join(tempdir, "large_archive")
+
+    with open(fname, "wb") as f:
+        np.savez(f, arr=a)
+
+    with open(fname, "rb") as f:
+        new_a = np.load(f)["arr"]
+
+    assert_(a.shape == new_a.shape)
 
 
 if __name__ == "__main__":

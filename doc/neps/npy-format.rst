@@ -199,7 +199,7 @@ bytes of the array.  Consumers can figure out the number of bytes
 by multiplying the number of elements given by the shape (noting
 that shape=() means there is 1 element) by dtype.itemsize.
 
-Format Specification: Version 1.0
+Format Specification: Version 2.0
 ---------------------------------
 
 The version 1.0 format only allowed the array header to have a

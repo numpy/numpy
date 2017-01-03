@@ -12,7 +12,8 @@ from .numeric import array
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
-    if a.ndim == 0: a.shape = (1,)
+    if a.ndim == 0:
+        a.shape = (1,)
     return a
 
 _convert_to_float = {
@@ -29,6 +30,8 @@ class finfo(object):
 
     Attributes
     ----------
+    bits : int
+        The number of bits occupied by the type.
     eps : float
         The smallest representable positive number such that
         ``1.0 + eps != 1.0``.  Type of `eps` is an appropriate floating
@@ -156,6 +159,7 @@ class finfo(object):
             setattr(self, word, getattr(machar, word))
         for word in ['tiny', 'resolution', 'epsneg']:
             setattr(self, word, getattr(machar, word).flat[0])
+        self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
         self.min = -self.max
         self.eps = machar.eps.flat[0]
@@ -170,25 +174,25 @@ class finfo(object):
         return self
 
     def __str__(self):
-        return '''\
-Machine parameters for %(dtype)s
----------------------------------------------------------------------
-precision=%(precision)3s   resolution= %(_str_resolution)s
-machep=%(machep)6s   eps=        %(_str_eps)s
-negep =%(negep)6s   epsneg=     %(_str_epsneg)s
-minexp=%(minexp)6s   tiny=       %(_str_tiny)s
-maxexp=%(maxexp)6s   max=        %(_str_max)s
-nexp  =%(nexp)6s   min=        -max
----------------------------------------------------------------------
-''' % self.__dict__
+        fmt = (
+            'Machine parameters for %(dtype)s\n'
+            '---------------------------------------------------------------\n'
+            'precision = %(precision)3s   resolution = %(_str_resolution)s\n'
+            'machep = %(machep)6s   eps =        %(_str_eps)s\n'
+            'negep =  %(negep)6s   epsneg =     %(_str_epsneg)s\n'
+            'minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n'
+            'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
+            'nexp =   %(nexp)6s   min =        -max\n'
+            '---------------------------------------------------------------\n'
+            )
+        return fmt % self.__dict__
 
     def __repr__(self):
         c = self.__class__.__name__
         d = self.__dict__.copy()
         d['klass'] = c
-        return ("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s," \
-               + " max=%(_str_max)s, dtype=%(dtype)s)") \
-                % d
+        return (("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s,"
+                 " max=%(_str_max)s, dtype=%(dtype)s)") % d)
 
 
 class iinfo(object):
@@ -199,6 +203,8 @@ class iinfo(object):
 
     Attributes
     ----------
+    bits : int
+        The number of bits occupied by the type.
     min : int
         The smallest integer expressible by the type.
     max : int
@@ -249,7 +255,7 @@ class iinfo(object):
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
-        if not self.kind in 'iu':
+        if self.kind not in 'iu':
             raise ValueError("Invalid integer data type.")
 
     def min(self):
@@ -282,13 +288,14 @@ class iinfo(object):
 
     def __str__(self):
         """String representation."""
-        return '''\
-Machine parameters for %(dtype)s
----------------------------------------------------------------------
-min = %(min)s
-max = %(max)s
----------------------------------------------------------------------
-''' % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
+        fmt = (
+            'Machine parameters for %(dtype)s\n'
+            '---------------------------------------------------------------\n'
+            'min = %(min)s\n'
+            'max = %(max)s\n'
+            '---------------------------------------------------------------\n'
+            )
+        return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,

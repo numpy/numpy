@@ -2,21 +2,16 @@
 from __future__ import division, absolute_import, print_function
 
 import sys, os
-from io import StringIO
+from io import BytesIO
 import re
-
-from Plex import *
-from Plex.Traditional import re as Re
+from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
+from plex.traditional import re as Re
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
         Scanner.__init__(self, self.lexicon, info, name)
 
     def begin(self, state_name):
-#        if self.state_name == '':
-#            print '<default>'
-#        else:
-#            print self.state_name
         Scanner.begin(self, state_name)
 
 def sep_seq(sequence, sep):
@@ -26,8 +21,8 @@ def sep_seq(sequence, sep):
     return pat
 
 def runScanner(data, scanner_class, lexicon=None):
-    info = StringIO(data)
-    outfo = StringIO()
+    info = BytesIO(data)
+    outfo = BytesIO()
     if lexicon is not None:
         scanner = scanner_class(lexicon, info)
     else:
@@ -194,7 +189,7 @@ def cleanComments(source):
             return SourceLines
 
     state = SourceLines
-    for line in StringIO(source):
+    for line in BytesIO(source):
         state = state(line)
     comments.flushTo(lines)
     return lines.getValue()
@@ -222,12 +217,12 @@ def removeHeader(source):
         return OutOfHeader
 
     state = LookingForHeader
-    for line in StringIO(source):
+    for line in BytesIO(source):
         state = state(line)
     return lines.getValue()
 
 def replaceDlamch(source):
-    """Replace dlamch_ calls with appropiate macros"""
+    """Replace dlamch_ calls with appropriate macros"""
     def repl(m):
         s = m.group(1)
         return dict(E='EPSILON', P='PRECISION', S='SAFEMINIMUM',

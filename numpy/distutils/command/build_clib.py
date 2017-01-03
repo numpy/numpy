@@ -30,7 +30,7 @@ class build_clib(old_build_clib):
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
         ('inplace', 'i', 'Build in-place'),
-        ('jobs=', 'j',
+        ('parallel=', 'j',
          "number of parallel jobs"),
         ]
 
@@ -40,16 +40,16 @@ class build_clib(old_build_clib):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
         self.inplace = 0
-        self.jobs = None
+        self.parallel = None
 
     def finalize_options(self):
-        if self.jobs:
+        if self.parallel:
             try:
-                self.jobs = int(self.jobs)
+                self.parallel = int(self.parallel)
             except ValueError:
-                raise ValueError("--jobs/-j argument must be an integer")
+                raise ValueError("--parallel/-j argument must be an integer")
         old_build_clib.finalize_options(self)
-        self.set_undefined_options('build', ('jobs', 'jobs'))
+        self.set_undefined_options('build', ('parallel', 'parallel'))
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:
@@ -290,6 +290,6 @@ class build_clib(old_build_clib):
         clib_libraries = build_info.get('libraries', [])
         for lname, binfo in libraries:
             if lname in clib_libraries:
-                clib_libraries.extend(binfo[1].get('libraries', []))
+                clib_libraries.extend(binfo.get('libraries', []))
         if clib_libraries:
             build_info['libraries'] = clib_libraries

@@ -1225,8 +1225,10 @@ add_newdoc('numpy.core.umath', 'floor',
 
 add_newdoc('numpy.core.umath', 'floor_divide',
     """
-    Return the largest integer smaller or equal to the division of the
-    inputs.
+    Return the largest integer smaller or equal to the division of the inputs.
+    It is equivalent to the Python ``//`` operator and pairs with the
+    Python ``%`` (`remainder`), function so that ``b = a % b + b * (a // b)``
+    up to roundoff.
 
     Parameters
     ----------
@@ -1243,6 +1245,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
 
     See Also
     --------
+    remainder : Remainder complementary to floor_divide.
     divide : Standard division.
     floor : Round a number to the nearest integer toward minus infinity.
     ceil : Round a number to the nearest integer toward infinity.
@@ -1527,7 +1530,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     Not a Number, positive infinity and negative infinity are considered
     to be non-finite.
 
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Also that positive infinity is not equivalent to negative infinity. But
     infinity is equivalent to positive infinity.  Errors result if the
@@ -1594,7 +1597,7 @@ add_newdoc('numpy.core.umath', 'isinf',
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754).
 
     Errors result if the second argument is supplied when the first
@@ -1647,7 +1650,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
     Examples
@@ -2393,11 +2396,11 @@ add_newdoc('numpy.core.umath', 'fmin',
     Examples
     --------
     >>> np.fmin([2, 3, 4], [1, 5, 2])
-    array([2, 5, 4])
+    array([1, 3, 2])
 
     >>> np.fmin(np.eye(2), [0.5, 2])
-    array([[ 1. ,  2. ],
-           [ 0.5,  2. ]])
+    array([[ 0.5,  0. ],
+           [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([  0.,   0.,  NaN])
@@ -2540,7 +2543,8 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
+    integer type raised to a negative integer power will raise a ValueError.
 
     Parameters
     ----------
@@ -2553,6 +2557,10 @@ add_newdoc('numpy.core.umath', 'power',
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    float_power : power function that promotes integers to float
 
     Examples
     --------
@@ -2579,6 +2587,63 @@ add_newdoc('numpy.core.umath', 'power',
     >>> np.power(x1, x2)
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'float_power',
+    """
+    First array elements raised to powers from second array, element-wise.
+
+    Raise each base in `x1` to the positionally-corresponding power in `x2`.
+    `x1` and `x2` must be broadcastable to the same shape. This differs from
+    the power function in that integers, float16, and float32  are promoted to
+    floats with a minimum precision of float64 so that the result is always
+    inexact.  The intent is that the function will return a usable result for
+    negative powers and seldom overflow for positive powers.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    x1 : array_like
+        The bases.
+    x2 : array_like
+        The exponents.
+
+    Returns
+    -------
+    y : ndarray
+        The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    power : power function that preserves type
+
+    Examples
+    --------
+    Cube each element in a list.
+
+    >>> x1 = range(6)
+    >>> x1
+    [0, 1, 2, 3, 4, 5]
+    >>> np.float_power(x1, 3)
+    array([   0.,    1.,    8.,   27.,   64.,  125.])
+
+    Raise the bases to different exponents.
+
+    >>> x2 = [1.0, 2.0, 3.0, 3.0, 2.0, 1.0]
+    >>> np.float_power(x1, x2)
+    array([  0.,   1.,   8.,  27.,  16.,   5.])
+
+    The effect of broadcasting.
+
+    >>> x2 = np.array([[1, 2, 3, 3, 2, 1], [1, 2, 3, 3, 2, 1]])
+    >>> x2
+    array([[1, 2, 3, 3, 2, 1],
+           [1, 2, 3, 3, 2, 1]])
+    >>> np.float_power(x1, x2)
+    array([[  0.,   1.,   8.,  27.,  16.,   5.],
+           [  0.,   1.,   8.,  27.,  16.,   5.]])
 
     """)
 
@@ -2689,9 +2754,9 @@ add_newdoc('numpy.core.umath', 'remainder',
     """
     Return element-wise remainder of division.
 
-    Computes ``x1 - floor(x1 / x2) * x2``, the result has the same sign as
-    the divisor `x2`. It is equivalent to the Python modulus operator
-    ``x1 % x2`` and should not be confused with the Matlab(TM) ``rem``
+    Computes the remainder complementary to the `floor_divide` function.  It is
+    equivalent to the Python modulus operator``x1 % x2`` and has the same sign
+    as the divisor `x2`. It should not be confused with the Matlab(TM) ``rem``
     function.
 
     Parameters
@@ -2707,11 +2772,12 @@ add_newdoc('numpy.core.umath', 'remainder',
     Returns
     -------
     y : ndarray
-        The remainder of the quotient ``x1/x2``, element-wise. Returns a
-        scalar if both  `x1` and `x2` are scalars.
+        The element-wise remainder of the quotient ``floor_divide(x1, x2)``.
+        Returns a scalar if both  `x1` and `x2` are scalars.
 
     See Also
     --------
+    floor_divide : Equivalent of Python ``//`` operator.
     fmod : Equivalent of the Matlab(TM) ``rem`` function.
     divide, floor
 
@@ -2799,7 +2865,13 @@ add_newdoc('numpy.core.umath', 'sign',
     """
     Returns an element-wise indication of the sign of a number.
 
-    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.
+    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.  nan
+    is returned for nan inputs.
+
+    For complex inputs, the `sign` function returns
+    ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
+
+    complex(nan, 0) is returned for complex nan inputs.
 
     Parameters
     ----------
@@ -2811,12 +2883,20 @@ add_newdoc('numpy.core.umath', 'sign',
     y : ndarray
       The sign of `x`.
 
+    Notes
+    -----
+    There is more than one definition of sign in common use for complex
+    numbers.  The definition used here is equivalent to :math:`x/\\sqrt{x*x}`
+    which is different from a common alternative, :math:`x/|x|`.
+
     Examples
     --------
     >>> np.sign([-5., 4.5])
     array([-1.,  1.])
     >>> np.sign(0)
     0
+    >>> np.sign(5-2j)
+    (1+0j)
 
     """)
 

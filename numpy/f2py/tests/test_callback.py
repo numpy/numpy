@@ -1,10 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-from numpy import array
 import math
-import util
 import textwrap
+
+from numpy import array
+from numpy.testing import run_module_suite, assert_, assert_equal, dec
+import util
+
 
 class TestF77Callback(util.F2PyTest):
     code = """
@@ -84,35 +86,38 @@ cf2py  intent(out) a
 
     def check_function(self, name):
         t = getattr(self.module, name)
-        r = t(lambda : 4)
-        assert_( r==4, repr(r))
-        r = t(lambda a:5, fun_extra_args=(6,))
-        assert_( r==5, repr(r))
-        r = t(lambda a:a, fun_extra_args=(6,))
-        assert_( r==6, repr(r))
-        r = t(lambda a:5+a, fun_extra_args=(7,))
-        assert_( r==12, repr(r))
-        r = t(lambda a:math.degrees(a), fun_extra_args=(math.pi,))
-        assert_( r==180, repr(r))
+        r = t(lambda: 4)
+        assert_(r == 4, repr(r))
+        r = t(lambda a: 5, fun_extra_args=(6,))
+        assert_(r == 5, repr(r))
+        r = t(lambda a: a, fun_extra_args=(6,))
+        assert_(r == 6, repr(r))
+        r = t(lambda a: 5 + a, fun_extra_args=(7,))
+        assert_(r == 12, repr(r))
+        r = t(lambda a: math.degrees(a), fun_extra_args=(math.pi,))
+        assert_(r == 180, repr(r))
         r = t(math.degrees, fun_extra_args=(math.pi,))
-        assert_( r==180, repr(r))
+        assert_(r == 180, repr(r))
 
         r = t(self.module.func, fun_extra_args=(6,))
-        assert_( r==17, repr(r))
+        assert_(r == 17, repr(r))
         r = t(self.module.func0)
-        assert_( r==11, repr(r))
+        assert_(r == 11, repr(r))
         r = t(self.module.func0._cpointer)
-        assert_( r==11, repr(r))
+        assert_(r == 11, repr(r))
+
         class A(object):
+
             def __call__(self):
                 return 7
+
             def mth(self):
                 return 9
         a = A()
         r = t(a)
-        assert_( r==7, repr(r))
+        assert_(r == 7, repr(r))
         r = t(a.mth)
-        assert_( r==9, repr(r))
+        assert_(r == 9, repr(r))
 
     def test_string_callback(self):
 
@@ -128,5 +133,4 @@ cf2py  intent(out) a
 
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

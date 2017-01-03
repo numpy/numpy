@@ -11,8 +11,7 @@ __all__ = np.__all__[:] # copy numpy namespace
 __all__ += ['rand', 'randn', 'repmat']
 
 def empty(shape, dtype=None, order='C'):
-    """
-    Return a new matrix of given shape and type, without initializing entries.
+    """Return a new matrix of given shape and type, without initializing entries.
 
     Parameters
     ----------
@@ -21,8 +20,9 @@ def empty(shape, dtype=None, order='C'):
     dtype : data-type, optional
         Desired output data-type.
     order : {'C', 'F'}, optional
-        Whether to store multi-dimensional data in C (row-major) or
-        Fortran (column-major) order in memory.
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
+        memory.
 
     See Also
     --------

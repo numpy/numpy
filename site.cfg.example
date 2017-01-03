@@ -8,6 +8,7 @@
 # will also be checked for the file ~/.numpy-site.cfg .
 
 # The format of the file is that of the standard library's ConfigParser module.
+# No interpolation is allowed, RawConfigParser class being used to load it.
 #
 #   http://docs.python.org/3/library/configparser.html
 #
@@ -35,7 +36,7 @@
 #           library_dirs = /usr/lib,/usr/local/lib
 #
 #   include_dirs
-#       List of directories to add to the header file earch path.
+#       List of directories to add to the header file search path.
 #           include_dirs = /usr/include:/usr/local/include
 #
 #   src_dirs 
@@ -68,7 +69,7 @@
 #           extra_compile_args = -g -ftree-vectorize
 #
 #   extra_link_args
-#       Add additional arguments to when libraries/executables
+#       Add additional arguments when libraries/executables
 #       are linked.
 #       Simple variable with no parsing done. 
 #       Provide a single line with all complete flags.
@@ -89,7 +90,7 @@
 # Atlas
 # -----
 # Atlas is an open source optimized implementation of the BLAS and Lapack
-# routines. Numpy will try to build against Atlas by default when available in
+# routines. NumPy will try to build against Atlas by default when available in
 # the system library dirs. To build numpy against a custom installation of
 # Atlas you can add an explicit section such as the following. Here we assume
 # that Atlas was configured with ``prefix=/opt/atlas``.
@@ -129,6 +130,27 @@
 # library_dirs = /opt/OpenBLAS/lib
 # include_dirs = /opt/OpenBLAS/include
 # runtime_library_dirs = /opt/OpenBLAS/lib
+
+# BLIS
+# ----
+# BLIS (https://github.com/flame/blis) also provides a BLAS interface.  It's a
+# relatively new library, its performance in some cases seems to match that of
+# MKL and OpenBLAS, but it hasn't been benchmarked with NumPy or Scipy yet.
+#
+# Notes on compiling BLIS itself:
+#   - the CBLAS interface (needed by NumPy) isn't built by default; define
+#     BLIS_ENABLE_CBLAS to build it.
+#   - ``./configure auto`` doesn't support 32-bit builds, see gh-7294 for
+#     details.
+# Notes on compiling NumPy against BLIS:
+#   - ``include_dirs`` below should be the directory where the BLIS cblas.h
+#     header is installed.
+#
+# [blis]
+# libraries = blis
+# library_dirs = /home/username/blis/lib
+# include_dirs = /home/username/blis/include/blis
+# runtime_library_dirs = /home/username/blis/lib
 
 # MKL
 #----

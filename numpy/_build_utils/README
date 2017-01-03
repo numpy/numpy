@@ -1,0 +1,8 @@
+=======
+WARNING
+=======
+
+This directory (numpy/_build_utils) is *not* part of the public numpy API,
+ - it is internal build support for numpy.
+ - it is only present in source distributions or during an in place build
+ - it is *not* installed with the rest of numpy

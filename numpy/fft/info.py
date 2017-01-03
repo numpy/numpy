@@ -91,7 +91,7 @@ represented by a complex exponential
 is the sampling interval.
 
 The values in the result follow so-called "standard" order: If ``A =
-fft(a, n)``, then ``A[0]`` contains the zero-frequency term (the mean of
+fft(a, n)``, then ``A[0]`` contains the zero-frequency term (the sum of
 the signal), which is always purely real for real inputs. Then ``A[1:n/2]``
 contains the positive-frequency terms, and ``A[n/2+1:]`` contains the
 negative-frequency terms, in order of decreasingly negative frequency.
@@ -116,7 +116,15 @@ The inverse DFT is defined as
    \\qquad m = 0,\\ldots,n-1.
 
 It differs from the forward transform by the sign of the exponential
-argument and the normalization by :math:`1/n`.
+argument and the default normalization by :math:`1/n`.
+
+Normalization
+-------------
+The default normalization has the direct transforms unscaled and the inverse
+transforms are scaled by :math:`1/n`. It is possible to obtain unitary
+transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is
+`None`) so that both direct and inverse transforms will be scaled by
+:math:`1/\\sqrt{n}`.
 
 Real and Hermitian transforms
 -----------------------------

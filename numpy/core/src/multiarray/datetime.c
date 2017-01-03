@@ -1232,12 +1232,18 @@ datetime_metadata_divides(
 {
     npy_uint64 num1, num2;
 
-    /* Generic units divide into anything */
-    if (divisor->base == NPY_FR_GENERIC) {
+    /*
+     * Any unit can always divide into generic units. In other words, we
+     * should be able to convert generic units into any more specific unit.
+     */
+    if (dividend->base == NPY_FR_GENERIC) {
         return 1;
     }
-    /* Non-generic units never divide into generic units */
-    else if (dividend->base == NPY_FR_GENERIC) {
+    /*
+     * However, generic units cannot always divide into more specific units.
+     * We cannot safely convert datetimes with units back into generic units.
+     */
+    else if (divisor->base == NPY_FR_GENERIC) {
         return 0;
     }
 
@@ -1310,9 +1316,6 @@ datetime_metadata_divides(
 
 /*
  * This provides the casting rules for the DATETIME data type units.
- *
- * Notably, there is a barrier between 'date units' and 'time units'
- * for all but 'unsafe' casting.
  */
 NPY_NO_EXPORT npy_bool
 can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
@@ -1325,31 +1328,26 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
             return 1;
 
         /*
-         * Only enforce the 'date units' vs 'time units' barrier with
-         * 'same_kind' casting.
+         * Can cast between all units with 'same_kind' casting.
          */
         case NPY_SAME_KIND_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
-                return (src_unit <= NPY_FR_D && dst_unit <= NPY_FR_D) ||
-                       (src_unit > NPY_FR_D && dst_unit > NPY_FR_D);
+                return 1;
             }
 
         /*
-         * Enforce the 'date units' vs 'time units' barrier and that
-         * casting is only allowed towards more precise units with
-         * 'safe' casting.
+         * Casting is only allowed towards more precise units with 'safe'
+         * casting.
          */
         case NPY_SAFE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
-                return (src_unit <= dst_unit) &&
-                       ((src_unit <= NPY_FR_D && dst_unit <= NPY_FR_D) ||
-                        (src_unit > NPY_FR_D && dst_unit > NPY_FR_D));
+                return (src_unit <= dst_unit);
             }
 
         /* Enforce equality with 'no' or 'equiv' casting */
@@ -1380,7 +1378,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAME_KIND_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= NPY_FR_M && dst_unit <= NPY_FR_M) ||
@@ -1394,7 +1392,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          */
         case NPY_SAFE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
-                return src_unit == dst_unit;
+                return src_unit == NPY_FR_GENERIC;
             }
             else {
                 return (src_unit <= dst_unit) &&
@@ -2248,6 +2246,14 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
             PyObject *offset;
             int seconds_offset, minutes_offset;
 
+            /* 2016-01-14, 1.11 */
+            PyErr_Clear();
+            if (DEPRECATE(
+                    "parsing timezone aware datetimes is deprecated; "
+                    "this will raise an error in the future") < 0) {
+                return -1;
+            }
+
             /* The utcoffset function should return a timedelta */
             offset = PyObject_CallMethod(tmp, "utcoffset", "O", obj);
             if (offset == NULL) {
@@ -2380,7 +2386,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
         /* Parse the ISO date */
         if (parse_iso_8601_datetime(str, len, meta->base, casting,
-                                &dts, NULL, &bestunit, NULL) < 0) {
+                                &dts, &bestunit, NULL) < 0) {
             Py_DECREF(bytes);
             return -1;
         }
@@ -3494,7 +3500,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
 
                 tmp_meta.base = -1;
                 if (parse_iso_8601_datetime(tmp_buffer, maxlen, -1,
-                                    NPY_UNSAFE_CASTING, &dts, NULL,
+                                    NPY_UNSAFE_CASTING, &dts,
                                     &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }
@@ -3503,7 +3509,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
             else {
                 tmp_meta.base = -1;
                 if (parse_iso_8601_datetime(data, tmp - data, -1,
-                                    NPY_UNSAFE_CASTING, &dts, NULL,
+                                    NPY_UNSAFE_CASTING, &dts,
                                     &tmp_meta.base, NULL) < 0) {
                     goto fail;
                 }

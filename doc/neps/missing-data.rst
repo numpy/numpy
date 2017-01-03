@@ -413,11 +413,11 @@ New ndarray Methods
 New functions added to the numpy namespace are::
 
     np.isna(arr) [IMPLEMENTED]
-        Returns a boolean array with True whereever the array is masked
+        Returns a boolean array with True wherever the array is masked
         or matches the NA bitpattern, and False elsewhere
 
     np.isavail(arr)
-        Returns a boolean array with False whereever the array is masked
+        Returns a boolean array with False wherever the array is masked
         or matches the NA bitpattern, and True elsewhere
 
 New functions added to the ndarray are::
@@ -884,7 +884,7 @@ a few different access patterns people use to get ahold of the numpy array data,
 here we examine a few of them to see what numpy can do. These examples are
 found from doing google searches of numpy C API array access.
 
-Numpy Documentation - How to extend NumPy
+NumPy Documentation - How to extend NumPy
 -----------------------------------------
 
 http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects

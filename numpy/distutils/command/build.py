@@ -16,7 +16,7 @@ class build(old_build):
     user_options = old_build.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
-        ('jobs=', 'j',
+        ('parallel=', 'j',
          "number of parallel jobs"),
         ]
 
@@ -28,14 +28,14 @@ class build(old_build):
     def initialize_options(self):
         old_build.initialize_options(self)
         self.fcompiler = None
-        self.jobs = None
+        self.parallel = None
 
     def finalize_options(self):
-        if self.jobs:
+        if self.parallel:
             try:
-                self.jobs = int(self.jobs)
+                self.parallel = int(self.parallel)
             except ValueError:
-                raise ValueError("--jobs/-j argument must be an integer")
+                raise ValueError("--parallel/-j argument must be an integer")
         build_scripts = self.build_scripts
         old_build.finalize_options(self)
         plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])

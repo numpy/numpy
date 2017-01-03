@@ -82,6 +82,18 @@ Exported symbols include:
 """
 from __future__ import division, absolute_import, print_function
 
+import types as _types
+import sys
+import numbers
+
+from numpy.compat import bytes, long
+from numpy.core.multiarray import (
+        typeinfo, ndarray, array, empty, dtype, datetime_data,
+        datetime_as_string, busday_offset, busday_count, is_busday,
+        busdaycalendar
+        )
+
+
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
@@ -90,15 +102,6 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
-from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
-        )
-import types as _types
-import sys
-from numpy.compat import bytes, long
-import numbers
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -117,16 +120,9 @@ else:
 _all_chars = [chr(_m) for _m in range(256)]
 _ascii_upper = _all_chars[65:65+26]
 _ascii_lower = _all_chars[97:97+26]
-LOWER_TABLE="".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
-UPPER_TABLE="".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
+LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
+UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
 
-#import string
-# assert (string.maketrans(string.ascii_uppercase, string.ascii_lowercase) == \
-#          LOWER_TABLE)
-# assert (string.maketrnas(string_ascii_lowercase, string.ascii_uppercase) == \
-#          UPPER_TABLE)
-#LOWER_TABLE = string.maketrans(string.ascii_uppercase, string.ascii_lowercase)
-#UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 def english_lower(s):
     """ Apply English case rules to convert ASCII strings to all lower case.
@@ -251,30 +247,30 @@ def bitname(obj):
     if name == 'bool_':
         char = 'b'
         base = 'bool'
-    elif name=='void':
+    elif name == 'void':
         char = 'V'
         base = 'void'
-    elif name=='object_':
+    elif name == 'object_':
         char = 'O'
         base = 'object'
         bits = 0
-    elif name=='datetime64':
+    elif name == 'datetime64':
         char = 'M'
-    elif name=='timedelta64':
+    elif name == 'timedelta64':
         char = 'm'
 
     if sys.version_info[0] >= 3:
-        if name=='bytes_':
+        if name == 'bytes_':
             char = 'S'
             base = 'bytes'
-        elif name=='str_':
+        elif name == 'str_':
             char = 'U'
             base = 'str'
     else:
-        if name=='string_':
+        if name == 'string_':
             char = 'S'
             base = 'string'
-        elif name=='unicode_':
+        elif name == 'unicode_':
             char = 'U'
             base = 'unicode'
 
@@ -310,11 +306,12 @@ def _add_aliases():
         typeobj = typeinfo[a][-1]
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(typeobj)
-        if base[-3:] == 'int' or char[0] in 'ui': continue
+        if base[-3:] == 'int' or char[0] in 'ui':
+            continue
         if base != '':
             myname = "%s%d" % (base, bit)
-            if (name != 'longdouble' and name != 'clongdouble') or \
-                   myname not in allTypes.keys():
+            if ((name != 'longdouble' and name != 'clongdouble') or
+                   myname not in allTypes.keys()):
                 allTypes[myname] = typeobj
                 sctypeDict[myname] = typeobj
                 if base == 'complex':
@@ -334,15 +331,10 @@ def _add_aliases():
             sctypeNA[char] = na_name
 _add_aliases()
 
-# Integers handled so that
-# The int32, int64 types should agree exactly with
-#  PyArray_INT32, PyArray_INT64 in C
-# We need to enforce the same checking as is done
-#  in arrayobject.h where the order of getting a
-#  bit-width match is:
-#       long, longlong, int, short, char
-#   for int8, int16, int32, int64, int128
-
+# Integers are handled so that the int32 and int64 types should agree
+# exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
+# as is done in arrayobject.h where the order of getting a bit-width match
+# is long, longlong, int, short, char.
 def _add_integer_aliases():
     _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
     for ctype in _ctypes:
@@ -446,7 +438,7 @@ sctypes = {'int': [],
            'uint':[],
            'float':[],
            'complex':[],
-           'others':[bool, object, str, unicode, void]}
+           'others':[bool, object, bytes, unicode, void]}
 
 def _add_array_type(typename, bits):
     try:
@@ -549,7 +541,7 @@ _python_types = {int: 'int_',
                  bytes: 'bytes_',
                  unicode: 'unicode_',
                  buffer_type: 'void',
-                }
+                 }
 
 if sys.version_info[0] >= 3:
     def _python_type(t):
@@ -778,6 +770,7 @@ class _typedict(dict):
     first they have to be populated.
 
     """
+
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))
 
@@ -829,7 +822,7 @@ def sctype2char(sctype):
     Examples
     --------
     >>> for sctype in [np.int32, np.float, np.complex, np.string_, np.ndarray]:
-    ...     print np.sctype2char(sctype)
+    ...     print(np.sctype2char(sctype))
     l
     d
     D
@@ -864,7 +857,7 @@ except AttributeError:
 ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)
 for key in _sctype2char_dict.keys():
-    cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
+    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()
@@ -965,6 +958,7 @@ def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
+
 _register_types()
 
 def find_common_type(array_types, scalar_types):

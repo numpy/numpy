@@ -207,12 +207,13 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     """
     when = _convert_when(when)
-    (rate, nper, pv, fv, when) = map(np.asarray, [rate, nper, pv, fv, when])
+    (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
     mask = (rate == 0.0)
-    np.copyto(rate, 1.0, where=mask)
-    z = np.zeros(np.broadcast(rate, nper, pv, fv, when).shape)
-    fact = np.where(mask != z, nper + z, (1 + rate*when)*(temp - 1)/rate + z)
+    masked_rate = np.where(mask, 1.0, rate)
+    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
+    fact = np.where(mask != z, nper + z,
+                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
@@ -247,7 +248,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     If you only had $150/month to pay towards the loan, how long would it take
     to pay-off a loan of $8,000 at 7% annual interest?
 
-    >>> print round(np.nper(0.07/12, -150, 8000), 5)
+    >>> print(round(np.nper(0.07/12, -150, 8000), 5))
     64.07335
 
     So, over 64 months would be required to pay off the loan.
@@ -347,7 +348,7 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     >>> for payment in per:
     ...     index = payment - 1
     ...     principal = principal + ppmt[index]
-    ...     print fmt.format(payment, ppmt[index], ipmt[index], principal)
+    ...     print(fmt.format(payment, ppmt[index], ipmt[index], principal))
      1  -200.58   -17.17  2299.42
      2  -201.96   -15.79  2097.46
      3  -203.35   -14.40  1894.11
@@ -651,7 +652,7 @@ def irr(values):
     """
     res = np.roots(values[::-1])
     mask = (res.imag == 0) & (res.real > 0)
-    if res.size == 0:
+    if not mask.any():
         return np.nan
     res = res[mask].real
     # NPV(rate) = 0 can have more than one solution so we return

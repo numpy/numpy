@@ -8,15 +8,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3473 $"
-__date__ = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
-
 import numpy as np
-from numpy.testing import *
-from numpy.ma.testutils import *
-from numpy.ma.core import *
+from numpy.testing import TestCase, run_module_suite, assert_raises
+from numpy.ma.testutils import assert_equal
+from numpy.ma.core import (
+    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
+    divide, asarray, asanyarray, nomask
+    )
+# from numpy.ma.core import (
 
 
 class SubArray(np.ndarray):
@@ -24,19 +23,36 @@ class SubArray(np.ndarray):
     # in the  dictionary `info`.
     def __new__(cls,arr,info={}):
         x = np.asanyarray(arr).view(cls)
-        x.info = info
+        x.info = info.copy()
         return x
 
     def __array_finalize__(self, obj):
-        self.info = getattr(obj, 'info', {})
+        if callable(getattr(super(SubArray, self),
+                            '__array_finalize__', None)):
+            super(SubArray, self).__array_finalize__(obj)
+        self.info = getattr(obj, 'info', {}).copy()
         return
 
     def __add__(self, other):
-        result = np.ndarray.__add__(self, other)
-        result.info.update({'added':result.info.pop('added', 0)+1})
+        result = super(SubArray, self).__add__(other)
+        result.info['added'] = result.info.get('added', 0) + 1
         return result
 
+    def __iadd__(self, other):
+        result = super(SubArray, self).__iadd__(other)
+        result.info['iadded'] = result.info.get('iadded', 0) + 1
+        return result
+
+
 subarray = SubArray
+
+
+class SubMaskedArray(MaskedArray):
+    """Pure subclass of MaskedArray, keeping some info on subclass."""
+    def __new__(cls, info=None, **kwargs):
+        obj = super(SubMaskedArray, cls).__new__(cls, **kwargs)
+        obj._optinfo['info'] = info
+        return obj
 
 
 class MSubArray(SubArray, MaskedArray):
@@ -46,11 +62,6 @@ class MSubArray(SubArray, MaskedArray):
         _data = MaskedArray.__new__(cls, data=subarr, mask=mask)
         _data.info = subarr.info
         return _data
-
-    def __array_finalize__(self, obj):
-        MaskedArray.__array_finalize__(self, obj)
-        SubArray.__array_finalize__(self, obj)
-        return
 
     def _get_series(self):
         _view = self.view(MaskedArray)
@@ -82,29 +93,90 @@ class MMatrix(MaskedArray, np.matrix,):
 mmatrix = MMatrix
 
 
-# also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
+# Also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
 # setting to non-class values (and thus np.ma.core.masked_print_option)
+# and overrides __array_wrap__, updating the info dict, to check that this
+# doesn't get destroyed by MaskedArray._update_from.  But this one also needs
+# its own iterator...
+class CSAIterator(object):
+    """
+    Flat iterator object that uses its own setter/getter
+    (works around ndarray.flat not propagating subclass setters/getters
+    see https://github.com/numpy/numpy/issues/4564)
+    roughly following MaskedIterator
+    """
+    def __init__(self, a):
+        self._original = a
+        self._dataiter = a.view(np.ndarray).flat
+
+    def __iter__(self):
+        return self
+
+    def __getitem__(self, indx):
+        out = self._dataiter.__getitem__(indx)
+        if not isinstance(out, np.ndarray):
+            out = out.__array__()
+        out = out.view(type(self._original))
+        return out
+
+    def __setitem__(self, index, value):
+        self._dataiter[index] = self._original._validate_input(value)
+
+    def __next__(self):
+        return next(self._dataiter).__array__().view(type(self._original))
+
+    next = __next__
+
+
 class ComplicatedSubArray(SubArray):
+
     def __str__(self):
-        return 'myprefix {0} mypostfix'.format(
-            super(ComplicatedSubArray, self).__str__())
+        return 'myprefix {0} mypostfix'.format(self.view(SubArray))
 
     def __repr__(self):
         # Return a repr that does not start with 'name('
         return '<{0} {1}>'.format(self.__class__.__name__, self)
 
-    def __setitem__(self, item, value):
-        # this ensures direct assignment to masked_print_option will fail
+    def _validate_input(self, value):
         if not isinstance(value, ComplicatedSubArray):
             raise ValueError("Can only set to MySubArray values")
-        super(ComplicatedSubArray, self).__setitem__(item, value)
+        return value
+
+    def __setitem__(self, item, value):
+        # validation ensures direct assignment with ndarray or
+        # masked_print_option will fail
+        super(ComplicatedSubArray, self).__setitem__(
+            item, self._validate_input(value))
+
+    def __getitem__(self, item):
+        # ensure getter returns our own class also for scalars
+        value = super(ComplicatedSubArray, self).__getitem__(item)
+        if not isinstance(value, np.ndarray):  # scalar
+            value = value.__array__().view(ComplicatedSubArray)
+        return value
+
+    @property
+    def flat(self):
+        return CSAIterator(self)
+
+    @flat.setter
+    def flat(self, value):
+        y = self.ravel()
+        y[:] = value
+
+    def __array_wrap__(self, obj, context=None):
+        obj = super(ComplicatedSubArray, self).__array_wrap__(obj, context)
+        if context is not None and context[0] is np.multiply:
+            obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
+
+        return obj
 
 
 class TestSubclassing(TestCase):
     # Test suite for masked subclasses of ndarray.
 
     def setUp(self):
-        x = np.arange(5)
+        x = np.arange(5, dtype='float')
         mx = mmatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
 
@@ -167,6 +239,12 @@ class TestSubclassing(TestCase):
         self.assertTrue(isinstance(z, MSubArray))
         self.assertTrue(isinstance(z._data, SubArray))
         self.assertTrue(z._data.info['added'] > 0)
+        # Test that inplace methods from data get used (gh-4617)
+        ym += 1
+        self.assertTrue(isinstance(ym, MaskedArray))
+        self.assertTrue(isinstance(ym, MSubArray))
+        self.assertTrue(isinstance(ym._data, SubArray))
+        self.assertTrue(ym._data.info['iadded'] > 0)
         #
         ym._set_mask([1, 0, 0, 0, 1])
         assert_equal(ym._mask, [1, 0, 0, 0, 1])
@@ -205,6 +283,38 @@ class TestSubclassing(TestCase):
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, m)
 
+    def test_subclass_items(self):
+        """test that getter and setter go via baseclass"""
+        x = np.arange(5)
+        xcsub = ComplicatedSubArray(x)
+        mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
+        # getter should  return a ComplicatedSubArray, even for single item
+        # first check we wrote ComplicatedSubArray correctly
+        self.assertTrue(isinstance(xcsub[1], ComplicatedSubArray))
+        self.assertTrue(isinstance(xcsub[1:4], ComplicatedSubArray))
+        # now that it propagates inside the MaskedArray
+        self.assertTrue(isinstance(mxcsub[1], ComplicatedSubArray))
+        self.assertTrue(mxcsub[0] is masked)
+        self.assertTrue(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
+        # also for flattened version (which goes via MaskedIterator)
+        self.assertTrue(isinstance(mxcsub.flat[1].data, ComplicatedSubArray))
+        self.assertTrue(mxcsub[0] is masked)
+        self.assertTrue(isinstance(mxcsub.flat[1:4].base, ComplicatedSubArray))
+
+        # setter should only work with ComplicatedSubArray input
+        # first check we wrote ComplicatedSubArray correctly
+        assert_raises(ValueError, xcsub.__setitem__, 1, x[4])
+        # now that it propagates inside the MaskedArray
+        assert_raises(ValueError, mxcsub.__setitem__, 1, x[4])
+        assert_raises(ValueError, mxcsub.__setitem__, slice(1, 4), x[1:4])
+        mxcsub[1] = xcsub[4]
+        mxcsub[1:4] = xcsub[1:4]
+        # also for flattened version (which goes via MaskedIterator)
+        assert_raises(ValueError, mxcsub.flat.__setitem__, 1, x[4])
+        assert_raises(ValueError, mxcsub.flat.__setitem__, slice(1, 4), x[1:4])
+        mxcsub.flat[1] = xcsub[4]
+        mxcsub.flat[1:4] = xcsub[1:4]
+
     def test_subclass_repr(self):
         """test that repr uses the name of the subclass
         and 'array' for np.ndarray"""
@@ -229,6 +339,18 @@ class TestSubclassing(TestCase):
                       np.ma.core.masked_print_option)
         mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
         self.assertTrue(str(mxcsub) == 'myprefix [-- 1 -- 3 4] mypostfix')
+
+    def test_pure_subclass_info_preservation(self):
+        # Test that ufuncs and methods conserve extra information consistently;
+        # see gh-7122.
+        arr1 = SubMaskedArray('test', data=[1,2,3,4,5,6])
+        arr2 = SubMaskedArray(data=[0,1,2,3,4,5])
+        diff1 = np.subtract(arr1, arr2)
+        self.assertTrue('info' in diff1._optinfo)
+        self.assertTrue(diff1._optinfo['info'] == 'test')
+        diff2 = arr1 - arr2
+        self.assertTrue('info' in diff2._optinfo)
+        self.assertTrue(diff2._optinfo['info'] == 'test')
 
 
 ###############################################################################

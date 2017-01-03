@@ -109,7 +109,7 @@ Glossary
 
          >>> def log(f):
          ...     def new_logging_func(*args, **kwargs):
-         ...         print "Logging call with parameters:", args, kwargs
+         ...         print("Logging call with parameters:", args, kwargs)
          ...         return f(*args, **kwargs)
          ...
          ...     return new_logging_func
@@ -182,10 +182,10 @@ Glossary
          >>> [item**2 for item in x]
          [1, 4, 9]
 
-       It is often used in combintion with ``enumerate``::
+       It is often used in combination with ``enumerate``::
          >>> keys = ['a','b','c']
          >>> for n, k in enumerate(keys):
-         ...     print "Key %d: %s" % (n, k)
+         ...     print("Key %d: %s" % (n, k))
          ...
          Key 0: a
          Key 1: b
@@ -264,7 +264,6 @@ Glossary
        (matrix multiplication) and ``**`` (matrix power), defined::
 
          >>> x = np.mat([[1, 2], [3, 4]])
-
          >>> x
          matrix([[1, 2],
                  [3, 4]])
@@ -278,18 +277,17 @@ Glossary
        method called ``repeat``::
 
          >>> x = np.array([1, 2, 3])
-
          >>> x.repeat(2)
          array([1, 1, 2, 2, 3, 3])
 
    ndarray
        See *array*.
-    
+
    record array
        An `ndarray`_ with `structured data type`_ which has been subclassed as
        np.recarray and whose dtype is of type np.record, making the
        fields of its data type to be accessible by attribute.
-       
+
    reference
        If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
        ``a`` and ``b`` are different names for the same Python object.
@@ -307,7 +305,7 @@ Glossary
            [1, 2, 3, 4, 5, 6]
 
        Row-major order is also known as the C order, as the C programming
-       language uses it. New Numpy arrays are by default in row-major order.
+       language uses it. New NumPy arrays are by default in row-major order.
 
    self
        Often seen in method signatures, ``self`` refers to the instance
@@ -317,7 +315,7 @@ Glossary
          ...     color = 'blue'
          ...
          ...     def paint(self):
-         ...         print "Painting the city %s!" % self.color
+         ...         print("Painting the city %s!" % self.color)
          ...
          >>> p = Paintbrush()
          >>> p.color = 'red'
@@ -360,7 +358,6 @@ Glossary
        changed.  Similar to a list, it can be indexed and sliced::
 
          >>> x = (1, 'one', [1, 2])
-
          >>> x
          (1, 'one', [1, 2])
 

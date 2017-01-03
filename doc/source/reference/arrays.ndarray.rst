@@ -45,8 +45,8 @@ objects implementing the :class:`buffer` or :ref:`array
 
    The array can be indexed using Python container-like syntax:
 
-   >>> x[1,2] # i.e., the element of x in the *second* row, *third*
-   column, namely, 6.
+   >>> # The element of x in the *second* row, *third* column, namely, 6.
+   >>> x[1, 2]
 
    For example :ref:`slicing <arrays.indexing>` can produce views of
    the array:
@@ -103,7 +103,7 @@ the bytes are interpreted is defined by the :ref:`data-type object
 
 A segment of memory is inherently 1-dimensional, and there are many
 different schemes for arranging the items of an *N*-dimensional array
-in a 1-dimensional block. Numpy is flexible, and :class:`ndarray`
+in a 1-dimensional block. NumPy is flexible, and :class:`ndarray`
 objects can accommodate any *strided indexing scheme*. In a strided
 scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
 corresponds to the offset (in bytes):
@@ -133,15 +133,16 @@ memory block can be accessed by some combination of the indices.
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
-  1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
-     This means that in the formula for the offset
-     :math:`n_k = 0` and thus :math:`s_k n_k = 0` and the value of
-     :math:`s_k` `= self.strides[k]` is arbitrary.
-  2. If an array has no elements (``self.size == 0``) there is no legal index
-     and the strides are never used. Any array with no elements may be
-     considered C-style and Fortran-style contiguous.
 
-Point 1. means that ``self``and ``self.squeeze()`` always have the same
+    1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+       This means that in the formula for the offset :math:`n_k = 0` and thus
+       :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
+       arbitrary.
+    2. If an array has no elements (``self.size == 0``) there is no legal
+       index and the strides are never used. Any array with no elements may be
+       considered C-style and Fortran-style contiguous.
+
+Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and :term:`aligned` flags value. This also means that even a high
 dimensional array could be C-style and Fortran-style contiguous at the same
 time.
@@ -154,7 +155,7 @@ base offset itself is a multiple of `self.itemsize`.
 .. note::
 
     Points (1) and (2) are not yet applied by default. Beginning with
-    Numpy 1.8.0, they are applied consistently only if the environment
+    NumPy 1.8.0, they are applied consistently only if the environment
     variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
     was built. Eventually this will become the default.
 
@@ -238,7 +239,6 @@ Other attributes
    ndarray.imag
    ndarray.flat
    ndarray.ctypes
-   __array_priority__
 
 
 .. _arrays.ndarray.array-interface:
@@ -292,7 +292,6 @@ Array conversion
    ndarray.item
    ndarray.tolist
    ndarray.itemset
-   ndarray.setasflat
    ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
@@ -428,10 +427,10 @@ be performed.
    ndarray.all
    ndarray.any
 
-Arithmetic and comparison operations
-====================================
+Arithmetic, matrix multiplication, and comparison operations
+============================================================
 
-.. index:: comparison, arithmetic, operation, operator
+.. index:: comparison, arithmetic, matrix, operation, operator
 
 Arithmetic and comparison operations on :class:`ndarrays <ndarray>`
 are defined as element-wise operations, and generally yield
@@ -441,7 +440,7 @@ Each of the arithmetic operations (``+``, ``-``, ``*``, ``/``, ``//``,
 ``%``, ``divmod()``, ``**`` or ``pow()``, ``<<``, ``>>``, ``&``,
 ``^``, ``|``, ``~``) and the comparisons (``==``, ``<``, ``>``,
 ``<=``, ``>=``, ``!=``) is equivalent to the corresponding
-:term:`universal function` (or :term:`ufunc` for short) in Numpy.  For
+:term:`universal function` (or :term:`ufunc` for short) in NumPy.  For
 more information, see the section on :ref:`Universal Functions
 <ufuncs>`.
 
@@ -468,7 +467,7 @@ Truth value of an array (:func:`bool()`):
 
    Truth-value testing of an array invokes
    :meth:`ndarray.__nonzero__`, which raises an error if the number of
-   elements in the the array is larger than 1, because the truth value
+   elements in the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
    in such cases. (If the number of elements is 0, the array evaluates
@@ -550,6 +549,20 @@ Arithmetic, in-place:
    3j``: while they both perform the same computation, ``a += 3``
    casts the result to fit back in ``a``, whereas ``a = a + 3j``
    re-binds the name ``a`` to the result.
+
+Matrix Multiplication:
+
+.. autosummary::
+   :toctree: generated/
+
+   ndarray.__matmul__
+
+.. note::
+
+   Matrix operators ``@`` and ``@=`` were introduced in Python 3.5
+   following PEP465. NumPy 1.10.0 has a preliminary implementation of ``@``
+   for testing purposes. Further documentation can be found in the
+   :func:`matmul` documentation.
 
 
 Special methods

@@ -54,12 +54,18 @@ _Fortran = Extension("_Fortran",
                     include_dirs = [numpy_include],
                     )
 
+_Flat = Extension("_Flat",
+                    ["Flat_wrap.cxx",
+                     "Flat.cxx"],
+                    include_dirs = [numpy_include],
+                    )
+
 # NumyTypemapTests setup
 setup(name        = "NumpyTypemapTests",
       description = "Functions that work on arrays",
       author      = "Bill Spotz",
       py_modules  = ["Array", "Farray", "Vector", "Matrix", "Tensor",
-                     "Fortran"],
+                     "Fortran", "Flat"],
       ext_modules = [_Array, _Farray, _Vector, _Matrix, _Tensor,
-                     _Fortran]
+                     _Fortran, _Flat]
       )

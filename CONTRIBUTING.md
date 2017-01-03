@@ -21,6 +21,11 @@ through our
 [development workflow](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html)
 
 Either way, please be sure to follow our
-[convention for commit messages](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html).
+[convention for commit messages](http://docs.scipy.org/doc/numpy-dev/dev/gitwash/development_workflow.html#writing-the-commit-message).
 
+If you are writing new C code, please follow the style described in
+``doc/C_STYLE_GUIDE``.
 
+Suggested ways to work on your development version (compile and run
+the tests without interfering with system packages) are described in
+``doc/source/dev/development_environment.rst``.

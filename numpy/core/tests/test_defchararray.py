@@ -1,14 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
-from numpy.core import *
-import numpy as np
 import sys
+
+import numpy as np
 from numpy.core.multiarray import _vec_string
-
 from numpy.compat import asbytes, asbytes_nested, sixu
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal
+)
 
-kw_unicode_true = {'unicode': True} # make 2to3 work properly
+kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
 class TestBasic(TestCase):
@@ -58,8 +59,10 @@ class TestBasic(TestCase):
         assert_array_equal(B, A)
         assert_equal(B.dtype, A.dtype)
         assert_equal(B.shape, A.shape)
+
         def fail():
-            B = np.char.array(A, **kw_unicode_false)
+            np.char.array(A, **kw_unicode_false)
+
         self.assertRaises(UnicodeEncodeError, fail)
 
     def test_unicode_upconvert(self):
@@ -82,38 +85,52 @@ class TestBasic(TestCase):
 
 class TestVecString(TestCase):
     def test_non_existent_method(self):
+
         def fail():
             _vec_string('a', np.string_, 'bogus')
+
         self.assertRaises(AttributeError, fail)
 
     def test_non_string_array(self):
+
         def fail():
             _vec_string(1, np.string_, 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_args_tuple(self):
+
         def fail():
             _vec_string(['a'], np.string_, 'strip', 1)
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_type_descr(self):
+
         def fail():
             _vec_string(['a'], 'BOGUS', 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_function_args(self):
+
         def fail():
             _vec_string(['a'], np.string_, 'strip', (1,))
+
         self.assertRaises(TypeError, fail)
 
     def test_invalid_result_type(self):
+
         def fail():
             _vec_string(['a'], np.integer, 'strip')
+
         self.assertRaises(TypeError, fail)
 
     def test_broadcast_error(self):
+
         def fail():
             _vec_string([['abc', 'def']], np.integer, 'find', (['a', 'd', 'j'],))
+
         self.assertRaises(ValueError, fail)
 
 
@@ -125,12 +142,12 @@ class TestWhitespace(TestCase):
                            ['789', 'xyz']]).view(np.chararray)
 
     def test1(self):
-        assert_(all(self.A == self.B))
-        assert_(all(self.A >= self.B))
-        assert_(all(self.A <= self.B))
-        assert_(not any(self.A > self.B))
-        assert_(not any(self.A < self.B))
-        assert_(not any(self.A != self.B))
+        assert_(np.all(self.A == self.B))
+        assert_(np.all(self.A >= self.B))
+        assert_(np.all(self.A <= self.B))
+        assert_(not np.any(self.A > self.B))
+        assert_(not np.any(self.A < self.B))
+        assert_(not np.any(self.A != self.B))
 
 class TestChar(TestCase):
     def setUp(self):
@@ -210,8 +227,10 @@ class TestInformation(TestCase):
         assert_(issubclass(self.A.endswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.endswith(' '), [[1, 0], [0, 0], [1, 0]])
         assert_array_equal(self.A.endswith('3', 0, 3), [[0, 0], [1, 0], [1, 0]])
+
         def fail():
             self.A.endswith('3', 'fdjk')
+
         self.assertRaises(TypeError, fail)
 
     def test_find(self):
@@ -222,8 +241,10 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.find(['1', 'P']), [[-1, -1], [0, -1], [0, 1]])
 
     def test_index(self):
+
         def fail():
             self.A.index('a')
+
         self.assertRaises(ValueError, fail)
         assert_(np.char.index('abcba', 'b') == 1)
         assert_(issubclass(np.char.index('abcba', 'b').dtype.type, np.integer))
@@ -264,8 +285,10 @@ class TestInformation(TestCase):
         assert_array_equal(self.A.rfind(['1', 'P']), [[-1, -1], [0, -1], [0, 2]])
 
     def test_rindex(self):
+
         def fail():
             self.A.rindex('a')
+
         self.assertRaises(ValueError, fail)
         assert_(np.char.rindex('abcba', 'b') == 3)
         assert_(issubclass(np.char.rindex('abcba', 'b').dtype.type, np.integer))
@@ -274,8 +297,10 @@ class TestInformation(TestCase):
         assert_(issubclass(self.A.startswith('').dtype.type, np.bool_))
         assert_array_equal(self.A.startswith(' '), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(self.A.startswith('1', 0, 3), [[0, 0], [1, 0], [1, 0]])
+
         def fail():
             self.A.startswith('3', 'fdjk')
+
         self.assertRaises(TypeError, fail)
 
 
@@ -290,30 +315,32 @@ class TestMethods(TestCase):
                            [sixu('123 \t 345 \0 '), sixu('UPPER')]]).view(np.chararray)
 
     def test_capitalize(self):
+        tgt = asbytes_nested([[' abc ', ''],
+                              ['12345', 'Mixedcase'],
+                              ['123 \t 345 \0 ', 'Upper']])
         assert_(issubclass(self.A.capitalize().dtype.type, np.string_))
-        assert_array_equal(self.A.capitalize(), asbytes_nested([
-                [' abc ', ''],
-                ['12345', 'Mixedcase'],
-                ['123 \t 345 \0 ', 'Upper']]))
+        assert_array_equal(self.A.capitalize(), tgt)
+
+        tgt = [[sixu(' \u03c3 '), ''],
+               ['12345', 'Mixedcase'],
+               ['123 \t 345 \0 ', 'Upper']]
         assert_(issubclass(self.B.capitalize().dtype.type, np.unicode_))
-        assert_array_equal(self.B.capitalize(), [
-                [sixu(' \u03c3 '), ''],
-                ['12345', 'Mixedcase'],
-                ['123 \t 345 \0 ', 'Upper']])
+        assert_array_equal(self.B.capitalize(), tgt)
 
     def test_center(self):
         assert_(issubclass(self.A.center(10).dtype.type, np.string_))
-        widths = np.array([[10, 20]])
         C = self.A.center([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
+
         C = self.A.center(20, asbytes('#'))
         assert_(np.all(C.startswith(asbytes('#'))))
         assert_(np.all(C.endswith(asbytes('#'))))
+
         C = np.char.center(asbytes('FOO'), [[10, 20], [15, 8]])
+        tgt = asbytes_nested([['   FOO    ', '        FOO         '],
+                              ['      FOO      ', '  FOO   ']])
         assert_(issubclass(C.dtype.type, np.string_))
-        assert_array_equal(C, asbytes_nested([
-                ['   FOO    ', '        FOO         '],
-                ['      FOO      ', '  FOO   ']]))
+        assert_array_equal(C, tgt)
 
     def test_decode(self):
         if sys.version_info[0] >= 3:
@@ -329,7 +356,7 @@ class TestMethods(TestCase):
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
-        assert_(T[2][0] == asbytes('123      345'))
+        assert_(T[2, 0] == asbytes('123      345 \0'))
 
     def test_join(self):
         if sys.version_info[0] >= 3:
@@ -344,154 +371,164 @@ class TestMethods(TestCase):
             assert_(issubclass(A.dtype.type, np.unicode_))
         else:
             assert_(issubclass(A.dtype.type, np.string_))
-        assert_array_equal(np.char.join([',', '#'], A0),
-                           [
-            [' ,a,b,c, ', ''],
-            ['1,2,3,4,5', 'M#i#x#e#d#C#a#s#e'],
-            ['1,2,3, ,\t, ,3,4,5, ,\x00, ', 'U#P#P#E#R']])
+        tgt = np.array([[' ,a,b,c, ', ''],
+                        ['1,2,3,4,5', 'M#i#x#e#d#C#a#s#e'],
+                        ['1,2,3, ,\t, ,3,4,5, ,\x00, ', 'U#P#P#E#R']])
+        assert_array_equal(np.char.join([',', '#'], A0), tgt)
 
     def test_ljust(self):
         assert_(issubclass(self.A.ljust(10).dtype.type, np.string_))
-        widths = np.array([[10, 20]])
+
         C = self.A.ljust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
+
         C = self.A.ljust(20, asbytes('#'))
         assert_array_equal(C.startswith(asbytes('#')), [
                 [False, True], [False, False], [False, False]])
         assert_(np.all(C.endswith(asbytes('#'))))
+
         C = np.char.ljust(asbytes('FOO'), [[10, 20], [15, 8]])
+        tgt = asbytes_nested([['FOO       ', 'FOO                 '],
+                              ['FOO            ', 'FOO     ']])
         assert_(issubclass(C.dtype.type, np.string_))
-        assert_array_equal(C, asbytes_nested([
-                ['FOO       ', 'FOO                 '],
-                ['FOO            ', 'FOO     ']]))
+        assert_array_equal(C, tgt)
 
     def test_lower(self):
+        tgt = asbytes_nested([[' abc ', ''],
+                              ['12345', 'mixedcase'],
+                              ['123 \t 345 \0 ', 'upper']])
         assert_(issubclass(self.A.lower().dtype.type, np.string_))
-        assert_array_equal(self.A.lower(), asbytes_nested([
-                [' abc ', ''],
-                ['12345', 'mixedcase'],
-                ['123 \t 345 \0 ', 'upper']]))
+        assert_array_equal(self.A.lower(), tgt)
+
+        tgt = [[sixu(' \u03c3 '), sixu('')],
+               [sixu('12345'), sixu('mixedcase')],
+               [sixu('123 \t 345 \0 '), sixu('upper')]]
         assert_(issubclass(self.B.lower().dtype.type, np.unicode_))
-        assert_array_equal(self.B.lower(), [
-                [sixu(' \u03c3 '), sixu('')],
-                [sixu('12345'), sixu('mixedcase')],
-                [sixu('123 \t 345 \0 '), sixu('upper')]])
+        assert_array_equal(self.B.lower(), tgt)
 
     def test_lstrip(self):
+        tgt = asbytes_nested([['abc ', ''],
+                              ['12345', 'MixedCase'],
+                              ['123 \t 345 \0 ', 'UPPER']])
         assert_(issubclass(self.A.lstrip().dtype.type, np.string_))
-        assert_array_equal(self.A.lstrip(), asbytes_nested([
-                ['abc ', ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345 \0 ', 'UPPER']]))
-        assert_array_equal(self.A.lstrip(asbytes_nested(['1', 'M'])),
-                           asbytes_nested([
-                [' abc', ''],
-                ['2345', 'ixedCase'],
-                ['23 \t 345 \x00', 'UPPER']]))
+        assert_array_equal(self.A.lstrip(), tgt)
+
+        tgt = asbytes_nested([[' abc', ''],
+                              ['2345', 'ixedCase'],
+                              ['23 \t 345 \x00', 'UPPER']])
+        assert_array_equal(self.A.lstrip(asbytes_nested(['1', 'M'])), tgt)
+
+        tgt = [[sixu('\u03a3 '), ''],
+               ['12345', 'MixedCase'],
+               ['123 \t 345 \0 ', 'UPPER']]
         assert_(issubclass(self.B.lstrip().dtype.type, np.unicode_))
-        assert_array_equal(self.B.lstrip(), [
-                [sixu('\u03a3 '), ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345 \0 ', 'UPPER']])
+        assert_array_equal(self.B.lstrip(), tgt)
 
     def test_partition(self):
         P = self.A.partition(asbytes_nested(['3', 'M']))
+        tgt = asbytes_nested([[(' abc ', '', ''), ('', '', '')],
+                             [('12', '3', '45'), ('', 'M', 'ixedCase')],
+                             [('12', '3', ' \t 345 \0 '), ('UPPER', '', '')]])
         assert_(issubclass(P.dtype.type, np.string_))
-        assert_array_equal(P, asbytes_nested([
-                [(' abc ', '', ''), ('', '', '')],
-                [('12', '3', '45'), ('', 'M', 'ixedCase')],
-                [('12', '3', ' \t 345 \0 '), ('UPPER', '', '')]]))
+        assert_array_equal(P, tgt)
 
     def test_replace(self):
         R = self.A.replace(asbytes_nested(['3', 'a']),
                            asbytes_nested(['##########', '@']))
+        tgt = asbytes_nested([[' abc ', ''],
+                              ['12##########45', 'MixedC@se'],
+                              ['12########## \t ##########45 \x00', 'UPPER']])
         assert_(issubclass(R.dtype.type, np.string_))
-        assert_array_equal(R, asbytes_nested([
-                [' abc ', ''],
-                ['12##########45', 'MixedC@se'],
-                ['12########## \t ##########45 \x00', 'UPPER']]))
+        assert_array_equal(R, tgt)
 
         if sys.version_info[0] < 3:
             # NOTE: b'abc'.replace(b'a', 'b') is not allowed on Py3
             R = self.A.replace(asbytes('a'), sixu('\u03a3'))
+            tgt = [[sixu(' \u03a3bc '), ''],
+                   ['12345', sixu('MixedC\u03a3se')],
+                   ['123 \t 345 \x00', 'UPPER']]
             assert_(issubclass(R.dtype.type, np.unicode_))
-            assert_array_equal(R, [
-                    [sixu(' \u03a3bc '), ''],
-                    ['12345', sixu('MixedC\u03a3se')],
-                    ['123 \t 345 \x00', 'UPPER']])
+            assert_array_equal(R, tgt)
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.string_))
-        widths = np.array([[10, 20]])
+
         C = self.A.rjust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
+
         C = self.A.rjust(20, asbytes('#'))
         assert_(np.all(C.startswith(asbytes('#'))))
         assert_array_equal(C.endswith(asbytes('#')),
                            [[False, True], [False, False], [False, False]])
+
         C = np.char.rjust(asbytes('FOO'), [[10, 20], [15, 8]])
+        tgt = asbytes_nested([['       FOO', '                 FOO'],
+                              ['            FOO', '     FOO']])
         assert_(issubclass(C.dtype.type, np.string_))
-        assert_array_equal(C, asbytes_nested([
-                ['       FOO', '                 FOO'],
-                ['            FOO', '     FOO']]))
+        assert_array_equal(C, tgt)
 
     def test_rpartition(self):
         P = self.A.rpartition(asbytes_nested(['3', 'M']))
+        tgt = asbytes_nested([[('', '', ' abc '), ('', '', '')],
+                              [('12', '3', '45'), ('', 'M', 'ixedCase')],
+                              [('123 \t ', '3', '45 \0 '), ('', '', 'UPPER')]])
         assert_(issubclass(P.dtype.type, np.string_))
-        assert_array_equal(P, asbytes_nested([
-                [('', '', ' abc '), ('', '', '')],
-                [('12', '3', '45'), ('', 'M', 'ixedCase')],
-                [('123 \t ', '3', '45 \0 '), ('', '', 'UPPER')]]))
+        assert_array_equal(P, tgt)
 
     def test_rsplit(self):
         A = self.A.rsplit(asbytes('3'))
+        tgt = asbytes_nested([[[' abc '], ['']],
+                              [['12', '45'], ['MixedCase']],
+                              [['12', ' \t ', '45 \x00 '], ['UPPER']]])
         assert_(issubclass(A.dtype.type, np.object_))
-        assert_equal(A.tolist(), asbytes_nested([
-                [[' abc '], ['']],
-                [['12', '45'], ['MixedCase']],
-                [['12', ' \t ', '45 \x00 '], ['UPPER']]]))
+        assert_equal(A.tolist(), tgt)
 
     def test_rstrip(self):
         assert_(issubclass(self.A.rstrip().dtype.type, np.string_))
-        assert_array_equal(self.A.rstrip(), asbytes_nested([
-                [' abc', ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345', 'UPPER']]))
-        assert_array_equal(self.A.rstrip(asbytes_nested(['5', 'ER'])),
-                           asbytes_nested([
-                [' abc ', ''],
-                ['1234', 'MixedCase'],
-                ['123 \t 345 \x00', 'UPP']]))
+
+        tgt = asbytes_nested([[' abc', ''],
+                              ['12345', 'MixedCase'],
+                              ['123 \t 345', 'UPPER']])
+        assert_array_equal(self.A.rstrip(), tgt)
+
+        tgt = asbytes_nested([[' abc ', ''],
+                              ['1234', 'MixedCase'],
+                              ['123 \t 345 \x00', 'UPP']
+                              ])
+        assert_array_equal(self.A.rstrip(asbytes_nested(['5', 'ER'])), tgt)
+
+        tgt = [[sixu(' \u03a3'), ''],
+               ['12345', 'MixedCase'],
+               ['123 \t 345', 'UPPER']]
         assert_(issubclass(self.B.rstrip().dtype.type, np.unicode_))
-        assert_array_equal(self.B.rstrip(), [
-                [sixu(' \u03a3'), ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345', 'UPPER']])
+        assert_array_equal(self.B.rstrip(), tgt)
 
     def test_strip(self):
+        tgt = asbytes_nested([['abc', ''],
+                              ['12345', 'MixedCase'],
+                              ['123 \t 345', 'UPPER']])
         assert_(issubclass(self.A.strip().dtype.type, np.string_))
-        assert_array_equal(self.A.strip(), asbytes_nested([
-                ['abc', ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345', 'UPPER']]))
-        assert_array_equal(self.A.strip(asbytes_nested(['15', 'EReM'])),
-                           asbytes_nested([
-                [' abc ', ''],
-                ['234', 'ixedCas'],
-                ['23 \t 345 \x00', 'UPP']]))
+        assert_array_equal(self.A.strip(), tgt)
+
+        tgt = asbytes_nested([[' abc ', ''],
+                              ['234', 'ixedCas'],
+                              ['23 \t 345 \x00', 'UPP']])
+        assert_array_equal(self.A.strip(asbytes_nested(['15', 'EReM'])), tgt)
+
+        tgt = [[sixu('\u03a3'), ''],
+               ['12345', 'MixedCase'],
+               ['123 \t 345', 'UPPER']]
         assert_(issubclass(self.B.strip().dtype.type, np.unicode_))
-        assert_array_equal(self.B.strip(), [
-                [sixu('\u03a3'), ''],
-                ['12345', 'MixedCase'],
-                ['123 \t 345', 'UPPER']])
+        assert_array_equal(self.B.strip(), tgt)
 
     def test_split(self):
         A = self.A.split(asbytes('3'))
+        tgt = asbytes_nested([
+                              [[' abc '], ['']],
+                              [['12', '45'], ['MixedCase']],
+                              [['12', ' \t ', '45 \x00 '], ['UPPER']]])
         assert_(issubclass(A.dtype.type, np.object_))
-        assert_equal(A.tolist(), asbytes_nested([
-                [[' abc '], ['']],
-                [['12', '45'], ['MixedCase']],
-                [['12', ' \t ', '45 \x00 '], ['UPPER']]]))
+        assert_equal(A.tolist(), tgt)
 
     def test_splitlines(self):
         A = np.char.array(['abc\nfds\nwer']).splitlines()
@@ -500,52 +537,59 @@ class TestMethods(TestCase):
         assert_(len(A[0]) == 3)
 
     def test_swapcase(self):
+        tgt = asbytes_nested([[' ABC ', ''],
+                              ['12345', 'mIXEDcASE'],
+                              ['123 \t 345 \0 ', 'upper']])
         assert_(issubclass(self.A.swapcase().dtype.type, np.string_))
-        assert_array_equal(self.A.swapcase(), asbytes_nested([
-                [' ABC ', ''],
-                ['12345', 'mIXEDcASE'],
-                ['123 \t 345 \0 ', 'upper']]))
+        assert_array_equal(self.A.swapcase(), tgt)
+
+        tgt = [[sixu(' \u03c3 '), sixu('')],
+               [sixu('12345'), sixu('mIXEDcASE')],
+               [sixu('123 \t 345 \0 '), sixu('upper')]]
         assert_(issubclass(self.B.swapcase().dtype.type, np.unicode_))
-        assert_array_equal(self.B.swapcase(), [
-                [sixu(' \u03c3 '), sixu('')],
-                [sixu('12345'), sixu('mIXEDcASE')],
-                [sixu('123 \t 345 \0 '), sixu('upper')]])
+        assert_array_equal(self.B.swapcase(), tgt)
 
     def test_title(self):
+        tgt = asbytes_nested([[' Abc ', ''],
+                              ['12345', 'Mixedcase'],
+                              ['123 \t 345 \0 ', 'Upper']])
         assert_(issubclass(self.A.title().dtype.type, np.string_))
-        assert_array_equal(self.A.title(), asbytes_nested([
-                [' Abc ', ''],
-                ['12345', 'Mixedcase'],
-                ['123 \t 345 \0 ', 'Upper']]))
+        assert_array_equal(self.A.title(), tgt)
+
+        tgt = [[sixu(' \u03a3 '), sixu('')],
+               [sixu('12345'), sixu('Mixedcase')],
+               [sixu('123 \t 345 \0 '), sixu('Upper')]]
         assert_(issubclass(self.B.title().dtype.type, np.unicode_))
-        assert_array_equal(self.B.title(), [
-                [sixu(' \u03a3 '), sixu('')],
-                [sixu('12345'), sixu('Mixedcase')],
-                [sixu('123 \t 345 \0 '), sixu('Upper')]])
+        assert_array_equal(self.B.title(), tgt)
 
     def test_upper(self):
+        tgt = asbytes_nested([[' ABC ', ''],
+                              ['12345', 'MIXEDCASE'],
+                              ['123 \t 345 \0 ', 'UPPER']])
         assert_(issubclass(self.A.upper().dtype.type, np.string_))
-        assert_array_equal(self.A.upper(), asbytes_nested([
-                [' ABC ', ''],
-                ['12345', 'MIXEDCASE'],
-                ['123 \t 345 \0 ', 'UPPER']]))
+        assert_array_equal(self.A.upper(), tgt)
+
+        tgt = [[sixu(' \u03a3 '), sixu('')],
+               [sixu('12345'), sixu('MIXEDCASE')],
+               [sixu('123 \t 345 \0 '), sixu('UPPER')]]
         assert_(issubclass(self.B.upper().dtype.type, np.unicode_))
-        assert_array_equal(self.B.upper(), [
-                [sixu(' \u03a3 '), sixu('')],
-                [sixu('12345'), sixu('MIXEDCASE')],
-                [sixu('123 \t 345 \0 '), sixu('UPPER')]])
+        assert_array_equal(self.B.upper(), tgt)
 
     def test_isnumeric(self):
+
         def fail():
             self.A.isnumeric()
+
         self.assertRaises(TypeError, fail)
         assert_(issubclass(self.B.isnumeric().dtype.type, np.bool_))
         assert_array_equal(self.B.isnumeric(), [
                 [False, False], [True, False], [False, False]])
 
     def test_isdecimal(self):
+
         def fail():
             self.A.isdecimal()
+
         self.assertRaises(TypeError, fail)
         assert_(issubclass(self.B.isdecimal().dtype.type, np.bool_))
         assert_array_equal(self.B.isdecimal(), [
@@ -626,8 +670,25 @@ class TestOperations(TestCase):
             except TypeError:
                 pass
             else:
-                self.fail("chararray __rmod__ should fail with " \
+                self.fail("chararray __rmod__ should fail with "
                           "non-string objects")
+
+    def test_slice(self):
+        """Regression test for https://github.com/numpy/numpy/issues/5982"""
+
+        arr = np.array([['abc ', 'def '], ['geh ', 'ijk ']],
+                       dtype='S4').view(np.chararray)
+        sl1 = arr[:]
+        assert_array_equal(sl1, arr)
+        assert_(sl1.base is arr)
+        assert_(sl1.base.base is arr.base)
+
+        sl2 = arr[:, :]
+        assert_array_equal(sl2, arr)
+        assert_(sl2.base is arr)
+        assert_(sl2.base.base is arr.base)
+
+        assert_(arr[0, 0] == asbytes('abc'))
 
 
 def test_empty_indexing():

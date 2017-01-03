@@ -24,7 +24,7 @@ subclass of an ndarray, then :func:`asanyarray` can be used to allow
 subclasses to propagate more cleanly through your subroutine. In
 principal a subclass could redefine any aspect of the array and
 therefore, under strict guidelines, :func:`asanyarray` would rarely be
-useful. However, most subclasses of the arrayobject will not
+useful. However, most subclasses of the array object will not
 redefine certain aspects of the array object such as the buffer
 interface, or the attributes of the array. One important example,
 however, of why your subroutine may not be able to handle an arbitrary
@@ -37,20 +37,20 @@ Special attributes and methods
 
 .. seealso:: :ref:`Subclassing ndarray <basics.subclassing>`
 
-Numpy provides several hooks that classes can customize:
+NumPy provides several hooks that classes can customize:
 
-.. function:: class.__numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs)
+.. method:: class.__numpy_ufunc__(ufunc, method, i, inputs, **kwargs)
 
-   .. versionadded:: 1.10
+   .. versionadded:: 1.11
 
    Any class (ndarray subclass or not) can define this method to
-   override behavior of Numpy's ufuncs. This works quite similarly to
+   override behavior of NumPy's ufuncs. This works quite similarly to
    Python's ``__mul__`` and other binary operation routines.
 
-   - *ufunc* is the ufunc object that was called. 
+   - *ufunc* is the ufunc object that was called.
    - *method* is a string indicating which Ufunc method was called
      (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
-     ``"accumulate"``, ``"outer"``, ``"inner"``). 
+     ``"accumulate"``, ``"outer"``, ``"inner"``).
    - *i* is the index of *self* in *inputs*.
    - *inputs* is a tuple of the input arguments to the ``ufunc``
    - *kwargs* is a dictionary containing the optional input arguments
@@ -109,7 +109,7 @@ Numpy provides several hooks that classes can customize:
       your_obj)`` always calls only your ``__numpy_ufunc__``, as
       expected.
 
-.. function:: class.__array_finalize__(self)
+.. method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
@@ -118,7 +118,7 @@ Numpy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. function:: class.__array_prepare__(array, context=None)
+.. method:: class.__array_prepare__(array, context=None)
 
    At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
    method is called on the input object with the highest array
@@ -130,7 +130,7 @@ Numpy provides several hooks that classes can customize:
    the subclass and update metadata before returning the array to the
    ufunc for computation.
 
-.. function:: class.__array_wrap__(array, context=None)
+.. method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -147,14 +147,14 @@ Numpy provides several hooks that classes can customize:
    The value of this attribute is used to determine what type of
    object to return in situations where there is more than one
    possibility for the Python type of the returned object. Subclasses
-   inherit a default value of 1.0 for this attribute.
+   inherit a default value of 0.0 for this attribute.
 
-.. function:: class.__array__([dtype])
+.. method:: class.__array__([dtype])
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
    <ufuncs.output-type>`, results will be written to the object
-   returned by :func:`__array__`. Similar conversion is done on 
+   returned by :func:`__array__`. Similar conversion is done on
    input arrays.
 
 
@@ -336,7 +336,7 @@ Record arrays (:mod:`numpy.rec`)
 .. seealso:: :ref:`routines.array-creation.rec`, :ref:`routines.dtype`,
              :ref:`arrays.dtypes`.
 
-Numpy provides the :class:`recarray` class which allows accessing the
+NumPy provides the :class:`recarray` class which allows accessing the
 fields of a structured array as attributes, and a corresponding
 scalar data type object :class:`record`.
 

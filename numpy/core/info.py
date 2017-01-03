@@ -4,7 +4,7 @@ Functions
 
 -   array                      - NumPy Array construction
 -   zeros                      - Return an array of all zeros
--   empty                      - Return an unitialized array
+-   empty                      - Return an uninitialized array
 -   shape                      - Return shape of sequence or array
 -   rank                       - Return number of dimensions
 -   size                       - Return number of elements in entire array or a

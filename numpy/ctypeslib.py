@@ -89,10 +89,37 @@ else:
 
     # Adapted from Albert Strasheim
     def load_library(libname, loader_path):
+        """
+        It is possible to load a library using 
+        >>> lib = ctypes.cdll[<full_path_name>]
+
+        But there are cross-platform considerations, such as library file extensions,
+        plus the fact Windows will just load the first library it finds with that name.  
+        NumPy supplies the load_library function as a convenience.
+
+        Parameters
+        ----------
+        libname : str
+            Name of the library, which can have 'lib' as a prefix,
+            but without an extension.
+        loader_path : str
+            Where the library can be found.
+
+        Returns
+        -------
+        ctypes.cdll[libpath] : library object
+           A ctypes library object 
+
+        Raises
+        ------
+        OSError
+            If there is no library with the expected extension, or the 
+            library is defective and cannot be loaded.
+        """
         if ctypes.__version__ < '1.0.1':
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
-                          "with ctypes < 1.0.1")
+                          "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -151,7 +178,7 @@ class _ndptr(_ndptr_base):
 
     def _check_retval_(self):
         """This method is called when this class is used as the .restype
-        asttribute for a shared-library function.   It constructs a numpy
+        attribute for a shared-library function.   It constructs a numpy
         array from a void pointer."""
         return array(self)
 
@@ -288,7 +315,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[dtype] = klass
+    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
     return klass
 
 if ctypes is not None:

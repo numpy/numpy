@@ -19,10 +19,16 @@ NumPyOS_ascii_formatl(char *buffer, size_t buf_size,
 NPY_NO_EXPORT double
 NumPyOS_ascii_strtod(const char *s, char** endptr);
 
+NPY_NO_EXPORT long double
+NumPyOS_ascii_strtold(const char *s, char** endptr);
+
 NPY_NO_EXPORT int
 NumPyOS_ascii_ftolf(FILE *fp, double *value);
 
 NPY_NO_EXPORT int
-NumPyOS_ascii_isspace(char c);
+NumPyOS_ascii_ftoLf(FILE *fp, long double *value);
+
+NPY_NO_EXPORT int
+NumPyOS_ascii_isspace(int c);
 
 #endif

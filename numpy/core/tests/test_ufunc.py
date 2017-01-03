@@ -1,13 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-
 import numpy as np
-from numpy.testing import *
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
 from numpy.compat import asbytes
 from numpy.core.test_rational import rational, test_add, test_add_rationals
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    assert_no_warnings
+)
 
 
 class TestUfuncKwargs(TestCase):
@@ -35,25 +37,25 @@ class TestUfuncKwargs(TestCase):
 class TestUfunc(TestCase):
     def test_pickle(self):
         import pickle
-        assert pickle.loads(pickle.dumps(np.sin)) is np.sin
+        assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
 
         # Check that ufunc not defined in the top level numpy namespace such as
         # numpy.core.test_rational.test_add can also be pickled
-        assert pickle.loads(pickle.dumps(test_add)) is test_add
+        assert_(pickle.loads(pickle.dumps(test_add)) is test_add)
 
     def test_pickle_withstring(self):
         import pickle
         astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
                 "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
-        assert pickle.loads(astring) is np.cos
+        assert_(pickle.loads(astring) is np.cos)
 
-    def test_reduceat_shifting_sum(self) :
+    def test_reduceat_shifting_sum(self):
         L = 6
         x = np.arange(L)
         idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x, idx)[::2], [1, 3, 5, 7])
 
-    def test_generic_loops(self) :
+    def test_generic_loops(self):
         """Test generic loops.
 
         The loops to be tested are:
@@ -107,7 +109,7 @@ class TestUfunc(TestCase):
 
         """
         fone = np.exp
-        ftwo = lambda x, y : x**y
+        ftwo = lambda x, y: x**y
         fone_val = 1
         ftwo_val = 1
         # check unary PyUFunc_f_f.
@@ -162,9 +164,10 @@ class TestUfunc(TestCase):
 
         # class to use in testing object method loops
         class foo(object):
-            def conjugate(self) :
+            def conjugate(self):
                 return np.bool_(1)
-            def logical_xor(self, obj) :
+
+            def logical_xor(self, obj):
                 return np.bool_(1)
 
         # check unary PyUFunc_O_O
@@ -174,7 +177,7 @@ class TestUfunc(TestCase):
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.conjugate(x) == True), msg)
 
@@ -185,14 +188,14 @@ class TestUfunc(TestCase):
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.logical_xor(x, x)), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
-    def test_all_ufunc(self) :
+    def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
 
         The list of ufuncs comes from generate_umath.py and is as follows:
@@ -275,7 +278,6 @@ class TestUfunc(TestCase):
         """
         pass
 
-
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
@@ -286,30 +288,39 @@ class TestUfunc(TestCase):
 
         # in the following calls, a ValueError should be raised because
         # of error in core signature
+        # FIXME These should be using assert_raises
+
         # error: extra parenthesis
         msg = "core_sig: extra parenthesis"
         try:
             ret = umt.test_signature(2, 1, "((i)),(i)->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: parenthesis matching
         msg = "core_sig: parenthesis matching"
         try:
             ret = umt.test_signature(2, 1, "(i),)i(->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: incomplete signature. letters outside of parenthesis are ignored
         msg = "core_sig: incomplete signature"
         try:
             ret = umt.test_signature(2, 1, "(i),->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
+
         # error: incomplete signature. 2 output arguments are specified
         msg = "core_sig: incomplete signature"
         try:
             ret = umt.test_signature(2, 2, "(i),(i)->()")
             assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
+        except ValueError:
+            pass
 
         # more complicated names for variables
         assert_equal(umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)"), 1)
@@ -341,6 +352,16 @@ class TestUfunc(TestCase):
         b[:] = 0
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
+
+    def test_true_divide(self):
+        # True_divide has a non uniform signature, see #3484.
+        # This also tests type_tuple_type_resolver.
+        a = np.full(5, 12.5)
+        b = np.full(5, 10.0)
+        tgt = np.full(5, 1.25)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float64), tgt)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float32), tgt)
+        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
@@ -376,7 +397,7 @@ class TestUfunc(TestCase):
         for dt in (np.complex64, np.complex128, np.clongdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v + 1) / 2) - dt((v * (v + 1) / 2) *1j)
+                tgt = dt(v * (v + 1) / 2) - dt((v * (v + 1) / 2) * 1j)
                 d = np.empty(v, dtype=dt)
                 d.real = np.arange(1, v + 1)
                 d.imag = -np.arange(1, v + 1)
@@ -427,20 +448,23 @@ class TestUfunc(TestCase):
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
         msg = "type cast on one argument"
         a = np.arange(6).reshape((2, 3))
-        b = a+0.1
-        assert_array_almost_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
-            err_msg=msg)
+        b = a + 0.1
+        assert_array_almost_equal(umt.inner1d(a, b), np.sum(a*b, axis=-1),
+                                  err_msg=msg)
 
     def test_endian(self):
         msg = "big endian"
         a = np.arange(6, dtype='>i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
         msg = "little endian"
         a = np.arange(6, dtype='<i4').reshape((2, 3))
-        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1), err_msg=msg)
+        assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1),
+                           err_msg=msg)
 
         # Output should always be native-endian
         Ba = np.arange(1, dtype='>f8')
@@ -520,8 +544,8 @@ class TestUfunc(TestCase):
         self.compare_matrix_multiply_results(np.double)
 
     def compare_matrix_multiply_results(self, tp):
-        d1 = np.array(rand(2, 3, 4), dtype=tp)
-        d2 = np.array(rand(2, 3, 4), dtype=tp)
+        d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
+        d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         msg = "matrix multiply on type %s" % d1.dtype.name
 
         def permute_n(n):
@@ -560,15 +584,15 @@ class TestUfunc(TestCase):
                     for s2 in slice_3:
                         a1 = d1.transpose(p1)[s1]
                         a2 = d2.transpose(p2)[s2]
-                        ref = ref and a1.base != None
-                        ref = ref and a2.base != None
+                        ref = ref and a1.base is not None
+                        ref = ref and a2.base is not None
                         if (a1.shape[-1] == a2.shape[-2] and
                                 broadcastable(a1.shape[0], a2.shape[0])):
                             assert_array_almost_equal(
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
                                        a1[..., np.newaxis,:], axis=-1),
-                                err_msg = msg+' %s %s' % (str(a1.shape),
+                                err_msg=msg + ' %s %s' % (str(a1.shape),
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
@@ -624,6 +648,41 @@ class TestUfunc(TestCase):
         assert_equal(np.min(a), False)
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
+
+    def test_object_array_accumulate_inplace(self):
+        # Checks that in-place accumulates work, see also gh-7402
+        arr = np.ones(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        # Twice reproduced also for tuples:
+        np.add.accumulate(arr, out=arr)
+        np.add.accumulate(arr, out=arr)
+        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        np.add.accumulate(arr, out=arr, axis=-1)
+        np.add.accumulate(arr, out=arr, axis=-1)
+        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+
+    def test_object_array_reduceat_inplace(self):
+        # Checks that in-place reduceats work, see also gh-7465
+        arr = np.empty(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        out = np.empty(4, dtype=object)
+        out[:] = [[1] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        np.add.reduceat(arr, np.arange(4), out=arr)
+        assert_array_equal(arr, out)
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        out = np.ones((2, 4), dtype=object)
+        out[0, :] = [[2] for i in range(4)]
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        assert_array_equal(arr, out)
 
     def test_object_scalar_multiply(self):
         # Tickets #2469 and #4482
@@ -817,10 +876,13 @@ class TestUfunc(TestCase):
         # make sure that error we get an error in exactly those cases where we
         # expect one, and assumes the calculations themselves are done
         # correctly.
+
         def ok(f, *args, **kwargs):
             f(*args, **kwargs)
+
         def err(f, *args, **kwargs):
             assert_raises(ValueError, f, *args, **kwargs)
+
         def t(expect, func, n, m):
             expect(func, np.zeros((n, m)), axis=1)
             expect(func, np.zeros((m, n)), axis=0)
@@ -829,7 +891,7 @@ class TestUfunc(TestCase):
             expect(func, np.zeros((n, m // 2, m // 2)), axis=(1, 2))
             expect(func, np.zeros((m // 2, n, m // 2)), axis=(0, 2))
             expect(func, np.zeros((m // 3, m // 3, m // 3,
-                                  n // 2, n //2)),
+                                  n // 2, n // 2)),
                                  axis=(0, 1, 2))
             # Check what happens if the inner (resp. outer) dimensions are a
             # mix of zero and non-zero:
@@ -838,6 +900,7 @@ class TestUfunc(TestCase):
             expect(func, np.zeros((m, 10, n)), axis=0)
             expect(func, np.zeros((10, m, n)), axis=1)
             expect(func, np.zeros((10, n, m)), axis=2)
+
         # np.maximum is just an arbitrary ufunc with no reduction identity
         assert_equal(np.maximum.identity, None)
         t(ok, np.maximum.reduce, 30, 30)
@@ -875,8 +938,10 @@ class TestUfunc(TestCase):
         assert_array_equal(assert_no_warnings(np.add, a, 1.1),
                            [2.1, 3.1, 4.1])
         assert_raises(TypeError, np.add, a, 1.1, out=a)
+
         def add_inplace(a, b):
             a += b
+
         assert_raises(TypeError, add_inplace, a, 1.1)
         # Make sure that explicitly overriding the exception is allowed:
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
@@ -921,16 +986,17 @@ class TestUfunc(TestCase):
 
     def test_custom_ufunc(self):
         a = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational);
+            dtype=rational)
         b = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational);
+            dtype=rational)
 
         result = test_add_rationals(a, b)
         expected = np.array([rational(1), rational(2, 3), rational(1, 2)],
-            dtype=rational);
-        assert_equal(result, expected);
+            dtype=rational)
+        assert_equal(result, expected)
 
     def test_custom_array_like(self):
+
         class MyThing(object):
             __array_priority__ = 1000
 
@@ -1001,15 +1067,15 @@ class TestUfunc(TestCase):
         b = np.array([100, 200, 300])
         np.add.at(a, (slice(None), [1, 2, 1], slice(None)), b)
         assert_equal(a,
-            [[[0,  1,  2  ],
+            [[[0,  1,  2],
               [203, 404, 605],
               [106, 207, 308]],
 
-             [[9,  10, 11 ],
+             [[9,  10, 11],
               [212, 413, 614],
               [115, 216, 317]],
 
-             [[18, 19, 20 ],
+             [[18, 19, 20],
               [221, 422, 623],
               [124, 225, 326]]])
 
@@ -1147,14 +1213,70 @@ class TestUfunc(TestCase):
                      out=None)
 
         # invalid keyord
+        assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
+        assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",
                       out=None)
-        assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, axis=0, dtype=None, keepdims=True,
                       out=None, invalid=0)
         assert_raises(TypeError, f, d, axis=0, dtype=None,
                       out=None, invalid=0)
-        assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
+
+    def test_structured_equal(self):
+        # https://github.com/numpy/numpy/issues/4855
+
+        class MyA(np.ndarray):
+            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs):
+                return getattr(ufunc, method)(*(input.view(np.ndarray)
+                                              for input in inputs), **kwargs)
+        a = np.arange(12.).reshape(4,3)
+        ra = a.view(dtype=('f8,f8,f8')).squeeze()
+        mra = ra.view(MyA)
+
+        target = np.array([ True, False, False, False], dtype=bool)
+        assert_equal(np.all(target == (mra == ra[0])), True)
+
+    def test_NotImplemented_not_returned(self):
+        # See gh-5964 and gh-2091. Some of these functions are not operator
+        # related and were fixed for other reasons in the past.
+        binary_funcs = [
+            np.power, np.add, np.subtract, np.multiply, np.divide,
+            np.true_divide, np.floor_divide, np.bitwise_and, np.bitwise_or,
+            np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
+            np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
+            np.logical_and, np.logical_or, np.logical_xor, np.maximum,
+            np.minimum, np.mod
+            ]
+
+        # These functions still return NotImplemented. Will be fixed in
+        # future.
+        # bad = [np.greater, np.greater_equal, np.less, np.less_equal, np.not_equal]
+
+        a = np.array('1')
+        b = 1
+        for f in binary_funcs:
+            assert_raises(TypeError, f, a, b)
+
+    def test_reduce_noncontig_output(self):
+        # Check that reduction deals with non-contiguous output arrays
+        # appropriately.
+        #
+        # gh-8036
+
+        x = np.arange(7*13*8, dtype=np.int16).reshape(7, 13, 8)
+        x = x[4:6,1:11:6,1:5].transpose(1, 2, 0)
+        y_base = np.arange(4*4, dtype=np.int16).reshape(4, 4)
+        y = y_base[::2,:]
+
+        y_base_copy = y_base.copy()
+
+        r0 = np.add.reduce(x, out=y.copy(), axis=2)
+        r1 = np.add.reduce(x, out=y, axis=2)
+
+        # The results should match, and y_base shouldn't get clobbered
+        assert_equal(r0, r1)
+        assert_equal(y_base[1,:], y_base_copy[1,:])
+        assert_equal(y_base[3,:], y_base_copy[3,:])
 
 
 if __name__ == "__main__":

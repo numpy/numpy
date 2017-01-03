@@ -4,7 +4,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
            'stack']
 
 from . import numeric as _nx
-from .numeric import array, asanyarray, newaxis
+from .numeric import asanyarray, newaxis
 
 def atleast_1d(*arys):
     """
@@ -21,7 +21,7 @@ def atleast_1d(*arys):
     Returns
     -------
     ret : ndarray
-        An array, or sequence of arrays, each with ``a.ndim >= 1``.
+        An array, or list of arrays, each with ``a.ndim >= 1``.
         Copies are made only if necessary.
 
     See Also
@@ -48,9 +48,9 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0 :
+        if len(ary.shape) == 0:
             result = ary.reshape(1)
-        else :
+        else:
             result = ary
         res.append(result)
     if len(res) == 1:
@@ -72,7 +72,7 @@ def atleast_2d(*arys):
     Returns
     -------
     res, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        An array, or list of arrays, each with ``a.ndim >= 2``.
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
@@ -98,11 +98,11 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0 :
+        if len(ary.shape) == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1 :
+        elif len(ary.shape) == 1:
             result = ary[newaxis,:]
-        else :
+        else:
             result = ary
         res.append(result)
     if len(res) == 1:
@@ -124,7 +124,7 @@ def atleast_3d(*arys):
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
         avoided where possible, and views with three or more dimensions are
         returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
         of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
@@ -146,11 +146,11 @@ def atleast_3d(*arys):
     >>> x = np.arange(12.0).reshape(4,3)
     >>> np.atleast_3d(x).shape
     (4, 3, 1)
-    >>> np.atleast_3d(x).base is x
+    >>> np.atleast_3d(x).base is x.base  # x is a reshape, so not base itself
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
-    ...     print arr, arr.shape
+    ...     print(arr, arr.shape)
     ...
     [[[1]
       [2]]] (1, 2, 1)
@@ -183,6 +183,10 @@ def vstack(tup):
 
     Take a sequence of arrays and stack them vertically to make a single
     array. Rebuild arrays divided by `vsplit`.
+
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------
@@ -235,6 +239,10 @@ def hstack(tup):
 
     Take a sequence of arrays and stack them horizontally to make
     a single array. Rebuild arrays divided by `hsplit`.
+
+    This function continues to be supported for backward compatibility, but
+    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
+    function was added in NumPy 1.10.
 
     Parameters
     ----------

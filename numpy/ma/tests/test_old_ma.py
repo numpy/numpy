@@ -1,13 +1,26 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 from functools import reduce
 
 import numpy as np
-from numpy.ma import *
-from numpy.core.numerictypes import float32
-from numpy.ma.core import umath
-from numpy.testing import *
+import numpy.core.umath as umath
+import numpy.core.fromnumeric as fromnumeric
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, suppress_warnings)
+from numpy.ma.testutils import assert_array_equal
+from numpy.ma import (
+    MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
+    arange, arccos, arcsin, arctan, arctan2, array, average, choose,
+    concatenate, conjugate, cos, cosh, count, divide, equal, exp, filled,
+    getmask, greater, greater_equal, inner, isMaskedArray, less,
+    less_equal, log, log10, make_mask, masked, masked_array, masked_equal,
+    masked_greater, masked_greater_equal, masked_inside, masked_less,
+    masked_less_equal, masked_not_equal, masked_outside,
+    masked_print_option, masked_values, masked_where, maximum, minimum,
+    multiply, nomask, nonzero, not_equal, ones, outer, product, put, ravel,
+    repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
+    take, tan, tanh, transpose, where, zeros,
+    )
 
 pi = np.pi
 
@@ -15,10 +28,7 @@ pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print("""Not eq:%s
-%s
-----
-%s""" % (msg, str(v), str(w)))
+        print("Not eq:%s\n%s\n----%s" % (msg, str(v), str(w)))
     return result
 
 
@@ -202,10 +212,11 @@ class TestMa(TestCase):
         x2 = array(x1, mask=[1, 0, 0, 0])
         x3 = array(x1, mask=[0, 1, 0, 1])
         x4 = array(x1)
-    # test conversion to strings
-        junk, garbage = str(x2), repr(x2)
+        # test conversion to strings
+        str(x2)  # raises?
+        repr(x2)  # raises?
         assert_(eq(np.sort(x1), sort(x2, fill_value=0)))
-    # tests of indexing
+        # tests of indexing
         assert_(type(x2[1]) is type(x1[1]))
         assert_(x1[1] == x2[1])
         assert_(x2[0] is masked)
@@ -247,62 +258,73 @@ class TestMa(TestCase):
 
     def test_testCopySize(self):
         # Tests of some subtle points of copying and sizing.
-        n = [0, 0, 1, 0, 0]
-        m = make_mask(n)
-        m2 = make_mask(m)
-        self.assertTrue(m is m2)
-        m3 = make_mask(m, copy=1)
-        self.assertTrue(m is not m3)
+        with suppress_warnings() as sup:
+            sup.filter(
+                np.ma.core.MaskedArrayFutureWarning,
+                "setting an item on a masked array which has a "
+                "shared mask will not copy")
 
-        x1 = np.arange(5)
-        y1 = array(x1, mask=m)
-        self.assertTrue(y1._data is not x1)
-        self.assertTrue(allequal(x1, y1._data))
-        self.assertTrue(y1.mask is m)
+            n = [0, 0, 1, 0, 0]
+            m = make_mask(n)
+            m2 = make_mask(m)
+            self.assertTrue(m is m2)
+            m3 = make_mask(m, copy=1)
+            self.assertTrue(m is not m3)
 
-        y1a = array(y1, copy=0)
-        self.assertTrue(y1a.mask is y1.mask)
+            x1 = np.arange(5)
+            y1 = array(x1, mask=m)
+            self.assertTrue(y1._data is not x1)
+            self.assertTrue(allequal(x1, y1._data))
+            self.assertTrue(y1.mask is m)
 
-        y2 = array(x1, mask=m, copy=0)
-        self.assertTrue(y2.mask is m)
-        self.assertTrue(y2[2] is masked)
-        y2[2] = 9
-        self.assertTrue(y2[2] is not masked)
-        self.assertTrue(y2.mask is not m)
-        self.assertTrue(allequal(y2.mask, 0))
+            y1a = array(y1, copy=0)
+            self.assertTrue(y1a.mask is y1.mask)
 
-        y3 = array(x1 * 1.0, mask=m)
-        self.assertTrue(filled(y3).dtype is (x1 * 1.0).dtype)
+            y2 = array(x1, mask=m, copy=0)
+            self.assertTrue(y2.mask is m)
+            self.assertTrue(y2[2] is masked)
+            y2[2] = 9
+            self.assertTrue(y2[2] is not masked)
+            self.assertTrue(y2.mask is not m)
+            self.assertTrue(allequal(y2.mask, 0))
 
-        x4 = arange(4)
-        x4[2] = masked
-        y4 = resize(x4, (8,))
-        self.assertTrue(eq(concatenate([x4, x4]), y4))
-        self.assertTrue(eq(getmask(y4), [0, 0, 1, 0, 0, 0, 1, 0]))
-        y5 = repeat(x4, (2, 2, 2, 2), axis=0)
-        self.assertTrue(eq(y5, [0, 0, 1, 1, 2, 2, 3, 3]))
-        y6 = repeat(x4, 2, axis=0)
-        self.assertTrue(eq(y5, y6))
+            y3 = array(x1 * 1.0, mask=m)
+            self.assertTrue(filled(y3).dtype is (x1 * 1.0).dtype)
+
+            x4 = arange(4)
+            x4[2] = masked
+            y4 = resize(x4, (8,))
+            self.assertTrue(eq(concatenate([x4, x4]), y4))
+            self.assertTrue(eq(getmask(y4), [0, 0, 1, 0, 0, 0, 1, 0]))
+            y5 = repeat(x4, (2, 2, 2, 2), axis=0)
+            self.assertTrue(eq(y5, [0, 0, 1, 1, 2, 2, 3, 3]))
+            y6 = repeat(x4, 2, axis=0)
+            self.assertTrue(eq(y5, y6))
 
     def test_testPut(self):
         # Test of put
-        d = arange(5)
-        n = [0, 0, 0, 1, 1]
-        m = make_mask(n)
-        x = array(d, mask=m)
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is masked)
-        x[[1, 4]] = [10, 40]
-        self.assertTrue(x.mask is not m)
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is not masked)
-        self.assertTrue(eq(x, [0, 10, 2, -1, 40]))
+        with suppress_warnings() as sup:
+            sup.filter(
+                np.ma.core.MaskedArrayFutureWarning,
+                "setting an item on a masked array which has a "
+                "shared mask will not copy")
+            d = arange(5)
+            n = [0, 0, 0, 1, 1]
+            m = make_mask(n)
+            x = array(d, mask=m)
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is masked)
+            x[[1, 4]] = [10, 40]
+            self.assertTrue(x.mask is not m)
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is not masked)
+            self.assertTrue(eq(x, [0, 10, 2, -1, 40]))
 
-        x = array(d, mask=m)
-        x.put([0, 1, 2], [-1, 100, 200])
-        self.assertTrue(eq(x, [-1, 100, 200, 0, 0]))
-        self.assertTrue(x[3] is masked)
-        self.assertTrue(x[4] is masked)
+            x = array(d, mask=m)
+            x.put([0, 1, 2], [-1, 100, 200])
+            self.assertTrue(eq(x, [-1, 100, 200, 0, 0]))
+            self.assertTrue(x[3] is masked)
+            self.assertTrue(x[4] is masked)
 
     def test_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
@@ -387,7 +409,7 @@ class TestMa(TestCase):
                    [1, 0, 1, 0, 1]))
         assert_(eq(masked_where([1, 1, 0, 0, 0], [1, 2, 3, 4, 5]),
                    [99, 99, 3, 4, 5]))
-        atest = ones((10, 10, 10), dtype=float32)
+        atest = ones((10, 10, 10), dtype=np.float32)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest, atest)
         assert_(eq(atest, ctest))
@@ -413,7 +435,7 @@ class TestMa(TestCase):
         assert_(eq(z, [99, 1, 1, 99, 99, 99]))
 
     def test_testMinMax2(self):
-        # Test of minumum, maximum.
+        # Test of minimum, maximum.
         assert_(eq(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3]))
         assert_(eq(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9]))
         x = arange(5)
@@ -489,7 +511,7 @@ class TestMa(TestCase):
         xm /= arange(10)
         assert_(eq(xm, ones((10,))))
 
-        x = arange(10).astype(float32)
+        x = arange(10).astype(np.float32)
         xm = arange(10)
         xm[2] = masked
         x += 1.
@@ -512,11 +534,6 @@ class TestMa(TestCase):
         self.assertTrue(str(masked) == '--')
         self.assertTrue(xx[1] is masked)
         self.assertEqual(filled(xx[1], 0), 0)
-        # don't know why these should raise an exception...
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, masked)
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, 2)
-        #self.assertRaises(Exception, lambda x,y: x+y, masked, xx)
-        #self.assertRaises(Exception, lambda x,y: x+y, xx, masked)
 
     def test_testAverage1(self):
         # Test of average.
@@ -671,9 +688,7 @@ class TestUfuncs(TestCase):
                   'arccosh',
                   'arctanh',
                   'absolute', 'fabs', 'negative',
-                  # 'nonzero', 'around',
                   'floor', 'ceil',
-                  # 'sometrue', 'alltrue',
                   'logical_not',
                   'add', 'subtract', 'multiply',
                   'divide', 'true_divide', 'floor_divide',
@@ -744,7 +759,6 @@ class TestArrayMethods(TestCase):
 
         self.d = (x, X, XX, m, mx, mX, mXX)
 
-    #------------------------------------------------------
     def test_trace(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         mXdiag = mX.diagonal()
@@ -814,56 +828,6 @@ def eqmask(m1, m2):
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
-
-#def timingTest():
-#    for f in [testf, testinplace]:
-#        for n in [1000,10000,50000]:
-#            t = testta(n, f)
-#            t1 = testtb(n, f)
-#            t2 = testtc(n, f)
-#            print f.test_name
-#            print """\
-#n = %7d
-#numpy time (ms) %6.1f
-#MA maskless ratio %6.1f
-#MA masked ratio %6.1f
-#""" % (n, t*1000.0, t1/t, t2/t)
-
-#def testta(n, f):
-#    x=np.arange(n) + 1.0
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testtb(n, f):
-#    x=arange(n) + 1.0
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testtc(n, f):
-#    x=arange(n) + 1.0
-#    x[0] = masked
-#    tn0 = time.time()
-#    z = f(x)
-#    return time.time() - tn0
-
-#def testf(x):
-#    for i in range(25):
-#        y = x **2 +  2.0 * x - 1.0
-#        w = x **2 +  1.0
-#        z = (y / w) ** 2
-#    return z
-#testf.test_name = 'Simple arithmetic'
-
-#def testinplace(x):
-#    for i in range(25):
-#        y = x**2
-#        y += 2.0*x
-#        y -= 1.0
-#        y /= x
-#    return y
-#testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
     run_module_suite()

@@ -3,7 +3,7 @@
 Indexing
 ========
 
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. currentmodule:: numpy
 
@@ -171,7 +171,7 @@ concepts to remember include:
 .. data:: newaxis
 
    The :const:`newaxis` object can be used in all slicing operations to 
-   create an axis of length one. :const: :const:`newaxis` is an alias for
+   create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
 
@@ -193,7 +193,7 @@ basic slicing that returns a :term:`view`).
    fundamentally different than ``x[(1,2,3)]``. The latter is
    equivalent to ``x[1,2,3]`` which will trigger basic selection while
    the former will trigger advanced indexing. Be sure to understand
-   why this is occurs.
+   why this occurs.
 
    Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
    whereas ``x[[1,2,slice(None)]]`` will trigger basic slicing.
@@ -357,11 +357,10 @@ faster when ``obj.shape == x.shape``.
 
 If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
 filled with the elements of *x* corresponding to the :const:`True`
-values of *obj*.
-The search order will be C-style (last index varies the fastest). If
-*obj* has :const:`True` values at entries that are outside of the
-bounds of *x*, then an index error will be raised. If *obj* is smaller
-than *x* it is identical to filling it with :const:`False`.
+values of *obj*.  The search order will be :term:`row-major`,
+C-style. If *obj* has :const:`True` values at entries that are outside
+of the bounds of *x*, then an index error will be raised. If *obj* is
+smaller than *x* it is identical to filling it with :const:`False`.
 
 .. admonition:: Example
 

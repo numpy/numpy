@@ -67,13 +67,14 @@ Shape Manipulation
 ------------------
 ================ ===================
 squeeze          Return a with length-one dimensions removed.
-atleast_1d       Force arrays to be > 1D
-atleast_2d       Force arrays to be > 2D
-atleast_3d       Force arrays to be > 3D
+atleast_1d       Force arrays to be >= 1D
+atleast_2d       Force arrays to be >= 2D
+atleast_3d       Force arrays to be >= 3D
 vstack           Stack arrays vertically (row on row)
 hstack           Stack arrays horizontally (column on column)
 column_stack     Stack 1D arrays as columns into 2D array
 dstack           Stack arrays depthwise (along third dimension)
+stack            Stack arrays along a new axis
 split            Divide array into a list of sub-arrays
 hsplit           Split into columns
 vsplit           Split into rows
@@ -106,6 +107,12 @@ polysub          Substract polynomials
 polymul          Multiply polynomials
 polydiv          Divide polynomials
 polyval          Evaluate polynomial at given argument
+================ ===================
+
+Iterators
+---------
+================ ===================
+Arrayterator     A buffered iterator for big arrays.
 ================ ===================
 
 Import Tricks

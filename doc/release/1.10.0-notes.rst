@@ -1,13 +1,13 @@
 NumPy 1.10.0 Release Notes
 **************************
 
-This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
+This release supports Python 2.6 - 2.7 and 3.2 - 3.5.
 
 
 Highlights
 ==========
-* numpy.distutils now supports parallel compilation via the --jobs/-j argument
-  passed to setup.py build
+* numpy.distutils now supports parallel compilation via the --parallel/-j
+  argument passed to setup.py build
 * numpy.distutils now supports additional customization via site.cfg to
   control compilation parameters, i.e. runtime libraries, extra
   linking/compilation flags.
@@ -18,33 +18,76 @@ Highlights
   sequence of arrays along a new axis, complementing `np.concatenate` for
   joining along an existing axis.
 * Addition of `nanprod` to the set of nanfunctions.
-
+* Support for the '@' operator in Python 3.5.
 
 Dropped Support
 ===============
-* The polytemplate.py file has been removed.
-* The _dotblas module is no longer available.
-* The testcalcs.py file has been removed.
 
+* The _dotblas module has been removed. CBLAS Support is now in
+  Multiarray.
+* The testcalcs.py file has been removed.
+* The polytemplate.py file has been removed.
+* npy_PyFile_Dup and npy_PyFile_DupClose have been removed from
+  npy_3kcompat.h.
+* splitcmdline has been removed from numpy/distutils/exec_command.py.
+* try_run and get_output have been removed from
+  numpy/distutils/command/config.py
+* The a._format attribute is no longer supported for array printing.
+* Keywords ``skiprows`` and ``missing`` removed from np.genfromtxt.
+* Keyword ``old_behavior`` removed from np.correlate.
 
 Future Changes
 ==============
-* The SafeEval class will be removed.
-* The alterdot and restoredot functions will be removed.
 
+* In array comparisons like ``arr1 == arr2``, many corner cases
+  involving strings or structured dtypes that used to return scalars
+  now issue ``FutureWarning`` or ``DeprecationWarning``, and in the
+  future will be change to either perform elementwise comparisons or
+  raise an error.
+* In ``np.lib.split`` an empty array in the result always had dimension
+  ``(0,)`` no matter the dimensions of the array being split. In Numpy 1.11
+  that behavior will be changed so that the dimensions will be preserved. A
+  ``FutureWarning`` for this change has been in place since Numpy 1.9 but,
+  due to a bug, sometimes no warning was raised and the dimensions were
+  already preserved.
+* The SafeEval class will be removed in Numpy 1.11.
+* The alterdot and restoredot functions will be removed in Numpy 1.11.
+
+See below for more details on these changes.
 
 Compatibility notes
 ===================
 
+Default casting rule change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default casting for inplace operations has changed to ``'same_kind'``. For
+instance, if n is an array of integers, and f is an array of floats, then
+``n += f`` will result in a ``TypeError``, whereas in previous Numpy
+versions the floats would be silently cast to ints. In the unlikely case
+that the example code is not an actual bug, it can be updated in a backward
+compatible way by rewriting it as ``np.add(n, f, out=n, casting='unsafe')``.
+The old ``'unsafe'`` default has been deprecated since Numpy 1.7.
+
 numpy version string
 ~~~~~~~~~~~~~~~~~~~~
 The numpy version string for development builds has been changed from
-``x.y.z.dev-githash`` to ``x.y.z.dev+githash`` (note the +) in order to comply
+``x.y.z.dev-githash`` to ``x.y.z.dev0+githash`` (note the +) in order to comply
 with PEP 440.
 
 relaxed stride checking
 ~~~~~~~~~~~~~~~~~~~~~~~
 NPY_RELAXED_STRIDE_CHECKING is now true by default.
+
+UPDATE: In 1.10.2 the default value of  NPY_RELAXED_STRIDE_CHECKING was
+changed to false for back compatibility reasons. More time is needed before
+it can be made the default. As part of the roadmap a deprecation of
+dimension changing views of f_contiguous not c_contiguous arrays was also
+added.
+
+Concatenation of 1d arrays along any but ``axis=0`` raises ``IndexError``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using axis != 0 has raised a DeprecationWarning since NumPy 1.7, it now
+raises an error.
 
 *np.ravel*, *np.diagonal* and *np.diag* now preserve subtypes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,13 +105,27 @@ Previously, a view was returned except when no change was made in the order
 of the axes, in which case the input array was returned.  A view is now
 returned in all cases.
 
+*nonzero* now returns base ndarrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, an inconsistency existed between 1-D inputs (returning a
+base ndarray) and higher dimensional ones (which preserved subclasses).
+Behavior has been unified, and the return will now be a base ndarray.
+Subclasses can still override this behavior by providing their own
+*nonzero* method.
+
 C API
 ~~~~~
 The changes to *swapaxes* also apply to the *PyArray_SwapAxes* C function,
 which now returns a view in all cases.
 
+The changes to *nonzero* also apply to the *PyArray_Nonzero* C function,
+which now returns a base ndarray in all cases.
+
 The dtype structure (PyArray_Descr) has a new member at the end to cache
 its hash value.  This shouldn't affect any well-written applications.
+
+The change to the concatenation function DeprecationWarning also affects
+PyArray_ConcatenateArrays,
 
 recarray field return types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,6 +137,13 @@ Notably, this affect recarrays containing strings with whitespace, as trailing
 whitespace is trimmed from chararrays but kept in ndarrays of string type.
 Also, the dtype.type of nested structured fields is now inherited.
 
+recarray views
+~~~~~~~~~~~~~~
+Viewing an ndarray as a recarray now automatically converts the dtype to
+np.record. See new record array documentation. Additionally, viewing a recarray
+with a non-structured dtype no longer converts the result's type to ndarray -
+the result will remain a recarray.
+
 'out' keyword argument of ufuncs now accepts tuples of arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When using the 'out' keyword argument of a ufunc, a tuple of arrays, one per
@@ -88,6 +152,33 @@ is also a valid 'out' keyword argument. Previously a single array could be
 provided in the 'out' keyword argument, and it would be used as the first
 output for ufuncs with multiple outputs, is deprecated, and will result in a
 `DeprecationWarning` now and an error in the future.
+
+byte-array indices now raises an IndexError
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Indexing an ndarray using a byte-string in Python 3 now raises an IndexError
+instead of a ValueError.
+
+Masked arrays containing objects with arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For such (rare) masked arrays, getting a single masked item no longer returns a
+corrupted masked array, but a fully masked version of the item.
+
+Median warns and returns nan when invalid values are encountered
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to mean, median and percentile now emits a Runtime warning and
+returns `NaN` in slices where a `NaN` is present.
+To compute the median or percentile while ignoring invalid values use the
+new `nanmedian` or `nanpercentile` functions.
+
+Functions available from numpy.ma.testutils have changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All functions from numpy.testing were once available from
+numpy.ma.testutils but not all of them were redefined to work with masked
+arrays. Most of those functions have now been removed from
+numpy.ma.testutils with a small subset retained in order to preserve
+backward compatibility. In the long run this should help avoid mistaken use
+of the wrong functions, but it may cause import problems for some.
+
 
 New Features
 ============
@@ -114,7 +205,7 @@ and a bit faster.
 
 numpy.distutils now allows parallel compilation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By passing *--jobs=n* or *-j n* to *setup.py build* the compilation of
+By passing *--parallel=n* or *-j n* to *setup.py build* the compilation of
 extensions is now performed in *n* parallel processes.
 The parallelization is limited to files within one extension so projects using
 Cython will not profit because it builds extensions from single files.
@@ -152,6 +243,23 @@ covariance calculations by applying two types of weighting to observation
 vectors. An array of ``fweights`` indicates the number of repeats of each
 observation vector, and an array of ``aweights`` provides their relative
 importance or probability.
+
+Support for the '@' operator in Python 3.5+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Python 3.5 adds support for a matrix multiplication operator '@' proposed
+in PEP465. Preliminary support for that has been implemented, and an
+equivalent function ``matmul`` has also been added for testing purposes and
+use in earlier Python versions. The function is preliminary and the order
+and number of its optional arguments can be expected to change.
+
+New argument ``norm`` to fft functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The default normalization has the direct transforms unscaled and the inverse
+transforms are scaled by :math:`1/n`. It is possible to obtain unitary
+transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is
+`None`) so that both direct and inverse transforms will be scaled by
+:math:`1/\\sqrt{n}`.
+
 
 Improvements
 ============
@@ -216,7 +324,7 @@ what was provided by *np.allclose*.
 
 *np.allclose* uses *np.isclose* internally.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*np.allcose* now uses *np.isclose* internally and inherits the ability to
+*np.allclose* now uses *np.isclose* internally and inherits the ability to
 compare NaNs as equal by setting ``equal_nan=True``. Subclasses, such as
 *np.ma.MaskedArray*, are also preserved now.
 
@@ -234,6 +342,13 @@ The functions *np.load* and *np.save* have additional keyword
 arguments for controlling backward compatibility of pickled Python
 objects. This enables Numpy on Python 3 to load npy files containing
 object arrays that were generated on Python 2.
+
+MaskedArray support for more complicated base classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Built-in assumptions that the baseclass behaved like a plain array are being
+removed. In particular, setting and getting elements and ranges will respect
+baseclass overrides of ``__setitem__`` and ``__getitem__``, and arithmetic
+will respect overrides of ``__add__``, ``__sub__``, etc.
 
 Changes
 =======
@@ -257,9 +372,50 @@ views returned from *np.einsum* are writeable
 Views returned by *np.einsum* will now be writeable whenever the input
 array is writeable.
 
+*np.argmin* skips NaT values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*np.argmin* now skips NaT values in datetime64 and timedelta64 arrays,
+making it consistent with *np.min*, *np.argmax* and *np.max*.
+
 
 Deprecations
 ============
+
+Array comparisons involving strings or structured dtypes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Normally, comparison operations on arrays perform elementwise
+comparisons and return arrays of booleans. But in some corner cases,
+especially involving strings are structured dtypes, NumPy has
+historically returned a scalar instead. For example::
+
+  ### Current behaviour
+
+  np.arange(2) == "foo"
+  # -> False
+
+  np.arange(2) < "foo"
+  # -> True on Python 2, error on Python 3
+
+  np.ones(2, dtype="i4,i4") == np.ones(2, dtype="i4,i4,i4")
+  # -> False
+
+Continuing work started in 1.9, in 1.10 these comparisons will now
+raise ``FutureWarning`` or ``DeprecationWarning``, and in the future
+they will be modified to behave more consistently with other
+comparison operations, e.g.::
+
+  ### Future behaviour
+
+  np.arange(2) == "foo"
+  # -> array([False, False])
+
+  np.arange(2) < "foo"
+  # -> error, strings and numbers are not orderable
+
+  np.ones(2, dtype="i4,i4") == np.ones(2, dtype="i4,i4,i4")
+  # -> [False, False]
 
 SafeEval
 ~~~~~~~~

@@ -78,22 +78,39 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2, -3,  5, 18])
 
     """
-    ary = np.asanyarray(ary).flat
-    ed = ary[1:] - ary[:-1]
-    arrays = [ed]
-    if to_begin is not None:
-        arrays.insert(0, to_begin)
-    if to_end is not None:
-        arrays.append(to_end)
+    # force a 1d array
+    ary = np.asanyarray(ary).ravel()
 
-    if len(arrays) != 1:
-        # We'll save ourselves a copy of a potentially large array in
-        # the common case where neither to_begin or to_end was given.
-        ed = np.hstack(arrays)
+    # fast track default case
+    if to_begin is None and to_end is None:
+        return ary[1:] - ary[:-1]
 
-    return ed
+    if to_begin is None:
+        l_begin = 0
+    else:
+        to_begin = np.asanyarray(to_begin).ravel()
+        l_begin = len(to_begin)
 
-def unique(ar, return_index=False, return_inverse=False, return_counts=False):
+    if to_end is None:
+        l_end = 0
+    else:
+        to_end = np.asanyarray(to_end).ravel()
+        l_end = len(to_end)
+
+    # do the calculation in place and copy to_begin and to_end
+    l_diff = max(len(ary) - 1, 0)
+    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)
+    result = ary.__array_wrap__(result)
+    if l_begin > 0:
+        result[:l_begin] = to_begin
+    if l_end > 0:
+        result[l_begin + l_diff:] = to_end
+    np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])
+    return result
+
+
+def unique(ar, return_index=False, return_inverse=False,
+           return_counts=False, axis=None):
     """
     Find the unique elements of an array.
 
@@ -106,17 +123,27 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     Parameters
     ----------
     ar : array_like
-        Input array. This will be flattened if it is not already 1-D.
+        Input array. Unless `axis` is specified, this will be flattened if it
+        is not already 1-D.
     return_index : bool, optional
-        If True, also return the indices of `ar` that result in the unique
-        array.
+        If True, also return the indices of `ar` (along the specified axis,
+        if provided, or in the flattened array) that result in the unique array.
     return_inverse : bool, optional
-        If True, also return the indices of the unique array that can be used
-        to reconstruct `ar`.
+        If True, also return the indices of the unique array (for the specified
+        axis, if provided) that can be used to reconstruct `ar`.
     return_counts : bool, optional
-        .. versionadded:: 1.9.0
-        If True, also return the number of times each unique value comes up
+        If True, also return the number of times each unique item appears
         in `ar`.
+        .. versionadded:: 1.9.0
+    axis : int or None, optional
+        The axis to operate on. If None, `ar` will be flattened beforehand.
+        Otherwise, duplicate items will be removed along the provided axis,
+        with all the other axes belonging to the each of the unique elements.
+        Object arrays or structured arrays that contain objects are not
+        supported if the `axis` kwarg is used.
+        .. versionadded:: 1.13.0
+
+
 
     Returns
     -------
@@ -124,14 +151,14 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
         The sorted unique values.
     unique_indices : ndarray, optional
         The indices of the first occurrences of the unique values in the
-        (flattened) original array. Only provided if `return_index` is True.
+        original array. Only provided if `return_index` is True.
     unique_inverse : ndarray, optional
-        The indices to reconstruct the (flattened) original array from the
+        The indices to reconstruct the original array from the
         unique array. Only provided if `return_inverse` is True.
     unique_counts : ndarray, optional
-        .. versionadded:: 1.9.0
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
+        .. versionadded:: 1.9.0
 
     See Also
     --------
@@ -145,6 +172,12 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     >>> a = np.array([[1, 1], [2, 3]])
     >>> np.unique(a)
     array([1, 2, 3])
+
+    Return the unique rows of a 2D array
+
+    >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
+    >>> np.unique(a, axis=0)
+    array([[1, 0, 0], [2, 3, 4]])
 
     Return the indices of the original array that give the unique values:
 
@@ -170,6 +203,53 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     >>> u[indices]
     array([1, 2, 6, 4, 2, 3, 2])
 
+    """
+    ar = np.asanyarray(ar)
+    if axis is None:
+        return _unique1d(ar, return_index, return_inverse, return_counts)
+    if not (-ar.ndim <= axis < ar.ndim):
+        raise ValueError('Invalid axis kwarg specified for unique')
+
+    ar = np.swapaxes(ar, axis, 0)
+    orig_shape, orig_dtype = ar.shape, ar.dtype
+    # Must reshape to a contiguous 2D array for this to work...
+    ar = ar.reshape(orig_shape[0], -1)
+    ar = np.ascontiguousarray(ar)
+
+    if ar.dtype.char in (np.typecodes['AllInteger'] +
+                         np.typecodes['Datetime'] + 'S'):
+        # Optimization: Creating a view of your data with a np.void data type of
+        # size the number of bytes in a full row. Handles any type where items
+        # have a unique binary representation, i.e. 0 is only 0, not +0 and -0.
+        dtype = np.dtype((np.void, ar.dtype.itemsize * ar.shape[1]))
+    else:
+        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+
+    try:
+        consolidated = ar.view(dtype)
+    except TypeError:
+        # There's no good way to do this for object arrays, etc...
+        msg = 'The axis argument to unique is not supported for dtype {dt}'
+        raise TypeError(msg.format(dt=ar.dtype))
+
+    def reshape_uniq(uniq):
+        uniq = uniq.view(orig_dtype)
+        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = np.swapaxes(uniq, 0, axis)
+        return uniq
+
+    output = _unique1d(consolidated, return_index,
+                       return_inverse, return_counts)
+    if not (return_index or return_inverse or return_counts):
+        return reshape_uniq(output)
+    else:
+        uniq = reshape_uniq(output[0])
+        return (uniq,) + output[1:]
+
+def _unique1d(ar, return_index=False, return_inverse=False,
+              return_counts=False):
+    """
+    Find the unique elements of an array, ignoring shape.
     """
     ar = np.asanyarray(ar).flatten()
 

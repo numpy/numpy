@@ -29,14 +29,14 @@ following aspects of the data:
    pair: dtype; scalar
 
 To describe the type of scalar data, there are several :ref:`built-in
-scalar types <arrays.scalars.built-in>` in Numpy for various precision
+scalar types <arrays.scalars.built-in>` in NumPy for various precision
 of integers, floating-point numbers, *etc*. An item extracted from an
 array, *e.g.*, by indexing, will be a Python object whose type is the
 scalar type associated with the data type of the array.
 
 Note that the scalar types are not :class:`dtype` objects, even though
 they can be used in place of one whenever a data type specification is
-needed in Numpy.
+needed in NumPy.
 
 .. index::
    pair: dtype; field
@@ -230,6 +230,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'u'``            unsigned integer
    ``'f'``            floating-point
    ``'c'``            complex-floating point
+   ``'m'``            timedelta
+   ``'M'``            datetime
    ``'O'``            (Python) objects
    ``'S'``, ``'a'``   (byte-)string
    ``'U'``            Unicode
@@ -424,16 +426,18 @@ Type strings
 
 ``(base_dtype, new_dtype)``
 
-    This usage is discouraged. In NumPy 1.7 and later, it is possible
-    to specify struct dtypes with overlapping fields, functioning like
-    the 'union' type in C. The union mechanism is preferred.
-
-    Both arguments must be convertible to data-type objects in this
-    case. The *base_dtype* is the data-type object that the new
-    data-type builds on. This is how you could assign named fields to
-    any built-in data-type object, as done in
+    In NumPy 1.7 and later, this form allows `base_dtype` to be interpreted as
+    a structured dtype. Arrays created with this dtype will have underlying
+    dtype `base_dtype` but will have fields and flags taken from `new_dtype`.
+    This is useful for creating custom structured dtypes, as done in
     :ref:`record arrays <arrays.classes.rec>`.
 
+    This form also makes it possible to specify struct dtypes with overlapping
+    fields, functioning like the 'union' type in C. This usage is discouraged,
+    however, and the union mechanism is preferred.
+
+    Both arguments must be convertible to data-type objects with the same total
+    size.
     .. admonition:: Example
 
        32-bit integer, whose first two bytes are interpreted as an integer
@@ -455,7 +459,7 @@ Type strings
 :class:`dtype`
 ==============
 
-Numpy data type descriptions are instances of the :class:`dtype` class.
+NumPy data type descriptions are instances of the :class:`dtype` class.
 
 Attributes
 ----------

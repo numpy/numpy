@@ -45,16 +45,10 @@ some additional SI-prefix seconds-based units.
     >>> np.datetime64('2005-02', 'D')
     numpy.datetime64('2005-02-01')
 
-    Using UTC "Zulu" time:
-
-    >>> np.datetime64('2005-02-25T03:30Z')
-    numpy.datetime64('2005-02-24T21:30-0600')
-
-    ISO 8601 specifies to use the local time zone
-    if none is explicitly given:
+    From a date and time:
 
     >>> np.datetime64('2005-02-25T03:30')
-    numpy.datetime64('2005-02-25T03:30-0600')
+    numpy.datetime64('2005-02-25T03:30')
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
@@ -99,23 +93,6 @@ because the moment of time is still being represented exactly.
 
     >>> np.datetime64('2010-03-14T15Z') == np.datetime64('2010-03-14T15:00:00.00Z')
     True
-
-An important exception to this rule is between datetimes with
-:ref:`date units <arrays.dtypes.dateunits>` and datetimes with
-:ref:`time units <arrays.dtypes.timeunits>`. This is because this kind
-of conversion generally requires a choice of timezone and
-particular time of day on the given date.
-
-.. admonition:: Example
-
-    >>> np.datetime64('2003-12-25', 's')
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: Cannot parse "2003-12-25" as unit 's' using casting rule 'same_kind'
-
-    >>> np.datetime64('2003-12-25') == np.datetime64('2003-12-25T00Z')
-    False
-
 
 Datetime and Timedelta Arithmetic
 =================================
@@ -200,9 +177,9 @@ And here are the time units:
 ======== ================ ======================= ==========================
    h       hour             +/- 1.0e15 years        [1.0e15 BC, 1.0e15 AD]
    m       minute           +/- 1.7e13 years        [1.7e13 BC, 1.7e13 AD]
-   s       second           +/- 2.9e12 years        [ 2.9e9 BC,  2.9e9 AD]
-   ms      millisecond      +/- 2.9e9 years         [ 2.9e6 BC,  2.9e6 AD]
-   us      microsecond      +/- 2.9e6 years         [290301 BC, 294241 AD]
+   s       second           +/- 2.9e11 years        [2.9e11 BC, 2.9e11 AD]
+   ms      millisecond      +/- 2.9e8 years         [ 2.9e8 BC,  2.9e8 AD]
+   us      microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    ns      nanosecond       +/- 292 years           [  1678 AD,   2262 AD]
    ps      picosecond       +/- 106 days            [  1969 AD,   1970 AD]
    fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]
@@ -352,6 +329,41 @@ Some examples::
     weekmask = "Mon Tue Wed Thu Fri"
     # any amount of whitespace is allowed; abbreviations are case-sensitive.
     weekmask = "MonTue Wed  Thu\tFri"
+
+Changes with NumPy 1.11
+=======================
+
+In prior versions of NumPy, the datetime64 type always stored
+times in UTC. By default, creating a datetime64 object from a string or
+printing it would convert from or to local time::
+
+    # old behavior
+    >>>> np.datetime64('2000-01-01T00:00:00')
+    numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
+
+A concensus of datetime64 users agreed that this behavior is undesirable
+and at odds with how datetime64 is usually used (e.g., by pandas_). For
+most use cases, a timezone naive datetime type is preferred, similar to the
+``datetime.datetime`` type in the Python standard library. Accordingly,
+datetime64 no longer assumes that input is in local time, nor does it print
+local times::
+
+    >>>> np.datetime64('2000-01-01T00:00:00')
+    numpy.datetime64('2000-01-01T00:00:00')
+
+For backwards compatibility, datetime64 still parses timezone offsets, which
+it handles by converting to UTC. However, the resulting datetime is timezone
+naive::
+
+    >>> np.datetime64('2000-01-01T00:00:00-08')
+    DeprecationWarning: parsing timezone aware datetimes is deprecated; this will raise an error in the future
+    numpy.datetime64('2000-01-01T08:00:00')
+
+As a corollary to this change, we no longer prohibit casting between datetimes
+with date units and datetimes with timeunits. With timezone naive datetimes,
+the rule for casting from dates to times is no longer ambiguous.
+
+pandas_: http://pandas.pydata.org
 
 Differences Between 1.6 and 1.7 Datetimes
 =========================================

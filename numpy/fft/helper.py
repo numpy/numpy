@@ -4,6 +4,9 @@ Discrete Fourier Transforms - helper.py
 """
 from __future__ import division, absolute_import, print_function
 
+import collections
+import threading
+
 from numpy.compat import integer_types
 from numpy.core import (
         asarray, concatenate, arange, take, integer, empty
@@ -222,3 +225,99 @@ def rfftfreq(n, d=1.0):
     N = n//2 + 1
     results = arange(0, N, dtype=int)
     return results * val
+
+
+class _FFTCache(object):
+    """
+    Cache for the FFT twiddle factors as an LRU (least recently used) cache.
+
+    Parameters
+    ----------
+    max_size_in_mb : int
+        Maximum memory usage of the cache before items are being evicted.
+    max_item_count : int
+        Maximum item count of the cache before items are being evicted.
+
+    Notes
+    -----
+    Items will be evicted if either limit has been reached upon getting and
+    setting. The maximum memory usages is not strictly the given
+    ``max_size_in_mb`` but rather
+    ``max(max_size_in_mb, 1.5 * size_of_largest_item)``. Thus the cache will
+    never be completely cleared - at least one item will remain and a single
+    large item can cause the cache to retain several smaller items even if the
+    given maximum cache size has been exceeded.
+    """
+    def __init__(self, max_size_in_mb, max_item_count):
+        self._max_size_in_bytes = max_size_in_mb * 1024 ** 2
+        self._max_item_count = max_item_count
+        self._dict = collections.OrderedDict()
+        self._lock = threading.Lock()
+
+    def put_twiddle_factors(self, n, factors):
+        """
+        Store twiddle factors for an FFT of length n in the cache.
+
+        Putting multiple twiddle factors for a certain n will store it multiple
+        times.
+
+        Parameters
+        ----------
+        n : int
+            Data length for the FFT.
+        factors : ndarray
+            The actual twiddle values.
+        """
+        with self._lock:
+            # Pop + later add to move it to the end for LRU behavior.
+            # Internally everything is stored in a dictionary whose values are
+            # lists.
+            try:
+                value = self._dict.pop(n)
+            except KeyError:
+                value = []
+            value.append(factors)
+            self._dict[n] = value
+            self._prune_cache()
+
+    def pop_twiddle_factors(self, n):
+        """
+        Pop twiddle factors for an FFT of length n from the cache.
+
+        Will return None if the requested twiddle factors are not available in
+        the cache.
+
+        Parameters
+        ----------
+        n : int
+            Data length for the FFT.
+
+        Returns
+        -------
+        out : ndarray or None
+            The retrieved twiddle factors if available, else None.
+        """
+        with self._lock:
+            if n not in self._dict or not self._dict[n]:
+                return None
+            # Pop + later add to move it to the end for LRU behavior.
+            all_values = self._dict.pop(n)
+            value = all_values.pop()
+            # Only put pack if there are still some arrays left in the list.
+            if all_values:
+                self._dict[n] = all_values
+            return value
+
+    def _prune_cache(self):
+        # Always keep at least one item.
+        while len(self._dict) > 1 and (
+                len(self._dict) > self._max_item_count or self._check_size()):
+            self._dict.popitem(last=False)
+
+    def _check_size(self):
+        item_sizes = [sum(_j.nbytes for _j in _i)
+                      for _i in self._dict.values() if _i]
+        if not item_sizes:
+            return False
+        max_size = max(self._max_size_in_bytes, 1.5 * max(item_sizes))
+        return sum(item_sizes) > max_size

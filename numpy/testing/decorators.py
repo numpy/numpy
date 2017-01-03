@@ -15,8 +15,9 @@ function name, setup and teardown functions and so on - see
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
 import collections
+
+from .utils import SkipTest, assert_warns
 
 
 def slow(t):
@@ -47,7 +48,7 @@ def slow(t):
 
       @dec.slow
       def test_big(self):
-          print 'Big, slow test'
+          print('Big, slow test')
 
     """
 
@@ -123,9 +124,9 @@ def skipif(skip_condition, msg=None):
 
         # Allow for both boolean or callable skip conditions.
         if isinstance(skip_condition, collections.Callable):
-            skip_val = lambda : skip_condition()
+            skip_val = lambda: skip_condition()
         else:
-            skip_val = lambda : skip_condition
+            skip_val = lambda: skip_condition
 
         def get_msg(func,msg=None):
             """Skip message with information about function being skipped."""
@@ -141,14 +142,14 @@ def skipif(skip_condition, msg=None):
         def skipper_func(*args, **kwargs):
             """Skipper for normal test functions."""
             if skip_val():
-                raise nose.SkipTest(get_msg(f, msg))
+                raise SkipTest(get_msg(f, msg))
             else:
                 return f(*args, **kwargs)
 
         def skipper_gen(*args, **kwargs):
             """Skipper for test generators."""
             if skip_val():
-                raise nose.SkipTest(get_msg(f, msg))
+                raise SkipTest(get_msg(f, msg))
             else:
                 for x in f(*args, **kwargs):
                     yield x
@@ -166,7 +167,7 @@ def skipif(skip_condition, msg=None):
 
 def knownfailureif(fail_condition, msg=None):
     """
-    Make function raise KnownFailureTest exception if given condition is true.
+    Make function raise KnownFailureException exception if given condition is true.
 
     If the condition is a callable, it is used at runtime to dynamically
     make the decision. This is useful for tests that may require costly
@@ -178,15 +179,15 @@ def knownfailureif(fail_condition, msg=None):
         Flag to determine whether to mark the decorated test as a known
         failure (if True) or not (if False).
     msg : str, optional
-        Message to give on raising a KnownFailureTest exception.
+        Message to give on raising a KnownFailureException exception.
         Default is None.
 
     Returns
     -------
     decorator : function
-        Decorator, which, when applied to a function, causes SkipTest
-        to be raised when `skip_condition` is True, and the function
-        to be called normally otherwise.
+        Decorator, which, when applied to a function, causes
+        KnownFailureException to be raised when `fail_condition` is True,
+        and the function to be called normally otherwise.
 
     Notes
     -----
@@ -199,18 +200,19 @@ def knownfailureif(fail_condition, msg=None):
 
     # Allow for both boolean or callable known failure conditions.
     if isinstance(fail_condition, collections.Callable):
-        fail_val = lambda : fail_condition()
+        fail_val = lambda: fail_condition()
     else:
-        fail_val = lambda : fail_condition
+        fail_val = lambda: fail_condition
 
     def knownfail_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        from .noseclasses import KnownFailureTest
+        from .noseclasses import KnownFailureException
+
         def knownfailer(*args, **kwargs):
             if fail_val():
-                raise KnownFailureTest(msg)
+                raise KnownFailureException(msg)
             else:
                 return f(*args, **kwargs)
         return nose.tools.make_decorator(f)(knownfailer)
@@ -246,19 +248,11 @@ def deprecated(conditional=True):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        from .noseclasses import KnownFailureTest
 
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement
-            with warnings.catch_warnings(record=True) as l:
-                warnings.simplefilter('always')
+            with assert_warns(DeprecationWarning):
                 f(*args, **kwargs)
-                if not len(l) > 0:
-                    raise AssertionError("No warning raised when calling %s"
-                            % f.__name__)
-                if not l[0].category is DeprecationWarning:
-                    raise AssertionError("First warning for %s is not a " \
-                            "DeprecationWarning( is %s)" % (f.__name__, l[0]))
 
         if isinstance(conditional, collections.Callable):
             cond = conditional()

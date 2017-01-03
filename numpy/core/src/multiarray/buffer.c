@@ -387,7 +387,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         case NPY_UNICODE: {
-            /* Numpy Unicode is always 4-byte */
+            /* NumPy Unicode is always 4-byte */
             char buf[128];
             assert(descr->elsize % 4 == 0);
             PyOS_snprintf(buf, sizeof(buf), "%dw", descr->elsize / 4);
@@ -629,8 +629,6 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 {
     PyArrayObject *self;
     _buffer_info_t *info = NULL;
-    int i;
-    Py_ssize_t sd;
 
     self = (PyArrayObject*)obj;
 
@@ -715,15 +713,19 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
          * regenerate strides from shape.
          */
         if (PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
-            !((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS)) {
-            sd = view->itemsize;
+                !((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS)) {
+            Py_ssize_t sd = view->itemsize;
+            int i;
+
             for (i = view->ndim-1; i >= 0; --i) {
                 view->strides[i] = sd;
                 sd *= view->shape[i];
             }
         }
         else if (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)) {
-            sd = view->itemsize;
+            Py_ssize_t sd = view->itemsize;
+            int i;
+
             for (i = 0; i < view->ndim; ++i) {
                 view->strides[i] = sd;
                 sd *= view->shape[i];

@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import doctest
+import inspect
 
 import nose
 from nose.plugins import doctests as npd
@@ -16,7 +17,8 @@ from nose.plugins.base import Plugin
 from nose.util import src
 import numpy
 from .nosetester import get_package_name
-import inspect
+from .utils import KnownFailureException, KnownFailureTest
+
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
@@ -32,34 +34,25 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         module.
         """
         if module is None:
-            #print '_fm C1'  # dbg
             return True
         elif inspect.isfunction(object):
-            #print '_fm C2'  # dbg
             return module.__dict__ is object.__globals__
         elif inspect.isbuiltin(object):
-            #print '_fm C2-1'  # dbg
             return module.__name__ == object.__module__
         elif inspect.isclass(object):
-            #print '_fm C3'  # dbg
             return module.__name__ == object.__module__
         elif inspect.ismethod(object):
             # This one may be a bug in cython that fails to correctly set the
             # __module__ attribute of methods, but since the same error is easy
             # to make by extension code writers, having this safety in place
             # isn't such a bad idea
-            #print '_fm C3-1'  # dbg
             return module.__name__ == object.__self__.__class__.__module__
         elif inspect.getmodule(object) is not None:
-            #print '_fm C4'  # dbg
-            #print 'C4 mod',module,'obj',object # dbg
             return module is inspect.getmodule(object)
         elif hasattr(object, '__module__'):
-            #print '_fm C5'  # dbg
             return module.__name__ == object.__module__
         elif isinstance(object, property):
-            #print '_fm C6'  # dbg
-            return True # [XX] no way not be sure.
+            return True  # [XX] no way not be sure.
         else:
             raise ValueError("object must be a class or function")
 
@@ -77,26 +70,23 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # doctests in extension modules.
 
         # Local shorthands
-        from inspect import isroutine, isclass, ismodule, isfunction, \
-                            ismethod
+        from inspect import (
+            isroutine, isclass, ismodule, isfunction, ismethod
+            )
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
                 valname1 = '%s.%s' % (name, valname)
                 if ( (isroutine(val) or isclass(val))
-                     and self._from_module(module, val) ):
+                     and self._from_module(module, val)):
 
                     self._find(tests, val, valname1, module, source_lines,
                                globs, seen)
 
-
         # Look for tests in a class's contained objects.
         if isclass(obj) and self._recurse:
-            #print 'RECURSE into class:',obj  # dbg
             for valname, val in obj.__dict__.items():
-                #valname1 = '%s.%s' % (name, valname)  # dbg
-                #print 'N',name,'VN:',valname,'val:',str(val)[:77] # dbg
                 # Special handling for staticmethod/classmethod.
                 if isinstance(val, staticmethod):
                     val = getattr(obj, valname)
@@ -128,12 +118,12 @@ class NumpyOutputChecker(doctest.OutputChecker):
             # actually some bigendian examples in the doctests). Let's try
             # making them all little endian
             got = got.replace("'>", "'<")
-            want= want.replace("'>", "'<")
+            want = want.replace("'>", "'<")
 
             # try to normalize out 32 and 64 bit default int sizes
             for sz in [4, 8]:
-                got = got.replace("'<i%d'"%sz, "int")
-                want= want.replace("'<i%d'"%sz, "int")
+                got = got.replace("'<i%d'" % sz, "int")
+                want = want.replace("'<i%d'" % sz, "int")
 
             ret = doctest.OutputChecker.check_output(self, want,
                     got, optionflags)
@@ -159,7 +149,7 @@ print_state = numpy.get_printoptions()
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
-    score = 1000 # load late, after doctest builtin
+    score = 1000  # load late, after doctest builtin
 
     # always use whitespace and ellipsis options for doctests
     doctest_optflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
@@ -283,8 +273,8 @@ class Unplugger(object):
     By default it removes the "doctest" plugin.
     """
     name = 'unplugger'
-    enabled = True # always enabled
-    score = 4000 # load late in order to be after builtins
+    enabled = True  # always enabled
+    score = 4000  # load late in order to be after builtins
 
     def __init__(self, to_unplug='doctest'):
         self.to_unplug = to_unplug
@@ -298,19 +288,14 @@ class Unplugger(object):
                                   if p.name != self.to_unplug]
 
 
-class KnownFailureTest(Exception):
-    '''Raise this exception to mark a test as a known failing test.'''
-    pass
-
-
-class KnownFailure(ErrorClassPlugin):
+class KnownFailurePlugin(ErrorClassPlugin):
     '''Plugin that installs a KNOWNFAIL error class for the
-    KnownFailureClass exception.  When KnownFailureTest is raised,
+    KnownFailureClass exception.  When KnownFailure is raised,
     the exception will be logged in the knownfail attribute of the
     result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
     exception will not be counted as an error or failure.'''
     enabled = True
-    knownfail = ErrorClass(KnownFailureTest,
+    knownfail = ErrorClass(KnownFailureException,
                            label='KNOWNFAIL',
                            isfailure=False)
 
@@ -318,7 +303,7 @@ class KnownFailure(ErrorClassPlugin):
         env_opt = 'NOSE_WITHOUT_KNOWNFAIL'
         parser.add_option('--no-knownfail', action='store_true',
                           dest='noKnownFail', default=env.get(env_opt, False),
-                          help='Disable special handling of KnownFailureTest '
+                          help='Disable special handling of KnownFailure '
                                'exceptions')
 
     def configure(self, options, conf):
@@ -328,6 +313,8 @@ class KnownFailure(ErrorClassPlugin):
         disable = getattr(options, 'noKnownFail', False)
         if disable:
             self.enabled = False
+
+KnownFailure = KnownFailurePlugin   # backwards compat
 
 
 # Class allows us to save the results of the tests in runTests - see runTests

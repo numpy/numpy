@@ -14,6 +14,7 @@ Matrix and vector products
    vdot
    inner
    outer
+   matmul
    tensordot
    einsum
    linalg.matrix_power

@@ -1,9 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+
 import numpy as np
-from numpy.testing import *
 from numpy.core.test_rational import rational
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    dec
+)
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -245,6 +249,45 @@ class TestRecord(TestCase):
                                    ('f1', 'datetime64[Y]'),
                                    ('f2', 'i8')]))
 
+    def test_from_dictproxy(self):
+        # Tests for PR #5920
+        dt = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'f4']})
+        assert_dtype_equal(dt, np.dtype(dt.fields))
+        dt2 = np.dtype((np.void, dt.fields))
+        assert_equal(dt2.fields, dt.fields)
+
+    def test_from_dict_with_zero_width_field(self):
+        # Regression test for #6430 / #2196
+        dt = np.dtype([('val1', np.float32, (0,)), ('val2', int)])
+        dt2 = np.dtype({'names': ['val1', 'val2'],
+                        'formats': [(np.float32, (0,)), int]})
+
+        assert_dtype_equal(dt, dt2)
+        assert_equal(dt.fields['val1'][0].itemsize, 0)
+        assert_equal(dt.itemsize, dt.fields['val2'][0].itemsize)
+
+    def test_bool_commastring(self):
+        d = np.dtype('?,?,?')  # raises?
+        assert_equal(len(d.names), 3)
+        for n in d.names:
+            assert_equal(d.fields[n][0], np.dtype('?'))
+
+    def test_nonint_offsets(self):
+        # gh-8059
+        def make_dtype(off):
+            return np.dtype({'names': ['A'], 'formats': ['i4'], 
+                             'offsets': [off]})
+        
+        assert_raises(TypeError, make_dtype, 'ASD')
+        assert_raises(OverflowError, make_dtype, 2**70)
+        assert_raises(TypeError, make_dtype, 2.3)
+        assert_raises(ValueError, make_dtype, -10)
+
+        # no errors here:
+        dt = make_dtype(np.uint32(0))
+        np.zeros(1, dtype=dt)[0].item()
+
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))
@@ -317,12 +360,15 @@ class TestSubarray(TestCase):
         dt = np.dtype([('a', 'f4', l)])
         assert_(isinstance(dt['a'].shape, tuple))
         #
+
         class IntLike(object):
             def __index__(self):
                 return 3
+
             def __int__(self):
                 # (a PyNumber_Check fails without __int__)
                 return 3
+
         dt = np.dtype([('a', 'f4', IntLike())])
         assert_(isinstance(dt['a'].shape, tuple))
         assert_(isinstance(dt['a'].shape[0], int))
@@ -353,6 +399,7 @@ class TestSubarray(TestCase):
 
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
+
     def test1(self):
         simple1 = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
             'titles': ['Red pixel', 'Blue pixel']})
@@ -385,6 +432,10 @@ class TestMetadata(TestCase):
     def test_nested_metadata(self):
         d = np.dtype([('a', np.dtype(int, metadata={'datum': 1}))])
         self.assertEqual(d['a'].metadata, {'datum': 1})
+
+    def base_metadata_copied(self):
+        d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
+        assert_equal(d.metadata, {'datum': 1})
 
 class TestString(TestCase):
     def test_complex_dtype_str(self):
@@ -502,18 +553,18 @@ class TestString(TestCase):
 
     @dec.skipif(sys.version_info[0] >= 3)
     def test_dtype_str_with_long_in_shape(self):
-        # Pull request #376
-        dt = np.dtype('(1L,)i4')
+        # Pull request #376, should not error
+        np.dtype('(1L,)i4')
 
     def test_base_dtype_with_object_type(self):
-        # Issue gh-2798
-        a = np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
+        # Issue gh-2798, should not error.
+        np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
 
     def test_empty_string_to_object(self):
         # Pull request #4722
         np.array(["", ""]).astype(object)
 
-class TestDtypeAttributeDeletion(object):
+class TestDtypeAttributeDeletion(TestCase):
 
     def test_dtype_non_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
@@ -524,12 +575,24 @@ class TestDtypeAttributeDeletion(object):
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
 
-
     def test_dtype_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
         attr = ["names"]
         for s in attr:
             assert_raises(AttributeError, delattr, dt, s)
+
+
+class TestDtypeAttributes(TestCase):
+    def test_descr_has_trailing_void(self):
+        # see gh-6359
+        dtype = np.dtype({
+            'names': ['A', 'B'],
+            'formats': ['f4', 'f4'],
+            'offsets': [0, 8],
+            'itemsize': 16})
+        new_dtype = np.dtype(dtype.descr)
+        assert_equal(new_dtype.itemsize, 16)
+
 
 class TestDtypeAttributes(TestCase):
 
@@ -542,7 +605,8 @@ class TestDtypeAttributes(TestCase):
 
     def test_name_dtype_subclass(self):
         # Ticket #4357
-        class user_def_subcls(np.void): pass
+        class user_def_subcls(np.void):
+            pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 
@@ -550,6 +614,10 @@ def test_rational_dtype():
     # test for bug gh-5719
     a = np.array([1111], dtype=rational).astype
     assert_raises(OverflowError, a, 'int8')
+
+    # test that dtype detection finds user-defined types
+    x = rational(1)
+    assert_equal(np.array([x,x]).dtype, np.dtype(rational))
 
 
 if __name__ == "__main__":

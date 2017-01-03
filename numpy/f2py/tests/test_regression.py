@@ -4,12 +4,14 @@ import os
 import math
 
 import numpy as np
-from numpy.testing import dec, assert_raises, assert_equal
+from numpy.testing import run_module_suite, dec, assert_raises, assert_equal
 
 import util
 
+
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
+
 
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
@@ -28,5 +30,4 @@ class TestIntentInOut(util.F2PyTest):
 
 
 if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+    run_module_suite()

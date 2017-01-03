@@ -1,0 +1,30 @@
+skip_tags: true
+clone_depth: 1
+
+os: Visual Studio 2015
+
+environment:
+  matrix:
+    - PY_MAJOR_VER: 2
+      PYTHON_ARCH: "x86"
+    - PY_MAJOR_VER: 3
+      PYTHON_ARCH: "x86_64"
+    - PY_MAJOR_VER: 3
+      PYTHON_ARCH: "x86"
+
+build_script:
+# If there's a newer build queued for the same PR, cancel this one
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+        throw "There are newer queued builds for this pull request, failing early." }
+  - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda$env:PY_MAJOR_VER-latest-Windows-$env:PYTHON_ARCH.exe" C:\Miniconda.exe; echo "Finished downloading miniconda"
+  - cmd: C:\Miniconda.exe /S /D=C:\Py
+  - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
+  - conda config --set always_yes yes
+  - conda update conda
+  - conda install cython nose pytz
+  - pip install . -vvv
+
+test_script:
+  - python runtests.py -v -n
