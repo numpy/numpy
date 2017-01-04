@@ -371,7 +371,9 @@ def rfft(a, n=None, axis=-1, norm=None):
     output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf,
                       _real_fft_cache)
     if _unitary(norm):
-        output *= 1 / sqrt(a.shape[axis])
+        if n is None:
+            n = a.shape[axis]
+        output *= 1 / sqrt(n)
     return output
 
 
