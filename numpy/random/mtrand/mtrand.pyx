@@ -4355,9 +4355,10 @@ cdef class RandomState:
                            self.lock)
 
     # Multivariate distributions:
-    def multivariate_normal(self, mean, cov, size=None):
+    def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
+                            tol=1e-8):
         """
-        multivariate_normal(mean, cov[, size])
+        multivariate_normal(mean, cov[, size, check_valid, tol])
 
         Draw random samples from a multivariate normal distribution.
 
@@ -4380,6 +4381,10 @@ cdef class RandomState:
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
             each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
             If no shape is specified, a single (`N`-D) sample is returned.
+        check_valid : { 'warn', 'raise', 'ignore' }, optional
+            Behavior when the covariance matrix is not positive semidefinite.
+        tol : float, optional
+            Tolerance when checking the singular values in covariance matrix.
 
         Returns
         -------
@@ -4464,11 +4469,11 @@ cdef class RandomState:
             shape = size
 
         if len(mean.shape) != 1:
-               raise ValueError("mean must be 1 dimensional")
+            raise ValueError("mean must be 1 dimensional")
         if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
-               raise ValueError("cov must be 2 dimensional and square")
+            raise ValueError("cov must be 2 dimensional and square")
         if mean.shape[0] != cov.shape[0]:
-               raise ValueError("mean and cov must have same length")
+            raise ValueError("mean and cov must have same length")
 
         # Compute shape of output and create a matrix of independent
         # standard normally distributed random numbers. The matrix has rows
@@ -4491,12 +4496,20 @@ cdef class RandomState:
         # not zero. We continue to use the SVD rather than Cholesky in
         # order to preserve current outputs. Note that symmetry has not
         # been checked.
+
         (u, s, v) = svd(cov)
-        neg = (np.sum(u.T * v, axis=1) < 0) & (s > 0)
-        if np.any(neg):
-            s[neg] = 0.
-            warnings.warn("covariance is not positive-semidefinite.",
-                          RuntimeWarning)
+
+        if check_valid != 'ignore':
+            if check_valid != 'warn' and check_valid != 'raise':
+                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
+
+            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+            if not psd:
+                if check_valid == 'warn':
+                    warnings.warn("covariance is not positive-semidefinite.",
+                                  RuntimeWarning)
+                else:
+                    raise ValueError("covariance is not positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
