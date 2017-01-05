@@ -580,10 +580,6 @@ class TestRandomDist(TestCase):
                             [-0.21682183359214885, 2.63373365386060332]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-    def test_laplace_0(self):
-        assert_(np.random.laplace(scale=0) in [0, 1])
-        assert_raises(ValueError, np.random.laplace, scale=-0.)
-
     def test_lognormal(self):
         np.random.seed(self.seed)
         actual = np.random.lognormal(mean=.123456789, sigma=2.0, size=(3, 2))
