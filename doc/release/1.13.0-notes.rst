@@ -137,3 +137,10 @@ with the covariance matrix by using two new keyword arguments:
   presence of a matrix that is not positive semidefinite. Valid options are
   ``ignore``, ``warn`` and ``raise``. The default value, ``warn`` keeps the
   the behavior used on previous releases.
+
+``assert_array_less`` compares ``np.inf`` and ``-np.inf`` now
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, ``np.testing.assert_array_less`` ignored all infinite values. This
+is not the expected behavior both according to documentation and intuitively.
+Now, -inf < x < inf is considered ``True`` for any real number x and all
+other cases fail.
