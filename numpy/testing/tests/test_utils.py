@@ -299,9 +299,24 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         a = np.array([[1., 2.], [3., 4.]])
         b = np.ma.masked_array([[1., 2.], [0., 4.]],
                                [[False, False], [True, False]])
-        assert_array_almost_equal(a, b)
-        assert_array_almost_equal(b, a)
-        assert_array_almost_equal(b, b)
+        self._assert_func(a, b)
+        self._assert_func(b, a)
+        self._assert_func(b, b)
+
+    def test_subclass_that_cannot_be_bool(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __lt__(self, other):
+                return super(MyArray, self).__lt__(other).view(np.ndarray)
+
+            def all(self, *args, **kwargs):
+                raise NotImplementedError
+
+        a = np.array([1., 2.]).view(MyArray)
+        self._assert_func(a, a)
 
 
 class TestAlmostEqual(_GenericTest, unittest.TestCase):
@@ -386,6 +401,21 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         except AssertionError as e:
             # remove anything that's not the array string
             self.assertEqual(str(e).split('%)\n ')[1], b)
+
+    def test_subclass_that_cannot_be_bool(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __lt__(self, other):
+                return super(MyArray, self).__lt__(other).view(np.ndarray)
+
+            def all(self, *args, **kwargs):
+                raise NotImplementedError
+
+        a = np.array([1., 2.]).view(MyArray)
+        self._assert_func(a, a)
 
 
 class TestApproxEqual(unittest.TestCase):

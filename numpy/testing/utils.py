@@ -669,8 +669,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, isinf, any, all, inf, zeros_like
-    from numpy.core.numerictypes import bool_
+    from numpy.core import array, isnan, isinf, any, inf
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -726,14 +725,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                 raise AssertionError(msg)
 
         if isnumber(x) and isnumber(y):
-            x_id, y_id = zeros_like(x, dtype=bool_), zeros_like(y, dtype=bool_)
             if equal_nan:
                 x_isnan, y_isnan = isnan(x), isnan(y)
                 # Validate that NaNs are in the same place
                 if any(x_isnan) or any(y_isnan):
                     chk_same_position(x_isnan, y_isnan, hasval='nan')
-                    x_id |= x_isnan
-                    y_id |= y_isnan
+                    x = x[~x_isnan]
+                    y = y[~y_isnan]
 
             if equal_inf:
                 x_isinf, y_isinf = isinf(x), isinf(y)
@@ -742,19 +740,14 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                     # Check +inf and -inf separately, since they are different
                     chk_same_position(x == +inf, y == +inf, hasval='+inf')
                     chk_same_position(x == -inf, y == -inf, hasval='-inf')
-                    x_id |= x_isinf
-                    y_id |= y_isinf
+                    x = x[~x_isinf]
+                    y = y[~y_isinf]
 
             # Only do the comparison if actual values are left
-            if all(x_id):
+            if x.size == 0:
                 return
 
-            if any(x_id):
-                val = safe_comparison(x[~x_id], y[~y_id])
-            else:
-                val = safe_comparison(x, y)
-        else:
-            val = safe_comparison(x, y)
+        val = safe_comparison(x, y)
 
         if isinstance(val, bool):
             cond = val
