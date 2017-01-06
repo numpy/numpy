@@ -248,24 +248,37 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
 
 
 def find_python_dll():
-    maj, min, micro = [int(i) for i in sys.version_info[:3]]
-    dllname = 'python%d%d.dll' % (maj, min)
-    print("Looking for %s" % dllname)
-
     # We can't do much here:
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
-    lib_dirs = [sys.prefix, sys.base_prefix, os.path.join(sys.prefix, 'lib')]
+    stems = [sys.prefix]
+    if sys.base_prefix != sys.prefix:
+        stems.append(sys.base_prefix)
 
+    sub_dirs = ['', 'lib']
+    # generate possible combinations of directory trees and sub-directories
+    lib_dirs = []
+    for stem in stems:
+        for folder in sub_dirs:
+            lib_dirs = os.path.join(stem, folder)
+
+    # add system directory as well
     if 'SYSTEMROOT' in os.environ:
         lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'System32'))
 
-    for d in lib_dirs:
-        dll = os.path.join(d, dllname)
-        if os.path.exists(dll):
-            return dll
+    # search in the file system for possible candidates
+    major_version, minor_version = tuple(sys.version_info[:2])
+    patterns = ['python%d%d.dll']
+
+    for pat in patterns:
+        dllname = pat % (major_version, minor_version)
+        print("Looking for %s" % dllname)
+        for folder in lib_dirs:
+            dll = os.path.join(folder, dllname)
+            if os.path.exists(dll):
+                return dll
 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
