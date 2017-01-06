@@ -257,7 +257,7 @@ def find_python_dll():
     if sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
 
-    sub_dirs = ['', 'lib']
+    sub_dirs = ['', 'lib', 'bin']
     # generate possible combinations of directory trees and sub-directories
     lib_dirs = []
     for stem in stems:
@@ -411,7 +411,7 @@ def _check_for_import_lib():
     major_version, minor_version = tuple(sys.version_info[:2])
 
     # patterns for the file name of the library itself
-    patterns = ['libpython%d%d.a']
+    patterns = ['libpython%d%d.a', 'libpython%d.%d.dll.a']
 
     # directory trees that may contain the library
     stems = [sys.prefix]
@@ -419,7 +419,7 @@ def _check_for_import_lib():
         stems.append(sys.base_prefix)
 
     # possible subdirectories within those trees where it is placed
-    sub_dirs = ['libs']
+    sub_dirs = ['libs', 'lib']
 
     # generate a list of candidate locations
     candidates = []
