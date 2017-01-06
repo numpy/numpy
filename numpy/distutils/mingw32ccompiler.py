@@ -411,7 +411,9 @@ def _check_for_import_lib():
     major_version, minor_version = tuple(sys.version_info[:2])
 
     # patterns for the file name of the library itself
-    patterns = ['libpython%d%d.a', 'libpython%d.%d.dll.a']
+    patterns = ['libpython%d%d.a',
+                'libpython%d%d.dll.a',
+                'libpython%d.%d.dll.a']
 
     # directory trees that may contain the library
     stems = [sys.prefix]
