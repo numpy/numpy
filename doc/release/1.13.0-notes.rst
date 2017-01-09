@@ -83,8 +83,9 @@ for instance). Note that this does not remove the need for Mingwpy; if you make
 extensive use of the runtime, you will most likely run into issues_. Instead,
 it should be regarded as a band-aid until Mingwpy is fully functional.
 
-The MinGW toolset can now also be used together with the moveable WinPython 3.4
-distribution, for programs that uses a PySide Qt4 front-end.
+Extensions can also be compiled using the MinGW toolset using the runtime
+library from the (moveable) WinPython 3.4 distribution, which can be useful for
+programs with a PySide1/Qt4 front-end.
 
 .. _MinGW: https://sf.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.2.0/threads-win32/seh/
 
