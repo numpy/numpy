@@ -455,7 +455,7 @@ using concatenate.
 Improved precision of ``ndarray.mean`` for float16 arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The computation of the mean of float16 arrays is now carried out in float32 for
-improved precision. This should be useful in packages such as scikit-learn
+improved precision. This should be useful in packages such as Theano
 where the precision of float16 is adequate and its smaller footprint is
 desireable.
 
@@ -540,7 +540,7 @@ names contributed a patch for the first time.
 - Eric Quintero +
 - Eric Wieser +
 - Erik M. Bray
-- Frederic Bastien +
+- Frederic Bastien
 - Friedrich Dunne +
 - Gerrit Holl
 - Golnaz Irannejad +
