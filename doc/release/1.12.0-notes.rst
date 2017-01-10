@@ -539,7 +539,7 @@ names contributed a patch for the first time.
 * Eric Quintero +
 * Eric Wieser +
 * Erik M. Bray
-* Frederic Bastien +
+* Frederic Bastien
 * Friedrich Dunne +
 * Gerrit Holl
 * Golnaz Irannejad +
