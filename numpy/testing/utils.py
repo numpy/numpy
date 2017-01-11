@@ -721,27 +721,35 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                                                   y.shape),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond:
-                raise AssertionError(msg)
+            raise AssertionError(msg)
 
         if isnumber(x) and isnumber(y):
+            has_nan = has_inf = False
             if equal_nan:
                 x_isnan, y_isnan = isnan(x), isnan(y)
                 # Validate that NaNs are in the same place
-                if any(x_isnan) or any(y_isnan):
+                has_nan = any(x_isnan) or any(y_isnan)
+                if has_nan:
                     chk_same_position(x_isnan, y_isnan, hasval='nan')
-                    x = x[~x_isnan]
-                    y = y[~y_isnan]
 
             if equal_inf:
                 x_isinf, y_isinf = isinf(x), isinf(y)
                 # Validate that infinite values are in the same place
-                if any(x_isinf) or any(y_isinf):
+                has_inf = any(x_isinf) or any(y_isinf)
+                if has_inf:
                     # Check +inf and -inf separately, since they are different
                     chk_same_position(x == +inf, y == +inf, hasval='+inf')
                     chk_same_position(x == -inf, y == -inf, hasval='-inf')
-                    x = x[~x_isinf]
-                    y = y[~y_isinf]
+
+            if has_nan and has_inf:
+                x = x[~(x_isnan | x_isinf)]
+                y = y[~(y_isnan | y_isinf)]
+            elif has_nan:
+                x = x[~x_isnan]
+                y = y[~y_isnan]
+            elif has_inf:
+                x = x[~x_isinf]
+                y = y[~y_isinf]
 
             # Only do the comparison if actual values are left
             if x.size == 0:
