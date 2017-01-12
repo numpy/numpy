@@ -303,6 +303,20 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         self._assert_func(b, a)
         self._assert_func(b, b)
 
+    def test_matrix(self):
+        # Matrix slicing keeps things 2-D, while array does not necessarily.
+        # See gh-8452.
+        m1 = np.matrix([[1., 2.]])
+        m2 = np.matrix([[1., np.nan]])
+        m3 = np.matrix([[1., -np.inf]])
+        m4 = np.matrix([[np.nan, np.inf]])
+        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
+        for m in m1, m2, m3, m4, m5:
+            self._assert_func(m, m)
+            a = np.array(m)
+            self._assert_func(a, m)
+            self._assert_func(m, a)
+
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
@@ -401,6 +415,20 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         except AssertionError as e:
             # remove anything that's not the array string
             self.assertEqual(str(e).split('%)\n ')[1], b)
+
+    def test_matrix(self):
+        # Matrix slicing keeps things 2-D, while array does not necessarily.
+        # See gh-8452.
+        m1 = np.matrix([[1., 2.]])
+        m2 = np.matrix([[1., np.nan]])
+        m3 = np.matrix([[1., -np.inf]])
+        m4 = np.matrix([[np.nan, np.inf]])
+        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
+        for m in m1, m2, m3, m4, m5:
+            self._assert_func(m, m)
+            a = np.array(m)
+            self._assert_func(a, m)
+            self._assert_func(m, a)
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
