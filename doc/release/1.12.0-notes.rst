@@ -1060,3 +1060,6 @@ A total of 413 pull requests were merged for this release.
 * `#8432 <https://github.com/numpy/numpy/pull/8432>`__: BUG: Let linspace accept input that has an array_interface.
 * `#8437 <https://github.com/numpy/numpy/pull/8437>`__: TST: Update 3.6-dev tests to 3.6 after Python final release.
 * `#8439 <https://github.com/numpy/numpy/pull/8439>`__: DOC: Update 1.12.0 release notes.
+* `#8466 <https://github.com/numpy/numpy/pull/8466>`__: MAINT: Update mailmap entries.
+* `#8467 <https://github.com/numpy/numpy/pull/8467>`__: DOC: Back-port the missing part of gh-8464.
+* `#8476 <https://github.com/numpy/numpy/pull/8476>`__: DOC: Update 1.12.0 release notes.
