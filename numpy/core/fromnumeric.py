@@ -1670,8 +1670,8 @@ def clip(a, a_min, a_max, out=None):
     a_min : scalar or array_like
         Minimum value.
     a_max : scalar or array_like
-        Maximum value.  If `a_min` or `a_max` are array_like, then they will
-        be broadcasted to the shape of `a`.
+        Maximum value.  If `a_min` or `a_max` are array_like, then the
+        three arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
@@ -1700,7 +1700,7 @@ def clip(a, a_min, a_max, out=None):
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> np.clip(a, [3,4,1,1,1,4,4,4,4,4], 8)
+    >>> np.clip(a, [3, 4, 1, 1, 1, 4, 4, 4, 4, 4], 8)
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
