@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Test functions for fftpack.helper module
 
 Copied from fftpack.helper by Pearu Peterson, October 2005
