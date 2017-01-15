@@ -644,7 +644,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 413 pull requests were merged for this release.
+A total of 418 pull requests were merged for this release.
 
 * `#4073 <https://github.com/numpy/numpy/pull/4073>`__: BUG: change real output checking to test if all imaginary parts...
 * `#4619 <https://github.com/numpy/numpy/pull/4619>`__: BUG : np.sum silently drops keepdims for sub-classes of ndarray
@@ -1063,3 +1063,4 @@ A total of 413 pull requests were merged for this release.
 * `#8466 <https://github.com/numpy/numpy/pull/8466>`__: MAINT: Update mailmap entries.
 * `#8467 <https://github.com/numpy/numpy/pull/8467>`__: DOC: Back-port the missing part of gh-8464.
 * `#8476 <https://github.com/numpy/numpy/pull/8476>`__: DOC: Update 1.12.0 release notes.
+* `#8477 <https://github.com/numpy/numpy/pull/8477>`__: DOC: Update 1.12.0 release notes.
