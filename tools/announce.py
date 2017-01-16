@@ -110,25 +110,26 @@ def main(token, revision_range):
 
     # document authors
     authors = get_authors(revision_range)
-    heading = u"Contributors to {0}".format(cur_release)
+    heading = u"Contributors"
     print()
     print(heading)
     print(u"="*len(heading))
     print(author_msg % len(authors))
 
     for s in authors:
-        print(u'- ' + s)
+        print(u'* ' + s)
 
     # document pull requests
     pull_requests = get_pull_requests(github_repo, revision_range)
-    heading = u"Pull requests merged for {0}".format(cur_release)
+    heading = u"Pull requests merged"
+    pull_msg = u"* `#{0} <{1}>`__: {2}"
+
     print()
     print(heading)
     print(u"="*len(heading))
     print(pull_request_msg % len(pull_requests))
 
     for pull in pull_requests:
-        pull_msg = u"- `#{0} <{1}>`__: {2}"
         title = re.sub(u"\\s+", u" ", pull.title.strip())
         if len(title) > 60:
             remainder = re.sub(u"\\s.*$", u"...", title[60:])
