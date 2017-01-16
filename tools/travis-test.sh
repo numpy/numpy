@@ -8,7 +8,10 @@ export NPY_NUM_BUILD_JOBS=2
 # setup env
 if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   # much faster package installation
-  export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
+  export LD_PRELOAD='/usr/lib/libeatmydata/libeatmydata.so'
+elif [ -r /usr/lib/*/libeatmydata.so ]; then
+  # much faster package installation
+  export LD_PRELOAD='/usr/$LIB/libeatmydata.so'
 fi
 
 source builds/venv/bin/activate
@@ -47,9 +50,9 @@ setup_base()
     else
       sysflags="$($PYTHON -c "from distutils import sysconfig; \
         print (sysconfig.get_config_var('CFLAGS'))")"
-      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install . 2>&1 | tee log
+      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install -v . 2>&1 | tee log
       grep -v "_configtest" log \
-        | grep -vE "ld returned 1|no previously-included files matching" \
+        | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
         | grep -E "warning\>" \
         | tee warnings
       # Check for an acceptable number of warnings. Some warnings are out of
@@ -95,15 +98,16 @@ setup_chroot()
     $DIST-security  main restricted universe multiverse \
     | sudo tee -a $DIR/etc/apt/sources.list
 
-  # install needed packages
   sudo chroot $DIR bash -c "apt-get update"
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
-    eatmydata libatlas-dev libatlas-base-dev gfortran \
-    python-dev python-nose python-pip cython"
-
   # faster operation with preloaded eatmydata
-  echo /usr/lib/libeatmydata/libeatmydata.so | \
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
+  echo '/usr/$LIB/libeatmydata.so' | \
     sudo tee -a $DIR/etc/ld.so.preload
+
+  # install needed packages
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
+    libatlas-dev libatlas-base-dev gfortran \
+    python-dev python-nose python-pip cython"
 }
 
 run_test()
