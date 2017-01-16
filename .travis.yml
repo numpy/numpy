@@ -40,7 +40,7 @@ matrix:
     - python: 2.7
       env: PY3_COMPATIBILITY_CHECK=1
     - python: 2.7
-      env: USE_CHROOT=1 ARCH=i386 DIST=trusty PYTHON=2.7
+      env: USE_CHROOT=1 ARCH=i386 DIST=yakkety PYTHON=2.7
       sudo: true
       dist: trusty
       addons:
