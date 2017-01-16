@@ -1118,11 +1118,15 @@ class TestDateTime(TestCase):
                     assert_warns(FutureWarning, op, td_other, td_nat)
 
             assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
+            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
+
+        with suppress_warnings() as sup:
+            sup.record(FutureWarning)
             assert_(np.not_equal(dt_nat, dt_other))
             assert_(np.not_equal(dt_other, dt_nat))
-            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
             assert_(np.not_equal(td_nat, td_other))
             assert_(np.not_equal(td_other, td_nat))
+            self.assertEqual(len(sup.log), 0)
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
