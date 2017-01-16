@@ -1466,8 +1466,8 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 && _equivalent_fields(type1->fields, type2->fields));
     }
     if (type_num1 == NPY_DATETIME
-            || type_num1 == NPY_DATETIME
-            || type_num2 == NPY_TIMEDELTA
+            || type_num1 == NPY_TIMEDELTA
+            || type_num2 == NPY_DATETIME
             || type_num2 == NPY_TIMEDELTA) {
         return ((type_num1 == type_num2)
                 && has_equivalent_datetime_metadata(type1, type2));
