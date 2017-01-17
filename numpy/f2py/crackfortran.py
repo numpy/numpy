@@ -2451,7 +2451,8 @@ def get_parameters(vars, global_params={}):
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+                    if len(v_)>1: 
+                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
             # There is missing code for extracting a complex number,
