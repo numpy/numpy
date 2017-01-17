@@ -28,6 +28,32 @@ class TestFromrecords(TestCase):
             assert_equal(r['col2'].dtype.itemsize, 3)
         assert_equal(r['col3'].dtype.kind, 'f')
 
+    def test_fromrecords_0len(self):
+        """ Verify fromrecords works with a 0-length input """
+        dtype = [('a', np.float), ('b', np.float)]
+        r = np.rec.fromrecords([], dtype=dtype)
+        assert_equal(r.shape, (0,))
+
+    def test_fromrecords_2d(self):
+        data = [
+            [(1, 2), (3, 4), (5, 6)],
+            [(6, 5), (4, 3), (2, 1)]
+        ]
+        expected_a = [[1, 3, 5], [6, 4, 2]]
+        expected_b = [[2, 4, 6], [5, 3, 1]]
+
+        # try with dtype
+        r1 = np.rec.fromrecords(data, dtype=[('a', int), ('b', int)])
+        assert_equal(r1['a'], expected_a)
+        assert_equal(r1['b'], expected_b)
+
+        # try with names
+        r2 = np.rec.fromrecords(data, names=['a', 'b'])
+        assert_equal(r2['a'], expected_a)
+        assert_equal(r2['b'], expected_b)
+
+        assert_equal(r1, r2)
+
     def test_method_array(self):
         r = np.rec.array(asbytes('abcdefg') * 100, formats='i2,a3,i4', shape=3, byteorder='big')
         assert_equal(r[1].item(), (25444, asbytes('efg'), 1633837924))

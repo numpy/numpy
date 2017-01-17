@@ -626,7 +626,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     return _array
 
-# shape must be 1-d if you use list of lists...
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
     """ create a recarray from a list of records in text form
@@ -657,10 +656,9 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     [(456, 'dbe', 1.2) (2, 'de', 1.3)]
     """
 
-    nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
-        arrlist = [sb.array(obj[..., i].tolist()) for i in range(nfields)]
+        arrlist = [sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)
 
