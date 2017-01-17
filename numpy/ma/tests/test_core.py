@@ -394,14 +394,25 @@ class TestMaskedArray(TestCase):
                         y1._data.__array_interface__)
         self.assertTrue(y1a.mask is y1.mask)
 
-        y2 = array(x1, mask=m)
+        y2 = array(x1, mask=m3)
         self.assertTrue(y2._data.__array_interface__ == x1.__array_interface__)
-        self.assertTrue(y2._mask.__array_interface__ == m.__array_interface__)
+        self.assertTrue(y2._mask.__array_interface__ == m3.__array_interface__)
         self.assertTrue(y2[2] is masked)
         y2[2] = 9
         self.assertTrue(y2[2] is not masked)
-        self.assertTrue(y2._mask.__array_interface__ != m.__array_interface__)
+        self.assertTrue(y2._mask.__array_interface__ == m3.__array_interface__)
         self.assertTrue(allequal(y2.mask, 0))
+
+        y2a = array(x1, mask=m, copy=1)
+        self.assertTrue(y2a._data.__array_interface__ != x1.__array_interface__)
+        #self.assertTrue( y2a.mask is not m)
+        self.assertTrue(y2a._mask.__array_interface__ != m.__array_interface__)
+        self.assertTrue(y2a[2] is masked)
+        y2a[2] = 9
+        self.assertTrue(y2a[2] is not masked)
+        #self.assertTrue( y2a.mask is not m)
+        self.assertTrue(y2a._mask.__array_interface__ != m.__array_interface__)
+        self.assertTrue(allequal(y2a.mask, 0))
 
         y3 = array(x1 * 1.0, mask=m)
         self.assertTrue(filled(y3).dtype is (x1 * 1.0).dtype)
