@@ -3357,8 +3357,6 @@ class MaskedArray(ndarray):
                 _mask[indx] = tuple([True] * nbfields)
             else:
                 _mask[indx] = True
-            if not self._isfield:
-                self._sharedmask = False
             return
 
         # Get the _data part of the new value
@@ -3374,27 +3372,6 @@ class MaskedArray(ndarray):
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
                 _mask[indx] = mval
         elif not self._hardmask:
-            # Unshare the mask if necessary to avoid propagation
-            # We want to remove the unshare logic from this place in the
-            # future. Note that _sharedmask has lots of false positives.
-            if not self._isfield:
-                notthree = getattr(sys, 'getrefcount', False) and (sys.getrefcount(_mask) != 3)
-                if self._sharedmask and not (
-                        # If no one else holds a reference (we have two
-                        # references (_mask and self._mask) -- add one for
-                        # getrefcount) and the array owns its own data
-                        # copying the mask should do nothing.
-                        (not notthree) and _mask.flags.owndata):
-                    # 2016.01.15 -- v1.11.0
-                    warnings.warn(
-                       "setting an item on a masked array which has a shared "
-                       "mask will not copy the mask and also change the "
-                       "original mask array in the future.\n"
-                       "Check the NumPy 1.11 release notes for more "
-                       "information.",
-                       MaskedArrayFutureWarning, stacklevel=2)
-                self.unshare_mask()
-                _mask = self._mask
             # Set the data, then the mask
             _data[indx] = dval
             _mask[indx] = mval
@@ -4659,7 +4636,7 @@ class MaskedArray(ndarray):
         if self._mask is nomask and getmask(values) is nomask:
             return
 
-        m = getmaskarray(self).copy()
+        m = getmaskarray(self)
 
         if getmask(values) is nomask:
             m.put(indices, False, mode=mode)
