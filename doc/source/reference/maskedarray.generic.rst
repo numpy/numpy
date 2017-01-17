@@ -379,8 +379,8 @@ is masked.
 When accessing a slice, the output is a masked array whose
 :attr:`~MaskedArray.data` attribute is a view of the original data, and whose
 mask is either :attr:`nomask` (if there was no invalid entries in the original
-array) or a copy of the corresponding slice of the original mask. The copy is
-required to avoid propagation of any modification of the mask to the original.
+array) or a view of the corresponding slice of the original mask. The view is
+required to ensure propagation of any modification of the mask to the original.
 
    >>> x = ma.array([1, 2, 3, 4, 5], mask=[0, 1, 0, 0, 1])
    >>> mx = x[:3]
