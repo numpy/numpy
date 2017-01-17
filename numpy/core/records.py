@@ -513,13 +513,8 @@ class recarray(ndarray):
             return obj
 
     def __repr__(self):
-        # get data/shape string. logic taken from numeric.array_repr
-        if self.size > 0 or self.shape == (0,):
-            lst = sb.array2string(self, separator=', ')
-        else:
-            # show zero-length shape unless it is (0,)
-            lst = "[], shape=%s" % (repr(self.shape),)
 
+        repr_dtype = self.dtype
         if (self.dtype.type is record
                 or (not issubclass(self.dtype.type, nt.void))):
             # If this is a full record array (has numpy.record dtype),
@@ -527,19 +522,26 @@ class recarray(ndarray):
             # represent it using the rec.array function. Since rec.array
             # converts dtype to a numpy.record for us, convert back
             # to non-record before printing
-            plain_dtype = self.dtype
-            if plain_dtype.type is record:
-                plain_dtype = sb.dtype((nt.void, plain_dtype))
-            lf = '\n'+' '*len("rec.array(")
-            return ('rec.array(%s, %sdtype=%s)' %
-                          (lst, lf, plain_dtype))
+            if repr_dtype.type is record:
+                repr_dtype = sb.dtype((nt.void, repr_dtype))
+            prefix = "rec.array("
+            fmt = 'rec.array(%s, %sdtype=%s)'
         else:
             # otherwise represent it using np.array plus a view
             # This should only happen if the user is playing
             # strange games with dtypes.
-            lf = '\n'+' '*len("array(")
-            return ('array(%s, %sdtype=%s).view(numpy.recarray)' %
-                          (lst, lf, str(self.dtype)))
+            prefix = "array("
+            fmt = 'array(%s, %sdtype=%s).view(numpy.recarray)'
+
+        # get data/shape string. logic taken from numeric.array_repr
+        if self.size > 0 or self.shape == (0,):
+            lst = sb.array2string(self, separator=', ', prefix=prefix)
+        else:
+            # show zero-length shape unless it is (0,)
+            lst = "[], shape=%s" % (repr(self.shape),)
+
+        lf = '\n'+' '*len(prefix)
+        return fmt % (lst, lf, repr_dtype)
 
     def field(self, attr, val=None):
         if isinstance(attr, int):
