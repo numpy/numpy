@@ -667,6 +667,15 @@ class TestMedian(TestCase):
         r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
                                              [np.inf, np.inf]]), axis=None)
         assert_equal(r, np.inf)
+        # all masked
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=-1)
+        assert_equal(r.mask, True)
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=None)
+        assert_equal(r.mask, True)
 
     def test_non_masked(self):
         x = np.arange(9)
@@ -991,6 +1000,19 @@ class TestMedian(TestCase):
             assert_equal(np.ma.median(a), inf)
             assert_equal(np.ma.median(a, axis=0), inf)
             assert_equal(np.ma.median(a, axis=1), inf)
+
+            a = np.array([[inf, 7, -inf, -9],
+                          [-10, np.nan, np.nan, 5],
+                          [4, np.nan, np.nan, inf]],
+                          dtype=np.float32)
+            a = np.ma.masked_array(a, mask=np.isnan(a))
+            if inf > 0:
+                assert_equal(np.ma.median(a, axis=0), [4., 7., -inf, 5.])
+                assert_equal(np.ma.median(a), 4.5)
+            else:
+                assert_equal(np.ma.median(a, axis=0), [-10., 7., -inf, -9.])
+                assert_equal(np.ma.median(a), -2.5)
+            assert_equal(np.ma.median(a, axis=1), [-1., -2.5, inf])
 
             for i in range(0, 10):
                 for j in range(1, 10):

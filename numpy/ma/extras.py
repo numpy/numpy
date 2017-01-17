@@ -758,6 +758,19 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     ind[axis] = np.minimum(h, asorted.shape[axis] - 1)
     high = asorted[tuple(ind)]
 
+    def replace_masked(s):
+        # Replace masked entries with minimum_full_value unless it all values
+        # are masked. This is required as the sort order of values equal or
+        # larger than the fill value is undefined and a valid value placed
+        # elsewhere, e.g. [4, --, inf].
+        if np.ma.is_masked(s):
+            rep = (~np.all(asorted.mask, axis=axis)) & s.mask
+            s.data[rep] = np.ma.minimum_fill_value(asorted)
+            s.mask[rep] = False
+
+    replace_masked(low)
+    replace_masked(high)
+
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     np.copyto(low, high, where=odd)
@@ -776,12 +789,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     else:
         s = np.ma.mean([low, high], axis=0, out=out)
 
-    # if result is masked either the input contained enough minimum_fill_value
-    # so that it would be the median or all values masked
-    if np.ma.is_masked(s):
-        rep = (~np.all(asorted.mask, axis=axis)) & s.mask
-        s.data[rep] = np.ma.minimum_fill_value(asorted)
-        s.mask[rep] = False
     return s
 
 

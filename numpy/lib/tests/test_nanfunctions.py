@@ -710,6 +710,18 @@ class TestNanFunctions_Median(TestCase):
                 a = np.array([[inf, inf], [inf, inf]])
                 assert_equal(np.nanmedian(a, axis=1), inf)
 
+                a = np.array([[inf, 7, -inf, -9],
+                              [-10, np.nan, np.nan, 5],
+                              [4, np.nan, np.nan, inf]],
+                              dtype=np.float32)
+                if inf > 0:
+                    assert_equal(np.nanmedian(a, axis=0), [4., 7., -inf, 5.])
+                    assert_equal(np.nanmedian(a), 4.5)
+                else:
+                    assert_equal(np.nanmedian(a, axis=0), [-10., 7., -inf, -9.])
+                    assert_equal(np.nanmedian(a), -2.5)
+                assert_equal(np.nanmedian(a, axis=-1), [-1., -2.5, inf])
+
                 for i in range(0, 10):
                     for j in range(1, 10):
                         a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
