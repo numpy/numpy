@@ -275,9 +275,9 @@ class TestRecord(TestCase):
     def test_nonint_offsets(self):
         # gh-8059
         def make_dtype(off):
-            return np.dtype({'names': ['A'], 'formats': ['i4'], 
+            return np.dtype({'names': ['A'], 'formats': ['i4'],
                              'offsets': [off]})
-        
+
         assert_raises(TypeError, make_dtype, 'ASD')
         assert_raises(OverflowError, make_dtype, 2**70)
         assert_raises(TypeError, make_dtype, 2.3)
@@ -618,6 +618,15 @@ def test_rational_dtype():
     # test that dtype detection finds user-defined types
     x = rational(1)
     assert_equal(np.array([x,x]).dtype, np.dtype(rational))
+
+
+def test_dtype_handles_overflow():
+    # test for bug gh-8433
+    a = np.full((2, 2), np.iinfo(np.int32).max, dtype=np.int32)
+    b = a.sum(axis=0)
+    assert_equal(b, np.array([4294967294, 4294967294]))
+    assert_equal(b.dtype, np.int64)
+    assert_equal(a.trace(), 4294967294)
 
 
 if __name__ == "__main__":
