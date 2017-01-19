@@ -1791,8 +1791,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     for (i = nin; i < nop; ++i) {
         PyArrayObject *op_tmp;
 
-        /* Prepare_ufunc_output may decref & replace pointer */
-        op_tmp = op_it[i];
+        /* prepare_ufunc_output may decref & replace pointer */
+        op_tmp = op[i];
         Py_INCREF(op_tmp);
 
         if (prepare_ufunc_output(ufunc, &op_tmp,
@@ -1801,7 +1801,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
             return -1;
         }
 
-        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op_it[i])) {
+        /* Validate that the prepare_ufunc_output didn't mess with pointers */
+        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op[i])) {
             PyErr_SetString(PyExc_ValueError,
                         "The __array_prepare__ functions modified the data "
                         "pointer addresses in an invalid fashion");
@@ -1809,6 +1810,13 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        /*
+         * Put the updated operand back and undo the DECREF above. If
+         * COPY_IF_OVERLAP made a temporary copy, the output will be copied in
+         * by UPDATEIFCOPY even if op[i] was changed.
+         */
+        op[i] = op_tmp;
         Py_DECREF(op_tmp);
     }
 
