@@ -1598,7 +1598,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Chebyshev series to data.
 
-    Return the coefficients of a Legendre series of degree `deg` that is the
+    Return the coefficients of a Chebyshev series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
     1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting
