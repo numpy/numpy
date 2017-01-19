@@ -170,9 +170,8 @@ add_newdoc('numpy.core', 'nditer',
           * "common_dtype" causes all the operands to be converted to
             a common data type, with copying or buffering as necessary.
           * "copy_if_overlap" causes the iterator to determine if read
-            operands have overlap with write operands (except if
-            the arrays are exactly the same), and make temporary copies
-            as necessary to avoid overlap. False positives (needless
+            operands have overlap with write operands, and make temporary
+            copies as necessary to avoid overlap. False positives (needless
             copying) are possible in some cases.
           * "delay_bufalloc" delays allocation of the buffers until
             a reset() call is made. Allows "allocate" operands to
@@ -213,6 +212,9 @@ add_newdoc('numpy.core', 'nditer',
             copies those elements indicated by this mask.
           * 'writemasked' indicates that only elements where the chosen
             'arraymask' operand is True will be written to.
+          * "overlap_allow_same" can be used to mark operands that are
+            accessed only in the iterator order, to allow less conservative
+            copying when "copy_if_overlap" is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
