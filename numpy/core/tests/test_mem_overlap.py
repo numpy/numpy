@@ -4,8 +4,8 @@ import sys
 import itertools
 
 import numpy as np
-from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal, assert_array_equal,
-                           assert_allclose)
+from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal,
+                           assert_array_equal, assert_allclose)
 
 from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import umath_tests
