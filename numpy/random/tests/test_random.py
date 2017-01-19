@@ -813,7 +813,9 @@ class TestRandomDist(TestCase):
         assert_raises(OverflowError, func, [0], [np.inf])
 
         # (fmax / 1e17) - fmin is within range, so this should not throw
-        np.random.uniform(low=fmin, high=fmax / 1e17)
+        # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
+        # DBL_MAX by increasing fmin a bit
+        np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
     def test_vonmises(self):
         np.random.seed(self.seed)
