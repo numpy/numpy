@@ -1155,12 +1155,15 @@ def test_iter_copy_if_overlap():
     i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
     assert_(not np.shares_memory(*i.operands))
 
-    # Copy not needed, 2 ops, exactly same arrays
+    # Copy not needed with allow_same, 2 ops, exactly same arrays
     x = arange(10)
     a = x
     b = x
-    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly', 'overlap_allow_same'],
+                                             ['readwrite', 'overlap_allow_same']])
     assert_(i.operands[0] is a and i.operands[1] is b)
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
+    assert_(i.operands[0] is a and not np.shares_memory(i.operands[1], b))
 
     # Copy not needed, 2 ops, no overlap
     x = arange(10)

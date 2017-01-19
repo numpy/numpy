@@ -463,28 +463,17 @@ Construction and Destruction
 
         .. c:var:: NPY_ITER_COPY_IF_OVERLAP
 
-            If a write operand has overlap with a read operand, eliminate all
-            overlap by making temporary copies (with UPDATEIFCOPY for write
-            operands).
-
-            Overlapping means:
-
-            - For a (read, write) pair of operands, there is a memory address
-              that contains data common to both arrays, which can be reached
-              via *different* index/dtype/shape combinations.
-
-            - In particular, unless the arrays have the same shape, dtype,
-              strides, start address, and NPY_ITER_OVERLAP_NOT_SAME is not specified,
-              any shared common data byte accessible
-              by indexing implies overlap.
+            If any write operand has overlap with any read operand, eliminate all
+            overlap by making temporary copies (enabling UPDATEIFCOPY for write
+            operands, if necessary). A pair of operands has overlap if there is
+            a memory address that contains data common to both arrays.
 
             Because exact overlap detection has exponential runtime
             in the number of dimensions, the decision is made based
             on heuristics, which has false positives (needless copies in unusual
             cases) but has no false negatives.
 
-            If read/write overlap exists and write operands are modified in the
-            iterator loop element-wise, this flag ensures the result of the
+            If any read/write overlap exists, this flag ensures the result of the
             operation is the same as if all operands were copied.
             In cases where copies would need to be made, **the result of the
             computation may be undefined without this flag!**
@@ -619,14 +608,20 @@ Construction and Destruction
             returns true from the corresponding element in the ARRAYMASK
             operand.
 
-        .. c:var:: NPY_ITER_OVERLAP_NOT_SAME
+        .. c:var:: NPY_ITER_OVERLAP_ALLOW_SAME
 
-            In the memory overlap checks done when ``NPY_ITER_COPY_IF_OVERLAP``
-            is specified, consider this array as overlapping even if it is
-            exactly the same as another array.
+            In memory overlap checks, operands with ``NPY_ITER_OVERLAP_ALLOW_SAME``
+            set are considered non-overlapping if they point to exactly the same array.
+            This means arrays with the same shape, dtype, strides, and start address.
+            In other cases, the default rules implied by
+            ``NPY_ITER_COPY_IF_OVERLAP`` apply.
 
-            This flag should be set on arrays that are not accessed in the
-            iterator order.
+            This flag can be enabled on the set of operands that are accessed
+            only in the iterator order, i.e. the operation is element-wise,
+            to avoid unnecessary copies.
+
+            This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
+            on the iterator.
 
 .. c:function:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 

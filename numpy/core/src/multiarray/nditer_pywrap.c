@@ -360,6 +360,11 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                         break;
                 }
                 break;
+            case 'o':
+                if (strcmp(str, "overlap_allow_same") == 0) {
+                    flag = NPY_ITER_OVERLAP_ALLOW_SAME;
+                }
+                break;
             case 'r':
                 if (length > 4) switch (str[4]) {
                     case 'o':
