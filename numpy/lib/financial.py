@@ -276,7 +276,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
             use_zero_rate = True
 
     if use_zero_rate:
-        return (-fv + pv) / (pmt + 0.0)
+        return -(fv + pv) / (pmt + 0.0)
     else:
         A = -(fv + pv)/(pmt+0.0)
         B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)

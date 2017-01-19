@@ -60,6 +60,12 @@ class TestFinancial(TestCase):
     def test_nper(self):
         assert_almost_equal(np.nper(0.075, -2000, 0, 100000.),
                             21.54, 2)
+        assert_almost_equal(np.nper(0.00001, -100, 5000, 0),
+                            50.01, 2)
+        assert_almost_equal(np.nper(0.0, -100, 5000, 0),
+                            50.00, 2)
+        assert_almost_equal(np.nper(0.0, -1, -1, 0),
+                            -1.00, 2)
 
     def test_nper2(self):
         assert_almost_equal(np.nper(0.0, -2000, 0, 100000.),
