@@ -737,9 +737,6 @@ class TestUFunc(object):
                 if min(a.shape[-2:]) < 2 or min(b.shape[-2:]) < 2 or a.shape[-1] < 2:
                     continue
 
-                if np.shares_memory(a, b):
-                    overlapping += 1
-
                 # Ensure the shapes are so that euclidean_pdist is happy
                 if b.shape[-1] > b.shape[-2]:
                     b = b[...,0,:]
@@ -757,6 +754,9 @@ class TestUFunc(object):
                     b = b[...,:p]
 
                 # Call
+                if np.shares_memory(a, b):
+                    overlapping += 1
+
                 bx = b.copy()
                 cx = gufunc(a, out=bx)
                 c = gufunc(a, out=b)
@@ -832,31 +832,29 @@ class TestUFunc(object):
             n = 1000
             k = 10
             indices = [
-                (np.index_exp[:n], np.index_exp[k:k+n]),
-                (np.index_exp[:n], np.index_exp[k:k+2*n:2]),
+                np.index_exp[:n],
+                np.index_exp[k:k+n],
+                np.index_exp[n-1::-1],
+                np.index_exp[k+n-1:k-1:-1],
+                np.index_exp[:2*n:2],
+                np.index_exp[k:k+2*n:2],
+                np.index_exp[2*n-1::-2],
+                np.index_exp[k+2*n-1:k-1:-2],
             ]
 
-            for ab in indices:
-                for x, y in itertools.permutations(ab):
-                    v = np.arange(1, 1 + n*2 + k, dtype=dtype)
-                    x = v[x]
-                    y = v[y]
+            for xi, yi in itertools.product(indices, indices):
+                v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                x = v[xi]
+                y = v[yi]
 
-                    with np.errstate(all='ignore'):
-                        check(x, y)
-                        check(x[::-1], y)
-                        check(x, y[::-1])
-                        check(x[::-1], y[::-1])
+                with np.errstate(all='ignore'):
+                    check(x, y)
 
-                        # Scalar cases
-                        check(x[:1], y)
-                        check(x[-1:], y)
-                        check(x[:1], y[::-1])
-                        check(x[-1:], y[::-1])
-                        check(x[:1].reshape([]), y)
-                        check(x[-1:].reshape([]), y)
-                        check(x[:1].reshape([]), y[::-1])
-                        check(x[-1:].reshape([]), y[::-1])
+                    # Scalar cases
+                    check(x[:1], y)
+                    check(x[-1:], y)
+                    check(x[:1].reshape([]), y)
+                    check(x[-1:].reshape([]), y)
 
     def test_unary_ufunc_where_same(self):
         # Check behavior at wheremask overlap
@@ -877,48 +875,44 @@ class TestUFunc(object):
         ufunc = np.add
 
         def check(a, b, c):
-            c1 = ufunc(a, b)
+            c0 = c.copy()
+            c1 = ufunc(a, b, out=c0)
             c2 = ufunc(a, b, out=c)
             assert_array_equal(c1, c2)
 
         for dtype in [np.int8, np.int16, np.int32, np.int64,
                       np.float32, np.float64, np.complex64, np.complex128]:
-            for ub in [4, 400, 40000]:
-                x = np.arange(ub).astype(dtype)
-                check(x, x, x)
-                for j in range(1, min(x.size-1, 2*x.dtype.itemsize)):
-                    # Check different data dependency orders
-                    x = np.arange(ub).astype(dtype)
-                    check(x[j:], x[:-j], x[:-j])
-                    check(x[j:], x[:-j], x[j:])
-                    check(x[j:], x[:-j], x[:-j][::-1])
-                    check(x[j:], x[:-j][::-1], x[:-j])
-                    check(x[j:][::-1], x[:-j], x[:-j])
-                    check(x[j:][::-1], x[:-j][::-1], x[:-j])
-                    check(x[j:][::-1], x[:-j], x[:-j][::-1])
-                    check(x[j:][::-1], x[:-j][::-1], x[:-j][::-1])
+            # Check different data dependency orders
 
             n = 1000
             k = 10
-            abcs = [
-                (np.index_exp[:n], np.index_exp[k:k+n], np.index_exp[2*k:2*k+2*n:2]),
-                (np.index_exp[:n], np.index_exp[k:k+2*n:2], np.index_exp[2*k:2*k+n])
-            ]
-            for abc in abcs:
-                for x, y, z in itertools.permutations(abc):
-                    v = np.arange(6*n).astype(dtype)
-                    x = v[x]
-                    y = v[y]
-                    z = v[z]
 
-                    check(x, y, z)
-                    check(x[::-1], y, z)
-                    check(x, y[::-1], z)
-                    check(x, y, z[::-1])
-                    check(x[::-1], y[::-1], z)
-                    check(x[::-1], y, z[::-1])
-                    check(x, y[::-1], z[::-1])
-                    check(x[::-1], y[::-1], z[::-1])
+            indices = []
+            for p in [1, 2]:
+                indices.extend([
+                    np.index_exp[:p*n:p],
+                    np.index_exp[k:k+p*n:p],
+                    np.index_exp[p*n-1::-p],
+                    np.index_exp[k+p*n-1:k-1:-p],
+                ])
+
+            for x, y, z in itertools.product(indices, indices, indices):
+                v = np.arange(6*n).astype(dtype)
+                x = v[x]
+                y = v[y]
+                z = v[z]
+
+                check(x, y, z)
+
+                # Scalar cases
+                check(x[:1], y, z)
+                check(x[-1:], y, z)
+                check(x[:1].reshape([]), y, z)
+                check(x[-1:].reshape([]), y, z)
+                check(x, y[:1], z)
+                check(x, y[-1:], z)
+                check(x, y[:1].reshape([]), z)
+                check(x, y[-1:].reshape([]), z)
 
     def test_inplace_op_simple_manual(self):
         rng = np.random.RandomState(1234)
