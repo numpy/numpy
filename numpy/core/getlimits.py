@@ -10,7 +10,6 @@ from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array
 from .umath import nextafter, log2, log10, isnan, exp2
-from ..testing.utils import suppress_warnings
 
 
 def _frz(a):
@@ -91,7 +90,8 @@ class MachArLike(object):
         self._str_resolution = float_to_str(self.resolution)
 
 
-# Known parameters for float32
+# Known parameters for float32.
+# See docstring of MachAr class for description of parameters.
 _f32 = ntypes.float32
 _float32_ma = MachArLike(_f32,
                          machep=-23,
@@ -109,7 +109,8 @@ _float32_ma = MachArLike(_f32,
                          tiny=exp2(_f32(-126)))
 
 # Known parameters for float64
-_float64_ma = MachArLike(ntypes.float64,
+_f64 = ntypes.float64
+_float64_ma = MachArLike(_f64,
                          machep=-52,
                          negep=-53,
                          minexp=-1022,
@@ -119,10 +120,10 @@ _float64_ma = MachArLike(ntypes.float64,
                          ibeta=2,
                          irnd=5,
                          ngrd=0,
-                         eps=exp2(-52),
-                         epsneg=exp2(-53),
-                         huge=_get_next(ntypes.float64, numeric.inf, 0),
-                         tiny=exp2(-1022))
+                         eps=2.0 ** -52.0,
+                         epsneg=2.0 ** -53.0,
+                         huge=_get_next(_f64, numeric.inf, 0),
+                         tiny=2.0 ** -1022.0)
 
 # Known parameters for float80
 _ld = ntypes.longdouble
@@ -141,7 +142,10 @@ _float80_ma = MachArLike(_ld,
                          huge=_get_next(_ld, numeric.inf, 0),
                          tiny=exp2(_ld(-16382)))
 
-# Guessed / known parameters for double double
+# Guessed / known parameters for double double; see:
+# https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
+# These numbers have the same exponent range as float64, but extended number of
+# digits in the significand.
 _float_dd_ma = MachArLike(_ld,
                           machep=-105,
                           negep=-106,
