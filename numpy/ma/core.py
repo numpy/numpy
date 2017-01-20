@@ -6130,8 +6130,11 @@ class MaskedConstant(MaskedArray):
     def __array_finalize__(self, obj):
         return
 
-    def __array_wrap__(self, obj):
-        return self
+    def __array_prepare__(self, obj, context=None):
+        return self.view(MaskedArray).__array_prepare__(obj, context)
+
+    def __array_wrap__(self, obj, context=None):
+        return self.view(MaskedArray).__array_wrap__(obj, context)
 
     def __str__(self):
         return str(masked_print_option._display)
