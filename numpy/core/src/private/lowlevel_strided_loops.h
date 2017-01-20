@@ -720,20 +720,23 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
     stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2);
 
-    if (stride1 >= 0) {
+    /* Arrays with zero stride are never "ahead" since the element is reused
+       (at this point we know the arrays do overlap). */
+
+    if (stride1 > 0) {
         arr1_ahead = (stride1 >= stride2 &&
                       (npy_uintp)PyArray_BYTES(arr1) >= (npy_uintp)PyArray_BYTES(arr2));
     }
-    else {
+    else if (stride1 < 0) {
         arr1_ahead = (stride1 <= stride2 &&
                       (npy_uintp)PyArray_BYTES(arr1) <= (npy_uintp)PyArray_BYTES(arr2));
     }
 
-    if (stride2 >= 0) {
+    if (stride2 > 0) {
         arr2_ahead = (stride2 >= stride1 &&
                       (npy_uintp)PyArray_BYTES(arr2) >= (npy_uintp)PyArray_BYTES(arr1));
     }
-    else {
+    else if (stride2 < 0) {
         arr2_ahead = (stride2 <= stride1 &&
                       (npy_uintp)PyArray_BYTES(arr2) <= (npy_uintp)PyArray_BYTES(arr1));
     }
