@@ -1712,7 +1712,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp *strides;
     npy_intp *countptr;
 
-    PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
     if (wheremask != NULL) {
@@ -1787,7 +1786,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Call the __array_prepare__ functions where necessary */
-    op_it = NpyIter_GetOperandArray(iter);
     for (i = nin; i < nop; ++i) {
         PyArrayObject *op_tmp;
 
