@@ -9,6 +9,9 @@ from .machar import MachAr
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array
+from .umath import nextafter, log2, log10, isnan, exp2
+from ..testing.utils import suppress_warnings
+
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -16,11 +19,163 @@ def _frz(a):
         a.shape = (1,)
     return a
 
+
 _convert_to_float = {
     ntypes.csingle: ntypes.single,
     ntypes.complex_: ntypes.float_,
     ntypes.clongfloat: ntypes.longfloat
     }
+
+
+def _get_next(ftype, start, above):
+    start = ftype(start)
+    above = ftype(above)
+    with suppress_warnings() as sup:
+        sup.filter(RuntimeWarning)
+        return nextafter(start, above)
+
+
+def _get_eps(ftype, direction=1):
+    start = ftype(1)
+    direction = ftype(direction)
+    above = start + direction
+    return (nextafter(start, above) - start) * direction
+
+
+# Parameters for creating MachAr / MachAr-like objects
+_MACHAR_PARAMS = {
+    ntypes.double: dict(
+        itype = ntypes.int64,
+        fmt = '%24.16e',
+        precname = 'double'),
+    ntypes.single: dict(
+        itype = ntypes.int32,
+        fmt = '%15.7e',
+        precname = 'single'),
+    ntypes.longdouble: dict(
+        itype = ntypes.longlong,
+        fmt = '%s',
+        precname = 'long double'),
+    ntypes.half: dict(
+        itype = ntypes.int16,
+        fmt = '%12.5e',
+        precname = 'half')}
+
+
+class MachArLike(object):
+    """ Object to simulate MachAr instance """
+
+    # These attributes should be of characteristic dtype
+    _native_attrs = ('tiny', 'huge', 'epsneg', 'eps')
+
+    def __init__(self,
+                 ftype,
+                 **kwargs):
+        params = _MACHAR_PARAMS[ftype]
+        float_conv = lambda v: array([v], ftype)
+        float_to_str = lambda v: params['fmt'] % array(_frz(v)[0], ftype)
+        self.title = 'numpy {} precision floating point number'.format(
+            params['precname'])
+        for key, value in kwargs.items():
+            if key in self._native_attrs:
+                value = float_conv(value)
+            self.__dict__[key] = value
+        self.epsilon = self.eps
+        self.xmax = self.huge
+        self.xmin = self.tiny
+        self.precision = int(-log10(self.eps))
+        self.resolution = float_conv(10) ** (-self.precision)
+        self._str_eps = float_to_str(self.eps)
+        self._str_epsneg = float_to_str(self.epsneg)
+        self._str_xmin = float_to_str(self.xmin)
+        self._str_xmax = float_to_str(self.xmax)
+        self._str_resolution = float_to_str(self.resolution)
+
+
+# Known parameters for float32
+_f32 = ntypes.float32
+_float32_ma = MachArLike(_f32,
+                         machep=-23,
+                         negep=-24,
+                         minexp=-126,
+                         maxexp=128,
+                         it=23,
+                         iexp=8,
+                         ibeta=2,
+                         irnd=5,
+                         ngrd=0,
+                         eps=exp2(_f32(-23)),
+                         epsneg=exp2(_f32(-24)),
+                         huge=_get_next(ntypes.float32, numeric.inf, 0),
+                         tiny=exp2(_f32(-126)))
+
+# Known parameters for float64
+_float64_ma = MachArLike(ntypes.float64,
+                         machep=-52,
+                         negep=-53,
+                         minexp=-1022,
+                         maxexp=1024,
+                         it=52,
+                         iexp=11,
+                         ibeta=2,
+                         irnd=5,
+                         ngrd=0,
+                         eps=exp2(-52),
+                         epsneg=exp2(-53),
+                         huge=_get_next(ntypes.float64, numeric.inf, 0),
+                         tiny=exp2(-1022))
+
+# Known parameters for float80
+_ld = ntypes.longdouble
+_float80_ma = MachArLike(_ld,
+                         machep=-63,
+                         negep=-64,
+                         minexp=-16382,
+                         maxexp=16384,
+                         it=63,
+                         iexp=15,
+                         ibeta=2,
+                         irnd=5,
+                         ngrd=0,
+                         eps=exp2(_ld(-63)),
+                         epsneg=exp2(_ld(-64)),
+                         huge=_get_next(_ld, numeric.inf, 0),
+                         tiny=exp2(_ld(-16382)))
+
+# Key to identify the floating point type is tuple (number of bits in
+# significand (ignoring implicit first digit), maximum exponent, number of
+# bytes).
+_KNOWN_TYPES = {(52, 1024, 8): _float64_ma,
+                (23, 128, 4): _float32_ma,
+                (63, 16384, 16): _float80_ma,  # float80 on 64-bit
+                (63, 16384, 12): _float80_ma,  # float80 on 32-bit
+               }
+
+
+def _get_machar(dtype):
+    """ Get MachAr instance or MachAr-like instance """
+    params = _MACHAR_PARAMS.get(dtype)
+    if params is None:
+        raise ValueError(repr(dtype))
+    # Detect known / suspected types
+    digits = int(abs(log2(_get_eps(dtype))))
+    huge = _get_next(dtype, numeric.inf, 0)
+    maxexp = None if isnan(huge) else int(log2(huge))
+    bits = numeric.dtype(dtype).itemsize
+    return _KNOWN_TYPES.get((digits, maxexp, bits), _discover_machar(dtype))
+
+
+def _discover_machar(dtype):
+    """ Create MachAr instance with found information on float types
+    """
+    params = _MACHAR_PARAMS[dtype]
+    title = 'numpy %s precision floating point number' % params['precname']
+    return MachAr(lambda v: array([v], dtype),
+                  lambda v:_frz(v.astype(params['itype']))[0],
+                  lambda v:array(_frz(v)[0], dtype),
+                  lambda v: params['fmt'] % array(_frz(v)[0], dtype),
+                  title)
+
 
 class finfo(object):
     """
@@ -128,30 +283,7 @@ class finfo(object):
 
     def _init(self, dtype):
         self.dtype = numeric.dtype(dtype)
-        if dtype is ntypes.double:
-            itype = ntypes.int64
-            fmt = '%24.16e'
-            precname = 'double'
-        elif dtype is ntypes.single:
-            itype = ntypes.int32
-            fmt = '%15.7e'
-            precname = 'single'
-        elif dtype is ntypes.longdouble:
-            itype = ntypes.longlong
-            fmt = '%s'
-            precname = 'long double'
-        elif dtype is ntypes.half:
-            itype = ntypes.int16
-            fmt = '%12.5e'
-            precname = 'half'
-        else:
-            raise ValueError(repr(dtype))
-
-        machar = MachAr(lambda v:array([v], dtype),
-                        lambda v:_frz(v.astype(itype))[0],
-                        lambda v:array(_frz(v)[0], dtype),
-                        lambda v: fmt % array(_frz(v)[0], dtype),
-                        'numpy %s precision floating point number' % precname)
+        machar = _get_machar(dtype)
 
         for word in ['precision', 'iexp',
                      'maxexp', 'minexp', 'negep',

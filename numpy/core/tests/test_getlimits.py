@@ -9,6 +9,8 @@ from numpy import half, single, double, longdouble
 from numpy.testing import (
     TestCase, run_module_suite, assert_equal
 )
+from numpy.core.getlimits import (_discover_machar, _float32_ma, _float64_ma,
+                                  _float80_ma)
 
 ##################################################
 
@@ -86,6 +88,23 @@ class TestRepr(TestCase):
 def test_instances():
     iinfo(10)
     finfo(3.0)
+
+
+def assert_ma_equal(discovered, ma_like):
+    for key, value in discovered.__dict__.items():
+        assert_equal(value, getattr(ma_like, key))
+
+
+def test_known_types():
+    # Test we are correctly compiling parameters for known types
+    for dtype, ma_like in ((np.float32, _float32_ma),
+                           (np.float64, _float64_ma)):
+        assert_ma_equal(_discover_machar(dtype), ma_like)
+    ld_ma = _discover_machar(np.longdouble)
+    bytes = np.dtype(np.longdouble).itemsize
+    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+        assert_ma_equal(ld_ma, _float80_ma)
+
 
 if __name__ == "__main__":
     run_module_suite()
