@@ -696,7 +696,7 @@ npy_bswap8_unaligned(char * x)
                                           PyArray_STRIDE(arr, 0) : \
                                           PyArray_ITEMSIZE(arr)))
 
-static int
+static NPY_INLINE int
 PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr2,
                                          int arr1_read, int arr2_read)
 {
