@@ -30,8 +30,7 @@ _convert_to_float = {
 def _get_next(ftype, start, above):
     start = ftype(start)
     above = ftype(above)
-    with suppress_warnings() as sup:
-        sup.filter(RuntimeWarning)
+    with numeric.errstate(all='ignore'):
         return nextafter(start, above)
 
 
@@ -142,6 +141,23 @@ _float80_ma = MachArLike(_ld,
                          huge=_get_next(_ld, numeric.inf, 0),
                          tiny=exp2(_ld(-16382)))
 
+# Guessed / known parameters for double double
+_float_dd_ma = MachArLike(_ld,
+                          machep=-105,
+                          negep=-106,
+                          minexp=-1022,
+                          maxexp=1024,
+                          it=105,
+                          iexp=11,
+                          ibeta=2,
+                          irnd=5,
+                          ngrd=0,
+                          eps=exp2(_ld(-105)),
+                          epsneg=exp2(_ld(-106)),
+                          huge=_get_next(_ld, numeric.inf, 0),
+                          tiny=exp2(_ld(-1022)))
+
+
 # Key to identify the floating point type is tuple (number of bits in
 # significand (ignoring implicit first digit), maximum exponent, number of
 # bytes).
@@ -149,6 +165,7 @@ _KNOWN_TYPES = {(52, 1024, 8): _float64_ma,
                 (23, 128, 4): _float32_ma,
                 (63, 16384, 16): _float80_ma,  # float80 on 64-bit
                 (63, 16384, 12): _float80_ma,  # float80 on 32-bit
+                (105, 1024, 16): _float_dd_ma,  # double double
                }
 
 
@@ -158,11 +175,14 @@ def _get_machar(dtype):
     if params is None:
         raise ValueError(repr(dtype))
     # Detect known / suspected types
-    digits = int(abs(log2(_get_eps(dtype))))
+    digits = int(abs(round(log2(_get_eps(dtype)))))
     huge = _get_next(dtype, numeric.inf, 0)
-    maxexp = None if isnan(huge) else int(log2(huge))
-    bits = numeric.dtype(dtype).itemsize
-    return _KNOWN_TYPES.get((digits, maxexp, bits), _discover_machar(dtype))
+    maxexp = None if isnan(huge) else int(round(log2(huge)))
+    bytes = numeric.dtype(dtype).itemsize
+    key = (digits, maxexp, bytes)
+    if key in _KNOWN_TYPES:
+        return _KNOWN_TYPES[key]
+    return _discover_machar(dtype)
 
 
 def _discover_machar(dtype):
