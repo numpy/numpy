@@ -1418,7 +1418,7 @@ iterator_loop(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1434,7 +1434,7 @@ iterator_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
                       NPY_ITER_NO_SUBTYPE |
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
@@ -1730,7 +1730,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         op_flags[i] = default_op_in_flags |
                       NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1751,7 +1751,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
                       NPY_ITER_NO_SUBTYPE |
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
     if (wheremask != NULL) {
         op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
@@ -2287,7 +2287,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
                       NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -2303,7 +2303,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_OVERLAP_ALLOW_SAME;
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
