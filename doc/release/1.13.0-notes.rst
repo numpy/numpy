@@ -87,6 +87,11 @@ it should be regarded as a band-aid until Mingwpy is fully functional.
 
 .. _issues: https://mingwpy.github.io/issues.html
 
+Performance improvements for ``packbits`` and ``unpackbits``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The functions ``numpy.packbits`` with boolean input and ``numpy.unpackbits`` have
+been optimized to be a significantly faster for contiguous data.
+
 Changes
 =======
 
