@@ -316,10 +316,6 @@ class TestUnique(TestCase):
         assert_array_equal(a2_inv, np.zeros(5))
 
     def test_unique_axis_errors(self):
-        assert_raises(TypeError, self._run_axis_tests, object)
-        assert_raises(TypeError, self._run_axis_tests,
-                      [('a', int), ('b', object)])
-
         assert_raises(ValueError, unique, np.arange(10), axis=2)
         assert_raises(ValueError, unique, np.arange(10), axis=-2)
 
@@ -338,6 +334,8 @@ class TestUnique(TestCase):
         types.append('timedelta64[D]')
         types.append([('a', int), ('b', int)])
         types.append([('a', int), ('b', float)])
+        types.append(object)
+        types.append([('a', int), ('b', object)])
 
         for dtype in types:
             self._run_axis_tests(dtype)

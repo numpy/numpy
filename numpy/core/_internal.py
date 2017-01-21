@@ -355,15 +355,38 @@ def _view_is_safe(oldtype, newtype):
         If the new type is incompatible with the old type.
 
     """
+    from numpy.lib.type_check import find_dtype_offsets
 
     # if the types are equivalent, there is no problem.
     # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
     if oldtype == newtype:
         return
 
-    if newtype.hasobject or oldtype.hasobject:
-        raise TypeError("Cannot change data-type for object array.")
-    return
+    # no object members is fine
+    if not newtype.hasobject and not oldtype.hasobject:
+        return
+
+    # if they don't both have object members, check if they line up
+    if newtype.hasobject != oldtype.hasobject:
+        raise TypeError("Cannot change data-type for object array to non object or vice versa.")
+
+    # repeat the dtypes until they line up in size
+    # recall that (dtype, shape) is itself a dtype specifier
+    newsize = newtype.itemsize
+    oldsize = oldtype.itemsize
+    gcd = _gcd(newsize, oldsize)
+    newtype = (newtype, oldsize // gcd)
+    oldtype = (oldtype, newsize // gcd)
+
+    # if the locations of objects are the same, viewing is fine
+    newoffsets = find_dtype_offsets(newtype, object_)
+    oldoffsets = find_dtype_offsets(oldtype, object_)
+    if len(newoffsets) == len(oldoffsets) and all(newoffsets == oldoffsets):
+        return
+
+    # otherwise views are not safe
+    raise TypeError("Locations of objects in new data-type must align with old data-type")
+
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a NumPy dtype
