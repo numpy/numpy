@@ -2750,8 +2750,8 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * to make copies, if the caller (eg ufunc) says it accesses
                  * data only in the iterator order.
                  */
-                if ((op_flags[iop] & NPY_ITER_OVERLAP_ALLOW_SAME) &&
-                    (op_flags[iother] & NPY_ITER_OVERLAP_ALLOW_SAME) &&
+                if ((op_flags[iop] & NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE) &&
+                    (op_flags[iother] & NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE) &&
                     PyArray_BYTES(op[iop]) == PyArray_BYTES(op[iother]) &&
                     PyArray_NDIM(op[iop]) == PyArray_NDIM(op[iother]) &&
                     PyArray_CompareLists(PyArray_DIMS(op[iop]),

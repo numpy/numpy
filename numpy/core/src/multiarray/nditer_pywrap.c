@@ -361,8 +361,8 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                 }
                 break;
             case 'o':
-                if (strcmp(str, "overlap_allow_same") == 0) {
-                    flag = NPY_ITER_OVERLAP_ALLOW_SAME;
+                if (strcmp(str, "overlap_assume_elementwise") == 0) {
+                    flag = NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
                 }
                 break;
             case 'r':

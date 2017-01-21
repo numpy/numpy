@@ -608,17 +608,14 @@ Construction and Destruction
             returns true from the corresponding element in the ARRAYMASK
             operand.
 
-        .. c:var:: NPY_ITER_OVERLAP_ALLOW_SAME
+        .. c:var:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
 
-            In memory overlap checks, operands with ``NPY_ITER_OVERLAP_ALLOW_SAME``
-            set are considered non-overlapping if they point to exactly the same array.
-            This means arrays with the same shape, dtype, strides, and start address.
-            In other cases, the default rules implied by
-            ``NPY_ITER_COPY_IF_OVERLAP`` apply.
+            In memory overlap checks, assume that operands with
+            ``NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE`` enabled are accessed only
+            in the iterator order.
 
-            This flag can be enabled on the set of operands that are accessed
-            only in the iterator order, i.e. the operation is element-wise,
-            to avoid unnecessary copies.
+            This enables the iterator to reason about data dependency,
+            possibly avoiding unnecessary copies.
 
             This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
             on the iterator.
