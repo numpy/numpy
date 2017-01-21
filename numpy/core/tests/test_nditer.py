@@ -2408,7 +2408,11 @@ def test_iter_reduction():
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[...] += x
+        # Use a for loop instead of ``y[...] += x``
+        # (equivalent to ``y[...] = y[...].copy() + x``),
+        # because y has zero strides we use for the reduction
+        for j in range(len(y)):
+            y[j] += x[j]
     # Since no axes were specified, should have allocated a scalar
     assert_equal(i.operands[1].ndim, 0)
     assert_equal(i.operands[1], np.sum(a))
@@ -2459,7 +2463,11 @@ def test_iter_buffering_reduction():
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[...] += x
+        # Use a for loop instead of ``y[...] += x``
+        # (equivalent to ``y[...] = y[...].copy() + x``),
+        # because y has zero strides we use for the reduction
+        for j in range(len(y)):
+            y[j] += x[j]
     assert_equal(b, np.sum(a, axis=1))
 
     # Iterator inner double loop was wrong on this one

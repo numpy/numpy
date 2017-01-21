@@ -2749,6 +2749,9 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * If the arrays are views to exactly the same data, no need
                  * to make copies, if the caller (eg ufunc) says it accesses
                  * data only in the iterator order.
+                 *
+                 * However, if there is internal overlap (e.g. a zero stride on
+                 * a non-unit dimension), a copy cannot be avoided.
                  */
                 if ((op_flags[iop] & NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE) &&
                     (op_flags[iother] & NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE) &&
@@ -2760,7 +2763,9 @@ npyiter_allocate_arrays(NpyIter *iter,
                     PyArray_CompareLists(PyArray_STRIDES(op[iop]),
                                          PyArray_STRIDES(op[iother]),
                                          PyArray_NDIM(op[iop])) &&
-                    PyArray_DESCR(op[iop]) == PyArray_DESCR(op[iother])) {
+                    PyArray_DESCR(op[iop]) == PyArray_DESCR(op[iother]) &&
+                    solve_may_have_internal_overlap(op[iop], 1) == 0) {
+
                     continue;
                 }
 
