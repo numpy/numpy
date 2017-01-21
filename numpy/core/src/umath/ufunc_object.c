@@ -1446,6 +1446,20 @@ iterator_loop(PyUFuncObject *ufunc,
                  NPY_ITER_DELAY_BUFALLOC |
                  NPY_ITER_COPY_IF_OVERLAP;
 
+    /* Call the __array_prepare__ functions for already existing output arrays.
+     * Do this before creating the iterator, as the iterator may UPDATEIFCOPY
+     * some of them.
+     */
+    for (i = 0; i < nout; ++i) {
+        if (op[nin+i] == NULL) {
+            continue;
+        }
+        if (prepare_ufunc_output(ufunc, &op[nin+i],
+                            arr_prep[i], arr_prep_args, i) < 0) {
+            return -1;
+        }
+    }
+
     /*
      * Allocate the iterator.  Because the types of the inputs
      * were already checked, we use the casting rule 'unsafe' which
@@ -1462,30 +1476,38 @@ iterator_loop(PyUFuncObject *ufunc,
 
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
-    /* Call the __array_prepare__ functions where necessary */
     for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
-            NpyIter_Deallocate(iter);
-            return -1;
+        if (op[nin+i] == NULL) {
+            op[nin+i] = op_it[nin+i];
+            Py_INCREF(op[nin+i]);
+
+            /* Call the __array_prepare__ functions for the new array */
+            if (prepare_ufunc_output(ufunc, &op[nin+i],
+                                     arr_prep[i], arr_prep_args, i) < 0) {
+                return -1;
+            }
+
+            /*
+             * In case __array_prepare__ returned a different array, put the
+             * results directly there, ignoring the array allocated by the
+             * iterator.
+             *
+             * Here, we assume the user-provided __array_prepare__ behaves
+             * sensibly and doesn't return an array overlapping in memory
+             * with other operands --- the op[nin+i] array passed to it is newly
+             * allocated and doesn't have any overlap.
+             */
+            baseptrs[nin+i] = PyArray_BYTES(op[nin+i]);
+        }
+        else {
+            baseptrs[nin+i] = PyArray_BYTES(op_it[nin+i]);
         }
     }
 
     /* Only do the loop if the iteration size is non-zero */
     if (NpyIter_GetIterSize(iter) != 0) {
-
-        /* Reset the iterator with the base pointers from the wrapped outputs */
+        /* Reset the iterator with the base pointers from possible __array_prepare__ */
         for (i = 0; i < nin; ++i) {
-            baseptrs[i] = PyArray_BYTES(op_it[i]);
-        }
-        for (i = nin; i < nop; ++i) {
             baseptrs[i] = PyArray_BYTES(op_it[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
