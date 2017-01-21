@@ -225,12 +225,7 @@ def unique(ar, return_index=False, return_inverse=False,
     else:
         dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
-    try:
-        consolidated = ar.view(dtype)
-    except TypeError:
-        # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+    consolidated = ar.view(dtype)
 
     def reshape_uniq(uniq):
         uniq = uniq.view(orig_dtype)
