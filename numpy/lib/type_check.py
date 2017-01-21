@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
            'typename', 'asfarray', 'mintypecode', 'asscalar',
-           'common_type']
+           'common_type', 'find_dtype_offsets']
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, array, isnan, \
@@ -602,3 +602,58 @@ def common_type(*arrays):
         return array_type[1][precision]
     else:
         return array_type[0][precision]
+
+
+def find_dtype_offsets(dtype, find):
+    """
+    Finds all the byte offsets of a given scalar type within a potentially
+    compound type
+
+    Parameters
+    ----------
+    dtype : dtype
+        The compound type to search within
+    find : type
+        The base type to search for within the dtype
+
+    Returns
+    -------
+    out : np.array of int
+        The byte offsets of scalars of type `find` within the `type`, in
+        ascending order
+
+    See Also
+    --------
+    dtype
+
+    Examples
+    --------
+    >>> np.find_dtype_offsets(np.float32, find=np.float32)
+    array([0])
+    >>> np.find_dtype_offsets((np.float32, 3), find=np.float32)
+    array([0, 8, 16])
+    >>> np.find_dtype_offsets([('a', np.int), ('b', np.float32)], find=np.float32)
+    array([4])
+    """
+    dtype = _nx.dtype(dtype)
+
+    # exact match on scalar type
+    if dtype == find:
+        return array([0], dtype=_nx.intp)
+
+    # subarray type - repeat for each element
+    if dtype.subdtype:
+        subtype, shape = dtype.subdtype
+        base_offsets = subtype.itemsize * _nx.arange(_nx.prod(shape), dtype=_nx.intp)
+        return (base_offsets[:,None] + find_dtype_offsets(subtype, find=find)).ravel()
+
+    # record type - combine the fields
+    if dtype.fields:
+        # sort by offset
+        fields = sorted(dtype.fields.values(), key=lambda f: f[1])
+        return _nx.concatenate([
+            offset + find_dtype_offsets(fdtype, find=find)
+            for fdtype, offset in fields
+        ])
+
+    return array([], dtype=_nx.intp)
