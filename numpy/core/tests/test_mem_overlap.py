@@ -283,6 +283,21 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
         yield x[j:], x[:-j]
         yield x[...,j:], x[...,:-j]
 
+    # An array with zero stride internal overlap
+    strides = list(x.strides)
+    strides[0] = 0
+    xp = as_strided(x, shape=x.shape, strides=strides)
+    yield x, xp
+    yield xp, xp
+
+    # An array with non-zero stride internal overlap
+    strides = list(x.strides)
+    if strides[0] > 1:
+        strides[0] = 1
+    xp = as_strided(x, shape=x.shape, strides=strides)
+    yield x, xp
+    yield xp, xp
+
     # Then discontiguous views
     while True:
         steps = tuple(rng.randint(1, 11, dtype=np.intp)
@@ -579,6 +594,27 @@ def view_element_first_byte(x):
     return np.asarray(DummyArray(interface, x))
 
 
+def assert_copy_equivalent(operation, args, out, **kwargs):
+    """
+    Check that operation(*args, out=out) produces results
+    equivalent to out[...] = operation(*args, out=out.copy())
+    """
+
+    kwargs['out'] = out
+    kwargs2 = dict(kwargs)
+    kwargs2['out'] = out.copy()
+
+    out_orig = out.copy()
+    out[...] = operation(*args, **kwargs2)
+    expected = out.copy()
+    out[...] = out_orig
+
+    got = operation(*args, **kwargs).copy()
+
+    if (got != expected).any():
+        assert_equal(got, expected)
+
+
 class TestUFunc(object):
     """
     Test ufunc call memory overlap handling
@@ -605,12 +641,7 @@ class TestUFunc(object):
                 b_orig = b.copy()
 
                 if get_out_axis_size is None:
-                    bx = b.copy()
-                    cx = operation(a, out=bx)
-                    c = operation(a, out=b)
-
-                    if (c != cx).any():
-                        assert_equal(c, cx)
+                    assert_copy_equivalent(operation, [a], out=b)
 
                     if np.shares_memory(a, b):
                         overlapping += 1
@@ -650,12 +681,7 @@ class TestUFunc(object):
                             overlapping += 1
 
                         # Check result
-                        bx = b_out.copy()
-                        cx = operation(a, out=bx, axis=axis)
-                        c = operation(a, out=b_out, axis=axis)
-
-                        if (c != cx).any():
-                            assert_equal(c, cx)
+                        assert_copy_equivalent(operation, [a], out=b_out, axis=axis)
 
     def test_unary_ufunc_call_fuzz(self):
         self.check_unary_fuzz(np.invert, None, np.int16)
@@ -757,12 +783,8 @@ class TestUFunc(object):
                 if np.shares_memory(a, b):
                     overlapping += 1
 
-                bx = b.copy()
-                cx = gufunc(a, out=bx)
-                c = gufunc(a, out=b)
-
-                if (c != cx).any():
-                    assert_equal(c, cx)
+                with np.errstate(over='ignore', invalid='ignore'):
+                    assert_copy_equivalent(gufunc, [a], out=b)
 
     def test_ufunc_at_manual(self):
         def check(ufunc, a, ind, b=None):
