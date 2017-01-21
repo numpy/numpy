@@ -640,6 +640,21 @@ class TestApplyAlongAxis(TestCase):
         xa = apply_along_axis(myfunc, 2, a, offset=1)
         assert_equal(xa, [[2, 5], [8, 11]])
 
+    def test_mask(self):
+        x = np.arange(20).reshape(4, 5)
+        m = np.ma.masked_where(x%2 == 0, x)
+
+        # note that this lambda sometime returns np.ma.masked
+        # works fine with normal apply_along_axis
+        row0 = np.ma.apply_along_axis(lambda x: x[0], 0, m)
+
+        # fails with normal apply_along_axis, which doesn't use a masked_array
+        row1 = np.ma.apply_along_axis(lambda x: x[1], 0, m)
+
+        # note the first of these is a float, because that's the type of np.ma.masked...
+        assert_equal(row0, np.ma.masked_array([-1, 1.0, -1, 3.0, -1], [1, 0, 1, 0, 1]))
+        assert_equal(row1, np.ma.masked_array([5, -1, 7, -1, 9], [0, 1, 0, 1, 0]))
+
 
 class TestApplyOverAxes(TestCase):
     # Tests apply_over_axes

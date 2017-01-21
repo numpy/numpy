@@ -379,83 +379,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     (This docstring should be overwritten)
     """
-    arr = array(arr, copy=False, subok=True)
-    nd = arr.ndim
-    axis = normalize_axis_index(axis, nd)
-    ind = [0] * (nd - 1)
-    i = np.zeros(nd, 'O')
-    indlist = list(range(nd))
-    indlist.remove(axis)
-    i[axis] = slice(None, None)
-    outshape = np.asarray(arr.shape).take(indlist)
-    i.put(indlist, ind)
-    j = i.copy()
-    res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-    #  if res is a number, then we have a smaller output array
-    asscalar = np.isscalar(res)
-    if not asscalar:
-        try:
-            len(res)
-        except TypeError:
-            asscalar = True
-    # Note: we shouldn't set the dtype of the output from the first result
-    # so we force the type to object, and build a list of dtypes.  We'll
-    # just take the largest, to avoid some downcasting
-    dtypes = []
-    if asscalar:
-        dtypes.append(np.asarray(res).dtype)
-        outarr = zeros(outshape, object)
-        outarr[tuple(ind)] = res
-        Ntot = np.product(outshape)
-        k = 1
-        while k < Ntot:
-            # increment the index
-            ind[-1] += 1
-            n = -1
-            while (ind[n] >= outshape[n]) and (n > (1 - nd)):
-                ind[n - 1] += 1
-                ind[n] = 0
-                n -= 1
-            i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-            outarr[tuple(ind)] = res
-            dtypes.append(asarray(res).dtype)
-            k += 1
-    else:
-        res = array(res, copy=False, subok=True)
-        j = i.copy()
-        j[axis] = ([slice(None, None)] * res.ndim)
-        j.put(indlist, ind)
-        Ntot = np.product(outshape)
-        holdshape = outshape
-        outshape = list(arr.shape)
-        outshape[axis] = res.shape
-        dtypes.append(asarray(res).dtype)
-        outshape = flatten_inplace(outshape)
-        outarr = zeros(outshape, object)
-        outarr[tuple(flatten_inplace(j.tolist()))] = res
-        k = 1
-        while k < Ntot:
-            # increment the index
-            ind[-1] += 1
-            n = -1
-            while (ind[n] >= holdshape[n]) and (n > (1 - nd)):
-                ind[n - 1] += 1
-                ind[n] = 0
-                n -= 1
-            i.put(indlist, ind)
-            j.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-            outarr[tuple(flatten_inplace(j.tolist()))] = res
-            dtypes.append(asarray(res).dtype)
-            k += 1
-    max_dtypes = np.dtype(np.asarray(dtypes).max())
-    if not hasattr(arr, '_mask'):
-        result = np.asarray(outarr, dtype=max_dtypes)
-    else:
-        result = asarray(outarr, dtype=max_dtypes)
-        result.fill_value = ma.default_fill_value(result)
-    return result
+    def wrapped_func(a, *args, **kwargs):
+        res = func1d(a, *args, **kwargs)
+        return np.asanyarray(res).view(masked_array)
+
+    return np.apply_along_axis(wrapped_func, axis, arr, *args, **kwargs)
 apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
