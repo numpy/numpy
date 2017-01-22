@@ -248,25 +248,37 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
 
 
 def find_python_dll():
-    maj, min, micro = [int(i) for i in sys.version_info[:3]]
-    dllname = 'python%d%d.dll' % (maj, min)
-    print("Looking for %s" % dllname)
-
     # We can't do much here:
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
-    lib_dirs = [sys.prefix, sys.base_prefix, os.path.join(sys.prefix, 'lib')]
-    try:
-        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
-    except KeyError:
-        pass
+    stems = [sys.prefix]
+    if sys.base_prefix != sys.prefix:
+        stems.append(sys.base_prefix)
 
-    for d in lib_dirs:
-        dll = os.path.join(d, dllname)
-        if os.path.exists(dll):
-            return dll
+    sub_dirs = ['', 'lib', 'bin']
+    # generate possible combinations of directory trees and sub-directories
+    lib_dirs = []
+    for stem in stems:
+        for folder in sub_dirs:
+            lib_dirs = os.path.join(stem, folder)
+
+    # add system directory as well
+    if 'SYSTEMROOT' in os.environ:
+        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'System32'))
+
+    # search in the file system for possible candidates
+    major_version, minor_version = tuple(sys.version_info[:2])
+    patterns = ['python%d%d.dll']
+
+    for pat in patterns:
+        dllname = pat % (major_version, minor_version)
+        print("Looking for %s" % dllname)
+        for folder in lib_dirs:
+            dll = os.path.join(folder, dllname)
+            if os.path.exists(dll):
+                return dll
 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
@@ -394,40 +406,70 @@ def build_import_library():
     else:
         raise ValueError("Unhandled arch %s" % arch)
 
+def _check_for_import_lib():
+    """Check if an import library for the Python runtime already exists."""
+    major_version, minor_version = tuple(sys.version_info[:2])
+
+    # patterns for the file name of the library itself
+    patterns = ['libpython%d%d.a',
+                'libpython%d%d.dll.a',
+                'libpython%d.%d.dll.a']
+
+    # directory trees that may contain the library
+    stems = [sys.prefix]
+    if sys.base_prefix != sys.prefix:
+        stems.append(sys.base_prefix)
+
+    # possible subdirectories within those trees where it is placed
+    sub_dirs = ['libs', 'lib']
+
+    # generate a list of candidate locations
+    candidates = []
+    for pat in patterns:
+        filename = pat % (major_version, minor_version)
+        for stem_dir in stems:
+            for folder in sub_dirs:
+                candidates.append(os.path.join(stem_dir, folder, filename))
+
+    # test the filesystem to see if we can find any of these
+    for fullname in candidates:
+        if os.path.isfile(fullname):
+            # already exists, in location given
+            return (True, fullname)
+
+    # needs to be built, preferred location given first
+    return (False, candidates[0])
+
 def _build_import_library_amd64():
+    out_exists, out_file = _check_for_import_lib()
+    if out_exists:
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+
+    # get the runtime dll for which we are building import library
     dll_file = find_python_dll()
-
-    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix, 'libs', out_name)
-    if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists' %
-                  (out_file))
-        return
-
-    # didn't exist in virtualenv, maybe in base distribution?
-    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
-    if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists', base_file)
-        return
-
-    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
-    def_file = os.path.join(sys.prefix, 'libs', def_name)
-
     log.info('Building import library (arch=AMD64): "%s" (from %s)' %
              (out_file, dll_file))
 
+    # generate symbol list from this library
+    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
     generate_def(dll_file, def_file)
 
+    # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
     subprocess.Popen(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
+    out_exists, out_file = _check_for_import_lib()
+    if out_exists:
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
     lib_file = os.path.join(sys.prefix, 'libs', lib_name)
-    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix, 'libs', out_name)
     if not os.path.isfile(lib_file):
         # didn't find library file in virtualenv, try base distribution, too,
         # and use that instead if found there
@@ -437,14 +479,6 @@ def _build_import_library_x86():
         else:
             log.warn('Cannot build import library: "%s" not found', lib_file)
             return
-    if os.path.isfile(out_file):
-        log.debug('Skip building import library: "%s" exists', out_file)
-        return
-    # didn't find in virtualenv, try base distribution, too
-    base_file = os.path.join(sys.base_prefix, 'libs', out_name)
-    if os.path.isfile(base_file):
-        log.debug('Skip building import library: "%s" exists', out_file)
-        return
     log.info('Building import library (ARCH=x86): "%s"', out_file)
 
     from numpy.distutils import lib2def
@@ -456,9 +490,9 @@ def _build_import_library_x86():
     dlist, flist = lib2def.parse_nm(nm_output)
     lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
 
-    dll_name = "python%d%d.dll" % tuple(sys.version_info[:2])
+    dll_name = find_python_dll ()
     args = (dll_name, def_file, out_file)
-    cmd = 'dlltool --dllname %s --def %s --output-lib %s' % args
+    cmd = 'dlltool --dllname "%s" --def "%s" --output-lib "%s"' % args
     status = os.system(cmd)
     # for now, fail silently
     if status:
