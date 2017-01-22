@@ -1462,7 +1462,9 @@ class TestSpecialMethods(TestCase):
 
         a = np.array([1]).view(type=with_prepare)
         x = np.add(a, a, a)
-        assert_(not np.shares_memory(x, a))  # returned array is always new
+        # Returned array is new, because of the strange
+        # __array_prepare__ above
+        assert_(not np.shares_memory(x, a))
         assert_equal(x, np.array([2]))
         assert_equal(type(x), with_prepare)
 
