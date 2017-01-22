@@ -4494,6 +4494,15 @@ def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
 
+
+def test_ufunc_with_output():
+    # check that giving an output argument always returns that output.
+    # Regression test for gh-8416.
+    x = array([1., 2., 3.], mask=[0, 0, 1])
+    y = np.add(x, 1., out=x)
+    assert_(y is x)
+
+
 ###############################################################################
 if __name__ == "__main__":
     run_module_suite()
