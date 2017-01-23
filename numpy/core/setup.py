@@ -899,7 +899,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
-            join('src', 'private', 'mem_overlap.c')]
+            join('src', 'private', 'mem_overlap.c'),
+            join('src', 'umath', 'logical_gufuncs.c.src')]
 
     umath_deps = [
             generate_umath_py,

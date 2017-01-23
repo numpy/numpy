@@ -1,0 +1,253 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include "Python.h"
+#include "math.h"
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
+
+
+#define all_INNER_LOOP(OP, TYPE)                \
+    *((npy_bool *)c_n) = NPY_TRUE;              \
+    for (i = 0; i < I; i++){                    \
+        a = *(TYPE *)a_i;                       \
+        b = *(TYPE *)b_i;                       \
+        if (a OP b){                            \
+            a_i += a_I;                         \
+            b_i += b_I;                         \
+        } else {                                \
+            *((npy_bool *)c_n) = NPY_FALSE;     \
+            break;                              \
+        }                                       \
+    }
+
+#define any_INNER_LOOP(OP, TYPE)                \
+    *((npy_bool *)c_n) = NPY_FALSE;             \
+    for (i = 0; i < I; i++){                    \
+        a = *(TYPE *)a_i;                       \
+        b = *(TYPE *)b_i;                       \
+        if (a OP b){                            \
+            *((npy_bool *)c_n) = NPY_TRUE;      \
+            break;                              \
+        } else {                                \
+            a_i += a_I;                         \
+            b_i += b_I;                         \
+        }                                       \
+    }
+
+/**begin repeat
+* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
+*/
+
+/**begin repeat1
+* #OP = ==,!=,<,<=,>,>=#
+* #OPNAME = eq,ne,lt,le,gt,ge#
+*/
+
+/**begin repeat2
+* #ALL_OR_ANY = all,any#
+*/
+
+void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
+                                  npy_intp* steps, void* data)
+{
+    npy_intp i, n;
+    npy_intp N = dimensions[0], I = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2], a_I = steps[3], b_I = steps[4];
+
+    char *a_i, *b_i;
+    npy_@TYPE@ a, b;
+
+    for (n = 0; n < N; n++) {
+        a_i = a_n;
+        b_i = b_n;
+
+        @ALL_OR_ANY@_INNER_LOOP(@OP@, npy_@TYPE@)
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+
+/**end repeat2**/
+/**end repeat1**/
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+/* create arrays of type specific functions for each gufunc  */
+
+#define FUNC_ARRAY_NAME(NAME) NAME ## _funcs
+
+#define GUFUNC_FUNC_ARRAY(NAME)                         \
+    static PyUFuncGenericFunction                       \
+    FUNC_ARRAY_NAME(NAME)[] = {                         \
+        byte_ ## NAME,                                  \
+        ubyte_ ## NAME,                                 \
+        short_ ## NAME,                                 \
+        ushort_ ## NAME,                                \
+        int_ ## NAME,                                   \
+        uint_ ## NAME,                                  \
+        long_ ## NAME,                                  \
+        ulong_ ## NAME,                                 \
+        longlong_ ## NAME,                              \
+        ulonglong_ ## NAME,                             \
+        float_ ## NAME,                                 \
+        double_ ## NAME,                                \
+        longdouble_ ## NAME,                            \
+    }
+
+
+GUFUNC_FUNC_ARRAY(all_eq);
+GUFUNC_FUNC_ARRAY(all_ne);
+GUFUNC_FUNC_ARRAY(all_lt);
+GUFUNC_FUNC_ARRAY(all_le);
+GUFUNC_FUNC_ARRAY(all_gt);
+GUFUNC_FUNC_ARRAY(all_ge);
+GUFUNC_FUNC_ARRAY(any_eq);
+GUFUNC_FUNC_ARRAY(any_ne);
+GUFUNC_FUNC_ARRAY(any_lt);
+GUFUNC_FUNC_ARRAY(any_le);
+GUFUNC_FUNC_ARRAY(any_gt);
+GUFUNC_FUNC_ARRAY(any_ge);
+
+
+/* -------------------------------------------------------------------------- */
+/* Create type arrays for each gufunc, which are all identical*/
+static char types[39] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
+                         NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
+                         NPY_SHORT, NPY_SHORT, NPY_BOOL,
+                         NPY_USHORT, NPY_USHORT, NPY_BOOL,
+                         NPY_INT, NPY_INT, NPY_BOOL,
+                         NPY_UINT, NPY_UINT, NPY_BOOL,
+                         NPY_LONG, NPY_LONG, NPY_BOOL,
+                         NPY_ULONG, NPY_ULONG, NPY_BOOL,
+                         NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
+                         NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
+                         NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
+                         NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
+                         NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL};
+
+
+/* -------------------------------------------------------------------------- */
+/* define name and docstring for each gufunc*/
+
+typedef struct gufunc_descriptor_struct {
+    char *name;
+    char *doc;
+    PyUFuncGenericFunction *funcs;
+} GUFUNC_DESCRIPTOR_t;
+
+GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
+    {
+        "all_equal",
+        "all equal docstring",
+        FUNC_ARRAY_NAME(all_eq)
+    },
+    {
+        "all_not_equal",
+        "all not equal docstring",
+        FUNC_ARRAY_NAME(all_ne)
+    },
+    {
+        "all_less",
+        "all less than docstring",
+        FUNC_ARRAY_NAME(all_lt)
+    },
+    {
+        "all_less_equal",
+        "all less than or equal docstring",
+        FUNC_ARRAY_NAME(all_le)
+    },
+    {
+        "all_greater",
+        "all greater than docstring",
+        FUNC_ARRAY_NAME(all_gt)
+    },
+    {
+        "all_greater_equal",
+        "all greater than or equal docstring",
+        FUNC_ARRAY_NAME(all_ge)
+    },
+    {
+        "any_equal",
+        "any equal docstring",
+        FUNC_ARRAY_NAME(any_eq)
+    },
+    {
+        "any_not_equal",
+        "any not equal docstring",
+        FUNC_ARRAY_NAME(any_ne)
+    },
+    {
+        "any_less",
+        "any less than docstring",
+        FUNC_ARRAY_NAME(any_lt)
+    },
+    {
+        "any_less_equal",
+        "any less than or equal docstring",
+        FUNC_ARRAY_NAME(any_le)
+    },
+    {
+        "any_greater",
+        "any greater than docstring",
+        FUNC_ARRAY_NAME(any_gt)
+    },
+    {
+        "any_greater_equal",
+        "any greater than or equal docstring",
+        FUNC_ARRAY_NAME(any_ge)
+    }
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* create array of nulls for "data" for each gufunc type*/
+static void *array_of_nulls[] = {
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* function to register all gufuncs*/
+void InitLogicalGufuncs(PyObject *dictionary) {
+    PyObject *f;
+    int i;
+    const int gufunc_count = sizeof(gufunc_descriptors)/
+        sizeof(gufunc_descriptors[0]);
+    for (i=0; i < gufunc_count; i++) {
+        GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
+        f = PyUFunc_FromFuncAndDataAndSignature(d->funcs,
+                                                array_of_nulls,
+                                                types,
+                                                13,             // number of types
+                                                2,              // number of inputs
+                                                1,              // number of outputs
+                                                PyUFunc_None,
+                                                d->name,
+                                                d->doc,
+                                                0,              // unused
+                                                "(i),(i)->()");
+        PyDict_SetItemString(dictionary, d->name, f);
+        Py_DECREF(f);
+    }
+}

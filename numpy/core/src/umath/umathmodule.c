@@ -41,6 +41,7 @@
 #include "ufunc_type_resolution.h"
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
+#include "logical_gufuncs.c"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
 
@@ -365,6 +366,7 @@ PyMODINIT_FUNC initumath(void)
 
     /* Load the ufunc operators into the array module's namespace */
     InitOperators(d);
+    InitLogicalGufuncs(d);
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
