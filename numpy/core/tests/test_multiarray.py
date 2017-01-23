@@ -6502,6 +6502,122 @@ class TestHashing(TestCase):
         x = np.array([])
         self.assertFalse(isinstance(x, collections.Hashable))
 
+from numpy.core._internal import _view_is_safe
+
+class TestObjViewSafetyFuncs(TestCase):
+
+    @staticmethod
+    def scan_view(d1, otype):
+        """ scans through positions at which we can view a type """
+        goodpos = []
+        for shift in range(d1.itemsize - np.dtype(otype).itemsize+1):
+            d2 = np.dtype({'names': ['f0'], 'formats': [otype],
+                        'offsets': [shift], 'itemsize': d1.itemsize})
+            try:
+                _view_is_safe(d1, d2)
+            except TypeError as e:
+                pass
+            else:
+                goodpos.append(shift)
+        return goodpos
+
+    def test_view_safety_object(self):
+        """ Tests the cases when changing the view does not add or hide objects """
+        psize = np.dtype('p').itemsize
+
+        # test nonequal itemsizes with objects:
+        # these should succeed:
+        _view_is_safe(np.dtype('O,p,O,p'), np.dtype('O,p,O,p,O,p'))
+        _view_is_safe(np.dtype('O,O'), np.dtype('O,O,O'))
+
+        # these should fail:
+        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('O,O'))
+        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('O,p'))
+        assert_raises(TypeError, _view_is_safe, np.dtype('O,O,p'), np.dtype('p,O'))
+
+        # test nested structures with objects:
+        nestedO = np.dtype([('f0', 'p'), ('f1', 'p,O,p')])
+        assert_array_equal(self.scan_view(nestedO, 'O'), [2*psize])
+
+    @dec.knownfailureif(True)
+    def test_view_safety_partial_object(self):
+        """ Tests the cases when changing the view adds or hides objects """
+        psize = np.dtype('p').itemsize
+
+        # test partial overlap with object field
+        assert_array_equal(
+            self.scan_view(np.dtype('p,O,p,p,O,O'), 'p'),
+            [0] + list(range(2*psize, 3*psize+1))
+        )
+        assert_array_equal(
+            self.scan_view(np.dtype('p,O,p,p,O,O'), 'O'),
+            [psize, 4*psize, 5*psize]
+        )
+
+        # test nested structures with objects:
+        nestedO = np.dtype([('f0', 'p'), ('f1', 'p,O,p')])
+        assert_array_equal(self.scan_view(nestedO, 'p'), list(range(psize+1)) + [3*psize])
+
+        # test subarrays with objects
+        subarrayO = np.dtype('p,(2,3)O,p')
+        assert_array_equal(
+            self.scan_view(subarrayO, 'O'),
+            list(range(psize, 6*psize+1, psize))
+        )
+        assert_array_equal(self.scan_view(subarrayO, 'p'), [0, 7*psize])
+
+    @dec.knownfailureif(True)
+    def test_view_safety_missing(self):
+        """ Tests the cases where fields are added where they used to be missing """
+        psize = np.dtype('p').itemsize
+
+        # creates dtype but with extra character code - for missing 'p' fields
+        def mtype(s):
+            n, offset, fields = 0, 0, []
+            for c in s.split(','):  # subarrays won't work
+                if c != '-':
+                    fields.append(('f{0}'.format(n), c, offset))
+                    n += 1
+                offset += np.dtype(c).itemsize if c != '-' else psize
+
+            names, formats, offsets = zip(*fields)
+            return np.dtype({'names': names, 'formats': formats,
+                          'offsets': offsets, 'itemsize': offset})
+
+        # test nonequal itemsizes with missing fields:
+        # these should succeed:
+        _view_is_safe(mtype('-,p,-,p'), mtype('-,p,-,p,-,p'))
+        _view_is_safe(np.dtype('p,p'), np.dtype('p,p,p'))
+
+        # these should fail:
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,p'))
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('p,-'))
+        assert_raises(TypeError, _view_is_safe, mtype('p,p,-'), mtype('-,p'))
+
+        # test partial overlap with missing field
+        assert_array_equal(
+            self.scan_view(mtype('p,-,p,p,-,-'), 'p'),
+            [0] + list(range(2*psize, 3*psize+1))
+        )
+
+        # test nested structures with missing fields:
+        nestedM = np.dtype([('f0', 'p'), ('f1', mtype('p,-,p'))])
+        assert_array_equal(self.scan_view(nestedM, 'p'), list(range(psize+1)) + [3*psize])
+
+    @dec.knownfailureif(True)
+    def test_view_safety_overlapping(self):
+        psize = np.dtype('p').itemsize
+
+        #test dtype with overlapping fields
+        overlapped = np.dtype({'names': ['f0', 'f1', 'f2', 'f3'],
+                            'formats': ['p', 'p', 'p', 'p'],
+                            'offsets': [0, 1, 3*psize-1, 3*psize],
+                            'itemsize': 4*psize})
+        assert_array_equal(
+            self.scan_view(overlapped, 'p'),
+            [0, 1, 3*psize-1, 3*psize]
+        )
+
 
 class TestArrayPriority(TestCase):
     # This will go away when __array_priority__ is settled, meanwhile
