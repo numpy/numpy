@@ -644,8 +644,11 @@ def find_dtype_offsets(dtype, find):
     # subarray type - repeat for each element
     if dtype.subdtype:
         subtype, shape = dtype.subdtype
-        base_offsets = subtype.itemsize * _nx.arange(_nx.prod(shape), dtype=_nx.intp)
-        return (base_offsets[:,None] + find_dtype_offsets(subtype, find=find)).ravel()
+        sub_offsets = find_dtype_offsets(subtype, find=find)
+        # don't invoke arange unless we have to, as it might be large
+        if sub_offsets.size:
+            base_offsets = subtype.itemsize * _nx.arange(_nx.prod(shape), dtype=_nx.intp)
+            return (base_offsets[:,None] + sub_offsets).ravel()
 
     # record type - combine the fields
     if dtype.fields:
