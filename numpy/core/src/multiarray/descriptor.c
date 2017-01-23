@@ -3651,6 +3651,31 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
     return result;
 }
 
+static int
+descr_nonzero(PyObject *self)
+{
+    /* `bool(np.dtype(...)) == True` for all dtypes. Needed to override default
+     * nonzero implementation, which checks if `len(object) > 0`. */
+    return 1;
+}
+
+static PyNumberMethods descr_as_number = {
+    (binaryfunc)0,                          /* nb_add */
+    (binaryfunc)0,                          /* nb_subtract */
+    (binaryfunc)0,                          /* nb_multiply */
+    #if defined(NPY_PY3K)
+    #else
+    (binaryfunc)0,                          /* nb_divide */
+    #endif
+    (binaryfunc)0,                          /* nb_remainder */
+    (binaryfunc)0,                          /* nb_divmod */
+    (ternaryfunc)0,                         /* nb_power */
+    (unaryfunc)0,                           /* nb_negative */
+    (unaryfunc)0,                           /* nb_positive */
+    (unaryfunc)0,                           /* nb_absolute */
+    (inquiry)descr_nonzero,                 /* nb_nonzero */
+};
+
 /*************************************************************************
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
@@ -3800,7 +3825,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_compare */
 #endif
     (reprfunc)arraydescr_repr,                  /* tp_repr */
-    0,                                          /* tp_as_number */
+    &descr_as_number,                           /* tp_as_number */
     &descr_as_sequence,                         /* tp_as_sequence */
     &descr_as_mapping,                          /* tp_as_mapping */
     0,                                          /* tp_hash */
