@@ -212,7 +212,7 @@ add_newdoc('numpy.core', 'nditer',
             copies those elements indicated by this mask.
           * 'writemasked' indicates that only elements where the chosen
             'arraymask' operand is True will be written to.
-          * "overlap_allow_same" can be used to mark operands that are
+          * "overlap_assume_elementwise" can be used to mark operands that are
             accessed only in the iterator order, to allow less conservative
             copying when "copy_if_overlap" is present.
     op_dtypes : dtype or tuple of dtype(s), optional
