@@ -72,10 +72,10 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
-            ret = a.dtype.type(ret)
+            ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
         if is_float16_result:
-            ret = a.dtype.type(ret / rcount)
+            ret = arr.dtype.type(ret / rcount)
         else:
             ret = ret.dtype.type(ret / rcount)
     else:
