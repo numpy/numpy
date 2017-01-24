@@ -4389,6 +4389,12 @@ class TestStats(TestCase):
         self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
         self.omat = self.omat.reshape(4, 5)
 
+    def test_python_type(self):
+        for x in (np.float16(1.), 1, 1., 1+0j):
+            assert_equal(np.mean([x]), 1.)
+            assert_equal(np.std([x]), 0.)
+            assert_equal(np.var([x]), 0.)
+
     def test_keepdims(self):
         mat = np.eye(3)
         for f in self.funcs:
