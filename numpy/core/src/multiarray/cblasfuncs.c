@@ -12,6 +12,7 @@
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
+#include "mem_overlap.h"
 
 
 /*
@@ -242,7 +243,7 @@ NPY_NO_EXPORT PyObject *
 cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                     PyArrayObject *out)
 {
-    PyArrayObject *ret = NULL;
+    PyArrayObject *ret = NULL, *result = NULL;
     int j, lda, ldb;
     npy_intp l;
     int nd;
@@ -412,14 +413,38 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 goto fail;
             }
         }
+
+        /* check for memory overlap */
+        if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
+              solve_may_share_memory(out, ap2, 1) == 0)) {
+            /* allocate temporary output array */
+            ret = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
+                                                        NULL, 0);
+            if (ret == NULL) {
+                goto fail;
+            }
+
+            /* set copy-back */
+            Py_INCREF(out);
+            if (PyArray_SetUpdateIfCopyBase(ret, out) < 0) {
+                Py_DECREF(out);
+                goto fail;
+            }
+        }
+        else {
+            Py_INCREF(out);
+            ret = out;
+        }
         Py_INCREF(out);
-        ret = out;
+        result = out;
     }
     else {
         PyObject *tmp = (PyObject *)(prior2 > prior1 ? ap2 : ap1);
 
         ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
                                            typenum, NULL, NULL, 0, 0, tmp);
+        Py_INCREF(ret);
+        result = ret;
     }
 
     if (ret == NULL) {
@@ -742,11 +767,13 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);
-    return PyArray_Return(ret);
+    Py_DECREF(ret);
+    return PyArray_Return(result);
 
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
+    Py_XDECREF(result);
     return NULL;
 }
