@@ -76,6 +76,26 @@ class Core(Benchmark):
         np.tril(self.l10x10)
 
 
+class Temporaries(Benchmark):
+    def setup(self):
+        self.amid = np.ones(50000)
+        self.bmid = np.ones(50000)
+        self.alarge = np.ones(1000000)
+        self.blarge = np.ones(1000000)
+
+    def time_mid(self):
+        (self.amid * 2) + self.bmid
+
+    def time_mid2(self):
+        (self.amid + self.bmid) - 2
+
+    def time_large(self):
+        (self.alarge * 2) + self.blarge
+
+    def time_large2(self):
+        (self.alarge + self.blarge) - 2
+
+
 class MA(Benchmark):
     def setup(self):
         self.l100 = range(100)
