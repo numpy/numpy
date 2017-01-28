@@ -108,7 +108,7 @@ objects can accommodate any *strided indexing scheme*. In a strided
 scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
 corresponds to the offset (in bytes):
 
-.. math:: n_{\mathrm{offset}} = \sum_{k=0}^{N-1} s_k n_k
+.. math:: n_{\mathrm{offset}} = \mathrm{itemsize} \sum_{k=0}^{N-1} s_k n_k
 
 from the beginning of the memory block associated with the
 array. Here, :math:`s_k` are integers which specify the :obj:`strides
@@ -124,7 +124,7 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 
 .. index:: single-segment, contiguous, non-contiguous
 
-where :math:`d_j` `= self.itemsize * self.shape[j]`.
+where :math:`d_j` `= self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
