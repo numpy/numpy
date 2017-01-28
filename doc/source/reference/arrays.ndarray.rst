@@ -108,7 +108,7 @@ objects can accommodate any *strided indexing scheme*. In a strided
 scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
 corresponds to the offset (in bytes):
 
-.. math:: n_{\mathrm{offset}} = \mathrm{itemsize} \sum_{k=0}^{N-1} s_k n_k
+.. math:: n_{\mathrm{offset}} = \sum_{k=0}^{N-1} s_k n_k
 
 from the beginning of the memory block associated with the
 array. Here, :math:`s_k` are integers which specify the :obj:`strides
@@ -119,8 +119,8 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 
 .. math::
 
-   s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j ,
-   \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
+   s_k^{\mathrm{column}} = \mathrm{itemsize} \prod_{j=0}^{k-1} d_j ,
+   \quad  s_k^{\mathrm{row}} = \mathrm{itemsize} \prod_{j=k+1}^{N-1} d_j .
 
 .. index:: single-segment, contiguous, non-contiguous
 
