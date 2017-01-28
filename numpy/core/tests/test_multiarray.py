@@ -2326,6 +2326,22 @@ class TestMethods(TestCase):
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
 
+    def test_dot_out_mem_overlap(self):
+        np.random.seed(1)
+
+        for dtype in [np.object_, np.float32, np.complex128, np.int64]:
+            a0 = np.random.rand(3, 3).astype(dtype)
+            b0 = np.random.rand(3, 3).astype(dtype)
+            for a, b in [(a0.copy(), b0.copy()),
+                         (a0.copy().T, b0.copy())]:
+                y = np.dot(a, b)
+                x = np.dot(a, b, out=b)
+                assert_equal(x, y, err_msg=repr(dtype))
+
+            # Check invalid output array
+            assert_raises(ValueError, np.dot, a, b, out=b[::2])
+            assert_raises(ValueError, np.dot, a, b, out=b.T)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
