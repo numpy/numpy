@@ -713,27 +713,29 @@ Several arrays can be stacked together along different axes::
 
 The function `column_stack`
 stacks 1D arrays as columns into a 2D array. It is equivalent to
-`vstack` only for 1D arrays::
+`hstack` for 2D arrays::
 
     >>> from numpy import newaxis
-    >>> np.column_stack((a,b))   # With 2D arrays
-    array([[ 8.,  8.,  1.,  8.],
-           [ 0.,  0.,  0.,  4.]])
-    >>> a = np.array([4.,2.])
+    >>> a = np.array([4.,3.])
     >>> b = np.array([2.,8.])
-    >>> a[:,newaxis]  # This allows to have a 2D columns vector
-    array([[ 4.],
-           [ 2.]])
-    >>> np.column_stack((a[:,newaxis],b[:,newaxis]))
+    >>> np.hstack((a,b))          # stacks as-is
+    array([ 4.,  3.,  2.,  8.])
+    >>> np.column_stack((a,b))    # returns a 2D array
     array([[ 4.,  2.],
-           [ 2.,  8.]])
-    >>> np.vstack((a[:,newaxis],b[:,newaxis])) # The behavior of vstack is different
+           [ 3.,  8.]])
+    >>> a[:,newaxis]              # this allows to have a 2D columns vector
     array([[ 4.],
-           [ 2.],
-           [ 2.],
-           [ 8.]])
+           [ 2.]])       
+    >>> np.hstack((a[:,newaxis],b[:,newaxis]))         # with 2D arrays
+    array([[ 4.,  2.],
+           [ 3.,  8.]])
+    >>> np.column_stack((a[:,newaxis],b[:,newaxis]))   # same as hstack
+    array([[ 4.,  2.],
+           [ 3.,  8.]])
 
-For arrays of with more than two dimensions,
+On the other hand, the function `row_stack` is equivalent to `vstack`
+for any input arrays.
+In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
 first axes, and `concatenate`
