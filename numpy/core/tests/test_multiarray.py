@@ -2329,9 +2329,11 @@ class TestMethods(TestCase):
     def test_dot_out_mem_overlap(self):
         np.random.seed(1)
 
-        # Test BLAS and non-BLAS code paths
-        for dtype in [np.float32, np.int64]:
-
+        # Test BLAS and non-BLAS code paths, including all dtypes
+        # that dot() supports
+        dtypes = [np.dtype(code) for code in np.typecodes['All']
+                  if code not in 'USVM']
+        for dtype in dtypes:
             a = np.random.rand(3, 3).astype(dtype)
             b = np.random.rand(3, 3).astype(dtype)
             y = np.dot(a, b)
