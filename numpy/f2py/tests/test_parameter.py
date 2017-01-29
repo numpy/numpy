@@ -18,6 +18,8 @@ class TestParameters(util.F2PyTest):
     sources = [_path('src', 'parameter', 'constant_real.f90'),
                _path('src', 'parameter', 'constant_integer.f90'),
                _path('src', 'parameter', 'constant_both.f90'),
+               _path('src', 'parameter', 'constant_compound.f90'),
+               _path('src', 'parameter', 'constant_non_compound.f90'),
     ]
 
     @dec.slow
@@ -41,6 +43,24 @@ class TestParameters(util.F2PyTest):
         x = np.arange(3, dtype=np.float64)
         self.module.foo_double(x)
         assert_equal(x, [0 + 1 + 2*3, 1, 2])
+
+    @dec.slow
+    def test_constant_compound_int(self):
+        # non-contiguous should raise error
+        x = np.arange(6, dtype=np.int32)[::2]
+        assert_raises(ValueError, self.module.foo_compound_int, x)
+
+        # check values with contiguous array
+        x = np.arange(3, dtype=np.int32)
+        self.module.foo_compound_int(x)
+        assert_equal(x, [0 + 1 + 2*6, 1, 2])
+
+    @dec.slow
+    def test_constant_non_compound_int(self):
+        # check values
+        x = np.arange(4, dtype=np.int32)
+        self.module.foo_non_compound_int(x)
+        assert_equal(x, [0 + 1 + 2 + 3*4, 1, 2, 3])
 
     @dec.slow
     def test_constant_integer_int(self):
