@@ -763,7 +763,7 @@ static PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
 {
-    PyArrayObject *ret;
+    PyArrayObject *out_buf;
     PyTypeObject *subtype;
     double prior1, prior2;
     /*
@@ -804,23 +804,23 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
         if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
               solve_may_share_memory(out, ap2, 1) == 0)) {
             /* allocate temporary output array */
-            ret = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
-                                                        NULL, 0);
-            if (ret == NULL) {
+            out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
+                                                            NULL, 0);
+            if (out_buf == NULL) {
                 return NULL;
             }
 
             /* set copy-back */
             Py_INCREF(out);
-            if (PyArray_SetUpdateIfCopyBase(ret, out) < 0) {
+            if (PyArray_SetUpdateIfCopyBase(out_buf, out) < 0) {
                 Py_DECREF(out);
-                Py_DECREF(ret);
+                Py_DECREF(out_buf);
                 return NULL;
             }
         }
         else {
             Py_INCREF(out);
-            ret = out;
+            out_buf = out;
         }
 
         if (result) {
@@ -828,20 +828,20 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             *result = out;
         }
 
-        return ret;
+        return out_buf;
     }
 
-    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                       typenum, NULL, NULL, 0, 0,
-                                       (PyObject *)
-                                       (prior2 > prior1 ? ap2 : ap1));
+    out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                           typenum, NULL, NULL, 0, 0,
+                                           (PyObject *)
+                                           (prior2 > prior1 ? ap2 : ap1));
 
-    if (ret != NULL && result) {
-        Py_INCREF(ret);
-        *result = ret;
+    if (out_buf != NULL && result) {
+        Py_INCREF(out_buf);
+        *result = out_buf;
     }
 
-    return ret;
+    return out_buf;
 }
 
 /* Could perhaps be redone to not make contiguous arrays */
@@ -937,7 +937,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 {
-    PyArrayObject *ap1, *ap2, *ret = NULL, *result = NULL;
+    PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
     npy_intp i, j, l;
     int typenum, nd, axis, matchDim;
@@ -979,12 +979,12 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 #endif
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
-        ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
-        ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
+        result = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
+        result = (PyArrayObject *)Py_TYPE(result)->tp_as_number->nb_multiply(
                                         (PyObject *)ap1, (PyObject *)ap2);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
-        return (PyObject *)ret;
+        return (PyObject *)result;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {
@@ -1016,24 +1016,24 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
-    ret = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
-    if (ret == NULL) {
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    if (out_buf == NULL) {
         goto fail;
     }
     /* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
-        memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
+        memset(PyArray_DATA(out_buf), 0, PyArray_NBYTES(out_buf));
     }
 
-    dot = PyArray_DESCR(ret)->f->dotfunc;
+    dot = PyArray_DESCR(out_buf)->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
         goto fail;
     }
 
-    op = PyArray_DATA(ret);
-    os = PyArray_DESCR(ret)->elsize;
+    op = PyArray_DATA(out_buf);
+    os = PyArray_DESCR(out_buf)->elsize;
     axis = PyArray_NDIM(ap1)-1;
     it1 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap1, &axis);
@@ -1049,7 +1049,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
-            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
+            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, out_buf);
             op += os;
             PyArray_ITER_NEXT(it2);
         }
@@ -1065,13 +1065,16 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
-    Py_DECREF(ret);
+
+    /* Trigger possible copy-back into `result` */
+    Py_DECREF(out_buf);
+
     return (PyObject *)result;
 
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
-    Py_XDECREF(ret);
+    Py_XDECREF(out_buf);
     Py_XDECREF(result);
     return NULL;
 }
