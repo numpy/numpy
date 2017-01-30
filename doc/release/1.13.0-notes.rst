@@ -57,8 +57,8 @@ A ``check_bound`` keyword argument is added to
 ``numpy.lib.stride_tricks.as_strided``.
 If ``check_bounds=True`` is passed to ``as_strided``, raise ``ValueError`` when
 given shape and strides lead out of bound on NumPy array.
-Default for a ``check_bounds`` keyword argument is ``False``, without checking
-out of bounds, as same as prior version of this function.
+Default for a ``check_bounds`` keyword argument is ``'warn'``, checking
+out of bound and warn ``FutureWarning`` when call leads out of bounds for now.
 
 Improvements
 ============

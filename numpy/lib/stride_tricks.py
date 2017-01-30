@@ -6,6 +6,7 @@ NumPy reference guide.
 
 """
 from __future__ import division, absolute_import, print_function
+import warnings
 
 import numpy as np
 
@@ -36,7 +37,7 @@ def _maybe_view_as_subclass(original_array, new_array):
 
 
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
-               check_bounds=False):
+               check_bounds='warn'):
     """
     Create a view into the array with the given shape and strides.
 
@@ -123,8 +124,15 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
         x_low, x_high = np.byte_bounds(x)
         a_low, a_high = np.byte_bounds(array)
         if x.size == 0 or a_low < x_low or x_high < a_high:
-            raise ValueError(("given shape and strides will cause "
-                              "out of bounds of original array"))
+            if check_bounds == 'warn':
+                warnings.warn(("In the future, this will raise ValueError "
+                               "if called without check_bounds=False, "
+                               "given shape and strides will cause "
+                               "out of bounds of original array"),
+                              FutureWarning)
+            else:
+                raise ValueError(("given shape and strides will cause "
+                                  "out of bounds of original array"))
 
     view = _maybe_view_as_subclass(x, array)
 
