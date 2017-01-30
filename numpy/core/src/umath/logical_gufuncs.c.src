@@ -47,7 +47,7 @@
 * #ALL_OR_ANY = all,any#
 */
 
-void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
+static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
                                   npy_intp* steps, void* data)
 {
     npy_intp i, n;
@@ -138,7 +138,7 @@ typedef struct gufunc_descriptor_struct {
     PyUFuncGenericFunction *funcs;
 } GUFUNC_DESCRIPTOR_t;
 
-GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
+static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "all_equal",
         "all equal docstring",
@@ -229,7 +229,7 @@ static void *array_of_nulls[] = {
 
 /* -------------------------------------------------------------------------- */
 /* function to register all gufuncs*/
-void InitLogicalGufuncs(PyObject *dictionary) {
+static void InitLogicalGufuncs(PyObject *dictionary) {
     PyObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
