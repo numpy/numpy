@@ -129,7 +129,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
                                "if called without check_bounds=False, "
                                "given shape and strides will cause "
                                "out of bounds of original array"),
-                              FutureWarning)
+                              FutureWarning, stacklevel=2)
             else:
                 raise ValueError(("given shape and strides will cause "
                                   "out of bounds of original array"))
