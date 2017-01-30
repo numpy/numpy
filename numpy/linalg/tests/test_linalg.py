@@ -275,18 +275,18 @@ def _stride_comb_iter(x):
         if x.ndim >= 1 and x.shape[-1] == 1:
             s = list(x.strides)
             s[-1] = 0
-            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            xi = np.lib.stride_tricks.as_strided(x, strides=s, check_bounds=False)
             yield xi, "stride_xxx_0"
         if x.ndim >= 2 and x.shape[-2] == 1:
             s = list(x.strides)
             s[-2] = 0
-            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            xi = np.lib.stride_tricks.as_strided(x, strides=s, check_bounds=False)
             yield xi, "stride_xxx_0_x"
         if x.ndim >= 2 and x.shape[:-2] == (1, 1):
             s = list(x.strides)
             s[-1] = 0
             s[-2] = 0
-            xi = np.lib.stride_tricks.as_strided(x, strides=s)
+            xi = np.lib.stride_tricks.as_strided(x, strides=s, check_bounds=False)
             yield xi, "stride_xxx_0_0"
 
 for src in (SQUARE_CASES,
