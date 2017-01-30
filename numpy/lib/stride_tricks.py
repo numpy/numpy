@@ -35,46 +35,6 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
-def resample(x, shape=None, strides=None, subok=False, writable=True):
-    """
-    Create a view into the array with the given shape and strides
-    with checking shape and strides will lead out of bounds.
-    Equivalent to `as_strided` with check_bounds=True.
-
-    .. versionadded:: 1.13.0
-
-    Parameters
-    ----------
-    x : ndarray
-        Array to create a new.
-    shape : sequence of int, optional
-        The shape of the new array. Defaults to ``x.shape``.
-    strides : sequence of int, optional
-        The strides of the new array. Defaults to ``x.strides``.
-    subok : bool, optional
-        If True, subclasses are preserved.
-    writeable : bool, optional
-        If set to False, the returned array will always be readonly.
-        Otherwise it will be writable if the original array was. It
-        is advisable to set this to False if possible (see Notes).
-
-    Returns
-    -------
-    view : ndarray
-
-    Raises
-    ------
-    ValueError
-        Raised when given shape and strides lead out of bound of returned array
-
-    See also
-    --------
-    as_strided: return same view with given shape and strides
-                without checking out of bound.
-    """
-    return as_strided(x, shape, strides, subok, writable, check_bounds=True)
-
-
 def as_strided(x, shape=None, strides=None, subok=False, writeable=True,
                check_bounds=False):
     """
