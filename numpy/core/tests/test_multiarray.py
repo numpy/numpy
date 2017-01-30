@@ -193,7 +193,8 @@ class TestAttributes(TestCase):
         self.assertRaises(RuntimeError, make_array, 8, 3, 1)
         # Check that the true extent of the array is used.
         # Test relies on as_strided base not exposing a buffer.
-        x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
+        x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0),
+                                            check_bounds=False)
 
         def set_strides(arr, strides):
             arr.strides = strides
@@ -202,7 +203,8 @@ class TestAttributes(TestCase):
 
         # Test for offset calculations:
         x = np.lib.stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
-                                                    shape=(10,), strides=(-1,))
+                                            shape=(10,), strides=(-1,),
+                                            check_bounds=False)
         self.assertRaises(ValueError, set_strides, x[::-1], -1)
         a = x[::-1]
         a.strides = 1

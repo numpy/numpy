@@ -443,10 +443,10 @@ def test_internal_overlap_manual():
     check_internal_overlap(x, False) # 1-dim
     check_internal_overlap(x.reshape([]), False) # 0-dim
 
-    a = as_strided(x, strides=(3, 4), shape=(4, 4))
+    a = as_strided(x, strides=(3, 4), shape=(4, 4), check_bounds=False)
     check_internal_overlap(a, False)
 
-    a = as_strided(x, strides=(3, 4), shape=(5, 4))
+    a = as_strided(x, strides=(3, 4), shape=(5, 4), check_bounds=False)
     check_internal_overlap(a, True)
 
     a = as_strided(x, strides=(0,), shape=(0,))
@@ -458,13 +458,13 @@ def test_internal_overlap_manual():
     a = as_strided(x, strides=(0,), shape=(2,))
     check_internal_overlap(a, True)
 
-    a = as_strided(x, strides=(0, -9993), shape=(87, 22))
+    a = as_strided(x, strides=(0, -9993), shape=(87, 22), check_bounds=False)
     check_internal_overlap(a, True)
 
-    a = as_strided(x, strides=(0, -9993), shape=(1, 22))
+    a = as_strided(x, strides=(0, -9993), shape=(1, 22), check_bounds=False)
     check_internal_overlap(a, False)
 
-    a = as_strided(x, strides=(0, -9993), shape=(0, 22))
+    a = as_strided(x, strides=(0, -9993), shape=(0, 22), check_bounds=False)
     check_internal_overlap(a, False)
 
 
@@ -487,7 +487,7 @@ def test_internal_overlap_fuzz():
         shape = tuple(rng.randint(1, 30, dtype=np.intp)
                       for j in range(ndim))
 
-        a = as_strided(x, strides=strides, shape=shape)
+        a = as_strided(x, strides=strides, shape=shape, check_bounds=False)
         result = check_internal_overlap(a)
 
         if result:
