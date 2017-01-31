@@ -4425,6 +4425,28 @@ class TestOptionalArgs(TestCase):
         assert_raises(ValueError, count, np.ma.array(1), axis=1)
 
 
+class TestMaskedConstant(TestCase):
+    def _do_add_test(self, add):
+        # sanity check
+        self.assertIs(add(np.ma.masked, 1), np.ma.masked)
+
+        # now try with a vector
+        vector = np.array([1, 2, 3])
+        result = add(np.ma.masked, vector)
+
+        # lots of things could go wrong here
+        assert_(result is not np.ma.masked)
+        assert_(not isinstance(result, np.ma.core.MaskedConstant))
+        assert_equal(result.shape, vector.shape)
+        assert_equal(np.ma.getmask(result), np.ones(vector.shape, dtype=bool))
+
+    def test_ufunc(self):
+        self._do_add_test(np.add)
+
+    def test_operator(self):
+        self._do_add_test(lambda a, b: a + b)
+
+
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
