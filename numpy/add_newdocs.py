@@ -5060,7 +5060,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     See Also
     --------
-    bincount, histogram, unique
+    bincount, histogram, unique, searchsorted
 
     Notes
     -----
