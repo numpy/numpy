@@ -1,7 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
-           'stack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'atleast_4d',
+           'atleast_5d', 'atleast_6d', 'atleast_7d', 'atleast_8d',
+           'atleast_9d', 'atleast_nd', 'vstack', 'hstack', 'stack']
 
 from . import numeric as _nx
 from .numeric import asanyarray, newaxis
@@ -26,7 +27,7 @@ def atleast_1d(*arys):
 
     See Also
     --------
-    atleast_2d, atleast_3d
+    atleast_2d, atleast_3d, atleast_9d, atleast_nd
 
     Examples
     --------
@@ -45,18 +46,7 @@ def atleast_1d(*arys):
     [array([1]), array([3, 4])]
 
     """
-    res = []
-    for ary in arys:
-        ary = asanyarray(ary)
-        if len(ary.shape) == 0:
-            result = ary.reshape(1)
-        else:
-            result = ary
-        res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return res
+    return atleast_nd(1, *arys)
 
 def atleast_2d(*arys):
     """
@@ -78,7 +68,7 @@ def atleast_2d(*arys):
 
     See Also
     --------
-    atleast_1d, atleast_3d
+    atleast_1d, atleast_3d, atleast_9d, atleast_nd
 
     Examples
     --------
@@ -95,6 +85,8 @@ def atleast_2d(*arys):
     [array([[1]]), array([[1, 2]]), array([[1, 2]])]
 
     """
+    # we cannot use atleast_nd() here because if len(shape)==1
+    # we append a new axis at the front and not at the back.
     res = []
     for ary in arys:
         ary = asanyarray(ary)
@@ -109,6 +101,7 @@ def atleast_2d(*arys):
         return res[0]
     else:
         return res
+
 
 def atleast_3d(*arys):
     """
@@ -132,7 +125,7 @@ def atleast_3d(*arys):
 
     See Also
     --------
-    atleast_1d, atleast_2d
+    atleast_1d, atleast_2d, atleast_9d, atleast_nd
 
     Examples
     --------
@@ -159,17 +152,127 @@ def atleast_3d(*arys):
     [[[1 2]]] (1, 1, 2)
 
     """
+    return atleast_nd(3, *arys)
+
+def atleast_4d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_9d, atleast_nd
+    """
+    return atleast_nd(4, *arys)
+
+
+def atleast_5d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_9d, atleast_nd
+    """
+    return atleast_nd(5, *arys)
+
+
+def atleast_6d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_9d, atleast_nd
+    """
+    return atleast_nd(6, *arys)
+
+
+def atleast_7d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_9d, atleast_nd
+    """
+    return atleast_nd(7, *arys)
+
+
+def atleast_8d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_9d, atleast_nd
+    """
+    return atleast_nd(8, *arys)
+
+
+def atleast_9d(*arys):
+    """
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_nd
+    """
+    return atleast_nd(9, *arys)
+
+
+def atleast_nd(n, *arys):
+    """
+    View inputs as arrays with at least n dimensions.
+
+    Parameters
+    ----------
+    N: int
+        Minimum number of dimensions of each output array
+    arys1, arys2, ... : array_like
+        One or more array-like sequences.  Non-array inputs are converted to
+        arrays.  Arrays that already have n or more dimensions are
+        preserved.
+
+    Returns
+    -------
+    res1, res2, ... : ndarray
+        An array, or list of arrays, each with ``a.ndim >= n``.  Copies are
+        avoided where possible, and views with n or more dimensions are
+        returned. The new dimensions are tried to add equally to both sides of the
+        shape (with priority on the back).
+        For example if ``n=5``, a 1-D array of shape ``(N,)`` becomes a view
+        of shape ``(1, 1, 1, N, 1, 1)``, a 2-D array of shape ``(M, N)`` becomes a
+        view of shape ``(1, M, N, 1, 1)``, and a 3-d array of shape ``(M, N, P)``
+        becomes a view of shape ``(1, M, N, P, 1)``
+
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d, atleast_4d, atleast_5d, atleast_6d
+    atleast_7d, atleast_8d, atleast_9d
+
+    Examples
+    --------
+    >>> np.atleast_nd(3, 3.0)
+    array([[[ 3.]]])
+
+    >>> x = np.arange(3.0)
+    >>> np.atleast_nd(3, x).shape
+    (1, 3, 1)
+
+    >>> x = np.arange(12.0).reshape(4,3)
+    >>> np.atleast_nd(3, x).shape
+    (4, 3, 1)
+    >>> np.atleast_nd(3, x).base is x.base  # x is a reshape, so not base itself
+    True
+
+    >>> x = np.arange(3*4*5).reshape(3,4,5)
+    >>> np.atleast_nd(5, x).shape
+    (1,3,4,5,1)
+
+    >>> x = np.arange(3*4*5).reshape(3,4,5)
+    >>> np.atleast_nd(6, x).shape
+    (1,3,4,5,1,1)
+
+    """
     res = []
     for ary in arys:
         ary = asanyarray(ary)
         if len(ary.shape) == 0:
-            result = ary.reshape(1, 1, 1)
-        elif len(ary.shape) == 1:
-            result = ary[newaxis,:, newaxis]
-        elif len(ary.shape) == 2:
-            result = ary[:,:, newaxis]
+            result = ary.reshape(1)
+        N = n - len(ary.shape)
+        if N > n:
+           result = ary
         else:
-            result = ary
+           shape = (1,)*(N//2) + ary.shape + (1,)*(N-N//2)
+           result = ary.reshape(shape)
         res.append(result)
     if len(res) == 1:
         return res[0]
