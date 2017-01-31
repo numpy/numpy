@@ -5029,7 +5029,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     `bins` is monotonically decreasing. If values in `x` are beyond the
     bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
     is True, then the right bin is closed so that the index ``i`` is such
-    that ``bins[i-1] < x <= bins[i]`` or bins[i-1] >= x > bins[i]`` if `bins`
+    that ``bins[i-1] < x <= bins[i]`` or ``bins[i-1] >= x > bins[i]`` if `bins`
     is monotonically increasing or decreasing, respectively.
 
     Parameters
@@ -5060,7 +5060,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     See Also
     --------
-    bincount, histogram, unique
+    bincount, histogram, unique, searchsorted
 
     Notes
     -----
