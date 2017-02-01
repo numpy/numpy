@@ -1240,7 +1240,7 @@ def hermevander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = He_i(x) * He_j(y),
+    .. math:: V[..., (deg[1] + 1)*i + j] = He_i(x) * He_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
