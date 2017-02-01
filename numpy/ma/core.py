@@ -2988,8 +2988,11 @@ class MaskedArray(ndarray):
         Wraps the numpy array and sets the mask according to context.
 
         """
-        result = obj.view(type(self))
-        result._update_from(self)
+        if obj is self:  # for in-place operations
+            result = obj
+        else:
+            result = obj.view(type(self))
+            result._update_from(self)
 
         if context is not None:
             result._mask = result._mask.copy()
@@ -3017,7 +3020,7 @@ class MaskedArray(ndarray):
                     except KeyError:
                         # Domain not recognized, use fill_value instead
                         fill_value = self.fill_value
-                    result = result.copy()
+
                     np.copyto(result, fill_value, where=d)
 
                     # Update the mask
@@ -3028,7 +3031,7 @@ class MaskedArray(ndarray):
                         m = (m | d)
 
             # Make sure the mask has the proper size
-            if result.shape == () and m:
+            if result is not self and result.shape == () and m:
                 return masked
             else:
                 result._mask = m
