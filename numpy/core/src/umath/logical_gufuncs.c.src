@@ -141,7 +141,31 @@ typedef struct gufunc_descriptor_struct {
 static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "all_equal",
-        "all equal docstring",
+        "Return True if x1 == x2 for all elements along the last axis, False\n"
+        "otherwise.  Similar to (x1==x2).all(axis=-1), except the last dimension\n"
+        "of x1 and x2 must be equal and greater than 1.  This function short\n"
+        "circuits after the first nonequal element."
+        "\n"
+        "Parameters\n"
+        "----------\n"
+        "x1, x2 : array_like\n"
+        "    Input arrays of the same shape.\n"
+        "\n"
+        "Returns\n"
+        "-------\n"
+        "out : ndarray or bool\n"
+        "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
+        "\n"
+        "See Also\n"
+        "-------\n"
+        "equal, all, any_equal, all_not_equal\n"
+        "\n"
+        "Examples\n"
+        "-------\n"
+        ">>> np.all_equal(np.arange(3), np.arange(3))\n"
+        "True\n"
+        ">>> np.all_equal([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
+        "array([ True, False,  True], dtype=bool)",
         FUNC_ARRAY_NAME(all_eq)
     },
     {
