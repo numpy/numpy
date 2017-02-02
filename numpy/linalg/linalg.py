@@ -24,8 +24,8 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones, matmul,
-    swapaxes, divide)
-
+    swapaxes, divide, count_nonzero
+)
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -1504,11 +1504,11 @@ def cond(x, p=None):
         return norm(x, p, axis=(-2, -1)) * norm(inv(x), p, axis=(-2, -1))
 
 
-def matrix_rank(M, tol=None):
+def matrix_rank(M, tol=None, hermitian=False):
     """
     Return matrix rank of array using SVD method
 
-    Rank of the array is the number of SVD singular values of the array that are
+    Rank of the array is the number of singular values of the array that are
     greater than `tol`.
 
     .. versionchanged:: 1.14
@@ -1526,6 +1526,12 @@ def matrix_rank(M, tol=None):
 
         .. versionchanged:: 1.14
            Broadcasted against the stack of matrices
+    hermitian : bool, optional
+        If True, `M` is assumed to be Hermitian (symmetric if real-valued),
+        enabling a more efficient method for finding singular values.
+        Defaults to False.
+
+        .. versionadded:: 1.14
 
     Notes
     -----
@@ -1589,12 +1595,15 @@ def matrix_rank(M, tol=None):
     M = asarray(M)
     if M.ndim < 2:
         return int(not all(M==0))
-    S = svd(M, compute_uv=False)
+    if hermitian:
+        S = abs(eigvalsh(M))
+    else:
+        S = svd(M, compute_uv=False)
     if tol is None:
         tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
     else:
-        tol = asarray(tol)[...,newaxis]
-    return (S > tol).sum(axis=-1)
+        tol = asarray(tol)[..., newaxis]
+    return count_nonzero(S > tol, axis=-1)
 
 
 # Generalized inverse

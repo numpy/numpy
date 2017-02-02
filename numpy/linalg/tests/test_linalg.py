@@ -1383,6 +1383,19 @@ class TestMatrixRank(object):
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
 
+    def test_symmetric_rank(self):
+        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
+        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
+        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        # rank deficient matrix
+        I = np.eye(4)
+        I[-1, -1] = 0.
+        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        # manually supplied tolerance
+        I[-1, -1] = 1e-8
+        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
+        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
+
 
 def test_reduced_rank():
     # Test matrices with reduced rank
