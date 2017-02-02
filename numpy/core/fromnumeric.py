@@ -1667,10 +1667,12 @@ def clip(a, a_min, a_max, out=None):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like
-        Minimum value.
-    a_max : scalar or array_like
-        Maximum value.  If `a_min` or `a_max` are array_like, then the
+    a_min : scalar or array_like or `None`
+        Minimum value. If `None`, clipping is not performed on lower
+        interval edge.
+    a_max : scalar or array_like or `None`
+        Maximum value. If `None`, clipping is not performed on upper
+        interval edge. If `a_min` or `a_max` are array_like, then the
         three arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
