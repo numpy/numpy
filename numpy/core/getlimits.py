@@ -8,8 +8,9 @@ __all__ = ['finfo', 'iinfo']
 from .machar import MachAr
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array
-from .umath import nextafter, log2, log10, isnan, exp2
+from .numeric import array, inf
+from .umath import log10, exp2
+from . import umath
 
 
 def _frz(a):
@@ -24,20 +25,6 @@ _convert_to_float = {
     ntypes.complex_: ntypes.float_,
     ntypes.clongfloat: ntypes.longfloat
     }
-
-
-def _get_next(ftype, start, above):
-    start = ftype(start)
-    above = ftype(above)
-    with numeric.errstate(all='ignore'):
-        return nextafter(start, above)
-
-
-def _get_eps(ftype, direction=1):
-    start = ftype(1)
-    direction = ftype(direction)
-    above = start + direction
-    return (nextafter(start, above) - start) * direction
 
 
 # Parameters for creating MachAr / MachAr-like objects
@@ -90,8 +77,25 @@ class MachArLike(object):
         self._str_resolution = float_to_str(self.resolution)
 
 
-# Known parameters for float32.
+# Known parameters for float16
 # See docstring of MachAr class for description of parameters.
+_f16 = ntypes.float16
+_float16_ma = MachArLike(_f16,
+                         machep=-10,
+                         negep=-11,
+                         minexp=-14,
+                         maxexp=16,
+                         it=10,
+                         iexp=5,
+                         ibeta=2,
+                         irnd=5,
+                         ngrd=0,
+                         eps=exp2(_f16(-10)),
+                         epsneg=exp2(_f16(-11)),
+                         huge=_f16(65504),
+                         tiny=_f16(2 ** -14))
+
+# Known parameters for float32
 _f32 = ntypes.float32
 _float32_ma = MachArLike(_f32,
                          machep=-23,
@@ -105,11 +109,13 @@ _float32_ma = MachArLike(_f32,
                          ngrd=0,
                          eps=exp2(_f32(-23)),
                          epsneg=exp2(_f32(-24)),
-                         huge=_get_next(ntypes.float32, numeric.inf, 0),
+                         huge=_f32((1 - 2 ** -24) * 2**128),
                          tiny=exp2(_f32(-126)))
 
 # Known parameters for float64
 _f64 = ntypes.float64
+_epsneg_f64 = 2.0 ** -53.0
+_tiny_f64 = 2.0 ** -1022.0
 _float64_ma = MachArLike(_f64,
                          machep=-52,
                          negep=-53,
@@ -121,12 +127,17 @@ _float64_ma = MachArLike(_f64,
                          irnd=5,
                          ngrd=0,
                          eps=2.0 ** -52.0,
-                         epsneg=2.0 ** -53.0,
-                         huge=_get_next(_f64, numeric.inf, 0),
-                         tiny=2.0 ** -1022.0)
+                         epsneg=_epsneg_f64,
+                         huge=(1.0 - _epsneg_f64) / _tiny_f64 * _f64(4),
+                         tiny=_tiny_f64)
 
-# Known parameters for float80
+# Known parameters for float80 (Intel 80-bit extended precision)
 _ld = ntypes.longdouble
+_epsneg_f80 = exp2(_ld(-64))
+_tiny_f80 = exp2(_ld(-16382))
+# Ignore runtime error when this is not f80
+with numeric.errstate(all='ignore'):
+    _huge_f80 = (_ld(1) - _epsneg_f80) / _tiny_f80 * _ld(4)
 _float80_ma = MachArLike(_ld,
                          machep=-63,
                          negep=-64,
@@ -138,14 +149,17 @@ _float80_ma = MachArLike(_ld,
                          irnd=5,
                          ngrd=0,
                          eps=exp2(_ld(-63)),
-                         epsneg=exp2(_ld(-64)),
-                         huge=_get_next(_ld, numeric.inf, 0),
-                         tiny=exp2(_ld(-16382)))
+                         epsneg=_epsneg_f80,
+                         huge=_huge_f80,
+                         tiny=_tiny_f80)
 
 # Guessed / known parameters for double double; see:
 # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
 # These numbers have the same exponent range as float64, but extended number of
 # digits in the significand.
+_huge_dd = (umath.nextafter(_ld(inf), _ld(0))
+            if hasattr(umath, 'nextafter')  # Missing on some platforms?
+            else _ld(inf))
 _float_dd_ma = MachArLike(_ld,
                           machep=-105,
                           negep=-106,
@@ -157,47 +171,73 @@ _float_dd_ma = MachArLike(_ld,
                           irnd=5,
                           ngrd=0,
                           eps=exp2(_ld(-105)),
-                          epsneg=exp2(_ld(-106)),
-                          huge=_get_next(_ld, numeric.inf, 0),
+                          epsneg= exp2(_ld(-106)),
+                          huge=_huge_dd,
                           tiny=exp2(_ld(-1022)))
 
 
-# Key to identify the floating point type is tuple (number of bits in
-# significand (ignoring implicit first digit), maximum exponent, number of
-# bytes).
-_KNOWN_TYPES = {(52, 1024, 8): _float64_ma,
-                (23, 128, 4): _float32_ma,
-                (63, 16384, 16): _float80_ma,  # float80 on 64-bit
-                (63, 16384, 12): _float80_ma,  # float80 on 32-bit
-                (105, 1024, 16): _float_dd_ma,  # double double
-               }
+# Key to identify the floating point type.  Key is result of
+# ftype('-0.1').newbyteorder('<').tobytes()
+# See:
+# https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
+_KNOWN_TYPES = {
+    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf' : _float64_ma,
+    b'\xcd\xcc\xcc\xbd' : _float32_ma,
+    b'f\xae' : _float16_ma,
+    # float80, first 10 bytes containing actual storage
+    b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf' : _float80_ma,
+    # double double; low, high order (e.g. PPC 64)
+    b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf' :
+    _float_dd_ma,
+    # double double; high, low order (e.g. PPC 64 le)
+    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<' :
+    _float_dd_ma,
+}
 
 
-def _get_machar(dtype):
-    """ Get MachAr instance or MachAr-like instance """
-    params = _MACHAR_PARAMS.get(dtype)
+def _get_machar(ftype):
+    """ Get MachAr instance or MachAr-like instance
+
+    Get parameters for floating point type, by first trying signatures of
+    various known floating point types, then, if none match, attempting to
+    identify parameters by analysis.
+
+    Parameters
+    ----------
+    ftype : class
+        Numpy floating point type class (e.g. ``np.float64``)
+
+    Returns
+    -------
+    ma_like : instance of :class:`MachAr` or :class:`MachArLike`
+        Object giving floating point parameters for `ftype`.
+    """
+    params = _MACHAR_PARAMS.get(ftype)
     if params is None:
-        raise ValueError(repr(dtype))
+        raise ValueError(repr(ftype))
     # Detect known / suspected types
-    digits = int(abs(round(log2(_get_eps(dtype)))))
-    huge = _get_next(dtype, numeric.inf, 0)
-    maxexp = None if isnan(huge) else int(round(log2(huge)))
-    bytes = numeric.dtype(dtype).itemsize
-    key = (digits, maxexp, bytes)
+    key = ftype('-0.1').newbyteorder('<').tobytes()
     if key in _KNOWN_TYPES:
         return _KNOWN_TYPES[key]
-    return _discover_machar(dtype)
+    # Could be 80 bit == 10 byte extended precision, where last bytes can be
+    # random garbage.  Try comparing first 10 bytes to pattern.
+    if ftype == ntypes.longdouble:
+        key = key[:10]
+        if key in _KNOWN_TYPES:
+            return _KNOWN_TYPES[key]
+    # Fall back to parameter discovery
+    return _discovered_machar(ftype)
 
 
-def _discover_machar(dtype):
+def _discovered_machar(ftype):
     """ Create MachAr instance with found information on float types
     """
-    params = _MACHAR_PARAMS[dtype]
+    params = _MACHAR_PARAMS[ftype]
     title = 'numpy %s precision floating point number' % params['precname']
-    return MachAr(lambda v: array([v], dtype),
+    return MachAr(lambda v: array([v], ftype),
                   lambda v:_frz(v.astype(params['itype']))[0],
-                  lambda v:array(_frz(v)[0], dtype),
-                  lambda v: params['fmt'] % array(_frz(v)[0], dtype),
+                  lambda v:array(_frz(v)[0], ftype),
+                  lambda v: params['fmt'] % array(_frz(v)[0], ftype),
                   title)
 
 
