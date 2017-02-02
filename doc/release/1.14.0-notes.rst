@@ -241,6 +241,12 @@ Changes
 0d arrays now use the array2string formatters to print their elements, like
 other arrays. The ``style`` argument of ``array2string`` is now non-functional.
 
+``np.linalg.matrix_rank`` is more efficient for hermitian matrices
+------------------------------------------------------------------
+The keyword argument ``hermitian`` was added to toggle between standard
+SVD-based matrix rank calculation and the more efficient eigenvalue-based
+method for symmetric/hermitian matrices.
+
 Integer scalars are now unaffected by ``np.set_string_function``
 ----------------------------------------------------------------
 Previously the str/repr of integer scalars could be controlled by
