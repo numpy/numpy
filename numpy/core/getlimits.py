@@ -5,6 +5,8 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['finfo', 'iinfo']
 
+import warnings
+
 from .machar import MachAr
 from . import numeric
 from . import numerictypes as ntypes
@@ -133,6 +135,8 @@ _float64_ma = MachArLike(_f64,
 
 # Known parameters for float80 (Intel 80-bit extended precision)
 _ld = ntypes.longdouble
+
+# Known parameters for float80 (Intel 80-bit extended precision)
 _epsneg_f80 = exp2(_ld(-64))
 _tiny_f80 = exp2(_ld(-16382))
 # Ignore runtime error when this is not f80
@@ -159,7 +163,7 @@ _float80_ma = MachArLike(_ld,
 # digits in the significand.
 _huge_dd = (umath.nextafter(_ld(inf), _ld(0))
             if hasattr(umath, 'nextafter')  # Missing on some platforms?
-            else _ld(inf))
+            else _float64_ma.huge)
 _float_dd_ma = MachArLike(_ld,
                           machep=-105,
                           negep=-106,
@@ -211,21 +215,30 @@ def _get_machar(ftype):
     -------
     ma_like : instance of :class:`MachAr` or :class:`MachArLike`
         Object giving floating point parameters for `ftype`.
+
+    Warns
+    -----
+    UserWarning
+        If the binary signature of the float type is not in the dictionary of
+        known float types.
     """
     params = _MACHAR_PARAMS.get(ftype)
     if params is None:
         raise ValueError(repr(ftype))
     # Detect known / suspected types
     key = ftype('-0.1').newbyteorder('<').tobytes()
-    if key in _KNOWN_TYPES:
-        return _KNOWN_TYPES[key]
+    ma_like = _KNOWN_TYPES.get(key)
     # Could be 80 bit == 10 byte extended precision, where last bytes can be
     # random garbage.  Try comparing first 10 bytes to pattern.
-    if ftype == ntypes.longdouble:
-        key = key[:10]
-        if key in _KNOWN_TYPES:
-            return _KNOWN_TYPES[key]
+    if ma_like is None and ftype == ntypes.longdouble:
+        ma_like = _KNOWN_TYPES.get(key[:10])
+    if ma_like is not None:
+        return ma_like
     # Fall back to parameter discovery
+    warnings.warn(
+        'Signature {} for {} does not match any known type: '
+        'falling back to type probe function'.format(key, ftype),
+        UserWarning, stacklevel=2)
     return _discovered_machar(ftype)
 
 
