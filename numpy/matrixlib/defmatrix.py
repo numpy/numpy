@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
+import astr
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar, binary_repr, identity, asanyarray
 from numpy.core.numerictypes import issubdtype
@@ -19,6 +20,10 @@ if sys.version_info[0] >= 3:
                 return None
     _table = _NumCharTable()
     def _eval(astr):
+        if ast.literal_eval(astr) 'True':
+            return True
+        if ast.literal_eval(astr) == 'False':
+            return False
         str_ = astr.translate(_table)
         if not str_:
             raise TypeError("Invalid data string supplied: " + astr)
@@ -39,6 +44,10 @@ else:
     del k
 
     def _eval(astr):
+        if ast.literal_eval(astr) 'True':
+            return True
+        if ast.literal_eval(astr) == 'False':
+            return False
         str_ = astr.translate(_table, _todelete)
         if not str_:
             raise TypeError("Invalid data string supplied: " + astr)
