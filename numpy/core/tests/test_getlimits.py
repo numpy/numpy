@@ -7,8 +7,10 @@ import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import (
-    TestCase, run_module_suite, assert_equal
+    TestCase, run_module_suite, assert_equal, assert_
 )
+from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
+                                  _float64_ma, _float128_ma, _float80_ma)
 
 ##################################################
 
@@ -86,6 +88,39 @@ class TestRepr(TestCase):
 def test_instances():
     iinfo(10)
     finfo(3.0)
+
+
+def assert_ma_equal(discovered, ma_like):
+    for key, value in discovered.__dict__.items():
+        assert_equal(value, getattr(ma_like, key))
+
+
+def test_known_types():
+    # Test we are correctly compiling parameters for known types
+    for ftype, ma_like in ((np.float16, _float16_ma),
+                           (np.float32, _float32_ma),
+                           (np.float64, _float64_ma)):
+        assert_ma_equal(_discovered_machar(ftype), ma_like)
+    # Suppress warning for broken discovery of double double on PPC
+    with np.errstate(all='ignore'):
+        ld_ma = _discovered_machar(np.longdouble)
+    bytes = np.dtype(np.longdouble).itemsize
+    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+        # 80-bit extended precision
+        assert_ma_equal(ld_ma, _float80_ma)
+    elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
+        # IEE 754 128-bit
+        assert_ma_equal(ld_ma, _float128_ma)
+
+
+def test_plausible_finfo():
+    # Assert that finfo returns reasonable results for all types
+    for ftype in np.sctypes['float'] + np.sctypes['complex']:
+        info = np.finfo(ftype)
+        assert_(info.nmant > 1)
+        assert_(info.minexp < -1)
+        assert_(info.maxexp > 1)
+
 
 if __name__ == "__main__":
     run_module_suite()

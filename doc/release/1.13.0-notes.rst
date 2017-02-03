@@ -105,6 +105,22 @@ Performance improvements for ``packbits`` and ``unpackbits``
 The functions ``numpy.packbits`` with boolean input and ``numpy.unpackbits`` have
 been optimized to be a significantly faster for contiguous data.
 
+Fix for PPC long double floating point information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In previous versions of numpy, the ``finfo`` function returned invalid
+information about the `double double`_ format of the ``longdouble`` float type
+on Power PC (PPC).  The invalid values resulted from the failure of the numpy
+algorithm to deal with the `variable number of digits in the significand
+<https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm>`_
+that are a feature of PPC long doubles.  This release by-passes the failing
+algorithm by using heuristics to detect the presence of the PPC double double
+format.  A side-effect of using these heuristics is that the ``finfo``
+function is faster than previous releases.
+
+.. _issues: https://github.com/numpy/numpy/issues/2669
+
+.. _double double: https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
+
 Changes
 =======
 
