@@ -6,12 +6,23 @@
 #include "numpy/npy_3kcompat.h"
 
 
+// define the basic real version similar to the macro for complex numbers
+#define REQ(a,b) (a==b)
+#define RNE(a,b) (a!=b)
+#define RLT(a,b) (a<b)
+#define RLE(a,b) (a<=b)
+#define RGT(a,b) (a>b)
+#define RGE(a,b) (a>=b)
+
+/* -------------------------------------------------------------------------- */
+/* define the inner loops  */
+
 #define all_INNER_LOOP(OP, TYPE)                \
     *((npy_bool *)c_n) = NPY_TRUE;              \
     for (i = 0; i < I; i++){                    \
         a = *(TYPE *)a_i;                       \
         b = *(TYPE *)b_i;                       \
-        if (a OP b){                            \
+        if (OP(a,b)){                           \
             a_i += a_I;                         \
             b_i += b_I;                         \
         } else {                                \
@@ -25,7 +36,7 @@
     for (i = 0; i < I; i++){                    \
         a = *(TYPE *)a_i;                       \
         b = *(TYPE *)b_i;                       \
-        if (a OP b){                            \
+        if (OP(a,b)){                           \
             *((npy_bool *)c_n) = NPY_TRUE;      \
             break;                              \
         } else {                                \
@@ -34,12 +45,16 @@
         }                                       \
     }
 
+/* -------------------------------------------------------------------------- */
+/* create the family of functions using a template  */
+
 /**begin repeat
-* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
+* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+* #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
 */
 
 /**begin repeat1
-* #OP = ==,!=,<,<=,>,>=#
+* #OP = EQ,NE,LT,LE,GT,GE#
 * #OPNAME = eq,ne,lt,le,gt,ge#
 */
 
@@ -62,7 +77,7 @@ static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
         a_i = a_n;
         b_i = b_n;
 
-        @ALL_OR_ANY@_INNER_LOOP(@OP@, npy_@TYPE@)
+        @ALL_OR_ANY@_INNER_LOOP(@OP_PREFIX@@OP@, npy_@TYPE@)
 
         a_n += a_N;
         b_n += b_N;
@@ -73,6 +88,7 @@ static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
 /**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
+
 
 /* -------------------------------------------------------------------------- */
 /* create arrays of type specific functions for each gufunc  */
@@ -95,6 +111,9 @@ static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
         float_ ## NAME,                                 \
         double_ ## NAME,                                \
         longdouble_ ## NAME,                            \
+        cfloat_ ## NAME,                                \
+        cdouble_ ## NAME,                               \
+        clongdouble_ ## NAME,                           \
     }
 
 
@@ -114,7 +133,7 @@ GUFUNC_FUNC_ARRAY(any_ge);
 
 /* -------------------------------------------------------------------------- */
 /* Create type arrays for each gufunc, which are all identical*/
-static char types[39] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
+static char types[48] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                          NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
                          NPY_SHORT, NPY_SHORT, NPY_BOOL,
                          NPY_USHORT, NPY_USHORT, NPY_BOOL,
@@ -126,7 +145,10 @@ static char types[39] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                          NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
                          NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
                          NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
-                         NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL};
+                         NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
+                         NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
+                         NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
+                         NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL};
 
 
 /* -------------------------------------------------------------------------- */
@@ -263,7 +285,7 @@ static void InitLogicalGufuncs(PyObject *dictionary) {
         f = PyUFunc_FromFuncAndDataAndSignature(d->funcs,
                                                 array_of_nulls,
                                                 types,
-                                                13,             // number of types
+                                                16,             // number of types
                                                 2,              // number of inputs
                                                 1,              // number of outputs
                                                 PyUFunc_None,
