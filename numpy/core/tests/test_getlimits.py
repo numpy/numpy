@@ -10,7 +10,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_equal, assert_
 )
 from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
-                                  _float64_ma, _float80_ma)
+                                  _float64_ma, _float128_ma, _float80_ma)
 
 ##################################################
 
@@ -106,7 +106,11 @@ def test_known_types():
         ld_ma = _discovered_machar(np.longdouble)
     bytes = np.dtype(np.longdouble).itemsize
     if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+        # 80-bit extended precision
         assert_ma_equal(ld_ma, _float80_ma)
+    elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
+        # IEE 754 128-bit
+        assert_ma_equal(ld_ma, _float128_ma)
 
 
 def test_plausible_finfo():

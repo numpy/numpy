@@ -133,8 +133,27 @@ _float64_ma = MachArLike(_f64,
                          huge=(1.0 - _epsneg_f64) / _tiny_f64 * _f64(4),
                          tiny=_tiny_f64)
 
-# Known parameters for float80 (Intel 80-bit extended precision)
+# Known parameters for IEEE 754 128-bit binary float
 _ld = ntypes.longdouble
+_epsneg_f128 = exp2(_ld(-113))
+_tiny_f128 = exp2(_ld(-16382))
+# Ignore runtime error when this is not f128
+with numeric.errstate(all='ignore'):
+    _huge_f128 = (_ld(1) - _epsneg_f128) / _tiny_f128 * _ld(4)
+_float128_ma = MachArLike(_ld,
+                         machep=-112,
+                         negep=-113,
+                         minexp=-16382,
+                         maxexp=16384,
+                         it=112,
+                         iexp=15,
+                         ibeta=2,
+                         irnd=5,
+                         ngrd=0,
+                         eps=exp2(_ld(-112)),
+                         epsneg=_epsneg_f128,
+                         huge=_huge_f128,
+                         tiny=_tiny_f128)
 
 # Known parameters for float80 (Intel 80-bit extended precision)
 _epsneg_f80 = exp2(_ld(-64))
@@ -196,6 +215,9 @@ _KNOWN_TYPES = {
     # double double; high, low order (e.g. PPC 64 le)
     b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<' :
     _float_dd_ma,
+    # IEEE 754 128-bit binary float
+    b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf' :
+    _float128_ma,
 }
 
 
