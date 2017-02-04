@@ -1895,6 +1895,10 @@ class TestComplexFunctions(object):
         info = np.finfo(dtype)
         real_dtype = dtype(0.).real.dtype
         eps = info.eps
+        # It's not guaranteed that the system-provided arc functions are
+        # accurate down to a few epsilons - e.g. on Linux 64-bit, PPC). So,
+        # allow option for more leeway on long complex tests.
+        effective_eps = max(eps, 2.5e-18)
 
         def check(x, rtol):
             x = x.astype(real_dtype)
@@ -1925,13 +1929,7 @@ class TestComplexFunctions(object):
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        if dtype is np.longcomplex:
-            # It's not guaranteed that the system-provided arc functions
-            # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
-            # So, give more leeway for long complex tests here:
-            check(x_series, 50*eps)
-        else:
-            check(x_series, 2.1*eps)
+        check(x_series, 2.1 * effective_eps)
         check(x_basic, 2*eps/1e-3)
 
         # Check a few points
