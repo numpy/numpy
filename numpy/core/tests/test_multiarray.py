@@ -8,6 +8,7 @@ import warnings
 import operator
 import io
 import itertools
+import functools
 import ctypes
 import os
 import gc
@@ -44,6 +45,32 @@ if sys.version_info[:2] > (3, 2):
     EMPTY = ()
 else:
     EMPTY = None
+
+
+def _aligned_zeros(shape, dtype=float, order="C", align=None):
+    """Allocate a new ndarray with aligned memory."""
+    dtype = np.dtype(dtype)
+    if dtype == np.dtype(object):
+        # Can't do this, fall back to standard allocation (which
+        # should always be sufficiently aligned)
+        if align is not None:
+            raise ValueError("object array alignment not supported")
+        return np.zeros(shape, dtype=dtype, order=order)
+    if align is None:
+        align = dtype.alignment
+    if not hasattr(shape, '__len__'):
+        shape = (shape,)
+    size = functools.reduce(operator.mul, shape) * dtype.itemsize
+    buf = np.empty(size + align + 1, np.uint8)
+    offset = buf.__array_interface__['data'][0] % align
+    if offset != 0:
+        offset = align - offset
+    # Note: slices producing 0-size arrays do not necessarily change
+    # data pointer --- so we use and allocate size+1
+    buf = buf[offset:offset+size+1][:-1]
+    data = np.ndarray(shape, dtype, buf, order=order)
+    data.fill(0)
+    return data
 
 
 class TestFlags(TestCase):
@@ -2335,7 +2362,11 @@ class TestMethods(TestCase):
                   if code not in 'USVM']
         for dtype in dtypes:
             a = np.random.rand(3, 3).astype(dtype)
-            b = np.random.rand(3, 3).astype(dtype)
+
+            # Valid dot() output arrays must be aligned
+            b = _aligned_zeros((3, 3), dtype=dtype)
+            b[...] = np.random.rand(3, 3)
+
             y = np.dot(a, b)
             x = np.dot(a, b, out=b)
             assert_equal(x, y, err_msg=repr(dtype))
