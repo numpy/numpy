@@ -2092,8 +2092,8 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
-            "Long double support buggy on win32 and PPC, ticket 1664.")
+@dec.knownfailureif(sys.platform == 'win32',
+            "Long double support buggy on win32, ticket 1664.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
@@ -2115,8 +2115,8 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
-            "Long double support buggy on win32 and PPC, ticket 1664.")
+@dec.knownfailureif(sys.platform == 'win32',
+            "Long double support buggy on win32, ticket 1664.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 
