@@ -82,6 +82,7 @@ def assert_(val, msg=''):
     For documentation on usage, refer to the Python documentation.
 
     """
+    __tracebackhide__ = True  # Hide traceback for py.test
     if not val:
         try:
             smsg = msg()
@@ -846,6 +847,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     ...                            rtol=1e-10, atol=0)
 
     """
+    __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
                          verbose=verbose, header='Arrays are not equal')
 
