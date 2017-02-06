@@ -3205,7 +3205,6 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
 
         Py_INCREF(a);
         if (PyArray_SetUpdateIfCopyBase(a_copy, a) < 0) {
-            Py_DECREF(a);
             goto fail;
         }
 
