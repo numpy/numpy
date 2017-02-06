@@ -1484,6 +1484,7 @@ iterator_loop(PyUFuncObject *ufunc,
             /* Call the __array_prepare__ functions for the new array */
             if (prepare_ufunc_output(ufunc, &op[nin+i],
                                      arr_prep[i], arr_prep_args, i) < 0) {
+                NpyIter_Deallocate(iter);
                 return -1;
             }
 

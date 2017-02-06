@@ -189,6 +189,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
         Py_INCREF(ret);
         if (PyArray_SetUpdateIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
+            Py_DECREF(ret_copy);
             return NULL;
         }
 
