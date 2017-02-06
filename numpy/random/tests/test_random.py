@@ -419,6 +419,46 @@ class TestRandomDist(TestCase):
             desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
             assert_array_equal(actual, desired)
 
+    def test_permutation(self):
+        # Test that permutation works on a list of tuples, and integers.
+
+        # list of (1, np.array([1, 1]), (2, np.array([2, 2])), and so on.
+        N = 5
+        A = np.arange(N)[:,None]
+        A = np.concatenate((A, A), axis=1)
+        B = range(N)
+        c = list(zip(B, A))
+        assert_(sorted(c) == sorted(np.random.permutation(c)))
+
+        d = np.arange(N)
+        assert_array_equal(d, sorted(np.random.permutation(N)))
+
+        # only integer arguments are accepted.
+        assert_raises(TypeError, np.random.permutation, 3.0)
+
+        # same test as shuffle.
+        for conv in [lambda x: np.array([]),
+                     lambda x: x,
+                     lambda x: np.asarray(x).astype(np.int8),
+                     lambda x: np.asarray(x).astype(np.float32),
+                     lambda x: np.asarray(x).astype(np.complex64),
+                     lambda x: np.asarray(x).astype(object),
+                     lambda x: [(i, i) for i in x],
+                     lambda x: np.asarray([[i, i] for i in x]),
+                     lambda x: np.vstack([x, x]).T,
+                     # gh-4270
+                     lambda x: np.asarray([(i, i) for i in x],
+                                          [("a", object, 1),
+                                           ("b", np.int32, 1)])]:
+            np.random.seed(self.seed)
+            alist = conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
+            blist = np.random.permutation(alist)
+            # check that array is not mutated.
+            assert_array_equal(alist, conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]))
+            actual = blist
+            desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
+            assert_array_equal(actual, desired)
+
     def test_shuffle_masked(self):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5, 4)) % 3 - 1, -1)
