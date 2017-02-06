@@ -729,10 +729,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             s = mid.sum(out=out)
             if not odd:
                 s = np.true_divide(s, 2., casting='safe', out=out)
-                # masked ufuncs do not fullfill `returned is out` (gh-8416)
-                # fix this to return the same in the nd path
-                if out is not None:
-                    s = out
             s = np.lib.utils._median_nancheck(asorted, s, axis, out)
         else:
             s = mid.mean(out=out)
