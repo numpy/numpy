@@ -5,8 +5,6 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "logical_gufuncs.h"
-//#include "npy_pycompat.h"
-//#include "npy_config.h"
 
 
 // define the basic real version similar to the macro for complex numbers
@@ -136,22 +134,22 @@ GUFUNC_FUNC_ARRAY(any_ge);
 
 /* -------------------------------------------------------------------------- */
 /* Create type arrays for each gufunc, which are all identical*/
-static char types[48] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
-                         NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
-                         NPY_SHORT, NPY_SHORT, NPY_BOOL,
-                         NPY_USHORT, NPY_USHORT, NPY_BOOL,
-                         NPY_INT, NPY_INT, NPY_BOOL,
-                         NPY_UINT, NPY_UINT, NPY_BOOL,
-                         NPY_LONG, NPY_LONG, NPY_BOOL,
-                         NPY_ULONG, NPY_ULONG, NPY_BOOL,
-                         NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
-                         NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
-                         NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
-                         NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
-                         NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
-                         NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
-                         NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
-                         NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL};
+static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
+                       NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
+                       NPY_SHORT, NPY_SHORT, NPY_BOOL,
+                       NPY_USHORT, NPY_USHORT, NPY_BOOL,
+                       NPY_INT, NPY_INT, NPY_BOOL,
+                       NPY_UINT, NPY_UINT, NPY_BOOL,
+                       NPY_LONG, NPY_LONG, NPY_BOOL,
+                       NPY_ULONG, NPY_ULONG, NPY_BOOL,
+                       NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
+                       NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
+                       NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
+                       NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
+                       NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
+                       NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
+                       NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
+                       NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL};
 
 
 /* -------------------------------------------------------------------------- */
