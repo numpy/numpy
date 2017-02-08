@@ -4102,6 +4102,24 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_BOUNDS, 0);
 }
 
+static PyObject *
+normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"axis", "ndim", NULL};
+    int axis;
+    int ndim;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii", kwlist,
+                                     &axis, &ndim)) {
+        return NULL;
+    }
+
+    if(check_and_adjust_axis(&axis, ndim) < 0) {
+        return NULL;
+    }
+
+    return PyInt_FromLong(axis);
+}
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
@@ -4276,6 +4294,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"packbits", (PyCFunction)io_pack,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unpackbits", (PyCFunction)io_unpack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };

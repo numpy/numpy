@@ -6728,6 +6728,51 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     53
     """)
 
+add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
+    """
+    normalize_axis_index(axis, ndim)
+
+    Normalizes an axis index, `axis`, such that is a valid positive index into
+    the shape of array with `ndim` dimensions. Raises an AxisError with an
+    appropriate message if this is not possible.
+
+    Used internally by all axis-checking logic.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    axis : int
+        The un-normalized index of the axis. Can be negative
+    ndim : int
+        The number of dimensions of the array that `axis` should be normalized
+        against
+
+    Returns
+    -------
+    normalized_axis : int
+        The normalized axis index, such that `0 <= normalized_axis < ndim`
+
+    Raises
+    ------
+    AxisError
+        If the axis index is invalid, when `-ndim <= axis < ndim` is false.
+
+    Examples
+    --------
+    >>> normalize_axis_index(0, ndim=3)
+    0
+    >>> normalize_axis_index(1, ndim=3)
+    1
+    >>> normalize_axis_index(-1, ndim=3)
+    2
+
+    >>> normalize_axis_index(3, ndim=3)
+    Traceback (most recent call last):
+    ...
+    AxisError: axis 3 is out of bounds for array of dimension 3
+    """)
+
 ##############################################################################
 #
 # nd_grid instances
