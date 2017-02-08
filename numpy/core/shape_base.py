@@ -5,6 +5,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
 
 from . import numeric as _nx
 from .numeric import asanyarray, newaxis
+from .multiarray import normalize_axis_index
 
 def atleast_1d(*arys):
     """
@@ -347,11 +348,7 @@ def stack(arrays, axis=0):
         raise ValueError('all input arrays must have the same shape')
 
     result_ndim = arrays[0].ndim + 1
-    if not -result_ndim <= axis < result_ndim:
-        msg = 'axis {0} out of bounds [-{1}, {1})'.format(axis, result_ndim)
-        raise IndexError(msg)
-    if axis < 0:
-        axis += result_ndim
+    axis = normalize_axis_index(axis, result_ndim)
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]

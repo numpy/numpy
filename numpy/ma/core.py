@@ -41,6 +41,7 @@ from numpy.compat import (
     getargspec, formatargspec, long, basestring, unicode, bytes, sixu
     )
 from numpy import expand_dims as n_expand_dims
+from numpy.core.multiarray import normalize_axis_index
 
 
 if sys.version_info[0] >= 3:
@@ -3902,7 +3903,9 @@ class MaskedArray(ndarray):
                         axis = None
                     try:
                         mask = mask.view((bool_, len(self.dtype))).all(axis)
-                    except ValueError:
+                    except (ValueError, IndexError):
+                        # TODO: what error are we trying to catch here?
+                        #       invalid axis, or invalid view?
                         mask = np.all([[f[n].all() for n in mask.dtype.names]
                                        for f in mask], axis=axis)
                 check._mask = mask
@@ -3938,7 +3941,9 @@ class MaskedArray(ndarray):
                         axis = None
                     try:
                         mask = mask.view((bool_, len(self.dtype))).all(axis)
-                    except ValueError:
+                    except (ValueError, IndexError):
+                        # TODO: what error are we trying to catch here?
+                        #       invalid axis, or invalid view?
                         mask = np.all([[f[n].all() for n in mask.dtype.names]
                                        for f in mask], axis=axis)
                 check._mask = mask
@@ -4340,7 +4345,7 @@ class MaskedArray(ndarray):
 
             if self.shape is ():
                 if axis not in (None, 0):
-                    raise ValueError("'axis' entry is out of bounds")
+                    raise IndexError("'axis' entry is out of bounds")
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
@@ -4348,11 +4353,9 @@ class MaskedArray(ndarray):
                 return self.size
 
             axes = axis if isinstance(axis, tuple) else (axis,)
-            axes = tuple(a if a >= 0 else self.ndim + a for a in axes)
+            axes = tuple(normalize_axis_index(a, self.ndim) for a in axes)
             if len(axes) != len(set(axes)):
                 raise ValueError("duplicate value in 'axis'")
-            if builtins.any(a < 0 or a >= self.ndim for a in axes):
-                raise ValueError("'axis' entry is out of bounds")
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
