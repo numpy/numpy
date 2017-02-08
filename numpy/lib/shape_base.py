@@ -96,11 +96,10 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # handle negative axes
     arr = asanyarray(arr)
     nd = arr.ndim
+    if not (-nd <= axis < nd):
+        raise IndexError('axis {0} out of bounds [-{1}, {1})'.format(axis, nd))
     if axis < 0:
         axis += nd
-    if axis >= nd:
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
 
     # arr, with the iteration axis at the end
     in_dims = list(range(nd))
