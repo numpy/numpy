@@ -134,6 +134,28 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
     return 0;
 }
 
+/*
+ * Returns -1 and sets an exception if *axis is an invalid axis for
+ * an array of dimension ndim, otherwise adjusts it in place to be
+ * 0 <= *axis < ndim, and returns 0.
+ */
+static NPY_INLINE int
+check_and_adjust_axis(int *axis, int ndim)
+{
+    /* Check that index is valid, taking into account negative indices */
+    if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
+        PyErr_Format(PyExc_IndexError,
+                     "axis %d is out of bounds for array of dimension %d",
+                     *axis, ndim);
+        return -1;
+    }
+    /* adjust negative indices */
+    if (*axis < 0) {
+        *axis += ndim;
+    }
+    return 0;
+}
+
 
 /*
  * return true if pointer is aligned to 'alignment'

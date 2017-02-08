@@ -705,12 +705,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
         }
         for (i = 0; i < n; i++) {
             axis = axes[i];
-            if (axis < 0) {
-                axis = PyArray_NDIM(ap) + axis;
-            }
-            if (axis < 0 || axis >= PyArray_NDIM(ap)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid axis for this array");
+            if (check_and_adjust_axis(&axis, PyArray_NDIM(ap)) < 0) {
                 return NULL;
             }
             if (reverse_permutation[axis] != -1) {

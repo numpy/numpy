@@ -4036,12 +4036,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                 Py_DECREF(mp);
                 return NULL;
             }
-            if (axis < 0) {
-                axis += ndim;
-            }
-            if (axis < 0 || axis >= ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "'axis' entry is out of bounds");
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -4058,18 +4053,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             Py_DECREF(mp);
             return NULL;
         }
-        if (axis < 0) {
-            axis += ndim;
-        }
         /* Special case letting axis={0 or -1} slip through for scalars */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
             axis = 0;
         }
-        else if (axis < 0 || axis >= ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "'axis' entry is out of bounds");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
+        else if (check_and_adjust_axis(&axis, ndim) < 0) {
             return NULL;
         }
         axes[0] = (int)axis;
