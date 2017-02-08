@@ -137,6 +137,14 @@ function is faster than previous releases.
 
 .. _double double: https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
 
+Support for returning arrays of arbitrary dimensionality in `apply_along_axis`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, only scalars or 1D arrays could be returned by the function passed
+to `apply_along_axis`. Now, it can return an array of any dimensionality
+(including 0D), and the shape of this array replaces the axis of the array
+being iterated over.
+
+
 Changes
 =======
 
