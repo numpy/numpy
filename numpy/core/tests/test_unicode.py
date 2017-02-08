@@ -15,7 +15,17 @@ if sys.version_info[:2] >= (3, 3):
     def buffer_length(arr):
         if isinstance(arr, unicode):
             arr = str(arr)
-            return (sys.getsizeof(arr+"a") - sys.getsizeof(arr)) * len(arr)
+            if not arr:
+                charmax = 0
+            else:
+                charmax = max([ord(c) for c in arr])
+            if charmax < 256:
+                size = 1
+            elif charmax < 65536:
+                size = 2
+            else:
+                size = 4
+            return size * len(arr)
         v = memoryview(arr)
         if v.shape is None:
             return len(v) * v.itemsize
