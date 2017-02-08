@@ -25,6 +25,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_
     )
+from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -2225,13 +2226,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
-        if row_axis < 0:
-            row_axis += nd
-        if col_axis < 0:
-            col_axis += nd
-        if not (0 <= row_axis < nd and 0 <= col_axis < nd):
-            raise ValueError('Invalid axis %r for an array with shape %r' %
-                             (axis, x.shape))
+        row_axis = normalize_axis_index(row_axis, nd)
+        col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:

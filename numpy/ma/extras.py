@@ -36,6 +36,7 @@ from .core import (
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
+from numpy.core.multiarray import normalize_axis_index
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -380,11 +381,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
+    axis = normalize_axis_index(axis, nd)
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -717,8 +714,8 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if axis is None:
         axis = 0
-    elif axis < 0:
-        axis += asorted.ndim
+    else:
+        axis = normalize_axis_index(axis, asorted.ndim)
 
     if asorted.ndim == 1:
         counts = count(asorted)
