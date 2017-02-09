@@ -248,7 +248,7 @@ Indexing
 Array scalars can be indexed like 0-dimensional arrays: if *x* is an
 array scalar,
 
-- ``x[()]`` returns a 0-dimensional :class:`ndarray`
+- ``x[...]`` returns a 0-dimensional :class:`ndarray`
 - ``x['field-name']`` returns the array scalar in the field *field-name*.
   (*x* can have fields, for example, when it corresponds to a structured data type.)
 
