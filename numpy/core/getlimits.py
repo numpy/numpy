@@ -15,10 +15,19 @@ from .umath import log10, exp2
 from . import umath
 
 
-def _frz(a):
+def _fr0(a):
     """fix rank-0 --> rank-1"""
     if a.ndim == 0:
+        a = a.copy()
         a.shape = (1,)
+    return a
+
+
+def _fr1(a):
+    """fix rank > 0 --> rank-0"""
+    if a.size == 1:
+        a = a.copy()
+        a.shape = ()
     return a
 
 
@@ -30,48 +39,46 @@ _convert_to_float = {
 
 
 # Parameters for creating MachAr / MachAr-like objects
+_title_fmt = 'numpy {} precision floating point number'
 _MACHAR_PARAMS = {
     ntypes.double: dict(
         itype = ntypes.int64,
         fmt = '%24.16e',
-        precname = 'double'),
+        title = _title_fmt.format('double')),
     ntypes.single: dict(
         itype = ntypes.int32,
         fmt = '%15.7e',
-        precname = 'single'),
+        title = _title_fmt.format('single')),
     ntypes.longdouble: dict(
         itype = ntypes.longlong,
         fmt = '%s',
-        precname = 'long double'),
+        title = _title_fmt.format('long double')),
     ntypes.half: dict(
         itype = ntypes.int16,
         fmt = '%12.5e',
-        precname = 'half')}
+        title = _title_fmt.format('half'))}
 
 
 class MachArLike(object):
     """ Object to simulate MachAr instance """
-
-    # These attributes should be of characteristic dtype
-    _native_attrs = ('tiny', 'huge', 'epsneg', 'eps')
 
     def __init__(self,
                  ftype,
                  **kwargs):
         params = _MACHAR_PARAMS[ftype]
         float_conv = lambda v: array([v], ftype)
-        float_to_str = lambda v: params['fmt'] % array(_frz(v)[0], ftype)
-        self.title = 'numpy {} precision floating point number'.format(
-            params['precname'])
-        for key, value in kwargs.items():
-            if key in self._native_attrs:
-                value = float_conv(value)
-            self.__dict__[key] = value
-        self.epsilon = self.eps
-        self.xmax = self.huge
-        self.xmin = self.tiny
+        float_to_float = lambda v : _fr1(float_conv(v))
+        float_to_str = lambda v: (params['fmt'] % array(_fr0(v)[0], ftype))
+        self.title = params['title']
+        # Parameter types same as for discovered MachAr object.
+        self.epsilon = self.eps = float_to_float(kwargs.pop('eps'))
+        self.epsneg = float_to_float(kwargs.pop('epsneg'))
+        self.xmax = self.huge = float_to_float(kwargs.pop('huge'))
+        self.xmin = self.tiny = float_to_float(kwargs.pop('tiny'))
+        self.ibeta = params['itype'](kwargs.pop('ibeta'))
+        self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
-        self.resolution = float_conv(10) ** (-self.precision)
+        self.resolution = float_to_float(float_conv(10) ** (-self.precision))
         self._str_eps = float_to_str(self.eps)
         self._str_epsneg = float_to_str(self.epsneg)
         self._str_xmin = float_to_str(self.xmin)
@@ -268,12 +275,11 @@ def _discovered_machar(ftype):
     """ Create MachAr instance with found information on float types
     """
     params = _MACHAR_PARAMS[ftype]
-    title = 'numpy %s precision floating point number' % params['precname']
     return MachAr(lambda v: array([v], ftype),
-                  lambda v:_frz(v.astype(params['itype']))[0],
-                  lambda v:array(_frz(v)[0], ftype),
-                  lambda v: params['fmt'] % array(_frz(v)[0], ftype),
-                  title)
+                  lambda v:_fr0(v.astype(params['itype']))[0],
+                  lambda v:array(_fr0(v)[0], ftype),
+                  lambda v: params['fmt'] % array(_fr0(v)[0], ftype),
+                  params['title'])
 
 
 class finfo(object):
