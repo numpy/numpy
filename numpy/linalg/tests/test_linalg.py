@@ -59,35 +59,43 @@ def get_rtol(dtype):
         return 1e-11
 
 
-class LinalgCase(object):
+# used to categorize tests
+all_tags = {
+  'square', 'nonsquare', 'hermitian',  # mutually exclusive
+  'generalized', 'size-0', 'strided' # optional additions
+}
 
-    def __init__(self, name, a, b, flags=frozenset()):
+class LinalgCase(object):
+    def __init__(self, name, a, b, tags=set()):
+        """
+        A bundle of arguments to be passed to a test case, with an identifying
+        name, the operands a and b, and a set of tags to filter the tests
+        """
         assert_(isinstance(name, str))
         self.name = name
         self.a = a
         self.b = b
-        self.flags = flags
+        self.tags = frozenset(tags)  # prevent shared tags
 
     def check(self, do):
-        do(self.a, self.b, flags=self.flags)
+        """
+        Run the function `do` on this test case, expanding arguments
+        """
+        do(self.a, self.b, tags=self.tags)
 
     def __repr__(self):
         return "<LinalgCase: %s>" % (self.name,)
 
-def apply_flags(flags, cases):
+def apply_tag(tag, cases):
+    """
+    Add the given tag (a string) to each of the cases (a list of LinalgCase
+    objects)
+    """
+    assert tag in all_tags, "Invalid tag"
     for case in cases:
-        case.flags = case.flags | flags
+        case.tags = case.tags | {tag}
     return cases
 
-class CaseFlags:
-    """ A simple flags enum. Could be replaced with ints for speed"""
-    square = frozenset(['square'])
-    generalized = frozenset(['generalized'])
-    empty = frozenset(['empty'])
-    hermitian = frozenset(['hermitian'])  # not a subset of square, because these have only one argument
-
-    none = frozenset()
-    all = square | generalized | empty | hermitian
 
 #
 # Base test cases
@@ -98,7 +106,7 @@ np.random.seed(1234)
 CASES = []
 
 # square test cases
-CASES += apply_flags(CaseFlags.square, [
+CASES += apply_tag('square', [
     LinalgCase("single",
                array([[1., 2.], [3., 4.]], dtype=single),
                array([2., 1.], dtype=single)),
@@ -120,7 +128,7 @@ CASES += apply_flags(CaseFlags.square, [
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0, 0), dtype=double),
-               flags=CaseFlags.empty),
+               tags={'size-0'}),
     LinalgCase("8x8",
                np.random.rand(8, 8),
                np.random.rand(8)),
@@ -139,7 +147,7 @@ CASES += apply_flags(CaseFlags.square, [
 ])
 
 # non-square test-cases
-CASES += apply_flags(CaseFlags.none, [
+CASES += apply_tag('nonsquare', [
     LinalgCase("single_nsq_1",
                array([[1., 2., 3.], [3., 4., 6.]], dtype=single),
                array([2., 1.], dtype=single)),
@@ -188,15 +196,15 @@ CASES += apply_flags(CaseFlags.none, [
     LinalgCase("0x4",
                np.random.rand(0, 4),
                np.random.rand(0),
-               flags=CaseFlags.empty),
+               tags={'size-0'}),
     LinalgCase("4x0",
                np.random.rand(4, 0),
                np.random.rand(4),
-               flags=CaseFlags.empty),
+               tags={'size-0'}),
 ])
 
 # hermitian test-cases
-CASES += apply_flags(CaseFlags.hermitian, [
+CASES += apply_tag('hermitian', [
     LinalgCase("hsingle",
                array([[1., 2.], [2., 1.]], dtype=single),
                None),
@@ -212,7 +220,7 @@ CASES += apply_flags(CaseFlags.hermitian, [
     LinalgCase("hempty",
                np.empty((0, 0), dtype=double),
                None,
-               flags=CaseFlags.empty),
+               tags={'size-0'}),
     LinalgCase("hnonarray",
                [[1, 2], [2, 1]],
                None),
@@ -244,7 +252,7 @@ def _make_generalized_cases():
         else:
             b = np.array([case.b, 7 * case.b, 6 * case.b])
         new_case = LinalgCase(case.name + "_tile3", a, b,
-                              flags=case.flags | {'generalized'})
+                              tags=case.tags | {'generalized'})
         new_cases.append(new_case)
 
         a = np.array([case.a] * 2 * 3).reshape((3, 2) + case.a.shape)
@@ -253,7 +261,7 @@ def _make_generalized_cases():
         else:
             b = np.array([case.b] * 2 * 3).reshape((3, 2) + case.b.shape)
         new_case = LinalgCase(case.name + "_tile213", a, b,
-                              flags=case.flags | {'generalized'})
+                              tags=case.tags | {'generalized'})
         new_cases.append(new_case)
 
     return new_cases
@@ -314,10 +322,10 @@ def _stride_comb_iter(x):
 def _make_strided_cases():
     new_cases = []
     for case in CASES:
-        for a, a_tag in _stride_comb_iter(case.a):
-            for b, b_tag in _stride_comb_iter(case.b):
-                new_case = LinalgCase(case.name + "_" + a_tag + "_" + b_tag, a, b,
-                                      flags=case.flags | {'strided'})
+        for a, a_label in _stride_comb_iter(case.a):
+            for b, b_label in _stride_comb_iter(case.b):
+                new_case = LinalgCase(case.name + "_" + a_label + "_" + b_label, a, b,
+                                      tags=case.tags | {'strided'})
                 new_cases.append(new_case)
     return new_cases
 
@@ -328,16 +336,16 @@ CASES += _make_strided_cases()
 # Test different routines against the above cases
 #
 
-def _check_cases(func, require=CaseFlags.none, exclude=CaseFlags.none):
+def _check_cases(func, require=set(), exclude=set()):
     """
-    Run func on each of the cases with all of the flags in require, and none
-    of the flags in exclude
+    Run func on each of the cases with all of the tags in require, and none
+    of the tags in exclude
     """
     for case in CASES:
         # filter by require and exclude
-        if case.flags & require != require:
+        if case.tags & require != require:
             continue
-        if case.flags & exclude:
+        if case.tags & exclude:
             continue
 
         try:
@@ -351,69 +359,49 @@ def _check_cases(func, require=CaseFlags.none, exclude=CaseFlags.none):
 class LinalgSquareTestCase(object):
 
     def test_sq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.square,
-            exclude=CaseFlags.generalized | CaseFlags.empty)
+        _check_cases(self.do, require={'square'}, exclude={'generalized', 'size-0'})
 
     def test_empty_sq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.square | CaseFlags.empty,
-            exclude=CaseFlags.generalized)
+        _check_cases(self.do, require={'square', 'size-0'}, exclude={'generalized'})
 
 
 class LinalgNonsquareTestCase(object):
 
     def test_nonsq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.none,
-            exclude=CaseFlags.generalized | CaseFlags.square | CaseFlags.hermitian | CaseFlags.empty)
+        _check_cases(self.do, require={'nonsquare'}, exclude={'generalized', 'size-0'})
 
     def test_empty_nonsq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.empty,
-            exclude=CaseFlags.generalized | CaseFlags.square | CaseFlags.hermitian)
+        _check_cases(self.do, require={'nonsquare', 'size-0'}, exclude={'generalized'})
 
 class HermitianTestCase(object):
 
     def test_herm_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.hermitian,
-            exclude=CaseFlags.generalized | CaseFlags.empty)
+        _check_cases(self.do, require={'hermitian'}, exclude={'generalized', 'size-0'})
 
     def test_empty_herm_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.hermitian | CaseFlags.empty,
-            exclude=CaseFlags.generalized)
+        _check_cases(self.do, require={'hermitian', 'size-0'}, exclude={'generalized'})
 
 
 class LinalgGeneralizedSquareTestCase(object):
 
     @dec.slow
     def test_generalized_sq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.generalized | CaseFlags.square,
-            exclude=CaseFlags.hermitian | CaseFlags.empty)
+        _check_cases(self.do, require={'generalized', 'square'}, exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_sq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.generalized | CaseFlags.square | CaseFlags.empty,
-            exclude=CaseFlags.hermitian)
+        _check_cases(self.do, require={'generalized', 'square', 'size-0'})
 
 
 class LinalgGeneralizedNonsquareTestCase(object):
 
     @dec.slow
     def test_generalized_nonsq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.generalized,
-            exclude=CaseFlags.square | CaseFlags.empty)
+        _check_cases(self.do, require={'generalized', 'nonsquare'}, exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_nonsq_cases(self):
-        _check_cases(self.do,
-            require=CaseFlags.generalized | CaseFlags.empty,
-            exclude=CaseFlags.square)
+        _check_cases(self.do, require={'generalized', 'nonsquare', 'size-0'})
 
 
 class HermitianGeneralizedTestCase(object):
@@ -421,14 +409,14 @@ class HermitianGeneralizedTestCase(object):
     @dec.slow
     def test_generalized_herm_cases(self):
         _check_cases(self.do,
-            require=CaseFlags.generalized | CaseFlags.hermitian,
-            exclude=CaseFlags.empty)
+            require={'generalized', 'hermitian'},
+            exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_herm_cases(self):
         _check_cases(self.do,
-            require=CaseFlags.generalized | CaseFlags.hermitian | CaseFlags.empty,
-            exclude=CaseFlags.none)
+            require={'generalized', 'hermitian', 'size-0'},
+            exclude={'none'})
 
 
 def dot_generalized(a, b):
@@ -463,7 +451,7 @@ def identity_like_generalized(a):
 
 class TestSolve(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
+    def do(self, a, b, tags):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
@@ -529,7 +517,7 @@ class TestSolve(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
+    def do(self, a, b, tags):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
                             identity_like_generalized(a))
@@ -560,8 +548,8 @@ class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.eigvals, a)
             return
         ev = linalg.eigvals(a)
@@ -580,8 +568,8 @@ class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.eig, a)
             return
 
@@ -609,8 +597,8 @@ class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.svd, a, 0)
             return
 
@@ -637,9 +625,9 @@ class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestCondSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
+    def do(self, a, b, tags):
         c = asarray(a)  # a might be a matrix
-        if flags & CaseFlags.empty:
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
             return
         s = linalg.svd(c, compute_uv=False)
@@ -654,9 +642,9 @@ class TestCondSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestCond2(LinalgSquareTestCase):
 
-    def do(self, a, b, flags):
+    def do(self, a, b, tags):
         c = asarray(a)  # a might be a matrix
-        if flags & CaseFlags.empty:
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
             return
         s = linalg.svd(c, compute_uv=False)
@@ -678,8 +666,8 @@ class TestCondInf(object):
 
 class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.pinv, a)
             return
         a_ginv = linalg.pinv(a)
@@ -690,8 +678,8 @@ class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
 class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.det, a)
             return
         d = linalg.det(a)
@@ -736,8 +724,8 @@ class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.lstsq, a, b)
             return
 
@@ -831,8 +819,8 @@ class TestBoolPower(object):
 
 class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.eigvalsh, a, 'L')
             return
         # note that eigenvalue arrays returned by eig must be sorted since
@@ -884,8 +872,8 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
 
-    def do(self, a, b, flags):
-        if flags & CaseFlags.empty:
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
             assert_raises(LinAlgError, linalg.eigh, a)
             return
         # note that eigenvalue arrays returned by eig must be sorted since
