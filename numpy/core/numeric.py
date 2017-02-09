@@ -27,7 +27,7 @@ from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._internal import TooHardError
+from ._internal import TooHardError, AxisError
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -65,7 +65,7 @@ __all__ = [
     'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
     'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
     'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
-    'TooHardError',
+    'TooHardError', 'AxisError'
     ]
 
 
