@@ -595,8 +595,6 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__len__
    ndarray.__getitem__
    ndarray.__setitem__
-   ndarray.__getslice__
-   ndarray.__setslice__
    ndarray.__contains__
 
 Conversion; the operations :func:`complex()`, :func:`int()`,

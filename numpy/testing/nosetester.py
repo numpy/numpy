@@ -420,8 +420,6 @@ class NoseTester(object):
                 sup.filter(DeprecationWarning,
                            r"sys\.exc_clear\(\) not supported in 3\.x",
                            module=threading)
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
                 sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
                 sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
                 sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")

@@ -209,9 +209,6 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __getslice__(self, i, j):
-        return _nx.arange(i, j)
-
     def __len__(self):
         return 0
 
@@ -336,10 +333,6 @@ class AxisConcatenator(object):
                 objs[k] = objs[k].astype(final_dtype)
 
         res = _nx.concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
-
-    def __getslice__(self, i, j):
-        res = _nx.arange(i, j)
         return self._retval(res)
 
     def __len__(self):
