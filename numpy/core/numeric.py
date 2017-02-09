@@ -1532,7 +1532,7 @@ def rollaxis(a, axis, start=0):
         start += n
     msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
     if not (0 <= start < n + 1):
-        raise IndexError(msg % ('start', -n, 'start', n + 1, start))
+        raise AxisError(msg % ('start', -n, 'start', n + 1, start))
     if axis < start:
         # it's been removed
         start -= 1
@@ -1551,7 +1551,7 @@ def _validate_axis(axis, ndim, argname):
         axis = list(axis)
     axis = [a + ndim if a < 0 else a for a in axis]
     if not builtins.all(0 <= a < ndim for a in axis):
-        raise IndexError('invalid axis for this array in `%s` argument' %
+        raise AxisError('invalid axis for this array in `%s` argument' %
                          argname)
     if len(set(axis)) != len(axis):
         raise ValueError('repeated axis in `%s` argument' % argname)

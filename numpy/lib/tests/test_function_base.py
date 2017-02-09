@@ -466,8 +466,8 @@ class TestInsert(TestCase):
                      insert(a, 1, a[:, 2,:], axis=1))
 
         # invalid axis value
-        assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=3)
-        assert_raises(IndexError, insert, a, 1, a[:, 2, :], axis=-4)
+        assert_raises(np.AxisError, insert, a, 1, a[:, 2, :], axis=3)
+        assert_raises(np.AxisError, insert, a, 1, a[:, 2, :], axis=-4)
 
         # negative axis value
         a = np.arange(24).reshape((2, 3, 4))

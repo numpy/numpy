@@ -3903,7 +3903,7 @@ class MaskedArray(ndarray):
                         axis = None
                     try:
                         mask = mask.view((bool_, len(self.dtype))).all(axis)
-                    except (ValueError, IndexError):
+                    except (ValueError, np.AxisError):
                         # TODO: what error are we trying to catch here?
                         #       invalid axis, or invalid view?
                         mask = np.all([[f[n].all() for n in mask.dtype.names]
@@ -3941,7 +3941,7 @@ class MaskedArray(ndarray):
                         axis = None
                     try:
                         mask = mask.view((bool_, len(self.dtype))).all(axis)
-                    except (ValueError, IndexError):
+                    except (ValueError, np.AxisError):
                         # TODO: what error are we trying to catch here?
                         #       invalid axis, or invalid view?
                         mask = np.all([[f[n].all() for n in mask.dtype.names]
@@ -4345,7 +4345,7 @@ class MaskedArray(ndarray):
 
             if self.shape is ():
                 if axis not in (None, 0):
-                    raise IndexError("'axis' entry is out of bounds")
+                    raise np.AxisError("'axis' entry is out of bounds")
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
