@@ -1102,8 +1102,8 @@ class _TestNorm(object):
             assert_raises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
-        assert_raises(IndexError, norm, B, None, 3)
-        assert_raises(IndexError, norm, B, None, (2, 3))
+        assert_raises(np.AxisError, norm, B, None, 3)
+        assert_raises(np.AxisError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
 
 
