@@ -144,7 +144,21 @@ check_and_adjust_axis(int *axis, int ndim)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
-        PyErr_Format(PyExc_IndexError,
+        /*
+         * Load the exception type, if we don't already have it. Unfortunately
+         * we don't have access to npy_cache_import here
+         */
+        static PyObject *AxisError_cls = NULL;
+        if (AxisError_cls == NULL) {
+            PyObject *mod = PyImport_ImportModule("numpy.core._internal");
+
+            if (mod != NULL) {
+                AxisError_cls = PyObject_GetAttrString(mod, "AxisError");
+                Py_DECREF(mod);
+            }
+        }
+
+        PyErr_Format(AxisError_cls,
                      "axis %d is out of bounds for array of dimension %d",
                      *axis, ndim);
         return -1;
