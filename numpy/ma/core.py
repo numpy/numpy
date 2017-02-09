@@ -2299,7 +2299,7 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     if issubclass(xnew.dtype.type, np.floating):
         condition = umath.less_equal(
             mabs(xnew - value), atol + rtol * mabs(value))
-        mask = getattr(x, '_mask', nomask)
+        mask = getmask(x)
     else:
         condition = umath.equal(xnew, value)
         mask = nomask
@@ -2951,7 +2951,7 @@ class MaskedArray(ndarray):
                 _mask = getattr(obj, '_mask',
                                 make_mask_none(obj.shape, obj.dtype))
             else:
-                _mask = getattr(obj, '_mask', nomask)
+                _mask = getmask(obj)
 
             # If self and obj point to exactly the same data, then probably
             # self is a simple view of obj (e.g., self = obj[...]), so they
@@ -3107,7 +3107,7 @@ class MaskedArray(ndarray):
         # also make the mask be a view (so attr changes to the view's
         # mask do no affect original object's mask)
         # (especially important to avoid affecting np.masked singleton)
-        if (getattr(output, '_mask', nomask) is not nomask):
+        if (getmask(output) is not nomask):
             output._mask = output._mask.view()
 
         # Make sure to reset the _fill_value if needed
@@ -3269,7 +3269,7 @@ class MaskedArray(ndarray):
         # Get the _data part of the new value
         dval = value
         # Get the _mask part of the new value
-        mval = getattr(value, '_mask', nomask)
+        mval = getmask(value)
         if nbfields and mval is nomask:
             mval = tuple([False] * nbfields)
         if _mask is nomask:
@@ -3900,7 +3900,7 @@ class MaskedArray(ndarray):
         """
         if self is masked:
             return masked
-        omask = getattr(other, '_mask', nomask)
+        omask = getmask(other)
         if omask is nomask:
             check = self.filled(0).__eq__(other)
             try:
@@ -3936,7 +3936,7 @@ class MaskedArray(ndarray):
         """
         if self is masked:
             return masked
-        omask = getattr(other, '_mask', nomask)
+        omask = getmask(other)
         if omask is nomask:
             check = self.filled(0).__ne__(other)
             try:
@@ -4913,7 +4913,7 @@ class MaskedArray(ndarray):
         # Explicit output
         result = self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
-            outmask = getattr(out, '_mask', nomask)
+            outmask = getmask(out)
             if (outmask is nomask):
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
@@ -4992,7 +4992,7 @@ class MaskedArray(ndarray):
         # Explicit output
         result = self.filled(1).prod(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
-            outmask = getattr(out, '_mask', nomask)
+            outmask = getmask(out)
             if (outmask is nomask):
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
@@ -5071,10 +5071,10 @@ class MaskedArray(ndarray):
         if out is not None:
             out.flat = result
             if isinstance(out, MaskedArray):
-                outmask = getattr(out, '_mask', nomask)
+                outmask = getmask(out)
                 if (outmask is nomask):
                     outmask = out._mask = make_mask_none(out.shape)
-                outmask.flat = getattr(result, '_mask', nomask)
+                outmask.flat = getmask(result)
             return out
         return result
 
@@ -5157,7 +5157,7 @@ class MaskedArray(ndarray):
         if dvar.ndim:
             dvar._mask = mask_or(self._mask.all(axis, **kwargs), (cnt <= 0))
             dvar._update_from(self)
-        elif getattr(dvar, '_mask', False):
+        elif getmask(dvar):
             # Make sure that masked is returned when the scalar is masked.
             dvar = masked
             if out is not None:
@@ -5510,7 +5510,7 @@ class MaskedArray(ndarray):
         # Explicit output
         result = self.filled(fill_value).min(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
-            outmask = getattr(out, '_mask', nomask)
+            outmask = getmask(out)
             if (outmask is nomask):
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
@@ -5612,7 +5612,7 @@ class MaskedArray(ndarray):
         # Explicit output
         result = self.filled(fill_value).max(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
-            outmask = getattr(out, '_mask', nomask)
+            outmask = getmask(out)
             if (outmask is nomask):
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
@@ -5664,7 +5664,7 @@ class MaskedArray(ndarray):
         (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
-        maskindices = getattr(indices, '_mask', nomask)
+        maskindices = getmask(indices)
         if maskindices is not nomask:
             indices = indices.filled(0)
         # Get the data, promoting scalars to 0d arrays with [...] so that
