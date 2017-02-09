@@ -2948,8 +2948,7 @@ class MaskedArray(ndarray):
             # XX: This looks like a bug -- shouldn't it check self.dtype
             # instead?
             if obj.dtype.names:
-                _mask = getattr(obj, '_mask',
-                                make_mask_none(obj.shape, obj.dtype))
+                _mask = getmaskarray(obj)
             else:
                 _mask = getmask(obj)
 
