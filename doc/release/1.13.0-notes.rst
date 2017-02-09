@@ -179,6 +179,15 @@ Better default repr for ``ndarray`` subclasses
 Subclasses of ndarray with no ``repr`` specialization now correctly indent
 their data and type lines.
 
+More reliable comparisons of masked arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Comparisons of masked arrays were buggy for masked scalars and failed for
+structured arrays with dimension higher than one. Both problems are now
+solved. In the process, it was ensured that in getting the result for a
+structured array, masked fields are properly ignored, i.e., the result is equal
+if all fields that are non-masked in both are equal, thus making the behaviour
+identical to what one gets by comparing an unstructured masked array and then
+doing ``.all()`` over some axis.
 
 Changes
 =======
