@@ -36,8 +36,8 @@ objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
 but not for integer arrays or other embedded sequences.
 
 .. index::
-   triple: ndarray; special methods; getslice
-   triple: ndarray; special methods; setslice
+   triple: ndarray; special methods; get slice
+   triple: ndarray; special methods; set slice
    single: ellipsis
    single: newaxis
 
