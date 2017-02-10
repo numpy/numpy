@@ -711,8 +711,10 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
         return 1;
     }
 
-    /* Arrays overlapping in memory may be equivalently iterable
-       if input arrays stride ahead faster than output arrays. */
+    /*
+     * Arrays overlapping in memory may be equivalently iterable if input
+     * arrays stride ahead faster than output arrays.
+     */
 
     size1 = PyArray_SIZE(arr1);
     size2 = PyArray_SIZE(arr2);
@@ -720,25 +722,27 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
     stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2);
 
-    /* Arrays with zero stride are never "ahead" since the element is reused
-       (at this point we know the arrays do overlap). */
+    /*
+     * Arrays with zero stride are never "ahead" since the element is reused
+     * (at this point we know the array extents overlap).
+     */
 
     if (stride1 > 0) {
         arr1_ahead = (stride1 >= stride2 &&
-                      (npy_uintp)PyArray_BYTES(arr1) >= (npy_uintp)PyArray_BYTES(arr2));
+                      PyArray_BYTES(arr1) >= PyArray_BYTES(arr2));
     }
     else if (stride1 < 0) {
         arr1_ahead = (stride1 <= stride2 &&
-                      (npy_uintp)PyArray_BYTES(arr1) <= (npy_uintp)PyArray_BYTES(arr2));
+                      PyArray_BYTES(arr1) <= PyArray_BYTES(arr2));
     }
 
     if (stride2 > 0) {
         arr2_ahead = (stride2 >= stride1 &&
-                      (npy_uintp)PyArray_BYTES(arr2) >= (npy_uintp)PyArray_BYTES(arr1));
+                      PyArray_BYTES(arr2) >= PyArray_BYTES(arr1));
     }
     else if (stride2 < 0) {
         arr2_ahead = (stride2 <= stride1 &&
-                      (npy_uintp)PyArray_BYTES(arr2) <= (npy_uintp)PyArray_BYTES(arr1));
+                      PyArray_BYTES(arr2) <= PyArray_BYTES(arr1));
     }
 
     return (!arr1_read || arr1_ahead) && (!arr2_read || arr2_ahead);
