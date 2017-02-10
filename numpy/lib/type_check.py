@@ -268,12 +268,10 @@ def iscomplexobj(x):
     """
     try:
         dtype = x.dtype
+        type_ = dtype.type
     except AttributeError:
-        dtype = asarray(x).dtype
-    try:
-        return issubclass(dtype.type, _nx.complexfloating)
-    except AttributeError:
-        return False
+        type_ = asarray(x).dtype.type
+    return issubclass(type_, _nx.complexfloating)
 
 
 def isrealobj(x):
