@@ -6991,44 +6991,42 @@ def where(condition, x=_NoValue, y=_NoValue):
      [6.0 -- 8.0]]
 
     """
-    missing = (x is _NoValue, y is _NoValue).count(True)
 
+    # handle the single-argument case
+    missing = (x is _NoValue, y is _NoValue).count(True)
     if missing == 1:
         raise ValueError("Must provide both 'x' and 'y' or neither.")
     if missing == 2:
-        return filled(condition, 0).nonzero()
+        return nonzero(condition)
 
-    # Both x and y are provided
+    # we only care if the condition is true - false or masked pick y
+    cf = filled(condition, False)
+    xd = getdata(x)
+    yd = getdata(y)
 
-    # Get the condition
-    fc = filled(condition, 0).astype(MaskType)
-    notfc = np.logical_not(fc)
+    # we need the full arrays here for correct final dimensions
+    cm = getmaskarray(condition)
+    xm = getmaskarray(x)
+    ym = getmaskarray(y)
 
-    # Get the data
-    xv = getdata(x)
-    yv = getdata(y)
-    if x is masked:
-        ndtype = yv.dtype
-    elif y is masked:
-        ndtype = xv.dtype
-    else:
-        ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
+    # deal with the fact that masked.dtype == float64, but we don't actually
+    # want to treat it as that.
+    if x is masked and y is not masked:
+        xd = np.zeros((), dtype=yd.dtype)
+        xm = np.ones((),  dtype=ym.dtype)
+    elif y is masked and x is not masked:
+        yd = np.zeros((), dtype=xd.dtype)
+        ym = np.ones((),  dtype=xm.dtype)
 
-    # Construct an empty array and fill it
-    d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    np.copyto(d._data, xv.astype(ndtype), where=fc)
-    np.copyto(d._data, yv.astype(ndtype), where=notfc)
+    data = np.where(cf, xd, yd)
+    mask = np.where(cf, xm, ym)
+    mask = np.where(cm, np.ones((), dtype=mask.dtype), mask)
 
-    # Create an empty mask and fill it
-    mask = np.zeros(fc.shape, dtype=MaskType)
-    np.copyto(mask, getmask(x), where=fc)
-    np.copyto(mask, getmask(y), where=notfc)
-    mask |= getmaskarray(condition)
+    # collapse the mask, for backwards compatibility
+    if mask.dtype == np.bool_ and not mask.any():
+        mask = nomask
 
-    # Use d._mask instead of d.mask to avoid copies
-    d._mask = mask if mask.any() else nomask
-
-    return d
+    return masked_array(data, mask=mask)
 
 
 def choose(indices, choices, out=None, mode='raise'):
