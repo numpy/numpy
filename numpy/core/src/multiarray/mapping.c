@@ -3262,11 +3262,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
 
 /*NUMPY_API
  *
- * Use advanced indexing to iterate an array. Please note
- * that most of this public API is currently not guaranteed
- * to stay the same between versions. If you plan on using
- * it, please consider adding more utility functions here
- * to accommodate new features.
+ * Use advanced indexing to iterate an array.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
