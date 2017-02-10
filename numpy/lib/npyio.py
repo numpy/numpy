@@ -1572,10 +1572,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         while not first_values:
             first_line = next(fhd)
-            if names is True:
-                if comments in first_line:
-                    first_line = (
-                        asbytes('').join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
