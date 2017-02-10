@@ -3942,6 +3942,38 @@ class TestMaskedArrayFunctions(TestCase):
         control = np.find_common_type([np.int32, np.float32], [])
         assert_equal(test, control)
 
+    def test_where_broadcast(self):
+        # Issue 8599
+        x = np.arange(9).reshape(3, 3)
+        y = np.zeros(3)
+        core = np.where([1, 0, 1], x, y)
+        ma = where([1, 0, 1], x, y)
+
+        assert_equal(core, ma)
+        assert_equal(core.dtype, ma.dtype)
+
+    def test_where_structured(self):
+        # Issue 8600
+        dt = np.dtype([('a', int), ('b', int)])
+        x = np.array([(1, 2), (3, 4), (5, 6)], dtype=dt)
+        y = np.array((10, 20), dtype=dt)
+        core = np.where([0, 1, 1], x, y)
+        ma = np.where([0, 1, 1], x, y)
+
+        assert_equal(core, ma)
+        assert_equal(core.dtype, ma.dtype)
+
+    def test_where_structured_masked(self):
+        dt = np.dtype([('a', int), ('b', int)])
+        x = np.array([(1, 2), (3, 4), (5, 6)], dtype=dt)
+
+        ma = where([0, 1, 1], x, masked)
+        expected = masked_where([1, 0, 0], x)
+
+        assert_equal(ma.dtype, expected.dtype)
+        assert_equal(ma, expected)
+        assert_equal(ma.mask, expected.mask)
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
