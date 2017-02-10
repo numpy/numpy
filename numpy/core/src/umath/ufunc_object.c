@@ -1765,8 +1765,10 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     }
     for (i = nin; i < nop; ++i) {
         /*
-         * Because we don't write to all elements, the output arrays
-         * must be considered READWRITE by the iterator.
+         * We don't write to all elements, and the iterator may make
+         * UPDATEIFCOPY temporary copies. The output arrays must be considered
+         * READWRITE by the iterator, so that the elements we don't write to are
+         * copied to the possible temporary array.
          */
         op_flags[i] = default_op_out_flags |
                       NPY_ITER_READWRITE |

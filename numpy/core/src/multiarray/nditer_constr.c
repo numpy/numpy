@@ -2711,7 +2711,19 @@ npyiter_allocate_arrays(NpyIter *iter,
     }
 
     if (flags & NPY_ITER_COPY_IF_OVERLAP) {
-        /* Perform operand memory overlap checks if requested */
+        /*
+         * Perform operand memory overlap checks, if requested.
+         *
+         * If any write operand has memory overlap with any read operand,
+         * eliminate all overlap by making temporary copies, by enabling
+         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force UPDATEIFCOPY.
+         *
+         * Operands with NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE enabled are not
+         * considered overlapping if the arrays are exactly the same. In this
+         * case, the iterator loops through them in the same order element by
+         * element.  (As usual, the user-provided inner loop is assumed to be
+         * able to deal with this level of simple aliasing.)
+         */
         for (iop = 0; iop < nop; ++iop) {
             int may_share_memory = 0;
             int iother;
@@ -2773,8 +2785,9 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * Use max work = 1. If the arrays are large, it might
                  * make sense to go further.
                  */
-                may_share_memory = solve_may_share_memory(
-                    op[iop], op[iother], 1);
+                may_share_memory = solve_may_share_memory(op[iop],
+                                                          op[iother],
+                                                          1);
 
                 if (may_share_memory) {
                     op_itflags[iop] |= NPY_OP_ITFLAG_FORCECOPY;
