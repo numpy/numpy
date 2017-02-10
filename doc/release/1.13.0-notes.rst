@@ -76,6 +76,11 @@ obvious exception of any code that tries to directly call
 ``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``). In
 this case, ``.__getitem__(slice(start, end))`` will act as a replacement.
 
+``np.squeeze`` always returns an array when passed a scalar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, this was only the case when passed a python scalar, and it did not
+do array promotion when passed a numpy scalar.
+
 
 C API
 ~~~~~
