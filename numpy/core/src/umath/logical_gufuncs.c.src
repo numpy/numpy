@@ -50,7 +50,8 @@
 /* create the family of functions using a template  */
 
 /**begin repeat
-* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
+          double,longdouble,cfloat,cdouble,clongdouble#
 * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
 */
 
@@ -69,7 +70,8 @@ static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
     npy_intp i, n;
     npy_intp N = dimensions[0], I = dimensions[1];
     char *a_n = args[0], *b_n = args[1], *c_n = args[2];
-    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2], a_I = steps[3], b_I = steps[4];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
 
     char *a_i, *b_i;
     npy_@TYPE@ a, b;
@@ -164,31 +166,7 @@ typedef struct gufunc_descriptor_struct {
 static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "all_equal",
-        "Return True if x1 == x2 for all elements along the last axis, False\n"
-        "otherwise.  Similar to (x1==x2).all(axis=-1), except the last dimension\n"
-        "of x1 and x2 must be equal and greater than 1.  This function short\n"
-        "circuits after the first nonequal element."
-        "\n"
-        "Parameters\n"
-        "----------\n"
-        "x1, x2 : array_like\n"
-        "    Input arrays of the same shape.\n"
-        "\n"
-        "Returns\n"
-        "-------\n"
-        "out : ndarray or bool\n"
-        "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-        "\n"
-        "See Also\n"
-        "-------\n"
-        "equal, all, any_equal, all_not_equal\n"
-        "\n"
-        "Examples\n"
-        "-------\n"
-        ">>> np.all_equal(np.arange(3), np.arange(3))\n"
-        "True\n"
-        ">>> np.all_equal([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
-        "array([ True, False,  True], dtype=bool)",
+        "all equal docstring",
         FUNC_ARRAY_NAME(all_eq)
     },
     {
@@ -275,7 +253,8 @@ static void *array_of_nulls[] = {
 
 /* -------------------------------------------------------------------------- */
 /* function to create and register all gufuncs*/
-void InitLogicalGufuncs(PyObject *dictionary, PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc) {
+void InitLogicalGufuncs(PyObject *dictionary, 
+                        PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc) {
     PyObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
@@ -287,7 +266,7 @@ void InitLogicalGufuncs(PyObject *dictionary, PyUFunc_FromFuncAndDataAndSignatur
         f = createPyUFunc(d->funcs,
                           array_of_nulls,
                           types,
-                          16,             // number of types
+                          sizeof(types),  // number of types
                           2,              // number of inputs
                           1,              // number of outputs
                           PyUFunc_None,
