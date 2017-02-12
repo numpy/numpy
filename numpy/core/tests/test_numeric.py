@@ -147,9 +147,6 @@ class TestNonarrayArgs(TestCase):
         A = [[[1, 1, 1], [2, 2, 2], [3, 3, 3]]]
         assert_(np.squeeze(A).shape == (3, 3))
 
-        assert_(isinstance(np.squeeze(1), np.ndarray))
-        assert_(isinstance(np.squeeze(np.int32(1)), np.ndarray))
-
     def test_std(self):
         A = [[1, 2, 3], [4, 5, 6]]
         assert_almost_equal(np.std(A), 1.707825127659933)

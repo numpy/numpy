@@ -1579,7 +1579,8 @@ gentype_squeeze(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "")) {
         return NULL;
     }
-    return PyArray_FromScalar(self, NULL);
+    Py_INCREF(self);
+    return self;
 }
 
 static Py_ssize_t
