@@ -1491,7 +1491,7 @@ def gradient(f, *varargs, **kwargs):
     """
     Return the gradient of an N-dimensional array.
 
-    The gradient is computed using first order accurate central differences
+    The gradient is computed using second order accurate central differences
     in the interior and either first differences or second order accurate
     one-sides (forward or backwards) differences at the boundaries. The
     returned gradient hence has the same shape as the input array.
@@ -1630,7 +1630,7 @@ def gradient(f, *varargs, **kwargs):
                 "Shape of array too small to calculate a numerical gradient, "
                 "at least two elements are required.")
 
-        # Numerical differentiation: 1st order edges, 1st order interior
+        # Numerical differentiation: 1st order edges, 2nd order interior
         if y.shape[axis] == 2 or edge_order == 1:
             # Use first order differences for time data
             out = np.empty_like(y, dtype=otype)
@@ -1653,7 +1653,7 @@ def gradient(f, *varargs, **kwargs):
             # 1D equivalent -- out[-1] = (y[-1] - y[-2])
             out[slice1] = (y[slice2] - y[slice3])
 
-        # Numerical differentiation: 2nd order edges, 1st order interior
+        # Numerical differentiation: 2st order edges, 2nd order interior
         else:
             # Use second order differences where possible
             out = np.empty_like(y, dtype=otype)
