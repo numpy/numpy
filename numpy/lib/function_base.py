@@ -1027,9 +1027,16 @@ def average(a, axis=None, weights=None, returned=False):
     a : array_like
         Array containing data to be averaged. If `a` is not an array, a
         conversion is attempted.
-    axis : int, optional
-        Axis along which to average `a`. If `None`, averaging is done over
-        the flattened array.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `a`.  The default,
+        axis=None, will average over all of the elements of the input array.
+        If axis is negative it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If axis is a tuple of ints, averaging is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
