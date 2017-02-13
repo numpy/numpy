@@ -140,6 +140,25 @@ class TestApplyAlongAxis(TestCase):
         res = np.apply_along_axis(sample_1d, 1, np.array([[1, 2], [3, 4]]))
         assert_array_equal(res, np.array([[2, 1], [4, 3]]))
 
+    def test_empty(self):
+        # can't apply_along_axis when there's no chance to call the function
+        def never_call(x):
+            assert_(False) # should never be reached
+
+        a = np.empty((0, 0))
+        assert_raises(ValueError, np.apply_along_axis, never_call, 0, a)
+        assert_raises(ValueError, np.apply_along_axis, never_call, 1, a)
+
+        # but it's sometimes ok with some non-zero dimensions
+        def empty_to_1(x):
+            assert_(len(x) == 0)
+            return 1
+
+        a = np.empty((10, 0))
+        actual = np.apply_along_axis(empty_to_1, 1, a)
+        assert_equal(actual, np.ones(10))
+        assert_raises(ValueError, np.apply_along_axis, empty_to_1, 0, a)
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
