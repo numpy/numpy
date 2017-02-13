@@ -1026,6 +1026,48 @@ class TestStructured(TestCase):
         b = a[0]
         assert_(b.base is a)
 
+    def test_kwarg_splat(self):
+        a = np.zeros(3, dtype='i4,f4')
+        b = a[0]
+        def f(f0, f1):
+            return f0, f1
+
+        # test arrays
+        f0, f1 = f(**a)
+        assert_equal(f0, a['f0'])
+        assert_equal(f1, a['f1'])
+
+        # test scalars
+        f0, f1 = f(**b)
+        assert_equal(f0, b['f0'])
+        assert_equal(f1, b['f1'])
+
+        c = np.zeros((3,2))
+        assert_raises(TypeError, lambda: f(**c))
+
+    def test_keys_only_on_void(self):
+        a = np.zeros(3, dtype='i4,f4')
+        assert_equal(sorted(a.keys()), ['f0', 'f1'])
+        assert_('keys' in dir(a))
+        assert_equal(sorted(a[0].keys()), ['f0', 'f1'])
+        assert_('keys' in dir(a[0]))
+
+        b = np.zeros(3)
+        assert_('keys' not in dir(b))
+        assert_raises(AttributeError, getattr, b, 'keys')
+        assert_('keys' not in dir(b[0]))
+        assert_raises(AttributeError, getattr, b[0], 'keys')
+
+
+    def test_dict_conversion(self):
+        a = np.zeros(3, dtype='i4,f4')
+        b = a[0]
+        assert_equal(dict(a), dict(f0=a['f0'], f1=a['f1']))
+        assert_equal(dict(b), dict(f0=b['f0'], f1=b['f1']))
+
+        c = np.zeros(3)
+        assert_raises(TypeError, dict, c)
+
 
 class TestBool(TestCase):
     def test_test_interning(self):
