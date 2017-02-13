@@ -2208,6 +2208,7 @@ class TestMeshgrid(TestCase):
     def test_no_input(self):
         args = []
         assert_array_equal([], meshgrid(*args))
+        assert_array_equal([], meshgrid(*args, copy=False))
 
     def test_indexing(self):
         x = [1, 2, 3]
@@ -2240,6 +2241,40 @@ class TestMeshgrid(TestCase):
         # https://github.com/numpy/numpy/issues/4755
         assert_raises(TypeError, meshgrid,
                       [1, 2, 3], [4, 5, 6, 7], indices='ij')
+
+    def test_return_type(self):
+        # Test for appropriate dtype in returned arrays.
+        # Regression test for issue #5297
+        # https://github.com/numpy/numpy/issues/5297
+        x = np.arange(0, 10, dtype=np.float32)
+        y = np.arange(10, 20, dtype=np.float64)
+
+        X, Y = np.meshgrid(x,y)
+
+        assert_(X.dtype == x.dtype)
+        assert_(Y.dtype == y.dtype)
+
+        # copy
+        X, Y = np.meshgrid(x,y, copy=True)
+
+        assert_(X.dtype == x.dtype)
+        assert_(Y.dtype == y.dtype)
+
+        # sparse
+        X, Y = np.meshgrid(x,y, sparse=True)
+
+        assert_(X.dtype == x.dtype)
+        assert_(Y.dtype == y.dtype)
+
+    def test_writeback(self):
+        # Issue 8561
+        X = np.array([1.1, 2.2])
+        Y = np.array([3.3, 4.4])
+        x, y = np.meshgrid(X, Y, sparse=False, copy=True)
+
+        x[0, :] = 0
+        assert_equal(x[0, :], 0)
+        assert_equal(x[1, :], X)
 
 
 class TestPiecewise(TestCase):
