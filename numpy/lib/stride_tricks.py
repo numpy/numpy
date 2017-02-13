@@ -179,7 +179,7 @@ def _broadcast_shape(*args):
     supplied arrays against each other.
     """
     if not args:
-        raise ValueError('must provide at least one argument')
+        return ()
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])

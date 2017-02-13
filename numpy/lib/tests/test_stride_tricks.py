@@ -266,7 +266,7 @@ def test_broadcast_to_raises():
 
 def test_broadcast_shape():
     # broadcast_shape is already exercized indirectly by broadcast_arrays
-    assert_raises(ValueError, _broadcast_shape)
+    assert_equal(_broadcast_shape(), ())
     assert_equal(_broadcast_shape([1, 2]), (2,))
     assert_equal(_broadcast_shape(np.ones((1, 1))), (1, 1))
     assert_equal(_broadcast_shape(np.ones((1, 1)), np.ones((3, 4))), (3, 4))
