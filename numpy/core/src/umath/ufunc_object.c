@@ -4395,6 +4395,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 continue;
             }
             res = PyObject_CallFunction(wrap, "O(OOi)", mps[j], ufunc, args, i);
+            /* Handle __array_wrap__ that does not accept a context argument */
             if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Clear();
                 res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
@@ -4402,9 +4403,6 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             Py_DECREF(wrap);
             if (res == NULL) {
                 goto fail;
-            }
-            else if (res == Py_None) {
-                Py_DECREF(res);
             }
             else {
                 Py_DECREF(mps[j]);
