@@ -2266,6 +2266,16 @@ class TestMeshgrid(TestCase):
         assert_(X.dtype == x.dtype)
         assert_(Y.dtype == y.dtype)
 
+    def test_writeback(self):
+        # Issue 8561
+        X = np.array([1.1, 2.2])
+        Y = np.array([3.3, 4.4])
+        x, y = np.meshgrid(X, Y, sparse=False, copy=True)
+
+        x[0, :] = 0
+        assert_equal(x[0, :], 0)
+        assert_equal(x[1, :], X)
+
 
 class TestPiecewise(TestCase):
 
