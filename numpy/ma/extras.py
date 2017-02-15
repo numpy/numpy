@@ -1189,6 +1189,7 @@ def isin(elements, test_elements, **kwargs):
     .. versionadded:: 1.13.0
 
     """
+    elements = ma.array(elements)
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 

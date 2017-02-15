@@ -70,7 +70,12 @@ In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
-
+``isin`` function, improving on ``in1d``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new function ``isin`` tests whether elements in an array are also present 
+in another array, preserving the shape of the first array. It builds on 
+the existing ``in1d`` routine. 
+                                        
 Improvements
 ============
 

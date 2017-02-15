@@ -147,6 +147,8 @@ intersect1d      Intersection of 1D arrays with unique elements.
 setxor1d         Set exclusive-or of 1D arrays with unique elements.
 in1d             Test whether elements in a 1D array are also present in
                  another array.
+isin             Test whether elements in an array are also present in
+                 another array, preserving shape of first array.
 union1d          Union of 1D arrays with unique elements.
 setdiff1d        Set difference of 1D arrays with unique elements.
 ================ ===================

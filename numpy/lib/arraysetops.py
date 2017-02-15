@@ -489,7 +489,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 def isin(elements, test_elements, **kwargs):
     """
     Test whether each element of an array is also present in a second array.
-    Returns a boolean array the same shape as `elements` that is True
+    Returns a boolean array of the same shape as `elements` that is True
     where an element of `elements` is in `test_elements` and False otherwise.
 
     Parameters
@@ -532,6 +532,7 @@ def isin(elements, test_elements, **kwargs):
            [ False, True]], dtype=bool)
     >>> test[mask]
     array([0, 6])"""
+    elements = np.array(elements)
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 
