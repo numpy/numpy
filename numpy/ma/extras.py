@@ -1135,14 +1135,18 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
     array.
+
     The output is always a masked array. See `numpy.in1d` for more details.
+
     See Also
     --------
     isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
+
     Notes
     -----
     .. versionadded:: 1.4.0
+
     """
     if not assume_unique:
         ar1, rev_idx = unique(ar1, return_inverse=True)
@@ -1171,17 +1175,20 @@ def isin(elements, test_elements, **kwargs):
     """
     Test whether each element of an array is also present in a second
     array.
-    The output is always a masked array of the same shape as `elements`. 
+
+    The output is always a masked array of the same shape as `elements`.
     See `numpy.isin` for more details.
-    
+
     See Also
     --------
     in1d       : Flattened version of this function.
     numpy.isin : Equivalent function for ndarrays.
+
     Notes
     -----
     .. versionadded:: 1.13.0
-    """    
+
+    """
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 

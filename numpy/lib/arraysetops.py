@@ -385,8 +385,10 @@ def setxor1d(ar1, ar2, assume_unique=False):
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of a 1-D array is also present in a second array.
+
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
+
     Parameters
     ----------
     ar1 : (M,) array_like
@@ -401,17 +403,21 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
+
         .. versionadded:: 1.8.0
+
     Returns
     -------
     in1d : (M,) ndarray, bool
         The values `ar1[in1d]` are in `ar2`.
+
     See Also
     --------
     isin                  : Version of this function that preserves the
                             shape of ar1.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
     Notes
     -----
     `in1d` can be considered as an element-wise function version of the
@@ -421,7 +427,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     container:  As ``ar2`` is converted to an array, in those cases
     ``asarray(ar2)`` is an object array rather than the expected array of
     contained values.
+
     .. versionadded:: 1.4.0
+
     Examples
     --------
     >>> test = np.array([0, 1, 2, 5, 0])
@@ -489,15 +497,15 @@ def isin(elements, test_elements, **kwargs):
     elements : array_like
         Input array.
     test_elements : array_like
-        The values against which to test each value of `ar1`. 
+        The values against which to test each value of `ar1`.
         This argument is flattened.
     **kwargs: Keyword arguments passed to `in1d`.
 
     Returns
     -------
     isin : ndarray, bool
-        Has the same shape as `elements`. The values `elements[isin]` 
-        are in `test_elements`. 
+        Has the same shape as `elements`. The values `elements[isin]`
+        are in `test_elements`.
 
     See Also
     --------
@@ -507,6 +515,7 @@ def isin(elements, test_elements, **kwargs):
     Notes
     -----
     .. versionadded:: 1.13.0
+
     Examples
     --------
     >>> test = np.array([[0, 2], [4, 6]])
