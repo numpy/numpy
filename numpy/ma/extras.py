@@ -1130,71 +1130,59 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
-def isin(elements, test_elements, assume_unique=False, invert=False):
+
+def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
     array.
-
-    The output is always a masked array. See `numpy.isin` for more details.
-
+    The output is always a masked array. See `numpy.in1d` for more details.
     See Also
     --------
-    in1d    : Older version of this function for flat arrays
-    numpy.isin : Equivalent function for ndarrays.
-
-    Notes
-    -----
-    .. versionadded:: 1.12.0
-
-    """
-    elements = asarray(elements)
-    if not assume_unique:
-        elements_flat, rev_idx = unique(elements, return_inverse=True)
-        test_elements = unique(test_elements)
-    else:
-        elements_flat = elements.ravel()
-        test_elements = asarray(test_elements).ravel()
-
-    elements_cat = ma.concatenate((elements_flat, test_elements))
-    # We need this to be a stable sort, so always use 'mergesort'
-    # here. The values from the first array should always come before
-    # the values from the second array.
-    order = elements_cat.argsort(kind='mergesort')
-    elements_cat_sort = elements_cat[order]
-    if invert:
-        bool_elements = (elements_cat_sort[1:] != elements_cat_sort[:-1])
-    else:
-        bool_elements = (elements_cat_sort[1:] == elements_cat_sort[:-1])
-    flag = ma.concatenate((bool_elements, [invert]))
-    indx = order.argsort(kind='mergesort')[:len(elements_flat)]
-
-    if assume_unique:
-        result = flag[indx]
-    else:
-        result = flag[indx][rev_idx]
-    return result.reshape(elements.shape)
-
-
-def in1d(elements, test_elements, **kwargs):
-    """
-    Test whether each element of an array is also present in a second
-    array.
-
-    The output is always a one-dimensional masked array. See `numpy.in1d` for
-    more details.
-
-    See Also
-    --------
-    isin    : New version of this function for multidimensional arrays
+    isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
-
     Notes
     -----
     .. versionadded:: 1.4.0
-
     """
-    # deprecate this eventually?
-    return isin(elements, test_elements, **kwargs).ravel()
+    if not assume_unique:
+        ar1, rev_idx = unique(ar1, return_inverse=True)
+        ar2 = unique(ar2)
+
+    ar = ma.concatenate((ar1, ar2))
+    # We need this to be a stable sort, so always use 'mergesort'
+    # here. The values from the first array should always come before
+    # the values from the second array.
+    order = ar.argsort(kind='mergesort')
+    sar = ar[order]
+    if invert:
+        bool_ar = (sar[1:] != sar[:-1])
+    else:
+        bool_ar = (sar[1:] == sar[:-1])
+    flag = ma.concatenate((bool_ar, [invert]))
+    indx = order.argsort(kind='mergesort')[:len(ar1)]
+
+    if assume_unique:
+        return flag[indx]
+    else:
+        return flag[indx][rev_idx]
+
+
+def isin(elements, test_elements, **kwargs):
+    """
+    Test whether each element of an array is also present in a second
+    array.
+    The output is always a masked array of the same shape as `elements`. 
+    See `numpy.isin` for more details.
+    
+    See Also
+    --------
+    in1d       : Flattened version of this function.
+    numpy.isin : Equivalent function for ndarrays.
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+    """    
+    return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 
 def union1d(ar1, ar2):
