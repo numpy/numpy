@@ -51,7 +51,7 @@
 
 /**begin repeat
 * #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
-          double,longdouble,cfloat,cdouble,clongdouble#
+*         double,longdouble,cfloat,cdouble,clongdouble#
 * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
 */
 
@@ -64,8 +64,9 @@
 * #ALL_OR_ANY = all,any#
 */
 
-static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
-                                  npy_intp* steps, void* data)
+static void base_@TYPE@_@ALL_OR_ANY@_@OPNAME@
+        (char **args, npy_intp *dimensions,
+         npy_intp* steps, void* data)
 {
     npy_intp i, n;
     npy_intp N = dimensions[0], I = dimensions[1];
@@ -94,45 +95,142 @@ static void @TYPE@_@ALL_OR_ANY@_@OPNAME@(char **args, npy_intp *dimensions,
 
 
 /* -------------------------------------------------------------------------- */
+/* vectorized versions*/
+
+#define BLOCK_SIZE 1024
+#define ALIGNMENT_SIZE 32
+#define ALIGNED(p) ((unsigned long)p & ALIGNMENT_SIZE)
+
+/*
+*  The core array must be contiguous, ie the core dimension steps must
+*  be equal to the sizeof the type
+*/
+/**begin repeat
+* #TYPE = float,double,int#
+**/
+void simd_core_contiguous_@TYPE@_all_eq(
+    char **args, npy_intp *dimensions, npy_intp* steps, void* data)
+{
+    npy_intp i, n, j;
+    npy_intp N = dimensions[0], I = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+
+    unsigned int true_count;
+    @TYPE@ *x, *y;
+
+    for (n = 0; n < N; n++) {
+        *((npy_bool *)c_n) = NPY_TRUE;
+        x = (@TYPE@ *)a_n;
+        y = (@TYPE@ *)b_n;
+
+        // get x aligned, helps compiler vectorize.  y can use unaligned
+        // loads. do while so at least the first element is checked
+        // before checking an entire chunk
+        i = 0;
+        do {
+            if ((*x) == (*y)) {
+                x++;
+                y++;
+                i++;
+            } else {
+                *((npy_bool *)c_n) = NPY_FALSE;
+                i = I;
+            }
+        } while (!ALIGNED(x) & (i<I));
+
+        // main loop in chunks with auto vectorize simd instructions
+        for ( ; i<(I-BLOCK_SIZE) ; i+=BLOCK_SIZE) {
+            true_count = 0;
+            for (j=0 ; j<BLOCK_SIZE ; j++){
+                true_count += ((*x) == (*y));
+                x++;
+                y++;
+            }
+            if (true_count != BLOCK_SIZE) {
+                *((npy_bool *)c_n) = NPY_FALSE;
+                i = I;
+                break;
+            }
+        };
+
+        // check remaining elements
+        for ( ; i<I ; i++) {
+            if ((*x) == (*y)) {
+                x++;
+                y++;
+            } else {
+                *((npy_bool *)c_n) = NPY_FALSE;
+                break;
+            } 
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+/* dispatchers to select optimal function */
+
+/**begin repeat
+* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
+*         double,longdouble,cfloat,cdouble,clongdouble#
+* #IS_VECTD = 0*4,1,0,0*4,1,1,0*4#
+*/
+void dispatch_@TYPE@_all_eq(
+    char **args, npy_intp *dimensions, npy_intp* steps, void* data)
+{
+
+    #if @IS_VECTD@
+        npy_intp I = dimensions[1];
+        npy_intp a_I = steps[3], b_I = steps[4];
+        if ((I > (2*BLOCK_SIZE)) & (a_I == sizeof(@TYPE@)) 
+                & (b_I == sizeof(@TYPE@)))
+        {
+            simd_core_contiguous_@TYPE@_all_eq(args, dimensions, steps, data);
+            return;
+        }
+    #endif
+    
+    base_@TYPE@_all_eq(args, dimensions, steps, data);
+
+}
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
 /* create arrays of type specific functions for each gufunc  */
 
-#define FUNC_ARRAY_NAME(NAME) NAME ## _funcs
+/**begin repeat
+* #NAME = all_eq,all_ne,all_lt,all_le,all_gt,all_ge,
+*         any_eq,any_ne,any_lt,any_le,any_gt,any_ge#
+* #APPROACH = dispatch,base*11#
+*/
 
-#define GUFUNC_FUNC_ARRAY(NAME)                         \
-    static PyUFuncGenericFunction                       \
-    FUNC_ARRAY_NAME(NAME)[] = {                         \
-        byte_ ## NAME,                                  \
-        ubyte_ ## NAME,                                 \
-        short_ ## NAME,                                 \
-        ushort_ ## NAME,                                \
-        int_ ## NAME,                                   \
-        uint_ ## NAME,                                  \
-        long_ ## NAME,                                  \
-        ulong_ ## NAME,                                 \
-        longlong_ ## NAME,                              \
-        ulonglong_ ## NAME,                             \
-        float_ ## NAME,                                 \
-        double_ ## NAME,                                \
-        longdouble_ ## NAME,                            \
-        cfloat_ ## NAME,                                \
-        cdouble_ ## NAME,                               \
-        clongdouble_ ## NAME,                           \
-    }
+static PyUFuncGenericFunction @NAME@_funcs[] = { 
+    @APPROACH@_byte_@NAME@,
+    @APPROACH@_ubyte_@NAME@,
+    @APPROACH@_short_@NAME@,
+    @APPROACH@_ushort_@NAME@,
 
+    @APPROACH@_int_@NAME@,
+    @APPROACH@_uint_@NAME@,
+    @APPROACH@_long_@NAME@,
+    @APPROACH@_ulong_@NAME@,
 
-GUFUNC_FUNC_ARRAY(all_eq);
-GUFUNC_FUNC_ARRAY(all_ne);
-GUFUNC_FUNC_ARRAY(all_lt);
-GUFUNC_FUNC_ARRAY(all_le);
-GUFUNC_FUNC_ARRAY(all_gt);
-GUFUNC_FUNC_ARRAY(all_ge);
-GUFUNC_FUNC_ARRAY(any_eq);
-GUFUNC_FUNC_ARRAY(any_ne);
-GUFUNC_FUNC_ARRAY(any_lt);
-GUFUNC_FUNC_ARRAY(any_le);
-GUFUNC_FUNC_ARRAY(any_gt);
-GUFUNC_FUNC_ARRAY(any_ge);
+    @APPROACH@_longlong_@NAME@,
+    @APPROACH@_ulonglong_@NAME@,
+    @APPROACH@_float_@NAME@,
+    @APPROACH@_double_@NAME@,
 
+    @APPROACH@_longdouble_@NAME@,
+    @APPROACH@_cfloat_@NAME@,
+    @APPROACH@_cdouble_@NAME@,
+    @APPROACH@_clongdouble_@NAME@
+};
+/**end repeat**/
 
 /* -------------------------------------------------------------------------- */
 /* Create type arrays for each gufunc, which are all identical*/
@@ -140,14 +238,17 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
                        NPY_SHORT, NPY_SHORT, NPY_BOOL,
                        NPY_USHORT, NPY_USHORT, NPY_BOOL,
+
                        NPY_INT, NPY_INT, NPY_BOOL,
                        NPY_UINT, NPY_UINT, NPY_BOOL,
                        NPY_LONG, NPY_LONG, NPY_BOOL,
                        NPY_ULONG, NPY_ULONG, NPY_BOOL,
+
                        NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
                        NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
                        NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
                        NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
+
                        NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
                        NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
                        NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
@@ -155,75 +256,27 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
 
 
 /* -------------------------------------------------------------------------- */
-/* define name and docstring for each gufunc*/
+/* define name pointer to functions for each gufunc*/
 
 typedef struct gufunc_descriptor_struct {
     char *name;
-    char *doc;
     PyUFuncGenericFunction *funcs;
 } GUFUNC_DESCRIPTOR_t;
 
 static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
-    {
-        "all_equal",
-        "all equal docstring",
-        FUNC_ARRAY_NAME(all_eq)
-    },
-    {
-        "all_not_equal",
-        "all not equal docstring",
-        FUNC_ARRAY_NAME(all_ne)
-    },
-    {
-        "all_less",
-        "all less than docstring",
-        FUNC_ARRAY_NAME(all_lt)
-    },
-    {
-        "all_less_equal",
-        "all less than or equal docstring",
-        FUNC_ARRAY_NAME(all_le)
-    },
-    {
-        "all_greater",
-        "all greater than docstring",
-        FUNC_ARRAY_NAME(all_gt)
-    },
-    {
-        "all_greater_equal",
-        "all greater than or equal docstring",
-        FUNC_ARRAY_NAME(all_ge)
-    },
-    {
-        "any_equal",
-        "any equal docstring",
-        FUNC_ARRAY_NAME(any_eq)
-    },
-    {
-        "any_not_equal",
-        "any not equal docstring",
-        FUNC_ARRAY_NAME(any_ne)
-    },
-    {
-        "any_less",
-        "any less than docstring",
-        FUNC_ARRAY_NAME(any_lt)
-    },
-    {
-        "any_less_equal",
-        "any less than or equal docstring",
-        FUNC_ARRAY_NAME(any_le)
-    },
-    {
-        "any_greater",
-        "any greater than docstring",
-        FUNC_ARRAY_NAME(any_gt)
-    },
-    {
-        "any_greater_equal",
-        "any greater than or equal docstring",
-        FUNC_ARRAY_NAME(any_ge)
-    }
+    {"all_equal",           all_eq_funcs},
+    {"all_not_equal",       all_ne_funcs},
+    {"all_less",            all_lt_funcs},
+    {"all_less_equal",      all_le_funcs},
+    {"all_greater",         all_gt_funcs},
+    {"all_greater_equal",   all_ge_funcs},
+
+    {"any_equal",           any_eq_funcs},
+    {"any_not_equal",       any_ne_funcs},
+    {"any_less",            any_lt_funcs},
+    {"any_less_equal",      any_le_funcs},
+    {"any_greater",         any_gt_funcs},
+    {"any_greater_equal",   any_ge_funcs}
 };
 
 
@@ -271,7 +324,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
                           1,              // number of outputs
                           PyUFunc_None,
                           d->name,
-                          d->doc,
+                          "temp docstring",
                           0,              // unused
                           "(i),(i)->()");
 
