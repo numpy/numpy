@@ -1452,6 +1452,22 @@ class TestSpecialMethods(TestCase):
         assert_equal(x, np.array(2))
         assert_equal(type(x), with_prepare)
 
+    def test_prepare_out(self):
+
+        class with_prepare(np.ndarray):
+            __array_priority__ = 10
+
+            def __array_prepare__(self, arr, context):
+                return np.array(arr).view(type=with_prepare)
+
+        a = np.array([1]).view(type=with_prepare)
+        x = np.add(a, a, a)
+        # Returned array is new, because of the strange
+        # __array_prepare__ above
+        assert_(not np.shares_memory(x, a))
+        assert_equal(x, np.array([2]))
+        assert_equal(type(x), with_prepare)
+
     def test_failing_prepare(self):
 
         class A(object):

@@ -143,6 +143,49 @@ being iterated over.
 Changes
 =======
 
+Ufunc behavior for overlapping inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Operations where ufunc input and output operands have memory overlap
+produced undefined results in previous Numpy versions, due to data
+dependency issues. In Numpy 1.13.0, results from such operations are
+now defined to be the same as for equivalent operations where there is
+no memory overlap.
+
+Operations affected now make temporary copies, as needed to eliminate
+data dependency. As detecting these cases is computationally
+expensive, a heuristic is used, which may in rare cases result to
+needless temporary copies.  For operations where the data dependency
+is simple enough for the heuristic to analyze, temporary copies will
+not be made even if the arrays overlap, if it can be deduced copies
+are not necessary.  As an example,``np.add(a, b, out=a)`` will not
+involve copies.
+
+To illustrate a previously undefined operation
+
+>>> x = np.arange(16).astype(float)
+>>> np.add(x[1:], x[:-1], out=x[1:])
+
+In Numpy 1.13.0 the last line is guaranteed to be equivalent to
+
+>>> np.add(x[1:].copy(), x[:-1].copy(), out=x[1:])
+
+A similar operation with simple non-problematic data dependence is
+
+>>> x = np.arange(16).astype(float)
+>>> np.add(x[1:], x[:-1], out=x[:-1])
+
+It will continue to produce the same results as in previous Numpy
+versions, and will not involve unnecessary temporary copies.
+
+The change applies also to in-place binary operations, for example:
+
+>>> x = np.random.rand(500, 500)
+>>> x += x.T
+
+This statement is now guaranteed to be equivalent to ``x[...] = x + x.T``,
+whereas in previous Numpy versions the results were undefined.
+
 ``average`` now preserves subclasses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 For ndarray subclasses, ``numpy.average`` will now return an instance of the
