@@ -658,8 +658,8 @@ s_ = IndexExpression(maketuple=False)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
-    For an array `a` with ``a.ndim > 2``, the diagonal is the list of
-    locations with indices ``a[i, i, ..., i]`` all identical. This function
+    For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
+    locations with indices ``a[i, ..., i]`` all identical. This function
     modifies the input array in-place, it does not return a value.
 
     Parameters
