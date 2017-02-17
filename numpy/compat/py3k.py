@@ -26,17 +26,17 @@ if sys.version_info[0] >= 3:
 
     def asunicode(s):
         if isinstance(s, bytes):
-            return s.decode('latin1')
+            return s.decode('utf-8')
         return str(s)
 
     def asbytes(s):
         if isinstance(s, bytes):
             return s
-        return str(s).encode('latin1')
+        return str(s).encode('utf-8')
 
     def asstr(s):
         if isinstance(s, bytes):
-            return s.decode('latin1')
+            return s.decode('utf-8')
         return str(s)
 
     def isfileobj(f):

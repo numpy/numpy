@@ -1239,7 +1239,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + header + newline))
+            fh.write(asunicode(comments + header + newline).decode('utf-8'))
         if iscomplex_X:
             for row in X:
                 row2 = []
@@ -1250,14 +1250,16 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         else:
             for row in X:
                 try:
-                    fh.write(asbytes(format % tuple(row) + newline))
+                    fh.write(asunicode(
+                        format % tuple(row) + newline).decode('utf-8')
+                    )
                 except TypeError:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format))
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + footer + newline))
+            fh.write(asunicode(comments + footer + newline).decode('utf-8'))
     finally:
         if own_fh:
             fh.close()
