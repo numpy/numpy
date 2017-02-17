@@ -11,6 +11,7 @@ Linear algebra basics:
 - pinv            Pseudo-inverse (Moore-Penrose) calculated using a singular
                   value decomposition
 - matrix_power    Integer power of a square matrix
+- inner_prods     Computes many inner products
 
 Eigenvalues and decompositions:
 

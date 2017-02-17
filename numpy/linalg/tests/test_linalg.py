@@ -13,7 +13,7 @@ import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot
+from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, inner_prods
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
@@ -1105,6 +1105,16 @@ class _TestNorm(object):
         assert_raises(ValueError, norm, B, None, 3)
         assert_raises(ValueError, norm, B, None, (2, 3))
         assert_raises(ValueError, norm, B, None, (0, 1, 2))
+
+    def test_inner_prods(self):
+        np.random.seed(42)
+        p, n = 300, 100
+        A = np.random.randn(n, n, dtype=self.dt)
+        X = np.random.randn(p, n, dtype=self.dt)
+
+        assert_equal(inner_prods(X, A), np.array([np.inner(x, A.dot(x))
+                                                            for x in X]))
+        assert_equal(inner_prods(X), np.array([np.inner(x, x) for x in X]))
 
 
 class TestNorm_NonSystematic(object):
