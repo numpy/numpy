@@ -162,3 +162,8 @@ class UnpackBits(Benchmark):
 
     def time_unpackbits_axis1(self):
         np.unpackbits(self.d2, axis=1)
+
+
+class Indices(Benchmark):
+    def time_indices(self):
+        np.indices((1000, 500))
