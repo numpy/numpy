@@ -41,6 +41,10 @@ def ix_(*args):
     Parameters
     ----------
     args : 1-D sequences
+        Each sequence should be of integer or boolean type.
+        Boolean sequences will be interpreted as boolean masks for the
+        corresponding dimension (equivalent to passing in
+        ``np.nonzero(boolean_sequence)``).
 
     Returns
     -------
@@ -58,12 +62,21 @@ def ix_(*args):
     >>> a
     array([[0, 1, 2, 3, 4],
            [5, 6, 7, 8, 9]])
-    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid = np.ix_([0, 1], [2, 4])
     >>> ixgrid
     (array([[0],
            [1]]), array([[2, 4]]))
     >>> ixgrid[0].shape, ixgrid[1].shape
     ((2, 1), (1, 2))
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
+    >>> ixgrid = np.ix_([True, True], [2, 4])
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+    >>> ixgrid = np.ix_([True, True], [False, False, True, False, True])
     >>> a[ixgrid]
     array([[2, 4],
            [7, 9]])
