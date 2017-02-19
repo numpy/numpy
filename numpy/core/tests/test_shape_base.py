@@ -1,11 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
-from numpy.compat import long
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
-                        vstack, hstack, newaxis, concatenate, stack)
-from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
-                           assert_equal, run_module_suite, assert_raises_regex)
+                        block, vstack, hstack, newaxis, concatenate, stack)
+from numpy.testing import (TestCase, assert_, assert_raises,
+                           assert_array_equal, assert_equal, run_module_suite,
+                           assert_raises_regex, assert_almost_equal)
+
+from numpy.compat import long
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
@@ -322,6 +325,127 @@ def test_stack():
     m = np.matrix([[1, 2], [3, 4]])
     assert_raises_regex(ValueError, 'shape too large to be a matrix',
                         stack, [m, m])
+
+
+class TestBlock(TestCase):
+    def test_block_simple_row_wise(self):
+        A = np.ones((2, 2))
+        B = 2 * A
+        desired = np.array([[1, 1, 2, 2],
+                            [1, 1, 2, 2]])
+        result = block([A, B])
+        assert_almost_equal(desired, result)
+        # with tuples
+        result = block((A, B))
+        assert_almost_equal(desired, result)
+
+    def test_block_simple_column_wise(self):
+        A = np.ones((2, 2))
+        B = 2 * A
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2],
+                             [2, 2]])
+        result = block(A, B)
+        assert_almost_equal(expected, result)
+
+    def test_block_needless_brackts(self):
+        A = np.ones((2, 2))
+        B = 2 * A
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2],
+                             [2, 2]])
+        result = block([A], [B])  # here are the needless brackets
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_row_wise(self):
+        # # # 1-D vectors are treated as row arrays
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3, 2, 3, 4]])
+        result = block([a, b])
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_multiple_rows(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3, 2, 3, 4],
+                             [1, 2, 3, 2, 3, 4]])
+        result = block([a, b], [a, b])
+        assert_almost_equal(expected, result)
+
+    def test_block_with_1d_arrays_column_wise(self):
+        # # # 1-D vectors are treated as row arrays
+        a = np.array([1, 2, 3])
+        b = np.array([2, 3, 4])
+        expected = np.array([[1, 2, 3],
+                             [2, 3, 4]])
+        result = block(a, b)
+        assert_almost_equal(expected, result)
+
+    def test_block_mixed_1d_and_2d(self):
+        A = np.ones((2, 2))
+        B = np.array([2, 2])
+        result = block(A, B)
+        expected = np.array([[1, 1],
+                             [1, 1],
+                             [2, 2]])
+        assert_almost_equal(expected, result)
+
+    def test_block_complex(self):
+        # # # a bit more complex
+        One = np.array([[1, 1, 1]])
+        Two = np.array([[2, 2, 2]])
+        Three = np.array([[3, 3, 3, 3, 3, 3]])
+        four = np.array([4, 4, 4, 4, 4, 4])
+        five = np.array([5])
+        six = np.array([6, 6, 6, 6, 6])
+        Zeros = np.zeros((2, 6))
+
+        result = block([One, Two],
+                       Three,
+                       four,
+                       [five, six],
+                       Zeros)
+        expected = np.array([[1, 1, 1, 2, 2, 2],
+                             [3, 3, 3, 3, 3, 3],
+                             [4, 4, 4, 4, 4, 4],
+                             [5, 6, 6, 6, 6, 6],
+                             [0, 0, 0, 0, 0, 0],
+                             [0, 0, 0, 0, 0, 0]])
+        assert_almost_equal(result, expected)
+
+        # additional [] around rows should not have any influence
+        result = block([One, Two],
+                       Three,
+                       [four],
+                       [five, six],
+                       Zeros)
+        assert_almost_equal(result, expected)
+
+        result = block([One, Two],
+                       [Three],
+                       [four],
+                       [five, six],
+                       Zeros)
+        assert_almost_equal(result, expected)
+
+        result = block([One, Two],
+                       [Three],
+                       [four],
+                       [five, six],
+                       [Zeros])
+        assert_almost_equal(result, expected)
+
+    def test_block_with_mismatched_shape(self):
+        a = np.array([0, 0])
+        b = np.eye(2)
+        assert_raises(ValueError, np.block, (a, b))
+        assert_raises(ValueError, np.block, (b, a))
+
+    def test_not_list_or_tuple_as_input(self):
+        assert_raises(TypeError, np.block)
 
 
 if __name__ == "__main__":
