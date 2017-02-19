@@ -315,7 +315,7 @@ def _getmaxmin(t):
     f = getlimits.finfo(t)
     return f.max, f.min
 
-def nan_to_num(x):
+def nan_to_num(x, copy=True):
     """
     Replace nan with zero and inf with finite numbers.
 
@@ -327,6 +327,13 @@ def nan_to_num(x):
     ----------
     x : array_like
         Input data.
+    copy : bool, optional
+        Whether to create a copy of `x` (True) or to replace values
+        in-place (False). The in-place operation only occurs if
+        casting to an array does not require a copy.
+        Default is True.
+
+        .. versionadded:: 1.13
 
     Returns
     -------
@@ -361,7 +368,7 @@ def nan_to_num(x):
             -1.28000000e+002,   1.28000000e+002])
 
     """
-    x = _nx.array(x, subok=True)
+    x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
     if not issubclass(xtype, _nx.inexact):
         return x
