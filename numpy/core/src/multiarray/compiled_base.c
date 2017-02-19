@@ -1509,7 +1509,7 @@ pack_inner(const char *inptr,
         __m128i zero = _mm_setzero_si128();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 2);
+        vn_out -= (vn_out & 1);
         for (index = 0; index < vn_out; index += 2) {
             unsigned int r;
             /* swap as packbits is "big endian", note x86 can load unaligned */
