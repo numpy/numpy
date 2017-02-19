@@ -198,11 +198,16 @@ class TestIndexExpression(TestCase):
 
 class TestIx_(TestCase):
     def test_regression_1(self):
-        # Test empty inputs create ouputs of indexing type, gh-5804
-        # Test both lists and arrays
-        for func in (range, np.arange):
-            a, = np.ix_(func(0))
-            assert_equal(a.dtype, np.intp)
+        # Test empty untyped inputs create ouputs of indexing type, gh-5804
+        a, = np.ix_(range(0))
+        assert_equal(a.dtype, np.intp)
+
+        a, = np.ix_([])
+        assert_equal(a.dtype, np.intp)
+
+        # but if the type is specified, don't change it
+        a, = np.ix_(np.array([], dtype=np.float32))
+        assert_equal(a.dtype, np.float32)
 
     def test_shape_and_dtype(self):
         sizes = (4, 5, 3, 2)

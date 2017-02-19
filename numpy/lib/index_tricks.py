@@ -85,12 +85,13 @@ def ix_(*args):
     out = []
     nd = len(args)
     for k, new in enumerate(args):
-        new = asarray(new)
+        if not isinstance(new, _nx.ndarray):
+            new = asarray(new)
+            if new.size == 0:
+                # Explicitly type empty arrays to avoid float default
+                new = new.astype(_nx.intp)
         if new.ndim != 1:
             raise ValueError("Cross index must be 1 dimensional")
-        if new.size == 0:
-            # Explicitly type empty arrays to avoid float default
-            new = new.astype(_nx.intp)
         if issubdtype(new.dtype, _nx.bool_):
             new, = new.nonzero()
         new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
