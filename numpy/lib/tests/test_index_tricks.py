@@ -219,9 +219,22 @@ class TestIx_(TestCase):
         int_a, = np.nonzero(bool_a)
         assert_equal(np.ix_(bool_a)[0], int_a)
 
-    def test_1d_only(self):
-        idx2d = [[1, 2, 3], [4, 5, 6]]
-        assert_raises(ValueError, np.ix_, idx2d)
+    def test_2d_bool(self):
+        bool_a = [[True, False, False, True]]
+        bool_b = [[True, True], [False, True]]
+
+        int_a1, int_a2, int_b1, int_b2 = np.ix_(bool_a, bool_b)
+
+        assert_equal(int_a1, np.nonzero(bool_a)[0][:,None])
+        assert_equal(int_a2, np.nonzero(bool_a)[1][:,None])
+        assert_equal(int_b1, np.nonzero(bool_b)[0][None,:])
+        assert_equal(int_b2, np.nonzero(bool_b)[1][None,:])
+
+        # assert_equal doesn't check leading dimensions
+        assert_equal(int_a1.ndim, 2)
+        assert_equal(int_a2.ndim, 2)
+        assert_equal(int_b1.ndim, 2)
+        assert_equal(int_b2.ndim, 2)
 
     def test_repeated_input(self):
         length_of_vector = 5
@@ -232,6 +245,17 @@ class TestIx_(TestCase):
         # check that input shape is not modified
         assert_equal(x.shape, (length_of_vector,))
 
+    def test_repeated_input_nd(self):
+        shape_of_vector = (5,3,2)
+        shape_padding = (1,)*len(shape_of_vector)
+        x = np.zeros(shape_of_vector, dtype=np.intp)
+        out = ix_(x, x, x)
+        assert_equal(out[0].shape, shape_of_vector + shape_padding   + shape_padding)
+        assert_equal(out[1].shape, shape_padding   + shape_of_vector + shape_padding)
+        assert_equal(out[2].shape, shape_padding   + shape_padding   + shape_of_vector)
+
+        # check that input shape is not modified
+        assert_equal(x.shape, shape_of_vector)
 
 def test_c_():
     a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]

@@ -83,18 +83,36 @@ def ix_(*args):
 
     """
     out = []
-    nd = len(args)
-    for k, new in enumerate(args):
-        new = asarray(new)
-        if new.ndim != 1:
-            raise ValueError("Cross index must be 1 dimensional")
-        if new.size == 0:
-            # Explicitly type empty arrays to avoid float default
-            new = new.astype(_nx.intp)
-        if issubdtype(new.dtype, _nx.bool_):
-            new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
-        out.append(new)
+    curr_dim = 0
+    for arg in args:
+        # Convert non-arrays to arrays, coercing empty arrays to intp
+        # if not isinstance(arg, _nx.ndarray):
+        arg = _nx.asarray(arg)
+        if arg.size == 0:
+            arg = arg.astype(_nx.intp)
+
+        # convert boolean arrays to integers, noting that an Nd boolean array
+        # will produce N 1D integer arrays
+        if issubdtype(arg.dtype, _nx.bool_):
+            inds = arg.nonzero()
+            arg_dim = 1
+        else:
+            inds = [arg]
+            arg_dim = arg.ndim
+
+        # reshape all indices for this argument, but applying only the leading dimensions
+        for ind in inds:
+            ind = ind.reshape((1,)*curr_dim + ind.shape)
+            out.append(ind)
+
+        curr_dim += arg_dim
+
+    # add the missing trailing dimensions, now we know the overall size
+    total_dims = curr_dim
+    out = [
+        ind.reshape(ind.shape + (total_dims - ind.ndim)*(1,))
+        for ind in out
+    ]
     return tuple(out)
 
 class nd_grid(object):
