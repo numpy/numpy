@@ -320,6 +320,16 @@ class TestNanToNum(TestCase):
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
 
+        # perform the same test but in-place
+        with np.errstate(divide='ignore', invalid='ignore'):
+            vals = np.array((-1., 0, 1))/0.
+        result = nan_to_num(vals, copy=False)
+
+        assert_(result is vals)
+        assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
+        assert_(vals[1] == 0)
+        assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
+
     def test_integer(self):
         vals = nan_to_num(1)
         assert_all(vals == 1)
