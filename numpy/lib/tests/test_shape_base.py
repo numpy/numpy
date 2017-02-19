@@ -159,6 +159,21 @@ class TestApplyAlongAxis(TestCase):
         assert_equal(actual, np.ones(10))
         assert_raises(ValueError, np.apply_along_axis, empty_to_1, 0, a)
 
+    def test_with_iterable_object(self):
+        # from issue 5248
+        d = np.array([
+            [set([1, 11]), set([2, 22]), set([3, 33])],
+            [set([4, 44]), set([5, 55]), set([6, 66])]
+        ])
+        actual = np.apply_along_axis(lambda a: set.union(*a), 0, d)
+        expected = np.array([{1, 11, 4, 44}, {2, 22, 5, 55}, {3, 33, 6, 66}])
+
+        assert_equal(actual, expected)
+
+        # issue 8642 - assert_equal doesn't detect this!
+        for i in np.ndindex(actual.shape):
+            assert_equal(type(actual[i]), type(expected[i]))
+
 
 class TestApplyOverAxes(TestCase):
     def test_simple(self):
