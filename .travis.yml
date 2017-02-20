@@ -72,6 +72,12 @@ matrix:
       env:
        - PYTHONOPTIMIZE=2
        - USE_ASV=1
+    - python: 2.7
+      env:
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+
 before_install:
   - ./tools/travis-before-install.sh
 
