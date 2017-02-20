@@ -4256,6 +4256,13 @@ class TestMaskedFields(TestCase):
         a[0]['a'] = 2
         assert_equal(a.mask, control)
 
+    def test_setitem_scalar(self):
+        # 8510
+        mask_0d = np.ma.masked_array(1, mask=True)
+        arr = np.ma.arange(3)
+        arr[0] = mask_0d
+        assert_array_equal(arr.mask, [True, False, False])
+
     def test_element_len(self):
         # check that len() works for mvoid (Github issue #576)
         for rec in self.data['base']:

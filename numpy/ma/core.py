@@ -3264,7 +3264,7 @@ class MaskedArray(ndarray):
             return
 
         # Get the _data part of the new value
-        dval = value
+        dval = getattr(value, '_data', value)
         # Get the _mask part of the new value
         mval = getattr(value, '_mask', nomask)
         if nbfields and mval is nomask:
