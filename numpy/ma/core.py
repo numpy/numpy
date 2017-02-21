@@ -1603,21 +1603,11 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     """
     if m is nomask:
         return nomask
-    elif isinstance(m, ndarray):
-        # We won't return after this point to make sure we can shrink the mask
-        # Fill the mask in case there are missing data
-        m = filled(m, True)
-        # Make sure the input dtype is valid
-        dtype = make_mask_descr(dtype)
-        if m.dtype == dtype:
-            if copy:
-                result = m.copy()
-            else:
-                result = m
-        else:
-            result = np.array(m, dtype=dtype, copy=copy)
-    else:
-        result = np.array(filled(m, True), dtype=MaskType)
+
+    # Make sure the input dtype is valid.
+    dtype = make_mask_descr(dtype)
+    # Fill the mask in case there are missing data; turn it into an ndarray.
+    result = np.array(filled(m, True), copy=copy, dtype=dtype, subok=True)
     # Bas les masques !
     if shrink and (not result.dtype.names) and (not result.any()):
         return nomask
