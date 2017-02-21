@@ -16,6 +16,15 @@ extern doublereal dlamch_(char *);
 
 extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
+/*
+f2c knows the exact rules for precedence, and so omits parentheses where not
+strictly necessary. Since this is generated code, we don't really care if
+it's readable, and we know what is written is correct. So don't warn about
+them.
+*/
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif
 
 
 /* Table of constant values */
