@@ -29,14 +29,10 @@ generate the CLAPACK_ distribution.
 
 .. _CLAPACK: http://netlib.org/clapack/index.html
 
-The versions in Numeric CVS as of 2005-04-12 use the LAPACK source from the
+The versions in the numpy git repo use the LAPACK source from the
 `Debian package lapack3`_, version 3.0.20000531a-6. It was found that these
 (being regularly maintained) worked better than the patches to the last
 released version of LAPACK available at the LAPACK_ page.
 
-.. _Debian package lapack3: http://packages.debian.org/unstable/libs/lapack3
+.. _Debian package lapack3: https://archive.debian.net/source/etch/lapack3
 .. _LAPACK: http://netlib.org/lapack/index.html
-
-A slightly-patched ``f2c`` was used to add parentheses around ``||`` expressions
-and the arguments to ``<<`` to silence gcc warnings. Edit
-the ``src/output.c`` in the ``f2c`` source to do this.
