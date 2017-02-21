@@ -664,7 +664,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if mn > mx:
         raise ValueError(
             'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([mn, mx])):
+    if not np.all(np.isfinite(np.hstack([mn, mx]))):
         raise ValueError(
             'range parameter must be finite.')
     if mn == mx:
