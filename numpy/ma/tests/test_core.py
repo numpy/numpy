@@ -1402,7 +1402,8 @@ class TestMaskedArrayArithmetic(TestCase):
                    mvoid((1, 2), mask=(1, 1), dtype=dt)):
             ma1 = m1.view(MaskedArray)
             r1 = ma1.view('2i4')
-            for m2 in (mvoid((1, 1), dtype=dt),
+            for m2 in (np.array((1, 1), dtype=dt),
+                       mvoid((1, 1), dtype=dt),
                        mvoid((1, 0), mask=(0, 1), dtype=dt),
                        mvoid((3, 2), mask=(0, 1), dtype=dt)):
                 ma2 = m2.view(MaskedArray)
@@ -1463,13 +1464,15 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(b != 1, masked)
 
     def test_eq_different_dimensions(self):
-        m1 = array([[0, 1], [1, 2]])
-        m2 = array([1, 1], mask=[0, 1])
-        test = (m1 == m2)
-        assert_equal(test, [[False, False],
-                            [True, False]])
-        assert_equal(test.mask, [[False, True],
-                                 [False, True]])
+        m1 = array([1, 1], mask=[0, 1])
+        # test comparison with both masked and regular arrays.
+        for m2 in (array([[0, 1], [1, 2]]),
+                   np.array([[0, 1], [1, 2]])):
+            test = (m1 == m2)
+            assert_equal(test.data, [[False, False],
+                                     [True, False]])
+            assert_equal(test.mask, [[False, True],
+                                     [False, True]])
 
     def test_numpyarithmetics(self):
         # Check that the mask is not back-propagated when using numpy functions
@@ -4055,7 +4058,15 @@ class TestMaskedArrayFunctions(TestCase):
         test = make_mask(mask, dtype=mask.dtype)
         assert_equal(test.dtype, bdtype)
         assert_equal(test, np.array([(0, 0), (0, 1)], dtype=bdtype))
-
+        # Ensure this also works for void
+        mask = np.array((False, True), dtype='?,?')[()]
+        assert_(isinstance(mask, np.void))
+        test = make_mask(mask, dtype=mask.dtype)
+        assert_equal(test, mask)
+        assert_(test is not mask)
+        mask = np.array((0, 1), dtype='i4,i4')[()]
+        test2 = make_mask(mask, dtype=mask.dtype)
+        assert_equal(test2, test)
         # test that nomask is returned when m is nomask.
         bools = [True, False]
         dtypes = [MaskType, np.float]
@@ -4063,7 +4074,6 @@ class TestMaskedArrayFunctions(TestCase):
         for cpy, shr, dt in itertools.product(bools, bools, dtypes):
             res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
             assert_(res is nomask, msgformat % (cpy, shr, dt))
-
 
     def test_mask_or(self):
         # Initialize
