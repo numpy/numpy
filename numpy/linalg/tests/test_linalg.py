@@ -13,7 +13,7 @@ import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot
+from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
@@ -33,11 +33,11 @@ def imply(a, b):
 old_assert_almost_equal = assert_almost_equal
 
 
-def assert_almost_equal(a, b, **kw):
+def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
     if asarray(a).dtype.type in (single, csingle):
-        decimal = 6
+        decimal = single_decimal
     else:
-        decimal = 12
+        decimal = double_decimal
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
 
@@ -59,23 +59,42 @@ def get_rtol(dtype):
         return 1e-11
 
 
-class LinalgCase(object):
+# used to categorize tests
+all_tags = {
+  'square', 'nonsquare', 'hermitian',  # mutually exclusive
+  'generalized', 'size-0', 'strided' # optional additions
+}
 
-    def __init__(self, name, a, b, exception_cls=None):
+class LinalgCase(object):
+    def __init__(self, name, a, b, tags=set()):
+        """
+        A bundle of arguments to be passed to a test case, with an identifying
+        name, the operands a and b, and a set of tags to filter the tests
+        """
         assert_(isinstance(name, str))
         self.name = name
         self.a = a
         self.b = b
-        self.exception_cls = exception_cls
+        self.tags = frozenset(tags)  # prevent shared tags
 
     def check(self, do):
-        if self.exception_cls is None:
-            do(self.a, self.b)
-        else:
-            assert_raises(self.exception_cls, do, self.a, self.b)
+        """
+        Run the function `do` on this test case, expanding arguments
+        """
+        do(self.a, self.b, tags=self.tags)
 
     def __repr__(self):
         return "<LinalgCase: %s>" % (self.name,)
+
+def apply_tag(tag, cases):
+    """
+    Add the given tag (a string) to each of the cases (a list of LinalgCase
+    objects)
+    """
+    assert tag in all_tags, "Invalid tag"
+    for case in cases:
+        case.tags = case.tags | {tag}
+    return cases
 
 
 #
@@ -84,7 +103,10 @@ class LinalgCase(object):
 
 np.random.seed(1234)
 
-SQUARE_CASES = [
+CASES = []
+
+# square test cases
+CASES += apply_tag('square', [
     LinalgCase("single",
                array([[1., 2.], [3., 4.]], dtype=single),
                array([2., 1.], dtype=single)),
@@ -103,10 +125,10 @@ SQUARE_CASES = [
     LinalgCase("cdouble_2",
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
                array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
-    LinalgCase("empty",
-               atleast_2d(array([], dtype=double)),
-               atleast_2d(array([], dtype=double)),
-               linalg.LinAlgError),
+    LinalgCase("0x0",
+               np.empty((0, 0), dtype=double),
+               np.empty((0, 0), dtype=double),
+               tags={'size-0'}),
     LinalgCase("8x8",
                np.random.rand(8, 8),
                np.random.rand(8)),
@@ -122,9 +144,10 @@ SQUARE_CASES = [
     LinalgCase("matrix_a_and_b",
                matrix([[1., 2.], [3., 4.]]),
                matrix([2., 1.]).T),
-]
+])
 
-NONSQUARE_CASES = [
+# non-square test-cases
+CASES += apply_tag('nonsquare', [
     LinalgCase("single_nsq_1",
                array([[1., 2., 3.], [3., 4., 6.]], dtype=single),
                array([2., 1.], dtype=single)),
@@ -163,16 +186,25 @@ NONSQUARE_CASES = [
                array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("8x11",
                np.random.rand(8, 11),
-               np.random.rand(11)),
+               np.random.rand(8)),
     LinalgCase("1x5",
                np.random.rand(1, 5),
-               np.random.rand(5)),
+               np.random.rand(1)),
     LinalgCase("5x1",
                np.random.rand(5, 1),
-               np.random.rand(1)),
-]
+               np.random.rand(5)),
+    LinalgCase("0x4",
+               np.random.rand(0, 4),
+               np.random.rand(0),
+               tags={'size-0'}),
+    LinalgCase("4x0",
+               np.random.rand(4, 0),
+               np.random.rand(4),
+               tags={'size-0'}),
+])
 
-HERMITIAN_CASES = [
+# hermitian test-cases
+CASES += apply_tag('hermitian', [
     LinalgCase("hsingle",
                array([[1., 2.], [2., 1.]], dtype=single),
                None),
@@ -186,9 +218,9 @@ HERMITIAN_CASES = [
                array([[1., 2 + 3j], [2 - 3j, 1]], dtype=cdouble),
                None),
     LinalgCase("hempty",
-               atleast_2d(array([], dtype=double)),
+               np.empty((0, 0), dtype=double),
                None,
-               linalg.LinAlgError),
+               tags={'size-0'}),
     LinalgCase("hnonarray",
                [[1, 2], [2, 1]],
                None),
@@ -201,21 +233,16 @@ HERMITIAN_CASES = [
     LinalgCase("hmatrix_1x1",
                np.random.rand(1, 1),
                None),
-]
+])
 
 
 #
 # Gufunc test cases
 #
+def _make_generalized_cases():
+    new_cases = []
 
-GENERALIZED_SQUARE_CASES = []
-GENERALIZED_NONSQUARE_CASES = []
-GENERALIZED_HERMITIAN_CASES = []
-
-for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
-                 (GENERALIZED_NONSQUARE_CASES, NONSQUARE_CASES),
-                 (GENERALIZED_HERMITIAN_CASES, HERMITIAN_CASES)):
-    for case in src:
+    for case in CASES:
         if not isinstance(case.a, np.ndarray):
             continue
 
@@ -225,8 +252,8 @@ for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
         else:
             b = np.array([case.b, 7 * case.b, 6 * case.b])
         new_case = LinalgCase(case.name + "_tile3", a, b,
-                              case.exception_cls)
-        tgt.append(new_case)
+                              tags=case.tags | {'generalized'})
+        new_cases.append(new_case)
 
         a = np.array([case.a] * 2 * 3).reshape((3, 2) + case.a.shape)
         if case.b is None:
@@ -234,13 +261,16 @@ for tgt, src in ((GENERALIZED_SQUARE_CASES, SQUARE_CASES),
         else:
             b = np.array([case.b] * 2 * 3).reshape((3, 2) + case.b.shape)
         new_case = LinalgCase(case.name + "_tile213", a, b,
-                              case.exception_cls)
-        tgt.append(new_case)
+                              tags=case.tags | {'generalized'})
+        new_cases.append(new_case)
+
+    return new_cases
+
+CASES += _make_generalized_cases()
 
 #
 # Generate stride combination variations of the above
 #
-
 
 def _stride_comb_iter(x):
     """
@@ -289,29 +319,35 @@ def _stride_comb_iter(x):
             xi = np.lib.stride_tricks.as_strided(x, strides=s)
             yield xi, "stride_xxx_0_0"
 
-for src in (SQUARE_CASES,
-            NONSQUARE_CASES,
-            HERMITIAN_CASES,
-            GENERALIZED_SQUARE_CASES,
-            GENERALIZED_NONSQUARE_CASES,
-            GENERALIZED_HERMITIAN_CASES):
-
+def _make_strided_cases():
     new_cases = []
-    for case in src:
-        for a, a_tag in _stride_comb_iter(case.a):
-            for b, b_tag in _stride_comb_iter(case.b):
-                new_case = LinalgCase(case.name + "_" + a_tag + "_" + b_tag, a, b,
-                                      exception_cls=case.exception_cls)
+    for case in CASES:
+        for a, a_label in _stride_comb_iter(case.a):
+            for b, b_label in _stride_comb_iter(case.b):
+                new_case = LinalgCase(case.name + "_" + a_label + "_" + b_label, a, b,
+                                      tags=case.tags | {'strided'})
                 new_cases.append(new_case)
-    src.extend(new_cases)
+    return new_cases
+
+CASES += _make_strided_cases()
 
 
 #
 # Test different routines against the above cases
 #
 
-def _check_cases(func, cases):
-    for case in cases:
+def _check_cases(func, require=set(), exclude=set()):
+    """
+    Run func on each of the cases with all of the tags in require, and none
+    of the tags in exclude
+    """
+    for case in CASES:
+        # filter by require and exclude
+        if case.tags & require != require:
+            continue
+        if case.tags & exclude:
+            continue
+
         try:
             case.check(func)
         except Exception:
@@ -320,43 +356,67 @@ def _check_cases(func, cases):
             raise AssertionError(msg)
 
 
-class LinalgTestCase(object):
+class LinalgSquareTestCase(object):
 
     def test_sq_cases(self):
-        _check_cases(self.do, SQUARE_CASES)
+        _check_cases(self.do, require={'square'}, exclude={'generalized', 'size-0'})
+
+    def test_empty_sq_cases(self):
+        _check_cases(self.do, require={'square', 'size-0'}, exclude={'generalized'})
 
 
 class LinalgNonsquareTestCase(object):
 
-    def test_sq_cases(self):
-        _check_cases(self.do, NONSQUARE_CASES)
+    def test_nonsq_cases(self):
+        _check_cases(self.do, require={'nonsquare'}, exclude={'generalized', 'size-0'})
+
+    def test_empty_nonsq_cases(self):
+        _check_cases(self.do, require={'nonsquare', 'size-0'}, exclude={'generalized'})
+
+class HermitianTestCase(object):
+
+    def test_herm_cases(self):
+        _check_cases(self.do, require={'hermitian'}, exclude={'generalized', 'size-0'})
+
+    def test_empty_herm_cases(self):
+        _check_cases(self.do, require={'hermitian', 'size-0'}, exclude={'generalized'})
 
 
-class LinalgGeneralizedTestCase(object):
+class LinalgGeneralizedSquareTestCase(object):
 
     @dec.slow
     def test_generalized_sq_cases(self):
-        _check_cases(self.do, GENERALIZED_SQUARE_CASES)
+        _check_cases(self.do, require={'generalized', 'square'}, exclude={'size-0'})
+
+    @dec.slow
+    def test_generalized_empty_sq_cases(self):
+        _check_cases(self.do, require={'generalized', 'square', 'size-0'})
 
 
 class LinalgGeneralizedNonsquareTestCase(object):
 
     @dec.slow
     def test_generalized_nonsq_cases(self):
-        _check_cases(self.do, GENERALIZED_NONSQUARE_CASES)
+        _check_cases(self.do, require={'generalized', 'nonsquare'}, exclude={'size-0'})
 
-
-class HermitianTestCase(object):
-
-    def test_herm_cases(self):
-        _check_cases(self.do, HERMITIAN_CASES)
+    @dec.slow
+    def test_generalized_empty_nonsq_cases(self):
+        _check_cases(self.do, require={'generalized', 'nonsquare', 'size-0'})
 
 
 class HermitianGeneralizedTestCase(object):
 
     @dec.slow
     def test_generalized_herm_cases(self):
-        _check_cases(self.do, GENERALIZED_HERMITIAN_CASES)
+        _check_cases(self.do,
+            require={'generalized', 'hermitian'},
+            exclude={'size-0'})
+
+    @dec.slow
+    def test_generalized_empty_herm_cases(self):
+        _check_cases(self.do,
+            require={'generalized', 'hermitian', 'size-0'},
+            exclude={'none'})
 
 
 def dot_generalized(a, b):
@@ -389,9 +449,9 @@ def identity_like_generalized(a):
         return identity(a.shape[0])
 
 
-class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestSolve(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
@@ -455,9 +515,9 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase):
         assert_(isinstance(result, ArraySubclass))
 
 
-class TestInv(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
                             identity_like_generalized(a))
@@ -486,9 +546,12 @@ class TestInv(LinalgTestCase, LinalgGeneralizedTestCase):
         assert_equal(a.shape, res.shape)
 
 
-class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.eigvals, a)
+            return
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
@@ -503,9 +566,13 @@ class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase):
             yield check, dtype
 
 
-class TestEig(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.eig, a)
+            return
+
         evalues, evectors = linalg.eig(a)
         assert_allclose(dot_generalized(a, evectors),
                         np.asarray(evectors) * np.asarray(evalues)[..., None, :],
@@ -528,9 +595,13 @@ class TestEig(LinalgTestCase, LinalgGeneralizedTestCase):
             yield check, dtype
 
 
-class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.svd, a, 0)
+            return
+
         u, s, vt = linalg.svd(a, 0)
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
@@ -552,26 +623,34 @@ class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase):
             yield check, dtype
 
 
-class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestCondSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
         c = asarray(a)  # a might be a matrix
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
+            return
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a), decimal=5)
+        assert_almost_equal(
+            s[..., 0] / s[..., -1], linalg.cond(a),
+            single_decimal=5, double_decimal=11)
 
     def test_stacked_arrays_explicitly(self):
         A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
         assert_equal(linalg.cond(A), linalg.cond(A[None, ...])[0])
 
 
-class TestCond2(LinalgTestCase):
+class TestCond2(LinalgSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
         c = asarray(a)  # a might be a matrix
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
+            return
         s = linalg.svd(c, compute_uv=False)
-        old_assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a, 2), decimal=5)
+        assert_almost_equal(
+            s[..., 0] / s[..., -1], linalg.cond(a, 2),
+            single_decimal=5, double_decimal=11)
 
     def test_stacked_arrays_explicitly(self):
         A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
@@ -585,17 +664,24 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgTestCase):
+class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.pinv, a)
+            return
         a_ginv = linalg.pinv(a)
-        assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
+        # `a @ a_ginv == I` does not hold if a is singular
+        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
-class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
+class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.det, a)
+            return
         d = linalg.det(a)
         (s, ld) = linalg.slogdet(a)
         if asarray(a).dtype.type in (single, double):
@@ -636,9 +722,13 @@ class TestDet(LinalgTestCase, LinalgGeneralizedTestCase):
             yield check, dtype
 
 
-class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase):
+class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.lstsq, a, b)
+            return
+
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
@@ -729,7 +819,10 @@ class TestBoolPower(object):
 
 class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.eigvalsh, a, 'L')
+            return
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev = linalg.eigvalsh(a, 'L')
@@ -779,7 +872,10 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
 
-    def do(self, a, b):
+    def do(self, a, b, tags):
+        if 'size-0' in tags:
+            assert_raises(LinAlgError, linalg.eigh, a)
+            return
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev, evc = linalg.eigh(a)

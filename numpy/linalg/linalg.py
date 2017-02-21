@@ -1138,6 +1138,7 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
@@ -1278,6 +1279,7 @@ def eigh(a, UPLO='L'):
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
+    _assertNoEmpty2d(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
@@ -1918,6 +1920,7 @@ def lstsq(a, b, rcond=-1):
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
+    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
@@ -1932,6 +1935,14 @@ def lstsq(a, b, rcond=-1):
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
+    # This line:
+    #  * is incorrect, according to the LAPACK documentation
+    #  * raises a ValueError if min(m,n) == 0
+    #  * should not be calculated here anyway, as LAPACK should calculate
+    #    `liwork` for us. But that only works if our version of lapack does
+    #    not have this bug:
+    #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
+    #    Lapack_lite does have that bug...
     nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
     iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
     if isComplexType(t):
