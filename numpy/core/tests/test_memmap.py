@@ -41,6 +41,7 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
+        self.assertEqual(newfp.flags.writeable, False)
 
     def test_open_with_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
