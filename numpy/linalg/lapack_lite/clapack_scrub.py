@@ -70,7 +70,7 @@ class LenSubsScanner(MyScanner):
                       "i_len", "do_fio", "do_lio") + iofun
 
     # Routines to not scrub the ftnlen argument from
-    keep_ftnlen = (Str('ilaenv_') | Str('s_rnge')) + Str('(')
+    keep_ftnlen = (Str('ilaenv_') | Str('iparmq_') | Str('s_rnge')) + Str('(')
 
     lexicon = Lexicon([
         (iofunctions,                           TEXT),

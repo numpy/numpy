@@ -23,7 +23,7 @@ import clapack_scrub
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
 #                     -C to check array subscripts
-F2C_ARGS = ['-A']
+F2C_ARGS = ['-A', '-Nx800']
 
 # The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
@@ -285,6 +285,12 @@ def main():
         print('creating %s ...'  % c_file)
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
+
+        # apply the patch
+        patch_file = fortran_file + '.patch'
+        if os.path.exists(patch_file):
+            subprocess.check_call(['patch', '-u', fortran_file, patch_file])
+            print("Patched {}".format(fortran_file))
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
