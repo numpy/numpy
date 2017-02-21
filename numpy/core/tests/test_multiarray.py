@@ -2013,13 +2013,13 @@ class TestMethods(TestCase):
             d = np.array([2, 1])
             d.partition(0, kind=k)
             assert_raises(ValueError, d.partition, 2)
-            assert_raises(ValueError, d.partition, 3, axis=1)
+            assert_raises(np.AxisError, d.partition, 3, axis=1)
             assert_raises(ValueError, np.partition, d, 2)
-            assert_raises(ValueError, np.partition, d, 2, axis=1)
+            assert_raises(np.AxisError, np.partition, d, 2, axis=1)
             assert_raises(ValueError, d.argpartition, 2)
-            assert_raises(ValueError, d.argpartition, 3, axis=1)
+            assert_raises(np.AxisError, d.argpartition, 3, axis=1)
             assert_raises(ValueError, np.argpartition, d, 2)
-            assert_raises(ValueError, np.argpartition, d, 2, axis=1)
+            assert_raises(np.AxisError, np.argpartition, d, 2, axis=1)
             d = np.arange(10).reshape((2, 5))
             d.partition(1, axis=0, kind=k)
             d.partition(4, axis=1, kind=k)
@@ -3522,8 +3522,8 @@ class TestArgmin(TestCase):
 class TestMinMax(TestCase):
 
     def test_scalar(self):
-        assert_raises(ValueError, np.amax, 1, 1)
-        assert_raises(ValueError, np.amin, 1, 1)
+        assert_raises(np.AxisError, np.amax, 1, 1)
+        assert_raises(np.AxisError, np.amin, 1, 1)
 
         assert_equal(np.amax(1, axis=0), 1)
         assert_equal(np.amin(1, axis=0), 1)
@@ -3531,7 +3531,7 @@ class TestMinMax(TestCase):
         assert_equal(np.amin(1, axis=None), 1)
 
     def test_axis(self):
-        assert_raises(ValueError, np.amax, [1, 2, 3], 1000)
+        assert_raises(np.AxisError, np.amax, [1, 2, 3], 1000)
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
@@ -3793,7 +3793,7 @@ class TestLexsort(TestCase):
 
     def test_invalid_axis(self): # gh-7528
         x = np.linspace(0., 1., 42*3).reshape(42, 3)
-        assert_raises(ValueError, np.lexsort, x, axis=2)
+        assert_raises(np.AxisError, np.lexsort, x, axis=2)
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""

@@ -1010,7 +1010,7 @@ class TestNonzero(TestCase):
 
         assert_raises(ValueError, np.count_nonzero, m, axis=(1, 1))
         assert_raises(TypeError, np.count_nonzero, m, axis='foo')
-        assert_raises(ValueError, np.count_nonzero, m, axis=3)
+        assert_raises(np.AxisError, np.count_nonzero, m, axis=3)
         assert_raises(TypeError, np.count_nonzero,
                       m, axis=np.array([[1], [2]]))
 
@@ -2323,10 +2323,10 @@ class TestRollaxis(TestCase):
 
     def test_exceptions(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4)
-        assert_raises(ValueError, np.rollaxis, a, -5, 0)
-        assert_raises(ValueError, np.rollaxis, a, 0, -5)
-        assert_raises(ValueError, np.rollaxis, a, 4, 0)
-        assert_raises(ValueError, np.rollaxis, a, 0, 5)
+        assert_raises(np.AxisError, np.rollaxis, a, -5, 0)
+        assert_raises(np.AxisError, np.rollaxis, a, 0, -5)
+        assert_raises(np.AxisError, np.rollaxis, a, 4, 0)
+        assert_raises(np.AxisError, np.rollaxis, a, 0, 5)
 
     def test_results(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
@@ -2413,11 +2413,11 @@ class TestMoveaxis(TestCase):
 
     def test_errors(self):
         x = np.random.randn(1, 2, 3)
-        assert_raises_regex(ValueError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'invalid axis .* `source`',
                             np.moveaxis, x, 3, 0)
-        assert_raises_regex(ValueError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'invalid axis .* `source`',
                             np.moveaxis, x, -4, 0)
-        assert_raises_regex(ValueError, 'invalid axis .* `destination`',
+        assert_raises_regex(np.AxisError, 'invalid axis .* `destination`',
                             np.moveaxis, x, 0, 5)
         assert_raises_regex(ValueError, 'repeated axis in `source`',
                             np.moveaxis, x, [0, 0], [0, 1])

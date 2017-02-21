@@ -327,7 +327,6 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     PyArray_Descr *dtype = NULL;
     PyArrayObject *ret = NULL;
     PyArrayObject_fields *sliding_view = NULL;
-    int orig_axis = axis;
 
     if (narrays <= 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -345,13 +344,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     }
 
     /* Handle standard Python negative indexing */
-    if (axis < 0) {
-        axis += ndim;
-    }
-
-    if (axis < 0 || axis >= ndim) {
-        PyErr_Format(PyExc_IndexError,
-                     "axis %d out of bounds [0, %d)", orig_axis, ndim);
+    if (check_and_adjust_axis(&axis, ndim) < 0) {
         return NULL;
     }
 
@@ -4109,6 +4102,24 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     return array_shares_memory_impl(args, kwds, NPY_MAY_SHARE_BOUNDS, 0);
 }
 
+static PyObject *
+normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"axis", "ndim", NULL};
+    int axis;
+    int ndim;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii", kwlist,
+                                     &axis, &ndim)) {
+        return NULL;
+    }
+
+    if(check_and_adjust_axis(&axis, ndim) < 0) {
+        return NULL;
+    }
+
+    return PyInt_FromLong(axis);
+}
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
@@ -4283,6 +4294,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"packbits", (PyCFunction)io_pack,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unpackbits", (PyCFunction)io_unpack,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };

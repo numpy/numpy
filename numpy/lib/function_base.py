@@ -25,7 +25,7 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount,
+    _insert, add_docstring, digitize, bincount, normalize_axis_index,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -4828,14 +4828,7 @@ def insert(arr, obj, values, axis=None):
             arr = arr.ravel()
         ndim = arr.ndim
         axis = ndim - 1
-    else:
-        if ndim > 0 and (axis < -ndim or axis >= ndim):
-            raise IndexError(
-                "axis %i is out of bounds for an array of "
-                "dimension %i" % (axis, ndim))
-        if (axis < 0):
-            axis += ndim
-    if (ndim == 0):
+    elif ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
@@ -4846,6 +4839,8 @@ def insert(arr, obj, values, axis=None):
             return wrap(arr)
         else:
             return arr
+    else:
+        axis = normalize_axis_index(axis, ndim)
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)

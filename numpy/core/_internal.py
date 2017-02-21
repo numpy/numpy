@@ -630,3 +630,6 @@ def _gcd(a, b):
 # Exception used in shares_memory()
 class TooHardError(RuntimeError):
     pass
+
+class AxisError(ValueError, IndexError):
+    pass

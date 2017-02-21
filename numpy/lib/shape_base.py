@@ -7,6 +7,7 @@ from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, isscalar, array, asanyarray
     )
 from numpy.core.fromnumeric import product, reshape, transpose
+from numpy.core.multiarray import normalize_axis_index
 from numpy.core import vstack, atleast_3d
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
@@ -96,10 +97,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # handle negative axes
     arr = asanyarray(arr)
     nd = arr.ndim
-    if not (-nd <= axis < nd):
-        raise IndexError('axis {0} out of bounds [-{1}, {1})'.format(axis, nd))
-    if axis < 0:
-        axis += nd
+    axis = normalize_axis_index(axis, nd)
 
     # arr, with the iteration axis at the end
     in_dims = list(range(nd))
@@ -289,8 +287,7 @@ def expand_dims(a, axis):
     """
     a = asarray(a)
     shape = a.shape
-    if axis < 0:
-        axis = axis + len(shape) + 1
+    axis = normalize_axis_index(axis, a.ndim + 1)
     return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
 row_stack = vstack
