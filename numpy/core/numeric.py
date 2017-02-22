@@ -1890,35 +1890,35 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
+    if type(arr) is not ndarray:
+        class_name = type(arr).__name__
+    else:
+        class_name = "array"
+
     if arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', "array(")
+                           ', ', class_name + "(")
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
-
-    if arr.__class__ is not ndarray:
-        cName = arr.__class__.__name__
-    else:
-        cName = "array"
 
     skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
 
     if skipdtype:
-        return "%s(%s)" % (cName, lst)
+        return "%s(%s)" % (class_name, lst)
     else:
         typename = arr.dtype.name
         # Quote typename in the output if it is "complex".
         if typename and not (typename[0].isalpha() and typename.isalnum()):
             typename = "'%s'" % typename
 
-        lf = ''
+        lf = ' '
         if issubclass(arr.dtype.type, flexible):
             if arr.dtype.names:
                 typename = "%s" % str(arr.dtype)
             else:
                 typename = "'%s'" % str(arr.dtype)
-            lf = '\n'+' '*len("array(")
-        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
+            lf = '\n'+' '*len(class_name + "(")
+        return "%s(%s,%sdtype=%s)" % (class_name, lst, lf, typename)
 
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
