@@ -52,7 +52,7 @@ def test_bytes():
 
 
 @in_foreign_locale
-def test_fromstring_foreign():
+def test_fromstring_foreign_repr():
     f = 1.234
     a = np.fromstring(repr(f), dtype=float, sep=" ")
     assert_equal(a[0], f)
