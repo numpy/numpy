@@ -6542,9 +6542,7 @@ def compressed(x):
         Equivalent method.
 
     """
-    if not isinstance(x, MaskedArray):
-        x = asanyarray(x)
-    return x.compressed()
+    return asanyarray(x).compressed()
 
 
 def concatenate(arrays, axis=0):
@@ -7690,6 +7688,10 @@ def asanyarray(a, dtype=None):
     <class 'numpy.ma.core.MaskedArray'>
 
     """
+    # workaround for #8666, to preserve identity. Ideally the bottom line
+    # would handle this for us.
+    if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
+        return a
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
 
 
