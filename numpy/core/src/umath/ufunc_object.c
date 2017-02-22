@@ -5428,7 +5428,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
     Py_DECREF(tmp);
     if (ap1 == NULL) {
         return NULL;
@@ -5437,7 +5437,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
     Py_DECREF(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
