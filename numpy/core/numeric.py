@@ -17,7 +17,7 @@ from .multiarray import (
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros)
+    zeros, normalize_axis_index)
 if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
@@ -27,7 +27,7 @@ from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
                     ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._internal import TooHardError
+from ._internal import TooHardError, AxisError
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -65,7 +65,7 @@ __all__ = [
     'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
     'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
     'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
-    'TooHardError',
+    'TooHardError', 'AxisError'
     ]
 
 
@@ -1527,15 +1527,12 @@ def rollaxis(a, axis, start=0):
 
     """
     n = a.ndim
-    if axis < 0:
-        axis += n
+    axis = normalize_axis_index(axis, n)
     if start < 0:
         start += n
     msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
-    if not (0 <= axis < n):
-        raise ValueError(msg % ('axis', -n, 'axis', n, axis))
     if not (0 <= start < n + 1):
-        raise ValueError(msg % ('start', -n, 'start', n + 1, start))
+        raise AxisError(msg % ('start', -n, 'start', n + 1, start))
     if axis < start:
         # it's been removed
         start -= 1
@@ -1554,7 +1551,7 @@ def _validate_axis(axis, ndim, argname):
         axis = list(axis)
     axis = [a + ndim if a < 0 else a for a in axis]
     if not builtins.all(0 <= a < ndim for a in axis):
-        raise ValueError('invalid axis for this array in `%s` argument' %
+        raise AxisError('invalid axis for this array in `%s` argument' %
                          argname)
     if len(set(axis)) != len(axis):
         raise ValueError('repeated axis in `%s` argument' % argname)
@@ -2089,15 +2086,12 @@ def indices(dimensions, dtype=int):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    if N == 0:
-        return array([], dtype=dtype)
+    shape = (1,)*N
     res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        tmp = arange(dim, dtype=dtype)
-        tmp.shape = (1,)*i + (dim,)+(1,)*(N-i-1)
-        newdim = dimensions[:i] + (1,) + dimensions[i+1:]
-        val = zeros(newdim, dtype)
-        add(tmp, val, res[i])
+        res[i] = arange(dim, dtype=dtype).reshape(
+            shape[:i] + (dim,) + shape[i+1:]
+        )
     return res
 
 

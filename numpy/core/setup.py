@@ -901,7 +901,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
-            join('src', 'umath', 'ufunc_type_resolution.c')]
+            join('src', 'umath', 'ufunc_type_resolution.c'),
+            join('src', 'private', 'mem_overlap.c')]
 
     umath_deps = [
             generate_umath_py,
@@ -911,6 +912,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
+            join('src', 'private', 'lowlevel_strided_loops.h'),
+            join('src', 'private', 'mem_overlap.h'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
 
     config.add_extension('umath',

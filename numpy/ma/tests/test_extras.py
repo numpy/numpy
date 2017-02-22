@@ -667,6 +667,15 @@ class TestMedian(TestCase):
         r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
                                              [np.inf, np.inf]]), axis=None)
         assert_equal(r, np.inf)
+        # all masked
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=-1)
+        assert_equal(r.mask, True)
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=None)
+        assert_equal(r.mask, True)
 
     def test_non_masked(self):
         x = np.arange(9)
@@ -864,7 +873,6 @@ class TestMedian(TestCase):
     def test_nan(self):
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            w.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
             for mask in (False, np.zeros(6, dtype=np.bool)):
                 dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
                 dm.mask = mask
@@ -914,7 +922,6 @@ class TestMedian(TestCase):
         a[2] = np.nan
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            w.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
             assert_array_equal(np.ma.median(a), np.nan)
             assert_array_equal(np.ma.median(a, axis=0), np.nan)
             assert_(w.log[0].category is RuntimeWarning)
@@ -929,7 +936,6 @@ class TestMedian(TestCase):
         # no axis
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            w.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_array_equal(np.ma.median(a), np.nan)
             assert_(np.isscalar(np.ma.median(a)))
@@ -992,6 +998,19 @@ class TestMedian(TestCase):
             assert_equal(np.ma.median(a, axis=0), inf)
             assert_equal(np.ma.median(a, axis=1), inf)
 
+            a = np.array([[inf, 7, -inf, -9],
+                          [-10, np.nan, np.nan, 5],
+                          [4, np.nan, np.nan, inf]],
+                          dtype=np.float32)
+            a = np.ma.masked_array(a, mask=np.isnan(a))
+            if inf > 0:
+                assert_equal(np.ma.median(a, axis=0), [4., 7., -inf, 5.])
+                assert_equal(np.ma.median(a), 4.5)
+            else:
+                assert_equal(np.ma.median(a, axis=0), [-10., 7., -inf, -9.])
+                assert_equal(np.ma.median(a), -2.5)
+            assert_equal(np.ma.median(a, axis=1), [-1., -2.5, inf])
+
             for i in range(0, 10):
                 for j in range(1, 10):
                     a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
@@ -1006,7 +1025,6 @@ class TestMedian(TestCase):
         a = np.ma.masked_array(np.array([], dtype=float))
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            w.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
             assert_array_equal(np.ma.median(a), np.nan)
             assert_(w.log[0].category is RuntimeWarning)
 
@@ -1015,7 +1033,6 @@ class TestMedian(TestCase):
         # no axis
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            w.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_array_equal(np.ma.median(a), np.nan)
             assert_(w.log[0].category is RuntimeWarning)

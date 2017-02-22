@@ -90,6 +90,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -936,10 +937,7 @@ def chebder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1064,10 +1062,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("Too many integration constants")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1472,7 +1467,7 @@ def chebvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
+    .. math:: V[..., (deg[1] + 1)*i + j] = T_i(x) * T_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1598,7 +1593,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Chebyshev series to data.
 
-    Return the coefficients of a Legendre series of degree `deg` that is the
+    Return the coefficients of a Chebyshev series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
     1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting

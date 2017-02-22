@@ -1226,7 +1226,7 @@ NPY_NO_EXPORT void
         const @type@ in2 = *(@type@ *)ip2;
         *((npy_bool *)op1) = in1 != in2;
 
-        if (in1 == NPY_DATETIME_NAT && in1 == NPY_DATETIME_NAT) {
+        if (in1 == NPY_DATETIME_NAT && in2 == NPY_DATETIME_NAT) {
             NPY_ALLOW_C_API_DEF
             NPY_ALLOW_C_API;
             /* 2016-01-18, 1.11 */

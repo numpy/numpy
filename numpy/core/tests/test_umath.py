@@ -1422,6 +1422,19 @@ class TestSpecialMethods(TestCase):
         a = A()
         self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
+    def test_none_wrap(self):
+        # Tests that issue #8507 is resolved. Previously, this would segfault
+
+        class A(object):
+            def __array__(self):
+                return np.zeros(1)
+
+            def __array_wrap__(self, arr, context=None):
+                return None
+
+        a = A()
+        assert_equal(ncu.maximum(a, a), None)
+
     def test_default_prepare(self):
 
         class with_wrap(object):
@@ -1450,6 +1463,22 @@ class TestSpecialMethods(TestCase):
         a = np.array(1).view(type=with_prepare)
         x = np.add(a, a)
         assert_equal(x, np.array(2))
+        assert_equal(type(x), with_prepare)
+
+    def test_prepare_out(self):
+
+        class with_prepare(np.ndarray):
+            __array_priority__ = 10
+
+            def __array_prepare__(self, arr, context):
+                return np.array(arr).view(type=with_prepare)
+
+        a = np.array([1]).view(type=with_prepare)
+        x = np.add(a, a, a)
+        # Returned array is new, because of the strange
+        # __array_prepare__ above
+        assert_(not np.shares_memory(x, a))
+        assert_equal(x, np.array([2]))
         assert_equal(type(x), with_prepare)
 
     def test_failing_prepare(self):
@@ -2092,10 +2121,16 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
-            "Long double support buggy on win32 and PPC, ticket 1664.")
+@dec.knownfailureif(sys.platform == 'win32',
+            "Long double support buggy on win32, ticket 1664.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
+
+def test_nextafter_0():
+    for t, direction in itertools.product(np.sctypes['float'], (1, -1)):
+        tiny = np.finfo(t).tiny
+        assert_(0. < direction * np.nextafter(t(0), t(direction)) < tiny)
+        assert_equal(np.nextafter(t(0), t(direction)) / t(2.1), direction * 0.0)
 
 def _test_spacing(t):
     one = t(1)
@@ -2115,8 +2150,8 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
-            "Long double support buggy on win32 and PPC, ticket 1664.")
+@dec.knownfailureif(sys.platform == 'win32',
+            "Long double support buggy on win32, ticket 1664.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 

@@ -1030,7 +1030,7 @@ class TestMaskedArrayArithmetic(TestCase):
         res = count(ott, 0)
         assert_(isinstance(res, ndarray))
         assert_(res.dtype.type is np.intp)
-        assert_raises(ValueError, ott.count, axis=1)
+        assert_raises(np.AxisError, ott.count, axis=1)
 
     def test_minmax_func(self):
         # Tests minimum and maximum.
@@ -4255,6 +4255,13 @@ class TestMaskedFields(TestCase):
         a[0]['a'] = 2
         assert_equal(a.mask, control)
 
+    def test_setitem_scalar(self):
+        # 8510
+        mask_0d = np.ma.masked_array(1, mask=True)
+        arr = np.ma.arange(3)
+        arr[0] = mask_0d
+        assert_array_equal(arr.mask, [True, False, False])
+
     def test_element_len(self):
         # check that len() works for mvoid (Github issue #576)
         for rec in self.data['base']:
@@ -4402,7 +4409,7 @@ class TestOptionalArgs(TestCase):
         assert_equal(count(a, axis=(0,1), keepdims=True), 4*ones((1,1,4)))
         assert_equal(count(a, axis=-2), 2*ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
-        assert_raises(ValueError, count, a, axis=3)
+        assert_raises(np.AxisError, count, a, axis=3)
 
         # check the 'nomask' path
         a = np.ma.array(d, mask=nomask)
@@ -4416,13 +4423,35 @@ class TestOptionalArgs(TestCase):
         assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
         assert_equal(count(a, axis=-2), 3*ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
-        assert_raises(ValueError, count, a, axis=3)
+        assert_raises(np.AxisError, count, a, axis=3)
 
         # check the 'masked' singleton
         assert_equal(count(np.ma.masked), 0)
 
         # check 0-d arrays do not allow axis > 0
-        assert_raises(ValueError, count, np.ma.array(1), axis=1)
+        assert_raises(np.AxisError, count, np.ma.array(1), axis=1)
+
+
+class TestMaskedConstant(TestCase):
+    def _do_add_test(self, add):
+        # sanity check
+        self.assertIs(add(np.ma.masked, 1), np.ma.masked)
+
+        # now try with a vector
+        vector = np.array([1, 2, 3])
+        result = add(np.ma.masked, vector)
+
+        # lots of things could go wrong here
+        assert_(result is not np.ma.masked)
+        assert_(not isinstance(result, np.ma.core.MaskedConstant))
+        assert_equal(result.shape, vector.shape)
+        assert_equal(np.ma.getmask(result), np.ones(vector.shape, dtype=bool))
+
+    def test_ufunc(self):
+        self._do_add_test(np.add)
+
+    def test_operator(self):
+        self._do_add_test(lambda a, b: a + b)
 
 
 def test_masked_array():
@@ -4471,6 +4500,15 @@ def test_append_masked_array_along_axis():
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
+
+
+def test_ufunc_with_output():
+    # check that giving an output argument always returns that output.
+    # Regression test for gh-8416.
+    x = array([1., 2., 3.], mask=[0, 0, 1])
+    y = np.add(x, 1., out=x)
+    assert_(y is x)
+
 
 ###############################################################################
 if __name__ == "__main__":

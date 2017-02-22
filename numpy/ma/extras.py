@@ -36,6 +36,7 @@ from .core import (
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
+from numpy.core.multiarray import normalize_axis_index
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -380,11 +381,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
+    axis = normalize_axis_index(axis, nd)
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -717,8 +714,8 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if axis is None:
         axis = 0
-    elif axis < 0:
-        axis += asorted.ndim
+    else:
+        axis = normalize_axis_index(axis, asorted.ndim)
 
     if asorted.ndim == 1:
         counts = count(asorted)
@@ -729,10 +726,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             s = mid.sum(out=out)
             if not odd:
                 s = np.true_divide(s, 2., casting='safe', out=out)
-                # masked ufuncs do not fullfill `returned is out` (gh-8416)
-                # fix this to return the same in the nd path
-                if out is not None:
-                    s = out
             s = np.lib.utils._median_nancheck(asorted, s, axis, out)
         else:
             s = mid.mean(out=out)
@@ -758,6 +751,19 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     ind[axis] = np.minimum(h, asorted.shape[axis] - 1)
     high = asorted[tuple(ind)]
 
+    def replace_masked(s):
+        # Replace masked entries with minimum_full_value unless it all values
+        # are masked. This is required as the sort order of values equal or
+        # larger than the fill value is undefined and a valid value placed
+        # elsewhere, e.g. [4, --, inf].
+        if np.ma.is_masked(s):
+            rep = (~np.all(asorted.mask, axis=axis)) & s.mask
+            s.data[rep] = np.ma.minimum_fill_value(asorted)
+            s.mask[rep] = False
+
+    replace_masked(low)
+    replace_masked(high)
+
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     np.copyto(low, high, where=odd)
@@ -776,12 +782,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     else:
         s = np.ma.mean([low, high], axis=0, out=out)
 
-    # if result is masked either the input contained enough minimum_fill_value
-    # so that it would be the median or all values masked
-    if np.ma.is_masked(s):
-        rep = (~np.all(asorted.mask, axis=axis)) & s.mask
-        s.data[rep] = np.ma.minimum_fill_value(asorted)
-        s.mask[rep] = False
     return s
 
 

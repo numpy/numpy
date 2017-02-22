@@ -1,0 +1,9 @@
+==========================
+NumPy 1.12.1 Release Notes
+==========================
+
+NumPy 1.12.1 supports Python 2.7 and 3.4 - 3.6 and fixes bugs and regressions
+found in NumPy 1.12.0. Wheels for Linux, Windows, and OSX can be found on pypi,
+
+Fixes Merged
+============

@@ -41,6 +41,7 @@
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
 #include "reduction.h"
+#include "mem_overlap.h"
 
 #include "ufunc_object.h"
 #include "ufunc_override.h"
@@ -1416,7 +1417,8 @@ iterator_loop(PyUFuncObject *ufunc,
     /* Set up the flags */
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1431,7 +1433,8 @@ iterator_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE;
+                      NPY_ITER_NO_SUBTYPE |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
@@ -1440,7 +1443,22 @@ iterator_loop(PyUFuncObject *ufunc,
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
                  NPY_ITER_GROWINNER |
-                 NPY_ITER_DELAY_BUFALLOC;
+                 NPY_ITER_DELAY_BUFALLOC |
+                 NPY_ITER_COPY_IF_OVERLAP;
+
+    /* Call the __array_prepare__ functions for already existing output arrays.
+     * Do this before creating the iterator, as the iterator may UPDATEIFCOPY
+     * some of them.
+     */
+    for (i = 0; i < nout; ++i) {
+        if (op[nin+i] == NULL) {
+            continue;
+        }
+        if (prepare_ufunc_output(ufunc, &op[nin+i],
+                            arr_prep[i], arr_prep_args, i) < 0) {
+            return -1;
+        }
+    }
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1458,31 +1476,40 @@ iterator_loop(PyUFuncObject *ufunc,
 
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
-    /* Call the __array_prepare__ functions where necessary */
     for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
-            NpyIter_Deallocate(iter);
-            return -1;
+        if (op[nin+i] == NULL) {
+            op[nin+i] = op_it[nin+i];
+            Py_INCREF(op[nin+i]);
+
+            /* Call the __array_prepare__ functions for the new array */
+            if (prepare_ufunc_output(ufunc, &op[nin+i],
+                                     arr_prep[i], arr_prep_args, i) < 0) {
+                NpyIter_Deallocate(iter);
+                return -1;
+            }
+
+            /*
+             * In case __array_prepare__ returned a different array, put the
+             * results directly there, ignoring the array allocated by the
+             * iterator.
+             *
+             * Here, we assume the user-provided __array_prepare__ behaves
+             * sensibly and doesn't return an array overlapping in memory
+             * with other operands --- the op[nin+i] array passed to it is newly
+             * allocated and doesn't have any overlap.
+             */
+            baseptrs[nin+i] = PyArray_BYTES(op[nin+i]);
+        }
+        else {
+            baseptrs[nin+i] = PyArray_BYTES(op_it[nin+i]);
         }
     }
 
     /* Only do the loop if the iteration size is non-zero */
     if (NpyIter_GetIterSize(iter) != 0) {
-
-        /* Reset the iterator with the base pointers from the wrapped outputs */
+        /* Reset the iterator with the base pointers from possible __array_prepare__ */
         for (i = 0; i < nin; ++i) {
             baseptrs[i] = PyArray_BYTES(op_it[i]);
-        }
-        for (i = nin; i < nop; ++i) {
-            baseptrs[i] = PyArray_BYTES(op[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
@@ -1581,7 +1608,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             }
             else if (op[1] != NULL &&
                         PyArray_NDIM(op[1]) >= PyArray_NDIM(op[0]) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[1],
@@ -1598,7 +1627,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
         else if (nin == 2 && nout == 1) {
             if (op[2] == NULL &&
                         (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ)) {
                 PyArrayObject *tmp;
                 /*
                  * Have to choose the input with more dimensions to clone, as
@@ -1637,7 +1668,10 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             else if (op[2] != NULL &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[0]) &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[1]) &&
-                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2])) {
+                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2],
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[2],
@@ -1701,7 +1735,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp *strides;
     npy_intp *countptr;
 
-    PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
     if (wheremask != NULL) {
@@ -1719,7 +1752,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = default_op_in_flags |
                       NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1730,12 +1764,19 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         }
     }
     for (i = nin; i < nop; ++i) {
+        /*
+         * We don't write to all elements, and the iterator may make
+         * UPDATEIFCOPY temporary copies. The output arrays must be considered
+         * READWRITE by the iterator, so that the elements we don't write to are
+         * copied to the possible temporary array.
+         */
         op_flags[i] = default_op_out_flags |
-                      NPY_ITER_WRITEONLY |
+                      NPY_ITER_READWRITE |
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE;
+                      NPY_ITER_NO_SUBTYPE |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
     if (wheremask != NULL) {
         op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
@@ -1748,7 +1789,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
-                 NPY_ITER_GROWINNER;
+                 NPY_ITER_GROWINNER |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1768,22 +1810,37 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
-    /* Copy any allocated outputs */
-    op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
     /* Call the __array_prepare__ functions where necessary */
-    for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
+    for (i = nin; i < nop; ++i) {
+        PyArrayObject *op_tmp;
+
+        /* prepare_ufunc_output may decref & replace pointer */
+        op_tmp = op[i];
+        Py_INCREF(op_tmp);
+
+        if (prepare_ufunc_output(ufunc, &op_tmp,
+                                 arr_prep[i], arr_prep_args, i) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        /* Validate that the prepare_ufunc_output didn't mess with pointers */
+        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op[i])) {
+            PyErr_SetString(PyExc_ValueError,
+                        "The __array_prepare__ functions modified the data "
+                        "pointer addresses in an invalid fashion");
+            Py_DECREF(op_tmp);
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+        /*
+         * Put the updated operand back and undo the DECREF above. If
+         * COPY_IF_OVERLAP made a temporary copy, the output will be copied in
+         * by UPDATEIFCOPY even if op[i] was changed.
+         */
+        op[i] = op_tmp;
+        Py_DECREF(op_tmp);
     }
 
     /* Only do the loop if the iteration size is non-zero */
@@ -1793,17 +1850,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         npy_intp fixed_strides[2*NPY_MAXARGS];
         PyArray_Descr **iter_dtypes;
         NPY_BEGIN_THREADS_DEF;
-
-        /* Validate that the prepare_ufunc_output didn't mess with pointers */
-        for (i = nin; i < nop; ++i) {
-            if (PyArray_BYTES(op[i]) != PyArray_BYTES(op_it[i])) {
-                PyErr_SetString(PyExc_ValueError,
-                        "The __array_prepare__ functions modified the data "
-                        "pointer addresses in an invalid fashion");
-                NpyIter_Deallocate(iter);
-                return -1;
-            }
-        }
 
         /*
          * Get the inner loop, with the possibility of specialization
@@ -2265,7 +2311,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -2280,14 +2327,16 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST;
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_REDUCE_OK |
-                 NPY_ITER_ZEROSIZE_OK;
+                 NPY_ITER_ZEROSIZE_OK |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,
@@ -3174,11 +3223,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
              !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(out)))) {
         need_outer_iterator = 1;
     }
+    /* If input and output overlap in memory, use iterator to figure it out */
+    else if (out != NULL && solve_may_share_memory(out, arr, NPY_MAY_SHARE_BOUNDS) != 0) {
+        need_outer_iterator = 1;
+    }
 
     if (need_outer_iterator) {
         int ndim_iter = 0;
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
-                           NPY_ITER_REFS_OK;
+                           NPY_ITER_REFS_OK|
+                           NPY_ITER_COPY_IF_OVERLAP;
         PyArray_Descr **op_dtypes_param = NULL;
 
         /*
@@ -3592,7 +3646,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     if (need_outer_iterator) {
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
                            NPY_ITER_REFS_OK|
-                           NPY_ITER_MULTI_INDEX;
+                           NPY_ITER_MULTI_INDEX|
+                           NPY_ITER_COPY_IF_OVERLAP;
 
         /*
          * The way reduceat is set up, we can't do buffering,
@@ -3635,6 +3690,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         /* In case COPY or UPDATEIFCOPY occurred */
         op[0] = NpyIter_GetOperandArray(iter)[0];
         op[1] = NpyIter_GetOperandArray(iter)[1];
+        op[2] = NpyIter_GetOperandArray(iter)[2];
 
         if (out == NULL) {
             out = op[0];
@@ -3980,12 +4036,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                 Py_DECREF(mp);
                 return NULL;
             }
-            if (axis < 0) {
-                axis += ndim;
-            }
-            if (axis < 0 || axis >= ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "'axis' entry is out of bounds");
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -4002,18 +4053,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             Py_DECREF(mp);
             return NULL;
         }
-        if (axis < 0) {
-            axis += ndim;
-        }
         /* Special case letting axis={0 or -1} slip through for scalars */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
             axis = 0;
         }
-        else if (axis < 0 || axis >= ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "'axis' entry is out of bounds");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
+        else if (check_and_adjust_axis(&axis, ndim) < 0) {
             return NULL;
         }
         axes[0] = (int)axis;
@@ -4395,6 +4439,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 continue;
             }
             res = PyObject_CallFunction(wrap, "O(OOi)", mps[j], ufunc, args, i);
+            /* Handle __array_wrap__ that does not accept a context argument */
             if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Clear();
                 res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
@@ -4402,9 +4447,6 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             Py_DECREF(wrap);
             if (res == NULL) {
                 goto fail;
-            }
-            else if (res == Py_None) {
-                Py_DECREF(res);
             }
             else {
                 Py_DECREF(mps[j]);
@@ -5259,11 +5301,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = (PyArrayObject *)op1;
 
-    iter = (PyArrayMapIterObject *)PyArray_MapIterArray(op1_array, idx);
-    if (iter == NULL) {
-        goto fail;
-    }
-
     /* Create second operand from number array if needed. */
     if (op2 != NULL) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL,
@@ -5271,7 +5308,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if (op2_array == NULL) {
             goto fail;
         }
+    }
 
+    /* Create map iterator */
+    iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
+        op1_array, idx, 1, op2_array);
+    if (iter == NULL) {
+        goto fail;
+    }
+    op1_array = iter->array;  /* May be updateifcopied on overlap */
+
+    if (op2 != NULL) {
         /*
          * May need to swap axes so that second operand is
          * iterated over correctly

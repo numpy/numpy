@@ -71,9 +71,13 @@ class TestFFT1D(TestCase):
 
     def test_rfft(self):
         x = random(30)
-        assert_array_almost_equal(np.fft.fft(x)[:16], np.fft.rfft(x))
-        assert_array_almost_equal(np.fft.rfft(x) / np.sqrt(30),
-                                  np.fft.rfft(x, norm="ortho"))
+        for n in [x.size, 2*x.size]:
+            for norm in [None, 'ortho']:
+                assert_array_almost_equal(
+                    np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
+                    np.fft.rfft(x, n=n, norm=norm))
+            assert_array_almost_equal(np.fft.rfft(x, n=n) / np.sqrt(n),
+                                      np.fft.rfft(x, n=n, norm="ortho"))
 
     def test_irfft(self):
         x = random(30)
@@ -122,6 +126,24 @@ class TestFFT1D(TestCase):
             x_herm, np.fft.ihfft(np.fft.hfft(x_herm, norm="ortho"),
                                  norm="ortho"))
 
+    def test_all_1d_norm_preserving(self):
+        # verify that round-trip transforms are norm-preserving
+        x = random(30)
+        x_norm = np.linalg.norm(x)
+        n = x.size * 2
+        func_pairs = [(np.fft.fft, np.fft.ifft),
+                      (np.fft.rfft, np.fft.irfft),
+                      # hfft: order so the first function takes x.size samples
+                      #       (necessary for comparison to x_norm above)
+                      (np.fft.ihfft, np.fft.hfft),
+                      ]
+        for forw, back in func_pairs:
+            for n in [x.size, 2*x.size]:
+                for norm in [None, 'ortho']:
+                    tmp = forw(x, n=n, norm=norm)
+                    tmp = back(tmp, n=n, norm=norm)
+                    assert_array_almost_equal(x_norm,
+                                              np.linalg.norm(tmp))
 
 class TestFFTThreadSafe(TestCase):
     threads = 16

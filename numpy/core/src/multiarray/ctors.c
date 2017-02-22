@@ -2793,7 +2793,6 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
-    int axis_orig = *axis;
 
     if (*axis == NPY_MAXDIMS || n == 0) {
         if (n != 1) {
@@ -2831,12 +2830,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
         temp2 = (PyObject *)temp1;
     }
     n = PyArray_NDIM((PyArrayObject *)temp2);
-    if (*axis < 0) {
-        *axis += n;
-    }
-    if ((*axis < 0) || (*axis >= n)) {
-        PyErr_Format(PyExc_ValueError,
-                     "axis(=%d) out of bounds", axis_orig);
+    if (check_and_adjust_axis(axis, n) < 0) {
         Py_DECREF(temp2);
         return NULL;
     }

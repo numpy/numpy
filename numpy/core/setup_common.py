@@ -38,7 +38,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000a - 1.10.x
 # 0x0000000a - 1.11.x
 # 0x0000000a - 1.12.x
-C_API_VERSION = 0x0000000a
+# 0x0000000b - 1.13.x
+C_API_VERSION = 0x0000000b
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -130,6 +131,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        # broken on OSX 10.11, make sure its not optimized away
                        ("volatile int r = __builtin_cpu_supports", '"sse"',
                         "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
+                       # MMX only needed for icc, but some clangs don't have it
+                       ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
                        ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
                         "xmmintrin.h"),  # SSE

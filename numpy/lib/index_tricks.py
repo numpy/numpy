@@ -41,6 +41,10 @@ def ix_(*args):
     Parameters
     ----------
     args : 1-D sequences
+        Each sequence should be of integer or boolean type.
+        Boolean sequences will be interpreted as boolean masks for the
+        corresponding dimension (equivalent to passing in
+        ``np.nonzero(boolean_sequence)``).
 
     Returns
     -------
@@ -58,12 +62,21 @@ def ix_(*args):
     >>> a
     array([[0, 1, 2, 3, 4],
            [5, 6, 7, 8, 9]])
-    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid = np.ix_([0, 1], [2, 4])
     >>> ixgrid
     (array([[0],
            [1]]), array([[2, 4]]))
     >>> ixgrid[0].shape, ixgrid[1].shape
     ((2, 1), (1, 2))
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
+    >>> ixgrid = np.ix_([True, True], [2, 4])
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+    >>> ixgrid = np.ix_([True, True], [False, False, True, False, True])
     >>> a[ixgrid]
     array([[2, 4],
            [7, 9]])
@@ -209,9 +222,6 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __getslice__(self, i, j):
-        return _nx.arange(i, j)
-
     def __len__(self):
         return 0
 
@@ -336,10 +346,6 @@ class AxisConcatenator(object):
                 objs[k] = objs[k].astype(final_dtype)
 
         res = _nx.concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
-
-    def __getslice__(self, i, j):
-        res = _nx.arange(i, j)
         return self._retval(res)
 
     def __len__(self):
@@ -665,8 +671,8 @@ s_ = IndexExpression(maketuple=False)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
-    For an array `a` with ``a.ndim > 2``, the diagonal is the list of
-    locations with indices ``a[i, i, ..., i]`` all identical. This function
+    For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
+    locations with indices ``a[i, ..., i]`` all identical. This function
     modifies the input array in-place, it does not return a value.
 
     Parameters

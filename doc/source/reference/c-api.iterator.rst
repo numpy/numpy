@@ -461,6 +461,23 @@ Construction and Destruction
             Then, call :c:func:`NpyIter_Reset` to allocate and fill the buffers
             with their initial values.
 
+        .. c:var:: NPY_ITER_COPY_IF_OVERLAP
+
+            If any write operand has overlap with any read operand, eliminate all
+            overlap by making temporary copies (enabling UPDATEIFCOPY for write
+            operands, if necessary). A pair of operands has overlap if there is
+            a memory address that contains data common to both arrays.
+
+            Because exact overlap detection has exponential runtime
+            in the number of dimensions, the decision is made based
+            on heuristics, which has false positives (needless copies in unusual
+            cases) but has no false negatives.
+
+            If any read/write overlap exists, this flag ensures the result of the
+            operation is the same as if all operands were copied.
+            In cases where copies would need to be made, **the result of the
+            computation may be undefined without this flag!**
+
     Flags that may be passed in ``op_flags[i]``, where ``0 <= i < nop``:
 
         .. c:var:: NPY_ITER_READWRITE
@@ -590,6 +607,18 @@ Construction and Destruction
             elements in the buffer for which :c:func:`NpyMask_IsExposed`
             returns true from the corresponding element in the ARRAYMASK
             operand.
+
+        .. c:var:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+            In memory overlap checks, assume that operands with
+            ``NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE`` enabled are accessed only
+            in the iterator order.
+
+            This enables the iterator to reason about data dependency,
+            possibly avoiding unnecessary copies.
+
+            This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
+            on the iterator.
 
 .. c:function:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 

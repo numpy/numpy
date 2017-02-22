@@ -130,3 +130,40 @@ class CountNonzero(Benchmark):
         if self.x.ndim >= 2:
             np.count_nonzero(self.x, axis=(
                 self.x.ndim - 1, self.x.ndim - 2))
+
+
+class PackBits(Benchmark):
+    param_names = ['dtype']
+    params = [[np.bool, np.uintp]]
+    def setup(self, dtype):
+        self.d = np.ones(10000, dtype=dtype)
+        self.d2 = np.ones((200, 1000), dtype=dtype)
+
+    def time_packbits(self, dtype):
+        np.packbits(self.d)
+
+    def time_packbits_axis0(self, dtype):
+        np.packbits(self.d2, axis=0)
+
+    def time_packbits_axis1(self, dtype):
+        np.packbits(self.d2, axis=1)
+
+
+class UnpackBits(Benchmark):
+    def setup(self):
+        self.d = np.ones(10000, dtype=np.uint8)
+        self.d2 = np.ones((200, 1000), dtype=np.uint8)
+
+    def time_unpackbits(self):
+        np.unpackbits(self.d)
+
+    def time_unpackbits_axis0(self):
+        np.unpackbits(self.d2, axis=0)
+
+    def time_unpackbits_axis1(self):
+        np.unpackbits(self.d2, axis=1)
+
+
+class Indices(Benchmark):
+    def time_indices(self):
+        np.indices((1000, 500))

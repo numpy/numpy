@@ -2392,7 +2392,8 @@ def _selected_real_kind_func(p, r=0, radix=0):
         return 4
     if p < 16:
         return 8
-    if platform.machine().lower().startswith('power'):
+    machine = platform.machine().lower()
+    if machine.startswith('power') or machine.startswith('ppc64'):
         if p <= 20:
             return 16
     else:
@@ -2451,7 +2452,8 @@ def get_parameters(vars, global_params={}):
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+                    if len(v_) > 1: 
+                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
             # There is missing code for extracting a complex number,

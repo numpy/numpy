@@ -8,6 +8,7 @@ import warnings
 import operator
 import io
 import itertools
+import functools
 import ctypes
 import os
 import gc
@@ -44,6 +45,32 @@ if sys.version_info[:2] > (3, 2):
     EMPTY = ()
 else:
     EMPTY = None
+
+
+def _aligned_zeros(shape, dtype=float, order="C", align=None):
+    """Allocate a new ndarray with aligned memory."""
+    dtype = np.dtype(dtype)
+    if dtype == np.dtype(object):
+        # Can't do this, fall back to standard allocation (which
+        # should always be sufficiently aligned)
+        if align is not None:
+            raise ValueError("object array alignment not supported")
+        return np.zeros(shape, dtype=dtype, order=order)
+    if align is None:
+        align = dtype.alignment
+    if not hasattr(shape, '__len__'):
+        shape = (shape,)
+    size = functools.reduce(operator.mul, shape) * dtype.itemsize
+    buf = np.empty(size + align + 1, np.uint8)
+    offset = buf.__array_interface__['data'][0] % align
+    if offset != 0:
+        offset = align - offset
+    # Note: slices producing 0-size arrays do not necessarily change
+    # data pointer --- so we use and allocate size+1
+    buf = buf[offset:offset+size+1][:-1]
+    data = np.ndarray(shape, dtype, buf, order=order)
+    data.fill(0)
+    return data
 
 
 class TestFlags(TestCase):
@@ -1986,13 +2013,13 @@ class TestMethods(TestCase):
             d = np.array([2, 1])
             d.partition(0, kind=k)
             assert_raises(ValueError, d.partition, 2)
-            assert_raises(ValueError, d.partition, 3, axis=1)
+            assert_raises(np.AxisError, d.partition, 3, axis=1)
             assert_raises(ValueError, np.partition, d, 2)
-            assert_raises(ValueError, np.partition, d, 2, axis=1)
+            assert_raises(np.AxisError, np.partition, d, 2, axis=1)
             assert_raises(ValueError, d.argpartition, 2)
-            assert_raises(ValueError, d.argpartition, 3, axis=1)
+            assert_raises(np.AxisError, d.argpartition, 3, axis=1)
             assert_raises(ValueError, np.argpartition, d, 2)
-            assert_raises(ValueError, np.argpartition, d, 2, axis=1)
+            assert_raises(np.AxisError, np.argpartition, d, 2, axis=1)
             d = np.arange(10).reshape((2, 5))
             d.partition(1, axis=0, kind=k)
             d.partition(4, axis=1, kind=k)
@@ -2325,6 +2352,28 @@ class TestMethods(TestCase):
 
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
+
+    def test_dot_out_mem_overlap(self):
+        np.random.seed(1)
+
+        # Test BLAS and non-BLAS code paths, including all dtypes
+        # that dot() supports
+        dtypes = [np.dtype(code) for code in np.typecodes['All']
+                  if code not in 'USVM']
+        for dtype in dtypes:
+            a = np.random.rand(3, 3).astype(dtype)
+
+            # Valid dot() output arrays must be aligned
+            b = _aligned_zeros((3, 3), dtype=dtype)
+            b[...] = np.random.rand(3, 3)
+
+            y = np.dot(a, b)
+            x = np.dot(a, b, out=b)
+            assert_equal(x, y, err_msg=repr(dtype))
+
+            # Check invalid output array
+            assert_raises(ValueError, np.dot, a, b, out=b[::2])
+            assert_raises(ValueError, np.dot, a, b, out=b.T)
 
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
@@ -3473,8 +3522,8 @@ class TestArgmin(TestCase):
 class TestMinMax(TestCase):
 
     def test_scalar(self):
-        assert_raises(ValueError, np.amax, 1, 1)
-        assert_raises(ValueError, np.amin, 1, 1)
+        assert_raises(np.AxisError, np.amax, 1, 1)
+        assert_raises(np.AxisError, np.amin, 1, 1)
 
         assert_equal(np.amax(1, axis=0), 1)
         assert_equal(np.amin(1, axis=0), 1)
@@ -3482,7 +3531,7 @@ class TestMinMax(TestCase):
         assert_equal(np.amin(1, axis=None), 1)
 
     def test_axis(self):
-        assert_raises(ValueError, np.amax, [1, 2, 3], 1000)
+        assert_raises(np.AxisError, np.amax, [1, 2, 3], 1000)
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
@@ -3744,7 +3793,7 @@ class TestLexsort(TestCase):
 
     def test_invalid_axis(self): # gh-7528
         x = np.linspace(0., 1., 42*3).reshape(42, 3)
-        assert_raises(ValueError, np.lexsort, x, axis=2)
+        assert_raises(np.AxisError, np.lexsort, x, axis=2)
 
 class TestIO(object):
     """Test tofile, fromfile, tobytes, and fromstring"""
@@ -4406,6 +4455,12 @@ class TestStats(TestCase):
         self.cmat = self.rmat + 1j * self.rmat
         self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
         self.omat = self.omat.reshape(4, 5)
+
+    def test_python_type(self):
+        for x in (np.float16(1.), 1, 1., 1+0j):
+            assert_equal(np.mean([x]), 1.)
+            assert_equal(np.std([x]), 0.)
+            assert_equal(np.var([x]), 0.)
 
     def test_keepdims(self):
         mat = np.eye(3)
