@@ -4000,32 +4000,50 @@ class TestMaskedArrayFunctions(TestCase):
         self.assertTrue(c.flags['C'])
 
     def test_make_mask_descr(self):
-        # Test make_mask_descr
         # Flexible
         ntype = [('a', np.float), ('b', np.float)]
         test = make_mask_descr(ntype)
         assert_equal(test, [('a', np.bool), ('b', np.bool)])
+        assert_(test is make_mask_descr(test))
+
         # Standard w/ shape
         ntype = (np.float, 2)
         test = make_mask_descr(ntype)
         assert_equal(test, (np.bool, 2))
+        assert_(test is make_mask_descr(test))
+
         # Standard standard
         ntype = np.float
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype(np.bool))
+        assert_(test is make_mask_descr(test))
+
         # Nested
         ntype = [('a', np.float), ('b', [('ba', np.float), ('bb', np.float)])]
         test = make_mask_descr(ntype)
         control = np.dtype([('a', 'b1'), ('b', [('ba', 'b1'), ('bb', 'b1')])])
         assert_equal(test, control)
+        assert_(test is make_mask_descr(test))
+
         # Named+ shape
         ntype = [('a', (np.float, 2))]
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype([('a', (np.bool, 2))]))
+        assert_(test is make_mask_descr(test))
+
         # 2 names
         ntype = [(('A', 'a'), float)]
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype([(('A', 'a'), bool)]))
+        assert_(test is make_mask_descr(test))
+
+        # nested boolean types should preserve identity
+        base_type = np.dtype([('a', int, 3)])
+        base_mtype = make_mask_descr(base_type)
+        sub_type = np.dtype([('a', int), ('b', base_mtype)])
+        test = make_mask_descr(sub_type)
+        assert_equal(test, np.dtype([('a', bool), ('b', [('a', bool, 3)])]))
+        assert_(test.fields['b'][0] is base_mtype)
 
     def test_make_mask(self):
         # Test make_mask

@@ -1297,14 +1297,19 @@ def _recursive_make_descr(datatype, newtype=bool_):
                 # Prepend the title to the name
                 name = (field[-1], name)
             descr.append((name, _recursive_make_descr(field[0], newtype)))
-        return descr
     # Is this some kind of composite a la (np.float,2)
     elif datatype.subdtype:
-        mdescr = list(datatype.subdtype)
-        mdescr[0] = _recursive_make_descr(datatype.subdtype[0], newtype)
-        return tuple(mdescr)
+        descr = list(datatype.subdtype)
+        descr[0] = _recursive_make_descr(datatype.subdtype[0], newtype)
+        descr = tuple(descr)
     else:
-        return newtype
+        descr = newtype
+
+    new_dtype = np.dtype(descr)
+    if new_dtype == datatype:
+        new_dtype = datatype
+
+    return new_dtype
 
 
 def make_mask_descr(ndtype):
@@ -1340,7 +1345,7 @@ def make_mask_descr(ndtype):
     # Make sure we do have a dtype
     if not isinstance(ndtype, np.dtype):
         ndtype = np.dtype(ndtype)
-    return np.dtype(_recursive_make_descr(ndtype, np.bool))
+    return _recursive_make_descr(ndtype, np.bool)
 
 
 def getmask(a):
