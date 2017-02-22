@@ -463,8 +463,11 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-
-    For detailed documentation, see `r_`.
+    
+    See Also
+    --------
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    r_ : For more detailed documentation.
 
     Examples
     --------
