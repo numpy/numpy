@@ -468,6 +468,10 @@ class CClass(AxisConcatenator):
 
     Examples
     --------
+    >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
     array([[1, 2, 3, 0, 0, 4, 5, 6]])
 
