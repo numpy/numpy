@@ -6500,20 +6500,19 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
-
-def argsort(a, axis=None, kind='quicksort', order=None, fill_value=None):
-    "Function version of the eponymous method."
-    if fill_value is None:
-        fill_value = default_fill_value(a)
-    d = filled(a, fill_value)
-    if axis is None:
-        return d.argsort(kind=kind, order=order)
-    return d.argsort(axis, kind=kind, order=order)
-argsort.__doc__ = MaskedArray.argsort.__doc__
-
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
+def argsort(a, axis=None, kind='quicksort', order=None, fill_value=None):
+    "Function version of the eponymous method."
+    a = np.asanyarray(a)
+
+    if isinstance(a, MaskedArray):
+        return a.argsort(axis=axis, kind=kind, order=order,
+                         fill_value=fill_value)
+    else:
+        return a.argsort(axis=axis, kind=kind, order=order)
+argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
