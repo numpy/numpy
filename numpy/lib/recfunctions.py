@@ -275,24 +275,20 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
     flatten : {True, False},
         Whether to
     """
-    # OK, that's a complete ripoff from Python2.6 itertools.izip_longest
-    def sentinel(counter=([fill_value] * (len(seqarrays) - 1)).pop):
-        "Yields the fill_value or raises IndexError"
-        yield counter()
-    #
-    fillers = itertools.repeat(fill_value)
-    iters = [itertools.chain(it, sentinel(), fillers) for it in seqarrays]
+
     # Should we flatten the items, or just use a nested approach
     if flatten:
         zipfunc = _izip_fields_flat
     else:
         zipfunc = _izip_fields
-    #
-    try:
-        for tup in zip(*iters):
-            yield tuple(zipfunc(tup))
-    except IndexError:
-        pass
+
+    if sys.version_info[0] >= 3:
+        zip_longest = itertools.zip_longest
+    else:
+        zip_longest = itertools.izip_longest
+
+    for tup in zip_longest(*seqarrays, fillvalue=fill_value):
+        yield tuple(zipfunc(tup))
 
 
 def _fix_output(output, usemask=True, asrecarray=False):
