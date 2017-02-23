@@ -1149,6 +1149,18 @@ class TestBinaryRepr(TestCase):
         assert_equal(np.binary_repr(10, width=7), '0001010')
         assert_equal(np.binary_repr(-5, width=7), '1111011')
 
+    def test_neg_width_boundaries(self):
+        # see gh-8670
+
+        # Ensure that the example in the issue does not
+        # break before proceeding to a more thorough test.
+        assert_equal(np.binary_repr(-128, width=8), '10000000')
+
+        for width in range(1, 11):
+            num = -2**(width - 1)
+            exp = '1' + (width - 1) * '0'
+            assert_equal(np.binary_repr(num, width=width), exp)
+
 
 class TestBaseRepr(TestCase):
     def test_base3(self):
