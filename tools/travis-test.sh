@@ -47,26 +47,26 @@ setup_base()
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
     if [ -z "$IN_CHROOT" ]; then
-      $PIP install .
+      $PIP install -v . 2>&1 | tee log
     else
       sysflags="$($PYTHON -c "from distutils import sysconfig; \
         print (sysconfig.get_config_var('CFLAGS'))")"
       CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install -v . 2>&1 | tee log
-      grep -v "_configtest" log \
-        | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
-        | grep -E "warning\>" \
-        | tee warnings
-      # Check for an acceptable number of warnings. Some warnings are out of
-      # our control, so adjust the number as needed. At the moment a
-      # cython generated code produces a warning about '-2147483648L', but
-      # the code seems to compile OK.
-      [[ $(wc -l < warnings) -lt 2 ]]
     fi
   else
     sysflags="$($PYTHON -c "from distutils import sysconfig; \
       print (sysconfig.get_config_var('CFLAGS'))")"
-    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace
+    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace 2>&1 | tee log
   fi
+  grep -v "_configtest" log \
+    | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
+    | grep -E "warning\>" \
+    | tee warnings
+  # Check for an acceptable number of warnings. Some warnings are out of
+  # our control, so adjust the number as needed. At the moment a
+  # cython generated code produces a warning about '-2147483648L', but
+  # the code seems to compile OK.
+  [[ $(wc -l < warnings) -lt 2 ]]
 }
 
 setup_chroot()
