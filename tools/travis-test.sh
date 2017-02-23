@@ -31,7 +31,8 @@ fi
 
 # make some warnings fatal, mostly to match windows compilers
 werrors="-Werror=declaration-after-statement -Werror=vla "
-werrors+="-Werror=nonnull -Werror=pointer-arith"
+werrors+="-Werror=nonnull -Werror=pointer-arith "
+werrors+="-Werror=implicit-function-declaration"
 
 setup_base()
 {
