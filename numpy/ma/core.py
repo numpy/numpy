@@ -6372,21 +6372,16 @@ class _frommethod:
     def __call__(self, a, *args, **params):
         if self.reversed:
             args = list(args)
-            arr = args[0]
-            args[0] = a
-            a = arr
-        # Get the method from the array (if possible)
+            a, args[0] = args[0], a
+
+        marr = asanyarray(a)
         method_name = self.__name__
-        method = getattr(a, method_name, None)
-        if method is not None:
-            return method(*args, **params)
-        # Still here ? Then a is not a MaskedArray
-        method = getattr(MaskedArray, method_name, None)
-        if method is not None:
-            return method(MaskedArray(a), *args, **params)
-        # Still here ? OK, let's call the corresponding np function
-        method = getattr(np, method_name)
-        return method(a, *args, **params)
+        method = getattr(type(marr), method_name, None)
+        if method is None:
+            # use the corresponding np function
+            method = getattr(np, method_name)
+
+        return method(marr, *args, **params)
 
 
 all = _frommethod('all')
@@ -6535,9 +6530,7 @@ def compressed(x):
         Equivalent method.
 
     """
-    if not isinstance(x, MaskedArray):
-        x = asanyarray(x)
-    return x.compressed()
+    return asanyarray(x).compressed()
 
 
 def concatenate(arrays, axis=0):
@@ -7683,6 +7676,10 @@ def asanyarray(a, dtype=None):
     <class 'numpy.ma.core.MaskedArray'>
 
     """
+    # workaround for #8666, to preserve identity. Ideally the bottom line
+    # would handle this for us.
+    if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
+        return a
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
 
 
