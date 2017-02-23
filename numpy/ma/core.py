@@ -6517,32 +6517,17 @@ argmax = _frommethod('argmax')
 
 def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
-    a = narray(a, copy=True, subok=True)
+    a = np.array(a, copy=True, subok=True)
     if axis is None:
         a = a.flatten()
         axis = 0
-    if fill_value is None:
-        if endwith:
-            # nan > inf
-            if np.issubdtype(a.dtype, np.floating):
-                filler = np.nan
-            else:
-                filler = minimum_fill_value(a)
-        else:
-            filler = maximum_fill_value(a)
-    else:
-        filler = fill_value
 
-    sindx = filled(a, filler).argsort(axis=axis, kind=kind, order=order)
-
-    # save meshgrid memory for 1d arrays
-    if a.ndim == 1:
-        indx = sindx
+    if isinstance(a, MaskedArray):
+        a.sort(axis=axis, kind=kind, order=order,
+               endwith=endwith, fill_value=fill_value)
     else:
-        indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
-                           indexing='ij')
-        indx[axis] = sindx
-    return a[indx]
+        a.sort(axis=axis, kind=kind, order=order)
+    return a
 sort.__doc__ = MaskedArray.sort.__doc__
 
 
