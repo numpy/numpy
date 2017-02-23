@@ -5452,17 +5452,14 @@ class MaskedArray(ndarray):
         sidx = self.argsort(axis=axis, kind=kind, order=order,
                             fill_value=fill_value, endwith=endwith)
 
-        # save meshgrid memory for 1d arrays
+        # save memory for 1d arrays
         if self.ndim == 1:
             idx = sidx
         else:
-            idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
-                              indexing='ij')
+            idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
-        tmp_mask = self._mask[idx].flat
-        tmp_data = self._data[idx].flat
-        self._data.flat = tmp_data
-        self._mask.flat = tmp_mask
+
+        self[...] = self[idx]
 
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
