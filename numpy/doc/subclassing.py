@@ -3,12 +3,6 @@
 Subclassing ndarray in python
 =============================
 
-Credits
--------
-
-This page is based with thanks on the wiki page on subclassing by Pierre
-Gerard-Marchant - http://www.scipy.org/Subclasses.
-
 Introduction
 ------------
 
