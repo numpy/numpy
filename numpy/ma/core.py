@@ -5444,35 +5444,36 @@ class MaskedArray(ndarray):
         """
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
-        else:
-            if self is masked:
-                return self
-            if fill_value is None:
-                if endwith:
-                    # nan > inf
-                    if np.issubdtype(self.dtype, np.floating):
-                        filler = np.nan
-                    else:
-                        filler = minimum_fill_value(self)
-                else:
-                    filler = maximum_fill_value(self)
-            else:
-                filler = fill_value
+            return
 
-            sidx = self.filled(filler).argsort(axis=axis, kind=kind,
-                                               order=order)
-            # save meshgrid memory for 1d arrays
-            if self.ndim == 1:
-                idx = sidx
+        if self is masked:
+            return
+
+        if fill_value is None:
+            if endwith:
+                # nan > inf
+                if np.issubdtype(self.dtype, np.floating):
+                    filler = np.nan
+                else:
+                    filler = minimum_fill_value(self)
             else:
-                idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
-                                  indexing='ij')
-                idx[axis] = sidx
-            tmp_mask = self._mask[idx].flat
-            tmp_data = self._data[idx].flat
-            self._data.flat = tmp_data
-            self._mask.flat = tmp_mask
-        return
+                filler = maximum_fill_value(self)
+        else:
+            filler = fill_value
+
+        sidx = self.filled(filler).argsort(axis=axis, kind=kind,
+                                           order=order)
+        # save meshgrid memory for 1d arrays
+        if self.ndim == 1:
+            idx = sidx
+        else:
+            idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
+                              indexing='ij')
+            idx[axis] = sidx
+        tmp_mask = self._mask[idx].flat
+        tmp_data = self._data[idx].flat
+        self._data.flat = tmp_data
+        self._mask.flat = tmp_mask
 
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
