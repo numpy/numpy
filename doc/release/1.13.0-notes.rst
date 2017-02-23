@@ -200,6 +200,14 @@ All of the following functions in ``np.linalg`` now work when given input
 arrays with a 0 in the last two dimensions: `det``, ``slogdet``, ``pinv``,
 ``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
 
+``argsort`` on masked arrays takes the same default arguments as ``sort``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By default, ``argsort`` now places the masked values at the end of the sorted
+array, in the same way that ``sort`` already did. Additionally, the
+``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
+Note that this argument is not added at the end, so breaks any code that
+passed ``fill_value`` as a positional argument.
+
 Changes
 =======
 
