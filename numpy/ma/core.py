@@ -5449,20 +5449,9 @@ class MaskedArray(ndarray):
         if self is masked:
             return
 
-        if fill_value is None:
-            if endwith:
-                # nan > inf
-                if np.issubdtype(self.dtype, np.floating):
-                    filler = np.nan
-                else:
-                    filler = minimum_fill_value(self)
-            else:
-                filler = maximum_fill_value(self)
-        else:
-            filler = fill_value
+        sidx = self.argsort(axis=axis, kind=kind, order=order,
+                            fill_value=fill_value, endwith=endwith)
 
-        sidx = self.filled(filler).argsort(axis=axis, kind=kind,
-                                           order=order)
         # save meshgrid memory for 1d arrays
         if self.ndim == 1:
             idx = sidx
