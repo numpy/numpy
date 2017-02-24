@@ -469,7 +469,7 @@ def fullapi_hash(api_dicts):
 
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
-VERRE = re.compile('(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
+VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
 
 def get_versions_hash():
     d = []
