@@ -1261,8 +1261,9 @@ class TestMatrixRank(object):
         yield assert_equal, matrix_rank(np.zeros((4,))), 0
         # accepts array-like
         yield assert_equal, matrix_rank([1]), 1
-        # greater than 2 dimensions raises error
-        yield assert_raises, TypeError, matrix_rank, np.zeros((2, 2, 2))
+        # greater than 2 dimensions treated as stacked matrices
+        ms = np.array([I, np.eye(4), np.zeros((4,4))])
+        yield assert_equal, matrix_rank(ms), np.array([3, 4, 0])
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
 
