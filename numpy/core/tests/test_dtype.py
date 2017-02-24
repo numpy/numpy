@@ -376,6 +376,23 @@ class TestSubarray(TestCase):
         assert_(isinstance(dt['a'].shape, tuple))
         assert_(isinstance(dt['a'].shape[0], int))
 
+    def test_shape_matches_ndim(self):
+        dt = np.dtype([('a', 'f4', ())])
+        assert_equal(dt['a'].shape, ())
+        assert_equal(dt['a'].ndim, 0)
+
+        dt = np.dtype([('a', 'f4')])
+        assert_equal(dt['a'].shape, ())
+        assert_equal(dt['a'].ndim, 0)
+
+        dt = np.dtype([('a', 'f4', 4)])
+        assert_equal(dt['a'].shape, (4,))
+        assert_equal(dt['a'].ndim, 1)
+
+        dt = np.dtype([('a', 'f4', (1, 2, 3))])
+        assert_equal(dt['a'].shape, (1, 2, 3))
+        assert_equal(dt['a'].ndim, 3)
+
     def test_shape_invalid(self):
         # Check that the shape is valid.
         max_int = np.iinfo(np.intc).max

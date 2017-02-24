@@ -6355,6 +6355,15 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('ndim',
+    """
+    Number of dimensions of the sub-array if this data type describes a
+    sub-array, and ``0`` otherwise.
+
+    .. versionadded:: 1.13.0
+
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('str',
     """The array-protocol typestring of this data-type object."""))
 

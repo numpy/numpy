@@ -1950,6 +1950,25 @@ arraydescr_shape_get(PyArray_Descr *self)
     return Py_BuildValue("(O)", self->subarray->shape);
 }
 
+static PyObject *
+arraydescr_ndim_get(PyArray_Descr *self)
+{
+    if (!PyDataType_HASSUBARRAY(self)) {
+        return PyInt_FromLong(0);
+    }
+    /*TODO
+     * self->subarray->shape should always be a tuple,
+     * so this check should be unnecessary
+     */
+    if (PyTuple_Check(self->subarray->shape)) {
+        Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
+        return PyInt_FromLong(ndim);
+    }
+    /* consistent with arraydescr_shape_get */
+    return PyInt_FromLong(1);
+}
+
+
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
@@ -2207,6 +2226,9 @@ static PyGetSetDef arraydescr_getsets[] = {
         NULL, NULL, NULL},
     {"shape",
         (getter)arraydescr_shape_get,
+        NULL, NULL, NULL},
+    {"ndim",
+        (getter)arraydescr_ndim_get,
         NULL, NULL, NULL},
     {"isbuiltin",
         (getter)arraydescr_isbuiltin_get,
