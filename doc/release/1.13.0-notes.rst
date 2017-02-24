@@ -159,6 +159,11 @@ to `apply_along_axis`. Now, it can return an array of any dimensionality
 (including 0D), and the shape of this array replaces the axis of the array
 being iterated over.
 
+``.ndim`` property added to ``dtype`` to complement ``.shape``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
+for ``len(d.shape)``.
+
 
 Changes
 =======
