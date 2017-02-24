@@ -1644,7 +1644,7 @@ def gradient(f, *varargs, **kwargs):
                 + \\left(h_{d}^{2} - h_{s}^{2}\\right)f\\left(x_{i}\\right) 
                 - h_{d}^{2}f\\left(x_{i}-h_{s}\\right)}
                 { h_{s}h_{d}\\left(h_{d} + h_{s}\\right)}
-            + \mathcal{O}\\left(\\frac{h_{d}h_{s}^{2} 
+            + \\mathcal{O}\\left(\\frac{h_{d}h_{s}^{2} 
                                 + h_{s}h_{d}^{2}}{h_{d} 
                                 + h_{s}}\\right)
 
@@ -1656,7 +1656,7 @@ def gradient(f, *varargs, **kwargs):
         
         \\hat f_{i}^{(1)}=
             \\frac{f\\left(x_{i+1}\\right) - f\\left(x_{i-1}\\right)}{2h} 
-            + \mathcal{O}\\left(h^{2}\\right)
+            + \\mathcal{O}\\left(h^{2}\\right)
 
     With a similar procedure the forward/backward approximations used for 
     boundaries can be derived.
