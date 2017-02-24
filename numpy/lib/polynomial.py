@@ -201,7 +201,7 @@ def roots(p):
     """
     # If input is scalar, this makes it an array
     p = atleast_1d(p)
-    if len(p.shape) != 1:
+    if p.ndim != 1:
         raise ValueError("Input must be a rank-1 array.")
 
     # find non-zero array entries
@@ -1051,7 +1051,7 @@ class poly1d(object):
         if r:
             c_or_r = poly(c_or_r)
         c_or_r = atleast_1d(c_or_r)
-        if len(c_or_r.shape) > 1:
+        if c_or_r.ndim > 1:
             raise ValueError("Polynomial must be 1d only.")
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:

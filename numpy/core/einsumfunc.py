@@ -360,7 +360,7 @@ def _parse_einsum_input(operands):
                 if operands[num].shape == ():
                     ellipse_count = 0
                 else:
-                    ellipse_count = max(len(operands[num].shape), 1)
+                    ellipse_count = max(operands[num].ndim, 1)
                     ellipse_count -= (len(sub) - 3)
 
                 if ellipse_count > longest:
