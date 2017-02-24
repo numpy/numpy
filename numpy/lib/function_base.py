@@ -1872,11 +1872,18 @@ def diff(a, n=1, axis=-1):
     -------
     diff : ndarray
         The n-th differences. The shape of the output is the same as `a`
-        except along `axis` where the dimension is smaller by `n`.
+        except along `axis` where the dimension is smaller by `n`. The
+        type of the output is the same as that of the input.
 
     See Also
     --------
     gradient, ediff1d, cumsum
+
+    Notes
+    -----
+    For boolean arrays, the preservation of type means that the result
+    will contain `False` when consecutive elements are the same and
+    `True` when they differ.
 
     Examples
     --------
