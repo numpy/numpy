@@ -192,15 +192,15 @@ def _fastCopyAndTranspose(type, *arrays):
 
 def _assertRank2(*arrays):
     for a in arrays:
-        if len(a.shape) != 2:
+        if a.ndim != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % len(a.shape))
+                    'two-dimensional' % a.ndim)
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
-        if len(a.shape) < 2:
+        if a.ndim < 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % len(a.shape))
+                    'at least two-dimensional' % a.ndim)
 
 def _assertSquareness(*arrays):
     for a in arrays:
@@ -231,7 +231,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=len(b.shape))``.
+    ``tensordot(a, x, axes=b.ndim)``.
 
     Parameters
     ----------
@@ -1917,7 +1917,7 @@ def lstsq(a, b, rcond=-1):
     import math
     a, _ = _makearray(a)
     b, wrap = _makearray(b)
-    is_1d = len(b.shape) == 1
+    is_1d = b.ndim == 1
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)

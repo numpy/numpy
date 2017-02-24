@@ -390,7 +390,7 @@ def dstack(tup):
 
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
-        if len(_nx.shape(sub_arys[i])) == 0:
+        if _nx.ndim(sub_arys[i]) == 0:
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
@@ -577,9 +577,9 @@ def hsplit(ary, indices_or_sections):
            [[ 6.,  7.]]])]
 
     """
-    if len(_nx.shape(ary)) == 0:
+    if _nx.ndim(ary) == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
-    if len(ary.shape) > 1:
+    if ary.ndim > 1:
         return split(ary, indices_or_sections, 1)
     else:
         return split(ary, indices_or_sections, 0)
@@ -631,7 +631,7 @@ def vsplit(ary, indices_or_sections):
             [ 6.,  7.]]])]
 
     """
-    if len(_nx.shape(ary)) < 2:
+    if _nx.ndim(ary) < 2:
         raise ValueError('vsplit only works on arrays of 2 or more dimensions')
     return split(ary, indices_or_sections, 0)
 
@@ -676,7 +676,7 @@ def dsplit(ary, indices_or_sections):
      array([], dtype=float64)]
 
     """
-    if len(_nx.shape(ary)) < 3:
+    if _nx.ndim(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
 

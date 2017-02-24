@@ -1013,7 +1013,7 @@ class TestUfunc(TestCase):
                 MyThing.getitem_count += 1
                 if not isinstance(i, tuple):
                     i = (i,)
-                if len(i) > len(self.shape):
+                if len(i) > self.ndim:
                     raise IndexError("boo")
 
                 return MyThing(self.shape[len(i):])

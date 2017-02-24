@@ -1674,7 +1674,7 @@ def gradient(f, *varargs, **kwargs):
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
-    N = len(f.shape)  # number of dimensions
+    N = f.ndim  # number of dimensions
 
     axes = kwargs.pop('axis', None)
     if axes is None:
@@ -1907,7 +1907,7 @@ def diff(a, n=1, axis=-1):
         raise ValueError(
             "order must be non-negative but got " + repr(n))
     a = asanyarray(a)
-    nd = len(a.shape)
+    nd = a.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1, None)
@@ -2151,7 +2151,7 @@ def unwrap(p, discont=pi, axis=-1):
 
     """
     p = asarray(p)
-    nd = len(p.shape)
+    nd = p.ndim
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
@@ -4495,7 +4495,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
             d = d.reshape(shape)
         else:
             d = diff(x, axis=axis)
-    nd = len(y.shape)
+    nd = y.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1, None)

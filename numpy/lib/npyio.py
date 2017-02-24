@@ -925,7 +925,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
-                if len(tp.shape) > 0:
+                if tp.ndim > 0:
                     packing.extend(flat_packing)
                 else:
                     packing.append((len(flat_dt), flat_packing))

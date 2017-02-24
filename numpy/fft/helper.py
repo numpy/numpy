@@ -64,7 +64,7 @@ def fftshift(x, axes=None):
 
     """
     tmp = asarray(x)
-    ndim = len(tmp.shape)
+    ndim = tmp.ndim
     if axes is None:
         axes = list(range(ndim))
     elif isinstance(axes, integer_types):
@@ -113,7 +113,7 @@ def ifftshift(x, axes=None):
 
     """
     tmp = asarray(x)
-    ndim = len(tmp.shape)
+    ndim = tmp.ndim
     if axes is None:
         axes = list(range(ndim))
     elif isinstance(axes, integer_types):

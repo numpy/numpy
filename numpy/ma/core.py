@@ -3204,7 +3204,7 @@ class MaskedArray(ndarray):
                     # If we're indexing a multidimensional field in a
                     # structured array (such as dtype("(2,)i2,(2,)i1")),
                     # dimensionality goes up (M[field].ndim == M.ndim +
-                    # len(M.dtype[field].shape)).  That's fine for
+                    # M.dtype[field].ndim).  That's fine for
                     # M[field] but problematic for M[field].fill_value
                     # which should have shape () to avoid breaking several
                     # methods. There is no great way out, so set to
@@ -3846,7 +3846,7 @@ class MaskedArray(ndarray):
         Literal string representation.
 
         """
-        n = len(self.shape)
+        n = self.ndim
         if self._baseclass is np.ndarray:
             name = 'array'
         else:
@@ -7319,9 +7319,9 @@ def inner(a, b):
     """
     fa = filled(a, 0)
     fb = filled(b, 0)
-    if len(fa.shape) == 0:
+    if fa.ndim == 0:
         fa.shape = (1,)
-    if len(fb.shape) == 0:
+    if fb.ndim == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
 inner.__doc__ = doc_note(np.inner.__doc__,

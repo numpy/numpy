@@ -169,7 +169,7 @@ def matrix_power(M, n):
 
     """
     M = asanyarray(M)
-    if len(M.shape) != 2 or M.shape[0] != M.shape[1]:
+    if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
     if not issubdtype(type(n), int):
         raise TypeError("exponent must be an integer")

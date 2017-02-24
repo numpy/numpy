@@ -1354,9 +1354,9 @@ def tensordot(a, b, axes=2):
 
     a, b = asarray(a), asarray(b)
     as_ = a.shape
-    nda = len(a.shape)
+    nda = a.ndim
     bs = b.shape
-    ndb = len(b.shape)
+    ndb = b.ndim
     equal = True
     if na != nb:
         equal = False
@@ -1461,7 +1461,7 @@ def roll(a, shift, axis=None):
 
     else:
         broadcasted = broadcast(shift, axis)
-        if len(broadcasted.shape) > 1:
+        if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
         shifts = {ax: 0 for ax in range(a.ndim)}

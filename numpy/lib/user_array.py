@@ -34,7 +34,7 @@ class container(object):
         self.array = array(data, dtype, copy=copy)
 
     def __repr__(self):
-        if len(self.shape) > 0:
+        if self.ndim > 0:
             return self.__class__.__name__ + repr(self.array)[len("array"):]
         else:
             return self.__class__.__name__ + "(" + repr(self.array) + ")"
@@ -183,7 +183,7 @@ class container(object):
         return self._rc(invert(self.array))
 
     def _scalarfunc(self, func):
-        if len(self.shape) == 0:
+        if self.ndim == 0:
             return func(self[0])
         else:
             raise TypeError(

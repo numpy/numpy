@@ -613,8 +613,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         shape = shape[:-nn]
 
     for k, obj in enumerate(arrayList):
-        nn = len(descr[k].shape)
-        testshape = obj.shape[:len(obj.shape) - nn]
+        nn = descr[k].ndim
+        testshape = obj.shape[:obj.ndim - nn]
         if testshape != shape:
             raise ValueError("array-shape mismatch in array %d" % k)
 
