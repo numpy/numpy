@@ -7,6 +7,8 @@ This release supports Python 2.7 and 3.4 - 3.6.
 Highlights
 ==========
 
+ * Operations like `a + b + c` will create less temporaries on some platforms
+
 
 Dropped Support
 ===============
@@ -83,6 +85,14 @@ C API
 
 New Features
 ============
+
+Temporary elision
+-----------------
+On platforms providing the `backtrace` function NumPy will now not create
+temporaries in expression when possible.
+For example `d = a + b + c` is transformed to `d = a + b; d += c` which can
+improve performance for large arrays as less memory bandwidth is required to
+perform the operation.
 
 ``axes`` argument for ``unique``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
