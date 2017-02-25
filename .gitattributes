@@ -1,7 +1,3 @@
-# Line endings for Windows scripts
-* text=auto
-tools/win32build/nsis_scripts/*.nsi.in eol=crlf
-
 # Numerical data files
 numpy/lib/tests/data/*.npy binary
 
