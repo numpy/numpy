@@ -31,37 +31,35 @@ def main(root):
     None
 
     """
+    import ast
+    import tokenize
+    import warnings
+    from pathlib import Path
+
     count = 0
-
-    if sys.version_info[:2] >= (3, 6):
-        import ast
-        import tokenize
-        import warnings
-        from pathlib import Path
-
-        base = Path(root)
-        paths = base.rglob("*.py") if base.is_dir() else [base]
-        for path in paths:
-            # use tokenize to auto-detect encoding on systems where no
-            # default encoding is defined (e.g. LANG='C')
-            with tokenize.open(str(path)) as f:
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter('always')
-                    tree = ast.parse(f.read())
-                if w:
-                    print("file: ", str(path))
-                    for e in w:
-                        print('line: ', e.lineno, ': ', e.message)
-                    print()
-                    count += len(w)
-    else:
-        raise RuntimeError("Python version must be >= 3.6")
-
+    base = Path(root)
+    paths = base.rglob("*.py") if base.is_dir() else [base]
+    for path in paths:
+        # use tokenize to auto-detect encoding on systems where no
+        # default encoding is defined (e.g. LANG='C')
+        with tokenize.open(str(path)) as f:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter('always')
+                tree = ast.parse(f.read())
+            if w:
+                print("file: ", str(path))
+                for e in w:
+                    print('line: ', e.lineno, ': ', e.message)
+                print()
+                count += len(w)
     print("Errors Found", count)
 
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
+    if sys.version_info[:2] < (3, 6):
+        raise RuntimeError("Python version must be >= 3.6")
 
     parser = ArgumentParser(description="Find deprecated escaped characters")
     parser.add_argument('root', help='directory or file to be checked')
