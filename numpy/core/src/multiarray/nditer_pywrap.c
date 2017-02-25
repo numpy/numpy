@@ -148,6 +148,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                             flag = NPY_ITER_C_INDEX;
                         }
                         break;
+                    case 'i':
+                        if (strcmp(str, "copy_if_overlap") == 0) {
+                            flag = NPY_ITER_COPY_IF_OVERLAP;
+                        }
+                        break;
                     case 'n':
                         if (strcmp(str, "common_dtype") == 0) {
                             flag = NPY_ITER_COMMON_DTYPE;
@@ -353,6 +358,11 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                             flag = NPY_ITER_NO_BROADCAST;
                         }
                         break;
+                }
+                break;
+            case 'o':
+                if (strcmp(str, "overlap_assume_elementwise") == 0) {
+                    flag = NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
                 }
                 break;
             case 'r':
@@ -2416,9 +2426,9 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat*/
     (ssizeargfunc)NULL,                     /*sq_repeat*/
     (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
-    (ssizessizeargfunc)npyiter_seq_slice,   /*sq_slice*/
+    (ssizessizeargfunc)NULL,                /*sq_slice*/
     (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
-    (ssizessizeobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
+    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sq_inplace_concat */
     (ssizeargfunc)NULL,                     /*sq_inplace_repeat */

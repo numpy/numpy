@@ -703,14 +703,14 @@ class TestUfunc(TestCase):
 
     def test_axis_out_of_bounds(self):
         a = np.array([False, False])
-        assert_raises(ValueError, a.all, axis=1)
+        assert_raises(np.AxisError, a.all, axis=1)
         a = np.array([False, False])
-        assert_raises(ValueError, a.all, axis=-2)
+        assert_raises(np.AxisError, a.all, axis=-2)
 
         a = np.array([False, False])
-        assert_raises(ValueError, a.any, axis=1)
+        assert_raises(np.AxisError, a.any, axis=1)
         a = np.array([False, False])
-        assert_raises(ValueError, a.any, axis=-2)
+        assert_raises(np.AxisError, a.any, axis=-2)
 
     def test_scalar_reduction(self):
         # The functions 'sum', 'prod', etc allow specifying axis=0
@@ -1013,7 +1013,7 @@ class TestUfunc(TestCase):
                 MyThing.getitem_count += 1
                 if not isinstance(i, tuple):
                     i = (i,)
-                if len(i) > len(self.shape):
+                if len(i) > self.ndim:
                     raise IndexError("boo")
 
                 return MyThing(self.shape[len(i):])
@@ -1256,6 +1256,27 @@ class TestUfunc(TestCase):
         b = 1
         for f in binary_funcs:
             assert_raises(TypeError, f, a, b)
+
+    def test_reduce_noncontig_output(self):
+        # Check that reduction deals with non-contiguous output arrays
+        # appropriately.
+        #
+        # gh-8036
+
+        x = np.arange(7*13*8, dtype=np.int16).reshape(7, 13, 8)
+        x = x[4:6,1:11:6,1:5].transpose(1, 2, 0)
+        y_base = np.arange(4*4, dtype=np.int16).reshape(4, 4)
+        y = y_base[::2,:]
+
+        y_base_copy = y_base.copy()
+
+        r0 = np.add.reduce(x, out=y.copy(), axis=2)
+        r1 = np.add.reduce(x, out=y, axis=2)
+
+        # The results should match, and y_base shouldn't get clobbered
+        assert_equal(r0, r1)
+        assert_equal(y_base[1,:], y_base_copy[1,:])
+        assert_equal(y_base[3,:], y_base_copy[3,:])
 
 
 if __name__ == "__main__":

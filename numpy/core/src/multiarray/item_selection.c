@@ -1101,16 +1101,12 @@ NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArray_SortFunc *sort;
-    int axis_orig = axis;
-    int  n = PyArray_NDIM(op);
+    int n = PyArray_NDIM(op);
 
-    if (axis < 0) {
-        axis += n;
-    }
-    if (axis < 0 || axis >= n) {
-        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis_orig);
+    if (check_and_adjust_axis(&axis, n) < 0) {
         return -1;
     }
+
     if (PyArray_FailUnlessWriteable(op, "sort array") < 0) {
         return -1;
     }
@@ -1161,11 +1157,8 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp nkth, i;
 
     if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
-        /* 2013-05-18, 1.8 */
-        if (DEPRECATE("Calling partition with a non integer index"
-                      " will result in an error in the future") < 0) {
-            return NULL;
-        }
+        PyErr_Format(PyExc_TypeError, "Partition index must be integer");
+        return NULL;
     }
 
     if (PyArray_NDIM(ktharray) > 1) {
@@ -1215,17 +1208,13 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     PyArrayObject *kthrvl;
     PyArray_PartitionFunc *part;
     PyArray_SortFunc *sort;
-    int axis_orig = axis;
     int n = PyArray_NDIM(op);
     int ret;
 
-    if (axis < 0) {
-        axis += n;
-    }
-    if (axis < 0 || axis >= n) {
-        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis_orig);
+    if (check_and_adjust_axis(&axis, n) < 0) {
         return -1;
     }
+
     if (PyArray_FailUnlessWriteable(op, "partition array") < 0) {
         return -1;
     }
@@ -1458,12 +1447,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         *((npy_intp *)(PyArray_DATA(ret))) = 0;
         goto finish;
     }
-    if (axis < 0) {
-        axis += nd;
-    }
-    if ((axis < 0) || (axis >= nd)) {
-        PyErr_Format(PyExc_ValueError,
-                "axis(=%d) out of bounds", axis);
+    if (check_and_adjust_axis(&axis, nd) < 0) {
         goto fail;
     }
 

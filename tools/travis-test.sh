@@ -8,20 +8,25 @@ export NPY_NUM_BUILD_JOBS=2
 # setup env
 if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
   # much faster package installation
-  export LD_PRELOAD=/usr/lib/libeatmydata/libeatmydata.so
+  export LD_PRELOAD='/usr/lib/libeatmydata/libeatmydata.so'
+elif [ -r /usr/lib/*/libeatmydata.so ]; then
+  # much faster package installation
+  export LD_PRELOAD='/usr/$LIB/libeatmydata.so'
 fi
+
+source builds/venv/bin/activate
 
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
-# explicit python version needed here
-if [ -n "$USE_DEBUG" ]; then
-  PYTHON="python3-dbg"
-fi
-
 if [ -n "$PYTHON_OO" ]; then
   PYTHON="${PYTHON} -OO"
+fi
+
+
+if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
+  PYTHON="${PYTHON} -3"
 fi
 
 # make some warnings fatal, mostly to match windows compilers
@@ -45,9 +50,9 @@ setup_base()
     else
       sysflags="$($PYTHON -c "from distutils import sysconfig; \
         print (sysconfig.get_config_var('CFLAGS'))")"
-      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install . 2>&1 | tee log
+      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install -v . 2>&1 | tee log
       grep -v "_configtest" log \
-        | grep -vE "ld returned 1|no previously-included files matching" \
+        | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
         | grep -E "warning\>" \
         | tee warnings
       # Check for an acceptable number of warnings. Some warnings are out of
@@ -71,7 +76,7 @@ setup_chroot()
   #   linux32 python setup.py build
   # when travis updates to ubuntu 14.04
   #
-  # Numpy may not distinguish between 64 and 32 bit ATLAS in the
+  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
   # configuration stage.
   DIR=$1
   set -u
@@ -93,15 +98,16 @@ setup_chroot()
     $DIST-security  main restricted universe multiverse \
     | sudo tee -a $DIR/etc/apt/sources.list
 
-  # install needed packages
   sudo chroot $DIR bash -c "apt-get update"
-  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
-    eatmydata libatlas-dev libatlas-base-dev gfortran \
-    python-dev python-nose python-pip cython"
-
   # faster operation with preloaded eatmydata
-  echo /usr/lib/libeatmydata/libeatmydata.so | \
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes eatmydata"
+  echo '/usr/$LIB/libeatmydata.so' | \
     sudo tee -a $DIR/etc/ld.so.preload
+
+  # install needed packages
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
+    libatlas-dev libatlas-base-dev gfortran \
+    python-dev python-nose python-pip cython"
 }
 
 run_test()
@@ -117,7 +123,11 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
-  $PYTHON ../tools/test-installed-numpy.py
+  if [ -n "$RUN_FULL_TESTS" ]; then
+    $PYTHON ../tools/test-installed-numpy.py --mode=full
+  else
+    $PYTHON ../tools/test-installed-numpy.py
+  fi
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis

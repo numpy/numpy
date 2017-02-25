@@ -3,7 +3,7 @@
 Indexing
 ========
 
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. currentmodule:: numpy
 
@@ -36,8 +36,8 @@ objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
 but not for integer arrays or other embedded sequences.
 
 .. index::
-   triple: ndarray; special methods; getslice
-   triple: ndarray; special methods; setslice
+   triple: ndarray; special methods; getitem
+   triple: ndarray; special methods; setitem
    single: ellipsis
    single: newaxis
 

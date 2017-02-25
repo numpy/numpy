@@ -470,10 +470,10 @@ backport.
 Pushing changes to the main repo
 ================================
 
-*This is only relevant if you have commit rights to the main Numpy repo.*
+*This is only relevant if you have commit rights to the main NumPy repo.*
 
 When you have a set of "ready" changes in a feature branch ready for
-Numpy's ``master`` or ``maintenance`` branches, you can push
+NumPy's ``master`` or ``maintenance`` branches, you can push
 them to ``upstream`` as follows:
 
 1. First, merge or rebase on the target branch.

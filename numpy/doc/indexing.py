@@ -65,7 +65,7 @@ inefficient as a new temporary array is created after the first index
 that is subsequently indexed by 2.
 
 Note to those used to IDL or Fortran memory order as it relates to
-indexing.  Numpy uses C-order indexing. That means that the last
+indexing.  NumPy uses C-order indexing. That means that the last
 index usually represents the most rapidly changing memory location,
 unlike Fortran or IDL, where the first index represents the most
 rapidly changing location in memory. This difference represents a
@@ -111,7 +111,7 @@ specific function.
 Index arrays
 ============
 
-Numpy arrays may be indexed with other arrays (or any other sequence-
+NumPy arrays may be indexed with other arrays (or any other sequence-
 like object that can be converted to an array, such as lists, with the
 exception of tuples; see the end of this document for why this is). The
 use of index arrays ranges from simple, straightforward cases to
@@ -200,8 +200,8 @@ one index array with y: ::
 
 What results is the construction of a new array where each value of
 the index array selects one row from the array being indexed and the
-resultant array has the resulting shape (size of row, number index
-elements).
+resultant array has the resulting shape (number of index elements,
+size of row).
 
 An example of where this may be useful is for a color lookup table
 where we want to map the values of an image into RGB triples for

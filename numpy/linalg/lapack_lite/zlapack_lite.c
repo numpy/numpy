@@ -16,6 +16,15 @@ extern doublereal dlamch_(char *);
 
 extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
+/*
+f2c knows the exact rules for precedence, and so omits parentheses where not
+strictly necessary. Since this is generated code, we don't really care if
+it's readable, and we know what is written is correct. So don't warn about
+them.
+*/
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif
 
 
 /* Table of constant values */
@@ -233,9 +242,9 @@ L20:
 	*info = -2;
     } else if (*n < 0) {
 	*info = -3;
-    } else if ((*ilo < 1) || (*ilo > max(1,*n))) {
+    } else if (*ilo < 1 || *ilo > max(1,*n)) {
 	*info = -4;
-    } else if ((*ihi < min(*ilo,*n)) || (*ihi > *n)) {
+    } else if (*ihi < min(*ilo,*n) || *ihi > *n) {
 	*info = -5;
     } else if (*m < 0) {
 	*info = -7;
@@ -266,7 +275,7 @@ L20:
 
 /*     Backward balance */
 
-    if ((lsame_(job, "S")) || (lsame_(job, "B"))) {
+    if (lsame_(job, "S") || lsame_(job, "B")) {
 
 	if (rightv) {
 	    i__1 = *ihi;
@@ -296,7 +305,7 @@ L20:
 */
 
 L30:
-    if ((lsame_(job, "P")) || (lsame_(job, "B"))) {
+    if (lsame_(job, "P") || lsame_(job, "B")) {
 	if (rightv) {
 	    i__1 = *n;
 	    for (ii = 1; ii <= i__1; ++ii) {
@@ -550,7 +559,7 @@ L50:
 		goto L60;
 	    }
 	    i__2 = j + i__ * a_dim1;
-	    if ((a[i__2].r != 0.) || (d_imag(&a[j + i__ * a_dim1]) != 0.)) {
+	    if (a[i__2].r != 0. || d_imag(&a[j + i__ * a_dim1]) != 0.) {
 		goto L70;
 	    }
 L60:
@@ -581,7 +590,7 @@ L90:
 		goto L100;
 	    }
 	    i__3 = i__ + j * a_dim1;
-	    if ((a[i__3].r != 0.) || (d_imag(&a[i__ + j * a_dim1]) != 0.)) {
+	    if (a[i__3].r != 0. || d_imag(&a[i__ + j * a_dim1]) != 0.) {
 		goto L110;
 	    }
 L100:
@@ -646,7 +655,7 @@ L150:
 
 /*        Guard against zero C or R due to underflow. */
 
-	if ((c__ == 0.) || (r__ == 0.)) {
+	if (c__ == 0. || r__ == 0.) {
 	    goto L200;
 	}
 	g = r__ / 8.;
@@ -657,8 +666,7 @@ L160:
 	d__1 = max(f,c__);
 /* Computing MIN */
 	d__2 = min(r__,g);
-	if (((c__ >= g) || (max(d__1,ca) >= sfmax2)) || (min(d__2,ra) <=
-		sfmin2)) {
+	if (c__ >= g || max(d__1,ca) >= sfmax2 || min(d__2,ra) <= sfmin2) {
 	    goto L170;
 	}
 	f *= 8.;
@@ -674,8 +682,7 @@ L170:
 L180:
 /* Computing MIN */
 	d__1 = min(f,c__), d__1 = min(d__1,g);
-	if (((g < r__) || (max(r__,ra) >= sfmax2)) || (min(d__1,ca) <= sfmin2)
-		) {
+	if (g < r__ || max(r__,ra) >= sfmax2 || min(d__1,ca) <= sfmin2) {
 	    goto L190;
 	}
 	f /= 8.;
@@ -1569,9 +1576,9 @@ L210:
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
-    } else if ((*ldvl < 1) || (wantvl && *ldvl < *n)) {
+    } else if (*ldvl < 1 || wantvl && *ldvl < *n) {
 	*info = -8;
-    } else if ((*ldvr < 1) || (wantvr && *ldvr < *n)) {
+    } else if (*ldvr < 1 || wantvr && *ldvr < *n) {
 	*info = -10;
     }
 
@@ -1589,12 +1596,12 @@ L210:
 */
 
     minwrk = 1;
-    if (*info == 0 && ((*lwork >= 1) || (lquery))) {
+    if (*info == 0 && (*lwork >= 1 || lquery)) {
 	maxwrk = *n + *n * ilaenv_(&c__1, "ZGEHRD", " ", n, &c__1, n, &c__0, (
 		ftnlen)6, (ftnlen)1);
 	if (! wantvl && ! wantvr) {
 /* Computing MAX */
-	    i__1 = 1, i__2 = (*n) << (1);
+	    i__1 = 1, i__2 = *n << 1;
 	    minwrk = max(i__1,i__2);
 /* Computing MAX */
 	    i__1 = ilaenv_(&c__8, "ZHSEQR", "EN", n, &c__1, n, &c_n1, (ftnlen)
@@ -1609,12 +1616,12 @@ L210:
 	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
 	    k = min(i__1,i__2);
 /* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = (*n) << (1);
+	    i__1 = k * (k + 2), i__2 = *n << 1;
 	    hswork = max(i__1,i__2);
 	    maxwrk = max(maxwrk,hswork);
 	} else {
 /* Computing MAX */
-	    i__1 = 1, i__2 = (*n) << (1);
+	    i__1 = 1, i__2 = *n << 1;
 	    minwrk = max(i__1,i__2);
 /* Computing MAX */
 	    i__1 = maxwrk, i__2 = *n + (*n - 1) * ilaenv_(&c__1, "ZUNGHR",
@@ -1633,10 +1640,10 @@ L210:
 	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
 	    k = min(i__1,i__2);
 /* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = (*n) << (1);
+	    i__1 = k * (k + 2), i__2 = *n << 1;
 	    hswork = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = max(maxwrk,hswork), i__2 = (*n) << (1);
+	    i__1 = max(maxwrk,hswork), i__2 = *n << 1;
 	    maxwrk = max(i__1,i__2);
 	}
 	work[1].r = (doublereal) maxwrk, work[1].i = 0.;
@@ -1799,7 +1806,7 @@ L210:
 	goto L50;
     }
 
-    if ((wantvl) || (wantvr)) {
+    if (wantvl || wantvr) {
 
 /*
           Compute left and/or right eigenvectors
@@ -2039,9 +2046,9 @@ L50:
     *info = 0;
     if (*n < 0) {
 	*info = -1;
-    } else if ((*ilo < 1) || (*ilo > max(1,*n))) {
+    } else if (*ilo < 1 || *ilo > max(1,*n)) {
 	*info = -2;
-    } else if ((*ihi < min(*ilo,*n)) || (*ihi > *n)) {
+    } else if (*ihi < min(*ilo,*n) || *ihi > *n) {
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
@@ -2242,9 +2249,9 @@ L50:
     lquery = *lwork == -1;
     if (*n < 0) {
 	*info = -1;
-    } else if ((*ilo < 1) || (*ilo > max(1,*n))) {
+    } else if (*ilo < 1 || *ilo > max(1,*n)) {
 	*info = -2;
-    } else if ((*ihi < min(*ilo,*n)) || (*ihi > *n)) {
+    } else if (*ihi < min(*ilo,*n) || *ihi > *n) {
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
@@ -2322,7 +2329,7 @@ L50:
     }
     ldwork = *n;
 
-    if ((nb < nbmin) || (nb >= nh)) {
+    if (nb < nbmin || nb >= nh) {
 
 /*        Use unblocked code below */
 
@@ -3034,24 +3041,23 @@ L50:
 
    Computing MAX
 */
-	    i__1 = maxwrk, i__2 = ((*n) << (1)) + (mm + *n) * ilaenv_(&c__1,
+	    i__1 = maxwrk, i__2 = (*n << 1) + (mm + *n) * ilaenv_(&c__1,
 		    "ZGEBRD", " ", &mm, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1)
 		    ;
 	    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = ((*n) << (1)) + *nrhs * ilaenv_(&c__1,
-		    "ZUNMBR", "QLC", &mm, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)
-		    3);
+	    i__1 = maxwrk, i__2 = (*n << 1) + *nrhs * ilaenv_(&c__1, "ZUNMBR",
+		     "QLC", &mm, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)3);
 	    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = ((*n) << (1)) + (*n - 1) * ilaenv_(&c__1,
-		    "ZUNMBR", "PLN", n, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)3);
+	    i__1 = maxwrk, i__2 = (*n << 1) + (*n - 1) * ilaenv_(&c__1, "ZUN"
+		    "MBR", "PLN", n, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)3);
 	    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * *nrhs;
+	    i__1 = maxwrk, i__2 = (*n << 1) + *n * *nrhs;
 	    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = ((*n) << (1)) + mm, i__2 = ((*n) << (1)) + *n * *nrhs;
+	    i__1 = (*n << 1) + mm, i__2 = (*n << 1) + *n * *nrhs;
 	    minwrk = max(i__1,i__2);
 	}
 	if (*n > *m) {
@@ -3065,17 +3071,17 @@ L50:
 		maxwrk = *m + *m * ilaenv_(&c__1, "ZGELQF", " ", m, n, &c_n1,
 			&c_n1, (ftnlen)6, (ftnlen)1);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = *m * *m + ((*m) << (2)) + ((*m) << (1))
-			* ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (
+		i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m << 1) *
+			ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (
 			ftnlen)6, (ftnlen)1);
 		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = *m * *m + ((*m) << (2)) + *nrhs *
-			ilaenv_(&c__1, "ZUNMBR", "QLC", m, nrhs, m, &c_n1, (
-			ftnlen)6, (ftnlen)3);
+		i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *nrhs * ilaenv_(&
+			c__1, "ZUNMBR", "QLC", m, nrhs, m, &c_n1, (ftnlen)6, (
+			ftnlen)3);
 		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = *m * *m + ((*m) << (2)) + (*m - 1) *
+		i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m - 1) *
 			ilaenv_(&c__1, "ZUNMLQ", "LC", n, nrhs, m, &c_n1, (
 			ftnlen)6, (ftnlen)2);
 		maxwrk = max(i__1,i__2);
@@ -3085,34 +3091,33 @@ L50:
 		    maxwrk = max(i__1,i__2);
 		} else {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = *m * *m + ((*m) << (1));
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 1);
 		    maxwrk = max(i__1,i__2);
 		}
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = *m * *m + ((*m) << (2)) + *m * *nrhs;
+		i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *m * *nrhs;
 		maxwrk = max(i__1,i__2);
 	    } else {
 
 /*              Path 2 - underdetermined. */
 
-		maxwrk = ((*m) << (1)) + (*n + *m) * ilaenv_(&c__1, "ZGEBRD",
+		maxwrk = (*m << 1) + (*n + *m) * ilaenv_(&c__1, "ZGEBRD",
 			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = ((*m) << (1)) + *nrhs * ilaenv_(&c__1,
+		i__1 = maxwrk, i__2 = (*m << 1) + *nrhs * ilaenv_(&c__1,
 			"ZUNMBR", "QLC", m, nrhs, m, &c_n1, (ftnlen)6, (
 			ftnlen)3);
 		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
-			"ZUNMBR", "PLN", n, nrhs, m, &c_n1, (ftnlen)6, (
-			ftnlen)3);
+		i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1, "ZUNMBR"
+			, "PLN", n, nrhs, m, &c_n1, (ftnlen)6, (ftnlen)3);
 		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * *nrhs;
+		i__1 = maxwrk, i__2 = (*m << 1) + *m * *nrhs;
 		maxwrk = max(i__1,i__2);
 	    }
 /* Computing MAX */
-	    i__1 = ((*m) << (1)) + *n, i__2 = ((*m) << (1)) + *m * *nrhs;
+	    i__1 = (*m << 1) + *n, i__2 = (*m << 1) + *m * *nrhs;
 	    minwrk = max(i__1,i__2);
 	}
 	minwrk = min(minwrk,maxwrk);
@@ -3134,7 +3139,7 @@ L50:
 
 /*     Quick return if possible. */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	*rank = 0;
 	return 0;
     }
@@ -3290,10 +3295,9 @@ L50:
 
     } else /* if(complicated condition) */ {
 /* Computing MAX */
-	i__1 = *m, i__2 = ((*m) << (1)) - 4, i__1 = max(i__1,i__2), i__1 =
-		max(i__1,*nrhs), i__2 = *n - *m * 3;
-	if (*n >= mnthr && *lwork >= ((*m) << (2)) + *m * *m + max(i__1,i__2))
-		 {
+	i__1 = *m, i__2 = (*m << 1) - 4, i__1 = max(i__1,i__2), i__1 = max(
+		i__1,*nrhs), i__2 = *n - *m * 3;
+	if (*n >= mnthr && *lwork >= (*m << 2) + *m * *m + max(i__1,i__2)) {
 
 /*
           Path 2a - underdetermined, with many more columns than rows
@@ -3305,10 +3309,10 @@ L50:
    Computing MAX
    Computing MAX
 */
-	    i__3 = *m, i__4 = ((*m) << (1)) - 4, i__3 = max(i__3,i__4), i__3 =
-		     max(i__3,*nrhs), i__4 = *n - *m * 3;
-	    i__1 = ((*m) << (2)) + *m * *lda + max(i__3,i__4), i__2 = *m * *
-		    lda + *m + *m * *nrhs;
+	    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4), i__3 =
+		    max(i__3,*nrhs), i__4 = *n - *m * 3;
+	    i__1 = (*m << 2) + *m * *lda + max(i__3,i__4), i__2 = *m * *lda +
+		    *m + *m * *nrhs;
 	    if (*lwork >= max(i__1,i__2)) {
 		ldwork = *lda;
 	    }
@@ -4084,14 +4088,14 @@ L10:
     mnthr2 = (integer) (minmn * 5. / 3.);
     wntqa = lsame_(jobz, "A");
     wntqs = lsame_(jobz, "S");
-    wntqas = (wntqa) || (wntqs);
+    wntqas = wntqa || wntqs;
     wntqo = lsame_(jobz, "O");
     wntqn = lsame_(jobz, "N");
     minwrk = 1;
     maxwrk = 1;
     lquery = *lwork == -1;
 
-    if (! ((((wntqa) || (wntqs)) || (wntqo)) || (wntqn))) {
+    if (! (wntqa || wntqs || wntqo || wntqn)) {
 	*info = -1;
     } else if (*m < 0) {
 	*info = -2;
@@ -4099,11 +4103,11 @@ L10:
 	*info = -3;
     } else if (*lda < max(1,*m)) {
 	*info = -5;
-    } else if (((*ldu < 1) || (wntqas && *ldu < *m)) || (wntqo && *m < *n && *
-	    ldu < *m)) {
+    } else if (*ldu < 1 || wntqas && *ldu < *m || wntqo && *m < *n && *ldu < *
+	    m) {
 	*info = -8;
-    } else if ((((*ldvt < 1) || (wntqa && *ldvt < *n)) || (wntqs && *ldvt <
-	    minmn)) || (wntqo && *m >= *n && *ldvt < *n)) {
+    } else if (*ldvt < 1 || wntqa && *ldvt < *n || wntqs && *ldvt < minmn ||
+	    wntqo && *m >= *n && *ldvt < *n) {
 	*info = -10;
     }
 
@@ -4134,9 +4138,9 @@ L10:
 		    wrkbl = *n + *n * ilaenv_(&c__1, "ZGEQRF", " ", m, n, &
 			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + ((*n) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 		    maxwrk = wrkbl;
 		    minwrk = *n * 3;
@@ -4151,22 +4155,22 @@ L10:
 			    " ", m, n, n, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + ((*n) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 		    maxwrk = *m * *n + *n * *n + wrkbl;
-		    minwrk = ((*n) << (1)) * *n + *n * 3;
+		    minwrk = (*n << 1) * *n + *n * 3;
 		} else if (wntqs) {
 
 /*                 Path 3 (M much larger than N, JOBZ='S') */
@@ -4178,17 +4182,17 @@ L10:
 			    " ", m, n, n, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + ((*n) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
@@ -4205,38 +4209,38 @@ L10:
 			    " ", m, m, n, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + ((*n) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", n, n, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 		    maxwrk = *n * *n + wrkbl;
-		    minwrk = *n * *n + ((*n) << (1)) + *m;
+		    minwrk = *n * *n + (*n << 1) + *m;
 		}
 	    } else if (*m >= mnthr2) {
 
 /*              Path 5 (M much larger than N, but not as much as MNTHR1) */
 
-		maxwrk = ((*n) << (1)) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
+		maxwrk = (*n << 1) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
 			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
-		minwrk = ((*n) << (1)) + *m;
+		minwrk = (*n << 1) + *m;
 		if (wntqo) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "P", n, n, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, n, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
@@ -4244,23 +4248,23 @@ L10:
 		    minwrk += *n * *n;
 		} else if (wntqs) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "P", n, n, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, n, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 		} else if (wntqa) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "P", n, n, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, m, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
@@ -4269,17 +4273,17 @@ L10:
 
 /*              Path 6 (M at least N, but not much larger) */
 
-		maxwrk = ((*n) << (1)) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
+		maxwrk = (*n << 1) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
 			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
-		minwrk = ((*n) << (1)) + *m;
+		minwrk = (*n << 1) + *m;
 		if (wntqo) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
@@ -4287,23 +4291,23 @@ L10:
 		    minwrk += *n * *n;
 		} else if (wntqs) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 		} else if (wntqa) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "PRC", n, n, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*n) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*n << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "QLN", m, m, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
@@ -4325,9 +4329,9 @@ L10:
 		    maxwrk = *m + *m * ilaenv_(&c__1, "ZGELQF", " ", m, n, &
 			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + ((*m) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = maxwrk, i__2 = (*m << 1) + (*m << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    maxwrk = max(i__1,i__2);
 		    minwrk = *m * 3;
 		} else if (wntqo) {
@@ -4341,22 +4345,22 @@ L10:
 			    " ", m, n, m, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + ((*m) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*m << 1) + (*m << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 		    maxwrk = *m * *n + *m * *m + wrkbl;
-		    minwrk = ((*m) << (1)) * *m + *m * 3;
+		    minwrk = (*m << 1) * *m + *m * 3;
 		} else if (wntqs) {
 
 /*                 Path 3t (N much larger than M, JOBZ='S') */
@@ -4368,17 +4372,17 @@ L10:
 			    " ", m, n, m, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + ((*m) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*m << 1) + (*m << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
@@ -4395,38 +4399,38 @@ L10:
 			    " ", n, n, m, &c_n1, (ftnlen)6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + ((*m) << (1)) *
-			    ilaenv_(&c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1,
-			    (ftnlen)6, (ftnlen)1);
+		    i__1 = wrkbl, i__2 = (*m << 1) + (*m << 1) * ilaenv_(&
+			    c__1, "ZGEBRD", " ", m, m, &c_n1, &c_n1, (ftnlen)
+			    6, (ftnlen)1);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = wrkbl, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, m, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    wrkbl = max(i__1,i__2);
 		    maxwrk = *m * *m + wrkbl;
-		    minwrk = *m * *m + ((*m) << (1)) + *n;
+		    minwrk = *m * *m + (*m << 1) + *n;
 		}
 	    } else if (*n >= mnthr2) {
 
 /*              Path 5t (N much larger than M, but not as much as MNTHR1) */
 
-		maxwrk = ((*m) << (1)) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
+		maxwrk = (*m << 1) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
 			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
-		minwrk = ((*m) << (1)) + *n;
+		minwrk = (*m << 1) + *n;
 		if (wntqo) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "P", m, n, m, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, m, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
@@ -4434,23 +4438,23 @@ L10:
 		    minwrk += *m * *m;
 		} else if (wntqs) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "P", m, n, m, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, m, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 		} else if (wntqa) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "P", n, n, m, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "Q", m, m, n, &c_n1, (ftnlen)6, (ftnlen)
 			    1);
 		    maxwrk = max(i__1,i__2);
@@ -4459,17 +4463,17 @@ L10:
 
 /*              Path 6t (N greater than M, but not much larger) */
 
-		maxwrk = ((*m) << (1)) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
+		maxwrk = (*m << 1) + (*m + *n) * ilaenv_(&c__1, "ZGEBRD",
 			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
-		minwrk = ((*m) << (1)) + *n;
+		minwrk = (*m << 1) + *n;
 		if (wntqo) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "PRC", m, n, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNMBR", "QLN", m, m, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
@@ -4477,23 +4481,23 @@ L10:
 		    minwrk += *m * *m;
 		} else if (wntqs) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "PRC", m, n, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "QLN", m, m, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 		} else if (wntqa) {
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *n * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *n * ilaenv_(&c__1,
 			    "ZUNGBR", "PRC", n, n, m, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
 /* Computing MAX */
-		    i__1 = maxwrk, i__2 = ((*m) << (1)) + *m * ilaenv_(&c__1,
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
 			    "ZUNGBR", "QLN", m, m, n, &c_n1, (ftnlen)6, (
 			    ftnlen)3);
 		    maxwrk = max(i__1,i__2);
@@ -4517,7 +4521,7 @@ L10:
 
 /*     Quick return if possible */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	if (*lwork >= 1) {
 	    work[1].r = 1., work[1].i = 0.;
 	}
@@ -5462,8 +5466,8 @@ L10:
 
 		i__2 = *m - 1;
 		i__1 = *m - 1;
-		zlaset_("U", &i__2, &i__1, &c_b59, &c_b59, &a[((a_dim1) << (1)
-			) + 1], lda);
+		zlaset_("U", &i__2, &i__1, &c_b59, &c_b59, &a[(a_dim1 << 1) +
+			1], lda);
 		ie = 1;
 		itauq = 1;
 		itaup = itauq + *m;
@@ -5773,8 +5777,8 @@ L10:
 
 		i__1 = *m - 1;
 		i__2 = *m - 1;
-		zlaset_("U", &i__1, &i__2, &c_b59, &c_b59, &a[((a_dim1) << (1)
-			) + 1], lda);
+		zlaset_("U", &i__1, &i__2, &c_b59, &c_b59, &a[(a_dim1 << 1) +
+			1], lda);
 		ie = 1;
 		itauq = itau;
 		itaup = itauq + *m;
@@ -6562,7 +6566,7 @@ L10:
 
 /*     Quick return if possible */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -6575,7 +6579,7 @@ L10:
 	jp = j - 1 + izamax_(&i__2, &a[j + j * a_dim1], &c__1);
 	ipiv[j] = jp;
 	i__2 = jp + j * a_dim1;
-	if ((a[i__2].r != 0.) || (a[i__2].i != 0.)) {
+	if (a[i__2].r != 0. || a[i__2].i != 0.) {
 
 /*           Apply the interchange to columns 1:N. */
 
@@ -6717,7 +6721,7 @@ L10:
 
 /*     Quick return if possible */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -6725,7 +6729,7 @@ L10:
 
     nb = ilaenv_(&c__1, "ZGETRF", " ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)
 	    1);
-    if ((nb <= 1) || (nb >= min(*m,*n))) {
+    if (nb <= 1 || nb >= min(*m,*n)) {
 
 /*        Use unblocked code. */
 
@@ -6914,7 +6918,7 @@ L10:
 
 /*     Quick return if possible */
 
-    if ((*n == 0) || (*nrhs == 0)) {
+    if (*n == 0 || *nrhs == 0) {
 	return 0;
     }
 
@@ -7150,7 +7154,7 @@ L10:
     /* Function Body */
     wantz = lsame_(jobz, "V");
     lower = lsame_(uplo, "L");
-    lquery = ((*lwork == -1) || (*lrwork == -1)) || (*liwork == -1);
+    lquery = *lwork == -1 || *lrwork == -1 || *liwork == -1;
 
     *info = 0;
     if (*n <= 1) {
@@ -7162,10 +7166,10 @@ L10:
 	liopt = liwmin;
     } else {
 	if (wantz) {
-	    lwmin = ((*n) << (1)) + *n * *n;
+	    lwmin = (*n << 1) + *n * *n;
 /* Computing 2nd power */
 	    i__1 = *n;
-	    lrwmin = *n * 5 + 1 + ((i__1 * i__1) << (1));
+	    lrwmin = *n * 5 + 1 + (i__1 * i__1 << 1);
 	    liwmin = *n * 5 + 3;
 	} else {
 	    lwmin = *n + 1;
@@ -7176,9 +7180,9 @@ L10:
 	lropt = lrwmin;
 	liopt = liwmin;
     }
-    if (! ((wantz) || (lsame_(jobz, "N")))) {
+    if (! (wantz || lsame_(jobz, "N"))) {
 	*info = -1;
-    } else if (! ((lower) || (lsame_(uplo, "U")))) {
+    } else if (! (lower || lsame_(uplo, "U"))) {
 	*info = -2;
     } else if (*n < 0) {
 	*info = -3;
@@ -7505,7 +7509,7 @@ L10:
 	    i__1 = i__;
 	    e[i__1] = alpha.r;
 
-	    if ((taui.r != 0.) || (taui.i != 0.)) {
+	    if (taui.r != 0. || taui.i != 0.) {
 
 /*              Apply H(i) from both sides to A(1:i,1:i) */
 
@@ -7584,7 +7588,7 @@ L10:
 	    i__2 = i__;
 	    e[i__2] = alpha.r;
 
-	    if ((taui.r != 0.) || (taui.i != 0.)) {
+	    if (taui.r != 0. || taui.i != 0.) {
 
 /*              Apply H(i) from both sides to A(i+1:n,i+1:n) */
 
@@ -8188,7 +8192,7 @@ L10:
     /* Function Body */
     wantt = lsame_(job, "S");
     initz = lsame_(compz, "I");
-    wantz = (initz) || (lsame_(compz, "V"));
+    wantz = initz || lsame_(compz, "V");
 
     *info = 0;
     i__1 = max(1,*n);
@@ -8200,13 +8204,13 @@ L10:
 	*info = -2;
     } else if (*n < 0) {
 	*info = -3;
-    } else if ((*ilo < 1) || (*ilo > max(1,*n))) {
+    } else if (*ilo < 1 || *ilo > max(1,*n)) {
 	*info = -4;
-    } else if ((*ihi < min(*ilo,*n)) || (*ihi > *n)) {
+    } else if (*ihi < min(*ilo,*n) || *ihi > *n) {
 	*info = -5;
     } else if (*ldh < max(1,*n)) {
 	*info = -7;
-    } else if ((*ldz < 1) || (wantz && *ldz < max(1,*n))) {
+    } else if (*ldz < 1 || wantz && *ldz < max(1,*n)) {
 	*info = -10;
     } else if (*lwork < max(1,*n) && ! lquery) {
 	*info = -12;
@@ -8336,7 +8340,7 @@ L10:
     s_cat(ch__1, a__1, i__4, &c__2, (ftnlen)2);
     maxb = ilaenv_(&c__8, "ZHSEQR", ch__1, n, ilo, ihi, &c_n1, (ftnlen)6, (
 	    ftnlen)2);
-    if (((ns <= 1) || (ns > nh)) || (maxb >= nh)) {
+    if (ns <= 1 || ns > nh || maxb >= nh) {
 
 /*        Use the standard double-shift algorithm */
 
@@ -8439,7 +8443,7 @@ L80:
 	    i2 = i__;
 	}
 
-	if ((its == 20) || (its == 30)) {
+	if (its == 20 || its == 30) {
 
 /*           Exceptional shifts. */
 
@@ -8828,7 +8832,7 @@ L180:
     y -= y_offset;
 
     /* Function Body */
-    if ((*m <= 0) || (*n <= 0)) {
+    if (*m <= 0 || *n <= 0) {
 	return 0;
     }
 
@@ -9516,7 +9520,7 @@ L180:
     --rwork;
 
     /* Function Body */
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -9806,7 +9810,7 @@ L10:
     if (iwork[subpbs] > smlsiz) {
 	for (j = subpbs; j >= 1; --j) {
 	    iwork[j * 2] = (iwork[j] + 1) / 2;
-	    iwork[((j) << (1)) - 1] = iwork[j] / 2;
+	    iwork[(j << 1) - 1] = iwork[j] / 2;
 /* L20: */
 	}
 	++tlvls;
@@ -9834,7 +9838,7 @@ L10:
 /* L40: */
     }
 
-    indxq = ((*n) << (2)) + 3;
+    indxq = (*n << 2) + 3;
 
 /*
        Set up workspaces for eigenvalues only/accumulate new vectors
@@ -9856,7 +9860,7 @@ L10:
     igivcl = igivpt + *n * lgn;
 
     igivnm = 1;
-    iq = igivnm + ((*n) << (1)) * lgn;
+    iq = igivnm + (*n << 1) * lgn;
 /* Computing 2nd power */
     i__1 = *n;
     iwrem = iq + i__1 * i__1 + 1;
@@ -10044,7 +10048,7 @@ L80:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurrence the dimension of the
+          the Z vector.  For each such occurence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED2.
 
@@ -10184,7 +10188,7 @@ L80:
 */
     if (*n < 0) {
 	*info = -1;
-    } else if ((min(1,*n) > *cutpnt) || (*n < *cutpnt)) {
+    } else if (min(1,*n) > *cutpnt || *n < *cutpnt) {
 	*info = -2;
     } else if (*qsiz < *n) {
 	*info = -3;
@@ -10253,8 +10257,7 @@ L80:
     zlaed8_(&k, n, qsiz, &q[q_offset], ldq, &d__[1], rho, cutpnt, &rwork[iz],
 	    &rwork[idlmda], &work[1], qsiz, &rwork[iw], &iwork[indxp], &iwork[
 	    indx], &indxq[1], &perm[prmptr[curr]], &givptr[curr + 1], &givcol[
-	    ((givptr[curr]) << (1)) + 1], &givnum[((givptr[curr]) << (1)) + 1]
-	    , info);
+	    (givptr[curr] << 1) + 1], &givnum[(givptr[curr] << 1) + 1], info);
     prmptr[curr + 1] = prmptr[curr] + *n;
     givptr[curr + 1] += givptr[curr];
 
@@ -10478,7 +10481,7 @@ L80:
 	*info = -3;
     } else if (*ldq < max(1,*n)) {
 	*info = -5;
-    } else if ((*cutpnt < min(1,*n)) || (*cutpnt > *n)) {
+    } else if (*cutpnt < min(1,*n) || *cutpnt > *n) {
 	*info = -8;
     } else if (*ldq2 < max(1,*n)) {
 	*info = -12;
@@ -10628,10 +10631,10 @@ L70:
 /*           Record the appropriate Givens rotation */
 
 	    ++(*givptr);
-	    givcol[((*givptr) << (1)) + 1] = indxq[indx[jlam]];
-	    givcol[((*givptr) << (1)) + 2] = indxq[indx[j]];
-	    givnum[((*givptr) << (1)) + 1] = c__;
-	    givnum[((*givptr) << (1)) + 2] = s;
+	    givcol[(*givptr << 1) + 1] = indxq[indx[jlam]];
+	    givcol[(*givptr << 1) + 2] = indxq[indx[j]];
+	    givnum[(*givptr << 1) + 1] = c__;
+	    givnum[(*givptr << 1) + 2] = s;
 	    zdrot_(qsiz, &q[indxq[indx[jlam]] * q_dim1 + 1], &c__1, &q[indxq[
 		    indx[j]] * q_dim1 + 1], &c__1, &c__, &s);
 	    t = d__[jlam] * c__ * c__ + d__[j] * s * s;
@@ -10962,7 +10965,7 @@ L30:
 	    i2 = i__;
 	}
 
-	if ((its == 10) || (its == 20)) {
+	if (its == 10 || its == 20) {
 
 /*           Exceptional shift. */
 
@@ -10982,7 +10985,7 @@ L30:
 	    d__1 = h__[i__3].r;
 	    z__1.r = d__1 * h__[i__2].r, z__1.i = d__1 * h__[i__2].i;
 	    u.r = z__1.r, u.i = z__1.i;
-	    if ((u.r != 0.) || (u.i != 0.)) {
+	    if (u.r != 0. || u.i != 0.) {
 		i__2 = i__ - 1 + (i__ - 1) * h_dim1;
 		z__2.r = h__[i__2].r - t.r, z__2.i = h__[i__2].i - t.i;
 		z__1.r = z__2.r * .5, z__1.i = z__2.i * .5;
@@ -11784,13 +11787,13 @@ L130:
     /* Function Body */
     *info = 0;
 
-    if ((*icompq < 0) || (*icompq > 1)) {
+    if (*icompq < 0 || *icompq > 1) {
 	*info = -1;
     } else if (*nl < 1) {
 	*info = -2;
     } else if (*nr < 1) {
 	*info = -3;
-    } else if ((*sqre < 0) || (*sqre > 1)) {
+    } else if (*sqre < 0 || *sqre > 1) {
 	*info = -4;
     }
 
@@ -11830,10 +11833,9 @@ L130:
 
 	i__1 = *givptr;
 	for (i__ = 1; i__ <= i__1; ++i__) {
-	    zdrot_(nrhs, &b[givcol[i__ + ((givcol_dim1) << (1))] + b_dim1],
-		    ldb, &b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[
-		    i__ + ((givnum_dim1) << (1))], &givnum[i__ + givnum_dim1])
-		    ;
+	    zdrot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &givnum[i__ + givnum_dim1]);
 /* L10: */
 	}
 
@@ -11862,41 +11864,40 @@ L130:
 	    for (j = 1; j <= i__1; ++j) {
 		diflj = difl[j];
 		dj = poles[j + poles_dim1];
-		dsigj = -poles[j + ((poles_dim1) << (1))];
+		dsigj = -poles[j + (poles_dim1 << 1)];
 		if (j < *k) {
 		    difrj = -difr[j + difr_dim1];
-		    dsigjp = -poles[j + 1 + ((poles_dim1) << (1))];
+		    dsigjp = -poles[j + 1 + (poles_dim1 << 1)];
 		}
-		if ((z__[j] == 0.) || (poles[j + ((poles_dim1) << (1))] == 0.)
-			) {
+		if (z__[j] == 0. || poles[j + (poles_dim1 << 1)] == 0.) {
 		    rwork[j] = 0.;
 		} else {
-		    rwork[j] = -poles[j + ((poles_dim1) << (1))] * z__[j] /
-			    diflj / (poles[j + ((poles_dim1) << (1))] + dj);
+		    rwork[j] = -poles[j + (poles_dim1 << 1)] * z__[j] / diflj
+			    / (poles[j + (poles_dim1 << 1)] + dj);
 		}
 		i__2 = j - 1;
 		for (i__ = 1; i__ <= i__2; ++i__) {
-		    if ((z__[i__] == 0.) || (poles[i__ + ((poles_dim1) << (1))
-			    ] == 0.)) {
+		    if (z__[i__] == 0. || poles[i__ + (poles_dim1 << 1)] ==
+			    0.) {
 			rwork[i__] = 0.;
 		    } else {
-			rwork[i__] = poles[i__ + ((poles_dim1) << (1))] * z__[
-				i__] / (dlamc3_(&poles[i__ + ((poles_dim1) <<
-				(1))], &dsigj) - diflj) / (poles[i__ + ((
-				poles_dim1) << (1))] + dj);
+			rwork[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				 / (dlamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigj) - diflj) / (poles[i__ + (poles_dim1 <<
+				1)] + dj);
 		    }
 /* L30: */
 		}
 		i__2 = *k;
 		for (i__ = j + 1; i__ <= i__2; ++i__) {
-		    if ((z__[i__] == 0.) || (poles[i__ + ((poles_dim1) << (1))
-			    ] == 0.)) {
+		    if (z__[i__] == 0. || poles[i__ + (poles_dim1 << 1)] ==
+			    0.) {
 			rwork[i__] = 0.;
 		    } else {
-			rwork[i__] = poles[i__ + ((poles_dim1) << (1))] * z__[
-				i__] / (dlamc3_(&poles[i__ + ((poles_dim1) <<
-				(1))], &dsigjp) + difrj) / (poles[i__ + ((
-				poles_dim1) << (1))] + dj);
+			rwork[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				 / (dlamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigjp) + difrj) / (poles[i__ + (poles_dim1 <<
+				 1)] + dj);
 		    }
 /* L40: */
 		}
@@ -11911,7 +11912,7 @@ L130:
       $                     B( J, 1 ), LDB )
 */
 
-		i__ = *k + ((*nrhs) << (1));
+		i__ = *k + (*nrhs << 1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = *k;
@@ -11923,10 +11924,9 @@ L130:
 		    }
 /* L60: */
 		}
-		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + ((*nrhs) << (1)
-			)], k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1], &
-			c__1);
-		i__ = *k + ((*nrhs) << (1));
+		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1], &c__1);
+		i__ = *k + (*nrhs << 1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = *k;
@@ -11937,9 +11937,9 @@ L130:
 		    }
 /* L80: */
 		}
-		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + ((*nrhs) << (1)
-			)], k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1 + *
-			nrhs], &c__1);
+		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1 + *nrhs],
+			&c__1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = j + jcol * b_dim1;
@@ -11976,23 +11976,22 @@ L130:
 	} else {
 	    i__1 = *k;
 	    for (j = 1; j <= i__1; ++j) {
-		dsigj = poles[j + ((poles_dim1) << (1))];
+		dsigj = poles[j + (poles_dim1 << 1)];
 		if (z__[j] == 0.) {
 		    rwork[j] = 0.;
 		} else {
 		    rwork[j] = -z__[j] / difl[j] / (dsigj + poles[j +
-			    poles_dim1]) / difr[j + ((difr_dim1) << (1))];
+			    poles_dim1]) / difr[j + (difr_dim1 << 1)];
 		}
 		i__2 = j - 1;
 		for (i__ = 1; i__ <= i__2; ++i__) {
 		    if (z__[j] == 0.) {
 			rwork[i__] = 0.;
 		    } else {
-			d__1 = -poles[i__ + 1 + ((poles_dim1) << (1))];
+			d__1 = -poles[i__ + 1 + (poles_dim1 << 1)];
 			rwork[i__] = z__[j] / (dlamc3_(&dsigj, &d__1) - difr[
 				i__ + difr_dim1]) / (dsigj + poles[i__ +
-				poles_dim1]) / difr[i__ + ((difr_dim1) << (1))
-				];
+				poles_dim1]) / difr[i__ + (difr_dim1 << 1)];
 		    }
 /* L110: */
 		}
@@ -12001,10 +12000,10 @@ L130:
 		    if (z__[j] == 0.) {
 			rwork[i__] = 0.;
 		    } else {
-			d__1 = -poles[i__ + ((poles_dim1) << (1))];
+			d__1 = -poles[i__ + (poles_dim1 << 1)];
 			rwork[i__] = z__[j] / (dlamc3_(&dsigj, &d__1) - difl[
 				i__]) / (dsigj + poles[i__ + poles_dim1]) /
-				difr[i__ + ((difr_dim1) << (1))];
+				difr[i__ + (difr_dim1 << 1)];
 		    }
 /* L120: */
 		}
@@ -12017,7 +12016,7 @@ L130:
       $                     BX( J, 1 ), LDBX )
 */
 
-		i__ = *k + ((*nrhs) << (1));
+		i__ = *k + (*nrhs << 1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = *k;
@@ -12029,10 +12028,9 @@ L130:
 		    }
 /* L140: */
 		}
-		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + ((*nrhs) << (1)
-			)], k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1], &
-			c__1);
-		i__ = *k + ((*nrhs) << (1));
+		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1], &c__1);
+		i__ = *k + (*nrhs << 1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = *k;
@@ -12043,9 +12041,9 @@ L130:
 		    }
 /* L160: */
 		}
-		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + ((*nrhs) << (1)
-			)], k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1 + *
-			nrhs], &c__1);
+		dgemv_("T", k, nrhs, &c_b1015, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b324, &rwork[*k + 1 + *nrhs],
+			&c__1);
 		i__2 = *nrhs;
 		for (jcol = 1; jcol <= i__2; ++jcol) {
 		    i__3 = j + jcol * bx_dim1;
@@ -12092,9 +12090,9 @@ L130:
 
 	for (i__ = *givptr; i__ >= 1; --i__) {
 	    d__1 = -givnum[i__ + givnum_dim1];
-	    zdrot_(nrhs, &b[givcol[i__ + ((givcol_dim1) << (1))] + b_dim1],
-		    ldb, &b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[
-		    i__ + ((givnum_dim1) << (1))], &d__1);
+	    zdrot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &d__1);
 /* L200: */
 	}
     }
@@ -12333,7 +12331,7 @@ L130:
     /* Function Body */
     *info = 0;
 
-    if ((*icompq < 0) || (*icompq > 1)) {
+    if (*icompq < 0 || *icompq > 1) {
 	*info = -1;
     } else if (*smlsiz < 3) {
 	*info = -2;
@@ -12408,7 +12406,7 @@ L130:
        $               B( NLF, 1 ), LDB, ZERO, BX( NLF, 1 ), LDBX )
 */
 
-	j = (nl * *nrhs) << (1);
+	j = nl * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nlf + nl - 1;
@@ -12421,9 +12419,8 @@ L130:
 /* L20: */
 	}
 	dgemm_("T", "N", &nl, nrhs, &nl, &c_b1015, &u[nlf + u_dim1], ldu, &
-		rwork[((nl * *nrhs) << (1)) + 1], &nl, &c_b324, &rwork[1], &
-		nl);
-	j = (nl * *nrhs) << (1);
+		rwork[(nl * *nrhs << 1) + 1], &nl, &c_b324, &rwork[1], &nl);
+	j = nl * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nlf + nl - 1;
@@ -12435,8 +12432,8 @@ L130:
 /* L40: */
 	}
 	dgemm_("T", "N", &nl, nrhs, &nl, &c_b1015, &u[nlf + u_dim1], ldu, &
-		rwork[((nl * *nrhs) << (1)) + 1], &nl, &c_b324, &rwork[nl * *
-		nrhs + 1], &nl);
+		rwork[(nl * *nrhs << 1) + 1], &nl, &c_b324, &rwork[nl * *nrhs
+		+ 1], &nl);
 	jreal = 0;
 	jimag = nl * *nrhs;
 	i__2 = *nrhs;
@@ -12463,7 +12460,7 @@ L130:
       $               B( NRF, 1 ), LDB, ZERO, BX( NRF, 1 ), LDBX )
 */
 
-	j = (nr * *nrhs) << (1);
+	j = nr * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nrf + nr - 1;
@@ -12476,9 +12473,8 @@ L130:
 /* L80: */
 	}
 	dgemm_("T", "N", &nr, nrhs, &nr, &c_b1015, &u[nrf + u_dim1], ldu, &
-		rwork[((nr * *nrhs) << (1)) + 1], &nr, &c_b324, &rwork[1], &
-		nr);
-	j = (nr * *nrhs) << (1);
+		rwork[(nr * *nrhs << 1) + 1], &nr, &c_b324, &rwork[1], &nr);
+	j = nr * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nrf + nr - 1;
@@ -12490,8 +12486,8 @@ L130:
 /* L100: */
 	}
 	dgemm_("T", "N", &nr, nrhs, &nr, &c_b1015, &u[nrf + u_dim1], ldu, &
-		rwork[((nr * *nrhs) << (1)) + 1], &nr, &c_b324, &rwork[nr * *
-		nrhs + 1], &nr);
+		rwork[(nr * *nrhs << 1) + 1], &nr, &c_b324, &rwork[nr * *nrhs
+		+ 1], &nr);
 	jreal = 0;
 	jimag = nr * *nrhs;
 	i__2 = *nrhs;
@@ -12534,7 +12530,7 @@ L130:
     sqre = 0;
 
     for (lvl = nlvl; lvl >= 1; --lvl) {
-	lvl2 = ((lvl) << (1)) - 1;
+	lvl2 = (lvl << 1) - 1;
 
 /*
           find the first node LF and last node LL on
@@ -12547,7 +12543,7 @@ L130:
 	} else {
 	    i__1 = lvl - 1;
 	    lf = pow_ii(&c__2, &i__1);
-	    ll = ((lf) << (1)) - 1;
+	    ll = (lf << 1) - 1;
 	}
 	i__1 = ll;
 	for (i__ = lf; i__ <= i__1; ++i__) {
@@ -12583,7 +12579,7 @@ L170:
     j = 0;
     i__1 = nlvl;
     for (lvl = 1; lvl <= i__1; ++lvl) {
-	lvl2 = ((lvl) << (1)) - 1;
+	lvl2 = (lvl << 1) - 1;
 
 /*
           Find the first node LF and last node LL on
@@ -12596,7 +12592,7 @@ L170:
 	} else {
 	    i__2 = lvl - 1;
 	    lf = pow_ii(&c__2, &i__2);
-	    ll = ((lf) << (1)) - 1;
+	    ll = (lf << 1) - 1;
 	}
 	i__2 = lf;
 	for (i__ = ll; i__ >= i__2; --i__) {
@@ -12654,7 +12650,7 @@ L170:
       $               B( NLF, 1 ), LDB, ZERO, BX( NLF, 1 ), LDBX )
 */
 
-	j = (nlp1 * *nrhs) << (1);
+	j = nlp1 * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nlf + nlp1 - 1;
@@ -12667,9 +12663,9 @@ L170:
 /* L210: */
 	}
 	dgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b1015, &vt[nlf + vt_dim1],
-		ldu, &rwork[((nlp1 * *nrhs) << (1)) + 1], &nlp1, &c_b324, &
-		rwork[1], &nlp1);
-	j = (nlp1 * *nrhs) << (1);
+		ldu, &rwork[(nlp1 * *nrhs << 1) + 1], &nlp1, &c_b324, &rwork[
+		1], &nlp1);
+	j = nlp1 * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nlf + nlp1 - 1;
@@ -12681,8 +12677,8 @@ L170:
 /* L230: */
 	}
 	dgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b1015, &vt[nlf + vt_dim1],
-		ldu, &rwork[((nlp1 * *nrhs) << (1)) + 1], &nlp1, &c_b324, &
-		rwork[nlp1 * *nrhs + 1], &nlp1);
+		ldu, &rwork[(nlp1 * *nrhs << 1) + 1], &nlp1, &c_b324, &rwork[
+		nlp1 * *nrhs + 1], &nlp1);
 	jreal = 0;
 	jimag = nlp1 * *nrhs;
 	i__2 = *nrhs;
@@ -12709,7 +12705,7 @@ L170:
       $               B( NRF, 1 ), LDB, ZERO, BX( NRF, 1 ), LDBX )
 */
 
-	j = (nrp1 * *nrhs) << (1);
+	j = nrp1 * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nrf + nrp1 - 1;
@@ -12722,9 +12718,9 @@ L170:
 /* L270: */
 	}
 	dgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b1015, &vt[nrf + vt_dim1],
-		ldu, &rwork[((nrp1 * *nrhs) << (1)) + 1], &nrp1, &c_b324, &
-		rwork[1], &nrp1);
-	j = (nrp1 * *nrhs) << (1);
+		ldu, &rwork[(nrp1 * *nrhs << 1) + 1], &nrp1, &c_b324, &rwork[
+		1], &nrp1);
+	j = nrp1 * *nrhs << 1;
 	i__2 = *nrhs;
 	for (jcol = 1; jcol <= i__2; ++jcol) {
 	    i__3 = nrf + nrp1 - 1;
@@ -12736,8 +12732,8 @@ L170:
 /* L290: */
 	}
 	dgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b1015, &vt[nrf + vt_dim1],
-		ldu, &rwork[((nrp1 * *nrhs) << (1)) + 1], &nrp1, &c_b324, &
-		rwork[nrp1 * *nrhs + 1], &nrp1);
+		ldu, &rwork[(nrp1 * *nrhs << 1) + 1], &nrp1, &c_b324, &rwork[
+		nrp1 * *nrhs + 1], &nrp1);
 	jreal = 0;
 	jimag = nrp1 * *nrhs;
 	i__2 = *nrhs;
@@ -12961,7 +12957,7 @@ L330:
 	*info = -3;
     } else if (*nrhs < 1) {
 	*info = -4;
-    } else if ((*ldb < 1) || (*ldb < *n)) {
+    } else if (*ldb < 1 || *ldb < *n) {
 	*info = -8;
     }
     if (*info != 0) {
@@ -12974,7 +12970,7 @@ L330:
 
 /*     Set up the tolerance. */
 
-    if ((*rcond <= 0.) || (*rcond >= 1.)) {
+    if (*rcond <= 0. || *rcond >= 1.) {
 	*rcond = eps;
     }
 
@@ -13009,7 +13005,7 @@ L330:
 		zdrot_(&c__1, &b[i__ + b_dim1], &c__1, &b[i__ + 1 + b_dim1], &
 			c__1, &cs, &sn);
 	    } else {
-		rwork[((i__) << (1)) - 1] = cs;
+		rwork[(i__ << 1) - 1] = cs;
 		rwork[i__ * 2] = sn;
 	    }
 /* L10: */
@@ -13019,7 +13015,7 @@ L330:
 	    for (i__ = 1; i__ <= i__1; ++i__) {
 		i__2 = *n - 1;
 		for (j = 1; j <= i__2; ++j) {
-		    cs = rwork[((j) << (1)) - 1];
+		    cs = rwork[(j << 1) - 1];
 		    sn = rwork[j * 2];
 		    zdrot_(&c__1, &b[j + i__ * b_dim1], &c__1, &b[j + 1 + i__
 			    * b_dim1], &c__1, &cs, &sn);
@@ -13204,12 +13200,12 @@ L330:
     vt = *smlsiz * *n + 1;
     difl = vt + smlszp * *n;
     difr = difl + nlvl * *n;
-    z__ = difr + ((nlvl * *n) << (1));
+    z__ = difr + (nlvl * *n << 1);
     c__ = z__ + nlvl * *n;
     s = c__ + *n;
     poles = s + *n;
-    givnum = poles + ((nlvl) << (1)) * *n;
-    nrwork = givnum + ((nlvl) << (1)) * *n;
+    givnum = poles + (nlvl << 1) * *n;
+    nrwork = givnum + (nlvl << 1) * *n;
     bx = 1;
 
     irwrb = nrwork;
@@ -13221,7 +13217,7 @@ L330:
     givptr = k + *n;
     perm = givptr + *n;
     givcol = perm + nlvl * *n;
-    iwk = givcol + ((nlvl * *n) << (1));
+    iwk = givcol + (nlvl * *n << 1);
 
     st = 1;
     sqre = 0;
@@ -13239,7 +13235,7 @@ L330:
 
     i__1 = nm1;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	if (((d__1 = e[i__], abs(d__1)) < eps) || (i__ == nm1)) {
+	if ((d__1 = e[i__], abs(d__1)) < eps || i__ == nm1) {
 	    ++nsub;
 	    iwork[nsub] = st;
 
@@ -13612,8 +13608,8 @@ doublereal zlange_(char *norm, integer *m, integer *n, doublecomplex *a,
 	    }
 /* L20: */
 	}
-    } else if ((lsame_(norm, "O")) || (*(unsigned char *
-	    )norm == '1')) {
+    } else if (lsame_(norm, "O") || *(unsigned char *)
+	    norm == '1') {
 
 /*        Find norm1(A). */
 
@@ -13655,8 +13651,7 @@ doublereal zlange_(char *norm, integer *m, integer *n, doublecomplex *a,
 	    value = max(d__1,d__2);
 /* L80: */
 	}
-    } else if ((lsame_(norm, "F")) || (lsame_(norm,
-	    "E"))) {
+    } else if (lsame_(norm, "F") || lsame_(norm, "E")) {
 
 /*        Find normF(A). */
 
@@ -13813,8 +13808,7 @@ doublereal zlanhe_(char *norm, char *uplo, integer *n, doublecomplex *a,
 /* L40: */
 	    }
 	}
-    } else if (((lsame_(norm, "I")) || (lsame_(norm,
-	    "O"))) || (*(unsigned char *)norm == '1')) {
+    } else if (lsame_(norm, "I") || lsame_(norm, "O") || *(unsigned char *)norm == '1') {
 
 /*        Find normI(A) ( = norm1(A), since A is hermitian). */
 
@@ -13862,8 +13856,7 @@ doublereal zlanhe_(char *norm, char *uplo, integer *n, doublecomplex *a,
 /* L100: */
 	    }
 	}
-    } else if ((lsame_(norm, "F")) || (lsame_(norm,
-	    "E"))) {
+    } else if (lsame_(norm, "F") || lsame_(norm, "E")) {
 
 /*        Find normF(A). */
 
@@ -14018,8 +14011,8 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
 	    }
 /* L20: */
 	}
-    } else if ((lsame_(norm, "O")) || (*(unsigned char *
-	    )norm == '1')) {
+    } else if (lsame_(norm, "O") || *(unsigned char *)
+	    norm == '1') {
 
 /*        Find norm1(A). */
 
@@ -14065,8 +14058,7 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
 	    value = max(d__1,d__2);
 /* L80: */
 	}
-    } else if ((lsame_(norm, "F")) || (lsame_(norm,
-	    "E"))) {
+    } else if (lsame_(norm, "F") || lsame_(norm, "E")) {
 
 /*        Find normF(A). */
 
@@ -14176,7 +14168,7 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
     --rwork;
 
     /* Function Body */
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -14331,7 +14323,7 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
 
 /*        Form  H * C */
 
-	if ((tau->r != 0.) || (tau->i != 0.)) {
+	if (tau->r != 0. || tau->i != 0.) {
 
 /*           w := C' * v */
 
@@ -14348,7 +14340,7 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
 
 /*        Form  C * H */
 
-	if ((tau->r != 0.) || (tau->i != 0.)) {
+	if (tau->r != 0. || tau->i != 0.) {
 
 /*           w := C * v */
 
@@ -14495,7 +14487,7 @@ doublereal zlanhs_(char *norm, integer *n, doublecomplex *a, integer *lda,
     work -= work_offset;
 
     /* Function Body */
-    if ((*m <= 0) || (*n <= 0)) {
+    if (*m <= 0 || *n <= 0) {
 	return 0;
     }
 
@@ -16771,7 +16763,7 @@ L230:
 	    i__2 = j + c_dim1;
 	    z__2.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__2.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__3.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__3.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__1.r = z__2.r + z__3.r, z__1.i = z__2.i + z__3.i;
@@ -16782,8 +16774,8 @@ L230:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -16815,7 +16807,7 @@ L250:
 	    i__2 = j + c_dim1;
 	    z__3.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__3.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__4.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__4.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__2.r = z__3.r + z__4.r, z__2.i = z__3.i + z__4.i;
@@ -16830,8 +16822,8 @@ L250:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -16874,7 +16866,7 @@ L270:
 	    i__2 = j + c_dim1;
 	    z__4.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__4.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__5.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__5.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__3.r = z__4.r + z__5.r, z__3.i = z__4.i + z__5.i;
@@ -16882,7 +16874,7 @@ L270:
 	    z__6.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__6.i = v3.r *
 		    c__[i__4].i + v3.i * c__[i__4].r;
 	    z__2.r = z__3.r + z__6.r, z__2.i = z__3.i + z__6.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__7.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__7.i = v4.r *
 		    c__[i__5].i + v4.i * c__[i__5].r;
 	    z__1.r = z__2.r + z__7.r, z__1.i = z__2.i + z__7.i;
@@ -16893,8 +16885,8 @@ L270:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -16905,8 +16897,8 @@ L270:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -16948,7 +16940,7 @@ L290:
 	    i__2 = j + c_dim1;
 	    z__5.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__5.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__6.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__6.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__4.r = z__5.r + z__6.r, z__4.i = z__5.i + z__6.i;
@@ -16956,7 +16948,7 @@ L290:
 	    z__7.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__7.i = v3.r *
 		    c__[i__4].i + v3.i * c__[i__4].r;
 	    z__3.r = z__4.r + z__7.r, z__3.i = z__4.i + z__7.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__8.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__8.i = v4.r *
 		    c__[i__5].i + v4.i * c__[i__5].r;
 	    z__2.r = z__3.r + z__8.r, z__2.i = z__3.i + z__8.i;
@@ -16971,8 +16963,8 @@ L290:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -16983,8 +16975,8 @@ L290:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17037,7 +17029,7 @@ L310:
 	    i__2 = j + c_dim1;
 	    z__6.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__6.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__7.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__7.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__5.r = z__6.r + z__7.r, z__5.i = z__6.i + z__7.i;
@@ -17045,7 +17037,7 @@ L310:
 	    z__8.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__8.i = v3.r *
 		    c__[i__4].i + v3.i * c__[i__4].r;
 	    z__4.r = z__5.r + z__8.r, z__4.i = z__5.i + z__8.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__9.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__9.i = v4.r *
 		    c__[i__5].i + v4.i * c__[i__5].r;
 	    z__3.r = z__4.r + z__9.r, z__3.i = z__4.i + z__9.i;
@@ -17064,8 +17056,8 @@ L310:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17076,8 +17068,8 @@ L310:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17141,7 +17133,7 @@ L330:
 	    i__2 = j + c_dim1;
 	    z__7.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__7.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__8.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__8.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__6.r = z__7.r + z__8.r, z__6.i = z__7.i + z__8.i;
@@ -17149,7 +17141,7 @@ L330:
 	    z__9.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__9.i = v3.r *
 		    c__[i__4].i + v3.i * c__[i__4].r;
 	    z__5.r = z__6.r + z__9.r, z__5.i = z__6.i + z__9.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__10.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__10.i = v4.r
 		    * c__[i__5].i + v4.i * c__[i__5].r;
 	    z__4.r = z__5.r + z__10.r, z__4.i = z__5.i + z__10.i;
@@ -17172,8 +17164,8 @@ L330:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17184,8 +17176,8 @@ L330:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17260,7 +17252,7 @@ L350:
 	    i__2 = j + c_dim1;
 	    z__8.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__8.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__9.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__9.i = v2.r *
 		    c__[i__3].i + v2.i * c__[i__3].r;
 	    z__7.r = z__8.r + z__9.r, z__7.i = z__8.i + z__9.i;
@@ -17268,7 +17260,7 @@ L350:
 	    z__10.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__10.i = v3.r
 		    * c__[i__4].i + v3.i * c__[i__4].r;
 	    z__6.r = z__7.r + z__10.r, z__6.i = z__7.i + z__10.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__11.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__11.i = v4.r
 		    * c__[i__5].i + v4.i * c__[i__5].r;
 	    z__5.r = z__6.r + z__11.r, z__5.i = z__6.i + z__11.i;
@@ -17284,7 +17276,7 @@ L350:
 	    z__14.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, z__14.i = v7.r
 		    * c__[i__8].i + v7.i * c__[i__8].r;
 	    z__2.r = z__3.r + z__14.r, z__2.i = z__3.i + z__14.i;
-	    i__9 = j + ((c_dim1) << (3));
+	    i__9 = j + (c_dim1 << 3);
 	    z__15.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, z__15.i = v8.r
 		    * c__[i__9].i + v8.i * c__[i__9].r;
 	    z__1.r = z__2.r + z__15.r, z__1.i = z__2.i + z__15.i;
@@ -17295,8 +17287,8 @@ L350:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17307,8 +17299,8 @@ L350:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17331,8 +17323,8 @@ L350:
 		    sum.i * t7.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (3));
-	    i__3 = j + ((c_dim1) << (3));
+	    i__2 = j + (c_dim1 << 3);
+	    i__3 = j + (c_dim1 << 3);
 	    z__2.r = sum.r * t8.r - sum.i * t8.i, z__2.i = sum.r * t8.i +
 		    sum.i * t8.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17394,7 +17386,7 @@ L370:
 	    i__2 = j + c_dim1;
 	    z__9.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__9.i = v1.r *
 		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__10.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__10.i = v2.r
 		    * c__[i__3].i + v2.i * c__[i__3].r;
 	    z__8.r = z__9.r + z__10.r, z__8.i = z__9.i + z__10.i;
@@ -17402,7 +17394,7 @@ L370:
 	    z__11.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__11.i = v3.r
 		    * c__[i__4].i + v3.i * c__[i__4].r;
 	    z__7.r = z__8.r + z__11.r, z__7.i = z__8.i + z__11.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__12.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__12.i = v4.r
 		    * c__[i__5].i + v4.i * c__[i__5].r;
 	    z__6.r = z__7.r + z__12.r, z__6.i = z__7.i + z__12.i;
@@ -17418,7 +17410,7 @@ L370:
 	    z__15.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, z__15.i = v7.r
 		    * c__[i__8].i + v7.i * c__[i__8].r;
 	    z__3.r = z__4.r + z__15.r, z__3.i = z__4.i + z__15.i;
-	    i__9 = j + ((c_dim1) << (3));
+	    i__9 = j + (c_dim1 << 3);
 	    z__16.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, z__16.i = v8.r
 		    * c__[i__9].i + v8.i * c__[i__9].r;
 	    z__2.r = z__3.r + z__16.r, z__2.i = z__3.i + z__16.i;
@@ -17433,8 +17425,8 @@ L370:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17445,8 +17437,8 @@ L370:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17469,8 +17461,8 @@ L370:
 		    sum.i * t7.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (3));
-	    i__3 = j + ((c_dim1) << (3));
+	    i__2 = j + (c_dim1 << 3);
+	    i__3 = j + (c_dim1 << 3);
 	    z__2.r = sum.r * t8.r - sum.i * t8.i, z__2.i = sum.r * t8.i +
 		    sum.i * t8.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17543,7 +17535,7 @@ L390:
 	    i__2 = j + c_dim1;
 	    z__10.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, z__10.i = v1.r
 		    * c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + ((c_dim1) << (1));
+	    i__3 = j + (c_dim1 << 1);
 	    z__11.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, z__11.i = v2.r
 		    * c__[i__3].i + v2.i * c__[i__3].r;
 	    z__9.r = z__10.r + z__11.r, z__9.i = z__10.i + z__11.i;
@@ -17551,7 +17543,7 @@ L390:
 	    z__12.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, z__12.i = v3.r
 		    * c__[i__4].i + v3.i * c__[i__4].r;
 	    z__8.r = z__9.r + z__12.r, z__8.i = z__9.i + z__12.i;
-	    i__5 = j + ((c_dim1) << (2));
+	    i__5 = j + (c_dim1 << 2);
 	    z__13.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, z__13.i = v4.r
 		    * c__[i__5].i + v4.i * c__[i__5].r;
 	    z__7.r = z__8.r + z__13.r, z__7.i = z__8.i + z__13.i;
@@ -17567,7 +17559,7 @@ L390:
 	    z__16.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, z__16.i = v7.r
 		    * c__[i__8].i + v7.i * c__[i__8].r;
 	    z__4.r = z__5.r + z__16.r, z__4.i = z__5.i + z__16.i;
-	    i__9 = j + ((c_dim1) << (3));
+	    i__9 = j + (c_dim1 << 3);
 	    z__17.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, z__17.i = v8.r
 		    * c__[i__9].i + v8.i * c__[i__9].r;
 	    z__3.r = z__4.r + z__17.r, z__3.i = z__4.i + z__17.i;
@@ -17586,8 +17578,8 @@ L390:
 		    sum.i * t1.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (1));
-	    i__3 = j + ((c_dim1) << (1));
+	    i__2 = j + (c_dim1 << 1);
+	    i__3 = j + (c_dim1 << 1);
 	    z__2.r = sum.r * t2.r - sum.i * t2.i, z__2.i = sum.r * t2.i +
 		    sum.i * t2.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17598,8 +17590,8 @@ L390:
 		    sum.i * t3.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (2));
-	    i__3 = j + ((c_dim1) << (2));
+	    i__2 = j + (c_dim1 << 2);
+	    i__3 = j + (c_dim1 << 2);
 	    z__2.r = sum.r * t4.r - sum.i * t4.i, z__2.i = sum.r * t4.i +
 		    sum.i * t4.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17622,8 +17614,8 @@ L390:
 		    sum.i * t7.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
 	    c__[i__2].r = z__1.r, c__[i__2].i = z__1.i;
-	    i__2 = j + ((c_dim1) << (3));
-	    i__3 = j + ((c_dim1) << (3));
+	    i__2 = j + (c_dim1 << 3);
+	    i__3 = j + (c_dim1 << 3);
 	    z__2.r = sum.r * t8.r - sum.i * t8.i, z__2.i = sum.r * t8.i +
 		    sum.i * t8.r;
 	    z__1.r = c__[i__3].r - z__2.r, z__1.i = c__[i__3].i - z__2.i;
@@ -17777,25 +17769,23 @@ L410:
 	*info = -4;
     } else if (*m < 0) {
 	*info = -6;
-    } else if (((*n < 0) || (itype == 4 && *n != *m)) || (itype == 5 && *n !=
-	    *m)) {
+    } else if (*n < 0 || itype == 4 && *n != *m || itype == 5 && *n != *m) {
 	*info = -7;
     } else if (itype <= 3 && *lda < max(1,*m)) {
 	*info = -9;
     } else if (itype >= 4) {
 /* Computing MAX */
 	i__1 = *m - 1;
-	if ((*kl < 0) || (*kl > max(i__1,0))) {
+	if (*kl < 0 || *kl > max(i__1,0)) {
 	    *info = -2;
 	} else /* if(complicated condition) */ {
 /* Computing MAX */
 	    i__1 = *n - 1;
-	    if (((*ku < 0) || (*ku > max(i__1,0))) || (((itype == 4) || (
-		    itype == 5)) && *kl != *ku)) {
+	    if (*ku < 0 || *ku > max(i__1,0) || (itype == 4 || itype == 5) &&
+		    *kl != *ku) {
 		*info = -3;
-	    } else if (((itype == 4 && *lda < *kl + 1) || (itype == 5 && *lda
-		    < *ku + 1)) || (itype == 6 && *lda < ((*kl) << (1)) + *ku
-		    + 1)) {
+	    } else if (itype == 4 && *lda < *kl + 1 || itype == 5 && *lda < *
+		    ku + 1 || itype == 6 && *lda < (*kl << 1) + *ku + 1) {
 		*info = -9;
 	    }
 	}
@@ -17809,7 +17799,7 @@ L410:
 
 /*     Quick return if possible */
 
-    if ((*n == 0) || (*m == 0)) {
+    if (*n == 0 || *m == 0) {
 	return 0;
     }
 
@@ -17955,7 +17945,7 @@ L10:
 
 	k1 = *kl + *ku + 2;
 	k2 = *kl + 1;
-	k3 = ((*kl) << (1)) + *ku + 1;
+	k3 = (*kl << 1) + *ku + 1;
 	k4 = *kl + *ku + 1 + *m;
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
@@ -18257,13 +18247,13 @@ L10:
 
     /* Function Body */
     info = 0;
-    if (! ((lsame_(side, "L")) || (lsame_(side, "R")))) {
+    if (! (lsame_(side, "L") || lsame_(side, "R"))) {
 	info = 1;
-    } else if (! (((lsame_(pivot, "V")) || (lsame_(
-	    pivot, "T"))) || (lsame_(pivot, "B")))) {
+    } else if (! (lsame_(pivot, "V") || lsame_(pivot,
+	    "T") || lsame_(pivot, "B"))) {
 	info = 2;
-    } else if (! ((lsame_(direct, "F")) || (lsame_(
-	    direct, "B")))) {
+    } else if (! (lsame_(direct, "F") || lsame_(direct,
+	    "B"))) {
 	info = 3;
     } else if (*m < 0) {
 	info = 4;
@@ -18279,7 +18269,7 @@ L10:
 
 /*     Quick return if possible */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
     if (lsame_(side, "L")) {
@@ -18292,7 +18282,7 @@ L10:
 		for (j = 1; j <= i__1; ++j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *n;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = j + 1 + i__ * a_dim1;
@@ -18322,7 +18312,7 @@ L10:
 		for (j = *m - 1; j >= 1; --j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *n;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = j + 1 + i__ * a_dim1;
@@ -18355,7 +18345,7 @@ L10:
 		for (j = 2; j <= i__1; ++j) {
 		    ctemp = c__[j - 1];
 		    stemp = s[j - 1];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *n;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = j + i__ * a_dim1;
@@ -18385,7 +18375,7 @@ L10:
 		for (j = *m; j >= 2; --j) {
 		    ctemp = c__[j - 1];
 		    stemp = s[j - 1];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *n;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = j + i__ * a_dim1;
@@ -18418,7 +18408,7 @@ L10:
 		for (j = 1; j <= i__1; ++j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *n;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = j + i__ * a_dim1;
@@ -18448,7 +18438,7 @@ L10:
 		for (j = *m - 1; j >= 1; --j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *n;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = j + i__ * a_dim1;
@@ -18486,7 +18476,7 @@ L10:
 		for (j = 1; j <= i__1; ++j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + (j + 1) * a_dim1;
@@ -18516,7 +18506,7 @@ L10:
 		for (j = *n - 1; j >= 1; --j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + (j + 1) * a_dim1;
@@ -18549,7 +18539,7 @@ L10:
 		for (j = 2; j <= i__1; ++j) {
 		    ctemp = c__[j - 1];
 		    stemp = s[j - 1];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * a_dim1;
@@ -18579,7 +18569,7 @@ L10:
 		for (j = *n; j >= 2; --j) {
 		    ctemp = c__[j - 1];
 		    stemp = s[j - 1];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + j * a_dim1;
@@ -18612,7 +18602,7 @@ L10:
 		for (j = 1; j <= i__1; ++j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * a_dim1;
@@ -18642,7 +18632,7 @@ L10:
 		for (j = *n - 1; j >= 1; --j) {
 		    ctemp = c__[j];
 		    stemp = s[j];
-		    if ((ctemp != 1.) || (stemp != 0.)) {
+		    if (ctemp != 1. || stemp != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + j * a_dim1;
@@ -18882,7 +18872,7 @@ L10:
 	return 0;
     }
 
-    n32 = (*n / 32) << (5);
+    n32 = *n / 32 << 5;
     if (n32 != 0) {
 	i__1 = n32;
 	for (j = 1; j <= i__1; j += 32) {
@@ -20785,7 +20775,7 @@ L210:
     nb = ilaenv_(&c__1, "ZLAUUM", uplo, n, &c_n1, &c_n1, &c_n1, (ftnlen)6, (
 	    ftnlen)1);
 
-    if ((nb <= 1) || (nb >= *n)) {
+    if (nb <= 1 || nb >= *n) {
 
 /*        Use unblocked code */
 
@@ -21188,7 +21178,7 @@ L40:
 
     nb = ilaenv_(&c__1, "ZPOTRF", uplo, n, &c_n1, &c_n1, &c_n1, (ftnlen)6, (
 	    ftnlen)1);
-    if ((nb <= 1) || (nb >= *n)) {
+    if (nb <= 1 || nb >= *n) {
 
 /*        Use unblocked code. */
 
@@ -21496,7 +21486,7 @@ L40:
 
 /*     Quick return if possible */
 
-    if ((*n == 0) || (*nrhs == 0)) {
+    if (*n == 0 || *nrhs == 0) {
 	return 0;
     }
 
@@ -21727,7 +21717,7 @@ L40:
 
     /* Function Body */
     *info = 0;
-    lquery = ((*lwork == -1) || (*lrwork == -1)) || (*liwork == -1);
+    lquery = *lwork == -1 || *lrwork == -1 || *liwork == -1;
 
     if (lsame_(compz, "N")) {
 	icompz = 0;
@@ -21738,7 +21728,7 @@ L40:
     } else {
 	icompz = -1;
     }
-    if ((*n <= 1) || (icompz <= 0)) {
+    if (*n <= 1 || icompz <= 0) {
 	lwmin = 1;
 	liwmin = 1;
 	lrwmin = 1;
@@ -21754,13 +21744,13 @@ L40:
 	    lwmin = *n * *n;
 /* Computing 2nd power */
 	    i__1 = *n;
-	    lrwmin = *n * 3 + 1 + ((*n) << (1)) * lgn + i__1 * i__1 * 3;
+	    lrwmin = *n * 3 + 1 + (*n << 1) * lgn + i__1 * i__1 * 3;
 	    liwmin = *n * 6 + 6 + *n * 5 * lgn;
 	} else if (icompz == 2) {
 	    lwmin = 1;
 /* Computing 2nd power */
 	    i__1 = *n;
-	    lrwmin = ((*n) << (2)) + 1 + ((i__1 * i__1) << (1));
+	    lrwmin = (*n << 2) + 1 + (i__1 * i__1 << 1);
 	    liwmin = *n * 5 + 3;
 	}
     }
@@ -21768,7 +21758,7 @@ L40:
 	*info = -1;
     } else if (*n < 0) {
 	*info = -2;
-    } else if ((*ldz < 1) || (icompz > 0 && *ldz < max(1,*n))) {
+    } else if (*ldz < 1 || icompz > 0 && *ldz < max(1,*n)) {
 	*info = -6;
     } else if (*lwork < lwmin && ! lquery) {
 	*info = -8;
@@ -22144,7 +22134,7 @@ L40:
 	*info = -1;
     } else if (*n < 0) {
 	*info = -2;
-    } else if ((*ldz < 1) || (icompz > 0 && *ldz < max(1,*n))) {
+    } else if (*ldz < 1 || icompz > 0 && *ldz < max(1,*n)) {
 	*info = -6;
     }
     if (*info != 0) {
@@ -22760,7 +22750,7 @@ L160:
     ===============
 
     The algorithm used in this program is basically backward (forward)
-    substitution, with scaling to make the code robust against
+    substitution, with scaling to make the the code robust against
     possible overflow.
 
     Each eigenvector is normalized so that the element of largest
@@ -22789,8 +22779,8 @@ L160:
 
     /* Function Body */
     bothv = lsame_(side, "B");
-    rightv = (lsame_(side, "R")) || (bothv);
-    leftv = (lsame_(side, "L")) || (bothv);
+    rightv = lsame_(side, "R") || bothv;
+    leftv = lsame_(side, "L") || bothv;
 
     allv = lsame_(howmny, "A");
     over = lsame_(howmny, "B");
@@ -22823,9 +22813,9 @@ L160:
 	*info = -4;
     } else if (*ldt < max(1,*n)) {
 	*info = -6;
-    } else if ((*ldvl < 1) || (leftv && *ldvl < *n)) {
+    } else if (*ldvl < 1 || leftv && *ldvl < *n) {
 	*info = -8;
-    } else if ((*ldvr < 1) || (rightv && *ldvr < *n)) {
+    } else if (*ldvr < 1 || rightv && *ldvr < *n) {
 	*info = -10;
     } else if (*mm < *m) {
 	*info = -11;
@@ -23411,7 +23401,7 @@ L130:
     s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
     nb = ilaenv_(&c__1, "ZTRTRI", ch__1, n, &c_n1, &c_n1, &c_n1, (ftnlen)6, (
 	    ftnlen)2);
-    if ((nb <= 1) || (nb >= *n)) {
+    if (nb <= 1 || nb >= *n) {
 
 /*        Use unblocked code */
 
@@ -23570,9 +23560,9 @@ L130:
     *info = 0;
     if (*m < 0) {
 	*info = -1;
-    } else if ((*n < 0) || (*n > *m)) {
+    } else if (*n < 0 || *n > *m) {
 	*info = -2;
-    } else if ((*k < 0) || (*k > *n)) {
+    } else if (*k < 0 || *k > *n) {
 	*info = -3;
     } else if (*lda < max(1,*m)) {
 	*info = -5;
@@ -23776,8 +23766,8 @@ L130:
 	*info = -1;
     } else if (*m < 0) {
 	*info = -2;
-    } else if (((*n < 0) || (wantq && ((*n > *m) || (*n < min(*m,*k))))) || (!
-	     wantq && ((*m > *n) || (*m < min(*n,*k))))) {
+    } else if (*n < 0 || wantq && (*n > *m || *n < min(*m,*k)) || ! wantq && (
+	    *m > *n || *m < min(*n,*k))) {
 	*info = -3;
     } else if (*k < 0) {
 	*info = -4;
@@ -23809,7 +23799,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	work[1].r = 1., work[1].i = 0.;
 	return 0;
     }
@@ -23865,8 +23855,8 @@ L130:
 		i__1 = *m - 1;
 		i__2 = *m - 1;
 		i__3 = *m - 1;
-		zungqr_(&i__1, &i__2, &i__3, &a[((a_dim1) << (1)) + 2], lda, &
-			tau[1], &work[1], lwork, &iinfo);
+		zungqr_(&i__1, &i__2, &i__3, &a[(a_dim1 << 1) + 2], lda, &tau[
+			1], &work[1], lwork, &iinfo);
 	    }
 	}
     } else {
@@ -23920,8 +23910,8 @@ L130:
 		i__1 = *n - 1;
 		i__2 = *n - 1;
 		i__3 = *n - 1;
-		zunglq_(&i__1, &i__2, &i__3, &a[((a_dim1) << (1)) + 2], lda, &
-			tau[1], &work[1], lwork, &iinfo);
+		zunglq_(&i__1, &i__2, &i__3, &a[(a_dim1 << 1) + 2], lda, &tau[
+			1], &work[1], lwork, &iinfo);
 	    }
 	}
     }
@@ -24028,9 +24018,9 @@ L130:
     lquery = *lwork == -1;
     if (*n < 0) {
 	*info = -1;
-    } else if ((*ilo < 1) || (*ilo > max(1,*n))) {
+    } else if (*ilo < 1 || *ilo > max(1,*n)) {
 	*info = -2;
-    } else if ((*ihi < min(*ilo,*n)) || (*ihi > *n)) {
+    } else if (*ihi < min(*ilo,*n) || *ihi > *n) {
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
@@ -24216,7 +24206,7 @@ L130:
 	*info = -1;
     } else if (*n < *m) {
 	*info = -2;
-    } else if ((*k < 0) || (*k > *m)) {
+    } else if (*k < 0 || *k > *m) {
 	*info = -3;
     } else if (*lda < max(1,*m)) {
 	*info = -5;
@@ -24407,7 +24397,7 @@ L130:
 	*info = -1;
     } else if (*n < *m) {
 	*info = -2;
-    } else if ((*k < 0) || (*k > *m)) {
+    } else if (*k < 0 || *k > *m) {
 	*info = -3;
     } else if (*lda < max(1,*m)) {
 	*info = -5;
@@ -24670,9 +24660,9 @@ L130:
     lquery = *lwork == -1;
     if (*m < 0) {
 	*info = -1;
-    } else if ((*n < 0) || (*n > *m)) {
+    } else if (*n < 0 || *n > *m) {
 	*info = -2;
-    } else if ((*k < 0) || (*k > *n)) {
+    } else if (*k < 0 || *k > *n) {
 	*info = -3;
     } else if (*lda < max(1,*m)) {
 	*info = -5;
@@ -24966,7 +24956,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,nq)) {
 	*info = -7;
@@ -24981,11 +24971,11 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	return 0;
     }
 
-    if ((left && notran) || (! left && ! notran)) {
+    if (left && notran || ! left && ! notran) {
 	i1 = 1;
 	i2 = *k;
 	i3 = 1;
@@ -25181,7 +25171,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,nq)) {
 	*info = -7;
@@ -25196,11 +25186,11 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	return 0;
     }
 
-    if ((left && ! notran) || (! left && notran)) {
+    if (left && ! notran || ! left && notran) {
 	i1 = 1;
 	i2 = *k;
 	i3 = 1;
@@ -25450,8 +25440,7 @@ L130:
     } else /* if(complicated condition) */ {
 /* Computing MAX */
 	i__1 = 1, i__2 = min(nq,*k);
-	if ((applyq && *lda < max(1,nq)) || (! applyq && *lda < max(i__1,i__2)
-		)) {
+	if (applyq && *lda < max(1,nq) || ! applyq && *lda < max(i__1,i__2)) {
 	    *info = -8;
 	} else if (*ldc < max(1,*m)) {
 	    *info = -11;
@@ -25516,7 +25505,7 @@ L130:
 /*     Quick return if possible */
 
     work[1].r = 1., work[1].i = 0.;
-    if ((*m == 0) || (*n == 0)) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -25580,9 +25569,9 @@ L130:
 		i2 = 2;
 	    }
 	    i__1 = nq - 1;
-	    zunmlq_(side, transt, &mi, &ni, &i__1, &a[((a_dim1) << (1)) + 1],
-		    lda, &tau[1], &c__[i1 + i2 * c_dim1], ldc, &work[1],
-		    lwork, &iinfo);
+	    zunmlq_(side, transt, &mi, &ni, &i__1, &a[(a_dim1 << 1) + 1], lda,
+		     &tau[1], &c__[i1 + i2 * c_dim1], ldc, &work[1], lwork, &
+		    iinfo);
 	}
     }
     work[1].r = (doublereal) lwkopt, work[1].i = 0.;
@@ -25732,7 +25721,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,*k)) {
 	*info = -7;
@@ -25747,11 +25736,11 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	return 0;
     }
 
-    if ((left && notran) || (! left && ! notran)) {
+    if (left && notran || ! left && ! notran) {
 	i1 = 1;
 	i2 = *k;
 	i3 = 1;
@@ -25987,7 +25976,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,*k)) {
 	*info = -7;
@@ -26026,7 +26015,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	work[1].r = 1., work[1].i = 0.;
 	return 0;
     }
@@ -26052,7 +26041,7 @@ L130:
 	iws = nw;
     }
 
-    if ((nb < nbmin) || (nb >= *k)) {
+    if (nb < nbmin || nb >= *k) {
 
 /*        Use unblocked code */
 
@@ -26062,7 +26051,7 @@ L130:
 
 /*        Use blocked code */
 
-	if ((left && notran) || (! left && ! notran)) {
+	if (left && notran || ! left && ! notran) {
 	    i1 = 1;
 	    i2 = *k;
 	    i3 = nb;
@@ -26297,7 +26286,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,nq)) {
 	*info = -7;
@@ -26336,7 +26325,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	work[1].r = 1., work[1].i = 0.;
 	return 0;
     }
@@ -26362,7 +26351,7 @@ L130:
 	iws = nw;
     }
 
-    if ((nb < nbmin) || (nb >= *k)) {
+    if (nb < nbmin || nb >= *k) {
 
 /*        Use unblocked code */
 
@@ -26372,7 +26361,7 @@ L130:
 
 /*        Use blocked code */
 
-	if ((left && notran) || (! left && ! notran)) {
+	if (left && notran || ! left && ! notran) {
 	    i1 = 1;
 	    i2 = *k;
 	    i3 = nb;
@@ -26597,7 +26586,7 @@ L130:
 	*info = -3;
     } else if (*n < 0) {
 	*info = -4;
-    } else if ((*k < 0) || (*k > nq)) {
+    } else if (*k < 0 || *k > nq) {
 	*info = -5;
     } else if (*lda < max(1,nq)) {
 	*info = -7;
@@ -26636,7 +26625,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (*k == 0)) {
+    if (*m == 0 || *n == 0 || *k == 0) {
 	work[1].r = 1., work[1].i = 0.;
 	return 0;
     }
@@ -26662,7 +26651,7 @@ L130:
 	iws = nw;
     }
 
-    if ((nb < nbmin) || (nb >= *k)) {
+    if (nb < nbmin || nb >= *k) {
 
 /*        Use unblocked code */
 
@@ -26672,7 +26661,7 @@ L130:
 
 /*        Use blocked code */
 
-	if ((left && ! notran) || (! left && notran)) {
+	if (left && ! notran || ! left && notran) {
 	    i1 = 1;
 	    i2 = *k;
 	    i3 = nb;
@@ -26962,7 +26951,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if (((*m == 0) || (*n == 0)) || (nq == 1)) {
+    if (*m == 0 || *n == 0 || nq == 1) {
 	work[1].r = 1., work[1].i = 0.;
 	return 0;
     }
@@ -26980,8 +26969,8 @@ L130:
 /*        Q was determined by a call to ZHETRD with UPLO = 'U' */
 
 	i__2 = nq - 1;
-	zunmql_(side, trans, &mi, &ni, &i__2, &a[((a_dim1) << (1)) + 1], lda,
-		&tau[1], &c__[c_offset], ldc, &work[1], lwork, &iinfo);
+	zunmql_(side, trans, &mi, &ni, &i__2, &a[(a_dim1 << 1) + 1], lda, &
+		tau[1], &c__[c_offset], ldc, &work[1], lwork, &iinfo);
     } else {
 
 /*        Q was determined by a call to ZHETRD with UPLO = 'L' */
@@ -27003,3 +26992,4 @@ L130:
 /*     End of ZUNMTR */
 
 } /* zunmtr_ */
+

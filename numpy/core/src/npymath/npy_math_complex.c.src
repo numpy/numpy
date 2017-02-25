@@ -1071,7 +1071,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
 #if @precision@ == 3
     const npy_longdouble A_crossover = 10.0l;
     const npy_longdouble B_crossover = 0.6417l;
-#if NPy_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
     const npy_longdouble FOUR_SQRT_MIN = 5.9666725849601654e-154;
 #else
     const npy_longdouble FOUR_SQRT_MIN = 7.3344154702193886625e-2466l;
@@ -1565,6 +1565,7 @@ _real_part_reciprocalf(npy_float x, npy_float y)
 #undef BIAS
 #undef CUTOFF
 #endif
+
 #if @precision@ == 2
 #define BIAS (DBL_MAX_EXP - 1)
 /*  more guard digits are useful iff there is extra precision. */
@@ -1604,8 +1605,11 @@ _real_part_reciprocal(npy_double x, npy_double y)
 #undef BIAS
 #undef CUTOFF
 #endif
+
 #if @precision@ == 3
-#ifndef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
+#if !defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) && \
+    !defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE)
+
 #define BIAS (LDBL_MAX_EXP - 1)
 #define CUTOFF (LDBL_MANT_DIG / 2 + 1)
 static NPY_INLINE npy_longdouble
@@ -1638,13 +1642,16 @@ _real_part_reciprocall(npy_longdouble x,
 }
 #undef BIAS
 #undef CUTOFF
+
 #else
+
 static NPY_INLINE npy_longdouble
 _real_part_reciprocall(npy_longdouble x,
     npy_longdouble y)
 {
     return x/(x*x + y*y);
 }
+
 #endif
 #endif
 

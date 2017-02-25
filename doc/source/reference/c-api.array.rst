@@ -1686,12 +1686,12 @@ Shape Manipulation
     different total number of elements then the old shape. If
     reallocation is necessary, then *self* must own its data, have
     *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
-    (unless refcheck is 0) not be referenced by any other array. A
-    reference to the new array is returned. The fortran argument can
-    be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`, or
-    :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
+    (unless refcheck is 0) not be referenced by any other array.
+    The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
+    or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
     it could be used to determine how the resize operation should view
     the data when constructing a differently-dimensioned array.
+    Returns None on success and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose(PyArrayObject* self, PyArray_Dims* permute)
 
@@ -1919,19 +1919,24 @@ Calculation
 
 .. c:function:: PyObject* PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out)
 
-    Equivalent to :meth:`ndarray.max` (*self*, *axis*). Return the largest
-    element of *self* along the given *axis*.
+    Equivalent to :meth:`ndarray.max` (*self*, *axis*). Returns the largest
+    element of *self* along the given *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
 
 .. c:function:: PyObject* PyArray_Min(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.min` (*self*, *axis*). Return the smallest
-    element of *self* along the given *axis*.
+    element of *self* along the given *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
+
 
 .. c:function:: PyObject* PyArray_Ptp(PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.ptp` (*self*, *axis*). Return the difference
     between the largest element of *self* along *axis* and the
-    smallest element of *self* along *axis*.
+    smallest element of *self* along *axis*. When the result is a single
+    element, returns a numpy scalar instead of an ndarray.
+
 
 
 
@@ -2098,7 +2103,7 @@ Array Functions
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
 
-.. c:function:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyObject* out)
+.. c:function:: PyObject* PyArray_MatrixProduct2(PyObject* obj1, PyObject* obj, PyArrayObject* out)
 
     .. versionadded:: 1.6
 
@@ -2291,7 +2296,7 @@ an element copier function as a primitive.::
 Array Iterators
 ---------------
 
-As of Numpy 1.6, these array iterators are superceded by
+As of NumPy 1.6.0, these array iterators are superceded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an

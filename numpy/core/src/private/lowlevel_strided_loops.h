@@ -2,6 +2,7 @@
 #define __LOWLEVEL_STRIDED_LOOPS_H
 #include "common.h"
 #include <npy_config.h>
+#include "mem_overlap.h"
 
 /*
  * NOTE: This API should remain private for the time being, to allow
@@ -126,7 +127,7 @@ PyArray_GetStridedCopySwapPairFn(int aligned,
  * Returns NPY_SUCCEED or NPY_FAIL
  */
 NPY_NO_EXPORT int
-PyArray_GetStridedZeroPadCopyFn(int aligned,
+PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
                             PyArray_StridedUnaryOp **outstransfer,
@@ -662,7 +663,24 @@ npy_bswap8_unaligned(char * x)
  * Note: Equivalently iterable macro requires one of arr1 or arr2 be
  *       trivially iterable to be valid.
  */
-#define PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) ( \
+
+/**
+ * Determine whether two arrays are safe for trivial iteration in cases where
+ * some of the arrays may be modified.
+ *
+ * In-place iteration is safe if one of the following is true:
+ *
+ * - Both arrays are read-only
+ * - The arrays do not have overlapping memory (based on a check that may be too
+ *   strict)
+ * - The strides match, and the non-read-only array base addresses are equal or
+ *   before the read-only one, ensuring correct data dependency.
+ */
+
+#define PyArray_TRIVIALLY_ITERABLE_OP_NOREAD 0
+#define PyArray_TRIVIALLY_ITERABLE_OP_READ 1
+
+#define PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) (            \
                         PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
                         PyArray_CompareLists(PyArray_DIMS(arr1), \
                                              PyArray_DIMS(arr2), \
@@ -673,6 +691,67 @@ npy_bswap8_unaligned(char * x)
                                               NPY_ARRAY_F_CONTIGUOUS)) \
                         )
 
+#define PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size, arr) ( \
+                        size == 1 ? 0 : ((PyArray_NDIM(arr) == 1) ? \
+                                          PyArray_STRIDE(arr, 0) : \
+                                          PyArray_ITEMSIZE(arr)))
+
+static NPY_INLINE int
+PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr2,
+                                         int arr1_read, int arr2_read)
+{
+    npy_intp size1, size2, stride1, stride2;
+    int arr1_ahead = 0, arr2_ahead = 0;
+
+    if (arr1_read && arr2_read) {
+        return 1;
+    }
+
+    if (solve_may_share_memory(arr1, arr2, 1) == 0) {
+        return 1;
+    }
+
+    /*
+     * Arrays overlapping in memory may be equivalently iterable if input
+     * arrays stride ahead faster than output arrays.
+     */
+
+    size1 = PyArray_SIZE(arr1);
+    size2 = PyArray_SIZE(arr2);
+
+    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
+    stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2);
+
+    /*
+     * Arrays with zero stride are never "ahead" since the element is reused
+     * (at this point we know the array extents overlap).
+     */
+
+    if (stride1 > 0) {
+        arr1_ahead = (stride1 >= stride2 &&
+                      PyArray_BYTES(arr1) >= PyArray_BYTES(arr2));
+    }
+    else if (stride1 < 0) {
+        arr1_ahead = (stride1 <= stride2 &&
+                      PyArray_BYTES(arr1) <= PyArray_BYTES(arr2));
+    }
+
+    if (stride2 > 0) {
+        arr2_ahead = (stride2 >= stride1 &&
+                      PyArray_BYTES(arr2) >= PyArray_BYTES(arr1));
+    }
+    else if (stride2 < 0) {
+        arr2_ahead = (stride2 <= stride1 &&
+                      PyArray_BYTES(arr2) <= PyArray_BYTES(arr1));
+    }
+
+    return (!arr1_read || arr1_ahead) && (!arr2_read || arr2_ahead);
+}
+
+#define PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2, arr1_read, arr2_read) ( \
+                        PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) && \
+                        PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK( \
+                            arr1, arr2, arr1_read, arr2_read))
 #define PyArray_TRIVIALLY_ITERABLE(arr) ( \
                     PyArray_NDIM(arr) <= 1 || \
                     PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
@@ -687,15 +766,16 @@ npy_bswap8_unaligned(char * x)
                                             PyArray_ITEMSIZE(arr)));
 
 
-#define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\
+#define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2, arr1_read, arr2_read) (   \
                     PyArray_TRIVIALLY_ITERABLE(arr1) && \
                         (PyArray_NDIM(arr2) == 0 || \
-                         PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) || \
+                         PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) ||  \
                          (PyArray_NDIM(arr1) == 0 && \
                              PyArray_TRIVIALLY_ITERABLE(arr2) \
                          ) \
-                        ) \
-                    )
+                        ) && \
+                        PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr2, arr1_read, arr2_read) \
+                        )
 #define PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(arr1, arr2, \
                                         count, \
                                         data1, data2, \
@@ -705,33 +785,32 @@ npy_bswap8_unaligned(char * x)
                     count = ((size1 > size2) || size1 == 0) ? size1 : size2; \
                     data1 = PyArray_BYTES(arr1); \
                     data2 = PyArray_BYTES(arr2); \
-                    stride1 = (size1 == 1 ? 0 : ((PyArray_NDIM(arr1) == 1) ? \
-                                                PyArray_STRIDE(arr1, 0) : \
-                                                PyArray_ITEMSIZE(arr1))); \
-                    stride2 = (size2 == 1 ? 0 : ((PyArray_NDIM(arr2) == 1) ? \
-                                                PyArray_STRIDE(arr2, 0) : \
-                                                PyArray_ITEMSIZE(arr2))); \
+                    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
+                    stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
                 }
 
-#define PyArray_TRIVIALLY_ITERABLE_TRIPLE(arr1, arr2, arr3) (\
+#define PyArray_TRIVIALLY_ITERABLE_TRIPLE(arr1, arr2, arr3, arr1_read, arr2_read, arr3_read) ( \
                 PyArray_TRIVIALLY_ITERABLE(arr1) && \
                     ((PyArray_NDIM(arr2) == 0 && \
                         (PyArray_NDIM(arr3) == 0 || \
-                            PyArray_EQUIVALENTLY_ITERABLE(arr1, arr3) \
+                            PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr3) \
                         ) \
                      ) || \
-                     (PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2) && \
+                     (PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) && \
                         (PyArray_NDIM(arr3) == 0 || \
-                            PyArray_EQUIVALENTLY_ITERABLE(arr1, arr3) \
+                            PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr3) \
                         ) \
                      ) || \
                      (PyArray_NDIM(arr1) == 0 && \
                         PyArray_TRIVIALLY_ITERABLE(arr2) && \
                             (PyArray_NDIM(arr3) == 0 || \
-                                PyArray_EQUIVALENTLY_ITERABLE(arr2, arr3) \
+                                PyArray_EQUIVALENTLY_ITERABLE_BASE(arr2, arr3) \
                             ) \
                      ) \
-                    ) \
+                    ) && \
+                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr2, arr1_read, arr2_read) && \
+                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr3, arr1_read, arr3_read) && \
+                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr2, arr3, arr2_read, arr3_read) \
                 )
 
 #define PyArray_PREPARE_TRIVIAL_TRIPLE_ITERATION(arr1, arr2, arr3, \
@@ -746,15 +825,9 @@ npy_bswap8_unaligned(char * x)
                     data1 = PyArray_BYTES(arr1); \
                     data2 = PyArray_BYTES(arr2); \
                     data3 = PyArray_BYTES(arr3); \
-                    stride1 = (size1 == 1 ? 0 : ((PyArray_NDIM(arr1) == 1) ? \
-                                                PyArray_STRIDE(arr1, 0) : \
-                                                PyArray_ITEMSIZE(arr1))); \
-                    stride2 = (size2 == 1 ? 0 : ((PyArray_NDIM(arr2) == 1) ? \
-                                                PyArray_STRIDE(arr2, 0) : \
-                                                PyArray_ITEMSIZE(arr2))); \
-                    stride3 = (size3 == 1 ? 0 : ((PyArray_NDIM(arr3) == 1) ? \
-                                                PyArray_STRIDE(arr3, 0) : \
-                                                PyArray_ITEMSIZE(arr3))); \
+                    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
+                    stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
+                    stride3 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size3, arr3); \
                 }
 
 #endif

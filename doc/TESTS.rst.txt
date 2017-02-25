@@ -9,7 +9,7 @@ Introduction
 ''''''''''''
 
 SciPy uses the `Nose testing system
-<http://www.somethingaboutorange.com/mrl/projects/nose>`__, with some
+<http://nose.readthedocs.io>`__, with some
 minor convenience features added.  Nose is an extension of the unit
 testing framework offered by `unittest.py
 <http://docs.python.org/lib/module-unittest.html>`__. Our goal is that
@@ -382,5 +382,5 @@ Tests on random data are good, but since test failures are meant to expose
 new bugs or regressions, a test that passes most of the time but fails
 occasionally with no code changes is not helpful. Make the random data
 deterministic by setting the random number seed before generating it.  Use
-either Python's ``random.seed(some_number)`` or Numpy's
+either Python's ``random.seed(some_number)`` or NumPy's
 ``numpy.random.seed(some_number)``, depending on the source of random numbers.

@@ -5,11 +5,11 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
     TestCase, run_module_suite, assert_equal, assert_array_equal,
-    assert_array_max_ulp, assert_array_almost_equal, assert_raises
+    assert_array_max_ulp, assert_array_almost_equal, assert_raises,
     )
 
 from numpy import (
-    arange, rot90, add, fliplr, flipud, zeros, ones, eye, array, diag,
+    arange, add, fliplr, flipud, zeros, ones, eye, array, diag,
     histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
     tril_indices, tril_indices_from, vander,
     )
@@ -167,37 +167,6 @@ class TestFlipud(TestCase):
         b = [[3, 4, 5],
              [0, 1, 2]]
         assert_equal(flipud(a), b)
-
-
-class TestRot90(TestCase):
-    def test_basic(self):
-        self.assertRaises(ValueError, rot90, ones(4))
-
-        a = [[0, 1, 2],
-             [3, 4, 5]]
-        b1 = [[2, 5],
-              [1, 4],
-              [0, 3]]
-        b2 = [[5, 4, 3],
-              [2, 1, 0]]
-        b3 = [[3, 0],
-              [4, 1],
-              [5, 2]]
-        b4 = [[0, 1, 2],
-              [3, 4, 5]]
-
-        for k in range(-3, 13, 4):
-            assert_equal(rot90(a, k=k), b1)
-        for k in range(-2, 13, 4):
-            assert_equal(rot90(a, k=k), b2)
-        for k in range(-1, 13, 4):
-            assert_equal(rot90(a, k=k), b3)
-        for k in range(0, 13, 4):
-            assert_equal(rot90(a, k=k), b4)
-
-    def test_axes(self):
-        a = ones((50, 40, 3))
-        assert_equal(rot90(a).shape, (40, 50, 3))
 
 
 class TestHistogram2d(TestCase):

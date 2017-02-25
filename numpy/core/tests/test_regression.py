@@ -13,26 +13,26 @@ from itertools import chain
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, TestCase, assert_, assert_equal,
+        run_module_suite, TestCase, assert_, assert_equal, IS_PYPY,
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec
+        assert_raises, assert_warns, dec, suppress_warnings
         )
-from numpy.testing.utils import _assert_valid_refcount
+from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
 from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
 
 rlevel = 1
 
 class TestRegression(TestCase):
-    def test_invalid_round(self,level=rlevel):
+    def test_invalid_round(self, level=rlevel):
         # Ticket #3
         v = 4.7599999999999998
         assert_array_equal(np.array([v]), np.array(v))
 
-    def test_mem_empty(self,level=rlevel):
+    def test_mem_empty(self, level=rlevel):
         # Ticket #7
         np.empty((1,), dtype=[('x', np.int64)])
 
-    def test_pickle_transposed(self,level=rlevel):
+    def test_pickle_transposed(self, level=rlevel):
         # Ticket #16
         a = np.transpose(np.array([[2, 9], [7, 0], [3, 8]]))
         f = BytesIO()
@@ -42,44 +42,44 @@ class TestRegression(TestCase):
         f.close()
         assert_array_equal(a, b)
 
-    def test_typeNA(self,level=rlevel):
+    def test_typeNA(self, level=rlevel):
         # Ticket #31
         assert_equal(np.typeNA[np.int64], 'Int64')
         assert_equal(np.typeNA[np.uint64], 'UInt64')
 
-    def test_dtype_names(self,level=rlevel):
+    def test_dtype_names(self, level=rlevel):
         # Ticket #35
         # Should succeed
         np.dtype([(('name', 'label'), np.int32, 3)])
 
-    def test_reduce(self,level=rlevel):
+    def test_reduce(self, level=rlevel):
         # Ticket #40
         assert_almost_equal(np.add.reduce([1., .5], dtype=None), 1.5)
 
-    def test_zeros_order(self,level=rlevel):
+    def test_zeros_order(self, level=rlevel):
         # Ticket #43
         np.zeros([3], int, 'C')
         np.zeros([3], order='C')
         np.zeros([3], int, order='C')
 
-    def test_asarray_with_order(self,level=rlevel):
+    def test_asarray_with_order(self, level=rlevel):
         # Check that nothing is done when order='F' and array C/F-contiguous
         a = np.ones(2)
         assert_(a is np.asarray(a, order='F'))
 
-    def test_ravel_with_order(self,level=rlevel):
+    def test_ravel_with_order(self, level=rlevel):
         # Check that ravel works when order='F' and array C/F-contiguous
         a = np.ones(2)
         assert_(not a.ravel('F').flags.owndata)
 
-    def test_sort_bigendian(self,level=rlevel):
+    def test_sort_bigendian(self, level=rlevel):
         # Ticket #47
         a = np.linspace(0, 10, 11)
         c = a.astype(np.dtype('<f8'))
         c.sort()
         assert_array_almost_equal(c, a)
 
-    def test_negative_nd_indexing(self,level=rlevel):
+    def test_negative_nd_indexing(self, level=rlevel):
         # Ticket #49
         c = np.arange(125).reshape((5, 5, 5))
         origidx = np.array([-1, 0, 1])
@@ -87,7 +87,7 @@ class TestRegression(TestCase):
         c[idx]
         assert_array_equal(idx, origidx)
 
-    def test_char_dump(self,level=rlevel):
+    def test_char_dump(self, level=rlevel):
         # Ticket #50
         f = BytesIO()
         ca = np.char.array(np.arange(1000, 1010), itemsize=4)
@@ -96,7 +96,7 @@ class TestRegression(TestCase):
         ca = np.load(f)
         f.close()
 
-    def test_noncontiguous_fill(self,level=rlevel):
+    def test_noncontiguous_fill(self, level=rlevel):
         # Ticket #58.
         a = np.zeros((5, 3))
         b = a[:, :2,]
@@ -106,30 +106,30 @@ class TestRegression(TestCase):
 
         self.assertRaises(AttributeError, rs)
 
-    def test_bool(self,level=rlevel):
+    def test_bool(self, level=rlevel):
         # Ticket #60
         np.bool_(1)  # Should succeed
 
-    def test_indexing1(self,level=rlevel):
+    def test_indexing1(self, level=rlevel):
         # Ticket #64
         descr = [('x', [('y', [('z', 'c16', (2,)),]),]),]
         buffer = ((([6j, 4j],),),)
         h = np.array(buffer, dtype=descr)
         h['x']['y']['z']
 
-    def test_indexing2(self,level=rlevel):
+    def test_indexing2(self, level=rlevel):
         # Ticket #65
         descr = [('x', 'i4', (2,))]
         buffer = ([3, 2],)
         h = np.array(buffer, dtype=descr)
         h['x']
 
-    def test_round(self,level=rlevel):
+    def test_round(self, level=rlevel):
         # Ticket #67
         x = np.array([1+2j])
         assert_almost_equal(x**(-1), [1/(1+2j)])
 
-    def test_scalar_compare(self,level=rlevel):
+    def test_scalar_compare(self, level=rlevel):
         # Trac Ticket #72
         # https://github.com/numpy/numpy/issues/565
         a = np.array(['test', 'auto'])
@@ -138,34 +138,34 @@ class TestRegression(TestCase):
         self.assertTrue(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
         # This should return true for now, but will eventually raise an error:
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning)
             self.assertTrue(b != 'auto')
         self.assertTrue(b[0] != 'auto')
 
-    def test_unicode_swapping(self,level=rlevel):
+    def test_unicode_swapping(self, level=rlevel):
         # Ticket #79
         ulen = 1
         ucs_value = sixu('\U0010FFFF')
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua.newbyteorder()  # Should succeed.
 
-    def test_object_array_fill(self,level=rlevel):
+    def test_object_array_fill(self, level=rlevel):
         # Ticket #86
         x = np.zeros(1, 'O')
         x.fill([])
 
-    def test_mem_dtype_align(self,level=rlevel):
+    def test_mem_dtype_align(self, level=rlevel):
         # Ticket #93
         self.assertRaises(TypeError, np.dtype,
-                              {'names':['a'],'formats':['foo']}, align=1)
+                              {'names':['a'], 'formats':['foo']}, align=1)
 
     @dec.knownfailureif((sys.version_info[0] >= 3) or
                         (sys.platform == "win32" and
                          platform.architecture()[0] == "64bit"),
                         "numpy.intp('0xff', 16) not supported on Py3, "
                         "as it does not inherit from Python int")
-    def test_intp(self,level=rlevel):
+    def test_intp(self, level=rlevel):
         # Ticket #99
         i_width = np.int_(0).nbytes*2 - 1
         np.intp('0x' + 'f'*i_width, 16)
@@ -174,7 +174,7 @@ class TestRegression(TestCase):
         assert_equal(255, np.intp('0xFF', 16))
         assert_equal(1024, np.intp(1024))
 
-    def test_endian_bool_indexing(self,level=rlevel):
+    def test_endian_bool_indexing(self, level=rlevel):
         # Ticket #105
         a = np.arange(10., dtype='>f8')
         b = np.arange(10., dtype='<f8')
@@ -187,7 +187,7 @@ class TestRegression(TestCase):
         assert_(np.all(a[ya] > 0.5))
         assert_(np.all(b[yb] > 0.5))
 
-    def test_endian_where(self,level=rlevel):
+    def test_endian_where(self, level=rlevel):
         # GitHub issue #369
         net = np.zeros(3, dtype='>f4')
         net[1] = 0.00458849
@@ -197,7 +197,7 @@ class TestRegression(TestCase):
         correct = np.array([ 0.60520202,  0.00458849,  0.60520202])
         assert_array_almost_equal(test, correct)
 
-    def test_endian_recarray(self,level=rlevel):
+    def test_endian_recarray(self, level=rlevel):
         # Ticket #2185
         dt = np.dtype([
                ('head', '>u4'),
@@ -213,7 +213,7 @@ class TestRegression(TestCase):
         buf[0]['data'][0] = d
         assert_(buf[0]['head'] == 1)
 
-    def test_mem_dot(self,level=rlevel):
+    def test_mem_dot(self, level=rlevel):
         # Ticket #106
         x = np.random.randn(0, 1)
         y = np.random.randn(10, 1)
@@ -227,7 +227,7 @@ class TestRegression(TestCase):
         np.core.multiarray.dot(x, np.transpose(y), out=z)
         assert_equal(_z, np.ones(10))
 
-    def test_arange_endian(self,level=rlevel):
+    def test_arange_endian(self, level=rlevel):
         # Ticket #111
         ref = np.arange(10)
         x = np.arange(10, dtype='<f8')
@@ -235,31 +235,31 @@ class TestRegression(TestCase):
         x = np.arange(10, dtype='>f8')
         assert_array_equal(ref, x)
 
-    def test_argmax(self,level=rlevel):
+    def test_argmax(self, level=rlevel):
         # Ticket #119
         a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
         for i in range(a.ndim):
             a.argmax(i)  # Should succeed
 
-    def test_mem_divmod(self,level=rlevel):
+    def test_mem_divmod(self, level=rlevel):
         # Ticket #126
         for i in range(10):
             divmod(np.array([i])[0], 10)
 
-    def test_hstack_invalid_dims(self,level=rlevel):
+    def test_hstack_invalid_dims(self, level=rlevel):
         # Ticket #128
         x = np.arange(9).reshape((3, 3))
         y = np.array([0, 0, 0])
         self.assertRaises(ValueError, np.hstack, (x, y))
 
-    def test_squeeze_type(self,level=rlevel):
+    def test_squeeze_type(self, level=rlevel):
         # Ticket #133
         a = np.array([3])
         b = np.array(3)
         assert_(type(a.squeeze()) is np.ndarray)
         assert_(type(b.squeeze()) is np.ndarray)
 
-    def test_add_identity(self,level=rlevel):
+    def test_add_identity(self, level=rlevel):
         # Ticket #143
         assert_equal(0, np.add.identity)
 
@@ -268,11 +268,11 @@ class TestRegression(TestCase):
         a = np.float_(23.) + 2**135
         assert_equal(a, 23. + 2**135)
 
-    def test_binary_repr_0(self,level=rlevel):
+    def test_binary_repr_0(self, level=rlevel):
         # Ticket #151
         assert_equal('0', np.binary_repr(0))
 
-    def test_rec_iterate(self,level=rlevel):
+    def test_rec_iterate(self, level=rlevel):
         # Ticket #160
         descr = np.dtype([('i', int), ('f', float), ('s', '|S3')])
         x = np.rec.array([(1, 1.1, '1.0'),
@@ -280,19 +280,19 @@ class TestRegression(TestCase):
         x[0].tolist()
         [i for i in x[0]]
 
-    def test_unicode_string_comparison(self,level=rlevel):
+    def test_unicode_string_comparison(self, level=rlevel):
         # Ticket #190
         a = np.array('hello', np.unicode_)
         b = np.array('world')
         a == b
 
-    def test_tobytes_FORTRANORDER_discontiguous(self,level=rlevel):
+    def test_tobytes_FORTRANORDER_discontiguous(self, level=rlevel):
         # Fix in r2836
         # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
         assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
 
-    def test_flat_assignment(self,level=rlevel):
+    def test_flat_assignment(self, level=rlevel):
         # Correct behaviour of ticket #194
         x = np.empty((3, 1))
         x.flat = np.arange(3)
@@ -300,7 +300,7 @@ class TestRegression(TestCase):
         x.flat = np.arange(3, dtype=float)
         assert_array_almost_equal(x, [[0], [1], [2]])
 
-    def test_broadcast_flat_assignment(self,level=rlevel):
+    def test_broadcast_flat_assignment(self, level=rlevel):
         # Ticket #194
         x = np.empty((3, 1))
 
@@ -328,7 +328,7 @@ class TestRegression(TestCase):
         assert_raises(ValueError, assign, a, r, np.nan)
         a[r] = np.array(np.nan)
 
-    def test_unpickle_dtype_with_object(self,level=rlevel):
+    def test_unpickle_dtype_with_object(self, level=rlevel):
         # Implemented in r2840
         dt = np.dtype([('x', int), ('y', np.object_), ('z', 'O')])
         f = BytesIO()
@@ -338,7 +338,7 @@ class TestRegression(TestCase):
         f.close()
         assert_equal(dt, dt_)
 
-    def test_mem_array_creation_invalid_specification(self,level=rlevel):
+    def test_mem_array_creation_invalid_specification(self, level=rlevel):
         # Ticket #196
         dt = np.dtype([('x', int), ('y', np.object_)])
         # Wrong way
@@ -346,7 +346,7 @@ class TestRegression(TestCase):
         # Correct way
         np.array([(1, 'object')], dt)
 
-    def test_recarray_single_element(self,level=rlevel):
+    def test_recarray_single_element(self, level=rlevel):
         # Ticket #202
         a = np.array([1, 2, 3], dtype=np.int32)
         b = a.copy()
@@ -354,7 +354,7 @@ class TestRegression(TestCase):
         assert_array_equal(a, b)
         assert_equal(a, r[0][0])
 
-    def test_zero_sized_array_indexing(self,level=rlevel):
+    def test_zero_sized_array_indexing(self, level=rlevel):
         # Ticket #205
         tmp = np.array([])
 
@@ -363,14 +363,14 @@ class TestRegression(TestCase):
 
         self.assertRaises(IndexError, index_tmp)
 
-    def test_chararray_rstrip(self,level=rlevel):
+    def test_chararray_rstrip(self, level=rlevel):
         # Ticket #222
         x = np.chararray((1,), 5)
         x[0] = asbytes('a   ')
         x = x.rstrip()
         assert_equal(x[0], asbytes('a'))
 
-    def test_object_array_shape(self,level=rlevel):
+    def test_object_array_shape(self, level=rlevel):
         # Ticket #239
         assert_equal(np.array([[1, 2], 3, 4], dtype=object).shape, (3,))
         assert_equal(np.array([[1, 2], [3, 4]], dtype=object).shape, (2, 2))
@@ -379,20 +379,20 @@ class TestRegression(TestCase):
         assert_equal(np.array([[], [], []], dtype=object).shape, (3, 0))
         assert_equal(np.array([[3, 4], [5, 6], None], dtype=object).shape, (3,))
 
-    def test_mem_around(self,level=rlevel):
+    def test_mem_around(self, level=rlevel):
         # Ticket #243
         x = np.zeros((1,))
         y = [0]
         decimal = 6
         np.around(abs(x-y), decimal) <= 10.0**(-decimal)
 
-    def test_character_array_strip(self,level=rlevel):
+    def test_character_array_strip(self, level=rlevel):
         # Ticket #246
         x = np.char.array(("x", "x ", "x  "))
         for c in x:
             assert_equal(c, "x")
 
-    def test_lexsort(self,level=rlevel):
+    def test_lexsort(self, level=rlevel):
         # Lexsort memory error
         v = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         assert_equal(np.lexsort(v), 0)
@@ -444,7 +444,7 @@ class TestRegression(TestCase):
                     for name in result.dtype.names:
                         assert_(isinstance(name, str))
 
-    def test_pickle_dtype(self,level=rlevel):
+    def test_pickle_dtype(self, level=rlevel):
         # Ticket #251
         pickle.dumps(np.float)
 
@@ -457,7 +457,7 @@ class TestRegression(TestCase):
 
     def test_object_array_from_list(self, level=rlevel):
         # Ticket #270
-        np.array([1, 'A', None])  # Should succeed
+        self.assertEqual(np.array([1, 'A', None]).shape, (3,))
 
     def test_multiple_assign(self, level=rlevel):
         # Ticket #273
@@ -706,12 +706,14 @@ class TestRegression(TestCase):
         # Issue gh-3001
         d = 123.
         a = np.array([d, 1], dtype=object)
-        ref_d = sys.getrefcount(d)
+        if HAS_REFCOUNT:
+            ref_d = sys.getrefcount(d)
         try:
             a.take([0, 100])
         except IndexError:
             pass
-        assert_(ref_d == sys.getrefcount(d))
+        if HAS_REFCOUNT:
+            assert_(ref_d == sys.getrefcount(d))
 
     def test_array_str_64bit(self, level=rlevel):
         # Ticket #501
@@ -805,15 +807,9 @@ class TestRegression(TestCase):
         def ia(x, s, v):
             x[(s > 0)] = v
 
-        # After removing deprecation, the following are ValueErrors.
-        # This might seem odd as compared to the value error below. This
-        # is due to the fact that the new code always uses "nonzero" logic
-        # and the boolean special case is not taken.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
-            self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
-            self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
+        self.assertRaises(IndexError, ia, x, s, np.zeros(9, dtype=float))
+        self.assertRaises(IndexError, ia, x, s, np.zeros(11, dtype=float))
+
         # Old special case (different code path):
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
         self.assertRaises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))
@@ -928,7 +924,7 @@ class TestRegression(TestCase):
         arr0[1] = b
         assert_(cnt(b) == cnt0_b + 1)
 
-        arr[:,:] = arr0
+        arr[:, :] = arr0
         assert_(cnt(a) == cnt0_a + 6)
         assert_(cnt(b) == cnt0_b + 6)
 
@@ -1239,19 +1235,6 @@ class TestRegression(TestCase):
         "Ticket #947."
         self.assertRaises(ValueError, lambda: np.array([1], ndmin=33))
 
-    def test_errobj_reference_leak(self, level=rlevel):
-        # Ticket #955
-        with np.errstate(all="ignore"):
-            z = int(0)
-            p = np.int32(-1)
-
-            gc.collect()
-            n_before = len(gc.get_objects())
-            z**p  # this shouldn't leak a reference to errobj
-            gc.collect()
-            n_after = len(gc.get_objects())
-            assert_(n_before >= n_after, (n_before, n_after))
-
     def test_void_scalar_with_titles(self, level=rlevel):
         # No ticket
         data = [('john', 4), ('mary', 5)]
@@ -1290,11 +1273,17 @@ class TestRegression(TestCase):
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    x.resize((m, 0))
+                    if IS_PYPY:
+                        x.resize((m, 0), refcheck=False)
+                    else:
+                        x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    y.resize((0, n))
+                    if IS_PYPY:
+                        y.resize((0, n), refcheck=False)
+                    else:
+                        y.resize((0, n))
 
-                    # `dot` should just return zero (m,n) matrix
+                    # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
                     assert_(np.all(z == 0))
                     assert_(z.shape == (m, n))
@@ -1458,6 +1447,7 @@ class TestRegression(TestCase):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1515,19 +1505,17 @@ class TestRegression(TestCase):
         dtypes = [x for x in np.typeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
-        a = np.array([], dtypes[0])
+        a = np.array([], np.bool_)  # not x[0] because it is unordered
         failures = []
-        # ignore complex warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', np.ComplexWarning)
-            for x in dtypes:
-                b = a.astype(x)
-                for y in dtypes:
-                    c = a.astype(y)
-                    try:
-                        np.dot(b, c)
-                    except TypeError:
-                        failures.append((x, y))
+
+        for x in dtypes:
+            b = a.astype(x)
+            for y in dtypes:
+                c = a.astype(y)
+                try:
+                    np.dot(b, c)
+                except TypeError:
+                    failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
@@ -1572,6 +1560,7 @@ class TestRegression(TestCase):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=np.float)
@@ -1617,8 +1606,8 @@ class TestRegression(TestCase):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
             assert_warns(np.ComplexWarning, float, x)
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
+            with suppress_warnings() as sup:
+                sup.filter(np.ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):
@@ -1704,7 +1693,7 @@ class TestRegression(TestCase):
     def test_squeeze_contiguous(self):
         # Similar to GitHub issue #387
         a = np.zeros((1, 2)).squeeze()
-        b = np.zeros((2, 2, 2), order='F')[:,:, ::2].squeeze()
+        b = np.zeros((2, 2, 2), order='F')[:, :, ::2].squeeze()
         assert_(a.flags.c_contiguous)
         assert_(a.flags.f_contiguous)
         assert_(b.flags.f_contiguous)
@@ -1731,7 +1720,7 @@ class TestRegression(TestCase):
         b = np.array(a, dtype=object)
         a[()] = b
         assert_raises(TypeError, int, a)
-        # Numpy has no tp_traverse currently, so circular references
+        # NumPy has no tp_traverse currently, so circular references
         # cannot be detected. So resolve it:
         a[()] = 0
 
@@ -1745,7 +1734,8 @@ class TestRegression(TestCase):
         # causing segmentation faults (gh-3787)
         a = np.array(object(), dtype=object)
         np.copyto(a, a)
-        assert_equal(sys.getrefcount(a[()]), 2)
+        if HAS_REFCOUNT:
+            assert_(sys.getrefcount(a[()]) == 2)
         a[()].__class__  # will segfault if object was deleted
 
     def test_zerosize_accumulate(self):
@@ -1948,6 +1938,7 @@ class TestRegression(TestCase):
             a = np.empty((100000000,), dtype='i1')
             del a
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -1978,7 +1969,7 @@ class TestRegression(TestCase):
     def test_string_truncation_ucs2(self):
         # Ticket #2081. Python compiled with two byte unicode
         # can lead to truncation if itemsize is not properly
-        # adjusted for Numpy's four byte unicode.
+        # adjusted for NumPy's four byte unicode.
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:
@@ -2080,6 +2071,22 @@ class TestRegression(TestCase):
         self.assertTrue(arr is not arr_cp)
         self.assertTrue(isinstance(arr_cp, type(arr)))
 
+    def test_deepcopy_F_order_object_array(self):
+        # Ticket #6456.
+        a = {'a': 1}
+        b = {'b': 2}
+        arr = np.array([[a, b], [a, b]], order='F')
+        arr_cp = copy.deepcopy(arr)
+
+        assert_equal(arr, arr_cp)
+        self.assertTrue(arr is not arr_cp)
+        # Ensure that we have actually copied the item.
+        self.assertTrue(arr[0, 1] is not arr_cp[1, 1])
+        # Ensure we are allowed to have references to the same object.
+        self.assertTrue(arr[0, 1] is arr[1, 1])
+        # Check the references hold for the copied objects.
+        self.assertTrue(arr_cp[0, 1] is arr_cp[1, 1])
+
     def test_bool_subscript_crash(self):
         # gh-4494
         c = np.rec.array([(1, 2, 3), (4, 5, 6)])
@@ -2096,7 +2103,7 @@ class TestRegression(TestCase):
         class Foo(object):
             __array_priority__ = 1002
 
-            def __array__(self,*args,**kwargs):
+            def __array__(self, *args, **kwargs):
                 raise Exception()
 
         rhs = Foo()
@@ -2104,7 +2111,9 @@ class TestRegression(TestCase):
         for f in [op.lt, op.le, op.gt, op.ge]:
             if sys.version_info[0] >= 3:
                 assert_raises(TypeError, f, lhs, rhs)
-            else:
+            elif not sys.py3kwarning:
+                # With -3 switch in python 2, DeprecationWarning is raised
+                # which we are not interested in
                 f(lhs, rhs)
         assert_(not op.eq(lhs, rhs))
         assert_(op.ne(lhs, rhs))
@@ -2115,7 +2124,7 @@ class TestRegression(TestCase):
             def __eq__(self, other):
                 return "OK"
 
-        x = np.array([1,2,3]).view(Foo)
+        x = np.array([1, 2, 3]).view(Foo)
         assert_equal(10 == x, "OK")
         assert_equal(np.int32(10) == x, "OK")
         assert_equal(np.array([10]) == x, "OK")
@@ -2152,6 +2161,7 @@ class TestRegression(TestCase):
         assert_equal(uf(a), ())
         assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),
@@ -2196,6 +2206,27 @@ class TestRegression(TestCase):
             # the result overflows to a total size of 10.
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
+
+    def test_invalid_structured_dtypes(self):
+        # gh-2865
+        # mapping python objects to other dtypes
+        assert_raises(ValueError, np.dtype, ('O', [('name', 'i8')]))
+        assert_raises(ValueError, np.dtype, ('i8', [('name', 'O')]))
+        assert_raises(ValueError, np.dtype,
+                      ('i8', [('name', [('name', 'O')])]))
+        assert_raises(ValueError, np.dtype, ([('a', 'i4'), ('b', 'i4')], 'O'))
+        assert_raises(ValueError, np.dtype, ('i8', 'O'))
+        # wrong number/type of tuple elements in dict
+        assert_raises(ValueError, np.dtype,
+                      ('i', {'name': ('i', 0, 'title', 'oops')}))
+        assert_raises(ValueError, np.dtype,
+                      ('i', {'name': ('i', 'wrongtype', 'title')}))
+        # disallowed as of 1.13
+        assert_raises(ValueError, np.dtype,
+                      ([('a', 'O'), ('b', 'O')], [('c', 'O'), ('d', 'O')]))
+        # allowed as a special case due to existing use, see gh-2798
+        a = np.ones(1, dtype=('O', [('name', 'O')]))
+        assert_equal(a[0], 1)
 
 
 if __name__ == "__main__":

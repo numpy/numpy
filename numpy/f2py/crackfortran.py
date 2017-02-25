@@ -549,16 +549,16 @@ beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
     r'\s*(?P<this>(\b(%s)\b))' + \
     r'\s*(?P<after>%s)\s*\Z'
 ##
-fortrantypes = 'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
+fortrantypes = r'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
 typespattern = re.compile(
     beforethisafter % ('', fortrantypes, fortrantypes, '.*'), re.I), 'type'
 typespattern4implicit = re.compile(beforethisafter % (
     '', fortrantypes + '|static|automatic|undefined', fortrantypes + '|static|automatic|undefined', '.*'), re.I)
 #
 functionpattern = re.compile(beforethisafter % (
-    '([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
+    r'([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
 subroutinepattern = re.compile(beforethisafter % (
-    '[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
+    r'[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
 # modulepattern=re.compile(beforethisafter%('[a-z\s]*?','module','module','.*'),re.I),'begin'
 #
 groupbegins77 = r'program|block\s*data'
@@ -570,11 +570,11 @@ beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
 groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, '[\w\s]*'), re.I), 'end'
+    beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
-endifs = '(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
+endifs = r'(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
 endifpattern = re.compile(
-    beforethisafter % ('[\w]*?', endifs, endifs, '[\w\s]*'), re.I), 'endif'
+    beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
@@ -593,9 +593,9 @@ privatepattern = re.compile(
 intrisicpattern = re.compile(
     beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
 intentpattern = re.compile(beforethisafter % (
-    '', 'intent|depend|note|check', 'intent|depend|note|check', '\s*\(.*?\).*'), re.I), 'intent'
+    '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
-    beforethisafter % ('', 'parameter', 'parameter', '\s*\(.*'), re.I), 'parameter'
+    beforethisafter % ('', 'parameter', 'parameter', r'\s*\(.*'), re.I), 'parameter'
 datapattern = re.compile(
     beforethisafter % ('', 'data', 'data', '.*'), re.I), 'data'
 callpattern = re.compile(
@@ -2392,7 +2392,8 @@ def _selected_real_kind_func(p, r=0, radix=0):
         return 4
     if p < 16:
         return 8
-    if platform.machine().lower().startswith('power'):
+    machine = platform.machine().lower()
+    if machine.startswith('power') or machine.startswith('ppc64'):
         if p <= 20:
             return 16
     else:
@@ -2433,18 +2434,48 @@ def get_parameters(vars, global_params={}):
                     v = v.replace(*repl)
             v = kind_re.sub(r'kind("\1")', v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)', v)
-            if isinteger(vars[n]) and not selected_kind_re.match(v):
-                v = v.split('_')[0]
+
+            # We need to act according to the data.
+            # The easy case is if the data has a kind-specifier,
+            # then we may easily remove those specifiers.
+            # However, it may be that the user uses other specifiers...(!)
+            is_replaced = False
+            if 'kindselector' in vars[n]:
+                if 'kind' in vars[n]['kindselector']:
+                    orig_v_len = len(v)
+                    v = v.replace('_' + vars[n]['kindselector']['kind'], '')
+                    # Again, this will be true if even a single specifier
+                    # has been replaced, see comment above.
+                    is_replaced = len(v) < orig_v_len
+                    
+            if not is_replaced:
+                if not selected_kind_re.match(v):
+                    v_ = v.split('_')
+                    # In case there are additive parameters
+                    if len(v_) > 1: 
+                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+
+            # Currently this will not work for complex numbers.
+            # There is missing code for extracting a complex number,
+            # which may be defined in either of these:
+            #  a) (Re, Im)
+            #  b) cmplx(Re, Im)
+            #  c) dcmplx(Re, Im)
+            #  d) cmplx(Re, Im, <prec>)
+
             if isdouble(vars[n]):
                 tt = list(v)
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(
                         v[m.start():m.end()].lower().replace('d', 'e'))
                 v = ''.join(tt)
-            if iscomplex(vars[n]):
+
+            elif iscomplex(vars[n]):
+                # FIXME complex numbers may also have exponents
                 if v[0] == '(' and v[-1] == ')':
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
+
             try:
                 params[n] = eval(v, g_params, params)
             except Exception as msg:

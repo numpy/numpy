@@ -625,7 +625,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
-        elif len(mask.shape) == 2:
+        elif mask.ndim == 2:
             mrec._mask.flat = [tuple(m) for m in mask]
         else:
             mrec.__setmask__(mask)
@@ -646,21 +646,21 @@ def _guessvartypes(arr):
     """
     vartypes = []
     arr = np.asarray(arr)
-    if len(arr.shape) == 2:
+    if arr.ndim == 2:
         arr = arr[0]
-    elif len(arr.shape) > 2:
+    elif arr.ndim > 2:
         raise ValueError("The array should be 2D at most!")
     # Start the conversion loop.
     for f in arr:
         try:
             int(f)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 float(f)
-            except ValueError:
+            except (ValueError, TypeError):
                 try:
                     complex(f)
-                except ValueError:
+                except (ValueError, TypeError):
                     vartypes.append(arr.dtype)
                 else:
                     vartypes.append(np.dtype(complex))
@@ -743,7 +743,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
         if len(vartypes) != nfields:
             msg = "Attempting to %i dtypes for %i fields!"
             msg += " Reverting to default."
-            warnings.warn(msg % (len(vartypes), nfields))
+            warnings.warn(msg % (len(vartypes), nfields), stacklevel=2)
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.

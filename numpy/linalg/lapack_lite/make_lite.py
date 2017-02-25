@@ -21,7 +21,7 @@ HEADER = '''\
 NOTE: This is generated code. Look in Misc/lapack_lite for information on
       remaking this file.
 */
-#include "Numeric/f2c.h"
+#include "f2c.h"
 
 #ifdef HAVE_CONFIG
 #include "config.h"
@@ -35,6 +35,15 @@ extern doublereal dlamch_(char *);
 
 extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
+/*
+f2c knows the exact rules for precedence, and so omits parentheses where not
+strictly necessary. Since this is generated code, we don't really care if
+it's readable, and we know what is written is correct. So don't warn about
+them.
+*/
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif
 '''
 
 class FortranRoutine(object):

@@ -1,5 +1,5 @@
 ***************
-Numpy internals
+NumPy internals
 ***************
 
 .. toctree::

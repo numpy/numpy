@@ -14,10 +14,12 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "ctors.h"
 #include "iterators.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
+#include "mem_overlap.h"
 
 
 #define HAS_INTEGER 1
@@ -343,6 +345,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
              * Single integer index, there are two cases here.
              * It could be an array, a 0-d array is handled
              * a bit weird however, so need to special case it.
+             *
+             * Check for integers first, purely for performance
              */
 #if !defined(NPY_PY3K)
             if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
@@ -440,16 +444,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             if (PyArray_NDIM(arr) == 0) {
                 /*
-                 * TODO, WARNING: This code block cannot be used due to
-                 *                FutureWarnings at this time. So instead
-                 *                just raise an IndexError.
-                 */
-                PyErr_SetString(PyExc_IndexError,
-                        "in the future, 0-d boolean arrays will be "
-                        "interpreted as a valid boolean index");
-                Py_DECREF((PyObject *)arr);
-                goto failed_building_indices;
-                /*
                  * This can actually be well defined. A new axis is added,
                  * but at the same time no axis is "used". So if we have True,
                  * we add a new axis (a bit like with np.newaxis). If it is
@@ -458,7 +452,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                 index_type |= HAS_FANCY;
                 indices[curr_idx].type = HAS_0D_BOOL;
-                indices[curr_idx].value = 1;
 
                 /* TODO: This can't fail, right? Is there a faster way? */
                 if (PyObject_IsTrue((PyObject *)arr)) {
@@ -467,6 +460,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 else {
                     n = 0;
                 }
+                indices[curr_idx].value = n;
                 indices[curr_idx].object = PyArray_Zeros(1, &n,
                                             PyArray_DescrFromType(NPY_INTP), 0);
                 Py_DECREF(arr);
@@ -662,26 +656,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
         for (i = 0; i < curr_idx; i++) {
             if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
                 if (indices[i].value != PyArray_DIM(self, used_ndim)) {
-                    static PyObject *warning = NULL;
-
                     char err_msg[174];
+
                     PyOS_snprintf(err_msg, sizeof(err_msg),
                         "boolean index did not match indexed array along "
                         "dimension %d; dimension is %" NPY_INTP_FMT
                         " but corresponding boolean dimension is %" NPY_INTP_FMT,
                         used_ndim, PyArray_DIM(self, used_ndim),
                         indices[i].value);
-
-                    npy_cache_import(
-                        "numpy", "VisibleDeprecationWarning", &warning);
-                    if (warning == NULL) {
-                        goto failed_building_indices;
-                    }
-
-                    if (PyErr_WarnEx(warning, err_msg, 1) < 0) {
-                        goto failed_building_indices;
-                    }
-                    break;
+                    PyErr_SetString(PyExc_IndexError, err_msg);
+                    goto failed_building_indices;
                 }
             }
 
@@ -717,6 +701,39 @@ prepare_index(PyArrayObject *self, PyObject *index,
         Py_DECREF(index);
     }
     return -1;
+}
+
+
+/**
+ * Check if self has memory overlap with one of the index arrays, or with extra_op.
+ *
+ * @returns 1 if memory overlap found, 0 if not.
+ */
+NPY_NO_EXPORT int
+index_has_memory_overlap(PyArrayObject *self,
+                         int index_type, npy_index_info *indices, int num,
+                         PyObject *extra_op)
+{
+    int i;
+
+    if (index_type & (HAS_FANCY | HAS_BOOL)) {
+        for (i = 0; i < num; ++i) {
+            if (indices[i].object != NULL &&
+                    PyArray_Check(indices[i].object) &&
+                    solve_may_share_memory(self,
+                                           (PyArrayObject *)indices[i].object,
+                                           1) != 0) {
+                return 1;
+            }
+        }
+    }
+
+    if (extra_op != NULL && PyArray_Check(extra_op) &&
+            solve_may_share_memory(self, (PyArrayObject *)extra_op, 1) != 0) {
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -1291,7 +1308,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
 
         /* view the array at the new offset+dtype */
         Py_INCREF(fieldtype);
-        *view = (PyArrayObject*)PyArray_NewFromDescr(
+        *view = (PyArrayObject*)PyArray_NewFromDescr_int(
                                     Py_TYPE(arr),
                                     fieldtype,
                                     PyArray_NDIM(arr),
@@ -1299,7 +1316,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_BYTES(arr) + offset,
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr);
+                                    (PyObject *)arr, 0, 1);
         if (*view == NULL) {
             return 0;
         }
@@ -1397,7 +1414,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         view_dtype->fields = fields;
         view_dtype->flags = PyArray_DESCR(arr)->flags;
 
-        *view = (PyArrayObject*)PyArray_NewFromDescr(
+        *view = (PyArrayObject*)PyArray_NewFromDescr_int(
                                     Py_TYPE(arr),
                                     view_dtype,
                                     PyArray_NDIM(arr),
@@ -1405,7 +1422,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_DATA(arr),
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr);
+                                    (PyObject *)arr, 0, 1);
         if (*view == NULL) {
             return 0;
         }
@@ -1427,6 +1444,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
 
+        PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
         if (viewcopy == NULL) {
             Py_DECREF(*view);
@@ -1435,6 +1453,9 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
         Py_DECREF(*view);
         *view = (PyArrayObject*)viewcopy;
+
+        /* warn when writing to the copy */
+        PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         return 0;
     }
     return -1;
@@ -1730,60 +1751,6 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
 
 
 /*
- * This fallback takes the old route of `arr.flat[index] = values`
- * for one dimensional `arr`. The route can sometimes fail slightly
- * differently (ValueError instead of IndexError), in which case we
- * warn users about the change. But since it does not actually care *at all*
- * about shapes, it should only fail for out of bound indexes or
- * casting errors.
- */
-NPY_NO_EXPORT int
-attempt_1d_fallback(PyArrayObject *self, PyObject *ind, PyObject *op)
-{
-    PyObject *err = PyErr_Occurred();
-    PyArrayIterObject *self_iter = NULL;
-
-    Py_INCREF(err);
-    PyErr_Clear();
-
-    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-    if (self_iter == NULL) {
-        goto fail;
-    }
-    if (iter_ass_subscript(self_iter, ind, op) < 0) {
-        goto fail;
-    }
-
-    Py_XDECREF((PyObject *)self_iter);
-    Py_DECREF(err);
-
-    /* 2014-06-12, 1.9 */
-    if (DEPRECATE(
-            "assignment will raise an error in the future, most likely "
-            "because your index result shape does not match the value array "
-            "shape. You can use `arr.flat[index] = values` to keep the old "
-            "behaviour.") < 0) {
-        return -1;
-    }
-    return 0;
-
-  fail:
-    if (!PyErr_ExceptionMatches(err)) {
-        PyObject *err, *val, *tb;
-        PyErr_Fetch(&err, &val, &tb);
-        /* 2014-06-12, 1.9 */
-        DEPRECATE_FUTUREWARNING(
-            "assignment exception type will change in the future");
-        PyErr_Restore(err, val, tb);
-    }
-
-    Py_XDECREF((PyObject *)self_iter);
-    Py_DECREF(err);
-    return -1;
-}
-
-
-/*
  * General assignment with python indexing objects.
  */
 static int
@@ -1876,17 +1843,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (array_assign_boolean_subscript(self,
                                            (PyArrayObject *)indices[0].object,
                                            tmp_arr, NPY_CORDER) < 0) {
-            /*
-             * Deprecated case. The old boolean indexing seemed to have some
-             * check to allow wrong dimensional boolean arrays in all cases.
-             */
-            if (PyArray_NDIM(tmp_arr) > 1) {
-                if (attempt_1d_fallback(self, indices[0].object,
-                                        (PyObject*)tmp_arr) < 0) {
-                    goto fail;
-                }
-                goto success;
-            }
             goto fail;
         }
         goto success;
@@ -2001,7 +1957,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                  * Either they are equivalent, or the values must
                  * be a scalar
                  */
-                (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr) ||
+                (PyArray_EQUIVALENTLY_ITERABLE(ind, tmp_arr,
+                                               PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                               PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
                         PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
                 /* Check if the type is equivalent to INTP */
@@ -2037,18 +1995,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                              tmp_arr, descr);
 
     if (mit == NULL) {
-        /*
-         * This is a deprecated special case to allow non-matching shapes
-         * for the index and value arrays.
-         */
-        if (index_type != HAS_FANCY || index_num != 1) {
-            /* This is not a "flat like" 1-d special case */
-            goto fail;
-        }
-        if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
-            goto fail;
-        }
-        goto success;
+        goto fail;
     }
 
     if (tmp_arr == NULL) {
@@ -2062,18 +2009,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             }
         }
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
-             /*
-              * This is a deprecated special case to allow non-matching shapes
-              * for the index and value arrays.
-              */
-              if (index_type != HAS_FANCY || index_num != 1) {
-                 /* This is not a "flat like" 1-d special case */
-                 goto fail;
-             }
-             if (attempt_1d_fallback(self, indices[0].object, op) < 0) {
-                 goto fail;
-             }
-             goto success;
+             goto fail;
         }
     }
 
@@ -2445,6 +2381,11 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
             mit->fancy_dims[j] = 1;
             /* Does not exist */
             mit->iteraxes[j++] = -1;
+            if ((indices[i].value == 0) &&
+                    (mit->dimensions[mit->nd_fancy - 1]) > 1) {
+                goto broadcast_error;
+            }
+            mit->dimensions[mit->nd_fancy-1] *= indices[i].value;
         }
 
         /* advance curr_dim for non-fancy indices */
@@ -2482,7 +2423,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
     }
 
     for (i = 0; i < index_num; i++) {
-        if (indices[i].type != HAS_FANCY) {
+        if (!(indices[i].type & HAS_FANCY)) {
             continue;
         }
         tmp = convert_shape_to_string(
@@ -3225,25 +3166,50 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
 /*NUMPY_API
  *
- * Use advanced indexing to iterate an array. Please note
- * that most of this public API is currently not guaranteed
- * to stay the same between versions. If you plan on using
- * it, please consider adding more utility functions here
- * to accommodate new features.
+ * Same as PyArray_MapIterArray, but:
+ *
+ * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
+ * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
+ * to avoid problems if `a` is modified during the iteration.
+ * `iter->array` may contain a copied array (with UPDATEIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
+PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
+                                  int copy_if_overlap, PyArrayObject *extra_op)
 {
     PyArrayMapIterObject * mit = NULL;
     PyArrayObject *subspace = NULL;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
     int i, index_num, ndim, fancy_ndim, index_type;
+    PyArrayObject *a_copy = NULL;
 
     index_type = prepare_index(a, index, indices, &index_num,
                                &ndim, &fancy_ndim, 0);
 
     if (index_type < 0) {
         return NULL;
+    }
+
+    if (copy_if_overlap && index_has_memory_overlap(a, index_type, indices,
+                                                    index_num,
+                                                    (PyObject *)extra_op)) {
+        /* Make a copy of the input array */
+        a_copy = (PyArrayObject *)PyArray_NewLikeArray(a, NPY_ANYORDER,
+                                                       NULL, 0);
+        if (a_copy == NULL) {
+            goto fail;
+        }
+
+        if (PyArray_CopyInto(a_copy, a) != 0) {
+            goto fail;
+        }
+
+        Py_INCREF(a);
+        if (PyArray_SetUpdateIfCopyBase(a_copy, a) < 0) {
+            goto fail;
+        }
+
+        a = a_copy;
     }
 
     /* If it is not a pure fancy index, need to get the subspace */
@@ -3273,6 +3239,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         goto fail;
     }
 
+    Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     PyArray_MapIterReset(mit);
 
@@ -3283,12 +3250,24 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     return (PyObject *)mit;
 
  fail:
+    Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     Py_XDECREF((PyObject *)mit);
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
     return NULL;
+}
+
+
+/*NUMPY_API
+ *
+ * Use advanced indexing to iterate an array.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
+{
+    return PyArray_MapIterArrayCopyIfOverlap(a, index, 0, NULL);
 }
 
 
@@ -3390,7 +3369,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

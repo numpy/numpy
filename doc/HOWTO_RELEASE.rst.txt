@@ -1,8 +1,5 @@
 This file gives an overview of what is necessary to build binary releases for
-NumPy. Windows binaries are built here using Wine, they can of course also be
-built on Windows itself. Building OS X binaries on another platform is not
-possible, but our current OSX binary build procedure uses travis-ci virtual
-machines running OSX.
+NumPy.
 
 Current build and release info
 ==============================
@@ -39,15 +36,15 @@ Release Scripts
 Supported platforms and versions
 ================================
 
-Python 2.6-2.7 and >=3.2 are the currently supported versions when building
-from source.  We test numpy against all these versions every time we merge
-code to trunk.  Binary installers may be available for a subset of these
-versions (see below).
+Python 2.7 and >=3.4 are the currently supported versions when building from
+source.  We test numpy against all these versions every time we merge code to
+trunk.  Binary installers may be available for a subset of these versions (see
+below).
 
 OS X
 ----
 
-Python 2.7 and >=3.3 are the versions for which we provide binary installers.
+Python 2.7 and >=3.4 are the versions for which we provide binary installers.
 OS X versions >= 10.6 are supported.  We build binary wheels for OSX that are
 compatible with Python.org Python, system Python, homebrew and macports - see
 this `OSX wheel building summary
@@ -56,26 +53,31 @@ this `OSX wheel building summary
 Windows
 -------
 
-32-bit Python 2.7, 3.3, 3.4 are the versions for which we provide binary
-installers. Windows XP, Vista and 7 are supported.  Our current windows mingw
-toolchain is not able to build 64-bit binaries of numpy.  We are hoping to
-update to a `mingw-w64 toolchain
-<https://github.com/numpy/numpy/wiki/Mingw-w64-faq>`_ soon.
+We build 32- and 64-bit wheels for Python 2.7, 3.4, 3.5 on Windows. Windows
+XP, Vista, 7, 8 and 10 are supported.  We build numpy using the MSVC compilers
+on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
+<http://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
 
 Linux
 -----
 
-Many distributions include NumPy. Building from source is also relatively
-straightforward. Only tarballs are created for Linux, no specific binary
-installers are provided (yet).
+We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
+wheels for numpy.  Many Linux distributions include their own binary builds
+of NumPy.
 
 BSD / Solaris
 -------------
-No binaries are provided, but succesful builds on Solaris and BSD have been
+
+No binaries are provided, but successful builds on Solaris and BSD have been
 reported.
 
 Tool chain
 ==========
+
+We build all our wheels on cloud infrastructure - so this list of compilers is
+for information and debugging builds locally.  See the ``.travis.yml`` and
+``appveyor.yml`` scripts in the `numpy wheels`_ repo for the definitive source
+of the build recipes.
 
 Compilers
 ---------
@@ -84,18 +86,14 @@ The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
 * OS X builds on travis currently use `clang`.  It appears that binary wheels
-  for OSX >= 10.6 can be safely built from from OSX 10.9 when building against
-  the Python from the Python.org installers.
-* Windows builds use MinGW 3.4.5.  Updating this to a more recent MinGW with
-  GCC 4.x is desired, but there are still practical difficulties in building
-  the binary installers.
+  for OSX >= 10.6 can be safely built from from the travis-ci OSX 10.9 VMs
+  when building against the Python from the Python.org installers;
+* Windows builds use the MSVC version corresponding to the Python being built
+  against;
+* Manylinux1 wheels use the gcc provided on the Manylinux docker images.
 
 You will need Cython for building the binaries.  Cython compiles the ``.pyx``
 files in the numpy distribution to ``.c`` files.
-
-Fortran: on OS X gfortran from `this site <http://r.research.att.com/tools/>`_
-is used. On Windows g77 (included in MinGW) is the current default, in the future
-this may shift to gfortran as well.
 
 Python
 ------
@@ -110,54 +108,6 @@ Building docs
 * Matplotlib
 * Texlive (or MikTeX on Windows)
 
-Wine
-----
-For building Windows binaries on OS X Wine can be used. In Wine the following
-needs to be installed:
-
-* Python 2.6-2.7 and 3.3
-* MakeNsis
-* CpuId plugin for MakeNsis : this can be found in the NumPy source tree under
-  tools/win32build/cpucaps and has to be built with MinGW (see SConstruct file in
-  that dir for details)
-* MinGW
-* ATLAS, 3x ([No SSE, SSE2, SSE3] for superpack installer) : ATLAS does not
-  compile under wine or on Windows out of the box. Binaries for ATLAS can be
-  found in the vendor repository on GitHub (http://github.com/numpy/vendor).
-
-To install Wine on OS X Snow Leopard the current options are to compile a
-current unstable version ,`<http://wiki.winehq.org/MacOSX/Building>`_, or to use
-an install script from `here <http://code.google.com/p/osxwinebuilder/>`_. For
-me, the former option did not work (everything compiled, but after installing
-Python the command ``import tempfile`` resulted in an exception. The latter
-option did work.
-
-After successful installation and an invocation of the wine executable, a
-~/.wine folder exists - new programs will be installed there in
-~/.wine/drive_c. Installing Windows programs with .exe executables is done by
-running
-
-  $ wine yourprog.exe
-
-and MSI installers can be installed with
-
-  $ msiexec /i yourprog.msi
-
-For the above to work you probably need to put the wine-1.x.x/bin directory in
-your PATH.
-
-To install MinGW, the easiest option is to use the automated installer on the
-MinGW download page. This will give you (at this moment) GCC 3.4.5; GCC 4.x is
-still not supported officially by MinGW.
-
-To be able to use gcc and MakeNsis in Wine, the locations of gcc.exe and
-makensis.exe should be added to the Windows environment variable PATH. This can
-easily be done by running
-
-  $ wine regedit
-
-add adding a PATH variable in HKEY_CURRENT_USER/Environment.
-
 Virtualenv
 ----------
 Virtualenv is a very useful tool to keep several versions of packages around.
@@ -167,18 +117,17 @@ It is also used in the Paver script to build the docs.
 What is released
 ================
 
-Binaries
---------
-
-Windows binary installers in "superpack" form for Python 2.7/3.3/3.4.  A
-superpack contains three builds, for SSE2, SSE3 and no SSE.
-
 Wheels
 ------
 
-OSX wheels built via travis-ci : see - see `building OSX wheels`_.
+* Windows wheels for Python 2.7, 3.4, 3.5, for 32- and 64-bit, built using
+  Appveyor;
+* Dual architecture OSX wheels built via travis-ci;
+* 32- and 64-bit Manylinux1 wheels built via travis-ci.
 
-.. _build OSX wheels: https://github.com/MacPython/numpy-wheels 
+See the `numpy wheels`_ building repository for more detail.
+
+.. _numpy wheels : https://github.com/MacPython/numpy-wheels
 
 Other
 -----
@@ -353,7 +302,7 @@ to public keyservers, with a command such as::
 
 Apply patch to fix bogus strides
 --------------------------------
-NPY_RELAXED_STRIDE_CHECKING was made the default in Numpy 1.10 and bogus
+NPY_RELAXED_STRIDE_CHECKING was made the default in NumPy 1.10.0 and bogus
 strides are used in the development branch to smoke out problems. The
 `patch <https://github.com/numpy/numpy/pull/5996>`_ should be updated if
 necessary and applied to the release branch to rationalize the strides.
@@ -366,26 +315,36 @@ Increment the release number in setup.py. Release candidates should have "rc1"
 Also create a new version hash in cversions.txt and a corresponding version
 define NPY_x_y_API_VERSION in numpyconfig.h
 
-Trigger the OSX builds on travis
---------------------------------
+Trigger the wheel builds on travis-ci and Appveyor
+--------------------------------------------------
 
-See `build OSX wheels`_.
+See the `numpy wheels` repository.
 
-You may need to check the ``.travis.yml`` file of the
-https://github.com/MacPython/numpy-wheels repository.
+In that repository edit the files:
 
-Make sure that the releast tag has been pushed, and that the ``.travis.yml``
-is set thusly::
+* ``.travis.yml``;
+* ``appveyor.yml``.
 
-  - NP_COMMIT=latest-tag  # comment out to build version in submodule
+In both cases, set the ``BUILD_COMMIT`` variable to the current release tag -
+e.g. ``v1.11.1``.
 
-Trigger a build by doing an empty (or otherwise) commit to the repository::
+Make sure that the release tag has been pushed.
+
+Trigger a build by doing a commit of your edits to ``.travis.yml`` and
+``appveyor.yml`` to the repository::
 
     cd /path/to/numpy-wheels
-    git commit --allow-empty
+    # Edit .travis.yml, appveyor.yml
+    git commit
     git push
 
-The wheels, once built, appear in http://wheels.scipy.org
+The wheels, once built, appear at a Rackspace container pointed at by:
+
+* http://wheels.scipy.org
+* https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
+
+The HTTP address may update first, and you should wait 15 minutes after the
+build finishes before fetching the binaries.
 
 Make the release
 ----------------
@@ -403,11 +362,57 @@ For example::
 
   scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
 
-Update PyPi
+Update PyPI
 -----------
 
-The final release (not betas or release candidates) should be uploaded to PyPi.
-There are two ways to update PyPi, the first one is::
+The wheels and source should be uploaded to PyPI.
+
+You should upload the wheels first, and the source formats last, to make sure
+that pip users don't accidentally get a source install when they were
+expecting a binary wheel.
+
+You can do this automatically using the ``wheel-uploader`` script from
+https://github.com/MacPython/terryfy.  Here is the recommended incantation for
+downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI.
+
+::
+
+    cd ~/wheelhouse   # local directory to cache wheel downloads
+    CDN_URL=https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
+    wheel-uploader -u $CDN_URL -w warehouse -v -s -t win numpy 1.11.1rc1
+    wheel-uploader -u $CDN_URL -w warehouse -v -s -t macosx numpy 1.11.1rc1
+    wheel-uploader -u $CDN_URL -w warehouse -v -s -t manylinux1 numpy 1.11.1rc1
+
+The ``-v`` flag gives verbose feedback, ``-s`` causes the script to sign the
+wheels with your GPG key before upload.  ``-r warehouse`` causes the upload to
+use the Warehouse PyPI server.  This is a good idea because the Warehouse
+server seems to be a lot more reliable in receiving automated wheel uploads.
+For this flag to work, you will need a ``warehouse`` section in your
+``~/.pypirc`` file, of form:
+
+    [distutils]
+    index-servers =
+        pypi
+        warehouse
+
+    [pypi]
+    username:your_user_name
+    password:your_password
+
+    [warehouse]
+    repository: https://upload.pypi.io/legacy/
+    username: your_user_name
+    password: your_password
+
+    [server-login]
+    username:your_user_name
+    password:your_password
+
+Don't forget to upload the wheels before the source tarball, so there is no
+period for which people switch from an expected binary install to a source
+install from PyPI.
+
+There are two ways to update the source release on PyPI, the first one is::
 
     $ git clean -fxd  # to be safe
     $ python setup.py sdist --formats=gztar,zip  # to check
@@ -417,11 +422,8 @@ This will ask for your key PGP passphrase, in order to sign the built source
 packages.
 
 The second way is to upload the PKG_INFO file inside the sdist dir in the
-web interface of PyPi. The source tarball can also be uploaded through this
+web interface of PyPI. The source tarball can also be uploaded through this
 interface.
-
-To push the travis-ci OSX wheels up to pypi see :
-https://github.com/MacPython/numpy-wheels#uploading-the-built-wheels-to-pypi
 
 .. _push-tag-and-commit:
 

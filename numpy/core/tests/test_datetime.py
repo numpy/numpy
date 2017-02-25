@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import pickle
-import warnings
 
 import numpy
 import numpy as np
@@ -9,7 +8,7 @@ import datetime
 from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec
+    assert_warns, dec, suppress_warnings
 )
 
 # Use pytz to test out various time zones if available
@@ -129,10 +128,11 @@ class TestDateTime(TestCase):
         # regression tests for GH6452
         assert_equal(np.datetime64('NaT'),
                      np.datetime64('2000') + np.timedelta64('NaT'))
-        # nb. we may want to make NaT != NaT true in the future; this test
-        # verifies the existing behavior (and that it should not warn)
-        assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
-        assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
+        # nb. we may want to make NaT != NaT true in the future
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, ".*NAT ==")
+            assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
+            assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
 
     def test_datetime_scalar_construction(self):
         # Construct with different units
@@ -572,6 +572,12 @@ class TestDateTime(TestCase):
         a = np.array([-1, 'NaT', 1234567], dtype='m')
         assert_equal(str(a), "[     -1   'NaT' 1234567]")
 
+        # Test with other byteorder:
+        a = np.array([-1, 'NaT', 1234567], dtype='>m')
+        assert_equal(str(a), "[     -1   'NaT' 1234567]")
+        a = np.array([-1, 'NaT', 1234567], dtype='<m')
+        assert_equal(str(a), "[     -1   'NaT' 1234567]")
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]')
@@ -989,8 +995,8 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
         # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in multiply")
             nat = np.timedelta64('NaT')
             def check(a, b, res):
                 assert_equal(a * b, res)
@@ -1053,8 +1059,8 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.divide, 1.5, dta)
 
         # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1092,27 +1098,35 @@ class TestDateTime(TestCase):
         td_nat = np.timedelta64('NaT', 'h')
         td_other = np.timedelta64(1, 'h')
 
-        for op in [np.equal, np.less, np.less_equal,
-                   np.greater, np.greater_equal]:
-            if op(dt_nat, dt_nat):
-                assert_warns(FutureWarning, op, dt_nat, dt_nat)
-            if op(dt_nat, dt_other):
-                assert_warns(FutureWarning, op, dt_nat, dt_other)
-            if op(dt_other, dt_nat):
-                assert_warns(FutureWarning, op, dt_other, dt_nat)
-            if op(td_nat, td_nat):
-                assert_warns(FutureWarning, op, td_nat, td_nat)
-            if op(td_nat, td_other):
-                assert_warns(FutureWarning, op, td_nat, td_other)
-            if op(td_other, td_nat):
-                assert_warns(FutureWarning, op, td_other, td_nat)
+        with suppress_warnings() as sup:
+            # The assert warns contexts will again see the warning:
+            sup.filter(FutureWarning, ".*NAT")
 
-        assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
-        assert_(np.not_equal(dt_nat, dt_other))
-        assert_(np.not_equal(dt_other, dt_nat))
-        assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
-        assert_(np.not_equal(td_nat, td_other))
-        assert_(np.not_equal(td_other, td_nat))
+            for op in [np.equal, np.less, np.less_equal,
+                       np.greater, np.greater_equal]:
+                if op(dt_nat, dt_nat):
+                    assert_warns(FutureWarning, op, dt_nat, dt_nat)
+                if op(dt_nat, dt_other):
+                    assert_warns(FutureWarning, op, dt_nat, dt_other)
+                if op(dt_other, dt_nat):
+                    assert_warns(FutureWarning, op, dt_other, dt_nat)
+                if op(td_nat, td_nat):
+                    assert_warns(FutureWarning, op, td_nat, td_nat)
+                if op(td_nat, td_other):
+                    assert_warns(FutureWarning, op, td_nat, td_other)
+                if op(td_other, td_nat):
+                    assert_warns(FutureWarning, op, td_other, td_nat)
+
+            assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
+            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
+
+        with suppress_warnings() as sup:
+            sup.record(FutureWarning)
+            assert_(np.not_equal(dt_nat, dt_other))
+            assert_(np.not_equal(dt_other, dt_nat))
+            assert_(np.not_equal(td_nat, td_other))
+            assert_(np.not_equal(td_other, td_nat))
+            self.assertEqual(len(sup.log), 0)
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD

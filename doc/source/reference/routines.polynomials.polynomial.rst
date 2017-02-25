@@ -32,6 +32,7 @@ Basics
    polygrid3d
    polyroots
    polyfromroots
+   polyvalfromroots
 
 Fitting
 -------

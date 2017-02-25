@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
+import warnings
 
 import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
-        assert_warns, assert_array_equal, assert_array_almost_equal)
+        assert_warns, assert_no_warnings, assert_array_equal,
+        assert_array_almost_equal, suppress_warnings)
 from numpy import random
 from numpy.compat import asbytes
 import sys
@@ -260,13 +262,14 @@ class TestRandomDist(TestCase):
 
     def test_random_integers(self):
         np.random.seed(self.seed)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
+        with suppress_warnings() as sup:
+            w = sup.record(DeprecationWarning)
             actual = np.random.random_integers(-99, 99, size=(3, 2))
-            desired = np.array([[31, 3],
-                                [-52, 41],
-                                [-48, -66]])
-            assert_array_equal(actual, desired)
+            assert_(len(w) == 1)
+        desired = np.array([[31, 3],
+                            [-52, 41],
+                            [-48, -66]])
+        assert_array_equal(actual, desired)
 
     def test_random_integers_max_int(self):
         # Tests whether random_integers can generate the
@@ -274,12 +277,14 @@ class TestRandomDist(TestCase):
         # into a C long. Previous implementations of this
         # method have thrown an OverflowError when attempting
         # to generate this integer.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
+        with suppress_warnings() as sup:
+            w = sup.record(DeprecationWarning)
             actual = np.random.random_integers(np.iinfo('l').max,
                                                np.iinfo('l').max)
-            desired = np.iinfo('l').max
-            assert_equal(actual, desired)
+            assert_(len(w) == 1)
+
+        desired = np.iinfo('l').max
+        assert_equal(actual, desired)
 
     def test_random_integers_deprecated(self):
         with warnings.catch_warnings():
@@ -485,6 +490,10 @@ class TestRandomDist(TestCase):
                             [0.68717433461363442, 1.69175666993575979]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_exponential_0(self):
+        assert_equal(np.random.exponential(scale=0), 0)
+        assert_raises(ValueError, np.random.exponential, scale=-0.)
+
     def test_f(self):
         np.random.seed(self.seed)
         actual = np.random.f(12, 77, size=(3, 2))
@@ -501,6 +510,10 @@ class TestRandomDist(TestCase):
                             [31.71863275789960568, 33.30143302795922011]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    def test_gamma_0(self):
+        assert_equal(np.random.gamma(shape=0, scale=0), 0)
+        assert_raises(ValueError, np.random.gamma, shape=-0., scale=-0.)
+
     def test_geometric(self):
         np.random.seed(self.seed)
         actual = np.random.geometric(.123456789, size=(3, 2))
@@ -516,6 +529,10 @@ class TestRandomDist(TestCase):
                             [-1.4492522252274278, -1.47374816298446865],
                             [1.10651090478803416, -0.69535848626236174]])
         assert_array_almost_equal(actual, desired, decimal=15)
+
+    def test_gumbel_0(self):
+        assert_equal(np.random.gumbel(scale=0), 0)
+        assert_raises(ValueError, np.random.gumbel, scale=-0.)
 
     def test_hypergeometric(self):
         np.random.seed(self.seed)
@@ -551,6 +568,10 @@ class TestRandomDist(TestCase):
                             [-0.05391065675859356, 1.74901336242837324]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_laplace_0(self):
+        assert_equal(np.random.laplace(scale=0), 0)
+        assert_raises(ValueError, np.random.laplace, scale=-0.)
+
     def test_logistic(self):
         np.random.seed(self.seed)
         actual = np.random.logistic(loc=.123456789, scale=2.0, size=(3, 2))
@@ -566,6 +587,10 @@ class TestRandomDist(TestCase):
                             [22.67886599981281748, 0.71617561058995771],
                             [65.72798501792723869, 86.84341601437161273]])
         assert_array_almost_equal(actual, desired, decimal=13)
+
+    def test_lognormal_0(self):
+        assert_equal(np.random.lognormal(sigma=0), 1)
+        assert_raises(ValueError, np.random.lognormal, sigma=-0.)
 
     def test_logseries(self):
         np.random.seed(self.seed)
@@ -589,27 +614,36 @@ class TestRandomDist(TestCase):
     def test_multivariate_normal(self):
         np.random.seed(self.seed)
         mean = (.123456789, 10)
-        # Hmm... not even symmetric.
-        cov = [[1, 0], [1, 0]]
+        cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[-1.47027513018564449, 10.],
-                             [-1.65915081534845532, 10.]],
-                            [[-2.29186329304599745, 10.],
-                             [-1.77505606019580053, 10.]],
-                            [[-0.54970369430044119, 10.],
-                             [0.29768848031692957, 10.]]])
+        desired = np.array([[[1.463620246718631, 11.73759122771936 ],
+                             [1.622445133300628, 9.771356667546383]],
+                            [[2.154490787682787, 12.170324946056553],
+                             [1.719909438201865, 9.230548443648306]],
+                            [[0.689515026297799, 9.880729819607714],
+                             [-0.023054015651998, 9.201096623542879]]])
+
         assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
         actual = np.random.multivariate_normal(mean, cov)
-        desired = np.array([-0.79441224511977482, 10.])
+        desired = np.array([0.895289569463708, 9.17180864067987])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-        # Check that non positive-semidefinite covariance raises warning
+        # Check that non positive-semidefinite covariance warns with
+        # RuntimeWarning
         mean = [0, 0]
-        cov = [[1, 1 + 1e-10], [1 + 1e-10, 1]]
+        cov = [[1, 2], [2, 1]]
         assert_warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
+
+        # and that it doesn't warn with RuntimeWarning check_valid='ignore'
+        assert_no_warnings(np.random.multivariate_normal, mean, cov,
+                           check_valid='ignore')
+
+        # and that it raises with RuntimeWarning check_valid='raises'
+        assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
+                      check_valid='raise')
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)
@@ -656,6 +690,10 @@ class TestRandomDist(TestCase):
                             [3.121433477601256, -0.33382987590723379],
                             [4.18552478636557357, 4.46410668111310471]])
         assert_array_almost_equal(actual, desired, decimal=15)
+
+    def test_normal_0(self):
+        assert_equal(np.random.normal(scale=0), 0)
+        assert_raises(ValueError, np.random.normal, scale=-0.)
 
     def test_pareto(self):
         np.random.seed(self.seed)
@@ -704,6 +742,10 @@ class TestRandomDist(TestCase):
                             [11.06066537006854311, 17.35468505778271009]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    def test_rayleigh_0(self):
+        assert_equal(np.random.rayleigh(scale=0), 0)
+        assert_raises(ValueError, np.random.rayleigh, scale=-0.)
+
     def test_standard_cauchy(self):
         np.random.seed(self.seed)
         actual = np.random.standard_cauchy(size=(3, 2))
@@ -727,6 +769,10 @@ class TestRandomDist(TestCase):
                             [5.93988484943779227, 2.31044849402133989],
                             [7.54838614231317084, 8.012756093271868]])
         assert_array_almost_equal(actual, desired, decimal=14)
+
+    def test_standard_gamma_0(self):
+        assert_equal(np.random.standard_gamma(shape=0), 0)
+        assert_raises(ValueError, np.random.standard_gamma, shape=-0.)
 
     def test_standard_normal(self):
         np.random.seed(self.seed)
@@ -769,9 +815,13 @@ class TestRandomDist(TestCase):
         assert_raises(OverflowError, func, -np.inf, 0)
         assert_raises(OverflowError, func,  0,      np.inf)
         assert_raises(OverflowError, func,  fmin,   fmax)
+        assert_raises(OverflowError, func, [-np.inf], [0])
+        assert_raises(OverflowError, func, [0], [np.inf])
 
         # (fmax / 1e17) - fmin is within range, so this should not throw
-        np.random.uniform(low=fmin, high=fmax / 1e17)
+        # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
+        # DBL_MAX by increasing fmin a bit
+        np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
     def test_vonmises(self):
         np.random.seed(self.seed)
@@ -802,6 +852,10 @@ class TestRandomDist(TestCase):
                             [1.89517770034962929, 1.91414357960479564],
                             [0.67057783752390987, 1.39494046635066793]])
         assert_array_almost_equal(actual, desired, decimal=15)
+
+    def test_weibull_0(self):
+        assert_equal(np.random.weibull(a=0), 0)
+        assert_raises(ValueError, np.random.weibull, a=-0.)
 
     def test_zipf(self):
         np.random.seed(self.seed)

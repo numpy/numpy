@@ -37,7 +37,9 @@ C_ABI_VERSION = 0x01000009
 # 0x00000009 - 1.9.x
 # 0x0000000a - 1.10.x
 # 0x0000000a - 1.11.x
-C_API_VERSION = 0x0000000a
+# 0x0000000a - 1.12.x
+# 0x0000000b - 1.13.x
+C_API_VERSION = 0x0000000b
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -94,7 +96,7 @@ def check_api_version(apiversion, codegen_dir):
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
-                      MismatchCAPIWarning)
+                      MismatchCAPIWarning, stacklevel=2)
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
@@ -105,7 +107,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
+        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
+        "backtrace"]
 
 
 OPTIONAL_HEADERS = [
@@ -113,10 +116,12 @@ OPTIONAL_HEADERS = [
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
+                "xlocale.h",  # see GH#8367
+                "dlfcn.h", # dladdr
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
-# required header
+# required header and definition name (HAVE_ prepended)
 # call arguments are required as the compiler will do strict signature checking
 OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_isinf", '5.'),
@@ -125,11 +130,21 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
+                       # broken on OSX 10.11, make sure its not optimized away
+                       ("volatile int r = __builtin_cpu_supports", '"sse"',
+                        "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
+                       # MMX only needed for icc, but some clangs don't have it
+                       ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
                        ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
                         "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
                        ("__builtin_prefetch", "(float*)0, 0, 3"),
+                       # check that the linker can handle avx
+                       ("__asm__ volatile", '"vpand %xmm1, %xmm2, %xmm3"',
+                        "stdio.h", "LINK_AVX"),
+                       ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
+                        "stdio.h", "LINK_AVX2"),
                        ]
 
 # function attributes
@@ -141,6 +156,10 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_optimize_opt_3'),
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
+                                ('__attribute__((target ("avx")))',
+                                 'attribute_target_avx'),
+                                ('__attribute__((target ("avx2")))',
+                                 'attribute_target_avx2'),
                                 ]
 
 # variable attributes tested via "int %s a" % attribute

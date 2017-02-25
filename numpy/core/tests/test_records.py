@@ -3,13 +3,14 @@ from __future__ import division, absolute_import, print_function
 import sys
 import collections
 import pickle
+import warnings
 from os import path
 
 import numpy as np
 from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
+    assert_array_almost_equal, assert_raises, assert_warns
     )
 
 
@@ -26,6 +27,32 @@ class TestFromrecords(TestCase):
             assert_equal(r['col2'].dtype.kind, 'S')
             assert_equal(r['col2'].dtype.itemsize, 3)
         assert_equal(r['col3'].dtype.kind, 'f')
+
+    def test_fromrecords_0len(self):
+        """ Verify fromrecords works with a 0-length input """
+        dtype = [('a', np.float), ('b', np.float)]
+        r = np.rec.fromrecords([], dtype=dtype)
+        assert_equal(r.shape, (0,))
+
+    def test_fromrecords_2d(self):
+        data = [
+            [(1, 2), (3, 4), (5, 6)],
+            [(6, 5), (4, 3), (2, 1)]
+        ]
+        expected_a = [[1, 3, 5], [6, 4, 2]]
+        expected_b = [[2, 4, 6], [5, 3, 1]]
+
+        # try with dtype
+        r1 = np.rec.fromrecords(data, dtype=[('a', int), ('b', int)])
+        assert_equal(r1['a'], expected_a)
+        assert_equal(r1['b'], expected_b)
+
+        # try with names
+        r2 = np.rec.fromrecords(data, names=['a', 'b'])
+        assert_equal(r2['a'], expected_a)
+        assert_equal(r2['b'], expected_b)
+
+        assert_equal(r1, r2)
 
     def test_method_array(self):
         r = np.rec.array(asbytes('abcdefg') * 100, formats='i2,a3,i4', shape=3, byteorder='big')
@@ -126,8 +153,11 @@ class TestFromrecords(TestCase):
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
-        assert_equal(r[['a', 'b']].dtype.type, np.record)
-        assert_equal(type(r[['a', 'b']]), np.recarray)
+
+        # suppress deprecation warning in 1.12 (remove in 1.13)
+        with assert_warns(FutureWarning):
+            assert_equal(r[['a', 'b']].dtype.type, np.record)
+            assert_equal(type(r[['a', 'b']]), np.recarray)
 
         #and that it preserves subclasses (gh-6949)
         class C(np.recarray):
@@ -254,6 +284,20 @@ class TestFromrecords(TestCase):
         assert_equal(a[0]['qux'].D, asbytes('fgehi'))
         assert_equal(a[0]['qux']['D'], asbytes('fgehi'))
 
+    def test_zero_width_strings(self):
+        # Test for #6430, based on the test case from #1901
+
+        cols = [['test'] * 3, [''] * 3]
+        rec = np.rec.fromarrays(cols)
+        assert_equal(rec['f0'], ['test', 'test', 'test'])
+        assert_equal(rec['f1'], ['', '', ''])
+
+        dt = np.dtype([('f0', '|S4'), ('f1', '|S')])
+        rec = np.rec.fromarrays(cols, dtype=dt)
+        assert_equal(rec.itemsize, 4)
+        assert_equal(rec['f0'], [b'test', b'test', b'test'])
+        assert_equal(rec['f1'], [b'', b'', b''])
+
 
 class TestRecord(TestCase):
     def setUp(self):
@@ -282,10 +326,22 @@ class TestRecord(TestCase):
 
         self.assertRaises(AttributeError, assign_invalid_column, a)
 
+    def test_nonwriteable_setfield(self):
+        # gh-8171
+        r = np.rec.array([(0,), (1,)], dtype=[('f', 'i4')])
+        r.flags.writeable = False
+        with assert_raises(ValueError):
+            r.f = [2, 3]
+        with assert_raises(ValueError):
+            r.setfield([2,3], *r.dtype.fields['f'])
+
     def test_out_of_order_fields(self):
         """Ticket #1431."""
-        x = self.data[['col1', 'col2']]
-        y = self.data[['col2', 'col1']]
+        # this test will be invalid in 1.13
+        # suppress deprecation warning in 1.12 (remove in 1.13)
+        with assert_warns(FutureWarning):
+            x = self.data[['col1', 'col2']]
+            y = self.data[['col2', 'col1']]
         assert_equal(x[0][0], y[0][1])
 
     def test_pickle_1(self):
@@ -316,7 +372,8 @@ class TestRecord(TestCase):
 
         # https://github.com/numpy/numpy/issues/3256
         ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
-        ra[['x','y']]  # TypeError?
+        with assert_warns(FutureWarning):
+            ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561

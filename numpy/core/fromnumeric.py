@@ -381,6 +381,8 @@ def repeat(a, repeats, axis=None):
 
     Examples
     --------
+    >>> np.repeat(3, 4)
+    array([3, 3, 3, 3])
     >>> x = np.array([[1,2],[3,4]])
     >>> np.repeat(x, 2)
     array([1, 1, 2, 2, 3, 3, 4, 4])
@@ -469,8 +471,8 @@ def swapaxes(a, axis1, axis2):
     Returns
     -------
     a_swapped : ndarray
-        For Numpy >= 1.10, if `a` is an ndarray, then a view of `a` is
-        returned; otherwise a new array is created. For earlier Numpy
+        For NumPy >= 1.10.0, if `a` is an ndarray, then a view of `a` is
+        returned; otherwise a new array is created. For earlier NumPy
         versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
@@ -774,6 +776,12 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
 
+    .. versionadded:: 1.12.0
+
+    quicksort has been changed to an introsort which will switch
+    heapsort when it does not make enough progress. This makes its
+    worst case O(n*log(n)).
+
     Examples
     --------
     >>> a = np.array([[1,4],[3,1]])
@@ -1051,7 +1059,7 @@ def searchsorted(a, v, side='left', sorter=None):
     -----
     Binary search is used to find the required insertion points.
 
-    As of Numpy 1.4.0 `searchsorted` works with real/complex arrays containing
+    As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
     Examples
@@ -1659,11 +1667,15 @@ def clip(a, a_min, a_max, out=None):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like
-        Minimum value.
-    a_max : scalar or array_like
-        Maximum value.  If `a_min` or `a_max` are array_like, then they will
-        be broadcasted to the shape of `a`.
+    a_min : scalar or array_like or `None`
+        Minimum value. If `None`, clipping is not performed on lower
+        interval edge. Not more than one of `a_min` and `a_max` may be
+        `None`.
+    a_max : scalar or array_like or `None`
+        Maximum value. If `None`, clipping is not performed on upper
+        interval edge. Not more than one of `a_min` and `a_max` may be
+        `None`. If `a_min` or `a_max` are array_like, then the three
+        arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
@@ -1692,7 +1704,7 @@ def clip(a, a_min, a_max, out=None):
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> np.clip(a, [3,4,1,1,1,4,4,4,4,4], 8)
+    >>> np.clip(a, [3, 4, 1, 1, 1, 4, 4, 4, 4, 4], 8)
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
@@ -2155,7 +2167,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         Axis or axes along which to operate.  By default, flattened input is
         used.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, the maximum is selected over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2256,7 +2268,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         Axis or axes along which to operate.  By default, flattened input is
         used.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, the minimum is selected over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2623,7 +2635,7 @@ def rank(a):
     Notes
     -----
     In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in Numpy `ndim` is used instead.
+    dimensions, but in NumPy `ndim` is used instead.
 
     Examples
     --------
@@ -2639,7 +2651,7 @@ def rank(a):
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning)
+        VisibleDeprecationWarning, stacklevel=2)
     try:
         return a.ndim
     except AttributeError:
@@ -2729,7 +2741,7 @@ def around(a, decimals=0, out=None):
 
     Notes
     -----
-    For values exactly halfway between rounded decimal values, Numpy
+    For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
     -0.5 and 0.5 round to 0.0, etc. Results may also be surprising due
     to the inexact representation of decimal fractions in the IEEE
@@ -2792,7 +2804,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Axis or axes along which the means are computed. The default is to
         compute the mean of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a mean is performed over multiple axes,
         instead of a single axis or all the axes as before.
@@ -2839,6 +2851,9 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     example below).  Specifying a higher-precision accumulator using the
     `dtype` keyword can alleviate this issue.
 
+    By default, `float16` results are computed using `float32` intermediates
+    for extra precision.
+
     Examples
     --------
     >>> a = np.array([[1, 2], [3, 4]])
@@ -2855,7 +2870,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> a[0, :] = 1.0
     >>> a[1, :] = 0.1
     >>> np.mean(a)
-    0.546875
+    0.54999924
 
     Computing the mean in float64 is more accurate:
 
@@ -2894,7 +2909,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         Axis or axes along which the standard deviation is computed. The
         default is to compute the standard deviation of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a standard deviation is performed over
         multiple axes, instead of a single axis or all the axes as before.
@@ -3013,7 +3028,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         Axis or axes along which the variance is computed.  The default is to
         compute the variance of the flattened array.
 
-        .. versionadded: 1.7.0
+        .. versionadded:: 1.7.0
 
         If this is a tuple of ints, a variance is performed over multiple axes,
         instead of a single axis or all the axes as before.

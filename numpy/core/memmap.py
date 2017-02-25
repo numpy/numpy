@@ -21,7 +21,7 @@ class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
 
     Memory-mapped files are used for accessing small segments of large files
-    on disk, without reading the entire file into memory.  Numpy's
+    on disk, without reading the entire file into memory.  NumPy's
     memmap's are array-like objects.  This differs from Python's ``mmap``
     module, which uses file-like objects.
 
@@ -97,16 +97,17 @@ class memmap(ndarray):
         changes to disk before removing the object.
 
 
+    See also
+    --------
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
+
     Notes
     -----
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-
-    Memory-mapped arrays use the Python memory-map object which
-    (prior to Python 2.5) does not allow files to be larger than a
-    certain size depending on the platform. This size is always < 2GB
-    even on 64-bit systems.
+    
+    Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
     current size in the filesystem, the contents of the new part are
@@ -259,11 +260,11 @@ class memmap(ndarray):
 
         start = offset - offset % mmap.ALLOCATIONGRANULARITY
         bytes -= start
-        offset -= start
+        array_offset = offset - start
         mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-            offset=offset, order=order)
+                               offset=array_offset, order=order)
         self._mmap = mm
         self.offset = offset
         self.mode = mode

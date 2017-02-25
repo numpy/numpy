@@ -1,6 +1,5 @@
 from __future__ import division, print_function
 
-import imp
 import os
 import sys
 import pickle
@@ -10,9 +9,10 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-from numpy._build_utils.apple_accelerate import (uses_accelerate_framework,
-                                                 get_sgemv_fix)
-
+from numpy._build_utils.apple_accelerate import (
+    uses_accelerate_framework, get_sgemv_fix
+    )
+from numpy.compat import npy_load_module
 from setup_common import *
 
 # Set to True to enable relaxed strides checking. This (mostly) means
@@ -152,12 +152,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for tup in OPTIONAL_INTRINSICS:
         headers = None
         if len(tup) == 2:
-            f, args = tup
+            f, args, m = tup[0], tup[1], fname2def(tup[0])
+        elif len(tup) == 3:
+            f, args, headers, m = tup[0], tup[1], [tup[2]], fname2def(tup[0])
         else:
-            f, args, headers = tup[0], tup[1], [tup[2]]
+            f, args, headers, m = tup[0], tup[1], [tup[2]], fname2def(tup[3])
         if config.check_func(f, decl=False, call=True, call_args=args,
                              headers=headers):
-            moredefs.append((fname2def(f), 1))
+            moredefs.append((m, 1))
 
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
@@ -178,7 +180,7 @@ def check_complex(config, mathlibs):
 
     try:
         if os.uname()[0] == "Interix":
-            warnings.warn("Disabling broken complex support. See #1365")
+            warnings.warn("Disabling broken complex support. See #1365", stacklevel=2)
             return priv, pub
     except:
         # os.uname not available on all platforms. blanket except ugly but safe
@@ -265,13 +267,20 @@ def check_types(config_cmd, ext, build_dir):
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
     if not result:
+        python = 'python'
+        if '__pypy__' in sys.builtin_module_names:
+            python = 'pypy'
         raise SystemError(
                 "Cannot compile 'Python.h'. Perhaps you need to "
-                "install python-dev|python-devel.")
+                "install {0}-dev|{0}-devel.".format(python))
     res = config_cmd.check_header("endian.h")
     if res:
         private_defines.append(('HAVE_ENDIAN_H', 1))
         public_defines.append(('NPY_HAVE_ENDIAN_H', 1))
+    res = config_cmd.check_header("sys/endian.h")
+    if res:
+        private_defines.append(('HAVE_SYS_ENDIAN_H', 1))
+        public_defines.append(('NPY_HAVE_SYS_ENDIAN_H', 1))
 
     # Check basic types sizes
     for type in ('short', 'int', 'long'):
@@ -386,9 +395,8 @@ def configuration(parent_package='',top_path=None):
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
-    generate_umath = imp.load_module('_'.join(n.split('.')),
-                                     open(generate_umath_py, 'U'), generate_umath_py,
-                                     ('.py', 'U', 1))
+    generate_umath = npy_load_module('_'.join(n.split('.')),
+                                     generate_umath_py, ('.py', 'U', 1))
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
@@ -606,9 +614,12 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'npysort'))
 
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
-    config.add_define_macros([("_FILE_OFFSET_BITS", "64")])
-    config.add_define_macros([('_LARGEFILE_SOURCE', '1')])
-    config.add_define_macros([('_LARGEFILE64_SOURCE', '1')])
+    if sys.platform[:3] == "aix":
+        config.add_define_macros([("_LARGE_FILES", None)])
+    else:
+        config.add_define_macros([("_FILE_OFFSET_BITS", "64")])
+        config.add_define_macros([('_LARGEFILE_SOURCE', '1')])
+        config.add_define_macros([('_LARGEFILE64_SOURCE', '1')])
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
@@ -735,7 +746,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'methods.h'),
             join('src', 'multiarray', 'multiarraymodule.h'),
             join('src', 'multiarray', 'nditer_impl.h'),
-            join('src', 'multiarray', 'numpymemoryview.h'),
             join('src', 'multiarray', 'number.h'),
             join('src', 'multiarray', 'numpyos.h'),
             join('src', 'multiarray', 'refcount.h'),
@@ -808,13 +818,13 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'nditer_constr.c'),
             join('src', 'multiarray', 'nditer_pywrap.c'),
             join('src', 'multiarray', 'number.c'),
-            join('src', 'multiarray', 'numpymemoryview.c'),
             join('src', 'multiarray', 'numpyos.c'),
             join('src', 'multiarray', 'refcount.c'),
             join('src', 'multiarray', 'sequence.c'),
             join('src', 'multiarray', 'shape.c'),
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
+            join('src', 'multiarray', 'temp_elide.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
@@ -892,7 +902,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
-            join('src', 'umath', 'ufunc_type_resolution.c')]
+            join('src', 'umath', 'ufunc_type_resolution.c'),
+            join('src', 'private', 'mem_overlap.c')]
 
     umath_deps = [
             generate_umath_py,
@@ -902,6 +913,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir, 'generate_ufunc_api.py'),
+            join('src', 'private', 'lowlevel_strided_loops.h'),
+            join('src', 'private', 'mem_overlap.h'),
             join('src', 'private', 'ufunc_override.h')] + npymath_sources
 
     config.add_extension('umath',

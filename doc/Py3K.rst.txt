@@ -11,7 +11,7 @@ Developer notes on the transition to Python 3
 General
 =======
 
-Numpy has now been ported to Python 3.
+NumPy has now been ported to Python 3.
 
 Some glitches may still be present; however, we are not aware of any
 significant ones, the test suite passes.
@@ -125,7 +125,7 @@ F2py is ported to Py3.
 Bytes vs. strings
 -----------------
 
-At many points in Numpy, bytes literals are needed. These can be created via
+At many points in NumPy, bytes literals are needed. These can be created via
 numpy.compat.asbytes and asbytes_nested.
 
 
@@ -245,7 +245,7 @@ Any new ones that need to be added should be added in this file.
 
 .. todo::
 
-   Remove PyString_* eventually -- having a call to one of these in Numpy
+   Remove PyString_* eventually -- having a call to one of these in NumPy
    sources is a sign of an error...
 
 
@@ -527,7 +527,7 @@ There are two issues related to the str/bytes change:
 This entry discusses return values etc. only, the 'S' dtype is a
 separate topic.
 
-All uses of PyString in Numpy should be changed to one of
+All uses of PyString in NumPy should be changed to one of
 
 - PyBytes: one-byte character strings in Py2 and Py3
 - PyUString (defined in npy_3kconfig.h): PyString in Py2, PyUnicode in Py3
@@ -554,7 +554,7 @@ Some specific decisions that have been made so far:
 
 * descriptor.c: dtype field names are UString
 
-  At some places in Numpy code, there are some guards for Unicode field
+  At some places in NumPy code, there are some guards for Unicode field
   names. However, the dtype constructor accepts only strings as field names,
   so we should assume field names are *always* UString.
 
@@ -604,7 +604,7 @@ PyUnicode
 PyUnicode in Py3 is pretty much as it was in Py2, except that it is
 now the only "real" string type.
 
-In Py3, Unicode and Bytes are not comparable, ie., 'a' != b'a'.  Numpy
+In Py3, Unicode and Bytes are not comparable, ie., 'a' != b'a'.  NumPy
 comparison routines were handled to act in the same way, leaving
 comparison between Unicode and Bytes undefined.
 
@@ -627,17 +627,17 @@ PyInt
 -----
 
 There is no limited-range integer type any more in Py3.  It makes no
-sense to inherit Numpy ints from Py3 ints.
+sense to inherit NumPy ints from Py3 ints.
 
 Currently, the following is done:
 
-1) Numpy's integer types no longer inherit from Python integer.
+1) NumPy's integer types no longer inherit from Python integer.
 2) int is taken dtype-equivalent to NPY_LONG
 3) ints are converted to NPY_LONG
 
 PyInt methods are currently replaced by PyLong, via macros in npy_3kcompat.h.
 
-Dtype decision rules were changed accordingly, so that Numpy understands
+Dtype decision rules were changed accordingly, so that NumPy understands
 Py3 int translate to NPY_LONG as far as dtypes are concerned.
 
 array([1]).dtype will be the default NPY_LONG integer.
@@ -645,7 +645,7 @@ array([1]).dtype will be the default NPY_LONG integer.
 .. todo::
 
    Not inheriting from `int` on Python 3 makes the following not work:
-   ``np.intp("0xff", 16)`` -- because the Numpy type does not take
+   ``np.intp("0xff", 16)`` -- because the NumPy type does not take
    the second argument. This could perhaps be fixed...
 
 
@@ -707,7 +707,7 @@ Module initialization
 
 The module initialization API changed in Python 3.1.
 
-Most Numpy modules are now converted.
+Most NumPy modules are now converted.
 
 
 PyTypeObject
@@ -871,7 +871,7 @@ obtained must be closed with fclose after use.
 
    Should probably be done much later on...
 
-   Adapt all Numpy I/O to use the PyFile_* methods or the low-level
+   Adapt all NumPy I/O to use the PyFile_* methods or the low-level
    IO routines. In any case, it's unlikely that C stdio can be used any more.
 
    Perhaps using PyFile_* makes numpy.tofile e.g. to a gzip to work?
@@ -914,4 +914,4 @@ PyCObject / PyCapsule
 The PyCObject API is removed in Python 3.2, so we need to rewrite it
 using PyCapsule.
 
-Numpy was changed to use the Capsule API, using NpyCapsule* wrappers.
+NumPy was changed to use the Capsule API, using NpyCapsule* wrappers.

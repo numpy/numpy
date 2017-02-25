@@ -89,7 +89,7 @@ class BagObj(object):
 def zipfile_factory(file, *args, **kwargs):
     """
     Create a ZipFile.
-    
+
     Allows for Zip64, and the `file` argument can accept file, str, or
     pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
     constructor.
@@ -316,6 +316,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     --------
     save, savez, savez_compressed, loadtxt
     memmap : Create a memory-map to an array stored in a file on disk.
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
 
     Notes
     -----
@@ -376,9 +377,9 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     if encoding not in ('ASCII', 'latin1', 'bytes'):
         # The 'encoding' value for pickle also affects what encoding
-        # the serialized binary data of Numpy arrays is loaded
+        # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
-        # Numpy. The unpickling code in numpy.core.multiarray is
+        # NumPy. The unpickling code in numpy.core.multiarray is
         # written to assume that unicode data appearing where binary
         # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.
         #
@@ -399,7 +400,9 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         _ZIP_PREFIX = asbytes('PK\x03\x04')
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
-        fid.seek(-N, 1)  # back-up
+        # If the file size is less than N, we need to make sure not
+        # to seek past the beginning of the file
+        fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith(_ZIP_PREFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
@@ -464,7 +467,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see the module docstring
-    of `numpy.lib.format` or the Numpy Enhancement Proposal
+    of `numpy.lib.format` or the NumPy Enhancement Proposal
     http://docs.scipy.org/doc/numpy/neps/npy-format.html
 
     Examples
@@ -550,7 +553,7 @@ def savez(file, *args, **kwds):
     variables they contain.  The archive is not compressed and each file
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see `numpy.lib.format` or the
-    Numpy Enhancement Proposal
+    NumPy Enhancement Proposal
     http://docs.scipy.org/doc/numpy/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
@@ -600,17 +603,55 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str
-        File name of ``.npz`` file.
-    args : Arguments
-        Function arguments.
-    kwds : Keyword arguments
-        Keywords.
+    file : str or file
+        Either the file name (string) or an open file (file-like object)
+        where the data will be saved. If file is a string or a Path, the
+        ``.npz`` extension will be appended to the file name if it is not
+        already there.
+    args : Arguments, optional
+        Arrays to save to the file. Since it is not possible for Python to
+        know the names of the arrays outside `savez`, the arrays will be saved
+        with names "arr_0", "arr_1", and so on. These arguments can be any
+        expression.
+    kwds : Keyword arguments, optional
+        Arrays to save to the file. Arrays will be saved in the file with the
+        keyword names.
+
+    Returns
+    -------
+    None
 
     See Also
     --------
+    numpy.save : Save a single array to a binary file in NumPy format.
+    numpy.savetxt : Save an array to a file as plain text.
     numpy.savez : Save several arrays into an uncompressed ``.npz`` file format
     numpy.load : Load the files created by savez_compressed.
+
+    Notes
+    -----
+    The ``.npz`` file format is a zipped archive of files named after the
+    variables they contain.  The archive is compressed with
+    ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
+    in ``.npy`` format. For a description of the ``.npy`` format, see
+    `numpy.lib.format` or the NumPy Enhancement Proposal
+    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+
+    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
+    returned. This is a dictionary-like object which can be queried for
+    its list of arrays (with the ``.files`` attribute), and for the arrays
+    themselves.
+
+    Examples
+    --------
+    >>> test_array = np.random.rand(3, 2)
+    >>> test_vector = np.random.rand(4)
+    >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
+    >>> loaded = np.load('/tmp/123.npz')
+    >>> print(np.array_equal(test_array, loaded['a']))
+    True
+    >>> print(np.array_equal(test_vector, loaded['b']))
+    True
 
     """
     _savez(file, args, kwds, True)
@@ -699,9 +740,9 @@ def _getconv(dtype):
     elif issubclass(typ, np.complex):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
-        return bytes
+        return asbytes
     else:
-        return str
+        return asstr
 
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -741,15 +782,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Skip the first `skiprows` lines; default: 0.
 
     usecols : int or sequence, optional
-        Which columns to read, with 0 being the first. For example, 
+        Which columns to read, with 0 being the first. For example,
         usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
-        
+
         .. versionadded:: 1.11.0
-        
+
         Also when a single column has to be read it is possible to use
         an integer instead of a tuple. E.g ``usecols = 3`` reads the
-        third column the same way as `usecols = (3,)`` would.
+        fourth column the same way as `usecols = (3,)`` would.
 
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
@@ -884,7 +925,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
-                if len(tp.shape) > 0:
+                if tp.ndim > 0:
                     packing.extend(flat_packing)
                 else:
                     packing.append((len(flat_dt), flat_packing))
@@ -942,7 +983,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -1039,7 +1080,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
                 like `' (%s+%sj)' % (fmt, fmt)`
             b) a full string specifying every real and imaginary part, e.g.
-                `' %.4e %+.4j %.4e %+.4j %.4e %+.4j'` for 3 columns
+                `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
             c) a list of specifiers, one per column - in this case, the real
                 and imaginary part must have separate specifiers,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
@@ -1327,7 +1368,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Mote
+        extension is `.gz` or `.bz2`, the file is first decompressed. Note
         that generators must return byte strings in Python 3k.  The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
@@ -1426,7 +1467,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     References
     ----------
-    .. [1] Numpy User Guide, section `I/O with Numpy
+    .. [1] NumPy User Guide, section `I/O with NumPy
            <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
@@ -1540,7 +1581,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # return an empty array if the datafile is empty
         first_line = asbytes('')
         first_values = []
-        warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
+        warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
     # Should we take the first values as names ?
     if names is True:
@@ -1825,7 +1866,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 raise ValueError(errmsg)
             # Issue a warning ?
             else:
-                warnings.warn(errmsg, ConversionWarning)
+                warnings.warn(errmsg, ConversionWarning, stacklevel=2)
 
     # Strip the last skip_footer data
     if skip_footer > 0:

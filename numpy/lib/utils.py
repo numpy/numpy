@@ -8,6 +8,7 @@ import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
+import numpy as np
 
 # getargspec and formatargspec were removed in Python 3.6
 from numpy.compat import getargspec, formatargspec
@@ -96,7 +97,7 @@ class _Deprecate(object):
 
         def newfunc(*args,**kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
-            warnings.warn(depdoc, DeprecationWarning)
+            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
         newfunc = _set_function_name(newfunc, old_name)
@@ -152,7 +153,7 @@ def deprecate(*args, **kwargs):
     >>> olduint(6)
     /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
     DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning)
+      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -241,10 +242,10 @@ def byte_bounds(a):
 
 def who(vardict=None):
     """
-    Print the Numpy arrays in the given dictionary.
+    Print the NumPy arrays in the given dictionary.
 
     If there is no dictionary passed in or `vardict` is None then returns
-    Numpy arrays in the globals() dictionary (all Numpy arrays in the
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
     namespace).
 
     Parameters
@@ -646,7 +647,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
 def source(object, output=sys.stdout):
     """
-    Print or write to a file the source code for a Numpy object.
+    Print or write to a file the source code for a NumPy object.
 
     The source code is only returned for objects written in Python. Many
     functions and classes are defined in C and will therefore not return
@@ -917,13 +918,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             continue
 
                         try:
-                            # Catch SystemExit, too
-                            base_exc = BaseException
-                        except NameError:
-                            # Python 2.4 doesn't have BaseException
-                            base_exc = Exception
-
-                        try:
                             old_stdout = sys.stdout
                             old_stderr = sys.stderr
                             try:
@@ -933,7 +927,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             finally:
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
-                        except base_exc:
+                        # Catch SystemExit, too
+                        except BaseException:
                             continue
 
             for n, v in _getmembers(item):
@@ -1016,7 +1011,7 @@ class SafeEval(object):
     def __init__(self):
         # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
 
     def visit(self, node):
         cls = node.__class__
@@ -1119,4 +1114,49 @@ def safe_eval(source):
     import ast
 
     return ast.literal_eval(source)
+
+
+def _median_nancheck(data, result, axis, out):
+    """
+    Utility function to check median result from data for NaN values at the end
+    and return NaN in that case. Input result can also be a MaskedArray.
+
+    Parameters
+    ----------
+    data : array
+        Input data to median function
+    result : Array or MaskedArray
+        Result of median function
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the median was computed.
+    out : ndarray, optional
+        Output array in which to place the result.
+    Returns
+    -------
+    median : scalar or ndarray
+        Median or NaN in axes which contained NaN in the input.
+    """
+    if data.size == 0:
+        return result
+    data = np.rollaxis(data, axis, data.ndim)
+    n = np.isnan(data[..., -1])
+    # masked NaN values are ok
+    if np.ma.isMaskedArray(n):
+        n = n.filled(False)
+    if result.ndim == 0:
+        if n == True:
+            warnings.warn("Invalid value encountered in median",
+                          RuntimeWarning, stacklevel=3)
+            if out is not None:
+                out[...] = data.dtype.type(np.nan)
+                result = out
+            else:
+                result = data.dtype.type(np.nan)
+    elif np.count_nonzero(n.ravel()) > 0:
+        warnings.warn("Invalid value encountered in median for" +
+                      " %d results" % np.count_nonzero(n.ravel()),
+                      RuntimeWarning, stacklevel=3)
+        result[n] = np.nan
+    return result
+
 #-----------------------------------------------------------------------------

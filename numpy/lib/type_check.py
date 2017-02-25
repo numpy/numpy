@@ -266,7 +266,13 @@ def iscomplexobj(x):
     True
 
     """
-    return issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    try:
+        dtype = x.dtype
+        type_ = dtype.type
+    except AttributeError:
+        type_ = asarray(x).dtype.type
+    return issubclass(type_, _nx.complexfloating)
+
 
 def isrealobj(x):
     """
@@ -300,7 +306,7 @@ def isrealobj(x):
     False
 
     """
-    return not issubclass(asarray(x).dtype.type, _nx.complexfloating)
+    return not iscomplexobj(x)
 
 #-----------------------------------------------------------------------------
 
@@ -309,7 +315,7 @@ def _getmaxmin(t):
     f = getlimits.finfo(t)
     return f.max, f.min
 
-def nan_to_num(x):
+def nan_to_num(x, copy=True):
     """
     Replace nan with zero and inf with finite numbers.
 
@@ -321,6 +327,13 @@ def nan_to_num(x):
     ----------
     x : array_like
         Input data.
+    copy : bool, optional
+        Whether to create a copy of `x` (True) or to replace values
+        in-place (False). The in-place operation only occurs if
+        casting to an array does not require a copy.
+        Default is True.
+
+        .. versionadded:: 1.13
 
     Returns
     -------
@@ -334,7 +347,7 @@ def nan_to_num(x):
 
     See Also
     --------
-    isinf : Shows which elements are negative or negative infinity.
+    isinf : Shows which elements are positive or negative infinity.
     isneginf : Shows which elements are negative infinity.
     isposinf : Shows which elements are positive infinity.
     isnan : Shows which elements are Not a Number (NaN).
@@ -342,7 +355,7 @@ def nan_to_num(x):
 
     Notes
     -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
 
@@ -355,7 +368,7 @@ def nan_to_num(x):
             -1.28000000e+002,   1.28000000e+002])
 
     """
-    x = _nx.array(x, subok=True)
+    x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
     if not issubclass(xtype, _nx.inexact):
         return x

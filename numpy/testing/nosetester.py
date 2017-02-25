@@ -12,6 +12,8 @@ import warnings
 from numpy.compat import basestring
 import numpy as np
 
+from .utils import import_nose, suppress_warnings
+
 
 def get_package_name(filepath):
     """
@@ -53,26 +55,6 @@ def get_package_name(filepath):
 
     return '.'.join(pkg_name)
 
-def import_nose():
-    """ Import nose only when needed.
-    """
-    fine_nose = True
-    minimum_nose_version = (1, 0, 0)
-    try:
-        import nose
-    except ImportError:
-        fine_nose = False
-    else:
-        if nose.__versioninfo__ < minimum_nose_version:
-            fine_nose = False
-
-    if not fine_nose:
-        msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://somethingaboutorange.com/mrl/projects/nose' %
-               minimum_nose_version)
-        raise ImportError(msg)
-
-    return nose
 
 def run_module_suite(file_to_run=None, argv=None):
     """
@@ -153,9 +135,9 @@ class NoseTester(object):
         which `NoseTester` is initialized.
     raise_warnings : None, str or sequence of warnings, optional
         This specifies which warnings to configure as 'raise' instead
-        of 'warn' during the test execution.  Valid strings are:
+        of being shown once during the test execution.  Valid strings are:
 
-          - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+          - "develop" : equals ``(Warning,)``
           - "release" : equals ``()``, don't raise on any warnings.
 
         Default is "release".
@@ -315,8 +297,7 @@ class NoseTester(object):
         return argv, plugins
 
     def test(self, label='fast', verbose=1, extra_argv=None,
-            doctests=False, coverage=False,
-            raise_warnings=None):
+             doctests=False, coverage=False, raise_warnings=None):
         """
         Run tests for module using nose.
 
@@ -342,12 +323,14 @@ class NoseTester(object):
             If True, report coverage of NumPy code. Default is False.
             (This requires the `coverage module:
              <http://nedbatchelder.com/code/modules/coverage.html>`_).
-        raise_warnings : str or sequence of warnings, optional
+        raise_warnings : None, str or sequence of warnings, optional
             This specifies which warnings to configure as 'raise' instead
-            of 'warn' during the test execution.  Valid strings are:
+            of being shown once during the test execution.  Valid strings are:
 
-              - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+              - "develop" : equals ``(Warning,)``
               - "release" : equals ``()``, don't raise on any warnings.
+
+            The default is to use the class initialization value.
 
         Returns
         -------
@@ -397,12 +380,12 @@ class NoseTester(object):
         if raise_warnings is None:
             raise_warnings = self.raise_warnings
 
-        _warn_opts = dict(develop=(DeprecationWarning, RuntimeWarning),
+        _warn_opts = dict(develop=(Warning,),
                           release=())
         if isinstance(raise_warnings, basestring):
             raise_warnings = _warn_opts[raise_warnings]
 
-        with warnings.catch_warnings():
+        with suppress_warnings("location") as sup:
             # Reset the warning filters to the default state,
             # so that running the tests is more repeatable.
             warnings.resetwarnings()
@@ -413,26 +396,47 @@ class NoseTester(object):
             for warningtype in raise_warnings:
                 warnings.filterwarnings('error', category=warningtype)
             # Filter out annoying import messages.
-            warnings.filterwarnings('ignore', message='Not importing directory')
-            warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-            warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-            warnings.filterwarnings("ignore", category=np.ModuleDeprecationWarning)
-            warnings.filterwarnings("ignore", category=FutureWarning)
+            sup.filter(message='Not importing directory')
+            sup.filter(message="numpy.dtype size changed")
+            sup.filter(message="numpy.ufunc size changed")
+            sup.filter(category=np.ModuleDeprecationWarning)
             # Filter out boolean '-' deprecation messages. This allows
             # older versions of scipy to test without a flood of messages.
-            warnings.filterwarnings("ignore", message=".*boolean negative.*")
-            warnings.filterwarnings("ignore", message=".*boolean subtract.*")
+            sup.filter(message=".*boolean negative.*")
+            sup.filter(message=".*boolean subtract.*")
+            # Filter out distutils cpu warnings (could be localized to
+            # distutils tests). ASV has problems with top level import,
+            # so fetch module for suppression here.
+            with warnings.catch_warnings():
+                warnings.simplefilter("always")
+                from ..distutils import cpuinfo
+            sup.filter(category=UserWarning, module=cpuinfo)
+            # See #7949: Filter out deprecation warnings due to the -3 flag to
+            # python 2
+            if sys.version_info.major == 2 and sys.py3kwarning:
+                # This is very specific, so using the fragile module filter
+                # is fine
+                import threading
+                sup.filter(DeprecationWarning,
+                           r"sys\.exc_clear\(\) not supported in 3\.x",
+                           module=threading)
+                sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
+                sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
+                sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
             # Filter out some deprecation warnings inside nose 1.3.7 when run
             # on python 3.5b2. See
             #     https://github.com/nose-devs/nose/issues/929
+            # Note: it is hard to filter based on module for sup (lineno could
+            #       be implemented).
             warnings.filterwarnings("ignore", message=".*getargspec.*",
                                     category=DeprecationWarning,
-                                    module="nose\.")
+                                    module=r"nose\.")
 
             from .noseclasses import NumpyTestProgram
 
             argv, plugins = self.prepare_test_args(
                     label, verbose, extra_argv, doctests, coverage)
+
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
 
         return t.result
@@ -507,6 +511,7 @@ class NoseTester(object):
         add_plugins = [Unplugger('doctest')]
 
         return nose.run(argv=argv, addplugins=add_plugins)
+
 
 def _numpy_tester():
     if hasattr(np, "__version__") and ".dev0" in np.__version__:

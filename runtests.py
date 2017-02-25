@@ -9,6 +9,7 @@ Examples::
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
     $ python runtests.py -t {SAMPLE_TEST}
+    $ python runtests.py -t {SAMPLE_TEST} -- {SAMPLE_NOSE_ARGUMENTS}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -27,7 +28,7 @@ Generate C code coverage listing under build/lcov/:
 from __future__ import division, print_function
 
 #
-# This is a generic test runner script for projects using Numpy's test
+# This is a generic test runner script for projects using NumPy's test
 # framework. Change the following values to adapt to your project:
 #
 
@@ -35,6 +36,7 @@ PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
+SAMPLE_NOSE_ARGUMENTS = "--pdb"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
               '/usr/local/lib/ccache', '/usr/local/lib/f90cache']
@@ -58,7 +60,6 @@ sys.path.pop(0)
 import shutil
 import subprocess
 import time
-import imp
 from argparse import ArgumentParser, REMAINDER
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
@@ -111,7 +112,7 @@ def main(argv):
                               "Note that you need to commit your changes first!"))
     parser.add_argument("--raise-warnings", default=None, type=str,
                         choices=('develop', 'release'),
-                        help="if 'develop', some warnings are treated as errors")
+                        help="if 'develop', warnings are treated as errors")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -137,9 +138,11 @@ def main(argv):
               "version; remove -g flag ***")
 
     if not args.no_build:
-        site_dir = build_project(args)
+        # we need the noarch path in case the package is pure python.
+        site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
-        os.environ['PYTHONPATH'] = site_dir
+        sys.path.insert(0, site_dir_noarch)
+        os.environ['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -148,14 +151,17 @@ def main(argv):
     if args.python:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings")
-        import warnings; warnings.filterwarnings("always")
+        import warnings
+        import types
+
+        warnings.filterwarnings("always")
         if extra_argv:
             # Don't use subprocess, since we don't want to include the
             # current path in PYTHONPATH.
             sys.argv = extra_argv
             with open(extra_argv[0], 'r') as f:
                 script = f.read()
-            sys.modules['__main__'] = imp.new_module('__main__')
+            sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
                       __file__=extra_argv[0])
             exec_(script, ns)
@@ -355,11 +361,14 @@ def build_project(args):
 
     from distutils.sysconfig import get_python_lib
     site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
+    site_dir_noarch = get_python_lib(prefix=dst_dir, plat_specific=False)
     # easy_install won't install to a path that Python by default cannot see
     # and isn't on the PYTHONPATH.  Plus, it has to exist.
     if not os.path.exists(site_dir):
         os.makedirs(site_dir)
-    env['PYTHONPATH'] = site_dir
+    if not os.path.exists(site_dir_noarch):
+        os.makedirs(site_dir_noarch)
+    env['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
@@ -398,7 +407,7 @@ def build_project(args):
             print("Build failed!")
         sys.exit(1)
 
-    return site_dir
+    return site_dir, site_dir_noarch
 
 
 #

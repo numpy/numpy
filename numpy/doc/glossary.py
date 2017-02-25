@@ -305,7 +305,7 @@ Glossary
            [1, 2, 3, 4, 5, 6]
 
        Row-major order is also known as the C order, as the C programming
-       language uses it. New Numpy arrays are by default in row-major order.
+       language uses it. New NumPy arrays are by default in row-major order.
 
    self
        Often seen in method signatures, ``self`` refers to the instance

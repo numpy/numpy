@@ -87,7 +87,15 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         if (refcheck) {
+#ifdef PYPY_VERSION
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array with refcheck=True on PyPy.\n"
+                    "Use the resize function or refcheck=False");
+             
+            return NULL;
+#else
             refcnt = PyArray_REFCOUNT(self);
+#endif /* PYPY_VERSION */
         }
         else {
             refcnt = 1;
@@ -96,8 +104,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "\
-                    "references or is referenced\n"\
+                    "cannot resize an array that "
+                    "references or is referenced\n"
                     "by another array in this way.  Use the resize function");
             return NULL;
         }
@@ -255,12 +263,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(PyArray_DESCR(self));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(Py_TYPE(self),
                                        PyArray_DESCR(self),
                                        ndim, dimensions,
                                        strides,
                                        PyArray_DATA(self),
-                                       flags, (PyObject *)self);
+                                       flags, (PyObject *)self, 0, 1);
 
     if (ret == NULL) {
         goto fail;
@@ -672,9 +680,9 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
-    npy_intp *axes, axis;
-    npy_intp i, n;
-    npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
+    npy_intp *axes;
+    int i, n;
+    int permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
     int flags;
 
@@ -696,13 +704,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
             reverse_permutation[i] = -1;
         }
         for (i = 0; i < n; i++) {
-            axis = axes[i];
-            if (axis < 0) {
-                axis = PyArray_NDIM(ap) + axis;
-            }
-            if (axis < 0 || axis >= PyArray_NDIM(ap)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid axis for this array");
+            int axis = axes[i];
+            if (check_and_adjust_axis(&axis, PyArray_NDIM(ap)) < 0) {
                 return NULL;
             }
             if (reverse_permutation[axis] != -1) {

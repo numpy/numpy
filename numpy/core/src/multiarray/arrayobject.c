@@ -1083,7 +1083,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val;
+    int val, cast = 0;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
@@ -1095,9 +1095,13 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
 #else
+        cast = 1;
+#endif  /* define(NPY_PY3K) */
+    }
+    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
-            PyArray_DESCR(other)->type_num == NPY_UNICODE) {
+                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
             unicode->elsize = PyArray_DESCR(self)->elsize << 2;
             new = PyArray_FromAny((PyObject *)self, unicode,
@@ -1108,10 +1112,17 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
-        else if (PyArray_TYPE(self) == NPY_UNICODE &&
-                 PyArray_DESCR(other)->type_num == NPY_STRING) {
+        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
+                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
+                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-            unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+
+            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
+                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+            }
+            else {
+                unicode->elsize = PyArray_DESCR(other)->elsize;
+            }
             new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
@@ -1126,7 +1137,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
-#endif
     }
     else {
         Py_INCREF(self);
@@ -1344,16 +1354,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 n_ops.less_equal);
         break;
     case Py_EQ:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.7 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_False);
-            return Py_False;
-        }
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1432,16 +1432,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_NE:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.8 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_True);
-            return Py_True;
-        }
-
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1652,11 +1642,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     itemsize = descr->elsize;
-    if (itemsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data-type with unspecified variable length");
-        goto fail;
-    }
 
     if (strides.ptr != NULL) {
         npy_intp nb, off;
@@ -1690,10 +1675,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     if (buffer.ptr == NULL) {
         ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, descr,
-                                 (int)dims.len,
-                                 dims.ptr,
-                                 strides.ptr, NULL, is_f_order, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     (int)dims.len,
+                                     dims.ptr,
+                                     strides.ptr, NULL, is_f_order, NULL,
+                                     0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1726,11 +1712,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
-            PyArray_NewFromDescr(subtype, descr,
-                                 dims.len, dims.ptr,
-                                 strides.ptr,
-                                 offset + (char *)buffer.ptr,
-                                 buffer.flags, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     dims.len, dims.ptr,
+                                     strides.ptr,
+                                     offset + (char *)buffer.ptr,
+                                     buffer.flags, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;

@@ -3,12 +3,6 @@
 Subclassing ndarray in python
 =============================
 
-Credits
--------
-
-This page is based with thanks on the wiki page on subclassing by Pierre
-Gerard-Marchant - http://www.scipy.org/Subclasses.
-
 Introduction
 ------------
 
@@ -97,7 +91,7 @@ Implications for subclassing
 
 If we subclass ndarray, we need to deal not only with explicit
 construction of our array type, but also :ref:`view-casting` or
-:ref:`new-from-template`.  Numpy has the machinery to do this, and this
+:ref:`new-from-template`.  NumPy has the machinery to do this, and this
 machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
@@ -523,7 +517,7 @@ Extra gotchas - custom ``__del__`` methods and ndarray.base
 One of the problems that ndarray solves is keeping track of memory
 ownership of ndarrays and their views.  Consider the case where we have
 created an ndarray, ``arr`` and have taken a slice with ``v = arr[1:]``.
-The two objects are looking at the same memory.  Numpy keeps track of
+The two objects are looking at the same memory.  NumPy keeps track of
 where the data came from for a particular array or view, with the
 ``base`` attribute:
 
@@ -555,6 +549,53 @@ the original array is deleted, but not the views.  For an example of
 how this can work, have a look at the ``memmap`` class in
 ``numpy.core``.
 
+Subclassing and Downstream Compatibility
+----------------------------------------
+
+When sub-classing ``ndarray`` or creating duck-types that mimic the ``ndarray``
+interface, it is your responsibility to decide how aligned your APIs will be
+with those of numpy. For convenience, many numpy functions that have a corresponding
+``ndarray`` method (e.g., ``sum``, ``mean``, ``take``, ``reshape``) work by checking
+if the first argument to a function has a method of the same name. If it exists, the
+method is called instead of coercing the arguments to a numpy array.
+
+For example, if you want your sub-class or duck-type to be compatible with
+numpy's ``sum`` function, the method signature for this object's ``sum`` method
+should be the following:
+
+.. testcode::
+
+    def sum(self, axis=None, dtype=None, out=None, keepdims=False):
+    ...
+
+This is the exact same method signature for ``np.sum``, so now if a user calls
+``np.sum`` on this object, numpy will call the object's own ``sum`` method and
+pass in these arguments enumerated above in the signature, and no errors will
+be raised because the signatures are completely compatible with each other.
+
+If, however, you decide to deviate from this signature and do something like this:
+
+.. testcode::
+
+   def sum(self, axis=None, dtype=None):
+   ...
+
+This object is no longer compatible with ``np.sum`` because if you call ``np.sum``,
+it will pass in unexpected arguments ``out`` and ``keepdims``, causing a TypeError
+to be raised.
+
+If you wish to maintain compatibility with numpy and its subsequent versions (which
+might add new keyword arguments) but do not want to surface all of numpy's arguments,
+your function's signature should accept ``**kwargs``. For example:
+
+.. testcode::
+
+   def sum(self, axis=None, dtype=None, **unused_kwargs):
+   ...
+
+This object is now compatible with ``np.sum`` again because any extraneous arguments
+(i.e. keywords that are not ``axis`` or ``dtype``) will be hidden away in the
+``**unused_kwargs`` parameter.
 
 """
 from __future__ import division, absolute_import, print_function

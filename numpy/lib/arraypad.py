@@ -1030,43 +1030,20 @@ def _normalize_shape(ndarray, shape, cast_to_int=True):
         return ((None, None), ) * ndims
 
     # Convert any input `info` to a NumPy array
-    arr = np.asarray(shape)
+    shape_arr = np.asarray(shape)
 
-    # Switch based on what input looks like
-    if arr.ndim <= 1:
-        if arr.shape == () or arr.shape == (1,):
-            # Single scalar input
-            #   Create new array of ones, multiply by the scalar
-            arr = np.ones((ndims, 2), dtype=ndarray.dtype) * arr
-        elif arr.shape == (2,):
-            # Apply padding (before, after) each axis
-            #   Create new axis 0, repeat along it for every axis
-            arr = arr[np.newaxis, :].repeat(ndims, axis=0)
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    elif arr.ndim == 2:
-        if arr.shape[1] == 1 and arr.shape[0] == ndims:
-            # Padded before and after by the same amount
-            arr = arr.repeat(2, axis=1)
-        elif arr.shape[0] == ndims:
-            # Input correctly formatted, pass it on as `arr`
-            pass
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    else:
+    try:
+        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
+    except ValueError:
         fmt = "Unable to create correctly shaped tuple from %s"
         raise ValueError(fmt % (shape,))
 
     # Cast if necessary
     if cast_to_int is True:
-        arr = np.round(arr).astype(int)
+        shape_arr = np.round(shape_arr).astype(int)
 
     # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in arr.tolist())
+    return tuple(tuple(axis) for axis in shape_arr.tolist())
 
 
 def _validate_lengths(narray, number_elements):
@@ -1361,7 +1338,7 @@ def pad(array, pad_width, mode, **kwargs):
         function = mode
 
         # Create a new padded array
-        rank = list(range(len(narray.shape)))
+        rank = list(range(narray.ndim))
         total_dim_increase = [np.sum(pad_width[i]) for i in rank]
         offset_slices = [slice(pad_width[i][0],
                                pad_width[i][0] + narray.shape[i])

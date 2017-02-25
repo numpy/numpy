@@ -51,6 +51,7 @@ Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
+Programming Language :: Python :: 3.6
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -61,7 +62,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 12
+MINOR               = 13
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -255,18 +256,18 @@ def parse_setuppy_commands():
 
               - `pip install .`       (from a git repo or downloaded source
                                        release)
-              - `pip install numpy`   (last Numpy release on PyPi)
+              - `pip install numpy`   (last NumPy release on PyPi)
 
             """))
         return True
 
     if '--help' in sys.argv[1:] or '-h' in sys.argv[1]:
         print(textwrap.dedent("""
-            Numpy-specific help
+            NumPy-specific help
             -------------------
 
-            To install Numpy from here with reliable uninstall, we recommend
-            that you use `pip install .`. To install the latest Numpy release
+            To install NumPy from here with reliable uninstall, we recommend
+            that you use `pip install .`. To install the latest NumPy release
             from PyPi, use `pip install numpy`.
 
             For help with build/installation issues, please ask on the
@@ -329,7 +330,7 @@ def parse_setuppy_commands():
     # If we got here, we didn't detect what setup.py command was given
     import warnings
     warnings.warn("Unrecognized setuptools command, proceeding with "
-                  "generating Cython sources and expanding templates")
+                  "generating Cython sources and expanding templates", stacklevel=2)
     return True
 
 
@@ -388,3 +389,8 @@ def setup_package():
 
 if __name__ == '__main__':
     setup_package()
+    # This may avoid problems where numpy is installed via ``*_requires`` by
+    # setuptools, the global namespace isn't reset properly, and then numpy is
+    # imported later (which will then fail to load numpy extension modules).
+    # See gh-7956 for details
+    del builtins.__NUMPY_SETUP__

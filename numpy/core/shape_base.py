@@ -5,6 +5,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
 
 from . import numeric as _nx
 from .numeric import asanyarray, newaxis
+from .multiarray import normalize_axis_index
 
 def atleast_1d(*arys):
     """
@@ -21,7 +22,7 @@ def atleast_1d(*arys):
     Returns
     -------
     ret : ndarray
-        An array, or sequence of arrays, each with ``a.ndim >= 1``.
+        An array, or list of arrays, each with ``a.ndim >= 1``.
         Copies are made only if necessary.
 
     See Also
@@ -48,7 +49,7 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1)
         else:
             result = ary
@@ -72,7 +73,7 @@ def atleast_2d(*arys):
     Returns
     -------
     res, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        An array, or list of arrays, each with ``a.ndim >= 2``.
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
@@ -98,9 +99,9 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:]
         else:
             result = ary
@@ -124,7 +125,7 @@ def atleast_3d(*arys):
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
         avoided where possible, and views with three or more dimensions are
         returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
         of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
@@ -146,7 +147,7 @@ def atleast_3d(*arys):
     >>> x = np.arange(12.0).reshape(4,3)
     >>> np.atleast_3d(x).shape
     (4, 3, 1)
-    >>> np.atleast_3d(x).base is x
+    >>> np.atleast_3d(x).base is x.base  # x is a reshape, so not base itself
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
@@ -162,11 +163,11 @@ def atleast_3d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:, newaxis]
-        elif len(ary.shape) == 2:
+        elif ary.ndim == 2:
             result = ary[:,:, newaxis]
         else:
             result = ary
@@ -347,11 +348,7 @@ def stack(arrays, axis=0):
         raise ValueError('all input arrays must have the same shape')
 
     result_ndim = arrays[0].ndim + 1
-    if not -result_ndim <= axis < result_ndim:
-        msg = 'axis {0} out of bounds [-{1}, {1})'.format(axis, result_ndim)
-        raise IndexError(msg)
-    if axis < 0:
-        axis += result_ndim
+    axis = normalize_axis_index(axis, result_ndim)
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]

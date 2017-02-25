@@ -103,7 +103,7 @@ the bytes are interpreted is defined by the :ref:`data-type object
 
 A segment of memory is inherently 1-dimensional, and there are many
 different schemes for arranging the items of an *N*-dimensional array
-in a 1-dimensional block. Numpy is flexible, and :class:`ndarray`
+in a 1-dimensional block. NumPy is flexible, and :class:`ndarray`
 objects can accommodate any *strided indexing scheme*. In a strided
 scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
 corresponds to the offset (in bytes):
@@ -119,12 +119,12 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 
 .. math::
 
-   s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j ,
-   \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
+   s_k^{\mathrm{column}} = \mathrm{itemsize} \prod_{j=0}^{k-1} d_j ,
+   \quad  s_k^{\mathrm{row}} = \mathrm{itemsize} \prod_{j=k+1}^{N-1} d_j .
 
 .. index:: single-segment, contiguous, non-contiguous
 
-where :math:`d_j` `= self.itemsize * self.shape[j]`.
+where :math:`d_j` `= self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
@@ -155,7 +155,7 @@ base offset itself is a multiple of `self.itemsize`.
 .. note::
 
     Points (1) and (2) are not yet applied by default. Beginning with
-    Numpy 1.8.0, they are applied consistently only if the environment
+    NumPy 1.8.0, they are applied consistently only if the environment
     variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
     was built. Eventually this will become the default.
 
@@ -440,7 +440,7 @@ Each of the arithmetic operations (``+``, ``-``, ``*``, ``/``, ``//``,
 ``%``, ``divmod()``, ``**`` or ``pow()``, ``<<``, ``>>``, ``&``,
 ``^``, ``|``, ``~``) and the comparisons (``==``, ``<``, ``>``,
 ``<=``, ``>=``, ``!=``) is equivalent to the corresponding
-:term:`universal function` (or :term:`ufunc` for short) in Numpy.  For
+:term:`universal function` (or :term:`ufunc` for short) in NumPy.  For
 more information, see the section on :ref:`Universal Functions
 <ufuncs>`.
 
@@ -560,7 +560,7 @@ Matrix Multiplication:
 .. note::
 
    Matrix operators ``@`` and ``@=`` were introduced in Python 3.5
-   following PEP465. Numpy 1.10 has a preliminary implementation of ``@``
+   following PEP465. NumPy 1.10.0 has a preliminary implementation of ``@``
    for testing purposes. Further documentation can be found in the
    :func:`matmul` documentation.
 
@@ -595,8 +595,6 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__len__
    ndarray.__getitem__
    ndarray.__setitem__
-   ndarray.__getslice__
-   ndarray.__setslice__
    ndarray.__contains__
 
 Conversion; the operations :func:`complex()`, :func:`int()`,

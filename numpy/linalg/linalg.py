@@ -25,6 +25,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_
     )
+from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -191,15 +192,15 @@ def _fastCopyAndTranspose(type, *arrays):
 
 def _assertRank2(*arrays):
     for a in arrays:
-        if len(a.shape) != 2:
+        if a.ndim != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % len(a.shape))
+                    'two-dimensional' % a.ndim)
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
-        if len(a.shape) < 2:
+        if a.ndim < 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % len(a.shape))
+                    'at least two-dimensional' % a.ndim)
 
 def _assertSquareness(*arrays):
     for a in arrays:
@@ -230,7 +231,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=len(b.shape))``.
+    ``tensordot(a, x, axes=b.ndim)``.
 
     Parameters
     ----------
@@ -257,7 +258,7 @@ def tensorsolve(a, b, axes=None):
 
     See Also
     --------
-    tensordot, tensorinv, einsum
+    numpy.tensordot, tensorinv, numpy.einsum
 
     Examples
     --------
@@ -416,7 +417,7 @@ def tensorinv(a, ind=2):
 
     See Also
     --------
-    tensordot, tensorsolve
+    numpy.tensordot, tensorsolve
 
     Examples
     --------
@@ -677,7 +678,7 @@ def qr(a, mode='reduced'):
     `a` is of type `matrix`, all the return values will be matrices too.
 
     New 'reduced', 'complete', and 'raw' options for mode were added in
-    Numpy 1.8 and the old option 'full' was made an alias of 'reduced'.  In
+    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.  In
     addition the options 'full' and 'economic' were deprecated.  Because
     'full' was the previous default and 'reduced' is the new default,
     backward compatibility can be maintained by letting `mode` default.
@@ -737,12 +738,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
-            msg = "The 'economic' option is deprecated.",
-            warnings.warn(msg, DeprecationWarning)
+            msg = "The 'economic' option is deprecated."
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'economic'
         else:
             raise ValueError("Unrecognized mode '%s'" % mode)
@@ -929,8 +930,12 @@ def eigvalsh(a, UPLO='L'):
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
-        Same as `lower`, with 'L' for lower and 'U' for upper triangular.
-        Deprecated.
+        Specifies whether the calculation is done with the lower triangular
+        part of `a` ('L', default) or the upper triangular part ('U').
+        Irrespective of this value only the real parts of the diagonal will
+        be considered in the computation to preserve the notion of a Hermitian
+        matrix. It therefore follows that the imaginary part of the diagonal
+        will always be treated as zero.
 
     Returns
     -------
@@ -966,6 +971,23 @@ def eigvalsh(a, UPLO='L'):
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
     array([ 0.17157288,  5.82842712])
+    
+    >>> # demonstrate the treatment of the imaginary part of the diagonal
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a
+    array([[ 5.+2.j,  9.-2.j],
+           [ 0.+2.j,  2.-1.j]])
+    >>> # with UPLO='L' this is numerically equivalent to using LA.eigvals()
+    >>> # with:
+    >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
+    >>> b
+    array([[ 5.+0.j,  0.-2.j],
+           [ 0.+2.j,  2.+0.j]])
+    >>> wa = LA.eigvalsh(a)
+    >>> wb = LA.eigvals(b)
+    >>> wa; wb
+    array([ 1.,  6.])
+    array([ 6.+0.j,  1.+0.j])
 
     """
     UPLO = UPLO.upper()
@@ -1117,6 +1139,7 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
+    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
@@ -1154,6 +1177,10 @@ def eigh(a, UPLO='L'):
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
         part of `a` ('L', default) or the upper triangular part ('U').
+        Irrespective of this value only the real parts of the diagonal will
+        be considered in the computation to preserve the notion of a Hermitian
+        matrix. It therefore follows that the imaginary part of the diagonal
+        will always be treated as zero.
 
     Returns
     -------
@@ -1225,6 +1252,26 @@ def eigh(a, UPLO='L'):
     matrix([[-0.92387953+0.j        , -0.38268343+0.j        ],
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
+    >>> # demonstrate the treatment of the imaginary part of the diagonal
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a
+    array([[ 5.+2.j,  9.-2.j],
+           [ 0.+2.j,  2.-1.j]])
+    >>> # with UPLO='L' this is numerically equivalent to using LA.eig() with:
+    >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
+    >>> b
+    array([[ 5.+0.j,  0.-2.j],
+           [ 0.+2.j,  2.+0.j]])
+    >>> wa, va = LA.eigh(a)
+    >>> wb, vb = LA.eig(b)
+    >>> wa; wb
+    array([ 1.,  6.])
+    array([ 6.+0.j,  1.+0.j])
+    >>> va; vb
+    array([[-0.44721360-0.j        , -0.89442719+0.j        ],
+           [ 0.00000000+0.89442719j,  0.00000000-0.4472136j ]])
+    array([[ 0.89442719+0.j       ,  0.00000000-0.4472136j],
+           [ 0.00000000-0.4472136j,  0.89442719+0.j       ]])
     """
     UPLO = UPLO.upper()
     if UPLO not in ('L', 'U'):
@@ -1233,6 +1280,7 @@ def eigh(a, UPLO='L'):
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
+    _assertNoEmpty2d(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
@@ -1666,7 +1714,7 @@ def slogdet(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    .. versionadded:: 1.6.0.
+    .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
@@ -1804,8 +1852,9 @@ def lstsq(a, b, rcond=-1):
         of `b`.
     rcond : float, optional
         Cut-off ratio for small singular values of `a`.
-        Singular values are set to zero if they are smaller than `rcond`
-        times the largest singular value of `a`.
+        For the purposes of rank determination, singular values are treated
+        as zero if they are smaller than `rcond` times the largest singular
+        value of `a`.
 
     Returns
     -------
@@ -1868,10 +1917,11 @@ def lstsq(a, b, rcond=-1):
     import math
     a, _ = _makearray(a)
     b, wrap = _makearray(b)
-    is_1d = len(b.shape) == 1
+    is_1d = b.ndim == 1
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
+    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
@@ -1886,6 +1936,14 @@ def lstsq(a, b, rcond=-1):
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
+    # This line:
+    #  * is incorrect, according to the LAPACK documentation
+    #  * raises a ValueError if min(m,n) == 0
+    #  * should not be calculated here anyway, as LAPACK should calculate
+    #    `liwork` for us. But that only works if our version of lapack does
+    #    not have this bug:
+    #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
+    #    Lapack_lite does have that bug...
     nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
     iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
     if isComplexType(t):
@@ -2179,13 +2237,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
-        if row_axis < 0:
-            row_axis += nd
-        if col_axis < 0:
-            col_axis += nd
-        if not (0 <= row_axis < nd and 0 <= col_axis < nd):
-            raise ValueError('Invalid axis %r for an array with shape %r' %
-                             (axis, x.shape))
+        row_axis = normalize_axis_index(row_axis, nd)
+        col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
