@@ -116,7 +116,7 @@ OPTIONAL_HEADERS = [
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
-                "xlocale.h"  # see GH#8367
+                "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
 ]
 
