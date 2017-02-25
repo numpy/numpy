@@ -3,6 +3,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include "npy_config.h"
 #include "numpy/arrayobject.h"
 
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
