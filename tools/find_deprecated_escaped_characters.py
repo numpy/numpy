@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-"""
+r"""
 Look for escape sequences deprecated in Python 3.6.
 
-Python 3.6 deprecates a number of non-escape sequences starting with `\` that
+Python 3.6 deprecates a number of non-escape sequences starting with '\' that
 were accepted before. For instance, '\(' was previously accepted but must now
 be written as '\\(' or r'\('.
 
