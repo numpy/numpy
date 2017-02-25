@@ -49,7 +49,7 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1)
         else:
             result = ary
@@ -99,9 +99,9 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:]
         else:
             result = ary
@@ -163,11 +163,11 @@ def atleast_3d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:, newaxis]
-        elif len(ary.shape) == 2:
+        elif ary.ndim == 2:
             result = ary[:,:, newaxis]
         else:
             result = ary

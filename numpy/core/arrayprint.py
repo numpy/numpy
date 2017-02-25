@@ -331,7 +331,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     # skip over array(
     next_line_prefix += " "*len(prefix)
 
-    lst = _formatArray(a, format_function, len(a.shape), max_line_width,
+    lst = _formatArray(a, format_function, a.ndim, max_line_width,
                        next_line_prefix, separator,
                        _summaryEdgeItems, summary_insert)[:-1]
     return lst
