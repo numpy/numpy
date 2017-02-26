@@ -14,6 +14,28 @@ class TestArrayRepr(object):
         x = np.array([np.nan, np.inf])
         assert_equal(repr(x), 'array([ nan,  inf])')
 
+    def test_subclass(self):
+        class sub(np.ndarray): pass
+
+        # one dimensional
+        x1d = np.array([1, 2]).view(sub)
+        assert_equal(repr(x1d), 'sub([1, 2])')
+
+        # two dimensional
+        x2d = np.array([[1, 2], [3, 4]]).view(sub)
+        assert_equal(repr(x2d),
+            'sub([[1, 2],\n'
+            '     [3, 4]])')
+
+        # two dimensional with flexible dtype
+        xstruct = np.ones((2,2), dtype=[('a', 'i4')]).view(sub)
+        assert_equal(repr(xstruct),
+            "sub([[(1,), (1,)],\n"
+            "     [(1,), (1,)]],\n"
+            "    dtype=[('a', '<i4')])"
+        )
+
+
 class TestComplexArray(TestCase):
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
