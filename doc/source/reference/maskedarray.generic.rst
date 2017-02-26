@@ -391,7 +391,7 @@ required to avoid propagation of any modification of the mask to the original.
    >>> mx[1] = -1
    >>> mx
    masked_array(data = [1 -1 3],
-                mask = [False  False False],
+                mask = [False False False],
           fill_value = 999999)
    >>> x.mask
    array([False,  True, False, False,  True], dtype=bool)
