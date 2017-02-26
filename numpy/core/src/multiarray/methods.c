@@ -2602,9 +2602,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"tobytes",
         (PyCFunction)array_tobytes,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#ifndef NPY_PYTHON_COMPILER_DIFFER
     {"tofile",
         (PyCFunction)array_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#endif
     {"tolist",
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},

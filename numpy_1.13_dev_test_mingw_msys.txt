@@ -1,0 +1,1081 @@
+c:\LocalPrograms\Python36\lib\importlib\_bootstrap.py:205: Warning: Numpy built with MINGW-W64 on Windows 64 bits is experimental, and only available for 
+testing. You are advised not to use it for production. 
+
+CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS
+  return f(*args, **kwds)
+...................................................................................................................................................................................................................S...........................................................................F...............c:\LocalPrograms\Python36\lib\site-packages\numpy\core\getlimits.py:391: UserWarning: Signature b'\x00\xd0\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf\x00\x00\x00\x00\xf0?' for <class 'numpy.float128'> does not match any known type: falling back to type probe function
+  machar = _get_machar(dtype)
+............................................................................................EE..E.....................F....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................EEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.BufferedRandom name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmps1s023ua\\mmapfj9zgkce'>
+  outcome.errors.clear()
+.................................................................................S....................................................EE.EEEEEEEEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.BufferedReader name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpl32zypnb\\tmpqvbluroy'>
+  outcome.errors.clear()
+EEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.BufferedWriter name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp2vm_5bht\\tmp_zsiq5ju'>
+  outcome.errors.clear()
+E.EEEEEEE.EEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.BufferedWriter name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp1rig0qte\\tmpl01g3owv'>
+  outcome.errors.clear()
+E..EEEEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpziu_zq21\\tmp3bvvv13c' mode='w' encoding='cp1252'>
+  outcome.errors.clear()
+EEc:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpuo_zwh8c\\tmp_1cneebs' mode='w' encoding='cp1252'>
+  outcome.errors.clear()
+.E....................................................................................................................................................................................................................................................E............................................................................................................................................................................................................................................K.................................................................................................................................................................................................................................................................................................................................FFF..........................................................................S................................Ec:\LocalPrograms\Python36\lib\unittest\case.py:629: ResourceWarning: unclosed file <_io.BufferedRandom name=3>
+  outcome.errors.clear()
+...........K..................................................................................S.............................................................................................................................................................................................................................F.........................c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py:1932: RuntimeWarning: divide by zero encountered in true_divide
+  d = np.absolute(np.arcsinh(x)/np.arcsinh(z).real - 1)
+FFF...................................................................................................KF..K.................................K...SK.S.......S................................................................................................Running unit tests for numpy
+NumPy version 1.13.0
+NumPy relaxed strides checking option: True
+NumPy is installed in c:\LocalPrograms\Python36\lib\site-packages\numpy
+Python version 3.6.0 (v3.6.0:41df79263a11, Dec 23 2016, 08:06:12) [MSC v.1900 64 bit (AMD64)]
+nose version 1.3.7
+.S..................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................EE..............................S........................................................................................................................................................................................................................................................................................................................................................................................EEE.E.KE.........EEE.EEKEEEException ignored in: <bound method ZipFile.__del__ of <zipfile.ZipFile [closed]>>
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\zipfile.py", line 1649, in __del__
+    self.close()
+  File "c:\LocalPrograms\Python36\lib\zipfile.py", line 1666, in close
+    self.fp.seek(self.start_dir)
+ValueError: seek of closed file
+EException in thread Thread-67:
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 237, in writer
+    np.savez(tmp, arr=arr)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 916, in _bootstrap_inner
+    self.run()
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 864, in run
+    self._target(*self._args, **self._kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 239, in writer
+    error_list.append(err)
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmphla9aojc.npz'
+
+Exception in thread Thread-68:
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 237, in writer
+    np.savez(tmp, arr=arr)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 916, in _bootstrap_inner
+    self.run()
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 864, in run
+    self._target(*self._args, **self._kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 239, in writer
+    error_list.append(err)
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmphiumm7zq.npz'
+
+Exception in thread Thread-69:
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 237, in writer
+    np.savez(tmp, arr=arr)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 916, in _bootstrap_inner
+    self.run()
+  File "c:\LocalPrograms\Python36\lib\threading.py", line 864, in run
+    self._target(*self._args, **self._kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 239, in writer
+    error_list.append(err)
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpfdo0255i.npz'
+
+.......EE..........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................S............................................................................................................................................S....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+======================================================================
+ERROR: test_fromfile (test_longdouble.FileBased)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 217, in knownfailer
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_longdouble.py", line 132, in test_fromfile
+    res = np.fromfile(path, dtype=np.longdouble, sep="\n")
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_fromfile_bogus (test_longdouble.FileBased)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_longdouble.py", line 124, in test_fromfile_bogus
+    res = np.fromfile(path, dtype=float, sep=" ")
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_tofile_roundtrip (test_longdouble.FileBased)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 217, in knownfailer
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_longdouble.py", line 154, in test_tofile_roundtrip
+    self.tgt.tofile(path, sep=" ")
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_path (test_memmap.TestMemmap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 147, in skipper_func
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_memmap.py", line 83, in test_path
+    shape=self.shape)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\memmap.py", line 275, in __new__
+    self.filename = filename.resolve()
+  File "c:\LocalPrograms\Python36\lib\pathlib.py", line 1120, in resolve
+    s = self._flavour.resolve(self, strict=strict)
+  File "c:\LocalPrograms\Python36\lib\pathlib.py", line 192, in resolve
+    s = self._ext_to_normal(_getfinalpathname(s))
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmps1s023ua\\mmapfj9zgkce'
+
+======================================================================
+ERROR: test_path (test_memmap.TestMemmap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_memmap.py", line 30, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmps1s023ua\\mmapfj9zgkce'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_ascii
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4044, in test_ascii
+    self._check_from('1 , 2 , 3 , 4', [1., 2., 3., 4.], sep=',')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_binary
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4001, in test_binary
+    dtype='<f4')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_counted_string
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4032, in test_counted_string
+    self._check_from('1,2,3,4', [1., 2., 3., 4.], count=4, sep=',')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_counted_string_with_ws
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4041, in test_counted_string_with_ws
+    sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_dtype
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4055, in test_dtype
+    self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_dtype_bool
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4064, in test_dtype_bool
+    y = np.fromfile(self.filename, sep=',', dtype=np.bool_)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_empty_files_binary
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3841, in test_empty_files_binary
+    y = np.fromfile(self.filename)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_empty_files_text
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3847, in test_empty_files_text
+    y = np.fromfile(self.filename, sep=" ")
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_file_position_after_fromfile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3940, in test_file_position_after_fromfile
+    np.fromfile(f, dtype=np.float64, count=1)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_file_position_after_fromfile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 385, in tearDown
+    try_run(self.inst, ('teardown', 'tearDown'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\util.py", line 471, in try_run
+    return func()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3811, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpl32zypnb\\tmpqvbluroy'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_file_position_after_tofile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3959, in test_file_position_after_tofile
+    np.array([0], dtype=np.float64).tofile(f)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_file_position_after_tofile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 385, in tearDown
+    try_run(self.inst, ('teardown', 'tearDown'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\util.py", line 471, in try_run
+    return func()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3811, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp2vm_5bht\\tmp_zsiq5ju'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_inf
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3992, in test_inf
+    sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_largish_file
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3905, in test_largish_file
+    d.tofile(self.filename)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_locale
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4091, in test_locale
+    in_foreign_locale(self.test_numbers)()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 228, in wrapper
+    return func(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3996, in test_numbers
+    [1.234, -1.234, .3, .3e55, -123133.1231e+133], sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_long_sep
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4051, in test_long_sep
+    self._check_from('1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_malformed
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4048, in test_malformed
+    self._check_from('1.234 1,234', [1.234, 1.], sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_nan
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3986, in test_nan
+    sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_nofile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3817, in test_nofile
+    assert_raises(IOError, np.fromfile, b, np.uint8, 80)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_numbers
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3996, in test_numbers
+    [1.234, -1.234, .3, .3e55, -123133.1231e+133], sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_roundtrip_file
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3852, in test_roundtrip_file
+    self.x.tofile(f)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_roundtrip_file
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 385, in tearDown
+    try_run(self.inst, ('teardown', 'tearDown'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\util.py", line 471, in try_run
+    return func()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3811, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp1rig0qte\\tmpl01g3owv'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_roundtrip_filename
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3861, in test_roundtrip_filename
+    self.x.tofile(self.filename)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_string
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4029, in test_string
+    self._check_from('1,2,3,4', [1., 2., 3., 4.], sep=',')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_string_with_ws
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4037, in test_string_with_ws
+    self._check_from('1 2  3     4   ', [1, 2, 3, 4], dtype=int, sep=' ')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3979, in _check_from
+    y = np.fromfile(self.filename, **kw)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_tofile_format
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4083, in test_tofile_format
+    x.tofile(f, sep=',', format='%.2f')
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_tofile_format
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 385, in tearDown
+    try_run(self.inst, ('teardown', 'tearDown'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\util.py", line 471, in try_run
+    return func()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3811, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpziu_zq21\\tmp3bvvv13c'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_tofile_sep
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 4071, in test_tofile_sep
+    x.tofile(f, sep=',')
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_tofile_sep
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 385, in tearDown
+    try_run(self.inst, ('teardown', 'tearDown'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\util.py", line 471, in try_run
+    return func()
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3811, in tearDown
+    shutil.rmtree(self.tempdir)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 488, in rmtree
+    return _rmtree_unsafe(path, onerror)
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 383, in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+  File "c:\LocalPrograms\Python36\lib\shutil.py", line 381, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpuo_zwh8c\\tmp_1cneebs'
+
+======================================================================
+ERROR: test_multiarray.TestIO.test_unbuffered_fromfile
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 3891, in test_unbuffered_fromfile
+    self.x.tofile(self.filename)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_zero_width_string (test_multiarray.TestStructured)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_multiarray.py", line 1019, in test_zero_width_string
+    np.save(tmp, xx)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 509, in save
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_fromfile_tofile_seeks (test_regression.TestRegression)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_regression.py", line 1586, in test_fromfile_tofile_seeks
+    ret = np.fromfile(f, count=4, dtype='u1')
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_format.test_compressed_roundtrip
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_format.py", line 522, in test_compressed_roundtrip
+    np.savez_compressed(npz_file, arr=arr)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 657, in savez_compressed
+    _savez(file, args, kwds, True)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_format.test_python2_python3_interoperability
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_format.py", line 533, in test_python2_python3_interoperability
+    data = np.load(path)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 419, in load
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 651, in read_array
+    array = numpy.fromfile(fp, dtype=dtype, count=count)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+======================================================================
+ERROR: test_save_load (test_io.TestPathUsage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 147, in skipper_func
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1855, in test_save_load
+    np.save(path, a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 509, in save
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_savez_compressed_load (test_io.TestPathUsage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1873, in test_savez_compressed_load
+    np.savez_compressed(path, lab='place holder')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 657, in savez_compressed
+    _savez(file, args, kwds, True)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 147, in skipper_func
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1876, in test_savez_compressed_load
+    data.close()
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp_zn0pkm5.npz'
+
+======================================================================
+ERROR: test_savez_load (test_io.TestPathUsage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1864, in test_savez_load
+    np.savez(path, lab='place holder')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 147, in skipper_func
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1866, in test_savez_load
+    assert_array_equal(data['lab'], 'place holder')
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmpr1e015m9.npz'
+
+======================================================================
+ERROR: test_array (test_io.TestSaveLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 98, in roundtrip
+    arr_reloaded = np.load(load_file, **load_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 419, in load
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 651, in read_array
+    array = numpy.fromfile(fp, dtype=dtype, count=count)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 121, in test_array
+    self.check_roundtrips(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 111, in check_roundtrips
+    self.roundtrip(a, file_on_disk=True)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 169, in roundtrip
+    RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 106, in roundtrip
+    if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
+UnboundLocalError: local variable 'arr_reloaded' referenced before assignment
+
+======================================================================
+ERROR: test_record (test_io.TestSaveLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 98, in roundtrip
+    arr_reloaded = np.load(load_file, **load_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 419, in load
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 651, in read_array
+    array = numpy.fromfile(fp, dtype=dtype, count=count)
+AttributeError: module 'numpy' has no attribute 'fromfile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 156, in test_record
+    self.check_roundtrips(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 111, in check_roundtrips
+    self.roundtrip(a, file_on_disk=True)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 169, in roundtrip
+    RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 106, in roundtrip
+    if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
+UnboundLocalError: local variable 'arr_reloaded' referenced before assignment
+
+======================================================================
+ERROR: test_1D (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 144, in test_1D
+    self.roundtrip(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 177, in roundtrip
+    RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 91, in roundtrip
+    save_func(target_file, *arr, **save_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_BagObj (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 222, in test_BagObj
+    np.savez(c, file_a=a, file_b=b)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_array (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 121, in test_array
+    self.check_roundtrips(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 110, in check_roundtrips
+    self.roundtrip(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 177, in roundtrip
+    RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 91, in roundtrip
+    save_func(target_file, *arr, **save_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_closing_fid (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 275, in test_closing_fid
+    np.savez(tmp, data='LOVELY LOAD')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 147, in skipper_func
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 290, in test_closing_fid
+    raise AssertionError(msg)
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\tmp8qih3gj2.npz'
+
+======================================================================
+ERROR: test_closing_zipfile_after_load (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1883, in temppath
+    yield path
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 299, in test_closing_zipfile_after_load
+    np.savez(tmp, lab='place holder')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 303, in test_closing_zipfile_after_load
+    assert_(fp.closed)
+  File "c:\LocalPrograms\Python36\lib\contextlib.py", line 100, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 1885, in temppath
+    os.remove(path)
+PermissionError: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'C:\\Users\\mfp\\AppData\\Local\\Temp\\numpy_test_closing_zipfile_after_load_8u6sbhqs.npz'
+
+======================================================================
+ERROR: test_multiple_arrays (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 206, in test_multiple_arrays
+    self.roundtrip(a, b)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 177, in roundtrip
+    RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 91, in roundtrip
+    save_func(target_file, *arr, **save_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_named_arrays (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 212, in test_named_arrays
+    np.savez(c, file_a=a, file_b=b)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_not_closing_opened_fid (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 257, in test_not_closing_opened_fid
+    np.savez(fp, data='LOVELY LOAD')
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_record (test_io.TestSavezLoad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 156, in test_record
+    self.check_roundtrips(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 110, in check_roundtrips
+    self.roundtrip(a)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 177, in roundtrip
+    RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 91, in roundtrip
+    save_func(target_file, *arr, **save_kwds)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_io.test_npzfile_dict
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 1991, in test_npzfile_dict
+    np.savez(s, x=x, y=y)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+ERROR: test_io.test_load_refcount
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\tests\test_io.py", line 2018, in test_load_refcount
+    np.savez(f, [1, 2, 3])
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 593, in savez
+    _savez(file, args, kwds, False)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\npyio.py", line 703, in _savez
+    pickle_kwargs=pickle_kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\lib\format.py", line 587, in write_array
+    array.tofile(fp)
+AttributeError: 'numpy.ndarray' object has no attribute 'tofile'
+
+======================================================================
+FAIL: test_denormal_numbers (test_function_base.TestLinspace)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_function_base.py", line 306, in test_denormal_numbers
+    assert_(any(linspace(0, stop, 10, endpoint=False, dtype=ftype)))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError
+
+======================================================================
+FAIL: test_longdouble.test_array_repr
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 217, in knownfailer
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 217, in knownfailer
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_longdouble.py", line 209, in test_array_repr
+    assert_(repr(a) != repr(b))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError
+
+======================================================================
+FAIL: test_print.test_locale_single
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 228, in wrapper
+    return func(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 235, in test_locale_single
+    assert_equal(str(np.float32(1.2)), str(float(1.2)))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 405, in assert_equal
+    raise AssertionError(msg)
+AssertionError: 
+Items are not equal:
+ ACTUAL: '1,2'
+ DESIRED: '1.2'
+
+======================================================================
+FAIL: test_print.test_locale_double
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 228, in wrapper
+    return func(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 239, in test_locale_double
+    assert_equal(str(np.double(1.2)), str(float(1.2)))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 405, in assert_equal
+    raise AssertionError(msg)
+AssertionError: 
+Items are not equal:
+ ACTUAL: '1,2'
+ DESIRED: '1.2'
+
+======================================================================
+FAIL: test_print.test_locale_longdouble
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 228, in wrapper
+    return func(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_print.py", line 243, in test_locale_longdouble
+    assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 405, in assert_equal
+    raise AssertionError(msg)
+AssertionError: 
+Items are not equal:
+ ACTUAL: '1,2'
+ DESIRED: '1.2'
+
+======================================================================
+FAIL: test_umath.TestComplexFunctions.test_branch_cuts(<ufunc 'arccosh'>, [-1, 0.5], [1j, 1j], 1, -1, True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 2077, in _check_branch_cut
+    assert_(np.all(np.absolute(y0.imag - yp.imag) < atol), (y0, yp))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError: (array([  0.00000000e+00+3.14159265j,   1.11022302e-16-1.04719755j]), array([  4.71216091e-07+3.14159218j,   1.28119737e-13+1.04719755j]))
+
+======================================================================
+FAIL: test_umath.TestComplexFunctions.test_loss_of_precision(<class 'numpy.complex64'>,)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1963, in check_loss_of_precision
+    check(x_series, 2.1*eps)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1934, in check
+    'arcsinh'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError: (0, 9.9999997e-21, inf, 'arcsinh')
+
+======================================================================
+FAIL: test_umath.TestComplexFunctions.test_loss_of_precision(<class 'numpy.complex128'>,)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1963, in check_loss_of_precision
+    check(x_series, 2.1*eps)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1934, in check
+    'arcsinh'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError: (0, 1.0000000000000022e-20, inf, 'arcsinh')
+
+======================================================================
+FAIL: test_umath.TestComplexFunctions.test_loss_of_precision_longcomplex
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\decorators.py", line 217, in knownfailer
+    return f(*args, **kwargs)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 2010, in test_loss_of_precision_longcomplex
+    self.check_loss_of_precision(np.longcomplex)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1961, in check_loss_of_precision
+    check(x_series, 50*eps)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 1934, in check
+    'arcsinh'))
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError: (0, 1.0000000000000022021e-20, inf, 'arcsinh')
+
+======================================================================
+FAIL: test_umath.test_nextafter_0
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\LocalPrograms\Python36\lib\site-packages\nose\case.py", line 198, in runTest
+    self.test(*self.arg)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\core\tests\test_umath.py", line 2132, in test_nextafter_0
+    assert_(0. < direction * np.nextafter(t(0), t(direction)) < tiny)
+  File "c:\LocalPrograms\Python36\lib\site-packages\numpy\testing\utils.py", line 91, in assert_
+    raise AssertionError(smsg)
+AssertionError
+
+----------------------------------------------------------------------
+Ran 6386 tests in 128.783s
+
+FAILED (KNOWNFAIL=8, SKIP=11, errors=55, failures=10)

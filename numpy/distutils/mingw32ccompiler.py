@@ -110,6 +110,15 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             # add preprocessor statement for using customized msvcr lib
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
+        # file operations typically do not work if numpy is compiled with a
+        # different compiler than the python code.
+        # Here I used the standard python (3.6) distribution and compile
+        # numpy with msys2 mingw
+        # This macro is used in multiarray/methods.c and multiarray/multiarraymodule.c
+        # to disable fromfile / tofile
+        # Prevents crashes
+        self.define_macro('NPY_PYTHON_COMPILER_DIFFER')
+
         # Define the MSVC version as hint for MinGW
         msvcr_version = msvc_runtime_version()
         if msvcr_version:

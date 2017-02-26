@@ -13,13 +13,21 @@ from .multiarray import (
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, count_nonzero, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
+    empty_like, flatiter, frombuffer, fromiter, fromstring,
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
     zeros, normalize_axis_index)
 if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
+
+_has_fromfile = False
+try:
+    # disabled fromfile for mingw compile
+    from .multiarry import fromfile
+    _has_fromfile =  True
+except ImportError:
+    pass
 
 from . import umath
 from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
@@ -47,7 +55,7 @@ loads = pickle.loads
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
-    'dtype', 'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer',
+    'dtype', 'fromstring', 'frombuffer', 'int_asbuffer',
     'where', 'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose',
     'lexsort', 'set_numeric_ops', 'can_cast', 'promote_types',
     'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
@@ -68,6 +76,8 @@ __all__ = [
     'TooHardError', 'AxisError'
     ]
 
+if _has_fromfile:
+    __all__.append('fromfile')
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])

@@ -4212,9 +4212,11 @@ static struct PyMethodDef array_module_methods[] = {
     {"frombuffer",
         (PyCFunction)array_frombuffer,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#ifndef NPY_PYTHON_COMPILER_DIFFER
     {"fromfile",
         (PyCFunction)array_fromfile,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#endif
     {"can_cast",
         (PyCFunction)array_can_cast_safely,
         METH_VARARGS | METH_KEYWORDS, NULL},
