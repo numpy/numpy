@@ -53,9 +53,7 @@ _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
 _TABLE = re.compile(r'^\s+\[([\s*[0-9]*)\] ([a-zA-Z0-9_]*)')
 
 # the same as cygwin plus some additional parameters
-_parent = distutils.cygwinccompiler.CygwinCCompiler # super() useable for all
-                                                    # python versions?
-class Mingw32CCompiler(_parent):
+class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
     """ A modified MingW32 compiler compatible with an MSVC built Python.
 
     """
@@ -266,8 +264,7 @@ class Mingw32CCompiler(_parent):
 
         # adds at least temporary build directory to library_dirs
         libraries, library_dirs, runtime_library_dirs  = \
-        _parent._fix_lib_args(self, libraries, library_dirs, runtime_library_dirs)
-
+        super(Mingw32CCompiler, self)._fix_lib_args(libraries, library_dirs, runtime_library_dirs)
         assert(library_dirs != None)
 
         # vcruntime 140 is there...
@@ -638,7 +635,7 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     maj = msvc_runtime_major()
     if maj:
-        if type(msver) == type(1.0) and msver == 14.0:
+        if isinstance(msver, float) and msver == 14.0:
             # vcruntime maj = 140 ...
             # I did not check what should be changed here ...
             msver = 140
