@@ -24,7 +24,7 @@ if sys.version_info[0] < 3:
 _has_fromfile = False
 try:
     # disabled fromfile for mingw compile
-    from .multiarry import fromfile
+    from .multiarray import fromfile
     _has_fromfile =  True
 except ImportError:
     pass
