@@ -717,6 +717,13 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     else:
         axis = normalize_axis_index(axis, asorted.ndim)
 
+    if asorted.shape[axis] == 0:
+        # for empty axis integer indices fail so use slicing to get same result
+        # as median (which is mean of empty slice = nan)
+        indexer = [slice(None)] * asorted.ndim
+        indexer[axis] = slice(0, 0)
+        return np.ma.mean(asorted[indexer], axis=axis, out=out)
+
     if asorted.ndim == 1:
         counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)

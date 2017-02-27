@@ -1039,14 +1039,14 @@ class TestMedian(TestCase):
 
         # axis 0 and 1
         b = np.ma.masked_array(np.array([], dtype=float, ndmin=2))
-        assert_equal(np.median(a, axis=0), b)
-        assert_equal(np.median(a, axis=1), b)
+        assert_equal(np.ma.median(a, axis=0), b)
+        assert_equal(np.ma.median(a, axis=1), b)
 
         # axis 2
         b = np.ma.masked_array(np.array(np.nan, dtype=float, ndmin=2))
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a, axis=2), b)
+            assert_equal(np.ma.median(a, axis=2), b)
             assert_(w[0].category is RuntimeWarning)
 
     def test_object(self):
