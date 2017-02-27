@@ -10,7 +10,7 @@
 
 /*
  * Functions used to try to avoid/elide temporaries in python expressions
- * of type a + b + b by translating some operations into inplace operations.
+ * of type a + b + b by translating some operations into in-place operations.
  * This example translates to this bytecode:
  *
  *        0 LOAD_FAST                0 (a)
@@ -23,7 +23,7 @@
  * instructions so they always have a reference count larger than 1.
  * The temporary of the first BINARY_ADD on the other hand only has a count of
  * 1. Only temporaries can have a count of 1 in python so we can use this to
- * transform the second operation into an inplace operation and not affect the
+ * transform the second operation into an in-place operation and not affect the
  * output of the program.
  * CPython does the same thing to resize memory instead of copying when doing
  * string concatenation.
@@ -41,19 +41,19 @@
  * This is an expensive operation so temporaries are only avoided for rather
  * large arrays.
  *
- * A possible future improvement would be to change cpython to give as access
+ * A possible future improvement would be to change cpython to give us access
  * to the top of the stack. Then we could just check that the objects involved
  * are on the cpython stack instead of checking the function callstack.
  *
- * Elision can be applied to all operations that do have inplace variants and
+ * Elision can be applied to all operations that do have in-place variants and
  * do not change types (addition, subtraction, multiplication, float division,
  * logical and bitwise operations ...)
  * For commutative operations (addition, multiplication, ...) if eliding into
- * the lefthand side fails it can succedd on the righthand side by swapping the
+ * the lefthand side fails it can succeed on the righthand side by swapping the
  * arguments. E.g. b * (a * 2) can be elided by changing it to (2 * a) * b.
  *
- * TODO only supports systems with backtrace(), windows can probably be
- * supported too by using the appropriate windows apis.
+ * TODO only supports systems with backtrace(), Windows can probably be
+ * supported too by using the appropriate Windows APIs.
  */
 
 #if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && ! defined PYPY_VERSION
@@ -69,7 +69,7 @@
 #endif
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
- * becomes less than speed gained by inplace operations. Depends on stack depth
+ * becomes less than speed gained by in-place operations. Depends on stack depth
  * being checked.  Measurements with 10 stacks show it getting worthwhile
  * around 100KiB but to be conservative put it higher around where the L2 cache
  * spills.
@@ -79,7 +79,7 @@
 #else
 /*
  * in debug mode always elide but skip scalars as these can convert to 0d array
- * during in place operations
+ * during in-place operations
  */
 #define NPY_MIN_ELIDE_BYTES (32)
 #endif
@@ -272,7 +272,7 @@ check_callers(int * cannot)
 
 /*
  * check if in "alhs @op@ orhs" that alhs is a temporary (refcnt == 1) so we
- * can do inplace operations instead of creating a new temporary
+ * can do in-place operations instead of creating a new temporary
  * "cannot" is set to true if it cannot be done even with swapped arguments
  */
 static int
