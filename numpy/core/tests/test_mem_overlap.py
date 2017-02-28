@@ -5,7 +5,7 @@ import itertools
 
 import numpy as np
 from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal,
-                           assert_array_equal, assert_allclose)
+                           assert_array_equal, assert_allclose, dec)
 
 from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import umath_tests
@@ -97,6 +97,7 @@ def test_overlapping_assignments():
         yield _check_assignment, srcidx, dstidx
 
 
+@dec.slow
 def test_diophantine_fuzz():
     # Fuzz test the diophantine solver
     rng = np.random.RandomState(1234)
@@ -373,6 +374,7 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
                 infeasible += 1
 
 
+@dec.slow
 def test_may_share_memory_easy_fuzz():
     # Check that overlap problems with common strides are always
     # solved with little work.
@@ -382,6 +384,7 @@ def test_may_share_memory_easy_fuzz():
                                      min_count=2000)
 
 
+@dec.slow
 def test_may_share_memory_harder_fuzz():
     # Overlap problems with not necessarily common strides take more
     # work.
@@ -683,6 +686,7 @@ class TestUFunc(object):
                         # Check result
                         assert_copy_equivalent(operation, [a], out=b_out, axis=axis)
 
+    @dec.slow
     def test_unary_ufunc_call_fuzz(self):
         self.check_unary_fuzz(np.invert, None, np.int16)
 
@@ -893,6 +897,7 @@ class TestUFunc(object):
         check(x, x.copy(), x)
         check(x, x, x.copy())
 
+    @dec.slow
     def test_binary_ufunc_1d_manual(self):
         ufunc = np.add
 
