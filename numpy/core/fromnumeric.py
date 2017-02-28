@@ -66,15 +66,28 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     """
     Take elements from an array along an axis.
 
-    This function does the same thing as "fancy" indexing (indexing arrays
-    using arrays); however, it can be easier to use if you need elements
-    along a given axis.
+    When axis is not None, this function does the same thing as "fancy"
+    indexing (indexing arrays using arrays); however, it can be easier to use
+    if you need elements along a given axis. A call such as
+    ``np.take(arr, indices, axis=3)`` is equivalent to
+    ``arr[:,:,:,indices,...]``.
+
+    Explained without fancy indexing, this is equivalent to the following use
+    of `ndindex`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of
+    indices::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        Nj = indices.shape
+        for ii in ndindex(Ni):
+            for jj in ndindex(Nj):
+                for kk in ndindex(Nk):
+                    out[ii + jj + kk] = a[ii + (indices[jj],) + kk]
 
     Parameters
     ----------
-    a : array_like
+    a : array_like (Ni..., M, Nk...)
         The source array.
-    indices : array_like
+    indices : array_like (Nj...)
         The indices of the values to extract.
 
         .. versionadded:: 1.8.0
@@ -83,7 +96,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     axis : int, optional
         The axis over which to select values. By default, the flattened
         input array is used.
-    out : ndarray, optional
+    out : ndarray, optional (Ni..., Nj..., Nk...)
         If provided, the result will be placed in this array. It should
         be of the appropriate shape and dtype.
     mode : {'raise', 'wrap', 'clip'}, optional
@@ -99,13 +112,30 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     Returns
     -------
-    subarray : ndarray
+    out : ndarray (Ni..., Nj..., Nk...)
         The returned array has the same type as `a`.
 
     See Also
     --------
     compress : Take elements using a boolean mask
     ndarray.take : equivalent method
+
+    Notes
+    -----
+
+    By eliminating the inner loop in the description above, and using `s_` to
+    build simple slice objects, `take` can be expressed  in terms of applying
+    fancy indexing to each 1-d slice::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nj):
+                out[ii + s_[...,] + kk] = a[ii + s_[:,] + kk][indices]
+
+    For this reason, it is equivalent to (but faster than) the following use
+    of `apply_along_axis`::
+
+        out = np.apply_along_axis(lambda a_1d: a_1d[indices], axis, a)
 
     Examples
     --------
