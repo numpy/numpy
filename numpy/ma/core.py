@@ -5635,6 +5635,18 @@ class MaskedArray(ndarray):
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
+    def partition(self, *args, **kwargs):
+        warnings.warn("Warning: 'partition' will ignore the 'mask' "
+                      "of the {}.".format(self.__class__.__name__),
+                      stacklevel=2)
+        return super(MaskedArray, self).partition(*args, **kwargs)
+
+    def argpartition(self, *args, **kwargs):
+        warnings.warn("Warning: 'argpartition' will ignore the 'mask' "
+                      "of the {}.".format(self.__class__.__name__),
+                      stacklevel=2)
+        return super(MaskedArray, self).argpartition(*args, **kwargs)
+
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
         """
