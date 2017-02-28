@@ -5531,15 +5531,7 @@ class MaskedArray(ndarray):
         sidx = self.argsort(axis=axis, kind=kind, order=order,
                             fill_value=fill_value, endwith=endwith)
 
-        # save memory for 1d arrays
-        if self.ndim == 1:
-            idx = sidx
-        else:
-            idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
-            idx[axis] = sidx
-            idx = tuple(idx)
-
-        self[...] = self[idx]
+        self[...] = np.take_along_axis(self, sidx, axis=axis)
 
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
