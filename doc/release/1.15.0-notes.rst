@@ -351,5 +351,22 @@ inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
 one-but-last dimension of the input arguments, and leave a size 1 dimension in
 that place in the output.
 
+New ``np.take_along_axis`` and ``np.put_along_axis`` functions
+--------------------------------------------------------------
+When used on multidimensional arrays, ``argsort``, ``argmin``, ``argmax``, and
+``argpartition`` return arrays that are difficult to use as indices.
+``take_along_axis`` provides an easy way to use these indices to lookup values
+within an array, so that::
+
+    np.take_along_axis(a, np.argsort(a, axis=axis), axis=axis)
+
+is the same as::
+
+    np.sort(a, axis=axis)
+
+``np.put_along_axis`` acts as the dual operation for writing to these indices
+within an array.
+
+
 Changes
 =======
