@@ -189,6 +189,11 @@ if all fields that are non-masked in both are equal, thus making the behaviour
 identical to what one gets by comparing an unstructured masked array and then
 doing ``.all()`` over some axis.
 
+np.matrix with booleans elements can now be created using the string syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
+``np.matrix('True')``. Now, this works as expected.
+
 Changes
 =======
 

@@ -35,8 +35,8 @@ class TestCtor(TestCase):
         assert_(mvec.shape == (1, 5))
 
     def test_exceptions(self):
-        # Check for TypeError when called with invalid string data.
-        assert_raises(TypeError, matrix, "invalid")
+        # Check for ValueError when called with invalid string data.
+        assert_raises(ValueError, matrix, "invalid")
 
     def test_bmat_nondefault_str(self):
         A = np.array([[1, 2], [3, 4]])
@@ -185,6 +185,11 @@ class TestProperties(TestCase):
     def test_repr(self):
         A = matrix([[1, 0], [0, 1]])
         assert_(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
+
+    def test_make_bool_matrix_from_str(self):
+        A = matrix('True; True; False')
+        B = matrix([[True], [True], [False]])
+        assert_array_equal(A, B)
 
 class TestCasting(TestCase):
     def test_basic(self):
