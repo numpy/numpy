@@ -21,8 +21,8 @@ def configuration(parent_package='', top_path=None):
         os.path.join(src_dir, 'f2c_s_lapack.c'),
         os.path.join(src_dir, 'f2c_lapack.c'),
         os.path.join(src_dir, 'f2c_blas.c'),
+        os.path.join(src_dir, 'f2c_config.c'),
         os.path.join(src_dir, 'f2c.c'),
-        os.path.join(src_dir, 'dlamch.c'),
     ]
     all_sources = config.paths(lapack_lite_src)
 

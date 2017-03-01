@@ -8,6 +8,7 @@ Typical invocation:
 
 Requires the following to be on the path:
  * f2c
+ * patch
 
 """
 from __future__ import division, absolute_import, print_function
@@ -166,6 +167,8 @@ class LapackLibrary(FortranLibrary):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
         if 'blas' in filename.lower():
             routine.type = 'blas'
+        elif 'install' in filename.lower():
+            routine.type = 'config'
         elif rname.startswith('z'):
             routine.type = 'z_lapack'
         elif rname.startswith('c'):
@@ -194,7 +197,11 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     lapack_src_dir = os.path.join(lapack_dir, 'SRC')
     if not os.path.exists(lapack_src_dir):
         lapack_src_dir = os.path.join(lapack_dir, 'src')
-    library = LapackLibrary([blas_src_dir, lapack_src_dir])
+    install_src_dir = os.path.join(lapack_dir, 'INSTALL')
+    if not os.path.exists(install_src_dir):
+        install_src_dir = os.path.join(lapack_dir, 'install')
+
+    library = LapackLibrary([install_src_dir, blas_src_dir, lapack_src_dir])
 
     for r in ignores:
         library.addIgnorableRoutine(r)
@@ -222,7 +229,7 @@ def getWrappedRoutineNames(wrapped_routines_file):
                 routines.append(line)
     return routines, ignores
 
-types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack'}
+types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
 
 def dumpRoutineNames(library, output_dir):
     for typename in {'unknown'} | types:
@@ -284,6 +291,11 @@ def main():
             print('f2c failed on %s' % fortran_file)
             break
         scrubF2CSource(c_file)
+
+        # patch any changes needed to the C file
+        c_patch_file = c_file + '.patch'
+        if os.path.exists(c_patch_file):
+            subprocess.check_call(['patch', '-u', c_file, c_patch_file])
 
         print()
 
