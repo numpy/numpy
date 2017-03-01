@@ -11,6 +11,7 @@ Matrix and vector products
    :toctree: generated/
 
    dot
+   linalg.multi_dot
    vdot
    inner
    outer
