@@ -1782,7 +1782,7 @@ L10:
 doublereal slamc3_(real *a, real *b)
 {
     /* System generated locals */
-    real ret_val;
+    volatile real ret_val;
 
 
 /*
