@@ -190,14 +190,9 @@ identical to what one gets by comparing an unstructured masked array and then
 doing ``.all()`` over some axis.
 
 np.matrix with booleans elements can now be created using the string syntax
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-np.matrix failed whenever one attempts to use it with booleans, e.g.,
-``np.matrix('True')``. This failed because the previous algorithm looked in
-the alphabet ``0123456789.-+jeEL`` to decode each string passed to
-``np.matrix``, which clearly does not include the case for ``True`` or
-``False`` strings. This problem is now solved by using ``ast.literal_eval``
-to correctly validate each string. Additionally, a ``ValueError``, rather than
-a ``TypeError``, is now throw whenever an invalid string is passed.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
+``np.matrix('True')``. Now, this works as expected.
 
 Changes
 =======
