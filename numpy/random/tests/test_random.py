@@ -384,11 +384,11 @@ class TestRandomDist(TestCase):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
     def test_bytes(self):
         np.random.seed(self.seed)
