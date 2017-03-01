@@ -71,6 +71,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     suppress : bool, optional
         Whether or not suppress printing of small floating point values
         using scientific notation (default False).
+        A number is "very small" if it is smaller than the current printing
+        precision.
     nanstr : str, optional
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
