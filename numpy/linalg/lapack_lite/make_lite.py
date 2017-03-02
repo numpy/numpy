@@ -24,7 +24,7 @@ import clapack_scrub
 #                     -C to check array subscripts
 F2C_ARGS = ['-A']
 
-# The header to add to the top of the *_lite.c file. Note that dlamch_() calls
+# The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
 HEADER = '''\
 /*
@@ -164,12 +164,18 @@ class FortranLibrary(object):
 class LapackLibrary(FortranLibrary):
     def _newFortranRoutine(self, rname, filename):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
-        if 'BLAS' in filename:
+        if 'blas' in filename.lower():
             routine.type = 'blas'
         elif rname.startswith('z'):
-            routine.type = 'zlapack'
+            routine.type = 'z_lapack'
+        elif rname.startswith('c'):
+            routine.type = 'c_lapack'
+        elif rname.startswith('s'):
+            routine.type = 's_lapack'
+        elif rname.startswith('d'):
+            routine.type = 'd_lapack'
         else:
-            routine.type = 'dlapack'
+            routine.type = 'lapack'
         return routine
 
     def allRoutinesByType(self, typename):
@@ -216,7 +222,7 @@ def getWrappedRoutineNames(wrapped_routines_file):
                 routines.append(line)
     return routines, ignores
 
-types = {'blas', 'zlapack', 'dlapack'}
+types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack'}
 
 def dumpRoutineNames(library, output_dir):
     for typename in {'unknown'} | types:
@@ -267,7 +273,7 @@ def main():
     dumpRoutineNames(library, output_dir)
 
     for typename in types:
-        fortran_file = os.path.join(output_dir, '%s_lite.f' % typename)
+        fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
         c_file = fortran_file[:-2] + '.c'
         print('creating %s ...'  % c_file)
         routines = library.allRoutinesByType(typename)

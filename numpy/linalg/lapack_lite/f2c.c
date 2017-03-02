@@ -1,3 +1,12 @@
+/*
+  Functions here are copied from the source code for libf2c.
+
+  Typically each function there is in its own file.
+
+  We don't link against libf2c directly, because we can't guarantee
+  it is available, and shipping a static library isn't portable.
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +18,7 @@ extern void s_wsfe(cilist *f) {;}
 extern void e_wsfe(void) {;}
 extern void do_fio(integer *c, char *s, ftnlen l) {;}
 
-/* You'll want this if you redo the *_lite.c files with the -C option
+/* You'll want this if you redo the f2c_*.c files with the -C option
  * to f2c for checking array subscripts. (It's not suggested you do that
  * for production use, of course.) */
 extern int
