@@ -1,18 +1,28 @@
 #!/usr/bin/env python
+"""
+Usage: make_lite.py <wrapped_routines_file> <lapack_dir> <output_dir>
+
+Typical invocation:
+
+    make_lite.py wrapped_routines /tmp/lapack-3.x.x .
+
+Requires the following to be on the path:
+ * f2c
+
+"""
 from __future__ import division, absolute_import, print_function
 
-import sys, os
+import sys
+import os
+import subprocess
+
 import fortran
 import clapack_scrub
-
-try: set
-except NameError:
-    from sets import Set as set
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
 #                     -C to check array subscripts
-F2C_ARGS = '-A'
+F2C_ARGS = ['-A']
 
 # The header to add to the top of the *_lite.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
@@ -63,6 +73,9 @@ class FortranRoutine(object):
             deps = fortran.getDependencies(self.filename)
             self._dependencies = [d.lower() for d in deps]
         return self._dependencies
+
+    def __repr__(self):
+        return "FortranRoutine({!r}, filename={!r})".format(self.name, self.filename)
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -188,64 +201,61 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     return library
 
 def getWrappedRoutineNames(wrapped_routines_file):
-    fo = open(wrapped_routines_file)
     routines = []
     ignores = []
-    for line in fo:
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        if line.startswith('IGNORE:'):
-            line = line[7:].strip()
-            ig = line.split()
-            ignores.extend(ig)
-        else:
-            routines.append(line)
+    with open(wrapped_routines_file) as fo:
+        for line in fo:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if line.startswith('IGNORE:'):
+                line = line[7:].strip()
+                ig = line.split()
+                ignores.extend(ig)
+            else:
+                routines.append(line)
     return routines, ignores
 
+types = {'blas', 'zlapack', 'dlapack'}
+
 def dumpRoutineNames(library, output_dir):
-    for typename in ['unknown', 'blas', 'dlapack', 'zlapack']:
+    for typename in {'unknown'} | types:
         routines = library.allRoutinesByType(typename)
         filename = os.path.join(output_dir, typename + '_routines.lst')
-        fo = open(filename, 'w')
-        for r in routines:
-            deps = r.dependencies()
-            fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
-        fo.close()
+        with open(filename, 'w') as fo:
+            for r in routines:
+                deps = r.dependencies()
+                fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
 
 def concatenateRoutines(routines, output_file):
-    output_fo = open(output_file, 'w')
-    for r in routines:
-        fo = open(r.filename, 'r')
-        source = fo.read()
-        fo.close()
-        output_fo.write(source)
-    output_fo.close()
+    with open(output_file, 'w') as output_fo:
+        for r in routines:
+            with open(r.filename, 'r') as fo:
+                source = fo.read()
+            output_fo.write(source)
 
 class F2CError(Exception):
     pass
 
 def runF2C(fortran_filename, output_dir):
-    # we're assuming no funny business that needs to be quoted for the shell
-    cmd = "f2c %s -d %s %s" % (F2C_ARGS, output_dir, fortran_filename)
-    rc = os.system(cmd)
-    if rc != 0:
+    try:
+        subprocess.check_call(
+            ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
+        )
+    except subprocess.CalledProcessError:
         raise F2CError
 
 def scrubF2CSource(c_file):
-    fo = open(c_file, 'r')
-    source = fo.read()
-    fo.close()
+    with open(c_file) as fo:
+        source = fo.read()
     source = clapack_scrub.scrubSource(source, verbose=True)
-    fo = open(c_file, 'w')
-    fo.write(HEADER)
-    fo.write(source)
-    fo.close()
+    with open(c_file, 'w') as fo:
+        fo.write(HEADER)
+        fo.write(source)
 
 def main():
     if len(sys.argv) != 4:
-        print('Usage: %s wrapped_routines_file lapack_dir output_dir' % \
-              (sys.argv[0],))
+        print(__doc__)
         return
     wrapped_routines_file = sys.argv[1]
     lapack_src_dir = sys.argv[2]
@@ -256,11 +266,11 @@ def main():
 
     dumpRoutineNames(library, output_dir)
 
-    for typename in ['blas', 'dlapack', 'zlapack']:
-        print('creating %s_lite.c ...'  % typename)
-        routines = library.allRoutinesByType(typename)
-        fortran_file = os.path.join(output_dir, typename+'_lite.f')
+    for typename in types:
+        fortran_file = os.path.join(output_dir, '%s_lite.f' % typename)
         c_file = fortran_file[:-2] + '.c'
+        print('creating %s ...'  % c_file)
+        routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
         try:
             runF2C(fortran_file, output_dir)
@@ -268,6 +278,8 @@ def main():
             print('f2c failed on %s' % fortran_file)
             break
         scrubF2CSource(c_file)
+
+        print()
 
 if __name__ == '__main__':
     main()
