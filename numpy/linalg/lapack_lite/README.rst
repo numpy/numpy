@@ -3,8 +3,7 @@ Regenerating lapack_lite source
 
 :Author: David M. Cooke <cookedm@physics.mcmaster.ca>
 
-The ``numpy/linalg/blas_lite.c``, ``numpy/linalg/dlapack_lite.c``, and
-``numpy/linalg/zlapack_lite.c`` are ``f2c``'d versions of the LAPACK routines
+The ``numpy/linalg/f2c_*.c`` files are ``f2c``'d versions of the LAPACK routines
 required by the ``LinearAlgebra`` module, and wrapped by the ``lapack_lite``
 module. The scripts in this directory can be used to create these files
 automatically from a directory of LAPACK source files.
@@ -23,9 +22,8 @@ properly. Assuming that you have an unpacked LAPACK source tree in
 $ python2 ./make_lite.py wrapped_routines ~/LAPACK new-lite/
 
 This will grab the right routines, with dependencies, put them into the
-appropriate ``blas_lite.f``, ``dlapack_lite.f``, or ``zlapack_lite.f`` files,
-run ``f2c`` over them, then do some scrubbing similar to that done to
-generate the CLAPACK_ distribution.
+appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing
+similar to that done to generate the CLAPACK_ distribution.
 
 .. _CLAPACK: http://netlib.org/clapack/index.html
 
