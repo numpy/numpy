@@ -2214,6 +2214,13 @@ class TestCorrelate(TestCase):
         r_z = r_z[::-1].conjugate()
         z = np.correlate(y, x, mode='full')
         assert_array_almost_equal(z, r_z)
+        
+    def test_zero_size(self):   		
+    	with self.assertRaises(ValueError):
+            np.correlate(np.array(()), np.ones(1000), mode='full')
+        with self.assertRaises(ValueError):
+            np.correlate(np.ones(1000), np.array(()), mode='full')
+    	 
 
 
 class TestConvolve(TestCase):

@@ -971,6 +971,11 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
+	#check for empty sequences (Issue 7625)
+    if len(array(a, copy=False, ndmin=1)) == 0:
+        raise ValueError('a cannot be empty')
+    if len(array(v, copy=False, ndmin=1)) == 0:
+        raise ValueError('v cannot be empty')
     mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
 
