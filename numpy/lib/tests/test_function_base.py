@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import operator
 import warnings
 import sys
+import decimal
 
 import numpy as np
 from numpy.testing import (
@@ -257,6 +258,11 @@ class TestAverage(TestCase):
 
         y6 = np.matrix(rand(5, 5))
         assert_array_equal(y6.mean(0), average(y6, 0))
+
+        y7 = np.array([decimal.Decimal(x) for x in range(10)])
+        w7 = np.array([decimal.Decimal(1) for _ in range(10)])
+        w7 /= w7.sum()
+        assert_almost_equal(y7.mean(0), average(y7, weights=w7)) 
 
     def test_weights(self):
         y = np.arange(10)
