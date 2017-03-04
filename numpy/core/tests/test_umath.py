@@ -1379,6 +1379,19 @@ class TestSpecialMethods(TestCase):
         a = A()
         self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
+    def test_none_wrap(self):
+        # Tests that issue #8507 is resolved. Previously, this would segfault
+
+        class A(object):
+            def __array__(self):
+                return np.zeros(1)
+
+            def __array_wrap__(self, arr, context=None):
+                return None
+
+        a = A()
+        assert_equal(ncu.maximum(a, a), None)
+
     def test_default_prepare(self):
 
         class with_wrap(object):

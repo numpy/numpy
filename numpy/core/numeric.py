@@ -2212,7 +2212,7 @@ def binary_repr(num, width=None):
         designated form.
 
         If the `width` value is insufficient, it will be ignored, and `num` will
-        be returned in binary(`num` > 0) or two's complement (`num` < 0) form
+        be returned in binary (`num` > 0) or two's complement (`num` < 0) form
         with its width equal to the minimum number of bits needed to represent
         the number in the designated form. This behavior is deprecated and will
         later raise an error.
@@ -2282,10 +2282,16 @@ def binary_repr(num, width=None):
 
         else:
             poswidth = len(bin(-num)[2:])
-            twocomp = 2**(poswidth + 1) + num
 
+            # See gh-8679: remove extra digit
+            # for numbers at boundaries.
+            if 2**(poswidth - 1) == -num:
+                poswidth -= 1
+
+            twocomp = 2**(poswidth + 1) + num
             binary = bin(twocomp)[2:]
             binwidth = len(binary)
+
             outwidth = max(binwidth, width)
             warn_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary

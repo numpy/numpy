@@ -2094,6 +2094,13 @@ class TestRegression(TestCase):
         # Check the references hold for the copied objects.
         self.assertTrue(arr_cp[0, 1] is arr_cp[1, 1])
 
+    def test_deepcopy_empty_object_array(self):
+        # Ticket #8536.
+        # Deepcopy should succeed
+        a = np.array([], dtype=object)
+        b = copy.deepcopy(a)
+        assert_(a.shape == b.shape)
+
     def test_bool_subscript_crash(self):
         # gh-4494
         c = np.rec.array([(1, 2, 3), (4, 5, 6)])
