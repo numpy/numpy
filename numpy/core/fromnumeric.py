@@ -1162,6 +1162,16 @@ def squeeze(a, axis=None):
         dimensions of length 1 removed. This is always `a` itself
         or a view into `a`.
 
+    Raises
+    ------
+    ValueError
+        If `axis` is not `None`, and an axis being squeezed is not of length 1
+
+    See Also
+    --------
+    expand_dims : The inverse operation, adding singleton dimensions
+    reshape : Insert, remove, and combine dimensions, and resize existing ones
+
     Examples
     --------
     >>> x = np.array([[[0], [1], [2]]])
@@ -1169,7 +1179,13 @@ def squeeze(a, axis=None):
     (1, 3, 1)
     >>> np.squeeze(x).shape
     (3,)
-    >>> np.squeeze(x, axis=(2,)).shape
+    >>> np.squeeze(x, axis=0).shape
+    (3, 1)
+    >>> np.squeeze(x, axis=1).shape
+    Traceback (most recent call last):
+    ...
+    ValueError: cannot select an axis to squeeze out which has size not equal to one
+    >>> np.squeeze(x, axis=2).shape
     (1, 3)
 
     """
