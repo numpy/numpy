@@ -59,8 +59,6 @@ class CallOnceOnly(object):
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
-PYTHON_HAS_UNICODE_WIDE = True
-
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -436,12 +434,6 @@ def configuration(parent_package='',top_path=None):
 
             # Inline check
             inline = config_cmd.check_inline()
-
-            # Check whether we need our own wide character support
-            if not config_cmd.check_decl('Py_UNICODE_WIDE', headers=['Python.h']):
-                PYTHON_HAS_UNICODE_WIDE = True
-            else:
-                PYTHON_HAS_UNICODE_WIDE = False
 
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
