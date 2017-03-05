@@ -973,7 +973,7 @@ cdef class RandomState:
             raise ValueError("low is out of bounds for %s" % (key,))
         if high > highbnd:
             raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
+        if low >= high and np.prod(size) != 0:
             raise ValueError("low >= high")
 
         with self.lock:
@@ -1106,8 +1106,6 @@ cdef class RandomState:
             raise ValueError("a must be 1-dimensional")
         else:
             pop_size = a.shape[0]
-            if pop_size is 0:
-                raise ValueError("a must be non-empty")
 
         if p is not None:
             d = len(p)

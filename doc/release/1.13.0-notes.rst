@@ -208,6 +208,13 @@ array, in the same way that ``sort`` already did. Additionally, the
 Note that this argument is not added at the end, so breaks any code that
 passed ``fill_value`` as a positional argument.
 
+``randint`` and ``choice`` now work on empty distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Even when no elements needed to be drawn, ``np.random.randint`` and
+``np.random.choice`` raised an error when the arguments described an empty
+distribution. This has been fixed so that e.g.
+``np.random.choice([],0) == np.array([],dtype=float64)``.
+
 Changes
 =======
 
