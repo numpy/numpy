@@ -777,7 +777,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'numpyconfig.h'),
             join('include', 'numpy', 'ndarraytypes.h'),
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
-            join('include', 'numpy', '_numpyconfig.h.in'),
             # add library sources as distuils does not consider libraries
             # dependencies
             ] + npysort_sources + npymath_sources
