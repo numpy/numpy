@@ -57,7 +57,7 @@
 
 /**begin repeat1
 * #OP = EQ,NE,LT,LE,GT,GE#
-* #OPNAME = eq,ne,lt,le,gt,ge#
+* #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
 */
 
 /**begin repeat2
@@ -108,7 +108,7 @@ static void base_@TYPE@_@ALL_OR_ANY@_@OPNAME@
 /**begin repeat
 * #TYPE = float,double,int#
 **/
-void simd_core_contiguous_@TYPE@_all_eq(
+void simd_core_contiguous_@TYPE@_all_equal(
     char **args, npy_intp *dimensions, npy_intp* steps, void* data)
 {
     npy_intp i, n, j;
@@ -178,9 +178,9 @@ void simd_core_contiguous_@TYPE@_all_eq(
 /**begin repeat
 * #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
 *         double,longdouble,cfloat,cdouble,clongdouble#
-* #IS_VECTD = 0*4,1,0,0*4,1,1,0*4#
+* #IS_VECTD = 0*4,1,0*5,1,1,0*4#
 */
-void dispatch_@TYPE@_all_eq(
+void dispatch_@TYPE@_all_equal(
     char **args, npy_intp *dimensions, npy_intp* steps, void* data)
 {
 
@@ -190,7 +190,7 @@ void dispatch_@TYPE@_all_eq(
         if ((I > (2*BLOCK_SIZE)) & (a_I == sizeof(@TYPE@)) 
                 & (b_I == sizeof(@TYPE@)))
         {
-            simd_core_contiguous_@TYPE@_all_eq(args, dimensions, steps, data);
+            simd_core_contiguous_@TYPE@_all_equal(args, dimensions, steps, data);
             return;
         }
     #endif
@@ -204,8 +204,8 @@ void dispatch_@TYPE@_all_eq(
 /* create arrays of type specific functions for each gufunc  */
 
 /**begin repeat
-* #NAME = all_eq,all_ne,all_lt,all_le,all_gt,all_ge,
-*         any_eq,any_ne,any_lt,any_le,any_gt,any_ge#
+* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,all_greater_equal,
+*         any_equal,any_not_equal,any_less,any_less_equal,any_greater,any_greater_equal#
 * #APPROACH = dispatch,base*11#
 */
 
@@ -264,19 +264,19 @@ typedef struct gufunc_descriptor_struct {
 } GUFUNC_DESCRIPTOR_t;
 
 static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
-    {"all_equal",           all_eq_funcs},
-    {"all_not_equal",       all_ne_funcs},
-    {"all_less",            all_lt_funcs},
-    {"all_less_equal",      all_le_funcs},
-    {"all_greater",         all_gt_funcs},
-    {"all_greater_equal",   all_ge_funcs},
+    {"all_equal",           all_equal_funcs},
+    {"all_not_equal",       all_not_equal_funcs},
+    {"all_less",            all_less_funcs},
+    {"all_less_equal",      all_less_equal_funcs},
+    {"all_greater",         all_greater_funcs},
+    {"all_greater_equal",   all_greater_equal_funcs},
 
-    {"any_equal",           any_eq_funcs},
-    {"any_not_equal",       any_ne_funcs},
-    {"any_less",            any_lt_funcs},
-    {"any_less_equal",      any_le_funcs},
-    {"any_greater",         any_gt_funcs},
-    {"any_greater_equal",   any_ge_funcs}
+    {"any_equal",           any_equal_funcs},
+    {"any_not_equal",       any_not_equal_funcs},
+    {"any_less",            any_less_funcs},
+    {"any_less_equal",      any_less_equal_funcs},
+    {"any_greater",         any_greater_funcs},
+    {"any_greater_equal",   any_greater_equal_funcs}
 };
 
 
