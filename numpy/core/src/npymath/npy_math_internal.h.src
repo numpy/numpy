@@ -63,7 +63,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-double npy_expm1(double x)
+NPY_INPLACE double npy_expm1(double x)
 {
     if (npy_isinf(x) && x > 0) {
         return x;
@@ -83,7 +83,7 @@ double npy_expm1(double x)
 #endif
 
 #ifndef HAVE_LOG1P
-double npy_log1p(double x)
+NPY_INPLACE double npy_log1p(double x)
 {
     if (npy_isinf(x) && x > 0) {
         return x;
@@ -110,7 +110,7 @@ double npy_log1p(double x)
 #ifndef HAVE_ATAN2
 /* XXX: we should have this in npy_math.h */
 #define NPY_DBL_EPSILON 1.2246467991473531772E-16
-double npy_atan2(double y, double x)
+NPY_INPLACE double npy_atan2(double y, double x)
 {
     npy_int32 k, m, iy, ix, hx, hy;
     npy_uint32 lx,ly;
@@ -189,7 +189,7 @@ double npy_atan2(double y, double x)
 #endif
 
 #ifndef HAVE_HYPOT
-double npy_hypot(double x, double y)
+NPY_INPLACE double npy_hypot(double x, double y)
 {
     double yx;
 
@@ -219,7 +219,7 @@ double npy_hypot(double x, double y)
 #endif
 
 #ifndef HAVE_ACOSH
-double npy_acosh(double x)
+NPY_INPLACE double npy_acosh(double x)
 {
     if (x < 1.0) {
         return NPY_NAN;
@@ -239,7 +239,7 @@ double npy_acosh(double x)
 #endif
 
 #ifndef HAVE_ASINH
-double npy_asinh(double xx)
+NPY_INPLACE double npy_asinh(double xx)
 {
     double x, d;
     int sign;
@@ -261,7 +261,7 @@ double npy_asinh(double xx)
 #endif
 
 #ifndef HAVE_ATANH
-double npy_atanh(double x)
+NPY_INPLACE double npy_atanh(double x)
 {
     if (x > 0) {
         return -0.5*npy_log1p(-2.0*x/(1.0 + x));
@@ -276,7 +276,7 @@ double npy_atanh(double x)
 #if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
 #pragma optimize("", off)
 #endif
-double npy_rint(double x)
+NPY_INPLACE double npy_rint(double x)
 {
     double y, r;
 
@@ -302,21 +302,21 @@ double npy_rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-double npy_trunc(double x)
+NPY_INPLACE double npy_trunc(double x)
 {
     return x < 0 ? npy_ceil(x) : npy_floor(x);
 }
 #endif
 
 #ifndef HAVE_EXP2
-double npy_exp2(double x)
+NPY_INPLACE double npy_exp2(double x)
 {
     return npy_exp(NPY_LOGE2*x);
 }
 #endif
 
 #ifndef HAVE_LOG2
-double npy_log2(double x)
+NPY_INPLACE double npy_log2(double x)
 {
 #ifdef HAVE_FREXP
     if (!npy_isfinite(x) || x <= 0.) {
@@ -389,7 +389,7 @@ double npy_log2(double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x)
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return (@type@) npy_@kind@((double)x);
 }
@@ -405,7 +405,7 @@ double npy_log2(double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x, @type@ y)
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) npy_@kind@((double)x, (double) y);
 }
@@ -416,7 +416,7 @@ double npy_log2(double x)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = npy_modf((double)x, &niptr);
@@ -429,7 +429,7 @@ double npy_log2(double x)
 #undef ldexp@c@
 #endif
 #ifndef HAVE_LDEXP@C@
-@type@ npy_ldexp@c@(@type@ x, int exp)
+NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
 {
     return (@type@) npy_ldexp((double)x, exp);
 }
@@ -439,7 +439,7 @@ double npy_log2(double x)
 #undef frexp@c@
 #endif
 #ifndef HAVE_FREXP@C@
-@type@ npy_frexp@c@(@type@ x, int* exp)
+NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 {
     return (@type@) npy_frexp(x, exp);
 }
@@ -464,7 +464,7 @@ double npy_log2(double x)
  *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
 #ifdef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x)
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return @kind@@c@(x);
 }
@@ -477,7 +477,7 @@ double npy_log2(double x)
  * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x, @type@ y)
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return @kind@@c@(x, y);
 }
@@ -485,21 +485,21 @@ double npy_log2(double x)
 /**end repeat1**/
 
 #ifdef HAVE_MODF@C@
-@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return modf@c@(x, iptr);
 }
 #endif
 
 #ifdef HAVE_LDEXP@C@
-@type@ npy_ldexp@c@(@type@ x, int exp)
+NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
 {
     return ldexp@c@(x, exp);
 }
 #endif
 
 #ifdef HAVE_FREXP@C@
-@type@ npy_frexp@c@(@type@ x, int* exp)
+NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 {
     return frexp@c@(x, exp);
 }
@@ -508,7 +508,7 @@ double npy_log2(double x)
 /* C99 but not mandatory */
 
 #ifndef HAVE_CBRT@C@
-@type@ npy_cbrt@c@(@type@ x)
+NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
     /* don't set invalid flag */
     if (npy_isnan(x)) {
@@ -522,7 +522,7 @@ double npy_log2(double x)
     }
 }
 #else
-@type@ npy_cbrt@c@(@type@ x)
+NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
     return cbrt@c@(x);
 }
@@ -546,27 +546,27 @@ double npy_log2(double x)
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
 #define DEG2RAD  (NPY_PI@c@/180.0@c@)
 
-@type@ npy_rad2deg@c@(@type@ x)
+NPY_INPLACE @type@ npy_rad2deg@c@(@type@ x)
 {
     return x*RAD2DEG;
 }
 
-@type@ npy_deg2rad@c@(@type@ x)
+NPY_INPLACE @type@ npy_deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
 }
 
-@type@ npy_log2_1p@c@(@type@ x)
+NPY_INPLACE @type@ npy_log2_1p@c@(@type@ x)
 {
     return LOG2E*npy_log1p@c@(x);
 }
 
-@type@ npy_exp2_m1@c@(@type@ x)
+NPY_INPLACE @type@ npy_exp2_m1@c@(@type@ x)
 {
     return npy_expm1@c@(LOGE2*x);
 }
 
-@type@ npy_logaddexp@c@(@type@ x, @type@ y)
+NPY_INPLACE @type@ npy_logaddexp@c@(@type@ x, @type@ y)
 {
     if (x == y) {
         /* Handles infinities of the same sign without warnings */
@@ -587,7 +587,7 @@ double npy_log2(double x)
     }
 }
 
-@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
+NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 {
     if (x == y) {
         /* Handles infinities of the same sign without warnings */
@@ -613,7 +613,7 @@ double npy_log2(double x)
  *
  * The implementation is mostly copied from cpython 3.5.
  */
-@type@
+NPY_INPLACE @type@
 npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 {
     @type@ div, mod, floordiv;

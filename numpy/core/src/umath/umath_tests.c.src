@@ -10,6 +10,7 @@
 #include "Python.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
 
 #include "npy_pycompat.h"
 
@@ -227,7 +228,7 @@ static void
                     ptr_this += stride_d;
                     ptr_that += stride_d;
                 }
-                *(@typ@ *)data_out = @sqrt_func@(out);
+                *(@typ@ *)data_out = npy_@sqrt_func@(out);
                 data_that += stride_n;
                 data_out += stride_p;
             }
