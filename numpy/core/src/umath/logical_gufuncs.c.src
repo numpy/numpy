@@ -195,42 +195,11 @@ void dispatch_@TYPE@_all_equal(
         }
     #endif
     
-    base_@TYPE@_all_eq(args, dimensions, steps, data);
+    base_@TYPE@_all_equal(args, dimensions, steps, data);
 
 }
 /**end repeat**/
 
-/* -------------------------------------------------------------------------- */
-/* create arrays of type specific functions for each gufunc  */
-
-/**begin repeat
-* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,all_greater_equal,
-*         any_equal,any_not_equal,any_less,any_less_equal,any_greater,any_greater_equal#
-* #APPROACH = dispatch,base*11#
-*/
-
-static PyUFuncGenericFunction @NAME@_funcs[] = { 
-    @APPROACH@_byte_@NAME@,
-    @APPROACH@_ubyte_@NAME@,
-    @APPROACH@_short_@NAME@,
-    @APPROACH@_ushort_@NAME@,
-
-    @APPROACH@_int_@NAME@,
-    @APPROACH@_uint_@NAME@,
-    @APPROACH@_long_@NAME@,
-    @APPROACH@_ulong_@NAME@,
-
-    @APPROACH@_longlong_@NAME@,
-    @APPROACH@_ulonglong_@NAME@,
-    @APPROACH@_float_@NAME@,
-    @APPROACH@_double_@NAME@,
-
-    @APPROACH@_longdouble_@NAME@,
-    @APPROACH@_cfloat_@NAME@,
-    @APPROACH@_cdouble_@NAME@,
-    @APPROACH@_clongdouble_@NAME@
-};
-/**end repeat**/
 
 /* -------------------------------------------------------------------------- */
 /* Create type arrays for each gufunc, which are all identical*/
@@ -256,79 +225,60 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
 
 
 /* -------------------------------------------------------------------------- */
-/* define name pointer to functions for each gufunc*/
-
-typedef struct gufunc_descriptor_struct {
-    char *name;
-    PyUFuncGenericFunction *funcs;
-} GUFUNC_DESCRIPTOR_t;
-
-static GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
-    {"all_equal",           all_equal_funcs},
-    {"all_not_equal",       all_not_equal_funcs},
-    {"all_less",            all_less_funcs},
-    {"all_less_equal",      all_less_equal_funcs},
-    {"all_greater",         all_greater_funcs},
-    {"all_greater_equal",   all_greater_equal_funcs},
-
-    {"any_equal",           any_equal_funcs},
-    {"any_not_equal",       any_not_equal_funcs},
-    {"any_less",            any_less_funcs},
-    {"any_less_equal",      any_less_equal_funcs},
-    {"any_greater",         any_greater_funcs},
-    {"any_greater_equal",   any_greater_equal_funcs}
-};
-
-
-/* -------------------------------------------------------------------------- */
 /* create array of nulls for "data" for each gufunc type*/
+
 static void *array_of_nulls[] = {
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL
 };
+
 
 /* -------------------------------------------------------------------------- */
 /* function to create and register all gufuncs*/
+
 void InitLogicalGufuncs(PyObject *dictionary, 
                         PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc) {
     PyObject *f;
-    int i;
-    const int gufunc_count = sizeof(gufunc_descriptors)/
-        sizeof(gufunc_descriptors[0]);
 
-    for (i=0; i < gufunc_count; i++) {
-        GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
+/**begin repeat
+* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,all_greater_equal,
+*         any_equal,any_not_equal,any_less,any_less_equal,any_greater,any_greater_equal#
+* #APPROACH = dispatch,base*11#
+*/
 
-        f = createPyUFunc(d->funcs,
-                          array_of_nulls,
-                          types,
-                          sizeof(types),  // number of types
-                          2,              // number of inputs
-                          1,              // number of outputs
-                          PyUFunc_None,
-                          d->name,
-                          "temp docstring",
-                          0,              // unused
-                          "(i),(i)->()");
+    static PyUFuncGenericFunction @NAME@_funcs[] = { 
 
-        PyDict_SetItemString(dictionary, d->name, f);
-        Py_DECREF(f);
-    }
+/**begin repeat1
+* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
+*         double,longdouble,cfloat,cdouble,clongdouble#
+*/
+
+        @APPROACH@_@TYPE@_@NAME@,
+
+/**end repeat1**/
+
+    }; // close array of funcs
+
+
+
+    f = createPyUFunc(@NAME@_funcs,
+                      array_of_nulls,
+                      types,
+                      sizeof(types),  // number of types
+                      2,              // number of inputs
+                      1,              // number of outputs
+                      PyUFunc_None,
+                      "@NAME@",
+                      "temp docstring",
+                      0,              // unused
+                      "(i),(i)->()");
+
+    PyDict_SetItemString(dictionary, "@NAME@", f);
+    Py_DECREF(f);
+
+/**end repeat**/
+
+
 }
