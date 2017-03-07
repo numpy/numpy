@@ -1840,6 +1840,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = tmp + 0;
         }
     }
+    npy_clear_floatstatus();
 }
 
 NPY_NO_EXPORT void
