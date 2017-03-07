@@ -23,7 +23,7 @@ def get_dispatch(dtypes):
 
 {{for npy_dt, npy_udt, np_dt in get_dispatch(dtypes)}}
 
-def _rand_{{npy_dt}}(low, high, size, rngstate):
+def _rand_{{npy_dt}}(npy_{{npy_dt}} low, npy_{{npy_dt}} high, size, rngstate):
     """
     _rand_{{npy_dt}}(low, high, size, rngstate)
 
@@ -60,19 +60,16 @@ def _rand_{{npy_dt}}(low, high, size, rngstate):
     cdef npy_intp cnt
     cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
-    off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low)
+    off = <npy_{{npy_udt}}>(low)
+    rng = <npy_{{npy_udt}}>(high) - <npy_{{npy_udt}}>(low)
 
     if size is None:
-        rng = <npy_{{npy_udt}}>(high - low)
         rk_random_{{npy_udt}}(off, rng, 1, &buf, state)
         return np.{{np_dt}}(<npy_{{npy_dt}}>buf)
-    elif np.prod(size) == 0:
-        return <ndarray>np.empty(size, np.{{np_dt}})
     else:
         array = <ndarray>np.empty(size, np.{{np_dt}})
         cnt = PyArray_SIZE(array)
         array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
-        rng = <npy_{{npy_udt}}>(high - low)
         with nogil:
             rk_random_{{npy_udt}}(off, rng, cnt, array_data, state)
         return array

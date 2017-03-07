@@ -22,8 +22,8 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "randint_helpers.pxi"
 include "numpy.pxd"
+include "randint_helpers.pxi"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
