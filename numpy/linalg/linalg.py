@@ -1527,7 +1527,6 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
 
@@ -1644,6 +1643,7 @@ def cond(x, p=None):
 
     """
     x = asarray(x)  # in case we have a matrix
+    _assertNoEmpty2d(x)
     if p is None or p == 2 or p == -2:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
