@@ -1269,22 +1269,20 @@ class TestAbsoluteNegative(TestCase):
                 np.negative(inp, out=out)
                 assert_equal(out, tgt, err_msg=msg)
 
-                # will throw invalid flag depending on compiler optimizations
-                with np.errstate(invalid='ignore'):
-                    for v in [np.nan, -np.inf, np.inf]:
-                        for i in range(inp.size):
-                            d = np.arange(inp.size, dtype=dt)
-                            inp[:] = -d
-                            inp[i] = v
-                            d[i] = -v if v == -np.inf else v
-                            assert_array_equal(np.abs(inp), d, err_msg=msg)
-                            np.abs(inp, out=out)
-                            assert_array_equal(out, d, err_msg=msg)
+                for v in [np.nan, -np.inf, np.inf]:
+                    for i in range(inp.size):
+                        d = np.arange(inp.size, dtype=dt)
+                        inp[:] = -d
+                        inp[i] = v
+                        d[i] = -v if v == -np.inf else v
+                        assert_array_equal(np.abs(inp), d, err_msg=msg)
+                        np.abs(inp, out=out)
+                        assert_array_equal(out, d, err_msg=msg)
 
-                            assert_array_equal(-inp, -1*inp, err_msg=msg)
-                            d = -1 * inp
-                            np.negative(inp, out=out)
-                            assert_array_equal(out, d, err_msg=msg)
+                        assert_array_equal(-inp, -1*inp, err_msg=msg)
+                        d = -1 * inp
+                        np.negative(inp, out=out)
+                        assert_array_equal(out, d, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size
