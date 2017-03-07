@@ -168,6 +168,15 @@ class TestAverage(TestCase):
         assert_array_equal(scl, np.array([1., 6.]))
 
 
+    def test_object_dtype(self):
+        a = np.array([x for x in range(10)])
+        w = np.array([None for _ in range(10)])
+
+        for i, _ in enumerate(w):
+            w[i] = float(1.)
+
+        assert_almost_equal(a.mean(0), average(a, weights=w))
+
 class TestSelect(TestCase):
     choices = [np.array([1, 2, 3]),
                np.array([4, 5, 6]),

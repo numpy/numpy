@@ -954,7 +954,7 @@ def average(a, axis=None, weights=None, returned=False):
             wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis, dtype=np.result_type(a.dtype, wgt.dtype))
-        if (scl == 0.0).any():
+        if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
