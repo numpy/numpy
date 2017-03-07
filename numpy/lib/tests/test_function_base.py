@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import operator
 import warnings
 import sys
+import decimal
 
 import numpy as np
 from numpy.testing import (
@@ -340,6 +341,12 @@ class TestAverage(TestCase):
             a = np.array([[1,2],[3,4]], dtype=at)
             w = np.array([[1,2],[3,4]], dtype=wt)
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))
+
+    def test_object_dtype(self):
+        a = np.array([decimal.Decimal(x) for x in range(10)])
+        w = np.array([decimal.Decimal(1) for _ in range(10)])
+        w /= w.sum()
+        assert_almost_equal(a.mean(0), average(a, weights=w)) 
 
 class TestSelect(TestCase):
     choices = [np.array([1, 2, 3]),
