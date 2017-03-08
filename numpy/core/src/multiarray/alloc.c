@@ -13,8 +13,8 @@
 
 #define NBUCKETS_DATA 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE_DATA 7 /* number of cache entries per bucket */
-#define NCACHE_DIM 15 /* number of cache entries per bucket */
+#define NCACHE_DATA 7 /* number of cache entries per data bucket */
+#define NCACHE_DIM 15 /* number of cache entries per dim bucket */
 
 /* this structure fits neatly into a cacheline */
 typedef struct {
@@ -36,8 +36,7 @@ static dim_cache_bucket dimcache[NBUCKETS_DIM];
 NPY_NO_EXPORT void *
 npy_alloc_cache(npy_uintp sz)
 {
-    assert(sz > 0);
-    if (sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
+    if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         return datacache[sz-1].ptrs[--(datacache[sz-1].available)];
     }
     return PyDataMem_NEW(sz);
@@ -47,10 +46,9 @@ npy_alloc_cache(npy_uintp sz)
 NPY_NO_EXPORT void *
 npy_alloc_cache_zero(npy_uintp sz)
 {
-    void * p;
-    assert(sz > 0);
+    void * p;    
     NPY_BEGIN_THREADS_DEF;
-    if (sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
+    if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
         memset(p, 0, sz);
         return p;
@@ -65,8 +63,8 @@ npy_alloc_cache_zero(npy_uintp sz)
 NPY_NO_EXPORT void
 npy_free_cache(void * p, npy_uintp sz)
 {
-    assert(sz > 0);
-    if (p != NULL && sz-1 < NBUCKETS_DATA && datacache[sz-1].available < NCACHE_DATA) {
+    if (p != NULL && sz > 0 && sz-1 < NBUCKETS_DATA &&
+        datacache[sz-1].available < NCACHE_DATA) {
         datacache[sz-1].ptrs[datacache[sz-1].available++] = p;
         return ;
     }
@@ -88,7 +86,8 @@ npy_alloc_cache_dim(npy_uintp sz)
 
     if (sz-2 < NBUCKETS_DIM && dimcache[sz-2].available > 0) {
             return dimcache[sz-2].ptrs[--(dimcache[sz-2].available)];
-    }    
+    }
+    /* type of dimension elements is npy_intp */
     p = PyArray_malloc(sz * sizeof(npy_intp));
     return p;
 }
@@ -101,7 +100,8 @@ npy_free_cache_dim(void * p, npy_uintp sz)
         sz = 2;
     }
     
-    if (p != NULL && sz-2 < NBUCKETS_DIM && dimcache[sz-2].available < NCACHE_DIM) {
+    if (p != NULL && sz-2 < NBUCKETS_DIM &&
+        dimcache[sz-2].available < NCACHE_DIM) {
         dimcache[sz-2].ptrs[dimcache[sz-2].available++] = p;
         return ;
     }
