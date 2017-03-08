@@ -2162,6 +2162,9 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
         goto error;
 
     work_count = (size_t) work_size_query.array[0];
+    /* Fix a bug in lapack 3.0.0 */
+    if(work_count == 0) work_count = 1;
+
     mem_buff2 = malloc(work_count*sizeof(@ftyp@));
     if (!mem_buff2)
         goto error;
@@ -2631,6 +2634,8 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
         if (0!=rv)
             goto error;
         work_count = (fortran_int)((@typ@*)&work_size_query)->array[0];
+        /* Fix a bug in lapack 3.0.0 */
+        if(work_count == 0) work_count = 1;
         work_size = (size_t)work_count * sizeof(@ftyp@);
     }
 
