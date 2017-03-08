@@ -37,7 +37,7 @@ NPY_NO_EXPORT void *
 npy_alloc_cache(npy_uintp sz)
 {
     assert(sz > 0);
-    if (sz <= NBUCKETS_DATA && datacache[sz-1].available > 0) {
+    if (sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         return datacache[sz-1].ptrs[--(datacache[sz-1].available)];
     }
     return PyDataMem_NEW(sz);
@@ -50,7 +50,7 @@ npy_alloc_cache_zero(npy_uintp sz)
     void * p;
     assert(sz > 0);
     NPY_BEGIN_THREADS_DEF;
-    if (sz <= NBUCKETS_DATA && datacache[sz-1].available > 0) {
+    if (sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
         memset(p, 0, sz);
         return p;
