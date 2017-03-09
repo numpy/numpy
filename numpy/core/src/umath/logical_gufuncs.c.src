@@ -563,44 +563,45 @@ void InitLogicalGufuncs(PyObject *dictionary,
     PyObject *f;
 
 /**begin repeat
-* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,all_greater_equal,
-*         any_equal,any_not_equal,any_less,any_less_equal,any_greater,any_greater_equal#
+* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,
+          all_greater_equal,any_equal,any_not_equal,any_less,any_less_equal,
+          any_greater,any_greater_equal#
 * #APPROACH = dispatch,base*11#
 */
 
-{
-    static PyUFuncGenericFunction @NAME@_funcs[] = {
+    { // open bracket surrounding inner repeat
+
+        static PyUFuncGenericFunction @NAME@_funcs[] = {
 
 /**begin repeat1
 * #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
 *         double,longdouble,cfloat,cdouble,clongdouble#
 */
 
-        @APPROACH@_@TYPE@_@NAME@,
+            @APPROACH@_@TYPE@_@NAME@,
 
 /**end repeat1**/
 
-    }; // close array of funcs
+        }; // close array of funcs
 
 
-    f = createPyUFunc(@NAME@_funcs,
-                      array_of_nulls,
-                      types,
-                      sizeof(types),  // number of types
-                      2,              // number of inputs
-                      1,              // number of outputs
-                      PyUFunc_None,
-                      "@NAME@",
-                      (char*) @NAME@_doc,
-                      0,              // unused
-                      "(i),(i)->()");
+        f = createPyUFunc(@NAME@_funcs,
+                          array_of_nulls,
+                          types,
+                          sizeof(types),  // number of types
+                          2,              // number of inputs
+                          1,              // number of outputs
+                          PyUFunc_None,
+                          "@NAME@",
+                          (char*) @NAME@_doc,
+                          0,              // unused
+                          "(i),(i)->()");
 
-    PyDict_SetItemString(dictionary, "@NAME@", f);
-    Py_DECREF(f);
+        PyDict_SetItemString(dictionary, "@NAME@", f);
+        Py_DECREF(f);
 
     }; // close bracket surrounding inner repeat
 
 /**end repeat**/
-
 
 }
