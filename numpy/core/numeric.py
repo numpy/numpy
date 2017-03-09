@@ -735,7 +735,7 @@ def require(a, dtype=None, requirements=None):
         subok = True
 
     order = 'A'
-    if requirements >= set(['C', 'F']):
+    if requirements >= {'C', 'F'}:
         raise ValueError('Cannot specify both "C" and "F" order')
     elif 'F' in requirements:
         order = 'F'
