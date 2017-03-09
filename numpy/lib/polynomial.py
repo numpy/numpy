@@ -1066,8 +1066,15 @@ class poly1d(object):
 
     def __init__(self, c_or_r, r=False, variable=None):
         if isinstance(c_or_r, poly1d):
-            for key in c_or_r.__dict__.keys():
-                self.__dict__[key] = c_or_r.__dict__[key]
+            self._variable = c_or_r._variable
+            self._coeffs = c_or_r._coeffs
+
+            if set(c_or_r.__dict__) - set(self.__dict__):
+                msg = ("In the future extra properties will not be copied "
+                       "across when constructing one poly1d from another")
+                warnings.warn(msg, FutureWarning, stacklevel=2)
+                self.__dict__.update(c_or_r.__dict__)
+
             if variable is not None:
                 self._variable = variable
             return
