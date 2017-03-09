@@ -8,9 +8,17 @@ class egg_info(_egg_info):
     def run(self):
         if 'sdist' in sys.argv:
             import warnings
-            warnings.warn("`build_src` is being run, this may lead to missing "
-                          "files in your sdist!  See numpy issue gh-7127 for "
-                          "details", UserWarning, stacklevel=2)
+            import textwrap
+            msg = textwrap.dedent("""
+                `build_src` is being run, this may lead to missing
+                files in your sdist!  You want to use distutils.sdist
+                instead of the setuptools version:
+
+                    from distutils.command.sdist import sdist
+                    cmdclass={'sdist': sdist}"
+
+                See numpy's setup.py or gh-7131 for details.""")
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         # We need to ensure that build_src has been executed in order to give
         # setuptools' egg_info command real filenames instead of functions which
