@@ -9,8 +9,6 @@
 #include <numpy/npy_common.h>
 #include "npy_config.h"
 
-#include <assert.h>
-
 #define NBUCKETS_DATA 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
 #define NCACHE_DATA 7 /* number of cache entries per data bucket */
@@ -47,16 +45,13 @@ NPY_NO_EXPORT void *
 npy_alloc_cache_zero(npy_uintp sz)
 {
     void * p;    
-    NPY_BEGIN_THREADS_DEF;
     if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
         memset(p, 0, sz);
         return p;
     }
     
-    NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(sz, 1);
-    NPY_END_THREADS;
     return p;
 }
 
