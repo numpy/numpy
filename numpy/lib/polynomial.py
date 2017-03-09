@@ -1199,11 +1199,15 @@ class poly1d(object):
     __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
+        if not isinstance(other, poly1d):
+            return NotImplemented
         if self.coeffs.shape != other.coeffs.shape:
             return False
         return (self.coeffs == other.coeffs).all()
 
     def __ne__(self, other):
+        if not isinstance(other, poly1d):
+            return NotImplemented
         return not self.__eq__(other)
 
     def __setattr__(self, key, val):
