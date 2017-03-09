@@ -140,6 +140,7 @@ numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
+numpy/core/src/umath/logical_gufuncs.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/reference/generated

@@ -568,7 +568,8 @@ void InitLogicalGufuncs(PyObject *dictionary,
 * #APPROACH = dispatch,base*11#
 */
 
-    static PyUFuncGenericFunction @NAME@_funcs[] = { 
+{
+    static PyUFuncGenericFunction @NAME@_funcs[] = {
 
 /**begin repeat1
 * #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
@@ -580,7 +581,6 @@ void InitLogicalGufuncs(PyObject *dictionary,
 /**end repeat1**/
 
     }; // close array of funcs
-
 
 
     f = createPyUFunc(@NAME@_funcs,
@@ -597,6 +597,8 @@ void InitLogicalGufuncs(PyObject *dictionary,
 
     PyDict_SetItemString(dictionary, "@NAME@", f);
     Py_DECREF(f);
+
+    }; // close bracket surrounding inner repeat
 
 /**end repeat**/
 
