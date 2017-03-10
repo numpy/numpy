@@ -4,6 +4,7 @@ import os
 import sys
 import pickle
 import copy
+import sysconfig
 import warnings
 from os.path import join
 from numpy.distutils import log
@@ -513,6 +514,7 @@ def configuration(parent_package='',top_path=None):
         # put private include directory in build_dir on search path
         # allows using code generation in headers headers
         config.add_include_dirs(join(build_dir, "src", "private"))
+        config.add_include_dirs(join(build_dir, "src", "npymath"))
 
         target = join(build_dir, header_dir, '_numpyconfig.h')
         d = os.path.dirname(target)
@@ -605,6 +607,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
 
+    config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
     if sys.platform[:3] == "aix":
         config.add_define_macros([("_LARGE_FILES", None)])
@@ -662,14 +665,16 @@ def configuration(parent_package='',top_path=None):
         subst_dict["posix_mathlib"] = posix_mlib
         subst_dict["msvc_mathlib"] = msvc_mlib
 
-    npymath_sources = [join('src', 'npymath', 'npy_math.c.src'),
+    npymath_sources = [join('src', 'npymath', 'npy_math_internal.h.src'),
+                       join('src', 'npymath', 'npy_math.c'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
-            install_dir='lib')
+            install_dir='lib',
+            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",

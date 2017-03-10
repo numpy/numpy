@@ -14,6 +14,14 @@ extern "C" {
 #endif
 #include <numpy/npy_common.h>
 
+/* By adding static inline specifiers to npy_math function definitions when
+   appropriate, compiler is given the opportunity to optimize */
+#if NPY_INLINE_MATH
+#define NPY_INPLACE NPY_INLINE static
+#else
+#define NPY_INPLACE
+#endif
+
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
@@ -108,46 +116,46 @@ NPY_INLINE static float __npy_nzerof(void)
 /*
  * C99 double math funcs
  */
-double npy_sin(double x);
-double npy_cos(double x);
-double npy_tan(double x);
-double npy_sinh(double x);
-double npy_cosh(double x);
-double npy_tanh(double x);
+NPY_INPLACE double npy_sin(double x);
+NPY_INPLACE double npy_cos(double x);
+NPY_INPLACE double npy_tan(double x);
+NPY_INPLACE double npy_sinh(double x);
+NPY_INPLACE double npy_cosh(double x);
+NPY_INPLACE double npy_tanh(double x);
 
-double npy_asin(double x);
-double npy_acos(double x);
-double npy_atan(double x);
+NPY_INPLACE double npy_asin(double x);
+NPY_INPLACE double npy_acos(double x);
+NPY_INPLACE double npy_atan(double x);
 
-double npy_log(double x);
-double npy_log10(double x);
-double npy_exp(double x);
-double npy_sqrt(double x);
-double npy_cbrt(double x);
+NPY_INPLACE double npy_log(double x);
+NPY_INPLACE double npy_log10(double x);
+NPY_INPLACE double npy_exp(double x);
+NPY_INPLACE double npy_sqrt(double x);
+NPY_INPLACE double npy_cbrt(double x);
 
-double npy_fabs(double x);
-double npy_ceil(double x);
-double npy_fmod(double x, double y);
-double npy_floor(double x);
+NPY_INPLACE double npy_fabs(double x);
+NPY_INPLACE double npy_ceil(double x);
+NPY_INPLACE double npy_fmod(double x, double y);
+NPY_INPLACE double npy_floor(double x);
 
-double npy_expm1(double x);
-double npy_log1p(double x);
-double npy_hypot(double x, double y);
-double npy_acosh(double x);
-double npy_asinh(double xx);
-double npy_atanh(double x);
-double npy_rint(double x);
-double npy_trunc(double x);
-double npy_exp2(double x);
-double npy_log2(double x);
+NPY_INPLACE double npy_expm1(double x);
+NPY_INPLACE double npy_log1p(double x);
+NPY_INPLACE double npy_hypot(double x, double y);
+NPY_INPLACE double npy_acosh(double x);
+NPY_INPLACE double npy_asinh(double xx);
+NPY_INPLACE double npy_atanh(double x);
+NPY_INPLACE double npy_rint(double x);
+NPY_INPLACE double npy_trunc(double x);
+NPY_INPLACE double npy_exp2(double x);
+NPY_INPLACE double npy_log2(double x);
 
-double npy_atan2(double x, double y);
-double npy_pow(double x, double y);
-double npy_modf(double x, double* y);
-double npy_frexp(double x, int* y);
-double npy_ldexp(double n, int y);
+NPY_INPLACE double npy_atan2(double x, double y);
+NPY_INPLACE double npy_pow(double x, double y);
+NPY_INPLACE double npy_modf(double x, double* y);
+NPY_INPLACE double npy_frexp(double x, int* y);
+NPY_INPLACE double npy_ldexp(double n, int y);
 
-double npy_copysign(double x, double y);
+NPY_INPLACE double npy_copysign(double x, double y);
 double npy_nextafter(double x, double y);
 double npy_spacing(double x);
 
@@ -217,111 +225,109 @@ double npy_spacing(double x);
 /*
  * float C99 math functions
  */
+NPY_INPLACE float npy_sinf(float x);
+NPY_INPLACE float npy_cosf(float x);
+NPY_INPLACE float npy_tanf(float x);
+NPY_INPLACE float npy_sinhf(float x);
+NPY_INPLACE float npy_coshf(float x);
+NPY_INPLACE float npy_tanhf(float x);
+NPY_INPLACE float npy_fabsf(float x);
+NPY_INPLACE float npy_floorf(float x);
+NPY_INPLACE float npy_ceilf(float x);
+NPY_INPLACE float npy_rintf(float x);
+NPY_INPLACE float npy_truncf(float x);
+NPY_INPLACE float npy_sqrtf(float x);
+NPY_INPLACE float npy_cbrtf(float x);
+NPY_INPLACE float npy_log10f(float x);
+NPY_INPLACE float npy_logf(float x);
+NPY_INPLACE float npy_expf(float x);
+NPY_INPLACE float npy_expm1f(float x);
+NPY_INPLACE float npy_asinf(float x);
+NPY_INPLACE float npy_acosf(float x);
+NPY_INPLACE float npy_atanf(float x);
+NPY_INPLACE float npy_asinhf(float x);
+NPY_INPLACE float npy_acoshf(float x);
+NPY_INPLACE float npy_atanhf(float x);
+NPY_INPLACE float npy_log1pf(float x);
+NPY_INPLACE float npy_exp2f(float x);
+NPY_INPLACE float npy_log2f(float x);
 
-float npy_sinf(float x);
-float npy_cosf(float x);
-float npy_tanf(float x);
-float npy_sinhf(float x);
-float npy_coshf(float x);
-float npy_tanhf(float x);
-float npy_fabsf(float x);
-float npy_floorf(float x);
-float npy_ceilf(float x);
-float npy_rintf(float x);
-float npy_truncf(float x);
-float npy_sqrtf(float x);
-float npy_cbrtf(float x);
-float npy_log10f(float x);
-float npy_logf(float x);
-float npy_expf(float x);
-float npy_expm1f(float x);
-float npy_asinf(float x);
-float npy_acosf(float x);
-float npy_atanf(float x);
-float npy_asinhf(float x);
-float npy_acoshf(float x);
-float npy_atanhf(float x);
-float npy_log1pf(float x);
-float npy_exp2f(float x);
-float npy_log2f(float x);
+NPY_INPLACE float npy_atan2f(float x, float y);
+NPY_INPLACE float npy_hypotf(float x, float y);
+NPY_INPLACE float npy_powf(float x, float y);
+NPY_INPLACE float npy_fmodf(float x, float y);
 
-float npy_atan2f(float x, float y);
-float npy_hypotf(float x, float y);
-float npy_powf(float x, float y);
-float npy_fmodf(float x, float y);
+NPY_INPLACE float npy_modff(float x, float* y);
+NPY_INPLACE float npy_frexpf(float x, int* y);
+NPY_INPLACE float npy_ldexpf(float x, int y);
 
-float npy_modff(float x, float* y);
-float npy_frexpf(float x, int* y);
-float npy_ldexpf(float x, int y);
-
-float npy_copysignf(float x, float y);
+NPY_INPLACE float npy_copysignf(float x, float y);
 float npy_nextafterf(float x, float y);
 float npy_spacingf(float x);
 
 /*
  * long double C99 math functions
  */
+NPY_INPLACE npy_longdouble npy_sinl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_cosl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_tanl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_sinhl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_coshl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_tanhl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_fabsl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_floorl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_ceill(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_rintl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_truncl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_sqrtl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_cbrtl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_log10l(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_logl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_expl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_expm1l(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_asinl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_acosl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_atanl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_asinhl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_acoshl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_atanhl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_log1pl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_exp2l(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_log2l(npy_longdouble x);
 
-npy_longdouble npy_sinl(npy_longdouble x);
-npy_longdouble npy_cosl(npy_longdouble x);
-npy_longdouble npy_tanl(npy_longdouble x);
-npy_longdouble npy_sinhl(npy_longdouble x);
-npy_longdouble npy_coshl(npy_longdouble x);
-npy_longdouble npy_tanhl(npy_longdouble x);
-npy_longdouble npy_fabsl(npy_longdouble x);
-npy_longdouble npy_floorl(npy_longdouble x);
-npy_longdouble npy_ceill(npy_longdouble x);
-npy_longdouble npy_rintl(npy_longdouble x);
-npy_longdouble npy_truncl(npy_longdouble x);
-npy_longdouble npy_sqrtl(npy_longdouble x);
-npy_longdouble npy_cbrtl(npy_longdouble x);
-npy_longdouble npy_log10l(npy_longdouble x);
-npy_longdouble npy_logl(npy_longdouble x);
-npy_longdouble npy_expl(npy_longdouble x);
-npy_longdouble npy_expm1l(npy_longdouble x);
-npy_longdouble npy_asinl(npy_longdouble x);
-npy_longdouble npy_acosl(npy_longdouble x);
-npy_longdouble npy_atanl(npy_longdouble x);
-npy_longdouble npy_asinhl(npy_longdouble x);
-npy_longdouble npy_acoshl(npy_longdouble x);
-npy_longdouble npy_atanhl(npy_longdouble x);
-npy_longdouble npy_log1pl(npy_longdouble x);
-npy_longdouble npy_exp2l(npy_longdouble x);
-npy_longdouble npy_log2l(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_atan2l(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_hypotl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
-npy_longdouble npy_atan2l(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_hypotl(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+NPY_INPLACE npy_longdouble npy_frexpl(npy_longdouble x, int* y);
+NPY_INPLACE npy_longdouble npy_ldexpl(npy_longdouble x, int y);
 
-npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
-npy_longdouble npy_frexpl(npy_longdouble x, int* y);
-npy_longdouble npy_ldexpl(npy_longdouble x, int y);
-
-npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_copysignl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_spacingl(npy_longdouble x);
 
 /*
  * Non standard functions
  */
-double npy_deg2rad(double x);
-double npy_rad2deg(double x);
-double npy_logaddexp(double x, double y);
-double npy_logaddexp2(double x, double y);
-double npy_divmod(double x, double y, double *modulus);
+NPY_INPLACE double npy_deg2rad(double x);
+NPY_INPLACE double npy_rad2deg(double x);
+NPY_INPLACE double npy_logaddexp(double x, double y);
+NPY_INPLACE double npy_logaddexp2(double x, double y);
+NPY_INPLACE double npy_divmod(double x, double y, double *modulus);
 
-float npy_deg2radf(float x);
-float npy_rad2degf(float x);
-float npy_logaddexpf(float x, float y);
-float npy_logaddexp2f(float x, float y);
-float npy_divmodf(float x, float y, float *modulus);
+NPY_INPLACE float npy_deg2radf(float x);
+NPY_INPLACE float npy_rad2degf(float x);
+NPY_INPLACE float npy_logaddexpf(float x, float y);
+NPY_INPLACE float npy_logaddexp2f(float x, float y);
+NPY_INPLACE float npy_divmodf(float x, float y, float *modulus);
 
-npy_longdouble npy_deg2radl(npy_longdouble x);
-npy_longdouble npy_rad2degl(npy_longdouble x);
-npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
-npy_longdouble npy_divmodl(npy_longdouble x, npy_longdouble y,
+NPY_INPLACE npy_longdouble npy_deg2radl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_rad2degl(npy_longdouble x);
+NPY_INPLACE npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_divmodl(npy_longdouble x, npy_longdouble y,
                            npy_longdouble *modulus);
 
 #define npy_degrees npy_rad2deg
@@ -524,6 +530,10 @@ void npy_set_floatstatus_invalid(void);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if NPY_INLINE_MATH
+#include "npy_math_internal.h"
 #endif
 
 #endif

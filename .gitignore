@@ -122,7 +122,6 @@ numpy/core/src/multiarray/multiarray_tests.c
 numpy/core/src/multiarray/nditer_templ.c
 numpy/core/src/multiarray/scalartypes.c
 numpy/core/src/npymath/ieee754.c
-numpy/core/src/npymath/npy_math.c
 numpy/core/src/npymath/npy_math_complex.c
 numpy/core/src/npysort/binsearch.c
 numpy/core/src/npysort/heapsort.c
