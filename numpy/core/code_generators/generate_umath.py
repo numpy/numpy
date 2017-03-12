@@ -881,12 +881,14 @@ defdict = {
           docstrings.get('numpy.core.umath.gcd'),
           "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(ints),
+          TD('O', f='npy_ObjectGCD'),
           ),
 'lcm' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.lcm'),
           "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(ints),
+          TD('O', f='npy_ObjectLCM'),
           )
 }
 
