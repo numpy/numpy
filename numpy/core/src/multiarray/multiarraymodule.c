@@ -2962,6 +2962,16 @@ fail:
 }
 
 static PyObject *
+array_set_memory_cache_size(PyObject *NPY_UNUSED(self), PyObject * args)
+{
+    int size;
+    if (!PyArg_ParseTuple(args, "i", &size)) {
+        return NULL;
+    }
+    return PyInt_FromLong(npy_set_lcache_size(size));
+}
+
+static PyObject *
 array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
         PyObject *kwds)
 {
@@ -4090,6 +4100,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reconstruct",
         (PyCFunction)array__reconstruct,
         METH_VARARGS, NULL},
+    {"set_memory_cache_size",
+        (PyCFunction)array_set_memory_cache_size,
+         METH_VARARGS, NULL},
     {"set_string_function",
         (PyCFunction)array_set_string_function,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4676,6 +4689,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
+
+    /* initialize memory cache, also disables it when appropriate */
+    npy_set_lcache_size(16);
 
     if (!intern_strings()) {
         goto err;

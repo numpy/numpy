@@ -6,6 +6,9 @@
 
 #define NPY_TRACE_DOMAIN 389047
 
+NPY_NO_EXPORT unsigned int
+npy_set_lcache_size(unsigned int size);
+
 NPY_NO_EXPORT void *
 npy_alloc_cache(npy_uintp sz);
 

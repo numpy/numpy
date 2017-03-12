@@ -109,7 +109,7 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace"]
+        "backtrace", "madvise"]
 
 
 OPTIONAL_HEADERS = [
@@ -119,6 +119,7 @@ OPTIONAL_HEADERS = [
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
+                "sys/mman.h", # madvise
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
