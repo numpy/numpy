@@ -101,6 +101,14 @@ Floating point routines
    nextafter
    spacing
 
+Rational routines
+-----------------
+.. autosummary::
+   :toctree: generated/
+
+   lcm
+   gcd
+
 Arithmetic operations
 ---------------------
 .. autosummary::

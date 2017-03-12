@@ -3679,3 +3679,63 @@ add_newdoc('numpy.core.umath', 'ldexp',
     array([ 0.,  1.,  2.,  3.,  4.,  5.])
 
     """)
+
+add_newdoc('numpy.core.umath', 'gcd',
+    """
+    Returns the greatest common divisor of |x1| and |x2|
+
+    Parameters
+    ----------
+    x1, x2 : array_like, int
+        Arrays of values
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The greatest common divisor of the absolute value of the inputs
+
+    See Also
+    --------
+    lcm : The lowest common multiple
+
+    Examples
+    --------
+    >>> np.gcd(12, 20)
+    4
+    >>> np.gcd.reduce([15, 25, 35])
+    5
+    >>> np.gcd(np.arange(6), 20)
+    array([20,  1,  2,  1,  4,  5])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'lcm',
+    """
+    Returns the lowest common multiple of |x1| and |x2|
+
+    Parameters
+    ----------
+    x1, x2 : array_like, int
+        Arrays of values
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The lowest common multiple of the absolute value of the inputs
+
+    See Also
+    --------
+    gcd : The greatest common divisor
+
+    Examples
+    --------
+    >>> np.lcm(12, 20)
+    60
+    >>> np.lcm.reduce([3, 12, 20])
+    60
+    >>> np.lcm.reduce([40, 12, 20])
+    120
+    >>> np.lcm(np.arange(6), 20)
+    array([ 0, 20, 20, 60, 20, 20])
+
+    """)
