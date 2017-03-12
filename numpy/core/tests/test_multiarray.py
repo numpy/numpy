@@ -2407,22 +2407,28 @@ class TestMethods(TestCase):
         assert_equal(c, np.dot(a, b))
 
     def test_dot_override(self):
-        class A(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
-                return "A"
-
         class B(object):
+            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+                return "B"
+
+        class C(object):
             def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return NotImplemented
 
-        a = A()
-        b = B()
-        c = np.array([[1]])
+        class D(object):
+            __array_ufunc__ = None
 
-        assert_equal(np.dot(a, b), "A")
-        assert_equal(c.dot(a), "A")
-        assert_raises(TypeError, np.dot, b, c)
-        assert_raises(TypeError, c.dot, b)
+        a = np.array([[1]])
+        b = B()
+        c = C()
+        d = D()
+
+        assert_equal(np.dot(a, b), "B")
+        assert_equal(a.dot(b), "B")
+        assert_raises(TypeError, np.dot, c, a)
+        assert_raises(TypeError, a.dot, c)
+        assert_raises(TypeError, np.dot, d, a)
+        assert_raises(TypeError, a.dot, d)
 
     def test_dot_type_mismatch(self):
         c = 1.
@@ -2885,10 +2891,9 @@ class TestBinop(object):
 
     # ndarray.__rop__ always calls ufunc
     # ndarray.__iop__ always calls ufunc
-    # ndarray.__op__:
-    #   - if other has __array_ufunc__, call ufunc
-    #   - else, if other is not a subclass and has higher array priority, defer
-    #   - else, if other is in scipy.sparse, defer
+    # ndarray.__op__, __rop__:
+    #   - defer if other has __array_ufunc__ and it is None
+    #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
@@ -2917,12 +2922,16 @@ class TestBinop(object):
 
         class Coerced(Exception):
             pass
+
         def array_impl(self):
             raise Coerced
+
         def op_impl(self, other):
             return "forward"
+
         def rop_impl(self, other):
             return "reverse"
+
         def iop_impl(self, other):
             return "in-place"
 
@@ -2932,16 +2941,16 @@ class TestBinop(object):
         # Create an object with the given base, in the given module, with a
         # bunch of placeholder __op__ methods, and optionally a
         # __array_ufunc__ and __array_priority__.
-        def make_obj(base, array_priority, array_ufunc,
+        def make_obj(base, array_priority=False, array_ufunc=False,
                      alleged_module="__main__"):
             class_namespace = {"__array__": array_impl}
-            if array_priority is not None:
+            if array_priority is not False:
                 class_namespace["__array_priority__"] = array_priority
             for op in ops:
                 class_namespace["__{0}__".format(op)] = op_impl
                 class_namespace["__r{0}__".format(op)] = rop_impl
                 class_namespace["__i{0}__".format(op)] = iop_impl
-            if array_ufunc is not None:
+            if array_ufunc is not False:
                 class_namespace["__array_ufunc__"] = array_ufunc
             eval_namespace = {"base": base,
                               "class_namespace": class_namespace,
@@ -2964,26 +2973,29 @@ class TestBinop(object):
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:
                     arr_method = getattr(arr, "__{0}__".format(op))
+
                     def norm(result):
                         if op == "divmod":
                             assert_(isinstance(result, tuple))
                             return result[0]
                         else:
                             return result
+
                     if binop_override_expected:
                         assert_equal(arr_method(obj), NotImplemented)
                     elif ufunc_override_expected:
                         assert_equal(norm(arr_method(obj))[0],
                                      "__array_ufunc__")
                     else:
-                        if (isinstance(obj, np.ndarray)
-                            and not hasattr(obj, "__array_ufunc__")):
+                        if (isinstance(obj, np.ndarray) and
+                                not hasattr(obj, "__array_ufunc__")):
                             # __array__ gets ignored
                             res = norm(arr_method(obj))
                             assert_(res.__class__ is obj.__class__)
                         else:
                             assert_raises((TypeError, Coerced),
                                           arr_method, obj)
+
                     arr_rmethod = getattr(arr, "__r{0}__".format(op))
                     if ufunc_override_expected:
                         res = norm(arr_rmethod(obj))
@@ -2992,7 +3004,7 @@ class TestBinop(object):
                             assert_equal(res[1], ufunc)
                     else:
                         if (isinstance(obj, np.ndarray) and
-                            not hasattr(obj, "__array_ufunc__")):
+                                not hasattr(obj, "__array_ufunc__")):
                             # __array__ gets ignored
                             res = norm(arr_rmethod(obj))
                             assert_(res.__class__ is obj.__class__)
@@ -3000,6 +3012,7 @@ class TestBinop(object):
                             # __array_ufunc__ = "asdf" creates a TypeError
                             assert_raises((TypeError, Coerced),
                                           arr_rmethod, obj)
+
                     # array scalars don't have in-place operators
                     if has_inplace and isinstance(arr, np.ndarray):
                         arr_imethod = getattr(arr, "__i{0}__".format(op))
@@ -3011,14 +3024,13 @@ class TestBinop(object):
                                 assert_(res[-1]["out"] is arr)
                         else:
                             if (isinstance(obj, np.ndarray) and
-                                not hasattr(obj, "__array_ufunc__")):
+                                    not hasattr(obj, "__array_ufunc__")):
                                 # __array__ gets ignored
                                 assert_(arr_imethod(obj) is arr)
                             else:
                                 assert_raises((TypeError, Coerced),
                                               arr_imethod, obj)
 
-                    import operator
                     op_fn = getattr(operator, op, None)
                     if op_fn is None:
                         op_fn = getattr(operator, op + "_", None)
@@ -3036,25 +3048,24 @@ class TestBinop(object):
                                      "__array_ufunc__")
 
         # No array priority, no numpy ufunc -> nothing called
-        check(make_obj(object, None, None), False, False)
+        check(make_obj(object), False, False)
         # Negative array priority, no numpy ufunc -> nothing called
         # (has to be very negative, because scalar priority is -1000000.0)
-        check(make_obj(object, -2**30, None), False, False)
+        check(make_obj(object, array_priority=-2**30), False, False)
         # Positive array priority, no numpy ufunc -> binops only
-        check(make_obj(object,  1, None), True, False)
+        check(make_obj(object, array_priority=1), True, False)
         # ndarray ignores array priority for ndarray subclasses
-        check(make_obj(np.ndarray, 1, None), False, False, check_scalar=False)
+        check(make_obj(np.ndarray, array_priority=1), False, False,
+              check_scalar=False)
         # Positive array priority and numpy ufunc -> numpy ufunc only
-        check(make_obj(object,  1, array_ufunc_impl), False, True)
-        check(make_obj(np.ndarray, 1, array_ufunc_impl), False, True)
-        # But a non-callable array_ufunc -> like no array_ufunc at all
-        check(make_obj(object,  1, "asdf"), True, False)
-        check(make_obj(np.ndarray, 1, "asdf"), False, False, check_scalar=False)
-        # Objects in scipy.sparse are special: for them we can do both binops
-        # and ufunc:
-        check(make_obj(object,  1, array_ufunc_impl,
-                       alleged_module="scipy.sparse"),
-              True, True)
+        check(make_obj(object, array_priority=1,
+                       array_ufunc=array_ufunc_impl), False, True)
+        check(make_obj(np.ndarray, array_priority=1,
+                       array_ufunc=array_ufunc_impl), False, True)
+        # array_ufunc set to None -> defer binops only
+        check(make_obj(object, array_ufunc=None), True, False)
+        check(make_obj(np.ndarray, array_ufunc=None), True, False,
+              check_scalar=False)
 
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
@@ -5257,26 +5268,40 @@ class MatmulCommon():
 
     def test_array_ufunc_override(self):
 
-        class A(np.ndarray):
+        class B(np.ndarray):
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
             def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
-                return "A"
+                return "B"
 
-        class B(np.ndarray):
+        class C(np.ndarray):
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
             def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
                 return NotImplemented
 
-        a = A([1, 2])
+        class D(np.ndarray):
+            def __new__(cls, *args, **kwargs):
+                return np.array(*args, **kwargs).view(cls)
+
+            __array_ufunc__ = None
+
+        a = np.ones(2)
         b = B([1, 2])
-        c = np.ones(2)
-        assert_equal(self.matmul(a, b), "A")
-        assert_equal(self.matmul(b, a), "A")
-        assert_raises(TypeError, self.matmul, b, c)
+        c = C([1, 2])
+        d = D([1, 2])
+        assert_equal(self.matmul(b, a), "B")
+        assert_equal(self.matmul(a, b), "B")
+        assert_equal(self.matmul(b, c), "B")
+        assert_equal(self.matmul(c, b), "B")
+        assert_equal(self.matmul(b, d), "B")
+        assert_equal(self.matmul(d, b), "B")
+        assert_raises(TypeError, self.matmul, a, c)
+        assert_raises(TypeError, self.matmul, c, a)
+        assert_raises(TypeError, self.matmul, d, a)
+        assert_raises(TypeError, self.matmul, a, d)
 
 
 class TestMatmul(MatmulCommon, TestCase):

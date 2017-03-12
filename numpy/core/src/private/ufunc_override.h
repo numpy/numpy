@@ -165,9 +165,9 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
  * Check a set of args for the `__array_ufunc__` method.  If more than one of
  * the input arguments implements `__array_ufunc__`, they are tried in the
  * order: subclasses before superclasses, otherwise left to right. The first
- * routine returning something other than `NotImplemented` determines the
- * result. If all of the `__array_ufunc__` operations returns `NotImplemented`,
- * a `TypeError` is raised.
+ * (non-None) routine returning something other than `NotImplemented`
+ * determines the result. If all of the `__array_ufunc__` operations return
+ * `NotImplemented` (or are None), a `TypeError` is raised.
  *
  * Returns 0 on success and 1 on exception. On success, *result contains the
  * result of the operation, if any. If *result is NULL, there is no override.
@@ -356,11 +356,17 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             goto fail;
         }
 
-        /* Call the override */
+        /* Access the override */
         array_ufunc = PyObject_GetAttrString(override_obj,
                                              "__array_ufunc__");
         if (array_ufunc == NULL) {
             goto fail;
+        }
+
+	/* If None, try next one (i.e., as if it returned NotImplemented) */
+        if (array_ufunc == Py_None) {
+            Py_DECREF(array_ufunc);
+            continue;
         }
 
         override_args = Py_BuildValue("OOO", ufunc, method_name, normal_args);
