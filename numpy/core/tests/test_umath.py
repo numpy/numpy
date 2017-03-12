@@ -2207,9 +2207,15 @@ class TestRationalFunctions(object):
         self._test_lcm_inner(np.int16)
         self._test_lcm_inner(np.uint16)
 
+    def test_lcm_object(self):
+        self._test_lcm_inner(np.object_)
+
     def test_gcd(self):
         self._test_gcd_inner(np.int16)
         self._test_lcm_inner(np.uint16)
+
+    def test_gcd_object(self):
+        self._test_gcd_inner(np.object_)
 
     def _test_lcm_inner(self, dtype):
         # basic use
@@ -2268,6 +2274,14 @@ class TestRationalFunctions(object):
             q = -(a // 4)
             assert_equal(np.gcd(a,  q*3), q)
             assert_equal(np.gcd(a, -q*3), q)
+
+    def test_decimal(self):
+        from decimal import Decimal
+        a = np.array([1,  1, -1, -1]) * Decimal('0.20')
+        b = np.array([1, -1,  1, -1]) * Decimal('0.12')
+
+        assert_equal(np.gcd(a, b), 4*[Decimal('0.04')])
+        assert_equal(np.lcm(a, b), 4*[Decimal('0.60')])
 
 
 def is_longdouble_finfo_bogus():

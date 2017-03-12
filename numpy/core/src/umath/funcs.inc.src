@@ -8,6 +8,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 
 /*
@@ -156,6 +157,73 @@ npy_ObjectLogicalNot(PyObject *i1)
             return Py_False;
         }
     }
+}
+
+static PyObject *
+npy_ObjectGCD(PyObject *i1, PyObject *i2)
+{
+    PyObject *gcd = NULL;
+
+    /* use math.gcd if available, and valid on the provided types */
+#if PY_VERSION_HEX >= 0x03050000
+    {
+        static PyObject *math_gcd_func = NULL;
+
+        npy_cache_import("math", "gcd", &math_gcd_func);
+        if (math_gcd_func == NULL) {
+            return NULL;
+        }
+        gcd = PyObject_CallFunction(math_gcd_func, "OO", i1, i2);
+        if (gcd != NULL) {
+            return gcd;
+        }
+        /* silence errors, and fall back on pure-python gcd */
+        PyErr_Clear();
+    }
+#endif
+
+    /* otherwise, use our internal one, written in python */
+    {
+        static PyObject *internal_gcd_func = NULL;
+
+        npy_cache_import("numpy.core._internal", "_gcd", &internal_gcd_func);
+        if (internal_gcd_func == NULL) {
+            return NULL;
+        }
+        gcd = PyObject_CallFunction(internal_gcd_func, "OO", i1, i2);
+        if (gcd == NULL) {
+            return NULL;
+        }
+        /* _gcd has some unusual behaviour regarding sign */
+        return PyNumber_Absolute(gcd);
+    }
+}
+
+static PyObject *
+npy_ObjectLCM(PyObject *i1, PyObject *i2)
+{
+    /* lcm(a, b) = abs(a // gcd(a, b) * b) */
+
+    PyObject *gcd = npy_ObjectGCD(i1, i2);
+    PyObject *tmp;
+    if(gcd == NULL) {
+        return NULL;
+    }
+    /* Floor divide preserves integer types - we know the division will have
+     * no remainder
+     */
+    tmp = PyNumber_FloorDivide(i1, gcd);
+    if(tmp == NULL) {
+        return NULL;
+    }
+
+    tmp = PyNumber_Multiply(tmp, i2);
+    if(tmp == NULL) {
+        return NULL;
+    }
+
+    /* even though we fix gcd to be positive, we need to do it again here */
+    return PyNumber_Absolute(tmp);
 }
 
 /*
