@@ -1041,6 +1041,7 @@ NPY_NO_EXPORT void
 /**begin repeat
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #c    = ,,,l,ll#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1132,11 +1133,26 @@ NPY_NO_EXPORT void
     }
 }
 
+/**begin repeat1
+ * #kind = gcd, lcm#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+    }
+}
+/**end repeat1**/
+
 /**end repeat**/
 
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
  * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = u,u,u,ul,ull#
  */
 
 NPY_NO_EXPORT void
@@ -1203,6 +1219,20 @@ NPY_NO_EXPORT void
         }
     }
 }
+
+/**begin repeat1
+ * #kind = gcd, lcm#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+    }
+}
+/**end repeat1**/
 
 /**end repeat**/
 

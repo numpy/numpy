@@ -2202,6 +2202,73 @@ class TestChoose(object):
         a = np.array([True, True])
         assert_equal(np.choose(c, (a, 1)), np.array([1, 1]))
 
+class TestRationalFunctions(object):
+    def test_lcm(self):
+        self._test_lcm_inner(np.int16)
+        self._test_lcm_inner(np.uint16)
+
+    def test_gcd(self):
+        self._test_gcd_inner(np.int16)
+        self._test_lcm_inner(np.uint16)
+
+    def _test_lcm_inner(self, dtype):
+        # basic use
+        a = np.array([12, 120], dtype=dtype)
+        b = np.array([20, 200], dtype=dtype)
+        assert_equal(np.lcm(a, b), [60, 600])
+
+        if not issubclass(dtype, np.unsignedinteger):
+            # negatives are ignored
+            a = np.array([12, -12,  12, -12], dtype=dtype)
+            b = np.array([20,  20, -20, -20], dtype=dtype)
+            assert_equal(np.lcm(a, b), [60]*4)
+
+        # reduce
+        a = np.array([3, 12, 20], dtype=dtype)
+        assert_equal(np.lcm.reduce([3, 12, 20]), 60)
+
+        # broadcasting, and a test including 0
+        a = np.arange(6).astype(dtype)
+        b = 20
+        assert_equal(np.lcm(a, b), [0, 20, 20, 60, 20, 20])
+
+    def _test_gcd_inner(self, dtype):
+        # basic use
+        a = np.array([12, 120], dtype=dtype)
+        b = np.array([20, 200], dtype=dtype)
+        assert_equal(np.gcd(a, b), [4, 40])
+
+        if not issubclass(dtype, np.unsignedinteger):
+            # negatives are ignored
+            a = np.array([12, -12,  12, -12], dtype=dtype)
+            b = np.array([20,  20, -20, -20], dtype=dtype)
+            assert_equal(np.gcd(a, b), [4]*4)
+
+        # reduce
+        a = np.array([15, 25, 35], dtype=dtype)
+        assert_equal(np.gcd.reduce(a), 5)
+
+        # broadcasting, and a test including 0
+        a = np.arange(6).astype(dtype)
+        b = 20
+        assert_equal(np.gcd(a, b), [20,  1,  2,  1,  4,  5])
+
+    def test_lcm_overflow(self):
+        # verify that we don't overflow when a*b does overflow
+        big = np.int32(np.iinfo(np.int32).max // 11)
+        a = 2*big
+        b = 5*big
+        assert_equal(np.lcm(a, b), 10*big)
+
+    def test_gcd_overflow(self):
+        for dtype in (np.int32, np.int64):
+            # verify that we don't overflow when taking abs(x)
+            # not relevant for lcm, where the result is unrepresentable anyway
+            a = dtype(np.iinfo(dtype).min)  # negative power of two
+            q = -(a // 4)
+            assert_equal(np.gcd(a,  q*3), q)
+            assert_equal(np.gcd(a, -q*3), q)
+
 
 def is_longdouble_finfo_bogus():
     info = np.finfo(np.longcomplex)
