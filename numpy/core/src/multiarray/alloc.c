@@ -28,6 +28,7 @@ typedef struct {
 static data_cache_bucket datacache[NBUCKETS_DATA];
 static dim_cache_bucket dimcache[NBUCKETS_DIM];
 
+
 /*
  * array data cache, sz is number of bytes to allocate
  */
@@ -40,13 +41,15 @@ npy_alloc_cache(npy_uintp sz)
     return PyDataMem_NEW(sz);
 }
 
-/* zero initialized data, sz is number of bytes to allocate */
+/*
+ * zero initialized data, sz is number of bytes to allocate
+ */
 NPY_NO_EXPORT void *
 npy_alloc_cache_zero(npy_uintp sz)
 {
     void * p;    
     if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
-        p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
+            p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
         memset(p, 0, sz);
         return p;
     }
@@ -59,7 +62,7 @@ NPY_NO_EXPORT void
 npy_free_cache(void * p, npy_uintp sz)
 {
     if (p != NULL && sz > 0 && sz-1 < NBUCKETS_DATA &&
-        datacache[sz-1].available < NCACHE_DATA) {
+            datacache[sz-1].available < NCACHE_DATA) {
         datacache[sz-1].ptrs[datacache[sz-1].available++] = p;
         return ;
     }
@@ -80,7 +83,7 @@ npy_alloc_cache_dim(npy_uintp sz)
     }
 
     if (sz-2 < NBUCKETS_DIM && dimcache[sz-2].available > 0) {
-            return dimcache[sz-2].ptrs[--(dimcache[sz-2].available)];
+        return dimcache[sz-2].ptrs[--(dimcache[sz-2].available)];
     }
     /* type of dimension elements is npy_intp */
     p = PyArray_malloc(sz * sizeof(npy_intp));
@@ -96,7 +99,7 @@ npy_free_cache_dim(void * p, npy_uintp sz)
     }
     
     if (p != NULL && sz-2 < NBUCKETS_DIM &&
-        dimcache[sz-2].available < NCACHE_DIM) {
+            dimcache[sz-2].available < NCACHE_DIM) {
         dimcache[sz-2].ptrs[dimcache[sz-2].available++] = p;
         return ;
     }
@@ -134,15 +137,15 @@ PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
 {
     PyDataMem_EventHookFunc *temp;
     NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API
-    temp = _PyDataMem_eventhook;
+        NPY_ALLOW_C_API
+        temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
         *old_data = _PyDataMem_eventhook_user_data;
     }
     _PyDataMem_eventhook_user_data = user_data;
     NPY_DISABLE_C_API
-    return temp;
+        return temp;
 }
 
 /*NUMPY_API
@@ -156,13 +159,13 @@ PyDataMem_NEW(size_t size)
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
+            NPY_ALLOW_C_API
+            if (_PyDataMem_eventhook != NULL) {
+                (*_PyDataMem_eventhook)(NULL, result, size,
+                                        _PyDataMem_eventhook_user_data);
+            }
         NPY_DISABLE_C_API
-    }
+            }
     return result;
 }
 
@@ -177,13 +180,13 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
     result = calloc(size, elsize);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size * elsize,
-                                    _PyDataMem_eventhook_user_data);
-        }
+            NPY_ALLOW_C_API
+            if (_PyDataMem_eventhook != NULL) {
+                (*_PyDataMem_eventhook)(NULL, result, size * elsize,
+                                        _PyDataMem_eventhook_user_data);
+            }
         NPY_DISABLE_C_API
-    }
+            }
     return result;
 }
 
@@ -196,13 +199,13 @@ PyDataMem_FREE(void *ptr)
     free(ptr);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, NULL, 0,
-                                    _PyDataMem_eventhook_user_data);
-        }
+            NPY_ALLOW_C_API
+            if (_PyDataMem_eventhook != NULL) {
+                (*_PyDataMem_eventhook)(ptr, NULL, 0,
+                                        _PyDataMem_eventhook_user_data);
+            }
         NPY_DISABLE_C_API
-    }
+            }
 }
 
 /*NUMPY_API
@@ -216,12 +219,12 @@ PyDataMem_RENEW(void *ptr, size_t size)
     result = realloc(ptr, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API
-        if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(ptr, result, size,
-                                    _PyDataMem_eventhook_user_data);
-        }
+            NPY_ALLOW_C_API
+            if (_PyDataMem_eventhook != NULL) {
+                (*_PyDataMem_eventhook)(ptr, result, size,
+                                        _PyDataMem_eventhook_user_data);
+            }
         NPY_DISABLE_C_API
-    }
+            }
     return result;
 }
