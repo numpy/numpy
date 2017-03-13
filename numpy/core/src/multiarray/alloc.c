@@ -12,7 +12,7 @@
 #define NBUCKETS_DATA 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
 #define NCACHE_DATA 7 /* number of cache entries per data bucket */
-#define NCACHE_DIM 15 /* number of cache entries per dim bucket */
+#define NCACHE_DIM 7 /* number of cache entries per dim bucket */
 
 /* this structure fits neatly into a cacheline */
 typedef struct {
