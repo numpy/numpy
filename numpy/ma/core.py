@@ -5230,7 +5230,8 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=None, kind='quicksort', order=None, fill_value=None):
+    def argsort(self, axis=None, kind='quicksort', order=None,
+                endwith=True, fill_value=None):
         """
         Return an ndarray of indices that sort the array along the
         specified axis.  Masked values are filled beforehand to
@@ -5241,15 +5242,21 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort.  The default is -1 (last axis).
             If None, the flattened array is used.
-        fill_value : var, optional
-            Value used to fill the array before sorting.
-            The default is the `fill_value` attribute of the input array.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
             specified.
+        endwith : {True, False}, optional
+            Whether missing values (if any) should be treated as the largest values
+            (True) or the smallest values (False)
+            When the array contains unmasked values at the same extremes of the
+            datatype, the ordering of these values and the masked values is
+            undefined.
+        fill_value : {var}, optional
+            Value used internally for the masked values.
+            If ``fill_value`` is not None, it supersedes ``endwith``.
 
         Returns
         -------
@@ -5259,7 +5266,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        sort : Describes sorting algorithms used.
+        MaskedArray.sort : Describes sorting algorithms used.
         lexsort : Indirect stable sort with multiple keys.
         ndarray.sort : Inplace sort.
 
@@ -5278,10 +5285,19 @@ class MaskedArray(ndarray):
         array([1, 0, 2])
 
         """
+
         if fill_value is None:
-            fill_value = default_fill_value(self)
-        d = self.filled(fill_value).view(ndarray)
-        return d.argsort(axis=axis, kind=kind, order=order)
+            if endwith:
+                # nan > inf
+                if np.issubdtype(self.dtype, np.floating):
+                    fill_value = np.nan
+                else:
+                    fill_value = minimum_fill_value(self)
+            else:
+                fill_value = maximum_fill_value(self)
+
+        filled = self.filled(fill_value)
+        return filled.argsort(axis=axis, kind=kind, order=order)
 
     def argmin(self, axis=None, fill_value=None, out=None):
         """
@@ -5380,12 +5396,11 @@ class MaskedArray(ndarray):
             to compare first, second, and so on.  This list does not need to
             include all of the fields.
         endwith : {True, False}, optional
-            Whether missing values (if any) should be forced in the upper indices
-            (at the end of the array) (True) or lower indices (at the beginning).
-            When the array contains unmasked values of the largest (or smallest if
-            False) representable value of the datatype the ordering of these values
-            and the masked values is undefined.  To enforce the masked values are
-            at the end (beginning) in this case one must sort the mask.
+            Whether missing values (if any) should be treated as the largest values
+            (True) or the smallest values (False)
+            When the array contains unmasked values at the same extremes of the
+            datatype, the ordering of these values and the masked values is
+            undefined.
         fill_value : {var}, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
@@ -5429,35 +5444,22 @@ class MaskedArray(ndarray):
         """
         if self._mask is nomask:
             ndarray.sort(self, axis=axis, kind=kind, order=order)
-        else:
-            if self is masked:
-                return self
-            if fill_value is None:
-                if endwith:
-                    # nan > inf
-                    if np.issubdtype(self.dtype, np.floating):
-                        filler = np.nan
-                    else:
-                        filler = minimum_fill_value(self)
-                else:
-                    filler = maximum_fill_value(self)
-            else:
-                filler = fill_value
+            return
 
-            sidx = self.filled(filler).argsort(axis=axis, kind=kind,
-                                               order=order)
-            # save meshgrid memory for 1d arrays
-            if self.ndim == 1:
-                idx = sidx
-            else:
-                idx = np.meshgrid(*[np.arange(x) for x in self.shape], sparse=True,
-                                  indexing='ij')
-                idx[axis] = sidx
-            tmp_mask = self._mask[idx].flat
-            tmp_data = self._data[idx].flat
-            self._data.flat = tmp_data
-            self._mask.flat = tmp_mask
-        return
+        if self is masked:
+            return
+
+        sidx = self.argsort(axis=axis, kind=kind, order=order,
+                            fill_value=fill_value, endwith=endwith)
+
+        # save memory for 1d arrays
+        if self.ndim == 1:
+            idx = sidx
+        else:
+            idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
+            idx[axis] = sidx
+
+        self[...] = self[idx]
 
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -6500,49 +6502,33 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
-
-def argsort(a, axis=None, kind='quicksort', order=None, fill_value=None):
-    "Function version of the eponymous method."
-    if fill_value is None:
-        fill_value = default_fill_value(a)
-    d = filled(a, fill_value)
-    if axis is None:
-        return d.argsort(kind=kind, order=order)
-    return d.argsort(axis, kind=kind, order=order)
-argsort.__doc__ = MaskedArray.argsort.__doc__
-
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
+def argsort(a, axis=None, kind='quicksort', order=None, endwith=True, fill_value=None):
+    "Function version of the eponymous method."
+    a = np.asanyarray(a)
+
+    if isinstance(a, MaskedArray):
+        return a.argsort(axis=axis, kind=kind, order=order,
+                         endwith=endwith, fill_value=fill_value)
+    else:
+        return a.argsort(axis=axis, kind=kind, order=order)
+argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
-    a = narray(a, copy=True, subok=True)
+    a = np.array(a, copy=True, subok=True)
     if axis is None:
         a = a.flatten()
         axis = 0
-    if fill_value is None:
-        if endwith:
-            # nan > inf
-            if np.issubdtype(a.dtype, np.floating):
-                filler = np.nan
-            else:
-                filler = minimum_fill_value(a)
-        else:
-            filler = maximum_fill_value(a)
-    else:
-        filler = fill_value
 
-    sindx = filled(a, filler).argsort(axis=axis, kind=kind, order=order)
-
-    # save meshgrid memory for 1d arrays
-    if a.ndim == 1:
-        indx = sindx
+    if isinstance(a, MaskedArray):
+        a.sort(axis=axis, kind=kind, order=order,
+               endwith=endwith, fill_value=fill_value)
     else:
-        indx = np.meshgrid(*[np.arange(x) for x in a.shape], sparse=True,
-                           indexing='ij')
-        indx[axis] = sindx
-    return a[indx]
+        a.sort(axis=axis, kind=kind, order=order)
+    return a
 sort.__doc__ = MaskedArray.sort.__doc__
 
 

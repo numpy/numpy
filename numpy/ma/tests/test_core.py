@@ -3031,6 +3031,20 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(sortedx._data, [1, 2, -2, -1, 0])
         assert_equal(sortedx._mask, [1, 1, 0, 0, 0])
 
+    def test_argsort_matches_sort(self):
+        x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
+
+        for kwargs in [dict(),
+                       dict(endwith=True),
+                       dict(endwith=False),
+                       dict(fill_value=2),
+                       dict(fill_value=2, endwith=True),
+                       dict(fill_value=2, endwith=False)]:
+            sortedx = sort(x, **kwargs)
+            argsortedx = x[argsort(x, **kwargs)]
+            assert_equal(sortedx._data, argsortedx._data)
+            assert_equal(sortedx._mask, argsortedx._mask)
+
     def test_sort_2d(self):
         # Check sort of 2D array.
         # 2D array w/o mask
