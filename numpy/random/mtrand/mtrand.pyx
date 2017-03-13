@@ -143,7 +143,6 @@ cdef extern from "initarray.h":
 import_array()
 
 cimport cython
-import copy
 import numpy as np
 import operator
 import warnings
@@ -4872,7 +4871,7 @@ cdef class RandomState:
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
         else:
-            arr = copy.copy(x)
+            arr = np.array(x)
         self.shuffle(arr)
         return arr
 
