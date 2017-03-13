@@ -1843,6 +1843,86 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[3], (1, 1))
         assert_equal(res[4], {'out': (a,)})
 
+    def test_ufunc_override_with_super(self):
+
+        class A(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                args = []
+                in_no = []
+                for i, input_ in enumerate(inputs):
+                    if isinstance(input_, A):
+                        in_no.append(i)
+                        args.append(input_.view(np.ndarray))
+                    else:
+                        args.append(input_)
+
+                outputs = kwargs.pop('out', [])
+                out_no = []
+                if outputs:
+                    out_args = []
+                    for j, output in enumerate(outputs):
+                        if isinstance(output, A):
+                            out_no.append(j)
+                            out_args.append(output.view(np.ndarray))
+                        else:
+                            out_args.append(output)
+                    kwargs['out'] = tuple(out_args)
+
+                info = {key: no for (key, no) in (('inputs', in_no),
+                                                  ('outputs', out_no))
+                        if no != []}
+
+                results = super(A, self).__array_ufunc__(ufunc, method,
+                                                         *args, **kwargs)
+                if not isinstance(results, tuple):
+                    if not isinstance(results, np.ndarray):
+                        return results
+                    results = (results,)
+
+                if outputs == []:
+                    outputs = [None] * len(results)
+                results = tuple(result.view(A) if output is None else output
+                                for result, output in zip(results, outputs))
+                if isinstance(results[0], A):
+                    results[0].info = info
+
+                return results[0] if len(results) == 1 else results
+
+        d = np.arange(5.)
+        a = np.arange(5.).view(A)
+        # 1 input, 1 output
+        b = np.sin(a)
+        check = np.sin(d)
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'inputs': [0]})
+        b = np.sin(d, out=(a,))
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'outputs': [0]})
+        assert_(b is a)
+        a = np.arange(5.).view(A)
+        b = np.sin(a, out=a)
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'inputs': [0], 'outputs': [0]})
+        # 1 input, 2 outputs
+        a = np.arange(5.).view(A)
+        b1, b2 = np.modf(a)
+        assert_equal(b1.info, {'inputs': [0]})
+        b1, b2 = np.modf(d, out=(None, a))
+        assert_(b2 is a)
+        assert_equal(b1.info, {'outputs': [1]})
+        a = np.arange(5.).view(A)
+        b = np.arange(5.).view(A)
+        c1, c2 = np.modf(a, out=(a, b))
+        assert_(c1 is a)
+        assert_(c2 is b)
+        assert_equal(c1.info, {'inputs': [0], 'outputs': [0, 1]})
+        # 2 input, 1 output
+        a = np.arange(5.).view(A)
+        b = np.arange(5.).view(A)
+        c = np.add(a, b, out=a)
+        assert_(c is a)
+        assert_equal(c.info, {'inputs': [0, 1], 'outputs': [0]})
+
 
 class TestChoose(TestCase):
     def test_mixed(self):

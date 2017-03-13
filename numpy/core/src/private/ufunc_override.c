@@ -1,7 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define NO_IMPORT_ARRAY
+
 #include "npy_pycompat.h"
 #include "numpy/ufuncobject.h"
 #include "get_attr_string.h"
+#include "npy_import.h"
 
 #include "ufunc_override.h"
 
@@ -170,6 +173,47 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 /*
+ * Check whether an object has __array_ufunc__ defined on its class and it
+ * is not the default, i.e., the object is not an ndarray, and its
+ * __array_ufunc__ is not the same as that of ndarray.
+ *
+ * Note that since this module is used with both multiarray and umath, we do
+ * not have access to PyArray_Type and therewith neither to PyArray_CheckExact
+ * nor to the default __array_ufunc__ method, so instead we import locally.
+ * TODO: Can this really not be done more smartly?
+ */
+static int
+has_non_default_array_ufunc(PyObject *obj)
+{
+    static PyObject *ndarray = NULL;
+    static PyObject *ndarray_array_ufunc = NULL;
+    PyObject *cls_array_ufunc;
+    int non_default;
+
+    /* on first entry, import and cache ndarray and its __array_ufunc__ */
+    if (ndarray == NULL) {
+        npy_cache_import("numpy.core.multiarray", "ndarray", &ndarray);
+        ndarray_array_ufunc = PyObject_GetAttrString(ndarray,
+                                                     "__array_ufunc__");
+    }
+
+    /* Fast return for ndarray */
+    if ((PyObject *)Py_TYPE(obj) == ndarray) {
+        return 0;
+    }
+    /* does the class define __array_ufunc__? */
+    cls_array_ufunc = PyArray_GetAttrString_SuppressException(
+                          (PyObject *)Py_TYPE(obj), "__array_ufunc__");
+    if (cls_array_ufunc == NULL) {
+        return 0;
+    }
+    /* is it different from ndarray.__array_ufunc__? */
+    non_default = (cls_array_ufunc != ndarray_array_ufunc);
+    Py_DECREF(cls_array_ufunc);
+    return non_default;
+}
+
+/*
  * Check a set of args for the `__array_ufunc__` method.  If more than one of
  * the input arguments implements `__array_ufunc__`, they are tried in the
  * order: subclasses before superclasses, otherwise left to right. The first
@@ -194,7 +238,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     int out_kwd_is_tuple = 0;
     int noa = 0; /* Number of overriding args.*/
 
-    PyObject *tmp;
     PyObject *obj;
     PyObject *out_kwd_obj = NULL;
     PyObject *other_obj;
@@ -203,9 +246,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *normal_args = NULL; /* normal_* holds normalized arguments. */
     PyObject *normal_kwds = NULL;
 
+    PyObject *override_args = NULL;
     PyObject *with_override[NPY_MAXARGS];
     Py_ssize_t len;
-    PyObject *override_args;
 
     /*
      * Check inputs
@@ -250,11 +293,14 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                 obj = out_kwd_obj;
             }
         }
-        tmp = PyArray_GetAttrString_SuppressException(obj, "__array_ufunc__");
-        if (tmp) {
-            Py_DECREF(tmp);
-            with_override[noa] = obj;
-            ++noa;
+        /*
+         * Now see if the object provides an __array_ufunc__. However, we should
+         * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
+         * any ndarray subclass instances that did not override __array_ufunc__.
+         */
+        if (has_non_default_array_ufunc(obj)) {
+	    with_override[noa] = obj;
+	    ++noa;
         }
     }
 
@@ -282,7 +328,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         out = PyDict_GetItemString(normal_kwds, "out");
         if (out != NULL) {
             if (PyTuple_Check(out)) {
-                int all_none;
+                int all_none = 1;
                 int i;
 
                 for (i = 0; i < PyTuple_GET_SIZE(out); i++) {
@@ -362,7 +408,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     Py_INCREF(ufunc);
     /* PyTuple_SET_ITEM steals reference */
-    PyTuple_SET_ITEM(override_args, 0, ufunc);
+    PyTuple_SET_ITEM(override_args, 0, (PyObject *)ufunc);
     Py_INCREF(method_name);
     PyTuple_SET_ITEM(override_args, 1, method_name);
     for (i = 0; i < len; i++) {
