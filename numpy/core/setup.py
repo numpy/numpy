@@ -152,7 +152,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     for h in OPTIONAL_HEADERS:
         if config.check_func("", decl=False, call=False, headers=[h]):
-            moredefs.append((fname2def(h).replace(".", "_"), 1))
+            h = h.replace(".", "_").replace(os.path.sep, "_")
+            moredefs.append((fname2def(h), 1))
 
     for tup in OPTIONAL_INTRINSICS:
         headers = None
