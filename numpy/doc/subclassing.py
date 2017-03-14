@@ -511,6 +511,10 @@ checks based on the input that may be desired before computation begins.
 Like ``__array_wrap__``, ``__array_prepare__`` must return an ndarray or
 subclass thereof or raise an error.
 
+.. note:: As of numpy 1.13, there also is a new, more powerful method to
+    handle how a subclass deals with ufuncs, ``__array_ufunc__``.  For details,
+    see the reference section.
+
 Extra gotchas - custom ``__del__`` methods and ndarray.base
 -----------------------------------------------------------
 
