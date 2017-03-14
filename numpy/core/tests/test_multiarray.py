@@ -2408,11 +2408,11 @@ class TestMethods(TestCase):
 
     def test_dot_override(self):
         class B(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return "B"
 
         class C(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return NotImplemented
 
         class D(object):
@@ -2935,8 +2935,8 @@ class TestBinop(object):
         def iop_impl(self, other):
             return "in-place"
 
-        def array_ufunc_impl(self, ufunc, *args, **kwargs):
-            return ("__array_ufunc__", ufunc, args, kwargs)
+        def array_ufunc_impl(self, ufunc, method, *args, **kwargs):
+            return ("__array_ufunc__", ufunc, method, args, kwargs)
 
         # Create an object with the given base, in the given module, with a
         # bunch of placeholder __op__ methods, and optionally a
@@ -3021,7 +3021,8 @@ class TestBinop(object):
                             assert_equal(res[0], "__array_ufunc__")
                             if ufunc is not None:
                                 assert_equal(res[1], ufunc)
-                                assert_(res[-1]["out"] is arr)
+                                assert_(type(res[-1]["out"]) is tuple)
+                                assert_(res[-1]["out"][0] is arr)
                         else:
                             if (isinstance(obj, np.ndarray) and
                                     not hasattr(obj, "__array_ufunc__")):
@@ -3070,7 +3071,7 @@ class TestBinop(object):
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
         class SomeClass(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
                 return kw
 
         a = SomeClass()
@@ -3086,52 +3087,56 @@ class TestBinop(object):
     def test_array_ufunc_index(self):
         # Check that index is set appropriately, also if only an output
         # is passed on (latter is another regression tests for github bug 4753)
+        # This also checks implicitly that 'out' is always a tuple.
         class CheckIndex(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
                 for i, a in enumerate(inputs):
                     if a is self:
                         return i
-                return None
+                # calls below mean we must be in an output.
+                for j, a in enumerate(kw['out']):
+                    if a is self:
+                        return (j,)
 
         a = CheckIndex()
         dummy = np.arange(2.)
         # 1 input, 1 output
         assert_equal(np.sin(a), 0)
-        assert_equal(np.sin(dummy, a), None)
-        assert_equal(np.sin(dummy, out=a), None)
-        assert_equal(np.sin(dummy, out=(a,)), None)
+        assert_equal(np.sin(dummy, a), (0,))
+        assert_equal(np.sin(dummy, out=a), (0,))
+        assert_equal(np.sin(dummy, out=(a,)), (0,))
         assert_equal(np.sin(a, a), 0)
         assert_equal(np.sin(a, out=a), 0)
         assert_equal(np.sin(a, out=(a,)), 0)
         # 1 input, 2 outputs
-        assert_equal(np.modf(dummy, a), None)
-        assert_equal(np.modf(dummy, None, a), None)
-        assert_equal(np.modf(dummy, dummy, a), None)
-        assert_equal(np.modf(dummy, out=a), None)
-        assert_equal(np.modf(dummy, out=(a,)), None)
-        assert_equal(np.modf(dummy, out=(a, None)), None)
-        assert_equal(np.modf(dummy, out=(a, dummy)), None)
-        assert_equal(np.modf(dummy, out=(None, a)), None)
-        assert_equal(np.modf(dummy, out=(dummy, a)), None)
+        assert_equal(np.modf(dummy, a), (0,))
+        assert_equal(np.modf(dummy, None, a), (1,))
+        assert_equal(np.modf(dummy, dummy, a), (1,))
+        assert_equal(np.modf(dummy, out=a), (0,))
+        assert_equal(np.modf(dummy, out=(a,)), (0,))
+        assert_equal(np.modf(dummy, out=(a, None)), (0,))
+        assert_equal(np.modf(dummy, out=(a, dummy)), (0,))
+        assert_equal(np.modf(dummy, out=(None, a)), (1,))
+        assert_equal(np.modf(dummy, out=(dummy, a)), (1,))
         assert_equal(np.modf(a, out=(dummy, a)), 0)
         # 2 inputs, 1 output
         assert_equal(np.add(a, dummy), 0)
         assert_equal(np.add(dummy, a), 1)
-        assert_equal(np.add(dummy, dummy, a), None)
+        assert_equal(np.add(dummy, dummy, a), (0,))
         assert_equal(np.add(dummy, a, a), 1)
-        assert_equal(np.add(dummy, dummy, out=a), None)
-        assert_equal(np.add(dummy, dummy, out=(a,)), None)
+        assert_equal(np.add(dummy, dummy, out=a), (0,))
+        assert_equal(np.add(dummy, dummy, out=(a,)), (0,))
         assert_equal(np.add(a, dummy, out=a), 0)
 
     def test_out_override(self):
         # regression test for github bug 4753
         class OutClass(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, inputs, **kw):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
                 if 'out' in kw:
                     tmp_kw = kw.copy()
                     tmp_kw.pop('out')
                     func = getattr(ufunc, method)
-                    kw['out'][...] = func(*inputs, **tmp_kw)
+                    kw['out'][0][...] = func(*inputs, **tmp_kw)
 
         A = np.array([0]).view(OutClass)
         B = np.array([5])
@@ -5272,14 +5277,14 @@ class MatmulCommon():
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return "B"
 
         class C(np.ndarray):
             def __new__(cls, *args, **kwargs):
                 return np.array(*args, **kwargs).view(cls)
 
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return NotImplemented
 
         class D(np.ndarray):

@@ -1225,7 +1225,7 @@ class TestUfunc(TestCase):
         # https://github.com/numpy/numpy/issues/4855
 
         class MyA(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return getattr(ufunc, method)(*(input.view(np.ndarray)
                                               for input in inputs), **kwargs)
         a = np.arange(12.).reshape(4,3)
