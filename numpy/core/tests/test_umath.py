@@ -1571,7 +1571,7 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override(self):
 
         class A(object):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return self, func, method, inputs, kwargs
 
         a = A()
@@ -1605,23 +1605,23 @@ class TestSpecialMethods(TestCase):
         four_mul_ufunc = np.frompyfunc(quatro_mul, 4, 1)
 
         class A(object):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "A"
 
         class ASub(A):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "ASub"
 
         class B(object):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "B"
 
         class C(object):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
         class CSub(object):
-            def __array_ufunc__(self, func, method, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
         a = A()
@@ -1685,7 +1685,7 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override_methods(self):
 
         class A(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return self, ufunc, method, inputs, kwargs
 
         # __call__
@@ -1704,9 +1704,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'reduce')
         assert_equal(res[3], (a,))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'keepdims': 'keep0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'keepdims': 'keep0',
+                              'axis': 'axis0'})
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
@@ -1716,9 +1716,9 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'reduce')
         assert_equal(res[3], (a,))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'keepdims': 'keep0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'keepdims': 'keep0',
+                              'axis': 'axis0'})
 
         # accumulate, pos args
         res = np.multiply.accumulate(a, 'axis0', 'dtype0', 'out0')
@@ -1727,8 +1727,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'accumulate')
         assert_equal(res[3], (a,))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # accumulate, kwargs
         res = np.multiply.accumulate(a, axis='axis0', dtype='dtype0',
@@ -1738,8 +1738,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'accumulate')
         assert_equal(res[3], (a,))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # reduceat, pos args
         res = np.multiply.reduceat(a, [4, 2], 'axis0', 'dtype0', 'out0')
@@ -1748,8 +1748,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'reduceat')
         assert_equal(res[3], (a, [4, 2]))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # reduceat, kwargs
         res = np.multiply.reduceat(a, [4, 2], axis='axis0', dtype='dtype0',
@@ -1759,8 +1759,8 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[2], 'reduceat')
         assert_equal(res[3], (a, [4, 2]))
         assert_equal(res[4], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # outer
         res = np.multiply.outer(a, 42)
@@ -1780,11 +1780,11 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override_out(self):
 
         class A(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return kwargs
 
         class B(object):
-            def __array_ufunc__(self, ufunc, method, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return kwargs
 
         a = A()
@@ -1796,12 +1796,12 @@ class TestSpecialMethods(TestCase):
         res4 = np.multiply(a, 4, 'out_arg')
         res5 = np.multiply(a, 5, out='out_arg')
 
-        assert_equal(res0['out'], 'out_arg')
-        assert_equal(res1['out'], 'out_arg')
-        assert_equal(res2['out'], 'out_arg')
-        assert_equal(res3['out'], 'out_arg')
-        assert_equal(res4['out'], 'out_arg')
-        assert_equal(res5['out'], 'out_arg')
+        assert_equal(res0['out'][0], 'out_arg')
+        assert_equal(res1['out'][0], 'out_arg')
+        assert_equal(res2['out'][0], 'out_arg')
+        assert_equal(res3['out'][0], 'out_arg')
+        assert_equal(res4['out'][0], 'out_arg')
+        assert_equal(res5['out'][0], 'out_arg')
 
         # ufuncs with multiple output modf and frexp.
         res6 = np.modf(a, 'out0', 'out1')
