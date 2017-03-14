@@ -213,6 +213,15 @@ class TestDocs(TestCase):
         v = np.arange(1, 21)
         assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
 
+    def test_poly_eq(self):
+        p = np.poly1d([1, 2, 3])
+        p2 = np.poly1d([1, 2, 4])
+        assert_equal(p == None, False)
+        assert_equal(p != None, True)
+        assert_equal(p == p, True)
+        assert_equal(p == p2, False)
+        assert_equal(p != p2, True)
+
 
 if __name__ == "__main__":
     run_module_suite()

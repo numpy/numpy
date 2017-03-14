@@ -1036,17 +1036,47 @@ class poly1d(object):
     poly1d([ 1, -3,  2])
 
     """
-    coeffs = None
-    order = None
-    variable = None
     __hash__ = None
 
-    def __init__(self, c_or_r, r=0, variable=None):
+    @property
+    def coeffs(self):
+        """ The polynomial coefficients """
+        return self._coeffs
+
+    @property
+    def variable(self):
+        """ The name of the polynomial variable """
+        return self._variable
+
+    # calculated attributes
+    @property
+    def order(self):
+        """ The order or degree of the polynomial """
+        return len(self._coeffs) - 1
+
+    @property
+    def roots(self):
+        """ The roots of the polynomial, where self(x) == 0 """
+        return roots(self._coeffs)
+
+    # alias attributes
+    r = roots
+    c = coef = coefficients = coeffs
+    o = order
+
+    def __init__(self, c_or_r, r=False, variable=None):
         if isinstance(c_or_r, poly1d):
-            for key in c_or_r.__dict__.keys():
-                self.__dict__[key] = c_or_r.__dict__[key]
+            self._variable = c_or_r._variable
+            self._coeffs = c_or_r._coeffs
+
+            if set(c_or_r.__dict__) - set(self.__dict__):
+                msg = ("In the future extra properties will not be copied "
+                       "across when constructing one poly1d from another")
+                warnings.warn(msg, FutureWarning, stacklevel=2)
+                self.__dict__.update(c_or_r.__dict__)
+
             if variable is not None:
-                self.__dict__['variable'] = variable
+                self._variable = variable
             return
         if r:
             c_or_r = poly(c_or_r)
@@ -1056,11 +1086,10 @@ class poly1d(object):
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
             c_or_r = NX.array([0.])
-        self.__dict__['coeffs'] = c_or_r
-        self.__dict__['order'] = len(c_or_r) - 1
+        self._coeffs = c_or_r
         if variable is None:
             variable = 'x'
-        self.__dict__['variable'] = variable
+        self._variable = variable
 
     def __array__(self, t=None):
         if t:
@@ -1199,29 +1228,17 @@ class poly1d(object):
     __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
+        if not isinstance(other, poly1d):
+            return NotImplemented
         if self.coeffs.shape != other.coeffs.shape:
             return False
         return (self.coeffs == other.coeffs).all()
 
     def __ne__(self, other):
+        if not isinstance(other, poly1d):
+            return NotImplemented
         return not self.__eq__(other)
 
-    def __setattr__(self, key, val):
-        raise ValueError("Attributes cannot be changed this way.")
-
-    def __getattr__(self, key):
-        if key in ['r', 'roots']:
-            return roots(self.coeffs)
-        elif key in ['c', 'coef', 'coefficients']:
-            return self.coeffs
-        elif key in ['o']:
-            return self.order
-        else:
-            try:
-                return self.__dict__[key]
-            except KeyError:
-                raise AttributeError(
-                    "'%s' has no attribute '%s'" % (self.__class__, key))
 
     def __getitem__(self, val):
         ind = self.order - val
@@ -1237,10 +1254,9 @@ class poly1d(object):
             raise ValueError("Does not support negative powers.")
         if key > self.order:
             zr = NX.zeros(key-self.order, self.coeffs.dtype)
-            self.__dict__['coeffs'] = NX.concatenate((zr, self.coeffs))
-            self.__dict__['order'] = key
+            self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
-        self.__dict__['coeffs'][ind] = val
+        self._coeffs[ind] = val
         return
 
     def __iter__(self):
