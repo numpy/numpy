@@ -1,5 +1,4 @@
-"""
-=============================
+"""=============================
 Subclassing ndarray in python
 =============================
 
@@ -220,8 +219,9 @@ where our object creation housekeeping usually goes.
 * For the explicit constructor call, our subclass will need to create a
   new ndarray instance of its own class.  In practice this means that
   we, the authors of the code, will need to make a call to
-  ``ndarray.__new__(MySubClass,...)``, or do view casting of an existing
-  array (see below)
+  ``ndarray.__new__(MySubClass,...)``, a class-hierarchy prepared call to
+  ``super(MySubClass, cls).__new__(cls, ...)``, or do view casting of an
+  existing array (see below)
 * For view casting and new-from-template, the equivalent of
   ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
@@ -237,7 +237,7 @@ The following code allows us to look at the call sequences and arguments:
    class C(np.ndarray):
        def __new__(cls, *args, **kwargs):
            print('In __new__ with class %s' % cls)
-           return np.ndarray.__new__(cls, *args, **kwargs)
+           return super(C, cls).__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
            # in practice you probably will not need or want an __init__
@@ -275,7 +275,8 @@ The signature of ``__array_finalize__`` is::
 
     def __array_finalize__(self, obj):
 
-``ndarray.__new__`` passes ``__array_finalize__`` the new object, of our
+One sees that the ``super`` call, which goes to
+``ndarray.__new__``, passes ``__array_finalize__`` the new object, of our
 own class (``self``) as well as the object from which the view has been
 taken (``obj``).  As you can see from the output above, the ``self`` is
 always a newly created instance of our subclass, and the type of ``obj``
@@ -303,13 +304,14 @@ Simple example - adding an extra attribute to ndarray
   class InfoArray(np.ndarray):
 
       def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
-            strides=None, order=None, info=None):
+                  strides=None, order=None, info=None):
           # Create the ndarray instance of our type, given the usual
           # ndarray input arguments.  This will call the standard
           # ndarray constructor, but return an object of our type.
           # It also triggers a call to InfoArray.__array_finalize__
-          obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
-                           order)
+          obj = super(InfoArray, subtype).__new__(subtype, shape, dtype,
+                                                  buffer, offset, strides,
+                                                  order)
           # set the new 'info' attribute to the value passed
           obj.info = info
           # Finally, we must return the newly created object:
@@ -412,15 +414,132 @@ So:
   >>> v.info
   'information'
 
+.. _array-ufunc:
+
+``__array_ufunc__`` for ufuncs
+------------------------------
+
+  .. versionadded:: 1.13
+
+A subclass can override what happens when executing numpy ufuncs on it by
+overriding the default ``ndarray.__array_ufunc__`` method. This method is
+executed *instead* of the ufunc and should return either the result of the
+operation, or :obj:`NotImplemented` if the operation requested is not
+implemented.
+
+The signature of ``__array_ufunc__`` is::
+
+    def __array_ufunc__(ufunc, method, *inputs, **kwargs):
+
+   - *ufunc* is the ufunc object that was called.
+   - *method* is a string indicating which Ufunc method was called
+     (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
+     ``"accumulate"``, ``"outer"``, ``"inner"``).
+   - *inputs* is a tuple of the input arguments to the ``ufunc``.
+   - *kwargs* is a dictionary containing the optional input arguments
+     of the ufunc. If given, any ``out`` arguments, both positional
+     and keyword, are passed as a :obj:`tuple` in *kwargs*.
+
+A typical implementation would convert any inputs or ouputs that are
+instances of one's own class, pass everything on to a superclass using
+``super()``, and finally return the results after possible
+back-conversion. An example, taken from the test case
+``test_ufunc_override_with_super`` in ``core/tests/test_umath.pu``, is the
+following.
+
+.. testcode::
+
+    input numpy as np
+
+    class A(np.ndarray):
+        def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+            args = []
+            in_no = []
+            for i, input_ in enumerate(inputs):
+                if isinstance(input_, A):
+                    in_no.append(i)
+                    args.append(input_.view(np.ndarray))
+                else:
+                    args.append(input_)
+
+            outputs = kwargs.pop('out', [])
+            out_no = []
+            if outputs:
+                out_args = []
+                for j, output in enumerate(outputs):
+                    if isinstance(output, A):
+                        out_no.append(j)
+                        out_args.append(output.view(np.ndarray))
+                    else:
+                        out_args.append(output)
+                kwargs['out'] = tuple(out_args)
+
+            info = {key: no for (key, no) in (('inputs', in_no),
+                                              ('outputs', out_no))
+                    if no != []}
+
+            results = super(A, self).__array_ufunc__(ufunc, method,
+                                                     *args, **kwargs)
+            if not isinstance(results, tuple):
+                if not isinstance(results, np.ndarray):
+                    return results
+                results = (results,)
+
+            if outputs == []:
+                outputs = [None] * len(results)
+            results = tuple(result.view(A) if output is None else output
+                            for result, output in zip(results, outputs))
+            if isinstance(results[0], A):
+                results[0].info = info
+
+            return results[0] if len(results) == 1 else results
+
+So, this class does not actually do anything interesting: it just
+converts any instances of its own to regular ndarray (otherwise, we'd
+get infinite recursion!), and adds an ``info`` dictionary that tells
+which inputs and outputs it converted. Hence, e.g.,
+
+>>> a = np.arange(5.).view(A)
+>>> b = np.sin(a)
+>>> b.info
+{'inputs': [0]}
+>>> b = np.sin(np.arange(5.), out=(a,))
+>>> b.info
+{'outputs': [0]}
+>>> a = np.arange(5.).view(A)
+>>> b = np.ones(1).view(A)
+>>> a += b
+>>> a.info
+{'inputs': [0, 1], 'outputs': [0]}
+
+Note that one might also consider just doing ``getattr(ufunc,
+methods)(*inputs, **kwargs)`` instead of the ``super`` call. This would
+work (indeed, ``ndarray.__array_ufunc__`` effectively does just that), but
+by using ``super`` one can more easily have a class hierarchy.  E.g.,
+suppose we had another class ``B`` that defined ``__array_ufunc__`` and
+then made a subclass ``C`` depending on both, i.e., ``class C(A, B)``
+without yet another ``__array_ufunc__`` override.  Then any ufunc on an
+instance of ``C`` would pass on to ``A.__array_ufunc__``, the ``super``
+call in ``A`` would go to ``B.__array_ufunc__``, and the ``super`` call in
+``B`` would go to ``ndarray.__array_ufunc__``.
+
 .. _array-wrap:
 
-``__array_wrap__`` for ufuncs
--------------------------------------------------------
+``__array_wrap__`` for ufuncs and other functions
+-------------------------------------------------
 
-``__array_wrap__`` gets called at the end of numpy ufuncs and other numpy
-functions, to allow a subclass to set the type of the return value
-and update attributes and metadata. Let's show how this works with an example.
-First we make the same subclass as above, but with a different name and
+Prior to numpy 1.13, the behaviour of ufuncs could be tuned using
+``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
+change the output type of a ufunc, but, in constrast to
+``__array_ufunc__``, did not allow one to make any changes to the inputs.
+It is hoped to eventually deprecate these, but ``__array_wrap__`` is also
+used by other numpy functions and methods, such as ``squeeze``, so at the
+present time is still needed for full functionality.
+
+Conceptually, ``__array_wrap__`` "wraps up the action" in the sense of
+allowing a subclass to set the type of the return value and update
+attributes and metadata.  Let's show how this works with an example.  First
+we return to the simpler example subclass, but with a different name and
 some print statements:
 
 .. testcode::
@@ -446,7 +565,7 @@ some print statements:
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return np.ndarray.__array_wrap__(self, out_arr, context)
+          return super(MySubClass, self).__array_wrap__(self, out_arr, context)
 
 We run a ufunc on an instance of our new array:
 
@@ -467,13 +586,12 @@ MySubClass([1, 3, 5, 7, 9])
 >>> ret.info
 'spam'
 
-Note that the ufunc (``np.add``) has called the ``__array_wrap__`` method of the
-input with the highest ``__array_priority__`` value, in this case
-``MySubClass.__array_wrap__``, with arguments ``self`` as ``obj``, and
-``out_arr`` as the (ndarray) result of the addition.  In turn, the
-default ``__array_wrap__`` (``ndarray.__array_wrap__``) has cast the
-result to class ``MySubClass``, and called ``__array_finalize__`` -
-hence the copying of the ``info`` attribute.  This has all happened at the C level.
+Note that the ufunc (``np.add``) has called the ``__array_wrap__`` method
+with arguments ``self`` as ``obj``, and ``out_arr`` as the (ndarray) result
+of the addition.  In turn, the default ``__array_wrap__``
+(``ndarray.__array_wrap__``) has cast the result to class ``MySubClass``,
+and called ``__array_finalize__`` - hence the copying of the ``info``
+attribute.  This has all happened at the C level.
 
 But, we could do anything we wanted:
 
@@ -494,11 +612,12 @@ But, we could do anything we wanted:
 So, by defining a specific ``__array_wrap__`` method for our subclass,
 we can tweak the output from ufuncs. The ``__array_wrap__`` method
 requires ``self``, then an argument - which is the result of the ufunc -
-and an optional parameter *context*. This parameter is returned by some
-ufuncs as a 3-element tuple: (name of the ufunc, argument of the ufunc,
-domain of the ufunc). ``__array_wrap__`` should return an instance of
-its containing class.  See the masked array subclass for an
-implementation.
+and an optional parameter *context*. This parameter is returned by
+ufuncs as a 3-element tuple: (name of the ufunc, arguments of the ufunc,
+domain of the ufunc), but is not set by other numpy functions. Though,
+as seen above, it is possible to do otherwise, ``__array_wrap__`` should
+return an instance of its containing class.  See the masked array
+subclass for an implementation.
 
 In addition to ``__array_wrap__``, which is called on the way out of the
 ufunc, there is also an ``__array_prepare__`` method which is called on
@@ -510,10 +629,6 @@ output array type, updating attributes and metadata, and performing any
 checks based on the input that may be desired before computation begins.
 Like ``__array_wrap__``, ``__array_prepare__`` must return an ndarray or
 subclass thereof or raise an error.
-
-.. note:: As of numpy 1.13, there also is a new, more powerful method to
-    handle how a subclass deals with ufuncs, ``__array_ufunc__``.  For details,
-    see the reference section.
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base
 -----------------------------------------------------------
