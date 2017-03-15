@@ -43,6 +43,10 @@ NumPy provides several hooks that classes can customize:
 
    .. versionadded:: 1.13
 
+   .. note:: The API is `provisional
+             <https://docs.python.org/3/glossary.html#term-provisional-api>`_,
+             i.e., we do not yet guarantee backward compatibility.
+
    Any class, ndarray subclass or not, can define this method or set it to
    :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
@@ -70,8 +74,11 @@ NumPy provides several hooks that classes can customize:
    raised.
 
    .. note:: In addition to ufuncs, :func:`__array_ufunc__` also
-      overrides the behavior of :func:`numpy.dot` and :func:`numpy.matmul`
-      even though these are not ufuncs.
+      overrides the behavior of :func:`numpy.dot` and :func:`numpy.matmul`.
+      This even though these are not ufuncs, but they can be thought of as
+      :ref:`generalized universal functions<c-api.generalized-ufuncs>`
+      (which are overridden). We intend to extend this behaviour to other
+      relevant functions.
 
    Like with other methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
@@ -92,17 +99,26 @@ NumPy provides several hooks that classes can customize:
    :class:`ndarray` will unconditionally return :obj:`NotImplemented`,
    so that your reverse methods will get called.
 
-   .. note:: If you subclass :class:`ndarray`, we strongly recommend
-      that you avoid confusion by neither setting
-      :func:`__array_ufunc__` to :obj:`None`, which makes no
-      sense for an array subclass, nor by defining it and also defining
-      reverse methods, which methods will be called by ``CPython`` in
-      preference over the :class:`ndarray` forward methods.
+   .. note:: If you subclass :class:`ndarray`:
+
+      - We strongly recommend that you avoid confusion by neither setting
+        :func:`__array_ufunc__` to :obj:`None`, which makes no sense for
+        an array subclass, nor by defining it and also defining reverse
+        methods, which methods will be called by ``CPython`` in
+        preference over the :class:`ndarray` forward methods.
+      - :class:`ndarray` defines its own :func:`__array_ufunc__`, which
+        corresponds to ``getattr(ufunc, method)(*inputs, **kwargs)``. Hence,
+        a typical override of :func:`__array_ufunc__` would convert any
+        instances of one's own class, pass these on to its superclass using
+        ``super().__array_ufunc__(*inputs, **kwargs)``, and finally return
+        the results after possible back-conversion. This practice ensures
+        that it is possible to have a hierarchy of subclasses. See
+        :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
    .. note:: If a class defines the :func:`__array_ufunc__` method,
       this disables the :func:`__array_wrap__`,
       :func:`__array_prepare__`, :data:`__array_priority__` mechanism
-      described below (which may eventually be deprecated).
+      described below for ufuncs (which may eventually be deprecated).
 
 .. py:method:: class.__array_finalize__(obj)
 
