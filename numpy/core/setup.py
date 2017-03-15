@@ -748,6 +748,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'ufunc_override.h'),
+            join('src', 'private', 'binop_override.h'),
             join('src', 'private', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -818,6 +820,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'ufunc_override.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -871,7 +874,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
-            join('src', 'private', 'mem_overlap.c')]
+            join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'ufunc_override.c')]
 
     umath_deps = [
             generate_umath_py,
@@ -883,7 +887,8 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
-            join('src', 'private', 'ufunc_override.h')] + npymath_sources
+            join('src', 'private', 'ufunc_override.h'),
+            join('src', 'private', 'binop_override.h')] + npymath_sources
 
     config.add_extension('umath',
                          sources=umath_src +
