@@ -169,7 +169,7 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
  * Returns 0 on success and 1 on exception. On success, *result contains the
  * result of the operation, if any. If *result is NULL, there is no override.
  */
-int
+NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds,
                       PyObject **result,
