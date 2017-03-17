@@ -300,7 +300,7 @@ Q: How F2PY distinguishes from Pyfort?
 
 F2PY and Pyfort have very similar aims and ideology of how they are
 targeted. Both projects started to evolve in the same year 1999
-independently. When we discovered each others projects, a discussion
+independently. When we discovered each other's projects, a discussion
 started to join the projects but that unfortunately failed for
 various reasons, e.g. both projects had evolved too far that merging
 the tools would have been impractical and giving up the efforts that
@@ -493,7 +493,7 @@ __ http://www.prism.enes.org/WPs/WP4a/Slides/pyfort/pyfort.html
 
 __ http://www.astro.uni-bonn.de/~heith/lecture_pdf/friedrich5.pdf
 
-+ Wiki topics on `Wrapping Tools`__ and `Wrapping Bemchmarks`__ for Climate
++ Wiki topics on `Wrapping Tools`__ and `Wrapping Benchmarks`__ for Climate
   System Center at the University of Chicago.
 
 __ https://geodoc.uchicago.edu/climatewiki/DiscussWrappingTools

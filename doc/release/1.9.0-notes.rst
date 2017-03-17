@@ -381,7 +381,7 @@ compiled on import.
 More GIL releases
 ~~~~~~~~~~~~~~~~~
 Several more functions now release the Global Interpreter Lock allowing more
-efficient parallization using the ``threading`` module. Most notably the GIL is
+efficient parallelization using the ``threading`` module. Most notably the GIL is
 now released for fancy indexing, ``np.where`` and the ``random`` module now
 uses a per-state lock instead of the GIL.
 

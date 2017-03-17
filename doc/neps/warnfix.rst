@@ -19,7 +19,7 @@ free.
 Warning flags
 =============
 
-Each compiler detects a diffferent set of potential errors. The baseline will
+Each compiler detects a different set of potential errors. The baseline will
 be gcc -Wall -W -Wextra. Ideally, a complete set would be nice:
 
 -W -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Waggregate-return
