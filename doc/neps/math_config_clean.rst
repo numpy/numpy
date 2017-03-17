@@ -22,7 +22,7 @@ Current problems
 
 Currently, the math configuration mainly test for some math functions, and
 configure numpy accordingly. But instead of testing each desired function
-independantly, the current system has been developed more as workarounds
+independently, the current system has been developed more as workarounds
 particular platform oddities, using platform implicit knowledge. This is
 against the normal philosophy of testing for capabilities only, which is the
 autoconf philosophy, which showed the path toward portability (on Unix at
@@ -38,7 +38,7 @@ sizeof(double).
 
 Another example is the testing for set of functions using only one function: if
 expf is found, it is assumed that all basic float functions are available.
-Instead, each function should be tested independantly (expf, sinf, etc...).
+Instead, each function should be tested independently (expf, sinf, etc...).
 
 Requirements
 ============
@@ -52,12 +52,12 @@ Proposal
 ========
 
 We suggest to break any implicit assumption, and test each math function
-independantly from each other, as usually done by autoconf. Since testing for a
+independently from each other, as usually done by autoconf. Since testing for a
 vast set of functions can be time consuming, we will use a scheme similar to
 AC_CHECK_FUNCS_ONCE in autoconf, that is test for a set of function at once,
 and only in the case it breaks, do the per function check. When the first check
 works, it should be as fast as the current scheme, except that the assumptions
-are explicitely checked (all functions implied by HAVE_LONGDOUBLE_FUNCS would
+are explicitly checked (all functions implied by HAVE_LONGDOUBLE_FUNCS would
 be checked together, for example).
 
 Issues

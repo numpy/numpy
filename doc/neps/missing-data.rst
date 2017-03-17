@@ -79,7 +79,7 @@ Unknown Yet Existing Data (NA)
 
 This is the approach taken in the R project, defining a missing element
 as something which does have a valid value which isn't known, or is
-NA (not available). This proposal adopts this behavior as as the
+NA (not available). This proposal adopts this behavior as the
 default for all operations involving missing values.
 
 In this interpretation, nearly any computation with a missing input produces

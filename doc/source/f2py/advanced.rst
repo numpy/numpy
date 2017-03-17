@@ -25,7 +25,7 @@ In Python:
 Modifying the dictionary of a F2PY generated module
 ===================================================
 
-The following example illustrates how to add an user-defined
+The following example illustrates how to add a user-defined
 variables to a F2PY generated extension module. Given the following
 signature file
 

@@ -16,7 +16,7 @@ In the following I will use the following definitions:
 1) A matrix is a mathematical object that represents a collection of
    objects (elements), usually visualized in a table form, and one can
    define a set of various (algebraic,etc) operations for matrices.
-   One can think of a matrix as a defintion of a certain mapping:
+   One can think of a matrix as a definition of a certain mapping:
          (i) |--> A(i)
    where i belongs to the set of indices (an index itself can be a
    sequence of objects, for example, a sequence of integers) and A(i)

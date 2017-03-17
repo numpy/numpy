@@ -142,7 +142,7 @@ lines 19 and 20 so that we can call the underlying C function at line
 created a new array that is no longer needed.
 
 This code has a significant amount of error handling.  Note the
-``SWIG_fail`` is a macro for ``goto fail``, refering to the label at
+``SWIG_fail`` is a macro for ``goto fail``, referring to the label at
 line 28.  If the user provides the wrong number of arguments, this
 will be caught at line 10.  If construction of the NumPy array
 fails or produces an array with the wrong number of dimensions, these
@@ -337,7 +337,7 @@ Argout Arrays
 Argout arrays are arrays that appear in the input arguments in C, but
 are in fact output arrays.  This pattern occurs often when there is
 more than one output variable and the single return argument is
-therefore not sufficient.  In Python, the convential way to return
+therefore not sufficient.  In Python, the conventional way to return
 multiple arguments is to pack them into a sequence (tuple, list, etc.)
 and return the sequence.  This is what the argout typemaps do.  If a
 wrapped function that uses these argout typemaps has more than one
@@ -556,7 +556,7 @@ and the argument you are passing is an integer extracted from a
 NumPy array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
 NumPy array scalars in addition to the standard integer types.
-Fortunately, this capabilitiy has been provided for you.  Simply copy
+Fortunately, this capability has been provided for you.  Simply copy
 the file::
 
     pyfragments.swg
@@ -577,7 +577,7 @@ inserted into your wrapper code once.
 
 There is a fragment for converting a Python integer to a C
 ``long``.  There is a different fragment that converts a Python
-integer to a C ``int``, that calls the rountine defined in the
+integer to a C ``int``, that calls the routine defined in the
 ``long`` fragment.  We can make the changes we want here by changing
 the definition for the ``long`` fragment.  `SWIG`_ determines the
 active definition for a fragment using a "first come, first served"
@@ -590,7 +590,7 @@ in ``numpy.i``, they would be ignored.
 Helper Functions
 ----------------
 
-The ``numpy.i`` file containes several macros and routines that it
+The ``numpy.i`` file contains several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
 be useful elsewhere in your interface file.  These macros and routines
 are implemented as fragments, which are described briefly in the

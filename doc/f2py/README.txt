@@ -305,7 +305,7 @@ __ https://github.com/numpy/numpy/blob/master/numpy/f2py/docs/HISTORY.txt
  Mailing list
 ===============
 
-A mailing list f2py-users@cens.ioc.ee is open for F2PY releated
+A mailing list f2py-users@cens.ioc.ee is open for F2PY related
 discussion/questions/etc.
 
 * `Subscribe..`__

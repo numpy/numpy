@@ -129,7 +129,7 @@ the dimension with the largest axis is found and used.
 Iterating over multiple arrays
 ------------------------------
 
-Very often, it is desireable to iterate over several arrays at the
+Very often, it is desirable to iterate over several arrays at the
 same time. The universal functions are an example of this kind of
 behavior. If all you want to do is iterate over arrays with the same
 shape, then simply creating several iterator objects is the standard
@@ -259,7 +259,7 @@ pointer to the data-type you've just defined. In addition, the
 required functions in the ".f" member must be defined: nonzero,
 copyswap, copyswapn, setitem, getitem, and cast. The more functions in
 the ".f" member you define, however, the more useful the new data-type
-will be.  It is very important to intialize unused functions to NULL.
+will be.  It is very important to initialize unused functions to NULL.
 This can be achieved using :c:func:`PyArray_InitArrFuncs` (f).
 
 Once a new :c:type:`PyArray_Descr` structure is created and filled with the
@@ -325,7 +325,7 @@ not presumed to be safely castable to user-defined data-types. This
 situation limits the ability of user-defined data-types to participate
 in the coercion system used by ufuncs and other times when automatic
 coercion takes place in NumPy. This can be changed by registering
-data-types as safely castable from a particlar data-type object. The
+data-types as safely castable from a particular data-type object. The
 function :c:func:`PyArray_RegisterCanCast` (from_descr, totype_number,
 scalarkind) should be used to specify that the data-type object
 from_descr can be cast to the data-type with type number
@@ -404,7 +404,7 @@ with regards to memory management. Sub-typing in C is not difficult
 even if you have only a rudimentary understanding of how to create new
 types for Python. While it is easiest to sub-type from a single parent
 type, sub-typing from multiple parent types is also possible. Multiple
-inheritence in C is generally less useful than it is in Python because
+inheritance in C is generally less useful than it is in Python because
 a restriction on Python sub-types is that they have a binary
 compatible memory layout. Perhaps for this reason, it is somewhat
 easier to sub-type from a single parent type.
@@ -441,9 +441,9 @@ every new Python type.
 Creating sub-types
 ------------------
 
-To create a sub-type, a similar proceedure must be followed except
+To create a sub-type, a similar procedure must be followed except
 only behaviors that are different require new entries in the type-
-object structure. All other entires can be NULL and will be filled in
+object structure. All other entries can be NULL and will be filled in
 by :c:func:`PyType_Ready` with appropriate functions from the parent
 type(s). In particular, to create a sub-type in C follow these steps:
 

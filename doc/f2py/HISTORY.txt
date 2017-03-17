@@ -49,7 +49,7 @@ Release 2.46.243
   - Fixed FORTRANAME typo, relevant when wrapping scalar functions with
     ``--no-wrap-functions``.
   - Improved failure handling for callback functions.
-  - Fixed bug in writting F90 wrapper functions when a line length
+  - Fixed bug in writing F90 wrapper functions when a line length
     is exactly 66.
 
 * cfuncs.py
@@ -336,7 +336,7 @@ Release 2.39.235_1660
 
 * f90mod_rules.py
 
-  - Splitted generated documentation strings (to avoid MSVC issue when
+  - Split generated documentation strings (to avoid MSVC issue when
     string length>2k)
 
   - Ignore ``private`` module data.
@@ -505,7 +505,7 @@ Release 2.35.229-1505
     len(vars) is large.
   - Fixed callback string argument detection.
   - Fixed evaluating expressions: only int|float expressions are
-    evaluated succesfully.
+    evaluated successfully.
 
 * docs
 
@@ -748,7 +748,7 @@ Older Releases
 
 ::
 
- *** Fixed copying of non-contigious 1-dimensional arrays bug.
+ *** Fixed copying of non-contiguous 1-dimensional arrays bug.
     (Thanks to Travis O.).
 
 

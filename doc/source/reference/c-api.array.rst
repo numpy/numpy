@@ -1030,12 +1030,12 @@ Converting data types
     exception is that 64-bit integers are allowed to be cast to 64-bit
     floating point values even though this can lose precision on large
     integers so as not to proliferate the use of long doubles without
-    explict requests. Flexible array types are not checked according
+    explicit requests. Flexible array types are not checked according
     to their lengths with this function.
 
 .. c:function:: int PyArray_CanCastTo(PyArray_Descr* fromtype, PyArray_Descr* totype)
 
-    :c:func:`PyArray_CanCastTypeTo` supercedes this function in
+    :c:func:`PyArray_CanCastTypeTo` supersedes this function in
     NumPy 1.6 and later.
 
     Equivalent to PyArray_CanCastTypeTo(fromtype, totype, NPY_SAFE_CASTING).
@@ -1356,7 +1356,7 @@ of the constant names is deprecated in 1.7.
 
     The data area can be written to.
 
-    Notice that the above 3 flags are are defined so that a new, well-
+    Notice that the above 3 flags are defined so that a new, well-
     behaved array has these flags defined as true.
 
 .. c:var:: NPY_ARRAY_UPDATEIFCOPY
@@ -1485,7 +1485,7 @@ For all of these macros *arr* must be an instance of a (subclass of)
 
 .. c:function:: PyArray_ISBEHAVED(arr)
 
-    Evalutes true if the data area of *arr* is aligned and writeable
+    Evaluates true if the data area of *arr* is aligned and writeable
     and in machine byte-order according to its descriptor.
 
 .. c:function:: PyArray_ISBEHAVED_RO(arr)
@@ -1659,7 +1659,7 @@ Shape Manipulation
     Equivalent to :meth:`ndarray.reshape` (*self*, *shape*) where *shape* is a
     sequence. Converts *shape* to a :c:type:`PyArray_Dims` structure and
     calls :c:func:`PyArray_Newshape` internally.
-    For back-ward compatability -- Not recommended
+    For back-ward compatibility -- Not recommended
 
 .. c:function:: PyObject* PyArray_Squeeze(PyArrayObject* self)
 
@@ -1975,7 +1975,7 @@ Calculation
 
     Equivalent to :meth:`ndarray.conjugate` (*self*).
     Return the complex conjugate of *self*. If *self* is not of
-    complex data type, then return *self* with an reference.
+    complex data type, then return *self* with a reference.
 
 .. c:function:: PyObject* PyArray_Round(PyArrayObject* self, int decimals, PyArrayObject* out)
 
@@ -2230,7 +2230,7 @@ an element copier function as a primitive.::
     void free_element_doubler_aux_data(NpyAuxData *data)
     {
         eldoubler_aux_data *d = (eldoubler_aux_data *)data;
-        /* Free the memory owned by this auxadata */
+        /* Free the memory owned by this auxdata */
         NPY_AUXDATA_FREE(d->funcdata);
         PyArray_free(d);
     }
@@ -3020,7 +3020,7 @@ Internal Flexibility
 .. c:function:: PyObject* PyArray_GetNumericOps(void)
 
     Return a Python dictionary containing the callable Python objects
-    stored in the the internal arithmetic operation table. The keys of
+    stored in the internal arithmetic operation table. The keys of
     this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)

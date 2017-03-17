@@ -37,10 +37,10 @@ Automatic detection of forward incompatibilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, if an extension was built against a version N of NumPy, and used on
-a system with NumPy M < N, the import_array was successfull, which could cause
+a system with NumPy M < N, the import_array was successful, which could cause
 crashes because the version M does not have a function in N. Starting from
 NumPy 1.4.0, this will cause a failure in import_array, so the error will be
-catched early on.
+caught early on.
 
 New iterators
 ~~~~~~~~~~~~~
@@ -58,7 +58,7 @@ is not compatible with the current polynomial support in numpy, but is much
 like the new chebyshev module. The most noticeable difference to most will
 be that coefficients are specified from low to high power, that the low
 level functions do *not* work with the Chebyshev and Polynomial classes as
-arguements, and that the Chebyshev and Polynomial classes include a domain.
+arguments, and that the Chebyshev and Polynomial classes include a domain.
 Mapping between domains is a linear substitution and the two classes can be
 converted one to the other, allowing, for instance, a Chebyshev series in
 one domain to be expanded as a polynomial in another domain. The new classes
@@ -159,8 +159,8 @@ Improvements
     #. The type comparison functions have been made consistent with the new
        sort order of nans. Searchsorted now works with sorted arrays
        containing nan values.
-    #. Complex division has been made more resistent to overflow.
-    #. Complex floor division has been made more resistent to overflow.
+    #. Complex division has been made more resistant to overflow.
+    #. Complex floor division has been made more resistant to overflow.
 
 Deprecations
 ============
@@ -199,8 +199,8 @@ Use C99 complex functions when available
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The numpy complex types are now guaranteed to be ABI compatible with C99
-complex type, if availble on the platform. Moreoever, the complex ufunc now use
-the platform C99 functions intead of our own.
+complex type, if available on the platform. Moreover, the complex ufunc now use
+the platform C99 functions instead of our own.
 
 split multiarray and umath source code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -4,7 +4,7 @@ My Setup:
 
 For Python/Fortran development, I run Windows 2000 and use the mingw32
 (www.mingw.org) set of gcc/g77 compilers and tools (gcc 2.95.2) to build python
-extensions.  I'll also ocassionally use MSVC for extension development, but
+extensions.  I'll also occasionally use MSVC for extension development, but
 rarely on projects that include Fortran code.  This short HOWTO describes how
 I use f2py in the Windows environment.  Pretty much everything is done from
 a CMD (DOS) prompt, so you'll need to be familiar with using shell commands.
@@ -41,12 +41,12 @@ automatically.  Here are the download steps:
 
         This will install f2py in the c:\python21\f2py2e directory.  It
         also copies a few scripts into the c:\python21\Scripts directory.
-        Thats all there is to installing f2py.  Now lets set up the environment
-        so that f2py is easy to use.
+        That's all there is to installing f2py.  Now let's set up the
+        environment so that f2py is easy to use.
 
-    4.  You need to set up a couple of environement variables.  The path
+    4.  You need to set up a couple of environment variables.  The path
         "c:\python21\Scripts" needs to be added to your path variables.
-        To do this, go to the enviroment variables settings page.  This is
+        To do this, go to the environment variables settings page.  This is
         where it is on windows 2000:
 
          Desktop->(right click)My Computer->Properties->Advanced->

@@ -62,7 +62,7 @@ This is a very flexible function.
 ``subtype`` : ``PyTypeObject *``
     The subtype that should be created (either pass in
     ``&PyArray_Type``,  or ``obj->ob_type``,
-    where ``obj`` is a an instance of a subtype (or subclass) of
+    where ``obj`` is an instance of a subtype (or subclass) of
     ``PyArray_Type``).
 
 ``descr`` : ``PyArray_Descr *``
@@ -184,7 +184,7 @@ function calls still remain but they are loose wrappers around the
         not it is safe.
 
 ``context`` : ``PyObject *``
-    If the Python object ``op`` is not an numpy array, but has an
+    If the Python object ``op`` is not a numpy array, but has an
     ``__array__`` method, context is passed as the second argument to
     that method (the first is the typecode). Almost always this
     parameter is ``NULL``.

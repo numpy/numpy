@@ -146,7 +146,7 @@ other units based on input data.
 
 Datetimes are always stored based on POSIX time (though having a TAI
 mode which allows for accounting of leap-seconds is proposed), with
-a epoch of 1970-01-01T00:00Z. This means the supported dates are
+an epoch of 1970-01-01T00:00Z. This means the supported dates are
 always a symmetric interval around the epoch, called "time span" in the
 table below.
 
@@ -341,7 +341,7 @@ printing it would convert from or to local time::
     >>>> np.datetime64('2000-01-01T00:00:00')
     numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
 
-A concensus of datetime64 users agreed that this behavior is undesirable
+A consensus of datetime64 users agreed that this behavior is undesirable
 and at odds with how datetime64 is usually used (e.g., by pandas_). For
 most use cases, a timezone naive datetime type is preferred, similar to the
 ``datetime.datetime`` type in the Python standard library. Accordingly,

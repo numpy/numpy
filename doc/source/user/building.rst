@@ -114,7 +114,7 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran
+means that g77 has been used. If libgfortran.so is a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 

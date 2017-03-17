@@ -57,7 +57,7 @@ Macros
     Deprecated: use npy_clear_floatstatus from npy_math.h instead.
 
     A macro that expands to platform-dependent code. The *ret*
-    variable can can be any integer. The :c:data:`UFUNC_FPE_{ERR}` bits are
+    variable can be any integer. The :c:data:`UFUNC_FPE_{ERR}` bits are
     set in *ret* according to the status of the corresponding error
     flags of the floating point processor.
 
@@ -342,7 +342,7 @@ structure.
 
     This general purpose 1-d core function assumes that *func* is a string
     representing a method of the input object. For each
-    iteration of the loop, the Python obejct is extracted from the array
+    iteration of the loop, the Python object is extracted from the array
     and its *func* method is called returning the result to the output array.
 
 .. c:function:: void PyUFunc_OO_O_method(char** args, npy_intp* dimensions,
@@ -372,7 +372,7 @@ structure.
                PyObject *callable;
            } PyUFunc_PyFuncData;
 
-    At each iteration of the loop, the *nin* input objects are exctracted
+    At each iteration of the loop, the *nin* input objects are extracted
     from their object arrays and placed into an argument tuple, the Python
     *callable* is called with the input arguments, and the nout
     outputs are placed into their object arrays.

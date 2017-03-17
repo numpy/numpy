@@ -97,7 +97,7 @@ In more detail
 
 #. Optional: Compare the changes with the previous version using with ``git
    diff`` (`git diff`_). This brings up a simple text browser interface that
-   highlights the difference between your files and the previous verison.
+   highlights the difference between your files and the previous version.
 
 #. Add any relevant modified or new files using  ``git add modified_file``
    (see `git add`_). This puts the files into a staging area, which is a queue

@@ -246,7 +246,7 @@ format_string. Using this function will raise a TypeError if invalid
 keyword arguments are passed in.
 
 For more help on this function please see section 1.8 (Keyword
-Paramters for Extension Functions) of the Extending and Embedding
+Parameters for Extension Functions) of the Extending and Embedding
 tutorial in the Python documentation.
 
 
@@ -373,7 +373,7 @@ writeable). The syntax is
 
     *obj*
 
-        The object can be any Python object convertable to an ndarray.
+        The object can be any Python object convertible to an ndarray.
         If the object is already (a subclass of) the ndarray that
         satisfies the requirements then a new reference is returned.
         Otherwise, a new array is constructed. The contents of *obj*

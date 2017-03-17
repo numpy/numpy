@@ -37,7 +37,7 @@ probably be some changes to make it more useable.
 The diagonal method currently returns a new array and raises a
 FutureWarning. In 1.9 it will return a readonly view.
 
-Multiple field selection from a array of structured type currently
+Multiple field selection from an array of structured type currently
 returns a new array and raises a FutureWarning. In 1.9 it will return a
 readonly view.
 
@@ -199,7 +199,7 @@ percentiles of samples.
 New functions `nanmean`, `nanvar` and `nanstd`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 New nan aware statistical functions are added. In these functions the
-results are what would be obtained if nan values were ommited from all
+results are what would be obtained if nan values were omitted from all
 computations.
 
 New functions `full` and `full_like`

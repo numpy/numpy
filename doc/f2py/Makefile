@@ -19,7 +19,7 @@ TTHFILTER3 = sed -e "s/{{}\\\verb@/\\\texttt{/g" | sed -e "s/@{}}/}/g" | $(TTH) 
 TTHMISSING = "\
 ***************************************************************\n\
 Warning:        Could not find tth (a TeX to HTML translator)  \n\
-                or an error arised was by tth\n\
+                or an error was arisen by tth\n\
 You can download tth from http://hutchinson.belmont.ma.us/tth/  \n\
 or\n\
 use your favorite LaTeX to HTML translator on file tmp_main.tex\n\

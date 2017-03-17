@@ -86,7 +86,7 @@ The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
 * OS X builds on travis currently use `clang`.  It appears that binary wheels
-  for OSX >= 10.6 can be safely built from from the travis-ci OSX 10.9 VMs
+  for OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs
   when building against the Python from the Python.org installers;
 * Windows builds use the MSVC version corresponding to the Python being built
   against;
