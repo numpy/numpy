@@ -282,7 +282,7 @@ Boolean indexing changes
 
 * Boolean indexes must match the dimension of the axis that they index.
 
-* Boolean indexes used on the lhs of an assigment must match the dimensions of
+* Boolean indexes used on the lhs of an assignment must match the dimensions of
   the rhs.
 
 * Boolean indexing into scalar arrays return a new 1-d array.  This means that

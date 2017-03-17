@@ -388,7 +388,7 @@ Type strings
     .. admonition:: Example
 
        Data type with fields ``r``, ``g``, ``b``, ``a``, each being
-       a 8-bit unsigned integer:
+       an 8-bit unsigned integer:
 
        >>> dt = np.dtype({'names': ['r','g','b','a'],
        ...                'formats': [uint8, uint8, uint8, uint8]})
