@@ -5,6 +5,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "logical_gufuncs.h"
+#include "lowlevel_strided_loops.h"
 
 
 // define the basic real version similar to the macro for complex numbers
@@ -16,42 +17,14 @@
 #define RGE(a,b) (a>=b)
 
 /* -------------------------------------------------------------------------- */
-/* define the inner loops  */
-
-#define all_INNER_LOOP(OP, TYPE)                \
-    *((npy_bool *)c_n) = NPY_TRUE;              \
-    for (i = 0; i < I; i++){                    \
-        a = *(TYPE *)a_i;                       \
-        b = *(TYPE *)b_i;                       \
-        if (OP(a,b)){                           \
-            a_i += a_I;                         \
-            b_i += b_I;                         \
-        } else {                                \
-            *((npy_bool *)c_n) = NPY_FALSE;     \
-            break;                              \
-        }                                       \
-    }
-
-#define any_INNER_LOOP(OP, TYPE)                \
-    *((npy_bool *)c_n) = NPY_FALSE;             \
-    for (i = 0; i < I; i++){                    \
-        a = *(TYPE *)a_i;                       \
-        b = *(TYPE *)b_i;                       \
-        if (OP(a,b)){                           \
-            *((npy_bool *)c_n) = NPY_TRUE;      \
-            break;                              \
-        } else {                                \
-            a_i += a_I;                         \
-            b_i += b_I;                         \
-        }                                       \
-    }
-
-/* -------------------------------------------------------------------------- */
 /* create the family of functions using a template  */
 
+#define BLOCK_SIZE 1024
+
 /**begin repeat
-* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
-*         double,longdouble,cfloat,cdouble,clongdouble#
+* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
 * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
 */
 
@@ -61,10 +34,12 @@
 */
 
 /**begin repeat2
-* #ALL_OR_ANY = all,any#
+* #fname = all,any#
+* #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+* #INV = ,!#
 */
 
-static void base_@TYPE@_@ALL_OR_ANY@_@OPNAME@
+static void NPY_GCC_OPT_3 base_@TYPE@_@fname@_@OPNAME@
         (char **args, npy_intp *dimensions,
          npy_intp* steps, void* data)
 {
@@ -75,13 +50,44 @@ static void base_@TYPE@_@ALL_OR_ANY@_@OPNAME@
     npy_intp a_I = steps[3], b_I = steps[4];
 
     char *a_i, *b_i;
-    npy_@TYPE@ a, b;
 
     for (n = 0; n < N; n++) {
         a_i = a_n;
         b_i = b_n;
 
-        @ALL_OR_ANY@_INNER_LOOP(@OP_PREFIX@@OP@, npy_@TYPE@)
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        i = 0;
+        /* main loop in chunks with auto vectorize simd instructions */
+        if (a_I == sizeof(@TYPE@) && b_I == sizeof(@TYPE@)) {
+            for (i=0; i < npy_blocked_end(0, 1, BLOCK_SIZE, I);
+                 i+=BLOCK_SIZE) {
+                unsigned int true_count = 0, j;
+                for (j=0 ; j<BLOCK_SIZE ; j++){
+                    @TYPE@ a = *(@TYPE@ *)a_i;
+                    @TYPE@ b = *(@TYPE@ *)b_i;
+                    true_count += @INV@@OP_PREFIX@@OP@(a, b);
+                    a_i += a_I;
+                    b_i += b_I;
+                }
+                if (true_count != BLOCK_SIZE) {
+                    *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                    i = I;
+                    break;
+                }
+            }
+        }
+
+        // check remaining elements
+        for ( ; i<I ; i++) {
+            if (@INV@@OP_PREFIX@@OP@(*(@TYPE@ *)a_i, *(@TYPE@ *)b_i)) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            } 
+        }
 
         a_n += a_N;
         b_n += b_N;
@@ -92,118 +98,6 @@ static void base_@TYPE@_@ALL_OR_ANY@_@OPNAME@
 /**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
-
-
-/* -------------------------------------------------------------------------- */
-/* vectorized versions*/
-
-#define BLOCK_SIZE 1024
-#define ALIGNMENT_SIZE 32
-#define ALIGNED(p) ((unsigned long)p & ALIGNMENT_SIZE)
-
-/*
-*  The core array must be contiguous, ie the core dimension steps must
-*  be equal to the sizeof the type
-*
-*  TODO: all contiguous signed and unsigned integer types could be handled by
-*  a single vectorized all_equal function.  Besides there should be at least 
-*  one simple C function without src templating.
-*/
-/**begin repeat
-* #TYPE = float,double,int#
-**/
-void simd_core_contiguous_@TYPE@_all_equal(
-    char **args, npy_intp *dimensions, npy_intp* steps, void* data)
-{
-    npy_intp i, n, j;
-    npy_intp N = dimensions[0], I = dimensions[1];
-    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
-    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
-
-    unsigned int true_count;
-    @TYPE@ *x, *y;
-
-    for (n = 0; n < N; n++) {
-        *((npy_bool *)c_n) = NPY_TRUE;
-        x = (@TYPE@ *)a_n;
-        y = (@TYPE@ *)b_n;
-
-        // get x aligned, helps compiler vectorize.  y can use unaligned
-        // loads. do while so at least the first element is checked
-        // before checking an entire chunk
-        i = 0;
-        do {
-            if ((*x) == (*y)) {
-                x++;
-                y++;
-                i++;
-            } else {
-                *((npy_bool *)c_n) = NPY_FALSE;
-                i = I;
-            }
-        } while (!ALIGNED(x) & (i<I));
-
-        // main loop in chunks with auto vectorize simd instructions
-        for ( ; i<(I-BLOCK_SIZE) ; i+=BLOCK_SIZE) {
-            true_count = 0;
-            for (j=0 ; j<BLOCK_SIZE ; j++){
-                true_count += ((*x) == (*y));
-                x++;
-                y++;
-            }
-            if (true_count != BLOCK_SIZE) {
-                *((npy_bool *)c_n) = NPY_FALSE;
-                i = I;
-                break;
-            }
-        };
-
-        // check remaining elements
-        for ( ; i<I ; i++) {
-            if ((*x) == (*y)) {
-                x++;
-                y++;
-            } else {
-                *((npy_bool *)c_n) = NPY_FALSE;
-                break;
-            } 
-        }
-
-        a_n += a_N;
-        b_n += b_N;
-        c_n += c_N;
-    }
-}
-/**end repeat**/
-
-/* -------------------------------------------------------------------------- */
-/* dispatchers to select optimal function */
-
-/**begin repeat
-* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
-*         double,longdouble,cfloat,cdouble,clongdouble#
-* #IS_VECTD = 0*4,1,0*5,1,1,0*4#
-*/
-void dispatch_@TYPE@_all_equal(
-    char **args, npy_intp *dimensions, npy_intp* steps, void* data)
-{
-
-    #if @IS_VECTD@
-        npy_intp I = dimensions[1];
-        npy_intp a_I = steps[3], b_I = steps[4];
-        if ((I > (2*BLOCK_SIZE)) & (a_I == sizeof(@TYPE@)) 
-                & (b_I == sizeof(@TYPE@)))
-        {
-            simd_core_contiguous_@TYPE@_all_equal(args, dimensions, steps, data);
-            return;
-        }
-    #endif
-    
-    base_@TYPE@_all_equal(args, dimensions, steps, data);
-
-}
-/**end repeat**/
-
 
 /* -------------------------------------------------------------------------- */
 /* Create type arrays for each gufunc, which are all identical*/
@@ -566,7 +460,6 @@ void InitLogicalGufuncs(PyObject *dictionary,
 * #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,
           all_greater_equal,any_equal,any_not_equal,any_less,any_less_equal,
           any_greater,any_greater_equal#
-* #APPROACH = dispatch,base*11#
 */
 
     { // open bracket surrounding inner repeat
@@ -574,11 +467,12 @@ void InitLogicalGufuncs(PyObject *dictionary,
         static PyUFuncGenericFunction @NAME@_funcs[] = {
 
 /**begin repeat1
-* #TYPE = byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,
-*         double,longdouble,cfloat,cdouble,clongdouble#
+* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
 */
 
-            @APPROACH@_@TYPE@_@NAME@,
+            base_@TYPE@_@NAME@,
 
 /**end repeat1**/
 
