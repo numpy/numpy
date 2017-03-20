@@ -2930,9 +2930,9 @@ def analyzeargs(block):
     return block
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z', re.I)
-determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(P<name>[\w]+)|)\Z', re.I)
+determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_3 = re.compile(
-    r'\A[+-]?[\d.]+[\d+-de.]*(_(P<name>[\w]+)|)\Z', re.I)
+    r'\A[+-]?[\d.]+[\d+\-de.]*(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_4 = re.compile(r'\A\(.*\)\Z', re.I)
 determineexprtype_re_5 = re.compile(r'\A(?P<name>\w+)\s*\(.*?\)\s*\Z', re.I)
 
