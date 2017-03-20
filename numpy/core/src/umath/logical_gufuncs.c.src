@@ -39,7 +39,15 @@
 * #INV = ,!#
 */
 
-static void NPY_GCC_OPT_3 base_@TYPE@_@fname@_@OPNAME@
+/**begin repeat3
+ * #isa = , _avx#
+ * #ISA = , AVX#
+ * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX#
+ * #ATTR = , NPY_GCC_TARGET_AVX#
+ */
+
+#if @CHK@
+static NPY_GCC_OPT_3 @ATTR@ void base_@TYPE@_@fname@_@OPNAME@@isa@
         (char **args, npy_intp *dimensions,
          npy_intp* steps, void* data)
 {
@@ -94,7 +102,9 @@ static void NPY_GCC_OPT_3 base_@TYPE@_@fname@_@OPNAME@
         c_n += c_N;
     }
 }
+#endif
 
+/**end repeat3**/
 /**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
@@ -464,7 +474,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
 
     { // open bracket surrounding inner repeat
 
-        static PyUFuncGenericFunction @NAME@_funcs[] = {
+        static PyUFuncGenericFunction @NAME@_funcs_base[] = {
 
 /**begin repeat1
 * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
@@ -477,9 +487,28 @@ void InitLogicalGufuncs(PyObject *dictionary,
 /**end repeat1**/
 
         }; // close array of funcs
+        static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
+/**begin repeat1
+* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+*/
 
-        f = createPyUFunc(@NAME@_funcs,
+            base_@TYPE@_@NAME@_avx,
+
+/**end repeat1**/
+
+        }; // close array of funcs
+
+        PyUFuncGenericFunction * funcs = @NAME@_funcs_base;
+
+#ifdef HAVE_ATTRIBUTE_TARGET_AVX
+        if (NPY_CPU_SUPPORTS_AVX) {
+            funcs = @NAME@_funcs_avx;
+        }
+#endif
+        f = createPyUFunc(funcs,
                           array_of_nulls,
                           types,
                           sizeof(types),  // number of types
