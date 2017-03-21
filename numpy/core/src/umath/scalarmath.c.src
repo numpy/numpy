@@ -969,13 +969,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
         case -3:
         default:
             /*
@@ -1040,13 +1040,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
         case -3:
         default:
             /*
@@ -1094,13 +1094,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
         case -3:
         default:
             /*
