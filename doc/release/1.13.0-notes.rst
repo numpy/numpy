@@ -29,6 +29,12 @@ Future Changes
 Compatibility notes
 ===================
 
+
+Error type changes
+~~~~~~~~~~~~~~~~~~
+
+``numpy.hstack()`` now throws ValueError instead of IndexError when input is empty.
+
 Tuple object dtypes
 ~~~~~~~~~~~~~~~~~~~
 

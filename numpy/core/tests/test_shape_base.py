@@ -123,6 +123,9 @@ class TestHstack(TestCase):
     def test_non_iterable(self):
         assert_raises(TypeError, hstack, 1)
 
+    def test_empty_input(self):
+        assert_raises(ValueError, hstack, ())
+
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -148,6 +151,9 @@ class TestHstack(TestCase):
 class TestVstack(TestCase):
     def test_non_iterable(self):
         assert_raises(TypeError, vstack, 1)
+
+    def test_empty_input(self):
+        assert_raises(ValueError, vstack, ())
 
     def test_0D_array(self):
         a = array(1)
