@@ -149,10 +149,16 @@ gentype_free(PyObject *v)
 
 
 static PyObject *
-gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
+gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
     PyObject *arr, *ret, *arg2;
     char *msg="unsupported operand type(s) for ** or pow()";
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
 
     if (!PyArray_IsScalar(m1, Generic)) {
         if (PyArray_Check(m1)) {

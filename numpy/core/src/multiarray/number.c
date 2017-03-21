@@ -614,10 +614,14 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
 }
 
 static PyObject *
-array_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
+array_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
 {
-    /* modulo is ignored! */
     PyObject *value;
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
     GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__pow__", "__rpow__", 0, nb_power);
     value = fast_scalar_power(a1, o2, 0);
     if (!value) {

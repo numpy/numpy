@@ -956,7 +956,7 @@ static PyObject *
 
 #if @cmplx@
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -969,13 +969,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
         default:
             /*
@@ -984,6 +984,12 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1030,7 +1036,7 @@ static PyObject *
 #elif @isint@
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2, out;
@@ -1040,13 +1046,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
         default:
             /*
@@ -1056,6 +1062,13 @@ static PyObject *
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
     }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
     PyUFunc_clearfperr();
 
     /*
@@ -1081,7 +1094,7 @@ static PyObject *
 #else
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -1094,13 +1107,13 @@ static PyObject *
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,Py_None);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
         default:
             /*
@@ -1109,6 +1122,12 @@ static PyObject *
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
