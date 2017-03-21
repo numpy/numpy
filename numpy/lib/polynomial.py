@@ -1041,7 +1041,7 @@ class poly1d(object):
     @property
     def coeffs(self):
         """ The polynomial coefficients """
-        return self._coeffs
+        return self._coeffs.copy()
 
     @property
     def variable(self):
