@@ -1040,7 +1040,7 @@ class poly1d(object):
 
     @property
     def coeffs(self):
-        """ The polynomial coefficients """
+        """ A copy of the polynomial coefficients """
         return self._coeffs.copy()
 
     @property
@@ -1060,8 +1060,7 @@ class poly1d(object):
         return roots(self._coeffs)
 
     # our internal _coeffs property need to be backed by __dict__['coeffs'] for
-    # scipy to work correctly. Note that as a result, the getter for .coeffs
-    # does not run unless accessed through one of its aliases.
+    # scipy to work correctly.
     @property
     def _coeffs(self):
         return self.__dict__['coeffs']

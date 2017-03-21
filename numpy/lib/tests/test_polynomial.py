@@ -222,6 +222,20 @@ class TestDocs(TestCase):
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)
 
+    def test_poly_coeffs_immutable(self):
+        """ Coefficients should not be modifiable """
+        p = np.poly1d([1, 2, 3])
+
+        try:
+            # despite throwing an exception, this used to change state
+            p.coeffs += 1
+        except Exception:
+            pass
+        assert_equal(p.coeffs, [1, 2, 3])
+
+        p.coeffs[2] += 10
+        assert_equal(p.coeffs, [1, 2, 3])
+
 
 if __name__ == "__main__":
     run_module_suite()
