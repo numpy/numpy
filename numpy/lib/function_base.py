@@ -4601,12 +4601,12 @@ def meshgrid(*xi, **kwargs):
     'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
     illustrated by the following code snippet::
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[i,j], yv[i,j]
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
@@ -4625,14 +4625,14 @@ def meshgrid(*xi, **kwargs):
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
-    >>> xv, yv = meshgrid(x, y)
+    >>> xv, yv = np.meshgrid(x, y)
     >>> xv
     array([[ 0. ,  0.5,  1. ],
            [ 0. ,  0.5,  1. ]])
     >>> yv
     array([[ 0.,  0.,  0.],
            [ 1.,  1.,  1.]])
-    >>> xv, yv = meshgrid(x, y, sparse=True)  # make sparse output arrays
+    >>> xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
     >>> xv
     array([[ 0. ,  0.5,  1. ]])
     >>> yv
@@ -4643,7 +4643,7 @@ def meshgrid(*xi, **kwargs):
 
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = meshgrid(x, y, sparse=True)
+    >>> xx, yy = np.meshgrid(x, y, sparse=True)
     >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
     >>> h = plt.contourf(x,y,z)
 
