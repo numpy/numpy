@@ -1,43 +1,43 @@
+#define _UMATHMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#include "Python.h"
-#include "math.h"
+#define NO_IMPORT_ARRAY
+#include "npy_config.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_3kcompat.h"
+#include "ufunc_type_resolution.h"
 #include "logical_gufuncs.h"
 #include "lowlevel_strided_loops.h"
 
 
-// define the basic real version similar to the macro for complex numbers
-#define REQ(a,b) (a==b)
-#define RNE(a,b) (a!=b)
-#define RLT(a,b) (a<b)
-#define RLE(a,b) (a<=b)
-#define RGT(a,b) (a>b)
-#define RGE(a,b) (a>=b)
+/* define the basic real version similar to the macro for complex numbers */
+#define REQ(a,b) ((a) == (b))
+#define RNE(a,b) ((a) != (b))
+#define RLT(a,b) ((a) < (b))
+#define RLE(a,b) ((a) <= (b))
+#define RGT(a,b) ((a) > (b))
+#define RGE(a,b) ((a) >= (b))
 
-/* -------------------------------------------------------------------------- */
 /* create the family of functions using a template  */
 
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 32
 
 /**begin repeat
-* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
-*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
-*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
-* #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
-*/
+ * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+ * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ */
 
 /**begin repeat1
-* #OP = EQ,NE,LT,LE,GT,GE#
-* #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
-*/
+ * #OP = EQ,NE,LT,LE,GT,GE#
+ * #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
+ */
 
 /**begin repeat2
-* #fname = all,any#
-* #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
-* #INV = ,!#
-*/
+ * #fname = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
 
 /**begin repeat3
  * #isa = , _avx#
@@ -47,28 +47,27 @@
  */
 
 #if @CHK@
-static NPY_GCC_OPT_3 @ATTR@ void base_@TYPE@_@fname@_@OPNAME@@isa@
-        (char **args, npy_intp *dimensions,
-         npy_intp* steps, void* data)
+static NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_@fname@_@OPNAME@@isa@(char **args, npy_intp *dimensions,
+                             npy_intp* steps, void* data)
 {
-    npy_intp i, n;
-    npy_intp N = dimensions[0], I = dimensions[1];
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
     char *a_n = args[0], *b_n = args[1], *c_n = args[2];
     npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
     npy_intp a_I = steps[3], b_I = steps[4];
 
-    char *a_i, *b_i;
-
     for (n = 0; n < N; n++) {
-        a_i = a_n;
-        b_i = b_n;
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
 
         *((npy_bool *)c_n) = @ALL_OR_ANY@;
 
         i = 0;
         /* main loop in chunks with auto vectorize simd instructions */
         if (a_I == sizeof(@TYPE@) && b_I == sizeof(@TYPE@)) {
-            for (i=0; i < npy_blocked_end(0, 1, BLOCK_SIZE, I);
+            for (i=0; i < npy_blocked_end(0, 1, BLOCK_SIZE, nI);
                  i+=BLOCK_SIZE) {
                 unsigned int true_count = 0, j;
                 for (j=0 ; j<BLOCK_SIZE ; j++){
@@ -80,21 +79,21 @@ static NPY_GCC_OPT_3 @ATTR@ void base_@TYPE@_@fname@_@OPNAME@@isa@
                 }
                 if (true_count != BLOCK_SIZE) {
                     *((npy_bool *)c_n) = !@ALL_OR_ANY@;
-                    i = I;
+                    i = nI;
                     break;
                 }
             }
         }
 
-        // check remaining elements
-        for ( ; i<I ; i++) {
+        /* check remaining elements */
+        for ( ; i < nI; i++) {
             if (@INV@@OP_PREFIX@@OP@(*(@TYPE@ *)a_i, *(@TYPE@ *)b_i)) {
                 a_i += a_I;
                 b_i += b_I;
             } else {
                 *((npy_bool *)c_n) = !@ALL_OR_ANY@;
                 break;
-            } 
+            }
         }
 
         a_n += a_N;
@@ -109,8 +108,7 @@ static NPY_GCC_OPT_3 @ATTR@ void base_@TYPE@_@fname@_@OPNAME@@isa@
 /**end repeat1**/
 /**end repeat**/
 
-/* -------------------------------------------------------------------------- */
-/* Create type arrays for each gufunc, which are all identical*/
+/* create type arrays for each gufunc, which are all identical */
 static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
                        NPY_SHORT, NPY_SHORT, NPY_BOOL,
@@ -132,8 +130,7 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL};
 
 
-/* -------------------------------------------------------------------------- */
-/* create array of nulls for "data" for each gufunc type*/
+/* create array of nulls for "data" for each gufunc type */
 
 static void *array_of_nulls[] = {
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
@@ -143,64 +140,34 @@ static void *array_of_nulls[] = {
 };
 
 
-/* -------------------------------------------------------------------------- */
-/* define docstrings*/
+/* define docstrings */
 
-static char const * const all_equal_doc =
-    "Return True if x1 == x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1==x2).all(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "equal, all, any_equal, all_not_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.all_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.all_equal([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
-    "array([ True, False,  True], dtype=bool)";
+/**begin repeat
+* #name = equal,not_equal,less,less_equal,greater,greater_equal,
+*         equal,not_equal,less,less_equal,greater,greater_equal#
+* #prefix = all*6, any*6#
+* #op = ==,!=,<,<=,>,>=,==,!=,<,<=,>,>=#
+* #res1 = True,False,False,True,False,True,
+*         True,False,False,True,False,True#
+* #res2 = array([ True False  True]),
+*         array([False  True False]),
+*         array([False  True False]),
+*         array([ True  True  True]),
+*         array([False False False]),
+*         array([ True False  True]),
+*         array([ True False  True]),
+*         array([False  True False]),
+*         array([False  True False]),
+*         array([ True  True  True]),
+*         array([False False False]),
+*         array([ True False  True])#
+*/
 
-static char const * const all_not_equal_doc =
-    "Return True if x1 != x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1!=x2).all(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "not_equal, all, any_not_equal, all_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.all_not_equal(np.arange(3), np.arange(3))\n"
+static char const * const @prefix@_@name@_doc =
+    "Return True if x1 @op@ x2 for @prefix@ elements along the last axis, "
     "False\n"
-    ">>> np.all_not_equal([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
-    "array([ False, True,  False], dtype=bool)";
-
-static char const * const all_less_doc =
-    "Return True if x1 < x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1<x2).all(axis=-1), except the last dimension\n"
+    "otherwise.  Similar to (x1 @op@ x2).@prefix@(axis=-1), except the last "
+    "dimension\n"
     "of x1 and x2 must be equal and greater than 1.\n"
     "\n"
     "Parameters\n"
@@ -213,293 +180,57 @@ static char const * const all_less_doc =
     "out : ndarray or bool\n"
     "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
     "\n"
-    "See Also\n"
-    "-------\n"
-    "less, all, any_less, all_greater\n"
     "\n"
     "Examples\n"
     "-------\n"
-    ">>> np.all_less(np.arange(3), np.arange(3))\n"
-    "False\n"
-    ">>> np.all_less([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
-    "array([ False, True,  False], dtype=bool)";
+    ">>> np.@prefix@_@name@(np.arange(3), np.arange(3))\n"
+    "@res1@\n"
+    ">>> np.@prefix@_@name@([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
+    "@res2@";
 
-static char const * const all_less_equal_doc =
-    "Return True if x1 <= x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1<=x2).all(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "less_equal, all, any_less_equal, all_greater_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.all_less_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.all_less_equal([[1, 2], [0, 0], [1, 3]], [1, 2])\n"
-    "array([ True, True,  False], dtype=bool)";
+/**end repeat**/
 
-static char const * const all_greater_doc =
-    "Return True if x1 > x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1>x2).all(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "greater, all, any_less_equal, all_less_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.all_greater(np.arange(3), np.arange(3))\n"
-    "False\n"
-    ">>> np.all_greater([[1, 2], [0, 0], [1, 3]], [1, 2])\n"
-    "array([ False, False,  False], dtype=bool)";
+/* function to create and register all gufuncs */
 
-static char const * const all_greater_equal_doc =
-    "Return True if x1 >= x2 for all elements along the last axis, False\n"
-    "otherwise.  Similar to (x1<=x2).all(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "greater_equal, all, any_greater, all_less\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.all_greater_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.all_greater_equal([[1, 2], [0, 0], [2, 3]], [1, 2])\n"
-    "array([ True, False,  True], dtype=bool)";
-
-static char const * const any_equal_doc =
-    "Return True if x1 == x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1==x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "equal, any, all_equal, any_not_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.any_equal([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ True, False,  True], dtype=bool)";
-
-static char const * const any_not_equal_doc =
-    "Return True if x1 != x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1!=x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "not_equal, any, all_not_equal, any_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_not_equal(np.arange(3), np.arange(3))\n"
-    "False\n"
-    ">>> np.any_not_equal([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ True, True,  True], dtype=bool)";
-
-static char const * const any_less_doc =
-    "Return True if x1 < x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1<x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "less, any, all_less, any_greater_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_less(np.arange(3), np.arange(3))\n"
-    "False\n"
-    ">>> np.any_less([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ True, True,  False], dtype=bool)";
-
-static char const * const any_less_equal_doc =
-    "Return True if x1 <= x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1<=x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "less_equal, any, all_less_equal, any_greater\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_less_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.any_less_equal([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ True, True,  True], dtype=bool)";
-
-static char const * const any_greater_doc =
-    "Return True if x1 > x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1>x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "greater, any, all_greater, any_less_equal\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_greater(np.arange(3), np.arange(3))\n"
-    "False\n"
-    ">>> np.any_greater([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ False, False,  True], dtype=bool)";
-
-static char const * const any_greater_equal_doc =
-    "Return True if x1 >= x2 for any elements along the last axis, False\n"
-    "otherwise.  Similar to (x1>=x2).any(axis=-1), except the last dimension\n"
-    "of x1 and x2 must be equal and greater than 1.\n"
-    "\n"
-    "Parameters\n"
-    "----------\n"
-    "x1, x2 : array_like\n"
-    "    Input arrays of the same shape.\n"
-    "\n"
-    "Returns\n"
-    "-------\n"
-    "out : ndarray or bool\n"
-    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
-    "\n"
-    "See Also\n"
-    "-------\n"
-    "greater_equal, any, all_greater_equal, any_less\n"
-    "\n"
-    "Examples\n"
-    "-------\n"
-    ">>> np.any_greater_equal(np.arange(3), np.arange(3))\n"
-    "True\n"
-    ">>> np.any_greater_equal([[1, 2], [0, 0], [2, 3]], [1, 3])\n"
-    "array([ True, False,  True], dtype=bool)";
-
-
-/* -------------------------------------------------------------------------- */
-/* function to create and register all gufuncs*/
-
-void InitLogicalGufuncs(PyObject *dictionary, 
-                        PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc) {
+void InitLogicalGufuncs(PyObject *dictionary,
+                        PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc)
+{
     PyObject *f;
 
 /**begin repeat
-* #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,
-          all_greater_equal,any_equal,any_not_equal,any_less,any_less_equal,
-          any_greater,any_greater_equal#
-*/
+ * #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,
+ *         all_greater_equal,any_equal,any_not_equal,any_less,any_less_equal,
+ *         any_greater,any_greater_equal#
+ */
 
-    { // open bracket surrounding inner repeat
+    { /* open bracket surrounding inner repeat */
 
         static PyUFuncGenericFunction @NAME@_funcs_base[] = {
 
 /**begin repeat1
-* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
-*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
-*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
-*/
+ * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+ */
 
-            base_@TYPE@_@NAME@,
+            @TYPE@_@NAME@,
 
 /**end repeat1**/
 
-        }; // close array of funcs
+        };
         static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
 /**begin repeat1
-* #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
-*         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
-*         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
-*/
+ * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+ */
 
-            base_@TYPE@_@NAME@_avx,
+            @TYPE@_@NAME@_avx,
 
 /**end repeat1**/
 
-        }; // close array of funcs
+        };
 
         PyUFuncGenericFunction * funcs = @NAME@_funcs_base;
 
@@ -511,20 +242,21 @@ void InitLogicalGufuncs(PyObject *dictionary,
         f = createPyUFunc(funcs,
                           array_of_nulls,
                           types,
-                          sizeof(types),  // number of types
-                          2,              // number of inputs
-                          1,              // number of outputs
+                          sizeof(types) / 3,  /* number of types */
+                          2,                  /* number of inputs */
+                          1,                  /* number of outputs */
                           PyUFunc_None,
                           "@NAME@",
                           (char*) @NAME@_doc,
-                          0,              // unused
+                          0,              /* unused */
                           "(i),(i)->()");
 
+        ((PyUFuncObject *)f)->type_resolver =
+            &PyUFunc_SimpleBinaryComparisonTypeResolver;
         PyDict_SetItemString(dictionary, "@NAME@", f);
         Py_DECREF(f);
 
-    }; // close bracket surrounding inner repeat
+    }; /* close bracket surrounding inner repeat */
 
 /**end repeat**/
-
 }

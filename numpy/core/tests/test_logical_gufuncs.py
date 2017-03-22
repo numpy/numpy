@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_equal
+    TestCase, run_module_suite, assert_equal
 )
 
 float_types = [np.float32, np.float64, np.longdouble]
@@ -50,6 +50,17 @@ def test_complex():
                 x2 = x1 + m + n * j
                 for x in check_all(x1, x2):
                     yield x
+
+
+class TestLogicalGUFuncs(TestCase):
+    def test_structure(self):
+        for op in [np.all_equal, np.all_less, np.all_less_equal,
+                   np.all_greater, np.all_greater_equal,
+                   np.any_equal, np.any_less, np.any_less_equal,
+                   np.any_greater, np.any_greater_equal]:
+            self.assertGreater(len(op.types), 0)
+            self.assertEqual(op.nin, 2)
+            self.assertEqual(op.nout, 1)
 
 
 if __name__ == "__main__":
