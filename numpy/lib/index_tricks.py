@@ -288,7 +288,7 @@ class AxisConcatenator(object):
                 if k != 0:
                     raise ValueError("special directives must be the "
                             "first entry.")
-                if item in 'rc':
+                if item in ('r', 'c'):
                     matrix = True
                     col = (item == 'c')
                     continue
