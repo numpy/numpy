@@ -902,7 +902,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         raise ValueError('fname must be a string, file handle, or generator')
     X = []
 
-    def flatten_dtype(dt):
+    # not to be confused with the flatten_dtype we import...
+    def flatten_dtype_internal(dt):
         """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
@@ -922,7 +923,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype(tp)
+                flat_dt, flat_packing = flatten_dtype_internal(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
                 if tp.ndim > 0:
@@ -986,7 +987,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype(dtype)
+        dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
