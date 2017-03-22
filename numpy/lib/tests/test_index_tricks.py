@@ -174,6 +174,19 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
 
+    def test_matrix(self):
+        a = [1, 2]
+        b = [3, 4]
+
+        ab_r = np.r_['r', a, b]
+        ab_c = np.r_['c', a, b]
+
+        assert_equal(type(ab_r), np.matrix)
+        assert_equal(type(ab_c), np.matrix)
+
+        assert_equal(np.array(ab_r), [[1,2,3,4]])
+        assert_equal(np.array(ab_c), [[1],[2],[3],[4]])
+
     def test_matrix_builder(self):
         a = np.array([1])
         b = np.array([2])
