@@ -14,7 +14,8 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_warns, suppress_warnings
+    TestCase, run_module_suite, assert_warns, suppress_warnings,
+    assert_raises
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -304,6 +305,8 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
+    def test_matrix_builder(self):
+        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
 
 class TestNotMasked(TestCase):
     # Tests notmasked_edges and notmasked_contiguous.

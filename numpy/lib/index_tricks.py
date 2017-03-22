@@ -237,6 +237,8 @@ class AxisConcatenator(object):
     For detailed documentation on usage, see `r_`.
 
     """
+    # allow ma.mr_ to override this
+    concatenate = staticmethod(_nx.concatenate)
 
     def _retval(self, res):
         if self.matrix:
@@ -345,7 +347,7 @@ class AxisConcatenator(object):
             for k in scalars:
                 objs[k] = objs[k].astype(final_dtype)
 
-        res = _nx.concatenate(tuple(objs), axis=self.axis)
+        res = self.concatenate(tuple(objs), axis=self.axis)
         return self._retval(res)
 
     def __len__(self):
