@@ -306,6 +306,16 @@ class TestRecord(object):
         assert_dtype_equal(dt[-2], dt[0])
         assert_raises(IndexError, lambda: dt[-3])
 
+        # check conversion to list works fine
+        dt_list = list(dt)
+        assert_dtype_equal(dt_list[0], np.dtype(np.int8))
+        assert_dtype_equal(dt_list[1], np.dtype((np.float32, 3)))
+
+        dt2 = np.dtype([('c', np.bool_), ('d', np.int16)])
+        dt_zip = list(zip(dt, dt2))
+        assert_equal(dt_zip[0], (np.int8, np.bool_))
+        assert_equal(dt_zip[1], ((np.float32, 3), np.int16))
+
 
 class TestSubarray(object):
     def test_single_subarray(self):

@@ -3812,6 +3812,15 @@ _subscript_by_index(PyArray_Descr *self, Py_ssize_t i)
 }
 
 static PyObject *
+descr_item(PyArray_Descr *self, Py_ssize_t i)
+{
+    if (_check_has_fields(self) < 0) {
+        return NULL;
+    }
+    return _subscript_by_index(self, i);
+}
+
+static PyObject *
 descr_subscript(PyArray_Descr *self, PyObject *op)
 {
     if (_check_has_fields(self) < 0) {
@@ -3843,7 +3852,7 @@ static PySequenceMethods descr_as_sequence = {
     (lenfunc) descr_length,                  /* sq_length */
     (binaryfunc) NULL,                       /* sq_concat */
     (ssizeargfunc) descr_repeat,             /* sq_repeat */
-    (ssizeargfunc) NULL,                     /* sq_item */
+    (ssizeargfunc) descr_item,               /* sq_item */
     (ssizessizeargfunc) NULL,                /* sq_slice */
     (ssizeobjargproc) NULL,                  /* sq_ass_item */
     (ssizessizeobjargproc) NULL,             /* sq_ass_slice */
