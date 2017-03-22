@@ -108,6 +108,126 @@ static NPY_GCC_OPT_3 @ATTR@ void
 /**end repeat1**/
 /**end repeat**/
 
+/**begin repeat
+ * #TYPE = npy_datetime, npy_timedelta#
+ */
+
+/**begin repeat1
+ * #NAME = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
+
+/**begin repeat2
+ * #OPNAME = equal,less,less_equal,greater,greater_equal#
+ * #OP = ==,<,<=,>,>=#
+ */
+
+static  void
+@TYPE@_@NAME@_@OPNAME@(char **args, npy_intp *dimensions,
+                       npy_intp* steps, void* data)
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            @TYPE@ a = *(@TYPE@ *)a_i;
+            @TYPE@ b = *(@TYPE@ *)b_i;
+            npy_bool res = @INV@(a @OP@ b);
+
+            if ((a == NPY_DATETIME_NAT || b == NPY_DATETIME_NAT) && @INV@res) {
+                NPY_ALLOW_C_API_DEF;
+                NPY_ALLOW_C_API;
+                /* 2016-01-18, 1.11 */
+                if (DEPRECATE_FUTUREWARNING(
+                                "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
+                                "will always be False.") < 0) {
+                    NPY_DISABLE_C_API;
+                    return;
+                }
+                NPY_DISABLE_C_API;
+            }
+
+            if (res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+
+/**end repeat2**/
+
+static  void
+@TYPE@_@NAME@_not_equal(char **args, npy_intp *dimensions,
+                        npy_intp* steps, void* data)
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            @TYPE@ a = *(@TYPE@ *)a_i;
+            @TYPE@ b = *(@TYPE@ *)b_i;
+            npy_bool res = @INV@(a != b);
+
+            if (a == NPY_DATETIME_NAT && a == NPY_DATETIME_NAT) {
+                NPY_ALLOW_C_API_DEF
+                NPY_ALLOW_C_API;
+                /* 2016-01-18, 1.11 */
+                if (DEPRECATE_FUTUREWARNING(
+                                    "In the future, NAT != NAT will be True "
+                                    "rather than False.") < 0) {
+                    NPY_DISABLE_C_API;
+                    return;
+                }
+                NPY_DISABLE_C_API;
+            }
+
+            if (res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+
+/**end repeat1**/
+/**end repeat**/
+
 /* create type arrays for each gufunc, which are all identical */
 static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
@@ -127,7 +247,10 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
                        NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
                        NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
-                       NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL};
+                       NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL,
+
+                       NPY_DATETIME, NPY_DATETIME, NPY_BOOL,
+                       NPY_TIMEDELTA, NPY_TIMEDELTA, NPY_BOOL};
 
 
 /* create array of nulls for "data" for each gufunc type */
@@ -136,7 +259,8 @@ static void *array_of_nulls[] = {
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
-    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL
 };
 
 
@@ -216,7 +340,8 @@ void InitLogicalGufuncs(PyObject *dictionary,
             @TYPE@_@NAME@,
 
 /**end repeat1**/
-
+            npy_datetime_@NAME@,
+            npy_timedelta_@NAME@
         };
         static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
@@ -229,7 +354,8 @@ void InitLogicalGufuncs(PyObject *dictionary,
             @TYPE@_@NAME@_avx,
 
 /**end repeat1**/
-
+            npy_datetime_@NAME@,
+            npy_timedelta_@NAME@
         };
 
         PyUFuncGenericFunction * funcs = @NAME@_funcs_base;

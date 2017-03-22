@@ -1097,24 +1097,32 @@ class TestDateTime(TestCase):
         dt_other = np.datetime64('2000-01-01')
         td_nat = np.timedelta64('NaT', 'h')
         td_other = np.timedelta64(1, 'h')
+        dt_nat = np.array([np.datetime64('NaT', 'D')]*2)
+        dt_other = np.array([np.datetime64('2000-01-01')]*2)
+        td_nat = np.array([np.timedelta64('NaT', 'h')]*2)
+        td_other = np.array([np.timedelta64(1, 'h')]*2)
 
         with suppress_warnings() as sup:
             # The assert warns contexts will again see the warning:
             sup.filter(FutureWarning, ".*NAT")
 
             for op in [np.equal, np.less, np.less_equal,
-                       np.greater, np.greater_equal]:
-                if op(dt_nat, dt_nat):
+                       np.greater, np.greater_equal,
+                       np.all_equal, np.all_less, np.all_less_equal,
+                       np.all_greater, np.all_greater_equal,
+                       np.any_equal, np.any_less, np.any_less_equal,
+                       np.any_greater, np.any_greater_equal]:
+                if op(dt_nat, dt_nat).all():
                     assert_warns(FutureWarning, op, dt_nat, dt_nat)
-                if op(dt_nat, dt_other):
+                if op(dt_nat, dt_other).all():
                     assert_warns(FutureWarning, op, dt_nat, dt_other)
-                if op(dt_other, dt_nat):
+                if op(dt_other, dt_nat).all():
                     assert_warns(FutureWarning, op, dt_other, dt_nat)
-                if op(td_nat, td_nat):
+                if op(td_nat, td_nat).all():
                     assert_warns(FutureWarning, op, td_nat, td_nat)
-                if op(td_nat, td_other):
+                if op(td_nat, td_other).all():
                     assert_warns(FutureWarning, op, td_nat, td_other)
-                if op(td_other, td_nat):
+                if op(td_other, td_nat).all():
                     assert_warns(FutureWarning, op, td_other, td_nat)
 
             assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
@@ -1122,10 +1130,10 @@ class TestDateTime(TestCase):
 
         with suppress_warnings() as sup:
             sup.record(FutureWarning)
-            assert_(np.not_equal(dt_nat, dt_other))
-            assert_(np.not_equal(dt_other, dt_nat))
-            assert_(np.not_equal(td_nat, td_other))
-            assert_(np.not_equal(td_other, td_nat))
+            assert_(np.not_equal(dt_nat, dt_other).all())
+            assert_(np.not_equal(dt_other, dt_nat).all())
+            assert_(np.not_equal(td_nat, td_other).all())
+            assert_(np.not_equal(td_other, td_nat).all())
             self.assertEqual(len(sup.log), 0)
 
     def test_datetime_minmax(self):

@@ -1196,6 +1196,7 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    /* NOTE logical_gufuncs.c.src implements the same code */
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
@@ -1221,6 +1222,7 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    /* NOTE logical_gufuncs.c.src implements the same code */
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
