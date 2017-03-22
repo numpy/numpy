@@ -174,6 +174,17 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
 
+    def test_matrix_builder(self):
+        a = np.array([1])
+        b = np.array([2])
+        c = np.array([3])
+        d = np.array([4])
+        actual = np.r_['a, b; c, d']
+        expected = np.bmat([[a, b], [c, d]])
+
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
+
 
 class TestNdenumerate(TestCase):
     def test_basic(self):
