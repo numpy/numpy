@@ -265,12 +265,12 @@ class AxisConcatenator(object):
         arraytypes = []
         scalartypes = []
 
-        for k in range(len(key)):
+        for k, item in enumerate(key):
             scalar = False
-            if isinstance(key[k], slice):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
+            if isinstance(item, slice):
+                step = item.step
+                start = item.start
+                stop = item.stop
                 if start is None:
                     start = 0
                 if step is None:
@@ -284,17 +284,16 @@ class AxisConcatenator(object):
                     newobj = array(newobj, copy=False, ndmin=ndmin)
                     if trans1d != -1:
                         newobj = newobj.swapaxes(-1, trans1d)
-            elif isinstance(key[k], str):
+            elif isinstance(item, str):
                 if k != 0:
                     raise ValueError("special directives must be the "
                             "first entry.")
-                key0 = key[0]
-                if key0 in 'rc':
+                if item in 'rc':
                     matrix = True
-                    col = (key0 == 'c')
+                    col = (item == 'c')
                     continue
-                if ',' in key0:
-                    vec = key0.split(',')
+                if ',' in item:
+                    vec = item.split(',')
                     try:
                         axis, ndmin = [int(x) for x in vec[:2]]
                         if len(vec) == 3:
@@ -303,17 +302,17 @@ class AxisConcatenator(object):
                     except:
                         raise ValueError("unknown special directive")
                 try:
-                    axis = int(key[k])
+                    axis = int(item)
                     continue
                 except (ValueError, TypeError):
                     raise ValueError("unknown special directive")
-            elif type(key[k]) in ScalarType:
-                newobj = array(key[k], ndmin=ndmin)
+            elif type(item) in ScalarType:
+                newobj = array(item, ndmin=ndmin)
                 scalars.append(k)
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
-                newobj = key[k]
+                newobj = item
                 if ndmin > 1:
                     tempobj = array(newobj, copy=False, subok=True)
                     newobj = array(newobj, copy=False, subok=True,
