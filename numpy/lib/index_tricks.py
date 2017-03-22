@@ -10,12 +10,12 @@ from numpy.core.numeric import (
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 from . import function_base
-import numpy.matrixlib as matrix
+import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
 from numpy.lib.stride_tricks import as_strided
 
-makemat = matrix.matrix
+makemat = matrixlib.matrix
 
 
 __all__ = [
@@ -235,44 +235,36 @@ class AxisConcatenator(object):
     Translates slice objects to concatenation along an axis.
 
     For detailed documentation on usage, see `r_`.
-
     """
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
-
-    def _retval(self, res):
-        if self.matrix:
-            oldndim = res.ndim
-            res = makemat(res)
-            if oldndim == 1 and self.col:
-                res = res.T
-        self.axis = self._axis
-        self.matrix = self._matrix
-        self.col = 0
-        return res
-
     def __init__(self, axis=0, matrix=False, ndmin=1, trans1d=-1):
-        self._axis = axis
-        self._matrix = matrix
         self.axis = axis
         self.matrix = matrix
-        self.col = 0
         self.trans1d = trans1d
         self.ndmin = ndmin
 
     def __getitem__(self, key):
-        trans1d = self.trans1d
-        ndmin = self.ndmin
+        # handle matrix builder syntax
         if isinstance(key, str):
             frame = sys._getframe().f_back
-            mymat = matrix.bmat(key, frame.f_globals, frame.f_locals)
+            mymat = matrixlib.bmat(key, frame.f_globals, frame.f_locals)
             return mymat
+
         if not isinstance(key, tuple):
             key = (key,)
+
+        # copy attributes, since they can be overriden in the first argument
+        trans1d = self.trans1d
+        ndmin = self.ndmin
+        matrix = self.matrix
+        axis = self.axis
+
         objs = []
         scalars = []
         arraytypes = []
         scalartypes = []
+
         for k in range(len(key)):
             scalar = False
             if isinstance(key[k], slice):
@@ -298,21 +290,20 @@ class AxisConcatenator(object):
                             "first entry.")
                 key0 = key[0]
                 if key0 in 'rc':
-                    self.matrix = True
-                    self.col = (key0 == 'c')
+                    matrix = True
+                    col = (key0 == 'c')
                     continue
                 if ',' in key0:
                     vec = key0.split(',')
                     try:
-                        self.axis, ndmin = \
-                                   [int(x) for x in vec[:2]]
+                        axis, ndmin = [int(x) for x in vec[:2]]
                         if len(vec) == 3:
                             trans1d = int(vec[2])
                         continue
                     except:
                         raise ValueError("unknown special directive")
                 try:
-                    self.axis = int(key[k])
+                    axis = int(key[k])
                     continue
                 except (ValueError, TypeError):
                     raise ValueError("unknown special directive")
@@ -341,14 +332,20 @@ class AxisConcatenator(object):
             if not scalar and isinstance(newobj, _nx.ndarray):
                 arraytypes.append(newobj.dtype)
 
-        #  Esure that scalars won't up-cast unless warranted
+        # Ensure that scalars won't up-cast unless warranted
         final_dtype = find_common_type(arraytypes, scalartypes)
         if final_dtype is not None:
             for k in scalars:
                 objs[k] = objs[k].astype(final_dtype)
 
-        res = self.concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
+        res = self.concatenate(tuple(objs), axis=axis)
+
+        if matrix:
+            oldndim = res.ndim
+            res = makemat(res)
+            if oldndim == 1 and col:
+                res = res.T
+        return res
 
     def __len__(self):
         return 0
