@@ -189,6 +189,11 @@ class TestConcatenator(TestCase):
 
         assert_raises(ValueError, lambda: np.r_['rc', a, b])
 
+    def test_matrix_scalar(self):
+        r = np.r_['r', [1, 2], 3]
+        assert_equal(type(r), np.matrix)
+        assert_equal(np.array(r), [[1,2,3]])
+
     def test_matrix_builder(self):
         a = np.array([1])
         b = np.array([2])

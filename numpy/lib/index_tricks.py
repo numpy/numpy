@@ -308,7 +308,7 @@ class AxisConcatenator(object):
                     raise ValueError("unknown special directive")
             elif type(item) in ScalarType:
                 newobj = array(item, ndmin=ndmin)
-                scalars.append(k)
+                scalars.append(len(objs))
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
