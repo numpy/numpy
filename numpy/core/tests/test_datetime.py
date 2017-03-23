@@ -1093,14 +1093,10 @@ class TestDateTime(TestCase):
         assert_equal(np.greater_equal(a, b), [1, 1, 0, 1, 0])
 
     def test_datetime_compare_nat(self):
-        dt_nat = np.datetime64('NaT', 'D')
-        dt_other = np.datetime64('2000-01-01')
-        td_nat = np.timedelta64('NaT', 'h')
-        td_other = np.timedelta64(1, 'h')
-        dt_nat = np.array([np.datetime64('NaT', 'D')]*2)
-        dt_other = np.array([np.datetime64('2000-01-01')]*2)
-        td_nat = np.array([np.timedelta64('NaT', 'h')]*2)
-        td_other = np.array([np.timedelta64(1, 'h')]*2)
+        dt_nat = np.array([np.datetime64('NaT', 'D')])
+        dt_other = np.array([np.datetime64('2000-01-01')])
+        td_nat = np.array([np.timedelta64('NaT', 'h')])
+        td_other = np.array([np.timedelta64(1, 'h')])
 
         with suppress_warnings() as sup:
             # The assert warns contexts will again see the warning:

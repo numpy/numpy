@@ -228,6 +228,74 @@ static  void
 /**end repeat1**/
 /**end repeat**/
 
+/**begin repeat
+ * #NAME = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
+
+/**begin repeat1
+ * #OPNAME = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP = EQ, NE, GT, GE, LT, LE#
+ */
+NPY_NO_EXPORT void
+OBJECT_@NAME@_@OPNAME@(char **args, npy_intp *dimensions,
+                       npy_intp *steps, void *NPY_UNUSED(func))
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            int res;
+            PyObject *ret_obj;
+            PyObject * a = *(PyObject **)a_i;
+            PyObject * b = *(PyObject **)b_i;
+
+            a = a ? a : Py_None;
+            b = b ? b : Py_None;
+
+            /*
+             * Do not use RichCompareBool because it includes an identity check
+             * for == and !=. This is wrong for elementwise behaviour, since it
+             * means that NaN can be equal to NaN and an array is equal to
+             * itself.
+             */
+            ret_obj = PyObject_RichCompare(a, b, Py_@OP@);
+            if (ret_obj == NULL) {
+                return;
+            }
+            res = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (res == -1) {
+                return;
+            }
+
+            if (@INV@res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+/**end repeat**/
+
 /* create type arrays for each gufunc, which are all identical */
 static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
@@ -249,6 +317,7 @@ static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
                        NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL,
 
+                       NPY_OBJECT, NPY_OBJECT, NPY_BOOL,
                        NPY_DATETIME, NPY_DATETIME, NPY_BOOL,
                        NPY_TIMEDELTA, NPY_TIMEDELTA, NPY_BOOL};
 
@@ -260,7 +329,7 @@ static void *array_of_nulls[] = {
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
-    (void *)NULL, (void *)NULL
+    (void *)NULL, (void *)NULL, (void *)NULL
 };
 
 
@@ -340,6 +409,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
             @TYPE@_@NAME@,
 
 /**end repeat1**/
+            OBJECT_@NAME@,
             npy_datetime_@NAME@,
             npy_timedelta_@NAME@
         };
@@ -354,6 +424,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
             @TYPE@_@NAME@_avx,
 
 /**end repeat1**/
+            OBJECT_@NAME@,
             npy_datetime_@NAME@,
             npy_timedelta_@NAME@
         };

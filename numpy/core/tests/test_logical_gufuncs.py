@@ -7,8 +7,9 @@ from numpy.testing import (
 
 float_types = [np.float32, np.float64, np.longdouble]
 complex_types = [np.cfloat, np.cdouble, np.clongdouble]
-int_types = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, 
-          np.uint64, np.longlong, np.ulonglong]
+int_types = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
+             np.int64, np.uint64, np.longlong, np.ulonglong]
+datetime = ['M8[s]', 'm8[h]']
 
 # helper functions
 def check(f, x1, x2, expected):
@@ -34,7 +35,8 @@ def test_real():
     inputs = np.array([[0,0],[0,1],[1,0],[1,1]])
     for i in range(inputs.shape[0]):
         for j in range(inputs.shape[0]):
-            for dtype in int_types + float_types + complex_types:
+            for dtype in (int_types + float_types + complex_types +
+                          [object] + datetime):
                 x1 = inputs[i, :].astype(dtype)
                 x2 = inputs[j, :].astype(dtype)
                 for x in check_all(x1, x2):
@@ -50,6 +52,21 @@ def test_complex():
                 x2 = x1 + m + n * j
                 for x in check_all(x1, x2):
                     yield x
+
+
+def test_simd():
+    for dtype in [np.float32, np.float64, np.int32]:
+        x1 = np.arange(4000, dtype=dtype)
+        x2 = x1.copy()
+        yield check, np.all_equal, x1, x2, (x1==x2).all()
+        x2[-1] = -1
+        yield check, np.all_equal, x1, x2, (x1==x2).all()
+        x2 = x1.copy()
+        x2[500] = -2
+        yield check, np.all_equal, x1, x2, (x1==x2).all()
+        x2 = x1.copy()
+        x2[0] = -3
+        yield check, np.all_equal, x1, x2, (x1==x2).all()
 
 
 class TestLogicalGUFuncs(TestCase):
