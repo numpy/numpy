@@ -511,6 +511,7 @@ Math operations
     fabs
     rint
     sign
+    heaviside
     conj
     exp
     exp2
