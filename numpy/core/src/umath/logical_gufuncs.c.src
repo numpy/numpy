@@ -4,6 +4,7 @@
 #include "npy_config.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/halffloat.h"
 #include "ufunc_type_resolution.h"
 #include "logical_gufuncs.h"
 #include "lowlevel_strided_loops.h"
@@ -17,15 +18,22 @@
 #define RGT(a,b) ((a) > (b))
 #define RGE(a,b) ((a) >= (b))
 
+#define HEQ(a,b) (npy_half_eq(a, b))
+#define HNE(a,b) (npy_half_ne(a, b))
+#define HLT(a,b) (npy_half_lt(a, b))
+#define HLE(a,b) (npy_half_le(a, b))
+#define HGT(a,b) (npy_half_gt(a, b))
+#define HGE(a,b) (npy_half_ge(a, b))
+
 /* create the family of functions using a template  */
 
 #define BLOCK_SIZE 32
 
 /**begin repeat
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
- * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
  */
 
 /**begin repeat1
@@ -310,6 +318,7 @@ static char types[] = {NPY_BOOL, NPY_BOOL, NPY_BOOL,
 
                        NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
                        NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
+                       NPY_HALF, NPY_HALF, NPY_BOOL,
                        NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
                        NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
 
@@ -330,7 +339,8 @@ static void *array_of_nulls[] = {
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
-    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL
 };
 
 
@@ -404,7 +414,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
             npy_ubyte_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
 
@@ -420,7 +430,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
             npy_ubyte_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
+ *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
 
@@ -439,6 +449,10 @@ void InitLogicalGufuncs(PyObject *dictionary,
             funcs = @NAME@_funcs_avx;
         }
 #endif
+
+        assert(sizeof(array_of_nulls) / sizeof(void*) == sizeof(types) / 3);
+        assert(sizeof(@NAME@_funcs_base) / sizeof(void*) == sizeof(types) / 3);
+        assert(sizeof(@NAME@_funcs_avx) / sizeof(void*) == sizeof(types) / 3);
         f = createPyUFunc(funcs,
                           array_of_nulls,
                           types,

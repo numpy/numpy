@@ -5,7 +5,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_equal
 )
 
-float_types = [np.float32, np.float64, np.longdouble]
+float_types = [np.float16, np.float32, np.float64, np.longdouble]
 complex_types = [np.cfloat, np.cdouble, np.clongdouble]
 int_types = [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32,
              np.uint32, np.int64, np.uint64, np.longlong, np.ulonglong]
@@ -75,7 +75,7 @@ class TestLogicalGUFuncs(TestCase):
                    np.all_greater, np.all_greater_equal,
                    np.any_equal, np.any_less, np.any_less_equal,
                    np.any_greater, np.any_greater_equal]:
-            self.assertGreater(len(op.types), 0)
+            assert_equal(op.types, np.equal.types)
             self.assertEqual(op.nin, 2)
             self.assertEqual(op.nout, 1)
 
