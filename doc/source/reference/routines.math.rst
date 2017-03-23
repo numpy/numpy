@@ -146,6 +146,7 @@ Miscellaneous
    absolute
    fabs
    sign
+   heaviside
    maximum
    minimum
    fmax
