@@ -122,8 +122,9 @@ def flatten_dtype(ndtype, flatten_base=False):
     ----------
     ndtype : dtype
         The datatype to collapse
-    flatten_base : {False, True}, optional
-        Whether to transform a field with a shape into several fields or not.
+    flatten_base : bool, optional
+       If True, transform a field with a shape into several fields. Default is
+       False.
 
     Examples
     --------
