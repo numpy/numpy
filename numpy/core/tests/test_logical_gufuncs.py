@@ -7,8 +7,8 @@ from numpy.testing import (
 
 float_types = [np.float32, np.float64, np.longdouble]
 complex_types = [np.cfloat, np.cdouble, np.clongdouble]
-int_types = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-             np.int64, np.uint64, np.longlong, np.ulonglong]
+int_types = [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32,
+             np.uint32, np.int64, np.uint64, np.longlong, np.ulonglong]
 datetime = ['M8[s]', 'm8[h]']
 
 # helper functions

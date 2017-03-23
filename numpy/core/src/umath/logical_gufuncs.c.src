@@ -297,7 +297,8 @@ OBJECT_@NAME@_@OPNAME@(char **args, npy_intp *dimensions,
 /**end repeat**/
 
 /* create type arrays for each gufunc, which are all identical */
-static char types[] = {NPY_BYTE, NPY_BYTE, NPY_BOOL,
+static char types[] = {NPY_BOOL, NPY_BOOL, NPY_BOOL,
+                       NPY_BYTE, NPY_BYTE, NPY_BOOL,
                        NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
                        NPY_SHORT, NPY_SHORT, NPY_BOOL,
                        NPY_USHORT, NPY_USHORT, NPY_BOOL,
@@ -329,7 +330,7 @@ static void *array_of_nulls[] = {
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
-    (void *)NULL, (void *)NULL, (void *)NULL
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL
 };
 
 
@@ -400,6 +401,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
 
         static PyUFuncGenericFunction @NAME@_funcs_base[] = {
 
+            npy_ubyte_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
@@ -415,6 +417,7 @@ void InitLogicalGufuncs(PyObject *dictionary,
         };
         static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
+            npy_ubyte_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_float,npy_double,
