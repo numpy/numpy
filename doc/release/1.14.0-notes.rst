@@ -177,6 +177,10 @@ The ufunc ``isnat`` used to raise a ``ValueError`` when it was not passed
 variables of type ``datetime`` or ``timedelta``. This has been changed to
 raising a ``TypeError``.
 
+``dtype.__getitem__`` raises ``TypeError`` when passed wrong type
+-----------------------------------------------------------------
+When indexed with a float, the dtype object used to raise ``ValueError``.
+
 
 C API changes
 =============

@@ -3825,17 +3825,18 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 #endif
         return _subscript_by_name(self, op);
     }
-    else if (PyInt_Check(op)) {
+    else {
         Py_ssize_t i = PyArray_PyIntAsIntp(op);
-        if (PyErr_Occurred()) {
+        if (error_converting(i)) {
+            /* if converting to an int gives a type error, adjust the message */
+            PyObject *err = PyErr_Occurred();
+            if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Field key must be an integer, string, or unicode.");
+            }
             return NULL;
         }
         return _subscript_by_index(self, i);
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "Field key must be an integer, string, or unicode.");
-        return NULL;
     }
 }
 

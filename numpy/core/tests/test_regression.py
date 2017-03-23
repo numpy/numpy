@@ -1352,7 +1352,7 @@ class TestRegression(object):
         dt = np.dtype([('f1', np.uint)])
         assert_raises(KeyError, dt.__getitem__, "f2")
         assert_raises(IndexError, dt.__getitem__, 1)
-        assert_raises(ValueError, dt.__getitem__, 0.0)
+        assert_raises(TypeError, dt.__getitem__, 0.0)
 
     def test_lexsort_buffer_length(self):
         # Ticket #1217, don't segfault.
