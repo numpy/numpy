@@ -39,13 +39,13 @@ Special attributes and methods
 
 NumPy provides several hooks that classes can customize:
 
-.. method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
+.. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
 
    .. versionadded:: 1.13
 
-   Any class (ndarray subclass or not) can define this method (or set it to
-   :obj:`None`) to override behavior of NumPy's ufuncs. This works quite
-   similarly to Python's ``__mul__`` and other binary operation routines.
+   Any class, ndarray subclass or not, can define this method or set it to
+   :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
+   quite similarly to Python's ``__mul__`` and other binary operation routines.
 
    - *ufunc* is the ufunc object that was called.
    - *method* is a string indicating which Ufunc method was called
@@ -94,17 +94,17 @@ NumPy provides several hooks that classes can customize:
 
    .. note:: If you subclass :class:`ndarray`, we strongly recommend
       that you avoid confusion by neither setting
-      :func:`__array_ufunc__` to :obj:`None` (which seems to make no
-      sense for an array subclass), nor defining it and also defining
-      reverse methods (which will be called by ``CPython`` in
-      preference over the :class:`ndarray` forward methods).
+      :func:`__array_ufunc__` to :obj:`None`, which makes no
+      sense for an array subclass, nor by defining it and also defining
+      reverse methods, which methods will be called by ``CPython`` in
+      preference over the :class:`ndarray` forward methods.
 
    .. note:: If a class defines the :func:`__array_ufunc__` method,
       this disables the :func:`__array_wrap__`,
       :func:`__array_prepare__`, :data:`__array_priority__` mechanism
       described below (which may eventually be deprecated).
 
-.. method:: class.__array_finalize__(obj)
+.. py:method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
@@ -113,7 +113,7 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. method:: class.__array_prepare__(array, context=None)
+.. py:method:: class.__array_prepare__(array, context=None)
 
    At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
    method is called on the input object with the highest array
@@ -126,9 +126,9 @@ NumPy provides several hooks that classes can customize:
    ufunc for computation.
 
    .. note:: It is hoped to eventually deprecate this method in favour of
-             :func:__array_ufunc__`.
+             :func:`__array_ufunc__`.
 
-.. method:: class.__array_wrap__(array, context=None)
+.. py:method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -140,7 +140,7 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-.. data:: class.__array_priority__
+.. py:attribute:: class.__array_priority__
 
    The value of this attribute is used to determine what type of
    object to return in situations where there is more than one
@@ -148,9 +148,9 @@ NumPy provides several hooks that classes can customize:
    inherit a default value of 0.0 for this attribute.
 
    .. note:: It is hoped to eventually deprecate this attribute in favour
-             of :func:__array_ufunc__`.
+             of :func:`__array_ufunc__`.
 
-.. method:: class.__array__([dtype])
+.. py:method:: class.__array__([dtype])
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
