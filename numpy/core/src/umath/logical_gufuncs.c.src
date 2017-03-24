@@ -30,11 +30,11 @@
 #define BLOCK_SIZE 32
 
 /**begin repeat
- * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
+ * #TYPE = npy_int8,npy_uint8,npy_int16,npy_uint16,npy_int32,npy_uint32,
+ *         npy_int64,npy_uint64,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
- * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
- * #VECTORIZE = 1*10,0,1,1,0,1,1,0#
+ * #OP_PREFIX = R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ * #VECTORIZE = 1*8,0,1,1,0,1,1,0#
  */
 
 /**begin repeat1
@@ -403,6 +403,46 @@ static char const * const @prefix@_@name@_doc =
 
 /* function to create and register all gufuncs */
 
+/*
+ * define bad integer names to sized names to assign long and longlong to the
+ * int64 functions (or int and long to int32)
+ * this avoids code duplication
+ */
+#define NPY_FUNCNAME__(type, name, suffix) type##_##name##suffix
+#define NPY_FUNCNAME_(type, name, suffix) NPY_FUNCNAME__(type, name, suffix)
+#define NPY_FUNCNAME(type, name, suffix) NPY_FUNCNAME_(type, name, suffix)
+
+/**begin repeat
+ * #name = byte, short, int, long, longlong#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG#
+ */
+/**begin repeat1
+ * #SIZE = 1, 2, 4, 8#
+ * #BITS = 8, 16, 32, 64#
+ */
+#if NPY_SIZEOF_@NAME@ == @SIZE@
+#define npy_@name@ npy_int@BITS@
+#define npy_u@name@ npy_uint@BITS@
+
+/**begin repeat2
+ * #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
+ */
+/**begin repeat3
+ * #fname = all,any#
+ */
+#ifdef HAVE_npy_int@BITS@_@fname@_@OPNAME@_avx
+#define HAVE_npy_@name@_@fname@_@OPNAME@_avx
+#endif
+#ifdef HAVE_npy_uint@BITS@_@fname@_@OPNAME@_avx
+#define HAVE_npy_u@name@_@fname@_@OPNAME@_avx
+#endif
+/**end repeat3**/
+/**end repeat2**/
+
+#endif
+/**end repeat1**/
+/**end repeat**/
+
 void InitLogicalGufuncs(PyObject *dictionary,
                         PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc)
 {
@@ -418,14 +458,13 @@ void InitLogicalGufuncs(PyObject *dictionary,
 
         static PyUFuncGenericFunction @NAME@_funcs_base[] = {
 
-            npy_ubyte_@NAME@, /* equal to npy_bool */
+            npy_uint8_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
-
-            @TYPE@_@NAME@,
+            NPY_FUNCNAME(@TYPE@,@NAME@,),
 
 /**end repeat1**/
             OBJECT_@NAME@,
@@ -434,16 +473,16 @@ void InitLogicalGufuncs(PyObject *dictionary,
         };
         static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
-            npy_ubyte_@NAME@, /* equal to npy_bool */
+            npy_uint8_@NAME@, /* equal to npy_bool */
 /**begin repeat1
  * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
 #ifdef HAVE_@TYPE@_@NAME@_avx
-            @TYPE@_@NAME@_avx,
+            NPY_FUNCNAME(@TYPE@,@NAME@,_avx),
 #else
-            @TYPE@_@NAME@,
+            NPY_FUNCNAME(@TYPE@,@NAME@,),
 #endif
 
 /**end repeat1**/
