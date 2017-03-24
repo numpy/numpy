@@ -215,7 +215,7 @@ static  void
             @TYPE@ b = *(@TYPE@ *)b_i;
             npy_bool res = @INV@(a != b);
 
-            if (a == NPY_DATETIME_NAT && a == NPY_DATETIME_NAT) {
+            if (a == NPY_DATETIME_NAT && b == NPY_DATETIME_NAT) {
                 NPY_ALLOW_C_API_DEF
                 NPY_ALLOW_C_API;
                 /* 2016-01-18, 1.11 */

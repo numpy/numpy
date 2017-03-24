@@ -1123,13 +1123,16 @@ class TestDateTime(TestCase):
 
             assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
             assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
+            assert_warns(FutureWarning, np.all_not_equal, dt_nat, dt_nat)
+            assert_warns(FutureWarning, np.any_not_equal, td_nat, td_nat)
 
         with suppress_warnings() as sup:
             sup.record(FutureWarning)
-            assert_(np.not_equal(dt_nat, dt_other).all())
-            assert_(np.not_equal(dt_other, dt_nat).all())
-            assert_(np.not_equal(td_nat, td_other).all())
-            assert_(np.not_equal(td_other, td_nat).all())
+            for op in [np.not_equal, np.all_not_equal, np.any_not_equal]:
+                assert_(op(dt_nat, dt_other).all())
+                assert_(op(dt_other, dt_nat).all())
+                assert_(op(td_nat, td_other).all())
+                assert_(op(td_other, td_nat).all())
             self.assertEqual(len(sup.log), 0)
 
     def test_datetime_minmax(self):
