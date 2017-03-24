@@ -254,18 +254,12 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     try:
         proc = subprocess.Popen(command, shell=use_shell, env=env,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
                                 universal_newlines=True)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
         return '', 127
     text, err = proc.communicate()
-    # Only append stderr if the command failed, as otherwise
-    # the output may become garbled for parsing
-    if proc.returncode:
-        if text:
-            text += "\n"
-        text += err
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
