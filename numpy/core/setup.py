@@ -701,28 +701,6 @@ def configuration(parent_package='',top_path=None):
     #                        multiarray module                            #
     #######################################################################
 
-    # Multiarray version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_multiarray_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'multiarray')
-        sources = [join(local_dir, subpath, 'scalartypes.c.src'),
-                   join(local_dir, subpath, 'arraytypes.c.src'),
-                   join(local_dir, subpath, 'nditer_templ.c.src'),
-                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'einsum.c.src'),
-                   join(local_dir, 'src', 'private', 'templ_common.h.src')
-                   ]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
-
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
@@ -855,26 +833,6 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
     #                           umath module                              #
     #######################################################################
-
-    # umath version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_umath_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'umath')
-        sources = [
-            join(local_dir, subpath, 'loops.h.src'),
-            join(local_dir, subpath, 'loops.c.src'),
-            join(local_dir, subpath, 'scalarmath.c.src'),
-            join(local_dir, subpath, 'simd.inc.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
 
     def generate_umath_c(ext, build_dir):
         target = join(build_dir, header_dir, '__umath_generated.c')
