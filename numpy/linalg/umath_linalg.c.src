@@ -675,15 +675,15 @@ print_CDOUBLE(npy_cdouble z)
 }
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
  */
 static inline void
 dump_@TYPE@_matrix(const char* name,
                    size_t rows, size_t columns,
                    const @typ@* ptr)
 {
-    size_t i,j;
+    size_t i, j;
 
     TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
     for (i=0; i<rows; i++)
@@ -814,10 +814,10 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
              /* rearranging of 2D matrices using blas */
 
 /**begin repeat
-    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-    #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-    #copy=scopy,dcopy,ccopy,zcopy#
-    #nan=s_nan, d_nan, c_nan, z_nan#
+    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+    #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+    #copy = scopy, dcopy, ccopy, zcopy#
+    #nan = s_nan, d_nan, c_nan, z_nan#
  */
 static inline void *
 linearize_@TYPE@_matrix(void *dst_in,
@@ -917,7 +917,7 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
 {
     @typ@ *dst = (@typ@ *) dst_in;
 
-    int i,j;
+    int i, j;
     for (i=0; i < data->rows; i++) {
         @typ@ *cp = dst;
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
@@ -933,9 +933,9 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
 
                /* identity square matrix generation */
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #cblas_type=s,d,c,z#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+   #cblas_type = s, d, c, z#
  */
 static inline void
 identity_@TYPE@_matrix(void *ptr, size_t n)
@@ -956,15 +956,15 @@ identity_@TYPE@_matrix(void *ptr, size_t n)
          /* lower/upper triangular matrix using blas (in place) */
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
-   #cblas_type=s,d,c,z#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+   #cblas_type = s, d, c, z#
  */
 
 static inline void
 triu_@TYPE@_matrix(void *ptr, size_t n)
 {
-    size_t i,j;
+    size_t i, j;
     @typ@ *matrix = (@typ@*)ptr;
     matrix += n;
     for (i=1; i < n; ++i) {
@@ -981,11 +981,11 @@ triu_@TYPE@_matrix(void *ptr, size_t n)
                           /* Determinants */
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE#
-   #typ=npy_float, npy_double#
-   #log_func=npy_logf,npy_log#
-   #exp_func=npy_expf,npy_exp#
-   #zero=0.0f,0.0#
+   #TYPE = FLOAT, DOUBLE#
+   #typ = npy_float, npy_double#
+   #log_func = npy_logf, npy_log#
+   #exp_func = npy_expf, npy_exp#
+   #zero = 0.0f, 0.0#
 */
 
 static inline void
@@ -1023,13 +1023,13 @@ static inline @typ@
 
 
 /**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #typ=npy_cfloat, npy_cdouble#
-   #basetyp=npy_float, npy_double#
-   #abs_func=npy_cabsf, npy_cabs#
-   #log_func=npy_logf, npy_log#
-   #exp_func=npy_expf, npy_exp#
-   #zero=0.0f,0.0#
+   #TYPE = CFLOAT, CDOUBLE#
+   #typ = npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double#
+   #abs_func = npy_cabsf, npy_cabs#
+   #log_func = npy_logf, npy_log#
+   #exp_func = npy_expf, npy_exp#
+   #zero = 0.0f, 0.0#
 */
 #define RE(COMPLEX) (((@basetyp@*)(&COMPLEX))[0])
 #define IM(COMPLEX) (((@basetyp@*)(&COMPLEX))[1])
@@ -1092,10 +1092,10 @@ static inline @typ@
  */
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #basetyp=npy_float,npy_double,npy_float,npy_double#
-   #cblas_type=s,d,c,z#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double, npy_float, npy_double#
+   #cblas_type = s, d, c, z#
 */
 
 static inline void
@@ -1111,8 +1111,7 @@ static inline void
     /* note: done in place */
     LAPACK(@cblas_type@getrf)(&m, &m, (void *)src, &lda, pivots, &info);
 
-    if (info == 0)
-    {
+    if (info == 0) {
         int change_sign = 0;
         /* note: fortran uses 1 based indexing */
         for (i=0; i < m; i++)
@@ -1161,8 +1160,7 @@ static void
     pivot_size = safe_m * sizeof(fortran_int);
     tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
 
-    if (tmp_buff)
-    {
+    if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
         /* swapped steps to get matrix in FORTRAN order */
         init_linearize_data(&lin_data, m, m,
@@ -1207,8 +1205,7 @@ static void
     pivot_size = safe_m * sizeof(fortran_int);
     tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
 
-    if (tmp_buff)
-    {
+    if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
         @typ@ sign;
         @basetyp@ logdet;
@@ -1252,10 +1249,10 @@ typedef struct eigh_params_struct {
 } EIGH_PARAMS_t;
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE#
-   #typ=npy_float,npy_double#
-   #ftyp=fortran_real,fortran_doublereal#
-   #lapack_func=ssyevd,dsyevd#
+   #TYPE = FLOAT, DOUBLE#
+   #typ = npy_float, npy_double#
+   #ftyp = fortran_real, fortran_doublereal#
+   #lapack_func = ssyevd, dsyevd#
 */
 
 static inline fortran_int
@@ -1289,8 +1286,9 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
 
     mem_buff = malloc(alloc_size);
 
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(@typ@);
 
@@ -1313,16 +1311,18 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
         params->WORK = &query_work_size;
         params->IWORK = &query_iwork_size;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         lwork = (fortran_int)query_work_size;
         liwork = query_iwork_size;
     }
 
     mem_buff2 = malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
 
     work = mem_buff2;
     iwork = mem_buff2 + lwork*sizeof(@typ@);
@@ -1346,12 +1346,12 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
 
 
 /**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #typ=npy_cfloat,npy_cdouble#
-   #basetyp=npy_float,npy_double#
-   #ftyp=fortran_complex,fortran_doublecomplex#
-   #fbasetyp=fortran_real,fortran_doublereal#
-   #lapack_func=cheevd,zheevd#
+   #TYPE = CFLOAT, CDOUBLE#
+   #typ = npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double#
+   #ftyp = fortran_complex, fortran_doublecomplex#
+   #fbasetyp = fortran_real, fortran_doublereal#
+   #lapack_func = cheevd, zheevd#
 */
 static inline fortran_int
 call_@lapack_func@(EIGH_PARAMS_t *params)
@@ -1387,8 +1387,9 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
 
     mem_buff = malloc(safe_N * safe_N * sizeof(@typ@) +
     	              safe_N * sizeof(@basetyp@));
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(@typ@);
 
@@ -1412,8 +1413,9 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
         params->RWORK = &query_rwork_size;
         params->IWORK = &query_iwork_size;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         lwork = (fortran_int)*(@fbasetyp@*)&query_work_size;
         lrwork = (fortran_int)query_rwork_size;
@@ -1423,8 +1425,9 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
     mem_buff2 = malloc(lwork*sizeof(@typ@) +
                        lrwork*sizeof(@basetyp@) +
                        liwork*sizeof(fortran_int));
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
 
     work = mem_buff2;
     rwork = work + lwork*sizeof(@typ@);
@@ -1451,14 +1454,14 @@ error:
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #BASETYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #basetyp=npy_float,npy_double,npy_float,npy_double#
-   #lapack_func=ssyevd,dsyevd,cheevd,zheevd#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #BASETYPE = FLOAT, DOUBLE, FLOAT, DOUBLE#
+   #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double, npy_float, npy_double#
+   #lapack_func = ssyevd, dsyevd, cheevd, zheevd#
 **/
 /*
- * (M,M)->(M,)(M,M)
+ * (M, M)->(M,)(M, M)
  * dimensions[1] -> M
  * args[0] -> A[in]
  * args[1] -> W
@@ -1550,7 +1553,7 @@ static inline void
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
  */
 static void
 @TYPE@_eighlo(char **args,
@@ -1594,8 +1597,8 @@ static void
 
 typedef struct gesv_params_struct
 {
-    void *A; /* A is (N,N) of base type */
-    void *B; /* B is (N,NRHS) of base type */
+    void *A; /* A is (N, N) of base type */
+    void *B; /* B is (N, NRHS) of base type */
     fortran_int * IPIV; /* IPIV is (N) */
 
     fortran_int N;
@@ -1605,10 +1608,10 @@ typedef struct gesv_params_struct
 } GESV_PARAMS_t;
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
-   #lapack_func=sgesv,dgesv,cgesv,zgesv#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #ftyp = fortran_real, fortran_doublereal, fortran_complex, fortran_doublecomplex#
+   #lapack_func = sgesv, dgesv, cgesv, zgesv#
 */
 
 static inline fortran_int
@@ -1638,8 +1641,9 @@ init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS)
     mem_buff = malloc(safe_N * safe_N * sizeof(@ftyp@) +
                       safe_N * safe_NRHS*sizeof(@ftyp@) +
                       safe_N * sizeof(fortran_int));
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
     a = mem_buff;
     b = a + safe_N * safe_N * sizeof(@ftyp@);
     ipiv = b + safe_N * safe_NRHS * sizeof(@ftyp@);
@@ -1790,10 +1794,10 @@ typedef struct potr_params_struct
 
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #ftyp=fortran_real, fortran_doublereal,
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #ftyp = fortran_real, fortran_doublereal,
          fortran_complex, fortran_doublecomplex#
-   #lapack_func=spotrf,dpotrf,cpotrf,zpotrf#
+   #lapack_func = spotrf, dpotrf, cpotrf, zpotrf#
  */
 
 static inline fortran_int
@@ -1815,8 +1819,9 @@ init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
     fortran_int lda = fortran_int_max(N, 1);
 
     mem_buff = malloc(safe_N * safe_N * sizeof(@ftyp@));
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
 
     a = mem_buff;
 
@@ -1852,8 +1857,7 @@ static void
     assert(uplo == 'L');
 
     n = (fortran_int)dimensions[0];
-    if (init_@lapack_func@(&params, uplo, n))
-    {
+    if (init_@lapack_func@(&params, uplo, n)) {
         LINEARIZE_DATA_t a_in, r_out;
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
@@ -1955,12 +1959,12 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
 }
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE#
-   #CTYPE=CFLOAT,CDOUBLE#
-   #typ=float,double#
-   #complextyp=COMPLEX_t,DOUBLECOMPLEX_t#
-   #lapack_func=sgeev,dgeev#
-   #zero=0.0f,0.0#
+   #TYPE = FLOAT, DOUBLE#
+   #CTYPE = CFLOAT, CDOUBLE#
+   #typ = float, double#
+   #complextyp = COMPLEX_t, DOUBLECOMPLEX_t#
+   #lapack_func = sgeev, dgeev#
+   #zero = 0.0f, 0.0#
 */
 
 static inline fortran_int
@@ -1999,8 +2003,9 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     mem_buff = malloc(a_size + wr_size + wi_size +
                       vlr_size + vrr_size +
                       w_size + vl_size + vr_size);
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
 
     a = mem_buff;
     wr = a + a_size;
@@ -2033,15 +2038,17 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
         params->LWORK = -1;
         params->WORK = &work_size_query;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         work_count = (size_t)work_size_query;
     }
 
     mem_buff2 = malloc(work_count*sizeof(@typ@));
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
     work = mem_buff2;
 
     params->LWORK = (fortran_int)work_count;
@@ -2152,11 +2159,11 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
 
 
 /**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
-   #ftyp=fortran_complex,fortran_doublecomplex#
-   #realtyp=float,double#
-   #lapack_func=cgeev,zgeev#
+   #TYPE = CFLOAT, CDOUBLE#
+   #typ = COMPLEX_t, DOUBLECOMPLEX_t#
+   #ftyp = fortran_complex, fortran_doublecomplex#
+   #realtyp = float, double#
+   #lapack_func = cgeev, zgeev#
  */
 
 static inline fortran_int
@@ -2195,8 +2202,9 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     fortran_int ld = fortran_int_max(n, 1);
 
     mem_buff = malloc(total_size);
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
 
     a = mem_buff;
     w = a + a_size;
@@ -2226,8 +2234,9 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
         params->LWORK = -1;
         params->WORK = &work_size_query;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         work_count = (size_t) work_size_query.array[0];
         /* Fix a bug in lapack 3.0.0 */
@@ -2235,8 +2244,9 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     }
 
     mem_buff2 = malloc(work_count*sizeof(@ftyp@));
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
 
     work = mem_buff2;
 
@@ -2262,10 +2272,10 @@ process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CDOUBLE#
-   #COMPLEXTYPE=CFLOAT,CDOUBLE,CDOUBLE#
-   #ftype=fortran_real,fortran_doublereal,fortran_doublecomplex#
-   #lapack_func=sgeev,dgeev,zgeev#
+   #TYPE = FLOAT, DOUBLE, CDOUBLE#
+   #COMPLEXTYPE = CFLOAT, CDOUBLE, CDOUBLE#
+   #ftype = fortran_real, fortran_doublereal, fortran_doublecomplex#
+   #lapack_func = sgeev, dgeev, zgeev#
  */
 
 static inline void
@@ -2342,22 +2352,26 @@ static inline void
                                                  geev_params.W,
                                                  &w_out);
 
-                if ('V' == geev_params.JOBVL)
+                if ('V' == geev_params.JOBVL) {
                     delinearize_@COMPLEXTYPE@_matrix(*arg_iter++,
                                                      geev_params.VL,
                                                      &vl_out);
-                if ('V' == geev_params.JOBVR)
+                }
+                if ('V' == geev_params.JOBVR) {
                     delinearize_@COMPLEXTYPE@_matrix(*arg_iter++,
                                                      geev_params.VR,
                                                      &vr_out);
+                }
             } else {
                 /* geev failed */
                 error_occurred = 1;
                 nan_@COMPLEXTYPE@_matrix(*arg_iter++, &w_out);
-                if ('V' == geev_params.JOBVL)
+                if ('V' == geev_params.JOBVL) {
                     nan_@COMPLEXTYPE@_matrix(*arg_iter++, &vl_out);
-                if ('V' == geev_params.JOBVR)
+                }
+                if ('V' == geev_params.JOBVR) {
                     nan_@COMPLEXTYPE@_matrix(*arg_iter++, &vr_out);
+                }
             }
             update_pointers((npy_uint8**)args, outer_steps, op_count);
         }
@@ -2452,7 +2466,7 @@ dump_gesdd_params(const char *name,
               "LDVT", (int)params->LDVT,
               "LWORK", (int)params->LWORK,
 
-              "JOBZ", ' ',params->JOBZ);
+              "JOBZ", ' ', params->JOBZ);
 }
 
 static inline int
@@ -2486,9 +2500,9 @@ compute_urows_vtcolumns(char jobz,
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE#
-   #lapack_func=sgesdd,dgesdd#
-   #ftyp=fortran_real,fortran_doublereal#
+   #TYPE = FLOAT, DOUBLE#
+   #lapack_func = sgesdd, dgesdd#
+   #ftyp = fortran_real, fortran_doublereal#
  */
 
 static inline fortran_int
@@ -2529,8 +2543,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     size_t iwork_size = 8 * safe_min_m_n * sizeof(fortran_int);
     fortran_int ld = fortran_int_max(m, 1);
 
-    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
+    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count)) {
         goto error;
+    }
 
     safe_u_row_count = u_row_count;
     safe_vt_column_count = vt_column_count;
@@ -2540,8 +2555,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
     mem_buff = malloc(a_size + s_size + u_size + vt_size + iwork_size);
 
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
 
     a = mem_buff;
     s = a + a_size;
@@ -2574,8 +2590,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
         params->LWORK = -1;
         params->WORK = &work_size_query;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         work_count = (fortran_int)work_size_query;
         /* Fix a bug in lapack 3.0.0 */
@@ -2584,8 +2601,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     }
 
     mem_buff2 = malloc(work_size);
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
 
     work = mem_buff2;
 
@@ -2605,11 +2623,11 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 /**end repeat**/
 
 /**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #ftyp=fortran_complex,fortran_doublecomplex#
-   #frealtyp=fortran_real,fortran_doublereal#
-   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
-   #lapack_func=cgesdd,zgesdd#
+   #TYPE = CFLOAT, CDOUBLE#
+   #ftyp = fortran_complex, fortran_doublecomplex#
+   #frealtyp = fortran_real, fortran_doublereal#
+   #typ = COMPLEX_t, DOUBLECOMPLEX_t#
+   #lapack_func = cgesdd, zgesdd#
  */
 
 static inline fortran_int
@@ -2645,8 +2663,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     size_t safe_min_m_n = min_m_n;
     fortran_int ld = fortran_int_max(m, 1);
 
-    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
+    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count)) {
         goto error;
+    }
 
     safe_u_row_count = u_row_count;
     safe_vt_column_count = vt_column_count;
@@ -2667,8 +2686,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
                       vt_size +
                       rwork_size +
                       iwork_size);
-    if (!mem_buff)
+    if (!mem_buff) {
         goto error;
+    }
 
     a = mem_buff;
     s = a + a_size;
@@ -2700,8 +2720,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
         params->LWORK = -1;
         params->WORK = &work_size_query;
 
-        if (call_@lapack_func@(params) != 0)
+        if (call_@lapack_func@(params) != 0) {
             goto error;
+        }
 
         work_count = (fortran_int)((@typ@*)&work_size_query)->array[0];
         /* Fix a bug in lapack 3.0.0 */
@@ -2710,8 +2731,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     }
 
     mem_buff2 = malloc(work_size);
-    if (!mem_buff2)
+    if (!mem_buff2) {
         goto error;
+    }
 
     work = mem_buff2;
 
@@ -2731,9 +2753,9 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
 
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
-   #lapack_func=sgesdd,dgesdd,cgesdd,zgesdd#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+   #REALTYPE = FLOAT, DOUBLE, FLOAT, DOUBLE#
+   #lapack_func = sgesdd, dgesdd, cgesdd, zgesdd#
  */
 static inline void
 release_@lapack_func@(GESDD_PARAMS_t* params)
@@ -2830,7 +2852,7 @@ static inline void
 
 /* svd gufunc entry points */
 /**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
  */
 static void
 @TYPE@_svd_N(char **args,
@@ -3094,18 +3116,18 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         " the outer dimensions. \n"\
         "Results in vectors with the solutions. \n"\
         "    \"(m,m),(m)->(m)\" \n",
-        4,2,1,
+        4, 2, 1,
         FUNC_ARRAY_NAME(solve1),
         equal_3_types
     },
     {
         "inv",
-        "(m,m)->(m,m)",
+        "(m, m)->(m, m)",
         "compute the inverse of the last two dimensions and broadcast"\
         " to the rest. \n"\
         "Results in the inverse matrices. \n"\
         "    \"(m,m)->(m,m)\" \n",
-        4,1,1,
+        4, 1, 1,
         FUNC_ARRAY_NAME(inv),
         equal_2_types
     },
@@ -3259,8 +3281,9 @@ init_umath_linalg(void)
 #else
     m = Py_InitModule(UMATH_LINALG_MODULE_NAME, UMath_LinAlgMethods);
 #endif
-    if (m == NULL)
+    if (m == NULL) {
         return RETVAL;
+    }
 
     import_array();
     import_ufunc();
