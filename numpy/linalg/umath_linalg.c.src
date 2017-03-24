@@ -21,7 +21,7 @@
 #include <math.h>
 
 
-static const char* umath_linalg_version_string = "0.1.4";
+static const char* umath_linalg_version_string = "0.1.5";
 
 /*
  ****************************************************************************
