@@ -55,13 +55,10 @@ __all__ = ['exec_command', 'find_executable']
 
 import os
 import sys
-import shlex
 import subprocess
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
-
 
 def temp_file_name():
     fo, name = make_temp_file()
@@ -146,7 +143,7 @@ def _supports_fileno(stream):
     """
     if hasattr(stream, 'fileno'):
         try:
-            r = stream.fileno()
+            stream.fileno()
             return True
         except IOError:
             return False
@@ -231,8 +228,6 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         use_shell = os.name=='posix'
     if use_tee is None:
         use_tee = os.name=='posix'
-
-    executable = None
 
     if os.name == 'posix' and use_shell:
         # On POSIX, subprocess always uses /bin/sh, override
