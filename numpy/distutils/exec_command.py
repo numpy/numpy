@@ -421,11 +421,6 @@ def test_execute_in(**kws):
     os.remove(tmpfile)
     print ('ok')
 
-def test_svn(**kws):
-    s, o = exec_command(['svn', 'status'],**kws)
-    assert s, (s, o)
-    print ('svn ok')
-
 def test_cl(**kws):
     if os.name=='nt':
         s, o = exec_command(['cl', '/V'],**kws)
@@ -447,5 +442,4 @@ if __name__ == "__main__":
     test(use_tee=1)
     test_execute_in(use_tee=0)
     test_execute_in(use_tee=1)
-    test_svn(use_tee=1)
     test_cl(use_tee=1)
