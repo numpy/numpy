@@ -368,13 +368,13 @@ typedef f2c_doublecomplex fortran_doublecomplex;
  *****************************************************************************
  */
 
-static inline void *
+static NPY_INLINE void *
 offset_ptr(void* ptr, ptrdiff_t offset)
 {
     return (void*)((npy_uint8*)ptr + offset);
 }
 
-static inline int
+static NPY_INLINE int
 get_fp_invalid_and_clear(void)
 {
     int status;
@@ -382,7 +382,7 @@ get_fp_invalid_and_clear(void)
     return !!(status & NPY_FPE_INVALID);
 }
 
-static inline void
+static NPY_INLINE void
 set_fp_invalid_or_clear(int error_occurred)
 {
     if (error_occurred) {
@@ -506,7 +506,7 @@ typedef struct linearize_data_struct
   ptrdiff_t  column_strides;
 } LINEARIZE_DATA_t;
 
-static inline void
+static NPY_INLINE void
 init_linearize_data(LINEARIZE_DATA_t *lin_data,
                     int rows,
                     int columns,
@@ -519,7 +519,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
     lin_data->column_strides = column_strides;
 }
 
-static inline void
+static NPY_INLINE void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
     TRACE_TXT("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
@@ -544,7 +544,7 @@ dump_ufunc_object(PyUFuncObject* ufunc)
     }
 }
 
-static inline void
+static NPY_INLINE void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
     TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
@@ -554,19 +554,19 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 }
 
 
-static inline float
+static NPY_INLINE float
 FLOAT_add(float op1, float op2)
 {
     return op1 + op2;
 }
 
-static inline double
+static NPY_INLINE double
 DOUBLE_add(double op1, double op2)
 {
     return op1 + op2;
 }
 
-static inline COMPLEX_t
+static NPY_INLINE COMPLEX_t
 CFLOAT_add(COMPLEX_t op1, COMPLEX_t op2)
 {
     COMPLEX_t result;
@@ -576,7 +576,7 @@ CFLOAT_add(COMPLEX_t op1, COMPLEX_t op2)
     return result;
 }
 
-static inline DOUBLECOMPLEX_t
+static NPY_INLINE DOUBLECOMPLEX_t
 CDOUBLE_add(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
 {
     DOUBLECOMPLEX_t result;
@@ -586,20 +586,20 @@ CDOUBLE_add(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
     return result;
 }
 
-static inline float
+static NPY_INLINE float
 FLOAT_mul(float op1, float op2)
 {
     return op1*op2;
 }
 
-static inline double
+static NPY_INLINE double
 DOUBLE_mul(double op1, double op2)
 {
     return op1*op2;
 }
 
 
-static inline COMPLEX_t
+static NPY_INLINE COMPLEX_t
 CFLOAT_mul(COMPLEX_t op1, COMPLEX_t op2)
 {
     COMPLEX_t result;
@@ -609,7 +609,7 @@ CFLOAT_mul(COMPLEX_t op1, COMPLEX_t op2)
     return result;
 }
 
-static inline DOUBLECOMPLEX_t
+static NPY_INLINE DOUBLECOMPLEX_t
 CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
 {
     DOUBLECOMPLEX_t result;
@@ -619,19 +619,19 @@ CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
     return result;
 }
 
-static inline float
+static NPY_INLINE float
 FLOAT_mulc(float op1, float op2)
 {
     return op1*op2;
 }
 
-static inline double
+static NPY_INLINE double
 DOUBLE_mulc(float op1, float op2)
 {
     return op1*op2;
 }
 
-static inline COMPLEX_t
+static NPY_INLINE COMPLEX_t
 CFLOAT_mulc(COMPLEX_t op1, COMPLEX_t op2)
 {
     COMPLEX_t result;
@@ -641,7 +641,7 @@ CFLOAT_mulc(COMPLEX_t op1, COMPLEX_t op2)
     return result;
 }
 
-static inline DOUBLECOMPLEX_t
+static NPY_INLINE DOUBLECOMPLEX_t
 CDOUBLE_mulc(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
 {
     DOUBLECOMPLEX_t result;
@@ -651,23 +651,23 @@ CDOUBLE_mulc(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
     return result;
 }
 
-static inline void
+static NPY_INLINE void
 print_FLOAT(npy_float s)
 {
     TRACE_TXT(" %8.4f", s);
 }
-static inline void
+static NPY_INLINE void
 print_DOUBLE(npy_double d)
 {
     TRACE_TXT(" %10.6f", d);
 }
-static inline void
+static NPY_INLINE void
 print_CFLOAT(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
     TRACE_TXT("(%8.4f, %8.4fj)", c_parts[0], c_parts[1]);
 }
-static inline void
+static NPY_INLINE void
 print_CDOUBLE(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
@@ -678,7 +678,7 @@ print_CDOUBLE(npy_cdouble z)
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
  */
-static inline void
+static NPY_INLINE void
 dump_@TYPE@_matrix(const char* name,
                    size_t rows, size_t columns,
                    const @typ@* ptr)
@@ -706,7 +706,7 @@ dump_@TYPE@_matrix(const char* name,
  *****************************************************************************
  */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 fortran_int_min(fortran_int x, fortran_int y) {
     if (x < y)
         return x;
@@ -714,7 +714,7 @@ fortran_int_min(fortran_int x, fortran_int y) {
         return y;
 }
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 fortran_int_max(fortran_int x, fortran_int y) {
     if (x > y)
         return x;
@@ -789,7 +789,7 @@ fortran_int_max(fortran_int x, fortran_int y) {
 
 #define END_OUTER_LOOP  }
 
-static inline void
+static NPY_INLINE void
 update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 {
     size_t i;
@@ -819,7 +819,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     #copy = scopy, dcopy, ccopy, zcopy#
     #nan = s_nan, d_nan, c_nan, z_nan#
  */
-static inline void *
+static NPY_INLINE void *
 linearize_@TYPE@_matrix(void *dst_in,
                         void *src_in,
                         const LINEARIZE_DATA_t* data)
@@ -865,7 +865,7 @@ linearize_@TYPE@_matrix(void *dst_in,
     }
 }
 
-static inline void *
+static NPY_INLINE void *
 delinearize_@TYPE@_matrix(void *dst_in,
                           void *src_in,
                           const LINEARIZE_DATA_t* data)
@@ -912,7 +912,7 @@ delinearize_@TYPE@_matrix(void *dst_in,
     }
 }
 
-static inline void
+static NPY_INLINE void
 nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
 {
     @typ@ *dst = (@typ@ *) dst_in;
@@ -937,7 +937,7 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
    #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
    #cblas_type = s, d, c, z#
  */
-static inline void
+static NPY_INLINE void
 identity_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i;
@@ -961,7 +961,7 @@ identity_@TYPE@_matrix(void *ptr, size_t n)
    #cblas_type = s, d, c, z#
  */
 
-static inline void
+static NPY_INLINE void
 triu_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i, j;
@@ -988,7 +988,7 @@ triu_@TYPE@_matrix(void *ptr, size_t n)
    #zero = 0.0f, 0.0#
 */
 
-static inline void
+static NPY_INLINE void
 @TYPE@_slogdet_from_factored_diagonal(@typ@* src,
                                       fortran_int m,
                                       @typ@ *sign,
@@ -1012,7 +1012,7 @@ static inline void
     *logdet = acc_logdet;
 }
 
-static inline @typ@
+static NPY_INLINE @typ@
 @TYPE@_det_from_slogdet(@typ@ sign, @typ@ logdet)
 {
     @typ@ result = sign * @exp_func@(logdet);
@@ -1034,7 +1034,7 @@ static inline @typ@
 #define RE(COMPLEX) (((@basetyp@*)(&COMPLEX))[0])
 #define IM(COMPLEX) (((@basetyp@*)(&COMPLEX))[1])
 
-static inline @typ@
+static NPY_INLINE @typ@
 @TYPE@_mult(@typ@ op1, @typ@ op2)
 {
     @typ@ rv;
@@ -1046,7 +1046,7 @@ static inline @typ@
 }
 
 
-static inline void
+static NPY_INLINE void
 @TYPE@_slogdet_from_factored_diagonal(@typ@* src,
                                       fortran_int m,
                                       @typ@ *sign,
@@ -1072,7 +1072,7 @@ static inline void
     *logdet = logdet_acc;
 }
 
-static inline @typ@
+static NPY_INLINE @typ@
 @TYPE@_det_from_slogdet(@typ@ sign, @basetyp@ logdet)
 {
     @typ@ tmp;
@@ -1098,7 +1098,7 @@ static inline @typ@
    #cblas_type = s, d, c, z#
 */
 
-static inline void
+static NPY_INLINE void
 @TYPE@_slogdet_single_element(fortran_int m,
                               void* src,
                               fortran_int* pivots,
@@ -1255,7 +1255,7 @@ typedef struct eigh_params_struct {
    #lapack_func = ssyevd, dsyevd#
 */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
@@ -1271,7 +1271,7 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
  * Initialize the parameters to use in for the lapack function _syevd
  * Handles buffer allocation
  */
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
                    fortran_int N)
 {
@@ -1353,7 +1353,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
    #fbasetyp = fortran_real, fortran_doublereal#
    #lapack_func = cheevd, zheevd#
 */
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
@@ -1370,7 +1370,7 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
  * Initialize the parameters to use in for the lapack function _heev
  * Handles buffer allocation
  */
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(EIGH_PARAMS_t *params,
                    char JOBZ,
                    char UPLO,
@@ -1468,7 +1468,7 @@ error:
  * args[2] -> A[out]
  */
 
-static inline void
+static NPY_INLINE void
 release_@lapack_func@(EIGH_PARAMS_t *params)
 {
     /* allocated memory in A and WORK */
@@ -1478,7 +1478,7 @@ release_@lapack_func@(EIGH_PARAMS_t *params)
 }
 
 
-static inline void
+static NPY_INLINE void
 @TYPE@_eigh_wrapper(char JOBZ,
                     char UPLO,
                     char**args,
@@ -1614,7 +1614,7 @@ typedef struct gesv_params_struct
    #lapack_func = sgesv, dgesv, cgesv, zgesv#
 */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(GESV_PARAMS_t *params)
 {
     fortran_int rv;
@@ -1630,7 +1630,7 @@ call_@lapack_func@(GESV_PARAMS_t *params)
  * Initialize the parameters to use in for the lapack function _heev
  * Handles buffer allocation
  */
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS)
 {
     npy_uint8 *mem_buff = NULL;
@@ -1664,7 +1664,7 @@ init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS)
     return 0;
 }
 
-static inline void
+static NPY_INLINE void
 release_@lapack_func@(GESV_PARAMS_t *params)
 {
     /* memory block base is in A */
@@ -1800,7 +1800,7 @@ typedef struct potr_params_struct
    #lapack_func = spotrf, dpotrf, cpotrf, zpotrf#
  */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(POTR_PARAMS_t *params)
 {
     fortran_int rv;
@@ -1810,7 +1810,7 @@ call_@lapack_func@(POTR_PARAMS_t *params)
     return rv;
 }
 
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
 {
     npy_uint8 *mem_buff = NULL;
@@ -1838,7 +1838,7 @@ init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
     return 0;
 }
 
-static inline void
+static NPY_INLINE void
 release_@lapack_func@(POTR_PARAMS_t *params)
 {
     /* memory block base in A */
@@ -1912,7 +1912,7 @@ typedef struct geev_params_struct {
     char JOBVR;
 } GEEV_PARAMS_t;
 
-static inline void
+static NPY_INLINE void
 dump_geev_params(const char *name, GEEV_PARAMS_t* params)
 {
     TRACE_TXT("\n%s\n"
@@ -1967,7 +1967,7 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
    #zero = 0.0f, 0.0#
 */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(GEEV_PARAMS_t* params)
 {
     fortran_int rv;
@@ -1981,7 +1981,7 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
     return rv;
 }
 
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
 {
     npy_uint8 *mem_buff=NULL;
@@ -2063,7 +2063,7 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     return 0;
 }
 
-static inline void
+static NPY_INLINE void
 mk_@TYPE@_complex_array_from_real(@complextyp@ *c, const @typ@ *re, size_t n)
 {
     size_t iter;
@@ -2073,7 +2073,7 @@ mk_@TYPE@_complex_array_from_real(@complextyp@ *c, const @typ@ *re, size_t n)
     }
 }
 
-static inline void
+static NPY_INLINE void
 mk_@TYPE@_complex_array(@complextyp@ *c,
                         const @typ@ *re,
                         const @typ@ *im,
@@ -2086,7 +2086,7 @@ mk_@TYPE@_complex_array(@complextyp@ *c,
     }
 }
 
-static inline void
+static NPY_INLINE void
 mk_@TYPE@_complex_array_conjugate_pair(@complextyp@ *c,
                                        const @typ@ *r,
                                        size_t n)
@@ -2109,7 +2109,7 @@ mk_@TYPE@_complex_array_conjugate_pair(@complextyp@ *c,
  * i is the eigenvalue imaginary part produced by sgeev/zgeev
  * n is so that the order of the matrix is n by n
  */
-static inline void
+static NPY_INLINE void
 mk_@lapack_func@_complex_eigenvectors(@complextyp@ *c,
                                       const @typ@ *r,
                                       const @typ@ *i,
@@ -2135,7 +2135,7 @@ mk_@lapack_func@_complex_eigenvectors(@complextyp@ *c,
 }
 
 
-static inline void
+static NPY_INLINE void
 process_@lapack_func@_results(GEEV_PARAMS_t *params)
 {
     /* REAL versions of geev need the results to be translated
@@ -2166,7 +2166,7 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
    #lapack_func = cgeev, zgeev#
  */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(GEEV_PARAMS_t* params)
 {
     fortran_int rv;
@@ -2182,7 +2182,7 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
     return rv;
 }
 
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(GEEV_PARAMS_t* params,
                    char jobvl,
                    char jobvr,
@@ -2263,7 +2263,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
 }
 
 
-static inline void
+static NPY_INLINE void
 process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
 {
     /* nothing to do here, complex versions are ready to copy out */
@@ -2278,7 +2278,7 @@ process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
    #lapack_func = sgeev, dgeev, zgeev#
  */
 
-static inline void
+static NPY_INLINE void
 release_@lapack_func@(GEEV_PARAMS_t *params)
 {
     free(params->WORK);
@@ -2286,7 +2286,7 @@ release_@lapack_func@(GEEV_PARAMS_t *params)
     memset(params, 0, sizeof(*params));
 }
 
-static inline void
+static NPY_INLINE void
 @TYPE@_eig_wrapper(char JOBVL,
                    char JOBVR,
                    char**args,
@@ -2426,7 +2426,7 @@ typedef struct gessd_params_struct
 } GESDD_PARAMS_t;
 
 
-static inline void
+static NPY_INLINE void
 dump_gesdd_params(const char *name,
                   GESDD_PARAMS_t *params)
 {
@@ -2469,7 +2469,7 @@ dump_gesdd_params(const char *name,
               "JOBZ", ' ', params->JOBZ);
 }
 
-static inline int
+static NPY_INLINE int
 compute_urows_vtcolumns(char jobz,
                         fortran_int m, fortran_int n,
                         fortran_int *urows, fortran_int *vtcolumns)
@@ -2505,7 +2505,7 @@ compute_urows_vtcolumns(char jobz,
    #ftyp = fortran_real, fortran_doublereal#
  */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(GESDD_PARAMS_t *params)
 {
     fortran_int rv;
@@ -2520,7 +2520,7 @@ call_@lapack_func@(GESDD_PARAMS_t *params)
     return rv;
 }
 
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(GESDD_PARAMS_t *params,
                    char jobz,
                    fortran_int m,
@@ -2630,7 +2630,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
    #lapack_func = cgesdd, zgesdd#
  */
 
-static inline fortran_int
+static NPY_INLINE fortran_int
 call_@lapack_func@(GESDD_PARAMS_t *params)
 {
     fortran_int rv;
@@ -2646,7 +2646,7 @@ call_@lapack_func@(GESDD_PARAMS_t *params)
     return rv;
 }
 
-static inline int
+static NPY_INLINE int
 init_@lapack_func@(GESDD_PARAMS_t *params,
                    char jobz,
                    fortran_int m,
@@ -2757,7 +2757,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
    #REALTYPE = FLOAT, DOUBLE, FLOAT, DOUBLE#
    #lapack_func = sgesdd, dgesdd, cgesdd, zgesdd#
  */
-static inline void
+static NPY_INLINE void
 release_@lapack_func@(GESDD_PARAMS_t* params)
 {
     /* A and WORK contain allocated blocks */
@@ -2766,7 +2766,7 @@ release_@lapack_func@(GESDD_PARAMS_t* params)
     memset(params, 0, sizeof(*params));
 }
 
-static inline void
+static NPY_INLINE void
 @TYPE@_svd_wrapper(char JOBZ,
                    char **args,
                    npy_intp* dimensions,
