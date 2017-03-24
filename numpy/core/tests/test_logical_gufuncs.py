@@ -43,6 +43,16 @@ def test_real():
                     yield x
 
 
+def test_bool():
+    inputs = np.array([[0,0],[0,12],[1,0],[1,16]])
+    for i in range(inputs.shape[0]):
+        for j in range(inputs.shape[0]):
+            x1 = inputs[i, :].astype(np.int8).view(np.bool)
+            x2 = inputs[j, :].astype(np.int8).view(np.bool)
+            for x in check_all(x1, x2):
+                yield x
+
+
 def test_complex():
     j = 1j
     for m in range(-1, 2):

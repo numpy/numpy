@@ -30,11 +30,13 @@
 #define BLOCK_SIZE 32
 
 /**begin repeat
- * #TYPE = npy_int8,npy_uint8,npy_int16,npy_uint16,npy_int32,npy_uint32,
- *         npy_int64,npy_uint64,npy_half,npy_float,npy_double,
- *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
- * #OP_PREFIX = R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
- * #VECTORIZE = 1*8,0,1,1,0,1,1,0#
+ * #TYPE = npy_bool,npy_int8,npy_uint8,npy_int16,npy_uint16,
+ *         npy_int32,npy_uint32,npy_int64,npy_uint64,
+ *         npy_half,npy_float,npy_double,npy_longdouble,
+ *         npy_cfloat,npy_cdouble,npy_clongdouble#
+ * #OP_PREFIX = R,R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ * #ISBOOL = != 0,,,,,,,,,,,,,,,#
+ * #VECTORIZE = 1*9,0,1,1,0,1,1,0#
  */
 
 /**begin repeat1
@@ -84,8 +86,8 @@ static NPY_GCC_OPT_3 @ATTR@ void
                  i+=BLOCK_SIZE) {
                 unsigned int true_count = 0, j;
                 for (j=0 ; j<BLOCK_SIZE ; j++){
-                    @TYPE@ a = *(@TYPE@ *)a_i;
-                    @TYPE@ b = *(@TYPE@ *)b_i;
+                    @TYPE@ a = (*(@TYPE@ *)a_i) @ISBOOL@;
+                    @TYPE@ b = (*(@TYPE@ *)b_i) @ISBOOL@;
                     true_count += @INV@@OP_PREFIX@@OP@(a, b);
                     a_i += a_I;
                     b_i += b_I;
@@ -100,7 +102,9 @@ static NPY_GCC_OPT_3 @ATTR@ void
 
         /* check remaining elements */
         for ( ; i < nI; i++) {
-            if (@INV@@OP_PREFIX@@OP@(*(@TYPE@ *)a_i, *(@TYPE@ *)b_i)) {
+            @TYPE@ a = (*(@TYPE@ *)a_i) @ISBOOL@;
+            @TYPE@ b = (*(@TYPE@ *)b_i) @ISBOOL@;
+            if (@INV@@OP_PREFIX@@OP@(a, b)) {
                 a_i += a_I;
                 b_i += b_I;
             } else {
@@ -458,10 +462,10 @@ void InitLogicalGufuncs(PyObject *dictionary,
 
         static PyUFuncGenericFunction @NAME@_funcs_base[] = {
 
-            npy_uint8_@NAME@, /* equal to npy_bool */
 /**begin repeat1
- * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
+ * #TYPE = npy_bool,npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,
+ *         npy_long,npy_ulong,npy_longlong,npy_ulonglong,
+ *         npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
             NPY_FUNCNAME(@TYPE@,@NAME@,),
@@ -473,10 +477,10 @@ void InitLogicalGufuncs(PyObject *dictionary,
         };
         static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
 
-            npy_uint8_@NAME@, /* equal to npy_bool */
 /**begin repeat1
- * #TYPE = npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,npy_long,
- *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
+ * #TYPE = npy_bool,npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,
+ *         npy_long,npy_ulong,npy_longlong,npy_ulonglong,
+ *         npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
 #ifdef HAVE_@TYPE@_@NAME@_avx
