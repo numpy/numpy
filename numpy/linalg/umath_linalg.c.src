@@ -1258,6 +1258,18 @@ typedef struct eigh_params_struct {
    #lapack_func=ssyevd,dsyevd#
 */
 
+static inline fortran_int
+call_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
+                          params->A, &params->LDA, params->W,
+                          params->WORK, &params->LWORK,
+                          params->IWORK, &params->LIWORK,
+                          &rv);
+    return rv;
+}
+
 /*
  * Initialize the parameters to use in for the lapack function _syevd
  * Handles buffer allocation
@@ -1326,18 +1338,6 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
 
     return 0;
 }
-
-static inline fortran_int
-call_@lapack_func@(EIGH_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
-                          params->A, &params->LDA, params->W,
-                          params->WORK, &params->LWORK,
-                          params->IWORK, &params->LIWORK,
-                          &rv);
-    return rv;
-}
 /**end repeat**/
 
 
@@ -1349,6 +1349,20 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
    #fbasetyp=fortran_real,fortran_doublereal#
    #lapack_func=cheevd,zheevd#
 */
+
+static inline fortran_int
+call_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
+                          params->A, &params->LDA, params->W,
+                          params->WORK, &params->LWORK,
+                          params->RWORK, &params->LRWORK,
+                          params->IWORK, &params->LIWORK,
+                          &rv);
+    return rv;
+}
+
 /*
  * Initialize the parameters to use in for the lapack function _heev
  * Handles buffer allocation
@@ -1423,19 +1437,6 @@ error:
     free(mem_buff);
 
     return 0;
-}
-
-static inline fortran_int
-call_@lapack_func@(EIGH_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
-                          params->A, &params->LDA, params->W,
-                          params->WORK, &params->LWORK,
-                          params->RWORK, &params->LRWORK,
-                          params->IWORK, &params->LIWORK,
-                          &rv);
-    return rv;
 }
 /**end repeat**/
 
@@ -1601,6 +1602,18 @@ typedef struct gesv_params_struct
    #lapack_func=sgesv,dgesv,cgesv,zgesv#
 */
 
+static inline fortran_int
+call_@lapack_func@(GESV_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->IPIV,
+                          params->B, &params->LDB,
+                          &rv);
+    return rv;
+}
+
 /*
  * Initialize the parameters to use in for the lapack function _heev
  * Handles buffer allocation
@@ -1644,18 +1657,6 @@ release_@lapack_func@(GESV_PARAMS_t *params)
     /* memory block base is in A */
     free(params->A);
     memset(params, 0, sizeof(*params));
-}
-
-static inline fortran_int
-call_@lapack_func@(GESV_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->IPIV,
-                          params->B, &params->LDB,
-                          &rv);
-    return rv;
 }
 
 static void
@@ -1786,6 +1787,16 @@ typedef struct potr_params_struct
    #lapack_func=spotrf,dpotrf,cpotrf,zpotrf#
  */
 
+static inline fortran_int
+call_@lapack_func@(POTR_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->UPLO,
+                          &params->N, params->A, &params->LDA,
+                          &rv);
+    return rv;
+}
+
 static inline int
 init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
 {
@@ -1819,16 +1830,6 @@ release_@lapack_func@(POTR_PARAMS_t *params)
     /* memory block base in A */
     free(params->A);
     memset(params, 0, sizeof(*params));
-}
-
-static inline fortran_int
-call_@lapack_func@(POTR_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->UPLO,
-                          &params->N, params->A, &params->LDA,
-                          &rv);
-    return rv;
 }
 
 static void
@@ -1952,6 +1953,21 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
    #lapack_func=sgeev,dgeev#
    #zero=0.0f,0.0#
 */
+
+static inline fortran_int
+call_@lapack_func@(GEEV_PARAMS_t* params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
+                          &params->N, params->A, &params->LDA,
+                          params->WR, params->WI,
+                          params->VLR, &params->LDVL,
+                          params->VRR, &params->LDVR,
+                          params->WORK, &params->LWORK,
+                          &rv);
+    return rv;
+}
+
 static inline int
 init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
 {
@@ -2028,21 +2044,6 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
 
     return 0;
 }
-
-static inline fortran_int
-call_@lapack_func@(GEEV_PARAMS_t* params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
-                          &params->N, params->A, &params->LDA,
-                          params->WR, params->WI,
-                          params->VLR, &params->LDVL,
-                          params->VRR, &params->LDVR,
-                          params->WORK, &params->LWORK,
-                          &rv);
-    return rv;
-}
-
 
 static inline void
 mk_@TYPE@_complex_array_from_real(@complextyp@ *c, const @typ@ *re, size_t n)
@@ -2147,6 +2148,22 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
    #lapack_func=cgeev,zgeev#
  */
 
+static inline fortran_int
+call_@lapack_func@(GEEV_PARAMS_t* params)
+{
+    fortran_int rv;
+
+    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
+                          &params->N, params->A, &params->LDA,
+                          params->W,
+                          params->VL, &params->LDVL,
+                          params->VR, &params->LDVR,
+                          params->WORK, &params->LWORK,
+                          params->WR, /* actually RWORK */
+                          &rv);
+    return rv;
+}
+
 static inline int
 init_@lapack_func@(GEEV_PARAMS_t* params,
                    char jobvl,
@@ -2222,23 +2239,6 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
 
     return 0;
 }
-
-static inline fortran_int
-call_@lapack_func@(GEEV_PARAMS_t* params)
-{
-    fortran_int rv;
-
-    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
-                          &params->N, params->A, &params->LDA,
-                          params->W,
-                          params->VL, &params->LDVL,
-                          params->VR, &params->LDVR,
-                          params->WORK, &params->LWORK,
-                          params->WR, /* actually RWORK */
-                          &rv);
-    return rv;
-}
-
 
 static inline void
 process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
@@ -2478,6 +2478,21 @@ compute_urows_vtcolumns(char jobz,
    #ftyp=fortran_real,fortran_doublereal#
  */
 
+static inline fortran_int
+call_@lapack_func@(GESDD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
+                          params->A, &params->LDA,
+                          params->S,
+                          params->U, &params->LDU,
+                          params->VT, &params->LDVT,
+                          params->WORK, &params->LWORK,
+                          params->IWORK,
+                          &rv);
+    return rv;
+}
+
 static inline int
 init_@lapack_func@(GESDD_PARAMS_t *params,
                    char jobz,
@@ -2574,6 +2589,16 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     return 0;
 }
 
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=CFLOAT,CDOUBLE#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #frealtyp=fortran_real,fortran_doublereal#
+   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=cgesdd,zgesdd#
+ */
+
 static inline fortran_int
 call_@lapack_func@(GESDD_PARAMS_t *params)
 {
@@ -2584,20 +2609,11 @@ call_@lapack_func@(GESDD_PARAMS_t *params)
                           params->U, &params->LDU,
                           params->VT, &params->LDVT,
                           params->WORK, &params->LWORK,
+                          params->RWORK,
                           params->IWORK,
                           &rv);
     return rv;
 }
-
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #ftyp=fortran_complex,fortran_doublecomplex#
-   #frealtyp=fortran_real,fortran_doublereal#
-   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
-   #lapack_func=cgesdd,zgesdd#
- */
 
 static inline int
 init_@lapack_func@(GESDD_PARAMS_t *params,
@@ -2698,22 +2714,6 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     memset(params, 0, sizeof(*params));
 
     return 0;
-}
-
-static inline fortran_int
-call_@lapack_func@(GESDD_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
-                          params->A, &params->LDA,
-                          params->S,
-                          params->U, &params->LDU,
-                          params->VT, &params->LDVT,
-                          params->WORK, &params->LWORK,
-                          params->RWORK,
-                          params->IWORK,
-                          &rv);
-    return rv;
 }
 /**end repeat**/
 
