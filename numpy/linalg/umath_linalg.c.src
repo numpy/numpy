@@ -1280,11 +1280,8 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
 {
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
-    @typ@ query_work_size;
-    fortran_int query_iwork_size;
-    fortran_int lwork  = -1;
-    fortran_int liwork = -1;
-    fortran_int info;
+    fortran_int lwork;
+    fortran_int liwork;
     npy_uint8 *a, *w, *work, *iwork;
     size_t safe_N = N;
     size_t alloc_size = safe_N * (safe_N + 1) * sizeof(@typ@);
@@ -1296,18 +1293,33 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
         goto error;
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(@typ@);
-    LAPACK(@lapack_func@)(&JOBZ, &UPLO, &N,
-                          (@ftyp@*)a, &lda, (@ftyp@*)w,
-                          &query_work_size, &lwork,
-                          &query_iwork_size, &liwork,
-                          &info);
 
-    if (info != 0)
-        goto error;
+    params->A = a;
+    params->W = w;
+    params->RWORK = NULL; /* unused */
+    params->N = N;
+    params->LRWORK = 0; /* unused */
+    params->JOBZ = JOBZ;
+    params->UPLO = UPLO;
+    params->LDA = lda;
 
-    work = mem_buff;
-    lwork = (fortran_int)query_work_size;
-    liwork = query_iwork_size;
+    /* Work size query */
+    {
+        @typ@ query_work_size;
+        fortran_int query_iwork_size;
+
+        params->LWORK = -1;
+        params->LIWORK = -1;
+        params->WORK = &query_work_size;
+        params->IWORK = &query_iwork_size;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        lwork = (fortran_int)query_work_size;
+        liwork = query_iwork_size;
+    }
+
     mem_buff2 = malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
     if (!mem_buff2)
         goto error;
@@ -1315,18 +1327,10 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
     work = mem_buff2;
     iwork = mem_buff2 + lwork*sizeof(@typ@);
 
-    params->A = a;
-    params->W = w;
-    params->WORK = work;
-    params->RWORK = NULL; /* unused */
-    params->IWORK = iwork;
-    params->N = N;
     params->LWORK = lwork;
-    params->LRWORK = 0; /* unused */
+    params->WORK = work;
     params->LIWORK = liwork;
-    params->JOBZ = JOBZ;
-    params->UPLO = UPLO;
-    params->LDA = lda;
+    params->IWORK = iwork;
 
     return 1;
 
@@ -1349,7 +1353,6 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
    #fbasetyp=fortran_real,fortran_doublereal#
    #lapack_func=cheevd,zheevd#
 */
-
 static inline fortran_int
 call_@lapack_func@(EIGH_PARAMS_t *params)
 {
@@ -1375,14 +1378,10 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
 {
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
-    @ftyp@ query_work_size;
-    @fbasetyp@ query_rwork_size;
-    fortran_int query_iwork_size;
-    fortran_int lwork = -1;
-    fortran_int lrwork = -1;
-    fortran_int liwork = -1;
+    fortran_int lwork;
+    fortran_int lrwork;
+    fortran_int liwork;
     npy_uint8 *a, *w, *work, *rwork, *iwork;
-    fortran_int info;
     size_t safe_N = N;
     fortran_int lda = fortran_int_max(N, 1);
 
@@ -1393,40 +1392,50 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(@typ@);
 
-    LAPACK(@lapack_func@)(&JOBZ, &UPLO, &N,
-                          (@ftyp@*)a, &lda, (@fbasetyp@*)w,
-                          &query_work_size, &lwork,
-                          &query_rwork_size, &lrwork,
-                          &query_iwork_size, &liwork,
-                          &info);
-    if (info != 0)
-        goto error;
+    params->A = a;
+    params->W = w;
+    params->N = N;
+    params->JOBZ = JOBZ;
+    params->UPLO = UPLO;
+    params->LDA = lda;
 
-    lwork = (fortran_int)*(@fbasetyp@*)&query_work_size;
-    lrwork = (fortran_int)query_rwork_size;
-    liwork = query_iwork_size;
+    /* Work size query */
+    {
+        @ftyp@ query_work_size;
+        @fbasetyp@ query_rwork_size;
+        fortran_int query_iwork_size;
+
+        params->LWORK = -1;
+        params->LRWORK = -1;
+        params->LIWORK = -1;
+        params->WORK = &query_work_size;
+        params->RWORK = &query_rwork_size;
+        params->IWORK = &query_iwork_size;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        lwork = (fortran_int)*(@fbasetyp@*)&query_work_size;
+        lrwork = (fortran_int)query_rwork_size;
+        liwork = query_iwork_size;
+    }
 
     mem_buff2 = malloc(lwork*sizeof(@typ@) +
                        lrwork*sizeof(@basetyp@) +
                        liwork*sizeof(fortran_int));
     if (!mem_buff2)
         goto error;
+
     work = mem_buff2;
     rwork = work + lwork*sizeof(@typ@);
     iwork = rwork + lrwork*sizeof(@basetyp@);
 
-    params->A = a;
-    params->W = w;
     params->WORK = work;
     params->RWORK = rwork;
     params->IWORK = iwork;
-    params->N = N;
     params->LWORK = lwork;
     params->LRWORK = lrwork;
     params->LIWORK = liwork;
-    params->JOBZ = JOBZ;
-    params->UPLO = UPLO;
-    params->LDA = lda;
 
     return 1;
 
@@ -1984,9 +1993,6 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     size_t vl_size = vlr_size*2;
     size_t vr_size = vrr_size*2;
     size_t work_count = 0;
-    @typ@ work_size_query;
-    fortran_int do_size_query = -1;
-    fortran_int rv;
     fortran_int ld = fortran_int_max(n, 1);
 
     /* allocate data for known sizes (all but work) */
@@ -2004,27 +2010,12 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     w = vrr + vrr_size;
     vl = w + w_size;
     vr = vl + vl_size;
-    LAPACK(@lapack_func@)(&jobvl, &jobvr, &n,
-                          (void *)a, &ld, (void *)wr, (void *)wi,
-                          (void *)vl, &ld, (void *)vr, &ld,
-                          &work_size_query, &do_size_query,
-                          &rv);
-
-    if (0 != rv)
-        goto error;
-
-    work_count = (size_t)work_size_query;
-    mem_buff2 = malloc(work_count*sizeof(@typ@));
-    if (!mem_buff2)
-        goto error;
-    work = mem_buff2;
 
     params->A = a;
     params->WR = wr;
     params->WI = wi;
     params->VLR = vlr;
     params->VRR = vrr;
-    params->WORK = work;
     params->W = w;
     params->VL = vl;
     params->VR = vr;
@@ -2032,9 +2023,29 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     params->LDA = ld;
     params->LDVL = ld;
     params->LDVR = ld;
-    params->LWORK = (fortran_int)work_count;
     params->JOBVL = jobvl;
     params->JOBVR = jobvr;
+
+    /* Work size query */
+    {
+        @typ@ work_size_query;
+
+        params->LWORK = -1;
+        params->WORK = &work_size_query;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (size_t)work_size_query;
+    }
+
+    mem_buff2 = malloc(work_count*sizeof(@typ@));
+    if (!mem_buff2)
+        goto error;
+    work = mem_buff2;
+
+    params->LWORK = (fortran_int)work_count;
+    params->WORK = work;
 
     return 1;
  error:
@@ -2180,9 +2191,6 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     size_t vr_size = jobvr=='V'? safe_n * safe_n * sizeof(@ftyp@) : 0;
     size_t rwork_size = 2 * safe_n * sizeof(@realtyp@);
     size_t work_count = 0;
-    @typ@ work_size_query;
-    fortran_int do_size_query = -1;
-    fortran_int rv;
     size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size;
     fortran_int ld = fortran_int_max(n, 1);
 
@@ -2195,24 +2203,6 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     vl = w + w_size;
     vr = vl + vl_size;
     rwork = vr + vr_size;
-    LAPACK(@lapack_func@)(&jobvl, &jobvr, &n,
-                          (void *)a, &ld, (void *)w,
-                          (void *)vl, &ld, (void *)vr, &ld,
-                          (void *)&work_size_query, &do_size_query,
-                          (void *)rwork,
-                          &rv);
-    if (0 != rv)
-        goto error;
-
-    work_count = (size_t) work_size_query.array[0];
-    /* Fix a bug in lapack 3.0.0 */
-    if(work_count == 0) work_count = 1;
-
-    mem_buff2 = malloc(work_count*sizeof(@ftyp@));
-    if (!mem_buff2)
-        goto error;
-
-    work = mem_buff2;
 
     params->A = a;
     params->WR = rwork;
@@ -2221,15 +2211,37 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     params->VRR = NULL;
     params->VL = vl;
     params->VR = vr;
-    params->WORK = work;
     params->W = w;
     params->N = n;
     params->LDA = ld;
     params->LDVL = ld;
     params->LDVR = ld;
-    params->LWORK = (fortran_int)work_count;
     params->JOBVL = jobvl;
     params->JOBVR = jobvr;
+
+    /* Work size query */
+    {
+        @typ@ work_size_query;
+
+        params->LWORK = -1;
+        params->WORK = &work_size_query;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (size_t) work_size_query.array[0];
+        /* Fix a bug in lapack 3.0.0 */
+        if(work_count == 0) work_count = 1;
+    }
+
+    mem_buff2 = malloc(work_count*sizeof(@ftyp@));
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->LWORK = (fortran_int)work_count;
+    params->WORK = work;
 
     return 1;
  error:
@@ -2239,6 +2251,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
 
     return 0;
 }
+
 
 static inline void
 process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
@@ -2537,19 +2550,33 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     iwork = vt + vt_size;
 
     /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
-    vt_column_count = vt_column_count < 1? 1 : vt_column_count;
+    vt_column_count = fortran_int_max(1, vt_column_count);
+
+    params->M = m;
+    params->N = n;
+    params->A = a;
+    params->S = s;
+    params->U = u;
+    params->VT = vt;
+    params->RWORK = NULL;
+    params->IWORK = iwork;
+    params->M = m;
+    params->N = n;
+    params->LDA = ld;
+    params->LDU = ld;
+    params->LDVT = vt_column_count;
+    params->JOBZ = jobz;
+
+    /* Work size query */
     {
-        /* compute optimal work size */
         @ftyp@ work_size_query;
-        fortran_int do_query = -1;
-        fortran_int rv;
-        LAPACK(@lapack_func@)(&jobz, &m, &n,
-                              (void*)a, &ld, (void*)s, (void*)u, &ld,
-                              (void*)vt, &vt_column_count,
-                              &work_size_query, &do_query,
-                              (void*)iwork, &rv);
-        if (0!=rv)
+
+        params->LWORK = -1;
+        params->WORK = &work_size_query;
+
+        if (call_@lapack_func@(params) != 0)
             goto error;
+
         work_count = (fortran_int)work_size_query;
         /* Fix a bug in lapack 3.0.0 */
         if(work_count == 0) work_count = 1;
@@ -2562,22 +2589,8 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
     work = mem_buff2;
 
-    params->M = m;
-    params->N = n;
-    params->A = a;
-    params->S = s;
-    params->U = u;
-    params->VT = vt;
-    params->WORK = work;
-    params->RWORK = NULL;
-    params->IWORK = iwork;
-    params->M = m;
-    params->N = n;
-    params->LDA = ld;
-    params->LDU = ld;
-    params->LDVT = vt_column_count;
     params->LWORK = work_count;
-    params->JOBZ = jobz;
+    params->WORK = work;
 
     return 1;
  error:
@@ -2665,20 +2678,31 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     iwork = rwork + rwork_size;
 
     /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
-    vt_column_count = vt_column_count < 1? 1 : vt_column_count;
+    vt_column_count = fortran_int_max(1, vt_column_count);
+
+    params->A = a;
+    params->S = s;
+    params->U = u;
+    params->VT = vt;
+    params->RWORK = rwork;
+    params->IWORK = iwork;
+    params->M = m;
+    params->N = n;
+    params->LDA = ld;
+    params->LDU = ld;
+    params->LDVT = vt_column_count;
+    params->JOBZ = jobz;
+
+    /* Work size query */
     {
-        /* compute optimal work size */
         @ftyp@ work_size_query;
-        fortran_int do_query = -1;
-        fortran_int rv;
-        LAPACK(@lapack_func@)(&jobz, &m, &n,
-                              (void*)a, &ld, (void*)s, (void*)u, &ld,
-                              (void*)vt, &vt_column_count,
-                              &work_size_query, &do_query,
-                              (void*)rwork,
-                              (void*)iwork, &rv);
-        if (0!=rv)
+
+        params->LWORK = -1;
+        params->WORK = &work_size_query;
+
+        if (call_@lapack_func@(params) != 0)
             goto error;
+
         work_count = (fortran_int)((@typ@*)&work_size_query)->array[0];
         /* Fix a bug in lapack 3.0.0 */
         if(work_count == 0) work_count = 1;
@@ -2691,20 +2715,8 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
     work = mem_buff2;
 
-    params->A = a;
-    params->S = s;
-    params->U = u;
-    params->VT = vt;
-    params->WORK = work;
-    params->RWORK = rwork;
-    params->IWORK = iwork;
-    params->M = m;
-    params->N = n;
-    params->LDA = ld;
-    params->LDU = ld;
-    params->LDVT = vt_column_count;
     params->LWORK = work_count;
-    params->JOBZ = jobz;
+    params->WORK = work;
 
     return 1;
  error:
