@@ -269,7 +269,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
-    if use_tee:
+    if use_tee and text:
         print(text)
     return proc.returncode, text
 
