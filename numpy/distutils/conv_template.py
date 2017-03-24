@@ -186,8 +186,8 @@ def parse_loop_header(loophead) :
         if nsub is None :
             nsub = size
         elif nsub != size :
-            msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
-            raise ValueError(msg)
+            msg = "Mismatch in number of values, %d != %d\n%s = %s"
+            raise ValueError(msg % (nsub, size, name, vals))
         names.append((name, vals))
 
 
