@@ -34,6 +34,7 @@
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  * #OP_PREFIX = R,R,R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ * #VECTORIZE = 1*10,0,1,1,0,1,1,0#
  */
 
 /**begin repeat1
@@ -50,11 +51,15 @@
 /**begin repeat3
  * #isa = , _avx#
  * #ISA = , AVX#
- * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX#
+ * #CHK = 1, defined HAVE_ATTRIBUTE_TARGET_AVX && defined DO_VECTORIZE#
  * #ATTR = , NPY_GCC_TARGET_AVX#
  */
+#if @VECTORIZE@
+#define DO_VECTORIZE
+#endif
 
 #if @CHK@
+#define HAVE_@TYPE@_@fname@_@OPNAME@@isa@
 static NPY_GCC_OPT_3 @ATTR@ void
 @TYPE@_@fname@_@OPNAME@@isa@(char **args, npy_intp *dimensions,
                              npy_intp* steps, void* data)
@@ -74,7 +79,7 @@ static NPY_GCC_OPT_3 @ATTR@ void
 
         i = 0;
         /* main loop in chunks with auto vectorize simd instructions */
-        if (a_I == sizeof(@TYPE@) && b_I == sizeof(@TYPE@)) {
+        if (@VECTORIZE@ && a_I == sizeof(@TYPE@) && b_I == sizeof(@TYPE@)) {
             for (i=0; i < npy_blocked_end(0, 1, BLOCK_SIZE, nI);
                  i+=BLOCK_SIZE) {
                 unsigned int true_count = 0, j;
@@ -110,6 +115,8 @@ static NPY_GCC_OPT_3 @ATTR@ void
     }
 }
 #endif
+
+#undef DO_VECTORIZE
 
 /**end repeat3**/
 /**end repeat2**/
@@ -433,8 +440,11 @@ void InitLogicalGufuncs(PyObject *dictionary,
  *         npy_ulong,npy_longlong,npy_ulonglong,npy_half,npy_float,npy_double,
  *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
  */
-
+#ifdef HAVE_@TYPE@_@NAME@_avx
             @TYPE@_@NAME@_avx,
+#else
+            @TYPE@_@NAME@,
+#endif
 
 /**end repeat1**/
             OBJECT_@NAME@,
