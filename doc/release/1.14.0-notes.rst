@@ -217,6 +217,10 @@ selected via the ``--fcompiler`` and ``--compiler`` options to
 supported; by default a gfortran-compatible static archive
 ``openblas.a`` is looked for.
 
+``np.linalg.pinv`` now works on stacked matrices
+------------------------------------------------
+Previously it was limited to a single 2d array.
+
 
 Changes
 =======

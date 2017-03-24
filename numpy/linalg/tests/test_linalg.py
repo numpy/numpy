@@ -712,12 +712,16 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
+class TestPinv(LinalgSquareTestCase,
+               LinalgNonsquareTestCase,
+               LinalgGeneralizedSquareTestCase,
+               LinalgGeneralizedNonsquareTestCase):
 
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
-        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
+        dot = dot_generalized
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
