@@ -52,7 +52,6 @@
 
 /**begin repeat3
  * #isa = , _avx#
- * #ISA = , AVX#
  * #CHK = 1, defined HAVE_ATTRIBUTE_TARGET_AVX && defined DO_VECTORIZE#
  * #ATTR = , NPY_GCC_TARGET_AVX#
  */
