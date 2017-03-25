@@ -33,7 +33,12 @@ Compatibility notes
 Error type changes
 ~~~~~~~~~~~~~~~~~~
 
-``numpy.hstack()`` now throws ValueError instead of IndexError when input is empty.
+* ``numpy.hstack()`` now throws ``ValueError`` instead of ``IndexError`` when
+  input is empty.
+* Functions taking an axis argument, when that argument is out of range, now
+  throw ``np.AxisError`` instead of a mixture of ``IndexError`` and
+  ``ValueError``. For backwards compatibility, ``AxisError`` subclasses both of
+  these.
 
 Tuple object dtypes
 ~~~~~~~~~~~~~~~~~~~
