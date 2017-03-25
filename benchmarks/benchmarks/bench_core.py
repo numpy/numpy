@@ -137,8 +137,8 @@ class CountNonzero(Benchmark):
     ]
 
     def setup(self, numaxes, size, dtype):
-        self.x = np.empty(shape=(
-            numaxes, size), dtype=dtype)
+        self.x = np.arange(numaxes * size).reshape(numaxes, size)
+        self.x = (self.x % 3).astype(dtype)
 
     def time_count_nonzero(self, numaxes, size, dtype):
         np.count_nonzero(self.x)
