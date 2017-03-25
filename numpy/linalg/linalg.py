@@ -1279,7 +1279,7 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices=1, compute_uv=1):
+def svd(a, full_matrices=True, compute_uv=True):
     """
     Singular Value Decomposition.
 
@@ -1642,7 +1642,7 @@ def pinv(a, rcond=1e-15 ):
         res = empty(a.shape[:-2] + (a.shape[-1], a.shape[-2]), dtype=a.dtype)
         return wrap(res)
     a = a.conjugate()
-    u, s, vt = svd(a, 0)
+    u, s, vt = svd(a, full_matrices=False)
     m = u.shape[0]
     n = vt.shape[1]
     cutoff = rcond*maximum.reduce(s)
