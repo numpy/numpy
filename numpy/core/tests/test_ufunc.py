@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
-from numpy.compat import asbytes
 from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
@@ -45,8 +44,8 @@ class TestUfunc(TestCase):
 
     def test_pickle_withstring(self):
         import pickle
-        astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
-                "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
+        astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
+                   b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
     def test_reduceat_shifting_sum(self):

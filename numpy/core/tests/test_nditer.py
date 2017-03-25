@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
-from numpy.compat import asbytes, sixu
+from numpy.compat import sixu
 from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
@@ -2118,7 +2118,7 @@ def test_iter_buffering_string():
     assert_raises(TypeError, nditer, a, ['buffered'], ['readonly'],
                   op_dtypes='S2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='S6')
-    assert_equal(i[0], asbytes('abc'))
+    assert_equal(i[0], b'abc')
     assert_equal(i[0].dtype, np.dtype('S6'))
 
     a = np.array(['abc', 'a', 'abcd'], dtype=np.unicode)

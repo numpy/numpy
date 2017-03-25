@@ -71,7 +71,7 @@ class TestBasic(TestCase):
         assert_(issubclass((A + B).dtype.type, np.unicode_))
 
     def test_from_string(self):
-        A = np.char.array(asbytes('abc'))
+        A = np.char.array(b'abc')
         assert_equal(len(A), 1)
         assert_equal(len(A[0]), 3)
         assert_(issubclass(A.dtype.type, np.string_))
@@ -155,7 +155,7 @@ class TestChar(TestCase):
 
     def test_it(self):
         assert_equal(self.A.shape, (4,))
-        assert_equal(self.A.upper()[:2].tobytes(), asbytes('AB'))
+        assert_equal(self.A.upper()[:2].tobytes(), b'AB')
 
 class TestComparisons(TestCase):
     def setUp(self):
@@ -332,11 +332,11 @@ class TestMethods(TestCase):
         C = self.A.center([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
 
-        C = self.A.center(20, asbytes('#'))
-        assert_(np.all(C.startswith(asbytes('#'))))
-        assert_(np.all(C.endswith(asbytes('#'))))
+        C = self.A.center(20, b'#')
+        assert_(np.all(C.startswith(b'#')))
+        assert_(np.all(C.endswith(b'#')))
 
-        C = np.char.center(asbytes('FOO'), [[10, 20], [15, 8]])
+        C = np.char.center(b'FOO', [[10, 20], [15, 8]])
         tgt = asbytes_nested([['   FOO    ', '        FOO         '],
                               ['      FOO      ', '  FOO   ']])
         assert_(issubclass(C.dtype.type, np.string_))
@@ -344,7 +344,7 @@ class TestMethods(TestCase):
 
     def test_decode(self):
         if sys.version_info[0] >= 3:
-            A = np.char.array([asbytes('\\u03a3')])
+            A = np.char.array([b'\\u03a3'])
             assert_(A.decode('unicode-escape')[0] == '\u03a3')
         else:
             A = np.char.array(['736563726574206d657373616765'])
@@ -356,7 +356,7 @@ class TestMethods(TestCase):
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
-        assert_(T[2, 0] == asbytes('123      345 \0'))
+        assert_(T[2, 0] == b'123      345 \0')
 
     def test_join(self):
         if sys.version_info[0] >= 3:
@@ -382,12 +382,12 @@ class TestMethods(TestCase):
         C = self.A.ljust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
 
-        C = self.A.ljust(20, asbytes('#'))
-        assert_array_equal(C.startswith(asbytes('#')), [
+        C = self.A.ljust(20, b'#')
+        assert_array_equal(C.startswith(b'#'), [
                 [False, True], [False, False], [False, False]])
-        assert_(np.all(C.endswith(asbytes('#'))))
+        assert_(np.all(C.endswith(b'#')))
 
-        C = np.char.ljust(asbytes('FOO'), [[10, 20], [15, 8]])
+        C = np.char.ljust(b'FOO', [[10, 20], [15, 8]])
         tgt = asbytes_nested([['FOO       ', 'FOO                 '],
                               ['FOO            ', 'FOO     ']])
         assert_(issubclass(C.dtype.type, np.string_))
@@ -443,7 +443,7 @@ class TestMethods(TestCase):
 
         if sys.version_info[0] < 3:
             # NOTE: b'abc'.replace(b'a', 'b') is not allowed on Py3
-            R = self.A.replace(asbytes('a'), sixu('\u03a3'))
+            R = self.A.replace(b'a', sixu('\u03a3'))
             tgt = [[sixu(' \u03a3bc '), ''],
                    ['12345', sixu('MixedC\u03a3se')],
                    ['123 \t 345 \x00', 'UPPER']]
@@ -456,12 +456,12 @@ class TestMethods(TestCase):
         C = self.A.rjust([10, 20])
         assert_array_equal(np.char.str_len(C), [[10, 20], [10, 20], [12, 20]])
 
-        C = self.A.rjust(20, asbytes('#'))
-        assert_(np.all(C.startswith(asbytes('#'))))
-        assert_array_equal(C.endswith(asbytes('#')),
+        C = self.A.rjust(20, b'#')
+        assert_(np.all(C.startswith(b'#')))
+        assert_array_equal(C.endswith(b'#'),
                            [[False, True], [False, False], [False, False]])
 
-        C = np.char.rjust(asbytes('FOO'), [[10, 20], [15, 8]])
+        C = np.char.rjust(b'FOO', [[10, 20], [15, 8]])
         tgt = asbytes_nested([['       FOO', '                 FOO'],
                               ['            FOO', '     FOO']])
         assert_(issubclass(C.dtype.type, np.string_))
@@ -476,7 +476,7 @@ class TestMethods(TestCase):
         assert_array_equal(P, tgt)
 
     def test_rsplit(self):
-        A = self.A.rsplit(asbytes('3'))
+        A = self.A.rsplit(b'3')
         tgt = asbytes_nested([[[' abc '], ['']],
                               [['12', '45'], ['MixedCase']],
                               [['12', ' \t ', '45 \x00 '], ['UPPER']]])
@@ -522,7 +522,7 @@ class TestMethods(TestCase):
         assert_array_equal(self.B.strip(), tgt)
 
     def test_split(self):
-        A = self.A.split(asbytes('3'))
+        A = self.A.split(b'3')
         tgt = asbytes_nested([
                               [[' abc '], ['']],
                               [['12', '45'], ['MixedCase']],
@@ -688,7 +688,7 @@ class TestOperations(TestCase):
         assert_(sl2.base is arr)
         assert_(sl2.base.base is arr.base)
 
-        assert_(arr[0, 0] == asbytes('abc'))
+        assert_(arr[0, 0] == b'abc')
 
 
 def test_empty_indexing():
