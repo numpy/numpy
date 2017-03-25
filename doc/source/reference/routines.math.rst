@@ -98,6 +98,8 @@ Floating point routines
    copysign
    frexp
    ldexp
+   nextafter
+   spacing
 
 Arithmetic operations
 ---------------------
