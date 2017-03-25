@@ -1821,6 +1821,29 @@ class TestSpecialMethods(TestCase):
         for func in [np.divide, np.dot]:
             assert_raises(ValueError, func, a, a)
 
+    def test_gufunc_override(self):
+        # gufunc are just ufunc instances, but follow a different path,
+        # so check __array_ufunc__ overrides them properly.
+        class A(object):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return self, ufunc, method, inputs, kwargs
+
+        a = A()
+        res = np.core.umath_tests.inner1d(a, a)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.core.umath_tests.inner1d)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], (a, a))
+        assert_equal(res[4], {})
+
+        res = np.core.umath_tests.inner1d(1, 1, out=a)
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.core.umath_tests.inner1d)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], (1, 1))
+        assert_equal(res[4], {'out': (a,)})
+
+
 class TestChoose(TestCase):
     def test_mixed(self):
         c = np.array([True, True])
