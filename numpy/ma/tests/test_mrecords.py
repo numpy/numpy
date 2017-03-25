@@ -13,7 +13,6 @@ import pickle
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
-from numpy.compat import asbytes_nested
 from numpy.ma import masked, nomask
 from numpy.testing import TestCase, run_module_suite, temppath
 from numpy.core.records import (
@@ -39,7 +38,7 @@ class TestMRecords(TestCase):
         # Generic setup
         ilist = [1, 2, 3, 4, 5]
         flist = [1.1, 2.2, 3.3, 4.4, 5.5]
-        slist = asbytes_nested(['one', 'two', 'three', 'four', 'five'])
+        slist = [b'one', b'two', b'three', b'four', b'five']
         ddtype = [('a', int), ('b', float), ('c', '|S8')]
         mask = [0, 1, 0, 0, 1]
         self.base = ma.array(list(zip(ilist, flist, slist)),
@@ -233,7 +232,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.b._data, [5., 5., 3.3, 4.4, 5.5])
         assert_equal(mbase.b._mask, [0, 0, 0, 0, 1])
         assert_equal(mbase.c._data,
-                     asbytes_nested(['5', '5', 'three', 'four', 'five']))
+                     [b'5', b'5', b'three', b'four', b'five'])
         assert_equal(mbase.b._mask, [0, 0, 0, 0, 1])
 
         mbase = base.view(mrecarray).copy()
@@ -243,7 +242,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.b._data, [1.1, 2.2, 3.3, 4.4, 5.5])
         assert_equal(mbase.b._mask, [1, 1, 0, 0, 1])
         assert_equal(mbase.c._data,
-                     asbytes_nested(['one', 'two', 'three', 'four', 'five']))
+                     [b'one', b'two', b'three', b'four', b'five'])
         assert_equal(mbase.b._mask, [1, 1, 0, 0, 1])
 
     def test_setslices_hardmask(self):
@@ -256,7 +255,7 @@ class TestMRecords(TestCase):
             assert_equal(mbase.a._data, [1, 2, 3, 5, 5])
             assert_equal(mbase.b._data, [1.1, 2.2, 3.3, 5, 5.5])
             assert_equal(mbase.c._data,
-                         asbytes_nested(['one', 'two', 'three', '5', 'five']))
+                         [b'one', b'two', b'three', b'5', b'five'])
             assert_equal(mbase.a._mask, [0, 1, 0, 0, 1])
             assert_equal(mbase.b._mask, mbase.a._mask)
             assert_equal(mbase.b._mask, mbase.c._mask)

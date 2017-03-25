@@ -18,7 +18,7 @@ from numpy.testing import (
         assert_raises, assert_warns, dec, suppress_warnings
         )
 from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
-from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
+from numpy.compat import asbytes, asunicode, long, sixu
 
 rlevel = 1
 
@@ -1175,7 +1175,7 @@ class TestRegression(TestCase):
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
-        b = np.array(asbytes_nested(['1', '2', '3']))
+        b = np.array([b'1', b'2', b'3'])
         assert_equal(a, b)
 
     def test_unaligned_unicode_access(self, level=rlevel):

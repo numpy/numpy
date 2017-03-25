@@ -284,7 +284,7 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import asbytes_nested, sixu
+from numpy.compat import sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec, SkipTest
@@ -682,23 +682,23 @@ def test_write_version():
             raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
-bad_version_magic = asbytes_nested([
-    '\x93NUMPY\x01\x01',
-    '\x93NUMPY\x00\x00',
-    '\x93NUMPY\x00\x01',
-    '\x93NUMPY\x02\x00',
-    '\x93NUMPY\x02\x02',
-    '\x93NUMPY\xff\xff',
-])
-malformed_magic = asbytes_nested([
-    '\x92NUMPY\x01\x00',
-    '\x00NUMPY\x01\x00',
-    '\x93numpy\x01\x00',
-    '\x93MATLB\x01\x00',
-    '\x93NUMPY\x01',
-    '\x93NUMPY',
-    '',
-])
+bad_version_magic = [
+    b'\x93NUMPY\x01\x01',
+    b'\x93NUMPY\x00\x00',
+    b'\x93NUMPY\x00\x01',
+    b'\x93NUMPY\x02\x00',
+    b'\x93NUMPY\x02\x02',
+    b'\x93NUMPY\xff\xff',
+]
+malformed_magic = [
+    b'\x92NUMPY\x01\x00',
+    b'\x00NUMPY\x01\x00',
+    b'\x93numpy\x01\x00',
+    b'\x93MATLB\x01\x00',
+    b'\x93NUMPY\x01',
+    b'\x93NUMPY',
+    b'',
+]
 
 def test_read_magic():
     s1 = BytesIO()
