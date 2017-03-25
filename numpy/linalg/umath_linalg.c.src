@@ -708,18 +708,12 @@ dump_@TYPE@_matrix(const char* name,
 
 static NPY_INLINE fortran_int
 fortran_int_min(fortran_int x, fortran_int y) {
-    if (x < y)
-        return x;
-    else
-        return y;
+    return x < y ? x : y;
 }
 
 static NPY_INLINE fortran_int
 fortran_int_max(fortran_int x, fortran_int y) {
-    if (x > y)
-        return x;
-    else
-        return y;
+    return x > y ? x : y;
 }
 
 #define INIT_OUTER_LOOP_1 \
