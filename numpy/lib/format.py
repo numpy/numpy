@@ -161,7 +161,7 @@ if sys.version_info[0] >= 3:
 else:
     import cPickle as pickle
 
-MAGIC_PREFIX = asbytes('\x93NUMPY')
+MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 

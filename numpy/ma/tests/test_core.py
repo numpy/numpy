@@ -1696,7 +1696,7 @@ class TestFillingValues(TestCase):
         assert_equal(fval, default_fill_value(0))
 
         fval = _check_fill_value(0, "|S3")
-        assert_equal(fval, asbytes("0"))
+        assert_equal(fval, b"0")
         fval = _check_fill_value(None, "|S3")
         assert_equal(fval, default_fill_value(b"camelot!"))
         self.assertRaises(TypeError, _check_fill_value, 1e+20, int)
@@ -1709,7 +1709,7 @@ class TestFillingValues(TestCase):
         # A check on a list should return a single record
         fval = _check_fill_value([-999, -12345678.9, "???"], ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+        assert_equal(fval.item(), [-999, -12345678.9, b"???"])
         # A check on None should output the defaults
         fval = _check_fill_value(None, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
@@ -1720,7 +1720,7 @@ class TestFillingValues(TestCase):
         fill_val = np.array((-999, -12345678.9, "???"), dtype=ndtype)
         fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+        assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using a flexible type w/ a different type shouldn't matter
         # BEHAVIOR in 1.5 and earlier: match structured types by position
@@ -1733,20 +1733,20 @@ class TestFillingValues(TestCase):
         with assert_warns(FutureWarning):
             fval = _check_fill_value(fill_val, ndtype)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+        assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using an object-array shouldn't matter either
         fill_val = np.ndarray(shape=(1,), dtype=object)
-        fill_val[0] = (-999, -12345678.9, asbytes("???"))
+        fill_val[0] = (-999, -12345678.9, b"???")
         fval = _check_fill_value(fill_val, object)
         self.assertTrue(isinstance(fval, ndarray))
-        assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+        assert_equal(fval.item(), [-999, -12345678.9, b"???"])
         # NOTE: This test was never run properly as "fill_value" rather than
         # "fill_val" was assigned.  Written properly, it fails.
         #fill_val = np.array((-999, -12345678.9, "???"))
         #fval = _check_fill_value(fill_val, ndtype)
         #self.assertTrue(isinstance(fval, ndarray))
-        #assert_equal(fval.item(), [-999, -12345678.9, asbytes("???")])
+        #assert_equal(fval.item(), [-999, -12345678.9, b"???"])
         #.....One-field-only flexible type should work as well
         ndtype = [("a", int)]
         fval = _check_fill_value(-999999999, ndtype)
@@ -1786,14 +1786,14 @@ class TestFillingValues(TestCase):
         mtype = [('f', float), ('s', '|S3')]
         x = array([(1, 'a'), (2, 'b'), (pi, 'pi')], dtype=mtype)
         x.fill_value = 999
-        assert_equal(x.fill_value.item(), [999., asbytes('999')])
+        assert_equal(x.fill_value.item(), [999., b'999'])
         assert_equal(x['f'].fill_value, 999)
-        assert_equal(x['s'].fill_value, asbytes('999'))
+        assert_equal(x['s'].fill_value, b'999')
 
         x.fill_value = (9, '???')
-        assert_equal(x.fill_value.item(), (9, asbytes('???')))
+        assert_equal(x.fill_value.item(), (9, b'???'))
         assert_equal(x['f'].fill_value, 9)
-        assert_equal(x['s'].fill_value, asbytes('???'))
+        assert_equal(x['s'].fill_value, b'???')
 
         x = array([1, 2, 3.1])
         x.fill_value = 999
@@ -3217,8 +3217,8 @@ class TestMaskedArrayMethods(TestCase):
                   dtype=[('a', int), ('b', float), ('c', '|S8')])
         x[-1] = masked
         assert_equal(x.tolist(),
-                     [(1, 1.1, asbytes('one')),
-                      (2, 2.2, asbytes('two')),
+                     [(1, 1.1, b'one'),
+                      (2, 2.2, b'two'),
                       (None, None, None)])
         # ... on structured array w/ masked fields
         a = array([(1, 2,), (3, 4)], mask=[(0, 1), (0, 0)],

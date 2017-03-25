@@ -7,7 +7,6 @@ import warnings
 from os import path
 
 import numpy as np
-from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_raises, assert_warns
@@ -55,18 +54,18 @@ class TestFromrecords(TestCase):
         assert_equal(r1, r2)
 
     def test_method_array(self):
-        r = np.rec.array(asbytes('abcdefg') * 100, formats='i2,a3,i4', shape=3, byteorder='big')
-        assert_equal(r[1].item(), (25444, asbytes('efg'), 1633837924))
+        r = np.rec.array(b'abcdefg' * 100, formats='i2,a3,i4', shape=3, byteorder='big')
+        assert_equal(r[1].item(), (25444, b'efg', 1633837924))
 
     def test_method_array2(self):
         r = np.rec.array([(1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'), (5, 55, 'ex'),
                      (6, 66, 'f'), (7, 77, 'g')], formats='u1,f4,a1')
-        assert_equal(r[1].item(), (2, 22.0, asbytes('b')))
+        assert_equal(r[1].item(), (2, 22.0, b'b'))
 
     def test_recarray_slices(self):
         r = np.rec.array([(1, 11, 'a'), (2, 22, 'b'), (3, 33, 'c'), (4, 44, 'd'), (5, 55, 'ex'),
                      (6, 66, 'f'), (7, 77, 'g')], formats='u1,f4,a1')
-        assert_equal(r[1::2][1].item(), (4, 44.0, asbytes('d')))
+        assert_equal(r[1::2][1].item(), (4, 44.0, b'd'))
 
     def test_recarray_fromarrays(self):
         x1 = np.array([1, 2, 3, 4])
@@ -279,10 +278,10 @@ class TestFromrecords(TestCase):
         assert_equal(a[0].bar['A'], 1)
         assert_equal(a[0]['bar'].A, 1)
         assert_equal(a[0]['bar']['A'], 1)
-        assert_equal(a[0].qux.D, asbytes('fgehi'))
-        assert_equal(a[0].qux['D'], asbytes('fgehi'))
-        assert_equal(a[0]['qux'].D, asbytes('fgehi'))
-        assert_equal(a[0]['qux']['D'], asbytes('fgehi'))
+        assert_equal(a[0].qux.D, b'fgehi')
+        assert_equal(a[0].qux['D'], b'fgehi')
+        assert_equal(a[0]['qux'].D, b'fgehi')
+        assert_equal(a[0]['qux']['D'], b'fgehi')
 
     def test_zero_width_strings(self):
         # Test for #6430, based on the test case from #1901

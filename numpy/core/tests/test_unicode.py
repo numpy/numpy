@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import asbytes, unicode, sixu
+from numpy.compat import unicode, sixu
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal)
 
@@ -80,7 +80,7 @@ class create_zeros(object):
         # Small check that data in array element is ok
         self.assertTrue(ua_scalar == sixu(''))
         # Encode to ascii and double check
-        self.assertTrue(ua_scalar.encode('ascii') == asbytes(''))
+        self.assertTrue(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars
         if ucs4:
             self.assertTrue(buffer_length(ua_scalar) == 0)

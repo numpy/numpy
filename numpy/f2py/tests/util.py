@@ -213,7 +213,7 @@ sys.exit(99)
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
 
-    m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
+    m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
     if m:
         _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
                             bool(int(m.group(3))))

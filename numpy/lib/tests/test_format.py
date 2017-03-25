@@ -284,7 +284,7 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested, sixu
+from numpy.compat import asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec, SkipTest
@@ -546,7 +546,7 @@ def test_pickle_python2_python3():
         xrange = __builtin__.xrange
 
     expected = np.array([None, xrange, sixu('\u512a\u826f'),
-                         asbytes('\xe4\xb8\x8d\xe8\x89\xaf')],
+                         b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
     for fname in ['py2-objarr.npy', 'py2-objarr.npz',
@@ -778,11 +778,11 @@ def test_bad_header():
     # header of length less than 2 should fail
     s = BytesIO()
     assert_raises(ValueError, format.read_array_header_1_0, s)
-    s = BytesIO(asbytes('1'))
+    s = BytesIO(b'1')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # header shorter than indicated size should fail
-    s = BytesIO(asbytes('\x01\x00'))
+    s = BytesIO(b'\x01\x00')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail

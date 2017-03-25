@@ -13,7 +13,7 @@ import pickle
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes_nested
 from numpy.ma import masked, nomask
 from numpy.testing import TestCase, run_module_suite, temppath
 from numpy.core.records import (
@@ -69,7 +69,7 @@ class TestMRecords(TestCase):
         mbase_first = mbase[0]
         assert_(isinstance(mbase_first, mrecarray))
         assert_equal(mbase_first.dtype, mbase.dtype)
-        assert_equal(mbase_first.tolist(), (1, 1.1, asbytes('one')))
+        assert_equal(mbase_first.tolist(), (1, 1.1, b'one'))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_first.recordmask, nomask)
         assert_equal(mbase_first._mask.item(), (False, False, False))
@@ -126,7 +126,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.c.mask, [1]*5)
         assert_equal(mbase.c.recordmask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
-        assert_equal(ma.getdata(mbase['c']), [asbytes('N/A')]*5)
+        assert_equal(ma.getdata(mbase['c']), [b'N/A']*5)
         assert_equal(mbase._mask.tolist(),
                      np.array([(0, 0, 1),
                                (0, 1, 1),
@@ -328,8 +328,8 @@ class TestMRecords(TestCase):
                           fill_value=(99999, 99999., 'N/A'))
 
         assert_equal(mrec.tolist(),
-                     [(1, 1.1, None), (2, 2.2, asbytes('two')),
-                      (None, None, asbytes('three'))])
+                     [(1, 1.1, None), (2, 2.2, b'two'),
+                      (None, None, b'three')])
 
     def test_withnames(self):
         # Test the creation w/ format and names
@@ -341,7 +341,7 @@ class TestMRecords(TestCase):
         # Test that 'exotic' formats are processed properly
         easy = mrecarray(1, dtype=[('i', int), ('s', '|S8'), ('f', float)])
         easy[0] = masked
-        assert_equal(easy.filled(1).item(), (1, asbytes('1'), 1.))
+        assert_equal(easy.filled(1).item(), (1, b'1', 1.))
 
         solo = mrecarray(1, dtype=[('f0', '<f8', (2, 2))])
         solo[0] = masked
@@ -405,12 +405,12 @@ class TestMRecordsImport(TestCase):
         # Generic setup
         _a = ma.array([1, 2, 3], mask=[0, 0, 1], dtype=int)
         _b = ma.array([1.1, 2.2, 3.3], mask=[0, 0, 1], dtype=float)
-        _c = ma.array(list(map(asbytes, ['one', 'two', 'three'])),
+        _c = ma.array([b'one', b'two', b'three'],
                       mask=[0, 0, 1], dtype='|S8')
         ddtype = [('a', int), ('b', float), ('c', '|S8')]
         mrec = fromarrays([_a, _b, _c], dtype=ddtype,
-                          fill_value=(asbytes('99999'), asbytes('99999.'),
-                                      asbytes('N/A')))
+                          fill_value=(b'99999', b'99999.',
+                                      b'N/A'))
         nrec = recfromarrays((_a._data, _b._data, _c._data), dtype=ddtype)
         self.data = (mrec, nrec, ddtype)
 

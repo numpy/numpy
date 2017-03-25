@@ -9,15 +9,15 @@ from __future__ import division, absolute_import, print_function
 import re
 import sys
 
-from numpy.compat import asbytes, basestring
+from numpy.compat import basestring
 from .multiarray import dtype, array, ndarray
 import ctypes
 from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
-    _nbo = asbytes('<')
+    _nbo = b'<'
 else:
-    _nbo = asbytes('>')
+    _nbo = b'>'
 
 def _makenames_list(adict, align):
     allfields = []
@@ -136,17 +136,16 @@ def _reconstruct(subtype, shape, dtype):
 
 # format_re was originally from numarray by J. Todd Miller
 
-format_re = re.compile(asbytes(
-                           r'(?P<order1>[<>|=]?)'
-                           r'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
-                           r'(?P<order2>[<>|=]?)'
-                           r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)'))
-sep_re = re.compile(asbytes(r'\s*,\s*'))
-space_re = re.compile(asbytes(r'\s+$'))
+format_re = re.compile(br'(?P<order1>[<>|=]?)'
+                       br'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
+                       br'(?P<order2>[<>|=]?)'
+                       br'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
+sep_re = re.compile(br'\s*,\s*')
+space_re = re.compile(br'\s+$')
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {asbytes('='): _nbo}
+_convorder = {b'=': _nbo}
 
 def _commastring(astr):
     startindex = 0
@@ -171,9 +170,9 @@ def _commastring(astr):
                         (len(result)+1, astr))
                 startindex = mo.end()
 
-        if order2 == asbytes(''):
+        if order2 == b'':
             order = order1
-        elif order1 == asbytes(''):
+        elif order1 == b'':
             order = order2
         else:
             order1 = _convorder.get(order1, order1)
@@ -184,10 +183,10 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in [asbytes('|'), asbytes('='), _nbo]:
-            order = asbytes('')
+        if order in [b'|', b'=', _nbo]:
+            order = b''
         dtype = order + dtype
-        if (repeats == asbytes('')):
+        if (repeats == b''):
             newitem = dtype
         else:
             newitem = (dtype, eval(repeats))
