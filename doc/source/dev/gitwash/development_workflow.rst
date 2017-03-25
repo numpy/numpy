@@ -174,6 +174,7 @@ what not to do; the reader has to go look for context elsewhere.
 Standard acronyms to start the commit message with are::
 
    API: an (incompatible) API change
+   BENCH: changes to the benchmark suite
    BLD: change related to building numpy
    BUG: bug fix
    DEP: deprecate something, or remove a deprecated object
