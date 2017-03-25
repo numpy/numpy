@@ -177,6 +177,17 @@ class TestPower(TestCase):
                 else:
                     assert_almost_equal(result, 9, err_msg=msg)
 
+    def test_modular_power(self):
+        # modular power is not implemented, so ensure it errors
+        a = 5
+        b = 4
+        c = 10
+        expected = pow(a, b, c)
+        for t in (np.int32, np.float32, np.complex64):
+            # note that 3-operand power only dispatches on the first argument
+            assert_raises(TypeError, operator.pow, t(a), b, c)
+            assert_raises(TypeError, operator.pow, np.array(t(a)), b, c)
+
 
 class TestModulus(TestCase):
 
