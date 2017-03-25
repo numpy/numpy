@@ -1757,7 +1757,7 @@ class TestFillingValues(TestCase):
         # Tests the behavior of fill_value during conversion
         # We had a tailored comment to make sure special attributes are
         # properly dealt with
-        a = array(asbytes_nested(['3', '4', '5']))
+        a = array([b'3', b'4', b'5'])
         a._optinfo.update({'comment':"updated!"})
 
         b = array(a, dtype=int)
@@ -4279,7 +4279,7 @@ class TestMaskedFields(TestCase):
 
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c._data,
-                     asbytes_nested(['pi', 'two', 'three', 'four', 'five']))
+                     [b'pi', b'two', b'three', b'four', b'five'])
 
     def test_set_record_slice(self):
         base = self.data['base']
@@ -4294,7 +4294,7 @@ class TestMaskedFields(TestCase):
 
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c._data,
-                     asbytes_nested(['pi', 'pi', 'pi', 'four', 'five']))
+                     [b'pi', b'pi', b'pi', b'four', b'five'])
 
     def test_mask_element(self):
         "Check record access"

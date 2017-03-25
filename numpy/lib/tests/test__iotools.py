@@ -5,7 +5,6 @@ import time
 from datetime import date
 
 import numpy as np
-from numpy.compat import asbytes_nested
 from numpy.testing import (
     run_module_suite, TestCase, assert_, assert_equal, assert_allclose,
     assert_raises
@@ -23,59 +22,59 @@ class TestLineSplitter(TestCase):
         "Test LineSplitter w/o delimiter"
         strg = b" 1 2 3 4  5 # test"
         test = LineSplitter()(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'5'])
         test = LineSplitter('')(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'5'])
 
     def test_space_delimiter(self):
         "Test space delimiter"
         strg = b" 1 2 3 4  5 # test"
         test = LineSplitter(b' ')(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'', b'5'])
         test = LineSplitter(b'  ')(strg)
-        assert_equal(test, asbytes_nested(['1 2 3 4', '5']))
+        assert_equal(test, [b'1 2 3 4', b'5'])
 
     def test_tab_delimiter(self):
         "Test tab delimiter"
         strg = b" 1\t 2\t 3\t 4\t 5  6"
         test = LineSplitter(b'\t')(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '5  6']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'5  6'])
         strg = b" 1  2\t 3  4\t 5  6"
         test = LineSplitter(b'\t')(strg)
-        assert_equal(test, asbytes_nested(['1  2', '3  4', '5  6']))
+        assert_equal(test, [b'1  2', b'3  4', b'5  6'])
 
     def test_other_delimiter(self):
         "Test LineSplitter on delimiter"
         strg = b"1,2,3,4,,5"
         test = LineSplitter(b',')(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'', b'5'])
         #
         strg = b" 1,2,3,4,,5 # test"
         test = LineSplitter(b',')(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'', b'5'])
 
     def test_constant_fixed_width(self):
         "Test LineSplitter w/ fixed-width fields"
         strg = b"  1  2  3  4     5   # test"
         test = LineSplitter(3)(strg)
-        assert_equal(test, asbytes_nested(['1', '2', '3', '4', '', '5', '']))
+        assert_equal(test, [b'1', b'2', b'3', b'4', b'', b'5', b''])
         #
         strg = b"  1     3  4  5  6# test"
         test = LineSplitter(20)(strg)
-        assert_equal(test, asbytes_nested(['1     3  4  5  6']))
+        assert_equal(test, [b'1     3  4  5  6'])
         #
         strg = b"  1     3  4  5  6# test"
         test = LineSplitter(30)(strg)
-        assert_equal(test, asbytes_nested(['1     3  4  5  6']))
+        assert_equal(test, [b'1     3  4  5  6'])
 
     def test_variable_fixed_width(self):
         strg = b"  1     3  4  5  6# test"
         test = LineSplitter((3, 6, 6, 3))(strg)
-        assert_equal(test, asbytes_nested(['1', '3', '4  5', '6']))
+        assert_equal(test, [b'1', b'3', b'4  5', b'6'])
         #
         strg = b"  1     3  4  5  6# test"
         test = LineSplitter((6, 6, 9))(strg)
-        assert_equal(test, asbytes_nested(['1', '3  4', '5  6']))
+        assert_equal(test, [b'1', b'3  4', b'5  6'])
 
 # -----------------------------------------------------------------------------
 
@@ -238,7 +237,7 @@ class TestStringConverter(TestCase):
         converter = StringConverter(int, default=0,
                                     missing_values=b"N/A")
         assert_equal(
-            converter.missing_values, set(asbytes_nested(['', 'N/A'])))
+            converter.missing_values, set([b'', b'N/A']))
 
     def test_int64_dtype(self):
         "Check that int64 integer types can be specified"
