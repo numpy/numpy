@@ -3163,7 +3163,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "svd_m_s",
         "(m,n)->(m,m),(m),(m,n)",
-        "svd when m>=n",
+        "svd when m<=n",
         4, 1, 3,
         FUNC_ARRAY_NAME(svd_S),
         svd_1_3_types
@@ -3179,7 +3179,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "svd_m_f",
         "(m,n)->(m,m),(m),(n,n)",
-        "svd when m>=n",
+        "svd when m<=n",
         4, 1, 3,
         FUNC_ARRAY_NAME(svd_A),
         svd_1_3_types
