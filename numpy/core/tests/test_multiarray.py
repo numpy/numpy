@@ -20,7 +20,7 @@ from decimal import Decimal
 
 
 import numpy as np
-from numpy.compat import getexception, strchar, unicode
+from numpy.compat import strchar, unicode
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
@@ -208,8 +208,8 @@ class TestAttributes(TestCase):
             try:
                 r = np.ndarray([size], dtype=int, buffer=x,
                                offset=offset*x.itemsize)
-            except:
-                raise RuntimeError(getexception())
+            except Exception as e:
+                raise RuntimeError(e)
             r.strides = strides = strides*x.itemsize
             return r
 
