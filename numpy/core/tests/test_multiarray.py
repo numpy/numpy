@@ -20,7 +20,7 @@ from decimal import Decimal
 
 
 import numpy as np
-from numpy.compat import getexception, strchar, unicode, sixu
+from numpy.compat import getexception, strchar, unicode
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
@@ -3278,8 +3278,8 @@ class TestStringCompare(TestCase):
         assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
 
     def test_unicode(self):
-        g1 = np.array([sixu("This"), sixu("is"), sixu("example")])
-        g2 = np.array([sixu("This"), sixu("was"), sixu("example")])
+        g1 = np.array([u"This", u"is", u"example"])
+        g2 = np.array([u"This", u"was", u"example"])
         assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0, 1, 2]])
         assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0, 1, 2]])
         assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0, 1, 2]])
@@ -4387,8 +4387,8 @@ class TestRecord(TestCase):
             raise SkipTest('non ascii unicode field indexing skipped; '
                            'raises segfault on python 2.x')
         else:
-            assert_raises(ValueError, a.__setitem__, sixu('\u03e0'), 1)
-            assert_raises(ValueError, a.__getitem__, sixu('\u03e0'))
+            assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
+            assert_raises(ValueError, a.__getitem__, u'\u03e0')
 
     def test_field_names_deprecation(self):
 

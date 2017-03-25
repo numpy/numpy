@@ -284,7 +284,6 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec, SkipTest
@@ -545,7 +544,7 @@ def test_pickle_python2_python3():
         import __builtin__
         xrange = __builtin__.xrange
 
-    expected = np.array([None, xrange, sixu('\u512a\u826f'),
+    expected = np.array([None, xrange, u'\u512a\u826f',
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 

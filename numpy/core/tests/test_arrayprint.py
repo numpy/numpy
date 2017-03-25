@@ -4,7 +4,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import sixu
 from numpy.testing import (
      TestCase, run_module_suite, assert_, assert_equal
 )
@@ -223,7 +222,7 @@ def test_unicode_object_array():
         expected = "array(['é'], dtype=object)"
     else:
         expected = "array([u'\\xe9'], dtype=object)"
-    x = np.array([sixu('\xe9')], dtype=object)
+    x = np.array([u'\xe9'], dtype=object)
     assert_equal(repr(x), expected)
 
 

@@ -39,7 +39,7 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
 from numpy.compat import (
-    getargspec, formatargspec, long, basestring, unicode, bytes, sixu
+    getargspec, formatargspec, long, basestring, unicode, bytes
     )
 from numpy import expand_dims as n_expand_dims
 from numpy.core.multiarray import normalize_axis_index
@@ -159,7 +159,7 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': '???',
-                  'U': sixu('N/A')
+                  'U': u'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
