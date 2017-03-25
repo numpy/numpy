@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import asbytes, asunicode
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal
 )
@@ -63,8 +62,8 @@ NbufferT = [
     # x     Info                                                color info        y                  z
     #       value y2 Info2                            name z2         Name Value
     #                name   value    y3       z3
-    ([3, 2], (6j, 6., (asbytes('nn'), [6j, 4j], [6., 4.], [1, 2]), asbytes('NN'), True), asbytes('cc'), (asunicode('NN'), 6j), [[6., 4.], [6., 4.]], 8),
-    ([4, 3], (7j, 7., (asbytes('oo'), [7j, 5j], [7., 5.], [2, 1]), asbytes('OO'), False), asbytes('dd'), (asunicode('OO'), 7j), [[7., 5.], [7., 5.]], 9),
+    ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True), b'cc', (u'NN', 6j), [[6., 4.], [6., 4.]], 8),
+    ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False), b'dd', (u'OO', 7j), [[7., 5.], [7., 5.]], 9),
     ]
 
 

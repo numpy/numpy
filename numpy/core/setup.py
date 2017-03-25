@@ -4,6 +4,7 @@ import os
 import sys
 import pickle
 import copy
+import sysconfig
 import warnings
 from os.path import join
 from numpy.distutils import log
@@ -58,8 +59,6 @@ class CallOnceOnly(object):
         else:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
-
-PYTHON_HAS_UNICODE_WIDE = True
 
 def pythonlib_dir():
     """return path where libpython* is."""
@@ -437,12 +436,6 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
-            # Check whether we need our own wide character support
-            if not config_cmd.check_decl('Py_UNICODE_WIDE', headers=['Python.h']):
-                PYTHON_HAS_UNICODE_WIDE = True
-            else:
-                PYTHON_HAS_UNICODE_WIDE = False
-
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
@@ -521,6 +514,7 @@ def configuration(parent_package='',top_path=None):
         # put private include directory in build_dir on search path
         # allows using code generation in headers headers
         config.add_include_dirs(join(build_dir, "src", "private"))
+        config.add_include_dirs(join(build_dir, "src", "npymath"))
 
         target = join(build_dir, header_dir, '_numpyconfig.h')
         d = os.path.dirname(target)
@@ -613,6 +607,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
 
+    config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
     if sys.platform[:3] == "aix":
         config.add_define_macros([("_LARGE_FILES", None)])
@@ -670,14 +665,16 @@ def configuration(parent_package='',top_path=None):
         subst_dict["posix_mathlib"] = posix_mlib
         subst_dict["msvc_mathlib"] = msvc_mlib
 
-    npymath_sources = [join('src', 'npymath', 'npy_math.c.src'),
+    npymath_sources = [join('src', 'npymath', 'npy_math_internal.h.src'),
+                       join('src', 'npymath', 'npy_math.c'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
-            install_dir='lib')
+            install_dir='lib',
+            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
@@ -703,28 +700,6 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
     #                        multiarray module                            #
     #######################################################################
-
-    # Multiarray version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_multiarray_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'multiarray')
-        sources = [join(local_dir, subpath, 'scalartypes.c.src'),
-                   join(local_dir, subpath, 'arraytypes.c.src'),
-                   join(local_dir, subpath, 'nditer_templ.c.src'),
-                   join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'einsum.c.src'),
-                   join(local_dir, 'src', 'private', 'templ_common.h.src')
-                   ]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
 
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
@@ -777,7 +752,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'numpyconfig.h'),
             join('include', 'numpy', 'ndarraytypes.h'),
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
-            join('include', 'numpy', '_numpyconfig.h.in'),
             # add library sources as distuils does not consider libraries
             # dependencies
             ] + npysort_sources + npymath_sources
@@ -824,6 +798,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.c'),
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
+            join('src', 'multiarray', 'temp_elide.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
@@ -858,26 +833,6 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
     #                           umath module                              #
     #######################################################################
-
-    # umath version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_umath_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'umath')
-        sources = [
-            join(local_dir, subpath, 'loops.h.src'),
-            join(local_dir, subpath, 'loops.c.src'),
-            join(local_dir, subpath, 'scalarmath.c.src'),
-            join(local_dir, subpath, 'simd.inc.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
 
     def generate_umath_c(ext, build_dir):
         target = join(build_dir, header_dir, '__umath_generated.c')

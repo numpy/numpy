@@ -7,6 +7,8 @@ This release supports Python 2.7 and 3.4 - 3.6.
 Highlights
 ==========
 
+ * Operations like `a + b + c` will create less temporaries on some platforms
+
 
 Dropped Support
 ===============
@@ -26,6 +28,17 @@ Future Changes
 
 Compatibility notes
 ===================
+
+
+Error type changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy.hstack()`` now throws ``ValueError`` instead of ``IndexError`` when
+  input is empty.
+* Functions taking an axis argument, when that argument is out of range, now
+  throw ``np.AxisError`` instead of a mixture of ``IndexError`` and
+  ``ValueError``. For backwards compatibility, ``AxisError`` subclasses both of
+  these.
 
 Tuple object dtypes
 ~~~~~~~~~~~~~~~~~~~
@@ -84,6 +97,14 @@ C API
 New Features
 ============
 
+Temporary elision
+-----------------
+On platforms providing the `backtrace` function NumPy will now not create
+temporaries in expression when possible.
+For example `d = a + b + c` is transformed to `d = a + b; d += c` which can
+improve performance for large arrays as less memory bandwidth is required to
+perform the operation.
+
 ``axes`` argument for ``unique``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In an N-dimensional array, the user can now choose the axis along which to look
@@ -116,8 +137,18 @@ This means that, e.g., it is now possible to do the following:
     >>> np.gradient(f, dx, y)
     [array([[ 1. ,  1. , -0.5], [ 1. ,  1. , -0.5]]), 
      array([[ 2. ,  2. ,  2. ], [ 2. ,  1.7,  0.5]])]
-     
-     
+
+
+``np.heaviside`` computes the Heaviside function
+------------------------------------------------
+The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
+function::
+
+                       { 0   if x < 0,
+    heaviside(x, h0) = { h0  if x == 0,
+                       { 1   if x > 0.
+
+
 Improvements
 ============
 
@@ -166,6 +197,44 @@ to `apply_along_axis`. Now, it can return an array of any dimensionality
 (including 0D), and the shape of this array replaces the axis of the array
 being iterated over.
 
+``.ndim`` property added to ``dtype`` to complement ``.shape``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
+for ``len(d.shape)``.
+
+Better default repr for ``ndarray`` subclasses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Subclasses of ndarray with no ``repr`` specialization now correctly indent
+their data and type lines.
+
+More reliable comparisons of masked arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Comparisons of masked arrays were buggy for masked scalars and failed for
+structured arrays with dimension higher than one. Both problems are now
+solved. In the process, it was ensured that in getting the result for a
+structured array, masked fields are properly ignored, i.e., the result is equal
+if all fields that are non-masked in both are equal, thus making the behaviour
+identical to what one gets by comparing an unstructured masked array and then
+doing ``.all()`` over some axis.
+
+np.matrix with booleans elements can now be created using the string syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
+``np.matrix('True')``. Now, this works as expected.
+
+More ``linalg`` operations now accept empty vectors and matrices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All of the following functions in ``np.linalg`` now work when given input
+arrays with a 0 in the last two dimensions: `det``, ``slogdet``, ``pinv``,
+``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
+
+``argsort`` on masked arrays takes the same default arguments as ``sort``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By default, ``argsort`` now places the masked values at the end of the sorted
+array, in the same way that ``sort`` already did. Additionally, the
+``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
+Note that this argument is not added at the end, so breaks any code that
+passed ``fill_value`` as a positional argument.
 
 Changes
 =======
@@ -241,7 +310,7 @@ Boolean indexing changes
 
 * Boolean indexes must match the dimension of the axis that they index.
 
-* Boolean indexes used on the lhs of an assigment must match the dimensions of
+* Boolean indexes used on the lhs of an assignment must match the dimensions of
   the rhs.
 
 * Boolean indexing into scalar arrays return a new 1-d array.  This means that

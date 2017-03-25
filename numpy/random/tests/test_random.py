@@ -7,7 +7,6 @@ from numpy.testing import (
         assert_warns, assert_no_warnings, assert_array_equal,
         assert_array_almost_equal, suppress_warnings)
 from numpy import random
-from numpy.compat import asbytes
 import sys
 import warnings
 
@@ -384,16 +383,16 @@ class TestRandomDist(TestCase):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        desired = b'\x82Ui\x9e\xff\x97+Wf\xa5'
         assert_equal(actual, desired)
 
     def test_shuffle(self):

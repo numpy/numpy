@@ -1441,41 +1441,42 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
             Py_DECREF(copied_array);
             return NULL;
         }
-        iter = (NpyIter *)NpyIter_New(copied_array,
-                                      (NPY_ITER_READWRITE |
-                                       NPY_ITER_EXTERNAL_LOOP |
-                                       NPY_ITER_REFS_OK),
-                                      NPY_KEEPORDER,
-                                      NPY_NO_CASTING,
-                                      NULL);
+        iter = NpyIter_New(copied_array,
+                           NPY_ITER_READWRITE |
+                           NPY_ITER_EXTERNAL_LOOP |
+                           NPY_ITER_REFS_OK |
+                           NPY_ITER_ZEROSIZE_OK,
+                           NPY_KEEPORDER, NPY_NO_CASTING,
+                           NULL);
         if (iter == NULL) {
             Py_DECREF(deepcopy);
             Py_DECREF(copied_array);
             return NULL;
         }
-        iternext = NpyIter_GetIterNext(iter, NULL);
-        if (iternext == NULL) {
-            NpyIter_Deallocate(iter);
-            Py_DECREF(deepcopy);
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-
-        dataptr = NpyIter_GetDataPtrArray(iter);
-        strideptr = NpyIter_GetInnerStrideArray(iter);
-        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-        do {
-            data = *dataptr;
-            stride = *strideptr;
-            count = *innersizeptr;
-            while (count--) {
-                _deepcopy_call(data, data, PyArray_DESCR(copied_array),
-                               deepcopy, visit);
-                data += stride;
+        if (NpyIter_GetIterSize(iter) != 0) {
+            iternext = NpyIter_GetIterNext(iter, NULL);
+            if (iternext == NULL) {
+                NpyIter_Deallocate(iter);
+                Py_DECREF(deepcopy);
+                Py_DECREF(copied_array);
+                return NULL;
             }
-        } while (iternext(iter));
 
+            dataptr = NpyIter_GetDataPtrArray(iter);
+            strideptr = NpyIter_GetInnerStrideArray(iter);
+            innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+            do {
+                data = *dataptr;
+                stride = *strideptr;
+                count = *innersizeptr;
+                while (count--) {
+                    _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                                   deepcopy, visit);
+                    data += stride;
+                }
+            } while (iternext(iter));
+        }
         NpyIter_Deallocate(iter);
         Py_DECREF(deepcopy);
     }

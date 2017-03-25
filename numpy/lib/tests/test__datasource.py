@@ -5,7 +5,6 @@ import sys
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
-from numpy.compat import asbytes
 from numpy.testing import (
     run_module_suite, TestCase, assert_, SkipTest
     )
@@ -53,7 +52,7 @@ http_fakefile = 'fake.txt'
 malicious_files = ['/etc/shadow', '../../shadow',
                    '..\\system.dat', 'c:\\windows\\system.dat']
 
-magic_line = asbytes('three is the magic number')
+magic_line = b'three is the magic number'
 
 
 # Utility functions used by many TestCases

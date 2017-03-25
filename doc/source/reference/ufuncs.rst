@@ -303,7 +303,7 @@ advanced usage and will not typically be used.
     parameter. Keyword 'out' arguments are incompatible with positional
     ones.
 
-    ..versionadded:: 1.10
+    .. versionadded:: 1.10
 
     The 'out' keyword argument is expected to be a tuple with one entry per
     output (which can be `None` for arrays to be allocated by the ufunc).
@@ -511,6 +511,7 @@ Math operations
     fabs
     rint
     sign
+    heaviside
     conj
     exp
     exp2

@@ -239,7 +239,7 @@ unpredictable writes.
 ``axes`` keyword argument for ``rot90``
 ---------------------------------------
 The ``axes`` keyword argument in ``rot90`` determines the plane in which the
-array is rotated. It defaults to ``axes=(0,1)`` as in the originial function.
+array is rotated. It defaults to ``axes=(0,1)`` as in the original function.
 
 Generalized ``flip``
 --------------------
@@ -457,7 +457,7 @@ Improved precision of ``ndarray.mean`` for float16 arrays
 The computation of the mean of float16 arrays is now carried out in float32 for
 improved precision. This should be useful in packages such as Theano
 where the precision of float16 is adequate and its smaller footprint is
-desireable.
+desirable.
 
 
 Changes
@@ -476,7 +476,7 @@ Operations on np.memmap objects return numpy arrays in most cases
 Previously operations on a memmap object would misleadingly return a memmap
 instance even if the result was actually not memmapped.  For example,
 ``arr + 1`` or ``arr + arr`` would return memmap instances, although no memory
-from the output array is memmaped. Version 1.12 returns ordinary numpy arrays
+from the output array is memmapped. Version 1.12 returns ordinary numpy arrays
 from these operations.
 
 Also, reduction of a memmap (e.g.  ``.sum(axis=None``) now returns a numpy

@@ -369,6 +369,18 @@ class TestUnique(TestCase):
         result = np.array([[-0.0, 0.0]])
         assert_array_equal(unique(data, axis=0), result, msg)
 
+    def test_unique_masked(self):
+        # issue 8664
+        x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0, 1, 2, 0, 63, 0], dtype='uint8')
+        y = np.ma.masked_equal(x, 0)
+
+        v = np.unique(y)
+        v2, i, c = np.unique(y, return_index=True, return_counts=True)
+
+        msg = 'Unique returned different results when asked for index'
+        assert_array_equal(v.data, v2.data, msg)
+        assert_array_equal(v.mask, v2.mask, msg)
+
     def _run_axis_tests(self, dtype):
         data = np.array([[0, 1, 0, 0],
                          [1, 0, 0, 0],

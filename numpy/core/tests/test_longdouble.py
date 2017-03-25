@@ -7,36 +7,39 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
     assert_array_equal, TestCase, temppath,
 )
-from numpy.compat import sixu
 from test_print import in_foreign_locale
 
-longdouble_longer_than_double = (np.finfo(np.longdouble).eps
-                                 < np.finfo(np.double).eps)
+LD_INFO = np.finfo(np.longdouble)
+longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
 
 
-_o = 1 + np.finfo(np.longdouble).eps
+_o = 1 + LD_INFO.eps
 string_to_longdouble_inaccurate = (_o != np.longdouble(repr(_o)))
 del _o
 
 
 def test_scalar_extraction():
     """Confirm that extracting a value doesn't convert to python float"""
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     a = np.array([o, o, o])
     assert_equal(a[1], o)
 
 
 # Conversions string -> long double
 
-
+# 0.1 not exactly representable in base 2 floating point.
+repr_precision = len(repr(np.longdouble(0.1)))
+# +2 from macro block starting around line 842 in scalartypes.c.src.
+@dec.skipif(LD_INFO.precision + 2 >= repr_precision,
+            "repr precision not enough to show eps")
 def test_repr_roundtrip():
-    o = 1 + np.finfo(np.longdouble).eps
-    assert_equal(np.longdouble(repr(o)), o,
-                 "repr was %s" % repr(o))
+    # We will only see eps in repr if within printing precision.
+    o = 1 + LD_INFO.eps
+    assert_equal(np.longdouble(repr(o)), o, "repr was %s" % repr(o))
 
 
 def test_unicode():
-    np.longdouble(sixu("1.2"))
+    np.longdouble(u"1.2")
 
 
 def test_string():
@@ -48,7 +51,7 @@ def test_bytes():
 
 
 @in_foreign_locale
-def test_fromstring_foreign():
+def test_fromstring_foreign_repr():
     f = 1.234
     a = np.fromstring(repr(f), dtype=float, sep=" ")
     assert_equal(a[0], f)
@@ -56,7 +59,7 @@ def test_fromstring_foreign():
 
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_repr_roundtrip_bytes():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(repr(o).encode("ascii")), o)
 
 
@@ -73,7 +76,7 @@ def test_bogus_string():
 
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_fromstring():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     s = (" " + repr(o))*5
     a = np.array([o]*5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
@@ -109,7 +112,7 @@ def test_fromstring_missing():
 
 class FileBased(TestCase):
 
-    ldbl = 1 + np.finfo(np.longdouble).eps
+    ldbl = 1 + LD_INFO.eps
     tgt = np.array([ldbl]*5)
     out = ''.join([repr(t) + '\n' for t in tgt])
 
@@ -176,28 +179,28 @@ def test_fromstring_foreign_value():
 
 
 def test_repr_exact():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     assert_(repr(o) != '1')
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_format():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     assert_("{0:.40g}".format(o) != '1')
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_percent():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     assert_("%.40g" % o != '1')
 
 
 @dec.knownfailureif(longdouble_longer_than_double, "array repr problem")
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_array_repr():
-    o = 1 + np.finfo(np.longdouble).eps
+    o = 1 + LD_INFO.eps
     a = np.array([o])
     b = np.array([1], dtype=np.longdouble)
     if not np.all(a != b):

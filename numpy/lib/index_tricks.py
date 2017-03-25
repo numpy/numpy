@@ -463,11 +463,18 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-
-    For detailed documentation, see `r_`.
+    
+    See Also
+    --------
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    r_ : For more detailed documentation.
 
     Examples
     --------
+    >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
     array([[1, 2, 3, 0, 0, 4, 5, 6]])
 

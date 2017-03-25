@@ -170,7 +170,7 @@ one.
   .. include:: fib1.pyf
      :literal:
 
-* Next, we'll teach F2PY that the argument ``n`` is a input argument
+* Next, we'll teach F2PY that the argument ``n`` is an input argument
   (use ``intent(in)`` attribute) and that the result, i.e. the
   contents of ``a`` after calling Fortran function ``FIB``, should be
   returned to Python (use ``intent(out)`` attribute). In addition, an

@@ -127,7 +127,11 @@ CASES += apply_tag('square', [
                array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
-               np.empty((0, 0), dtype=double),
+               np.empty((0,), dtype=double),
+               tags={'size-0'}),
+    LinalgCase("0x0_matrix",
+               np.empty((0, 0), dtype=double).view(np.matrix),
+               np.empty((0, 1), dtype=double).view(np.matrix),
                tags={'size-0'}),
     LinalgCase("8x8",
                np.random.rand(8, 8),
@@ -549,9 +553,6 @@ class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.eigvals, a)
-            return
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
@@ -569,10 +570,6 @@ class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.eig, a)
-            return
-
         evalues, evectors = linalg.eig(a)
         assert_allclose(dot_generalized(a, evectors),
                         np.asarray(evectors) * np.asarray(evalues)[..., None, :],
@@ -667,9 +664,6 @@ class TestCondInf(object):
 class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.pinv, a)
-            return
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
         assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
@@ -679,9 +673,6 @@ class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
 class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.det, a)
-            return
         d = linalg.det(a)
         (s, ld) = linalg.slogdet(a)
         if asarray(a).dtype.type in (single, double):
@@ -743,7 +734,7 @@ class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
             expect_resids = (
                 np.asarray(abs(np.dot(a, x) - b)) ** 2).sum(axis=0)
             expect_resids = np.asarray(expect_resids)
-            if len(np.asarray(b).shape) == 1:
+            if np.asarray(b).ndim == 1:
                 expect_resids.shape = (1,)
                 assert_equal(residuals.shape, expect_resids.shape)
         else:
@@ -820,9 +811,6 @@ class TestBoolPower(object):
 class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.eigvalsh, a, 'L')
-            return
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev = linalg.eigvalsh(a, 'L')
@@ -873,9 +861,6 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.eigh, a)
-            return
         # note that eigenvalue arrays returned by eig must be sorted since
         # their order isn't guaranteed.
         ev, evc = linalg.eigh(a)

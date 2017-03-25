@@ -413,7 +413,7 @@ parameter to control the layout of their output(s).
 
 The iterator can do automatic casting, and I have created a sequence
 of progressively more permissive casting rules.  Perhaps for 2.0, NumPy
-could adopt this enum as its prefered way of dealing with casting.::
+could adopt this enum as its preferred way of dealing with casting.::
 
     /* For specifying allowed casting in operations which support it */
     typedef enum {
@@ -943,7 +943,7 @@ Construction and Destruction
             If the operand is flagged as write-only and a copy is needed,
             an uninitialized temporary array will be created and then copied
             to back to ``op[i]`` on destruction, instead of doing
-            the unecessary copy operation.
+            the unnecessary copy operation.
 
         ``NPY_ITER_NBO``, ``NPY_ITER_ALIGNED``, ``NPY_ITER_CONTIG``
 

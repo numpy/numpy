@@ -1354,9 +1354,9 @@ def tensordot(a, b, axes=2):
 
     a, b = asarray(a), asarray(b)
     as_ = a.shape
-    nda = len(a.shape)
+    nda = a.ndim
     bs = b.shape
-    ndb = len(b.shape)
+    ndb = b.ndim
     equal = True
     if na != nb:
         equal = False
@@ -1461,7 +1461,7 @@ def roll(a, shift, axis=None):
 
     else:
         broadcasted = broadcast(shift, axis)
-        if len(broadcasted.shape) > 1:
+        if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
         shifts = {ax: 0 for ax in range(a.ndim)}
@@ -1890,35 +1890,35 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
+    if type(arr) is not ndarray:
+        class_name = type(arr).__name__
+    else:
+        class_name = "array"
+
     if arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', "array(")
+                           ', ', class_name + "(")
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
-
-    if arr.__class__ is not ndarray:
-        cName = arr.__class__.__name__
-    else:
-        cName = "array"
 
     skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
 
     if skipdtype:
-        return "%s(%s)" % (cName, lst)
+        return "%s(%s)" % (class_name, lst)
     else:
         typename = arr.dtype.name
         # Quote typename in the output if it is "complex".
         if typename and not (typename[0].isalpha() and typename.isalnum()):
             typename = "'%s'" % typename
 
-        lf = ''
+        lf = ' '
         if issubclass(arr.dtype.type, flexible):
             if arr.dtype.names:
                 typename = "%s" % str(arr.dtype)
             else:
                 typename = "'%s'" % str(arr.dtype)
-            lf = '\n'+' '*len("array(")
-        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
+            lf = '\n'+' '*len(class_name + "(")
+        return "%s(%s,%sdtype=%s)" % (class_name, lst, lf, typename)
 
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
@@ -2206,7 +2206,7 @@ def binary_repr(num, width=None):
         designated form.
 
         If the `width` value is insufficient, it will be ignored, and `num` will
-        be returned in binary(`num` > 0) or two's complement (`num` < 0) form
+        be returned in binary (`num` > 0) or two's complement (`num` < 0) form
         with its width equal to the minimum number of bits needed to represent
         the number in the designated form. This behavior is deprecated and will
         later raise an error.
@@ -2276,10 +2276,16 @@ def binary_repr(num, width=None):
 
         else:
             poswidth = len(bin(-num)[2:])
-            twocomp = 2**(poswidth + 1) + num
 
+            # See gh-8679: remove extra digit
+            # for numbers at boundaries.
+            if 2**(poswidth - 1) == -num:
+                poswidth -= 1
+
+            twocomp = 2**(poswidth + 1) + num
             binary = bin(twocomp)[2:]
             binwidth = len(binary)
+
             outwidth = max(binwidth, width)
             warn_if_insufficient(width, binwidth)
             return '1' * (outwidth - binwidth) + binary
