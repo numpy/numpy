@@ -10,6 +10,7 @@ from operator import itemgetter, index as opindex
 
 import numpy as np
 from . import format
+from .format import PickleWarning
 from ._datasource import DataSource
 from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
@@ -33,7 +34,8 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource',
+    'PickleWarning'
     ]
 
 

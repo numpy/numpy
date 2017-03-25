@@ -133,11 +133,14 @@ class RoundtripTest(object):
         self.check_roundtrips(a)
 
     def test_array_object(self):
-        a = np.array([], object)
-        self.check_roundtrips(a)
+        with suppress_warnings() as sup:
+            sup.filter(np.PickleWarning)
 
-        a = np.array([[1, 2], [3, 4]], object)
-        self.check_roundtrips(a)
+            a = np.array([], object)
+            self.check_roundtrips(a)
+
+            a = np.array([[1, 2], [3, 4]], object)
+            self.check_roundtrips(a)
 
     def test_1D(self):
         a = np.array([1, 2, 3, 4], int)
