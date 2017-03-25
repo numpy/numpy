@@ -7,7 +7,6 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
     assert_array_equal, TestCase, temppath,
 )
-from numpy.compat import sixu
 from test_print import in_foreign_locale
 
 LD_INFO = np.finfo(np.longdouble)
@@ -40,7 +39,7 @@ def test_repr_roundtrip():
 
 
 def test_unicode():
-    np.longdouble(sixu("1.2"))
+    np.longdouble(u"1.2")
 
 
 def test_string():

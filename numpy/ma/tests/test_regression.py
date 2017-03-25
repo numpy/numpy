@@ -6,7 +6,6 @@ import numpy as np
 from numpy.testing import (assert_, TestCase, assert_array_equal,
                            assert_allclose, run_module_suite,
                            suppress_warnings)
-from numpy.compat import sixu
 
 rlevel = 1
 
@@ -44,7 +43,7 @@ class TestRegression(TestCase):
 
     def test_masked_array_repr_unicode(self):
         # Ticket #1256
-        repr(np.ma.array(sixu("Unicode")))
+        repr(np.ma.array(u"Unicode"))
 
     def test_atleast_2d(self):
         # Ticket #1559

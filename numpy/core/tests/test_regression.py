@@ -18,7 +18,7 @@ from numpy.testing import (
         assert_raises, assert_warns, dec, suppress_warnings
         )
 from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
-from numpy.compat import asbytes, asunicode, long, sixu
+from numpy.compat import asbytes, asunicode, long
 
 rlevel = 1
 
@@ -146,7 +146,7 @@ class TestRegression(TestCase):
     def test_unicode_swapping(self, level=rlevel):
         # Ticket #79
         ulen = 1
-        ucs_value = sixu('\U0010FFFF')
+        ucs_value = u'\U0010FFFF'
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua.newbyteorder()  # Should succeed.
 
@@ -1183,7 +1183,7 @@ class TestRegression(TestCase):
         for i in range(1, 9):
             msg = 'unicode offset: %d chars' % i
             t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
-            x = np.array([(b'a', sixu('b'))], dtype=t)
+            x = np.array([(b'a', u'b')], dtype=t)
             if sys.version_info[0] >= 3:
                 assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
             else:
@@ -1377,21 +1377,21 @@ class TestRegression(TestCase):
 
     def test_unicode_to_string_cast(self):
         # Ticket #1240.
-        a = np.array([[sixu('abc'), sixu('\u03a3')],
-                      [sixu('asdf'), sixu('erw')]],
+        a = np.array([[u'abc', u'\u03a3'],
+                      [u'asdf', u'erw']],
                      dtype='U')
         self.assertRaises(UnicodeEncodeError, np.array, a, 'S4')
 
     def test_mixed_string_unicode_array_creation(self):
-        a = np.array(['1234', sixu('123')])
+        a = np.array(['1234', u'123'])
         assert_(a.itemsize == 16)
-        a = np.array([sixu('123'), '1234'])
+        a = np.array([u'123', '1234'])
         assert_(a.itemsize == 16)
-        a = np.array(['1234', sixu('123'), '12345'])
+        a = np.array(['1234', u'123', '12345'])
         assert_(a.itemsize == 20)
-        a = np.array([sixu('123'), '1234', sixu('12345')])
+        a = np.array([u'123', '1234', u'12345'])
         assert_(a.itemsize == 20)
-        a = np.array([sixu('123'), '1234', sixu('1234')])
+        a = np.array([u'123', '1234', u'1234'])
         assert_(a.itemsize == 16)
 
     def test_misaligned_objects_segfault(self):
@@ -1973,7 +1973,7 @@ class TestRegression(TestCase):
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:
-            a = np.array([sixu('abcd')])
+            a = np.array([u'abcd'])
         assert_equal(a.dtype.itemsize, 16)
 
     def test_unique_stable(self):
@@ -2042,8 +2042,8 @@ class TestRegression(TestCase):
         import numpy as np
         a = np.array([['Hello', 'Foob']], dtype='U5', order='F')
         arr = np.ndarray(shape=[1, 2, 5], dtype='U1', buffer=a)
-        arr2 = np.array([[[sixu('H'), sixu('e'), sixu('l'), sixu('l'), sixu('o')],
-                          [sixu('F'), sixu('o'), sixu('o'), sixu('b'), sixu('')]]])
+        arr2 = np.array([[[u'H', u'e', u'l', u'l', u'o'],
+                          [u'F', u'o', u'o', u'b', u'']]])
         assert_array_equal(arr, arr2)
 
     def test_assign_from_sequence_error(self):
