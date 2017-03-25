@@ -899,7 +899,9 @@ delinearize_@TYPE@_matrix(void *dst_in,
                  * manually
                  */
                 if (columns > 0) {
-                    memcpy((@typ@*)dst, (@typ@*)src + (columns-1), sizeof(@typ@));
+                    memcpy((@typ@*)dst,
+                           (@typ@*)src + (columns-1),
+                           sizeof(@typ@));
                 }
             }
             src += data->columns;
@@ -1610,7 +1612,8 @@ typedef struct gesv_params_struct
 /**begin repeat
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
-   #ftyp = fortran_real, fortran_doublereal, fortran_complex, fortran_doublecomplex#
+   #ftyp = fortran_real, fortran_doublereal,
+           fortran_complex, fortran_doublecomplex#
    #lapack_func = sgesv, dgesv, cgesv, zgesv#
 */
 
@@ -1796,7 +1799,7 @@ typedef struct potr_params_struct
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #ftyp = fortran_real, fortran_doublereal,
-         fortran_complex, fortran_doublecomplex#
+           fortran_complex, fortran_doublecomplex#
    #lapack_func = spotrf, dpotrf, cpotrf, zpotrf#
  */
 
