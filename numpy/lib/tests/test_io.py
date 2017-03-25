@@ -532,7 +532,7 @@ class TestLoadTxt(TestCase):
         c.write('# comment\n1,2,3,5\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',',
-                       comments=unicode('#'))
+                       comments=u'#')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 

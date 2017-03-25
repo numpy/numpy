@@ -986,10 +986,7 @@ class TestNdarrayPadWidth(TestCase):
 
 class TestUnicodeInput(TestCase):
     def test_unicode_mode(self):
-        try:
-            constant_mode = unicode('constant')
-        except NameError:
-            constant_mode = 'constant'
+        constant_mode = u'constant'
         a = np.pad([1], 2, mode=constant_mode)
         b = np.array([0, 0, 1, 0, 0])
         assert_array_equal(a, b)

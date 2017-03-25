@@ -4310,7 +4310,7 @@ class TestRecord(TestCase):
     else:
         def test_unicode_field_titles(self):
             # Unicode field titles are added to field dict on Py2
-            title = unicode('b')
+            title = u'b'
             dt = np.dtype([((title, 'a'), int)])
             dt[title]
             dt['a']
@@ -4323,7 +4323,7 @@ class TestRecord(TestCase):
 
         def test_unicode_field_names(self):
             # Unicode field names are not allowed on Py2
-            title = unicode('b')
+            title = u'b'
             assert_raises(TypeError, np.dtype, [(title, int)])
             assert_raises(TypeError, np.dtype, [(('a', title), int)])
 
