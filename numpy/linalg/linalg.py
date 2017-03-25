@@ -975,9 +975,9 @@ def eigvalsh(a, UPLO='L'):
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
     array([ 0.17157288,  5.82842712])
-    
+
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -1261,7 +1261,7 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -2357,14 +2357,13 @@ def multi_dot(arrays):
     >>> # or
     >>> A.dot(B).dot(C).dot(D)
 
-
-    Example: multiplication costs of different parenthesizations
-    ------------------------------------------------------------
-
+    Notes
+    -----
     The cost for a matrix multiplication can be calculated with the
     following function::
 
-        def cost(A, B): return A.shape[0] * A.shape[1] * B.shape[1]
+        def cost(A, B):
+            return A.shape[0] * A.shape[1] * B.shape[1]
 
     Let's assume we have three matrices
     :math:`A_{10x100}, B_{100x5}, C_{5x50}$`.
