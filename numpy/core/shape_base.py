@@ -265,7 +265,8 @@ def hstack(tup):
 
     Notes
     -----
-    Equivalent to ``np.concatenate(tup, axis=1)``
+    Equivalent to ``np.concatenate(tup, axis=1)`` if `tup` contains arrays that
+    are at least 2-dimensional.
 
     Examples
     --------
