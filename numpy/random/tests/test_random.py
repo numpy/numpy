@@ -7,7 +7,6 @@ from numpy.testing import (
         assert_warns, assert_no_warnings, assert_array_equal,
         assert_array_almost_equal, suppress_warnings)
 from numpy import random
-from numpy.compat import asbytes
 import sys
 import warnings
 
@@ -393,7 +392,7 @@ class TestRandomDist(TestCase):
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        desired = b'\x82Ui\x9e\xff\x97+Wf\xa5'
         assert_equal(actual, desired)
 
     def test_shuffle(self):

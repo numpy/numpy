@@ -20,7 +20,7 @@ from decimal import Decimal
 
 
 import numpy as np
-from numpy.compat import asbytes, getexception, strchar, unicode, sixu
+from numpy.compat import strchar, unicode
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
@@ -208,8 +208,8 @@ class TestAttributes(TestCase):
             try:
                 r = np.ndarray([size], dtype=int, buffer=x,
                                offset=offset*x.itemsize)
-            except:
-                raise RuntimeError(getexception())
+            except Exception as e:
+                raise RuntimeError(e)
             r.strides = strides = strides*x.itemsize
             return r
 
@@ -3159,46 +3159,46 @@ class TestPickling(TestCase):
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
     def test_version0_int8(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = np.array([1, 2, 3, 4], dtype=np.int8)
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_float32(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     def test_version0_object(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = np.array([{'a': 1}, {'b': 2}])
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
     def test_version1_int8(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = np.array([1, 2, 3, 4], dtype=np.int8)
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_float32(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     def test_version1_object(self):
-        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = np.array([{'a': 1}, {'b': 2}])
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
     def test_subarray_int_shape(self):
-        s = "cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp20\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\ntp24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\nNNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
+        s = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp20\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\ntp24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\nNNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
         a = np.array([(1, (1, 2))], dtype=[('a', 'i1', (2, 2)), ('b', 'i1', 2)])
-        p = self._loads(asbytes(s))
+        p = self._loads(s)
         assert_equal(a, p)
 
 
@@ -3278,8 +3278,8 @@ class TestStringCompare(TestCase):
         assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
 
     def test_unicode(self):
-        g1 = np.array([sixu("This"), sixu("is"), sixu("example")])
-        g2 = np.array([sixu("This"), sixu("was"), sixu("example")])
+        g1 = np.array([u"This", u"is", u"example"])
+        g2 = np.array([u"This", u"was", u"example"])
         assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0, 1, 2]])
         assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0, 1, 2]])
         assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0, 1, 2]])
@@ -4011,33 +4011,33 @@ class TestIO(object):
             assert_equal(pos, 10, err_msg=err_msg)
 
     def _check_from(self, s, value, **kw):
-        y = np.fromstring(asbytes(s), **kw)
+        y = np.fromstring(s, **kw)
         assert_array_equal(y, value)
 
         f = open(self.filename, 'wb')
-        f.write(asbytes(s))
+        f.write(s)
         f.close()
         y = np.fromfile(self.filename, **kw)
         assert_array_equal(y, value)
 
     def test_nan(self):
         self._check_from(
-            "nan +nan -nan NaN nan(foo) +NaN(BAR) -NAN(q_u_u_x_)",
+            b"nan +nan -nan NaN nan(foo) +NaN(BAR) -NAN(q_u_u_x_)",
             [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
             sep=' ')
 
     def test_inf(self):
         self._check_from(
-            "inf +inf -inf infinity -Infinity iNfInItY -inF",
+            b"inf +inf -inf infinity -Infinity iNfInItY -inF",
             [np.inf, np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf],
             sep=' ')
 
     def test_numbers(self):
-        self._check_from("1.234 -1.234 .3 .3e55 -123133.1231e+133",
+        self._check_from(b"1.234 -1.234 .3 .3e55 -123133.1231e+133",
                          [1.234, -1.234, .3, .3e55, -123133.1231e+133], sep=' ')
 
     def test_binary(self):
-        self._check_from('\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',
+        self._check_from(b'\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',
                          np.array([1, 2, 3, 4]),
                          dtype='<f4')
 
@@ -4067,40 +4067,40 @@ class TestIO(object):
             pass
 
     def test_string(self):
-        self._check_from('1,2,3,4', [1., 2., 3., 4.], sep=',')
+        self._check_from(b'1,2,3,4', [1., 2., 3., 4.], sep=',')
 
     def test_counted_string(self):
-        self._check_from('1,2,3,4', [1., 2., 3., 4.], count=4, sep=',')
-        self._check_from('1,2,3,4', [1., 2., 3.], count=3, sep=',')
-        self._check_from('1,2,3,4', [1., 2., 3., 4.], count=-1, sep=',')
+        self._check_from(b'1,2,3,4', [1., 2., 3., 4.], count=4, sep=',')
+        self._check_from(b'1,2,3,4', [1., 2., 3.], count=3, sep=',')
+        self._check_from(b'1,2,3,4', [1., 2., 3., 4.], count=-1, sep=',')
 
     def test_string_with_ws(self):
-        self._check_from('1 2  3     4   ', [1, 2, 3, 4], dtype=int, sep=' ')
+        self._check_from(b'1 2  3     4   ', [1, 2, 3, 4], dtype=int, sep=' ')
 
     def test_counted_string_with_ws(self):
-        self._check_from('1 2  3     4   ', [1, 2, 3], count=3, dtype=int,
+        self._check_from(b'1 2  3     4   ', [1, 2, 3], count=3, dtype=int,
                          sep=' ')
 
     def test_ascii(self):
-        self._check_from('1 , 2 , 3 , 4', [1., 2., 3., 4.], sep=',')
-        self._check_from('1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
+        self._check_from(b'1 , 2 , 3 , 4', [1., 2., 3., 4.], sep=',')
+        self._check_from(b'1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
 
     def test_malformed(self):
-        self._check_from('1.234 1,234', [1.234, 1.], sep=' ')
+        self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
 
     def test_long_sep(self):
-        self._check_from('1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
+        self._check_from(b'1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
 
     def test_dtype(self):
         v = np.array([1, 2, 3, 4], dtype=np.int_)
-        self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
+        self._check_from(b'1,2,3,4', v, sep=',', dtype=np.int_)
 
     def test_dtype_bool(self):
         # can't use _check_from because fromstring can't handle True/False
         v = np.array([True, False, True, False], dtype=np.bool_)
-        s = '1,0,-2.3,0'
+        s = b'1,0,-2.3,0'
         f = open(self.filename, 'wb')
-        f.write(asbytes(s))
+        f.write(s)
         f.close()
         y = np.fromfile(self.filename, sep=',', dtype=np.bool_)
         assert_(y.dtype == '?')
@@ -4152,7 +4152,7 @@ class TestFromBuffer(object):
                 yield self.tst_basic, buf, x.flat, {'dtype':dt}
 
     def test_empty(self):
-        yield self.tst_basic, asbytes(''), np.array([]), {}
+        yield self.tst_basic, b'', np.array([]), {}
 
 
 class TestFlat(TestCase):
@@ -4286,17 +4286,17 @@ class TestRecord(TestCase):
         def test_bytes_fields(self):
             # Bytes are not allowed in field names and not recognized in titles
             # on Py3
-            assert_raises(TypeError, np.dtype, [(asbytes('a'), int)])
-            assert_raises(TypeError, np.dtype, [(('b', asbytes('a')), int)])
+            assert_raises(TypeError, np.dtype, [(b'a', int)])
+            assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
 
-            dt = np.dtype([((asbytes('a'), 'b'), int)])
-            assert_raises(ValueError, dt.__getitem__, asbytes('a'))
+            dt = np.dtype([((b'a', 'b'), int)])
+            assert_raises(ValueError, dt.__getitem__, b'a')
 
             x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(IndexError, x.__getitem__, asbytes('a'))
+            assert_raises(IndexError, x.__getitem__, b'a')
 
             y = x[0]
-            assert_raises(IndexError, y.__getitem__, asbytes('a'))
+            assert_raises(IndexError, y.__getitem__, b'a')
 
         def test_multiple_field_name_unicode(self):
             def test_assign_unicode():
@@ -4310,7 +4310,7 @@ class TestRecord(TestCase):
     else:
         def test_unicode_field_titles(self):
             # Unicode field titles are added to field dict on Py2
-            title = unicode('b')
+            title = u'b'
             dt = np.dtype([((title, 'a'), int)])
             dt[title]
             dt['a']
@@ -4323,7 +4323,7 @@ class TestRecord(TestCase):
 
         def test_unicode_field_names(self):
             # Unicode field names are not allowed on Py2
-            title = unicode('b')
+            title = u'b'
             assert_raises(TypeError, np.dtype, [(title, int)])
             assert_raises(TypeError, np.dtype, [(('a', title), int)])
 
@@ -4336,10 +4336,10 @@ class TestRecord(TestCase):
         if is_py3:
             funcs = (str,)
             # byte string indexing fails gracefully
-            assert_raises(IndexError, a.__setitem__, asbytes('f1'), 1)
-            assert_raises(IndexError, a.__getitem__, asbytes('f1'))
-            assert_raises(IndexError, a['f1'].__setitem__, asbytes('sf1'), 1)
-            assert_raises(IndexError, a['f1'].__getitem__, asbytes('sf1'))
+            assert_raises(IndexError, a.__setitem__, b'f1', 1)
+            assert_raises(IndexError, a.__getitem__, b'f1')
+            assert_raises(IndexError, a['f1'].__setitem__, b'sf1', 1)
+            assert_raises(IndexError, a['f1'].__getitem__, b'sf1')
         else:
             funcs = (str, unicode)
         for func in funcs:
@@ -4387,8 +4387,8 @@ class TestRecord(TestCase):
             raise SkipTest('non ascii unicode field indexing skipped; '
                            'raises segfault on python 2.x')
         else:
-            assert_raises(ValueError, a.__setitem__, sixu('\u03e0'), 1)
-            assert_raises(ValueError, a.__getitem__, sixu('\u03e0'))
+            assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
+            assert_raises(ValueError, a.__getitem__, u'\u03e0')
 
     def test_field_names_deprecation(self):
 
@@ -5960,7 +5960,7 @@ class TestNewBufferProtocol(object):
               ]
         x = np.array(
                 [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                    asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
+                    b'aaaa', 'bbbb', b'xxx', True, 1.0)],
                 dtype=dt)
         self._check_roundtrip(x)
 
@@ -6097,7 +6097,7 @@ class TestNewBufferProtocol(object):
               ]
         x = np.array(
                 [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                    asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
+                    b'aaaa', 'bbbb', b'   ', True, 1.0)],
                 dtype=dt)
         y = memoryview(x)
         assert_equal(y.shape, (1,))

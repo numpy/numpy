@@ -29,14 +29,13 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
-from numpy.compat import asbytes
 
 # For Python2/3 compatibility
-_N = asbytes('N')
-_V = asbytes('V')
-_A = asbytes('A')
-_S = asbytes('S')
-_L = asbytes('L')
+_N = b'N'
+_V = b'V'
+_A = b'A'
+_S = b'S'
+_L = b'L'
 
 fortran_int = intc
 
