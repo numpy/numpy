@@ -138,7 +138,6 @@ This means that, e.g., it is now possible to do the following:
     [array([[ 1. ,  1. , -0.5], [ 1. ,  1. , -0.5]]), 
      array([[ 2. ,  2. ,  2. ], [ 2. ,  1.7,  0.5]])]
 
-
 ``np.heaviside`` computes the Heaviside function
 ------------------------------------------------
 The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
