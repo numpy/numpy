@@ -686,10 +686,10 @@ dump_@TYPE@_matrix(const char* name,
     size_t i, j;
 
     TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
-    for (i=0; i<rows; i++)
+    for (i = 0; i < rows; i++)
     {
         TRACE_TXT("| ");
-        for (j=0; j<columns; j++)
+        for (j = 0; j < columns; j++)
         {
             print_@TYPE@(ptr[j*rows + i]);
             TRACE_TXT(", ");
@@ -793,7 +793,7 @@ static NPY_INLINE void
 update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 {
     size_t i;
-    for (i=0; i < count; ++i) {
+    for (i = 0; i < count; ++i) {
         bases[i] += offsets[i];
     }
 }
@@ -834,7 +834,7 @@ linearize_@TYPE@_matrix(void *dst_in,
         fortran_int column_strides =
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
-        for (i=0; i< data->rows; i++) {
+        for (i = 0; i < data->rows; i++) {
             if (column_strides > 0) {
                 FNAME(@copy@)(&columns,
                               (void*)src, &column_strides,
@@ -880,7 +880,7 @@ delinearize_@TYPE@_matrix(void *dst_in,
         fortran_int column_strides =
             (fortran_int)(data->column_strides/sizeof(@typ@));
         fortran_int one = 1;
-        for (i=0; i < data->rows; i++) {
+        for (i = 0; i < data->rows; i++) {
             if (column_strides > 0) {
                 FNAME(@copy@)(&columns,
                               (void*)src, &one,
@@ -920,10 +920,10 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
     @typ@ *dst = (@typ@ *) dst_in;
 
     int i, j;
-    for (i=0; i < data->rows; i++) {
+    for (i = 0; i < data->rows; i++) {
         @typ@ *cp = dst;
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
-        for (j=0; j< data->columns; ++j) {
+        for (j = 0; j < data->columns; ++j) {
             *cp = @nan@;
             cp += cs;
         }
@@ -969,8 +969,8 @@ triu_@TYPE@_matrix(void *ptr, size_t n)
     size_t i, j;
     @typ@ *matrix = (@typ@*)ptr;
     matrix += n;
-    for (i=1; i < n; ++i) {
-        for (j=0; j<i; ++j) {
+    for (i = 1; i < n; ++i) {
+        for (j = 0; j < i; ++j) {
             matrix[j] = @cblas_type@_zero;
         }
         matrix += n;
@@ -1116,7 +1116,7 @@ static NPY_INLINE void
     if (info == 0) {
         int change_sign = 0;
         /* note: fortran uses 1 based indexing */
-        for (i=0; i < m; i++)
+        for (i = 0; i < m; i++)
         {
             change_sign += (pivots[i] != (i+1));
         }
@@ -1494,7 +1494,7 @@ static NPY_INLINE void
     EIGH_PARAMS_t eigh_params;
     int error_occurred = get_fp_invalid_and_clear();
 
-    for (iter=0; iter < op_count; ++iter) {
+    for (iter = 0; iter < op_count; ++iter) {
         outer_steps[iter] = (ptrdiff_t) steps[iter];
     }
     steps += op_count;
@@ -1987,8 +1987,8 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
 static NPY_INLINE int
 init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
 {
-    npy_uint8 *mem_buff=NULL;
-    npy_uint8 *mem_buff2=NULL;
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
     npy_uint8 *a, *wr, *wi, *vlr, *vrr, *work, *w, *vl, *vr;
     size_t safe_n = n;
     size_t a_size = safe_n * safe_n * sizeof(@typ@);
@@ -2309,7 +2309,7 @@ static NPY_INLINE void
     op_count += 'V'==JOBVL?1:0;
     op_count += 'V'==JOBVR?1:0;
 
-    for (iter=0; iter < op_count; ++iter) {
+    for (iter = 0; iter < op_count; ++iter) {
         outer_steps[iter] = (ptrdiff_t) steps[iter];
     }
     steps += op_count;
@@ -2782,7 +2782,7 @@ static NPY_INLINE void
     size_t op_count = (JOBZ=='N')?2:4;
     GESDD_PARAMS_t params;
 
-    for (iter=0; iter < op_count; ++iter) {
+    for (iter = 0; iter < op_count; ++iter) {
         outer_steps[iter] = (ptrdiff_t) steps[iter];
     }
     steps += op_count;
@@ -3221,7 +3221,7 @@ addUfuncs(PyObject *dictionary) {
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
         sizeof(gufunc_descriptors[0]);
-    for (i=0; i < gufunc_count; i++) {
+    for (i = 0; i < gufunc_count; i++) {
         GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
         f = PyUFunc_FromFuncAndDataAndSignature(d->funcs,
                                                 array_of_nulls,
