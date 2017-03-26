@@ -21,7 +21,7 @@ Array structure and data access
 -------------------------------
 
 These macros all access the :c:type:`PyArrayObject` structure members. The input
-argument, arr, can be any :c:type:`PyObject *` that is directly interpretable
+argument, arr, can be any :c:type:`PyObject *<PyObject>` that is directly interpretable
 as a :c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type` and its
 sub-types).
 
@@ -833,7 +833,7 @@ Data-type checking
 
 For the typenum macros, the argument is an integer representing an
 enumerated array data type. For the array type checking macros the
-argument must be a :c:type:`PyObject *` that can be directly interpreted as a
+argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpreted as a
 :c:type:`PyArrayObject *`.
 
 .. c:function:: PyTypeNum_ISUNSIGNED(num)
@@ -2371,7 +2371,7 @@ Broadcasting (multi-iterators)
 .. c:function:: PyObject* PyArray_MultiIterNew(int num, ...)
 
     A simplified interface to broadcasting. This function takes the
-    number of arrays to broadcast and then *num* extra ( :c:type:`PyObject *`
+    number of arrays to broadcast and then *num* extra ( :c:type:`PyObject *<PyObject>`
     ) arguments. These arguments are converted to arrays and iterators
     are created. :c:func:`PyArray_Broadcast` is then called on the resulting
     multi-iterator object. The resulting, broadcasted mult-iterator

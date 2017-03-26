@@ -210,9 +210,9 @@ The :c:func:`Py_BuildValue` (format_string, c_variables...) function makes
 it easy to build tuples of Python objects from C variables. Pay
 special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
-increments the reference count of the :c:type:`PyObject *` C-variable it
+increments the reference count of the :c:type:`PyObject *<PyObject>` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :c:type:`PyObject *` C-variable. You should use 'N' if you have
+corresponding :c:type:`PyObject *<PyObject>` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the

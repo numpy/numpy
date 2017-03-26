@@ -6,7 +6,7 @@ Python Types and C-Structures
 
 Several new types are defined in the C-code. Most of these are
 accessible from Python, but a few are not exposed due to their limited
-use. Every new Python type has an associated :c:type:`PyObject *` with an
+use. Every new Python type has an associated :c:type:`PyObject *<PyObject>` with an
 internal structure that includes a pointer to a "method table" that
 defines how the new object behaves in Python. When you receive a
 Python object into C code, you always get a pointer to a

@@ -173,7 +173,7 @@ each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
 multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
-:c:type:`PyObject *`). The data from input number ``i`` is available using
+:c:type:`PyObject *<PyObject>`). The data from input number ``i`` is available using
 :c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
 size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
 feature follows.
