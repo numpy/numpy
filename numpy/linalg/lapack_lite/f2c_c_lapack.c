@@ -30,22 +30,26 @@ them.
 /* Table of constant values */
 
 static integer c__1 = 1;
-static complex c_b55 = {0.f,0.f};
-static complex c_b56 = {1.f,0.f};
+static complex c_b56 = {0.f,0.f};
+static complex c_b57 = {1.f,0.f};
 static integer c_n1 = -1;
 static integer c__3 = 3;
 static integer c__2 = 2;
 static integer c__0 = 0;
-static integer c__8 = 8;
-static integer c__4 = 4;
 static integer c__65 = 65;
-static real c_b871 = 1.f;
-static integer c__15 = 15;
-static logical c_false = FALSE_;
-static real c_b1101 = 0.f;
+static real c_b894 = 1.f;
+static integer c__12 = 12;
+static integer c__49 = 49;
+static real c_b1087 = 0.f;
 static integer c__9 = 9;
-static real c_b1150 = -1.f;
-static real c_b1794 = .5f;
+static real c_b1136 = -1.f;
+static integer c__13 = 13;
+static integer c__15 = 15;
+static integer c__14 = 14;
+static integer c__16 = 16;
+static logical c_false = FALSE_;
+static logical c_true = TRUE_;
+static real c_b2023 = .5f;
 
 /* Subroutine */ int cgebak_(char *job, char *side, integer *n, integer *ilo,
 	integer *ihi, real *scale, integer *m, complex *v, integer *ldv,
@@ -68,10 +72,10 @@ static real c_b1794 = .5f;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -282,14 +286,15 @@ L50:
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
 	    *), xerbla_(char *, integer *);
+    extern logical sisnan_(real *);
     static logical noconv;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -529,7 +534,7 @@ L120:
 
     sfmin1 = slamch_("S") / slamch_("P");
     sfmax1 = 1.f / sfmin1;
-    sfmin2 = sfmin1 * 8.f;
+    sfmin2 = sfmin1 * 2.f;
     sfmax2 = 1.f / sfmin2;
 L140:
     noconv = FALSE_;
@@ -564,7 +569,7 @@ L150:
 	if (c__ == 0.f || r__ == 0.f) {
 	    goto L200;
 	}
-	g = r__ / 8.f;
+	g = r__ / 2.f;
 	f = 1.f;
 	s = c__ + r__;
 L160:
@@ -575,28 +580,38 @@ L160:
 	if (c__ >= g || dmax(r__1,ca) >= sfmax2 || dmin(r__2,ra) <= sfmin2) {
 	    goto L170;
 	}
-	f *= 8.f;
-	c__ *= 8.f;
-	ca *= 8.f;
-	r__ /= 8.f;
-	g /= 8.f;
-	ra /= 8.f;
+	r__1 = c__ + f + ca + r__ + g + ra;
+	if (sisnan_(&r__1)) {
+
+/*           Exit if NaN to avoid infinite loop */
+
+	    *info = -3;
+	    i__2 = -(*info);
+	    xerbla_("CGEBAL", &i__2);
+	    return 0;
+	}
+	f *= 2.f;
+	c__ *= 2.f;
+	ca *= 2.f;
+	r__ /= 2.f;
+	g /= 2.f;
+	ra /= 2.f;
 	goto L160;
 
 L170:
-	g = c__ / 8.f;
+	g = c__ / 2.f;
 L180:
 /* Computing MIN */
 	r__1 = min(f,c__), r__1 = min(r__1,g);
 	if (g < r__ || dmax(r__,ra) >= sfmax2 || dmin(r__1,ca) <= sfmin2) {
 	    goto L190;
 	}
-	f /= 8.f;
-	c__ /= 8.f;
-	g /= 8.f;
-	ca /= 8.f;
-	r__ *= 8.f;
-	ra *= 8.f;
+	f /= 2.f;
+	c__ /= 2.f;
+	g /= 2.f;
+	ca /= 2.f;
+	r__ *= 2.f;
+	ra *= 2.f;
 	goto L180;
 
 /*        Now balance. */
@@ -646,7 +661,7 @@ L210:
 	integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
+    integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1;
 
     /* Builtin functions */
@@ -663,10 +678,10 @@ L210:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -832,11 +847,13 @@ L210:
 
 /*           Apply H(i)' to A(i:m,i+1:n) from the left */
 
-	    i__2 = *m - i__ + 1;
-	    i__3 = *n - i__;
-	    r_cnjg(&q__1, &tauq[i__]);
-	    clarf_("Left", &i__2, &i__3, &a[i__ + i__ * a_dim1], &c__1, &q__1,
-		     &a[i__ + (i__ + 1) * a_dim1], lda, &work[1]);
+	    if (i__ < *n) {
+		i__2 = *m - i__ + 1;
+		i__3 = *n - i__;
+		r_cnjg(&q__1, &tauq[i__]);
+		clarf_("Left", &i__2, &i__3, &a[i__ + i__ * a_dim1], &c__1, &
+			q__1, &a[i__ + (i__ + 1) * a_dim1], lda, &work[1]);
+	    }
 	    i__2 = i__ + i__ * a_dim1;
 	    i__3 = i__;
 	    a[i__2].r = d__[i__3], a[i__2].i = 0.f;
@@ -905,12 +922,12 @@ L210:
 
 /*           Apply G(i) to A(i+1:m,i:n) from the right */
 
-	    i__2 = *m - i__;
-	    i__3 = *n - i__ + 1;
-/* Computing MIN */
-	    i__4 = i__ + 1;
-	    clarf_("Right", &i__2, &i__3, &a[i__ + i__ * a_dim1], lda, &taup[
-		    i__], &a[min(i__4,*m) + i__ * a_dim1], lda, &work[1]);
+	    if (i__ < *m) {
+		i__2 = *m - i__;
+		i__3 = *n - i__ + 1;
+		clarf_("Right", &i__2, &i__3, &a[i__ + i__ * a_dim1], lda, &
+			taup[i__], &a[i__ + 1 + i__ * a_dim1], lda, &work[1]);
+	    }
 	    i__2 = *n - i__ + 1;
 	    clacgv_(&i__2, &a[i__ + i__ * a_dim1], lda);
 	    i__2 = i__ + i__ * a_dim1;
@@ -988,10 +1005,10 @@ L210:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -1050,7 +1067,7 @@ L210:
             The scalar factors of the elementary reflectors which
             represent the unitary matrix P. See Further Details.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -1235,14 +1252,14 @@ L210:
 	q__1.r = -1.f, q__1.i = -0.f;
 	cgemm_("No transpose", "Conjugate transpose", &i__3, &i__4, &nb, &
 		q__1, &a[i__ + nb + i__ * a_dim1], lda, &work[ldwrkx * nb +
-		nb + 1], &ldwrky, &c_b56, &a[i__ + nb + (i__ + nb) * a_dim1],
+		nb + 1], &ldwrky, &c_b57, &a[i__ + nb + (i__ + nb) * a_dim1],
 		lda);
 	i__3 = *m - i__ - nb + 1;
 	i__4 = *n - i__ - nb + 1;
 	q__1.r = -1.f, q__1.i = -0.f;
 	cgemm_("No transpose", "No transpose", &i__3, &i__4, &nb, &q__1, &
 		work[nb + 1], &ldwrkx, &a[i__ + (i__ + nb) * a_dim1], lda, &
-		c_b56, &a[i__ + nb + (i__ + nb) * a_dim1], lda);
+		c_b57, &a[i__ + nb + (i__ + nb) * a_dim1], lda);
 
 /*        Copy diagonal and off-diagonal elements of B back into A */
 
@@ -1292,7 +1309,7 @@ L210:
 {
     /* System generated locals */
     integer a_dim1, a_offset, vl_dim1, vl_offset, vr_dim1, vr_offset, i__1,
-	    i__2, i__3, i__4;
+	    i__2, i__3;
     real r__1, r__2;
     complex q__1, q__2;
 
@@ -1308,7 +1325,6 @@ L210:
     static complex tmp;
     static integer ibal;
     static char side[1];
-    static integer maxb;
     static real anrm;
     static integer ierr, itau, iwrk, nout;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
@@ -1352,10 +1368,10 @@ L210:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -1420,7 +1436,7 @@ L210:
             The leading dimension of the array VR.  LDVR >= 1; if
             JOBVR = 'V', LDVR >= N.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -1494,62 +1510,44 @@ L210:
          the worst case.)
 */
 
-    minwrk = 1;
-    if (*info == 0 && (*lwork >= 1 || lquery)) {
-	maxwrk = *n + *n * ilaenv_(&c__1, "CGEHRD", " ", n, &c__1, n, &c__0, (
-		ftnlen)6, (ftnlen)1);
-	if (! wantvl && ! wantvr) {
-/* Computing MAX */
-	    i__1 = 1, i__2 = *n << 1;
-	    minwrk = max(i__1,i__2);
-/* Computing MAX */
-	    i__1 = ilaenv_(&c__8, "CHSEQR", "EN", n, &c__1, n, &c_n1, (ftnlen)
-		    6, (ftnlen)2);
-	    maxb = max(i__1,2);
-/*
-   Computing MIN
-   Computing MAX
-*/
-	    i__3 = 2, i__4 = ilaenv_(&c__4, "CHSEQR", "EN", n, &c__1, n, &
-		    c_n1, (ftnlen)6, (ftnlen)2);
-	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
-	    k = min(i__1,i__2);
-/* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = *n << 1;
-	    hswork = max(i__1,i__2);
-	    maxwrk = max(maxwrk,hswork);
+    if (*info == 0) {
+	if (*n == 0) {
+	    minwrk = 1;
+	    maxwrk = 1;
 	} else {
+	    maxwrk = *n + *n * ilaenv_(&c__1, "CGEHRD", " ", n, &c__1, n, &
+		    c__0, (ftnlen)6, (ftnlen)1);
+	    minwrk = *n << 1;
+	    if (wantvl) {
 /* Computing MAX */
-	    i__1 = 1, i__2 = *n << 1;
-	    minwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n + (*n - 1) * ilaenv_(&c__1, "CUNGHR",
+			 " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)1);
+		maxwrk = max(i__1,i__2);
+		chseqr_("S", "V", n, &c__1, n, &a[a_offset], lda, &w[1], &vl[
+			vl_offset], ldvl, &work[1], &c_n1, info);
+	    } else if (wantvr) {
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = *n + (*n - 1) * ilaenv_(&c__1, "CUNGHR",
-		    " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)1);
-	    maxwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n + (*n - 1) * ilaenv_(&c__1, "CUNGHR",
+			 " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)1);
+		maxwrk = max(i__1,i__2);
+		chseqr_("S", "V", n, &c__1, n, &a[a_offset], lda, &w[1], &vr[
+			vr_offset], ldvr, &work[1], &c_n1, info);
+	    } else {
+		chseqr_("E", "N", n, &c__1, n, &a[a_offset], lda, &w[1], &vr[
+			vr_offset], ldvr, &work[1], &c_n1, info);
+	    }
+	    hswork = work[1].r;
 /* Computing MAX */
-	    i__1 = ilaenv_(&c__8, "CHSEQR", "SV", n, &c__1, n, &c_n1, (ftnlen)
-		    6, (ftnlen)2);
-	    maxb = max(i__1,2);
-/*
-   Computing MIN
-   Computing MAX
-*/
-	    i__3 = 2, i__4 = ilaenv_(&c__4, "CHSEQR", "SV", n, &c__1, n, &
-		    c_n1, (ftnlen)6, (ftnlen)2);
-	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
-	    k = min(i__1,i__2);
-/* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = *n << 1;
-	    hswork = max(i__1,i__2);
-/* Computing MAX */
-	    i__1 = max(maxwrk,hswork), i__2 = *n << 1;
-	    maxwrk = max(i__1,i__2);
+	    i__1 = max(maxwrk,hswork);
+	    maxwrk = max(i__1,minwrk);
 	}
 	work[1].r = (real) maxwrk, work[1].i = 0.f;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -12;
+	}
     }
-    if (*lwork < minwrk && ! lquery) {
-	*info = -12;
-    }
+
     if (*info != 0) {
 	i__1 = -(*info);
 	xerbla_("CGEEV ", &i__1);
@@ -1847,10 +1845,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2006,7 +2004,7 @@ L50:
     complex q__1;
 
     /* Local variables */
-    static integer i__;
+    static integer i__, j;
     static complex t[4160]	/* was [65][64] */;
     static integer ib;
     static complex ei;
@@ -2015,14 +2013,16 @@ L50:
 	    integer *, complex *, complex *, integer *, complex *, integer *,
 	    complex *, complex *, integer *);
     static integer nbmin, iinfo;
-    extern /* Subroutine */ int cgehd2_(integer *, integer *, integer *,
-	    complex *, integer *, complex *, complex *, integer *), clarfb_(
-	    char *, char *, char *, char *, integer *, integer *, integer *,
-	    complex *, integer *, complex *, integer *, complex *, integer *,
-	    complex *, integer *), clahrd_(
+    extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
+	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *), caxpy_(integer *,
+	    complex *, complex *, integer *, complex *, integer *), cgehd2_(
 	    integer *, integer *, integer *, complex *, integer *, complex *,
-	    complex *, integer *, complex *, integer *), xerbla_(char *,
-	    integer *);
+	    complex *, integer *), clahr2_(integer *, integer *, integer *,
+	    complex *, integer *, complex *, complex *, integer *, complex *,
+	    integer *), clarfb_(char *, char *, char *, char *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    complex *, integer *, complex *, integer *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static integer ldwork, lwkopt;
@@ -2030,17 +2030,17 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2.1)                                  --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    -- April 2009                                                      --
 
 
     Purpose
     =======
 
-    CGEHRD reduces a complex general matrix A to upper Hessenberg form H
-    by a unitary similarity transformation:  Q' * A * Q = H .
+    CGEHRD reduces a complex general matrix A to upper Hessenberg form H by
+    an unitary similarity transformation:  Q' * A * Q = H .
 
     Arguments
     =========
@@ -2122,6 +2122,10 @@ L50:
     modified element of the upper Hessenberg matrix H, and vi denotes an
     element of the vector defining H(i).
 
+    This file is a slight modification of LAPACK-3.0's DGEHRD
+    subroutine incorporating improvements proposed by Quintana-Orti and
+    Van de Geijn (2006). (See DLAHR2.)
+
     =====================================================================
 
 
@@ -2186,13 +2190,21 @@ L50:
 	return 0;
     }
 
+/*
+       Determine the block size
+
+   Computing MIN
+*/
+    i__1 = 64, i__2 = ilaenv_(&c__1, "CGEHRD", " ", n, ilo, ihi, &c_n1, (
+	    ftnlen)6, (ftnlen)1);
+    nb = min(i__1,i__2);
     nbmin = 2;
     iws = 1;
     if (nb > 1 && nb < nh) {
 
 /*
           Determine when to cross over from blocked to unblocked code
-          (last block is always handled by unblocked code).
+          (last block is always handled by unblocked code)
 
    Computing MAX
 */
@@ -2201,7 +2213,7 @@ L50:
 	nx = max(i__1,i__2);
 	if (nx < nh) {
 
-/*           Determine if workspace is large enough for blocked code. */
+/*           Determine if workspace is large enough for blocked code */
 
 	    iws = *n * nb;
 	    if (*lwork < iws) {
@@ -2209,7 +2221,7 @@ L50:
 /*
                 Not enough workspace to use optimal NB:  determine the
                 minimum value of NB, and reduce NB or force use of
-                unblocked code.
+                unblocked code
 
    Computing MAX
 */
@@ -2249,13 +2261,13 @@ L50:
              which performs the reduction, and also the matrix Y = A*V*T
 */
 
-	    clahrd_(ihi, &i__, &ib, &a[i__ * a_dim1 + 1], lda, &tau[i__], t, &
+	    clahr2_(ihi, &i__, &ib, &a[i__ * a_dim1 + 1], lda, &tau[i__], t, &
 		    c__65, &work[1], &ldwork);
 
 /*
              Apply the block reflector H to A(1:ihi,i+ib:ihi) from the
              right, computing  A := A - Y * V'. V(i+ib,ib-1) must be set
-             to 1.
+             to 1
 */
 
 	    i__3 = i__ + ib + (i__ + ib - 1) * a_dim1;
@@ -2266,9 +2278,26 @@ L50:
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemm_("No transpose", "Conjugate transpose", ihi, &i__3, &ib, &
 		    q__1, &work[1], &ldwork, &a[i__ + ib + i__ * a_dim1], lda,
-		     &c_b56, &a[(i__ + ib) * a_dim1 + 1], lda);
+		     &c_b57, &a[(i__ + ib) * a_dim1 + 1], lda);
 	    i__3 = i__ + ib + (i__ + ib - 1) * a_dim1;
 	    a[i__3].r = ei.r, a[i__3].i = ei.i;
+
+/*
+             Apply the block reflector H to A(1:i,i+1:i+ib-1) from the
+             right
+*/
+
+	    i__3 = ib - 1;
+	    ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", &i__, &
+		    i__3, &c_b57, &a[i__ + 1 + i__ * a_dim1], lda, &work[1], &
+		    ldwork);
+	    i__3 = ib - 2;
+	    for (j = 0; j <= i__3; ++j) {
+		q__1.r = -1.f, q__1.i = -0.f;
+		caxpy_(&i__, &q__1, &work[ldwork * j + 1], &c__1, &a[(i__ + j
+			+ 1) * a_dim1 + 1], &c__1);
+/* L30: */
+	    }
 
 /*
              Apply the block reflector H to A(i+1:ihi,i+ib:n) from the
@@ -2281,7 +2310,7 @@ L50:
 		    i__3, &i__4, &ib, &a[i__ + 1 + i__ * a_dim1], lda, t, &
 		    c__65, &a[i__ + 1 + (i__ + ib) * a_dim1], lda, &work[1], &
 		    ldwork);
-/* L30: */
+/* L40: */
 	}
     }
 
@@ -2313,10 +2342,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -2459,10 +2488,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2495,7 +2524,7 @@ L50:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -2688,10 +2717,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -2831,10 +2860,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2868,7 +2897,7 @@ L50:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -3106,15 +3135,16 @@ L50:
 	    complex *, integer *, complex *, complex *, integer *, integer *);
     static integer ldwrkr, minwrk, ldwrku, maxwrk, ldwkvt;
     static real smlnum;
-    static logical wntqas, lquery;
+    static logical wntqas;
     static integer nrwork;
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK driver routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+       8-15-00:  Improve consistency of WS calculations (eca)
 
 
     Purpose
@@ -3153,11 +3183,11 @@ L50:
                     min(M,N) rows of V**H are returned in the arrays U
                     and VT;
             = 'O':  If M >= N, the first N columns of U are overwritten
-                    on the array A and all rows of V**H are returned in
+                    in the array A and all rows of V**H are returned in
                     the array VT;
                     otherwise, all columns of U are returned in the
                     array U and the first M rows of V**H are overwritten
-                    in the array VT;
+                    in the array A;
             = 'N':  no columns of U or rows of V**H are computed.
 
     M       (input) INTEGER
@@ -3208,7 +3238,7 @@ L50:
             JOBZ = 'A' or JOBZ = 'O' and M >= N, LDVT >= N;
             if JOBZ = 'S', LDVT >= min(M,N).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -3219,12 +3249,15 @@ L50:
             if JOBZ = 'S' or 'A',
                   LWORK >= min(M,N)*min(M,N)+2*min(M,N)+max(M,N).
             For good performance, LWORK should generally be larger.
-            If LWORK < 0 but other input arguments are legal, WORK(1)
-            returns the optimal LWORK.
 
-    RWORK   (workspace) REAL array, dimension (LRWORK)
-            If JOBZ = 'N', LRWORK >= 7*min(M,N).
-            Otherwise, LRWORK >= 5*min(M,N)*min(M,N) + 5*min(M,N)
+            If LWORK = -1, a workspace query is assumed.  The optimal
+            size for the WORK array is calculated and stored in WORK(1),
+            and no other work except argument checking is performed.
+
+    RWORK   (workspace) REAL array, dimension (MAX(1,LRWORK))
+            If JOBZ = 'N', LRWORK >= 5*min(M,N).
+            Otherwise,
+            LRWORK >= min(M,N)*max(5*min(M,N)+7,2*max(M,N)+2*min(M,N)+1)
 
     IWORK   (workspace) INTEGER array, dimension (8*min(M,N))
 
@@ -3273,7 +3306,6 @@ L50:
     wntqn = lsame_(jobz, "N");
     minwrk = 1;
     maxwrk = 1;
-    lquery = *lwork == -1;
 
     if (! (wntqa || wntqs || wntqo || wntqn)) {
 	*info = -1;
@@ -3306,8 +3338,11 @@ L50:
 
 /*
              There is no complex work space needed for bidiagonal SVD
-             The real work space needed for bidiagonal SVD is BDSPAC,
-             BDSPAC = 3*N*N + 4*N
+             The real work space needed for bidiagonal SVD is BDSPAC
+             for computing singular values and singular vectors; BDSPAN
+             for computing singular values only.
+             BDSPAC = 5*N*N + 7*N
+             BDSPAN = MAX(7*N+4, 3*N+2+SMLSIZ*(SMLSIZ+8))
 */
 
 	    if (*m >= mnthr1) {
@@ -3315,14 +3350,13 @@ L50:
 
 /*                 Path 1 (M much larger than N, JOBZ='N') */
 
-		    wrkbl = *n + *n * ilaenv_(&c__1, "CGEQRF", " ", m, n, &
+		    maxwrk = *n + *n * ilaenv_(&c__1, "CGEQRF", " ", m, n, &
 			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
 /* Computing MAX */
-		    i__1 = wrkbl, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
+		    i__1 = maxwrk, i__2 = (*n << 1) + (*n << 1) * ilaenv_(&
 			    c__1, "CGEBRD", " ", n, n, &c_n1, &c_n1, (ftnlen)
 			    6, (ftnlen)1);
-		    wrkbl = max(i__1,i__2);
-		    maxwrk = wrkbl;
+		    maxwrk = max(i__1,i__2);
 		    minwrk = *n * 3;
 		} else if (wntqo) {
 
@@ -3497,8 +3531,11 @@ L50:
 
 /*
              There is no complex work space needed for bidiagonal SVD
-             The real work space needed for bidiagonal SVD is BDSPAC,
-             BDSPAC = 3*M*M + 4*M
+             The real work space needed for bidiagonal SVD is BDSPAC
+             for computing singular values and singular vectors; BDSPAN
+             for computing singular values only.
+             BDSPAC = 5*M*M + 7*M
+             BDSPAN = MAX(7*M+4, 3*M+2+SMLSIZ*(SMLSIZ+8))
 */
 
 	    if (*n >= mnthr1) {
@@ -3685,26 +3722,25 @@ L50:
 	    }
 	}
 	maxwrk = max(maxwrk,minwrk);
+    }
+    if (*info == 0) {
 	work[1].r = (real) maxwrk, work[1].i = 0.f;
+	if (*lwork < minwrk && *lwork != -1) {
+	    *info = -13;
+	}
     }
 
-    if (*lwork < minwrk && ! lquery) {
-	*info = -13;
-    }
+/*     Quick returns */
+
     if (*info != 0) {
 	i__1 = -(*info);
 	xerbla_("CGESDD", &i__1);
 	return 0;
-    } else if (lquery) {
+    }
+    if (*lwork == -1) {
 	return 0;
     }
-
-/*     Quick return if possible */
-
     if (*m == 0 || *n == 0) {
-	if (*lwork >= 1) {
-	    work[1].r = 1.f, work[1].i = 0.f;
-	}
 	return 0;
     }
 
@@ -3762,7 +3798,7 @@ L50:
 
 		i__1 = *n - 1;
 		i__2 = *n - 1;
-		claset_("L", &i__1, &i__2, &c_b55, &c_b55, &a[a_dim1 + 2],
+		claset_("L", &i__1, &i__2, &c_b56, &c_b56, &a[a_dim1 + 2],
 			lda);
 		ie = 1;
 		itauq = 1;
@@ -3783,7 +3819,7 @@ L50:
 /*
                 Perform bidiagonal SVD, compute singular values only
                 (CWorkspace: 0)
-                (RWorkspace: need BDSPAC)
+                (RWorkspace: need BDSPAN)
 */
 
 		sbdsdc_("U", "N", n, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -3829,7 +3865,7 @@ L50:
 		clacpy_("U", n, n, &a[a_offset], lda, &work[ir], &ldwrkr);
 		i__1 = *n - 1;
 		i__2 = *n - 1;
-		claset_("L", &i__1, &i__2, &c_b55, &c_b55, &work[ir + 1], &
+		claset_("L", &i__1, &i__2, &c_b56, &c_b56, &work[ir + 1], &
 			ldwrkr);
 
 /*
@@ -3911,8 +3947,8 @@ L50:
 /* Computing MIN */
 		    i__3 = *m - i__ + 1;
 		    chunk = min(i__3,ldwrkr);
-		    cgemm_("N", "N", &chunk, n, n, &c_b56, &a[i__ + a_dim1],
-			    lda, &work[iu], &ldwrku, &c_b55, &work[ir], &
+		    cgemm_("N", "N", &chunk, n, n, &c_b57, &a[i__ + a_dim1],
+			    lda, &work[iu], &ldwrku, &c_b56, &work[ir], &
 			    ldwrkr);
 		    clacpy_("F", &chunk, n, &work[ir], &ldwrkr, &a[i__ +
 			    a_dim1], lda);
@@ -3950,7 +3986,7 @@ L50:
 		clacpy_("U", n, n, &a[a_offset], lda, &work[ir], &ldwrkr);
 		i__2 = *n - 1;
 		i__1 = *n - 1;
-		claset_("L", &i__2, &i__1, &c_b55, &c_b55, &work[ir + 1], &
+		claset_("L", &i__2, &i__1, &c_b56, &c_b56, &work[ir + 1], &
 			ldwrkr);
 
 /*
@@ -4025,8 +4061,8 @@ L50:
 */
 
 		clacpy_("F", n, n, &u[u_offset], ldu, &work[ir], &ldwrkr);
-		cgemm_("N", "N", m, n, n, &c_b56, &a[a_offset], lda, &work[ir]
-			, &ldwrkr, &c_b55, &u[u_offset], ldu);
+		cgemm_("N", "N", m, n, n, &c_b57, &a[a_offset], lda, &work[ir]
+			, &ldwrkr, &c_b56, &u[u_offset], ldu);
 
 	    } else if (wntqa) {
 
@@ -4069,7 +4105,7 @@ L50:
 
 		i__2 = *n - 1;
 		i__1 = *n - 1;
-		claset_("L", &i__2, &i__1, &c_b55, &c_b55, &a[a_dim1 + 2],
+		claset_("L", &i__2, &i__1, &c_b56, &c_b56, &a[a_dim1 + 2],
 			lda);
 		ie = 1;
 		itauq = itau;
@@ -4134,8 +4170,8 @@ L50:
                 (RWorkspace: 0)
 */
 
-		cgemm_("N", "N", m, n, n, &c_b56, &u[u_offset], ldu, &work[iu]
-			, &ldwrku, &c_b55, &a[a_offset], lda);
+		cgemm_("N", "N", m, n, n, &c_b57, &u[u_offset], ldu, &work[iu]
+			, &ldwrku, &c_b56, &a[a_offset], lda);
 
 /*              Copy left singular vectors of A from A to U */
 
@@ -4173,7 +4209,7 @@ L50:
 /*
                 Compute singular values only
                 (Cworkspace: 0)
-                (Rworkspace: need BDSPAC)
+                (Rworkspace: need BDSPAN)
 */
 
 		sbdsdc_("U", "N", n, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -4417,7 +4453,7 @@ L50:
 /*
                 Compute singular values only
                 (Cworkspace: 0)
-                (Rworkspace: need BDSPAC)
+                (Rworkspace: need BDSPAN)
 */
 
 		sbdsdc_("U", "N", n, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -4475,7 +4511,7 @@ L50:
                 (Rworkspace: need 0)
 */
 
-		    claset_("F", m, n, &c_b55, &c_b55, &work[iu], &ldwrku);
+		    claset_("F", m, n, &c_b56, &c_b56, &work[iu], &ldwrku);
 		    clacp2_("F", n, n, &rwork[iru], n, &work[iu], &ldwrku);
 		    i__1 = *lwork - nwork + 1;
 		    cunmbr_("Q", "L", "N", m, n, n, &a[a_offset], lda, &work[
@@ -4541,7 +4577,7 @@ L50:
                 (RWorkspace: 0)
 */
 
-		claset_("F", m, n, &c_b55, &c_b55, &u[u_offset], ldu);
+		claset_("F", m, n, &c_b56, &c_b56, &u[u_offset], ldu);
 		clacp2_("F", n, n, &rwork[iru], n, &u[u_offset], ldu);
 		i__2 = *lwork - nwork + 1;
 		cunmbr_("Q", "L", "N", m, n, n, &a[a_offset], lda, &work[
@@ -4578,11 +4614,13 @@ L50:
 
 /*              Set the right corner of U to identity matrix */
 
-		claset_("F", m, m, &c_b55, &c_b55, &u[u_offset], ldu);
-		i__2 = *m - *n;
-		i__1 = *m - *n;
-		claset_("F", &i__2, &i__1, &c_b55, &c_b56, &u[*n + 1 + (*n +
-			1) * u_dim1], ldu);
+		claset_("F", m, m, &c_b56, &c_b56, &u[u_offset], ldu);
+		if (*m > *n) {
+		    i__2 = *m - *n;
+		    i__1 = *m - *n;
+		    claset_("F", &i__2, &i__1, &c_b56, &c_b57, &u[*n + 1 + (*
+			    n + 1) * u_dim1], ldu);
+		}
 
 /*
                 Copy real matrix RWORK(IRU) to complex matrix U
@@ -4616,8 +4654,8 @@ L50:
 
 /*
           A has more columns than rows. If A has sufficiently more
-          columns than rows, first reduce using the LQ decomposition
-          (if sufficient workspace available)
+          columns than rows, first reduce using the LQ decomposition (if
+          sufficient workspace available)
 */
 
 	if (*n >= mnthr1) {
@@ -4646,7 +4684,7 @@ L50:
 
 		i__2 = *m - 1;
 		i__1 = *m - 1;
-		claset_("U", &i__2, &i__1, &c_b55, &c_b55, &a[(a_dim1 << 1) +
+		claset_("U", &i__2, &i__1, &c_b56, &c_b56, &a[(a_dim1 << 1) +
 			1], lda);
 		ie = 1;
 		itauq = 1;
@@ -4667,7 +4705,7 @@ L50:
 /*
                 Perform bidiagonal SVD, compute singular values only
                 (CWorkspace: 0)
-                (RWorkspace: need BDSPAC)
+                (RWorkspace: need BDSPAN)
 */
 
 		sbdsdc_("U", "N", m, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -4718,7 +4756,7 @@ L50:
 		clacpy_("L", m, m, &a[a_offset], lda, &work[il], &ldwrkl);
 		i__2 = *m - 1;
 		i__1 = *m - 1;
-		claset_("U", &i__2, &i__1, &c_b55, &c_b55, &work[il + ldwrkl],
+		claset_("U", &i__2, &i__1, &c_b56, &c_b56, &work[il + ldwrkl],
 			 &ldwrkl);
 
 /*
@@ -4799,8 +4837,8 @@ L50:
 /* Computing MIN */
 		    i__3 = *n - i__ + 1;
 		    blk = min(i__3,chunk);
-		    cgemm_("N", "N", m, &blk, m, &c_b56, &work[ivt], m, &a[
-			    i__ * a_dim1 + 1], lda, &c_b55, &work[il], &
+		    cgemm_("N", "N", m, &blk, m, &c_b57, &work[ivt], m, &a[
+			    i__ * a_dim1 + 1], lda, &c_b56, &work[il], &
 			    ldwrkl);
 		    clacpy_("F", m, &blk, &work[il], &ldwrkl, &a[i__ * a_dim1
 			    + 1], lda);
@@ -4838,7 +4876,7 @@ L50:
 		clacpy_("L", m, m, &a[a_offset], lda, &work[il], &ldwrkl);
 		i__1 = *m - 1;
 		i__2 = *m - 1;
-		claset_("U", &i__1, &i__2, &c_b55, &c_b55, &work[il + ldwrkl],
+		claset_("U", &i__1, &i__2, &c_b56, &c_b56, &work[il + ldwrkl],
 			 &ldwrkl);
 
 /*
@@ -4913,8 +4951,8 @@ L50:
 */
 
 		clacpy_("F", m, m, &vt[vt_offset], ldvt, &work[il], &ldwrkl);
-		cgemm_("N", "N", m, n, m, &c_b56, &work[il], &ldwrkl, &a[
-			a_offset], lda, &c_b55, &vt[vt_offset], ldvt);
+		cgemm_("N", "N", m, n, m, &c_b57, &work[il], &ldwrkl, &a[
+			a_offset], lda, &c_b56, &vt[vt_offset], ldvt);
 
 	    } else if (wntqa) {
 
@@ -4957,7 +4995,7 @@ L50:
 
 		i__1 = *m - 1;
 		i__2 = *m - 1;
-		claset_("U", &i__1, &i__2, &c_b55, &c_b55, &a[(a_dim1 << 1) +
+		claset_("U", &i__1, &i__2, &c_b56, &c_b56, &a[(a_dim1 << 1) +
 			1], lda);
 		ie = 1;
 		itauq = itau;
@@ -5021,8 +5059,8 @@ L50:
                 (RWorkspace: 0)
 */
 
-		cgemm_("N", "N", m, n, m, &c_b56, &work[ivt], &ldwkvt, &vt[
-			vt_offset], ldvt, &c_b55, &a[a_offset], lda);
+		cgemm_("N", "N", m, n, m, &c_b57, &work[ivt], &ldwkvt, &vt[
+			vt_offset], ldvt, &c_b56, &a[a_offset], lda);
 
 /*              Copy right singular vectors of A from A to VT */
 
@@ -5062,7 +5100,7 @@ L50:
 /*
                 Compute singular values only
                 (Cworkspace: 0)
-                (Rworkspace: need BDSPAC)
+                (Rworkspace: need BDSPAN)
 */
 
 		sbdsdc_("L", "N", m, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -5306,7 +5344,7 @@ L50:
 /*
                 Compute singular values only
                 (Cworkspace: 0)
-                (Rworkspace: need BDSPAC)
+                (Rworkspace: need BDSPAN)
 */
 
 		sbdsdc_("L", "N", m, &s[1], &rwork[ie], dum, &c__1, dum, &
@@ -5318,7 +5356,7 @@ L50:
 
 /*                 WORK( IVT ) is M by N */
 
-		    claset_("F", m, n, &c_b55, &c_b55, &work[ivt], &ldwkvt);
+		    claset_("F", m, n, &c_b56, &c_b56, &work[ivt], &ldwkvt);
 		    nwork = ivt + ldwkvt * *n;
 		} else {
 
@@ -5441,7 +5479,7 @@ L50:
                 (RWorkspace: M*M)
 */
 
-		claset_("F", m, n, &c_b55, &c_b55, &vt[vt_offset], ldvt);
+		claset_("F", m, n, &c_b56, &c_b56, &vt[vt_offset], ldvt);
 		clacp2_("F", m, m, &rwork[irvt], m, &vt[vt_offset], ldvt);
 		i__1 = *lwork - nwork + 1;
 		cunmbr_("P", "R", "C", m, n, m, &a[a_offset], lda, &work[
@@ -5477,12 +5515,9 @@ L50:
 		cunmbr_("Q", "L", "N", m, m, n, &a[a_offset], lda, &work[
 			itauq], &u[u_offset], ldu, &work[nwork], &i__1, &ierr);
 
-/*              Set the right corner of VT to identity matrix */
+/*              Set all of VT to identity matrix */
 
-		i__1 = *n - *m;
-		i__2 = *n - *m;
-		claset_("F", &i__1, &i__2, &c_b55, &c_b56, &vt[*m + 1 + (*m +
-			1) * vt_dim1], ldvt);
+		claset_("F", n, n, &c_b56, &c_b57, &vt[vt_offset], ldvt);
 
 /*
                 Copy real matrix RWORK(IRVT) to complex matrix VT
@@ -5491,7 +5526,6 @@ L50:
                 (RWorkspace: M*M)
 */
 
-		claset_("F", n, n, &c_b55, &c_b55, &vt[vt_offset], ldvt);
 		clacp2_("F", m, m, &rwork[irvt], m, &vt[vt_offset], ldvt);
 		i__1 = *lwork - nwork + 1;
 		cunmbr_("P", "R", "C", n, n, m, &a[a_offset], lda, &work[
@@ -5510,9 +5544,19 @@ L50:
 	    slascl_("G", &c__0, &c__0, &bignum, &anrm, &minmn, &c__1, &s[1], &
 		    minmn, &ierr);
 	}
+	if (*info != 0 && anrm > bignum) {
+	    i__1 = minmn - 1;
+	    slascl_("G", &c__0, &c__0, &bignum, &anrm, &i__1, &c__1, &rwork[
+		    ie], &minmn, &ierr);
+	}
 	if (anrm < smlnum) {
 	    slascl_("G", &c__0, &c__0, &smlnum, &anrm, &minmn, &c__1, &s[1], &
 		    minmn, &ierr);
+	}
+	if (*info != 0 && anrm < smlnum) {
+	    i__1 = minmn - 1;
+	    slascl_("G", &c__0, &c__0, &smlnum, &anrm, &i__1, &c__1, &rwork[
+		    ie], &minmn, &ierr);
 	}
     }
 
@@ -5539,10 +5583,10 @@ L50:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -5652,23 +5696,27 @@ L50:
     complex q__1;
 
     /* Builtin functions */
+    double c_abs(complex *);
     void c_div(complex *, complex *, complex *);
 
     /* Local variables */
-    static integer j, jp;
+    static integer i__, j, jp;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
 	    integer *), cgeru_(integer *, integer *, complex *, complex *,
-	    integer *, complex *, integer *, complex *, integer *), cswap_(
 	    integer *, complex *, integer *, complex *, integer *);
+    static real sfmin;
+    extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
+	    complex *, integer *);
     extern integer icamax_(integer *, complex *, integer *);
+    extern doublereal slamch_(char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -5747,6 +5795,10 @@ L50:
 	return 0;
     }
 
+/*     Compute machine safe minimum */
+
+    sfmin = slamch_("S");
+
     i__1 = min(*m,*n);
     for (j = 1; j <= i__1; ++j) {
 
@@ -5767,9 +5819,20 @@ L50:
 /*           Compute elements J+1:M of J-th column. */
 
 	    if (j < *m) {
-		i__2 = *m - j;
-		c_div(&q__1, &c_b56, &a[j + j * a_dim1]);
-		cscal_(&i__2, &q__1, &a[j + 1 + j * a_dim1], &c__1);
+		if (c_abs(&a[j + j * a_dim1]) >= sfmin) {
+		    i__2 = *m - j;
+		    c_div(&q__1, &c_b57, &a[j + j * a_dim1]);
+		    cscal_(&i__2, &q__1, &a[j + 1 + j * a_dim1], &c__1);
+		} else {
+		    i__2 = *m - j;
+		    for (i__ = 1; i__ <= i__2; ++i__) {
+			i__3 = j + i__ + j * a_dim1;
+			c_div(&q__1, &a[j + i__ + j * a_dim1], &a[j + j *
+				a_dim1]);
+			a[i__3].r = q__1.r, a[i__3].i = q__1.i;
+/* L20: */
+		    }
+		}
 	    }
 
 	} else if (*info == 0) {
@@ -5821,10 +5884,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -5963,7 +6026,7 @@ L50:
 
 		i__3 = *n - j - jb + 1;
 		ctrsm_("Left", "Lower", "No transpose", "Unit", &jb, &i__3, &
-			c_b56, &a[j + j * a_dim1], lda, &a[j + (j + jb) *
+			c_b57, &a[j + j * a_dim1], lda, &a[j + (j + jb) *
 			a_dim1], lda);
 		if (j + jb <= *m) {
 
@@ -5974,7 +6037,7 @@ L50:
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemm_("No transpose", "No transpose", &i__3, &i__4, &jb,
 			    &q__1, &a[j + jb + j * a_dim1], lda, &a[j + (j +
-			    jb) * a_dim1], lda, &c_b56, &a[j + jb + (j + jb) *
+			    jb) * a_dim1], lda, &c_b57, &a[j + jb + (j + jb) *
 			     a_dim1], lda);
 		}
 	    }
@@ -6005,10 +6068,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6111,12 +6174,12 @@ L50:
 
 /*        Solve L*X = B, overwriting B with X. */
 
-	ctrsm_("Left", "Lower", "No transpose", "Unit", n, nrhs, &c_b56, &a[
+	ctrsm_("Left", "Lower", "No transpose", "Unit", n, nrhs, &c_b57, &a[
 		a_offset], lda, &b[b_offset], ldb);
 
 /*        Solve U*X = B, overwriting B with X. */
 
-	ctrsm_("Left", "Upper", "No transpose", "Non-unit", n, nrhs, &c_b56, &
+	ctrsm_("Left", "Upper", "No transpose", "Non-unit", n, nrhs, &c_b57, &
 		a[a_offset], lda, &b[b_offset], ldb);
     } else {
 
@@ -6126,12 +6189,12 @@ L50:
           Solve U'*X = B, overwriting B with X.
 */
 
-	ctrsm_("Left", "Upper", trans, "Non-unit", n, nrhs, &c_b56, &a[
+	ctrsm_("Left", "Upper", trans, "Non-unit", n, nrhs, &c_b57, &a[
 		a_offset], lda, &b[b_offset], ldb);
 
 /*        Solve L'*X = B, overwriting B with X. */
 
-	ctrsm_("Left", "Lower", trans, "Unit", n, nrhs, &c_b56, &a[a_offset],
+	ctrsm_("Left", "Lower", trans, "Unit", n, nrhs, &c_b57, &a[a_offset],
 		lda, &b[b_offset], ldb);
 
 /*        Apply row interchanges to the solution vectors. */
@@ -6150,8 +6213,8 @@ L50:
 	integer *lrwork, integer *iwork, integer *liwork, integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    real r__1, r__2;
+    integer a_dim1, a_offset, i__1, i__2;
+    real r__1;
 
     /* Builtin functions */
     double sqrt(doublereal);
@@ -6184,6 +6247,8 @@ L50:
 	    *, real *, real *, complex *, complex *, integer *, integer *), clacpy_(char *, integer *, integer *, complex *, integer
 	    *, complex *, integer *);
     static real safmin;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static real bignum;
     static integer indtau, indrwk, indwrk, liwmin;
@@ -6198,10 +6263,10 @@ L50:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6250,7 +6315,7 @@ L50:
     W       (output) REAL array, dimension (N)
             If INFO = 0, the eigenvalues in ascending order.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -6260,9 +6325,10 @@ L50:
             If JOBZ  = 'V' and N > 1, LWORK must be at least 2*N + N**2.
 
             If LWORK = -1, then a workspace query is assumed; the routine
-            only calculates the optimal size of the WORK array, returns
-            this value as the first entry of the WORK array, and no error
-            message related to LWORK is issued by XERBLA.
+            only calculates the optimal sizes of the WORK, RWORK and
+            IWORK arrays, returns these values as the first entries of
+            the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
     RWORK   (workspace/output) REAL array,
                                            dimension (LRWORK)
@@ -6276,11 +6342,12 @@ L50:
                            1 + 5*N + 2*N**2.
 
             If LRWORK = -1, then a workspace query is assumed; the
-            routine only calculates the optimal size of the RWORK array,
-            returns this value as the first entry of the RWORK array, and
-            no error message related to LRWORK is issued by XERBLA.
+            routine only calculates the optimal sizes of the WORK, RWORK
+            and IWORK arrays, returns these values as the first entries
+            of the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
-    IWORK   (workspace/output) INTEGER array, dimension (LIWORK)
+    IWORK   (workspace/output) INTEGER array, dimension (MAX(1,LIWORK))
             On exit, if INFO = 0, IWORK(1) returns the optimal LIWORK.
 
     LIWORK  (input) INTEGER
@@ -6290,16 +6357,21 @@ L50:
             If JOBZ  = 'V' and N > 1, LIWORK must be at least 3 + 5*N.
 
             If LIWORK = -1, then a workspace query is assumed; the
-            routine only calculates the optimal size of the IWORK array,
-            returns this value as the first entry of the IWORK array, and
-            no error message related to LIWORK is issued by XERBLA.
+            routine only calculates the optimal sizes of the WORK, RWORK
+            and IWORK arrays, returns these values as the first entries
+            of the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
     INFO    (output) INTEGER
             = 0:  successful exit
             < 0:  if INFO = -i, the i-th argument had an illegal value
-            > 0:  if INFO = i, the algorithm failed to converge; i
-                  off-diagonal elements of an intermediate tridiagonal
-                  form did not converge to zero.
+            > 0:  if INFO = i and JOBZ = 'N', then the algorithm failed
+                  to converge; i off-diagonal elements of an intermediate
+                  tridiagonal form did not converge to zero;
+                  if INFO = i and JOBZ = 'V', then the algorithm failed
+                  to compute an eigenvalue while working on the submatrix
+                  lying in rows and columns INFO/(N+1) through
+                  mod(INFO,N+1).
 
     Further Details
     ===============
@@ -6308,6 +6380,7 @@ L50:
        Jeff Rutter, Computer Science Division, University of California
        at Berkeley, USA
 
+    Modified description of INFO. Sven, 16 Feb 05.
     =====================================================================
 
 
@@ -6329,29 +6402,6 @@ L50:
     lquery = *lwork == -1 || *lrwork == -1 || *liwork == -1;
 
     *info = 0;
-    if (*n <= 1) {
-	lwmin = 1;
-	lrwmin = 1;
-	liwmin = 1;
-	lopt = lwmin;
-	lropt = lrwmin;
-	liopt = liwmin;
-    } else {
-	if (wantz) {
-	    lwmin = (*n << 1) + *n * *n;
-/* Computing 2nd power */
-	    i__1 = *n;
-	    lrwmin = *n * 5 + 1 + (i__1 * i__1 << 1);
-	    liwmin = *n * 5 + 3;
-	} else {
-	    lwmin = *n + 1;
-	    lrwmin = *n;
-	    liwmin = 1;
-	}
-	lopt = lwmin;
-	lropt = lrwmin;
-	liopt = liwmin;
-    }
     if (! (wantz || lsame_(jobz, "N"))) {
 	*info = -1;
     } else if (! (lower || lsame_(uplo, "U"))) {
@@ -6360,18 +6410,46 @@ L50:
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
-    } else if (*lwork < lwmin && ! lquery) {
-	*info = -8;
-    } else if (*lrwork < lrwmin && ! lquery) {
-	*info = -10;
-    } else if (*liwork < liwmin && ! lquery) {
-	*info = -12;
     }
 
     if (*info == 0) {
+	if (*n <= 1) {
+	    lwmin = 1;
+	    lrwmin = 1;
+	    liwmin = 1;
+	    lopt = lwmin;
+	    lropt = lrwmin;
+	    liopt = liwmin;
+	} else {
+	    if (wantz) {
+		lwmin = (*n << 1) + *n * *n;
+/* Computing 2nd power */
+		i__1 = *n;
+		lrwmin = *n * 5 + 1 + (i__1 * i__1 << 1);
+		liwmin = *n * 5 + 3;
+	    } else {
+		lwmin = *n + 1;
+		lrwmin = *n;
+		liwmin = 1;
+	    }
+/* Computing MAX */
+	    i__1 = lwmin, i__2 = *n + ilaenv_(&c__1, "CHETRD", uplo, n, &c_n1,
+		     &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+	    lopt = max(i__1,i__2);
+	    lropt = lrwmin;
+	    liopt = liwmin;
+	}
 	work[1].r = (real) lopt, work[1].i = 0.f;
 	rwork[1] = (real) lropt;
 	iwork[1] = liopt;
+
+	if (*lwork < lwmin && ! lquery) {
+	    *info = -8;
+	} else if (*lrwork < lrwmin && ! lquery) {
+	    *info = -10;
+	} else if (*liwork < liwmin && ! lquery) {
+	    *info = -12;
+	}
     }
 
     if (*info != 0) {
@@ -6419,7 +6497,7 @@ L50:
 	sigma = rmax / anrm;
     }
     if (iscale == 1) {
-	clascl_(uplo, &c__0, &c__0, &c_b871, &sigma, n, n, &a[a_offset], lda,
+	clascl_(uplo, &c__0, &c__0, &c_b894, &sigma, n, n, &a[a_offset], lda,
 		info);
     }
 
@@ -6435,10 +6513,6 @@ L50:
     llrwk = *lrwork - indrwk + 1;
     chetrd_(uplo, n, &a[a_offset], lda, &w[1], &rwork[inde], &work[indtau], &
 	    work[indwrk], &llwork, &iinfo);
-/* Computing MAX */
-    i__1 = indwrk;
-    r__1 = (real) lopt, r__2 = (real) (*n) + work[i__1].r;
-    lopt = dmax(r__1,r__2);
 
 /*
        For eigenvalues only, call SSTERF.  For eigenvectors, first call
@@ -6456,14 +6530,6 @@ L50:
 	cunmtr_("L", uplo, "N", n, n, &a[a_offset], lda, &work[indtau], &work[
 		indwrk], n, &work[indwk2], &llwrk2, &iinfo);
 	clacpy_("A", n, n, &work[indwrk], n, &a[a_offset], lda);
-/*
-   Computing MAX
-   Computing 2nd power
-*/
-	i__3 = *n;
-	i__4 = indwk2;
-	i__1 = lopt, i__2 = *n + i__3 * i__3 + (integer) work[i__4].r;
-	lopt = max(i__1,i__2);
     }
 
 /*     If matrix was scaled, then rescale eigenvalues appropriately. */
@@ -6515,10 +6581,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6688,7 +6754,7 @@ L50:
 /*              Compute  x := tau * A * v  storing x in TAU(1:i) */
 
 		chemv_(uplo, &i__, &taui, &a[a_offset], lda, &a[(i__ + 1) *
-			a_dim1 + 1], &c__1, &c_b55, &tau[1], &c__1)
+			a_dim1 + 1], &c__1, &c_b56, &tau[1], &c__1)
 			;
 
 /*              Compute  w := x - 1/2 * tau * (x'*v) * v */
@@ -6768,7 +6834,7 @@ L50:
 
 		i__2 = *n - i__;
 		chemv_(uplo, &i__2, &taui, &a[i__ + 1 + (i__ + 1) * a_dim1],
-			lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &c_b55, &tau[
+			lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &c_b56, &tau[
 			i__], &c__1);
 
 /*              Compute  w := x - 1/2 * tau * (x'*v) * v */
@@ -6850,10 +6916,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6907,7 +6973,7 @@ L50:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -7095,7 +7161,7 @@ L50:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cher2k_(uplo, "No transpose", &i__3, &nb, &q__1, &a[i__ * a_dim1
-		    + 1], lda, &work[1], &ldwork, &c_b871, &a[a_offset], lda);
+		    + 1], lda, &work[1], &ldwork, &c_b894, &a[a_offset], lda);
 
 /*
              Copy superdiagonal elements back into A, and diagonal
@@ -7144,7 +7210,7 @@ L50:
 	    i__3 = *n - i__ - nb + 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cher2k_(uplo, "No transpose", &i__3, &nb, &q__1, &a[i__ + nb +
-		    i__ * a_dim1], lda, &work[nb + 1], &ldwork, &c_b871, &a[
+		    i__ * a_dim1], lda, &work[nb + 1], &ldwork, &c_b894, &a[
 		    i__ + nb + (i__ + nb) * a_dim1], lda);
 
 /*
@@ -7185,160 +7251,259 @@ L50:
 {
     /* System generated locals */
     address a__1[2];
-    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4[2],
-	    i__5, i__6;
-    real r__1, r__2, r__3, r__4;
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3[2];
+    real r__1, r__2, r__3;
     complex q__1;
     char ch__1[2];
 
     /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
     /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
-    static integer i__, j, k, l;
-    static complex s[225]	/* was [15][15] */, v[16];
-    static integer i1, i2, ii, nh, nr, ns, nv;
-    static complex vv[16];
-    static integer itn;
-    static complex tau;
-    static integer its;
-    static real ulp, tst1;
-    static integer maxb, ierr;
-    static real unfl;
-    static complex temp;
-    static real ovfl;
-    extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *);
+    static complex hl[2401]	/* was [49][49] */;
+    static integer kbot, nmin;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
-	    , integer *), ccopy_(integer *, complex *, integer *,
+    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
 	    complex *, integer *);
-    static integer itemp;
-    static real rtemp;
-    static logical initz, wantt, wantz;
-    static real rwork[1];
-    extern doublereal slapy2_(real *, real *);
-    extern /* Subroutine */ int slabad_(real *, real *), clarfg_(integer *,
-	    complex *, complex *, integer *, complex *);
-    extern integer icamax_(integer *, complex *, integer *);
-    extern doublereal slamch_(char *), clanhs_(char *, integer *,
-	    complex *, integer *, real *);
-    extern /* Subroutine */ int csscal_(integer *, real *, complex *, integer
-	    *), clahqr_(logical *, logical *, integer *, integer *, integer *,
-	     complex *, integer *, complex *, integer *, integer *, complex *,
-	     integer *, integer *), clacpy_(char *, integer *, integer *,
+    static logical initz;
+    static complex workl[49];
+    static logical wantt, wantz;
+    extern /* Subroutine */ int claqr0_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, complex *, integer *, integer *),
+	     clahqr_(logical *, logical *, integer *, integer *, integer *,
+	    complex *, integer *, complex *, integer *, integer *, complex *,
+	    integer *, integer *), clacpy_(char *, integer *, integer *,
 	    complex *, integer *, complex *, integer *), claset_(char
 	    *, integer *, integer *, complex *, complex *, complex *, integer
 	    *), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
-    extern /* Subroutine */ int clarfx_(char *, integer *, integer *, complex
-	    *, complex *, complex *, integer *, complex *);
-    static real smlnum;
     static logical lquery;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK computational routine (version 3.2.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       June 2010
+
+       Purpose
+       =======
+
+       CHSEQR computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**H, where T is an upper triangular matrix (the
+       Schur form), and Z is the unitary matrix of Schur vectors.
+
+       Optionally Z may be postmultiplied into an input unitary
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the unitary matrix Q:  A = Q*H*Q**H = (QZ)*H*(QZ)**H.
+
+       Arguments
+       =========
+
+       JOB   (input) CHARACTER*1
+             = 'E':  compute eigenvalues only;
+             = 'S':  compute eigenvalues and the Schur form T.
+
+       COMPZ (input) CHARACTER*1
+             = 'N':  no Schur vectors are computed;
+             = 'I':  Z is initialized to the unit matrix and the matrix Z
+                     of Schur vectors of H is returned;
+             = 'V':  Z must contain an unitary matrix Q on entry, and
+                     the product Q*Z is returned.
+
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
+
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N. ILO and IHI are normally
+             set by a previous call to CGEBAL, and then passed to CGEHRD
+             when the matrix output by CGEBAL is reduced to Hessenberg
+             form. Otherwise ILO and IHI should be set to 1 and N
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
+
+       H     (input/output) COMPLEX array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and JOB = 'S', H contains the upper
+             triangular matrix T from the Schur decomposition (the
+             Schur form). If INFO = 0 and JOB = 'E', the contents of
+             H are unspecified on exit.  (The output value of H when
+             INFO.GT.0 is given under the description of INFO below.)
+
+             Unlike earlier versions of CHSEQR, this subroutine may
+             explicitly H(i,j) = 0 for i.GT.j and j = 1, 2, ... ILO-1
+             or j = IHI+1, IHI+2, ... N.
+
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
+
+       W        (output) COMPLEX array, dimension (N)
+             The computed eigenvalues. If JOB = 'S', the eigenvalues are
+             stored in the same order as on the diagonal of the Schur
+             form returned in H, with W(i) = H(i,i).
+
+       Z     (input/output) COMPLEX array, dimension (LDZ,N)
+             If COMPZ = 'N', Z is not referenced.
+             If COMPZ = 'I', on entry Z need not be set and on exit,
+             if INFO = 0, Z contains the unitary matrix Z of the Schur
+             vectors of H.  If COMPZ = 'V', on entry Z must contain an
+             N-by-N matrix Q, which is assumed to be equal to the unit
+             matrix except for the submatrix Z(ILO:IHI,ILO:IHI). On exit,
+             if INFO = 0, Z contains Q*Z.
+             Normally Q is the unitary matrix generated by CUNGHR
+             after the call to CGEHRD which formed the Hessenberg matrix
+             H. (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if COMPZ = 'I' or
+             COMPZ = 'V', then LDZ.GE.MAX(1,N).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) COMPLEX array, dimension (LWORK)
+             On exit, if INFO = 0, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient and delivers very good and sometimes
+             optimal performance.  However, LWORK as large as 11*N
+             may be required for optimal performance.  A workspace
+             query is recommended to determine the optimal workspace
+             size.
+
+             If LWORK = -1, then CHSEQR does a workspace query.
+             In this case, CHSEQR checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
 
 
-    Purpose
-    =======
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .LT. 0:  if INFO = -i, the i-th argument had an illegal
+                      value
+             .GT. 0:  if INFO = i, CHSEQR failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
 
-    CHSEQR computes the eigenvalues of a complex upper Hessenberg
-    matrix H, and, optionally, the matrices T and Z from the Schur
-    decomposition H = Z T Z**H, where T is an upper triangular matrix
-    (the Schur form), and Z is the unitary matrix of Schur vectors.
+                  If INFO .GT. 0 and JOB = 'E', then on exit, the
+                  remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
 
-    Optionally Z may be postmultiplied into an input unitary matrix Q,
-    so that this routine can give the Schur factorization of a matrix A
-    which has been reduced to the Hessenberg form H by the unitary
-    matrix Q:  A = Q*H*Q**H = (QZ)*T*(QZ)**H.
+                  If INFO .GT. 0 and JOB   = 'S', then on exit
 
-    Arguments
-    =========
+             (*)  (initial value of H)*U  = U*(final value of H)
 
-    JOB     (input) CHARACTER*1
-            = 'E': compute eigenvalues only;
-            = 'S': compute eigenvalues and the Schur form T.
+                  where U is a unitary matrix.  The final
+                  value of  H is upper Hessenberg and triangular in
+                  rows and columns INFO+1 through IHI.
 
-    COMPZ   (input) CHARACTER*1
-            = 'N': no Schur vectors are computed;
-            = 'I': Z is initialized to the unit matrix and the matrix Z
-                   of Schur vectors of H is returned;
-            = 'V': Z must contain an unitary matrix Q on entry, and
-                   the product Q*Z is returned.
+                  If INFO .GT. 0 and COMPZ = 'V', then on exit
 
-    N       (input) INTEGER
-            The order of the matrix H.  N >= 0.
+                    (final value of Z)  =  (initial value of Z)*U
 
-    ILO     (input) INTEGER
-    IHI     (input) INTEGER
-            It is assumed that H is already upper triangular in rows
-            and columns 1:ILO-1 and IHI+1:N. ILO and IHI are normally
-            set by a previous call to CGEBAL, and then passed to CGEHRD
-            when the matrix output by CGEBAL is reduced to Hessenberg
-            form. Otherwise ILO and IHI should be set to 1 and N
-            respectively.
-            1 <= ILO <= IHI <= N, if N > 0; ILO=1 and IHI=0, if N=0.
+                  where U is the unitary matrix in (*) (regard-
+                  less of the value of JOB.)
 
-    H       (input/output) COMPLEX array, dimension (LDH,N)
-            On entry, the upper Hessenberg matrix H.
-            On exit, if JOB = 'S', H contains the upper triangular matrix
-            T from the Schur decomposition (the Schur form). If
-            JOB = 'E', the contents of H are unspecified on exit.
+                  If INFO .GT. 0 and COMPZ = 'I', then on exit
+                        (final value of Z)  = U
+                  where U is the unitary matrix in (*) (regard-
+                  less of the value of JOB.)
 
-    LDH     (input) INTEGER
-            The leading dimension of the array H. LDH >= max(1,N).
+                  If INFO .GT. 0 and COMPZ = 'N', then Z is not
+                  accessed.
 
-    W       (output) COMPLEX array, dimension (N)
-            The computed eigenvalues. If JOB = 'S', the eigenvalues are
-            stored in the same order as on the diagonal of the Schur form
-            returned in H, with W(i) = H(i,i).
+       ================================================================
+               Default values supplied by
+               ILAENV(ISPEC,'CHSEQR',JOB(:1)//COMPZ(:1),N,ILO,IHI,LWORK).
+               It is suggested that these defaults be adjusted in order
+               to attain best performance in each particular
+               computational environment.
 
-    Z       (input/output) COMPLEX array, dimension (LDZ,N)
-            If COMPZ = 'N': Z is not referenced.
-            If COMPZ = 'I': on entry, Z need not be set, and on exit, Z
-            contains the unitary matrix Z of the Schur vectors of H.
-            If COMPZ = 'V': on entry Z must contain an N-by-N matrix Q,
-            which is assumed to be equal to the unit matrix except for
-            the submatrix Z(ILO:IHI,ILO:IHI); on exit Z contains Q*Z.
-            Normally Q is the unitary matrix generated by CUNGHR after
-            the call to CGEHRD which formed the Hessenberg matrix H.
+              ISPEC=12: The CLAHQR vs CLAQR0 crossover point.
+                        Default: 75. (Must be at least 11.)
 
-    LDZ     (input) INTEGER
-            The leading dimension of the array Z.
-            LDZ >= max(1,N) if COMPZ = 'I' or 'V'; LDZ >= 1 otherwise.
+              ISPEC=13: Recommended deflation window size.
+                        This depends on ILO, IHI and NS.  NS is the
+                        number of simultaneous shifts returned
+                        by ILAENV(ISPEC=15).  (See ISPEC=15 below.)
+                        The default for (IHI-ILO+1).LE.500 is NS.
+                        The default for (IHI-ILO+1).GT.500 is 3*NS/2.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
-            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+              ISPEC=14: Nibble crossover point. (See IPARMQ for
+                        details.)  Default: 14% of deflation window
+                        size.
 
-    LWORK   (input) INTEGER
-            The dimension of the array WORK.  LWORK >= max(1,N).
+              ISPEC=15: Number of simultaneous shifts in a multishift
+                        QR iteration.
 
-            If LWORK = -1, then a workspace query is assumed; the routine
-            only calculates the optimal size of the WORK array, returns
-            this value as the first entry of the WORK array, and no error
-            message related to LWORK is issued by XERBLA.
+                        If IHI-ILO+1 is ...
 
-    INFO    (output) INTEGER
-            = 0:  successful exit
-            < 0:  if INFO = -i, the i-th argument had an illegal value
-            > 0:  if INFO = i, CHSEQR failed to compute all the
-                  eigenvalues in a total of 30*(IHI-ILO+1) iterations;
-                  elements 1:ilo-1 and i+1:n of W contain those
-                  eigenvalues which have been successfully computed.
+                        greater than      ...but less    ... the
+                        or equal to ...      than        default is
 
-    =====================================================================
+                             1               30          NS =   2(+)
+                            30               60          NS =   4(+)
+                            60              150          NS =  10(+)
+                           150              590          NS =  **
+                           590             3000          NS =  64
+                          3000             6000          NS = 128
+                          6000             infinity      NS = 256
 
+                    (+)  By default some or all matrices of this order
+                         are passed to the implicit double shift routine
+                         CLAHQR and this parameter is ignored.  See
+                         ISPEC=12 above and comments in IPARMQ for
+                         details.
 
-       Decode and test the input parameters
+                   (**)  The asterisks (**) indicate an ad-hoc
+                         function of N increasing from 10 to 64.
+
+              ISPEC=16: Select structured matrix multiply.
+                        If the number of simultaneous shifts (specified
+                        by ISPEC=15) is less than 14, then the default
+                        for ISPEC=16 is 0.  Otherwise the default for
+                        ISPEC=16 is 2.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    CLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== NL allocates some local workspace to help small matrices
+       .    through a rare CLAHQR failure.  NL .GT. NTINY = 11 is
+       .    required and NL .LE. NMIN = ILAENV(ISPEC=12,...) is recom-
+       .    mended.  (The default value of NMIN is 75.)  Using NL = 49
+       .    allows up to six simultaneous shifts and a 16-by-16
+       .    deflation window.  ====
+
+       ==== Decode and check the input parameters. ====
 */
 
     /* Parameter adjustments */
@@ -7355,11 +7520,12 @@ L50:
     wantt = lsame_(job, "S");
     initz = lsame_(compz, "I");
     wantz = initz || lsame_(compz, "V");
+    r__1 = (real) max(1,*n);
+    q__1.r = r__1, q__1.i = 0.f;
+    work[1].r = q__1.r, work[1].i = q__1.i;
+    lquery = *lwork == -1;
 
     *info = 0;
-    i__1 = max(1,*n);
-    work[1].r = (real) i__1, work[1].i = 0.f;
-    lquery = *lwork == -1;
     if (! lsame_(job, "E") && ! wantt) {
 	*info = -1;
     } else if (! lsame_(compz, "N") && ! wantz) {
@@ -7377,451 +7543,162 @@ L50:
     } else if (*lwork < max(1,*n) && ! lquery) {
 	*info = -12;
     }
+
     if (*info != 0) {
+
+/*        ==== Quick return in case of invalid argument. ==== */
+
 	i__1 = -(*info);
 	xerbla_("CHSEQR", &i__1);
 	return 0;
+
+    } else if (*n == 0) {
+
+/*        ==== Quick return in case N = 0; nothing to do. ==== */
+
+	return 0;
+
     } else if (lquery) {
-	return 0;
-    }
 
-/*     Initialize Z, if necessary */
+/*        ==== Quick return in case of a workspace query ==== */
 
-    if (initz) {
-	claset_("Full", n, n, &c_b55, &c_b56, &z__[z_offset], ldz);
-    }
-
-/*     Store the eigenvalues isolated by CGEBAL. */
-
-    i__1 = *ilo - 1;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	i__2 = i__;
-	i__3 = i__ + i__ * h_dim1;
-	w[i__2].r = h__[i__3].r, w[i__2].i = h__[i__3].i;
-/* L10: */
-    }
-    i__1 = *n;
-    for (i__ = *ihi + 1; i__ <= i__1; ++i__) {
-	i__2 = i__;
-	i__3 = i__ + i__ * h_dim1;
-	w[i__2].r = h__[i__3].r, w[i__2].i = h__[i__3].i;
-/* L20: */
-    }
-
-/*     Quick return if possible. */
-
-    if (*n == 0) {
-	return 0;
-    }
-    if (*ilo == *ihi) {
-	i__1 = *ilo;
-	i__2 = *ilo + *ilo * h_dim1;
-	w[i__1].r = h__[i__2].r, w[i__1].i = h__[i__2].i;
-	return 0;
-    }
-
+	claqr0_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1], ilo,
+		ihi, &z__[z_offset], ldz, &work[1], lwork, info);
 /*
-       Set rows and columns ILO to IHI to zero below the first
-       subdiagonal.
+          ==== Ensure reported workspace size is backward-compatible with
+          .    previous LAPACK versions. ====
+   Computing MAX
 */
+	r__2 = work[1].r, r__3 = (real) max(1,*n);
+	r__1 = dmax(r__2,r__3);
+	q__1.r = r__1, q__1.i = 0.f;
+	work[1].r = q__1.r, work[1].i = q__1.i;
+	return 0;
 
-    i__1 = *ihi - 2;
-    for (j = *ilo; j <= i__1; ++j) {
-	i__2 = *n;
-	for (i__ = j + 2; i__ <= i__2; ++i__) {
-	    i__3 = i__ + j * h_dim1;
-	    h__[i__3].r = 0.f, h__[i__3].i = 0.f;
-/* L30: */
-	}
-/* L40: */
-    }
-    nh = *ihi - *ilo + 1;
-
-/*
-       I1 and I2 are the indices of the first row and last column of H
-       to which transformations must be applied. If eigenvalues only are
-       being computed, I1 and I2 are re-set inside the main loop.
-*/
-
-    if (wantt) {
-	i1 = 1;
-	i2 = *n;
     } else {
-	i1 = *ilo;
-	i2 = *ihi;
-    }
 
-/*     Ensure that the subdiagonal elements are real. */
+/*        ==== copy eigenvalues isolated by CGEBAL ==== */
 
-    i__1 = *ihi;
-    for (i__ = *ilo + 1; i__ <= i__1; ++i__) {
-	i__2 = i__ + (i__ - 1) * h_dim1;
-	temp.r = h__[i__2].r, temp.i = h__[i__2].i;
-	if (r_imag(&temp) != 0.f) {
-	    r__1 = temp.r;
-	    r__2 = r_imag(&temp);
-	    rtemp = slapy2_(&r__1, &r__2);
-	    i__2 = i__ + (i__ - 1) * h_dim1;
-	    h__[i__2].r = rtemp, h__[i__2].i = 0.f;
-	    q__1.r = temp.r / rtemp, q__1.i = temp.i / rtemp;
-	    temp.r = q__1.r, temp.i = q__1.i;
-	    if (i2 > i__) {
-		i__2 = i2 - i__;
-		r_cnjg(&q__1, &temp);
-		cscal_(&i__2, &q__1, &h__[i__ + (i__ + 1) * h_dim1], ldh);
-	    }
-	    i__2 = i__ - i1;
-	    cscal_(&i__2, &temp, &h__[i1 + i__ * h_dim1], &c__1);
-	    if (i__ < *ihi) {
-		i__2 = i__ + 1 + i__ * h_dim1;
-		i__3 = i__ + 1 + i__ * h_dim1;
-		q__1.r = temp.r * h__[i__3].r - temp.i * h__[i__3].i, q__1.i =
-			 temp.r * h__[i__3].i + temp.i * h__[i__3].r;
-		h__[i__2].r = q__1.r, h__[i__2].i = q__1.i;
-	    }
-	    if (wantz) {
-		cscal_(&nh, &temp, &z__[*ilo + i__ * z_dim1], &c__1);
-	    }
+	if (*ilo > 1) {
+	    i__1 = *ilo - 1;
+	    i__2 = *ldh + 1;
+	    ccopy_(&i__1, &h__[h_offset], &i__2, &w[1], &c__1);
 	}
-/* L50: */
-    }
+	if (*ihi < *n) {
+	    i__1 = *n - *ihi;
+	    i__2 = *ldh + 1;
+	    ccopy_(&i__1, &h__[*ihi + 1 + (*ihi + 1) * h_dim1], &i__2, &w[*
+		    ihi + 1], &c__1);
+	}
+
+/*        ==== Initialize Z, if requested ==== */
+
+	if (initz) {
+	    claset_("A", n, n, &c_b56, &c_b57, &z__[z_offset], ldz)
+		    ;
+	}
+
+/*        ==== Quick return if possible ==== */
+
+	if (*ilo == *ihi) {
+	    i__1 = *ilo;
+	    i__2 = *ilo + *ilo * h_dim1;
+	    w[i__1].r = h__[i__2].r, w[i__1].i = h__[i__2].i;
+	    return 0;
+	}
 
 /*
-       Determine the order of the multi-shift QR algorithm to be used.
+          ==== CLAHQR/CLAQR0 crossover point ====
 
    Writing concatenation
 */
-    i__4[0] = 1, a__1[0] = job;
-    i__4[1] = 1, a__1[1] = compz;
-    s_cat(ch__1, a__1, i__4, &c__2, (ftnlen)2);
-    ns = ilaenv_(&c__4, "CHSEQR", ch__1, n, ilo, ihi, &c_n1, (ftnlen)6, (
-	    ftnlen)2);
-/* Writing concatenation */
-    i__4[0] = 1, a__1[0] = job;
-    i__4[1] = 1, a__1[1] = compz;
-    s_cat(ch__1, a__1, i__4, &c__2, (ftnlen)2);
-    maxb = ilaenv_(&c__8, "CHSEQR", ch__1, n, ilo, ihi, &c_n1, (ftnlen)6, (
-	    ftnlen)2);
-    if (ns <= 1 || ns > nh || maxb >= nh) {
+	i__3[0] = 1, a__1[0] = job;
+	i__3[1] = 1, a__1[1] = compz;
+	s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+	nmin = ilaenv_(&c__12, "CHSEQR", ch__1, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nmin = max(11,nmin);
 
-/*        Use the standard double-shift algorithm */
+/*        ==== CLAQR0 for big matrices; CLAHQR for small ones ==== */
 
-	clahqr_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1], ilo,
-		ihi, &z__[z_offset], ldz, info);
-	return 0;
-    }
-    maxb = max(2,maxb);
-/* Computing MIN */
-    i__1 = min(ns,maxb);
-    ns = min(i__1,15);
-
-/*
-       Now 1 < NS <= MAXB < NH.
-
-       Set machine-dependent constants for the stopping criterion.
-       If norm(H) <= sqrt(OVFL), overflow should not occur.
-*/
-
-    unfl = slamch_("Safe minimum");
-    ovfl = 1.f / unfl;
-    slabad_(&unfl, &ovfl);
-    ulp = slamch_("Precision");
-    smlnum = unfl * (nh / ulp);
-
-/*     ITN is the total number of multiple-shift QR iterations allowed. */
-
-    itn = nh * 30;
-
-/*
-       The main loop begins here. I is the loop index and decreases from
-       IHI to ILO in steps of at most MAXB. Each iteration of the loop
-       works with the active submatrix in rows and columns L to I.
-       Eigenvalues I+1 to IHI have already converged. Either L = ILO, or
-       H(L,L-1) is negligible so that the matrix splits.
-*/
-
-    i__ = *ihi;
-L60:
-    if (i__ < *ilo) {
-	goto L180;
-    }
-
-/*
-       Perform multiple-shift QR iterations on rows and columns ILO to I
-       until a submatrix of order at most MAXB splits off at the bottom
-       because a subdiagonal element has become negligible.
-*/
-
-    l = *ilo;
-    i__1 = itn;
-    for (its = 0; its <= i__1; ++its) {
-
-/*        Look for a single small subdiagonal element. */
-
-	i__2 = l + 1;
-	for (k = i__; k >= i__2; --k) {
-	    i__3 = k - 1 + (k - 1) * h_dim1;
-	    i__5 = k + k * h_dim1;
-	    tst1 = (r__1 = h__[i__3].r, dabs(r__1)) + (r__2 = r_imag(&h__[k -
-		    1 + (k - 1) * h_dim1]), dabs(r__2)) + ((r__3 = h__[i__5]
-		    .r, dabs(r__3)) + (r__4 = r_imag(&h__[k + k * h_dim1]),
-		    dabs(r__4)));
-	    if (tst1 == 0.f) {
-		i__3 = i__ - l + 1;
-		tst1 = clanhs_("1", &i__3, &h__[l + l * h_dim1], ldh, rwork);
-	    }
-	    i__3 = k + (k - 1) * h_dim1;
-/* Computing MAX */
-	    r__2 = ulp * tst1;
-	    if ((r__1 = h__[i__3].r, dabs(r__1)) <= dmax(r__2,smlnum)) {
-		goto L80;
-	    }
-/* L70: */
-	}
-L80:
-	l = k;
-	if (l > *ilo) {
-
-/*           H(L,L-1) is negligible. */
-
-	    i__2 = l + (l - 1) * h_dim1;
-	    h__[i__2].r = 0.f, h__[i__2].i = 0.f;
-	}
-
-/*        Exit from loop if a submatrix of order <= MAXB has split off. */
-
-	if (l >= i__ - maxb + 1) {
-	    goto L170;
-	}
-
-/*
-          Now the active submatrix is in rows and columns L to I. If
-          eigenvalues only are being computed, only the active submatrix
-          need be transformed.
-*/
-
-	if (! wantt) {
-	    i1 = l;
-	    i2 = i__;
-	}
-
-	if (its == 20 || its == 30) {
-
-/*           Exceptional shifts. */
-
-	    i__2 = i__;
-	    for (ii = i__ - ns + 1; ii <= i__2; ++ii) {
-		i__3 = ii;
-		i__5 = ii + (ii - 1) * h_dim1;
-		i__6 = ii + ii * h_dim1;
-		r__3 = ((r__1 = h__[i__5].r, dabs(r__1)) + (r__2 = h__[i__6]
-			.r, dabs(r__2))) * 1.5f;
-		w[i__3].r = r__3, w[i__3].i = 0.f;
-/* L90: */
-	    }
+	if (*n > nmin) {
+	    claqr0_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1],
+		    ilo, ihi, &z__[z_offset], ldz, &work[1], lwork, info);
 	} else {
 
-/*           Use eigenvalues of trailing submatrix of order NS as shifts. */
+/*           ==== Small matrix ==== */
 
-	    clacpy_("Full", &ns, &ns, &h__[i__ - ns + 1 + (i__ - ns + 1) *
-		    h_dim1], ldh, s, &c__15);
-	    clahqr_(&c_false, &c_false, &ns, &c__1, &ns, s, &c__15, &w[i__ -
-		    ns + 1], &c__1, &ns, &z__[z_offset], ldz, &ierr);
-	    if (ierr > 0) {
+	    clahqr_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1],
+		    ilo, ihi, &z__[z_offset], ldz, info);
+
+	    if (*info > 0) {
 
 /*
-                If CLAHQR failed to compute all NS eigenvalues, use the
-                unconverged diagonal elements as the remaining shifts.
+                ==== A rare CLAHQR failure!  CLAQR0 sometimes succeeds
+                .    when CLAHQR fails. ====
 */
 
-		i__2 = ierr;
-		for (ii = 1; ii <= i__2; ++ii) {
-		    i__3 = i__ - ns + ii;
-		    i__5 = ii + ii * 15 - 16;
-		    w[i__3].r = s[i__5].r, w[i__3].i = s[i__5].i;
-/* L100: */
+		kbot = *info;
+
+		if (*n >= 49) {
+
+/*
+                   ==== Larger matrices have enough subdiagonal scratch
+                   .    space to call CLAQR0 directly. ====
+*/
+
+		    claqr0_(&wantt, &wantz, n, ilo, &kbot, &h__[h_offset],
+			    ldh, &w[1], ilo, ihi, &z__[z_offset], ldz, &work[
+			    1], lwork, info);
+
+		} else {
+
+/*
+                   ==== Tiny matrices don't have enough subdiagonal
+                   .    scratch space to benefit from CLAQR0.  Hence,
+                   .    tiny matrices must be copied into a larger
+                   .    array before calling CLAQR0. ====
+*/
+
+		    clacpy_("A", n, n, &h__[h_offset], ldh, hl, &c__49);
+		    i__1 = *n + 1 + *n * 49 - 50;
+		    hl[i__1].r = 0.f, hl[i__1].i = 0.f;
+		    i__1 = 49 - *n;
+		    claset_("A", &c__49, &i__1, &c_b56, &c_b56, &hl[(*n + 1) *
+			     49 - 49], &c__49);
+		    claqr0_(&wantt, &wantz, &c__49, ilo, &kbot, hl, &c__49, &
+			    w[1], ilo, ihi, &z__[z_offset], ldz, workl, &
+			    c__49, info);
+		    if (wantt || *info != 0) {
+			clacpy_("A", n, n, hl, &c__49, &h__[h_offset], ldh);
+		    }
 		}
 	    }
 	}
 
-/*
-          Form the first column of (G-w(1)) (G-w(2)) . . . (G-w(ns))
-          where G is the Hessenberg submatrix H(L:I,L:I) and w is
-          the vector of shifts (stored in W). The result is
-          stored in the local array V.
-*/
+/*        ==== Clear out the trash, if necessary. ==== */
 
-	v[0].r = 1.f, v[0].i = 0.f;
-	i__2 = ns + 1;
-	for (ii = 2; ii <= i__2; ++ii) {
-	    i__3 = ii - 1;
-	    v[i__3].r = 0.f, v[i__3].i = 0.f;
-/* L110: */
-	}
-	nv = 1;
-	i__2 = i__;
-	for (j = i__ - ns + 1; j <= i__2; ++j) {
-	    i__3 = nv + 1;
-	    ccopy_(&i__3, v, &c__1, vv, &c__1);
-	    i__3 = nv + 1;
-	    i__5 = j;
-	    q__1.r = -w[i__5].r, q__1.i = -w[i__5].i;
-	    cgemv_("No transpose", &i__3, &nv, &c_b56, &h__[l + l * h_dim1],
-		    ldh, vv, &c__1, &q__1, v, &c__1);
-	    ++nv;
-
-/*
-             Scale V(1:NV) so that max(abs(V(i))) = 1. If V is zero,
-             reset it to the unit vector.
-*/
-
-	    itemp = icamax_(&nv, v, &c__1);
-	    i__3 = itemp - 1;
-	    rtemp = (r__1 = v[i__3].r, dabs(r__1)) + (r__2 = r_imag(&v[itemp
-		    - 1]), dabs(r__2));
-	    if (rtemp == 0.f) {
-		v[0].r = 1.f, v[0].i = 0.f;
-		i__3 = nv;
-		for (ii = 2; ii <= i__3; ++ii) {
-		    i__5 = ii - 1;
-		    v[i__5].r = 0.f, v[i__5].i = 0.f;
-/* L120: */
-		}
-	    } else {
-		rtemp = dmax(rtemp,smlnum);
-		r__1 = 1.f / rtemp;
-		csscal_(&nv, &r__1, v, &c__1);
-	    }
-/* L130: */
+	if ((wantt || *info != 0) && *n > 2) {
+	    i__1 = *n - 2;
+	    i__2 = *n - 2;
+	    claset_("L", &i__1, &i__2, &c_b56, &c_b56, &h__[h_dim1 + 3], ldh);
 	}
 
-/*        Multiple-shift QR step */
-
-	i__2 = i__ - 1;
-	for (k = l; k <= i__2; ++k) {
-
 /*
-             The first iteration of this loop determines a reflection G
-             from the vector V and applies it from left and right to H,
-             thus creating a nonzero bulge below the subdiagonal.
+          ==== Ensure reported workspace size is backward-compatible with
+          .    previous LAPACK versions. ====
 
-             Each subsequent iteration determines a reflection G to
-             restore the Hessenberg form in the (K-1)th column, and thus
-             chases the bulge one step toward the bottom of the active
-             submatrix. NR is the order of G.
-
-   Computing MIN
+   Computing MAX
 */
-	    i__3 = ns + 1, i__5 = i__ - k + 1;
-	    nr = min(i__3,i__5);
-	    if (k > l) {
-		ccopy_(&nr, &h__[k + (k - 1) * h_dim1], &c__1, v, &c__1);
-	    }
-	    clarfg_(&nr, v, &v[1], &c__1, &tau);
-	    if (k > l) {
-		i__3 = k + (k - 1) * h_dim1;
-		h__[i__3].r = v[0].r, h__[i__3].i = v[0].i;
-		i__3 = i__;
-		for (ii = k + 1; ii <= i__3; ++ii) {
-		    i__5 = ii + (k - 1) * h_dim1;
-		    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
-/* L140: */
-		}
-	    }
-	    v[0].r = 1.f, v[0].i = 0.f;
-
-/*
-             Apply G' from the left to transform the rows of the matrix
-             in columns K to I2.
-*/
-
-	    i__3 = i2 - k + 1;
-	    r_cnjg(&q__1, &tau);
-	    clarfx_("Left", &nr, &i__3, v, &q__1, &h__[k + k * h_dim1], ldh, &
-		    work[1]);
-
-/*
-             Apply G from the right to transform the columns of the
-             matrix in rows I1 to min(K+NR,I).
-
-   Computing MIN
-*/
-	    i__5 = k + nr;
-	    i__3 = min(i__5,i__) - i1 + 1;
-	    clarfx_("Right", &i__3, &nr, v, &tau, &h__[i1 + k * h_dim1], ldh,
-		    &work[1]);
-
-	    if (wantz) {
-
-/*              Accumulate transformations in the matrix Z */
-
-		clarfx_("Right", &nh, &nr, v, &tau, &z__[*ilo + k * z_dim1],
-			ldz, &work[1]);
-	    }
-/* L150: */
-	}
-
-/*        Ensure that H(I,I-1) is real. */
-
-	i__2 = i__ + (i__ - 1) * h_dim1;
-	temp.r = h__[i__2].r, temp.i = h__[i__2].i;
-	if (r_imag(&temp) != 0.f) {
-	    r__1 = temp.r;
-	    r__2 = r_imag(&temp);
-	    rtemp = slapy2_(&r__1, &r__2);
-	    i__2 = i__ + (i__ - 1) * h_dim1;
-	    h__[i__2].r = rtemp, h__[i__2].i = 0.f;
-	    q__1.r = temp.r / rtemp, q__1.i = temp.i / rtemp;
-	    temp.r = q__1.r, temp.i = q__1.i;
-	    if (i2 > i__) {
-		i__2 = i2 - i__;
-		r_cnjg(&q__1, &temp);
-		cscal_(&i__2, &q__1, &h__[i__ + (i__ + 1) * h_dim1], ldh);
-	    }
-	    i__2 = i__ - i1;
-	    cscal_(&i__2, &temp, &h__[i1 + i__ * h_dim1], &c__1);
-	    if (wantz) {
-		cscal_(&nh, &temp, &z__[*ilo + i__ * z_dim1], &c__1);
-	    }
-	}
-
-/* L160: */
+	r__2 = (real) max(1,*n), r__3 = work[1].r;
+	r__1 = dmax(r__2,r__3);
+	q__1.r = r__1, q__1.i = 0.f;
+	work[1].r = q__1.r, work[1].i = q__1.i;
     }
 
-/*     Failure to converge in remaining number of iterations */
+/*     ==== End of CHSEQR ==== */
 
-    *info = i__;
     return 0;
-
-L170:
-
-/*
-       A submatrix of order <= MAXB in rows and columns L to I has split
-       off. Use the double-shift QR algorithm to handle it.
-*/
-
-    clahqr_(&wantt, &wantz, n, &l, &i__, &h__[h_offset], ldh, &w[1], ilo, ihi,
-	     &z__[z_offset], ldz, info);
-    if (*info > 0) {
-	return 0;
-    }
-
-/*
-       Decrement number of remaining iterations, and return to start of
-       the main loop with a new value of I.
-*/
-
-    itn -= its;
-    i__ = l - 1;
-    goto L60;
-
-L180:
-    i__1 = max(1,*n);
-    work[1].r = (real) i__1, work[1].i = 0.f;
-    return 0;
-
-/*     End of CHSEQR */
-
 } /* chseqr_ */
 
 /* Subroutine */ int clabrd_(integer *m, integer *n, integer *nb, complex *a,
@@ -7844,10 +7721,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -7923,7 +7800,7 @@ L180:
             The n-by-nb matrix Y required to update the unreduced part
             of A.
 
-    LDY     (output) INTEGER
+    LDY     (input) INTEGER
             The leading dimension of the array Y. LDY >= max(1,N).
 
     Further Details
@@ -8011,7 +7888,7 @@ L180:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("No transpose", &i__2, &i__3, &q__1, &a[i__ + a_dim1], lda,
-		     &y[i__ + y_dim1], ldy, &c_b56, &a[i__ + i__ * a_dim1], &
+		     &y[i__ + y_dim1], ldy, &c_b57, &a[i__ + i__ * a_dim1], &
 		    c__1);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &y[i__ + y_dim1], ldy);
@@ -8019,7 +7896,7 @@ L180:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("No transpose", &i__2, &i__3, &q__1, &x[i__ + x_dim1], ldx,
-		     &a[i__ * a_dim1 + 1], &c__1, &c_b56, &a[i__ + i__ *
+		     &a[i__ * a_dim1 + 1], &c__1, &c_b57, &a[i__ + i__ *
 		    a_dim1], &c__1);
 
 /*           Generate reflection Q(i) to annihilate A(i+1:m,i) */
@@ -8041,31 +7918,31 @@ L180:
 
 		i__2 = *m - i__ + 1;
 		i__3 = *n - i__;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ + (
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ + (
 			i__ + 1) * a_dim1], lda, &a[i__ + i__ * a_dim1], &
-			c__1, &c_b55, &y[i__ + 1 + i__ * y_dim1], &c__1);
+			c__1, &c_b56, &y[i__ + 1 + i__ * y_dim1], &c__1);
 		i__2 = *m - i__ + 1;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ +
-			a_dim1], lda, &a[i__ + i__ * a_dim1], &c__1, &c_b55, &
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ +
+			a_dim1], lda, &a[i__ + i__ * a_dim1], &c__1, &c_b56, &
 			y[i__ * y_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &y[i__ + 1 +
-			y_dim1], ldy, &y[i__ * y_dim1 + 1], &c__1, &c_b56, &y[
+			y_dim1], ldy, &y[i__ * y_dim1 + 1], &c__1, &c_b57, &y[
 			i__ + 1 + i__ * y_dim1], &c__1);
 		i__2 = *m - i__ + 1;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &x[i__ +
-			x_dim1], ldx, &a[i__ + i__ * a_dim1], &c__1, &c_b55, &
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &x[i__ +
+			x_dim1], ldx, &a[i__ + i__ * a_dim1], &c__1, &c_b56, &
 			y[i__ * y_dim1 + 1], &c__1);
 		i__2 = i__ - 1;
 		i__3 = *n - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("Conjugate transpose", &i__2, &i__3, &q__1, &a[(i__ +
 			1) * a_dim1 + 1], lda, &y[i__ * y_dim1 + 1], &c__1, &
-			c_b56, &y[i__ + 1 + i__ * y_dim1], &c__1);
+			c_b57, &y[i__ + 1 + i__ * y_dim1], &c__1);
 		i__2 = *n - i__;
 		cscal_(&i__2, &tauq[i__], &y[i__ + 1 + i__ * y_dim1], &c__1);
 
@@ -8077,7 +7954,7 @@ L180:
 		i__2 = *n - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__, &q__1, &y[i__ + 1 +
-			y_dim1], ldy, &a[i__ + a_dim1], lda, &c_b56, &a[i__ +
+			y_dim1], ldy, &a[i__ + a_dim1], lda, &c_b57, &a[i__ +
 			(i__ + 1) * a_dim1], lda);
 		clacgv_(&i__, &a[i__ + a_dim1], lda);
 		i__2 = i__ - 1;
@@ -8086,7 +7963,7 @@ L180:
 		i__3 = *n - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("Conjugate transpose", &i__2, &i__3, &q__1, &a[(i__ +
-			1) * a_dim1 + 1], lda, &x[i__ + x_dim1], ldx, &c_b56,
+			1) * a_dim1 + 1], lda, &x[i__ + x_dim1], ldx, &c_b57,
 			&a[i__ + (i__ + 1) * a_dim1], lda);
 		i__2 = i__ - 1;
 		clacgv_(&i__2, &x[i__ + x_dim1], ldx);
@@ -8109,28 +7986,28 @@ L180:
 
 		i__2 = *m - i__;
 		i__3 = *n - i__;
-		cgemv_("No transpose", &i__2, &i__3, &c_b56, &a[i__ + 1 + (
+		cgemv_("No transpose", &i__2, &i__3, &c_b57, &a[i__ + 1 + (
 			i__ + 1) * a_dim1], lda, &a[i__ + (i__ + 1) * a_dim1],
-			 lda, &c_b55, &x[i__ + 1 + i__ * x_dim1], &c__1);
+			 lda, &c_b56, &x[i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = *n - i__;
-		cgemv_("Conjugate transpose", &i__2, &i__, &c_b56, &y[i__ + 1
+		cgemv_("Conjugate transpose", &i__2, &i__, &c_b57, &y[i__ + 1
 			+ y_dim1], ldy, &a[i__ + (i__ + 1) * a_dim1], lda, &
-			c_b55, &x[i__ * x_dim1 + 1], &c__1);
+			c_b56, &x[i__ * x_dim1 + 1], &c__1);
 		i__2 = *m - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__, &q__1, &a[i__ + 1 +
-			a_dim1], lda, &x[i__ * x_dim1 + 1], &c__1, &c_b56, &x[
+			a_dim1], lda, &x[i__ * x_dim1 + 1], &c__1, &c_b57, &x[
 			i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = i__ - 1;
 		i__3 = *n - i__;
-		cgemv_("No transpose", &i__2, &i__3, &c_b56, &a[(i__ + 1) *
+		cgemv_("No transpose", &i__2, &i__3, &c_b57, &a[(i__ + 1) *
 			a_dim1 + 1], lda, &a[i__ + (i__ + 1) * a_dim1], lda, &
-			c_b55, &x[i__ * x_dim1 + 1], &c__1);
+			c_b56, &x[i__ * x_dim1 + 1], &c__1);
 		i__2 = *m - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &x[i__ + 1 +
-			x_dim1], ldx, &x[i__ * x_dim1 + 1], &c__1, &c_b56, &x[
+			x_dim1], ldx, &x[i__ * x_dim1 + 1], &c__1, &c_b57, &x[
 			i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = *m - i__;
 		cscal_(&i__2, &taup[i__], &x[i__ + 1 + i__ * x_dim1], &c__1);
@@ -8156,7 +8033,7 @@ L180:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("No transpose", &i__2, &i__3, &q__1, &y[i__ + y_dim1], ldy,
-		     &a[i__ + a_dim1], lda, &c_b56, &a[i__ + i__ * a_dim1],
+		     &a[i__ + a_dim1], lda, &c_b57, &a[i__ + i__ * a_dim1],
 		    lda);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &a[i__ + a_dim1], lda);
@@ -8166,7 +8043,7 @@ L180:
 	    i__3 = *n - i__ + 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("Conjugate transpose", &i__2, &i__3, &q__1, &a[i__ *
-		    a_dim1 + 1], lda, &x[i__ + x_dim1], ldx, &c_b56, &a[i__ +
+		    a_dim1 + 1], lda, &x[i__ + x_dim1], ldx, &c_b57, &a[i__ +
 		    i__ * a_dim1], lda);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &x[i__ + x_dim1], ldx);
@@ -8190,30 +8067,30 @@ L180:
 
 		i__2 = *m - i__;
 		i__3 = *n - i__ + 1;
-		cgemv_("No transpose", &i__2, &i__3, &c_b56, &a[i__ + 1 + i__
-			* a_dim1], lda, &a[i__ + i__ * a_dim1], lda, &c_b55, &
+		cgemv_("No transpose", &i__2, &i__3, &c_b57, &a[i__ + 1 + i__
+			* a_dim1], lda, &a[i__ + i__ * a_dim1], lda, &c_b56, &
 			x[i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = *n - i__ + 1;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &y[i__ +
-			y_dim1], ldy, &a[i__ + i__ * a_dim1], lda, &c_b55, &x[
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &y[i__ +
+			y_dim1], ldy, &a[i__ + i__ * a_dim1], lda, &c_b56, &x[
 			i__ * x_dim1 + 1], &c__1);
 		i__2 = *m - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &a[i__ + 1 +
-			a_dim1], lda, &x[i__ * x_dim1 + 1], &c__1, &c_b56, &x[
+			a_dim1], lda, &x[i__ * x_dim1 + 1], &c__1, &c_b57, &x[
 			i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = i__ - 1;
 		i__3 = *n - i__ + 1;
-		cgemv_("No transpose", &i__2, &i__3, &c_b56, &a[i__ * a_dim1
-			+ 1], lda, &a[i__ + i__ * a_dim1], lda, &c_b55, &x[
+		cgemv_("No transpose", &i__2, &i__3, &c_b57, &a[i__ * a_dim1
+			+ 1], lda, &a[i__ + i__ * a_dim1], lda, &c_b56, &x[
 			i__ * x_dim1 + 1], &c__1);
 		i__2 = *m - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &x[i__ + 1 +
-			x_dim1], ldx, &x[i__ * x_dim1 + 1], &c__1, &c_b56, &x[
+			x_dim1], ldx, &x[i__ * x_dim1 + 1], &c__1, &c_b57, &x[
 			i__ + 1 + i__ * x_dim1], &c__1);
 		i__2 = *m - i__;
 		cscal_(&i__2, &taup[i__], &x[i__ + 1 + i__ * x_dim1], &c__1);
@@ -8228,14 +8105,14 @@ L180:
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &a[i__ + 1 +
-			a_dim1], lda, &y[i__ + y_dim1], ldy, &c_b56, &a[i__ +
+			a_dim1], lda, &y[i__ + y_dim1], ldy, &c_b57, &a[i__ +
 			1 + i__ * a_dim1], &c__1);
 		i__2 = i__ - 1;
 		clacgv_(&i__2, &y[i__ + y_dim1], ldy);
 		i__2 = *m - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__, &q__1, &x[i__ + 1 +
-			x_dim1], ldx, &a[i__ * a_dim1 + 1], &c__1, &c_b56, &a[
+			x_dim1], ldx, &a[i__ * a_dim1 + 1], &c__1, &c_b57, &a[
 			i__ + 1 + i__ * a_dim1], &c__1);
 
 /*              Generate reflection Q(i) to annihilate A(i+2:m,i) */
@@ -8256,30 +8133,30 @@ L180:
 
 		i__2 = *m - i__;
 		i__3 = *n - i__;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ +
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ +
 			1 + (i__ + 1) * a_dim1], lda, &a[i__ + 1 + i__ *
-			a_dim1], &c__1, &c_b55, &y[i__ + 1 + i__ * y_dim1], &
+			a_dim1], &c__1, &c_b56, &y[i__ + 1 + i__ * y_dim1], &
 			c__1);
 		i__2 = *m - i__;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ +
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ +
 			1 + a_dim1], lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &
-			c_b55, &y[i__ * y_dim1 + 1], &c__1);
+			c_b56, &y[i__ * y_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &y[i__ + 1 +
-			y_dim1], ldy, &y[i__ * y_dim1 + 1], &c__1, &c_b56, &y[
+			y_dim1], ldy, &y[i__ * y_dim1 + 1], &c__1, &c_b57, &y[
 			i__ + 1 + i__ * y_dim1], &c__1);
 		i__2 = *m - i__;
-		cgemv_("Conjugate transpose", &i__2, &i__, &c_b56, &x[i__ + 1
+		cgemv_("Conjugate transpose", &i__2, &i__, &c_b57, &x[i__ + 1
 			+ x_dim1], ldx, &a[i__ + 1 + i__ * a_dim1], &c__1, &
-			c_b55, &y[i__ * y_dim1 + 1], &c__1);
+			c_b56, &y[i__ * y_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("Conjugate transpose", &i__, &i__2, &q__1, &a[(i__ + 1)
 			 * a_dim1 + 1], lda, &y[i__ * y_dim1 + 1], &c__1, &
-			c_b56, &y[i__ + 1 + i__ * y_dim1], &c__1);
+			c_b57, &y[i__ + 1 + i__ * y_dim1], &c__1);
 		i__2 = *n - i__;
 		cscal_(&i__2, &tauq[i__], &y[i__ + 1 + i__ * y_dim1], &c__1);
 	    } else {
@@ -8309,10 +8186,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8382,10 +8259,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8494,10 +8371,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8614,10 +8491,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8695,8 +8572,8 @@ L180:
     }
 
     l = *m * *n + 1;
-    sgemm_("N", "N", m, n, n, &c_b871, &rwork[1], m, &b[b_offset], ldb, &
-	    c_b1101, &rwork[l], m);
+    sgemm_("N", "N", m, n, n, &c_b894, &rwork[1], m, &b[b_offset], ldb, &
+	    c_b1087, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -8718,8 +8595,8 @@ L180:
 	}
 /* L60: */
     }
-    sgemm_("N", "N", m, n, n, &c_b871, &rwork[1], m, &b[b_offset], ldb, &
-	    c_b1101, &rwork[l], m);
+    sgemm_("N", "N", m, n, n, &c_b894, &rwork[1], m, &b[b_offset], ldb, &
+	    c_b1087, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -8757,10 +8634,10 @@ L180:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8836,10 +8713,10 @@ L180:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -9160,8 +9037,7 @@ L80:
     integer pow_ii(integer *, integer *);
 
     /* Local variables */
-    static integer i__, k, n1, n2, iq, iw, iz, ptr, ind1, ind2, indx, curr,
-	    indxc, indxp;
+    static integer i__, k, n1, n2, iq, iw, iz, ptr, indx, curr, indxc, indxp;
     extern /* Subroutine */ int claed8_(integer *, integer *, integer *,
 	    complex *, integer *, real *, real *, integer *, real *, real *,
 	    complex *, integer *, real *, integer *, integer *, integer *,
@@ -9180,10 +9056,10 @@ L80:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -9436,8 +9312,6 @@ L80:
 
 	n1 = k;
 	n2 = *n - k;
-	ind1 = 1;
-	ind2 = *n;
 	slamrg_(&n1, &n2, &d__[1], &c__1, &c_n1, &indxq[1]);
     } else {
 	qptr[curr + 1] = qptr[curr];
@@ -9489,10 +9363,10 @@ L80:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -9649,6 +9523,15 @@ L80:
 	return 0;
     }
 
+/*
+       Need to initialize GIVPTR to O here in case of quick exit
+       to prevent an unspecified code behavior (usually sigfault)
+       when IWORK array on entry to *stedc is not zeroed
+       (or at least some IWORK entries which used in *laed7 for GIVPTR).
+*/
+
+    *givptr = 0;
+
 /*     Quick return if possible */
 
     if (*n == 0) {
@@ -9660,7 +9543,7 @@ L80:
     n1p1 = n1 + 1;
 
     if (*rho < 0.f) {
-	sscal_(&n2, &c_b1150, &z__[n1p1], &c__1);
+	sscal_(&n2, &c_b1136, &z__[n1p1], &c__1);
     }
 
 /*     Normalize z so that norm(z) = 1 */
@@ -9732,7 +9615,6 @@ L80:
 */
 
     *k = 0;
-    *givptr = 0;
     k2 = *n + 1;
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
@@ -9875,14 +9757,16 @@ L100:
 	info)
 {
     /* System generated locals */
-    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
-    complex q__1, q__2, q__3, q__4;
+    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7;
 
     /* Builtin functions */
     double r_imag(complex *);
-    void c_sqrt(complex *, complex *), r_cnjg(complex *, complex *);
+    void r_cnjg(complex *, complex *);
     double c_abs(complex *);
+    void c_sqrt(complex *, complex *), pow_ci(complex *, complex *, integer *)
+	    ;
 
     /* Local variables */
     static integer i__, j, k, l, m;
@@ -9892,59 +9776,60 @@ L100:
     static complex t1;
     static real t2;
     static complex v2;
-    static real h10;
+    static real aa, ab, ba, bb, h10;
     static complex h11;
     static real h21;
-    static complex h22;
+    static complex h22, sc;
     static integer nh, nz;
+    static real sx;
+    static integer jhi;
     static complex h11s;
-    static integer itn, its;
+    static integer jlo, its;
     static real ulp;
     static complex sum;
-    static real tst1;
+    static real tst;
     static complex temp;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
 	    integer *), ccopy_(integer *, complex *, integer *, complex *,
 	    integer *);
-    static real rtemp, rwork[1];
-    extern /* Subroutine */ int clarfg_(integer *, complex *, complex *,
-	    integer *, complex *);
+    static real rtemp;
+    extern /* Subroutine */ int slabad_(real *, real *), clarfg_(integer *,
+	    complex *, complex *, integer *, complex *);
     extern /* Complex */ VOID cladiv_(complex *, complex *, complex *);
-    extern doublereal slamch_(char *), clanhs_(char *, integer *,
-	    complex *, integer *, real *);
-    static real smlnum;
+    extern doublereal slamch_(char *);
+    static real safmin, safmax, smlnum;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
 
 
-    Purpose
-    =======
+       Purpose
+       =======
 
-    CLAHQR is an auxiliary routine called by CHSEQR to update the
-    eigenvalues and Schur decomposition already computed by CHSEQR, by
-    dealing with the Hessenberg submatrix in rows and columns ILO to IHI.
+       CLAHQR is an auxiliary routine called by CHSEQR to update the
+       eigenvalues and Schur decomposition already computed by CHSEQR, by
+       dealing with the Hessenberg submatrix in rows and columns ILO to
+       IHI.
 
-    Arguments
-    =========
+       Arguments
+       =========
 
-    WANTT   (input) LOGICAL
+       WANTT   (input) LOGICAL
             = .TRUE. : the full Schur form T is required;
             = .FALSE.: only eigenvalues are required.
 
-    WANTZ   (input) LOGICAL
+       WANTZ   (input) LOGICAL
             = .TRUE. : the matrix of Schur vectors Z is required;
             = .FALSE.: Schur vectors are not required.
 
-    N       (input) INTEGER
+       N       (input) INTEGER
             The order of the matrix H.  N >= 0.
 
-    ILO     (input) INTEGER
-    IHI     (input) INTEGER
+       ILO     (input) INTEGER
+       IHI     (input) INTEGER
             It is assumed that H is already upper triangular in rows and
             columns IHI+1:N, and that H(ILO,ILO-1) = 0 (unless ILO = 1).
             CLAHQR works primarily with the Hessenberg submatrix in rows
@@ -9952,46 +9837,78 @@ L100:
             H if WANTT is .TRUE..
             1 <= ILO <= max(1,IHI); IHI <= N.
 
-    H       (input/output) COMPLEX array, dimension (LDH,N)
+       H       (input/output) COMPLEX array, dimension (LDH,N)
             On entry, the upper Hessenberg matrix H.
-            On exit, if WANTT is .TRUE., H is upper triangular in rows
-            and columns ILO:IHI, with any 2-by-2 diagonal blocks in
-            standard form. If WANTT is .FALSE., the contents of H are
-            unspecified on exit.
+            On exit, if INFO is zero and if WANTT is .TRUE., then H
+            is upper triangular in rows and columns ILO:IHI.  If INFO
+            is zero and if WANTT is .FALSE., then the contents of H
+            are unspecified on exit.  The output state of H in case
+            INF is positive is below under the description of INFO.
 
-    LDH     (input) INTEGER
+       LDH     (input) INTEGER
             The leading dimension of the array H. LDH >= max(1,N).
 
-    W       (output) COMPLEX array, dimension (N)
+       W       (output) COMPLEX array, dimension (N)
             The computed eigenvalues ILO to IHI are stored in the
             corresponding elements of W. If WANTT is .TRUE., the
             eigenvalues are stored in the same order as on the diagonal
             of the Schur form returned in H, with W(i) = H(i,i).
 
-    ILOZ    (input) INTEGER
-    IHIZ    (input) INTEGER
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
             Specify the rows of Z to which transformations must be
             applied if WANTZ is .TRUE..
             1 <= ILOZ <= ILO; IHI <= IHIZ <= N.
 
-    Z       (input/output) COMPLEX array, dimension (LDZ,N)
+       Z       (input/output) COMPLEX array, dimension (LDZ,N)
             If WANTZ is .TRUE., on entry Z must contain the current
             matrix Z of transformations accumulated by CHSEQR, and on
             exit Z has been updated; transformations are applied only to
             the submatrix Z(ILOZ:IHIZ,ILO:IHI).
             If WANTZ is .FALSE., Z is not referenced.
 
-    LDZ     (input) INTEGER
+       LDZ     (input) INTEGER
             The leading dimension of the array Z. LDZ >= max(1,N).
 
-    INFO    (output) INTEGER
-            = 0: successful exit
-            > 0: if INFO = i, CLAHQR failed to compute all the
-                 eigenvalues ILO to IHI in a total of 30*(IHI-ILO+1)
-                 iterations; elements i+1:ihi of W contain those
-                 eigenvalues which have been successfully computed.
+       INFO    (output) INTEGER
+             =   0: successful exit
+            .GT. 0: if INFO = i, CLAHQR failed to compute all the
+                    eigenvalues ILO to IHI in a total of 30 iterations
+                    per eigenvalue; elements i+1:ihi of W contain
+                    those eigenvalues which have been successfully
+                    computed.
 
-    =====================================================================
+                    If INFO .GT. 0 and WANTT is .FALSE., then on exit,
+                    the remaining unconverged eigenvalues are the
+                    eigenvalues of the upper Hessenberg matrix
+                    rows and columns ILO thorugh INFO of the final,
+                    output value of H.
+
+                    If INFO .GT. 0 and WANTT is .TRUE., then on exit
+            (*)       (initial value of H)*U  = U*(final value of H)
+                    where U is an orthognal matrix.    The final
+                    value of H is upper Hessenberg and triangular in
+                    rows and columns INFO+1 through IHI.
+
+                    If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+                        (final value of Z)  = (initial value of Z)*U
+                    where U is the orthogonal matrix in (*)
+                    (regardless of the value of WANTT.)
+
+       Further Details
+       ===============
+
+       02-96 Based on modifications by
+       David Day, Sandia National Laboratory, USA
+
+       12-04 Further modifications by
+       Ralph Byers, University of Kansas, USA
+       This is a modified version of CLAHQR from LAPACK version 3.0.
+       It is (1) more robust against overflow and underflow and
+       (2) adopts the more conservative Ahues & Tisseur stopping
+       criterion (LAWN 122, 1997).
+
+       =========================================================
 */
 
 
@@ -10019,16 +9936,74 @@ L100:
 	return 0;
     }
 
+/*     ==== clear out the trash ==== */
+    i__1 = *ihi - 3;
+    for (j = *ilo; j <= i__1; ++j) {
+	i__2 = j + 2 + j * h_dim1;
+	h__[i__2].r = 0.f, h__[i__2].i = 0.f;
+	i__2 = j + 3 + j * h_dim1;
+	h__[i__2].r = 0.f, h__[i__2].i = 0.f;
+/* L10: */
+    }
+    if (*ilo <= *ihi - 2) {
+	i__1 = *ihi + (*ihi - 2) * h_dim1;
+	h__[i__1].r = 0.f, h__[i__1].i = 0.f;
+    }
+/*     ==== ensure that subdiagonal entries are real ==== */
+    if (*wantt) {
+	jlo = 1;
+	jhi = *n;
+    } else {
+	jlo = *ilo;
+	jhi = *ihi;
+    }
+    i__1 = *ihi;
+    for (i__ = *ilo + 1; i__ <= i__1; ++i__) {
+	if (r_imag(&h__[i__ + (i__ - 1) * h_dim1]) != 0.f) {
+/*
+             ==== The following redundant normalization
+             .    avoids problems with both gradual and
+             .    sudden underflow in ABS(H(I,I-1)) ====
+*/
+	    i__2 = i__ + (i__ - 1) * h_dim1;
+	    i__3 = i__ + (i__ - 1) * h_dim1;
+	    r__3 = (r__1 = h__[i__3].r, dabs(r__1)) + (r__2 = r_imag(&h__[i__
+		    + (i__ - 1) * h_dim1]), dabs(r__2));
+	    q__1.r = h__[i__2].r / r__3, q__1.i = h__[i__2].i / r__3;
+	    sc.r = q__1.r, sc.i = q__1.i;
+	    r_cnjg(&q__2, &sc);
+	    r__1 = c_abs(&sc);
+	    q__1.r = q__2.r / r__1, q__1.i = q__2.i / r__1;
+	    sc.r = q__1.r, sc.i = q__1.i;
+	    i__2 = i__ + (i__ - 1) * h_dim1;
+	    r__1 = c_abs(&h__[i__ + (i__ - 1) * h_dim1]);
+	    h__[i__2].r = r__1, h__[i__2].i = 0.f;
+	    i__2 = jhi - i__ + 1;
+	    cscal_(&i__2, &sc, &h__[i__ + i__ * h_dim1], ldh);
+/* Computing MIN */
+	    i__3 = jhi, i__4 = i__ + 1;
+	    i__2 = min(i__3,i__4) - jlo + 1;
+	    r_cnjg(&q__1, &sc);
+	    cscal_(&i__2, &q__1, &h__[jlo + i__ * h_dim1], &c__1);
+	    if (*wantz) {
+		i__2 = *ihiz - *iloz + 1;
+		r_cnjg(&q__1, &sc);
+		cscal_(&i__2, &q__1, &z__[*iloz + i__ * z_dim1], &c__1);
+	    }
+	}
+/* L20: */
+    }
+
     nh = *ihi - *ilo + 1;
     nz = *ihiz - *iloz + 1;
 
-/*
-       Set machine-dependent constants for the stopping criterion.
-       If norm(H) <= sqrt(OVFL), overflow should not occur.
-*/
+/*     Set machine-dependent constants for the stopping criterion. */
 
-    ulp = slamch_("Precision");
-    smlnum = slamch_("Safe minimum") / ulp;
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) nh / ulp);
 
 /*
        I1 and I2 are the indices of the first row and last column of H
@@ -10041,10 +10016,6 @@ L100:
 	i2 = *n;
     }
 
-/*     ITN is the total number of QR iterations allowed. */
-
-    itn = nh * 30;
-
 /*
        The main loop begins here. I is the loop index and decreases from
        IHI to ILO in steps of 1. Each iteration of the loop works
@@ -10054,9 +10025,9 @@ L100:
 */
 
     i__ = *ihi;
-L10:
+L30:
     if (i__ < *ilo) {
-	goto L130;
+	goto L150;
     }
 
 /*
@@ -10066,45 +10037,102 @@ L10:
 */
 
     l = *ilo;
-    i__1 = itn;
-    for (its = 0; its <= i__1; ++its) {
+    for (its = 0; its <= 30; ++its) {
 
 /*        Look for a single small subdiagonal element. */
 
-	i__2 = l + 1;
-	for (k = i__; k >= i__2; --k) {
-	    i__3 = k - 1 + (k - 1) * h_dim1;
-	    i__4 = k + k * h_dim1;
-	    tst1 = (r__1 = h__[i__3].r, dabs(r__1)) + (r__2 = r_imag(&h__[k -
-		    1 + (k - 1) * h_dim1]), dabs(r__2)) + ((r__3 = h__[i__4]
+	i__1 = l + 1;
+	for (k = i__; k >= i__1; --k) {
+	    i__2 = k + (k - 1) * h_dim1;
+	    if ((r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&h__[k + (k
+		    - 1) * h_dim1]), dabs(r__2)) <= smlnum) {
+		goto L50;
+	    }
+	    i__2 = k - 1 + (k - 1) * h_dim1;
+	    i__3 = k + k * h_dim1;
+	    tst = (r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&h__[k -
+		    1 + (k - 1) * h_dim1]), dabs(r__2)) + ((r__3 = h__[i__3]
 		    .r, dabs(r__3)) + (r__4 = r_imag(&h__[k + k * h_dim1]),
 		    dabs(r__4)));
-	    if (tst1 == 0.f) {
-		i__3 = i__ - l + 1;
-		tst1 = clanhs_("1", &i__3, &h__[l + l * h_dim1], ldh, rwork);
+	    if (tst == 0.f) {
+		if (k - 2 >= *ilo) {
+		    i__2 = k - 1 + (k - 2) * h_dim1;
+		    tst += (r__1 = h__[i__2].r, dabs(r__1));
+		}
+		if (k + 1 <= *ihi) {
+		    i__2 = k + 1 + k * h_dim1;
+		    tst += (r__1 = h__[i__2].r, dabs(r__1));
+		}
 	    }
-	    i__3 = k + (k - 1) * h_dim1;
+/*
+             ==== The following is a conservative small subdiagonal
+             .    deflation criterion due to Ahues & Tisseur (LAWN 122,
+             .    1997). It has better mathematical foundation and
+             .    improves accuracy in some examples.  ====
+*/
+	    i__2 = k + (k - 1) * h_dim1;
+	    if ((r__1 = h__[i__2].r, dabs(r__1)) <= ulp * tst) {
 /* Computing MAX */
-	    r__2 = ulp * tst1;
-	    if ((r__1 = h__[i__3].r, dabs(r__1)) <= dmax(r__2,smlnum)) {
-		goto L30;
+		i__2 = k + (k - 1) * h_dim1;
+		i__3 = k - 1 + k * h_dim1;
+		r__5 = (r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&h__[
+			k + (k - 1) * h_dim1]), dabs(r__2)), r__6 = (r__3 =
+			h__[i__3].r, dabs(r__3)) + (r__4 = r_imag(&h__[k - 1
+			+ k * h_dim1]), dabs(r__4));
+		ab = dmax(r__5,r__6);
+/* Computing MIN */
+		i__2 = k + (k - 1) * h_dim1;
+		i__3 = k - 1 + k * h_dim1;
+		r__5 = (r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&h__[
+			k + (k - 1) * h_dim1]), dabs(r__2)), r__6 = (r__3 =
+			h__[i__3].r, dabs(r__3)) + (r__4 = r_imag(&h__[k - 1
+			+ k * h_dim1]), dabs(r__4));
+		ba = dmin(r__5,r__6);
+		i__2 = k - 1 + (k - 1) * h_dim1;
+		i__3 = k + k * h_dim1;
+		q__2.r = h__[i__2].r - h__[i__3].r, q__2.i = h__[i__2].i -
+			h__[i__3].i;
+		q__1.r = q__2.r, q__1.i = q__2.i;
+/* Computing MAX */
+		i__4 = k + k * h_dim1;
+		r__5 = (r__1 = h__[i__4].r, dabs(r__1)) + (r__2 = r_imag(&h__[
+			k + k * h_dim1]), dabs(r__2)), r__6 = (r__3 = q__1.r,
+			dabs(r__3)) + (r__4 = r_imag(&q__1), dabs(r__4));
+		aa = dmax(r__5,r__6);
+		i__2 = k - 1 + (k - 1) * h_dim1;
+		i__3 = k + k * h_dim1;
+		q__2.r = h__[i__2].r - h__[i__3].r, q__2.i = h__[i__2].i -
+			h__[i__3].i;
+		q__1.r = q__2.r, q__1.i = q__2.i;
+/* Computing MIN */
+		i__4 = k + k * h_dim1;
+		r__5 = (r__1 = h__[i__4].r, dabs(r__1)) + (r__2 = r_imag(&h__[
+			k + k * h_dim1]), dabs(r__2)), r__6 = (r__3 = q__1.r,
+			dabs(r__3)) + (r__4 = r_imag(&q__1), dabs(r__4));
+		bb = dmin(r__5,r__6);
+		s = aa + ab;
+/* Computing MAX */
+		r__1 = smlnum, r__2 = ulp * (bb * (aa / s));
+		if (ba * (ab / s) <= dmax(r__1,r__2)) {
+		    goto L50;
+		}
 	    }
-/* L20: */
+/* L40: */
 	}
-L30:
+L50:
 	l = k;
 	if (l > *ilo) {
 
 /*           H(L,L-1) is negligible */
 
-	    i__2 = l + (l - 1) * h_dim1;
-	    h__[i__2].r = 0.f, h__[i__2].i = 0.f;
+	    i__1 = l + (l - 1) * h_dim1;
+	    h__[i__1].r = 0.f, h__[i__1].i = 0.f;
 	}
 
 /*        Exit from loop if a submatrix of order 1 has split off. */
 
 	if (l >= i__) {
-	    goto L120;
+	    goto L140;
 	}
 
 /*
@@ -10118,42 +10146,67 @@ L30:
 	    i2 = i__;
 	}
 
-	if (its == 10 || its == 20) {
+	if (its == 10) {
 
 /*           Exceptional shift. */
 
-	    i__2 = i__ + (i__ - 1) * h_dim1;
-	    s = (r__1 = h__[i__2].r, dabs(r__1)) * .75f;
-	    i__2 = i__ + i__ * h_dim1;
-	    q__1.r = s + h__[i__2].r, q__1.i = h__[i__2].i;
+	    i__1 = l + 1 + l * h_dim1;
+	    s = (r__1 = h__[i__1].r, dabs(r__1)) * .75f;
+	    i__1 = l + l * h_dim1;
+	    q__1.r = s + h__[i__1].r, q__1.i = h__[i__1].i;
+	    t.r = q__1.r, t.i = q__1.i;
+	} else if (its == 20) {
+
+/*           Exceptional shift. */
+
+	    i__1 = i__ + (i__ - 1) * h_dim1;
+	    s = (r__1 = h__[i__1].r, dabs(r__1)) * .75f;
+	    i__1 = i__ + i__ * h_dim1;
+	    q__1.r = s + h__[i__1].r, q__1.i = h__[i__1].i;
 	    t.r = q__1.r, t.i = q__1.i;
 	} else {
 
 /*           Wilkinson's shift. */
 
-	    i__2 = i__ + i__ * h_dim1;
-	    t.r = h__[i__2].r, t.i = h__[i__2].i;
-	    i__2 = i__ - 1 + i__ * h_dim1;
-	    i__3 = i__ + (i__ - 1) * h_dim1;
-	    r__1 = h__[i__3].r;
-	    q__1.r = r__1 * h__[i__2].r, q__1.i = r__1 * h__[i__2].i;
+	    i__1 = i__ + i__ * h_dim1;
+	    t.r = h__[i__1].r, t.i = h__[i__1].i;
+	    c_sqrt(&q__2, &h__[i__ - 1 + i__ * h_dim1]);
+	    c_sqrt(&q__3, &h__[i__ + (i__ - 1) * h_dim1]);
+	    q__1.r = q__2.r * q__3.r - q__2.i * q__3.i, q__1.i = q__2.r *
+		    q__3.i + q__2.i * q__3.r;
 	    u.r = q__1.r, u.i = q__1.i;
-	    if (u.r != 0.f || u.i != 0.f) {
-		i__2 = i__ - 1 + (i__ - 1) * h_dim1;
-		q__2.r = h__[i__2].r - t.r, q__2.i = h__[i__2].i - t.i;
+	    s = (r__1 = u.r, dabs(r__1)) + (r__2 = r_imag(&u), dabs(r__2));
+	    if (s != 0.f) {
+		i__1 = i__ - 1 + (i__ - 1) * h_dim1;
+		q__2.r = h__[i__1].r - t.r, q__2.i = h__[i__1].i - t.i;
 		q__1.r = q__2.r * .5f, q__1.i = q__2.i * .5f;
 		x.r = q__1.r, x.i = q__1.i;
-		q__3.r = x.r * x.r - x.i * x.i, q__3.i = x.r * x.i + x.i *
-			x.r;
-		q__2.r = q__3.r + u.r, q__2.i = q__3.i + u.i;
-		c_sqrt(&q__1, &q__2);
+		sx = (r__1 = x.r, dabs(r__1)) + (r__2 = r_imag(&x), dabs(r__2)
+			);
+/* Computing MAX */
+		r__3 = s, r__4 = (r__1 = x.r, dabs(r__1)) + (r__2 = r_imag(&x)
+			, dabs(r__2));
+		s = dmax(r__3,r__4);
+		q__5.r = x.r / s, q__5.i = x.i / s;
+		pow_ci(&q__4, &q__5, &c__2);
+		q__7.r = u.r / s, q__7.i = u.i / s;
+		pow_ci(&q__6, &q__7, &c__2);
+		q__3.r = q__4.r + q__6.r, q__3.i = q__4.i + q__6.i;
+		c_sqrt(&q__2, &q__3);
+		q__1.r = s * q__2.r, q__1.i = s * q__2.i;
 		y.r = q__1.r, y.i = q__1.i;
-		if (x.r * y.r + r_imag(&x) * r_imag(&y) < 0.f) {
-		    q__1.r = -y.r, q__1.i = -y.i;
-		    y.r = q__1.r, y.i = q__1.i;
+		if (sx > 0.f) {
+		    q__1.r = x.r / sx, q__1.i = x.i / sx;
+		    q__2.r = x.r / sx, q__2.i = x.i / sx;
+		    if (q__1.r * y.r + r_imag(&q__2) * r_imag(&y) < 0.f) {
+			q__3.r = -y.r, q__3.i = -y.i;
+			y.r = q__3.r, y.i = q__3.i;
+		    }
 		}
-		q__3.r = x.r + y.r, q__3.i = x.i + y.i;
-		cladiv_(&q__2, &u, &q__3);
+		q__4.r = x.r + y.r, q__4.i = x.i + y.i;
+		cladiv_(&q__3, &u, &q__4);
+		q__2.r = u.r * q__3.r - u.i * q__3.i, q__2.i = u.r * q__3.i +
+			u.i * q__3.r;
 		q__1.r = t.r - q__2.r, q__1.i = t.i - q__2.i;
 		t.r = q__1.r, t.i = q__1.i;
 	    }
@@ -10161,8 +10214,8 @@ L30:
 
 /*        Look for two consecutive small subdiagonal elements. */
 
-	i__2 = l + 1;
-	for (m = i__ - 1; m >= i__2; --m) {
+	i__1 = l + 1;
+	for (m = i__ - 1; m >= i__1; --m) {
 
 /*
              Determine the effect of starting the single-shift QR
@@ -10170,14 +10223,14 @@ L30:
              negligible.
 */
 
-	    i__3 = m + m * h_dim1;
-	    h11.r = h__[i__3].r, h11.i = h__[i__3].i;
-	    i__3 = m + 1 + (m + 1) * h_dim1;
-	    h22.r = h__[i__3].r, h22.i = h__[i__3].i;
+	    i__2 = m + m * h_dim1;
+	    h11.r = h__[i__2].r, h11.i = h__[i__2].i;
+	    i__2 = m + 1 + (m + 1) * h_dim1;
+	    h22.r = h__[i__2].r, h22.i = h__[i__2].i;
 	    q__1.r = h11.r - t.r, q__1.i = h11.i - t.i;
 	    h11s.r = q__1.r, h11s.i = q__1.i;
-	    i__3 = m + 1 + m * h_dim1;
-	    h21 = h__[i__3].r;
+	    i__2 = m + 1 + m * h_dim1;
+	    h21 = h__[i__2].r;
 	    s = (r__1 = h11s.r, dabs(r__1)) + (r__2 = r_imag(&h11s), dabs(
 		    r__2)) + dabs(h21);
 	    q__1.r = h11s.r / s, q__1.i = h11s.i / s;
@@ -10185,25 +10238,25 @@ L30:
 	    h21 /= s;
 	    v[0].r = h11s.r, v[0].i = h11s.i;
 	    v[1].r = h21, v[1].i = 0.f;
-	    i__3 = m + (m - 1) * h_dim1;
-	    h10 = h__[i__3].r;
-	    tst1 = ((r__1 = h11s.r, dabs(r__1)) + (r__2 = r_imag(&h11s), dabs(
-		    r__2))) * ((r__3 = h11.r, dabs(r__3)) + (r__4 = r_imag(&
-		    h11), dabs(r__4)) + ((r__5 = h22.r, dabs(r__5)) + (r__6 =
-		    r_imag(&h22), dabs(r__6))));
-	    if ((r__1 = h10 * h21, dabs(r__1)) <= ulp * tst1) {
-		goto L50;
+	    i__2 = m + (m - 1) * h_dim1;
+	    h10 = h__[i__2].r;
+	    if (dabs(h10) * dabs(h21) <= ulp * (((r__1 = h11s.r, dabs(r__1))
+		    + (r__2 = r_imag(&h11s), dabs(r__2))) * ((r__3 = h11.r,
+		    dabs(r__3)) + (r__4 = r_imag(&h11), dabs(r__4)) + ((r__5 =
+		     h22.r, dabs(r__5)) + (r__6 = r_imag(&h22), dabs(r__6)))))
+		    ) {
+		goto L70;
 	    }
-/* L40: */
+/* L60: */
 	}
-	i__2 = l + l * h_dim1;
-	h11.r = h__[i__2].r, h11.i = h__[i__2].i;
-	i__2 = l + 1 + (l + 1) * h_dim1;
-	h22.r = h__[i__2].r, h22.i = h__[i__2].i;
+	i__1 = l + l * h_dim1;
+	h11.r = h__[i__1].r, h11.i = h__[i__1].i;
+	i__1 = l + 1 + (l + 1) * h_dim1;
+	h22.r = h__[i__1].r, h22.i = h__[i__1].i;
 	q__1.r = h11.r - t.r, q__1.i = h11.i - t.i;
 	h11s.r = q__1.r, h11s.i = q__1.i;
-	i__2 = l + 1 + l * h_dim1;
-	h21 = h__[i__2].r;
+	i__1 = l + 1 + l * h_dim1;
+	h21 = h__[i__1].r;
 	s = (r__1 = h11s.r, dabs(r__1)) + (r__2 = r_imag(&h11s), dabs(r__2))
 		+ dabs(h21);
 	q__1.r = h11s.r / s, q__1.i = h11s.i / s;
@@ -10211,12 +10264,12 @@ L30:
 	h21 /= s;
 	v[0].r = h11s.r, v[0].i = h11s.i;
 	v[1].r = h21, v[1].i = 0.f;
-L50:
+L70:
 
 /*        Single-shift QR step */
 
-	i__2 = i__ - 1;
-	for (k = m; k <= i__2; ++k) {
+	i__1 = i__ - 1;
+	for (k = m; k <= i__1; ++k) {
 
 /*
              The first iteration of this loop determines a reflection G
@@ -10237,10 +10290,10 @@ L50:
 	    }
 	    clarfg_(&c__2, v, &v[1], &c__1, &t1);
 	    if (k > m) {
-		i__3 = k + (k - 1) * h_dim1;
-		h__[i__3].r = v[0].r, h__[i__3].i = v[0].i;
-		i__3 = k + 1 + (k - 1) * h_dim1;
-		h__[i__3].r = 0.f, h__[i__3].i = 0.f;
+		i__2 = k + (k - 1) * h_dim1;
+		h__[i__2].r = v[0].r, h__[i__2].i = v[0].i;
+		i__2 = k + 1 + (k - 1) * h_dim1;
+		h__[i__2].r = 0.f, h__[i__2].i = 0.f;
 	    }
 	    v2.r = v[1].r, v2.i = v[1].i;
 	    q__1.r = t1.r * v2.r - t1.i * v2.i, q__1.i = t1.r * v2.i + t1.i *
@@ -10252,27 +10305,27 @@ L50:
              in columns K to I2.
 */
 
-	    i__3 = i2;
-	    for (j = k; j <= i__3; ++j) {
+	    i__2 = i2;
+	    for (j = k; j <= i__2; ++j) {
 		r_cnjg(&q__3, &t1);
-		i__4 = k + j * h_dim1;
-		q__2.r = q__3.r * h__[i__4].r - q__3.i * h__[i__4].i, q__2.i =
-			 q__3.r * h__[i__4].i + q__3.i * h__[i__4].r;
-		i__5 = k + 1 + j * h_dim1;
-		q__4.r = t2 * h__[i__5].r, q__4.i = t2 * h__[i__5].i;
+		i__3 = k + j * h_dim1;
+		q__2.r = q__3.r * h__[i__3].r - q__3.i * h__[i__3].i, q__2.i =
+			 q__3.r * h__[i__3].i + q__3.i * h__[i__3].r;
+		i__4 = k + 1 + j * h_dim1;
+		q__4.r = t2 * h__[i__4].r, q__4.i = t2 * h__[i__4].i;
 		q__1.r = q__2.r + q__4.r, q__1.i = q__2.i + q__4.i;
 		sum.r = q__1.r, sum.i = q__1.i;
+		i__3 = k + j * h_dim1;
 		i__4 = k + j * h_dim1;
-		i__5 = k + j * h_dim1;
-		q__1.r = h__[i__5].r - sum.r, q__1.i = h__[i__5].i - sum.i;
-		h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
+		q__1.r = h__[i__4].r - sum.r, q__1.i = h__[i__4].i - sum.i;
+		h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+		i__3 = k + 1 + j * h_dim1;
 		i__4 = k + 1 + j * h_dim1;
-		i__5 = k + 1 + j * h_dim1;
 		q__2.r = sum.r * v2.r - sum.i * v2.i, q__2.i = sum.r * v2.i +
 			sum.i * v2.r;
-		q__1.r = h__[i__5].r - q__2.r, q__1.i = h__[i__5].i - q__2.i;
-		h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
-/* L60: */
+		q__1.r = h__[i__4].r - q__2.r, q__1.i = h__[i__4].i - q__2.i;
+		h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+/* L80: */
 	    }
 
 /*
@@ -10281,57 +10334,57 @@ L50:
 
    Computing MIN
 */
-	    i__4 = k + 2;
-	    i__3 = min(i__4,i__);
-	    for (j = i1; j <= i__3; ++j) {
-		i__4 = j + k * h_dim1;
-		q__2.r = t1.r * h__[i__4].r - t1.i * h__[i__4].i, q__2.i =
-			t1.r * h__[i__4].i + t1.i * h__[i__4].r;
-		i__5 = j + (k + 1) * h_dim1;
-		q__3.r = t2 * h__[i__5].r, q__3.i = t2 * h__[i__5].i;
+	    i__3 = k + 2;
+	    i__2 = min(i__3,i__);
+	    for (j = i1; j <= i__2; ++j) {
+		i__3 = j + k * h_dim1;
+		q__2.r = t1.r * h__[i__3].r - t1.i * h__[i__3].i, q__2.i =
+			t1.r * h__[i__3].i + t1.i * h__[i__3].r;
+		i__4 = j + (k + 1) * h_dim1;
+		q__3.r = t2 * h__[i__4].r, q__3.i = t2 * h__[i__4].i;
 		q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
 		sum.r = q__1.r, sum.i = q__1.i;
+		i__3 = j + k * h_dim1;
 		i__4 = j + k * h_dim1;
-		i__5 = j + k * h_dim1;
-		q__1.r = h__[i__5].r - sum.r, q__1.i = h__[i__5].i - sum.i;
-		h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
+		q__1.r = h__[i__4].r - sum.r, q__1.i = h__[i__4].i - sum.i;
+		h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+		i__3 = j + (k + 1) * h_dim1;
 		i__4 = j + (k + 1) * h_dim1;
-		i__5 = j + (k + 1) * h_dim1;
 		r_cnjg(&q__3, &v2);
 		q__2.r = sum.r * q__3.r - sum.i * q__3.i, q__2.i = sum.r *
 			q__3.i + sum.i * q__3.r;
-		q__1.r = h__[i__5].r - q__2.r, q__1.i = h__[i__5].i - q__2.i;
-		h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
-/* L70: */
+		q__1.r = h__[i__4].r - q__2.r, q__1.i = h__[i__4].i - q__2.i;
+		h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+/* L90: */
 	    }
 
 	    if (*wantz) {
 
 /*              Accumulate transformations in the matrix Z */
 
-		i__3 = *ihiz;
-		for (j = *iloz; j <= i__3; ++j) {
-		    i__4 = j + k * z_dim1;
-		    q__2.r = t1.r * z__[i__4].r - t1.i * z__[i__4].i, q__2.i =
-			     t1.r * z__[i__4].i + t1.i * z__[i__4].r;
-		    i__5 = j + (k + 1) * z_dim1;
-		    q__3.r = t2 * z__[i__5].r, q__3.i = t2 * z__[i__5].i;
+		i__2 = *ihiz;
+		for (j = *iloz; j <= i__2; ++j) {
+		    i__3 = j + k * z_dim1;
+		    q__2.r = t1.r * z__[i__3].r - t1.i * z__[i__3].i, q__2.i =
+			     t1.r * z__[i__3].i + t1.i * z__[i__3].r;
+		    i__4 = j + (k + 1) * z_dim1;
+		    q__3.r = t2 * z__[i__4].r, q__3.i = t2 * z__[i__4].i;
 		    q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
 		    sum.r = q__1.r, sum.i = q__1.i;
+		    i__3 = j + k * z_dim1;
 		    i__4 = j + k * z_dim1;
-		    i__5 = j + k * z_dim1;
-		    q__1.r = z__[i__5].r - sum.r, q__1.i = z__[i__5].i -
+		    q__1.r = z__[i__4].r - sum.r, q__1.i = z__[i__4].i -
 			    sum.i;
-		    z__[i__4].r = q__1.r, z__[i__4].i = q__1.i;
+		    z__[i__3].r = q__1.r, z__[i__3].i = q__1.i;
+		    i__3 = j + (k + 1) * z_dim1;
 		    i__4 = j + (k + 1) * z_dim1;
-		    i__5 = j + (k + 1) * z_dim1;
 		    r_cnjg(&q__3, &v2);
 		    q__2.r = sum.r * q__3.r - sum.i * q__3.i, q__2.i = sum.r *
 			     q__3.i + sum.i * q__3.r;
-		    q__1.r = z__[i__5].r - q__2.r, q__1.i = z__[i__5].i -
+		    q__1.r = z__[i__4].r - q__2.r, q__1.i = z__[i__4].i -
 			    q__2.i;
-		    z__[i__4].r = q__1.r, z__[i__4].i = q__1.i;
-/* L80: */
+		    z__[i__3].r = q__1.r, z__[i__3].i = q__1.i;
+/* L100: */
 		}
 	    }
 
@@ -10349,66 +10402,66 @@ L50:
 		r__1 = c_abs(&temp);
 		q__1.r = temp.r / r__1, q__1.i = temp.i / r__1;
 		temp.r = q__1.r, temp.i = q__1.i;
+		i__2 = m + 1 + m * h_dim1;
 		i__3 = m + 1 + m * h_dim1;
-		i__4 = m + 1 + m * h_dim1;
 		r_cnjg(&q__2, &temp);
-		q__1.r = h__[i__4].r * q__2.r - h__[i__4].i * q__2.i, q__1.i =
-			 h__[i__4].r * q__2.i + h__[i__4].i * q__2.r;
-		h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+		q__1.r = h__[i__3].r * q__2.r - h__[i__3].i * q__2.i, q__1.i =
+			 h__[i__3].r * q__2.i + h__[i__3].i * q__2.r;
+		h__[i__2].r = q__1.r, h__[i__2].i = q__1.i;
 		if (m + 2 <= i__) {
+		    i__2 = m + 2 + (m + 1) * h_dim1;
 		    i__3 = m + 2 + (m + 1) * h_dim1;
-		    i__4 = m + 2 + (m + 1) * h_dim1;
-		    q__1.r = h__[i__4].r * temp.r - h__[i__4].i * temp.i,
-			    q__1.i = h__[i__4].r * temp.i + h__[i__4].i *
+		    q__1.r = h__[i__3].r * temp.r - h__[i__3].i * temp.i,
+			    q__1.i = h__[i__3].r * temp.i + h__[i__3].i *
 			    temp.r;
-		    h__[i__3].r = q__1.r, h__[i__3].i = q__1.i;
+		    h__[i__2].r = q__1.r, h__[i__2].i = q__1.i;
 		}
-		i__3 = i__;
-		for (j = m; j <= i__3; ++j) {
+		i__2 = i__;
+		for (j = m; j <= i__2; ++j) {
 		    if (j != m + 1) {
 			if (i2 > j) {
-			    i__4 = i2 - j;
-			    cscal_(&i__4, &temp, &h__[j + (j + 1) * h_dim1],
+			    i__3 = i2 - j;
+			    cscal_(&i__3, &temp, &h__[j + (j + 1) * h_dim1],
 				    ldh);
 			}
-			i__4 = j - i1;
+			i__3 = j - i1;
 			r_cnjg(&q__1, &temp);
-			cscal_(&i__4, &q__1, &h__[i1 + j * h_dim1], &c__1);
+			cscal_(&i__3, &q__1, &h__[i1 + j * h_dim1], &c__1);
 			if (*wantz) {
 			    r_cnjg(&q__1, &temp);
 			    cscal_(&nz, &q__1, &z__[*iloz + j * z_dim1], &
 				    c__1);
 			}
 		    }
-/* L90: */
+/* L110: */
 		}
 	    }
-/* L100: */
+/* L120: */
 	}
 
 /*        Ensure that H(I,I-1) is real. */
 
-	i__2 = i__ + (i__ - 1) * h_dim1;
-	temp.r = h__[i__2].r, temp.i = h__[i__2].i;
+	i__1 = i__ + (i__ - 1) * h_dim1;
+	temp.r = h__[i__1].r, temp.i = h__[i__1].i;
 	if (r_imag(&temp) != 0.f) {
 	    rtemp = c_abs(&temp);
-	    i__2 = i__ + (i__ - 1) * h_dim1;
-	    h__[i__2].r = rtemp, h__[i__2].i = 0.f;
+	    i__1 = i__ + (i__ - 1) * h_dim1;
+	    h__[i__1].r = rtemp, h__[i__1].i = 0.f;
 	    q__1.r = temp.r / rtemp, q__1.i = temp.i / rtemp;
 	    temp.r = q__1.r, temp.i = q__1.i;
 	    if (i2 > i__) {
-		i__2 = i2 - i__;
+		i__1 = i2 - i__;
 		r_cnjg(&q__1, &temp);
-		cscal_(&i__2, &q__1, &h__[i__ + (i__ + 1) * h_dim1], ldh);
+		cscal_(&i__1, &q__1, &h__[i__ + (i__ + 1) * h_dim1], ldh);
 	    }
-	    i__2 = i__ - i1;
-	    cscal_(&i__2, &temp, &h__[i1 + i__ * h_dim1], &c__1);
+	    i__1 = i__ - i1;
+	    cscal_(&i__1, &temp, &h__[i1 + i__ * h_dim1], &c__1);
 	    if (*wantz) {
 		cscal_(&nz, &temp, &z__[*iloz + i__ * z_dim1], &c__1);
 	    }
 	}
 
-/* L110: */
+/* L130: */
     }
 
 /*     Failure to converge in remaining number of iterations */
@@ -10416,7 +10469,7 @@ L50:
     *info = i__;
     return 0;
 
-L120:
+L140:
 
 /*     H(I,I-1) is negligible: one eigenvalue has converged. */
 
@@ -10424,23 +10477,19 @@ L120:
     i__2 = i__ + i__ * h_dim1;
     w[i__1].r = h__[i__2].r, w[i__1].i = h__[i__2].i;
 
-/*
-       Decrement number of remaining iterations, and return to start of
-       the main loop with new value of I.
-*/
+/*     return to start of the main loop with new value of I. */
 
-    itn -= its;
     i__ = l - 1;
-    goto L10;
+    goto L30;
 
-L130:
+L150:
     return 0;
 
 /*     End of CLAHQR */
 
 } /* clahqr_ */
 
-/* Subroutine */ int clahrd_(integer *n, integer *k, integer *nb, complex *a,
+/* Subroutine */ int clahr2_(integer *n, integer *k, integer *nb, complex *a,
 	integer *lda, complex *tau, complex *t, integer *ldt, complex *y,
 	integer *ldy)
 {
@@ -10453,28 +10502,35 @@ L130:
     static integer i__;
     static complex ei;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
-	    integer *), cgemv_(char *, integer *, integer *, complex *,
-	    complex *, integer *, complex *, integer *, complex *, complex *,
-	    integer *), ccopy_(integer *, complex *, integer *,
-	    complex *, integer *), caxpy_(integer *, complex *, complex *,
-	    integer *, complex *, integer *), ctrmv_(char *, char *, char *,
-	    integer *, complex *, integer *, complex *, integer *), clarfg_(integer *, complex *, complex *, integer
-	    *, complex *), clacgv_(integer *, complex *, integer *);
+	    integer *), cgemm_(char *, char *, integer *, integer *, integer *
+	    , complex *, complex *, integer *, complex *, integer *, complex *
+	    , complex *, integer *), cgemv_(char *, integer *,
+	     integer *, complex *, complex *, integer *, complex *, integer *,
+	     complex *, complex *, integer *), ccopy_(integer *,
+	    complex *, integer *, complex *, integer *), ctrmm_(char *, char *
+	    , char *, char *, integer *, integer *, complex *, complex *,
+	    integer *, complex *, integer *),
+	    caxpy_(integer *, complex *, complex *, integer *, complex *,
+	    integer *), ctrmv_(char *, char *, char *, integer *, complex *,
+	    integer *, complex *, integer *), clarfg_(
+	    integer *, complex *, complex *, integer *, complex *), clacgv_(
+	    integer *, complex *, integer *), clacpy_(char *, integer *,
+	    integer *, complex *, integer *, complex *, integer *);
 
 
+/*  -- LAPACK auxiliary routine (version 3.2.1)                        -- */
+/*  -- LAPACK is a software package provided by Univ. of Tennessee,    --*  -- April 2009
+                                 -- */
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
     =======
 
-    CLAHRD reduces the first NB columns of a complex general n-by-(n-k+1)
+    CLAHR2 reduces the first NB columns of A complex general n-BY-(n-k+1)
     matrix A so that elements below the k-th subdiagonal are zero. The
-    reduction is performed by a unitary similarity transformation
+    reduction is performed by an unitary similarity transformation
     Q' * A * Q. The routine returns the matrices V and T which determine
     Q as a block reflector I - V*T*V', and also the matrix Y = A * V * T.
 
@@ -10489,6 +10545,7 @@ L130:
     K       (input) INTEGER
             The offset for the reduction. Elements below the k-th
             subdiagonal in the first NB columns are reduced to zero.
+            K < N.
 
     NB      (input) INTEGER
             The number of columns to be reduced.
@@ -10519,7 +10576,7 @@ L130:
             The n-by-nb matrix Y.
 
     LDY     (input) INTEGER
-            The leading dimension of the array Y. LDY >= max(1,N).
+            The leading dimension of the array Y. LDY >= N.
 
     Further Details
     ===============
@@ -10544,9 +10601,9 @@ L130:
     The contents of A on exit are illustrated by the following example
     with n = 7, k = 3 and nb = 2:
 
-       ( a   h   a   a   a )
-       ( a   h   a   a   a )
-       ( a   h   a   a   a )
+       ( a   a   a   a   a )
+       ( a   a   a   a   a )
+       ( a   a   a   a   a )
        ( h   h   a   a   a )
        ( v1  h   a   a   a )
        ( v1  v2  a   a   a )
@@ -10555,6 +10612,19 @@ L130:
     where a denotes an element of the original matrix A, h denotes a
     modified element of the upper Hessenberg matrix H, and vi denotes an
     element of the vector defining H(i).
+
+    This subroutine is a slight modification of LAPACK-3.0's DLAHRD
+    incorporating improvements proposed by Quintana-Orti and Van de
+    Gejin. Note that the entries of A(1:K,2:NB) differ from those
+    returned by the original LAPACK-3.0's DLAHRD routine. (This
+    subroutine is not backward compatible with LAPACK-3.0's DLAHRD.)
+
+    References
+    ==========
+
+    Gregorio Quintana-Orti and Robert van de Geijn, "Improving the
+    performance of reduction to Hessenberg form," ACM Transactions on
+    Mathematical Software, 32(2):180-194, June 2006.
 
     =====================================================================
 
@@ -10584,18 +10654,19 @@ L130:
 	if (i__ > 1) {
 
 /*
-             Update A(1:n,i)
+             Update A(K+1:N,I)
 
-             Compute i-th column of A - Y * V'
+             Update I-th column of A - Y * V'
 */
 
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &a[*k + i__ - 1 + a_dim1], lda);
-	    i__2 = i__ - 1;
+	    i__2 = *n - *k;
+	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
-	    cgemv_("No transpose", n, &i__2, &q__1, &y[y_offset], ldy, &a[*k
-		    + i__ - 1 + a_dim1], lda, &c_b56, &a[i__ * a_dim1 + 1], &
-		    c__1);
+	    cgemv_("NO TRANSPOSE", &i__2, &i__3, &q__1, &y[*k + 1 + y_dim1],
+		    ldy, &a[*k + i__ - 1 + a_dim1], lda, &c_b57, &a[*k + 1 +
+		    i__ * a_dim1], &c__1);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &a[*k + i__ - 1 + a_dim1], lda);
 
@@ -10615,21 +10686,21 @@ L130:
 	    ccopy_(&i__2, &a[*k + 1 + i__ * a_dim1], &c__1, &t[*nb * t_dim1 +
 		    1], &c__1);
 	    i__2 = i__ - 1;
-	    ctrmv_("Lower", "Conjugate transpose", "Unit", &i__2, &a[*k + 1 +
+	    ctrmv_("Lower", "Conjugate transpose", "UNIT", &i__2, &a[*k + 1 +
 		    a_dim1], lda, &t[*nb * t_dim1 + 1], &c__1);
 
 /*           w := w + V2'*b2 */
 
 	    i__2 = *n - *k - i__ + 1;
 	    i__3 = i__ - 1;
-	    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[*k + i__ +
-		    a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b56,
+	    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[*k + i__ +
+		    a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b57,
 		    &t[*nb * t_dim1 + 1], &c__1);
 
 /*           w := T'*w */
 
 	    i__2 = i__ - 1;
-	    ctrmv_("Upper", "Conjugate transpose", "Non-unit", &i__2, &t[
+	    ctrmv_("Upper", "Conjugate transpose", "NON-UNIT", &i__2, &t[
 		    t_offset], ldt, &t[*nb * t_dim1 + 1], &c__1);
 
 /*           b2 := b2 - V2*w */
@@ -10637,14 +10708,14 @@ L130:
 	    i__2 = *n - *k - i__ + 1;
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
-	    cgemv_("No transpose", &i__2, &i__3, &q__1, &a[*k + i__ + a_dim1],
-		     lda, &t[*nb * t_dim1 + 1], &c__1, &c_b56, &a[*k + i__ +
+	    cgemv_("NO TRANSPOSE", &i__2, &i__3, &q__1, &a[*k + i__ + a_dim1],
+		     lda, &t[*nb * t_dim1 + 1], &c__1, &c_b57, &a[*k + i__ +
 		    i__ * a_dim1], &c__1);
 
 /*           b1 := b1 - V1*w */
 
 	    i__2 = i__ - 1;
-	    ctrmv_("Lower", "No transpose", "Unit", &i__2, &a[*k + 1 + a_dim1]
+	    ctrmv_("Lower", "NO TRANSPOSE", "UNIT", &i__2, &a[*k + 1 + a_dim1]
 		    , lda, &t[*nb * t_dim1 + 1], &c__1);
 	    i__2 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
@@ -10656,45 +10727,49 @@ L130:
 	}
 
 /*
-          Generate the elementary reflector H(i) to annihilate
-          A(k+i+1:n,i)
+          Generate the elementary reflector H(I) to annihilate
+          A(K+I+1:N,I)
 */
 
-	i__2 = *k + i__ + i__ * a_dim1;
-	ei.r = a[i__2].r, ei.i = a[i__2].i;
 	i__2 = *n - *k - i__ + 1;
 /* Computing MIN */
 	i__3 = *k + i__ + 1;
-	clarfg_(&i__2, &ei, &a[min(i__3,*n) + i__ * a_dim1], &c__1, &tau[i__])
-		;
+	clarfg_(&i__2, &a[*k + i__ + i__ * a_dim1], &a[min(i__3,*n) + i__ *
+		a_dim1], &c__1, &tau[i__]);
+	i__2 = *k + i__ + i__ * a_dim1;
+	ei.r = a[i__2].r, ei.i = a[i__2].i;
 	i__2 = *k + i__ + i__ * a_dim1;
 	a[i__2].r = 1.f, a[i__2].i = 0.f;
 
-/*        Compute  Y(1:n,i) */
+/*        Compute  Y(K+1:N,I) */
 
-	i__2 = *n - *k - i__ + 1;
-	cgemv_("No transpose", n, &i__2, &c_b56, &a[(i__ + 1) * a_dim1 + 1],
-		lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b55, &y[i__ *
-		y_dim1 + 1], &c__1);
+	i__2 = *n - *k;
+	i__3 = *n - *k - i__ + 1;
+	cgemv_("NO TRANSPOSE", &i__2, &i__3, &c_b57, &a[*k + 1 + (i__ + 1) *
+		a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b56, &y[*
+		k + 1 + i__ * y_dim1], &c__1);
 	i__2 = *n - *k - i__ + 1;
 	i__3 = i__ - 1;
-	cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[*k + i__ +
-		a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b55, &t[
+	cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[*k + i__ +
+		a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b56, &t[
 		i__ * t_dim1 + 1], &c__1);
-	i__2 = i__ - 1;
+	i__2 = *n - *k;
+	i__3 = i__ - 1;
 	q__1.r = -1.f, q__1.i = -0.f;
-	cgemv_("No transpose", n, &i__2, &q__1, &y[y_offset], ldy, &t[i__ *
-		t_dim1 + 1], &c__1, &c_b56, &y[i__ * y_dim1 + 1], &c__1);
-	cscal_(n, &tau[i__], &y[i__ * y_dim1 + 1], &c__1);
+	cgemv_("NO TRANSPOSE", &i__2, &i__3, &q__1, &y[*k + 1 + y_dim1], ldy,
+		&t[i__ * t_dim1 + 1], &c__1, &c_b57, &y[*k + 1 + i__ * y_dim1]
+		, &c__1);
+	i__2 = *n - *k;
+	cscal_(&i__2, &tau[i__], &y[*k + 1 + i__ * y_dim1], &c__1);
 
-/*        Compute T(1:i,i) */
+/*        Compute T(1:I,I) */
 
 	i__2 = i__ - 1;
 	i__3 = i__;
 	q__1.r = -tau[i__3].r, q__1.i = -tau[i__3].i;
 	cscal_(&i__2, &q__1, &t[i__ * t_dim1 + 1], &c__1);
 	i__2 = i__ - 1;
-	ctrmv_("Upper", "No transpose", "Non-unit", &i__2, &t[t_offset], ldt,
+	ctrmv_("Upper", "No Transpose", "NON-UNIT", &i__2, &t[t_offset], ldt,
 		&t[i__ * t_dim1 + 1], &c__1)
 		;
 	i__2 = i__ + i__ * t_dim1;
@@ -10706,11 +10781,25 @@ L130:
     i__1 = *k + *nb + *nb * a_dim1;
     a[i__1].r = ei.r, a[i__1].i = ei.i;
 
+/*     Compute Y(1:K,1:NB) */
+
+    clacpy_("ALL", k, nb, &a[(a_dim1 << 1) + 1], lda, &y[y_offset], ldy);
+    ctrmm_("RIGHT", "Lower", "NO TRANSPOSE", "UNIT", k, nb, &c_b57, &a[*k + 1
+	    + a_dim1], lda, &y[y_offset], ldy);
+    if (*n > *k + *nb) {
+	i__1 = *n - *k - *nb;
+	cgemm_("NO TRANSPOSE", "NO TRANSPOSE", k, nb, &i__1, &c_b57, &a[(*nb
+		+ 2) * a_dim1 + 1], lda, &a[*k + 1 + *nb + a_dim1], lda, &
+		c_b57, &y[y_offset], ldy);
+    }
+    ctrmm_("RIGHT", "Upper", "NO TRANSPOSE", "NON-UNIT", k, nb, &c_b57, &t[
+	    t_offset], ldt, &y[y_offset], ldy);
+
     return 0;
 
-/*     End of CLAHRD */
+/*     End of CLAHR2 */
 
-} /* clahrd_ */
+} /* clahr2_ */
 
 doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
 	lda, real *work)
@@ -10732,10 +10821,10 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -10761,7 +10850,7 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
     where  norm1  denotes the  one norm of a matrix (maximum column sum),
     normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
     normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+    squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 
     Arguments
     =========
@@ -10784,7 +10873,7 @@ doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(M,1).
 
-    WORK    (workspace) REAL array, dimension (LWORK),
+    WORK    (workspace) REAL array, dimension (MAX(1,LWORK)),
             where LWORK >= M when NORM = 'I'; otherwise, WORK is not
             referenced.
 
@@ -10901,10 +10990,10 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -10930,7 +11019,7 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
     where  norm1  denotes the  one norm of a matrix (maximum column sum),
     normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
     normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+    squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 
     Arguments
     =========
@@ -10962,7 +11051,7 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(N,1).
 
-    WORK    (workspace) REAL array, dimension (LWORK),
+    WORK    (workspace) REAL array, dimension (MAX(1,LWORK)),
             where LWORK >= N when NORM = 'I' or '1' or 'O'; otherwise,
             WORK is not referenced.
 
@@ -11116,180 +11205,4273 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
 
 } /* clanhe_ */
 
-doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
-	work)
+/* Subroutine */ int claqr0_(logical *wantt, logical *wantz, integer *n,
+	integer *ilo, integer *ihi, complex *h__, integer *ldh, complex *w,
+	integer *iloz, integer *ihiz, complex *z__, integer *ldz, complex *
+	work, integer *lwork, integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    real ret_val, r__1, r__2;
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
+    real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
+    complex q__1, q__2, q__3, q__4, q__5;
 
     /* Builtin functions */
-    double c_abs(complex *), sqrt(doublereal);
+    double r_imag(complex *);
+    void c_sqrt(complex *, complex *);
 
     /* Local variables */
-    static integer i__, j;
-    static real sum, scale;
-    extern logical lsame_(char *, char *);
-    static real value;
-    extern /* Subroutine */ int classq_(integer *, complex *, integer *, real
-	    *, real *);
+    static integer i__, k;
+    static real s;
+    static complex aa, bb, cc, dd;
+    static integer ld, nh, it, ks, kt, ku, kv, ls, ns, nw;
+    static complex tr2, det;
+    static integer inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl, kbot,
+	    nmin;
+    static complex swap;
+    static integer ktop;
+    static complex zdum[1]	/* was [1][1] */;
+    static integer kacc22, itmax, nsmax, nwmax, kwtop;
+    extern /* Subroutine */ int claqr3_(logical *, logical *, integer *,
+	    integer *, integer *, integer *, complex *, integer *, integer *,
+	    integer *, complex *, integer *, integer *, integer *, complex *,
+	    complex *, integer *, integer *, complex *, integer *, integer *,
+	    complex *, integer *, complex *, integer *), claqr4_(logical *,
+	    logical *, integer *, integer *, integer *, complex *, integer *,
+	    complex *, integer *, integer *, complex *, integer *, complex *,
+	    integer *, integer *), claqr5_(logical *, logical *, integer *,
+	    integer *, integer *, integer *, integer *, complex *, complex *,
+	    integer *, integer *, integer *, complex *, integer *, complex *,
+	    integer *, complex *, integer *, integer *, complex *, integer *,
+	    integer *, complex *, integer *);
+    static integer nibble;
+    extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex *, integer *, complex *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static char jbcmpz[2];
+    static complex rtdisc;
+    static integer nwupbd;
+    static logical sorted;
+    static integer lwkopt;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
 
 
-    Purpose
-    =======
+       Purpose
+       =======
 
-    CLANHS  returns the value of the one norm,  or the Frobenius norm, or
-    the  infinity norm,  or the  element of  largest absolute value  of a
-    Hessenberg matrix A.
+       CLAQR0 computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**H, where T is an upper triangular matrix (the
+       Schur form), and Z is the unitary matrix of Schur vectors.
 
-    Description
-    ===========
+       Optionally Z may be postmultiplied into an input unitary
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the unitary matrix Q:  A = Q*H*Q**H = (QZ)*H*(QZ)**H.
 
-    CLANHS returns the value
+       Arguments
+       =========
 
-       CLANHS = ( max(abs(A(i,j))), NORM = 'M' or 'm'
-                (
-                ( norm1(A),         NORM = '1', 'O' or 'o'
-                (
-                ( normI(A),         NORM = 'I' or 'i'
-                (
-                ( normF(A),         NORM = 'F', 'f', 'E' or 'e'
+       WANTT   (input) LOGICAL
+            = .TRUE. : the full Schur form T is required;
+            = .FALSE.: only eigenvalues are required.
 
-    where  norm1  denotes the  one norm of a matrix (maximum column sum),
-    normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
-    normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+       WANTZ   (input) LOGICAL
+            = .TRUE. : the matrix of Schur vectors Z is required;
+            = .FALSE.: Schur vectors are not required.
 
-    Arguments
-    =========
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
 
-    NORM    (input) CHARACTER*1
-            Specifies the value to be returned in CLANHS as described
-            above.
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N and, if ILO.GT.1,
+             H(ILO,ILO-1) is zero. ILO and IHI are normally set by a
+             previous call to CGEBAL, and then passed to CGEHRD when the
+             matrix output by CGEBAL is reduced to Hessenberg form.
+             Otherwise, ILO and IHI should be set to 1 and N,
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
 
-    N       (input) INTEGER
-            The order of the matrix A.  N >= 0.  When N = 0, CLANHS is
-            set to zero.
+       H     (input/output) COMPLEX array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and WANTT is .TRUE., then H
+             contains the upper triangular matrix T from the Schur
+             decomposition (the Schur form). If INFO = 0 and WANT is
+             .FALSE., then the contents of H are unspecified on exit.
+             (The output value of H when INFO.GT.0 is given under the
+             description of INFO below.)
 
-    A       (input) COMPLEX array, dimension (LDA,N)
-            The n by n upper Hessenberg matrix A; the part of A below the
-            first sub-diagonal is not referenced.
+             This subroutine may explicitly set H(i,j) = 0 for i.GT.j and
+             j = 1, 2, ... ILO-1 or j = IHI+1, IHI+2, ... N.
 
-    LDA     (input) INTEGER
-            The leading dimension of the array A.  LDA >= max(N,1).
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
 
-    WORK    (workspace) REAL array, dimension (LWORK),
-            where LWORK >= N when NORM = 'I'; otherwise, WORK is not
-            referenced.
+       W        (output) COMPLEX array, dimension (N)
+             The computed eigenvalues of H(ILO:IHI,ILO:IHI) are stored
+             in W(ILO:IHI). If WANTT is .TRUE., then the eigenvalues are
+             stored in the same order as on the diagonal of the Schur
+             form returned in H, with W(i) = H(i,i).
 
-   =====================================================================
+       Z     (input/output) COMPLEX array, dimension (LDZ,IHI)
+             If WANTZ is .FALSE., then Z is not referenced.
+             If WANTZ is .TRUE., then Z(ILO:IHI,ILOZ:IHIZ) is
+             replaced by Z(ILO:IHI,ILOZ:IHIZ)*U where U is the
+             orthogonal Schur factor of H(ILO:IHI,ILO:IHI).
+             (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if WANTZ is .TRUE.
+             then LDZ.GE.MAX(1,IHIZ).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) COMPLEX array, dimension LWORK
+             On exit, if LWORK = -1, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient, but LWORK typically as large as 6*N may
+             be required for optimal performance.  A workspace query
+             to determine the optimal workspace size is recommended.
+
+             If LWORK = -1, then CLAQR0 does a workspace query.
+             In this case, CLAQR0 checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
+
+
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .GT. 0:  if INFO = i, CLAQR0 failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
+
+                  If INFO .GT. 0 and WANT is .FALSE., then on exit,
+                  the remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
+
+                  If INFO .GT. 0 and WANTT is .TRUE., then on exit
+
+             (*)  (initial value of H)*U  = U*(final value of H)
+
+                  where U is a unitary matrix.  The final
+                  value of  H is upper Hessenberg and triangular in
+                  rows and columns INFO+1 through IHI.
+
+                  If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+
+                    (final value of Z(ILO:IHI,ILOZ:IHIZ)
+                     =  (initial value of Z(ILO:IHI,ILOZ:IHIZ)*U
+
+                  where U is the unitary matrix in (*) (regard-
+                  less of the value of WANTT.)
+
+                  If INFO .GT. 0 and WANTZ is .FALSE., then Z is not
+                  accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    CLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== Exceptional deflation windows:  try to cure rare
+       .    slow convergence by varying the size of the
+       .    deflation window after KEXNW iterations. ====
+
+       ==== Exceptional shifts: try to cure rare slow convergence
+       .    with ad-hoc exceptional shifts every KEXSH iterations.
+       .    ====
+
+       ==== The constant WILK1 is used to form the exceptional
+       .    shifts. ====
 */
-
-
     /* Parameter adjustments */
-    a_dim1 = *lda;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --w;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
     --work;
 
     /* Function Body */
+    *info = 0;
+
+/*     ==== Quick return for N = 0: nothing to do. ==== */
+
     if (*n == 0) {
-	value = 0.f;
-    } else if (lsame_(norm, "M")) {
-
-/*        Find max(abs(A(i,j))). */
-
-	value = 0.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-/* Computing MAX */
-		r__1 = value, r__2 = c_abs(&a[i__ + j * a_dim1]);
-		value = dmax(r__1,r__2);
-/* L10: */
-	    }
-/* L20: */
-	}
-    } else if (lsame_(norm, "O") || *(unsigned char *)
-	    norm == '1') {
-
-/*        Find norm1(A). */
-
-	value = 0.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    sum = 0.f;
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		sum += c_abs(&a[i__ + j * a_dim1]);
-/* L30: */
-	    }
-	    value = dmax(value,sum);
-/* L40: */
-	}
-    } else if (lsame_(norm, "I")) {
-
-/*        Find normI(A). */
-
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    work[i__] = 0.f;
-/* L50: */
-	}
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		work[i__] += c_abs(&a[i__ + j * a_dim1]);
-/* L60: */
-	    }
-/* L70: */
-	}
-	value = 0.f;
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-/* Computing MAX */
-	    r__1 = value, r__2 = work[i__];
-	    value = dmax(r__1,r__2);
-/* L80: */
-	}
-    } else if (lsame_(norm, "F") || lsame_(norm, "E")) {
-
-/*        Find normF(A). */
-
-	scale = 0.f;
-	sum = 1.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    classq_(&i__2, &a[j * a_dim1 + 1], &c__1, &scale, &sum);
-/* L90: */
-	}
-	value = scale * sqrt(sum);
+	work[1].r = 1.f, work[1].i = 0.f;
+	return 0;
     }
 
-    ret_val = value;
-    return ret_val;
+    if (*n <= 11) {
 
-/*     End of CLANHS */
+/*        ==== Tiny matrices must use CLAHQR. ==== */
 
-} /* clanhs_ */
+	lwkopt = 1;
+	if (*lwork != -1) {
+	    clahqr_(wantt, wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1],
+		    iloz, ihiz, &z__[z_offset], ldz, info);
+	}
+    } else {
+
+/*
+          ==== Use small bulge multi-shift QR with aggressive early
+          .    deflation on larger-than-tiny matrices. ====
+
+          ==== Hope for the best. ====
+*/
+
+	*info = 0;
+
+/*        ==== Set up job flags for ILAENV. ==== */
+
+	if (*wantt) {
+	    *(unsigned char *)jbcmpz = 'S';
+	} else {
+	    *(unsigned char *)jbcmpz = 'E';
+	}
+	if (*wantz) {
+	    *(unsigned char *)&jbcmpz[1] = 'V';
+	} else {
+	    *(unsigned char *)&jbcmpz[1] = 'N';
+	}
+
+/*
+          ==== NWR = recommended deflation window size.  At this
+          .    point,  N .GT. NTINY = 11, so there is enough
+          .    subdiagonal workspace for NWR.GE.2 as required.
+          .    (In fact, there is enough subdiagonal space for
+          .    NWR.GE.3.) ====
+*/
+
+	nwr = ilaenv_(&c__13, "CLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nwr = max(2,nwr);
+/* Computing MIN */
+	i__1 = *ihi - *ilo + 1, i__2 = (*n - 1) / 3, i__1 = min(i__1,i__2);
+	nwr = min(i__1,nwr);
+
+/*
+          ==== NSR = recommended number of simultaneous shifts.
+          .    At this point N .GT. NTINY = 11, so there is at
+          .    enough subdiagonal workspace for NSR to be even
+          .    and greater than or equal to two as required. ====
+*/
+
+	nsr = ilaenv_(&c__15, "CLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+/* Computing MIN */
+	i__1 = nsr, i__2 = (*n + 6) / 9, i__1 = min(i__1,i__2), i__2 = *ihi -
+		*ilo;
+	nsr = min(i__1,i__2);
+/* Computing MAX */
+	i__1 = 2, i__2 = nsr - nsr % 2;
+	nsr = max(i__1,i__2);
+
+/*
+          ==== Estimate optimal workspace ====
+
+          ==== Workspace query call to CLAQR3 ====
+*/
+
+	i__1 = nwr + 1;
+	claqr3_(wantt, wantz, n, ilo, ihi, &i__1, &h__[h_offset], ldh, iloz,
+		ihiz, &z__[z_offset], ldz, &ls, &ld, &w[1], &h__[h_offset],
+		ldh, n, &h__[h_offset], ldh, n, &h__[h_offset], ldh, &work[1],
+		 &c_n1);
+
+/*
+          ==== Optimal workspace = MAX(CLAQR5, CLAQR3) ====
+
+   Computing MAX
+*/
+	i__1 = nsr * 3 / 2, i__2 = (integer) work[1].r;
+	lwkopt = max(i__1,i__2);
+
+/*        ==== Quick return in case of workspace query. ==== */
+
+	if (*lwork == -1) {
+	    r__1 = (real) lwkopt;
+	    q__1.r = r__1, q__1.i = 0.f;
+	    work[1].r = q__1.r, work[1].i = q__1.i;
+	    return 0;
+	}
+
+/*        ==== CLAHQR/CLAQR0 crossover point ==== */
+
+	nmin = ilaenv_(&c__12, "CLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)
+		6, (ftnlen)2);
+	nmin = max(11,nmin);
+
+/*        ==== Nibble crossover point ==== */
+
+	nibble = ilaenv_(&c__14, "CLAQR0", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	nibble = max(0,nibble);
+
+/*
+          ==== Accumulate reflections during ttswp?  Use block
+          .    2-by-2 structure during matrix-matrix multiply? ====
+*/
+
+	kacc22 = ilaenv_(&c__16, "CLAQR0", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	kacc22 = max(0,kacc22);
+	kacc22 = min(2,kacc22);
+
+/*
+          ==== NWMAX = the largest possible deflation window for
+          .    which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n - 1) / 3, i__2 = *lwork / 2;
+	nwmax = min(i__1,i__2);
+	nw = nwmax;
+
+/*
+          ==== NSMAX = the Largest number of simultaneous shifts
+          .    for which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n + 6) / 9, i__2 = (*lwork << 1) / 3;
+	nsmax = min(i__1,i__2);
+	nsmax -= nsmax % 2;
+
+/*        ==== NDFL: an iteration count restarted at deflation. ==== */
+
+	ndfl = 1;
+
+/*
+          ==== ITMAX = iteration limit ====
+
+   Computing MAX
+*/
+	i__1 = 10, i__2 = *ihi - *ilo + 1;
+	itmax = max(i__1,i__2) * 30;
+
+/*        ==== Last row and column in the active block ==== */
+
+	kbot = *ihi;
+
+/*        ==== Main Loop ==== */
+
+	i__1 = itmax;
+	for (it = 1; it <= i__1; ++it) {
+
+/*           ==== Done when KBOT falls below ILO ==== */
+
+	    if (kbot < *ilo) {
+		goto L80;
+	    }
+
+/*           ==== Locate active block ==== */
+
+	    i__2 = *ilo + 1;
+	    for (k = kbot; k >= i__2; --k) {
+		i__3 = k + (k - 1) * h_dim1;
+		if (h__[i__3].r == 0.f && h__[i__3].i == 0.f) {
+		    goto L20;
+		}
+/* L10: */
+	    }
+	    k = *ilo;
+L20:
+	    ktop = k;
+
+/*
+             ==== Select deflation window size:
+             .    Typical Case:
+             .      If possible and advisable, nibble the entire
+             .      active block.  If not, use size MIN(NWR,NWMAX)
+             .      or MIN(NWR+1,NWMAX) depending upon which has
+             .      the smaller corresponding subdiagonal entry
+             .      (a heuristic).
+             .
+             .    Exceptional Case:
+             .      If there have been no deflations in KEXNW or
+             .      more iterations, then vary the deflation window
+             .      size.   At first, because, larger windows are,
+             .      in general, more powerful than smaller ones,
+             .      rapidly increase the window to the maximum possible.
+             .      Then, gradually reduce the window size. ====
+*/
+
+	    nh = kbot - ktop + 1;
+	    nwupbd = min(nh,nwmax);
+	    if (ndfl < 5) {
+		nw = min(nwupbd,nwr);
+	    } else {
+/* Computing MIN */
+		i__2 = nwupbd, i__3 = nw << 1;
+		nw = min(i__2,i__3);
+	    }
+	    if (nw < nwmax) {
+		if (nw >= nh - 1) {
+		    nw = nh;
+		} else {
+		    kwtop = kbot - nw + 1;
+		    i__2 = kwtop + (kwtop - 1) * h_dim1;
+		    i__3 = kwtop - 1 + (kwtop - 2) * h_dim1;
+		    if ((r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&
+			    h__[kwtop + (kwtop - 1) * h_dim1]), dabs(r__2)) >
+			    (r__3 = h__[i__3].r, dabs(r__3)) + (r__4 = r_imag(
+			    &h__[kwtop - 1 + (kwtop - 2) * h_dim1]), dabs(
+			    r__4))) {
+			++nw;
+		    }
+		}
+	    }
+	    if (ndfl < 5) {
+		ndec = -1;
+	    } else if (ndec >= 0 || nw >= nwupbd) {
+		++ndec;
+		if (nw - ndec < 2) {
+		    ndec = 0;
+		}
+		nw -= ndec;
+	    }
+
+/*
+             ==== Aggressive early deflation:
+             .    split workspace under the subdiagonal into
+             .      - an nw-by-nw work array V in the lower
+             .        left-hand-corner,
+             .      - an NW-by-at-least-NW-but-more-is-better
+             .        (NW-by-NHO) horizontal work array along
+             .        the bottom edge,
+             .      - an at-least-NW-but-more-is-better (NHV-by-NW)
+             .        vertical work array along the left-hand-edge.
+             .        ====
+*/
+
+	    kv = *n - nw + 1;
+	    kt = nw + 1;
+	    nho = *n - nw - 1 - kt + 1;
+	    kwv = nw + 2;
+	    nve = *n - nw - kwv + 1;
+
+/*           ==== Aggressive early deflation ==== */
+
+	    claqr3_(wantt, wantz, n, &ktop, &kbot, &nw, &h__[h_offset], ldh,
+		    iloz, ihiz, &z__[z_offset], ldz, &ls, &ld, &w[1], &h__[kv
+		    + h_dim1], ldh, &nho, &h__[kv + kt * h_dim1], ldh, &nve, &
+		    h__[kwv + h_dim1], ldh, &work[1], lwork);
+
+/*           ==== Adjust KBOT accounting for new deflations. ==== */
+
+	    kbot -= ld;
+
+/*           ==== KS points to the shifts. ==== */
+
+	    ks = kbot - ls + 1;
+
+/*
+             ==== Skip an expensive QR sweep if there is a (partly
+             .    heuristic) reason to expect that many eigenvalues
+             .    will deflate without it.  Here, the QR sweep is
+             .    skipped if many eigenvalues have just been deflated
+             .    or if the remaining active block is small.
+*/
+
+	    if (ld == 0 || ld * 100 <= nw * nibble && kbot - ktop + 1 > min(
+		    nmin,nwmax)) {
+
+/*
+                ==== NS = nominal number of simultaneous shifts.
+                .    This may be lowered (slightly) if CLAQR3
+                .    did not provide that many shifts. ====
+
+   Computing MIN
+   Computing MAX
+*/
+		i__4 = 2, i__5 = kbot - ktop;
+		i__2 = min(nsmax,nsr), i__3 = max(i__4,i__5);
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+
+/*
+                ==== If there have been no deflations
+                .    in a multiple of KEXSH iterations,
+                .    then try exceptional shifts.
+                .    Otherwise use shifts provided by
+                .    CLAQR3 above or from the eigenvalues
+                .    of a trailing principal submatrix. ====
+*/
+
+		if (ndfl % 6 == 0) {
+		    ks = kbot - ns + 1;
+		    i__2 = ks + 1;
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			i__3 = i__;
+			i__4 = i__ + i__ * h_dim1;
+			i__5 = i__ + (i__ - 1) * h_dim1;
+			r__3 = ((r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[i__ + (i__ - 1) * h_dim1]), dabs(
+				r__2))) * .75f;
+			q__1.r = h__[i__4].r + r__3, q__1.i = h__[i__4].i;
+			w[i__3].r = q__1.r, w[i__3].i = q__1.i;
+			i__3 = i__ - 1;
+			i__4 = i__;
+			w[i__3].r = w[i__4].r, w[i__3].i = w[i__4].i;
+/* L30: */
+		    }
+		} else {
+
+/*
+                   ==== Got NS/2 or fewer shifts? Use CLAQR4 or
+                   .    CLAHQR on a trailing principal submatrix to
+                   .    get more. (Since NS.LE.NSMAX.LE.(N+6)/9,
+                   .    there is enough space below the subdiagonal
+                   .    to fit an NS-by-NS scratch array.) ====
+*/
+
+		    if (kbot - ks + 1 <= ns / 2) {
+			ks = kbot - ns + 1;
+			kt = *n - ns + 1;
+			clacpy_("A", &ns, &ns, &h__[ks + ks * h_dim1], ldh, &
+				h__[kt + h_dim1], ldh);
+			if (ns > nmin) {
+			    claqr4_(&c_false, &c_false, &ns, &c__1, &ns, &h__[
+				    kt + h_dim1], ldh, &w[ks], &c__1, &c__1,
+				    zdum, &c__1, &work[1], lwork, &inf);
+			} else {
+			    clahqr_(&c_false, &c_false, &ns, &c__1, &ns, &h__[
+				    kt + h_dim1], ldh, &w[ks], &c__1, &c__1,
+				    zdum, &c__1, &inf);
+			}
+			ks += inf;
+
+/*
+                      ==== In case of a rare QR failure use
+                      .    eigenvalues of the trailing 2-by-2
+                      .    principal submatrix.  Scale to avoid
+                      .    overflows, underflows and subnormals.
+                      .    (The scale factor S can not be zero,
+                      .    because H(KBOT,KBOT-1) is nonzero.) ====
+*/
+
+			if (ks >= kbot) {
+			    i__2 = kbot - 1 + (kbot - 1) * h_dim1;
+			    i__3 = kbot + (kbot - 1) * h_dim1;
+			    i__4 = kbot - 1 + kbot * h_dim1;
+			    i__5 = kbot + kbot * h_dim1;
+			    s = (r__1 = h__[i__2].r, dabs(r__1)) + (r__2 =
+				    r_imag(&h__[kbot - 1 + (kbot - 1) *
+				    h_dim1]), dabs(r__2)) + ((r__3 = h__[i__3]
+				    .r, dabs(r__3)) + (r__4 = r_imag(&h__[
+				    kbot + (kbot - 1) * h_dim1]), dabs(r__4)))
+				     + ((r__5 = h__[i__4].r, dabs(r__5)) + (
+				    r__6 = r_imag(&h__[kbot - 1 + kbot *
+				    h_dim1]), dabs(r__6))) + ((r__7 = h__[
+				    i__5].r, dabs(r__7)) + (r__8 = r_imag(&
+				    h__[kbot + kbot * h_dim1]), dabs(r__8)));
+			    i__2 = kbot - 1 + (kbot - 1) * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    aa.r = q__1.r, aa.i = q__1.i;
+			    i__2 = kbot + (kbot - 1) * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    cc.r = q__1.r, cc.i = q__1.i;
+			    i__2 = kbot - 1 + kbot * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    bb.r = q__1.r, bb.i = q__1.i;
+			    i__2 = kbot + kbot * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    dd.r = q__1.r, dd.i = q__1.i;
+			    q__2.r = aa.r + dd.r, q__2.i = aa.i + dd.i;
+			    q__1.r = q__2.r / 2.f, q__1.i = q__2.i / 2.f;
+			    tr2.r = q__1.r, tr2.i = q__1.i;
+			    q__3.r = aa.r - tr2.r, q__3.i = aa.i - tr2.i;
+			    q__4.r = dd.r - tr2.r, q__4.i = dd.i - tr2.i;
+			    q__2.r = q__3.r * q__4.r - q__3.i * q__4.i,
+				    q__2.i = q__3.r * q__4.i + q__3.i *
+				    q__4.r;
+			    q__5.r = bb.r * cc.r - bb.i * cc.i, q__5.i = bb.r
+				    * cc.i + bb.i * cc.r;
+			    q__1.r = q__2.r - q__5.r, q__1.i = q__2.i -
+				    q__5.i;
+			    det.r = q__1.r, det.i = q__1.i;
+			    q__2.r = -det.r, q__2.i = -det.i;
+			    c_sqrt(&q__1, &q__2);
+			    rtdisc.r = q__1.r, rtdisc.i = q__1.i;
+			    i__2 = kbot - 1;
+			    q__2.r = tr2.r + rtdisc.r, q__2.i = tr2.i +
+				    rtdisc.i;
+			    q__1.r = s * q__2.r, q__1.i = s * q__2.i;
+			    w[i__2].r = q__1.r, w[i__2].i = q__1.i;
+			    i__2 = kbot;
+			    q__2.r = tr2.r - rtdisc.r, q__2.i = tr2.i -
+				    rtdisc.i;
+			    q__1.r = s * q__2.r, q__1.i = s * q__2.i;
+			    w[i__2].r = q__1.r, w[i__2].i = q__1.i;
+
+			    ks = kbot - 1;
+			}
+		    }
+
+		    if (kbot - ks + 1 > ns) {
+
+/*                    ==== Sort the shifts (Helps a little) ==== */
+
+			sorted = FALSE_;
+			i__2 = ks + 1;
+			for (k = kbot; k >= i__2; --k) {
+			    if (sorted) {
+				goto L60;
+			    }
+			    sorted = TRUE_;
+			    i__3 = k - 1;
+			    for (i__ = ks; i__ <= i__3; ++i__) {
+				i__4 = i__;
+				i__5 = i__ + 1;
+				if ((r__1 = w[i__4].r, dabs(r__1)) + (r__2 =
+					r_imag(&w[i__]), dabs(r__2)) < (r__3 =
+					 w[i__5].r, dabs(r__3)) + (r__4 =
+					r_imag(&w[i__ + 1]), dabs(r__4))) {
+				    sorted = FALSE_;
+				    i__4 = i__;
+				    swap.r = w[i__4].r, swap.i = w[i__4].i;
+				    i__4 = i__;
+				    i__5 = i__ + 1;
+				    w[i__4].r = w[i__5].r, w[i__4].i = w[i__5]
+					    .i;
+				    i__4 = i__ + 1;
+				    w[i__4].r = swap.r, w[i__4].i = swap.i;
+				}
+/* L40: */
+			    }
+/* L50: */
+			}
+L60:
+			;
+		    }
+		}
+
+/*
+                ==== If there are only two shifts, then use
+                .    only one.  ====
+*/
+
+		if (kbot - ks + 1 == 2) {
+		    i__2 = kbot;
+		    i__3 = kbot + kbot * h_dim1;
+		    q__2.r = w[i__2].r - h__[i__3].r, q__2.i = w[i__2].i -
+			    h__[i__3].i;
+		    q__1.r = q__2.r, q__1.i = q__2.i;
+		    i__4 = kbot - 1;
+		    i__5 = kbot + kbot * h_dim1;
+		    q__4.r = w[i__4].r - h__[i__5].r, q__4.i = w[i__4].i -
+			    h__[i__5].i;
+		    q__3.r = q__4.r, q__3.i = q__4.i;
+		    if ((r__1 = q__1.r, dabs(r__1)) + (r__2 = r_imag(&q__1),
+			    dabs(r__2)) < (r__3 = q__3.r, dabs(r__3)) + (r__4
+			    = r_imag(&q__3), dabs(r__4))) {
+			i__2 = kbot - 1;
+			i__3 = kbot;
+			w[i__2].r = w[i__3].r, w[i__2].i = w[i__3].i;
+		    } else {
+			i__2 = kbot;
+			i__3 = kbot - 1;
+			w[i__2].r = w[i__3].r, w[i__2].i = w[i__3].i;
+		    }
+		}
+
+/*
+                ==== Use up to NS of the the smallest magnatiude
+                .    shifts.  If there aren't NS shifts available,
+                .    then use them all, possibly dropping one to
+                .    make the number of shifts even. ====
+
+   Computing MIN
+*/
+		i__2 = ns, i__3 = kbot - ks + 1;
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+		ks = kbot - ns + 1;
+
+/*
+                ==== Small-bulge multi-shift QR sweep:
+                .    split workspace under the subdiagonal into
+                .    - a KDU-by-KDU work array U in the lower
+                .      left-hand-corner,
+                .    - a KDU-by-at-least-KDU-but-more-is-better
+                .      (KDU-by-NHo) horizontal work array WH along
+                .      the bottom edge,
+                .    - and an at-least-KDU-but-more-is-better-by-KDU
+                .      (NVE-by-KDU) vertical work WV arrow along
+                .      the left-hand-edge. ====
+*/
+
+		kdu = ns * 3 - 3;
+		ku = *n - kdu + 1;
+		kwh = kdu + 1;
+		nho = *n - kdu - 3 - (kdu + 1) + 1;
+		kwv = kdu + 4;
+		nve = *n - kdu - kwv + 1;
+
+/*              ==== Small-bulge multi-shift QR sweep ==== */
+
+		claqr5_(wantt, wantz, &kacc22, n, &ktop, &kbot, &ns, &w[ks], &
+			h__[h_offset], ldh, iloz, ihiz, &z__[z_offset], ldz, &
+			work[1], &c__3, &h__[ku + h_dim1], ldh, &nve, &h__[
+			kwv + h_dim1], ldh, &nho, &h__[ku + kwh * h_dim1],
+			ldh);
+	    }
+
+/*           ==== Note progress (or the lack of it). ==== */
+
+	    if (ld > 0) {
+		ndfl = 1;
+	    } else {
+		++ndfl;
+	    }
+
+/*
+             ==== End of main loop ====
+   L70:
+*/
+	}
+
+/*
+          ==== Iteration limit exceeded.  Set INFO to show where
+          .    the problem occurred and exit. ====
+*/
+
+	*info = kbot;
+L80:
+	;
+    }
+
+/*     ==== Return the optimal value of LWORK. ==== */
+
+    r__1 = (real) lwkopt;
+    q__1.r = r__1, q__1.i = 0.f;
+    work[1].r = q__1.r, work[1].i = q__1.i;
+
+/*     ==== End of CLAQR0 ==== */
+
+    return 0;
+} /* claqr0_ */
+
+/* Subroutine */ int claqr1_(integer *n, complex *h__, integer *ldh, complex *
+	s1, complex *s2, complex *v)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, i__1, i__2, i__3, i__4;
+    real r__1, r__2, r__3, r__4, r__5, r__6;
+    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
+
+    /* Builtin functions */
+    double r_imag(complex *);
+
+    /* Local variables */
+    static real s;
+    static complex h21s, h31s;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+         Given a 2-by-2 or 3-by-3 matrix H, CLAQR1 sets v to a
+         scalar multiple of the first column of the product
+
+         (*)  K = (H - s1*I)*(H - s2*I)
+
+         scaling to avoid overflows and most underflows.
+
+         This is useful for starting double implicit shift bulges
+         in the QR algorithm.
+
+
+         N      (input) integer
+                Order of the matrix H. N must be either 2 or 3.
+
+         H      (input) COMPLEX array of dimension (LDH,N)
+                The 2-by-2 or 3-by-3 matrix H in (*).
+
+         LDH    (input) integer
+                The leading dimension of H as declared in
+                the calling procedure.  LDH.GE.N
+
+         S1     (input) COMPLEX
+         S2     S1 and S2 are the shifts defining K in (*) above.
+
+         V      (output) COMPLEX array of dimension N
+                A scalar multiple of the first column of the
+                matrix K in (*).
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --v;
+
+    /* Function Body */
+    if (*n == 2) {
+	i__1 = h_dim1 + 1;
+	q__2.r = h__[i__1].r - s2->r, q__2.i = h__[i__1].i - s2->i;
+	q__1.r = q__2.r, q__1.i = q__2.i;
+	i__2 = h_dim1 + 2;
+	s = (r__1 = q__1.r, dabs(r__1)) + (r__2 = r_imag(&q__1), dabs(r__2))
+		+ ((r__3 = h__[i__2].r, dabs(r__3)) + (r__4 = r_imag(&h__[
+		h_dim1 + 2]), dabs(r__4)));
+	if (s == 0.f) {
+	    v[1].r = 0.f, v[1].i = 0.f;
+	    v[2].r = 0.f, v[2].i = 0.f;
+	} else {
+	    i__1 = h_dim1 + 2;
+	    q__1.r = h__[i__1].r / s, q__1.i = h__[i__1].i / s;
+	    h21s.r = q__1.r, h21s.i = q__1.i;
+	    i__1 = (h_dim1 << 1) + 1;
+	    q__2.r = h21s.r * h__[i__1].r - h21s.i * h__[i__1].i, q__2.i =
+		    h21s.r * h__[i__1].i + h21s.i * h__[i__1].r;
+	    i__2 = h_dim1 + 1;
+	    q__4.r = h__[i__2].r - s1->r, q__4.i = h__[i__2].i - s1->i;
+	    i__3 = h_dim1 + 1;
+	    q__6.r = h__[i__3].r - s2->r, q__6.i = h__[i__3].i - s2->i;
+	    q__5.r = q__6.r / s, q__5.i = q__6.i / s;
+	    q__3.r = q__4.r * q__5.r - q__4.i * q__5.i, q__3.i = q__4.r *
+		    q__5.i + q__4.i * q__5.r;
+	    q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	    v[1].r = q__1.r, v[1].i = q__1.i;
+	    i__1 = h_dim1 + 1;
+	    i__2 = (h_dim1 << 1) + 2;
+	    q__4.r = h__[i__1].r + h__[i__2].r, q__4.i = h__[i__1].i + h__[
+		    i__2].i;
+	    q__3.r = q__4.r - s1->r, q__3.i = q__4.i - s1->i;
+	    q__2.r = q__3.r - s2->r, q__2.i = q__3.i - s2->i;
+	    q__1.r = h21s.r * q__2.r - h21s.i * q__2.i, q__1.i = h21s.r *
+		    q__2.i + h21s.i * q__2.r;
+	    v[2].r = q__1.r, v[2].i = q__1.i;
+	}
+    } else {
+	i__1 = h_dim1 + 1;
+	q__2.r = h__[i__1].r - s2->r, q__2.i = h__[i__1].i - s2->i;
+	q__1.r = q__2.r, q__1.i = q__2.i;
+	i__2 = h_dim1 + 2;
+	i__3 = h_dim1 + 3;
+	s = (r__1 = q__1.r, dabs(r__1)) + (r__2 = r_imag(&q__1), dabs(r__2))
+		+ ((r__3 = h__[i__2].r, dabs(r__3)) + (r__4 = r_imag(&h__[
+		h_dim1 + 2]), dabs(r__4))) + ((r__5 = h__[i__3].r, dabs(r__5))
+		 + (r__6 = r_imag(&h__[h_dim1 + 3]), dabs(r__6)));
+	if (s == 0.f) {
+	    v[1].r = 0.f, v[1].i = 0.f;
+	    v[2].r = 0.f, v[2].i = 0.f;
+	    v[3].r = 0.f, v[3].i = 0.f;
+	} else {
+	    i__1 = h_dim1 + 2;
+	    q__1.r = h__[i__1].r / s, q__1.i = h__[i__1].i / s;
+	    h21s.r = q__1.r, h21s.i = q__1.i;
+	    i__1 = h_dim1 + 3;
+	    q__1.r = h__[i__1].r / s, q__1.i = h__[i__1].i / s;
+	    h31s.r = q__1.r, h31s.i = q__1.i;
+	    i__1 = h_dim1 + 1;
+	    q__4.r = h__[i__1].r - s1->r, q__4.i = h__[i__1].i - s1->i;
+	    i__2 = h_dim1 + 1;
+	    q__6.r = h__[i__2].r - s2->r, q__6.i = h__[i__2].i - s2->i;
+	    q__5.r = q__6.r / s, q__5.i = q__6.i / s;
+	    q__3.r = q__4.r * q__5.r - q__4.i * q__5.i, q__3.i = q__4.r *
+		    q__5.i + q__4.i * q__5.r;
+	    i__3 = (h_dim1 << 1) + 1;
+	    q__7.r = h__[i__3].r * h21s.r - h__[i__3].i * h21s.i, q__7.i =
+		    h__[i__3].r * h21s.i + h__[i__3].i * h21s.r;
+	    q__2.r = q__3.r + q__7.r, q__2.i = q__3.i + q__7.i;
+	    i__4 = h_dim1 * 3 + 1;
+	    q__8.r = h__[i__4].r * h31s.r - h__[i__4].i * h31s.i, q__8.i =
+		    h__[i__4].r * h31s.i + h__[i__4].i * h31s.r;
+	    q__1.r = q__2.r + q__8.r, q__1.i = q__2.i + q__8.i;
+	    v[1].r = q__1.r, v[1].i = q__1.i;
+	    i__1 = h_dim1 + 1;
+	    i__2 = (h_dim1 << 1) + 2;
+	    q__5.r = h__[i__1].r + h__[i__2].r, q__5.i = h__[i__1].i + h__[
+		    i__2].i;
+	    q__4.r = q__5.r - s1->r, q__4.i = q__5.i - s1->i;
+	    q__3.r = q__4.r - s2->r, q__3.i = q__4.i - s2->i;
+	    q__2.r = h21s.r * q__3.r - h21s.i * q__3.i, q__2.i = h21s.r *
+		    q__3.i + h21s.i * q__3.r;
+	    i__3 = h_dim1 * 3 + 2;
+	    q__6.r = h__[i__3].r * h31s.r - h__[i__3].i * h31s.i, q__6.i =
+		    h__[i__3].r * h31s.i + h__[i__3].i * h31s.r;
+	    q__1.r = q__2.r + q__6.r, q__1.i = q__2.i + q__6.i;
+	    v[2].r = q__1.r, v[2].i = q__1.i;
+	    i__1 = h_dim1 + 1;
+	    i__2 = h_dim1 * 3 + 3;
+	    q__5.r = h__[i__1].r + h__[i__2].r, q__5.i = h__[i__1].i + h__[
+		    i__2].i;
+	    q__4.r = q__5.r - s1->r, q__4.i = q__5.i - s1->i;
+	    q__3.r = q__4.r - s2->r, q__3.i = q__4.i - s2->i;
+	    q__2.r = h31s.r * q__3.r - h31s.i * q__3.i, q__2.i = h31s.r *
+		    q__3.i + h31s.i * q__3.r;
+	    i__3 = (h_dim1 << 1) + 3;
+	    q__6.r = h21s.r * h__[i__3].r - h21s.i * h__[i__3].i, q__6.i =
+		    h21s.r * h__[i__3].i + h21s.i * h__[i__3].r;
+	    q__1.r = q__2.r + q__6.r, q__1.i = q__2.i + q__6.i;
+	    v[3].r = q__1.r, v[3].i = q__1.i;
+	}
+    }
+    return 0;
+} /* claqr1_ */
+
+/* Subroutine */ int claqr2_(logical *wantt, logical *wantz, integer *n,
+	integer *ktop, integer *kbot, integer *nw, complex *h__, integer *ldh,
+	 integer *iloz, integer *ihiz, complex *z__, integer *ldz, integer *
+	ns, integer *nd, complex *sh, complex *v, integer *ldv, integer *nh,
+	complex *t, integer *ldt, integer *nv, complex *wv, integer *ldwv,
+	complex *work, integer *lwork)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
+	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
+    real r__1, r__2, r__3, r__4, r__5, r__6;
+    complex q__1, q__2;
+
+    /* Builtin functions */
+    double r_imag(complex *);
+    void r_cnjg(complex *, complex *);
+
+    /* Local variables */
+    static integer i__, j;
+    static complex s;
+    static integer jw;
+    static real foo;
+    static integer kln;
+    static complex tau;
+    static integer knt;
+    static real ulp;
+    static integer lwk1, lwk2;
+    static complex beta;
+    static integer kcol, info, ifst, ilst, ltop, krow;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
+	    , integer *, complex *, complex *, integer *, complex *),
+	    cgemm_(char *, char *, integer *, integer *, integer *, complex *,
+	     complex *, integer *, complex *, integer *, complex *, complex *,
+	     integer *), ccopy_(integer *, complex *, integer
+	    *, complex *, integer *);
+    static integer infqr, kwtop;
+    extern /* Subroutine */ int slabad_(real *, real *), cgehrd_(integer *,
+	    integer *, integer *, complex *, integer *, complex *, complex *,
+	    integer *, integer *), clarfg_(integer *, complex *, complex *,
+	    integer *, complex *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex *, integer *, complex *, integer *), claset_(char *, integer *, integer *, complex *, complex
+	    *, complex *, integer *);
+    static real safmin, safmax;
+    extern /* Subroutine */ int ctrexc_(char *, integer *, complex *, integer
+	    *, complex *, integer *, integer *, integer *, integer *),
+	     cunmhr_(char *, char *, integer *, integer *, integer *, integer
+	    *, complex *, integer *, complex *, complex *, integer *, complex
+	    *, integer *, integer *);
+    static real smlnum;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+    -- April 2009                                                      --
+
+
+       This subroutine is identical to CLAQR3 except that it avoids
+       recursion by calling CLAHQR instead of CLAQR4.
+
+
+       ******************************************************************
+       Aggressive early deflation:
+
+       This subroutine accepts as input an upper Hessenberg matrix
+       H and performs an unitary similarity transformation
+       designed to detect and deflate fully converged eigenvalues from
+       a trailing principal submatrix.  On output H has been over-
+       written by a new Hessenberg matrix that is a perturbation of
+       an unitary similarity transformation of H.  It is to be
+       hoped that the final version of H has many zero subdiagonal
+       entries.
+
+       ******************************************************************
+       WANTT   (input) LOGICAL
+            If .TRUE., then the Hessenberg matrix H is fully updated
+            so that the triangular Schur factor may be
+            computed (in cooperation with the calling subroutine).
+            If .FALSE., then only enough of H is updated to preserve
+            the eigenvalues.
+
+       WANTZ   (input) LOGICAL
+            If .TRUE., then the unitary matrix Z is updated so
+            so that the unitary Schur factor may be computed
+            (in cooperation with the calling subroutine).
+            If .FALSE., then Z is not referenced.
+
+       N       (input) INTEGER
+            The order of the matrix H and (if WANTZ is .TRUE.) the
+            order of the unitary matrix Z.
+
+       KTOP    (input) INTEGER
+            It is assumed that either KTOP = 1 or H(KTOP,KTOP-1)=0.
+            KBOT and KTOP together determine an isolated block
+            along the diagonal of the Hessenberg matrix.
+
+       KBOT    (input) INTEGER
+            It is assumed without a check that either
+            KBOT = N or H(KBOT+1,KBOT)=0.  KBOT and KTOP together
+            determine an isolated block along the diagonal of the
+            Hessenberg matrix.
+
+       NW      (input) INTEGER
+            Deflation window size.  1 .LE. NW .LE. (KBOT-KTOP+1).
+
+       H       (input/output) COMPLEX array, dimension (LDH,N)
+            On input the initial N-by-N section of H stores the
+            Hessenberg matrix undergoing aggressive early deflation.
+            On output H has been transformed by a unitary
+            similarity transformation, perturbed, and the returned
+            to Hessenberg form that (it is to be hoped) has some
+            zero subdiagonal entries.
+
+       LDH     (input) integer
+            Leading dimension of H just as declared in the calling
+            subroutine.  N .LE. LDH
+
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
+            Specify the rows of Z to which transformations must be
+            applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N.
+
+       Z       (input/output) COMPLEX array, dimension (LDZ,N)
+            IF WANTZ is .TRUE., then on output, the unitary
+            similarity transformation mentioned above has been
+            accumulated into Z(ILOZ:IHIZ,ILO:IHI) from the right.
+            If WANTZ is .FALSE., then Z is unreferenced.
+
+       LDZ     (input) integer
+            The leading dimension of Z just as declared in the
+            calling subroutine.  1 .LE. LDZ.
+
+       NS      (output) integer
+            The number of unconverged (ie approximate) eigenvalues
+            returned in SR and SI that may be used as shifts by the
+            calling subroutine.
+
+       ND      (output) integer
+            The number of converged eigenvalues uncovered by this
+            subroutine.
+
+       SH      (output) COMPLEX array, dimension KBOT
+            On output, approximate eigenvalues that may
+            be used for shifts are stored in SH(KBOT-ND-NS+1)
+            through SR(KBOT-ND).  Converged eigenvalues are
+            stored in SH(KBOT-ND+1) through SH(KBOT).
+
+       V       (workspace) COMPLEX array, dimension (LDV,NW)
+            An NW-by-NW work array.
+
+       LDV     (input) integer scalar
+            The leading dimension of V just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       NH      (input) integer scalar
+            The number of columns of T.  NH.GE.NW.
+
+       T       (workspace) COMPLEX array, dimension (LDT,NW)
+
+       LDT     (input) integer
+            The leading dimension of T just as declared in the
+            calling subroutine.  NW .LE. LDT
+
+       NV      (input) integer
+            The number of rows of work array WV available for
+            workspace.  NV.GE.NW.
+
+       WV      (workspace) COMPLEX array, dimension (LDWV,NW)
+
+       LDWV    (input) integer
+            The leading dimension of W just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       WORK    (workspace) COMPLEX array, dimension LWORK.
+            On exit, WORK(1) is set to an estimate of the optimal value
+            of LWORK for the given values of N, NW, KTOP and KBOT.
+
+       LWORK   (input) integer
+            The dimension of the work array WORK.  LWORK = 2*NW
+            suffices, but greater efficiency may result from larger
+            values of LWORK.
+
+            If LWORK = -1, then a workspace query is assumed; CLAQR2
+            only estimates the optimal workspace size for the given
+            values of N, NW, KTOP and KBOT.  The estimate is returned
+            in WORK(1).  No error message related to LWORK is issued
+            by XERBLA.  Neither H nor Z are accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+
+       ==== Estimate optimal workspace. ====
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --sh;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    --work;
+
+    /* Function Body */
+/* Computing MIN */
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    if (jw <= 2) {
+	lwkopt = 1;
+    } else {
+
+/*        ==== Workspace query call to CGEHRD ==== */
+
+	i__1 = jw - 1;
+	cgehrd_(&jw, &c__1, &i__1, &t[t_offset], ldt, &work[1], &work[1], &
+		c_n1, &info);
+	lwk1 = (integer) work[1].r;
+
+/*        ==== Workspace query call to CUNMHR ==== */
+
+	i__1 = jw - 1;
+	cunmhr_("R", "N", &jw, &jw, &c__1, &i__1, &t[t_offset], ldt, &work[1],
+		 &v[v_offset], ldv, &work[1], &c_n1, &info);
+	lwk2 = (integer) work[1].r;
+
+/*        ==== Optimal workspace ==== */
+
+	lwkopt = jw + max(lwk1,lwk2);
+    }
+
+/*     ==== Quick return in case of workspace query. ==== */
+
+    if (*lwork == -1) {
+	r__1 = (real) lwkopt;
+	q__1.r = r__1, q__1.i = 0.f;
+	work[1].r = q__1.r, work[1].i = q__1.i;
+	return 0;
+    }
+
+/*
+       ==== Nothing to do ...
+       ... for an empty active block ... ====
+*/
+    *ns = 0;
+    *nd = 0;
+    work[1].r = 1.f, work[1].i = 0.f;
+    if (*ktop > *kbot) {
+	return 0;
+    }
+/*     ... nor for an empty deflation window. ==== */
+    if (*nw < 1) {
+	return 0;
+    }
+
+/*     ==== Machine constants ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Setup deflation window ====
+
+   Computing MIN
+*/
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    kwtop = *kbot - jw + 1;
+    if (kwtop == *ktop) {
+	s.r = 0.f, s.i = 0.f;
+    } else {
+	i__1 = kwtop + (kwtop - 1) * h_dim1;
+	s.r = h__[i__1].r, s.i = h__[i__1].i;
+    }
+
+    if (*kbot == kwtop) {
+
+/*        ==== 1-by-1 deflation window: not much to do ==== */
+
+	i__1 = kwtop;
+	i__2 = kwtop + kwtop * h_dim1;
+	sh[i__1].r = h__[i__2].r, sh[i__1].i = h__[i__2].i;
+	*ns = 1;
+	*nd = 0;
+/* Computing MAX */
+	i__1 = kwtop + kwtop * h_dim1;
+	r__5 = smlnum, r__6 = ulp * ((r__1 = h__[i__1].r, dabs(r__1)) + (r__2
+		= r_imag(&h__[kwtop + kwtop * h_dim1]), dabs(r__2)));
+	if ((r__3 = s.r, dabs(r__3)) + (r__4 = r_imag(&s), dabs(r__4)) <=
+		dmax(r__5,r__6)) {
+	    *ns = 0;
+	    *nd = 1;
+	    if (kwtop > *ktop) {
+		i__1 = kwtop + (kwtop - 1) * h_dim1;
+		h__[i__1].r = 0.f, h__[i__1].i = 0.f;
+	    }
+	}
+	work[1].r = 1.f, work[1].i = 0.f;
+	return 0;
+    }
+
+/*
+       ==== Convert to spike-triangular form.  (In case of a
+       .    rare QR failure, this routine continues to do
+       .    aggressive early deflation using that part of
+       .    the deflation window that converged using INFQR
+       .    here and there to keep track.) ====
+*/
+
+    clacpy_("U", &jw, &jw, &h__[kwtop + kwtop * h_dim1], ldh, &t[t_offset],
+	    ldt);
+    i__1 = jw - 1;
+    i__2 = *ldh + 1;
+    i__3 = *ldt + 1;
+    ccopy_(&i__1, &h__[kwtop + 1 + kwtop * h_dim1], &i__2, &t[t_dim1 + 2], &
+	    i__3);
+
+    claset_("A", &jw, &jw, &c_b56, &c_b57, &v[v_offset], ldv);
+    clahqr_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sh[kwtop],
+	    &c__1, &jw, &v[v_offset], ldv, &infqr);
+
+/*     ==== Deflation detection loop ==== */
+
+    *ns = jw;
+    ilst = infqr + 1;
+    i__1 = jw;
+    for (knt = infqr + 1; knt <= i__1; ++knt) {
+
+/*        ==== Small spike tip deflation test ==== */
+
+	i__2 = *ns + *ns * t_dim1;
+	foo = (r__1 = t[i__2].r, dabs(r__1)) + (r__2 = r_imag(&t[*ns + *ns *
+		t_dim1]), dabs(r__2));
+	if (foo == 0.f) {
+	    foo = (r__1 = s.r, dabs(r__1)) + (r__2 = r_imag(&s), dabs(r__2));
+	}
+	i__2 = *ns * v_dim1 + 1;
+/* Computing MAX */
+	r__5 = smlnum, r__6 = ulp * foo;
+	if (((r__1 = s.r, dabs(r__1)) + (r__2 = r_imag(&s), dabs(r__2))) * ((
+		r__3 = v[i__2].r, dabs(r__3)) + (r__4 = r_imag(&v[*ns *
+		v_dim1 + 1]), dabs(r__4))) <= dmax(r__5,r__6)) {
+
+/*           ==== One more converged eigenvalue ==== */
+
+	    --(*ns);
+	} else {
+
+/*
+             ==== One undeflatable eigenvalue.  Move it up out of the
+             .    way.   (CTREXC can not fail in this case.) ====
+*/
+
+	    ifst = *ns;
+	    ctrexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst, &
+		    ilst, &info);
+	    ++ilst;
+	}
+/* L10: */
+    }
+
+/*        ==== Return to Hessenberg form ==== */
+
+    if (*ns == 0) {
+	s.r = 0.f, s.i = 0.f;
+    }
+
+    if (*ns < jw) {
+
+/*
+          ==== sorting the diagonal of T improves accuracy for
+          .    graded matrices.  ====
+*/
+
+	i__1 = *ns;
+	for (i__ = infqr + 1; i__ <= i__1; ++i__) {
+	    ifst = i__;
+	    i__2 = *ns;
+	    for (j = i__ + 1; j <= i__2; ++j) {
+		i__3 = j + j * t_dim1;
+		i__4 = ifst + ifst * t_dim1;
+		if ((r__1 = t[i__3].r, dabs(r__1)) + (r__2 = r_imag(&t[j + j *
+			 t_dim1]), dabs(r__2)) > (r__3 = t[i__4].r, dabs(r__3)
+			) + (r__4 = r_imag(&t[ifst + ifst * t_dim1]), dabs(
+			r__4))) {
+		    ifst = j;
+		}
+/* L20: */
+	    }
+	    ilst = i__;
+	    if (ifst != ilst) {
+		ctrexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &info);
+	    }
+/* L30: */
+	}
+    }
+
+/*     ==== Restore shift/eigenvalue array from T ==== */
+
+    i__1 = jw;
+    for (i__ = infqr + 1; i__ <= i__1; ++i__) {
+	i__2 = kwtop + i__ - 1;
+	i__3 = i__ + i__ * t_dim1;
+	sh[i__2].r = t[i__3].r, sh[i__2].i = t[i__3].i;
+/* L40: */
+    }
+
+
+    if (*ns < jw || s.r == 0.f && s.i == 0.f) {
+	if (*ns > 1 && (s.r != 0.f || s.i != 0.f)) {
+
+/*           ==== Reflect spike back into lower triangle ==== */
+
+	    ccopy_(ns, &v[v_offset], ldv, &work[1], &c__1);
+	    i__1 = *ns;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		i__2 = i__;
+		r_cnjg(&q__1, &work[i__]);
+		work[i__2].r = q__1.r, work[i__2].i = q__1.i;
+/* L50: */
+	    }
+	    beta.r = work[1].r, beta.i = work[1].i;
+	    clarfg_(ns, &beta, &work[2], &c__1, &tau);
+	    work[1].r = 1.f, work[1].i = 0.f;
+
+	    i__1 = jw - 2;
+	    i__2 = jw - 2;
+	    claset_("L", &i__1, &i__2, &c_b56, &c_b56, &t[t_dim1 + 3], ldt);
+
+	    r_cnjg(&q__1, &tau);
+	    clarf_("L", ns, &jw, &work[1], &c__1, &q__1, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    clarf_("R", ns, ns, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    clarf_("R", &jw, ns, &work[1], &c__1, &tau, &v[v_offset], ldv, &
+		    work[jw + 1]);
+
+	    i__1 = *lwork - jw;
+	    cgehrd_(&jw, &c__1, ns, &t[t_offset], ldt, &work[1], &work[jw + 1]
+		    , &i__1, &info);
+	}
+
+/*        ==== Copy updated reduced window into place ==== */
+
+	if (kwtop > 1) {
+	    i__1 = kwtop + (kwtop - 1) * h_dim1;
+	    r_cnjg(&q__2, &v[v_dim1 + 1]);
+	    q__1.r = s.r * q__2.r - s.i * q__2.i, q__1.i = s.r * q__2.i + s.i
+		    * q__2.r;
+	    h__[i__1].r = q__1.r, h__[i__1].i = q__1.i;
+	}
+	clacpy_("U", &jw, &jw, &t[t_offset], ldt, &h__[kwtop + kwtop * h_dim1]
+		, ldh);
+	i__1 = jw - 1;
+	i__2 = *ldt + 1;
+	i__3 = *ldh + 1;
+	ccopy_(&i__1, &t[t_dim1 + 2], &i__2, &h__[kwtop + 1 + kwtop * h_dim1],
+		 &i__3);
+
+/*
+          ==== Accumulate orthogonal matrix in order update
+          .    H and Z, if requested.  ====
+*/
+
+	if (*ns > 1 && (s.r != 0.f || s.i != 0.f)) {
+	    i__1 = *lwork - jw;
+	    cunmhr_("R", "N", &jw, ns, &c__1, ns, &t[t_offset], ldt, &work[1],
+		     &v[v_offset], ldv, &work[jw + 1], &i__1, &info);
+	}
+
+/*        ==== Update vertical slab in H ==== */
+
+	if (*wantt) {
+	    ltop = 1;
+	} else {
+	    ltop = *ktop;
+	}
+	i__1 = kwtop - 1;
+	i__2 = *nv;
+	for (krow = ltop; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		i__2) {
+/* Computing MIN */
+	    i__3 = *nv, i__4 = kwtop - krow;
+	    kln = min(i__3,i__4);
+	    cgemm_("N", "N", &kln, &jw, &jw, &c_b57, &h__[krow + kwtop *
+		    h_dim1], ldh, &v[v_offset], ldv, &c_b56, &wv[wv_offset],
+		    ldwv);
+	    clacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &h__[krow + kwtop *
+		    h_dim1], ldh);
+/* L60: */
+	}
+
+/*        ==== Update horizontal slab in H ==== */
+
+	if (*wantt) {
+	    i__2 = *n;
+	    i__1 = *nh;
+	    for (kcol = *kbot + 1; i__1 < 0 ? kcol >= i__2 : kcol <= i__2;
+		    kcol += i__1) {
+/* Computing MIN */
+		i__3 = *nh, i__4 = *n - kcol + 1;
+		kln = min(i__3,i__4);
+		cgemm_("C", "N", &jw, &kln, &jw, &c_b57, &v[v_offset], ldv, &
+			h__[kwtop + kcol * h_dim1], ldh, &c_b56, &t[t_offset],
+			 ldt);
+		clacpy_("A", &jw, &kln, &t[t_offset], ldt, &h__[kwtop + kcol *
+			 h_dim1], ldh);
+/* L70: */
+	    }
+	}
+
+/*        ==== Update vertical slab in Z ==== */
+
+	if (*wantz) {
+	    i__1 = *ihiz;
+	    i__2 = *nv;
+	    for (krow = *iloz; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		     i__2) {
+/* Computing MIN */
+		i__3 = *nv, i__4 = *ihiz - krow + 1;
+		kln = min(i__3,i__4);
+		cgemm_("N", "N", &kln, &jw, &jw, &c_b57, &z__[krow + kwtop *
+			z_dim1], ldz, &v[v_offset], ldv, &c_b56, &wv[
+			wv_offset], ldwv);
+		clacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &z__[krow +
+			kwtop * z_dim1], ldz);
+/* L80: */
+	    }
+	}
+    }
+
+/*     ==== Return the number of deflations ... ==== */
+
+    *nd = jw - *ns;
+
+/*
+       ==== ... and the number of shifts. (Subtracting
+       .    INFQR from the spike length takes care
+       .    of the case of a rare QR failure while
+       .    calculating eigenvalues of the deflation
+       .    window.)  ====
+*/
+
+    *ns -= infqr;
+
+/*      ==== Return optimal workspace. ==== */
+
+    r__1 = (real) lwkopt;
+    q__1.r = r__1, q__1.i = 0.f;
+    work[1].r = q__1.r, work[1].i = q__1.i;
+
+/*     ==== End of CLAQR2 ==== */
+
+    return 0;
+} /* claqr2_ */
+
+/* Subroutine */ int claqr3_(logical *wantt, logical *wantz, integer *n,
+	integer *ktop, integer *kbot, integer *nw, complex *h__, integer *ldh,
+	 integer *iloz, integer *ihiz, complex *z__, integer *ldz, integer *
+	ns, integer *nd, complex *sh, complex *v, integer *ldv, integer *nh,
+	complex *t, integer *ldt, integer *nv, complex *wv, integer *ldwv,
+	complex *work, integer *lwork)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
+	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
+    real r__1, r__2, r__3, r__4, r__5, r__6;
+    complex q__1, q__2;
+
+    /* Builtin functions */
+    double r_imag(complex *);
+    void r_cnjg(complex *, complex *);
+
+    /* Local variables */
+    static integer i__, j;
+    static complex s;
+    static integer jw;
+    static real foo;
+    static integer kln;
+    static complex tau;
+    static integer knt;
+    static real ulp;
+    static integer lwk1, lwk2, lwk3;
+    static complex beta;
+    static integer kcol, info, nmin, ifst, ilst, ltop, krow;
+    extern /* Subroutine */ int clarf_(char *, integer *, integer *, complex *
+	    , integer *, complex *, complex *, integer *, complex *),
+	    cgemm_(char *, char *, integer *, integer *, integer *, complex *,
+	     complex *, integer *, complex *, integer *, complex *, complex *,
+	     integer *), ccopy_(integer *, complex *, integer
+	    *, complex *, integer *);
+    static integer infqr, kwtop;
+    extern /* Subroutine */ int claqr4_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, complex *, integer *, integer *),
+	     slabad_(real *, real *), cgehrd_(integer *, integer *, integer *,
+	     complex *, integer *, complex *, complex *, integer *, integer *)
+	    , clarfg_(integer *, complex *, complex *, integer *, complex *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex *, integer *, complex *, integer *), claset_(char *, integer *, integer *, complex *, complex
+	    *, complex *, integer *);
+    static real safmin;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static real safmax;
+    extern /* Subroutine */ int ctrexc_(char *, integer *, complex *, integer
+	    *, complex *, integer *, integer *, integer *, integer *),
+	     cunmhr_(char *, char *, integer *, integer *, integer *, integer
+	    *, complex *, integer *, complex *, complex *, integer *, complex
+	    *, integer *, integer *);
+    static real smlnum;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+    -- April 2009                                                      --
+
+
+       ******************************************************************
+       Aggressive early deflation:
+
+       This subroutine accepts as input an upper Hessenberg matrix
+       H and performs an unitary similarity transformation
+       designed to detect and deflate fully converged eigenvalues from
+       a trailing principal submatrix.  On output H has been over-
+       written by a new Hessenberg matrix that is a perturbation of
+       an unitary similarity transformation of H.  It is to be
+       hoped that the final version of H has many zero subdiagonal
+       entries.
+
+       ******************************************************************
+       WANTT   (input) LOGICAL
+            If .TRUE., then the Hessenberg matrix H is fully updated
+            so that the triangular Schur factor may be
+            computed (in cooperation with the calling subroutine).
+            If .FALSE., then only enough of H is updated to preserve
+            the eigenvalues.
+
+       WANTZ   (input) LOGICAL
+            If .TRUE., then the unitary matrix Z is updated so
+            so that the unitary Schur factor may be computed
+            (in cooperation with the calling subroutine).
+            If .FALSE., then Z is not referenced.
+
+       N       (input) INTEGER
+            The order of the matrix H and (if WANTZ is .TRUE.) the
+            order of the unitary matrix Z.
+
+       KTOP    (input) INTEGER
+            It is assumed that either KTOP = 1 or H(KTOP,KTOP-1)=0.
+            KBOT and KTOP together determine an isolated block
+            along the diagonal of the Hessenberg matrix.
+
+       KBOT    (input) INTEGER
+            It is assumed without a check that either
+            KBOT = N or H(KBOT+1,KBOT)=0.  KBOT and KTOP together
+            determine an isolated block along the diagonal of the
+            Hessenberg matrix.
+
+       NW      (input) INTEGER
+            Deflation window size.  1 .LE. NW .LE. (KBOT-KTOP+1).
+
+       H       (input/output) COMPLEX array, dimension (LDH,N)
+            On input the initial N-by-N section of H stores the
+            Hessenberg matrix undergoing aggressive early deflation.
+            On output H has been transformed by a unitary
+            similarity transformation, perturbed, and the returned
+            to Hessenberg form that (it is to be hoped) has some
+            zero subdiagonal entries.
+
+       LDH     (input) integer
+            Leading dimension of H just as declared in the calling
+            subroutine.  N .LE. LDH
+
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
+            Specify the rows of Z to which transformations must be
+            applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N.
+
+       Z       (input/output) COMPLEX array, dimension (LDZ,N)
+            IF WANTZ is .TRUE., then on output, the unitary
+            similarity transformation mentioned above has been
+            accumulated into Z(ILOZ:IHIZ,ILO:IHI) from the right.
+            If WANTZ is .FALSE., then Z is unreferenced.
+
+       LDZ     (input) integer
+            The leading dimension of Z just as declared in the
+            calling subroutine.  1 .LE. LDZ.
+
+       NS      (output) integer
+            The number of unconverged (ie approximate) eigenvalues
+            returned in SR and SI that may be used as shifts by the
+            calling subroutine.
+
+       ND      (output) integer
+            The number of converged eigenvalues uncovered by this
+            subroutine.
+
+       SH      (output) COMPLEX array, dimension KBOT
+            On output, approximate eigenvalues that may
+            be used for shifts are stored in SH(KBOT-ND-NS+1)
+            through SR(KBOT-ND).  Converged eigenvalues are
+            stored in SH(KBOT-ND+1) through SH(KBOT).
+
+       V       (workspace) COMPLEX array, dimension (LDV,NW)
+            An NW-by-NW work array.
+
+       LDV     (input) integer scalar
+            The leading dimension of V just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       NH      (input) integer scalar
+            The number of columns of T.  NH.GE.NW.
+
+       T       (workspace) COMPLEX array, dimension (LDT,NW)
+
+       LDT     (input) integer
+            The leading dimension of T just as declared in the
+            calling subroutine.  NW .LE. LDT
+
+       NV      (input) integer
+            The number of rows of work array WV available for
+            workspace.  NV.GE.NW.
+
+       WV      (workspace) COMPLEX array, dimension (LDWV,NW)
+
+       LDWV    (input) integer
+            The leading dimension of W just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       WORK    (workspace) COMPLEX array, dimension LWORK.
+            On exit, WORK(1) is set to an estimate of the optimal value
+            of LWORK for the given values of N, NW, KTOP and KBOT.
+
+       LWORK   (input) integer
+            The dimension of the work array WORK.  LWORK = 2*NW
+            suffices, but greater efficiency may result from larger
+            values of LWORK.
+
+            If LWORK = -1, then a workspace query is assumed; CLAQR3
+            only estimates the optimal workspace size for the given
+            values of N, NW, KTOP and KBOT.  The estimate is returned
+            in WORK(1).  No error message related to LWORK is issued
+            by XERBLA.  Neither H nor Z are accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+
+       ==== Estimate optimal workspace. ====
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --sh;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    --work;
+
+    /* Function Body */
+/* Computing MIN */
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    if (jw <= 2) {
+	lwkopt = 1;
+    } else {
+
+/*        ==== Workspace query call to CGEHRD ==== */
+
+	i__1 = jw - 1;
+	cgehrd_(&jw, &c__1, &i__1, &t[t_offset], ldt, &work[1], &work[1], &
+		c_n1, &info);
+	lwk1 = (integer) work[1].r;
+
+/*        ==== Workspace query call to CUNMHR ==== */
+
+	i__1 = jw - 1;
+	cunmhr_("R", "N", &jw, &jw, &c__1, &i__1, &t[t_offset], ldt, &work[1],
+		 &v[v_offset], ldv, &work[1], &c_n1, &info);
+	lwk2 = (integer) work[1].r;
+
+/*        ==== Workspace query call to CLAQR4 ==== */
+
+	claqr4_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sh[1],
+		&c__1, &jw, &v[v_offset], ldv, &work[1], &c_n1, &infqr);
+	lwk3 = (integer) work[1].r;
+
+/*
+          ==== Optimal workspace ====
+
+   Computing MAX
+*/
+	i__1 = jw + max(lwk1,lwk2);
+	lwkopt = max(i__1,lwk3);
+    }
+
+/*     ==== Quick return in case of workspace query. ==== */
+
+    if (*lwork == -1) {
+	r__1 = (real) lwkopt;
+	q__1.r = r__1, q__1.i = 0.f;
+	work[1].r = q__1.r, work[1].i = q__1.i;
+	return 0;
+    }
+
+/*
+       ==== Nothing to do ...
+       ... for an empty active block ... ====
+*/
+    *ns = 0;
+    *nd = 0;
+    work[1].r = 1.f, work[1].i = 0.f;
+    if (*ktop > *kbot) {
+	return 0;
+    }
+/*     ... nor for an empty deflation window. ==== */
+    if (*nw < 1) {
+	return 0;
+    }
+
+/*     ==== Machine constants ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Setup deflation window ====
+
+   Computing MIN
+*/
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    kwtop = *kbot - jw + 1;
+    if (kwtop == *ktop) {
+	s.r = 0.f, s.i = 0.f;
+    } else {
+	i__1 = kwtop + (kwtop - 1) * h_dim1;
+	s.r = h__[i__1].r, s.i = h__[i__1].i;
+    }
+
+    if (*kbot == kwtop) {
+
+/*        ==== 1-by-1 deflation window: not much to do ==== */
+
+	i__1 = kwtop;
+	i__2 = kwtop + kwtop * h_dim1;
+	sh[i__1].r = h__[i__2].r, sh[i__1].i = h__[i__2].i;
+	*ns = 1;
+	*nd = 0;
+/* Computing MAX */
+	i__1 = kwtop + kwtop * h_dim1;
+	r__5 = smlnum, r__6 = ulp * ((r__1 = h__[i__1].r, dabs(r__1)) + (r__2
+		= r_imag(&h__[kwtop + kwtop * h_dim1]), dabs(r__2)));
+	if ((r__3 = s.r, dabs(r__3)) + (r__4 = r_imag(&s), dabs(r__4)) <=
+		dmax(r__5,r__6)) {
+	    *ns = 0;
+	    *nd = 1;
+	    if (kwtop > *ktop) {
+		i__1 = kwtop + (kwtop - 1) * h_dim1;
+		h__[i__1].r = 0.f, h__[i__1].i = 0.f;
+	    }
+	}
+	work[1].r = 1.f, work[1].i = 0.f;
+	return 0;
+    }
+
+/*
+       ==== Convert to spike-triangular form.  (In case of a
+       .    rare QR failure, this routine continues to do
+       .    aggressive early deflation using that part of
+       .    the deflation window that converged using INFQR
+       .    here and there to keep track.) ====
+*/
+
+    clacpy_("U", &jw, &jw, &h__[kwtop + kwtop * h_dim1], ldh, &t[t_offset],
+	    ldt);
+    i__1 = jw - 1;
+    i__2 = *ldh + 1;
+    i__3 = *ldt + 1;
+    ccopy_(&i__1, &h__[kwtop + 1 + kwtop * h_dim1], &i__2, &t[t_dim1 + 2], &
+	    i__3);
+
+    claset_("A", &jw, &jw, &c_b56, &c_b57, &v[v_offset], ldv);
+    nmin = ilaenv_(&c__12, "CLAQR3", "SV", &jw, &c__1, &jw, lwork, (ftnlen)6,
+	    (ftnlen)2);
+    if (jw > nmin) {
+	claqr4_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sh[
+		kwtop], &c__1, &jw, &v[v_offset], ldv, &work[1], lwork, &
+		infqr);
+    } else {
+	clahqr_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sh[
+		kwtop], &c__1, &jw, &v[v_offset], ldv, &infqr);
+    }
+
+/*     ==== Deflation detection loop ==== */
+
+    *ns = jw;
+    ilst = infqr + 1;
+    i__1 = jw;
+    for (knt = infqr + 1; knt <= i__1; ++knt) {
+
+/*        ==== Small spike tip deflation test ==== */
+
+	i__2 = *ns + *ns * t_dim1;
+	foo = (r__1 = t[i__2].r, dabs(r__1)) + (r__2 = r_imag(&t[*ns + *ns *
+		t_dim1]), dabs(r__2));
+	if (foo == 0.f) {
+	    foo = (r__1 = s.r, dabs(r__1)) + (r__2 = r_imag(&s), dabs(r__2));
+	}
+	i__2 = *ns * v_dim1 + 1;
+/* Computing MAX */
+	r__5 = smlnum, r__6 = ulp * foo;
+	if (((r__1 = s.r, dabs(r__1)) + (r__2 = r_imag(&s), dabs(r__2))) * ((
+		r__3 = v[i__2].r, dabs(r__3)) + (r__4 = r_imag(&v[*ns *
+		v_dim1 + 1]), dabs(r__4))) <= dmax(r__5,r__6)) {
+
+/*           ==== One more converged eigenvalue ==== */
+
+	    --(*ns);
+	} else {
+
+/*
+             ==== One undeflatable eigenvalue.  Move it up out of the
+             .    way.   (CTREXC can not fail in this case.) ====
+*/
+
+	    ifst = *ns;
+	    ctrexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst, &
+		    ilst, &info);
+	    ++ilst;
+	}
+/* L10: */
+    }
+
+/*        ==== Return to Hessenberg form ==== */
+
+    if (*ns == 0) {
+	s.r = 0.f, s.i = 0.f;
+    }
+
+    if (*ns < jw) {
+
+/*
+          ==== sorting the diagonal of T improves accuracy for
+          .    graded matrices.  ====
+*/
+
+	i__1 = *ns;
+	for (i__ = infqr + 1; i__ <= i__1; ++i__) {
+	    ifst = i__;
+	    i__2 = *ns;
+	    for (j = i__ + 1; j <= i__2; ++j) {
+		i__3 = j + j * t_dim1;
+		i__4 = ifst + ifst * t_dim1;
+		if ((r__1 = t[i__3].r, dabs(r__1)) + (r__2 = r_imag(&t[j + j *
+			 t_dim1]), dabs(r__2)) > (r__3 = t[i__4].r, dabs(r__3)
+			) + (r__4 = r_imag(&t[ifst + ifst * t_dim1]), dabs(
+			r__4))) {
+		    ifst = j;
+		}
+/* L20: */
+	    }
+	    ilst = i__;
+	    if (ifst != ilst) {
+		ctrexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &info);
+	    }
+/* L30: */
+	}
+    }
+
+/*     ==== Restore shift/eigenvalue array from T ==== */
+
+    i__1 = jw;
+    for (i__ = infqr + 1; i__ <= i__1; ++i__) {
+	i__2 = kwtop + i__ - 1;
+	i__3 = i__ + i__ * t_dim1;
+	sh[i__2].r = t[i__3].r, sh[i__2].i = t[i__3].i;
+/* L40: */
+    }
+
+
+    if (*ns < jw || s.r == 0.f && s.i == 0.f) {
+	if (*ns > 1 && (s.r != 0.f || s.i != 0.f)) {
+
+/*           ==== Reflect spike back into lower triangle ==== */
+
+	    ccopy_(ns, &v[v_offset], ldv, &work[1], &c__1);
+	    i__1 = *ns;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		i__2 = i__;
+		r_cnjg(&q__1, &work[i__]);
+		work[i__2].r = q__1.r, work[i__2].i = q__1.i;
+/* L50: */
+	    }
+	    beta.r = work[1].r, beta.i = work[1].i;
+	    clarfg_(ns, &beta, &work[2], &c__1, &tau);
+	    work[1].r = 1.f, work[1].i = 0.f;
+
+	    i__1 = jw - 2;
+	    i__2 = jw - 2;
+	    claset_("L", &i__1, &i__2, &c_b56, &c_b56, &t[t_dim1 + 3], ldt);
+
+	    r_cnjg(&q__1, &tau);
+	    clarf_("L", ns, &jw, &work[1], &c__1, &q__1, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    clarf_("R", ns, ns, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    clarf_("R", &jw, ns, &work[1], &c__1, &tau, &v[v_offset], ldv, &
+		    work[jw + 1]);
+
+	    i__1 = *lwork - jw;
+	    cgehrd_(&jw, &c__1, ns, &t[t_offset], ldt, &work[1], &work[jw + 1]
+		    , &i__1, &info);
+	}
+
+/*        ==== Copy updated reduced window into place ==== */
+
+	if (kwtop > 1) {
+	    i__1 = kwtop + (kwtop - 1) * h_dim1;
+	    r_cnjg(&q__2, &v[v_dim1 + 1]);
+	    q__1.r = s.r * q__2.r - s.i * q__2.i, q__1.i = s.r * q__2.i + s.i
+		    * q__2.r;
+	    h__[i__1].r = q__1.r, h__[i__1].i = q__1.i;
+	}
+	clacpy_("U", &jw, &jw, &t[t_offset], ldt, &h__[kwtop + kwtop * h_dim1]
+		, ldh);
+	i__1 = jw - 1;
+	i__2 = *ldt + 1;
+	i__3 = *ldh + 1;
+	ccopy_(&i__1, &t[t_dim1 + 2], &i__2, &h__[kwtop + 1 + kwtop * h_dim1],
+		 &i__3);
+
+/*
+          ==== Accumulate orthogonal matrix in order update
+          .    H and Z, if requested.  ====
+*/
+
+	if (*ns > 1 && (s.r != 0.f || s.i != 0.f)) {
+	    i__1 = *lwork - jw;
+	    cunmhr_("R", "N", &jw, ns, &c__1, ns, &t[t_offset], ldt, &work[1],
+		     &v[v_offset], ldv, &work[jw + 1], &i__1, &info);
+	}
+
+/*        ==== Update vertical slab in H ==== */
+
+	if (*wantt) {
+	    ltop = 1;
+	} else {
+	    ltop = *ktop;
+	}
+	i__1 = kwtop - 1;
+	i__2 = *nv;
+	for (krow = ltop; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		i__2) {
+/* Computing MIN */
+	    i__3 = *nv, i__4 = kwtop - krow;
+	    kln = min(i__3,i__4);
+	    cgemm_("N", "N", &kln, &jw, &jw, &c_b57, &h__[krow + kwtop *
+		    h_dim1], ldh, &v[v_offset], ldv, &c_b56, &wv[wv_offset],
+		    ldwv);
+	    clacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &h__[krow + kwtop *
+		    h_dim1], ldh);
+/* L60: */
+	}
+
+/*        ==== Update horizontal slab in H ==== */
+
+	if (*wantt) {
+	    i__2 = *n;
+	    i__1 = *nh;
+	    for (kcol = *kbot + 1; i__1 < 0 ? kcol >= i__2 : kcol <= i__2;
+		    kcol += i__1) {
+/* Computing MIN */
+		i__3 = *nh, i__4 = *n - kcol + 1;
+		kln = min(i__3,i__4);
+		cgemm_("C", "N", &jw, &kln, &jw, &c_b57, &v[v_offset], ldv, &
+			h__[kwtop + kcol * h_dim1], ldh, &c_b56, &t[t_offset],
+			 ldt);
+		clacpy_("A", &jw, &kln, &t[t_offset], ldt, &h__[kwtop + kcol *
+			 h_dim1], ldh);
+/* L70: */
+	    }
+	}
+
+/*        ==== Update vertical slab in Z ==== */
+
+	if (*wantz) {
+	    i__1 = *ihiz;
+	    i__2 = *nv;
+	    for (krow = *iloz; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		     i__2) {
+/* Computing MIN */
+		i__3 = *nv, i__4 = *ihiz - krow + 1;
+		kln = min(i__3,i__4);
+		cgemm_("N", "N", &kln, &jw, &jw, &c_b57, &z__[krow + kwtop *
+			z_dim1], ldz, &v[v_offset], ldv, &c_b56, &wv[
+			wv_offset], ldwv);
+		clacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &z__[krow +
+			kwtop * z_dim1], ldz);
+/* L80: */
+	    }
+	}
+    }
+
+/*     ==== Return the number of deflations ... ==== */
+
+    *nd = jw - *ns;
+
+/*
+       ==== ... and the number of shifts. (Subtracting
+       .    INFQR from the spike length takes care
+       .    of the case of a rare QR failure while
+       .    calculating eigenvalues of the deflation
+       .    window.)  ====
+*/
+
+    *ns -= infqr;
+
+/*      ==== Return optimal workspace. ==== */
+
+    r__1 = (real) lwkopt;
+    q__1.r = r__1, q__1.i = 0.f;
+    work[1].r = q__1.r, work[1].i = q__1.i;
+
+/*     ==== End of CLAQR3 ==== */
+
+    return 0;
+} /* claqr3_ */
+
+/* Subroutine */ int claqr4_(logical *wantt, logical *wantz, integer *n,
+	integer *ilo, integer *ihi, complex *h__, integer *ldh, complex *w,
+	integer *iloz, integer *ihiz, complex *z__, integer *ldz, complex *
+	work, integer *lwork, integer *info)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
+    real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
+    complex q__1, q__2, q__3, q__4, q__5;
+
+    /* Builtin functions */
+    double r_imag(complex *);
+    void c_sqrt(complex *, complex *);
+
+    /* Local variables */
+    static integer i__, k;
+    static real s;
+    static complex aa, bb, cc, dd;
+    static integer ld, nh, it, ks, kt, ku, kv, ls, ns, nw;
+    static complex tr2, det;
+    static integer inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl, kbot,
+	    nmin;
+    static complex swap;
+    static integer ktop;
+    static complex zdum[1]	/* was [1][1] */;
+    static integer kacc22, itmax, nsmax, nwmax, kwtop;
+    extern /* Subroutine */ int claqr2_(logical *, logical *, integer *,
+	    integer *, integer *, integer *, complex *, integer *, integer *,
+	    integer *, complex *, integer *, integer *, integer *, complex *,
+	    complex *, integer *, integer *, complex *, integer *, integer *,
+	    complex *, integer *, complex *, integer *), claqr5_(logical *,
+	    logical *, integer *, integer *, integer *, integer *, integer *,
+	    complex *, complex *, integer *, integer *, integer *, complex *,
+	    integer *, complex *, integer *, complex *, integer *, integer *,
+	    complex *, integer *, integer *, complex *, integer *);
+    static integer nibble;
+    extern /* Subroutine */ int clahqr_(logical *, logical *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, complex *, integer *, integer *), clacpy_(char *,
+	    integer *, integer *, complex *, integer *, complex *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static char jbcmpz[2];
+    static complex rtdisc;
+    static integer nwupbd;
+    static logical sorted;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+       This subroutine implements one level of recursion for CLAQR0.
+       It is a complete implementation of the small bulge multi-shift
+       QR algorithm.  It may be called by CLAQR0 and, for large enough
+       deflation window size, it may be called by CLAQR3.  This
+       subroutine is identical to CLAQR0 except that it calls CLAQR2
+       instead of CLAQR3.
+
+       Purpose
+       =======
+
+       CLAQR4 computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**H, where T is an upper triangular matrix (the
+       Schur form), and Z is the unitary matrix of Schur vectors.
+
+       Optionally Z may be postmultiplied into an input unitary
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the unitary matrix Q:  A = Q*H*Q**H = (QZ)*H*(QZ)**H.
+
+       Arguments
+       =========
+
+       WANTT   (input) LOGICAL
+            = .TRUE. : the full Schur form T is required;
+            = .FALSE.: only eigenvalues are required.
+
+       WANTZ   (input) LOGICAL
+            = .TRUE. : the matrix of Schur vectors Z is required;
+            = .FALSE.: Schur vectors are not required.
+
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
+
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N and, if ILO.GT.1,
+             H(ILO,ILO-1) is zero. ILO and IHI are normally set by a
+             previous call to CGEBAL, and then passed to CGEHRD when the
+             matrix output by CGEBAL is reduced to Hessenberg form.
+             Otherwise, ILO and IHI should be set to 1 and N,
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
+
+       H     (input/output) COMPLEX array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and WANTT is .TRUE., then H
+             contains the upper triangular matrix T from the Schur
+             decomposition (the Schur form). If INFO = 0 and WANT is
+             .FALSE., then the contents of H are unspecified on exit.
+             (The output value of H when INFO.GT.0 is given under the
+             description of INFO below.)
+
+             This subroutine may explicitly set H(i,j) = 0 for i.GT.j and
+             j = 1, 2, ... ILO-1 or j = IHI+1, IHI+2, ... N.
+
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
+
+       W        (output) COMPLEX array, dimension (N)
+             The computed eigenvalues of H(ILO:IHI,ILO:IHI) are stored
+             in W(ILO:IHI). If WANTT is .TRUE., then the eigenvalues are
+             stored in the same order as on the diagonal of the Schur
+             form returned in H, with W(i) = H(i,i).
+
+       Z     (input/output) COMPLEX array, dimension (LDZ,IHI)
+             If WANTZ is .FALSE., then Z is not referenced.
+             If WANTZ is .TRUE., then Z(ILO:IHI,ILOZ:IHIZ) is
+             replaced by Z(ILO:IHI,ILOZ:IHIZ)*U where U is the
+             orthogonal Schur factor of H(ILO:IHI,ILO:IHI).
+             (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if WANTZ is .TRUE.
+             then LDZ.GE.MAX(1,IHIZ).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) COMPLEX array, dimension LWORK
+             On exit, if LWORK = -1, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient, but LWORK typically as large as 6*N may
+             be required for optimal performance.  A workspace query
+             to determine the optimal workspace size is recommended.
+
+             If LWORK = -1, then CLAQR4 does a workspace query.
+             In this case, CLAQR4 checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
+
+
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .GT. 0:  if INFO = i, CLAQR4 failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
+
+                  If INFO .GT. 0 and WANT is .FALSE., then on exit,
+                  the remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
+
+                  If INFO .GT. 0 and WANTT is .TRUE., then on exit
+
+             (*)  (initial value of H)*U  = U*(final value of H)
+
+                  where U is a unitary matrix.  The final
+                  value of  H is upper Hessenberg and triangular in
+                  rows and columns INFO+1 through IHI.
+
+                  If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+
+                    (final value of Z(ILO:IHI,ILOZ:IHIZ)
+                     =  (initial value of Z(ILO:IHI,ILOZ:IHIZ)*U
+
+                  where U is the unitary matrix in (*) (regard-
+                  less of the value of WANTT.)
+
+                  If INFO .GT. 0 and WANTZ is .FALSE., then Z is not
+                  accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    CLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== Exceptional deflation windows:  try to cure rare
+       .    slow convergence by varying the size of the
+       .    deflation window after KEXNW iterations. ====
+
+       ==== Exceptional shifts: try to cure rare slow convergence
+       .    with ad-hoc exceptional shifts every KEXSH iterations.
+       .    ====
+
+       ==== The constant WILK1 is used to form the exceptional
+       .    shifts. ====
+*/
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --w;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+/*     ==== Quick return for N = 0: nothing to do. ==== */
+
+    if (*n == 0) {
+	work[1].r = 1.f, work[1].i = 0.f;
+	return 0;
+    }
+
+    if (*n <= 11) {
+
+/*        ==== Tiny matrices must use CLAHQR. ==== */
+
+	lwkopt = 1;
+	if (*lwork != -1) {
+	    clahqr_(wantt, wantz, n, ilo, ihi, &h__[h_offset], ldh, &w[1],
+		    iloz, ihiz, &z__[z_offset], ldz, info);
+	}
+    } else {
+
+/*
+          ==== Use small bulge multi-shift QR with aggressive early
+          .    deflation on larger-than-tiny matrices. ====
+
+          ==== Hope for the best. ====
+*/
+
+	*info = 0;
+
+/*        ==== Set up job flags for ILAENV. ==== */
+
+	if (*wantt) {
+	    *(unsigned char *)jbcmpz = 'S';
+	} else {
+	    *(unsigned char *)jbcmpz = 'E';
+	}
+	if (*wantz) {
+	    *(unsigned char *)&jbcmpz[1] = 'V';
+	} else {
+	    *(unsigned char *)&jbcmpz[1] = 'N';
+	}
+
+/*
+          ==== NWR = recommended deflation window size.  At this
+          .    point,  N .GT. NTINY = 11, so there is enough
+          .    subdiagonal workspace for NWR.GE.2 as required.
+          .    (In fact, there is enough subdiagonal space for
+          .    NWR.GE.3.) ====
+*/
+
+	nwr = ilaenv_(&c__13, "CLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nwr = max(2,nwr);
+/* Computing MIN */
+	i__1 = *ihi - *ilo + 1, i__2 = (*n - 1) / 3, i__1 = min(i__1,i__2);
+	nwr = min(i__1,nwr);
+
+/*
+          ==== NSR = recommended number of simultaneous shifts.
+          .    At this point N .GT. NTINY = 11, so there is at
+          .    enough subdiagonal workspace for NSR to be even
+          .    and greater than or equal to two as required. ====
+*/
+
+	nsr = ilaenv_(&c__15, "CLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+/* Computing MIN */
+	i__1 = nsr, i__2 = (*n + 6) / 9, i__1 = min(i__1,i__2), i__2 = *ihi -
+		*ilo;
+	nsr = min(i__1,i__2);
+/* Computing MAX */
+	i__1 = 2, i__2 = nsr - nsr % 2;
+	nsr = max(i__1,i__2);
+
+/*
+          ==== Estimate optimal workspace ====
+
+          ==== Workspace query call to CLAQR2 ====
+*/
+
+	i__1 = nwr + 1;
+	claqr2_(wantt, wantz, n, ilo, ihi, &i__1, &h__[h_offset], ldh, iloz,
+		ihiz, &z__[z_offset], ldz, &ls, &ld, &w[1], &h__[h_offset],
+		ldh, n, &h__[h_offset], ldh, n, &h__[h_offset], ldh, &work[1],
+		 &c_n1);
+
+/*
+          ==== Optimal workspace = MAX(CLAQR5, CLAQR2) ====
+
+   Computing MAX
+*/
+	i__1 = nsr * 3 / 2, i__2 = (integer) work[1].r;
+	lwkopt = max(i__1,i__2);
+
+/*        ==== Quick return in case of workspace query. ==== */
+
+	if (*lwork == -1) {
+	    r__1 = (real) lwkopt;
+	    q__1.r = r__1, q__1.i = 0.f;
+	    work[1].r = q__1.r, work[1].i = q__1.i;
+	    return 0;
+	}
+
+/*        ==== CLAHQR/CLAQR0 crossover point ==== */
+
+	nmin = ilaenv_(&c__12, "CLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)
+		6, (ftnlen)2);
+	nmin = max(11,nmin);
+
+/*        ==== Nibble crossover point ==== */
+
+	nibble = ilaenv_(&c__14, "CLAQR4", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	nibble = max(0,nibble);
+
+/*
+          ==== Accumulate reflections during ttswp?  Use block
+          .    2-by-2 structure during matrix-matrix multiply? ====
+*/
+
+	kacc22 = ilaenv_(&c__16, "CLAQR4", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	kacc22 = max(0,kacc22);
+	kacc22 = min(2,kacc22);
+
+/*
+          ==== NWMAX = the largest possible deflation window for
+          .    which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n - 1) / 3, i__2 = *lwork / 2;
+	nwmax = min(i__1,i__2);
+	nw = nwmax;
+
+/*
+          ==== NSMAX = the Largest number of simultaneous shifts
+          .    for which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n + 6) / 9, i__2 = (*lwork << 1) / 3;
+	nsmax = min(i__1,i__2);
+	nsmax -= nsmax % 2;
+
+/*        ==== NDFL: an iteration count restarted at deflation. ==== */
+
+	ndfl = 1;
+
+/*
+          ==== ITMAX = iteration limit ====
+
+   Computing MAX
+*/
+	i__1 = 10, i__2 = *ihi - *ilo + 1;
+	itmax = max(i__1,i__2) * 30;
+
+/*        ==== Last row and column in the active block ==== */
+
+	kbot = *ihi;
+
+/*        ==== Main Loop ==== */
+
+	i__1 = itmax;
+	for (it = 1; it <= i__1; ++it) {
+
+/*           ==== Done when KBOT falls below ILO ==== */
+
+	    if (kbot < *ilo) {
+		goto L80;
+	    }
+
+/*           ==== Locate active block ==== */
+
+	    i__2 = *ilo + 1;
+	    for (k = kbot; k >= i__2; --k) {
+		i__3 = k + (k - 1) * h_dim1;
+		if (h__[i__3].r == 0.f && h__[i__3].i == 0.f) {
+		    goto L20;
+		}
+/* L10: */
+	    }
+	    k = *ilo;
+L20:
+	    ktop = k;
+
+/*
+             ==== Select deflation window size:
+             .    Typical Case:
+             .      If possible and advisable, nibble the entire
+             .      active block.  If not, use size MIN(NWR,NWMAX)
+             .      or MIN(NWR+1,NWMAX) depending upon which has
+             .      the smaller corresponding subdiagonal entry
+             .      (a heuristic).
+             .
+             .    Exceptional Case:
+             .      If there have been no deflations in KEXNW or
+             .      more iterations, then vary the deflation window
+             .      size.   At first, because, larger windows are,
+             .      in general, more powerful than smaller ones,
+             .      rapidly increase the window to the maximum possible.
+             .      Then, gradually reduce the window size. ====
+*/
+
+	    nh = kbot - ktop + 1;
+	    nwupbd = min(nh,nwmax);
+	    if (ndfl < 5) {
+		nw = min(nwupbd,nwr);
+	    } else {
+/* Computing MIN */
+		i__2 = nwupbd, i__3 = nw << 1;
+		nw = min(i__2,i__3);
+	    }
+	    if (nw < nwmax) {
+		if (nw >= nh - 1) {
+		    nw = nh;
+		} else {
+		    kwtop = kbot - nw + 1;
+		    i__2 = kwtop + (kwtop - 1) * h_dim1;
+		    i__3 = kwtop - 1 + (kwtop - 2) * h_dim1;
+		    if ((r__1 = h__[i__2].r, dabs(r__1)) + (r__2 = r_imag(&
+			    h__[kwtop + (kwtop - 1) * h_dim1]), dabs(r__2)) >
+			    (r__3 = h__[i__3].r, dabs(r__3)) + (r__4 = r_imag(
+			    &h__[kwtop - 1 + (kwtop - 2) * h_dim1]), dabs(
+			    r__4))) {
+			++nw;
+		    }
+		}
+	    }
+	    if (ndfl < 5) {
+		ndec = -1;
+	    } else if (ndec >= 0 || nw >= nwupbd) {
+		++ndec;
+		if (nw - ndec < 2) {
+		    ndec = 0;
+		}
+		nw -= ndec;
+	    }
+
+/*
+             ==== Aggressive early deflation:
+             .    split workspace under the subdiagonal into
+             .      - an nw-by-nw work array V in the lower
+             .        left-hand-corner,
+             .      - an NW-by-at-least-NW-but-more-is-better
+             .        (NW-by-NHO) horizontal work array along
+             .        the bottom edge,
+             .      - an at-least-NW-but-more-is-better (NHV-by-NW)
+             .        vertical work array along the left-hand-edge.
+             .        ====
+*/
+
+	    kv = *n - nw + 1;
+	    kt = nw + 1;
+	    nho = *n - nw - 1 - kt + 1;
+	    kwv = nw + 2;
+	    nve = *n - nw - kwv + 1;
+
+/*           ==== Aggressive early deflation ==== */
+
+	    claqr2_(wantt, wantz, n, &ktop, &kbot, &nw, &h__[h_offset], ldh,
+		    iloz, ihiz, &z__[z_offset], ldz, &ls, &ld, &w[1], &h__[kv
+		    + h_dim1], ldh, &nho, &h__[kv + kt * h_dim1], ldh, &nve, &
+		    h__[kwv + h_dim1], ldh, &work[1], lwork);
+
+/*           ==== Adjust KBOT accounting for new deflations. ==== */
+
+	    kbot -= ld;
+
+/*           ==== KS points to the shifts. ==== */
+
+	    ks = kbot - ls + 1;
+
+/*
+             ==== Skip an expensive QR sweep if there is a (partly
+             .    heuristic) reason to expect that many eigenvalues
+             .    will deflate without it.  Here, the QR sweep is
+             .    skipped if many eigenvalues have just been deflated
+             .    or if the remaining active block is small.
+*/
+
+	    if (ld == 0 || ld * 100 <= nw * nibble && kbot - ktop + 1 > min(
+		    nmin,nwmax)) {
+
+/*
+                ==== NS = nominal number of simultaneous shifts.
+                .    This may be lowered (slightly) if CLAQR2
+                .    did not provide that many shifts. ====
+
+   Computing MIN
+   Computing MAX
+*/
+		i__4 = 2, i__5 = kbot - ktop;
+		i__2 = min(nsmax,nsr), i__3 = max(i__4,i__5);
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+
+/*
+                ==== If there have been no deflations
+                .    in a multiple of KEXSH iterations,
+                .    then try exceptional shifts.
+                .    Otherwise use shifts provided by
+                .    CLAQR2 above or from the eigenvalues
+                .    of a trailing principal submatrix. ====
+*/
+
+		if (ndfl % 6 == 0) {
+		    ks = kbot - ns + 1;
+		    i__2 = ks + 1;
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			i__3 = i__;
+			i__4 = i__ + i__ * h_dim1;
+			i__5 = i__ + (i__ - 1) * h_dim1;
+			r__3 = ((r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[i__ + (i__ - 1) * h_dim1]), dabs(
+				r__2))) * .75f;
+			q__1.r = h__[i__4].r + r__3, q__1.i = h__[i__4].i;
+			w[i__3].r = q__1.r, w[i__3].i = q__1.i;
+			i__3 = i__ - 1;
+			i__4 = i__;
+			w[i__3].r = w[i__4].r, w[i__3].i = w[i__4].i;
+/* L30: */
+		    }
+		} else {
+
+/*
+                   ==== Got NS/2 or fewer shifts? Use CLAHQR
+                   .    on a trailing principal submatrix to
+                   .    get more. (Since NS.LE.NSMAX.LE.(N+6)/9,
+                   .    there is enough space below the subdiagonal
+                   .    to fit an NS-by-NS scratch array.) ====
+*/
+
+		    if (kbot - ks + 1 <= ns / 2) {
+			ks = kbot - ns + 1;
+			kt = *n - ns + 1;
+			clacpy_("A", &ns, &ns, &h__[ks + ks * h_dim1], ldh, &
+				h__[kt + h_dim1], ldh);
+			clahqr_(&c_false, &c_false, &ns, &c__1, &ns, &h__[kt
+				+ h_dim1], ldh, &w[ks], &c__1, &c__1, zdum, &
+				c__1, &inf);
+			ks += inf;
+
+/*
+                      ==== In case of a rare QR failure use
+                      .    eigenvalues of the trailing 2-by-2
+                      .    principal submatrix.  Scale to avoid
+                      .    overflows, underflows and subnormals.
+                      .    (The scale factor S can not be zero,
+                      .    because H(KBOT,KBOT-1) is nonzero.) ====
+*/
+
+			if (ks >= kbot) {
+			    i__2 = kbot - 1 + (kbot - 1) * h_dim1;
+			    i__3 = kbot + (kbot - 1) * h_dim1;
+			    i__4 = kbot - 1 + kbot * h_dim1;
+			    i__5 = kbot + kbot * h_dim1;
+			    s = (r__1 = h__[i__2].r, dabs(r__1)) + (r__2 =
+				    r_imag(&h__[kbot - 1 + (kbot - 1) *
+				    h_dim1]), dabs(r__2)) + ((r__3 = h__[i__3]
+				    .r, dabs(r__3)) + (r__4 = r_imag(&h__[
+				    kbot + (kbot - 1) * h_dim1]), dabs(r__4)))
+				     + ((r__5 = h__[i__4].r, dabs(r__5)) + (
+				    r__6 = r_imag(&h__[kbot - 1 + kbot *
+				    h_dim1]), dabs(r__6))) + ((r__7 = h__[
+				    i__5].r, dabs(r__7)) + (r__8 = r_imag(&
+				    h__[kbot + kbot * h_dim1]), dabs(r__8)));
+			    i__2 = kbot - 1 + (kbot - 1) * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    aa.r = q__1.r, aa.i = q__1.i;
+			    i__2 = kbot + (kbot - 1) * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    cc.r = q__1.r, cc.i = q__1.i;
+			    i__2 = kbot - 1 + kbot * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    bb.r = q__1.r, bb.i = q__1.i;
+			    i__2 = kbot + kbot * h_dim1;
+			    q__1.r = h__[i__2].r / s, q__1.i = h__[i__2].i /
+				    s;
+			    dd.r = q__1.r, dd.i = q__1.i;
+			    q__2.r = aa.r + dd.r, q__2.i = aa.i + dd.i;
+			    q__1.r = q__2.r / 2.f, q__1.i = q__2.i / 2.f;
+			    tr2.r = q__1.r, tr2.i = q__1.i;
+			    q__3.r = aa.r - tr2.r, q__3.i = aa.i - tr2.i;
+			    q__4.r = dd.r - tr2.r, q__4.i = dd.i - tr2.i;
+			    q__2.r = q__3.r * q__4.r - q__3.i * q__4.i,
+				    q__2.i = q__3.r * q__4.i + q__3.i *
+				    q__4.r;
+			    q__5.r = bb.r * cc.r - bb.i * cc.i, q__5.i = bb.r
+				    * cc.i + bb.i * cc.r;
+			    q__1.r = q__2.r - q__5.r, q__1.i = q__2.i -
+				    q__5.i;
+			    det.r = q__1.r, det.i = q__1.i;
+			    q__2.r = -det.r, q__2.i = -det.i;
+			    c_sqrt(&q__1, &q__2);
+			    rtdisc.r = q__1.r, rtdisc.i = q__1.i;
+			    i__2 = kbot - 1;
+			    q__2.r = tr2.r + rtdisc.r, q__2.i = tr2.i +
+				    rtdisc.i;
+			    q__1.r = s * q__2.r, q__1.i = s * q__2.i;
+			    w[i__2].r = q__1.r, w[i__2].i = q__1.i;
+			    i__2 = kbot;
+			    q__2.r = tr2.r - rtdisc.r, q__2.i = tr2.i -
+				    rtdisc.i;
+			    q__1.r = s * q__2.r, q__1.i = s * q__2.i;
+			    w[i__2].r = q__1.r, w[i__2].i = q__1.i;
+
+			    ks = kbot - 1;
+			}
+		    }
+
+		    if (kbot - ks + 1 > ns) {
+
+/*                    ==== Sort the shifts (Helps a little) ==== */
+
+			sorted = FALSE_;
+			i__2 = ks + 1;
+			for (k = kbot; k >= i__2; --k) {
+			    if (sorted) {
+				goto L60;
+			    }
+			    sorted = TRUE_;
+			    i__3 = k - 1;
+			    for (i__ = ks; i__ <= i__3; ++i__) {
+				i__4 = i__;
+				i__5 = i__ + 1;
+				if ((r__1 = w[i__4].r, dabs(r__1)) + (r__2 =
+					r_imag(&w[i__]), dabs(r__2)) < (r__3 =
+					 w[i__5].r, dabs(r__3)) + (r__4 =
+					r_imag(&w[i__ + 1]), dabs(r__4))) {
+				    sorted = FALSE_;
+				    i__4 = i__;
+				    swap.r = w[i__4].r, swap.i = w[i__4].i;
+				    i__4 = i__;
+				    i__5 = i__ + 1;
+				    w[i__4].r = w[i__5].r, w[i__4].i = w[i__5]
+					    .i;
+				    i__4 = i__ + 1;
+				    w[i__4].r = swap.r, w[i__4].i = swap.i;
+				}
+/* L40: */
+			    }
+/* L50: */
+			}
+L60:
+			;
+		    }
+		}
+
+/*
+                ==== If there are only two shifts, then use
+                .    only one.  ====
+*/
+
+		if (kbot - ks + 1 == 2) {
+		    i__2 = kbot;
+		    i__3 = kbot + kbot * h_dim1;
+		    q__2.r = w[i__2].r - h__[i__3].r, q__2.i = w[i__2].i -
+			    h__[i__3].i;
+		    q__1.r = q__2.r, q__1.i = q__2.i;
+		    i__4 = kbot - 1;
+		    i__5 = kbot + kbot * h_dim1;
+		    q__4.r = w[i__4].r - h__[i__5].r, q__4.i = w[i__4].i -
+			    h__[i__5].i;
+		    q__3.r = q__4.r, q__3.i = q__4.i;
+		    if ((r__1 = q__1.r, dabs(r__1)) + (r__2 = r_imag(&q__1),
+			    dabs(r__2)) < (r__3 = q__3.r, dabs(r__3)) + (r__4
+			    = r_imag(&q__3), dabs(r__4))) {
+			i__2 = kbot - 1;
+			i__3 = kbot;
+			w[i__2].r = w[i__3].r, w[i__2].i = w[i__3].i;
+		    } else {
+			i__2 = kbot;
+			i__3 = kbot - 1;
+			w[i__2].r = w[i__3].r, w[i__2].i = w[i__3].i;
+		    }
+		}
+
+/*
+                ==== Use up to NS of the the smallest magnatiude
+                .    shifts.  If there aren't NS shifts available,
+                .    then use them all, possibly dropping one to
+                .    make the number of shifts even. ====
+
+   Computing MIN
+*/
+		i__2 = ns, i__3 = kbot - ks + 1;
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+		ks = kbot - ns + 1;
+
+/*
+                ==== Small-bulge multi-shift QR sweep:
+                .    split workspace under the subdiagonal into
+                .    - a KDU-by-KDU work array U in the lower
+                .      left-hand-corner,
+                .    - a KDU-by-at-least-KDU-but-more-is-better
+                .      (KDU-by-NHo) horizontal work array WH along
+                .      the bottom edge,
+                .    - and an at-least-KDU-but-more-is-better-by-KDU
+                .      (NVE-by-KDU) vertical work WV arrow along
+                .      the left-hand-edge. ====
+*/
+
+		kdu = ns * 3 - 3;
+		ku = *n - kdu + 1;
+		kwh = kdu + 1;
+		nho = *n - kdu - 3 - (kdu + 1) + 1;
+		kwv = kdu + 4;
+		nve = *n - kdu - kwv + 1;
+
+/*              ==== Small-bulge multi-shift QR sweep ==== */
+
+		claqr5_(wantt, wantz, &kacc22, n, &ktop, &kbot, &ns, &w[ks], &
+			h__[h_offset], ldh, iloz, ihiz, &z__[z_offset], ldz, &
+			work[1], &c__3, &h__[ku + h_dim1], ldh, &nve, &h__[
+			kwv + h_dim1], ldh, &nho, &h__[ku + kwh * h_dim1],
+			ldh);
+	    }
+
+/*           ==== Note progress (or the lack of it). ==== */
+
+	    if (ld > 0) {
+		ndfl = 1;
+	    } else {
+		++ndfl;
+	    }
+
+/*
+             ==== End of main loop ====
+   L70:
+*/
+	}
+
+/*
+          ==== Iteration limit exceeded.  Set INFO to show where
+          .    the problem occurred and exit. ====
+*/
+
+	*info = kbot;
+L80:
+	;
+    }
+
+/*     ==== Return the optimal value of LWORK. ==== */
+
+    r__1 = (real) lwkopt;
+    q__1.r = r__1, q__1.i = 0.f;
+    work[1].r = q__1.r, work[1].i = q__1.i;
+
+/*     ==== End of CLAQR4 ==== */
+
+    return 0;
+} /* claqr4_ */
+
+/* Subroutine */ int claqr5_(logical *wantt, logical *wantz, integer *kacc22,
+	integer *n, integer *ktop, integer *kbot, integer *nshfts, complex *s,
+	 complex *h__, integer *ldh, integer *iloz, integer *ihiz, complex *
+	z__, integer *ldz, complex *v, integer *ldv, complex *u, integer *ldu,
+	 integer *nv, complex *wv, integer *ldwv, integer *nh, complex *wh,
+	integer *ldwh)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, u_dim1, u_offset, v_dim1, v_offset, wh_dim1,
+	    wh_offset, wv_dim1, wv_offset, z_dim1, z_offset, i__1, i__2, i__3,
+	     i__4, i__5, i__6, i__7, i__8, i__9, i__10, i__11;
+    real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
+    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
+
+    /* Builtin functions */
+    void r_cnjg(complex *, complex *);
+    double r_imag(complex *);
+
+    /* Local variables */
+    static integer j, k, m, i2, j2, i4, j4, k1;
+    static real h11, h12, h21, h22;
+    static integer m22, ns, nu;
+    static complex vt[3];
+    static real scl;
+    static integer kdu, kms;
+    static real ulp;
+    static integer knz, kzs;
+    static real tst1, tst2;
+    static complex beta;
+    static logical blk22, bmp22;
+    static integer mend, jcol, jlen, jbot, mbot, jtop, jrow, mtop;
+    static complex alpha;
+    static logical accum;
+    extern /* Subroutine */ int cgemm_(char *, char *, integer *, integer *,
+	    integer *, complex *, complex *, integer *, complex *, integer *,
+	    complex *, complex *, integer *);
+    static integer ndcol, incol, krcol, nbmps;
+    extern /* Subroutine */ int ctrmm_(char *, char *, char *, char *,
+	    integer *, integer *, complex *, complex *, integer *, complex *,
+	    integer *), claqr1_(integer *,
+	    complex *, integer *, complex *, complex *, complex *), slabad_(
+	    real *, real *), clarfg_(integer *, complex *, complex *, integer
+	    *, complex *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
+	    *, integer *, complex *, integer *), claset_(char *,
+	    integer *, integer *, complex *, complex *, complex *, integer *);
+    static real safmin, safmax;
+    static complex refsum;
+    static integer mstart;
+    static real smlnum;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+       This auxiliary subroutine called by CLAQR0 performs a
+       single small-bulge multi-shift QR sweep.
+
+        WANTT  (input) logical scalar
+               WANTT = .true. if the triangular Schur factor
+               is being computed.  WANTT is set to .false. otherwise.
+
+        WANTZ  (input) logical scalar
+               WANTZ = .true. if the unitary Schur factor is being
+               computed.  WANTZ is set to .false. otherwise.
+
+        KACC22 (input) integer with value 0, 1, or 2.
+               Specifies the computation mode of far-from-diagonal
+               orthogonal updates.
+          = 0: CLAQR5 does not accumulate reflections and does not
+               use matrix-matrix multiply to update far-from-diagonal
+               matrix entries.
+          = 1: CLAQR5 accumulates reflections and uses matrix-matrix
+               multiply to update the far-from-diagonal matrix entries.
+          = 2: CLAQR5 accumulates reflections, uses matrix-matrix
+               multiply to update the far-from-diagonal matrix entries,
+               and takes advantage of 2-by-2 block structure during
+               matrix multiplies.
+
+        N      (input) integer scalar
+               N is the order of the Hessenberg matrix H upon which this
+               subroutine operates.
+
+        KTOP   (input) integer scalar
+        KBOT   (input) integer scalar
+               These are the first and last rows and columns of an
+               isolated diagonal block upon which the QR sweep is to be
+               applied. It is assumed without a check that
+                         either KTOP = 1  or   H(KTOP,KTOP-1) = 0
+               and
+                         either KBOT = N  or   H(KBOT+1,KBOT) = 0.
+
+        NSHFTS (input) integer scalar
+               NSHFTS gives the number of simultaneous shifts.  NSHFTS
+               must be positive and even.
+
+        S      (input/output) COMPLEX array of size (NSHFTS)
+               S contains the shifts of origin that define the multi-
+               shift QR sweep.  On output S may be reordered.
+
+        H      (input/output) COMPLEX array of size (LDH,N)
+               On input H contains a Hessenberg matrix.  On output a
+               multi-shift QR sweep with shifts SR(J)+i*SI(J) is applied
+               to the isolated diagonal block in rows and columns KTOP
+               through KBOT.
+
+        LDH    (input) integer scalar
+               LDH is the leading dimension of H just as declared in the
+               calling procedure.  LDH.GE.MAX(1,N).
+
+        ILOZ   (input) INTEGER
+        IHIZ   (input) INTEGER
+               Specify the rows of Z to which transformations must be
+               applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N
+
+        Z      (input/output) COMPLEX array of size (LDZ,IHI)
+               If WANTZ = .TRUE., then the QR Sweep unitary
+               similarity transformation is accumulated into
+               Z(ILOZ:IHIZ,ILO:IHI) from the right.
+               If WANTZ = .FALSE., then Z is unreferenced.
+
+        LDZ    (input) integer scalar
+               LDA is the leading dimension of Z just as declared in
+               the calling procedure. LDZ.GE.N.
+
+        V      (workspace) COMPLEX array of size (LDV,NSHFTS/2)
+
+        LDV    (input) integer scalar
+               LDV is the leading dimension of V as declared in the
+               calling procedure.  LDV.GE.3.
+
+        U      (workspace) COMPLEX array of size
+               (LDU,3*NSHFTS-3)
+
+        LDU    (input) integer scalar
+               LDU is the leading dimension of U just as declared in the
+               in the calling subroutine.  LDU.GE.3*NSHFTS-3.
+
+        NH     (input) integer scalar
+               NH is the number of columns in array WH available for
+               workspace. NH.GE.1.
+
+        WH     (workspace) COMPLEX array of size (LDWH,NH)
+
+        LDWH   (input) integer scalar
+               Leading dimension of WH just as declared in the
+               calling procedure.  LDWH.GE.3*NSHFTS-3.
+
+        NV     (input) integer scalar
+               NV is the number of rows in WV agailable for workspace.
+               NV.GE.1.
+
+        WV     (workspace) COMPLEX array of size
+               (LDWV,3*NSHFTS-3)
+
+        LDWV   (input) integer scalar
+               LDWV is the leading dimension of WV as declared in the
+               in the calling subroutine.  LDWV.GE.NV.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       Reference:
+
+       K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+       Algorithm Part I: Maintaining Well Focused Shifts, and
+       Level 3 Performance, SIAM Journal of Matrix Analysis,
+       volume 23, pages 929--947, 2002.
+
+       ================================================================
+
+
+       ==== If there are no shifts, then there is nothing to do. ====
+*/
+
+    /* Parameter adjustments */
+    --s;
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    u_dim1 = *ldu;
+    u_offset = 1 + u_dim1;
+    u -= u_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    wh_dim1 = *ldwh;
+    wh_offset = 1 + wh_dim1;
+    wh -= wh_offset;
+
+    /* Function Body */
+    if (*nshfts < 2) {
+	return 0;
+    }
+
+/*
+       ==== If the active block is empty or 1-by-1, then there
+       .    is nothing to do. ====
+*/
+
+    if (*ktop >= *kbot) {
+	return 0;
+    }
+
+/*
+       ==== NSHFTS is supposed to be even, but if it is odd,
+       .    then simply reduce it by one.  ====
+*/
+
+    ns = *nshfts - *nshfts % 2;
+
+/*     ==== Machine constants for deflation ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Use accumulated reflections to update far-from-diagonal
+       .    entries ? ====
+*/
+
+    accum = *kacc22 == 1 || *kacc22 == 2;
+
+/*     ==== If so, exploit the 2-by-2 block structure? ==== */
+
+    blk22 = ns > 2 && *kacc22 == 2;
+
+/*     ==== clear trash ==== */
+
+    if (*ktop + 2 <= *kbot) {
+	i__1 = *ktop + 2 + *ktop * h_dim1;
+	h__[i__1].r = 0.f, h__[i__1].i = 0.f;
+    }
+
+/*     ==== NBMPS = number of 2-shift bulges in the chain ==== */
+
+    nbmps = ns / 2;
+
+/*     ==== KDU = width of slab ==== */
+
+    kdu = nbmps * 6 - 3;
+
+/*     ==== Create and chase chains of NBMPS bulges ==== */
+
+    i__1 = *kbot - 2;
+    i__2 = nbmps * 3 - 2;
+    for (incol = (1 - nbmps) * 3 + *ktop - 1; i__2 < 0 ? incol >= i__1 :
+	    incol <= i__1; incol += i__2) {
+	ndcol = incol + kdu;
+	if (accum) {
+	    claset_("ALL", &kdu, &kdu, &c_b56, &c_b57, &u[u_offset], ldu);
+	}
+
+/*
+          ==== Near-the-diagonal bulge chase.  The following loop
+          .    performs the near-the-diagonal part of a small bulge
+          .    multi-shift QR sweep.  Each 6*NBMPS-2 column diagonal
+          .    chunk extends from column INCOL to column NDCOL
+          .    (including both column INCOL and column NDCOL). The
+          .    following loop chases a 3*NBMPS column long chain of
+          .    NBMPS bulges 3*NBMPS-2 columns to the right.  (INCOL
+          .    may be less than KTOP and and NDCOL may be greater than
+          .    KBOT indicating phantom columns from which to chase
+          .    bulges before they are actually introduced or to which
+          .    to chase bulges beyond column KBOT.)  ====
+
+   Computing MIN
+*/
+	i__4 = incol + nbmps * 3 - 3, i__5 = *kbot - 2;
+	i__3 = min(i__4,i__5);
+	for (krcol = incol; krcol <= i__3; ++krcol) {
+
+/*
+             ==== Bulges number MTOP to MBOT are active double implicit
+             .    shift bulges.  There may or may not also be small
+             .    2-by-2 bulge, if there is room.  The inactive bulges
+             .    (if any) must wait until the active bulges have moved
+             .    down the diagonal to make room.  The phantom matrix
+             .    paradigm described above helps keep track.  ====
+
+   Computing MAX
+*/
+	    i__4 = 1, i__5 = (*ktop - 1 - krcol + 2) / 3 + 1;
+	    mtop = max(i__4,i__5);
+/* Computing MIN */
+	    i__4 = nbmps, i__5 = (*kbot - krcol) / 3;
+	    mbot = min(i__4,i__5);
+	    m22 = mbot + 1;
+	    bmp22 = mbot < nbmps && krcol + (m22 - 1) * 3 == *kbot - 2;
+
+/*
+             ==== Generate reflections to chase the chain right
+             .    one column.  (The minimum value of K is KTOP-1.) ====
+*/
+
+	    i__4 = mbot;
+	    for (m = mtop; m <= i__4; ++m) {
+		k = krcol + (m - 1) * 3;
+		if (k == *ktop - 1) {
+		    claqr1_(&c__3, &h__[*ktop + *ktop * h_dim1], ldh, &s[(m <<
+			     1) - 1], &s[m * 2], &v[m * v_dim1 + 1]);
+		    i__5 = m * v_dim1 + 1;
+		    alpha.r = v[i__5].r, alpha.i = v[i__5].i;
+		    clarfg_(&c__3, &alpha, &v[m * v_dim1 + 2], &c__1, &v[m *
+			    v_dim1 + 1]);
+		} else {
+		    i__5 = k + 1 + k * h_dim1;
+		    beta.r = h__[i__5].r, beta.i = h__[i__5].i;
+		    i__5 = m * v_dim1 + 2;
+		    i__6 = k + 2 + k * h_dim1;
+		    v[i__5].r = h__[i__6].r, v[i__5].i = h__[i__6].i;
+		    i__5 = m * v_dim1 + 3;
+		    i__6 = k + 3 + k * h_dim1;
+		    v[i__5].r = h__[i__6].r, v[i__5].i = h__[i__6].i;
+		    clarfg_(&c__3, &beta, &v[m * v_dim1 + 2], &c__1, &v[m *
+			    v_dim1 + 1]);
+
+/*
+                   ==== A Bulge may collapse because of vigilant
+                   .    deflation or destructive underflow.  In the
+                   .    underflow case, try the two-small-subdiagonals
+                   .    trick to try to reinflate the bulge.  ====
+*/
+
+		    i__5 = k + 3 + k * h_dim1;
+		    i__6 = k + 3 + (k + 1) * h_dim1;
+		    i__7 = k + 3 + (k + 2) * h_dim1;
+		    if (h__[i__5].r != 0.f || h__[i__5].i != 0.f || (h__[i__6]
+			    .r != 0.f || h__[i__6].i != 0.f) || h__[i__7].r ==
+			     0.f && h__[i__7].i == 0.f) {
+
+/*                    ==== Typical case: not collapsed (yet). ==== */
+
+			i__5 = k + 1 + k * h_dim1;
+			h__[i__5].r = beta.r, h__[i__5].i = beta.i;
+			i__5 = k + 2 + k * h_dim1;
+			h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			i__5 = k + 3 + k * h_dim1;
+			h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+		    } else {
+
+/*
+                      ==== Atypical case: collapsed.  Attempt to
+                      .    reintroduce ignoring H(K+1,K) and H(K+2,K).
+                      .    If the fill resulting from the new
+                      .    reflector is too large, then abandon it.
+                      .    Otherwise, use the new one. ====
+*/
+
+			claqr1_(&c__3, &h__[k + 1 + (k + 1) * h_dim1], ldh, &
+				s[(m << 1) - 1], &s[m * 2], vt);
+			alpha.r = vt[0].r, alpha.i = vt[0].i;
+			clarfg_(&c__3, &alpha, &vt[1], &c__1, vt);
+			r_cnjg(&q__2, vt);
+			i__5 = k + 1 + k * h_dim1;
+			r_cnjg(&q__5, &vt[1]);
+			i__6 = k + 2 + k * h_dim1;
+			q__4.r = q__5.r * h__[i__6].r - q__5.i * h__[i__6].i,
+				q__4.i = q__5.r * h__[i__6].i + q__5.i * h__[
+				i__6].r;
+			q__3.r = h__[i__5].r + q__4.r, q__3.i = h__[i__5].i +
+				q__4.i;
+			q__1.r = q__2.r * q__3.r - q__2.i * q__3.i, q__1.i =
+				q__2.r * q__3.i + q__2.i * q__3.r;
+			refsum.r = q__1.r, refsum.i = q__1.i;
+
+			i__5 = k + 2 + k * h_dim1;
+			q__3.r = refsum.r * vt[1].r - refsum.i * vt[1].i,
+				q__3.i = refsum.r * vt[1].i + refsum.i * vt[1]
+				.r;
+			q__2.r = h__[i__5].r - q__3.r, q__2.i = h__[i__5].i -
+				q__3.i;
+			q__1.r = q__2.r, q__1.i = q__2.i;
+			q__5.r = refsum.r * vt[2].r - refsum.i * vt[2].i,
+				q__5.i = refsum.r * vt[2].i + refsum.i * vt[2]
+				.r;
+			q__4.r = q__5.r, q__4.i = q__5.i;
+			i__6 = k + k * h_dim1;
+			i__7 = k + 1 + (k + 1) * h_dim1;
+			i__8 = k + 2 + (k + 2) * h_dim1;
+			if ((r__1 = q__1.r, dabs(r__1)) + (r__2 = r_imag(&
+				q__1), dabs(r__2)) + ((r__3 = q__4.r, dabs(
+				r__3)) + (r__4 = r_imag(&q__4), dabs(r__4)))
+				> ulp * ((r__5 = h__[i__6].r, dabs(r__5)) + (
+				r__6 = r_imag(&h__[k + k * h_dim1]), dabs(
+				r__6)) + ((r__7 = h__[i__7].r, dabs(r__7)) + (
+				r__8 = r_imag(&h__[k + 1 + (k + 1) * h_dim1]),
+				 dabs(r__8))) + ((r__9 = h__[i__8].r, dabs(
+				r__9)) + (r__10 = r_imag(&h__[k + 2 + (k + 2)
+				* h_dim1]), dabs(r__10))))) {
+
+/*
+                         ==== Starting a new bulge here would
+                         .    create non-negligible fill.  Use
+                         .    the old one with trepidation. ====
+*/
+
+			    i__5 = k + 1 + k * h_dim1;
+			    h__[i__5].r = beta.r, h__[i__5].i = beta.i;
+			    i__5 = k + 2 + k * h_dim1;
+			    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			    i__5 = k + 3 + k * h_dim1;
+			    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			} else {
+
+/*
+                         ==== Stating a new bulge here would
+                         .    create only negligible fill.
+                         .    Replace the old reflector with
+                         .    the new one. ====
+*/
+
+			    i__5 = k + 1 + k * h_dim1;
+			    i__6 = k + 1 + k * h_dim1;
+			    q__1.r = h__[i__6].r - refsum.r, q__1.i = h__[
+				    i__6].i - refsum.i;
+			    h__[i__5].r = q__1.r, h__[i__5].i = q__1.i;
+			    i__5 = k + 2 + k * h_dim1;
+			    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			    i__5 = k + 3 + k * h_dim1;
+			    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			    i__5 = m * v_dim1 + 1;
+			    v[i__5].r = vt[0].r, v[i__5].i = vt[0].i;
+			    i__5 = m * v_dim1 + 2;
+			    v[i__5].r = vt[1].r, v[i__5].i = vt[1].i;
+			    i__5 = m * v_dim1 + 3;
+			    v[i__5].r = vt[2].r, v[i__5].i = vt[2].i;
+			}
+		    }
+		}
+/* L10: */
+	    }
+
+/*           ==== Generate a 2-by-2 reflection, if needed. ==== */
+
+	    k = krcol + (m22 - 1) * 3;
+	    if (bmp22) {
+		if (k == *ktop - 1) {
+		    claqr1_(&c__2, &h__[k + 1 + (k + 1) * h_dim1], ldh, &s[(
+			    m22 << 1) - 1], &s[m22 * 2], &v[m22 * v_dim1 + 1])
+			    ;
+		    i__4 = m22 * v_dim1 + 1;
+		    beta.r = v[i__4].r, beta.i = v[i__4].i;
+		    clarfg_(&c__2, &beta, &v[m22 * v_dim1 + 2], &c__1, &v[m22
+			    * v_dim1 + 1]);
+		} else {
+		    i__4 = k + 1 + k * h_dim1;
+		    beta.r = h__[i__4].r, beta.i = h__[i__4].i;
+		    i__4 = m22 * v_dim1 + 2;
+		    i__5 = k + 2 + k * h_dim1;
+		    v[i__4].r = h__[i__5].r, v[i__4].i = h__[i__5].i;
+		    clarfg_(&c__2, &beta, &v[m22 * v_dim1 + 2], &c__1, &v[m22
+			    * v_dim1 + 1]);
+		    i__4 = k + 1 + k * h_dim1;
+		    h__[i__4].r = beta.r, h__[i__4].i = beta.i;
+		    i__4 = k + 2 + k * h_dim1;
+		    h__[i__4].r = 0.f, h__[i__4].i = 0.f;
+		}
+	    }
+
+/*           ==== Multiply H by reflections from the left ==== */
+
+	    if (accum) {
+		jbot = min(ndcol,*kbot);
+	    } else if (*wantt) {
+		jbot = *n;
+	    } else {
+		jbot = *kbot;
+	    }
+	    i__4 = jbot;
+	    for (j = max(*ktop,krcol); j <= i__4; ++j) {
+/* Computing MIN */
+		i__5 = mbot, i__6 = (j - krcol + 2) / 3;
+		mend = min(i__5,i__6);
+		i__5 = mend;
+		for (m = mtop; m <= i__5; ++m) {
+		    k = krcol + (m - 1) * 3;
+		    r_cnjg(&q__2, &v[m * v_dim1 + 1]);
+		    i__6 = k + 1 + j * h_dim1;
+		    r_cnjg(&q__6, &v[m * v_dim1 + 2]);
+		    i__7 = k + 2 + j * h_dim1;
+		    q__5.r = q__6.r * h__[i__7].r - q__6.i * h__[i__7].i,
+			    q__5.i = q__6.r * h__[i__7].i + q__6.i * h__[i__7]
+			    .r;
+		    q__4.r = h__[i__6].r + q__5.r, q__4.i = h__[i__6].i +
+			    q__5.i;
+		    r_cnjg(&q__8, &v[m * v_dim1 + 3]);
+		    i__8 = k + 3 + j * h_dim1;
+		    q__7.r = q__8.r * h__[i__8].r - q__8.i * h__[i__8].i,
+			    q__7.i = q__8.r * h__[i__8].i + q__8.i * h__[i__8]
+			    .r;
+		    q__3.r = q__4.r + q__7.r, q__3.i = q__4.i + q__7.i;
+		    q__1.r = q__2.r * q__3.r - q__2.i * q__3.i, q__1.i =
+			    q__2.r * q__3.i + q__2.i * q__3.r;
+		    refsum.r = q__1.r, refsum.i = q__1.i;
+		    i__6 = k + 1 + j * h_dim1;
+		    i__7 = k + 1 + j * h_dim1;
+		    q__1.r = h__[i__7].r - refsum.r, q__1.i = h__[i__7].i -
+			    refsum.i;
+		    h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+		    i__6 = k + 2 + j * h_dim1;
+		    i__7 = k + 2 + j * h_dim1;
+		    i__8 = m * v_dim1 + 2;
+		    q__2.r = refsum.r * v[i__8].r - refsum.i * v[i__8].i,
+			    q__2.i = refsum.r * v[i__8].i + refsum.i * v[i__8]
+			    .r;
+		    q__1.r = h__[i__7].r - q__2.r, q__1.i = h__[i__7].i -
+			    q__2.i;
+		    h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+		    i__6 = k + 3 + j * h_dim1;
+		    i__7 = k + 3 + j * h_dim1;
+		    i__8 = m * v_dim1 + 3;
+		    q__2.r = refsum.r * v[i__8].r - refsum.i * v[i__8].i,
+			    q__2.i = refsum.r * v[i__8].i + refsum.i * v[i__8]
+			    .r;
+		    q__1.r = h__[i__7].r - q__2.r, q__1.i = h__[i__7].i -
+			    q__2.i;
+		    h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+/* L20: */
+		}
+/* L30: */
+	    }
+	    if (bmp22) {
+		k = krcol + (m22 - 1) * 3;
+/* Computing MAX */
+		i__4 = k + 1;
+		i__5 = jbot;
+		for (j = max(i__4,*ktop); j <= i__5; ++j) {
+		    r_cnjg(&q__2, &v[m22 * v_dim1 + 1]);
+		    i__4 = k + 1 + j * h_dim1;
+		    r_cnjg(&q__5, &v[m22 * v_dim1 + 2]);
+		    i__6 = k + 2 + j * h_dim1;
+		    q__4.r = q__5.r * h__[i__6].r - q__5.i * h__[i__6].i,
+			    q__4.i = q__5.r * h__[i__6].i + q__5.i * h__[i__6]
+			    .r;
+		    q__3.r = h__[i__4].r + q__4.r, q__3.i = h__[i__4].i +
+			    q__4.i;
+		    q__1.r = q__2.r * q__3.r - q__2.i * q__3.i, q__1.i =
+			    q__2.r * q__3.i + q__2.i * q__3.r;
+		    refsum.r = q__1.r, refsum.i = q__1.i;
+		    i__4 = k + 1 + j * h_dim1;
+		    i__6 = k + 1 + j * h_dim1;
+		    q__1.r = h__[i__6].r - refsum.r, q__1.i = h__[i__6].i -
+			    refsum.i;
+		    h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
+		    i__4 = k + 2 + j * h_dim1;
+		    i__6 = k + 2 + j * h_dim1;
+		    i__7 = m22 * v_dim1 + 2;
+		    q__2.r = refsum.r * v[i__7].r - refsum.i * v[i__7].i,
+			    q__2.i = refsum.r * v[i__7].i + refsum.i * v[i__7]
+			    .r;
+		    q__1.r = h__[i__6].r - q__2.r, q__1.i = h__[i__6].i -
+			    q__2.i;
+		    h__[i__4].r = q__1.r, h__[i__4].i = q__1.i;
+/* L40: */
+		}
+	    }
+
+/*
+             ==== Multiply H by reflections from the right.
+             .    Delay filling in the last row until the
+             .    vigilant deflation check is complete. ====
+*/
+
+	    if (accum) {
+		jtop = max(*ktop,incol);
+	    } else if (*wantt) {
+		jtop = 1;
+	    } else {
+		jtop = *ktop;
+	    }
+	    i__5 = mbot;
+	    for (m = mtop; m <= i__5; ++m) {
+		i__4 = m * v_dim1 + 1;
+		if (v[i__4].r != 0.f || v[i__4].i != 0.f) {
+		    k = krcol + (m - 1) * 3;
+/* Computing MIN */
+		    i__6 = *kbot, i__7 = k + 3;
+		    i__4 = min(i__6,i__7);
+		    for (j = jtop; j <= i__4; ++j) {
+			i__6 = m * v_dim1 + 1;
+			i__7 = j + (k + 1) * h_dim1;
+			i__8 = m * v_dim1 + 2;
+			i__9 = j + (k + 2) * h_dim1;
+			q__4.r = v[i__8].r * h__[i__9].r - v[i__8].i * h__[
+				i__9].i, q__4.i = v[i__8].r * h__[i__9].i + v[
+				i__8].i * h__[i__9].r;
+			q__3.r = h__[i__7].r + q__4.r, q__3.i = h__[i__7].i +
+				q__4.i;
+			i__10 = m * v_dim1 + 3;
+			i__11 = j + (k + 3) * h_dim1;
+			q__5.r = v[i__10].r * h__[i__11].r - v[i__10].i * h__[
+				i__11].i, q__5.i = v[i__10].r * h__[i__11].i
+				+ v[i__10].i * h__[i__11].r;
+			q__2.r = q__3.r + q__5.r, q__2.i = q__3.i + q__5.i;
+			q__1.r = v[i__6].r * q__2.r - v[i__6].i * q__2.i,
+				q__1.i = v[i__6].r * q__2.i + v[i__6].i *
+				q__2.r;
+			refsum.r = q__1.r, refsum.i = q__1.i;
+			i__6 = j + (k + 1) * h_dim1;
+			i__7 = j + (k + 1) * h_dim1;
+			q__1.r = h__[i__7].r - refsum.r, q__1.i = h__[i__7].i
+				- refsum.i;
+			h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+			i__6 = j + (k + 2) * h_dim1;
+			i__7 = j + (k + 2) * h_dim1;
+			r_cnjg(&q__3, &v[m * v_dim1 + 2]);
+			q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				q__2.i = refsum.r * q__3.i + refsum.i *
+				q__3.r;
+			q__1.r = h__[i__7].r - q__2.r, q__1.i = h__[i__7].i -
+				q__2.i;
+			h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+			i__6 = j + (k + 3) * h_dim1;
+			i__7 = j + (k + 3) * h_dim1;
+			r_cnjg(&q__3, &v[m * v_dim1 + 3]);
+			q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				q__2.i = refsum.r * q__3.i + refsum.i *
+				q__3.r;
+			q__1.r = h__[i__7].r - q__2.r, q__1.i = h__[i__7].i -
+				q__2.i;
+			h__[i__6].r = q__1.r, h__[i__6].i = q__1.i;
+/* L50: */
+		    }
+
+		    if (accum) {
+
+/*
+                      ==== Accumulate U. (If necessary, update Z later
+                      .    with with an efficient matrix-matrix
+                      .    multiply.) ====
+*/
+
+			kms = k - incol;
+/* Computing MAX */
+			i__4 = 1, i__6 = *ktop - incol;
+			i__7 = kdu;
+			for (j = max(i__4,i__6); j <= i__7; ++j) {
+			    i__4 = m * v_dim1 + 1;
+			    i__6 = j + (kms + 1) * u_dim1;
+			    i__8 = m * v_dim1 + 2;
+			    i__9 = j + (kms + 2) * u_dim1;
+			    q__4.r = v[i__8].r * u[i__9].r - v[i__8].i * u[
+				    i__9].i, q__4.i = v[i__8].r * u[i__9].i +
+				    v[i__8].i * u[i__9].r;
+			    q__3.r = u[i__6].r + q__4.r, q__3.i = u[i__6].i +
+				    q__4.i;
+			    i__10 = m * v_dim1 + 3;
+			    i__11 = j + (kms + 3) * u_dim1;
+			    q__5.r = v[i__10].r * u[i__11].r - v[i__10].i * u[
+				    i__11].i, q__5.i = v[i__10].r * u[i__11]
+				    .i + v[i__10].i * u[i__11].r;
+			    q__2.r = q__3.r + q__5.r, q__2.i = q__3.i +
+				    q__5.i;
+			    q__1.r = v[i__4].r * q__2.r - v[i__4].i * q__2.i,
+				    q__1.i = v[i__4].r * q__2.i + v[i__4].i *
+				    q__2.r;
+			    refsum.r = q__1.r, refsum.i = q__1.i;
+			    i__4 = j + (kms + 1) * u_dim1;
+			    i__6 = j + (kms + 1) * u_dim1;
+			    q__1.r = u[i__6].r - refsum.r, q__1.i = u[i__6].i
+				    - refsum.i;
+			    u[i__4].r = q__1.r, u[i__4].i = q__1.i;
+			    i__4 = j + (kms + 2) * u_dim1;
+			    i__6 = j + (kms + 2) * u_dim1;
+			    r_cnjg(&q__3, &v[m * v_dim1 + 2]);
+			    q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				    q__2.i = refsum.r * q__3.i + refsum.i *
+				    q__3.r;
+			    q__1.r = u[i__6].r - q__2.r, q__1.i = u[i__6].i -
+				    q__2.i;
+			    u[i__4].r = q__1.r, u[i__4].i = q__1.i;
+			    i__4 = j + (kms + 3) * u_dim1;
+			    i__6 = j + (kms + 3) * u_dim1;
+			    r_cnjg(&q__3, &v[m * v_dim1 + 3]);
+			    q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				    q__2.i = refsum.r * q__3.i + refsum.i *
+				    q__3.r;
+			    q__1.r = u[i__6].r - q__2.r, q__1.i = u[i__6].i -
+				    q__2.i;
+			    u[i__4].r = q__1.r, u[i__4].i = q__1.i;
+/* L60: */
+			}
+		    } else if (*wantz) {
+
+/*
+                      ==== U is not accumulated, so update Z
+                      .    now by multiplying by reflections
+                      .    from the right. ====
+*/
+
+			i__7 = *ihiz;
+			for (j = *iloz; j <= i__7; ++j) {
+			    i__4 = m * v_dim1 + 1;
+			    i__6 = j + (k + 1) * z_dim1;
+			    i__8 = m * v_dim1 + 2;
+			    i__9 = j + (k + 2) * z_dim1;
+			    q__4.r = v[i__8].r * z__[i__9].r - v[i__8].i *
+				    z__[i__9].i, q__4.i = v[i__8].r * z__[
+				    i__9].i + v[i__8].i * z__[i__9].r;
+			    q__3.r = z__[i__6].r + q__4.r, q__3.i = z__[i__6]
+				    .i + q__4.i;
+			    i__10 = m * v_dim1 + 3;
+			    i__11 = j + (k + 3) * z_dim1;
+			    q__5.r = v[i__10].r * z__[i__11].r - v[i__10].i *
+				    z__[i__11].i, q__5.i = v[i__10].r * z__[
+				    i__11].i + v[i__10].i * z__[i__11].r;
+			    q__2.r = q__3.r + q__5.r, q__2.i = q__3.i +
+				    q__5.i;
+			    q__1.r = v[i__4].r * q__2.r - v[i__4].i * q__2.i,
+				    q__1.i = v[i__4].r * q__2.i + v[i__4].i *
+				    q__2.r;
+			    refsum.r = q__1.r, refsum.i = q__1.i;
+			    i__4 = j + (k + 1) * z_dim1;
+			    i__6 = j + (k + 1) * z_dim1;
+			    q__1.r = z__[i__6].r - refsum.r, q__1.i = z__[
+				    i__6].i - refsum.i;
+			    z__[i__4].r = q__1.r, z__[i__4].i = q__1.i;
+			    i__4 = j + (k + 2) * z_dim1;
+			    i__6 = j + (k + 2) * z_dim1;
+			    r_cnjg(&q__3, &v[m * v_dim1 + 2]);
+			    q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				    q__2.i = refsum.r * q__3.i + refsum.i *
+				    q__3.r;
+			    q__1.r = z__[i__6].r - q__2.r, q__1.i = z__[i__6]
+				    .i - q__2.i;
+			    z__[i__4].r = q__1.r, z__[i__4].i = q__1.i;
+			    i__4 = j + (k + 3) * z_dim1;
+			    i__6 = j + (k + 3) * z_dim1;
+			    r_cnjg(&q__3, &v[m * v_dim1 + 3]);
+			    q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				    q__2.i = refsum.r * q__3.i + refsum.i *
+				    q__3.r;
+			    q__1.r = z__[i__6].r - q__2.r, q__1.i = z__[i__6]
+				    .i - q__2.i;
+			    z__[i__4].r = q__1.r, z__[i__4].i = q__1.i;
+/* L70: */
+			}
+		    }
+		}
+/* L80: */
+	    }
+
+/*           ==== Special case: 2-by-2 reflection (if needed) ==== */
+
+	    k = krcol + (m22 - 1) * 3;
+	    i__5 = m22 * v_dim1 + 1;
+	    if (bmp22 && (v[i__5].r != 0.f || v[i__5].i != 0.f)) {
+/* Computing MIN */
+		i__7 = *kbot, i__4 = k + 3;
+		i__5 = min(i__7,i__4);
+		for (j = jtop; j <= i__5; ++j) {
+		    i__7 = m22 * v_dim1 + 1;
+		    i__4 = j + (k + 1) * h_dim1;
+		    i__6 = m22 * v_dim1 + 2;
+		    i__8 = j + (k + 2) * h_dim1;
+		    q__3.r = v[i__6].r * h__[i__8].r - v[i__6].i * h__[i__8]
+			    .i, q__3.i = v[i__6].r * h__[i__8].i + v[i__6].i *
+			     h__[i__8].r;
+		    q__2.r = h__[i__4].r + q__3.r, q__2.i = h__[i__4].i +
+			    q__3.i;
+		    q__1.r = v[i__7].r * q__2.r - v[i__7].i * q__2.i, q__1.i =
+			     v[i__7].r * q__2.i + v[i__7].i * q__2.r;
+		    refsum.r = q__1.r, refsum.i = q__1.i;
+		    i__7 = j + (k + 1) * h_dim1;
+		    i__4 = j + (k + 1) * h_dim1;
+		    q__1.r = h__[i__4].r - refsum.r, q__1.i = h__[i__4].i -
+			    refsum.i;
+		    h__[i__7].r = q__1.r, h__[i__7].i = q__1.i;
+		    i__7 = j + (k + 2) * h_dim1;
+		    i__4 = j + (k + 2) * h_dim1;
+		    r_cnjg(&q__3, &v[m22 * v_dim1 + 2]);
+		    q__2.r = refsum.r * q__3.r - refsum.i * q__3.i, q__2.i =
+			    refsum.r * q__3.i + refsum.i * q__3.r;
+		    q__1.r = h__[i__4].r - q__2.r, q__1.i = h__[i__4].i -
+			    q__2.i;
+		    h__[i__7].r = q__1.r, h__[i__7].i = q__1.i;
+/* L90: */
+		}
+
+		if (accum) {
+		    kms = k - incol;
+/* Computing MAX */
+		    i__5 = 1, i__7 = *ktop - incol;
+		    i__4 = kdu;
+		    for (j = max(i__5,i__7); j <= i__4; ++j) {
+			i__5 = m22 * v_dim1 + 1;
+			i__7 = j + (kms + 1) * u_dim1;
+			i__6 = m22 * v_dim1 + 2;
+			i__8 = j + (kms + 2) * u_dim1;
+			q__3.r = v[i__6].r * u[i__8].r - v[i__6].i * u[i__8]
+				.i, q__3.i = v[i__6].r * u[i__8].i + v[i__6]
+				.i * u[i__8].r;
+			q__2.r = u[i__7].r + q__3.r, q__2.i = u[i__7].i +
+				q__3.i;
+			q__1.r = v[i__5].r * q__2.r - v[i__5].i * q__2.i,
+				q__1.i = v[i__5].r * q__2.i + v[i__5].i *
+				q__2.r;
+			refsum.r = q__1.r, refsum.i = q__1.i;
+			i__5 = j + (kms + 1) * u_dim1;
+			i__7 = j + (kms + 1) * u_dim1;
+			q__1.r = u[i__7].r - refsum.r, q__1.i = u[i__7].i -
+				refsum.i;
+			u[i__5].r = q__1.r, u[i__5].i = q__1.i;
+			i__5 = j + (kms + 2) * u_dim1;
+			i__7 = j + (kms + 2) * u_dim1;
+			r_cnjg(&q__3, &v[m22 * v_dim1 + 2]);
+			q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				q__2.i = refsum.r * q__3.i + refsum.i *
+				q__3.r;
+			q__1.r = u[i__7].r - q__2.r, q__1.i = u[i__7].i -
+				q__2.i;
+			u[i__5].r = q__1.r, u[i__5].i = q__1.i;
+/* L100: */
+		    }
+		} else if (*wantz) {
+		    i__4 = *ihiz;
+		    for (j = *iloz; j <= i__4; ++j) {
+			i__5 = m22 * v_dim1 + 1;
+			i__7 = j + (k + 1) * z_dim1;
+			i__6 = m22 * v_dim1 + 2;
+			i__8 = j + (k + 2) * z_dim1;
+			q__3.r = v[i__6].r * z__[i__8].r - v[i__6].i * z__[
+				i__8].i, q__3.i = v[i__6].r * z__[i__8].i + v[
+				i__6].i * z__[i__8].r;
+			q__2.r = z__[i__7].r + q__3.r, q__2.i = z__[i__7].i +
+				q__3.i;
+			q__1.r = v[i__5].r * q__2.r - v[i__5].i * q__2.i,
+				q__1.i = v[i__5].r * q__2.i + v[i__5].i *
+				q__2.r;
+			refsum.r = q__1.r, refsum.i = q__1.i;
+			i__5 = j + (k + 1) * z_dim1;
+			i__7 = j + (k + 1) * z_dim1;
+			q__1.r = z__[i__7].r - refsum.r, q__1.i = z__[i__7].i
+				- refsum.i;
+			z__[i__5].r = q__1.r, z__[i__5].i = q__1.i;
+			i__5 = j + (k + 2) * z_dim1;
+			i__7 = j + (k + 2) * z_dim1;
+			r_cnjg(&q__3, &v[m22 * v_dim1 + 2]);
+			q__2.r = refsum.r * q__3.r - refsum.i * q__3.i,
+				q__2.i = refsum.r * q__3.i + refsum.i *
+				q__3.r;
+			q__1.r = z__[i__7].r - q__2.r, q__1.i = z__[i__7].i -
+				q__2.i;
+			z__[i__5].r = q__1.r, z__[i__5].i = q__1.i;
+/* L110: */
+		    }
+		}
+	    }
+
+/*           ==== Vigilant deflation check ==== */
+
+	    mstart = mtop;
+	    if (krcol + (mstart - 1) * 3 < *ktop) {
+		++mstart;
+	    }
+	    mend = mbot;
+	    if (bmp22) {
+		++mend;
+	    }
+	    if (krcol == *kbot - 2) {
+		++mend;
+	    }
+	    i__4 = mend;
+	    for (m = mstart; m <= i__4; ++m) {
+/* Computing MIN */
+		i__5 = *kbot - 1, i__7 = krcol + (m - 1) * 3;
+		k = min(i__5,i__7);
+
+/*
+                ==== The following convergence test requires that
+                .    the tradition small-compared-to-nearby-diagonals
+                .    criterion and the Ahues & Tisseur (LAWN 122, 1997)
+                .    criteria both be satisfied.  The latter improves
+                .    accuracy in some examples. Falling back on an
+                .    alternate convergence criterion when TST1 or TST2
+                .    is zero (as done here) is traditional but probably
+                .    unnecessary. ====
+*/
+
+		i__5 = k + 1 + k * h_dim1;
+		if (h__[i__5].r != 0.f || h__[i__5].i != 0.f) {
+		    i__5 = k + k * h_dim1;
+		    i__7 = k + 1 + (k + 1) * h_dim1;
+		    tst1 = (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 = r_imag(&
+			    h__[k + k * h_dim1]), dabs(r__2)) + ((r__3 = h__[
+			    i__7].r, dabs(r__3)) + (r__4 = r_imag(&h__[k + 1
+			    + (k + 1) * h_dim1]), dabs(r__4)));
+		    if (tst1 == 0.f) {
+			if (k >= *ktop + 1) {
+			    i__5 = k + (k - 1) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + (k - 1) * h_dim1]), dabs(
+				    r__2));
+			}
+			if (k >= *ktop + 2) {
+			    i__5 = k + (k - 2) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + (k - 2) * h_dim1]), dabs(
+				    r__2));
+			}
+			if (k >= *ktop + 3) {
+			    i__5 = k + (k - 3) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + (k - 3) * h_dim1]), dabs(
+				    r__2));
+			}
+			if (k <= *kbot - 2) {
+			    i__5 = k + 2 + (k + 1) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + 2 + (k + 1) * h_dim1]),
+				    dabs(r__2));
+			}
+			if (k <= *kbot - 3) {
+			    i__5 = k + 3 + (k + 1) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + 3 + (k + 1) * h_dim1]),
+				    dabs(r__2));
+			}
+			if (k <= *kbot - 4) {
+			    i__5 = k + 4 + (k + 1) * h_dim1;
+			    tst1 += (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				     r_imag(&h__[k + 4 + (k + 1) * h_dim1]),
+				    dabs(r__2));
+			}
+		    }
+		    i__5 = k + 1 + k * h_dim1;
+/* Computing MAX */
+		    r__3 = smlnum, r__4 = ulp * tst1;
+		    if ((r__1 = h__[i__5].r, dabs(r__1)) + (r__2 = r_imag(&
+			    h__[k + 1 + k * h_dim1]), dabs(r__2)) <= dmax(
+			    r__3,r__4)) {
+/* Computing MAX */
+			i__5 = k + 1 + k * h_dim1;
+			i__7 = k + (k + 1) * h_dim1;
+			r__5 = (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[k + 1 + k * h_dim1]), dabs(r__2)),
+				 r__6 = (r__3 = h__[i__7].r, dabs(r__3)) + (
+				r__4 = r_imag(&h__[k + (k + 1) * h_dim1]),
+				dabs(r__4));
+			h12 = dmax(r__5,r__6);
+/* Computing MIN */
+			i__5 = k + 1 + k * h_dim1;
+			i__7 = k + (k + 1) * h_dim1;
+			r__5 = (r__1 = h__[i__5].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[k + 1 + k * h_dim1]), dabs(r__2)),
+				 r__6 = (r__3 = h__[i__7].r, dabs(r__3)) + (
+				r__4 = r_imag(&h__[k + (k + 1) * h_dim1]),
+				dabs(r__4));
+			h21 = dmin(r__5,r__6);
+			i__5 = k + k * h_dim1;
+			i__7 = k + 1 + (k + 1) * h_dim1;
+			q__2.r = h__[i__5].r - h__[i__7].r, q__2.i = h__[i__5]
+				.i - h__[i__7].i;
+			q__1.r = q__2.r, q__1.i = q__2.i;
+/* Computing MAX */
+			i__6 = k + 1 + (k + 1) * h_dim1;
+			r__5 = (r__1 = h__[i__6].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[k + 1 + (k + 1) * h_dim1]), dabs(
+				r__2)), r__6 = (r__3 = q__1.r, dabs(r__3)) + (
+				r__4 = r_imag(&q__1), dabs(r__4));
+			h11 = dmax(r__5,r__6);
+			i__5 = k + k * h_dim1;
+			i__7 = k + 1 + (k + 1) * h_dim1;
+			q__2.r = h__[i__5].r - h__[i__7].r, q__2.i = h__[i__5]
+				.i - h__[i__7].i;
+			q__1.r = q__2.r, q__1.i = q__2.i;
+/* Computing MIN */
+			i__6 = k + 1 + (k + 1) * h_dim1;
+			r__5 = (r__1 = h__[i__6].r, dabs(r__1)) + (r__2 =
+				r_imag(&h__[k + 1 + (k + 1) * h_dim1]), dabs(
+				r__2)), r__6 = (r__3 = q__1.r, dabs(r__3)) + (
+				r__4 = r_imag(&q__1), dabs(r__4));
+			h22 = dmin(r__5,r__6);
+			scl = h11 + h12;
+			tst2 = h22 * (h11 / scl);
+
+/* Computing MAX */
+			r__1 = smlnum, r__2 = ulp * tst2;
+			if (tst2 == 0.f || h21 * (h12 / scl) <= dmax(r__1,
+				r__2)) {
+			    i__5 = k + 1 + k * h_dim1;
+			    h__[i__5].r = 0.f, h__[i__5].i = 0.f;
+			}
+		    }
+		}
+/* L120: */
+	    }
+
+/*
+             ==== Fill in the last row of each bulge. ====
+
+   Computing MIN
+*/
+	    i__4 = nbmps, i__5 = (*kbot - krcol - 1) / 3;
+	    mend = min(i__4,i__5);
+	    i__4 = mend;
+	    for (m = mtop; m <= i__4; ++m) {
+		k = krcol + (m - 1) * 3;
+		i__5 = m * v_dim1 + 1;
+		i__7 = m * v_dim1 + 3;
+		q__2.r = v[i__5].r * v[i__7].r - v[i__5].i * v[i__7].i,
+			q__2.i = v[i__5].r * v[i__7].i + v[i__5].i * v[i__7]
+			.r;
+		i__6 = k + 4 + (k + 3) * h_dim1;
+		q__1.r = q__2.r * h__[i__6].r - q__2.i * h__[i__6].i, q__1.i =
+			 q__2.r * h__[i__6].i + q__2.i * h__[i__6].r;
+		refsum.r = q__1.r, refsum.i = q__1.i;
+		i__5 = k + 4 + (k + 1) * h_dim1;
+		q__1.r = -refsum.r, q__1.i = -refsum.i;
+		h__[i__5].r = q__1.r, h__[i__5].i = q__1.i;
+		i__5 = k + 4 + (k + 2) * h_dim1;
+		q__2.r = -refsum.r, q__2.i = -refsum.i;
+		r_cnjg(&q__3, &v[m * v_dim1 + 2]);
+		q__1.r = q__2.r * q__3.r - q__2.i * q__3.i, q__1.i = q__2.r *
+			q__3.i + q__2.i * q__3.r;
+		h__[i__5].r = q__1.r, h__[i__5].i = q__1.i;
+		i__5 = k + 4 + (k + 3) * h_dim1;
+		i__7 = k + 4 + (k + 3) * h_dim1;
+		r_cnjg(&q__3, &v[m * v_dim1 + 3]);
+		q__2.r = refsum.r * q__3.r - refsum.i * q__3.i, q__2.i =
+			refsum.r * q__3.i + refsum.i * q__3.r;
+		q__1.r = h__[i__7].r - q__2.r, q__1.i = h__[i__7].i - q__2.i;
+		h__[i__5].r = q__1.r, h__[i__5].i = q__1.i;
+/* L130: */
+	    }
+
+/*
+             ==== End of near-the-diagonal bulge chase. ====
+
+   L140:
+*/
+	}
+
+/*
+          ==== Use U (if accumulated) to update far-from-diagonal
+          .    entries in H.  If required, use U to update Z as
+          .    well. ====
+*/
+
+	if (accum) {
+	    if (*wantt) {
+		jtop = 1;
+		jbot = *n;
+	    } else {
+		jtop = *ktop;
+		jbot = *kbot;
+	    }
+	    if (! blk22 || incol < *ktop || ndcol > *kbot || ns <= 2) {
+
+/*
+                ==== Updates not exploiting the 2-by-2 block
+                .    structure of U.  K1 and NU keep track of
+                .    the location and size of U in the special
+                .    cases of introducing bulges and chasing
+                .    bulges off the bottom.  In these special
+                .    cases and in case the number of shifts
+                .    is NS = 2, there is no 2-by-2 block
+                .    structure to exploit.  ====
+
+   Computing MAX
+*/
+		i__3 = 1, i__4 = *ktop - incol;
+		k1 = max(i__3,i__4);
+/* Computing MAX */
+		i__3 = 0, i__4 = ndcol - *kbot;
+		nu = kdu - max(i__3,i__4) - k1 + 1;
+
+/*              ==== Horizontal Multiply ==== */
+
+		i__3 = jbot;
+		i__4 = *nh;
+		for (jcol = min(ndcol,*kbot) + 1; i__4 < 0 ? jcol >= i__3 :
+			jcol <= i__3; jcol += i__4) {
+/* Computing MIN */
+		    i__5 = *nh, i__7 = jbot - jcol + 1;
+		    jlen = min(i__5,i__7);
+		    cgemm_("C", "N", &nu, &jlen, &nu, &c_b57, &u[k1 + k1 *
+			    u_dim1], ldu, &h__[incol + k1 + jcol * h_dim1],
+			    ldh, &c_b56, &wh[wh_offset], ldwh);
+		    clacpy_("ALL", &nu, &jlen, &wh[wh_offset], ldwh, &h__[
+			    incol + k1 + jcol * h_dim1], ldh);
+/* L150: */
+		}
+
+/*              ==== Vertical multiply ==== */
+
+		i__4 = max(*ktop,incol) - 1;
+		i__3 = *nv;
+		for (jrow = jtop; i__3 < 0 ? jrow >= i__4 : jrow <= i__4;
+			jrow += i__3) {
+/* Computing MIN */
+		    i__5 = *nv, i__7 = max(*ktop,incol) - jrow;
+		    jlen = min(i__5,i__7);
+		    cgemm_("N", "N", &jlen, &nu, &nu, &c_b57, &h__[jrow + (
+			    incol + k1) * h_dim1], ldh, &u[k1 + k1 * u_dim1],
+			    ldu, &c_b56, &wv[wv_offset], ldwv);
+		    clacpy_("ALL", &jlen, &nu, &wv[wv_offset], ldwv, &h__[
+			    jrow + (incol + k1) * h_dim1], ldh);
+/* L160: */
+		}
+
+/*              ==== Z multiply (also vertical) ==== */
+
+		if (*wantz) {
+		    i__3 = *ihiz;
+		    i__4 = *nv;
+		    for (jrow = *iloz; i__4 < 0 ? jrow >= i__3 : jrow <= i__3;
+			     jrow += i__4) {
+/* Computing MIN */
+			i__5 = *nv, i__7 = *ihiz - jrow + 1;
+			jlen = min(i__5,i__7);
+			cgemm_("N", "N", &jlen, &nu, &nu, &c_b57, &z__[jrow +
+				(incol + k1) * z_dim1], ldz, &u[k1 + k1 *
+				u_dim1], ldu, &c_b56, &wv[wv_offset], ldwv);
+			clacpy_("ALL", &jlen, &nu, &wv[wv_offset], ldwv, &z__[
+				jrow + (incol + k1) * z_dim1], ldz)
+				;
+/* L170: */
+		    }
+		}
+	    } else {
+
+/*
+                ==== Updates exploiting U's 2-by-2 block structure.
+                .    (I2, I4, J2, J4 are the last rows and columns
+                .    of the blocks.) ====
+*/
+
+		i2 = (kdu + 1) / 2;
+		i4 = kdu;
+		j2 = i4 - i2;
+		j4 = kdu;
+
+/*
+                ==== KZS and KNZ deal with the band of zeros
+                .    along the diagonal of one of the triangular
+                .    blocks. ====
+*/
+
+		kzs = j4 - j2 - (ns + 1);
+		knz = ns + 1;
+
+/*              ==== Horizontal multiply ==== */
+
+		i__4 = jbot;
+		i__3 = *nh;
+		for (jcol = min(ndcol,*kbot) + 1; i__3 < 0 ? jcol >= i__4 :
+			jcol <= i__4; jcol += i__3) {
+/* Computing MIN */
+		    i__5 = *nh, i__7 = jbot - jcol + 1;
+		    jlen = min(i__5,i__7);
+
+/*
+                   ==== Copy bottom of H to top+KZS of scratch ====
+                    (The first KZS rows get multiplied by zero.) ====
+*/
+
+		    clacpy_("ALL", &knz, &jlen, &h__[incol + 1 + j2 + jcol *
+			    h_dim1], ldh, &wh[kzs + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U21' ==== */
+
+		    claset_("ALL", &kzs, &jlen, &c_b56, &c_b56, &wh[wh_offset]
+			    , ldwh);
+		    ctrmm_("L", "U", "C", "N", &knz, &jlen, &c_b57, &u[j2 + 1
+			    + (kzs + 1) * u_dim1], ldu, &wh[kzs + 1 + wh_dim1]
+			    , ldwh);
+
+/*                 ==== Multiply top of H by U11' ==== */
+
+		    cgemm_("C", "N", &i2, &jlen, &j2, &c_b57, &u[u_offset],
+			    ldu, &h__[incol + 1 + jcol * h_dim1], ldh, &c_b57,
+			     &wh[wh_offset], ldwh);
+
+/*                 ==== Copy top of H to bottom of WH ==== */
+
+		    clacpy_("ALL", &j2, &jlen, &h__[incol + 1 + jcol * h_dim1]
+			    , ldh, &wh[i2 + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U21' ==== */
+
+		    ctrmm_("L", "L", "C", "N", &j2, &jlen, &c_b57, &u[(i2 + 1)
+			     * u_dim1 + 1], ldu, &wh[i2 + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U22 ==== */
+
+		    i__5 = i4 - i2;
+		    i__7 = j4 - j2;
+		    cgemm_("C", "N", &i__5, &jlen, &i__7, &c_b57, &u[j2 + 1 +
+			    (i2 + 1) * u_dim1], ldu, &h__[incol + 1 + j2 +
+			    jcol * h_dim1], ldh, &c_b57, &wh[i2 + 1 + wh_dim1]
+			    , ldwh);
+
+/*                 ==== Copy it back ==== */
+
+		    clacpy_("ALL", &kdu, &jlen, &wh[wh_offset], ldwh, &h__[
+			    incol + 1 + jcol * h_dim1], ldh);
+/* L180: */
+		}
+
+/*              ==== Vertical multiply ==== */
+
+		i__3 = max(incol,*ktop) - 1;
+		i__4 = *nv;
+		for (jrow = jtop; i__4 < 0 ? jrow >= i__3 : jrow <= i__3;
+			jrow += i__4) {
+/* Computing MIN */
+		    i__5 = *nv, i__7 = max(incol,*ktop) - jrow;
+		    jlen = min(i__5,i__7);
+
+/*
+                   ==== Copy right of H to scratch (the first KZS
+                   .    columns get multiplied by zero) ====
+*/
+
+		    clacpy_("ALL", &jlen, &knz, &h__[jrow + (incol + 1 + j2) *
+			     h_dim1], ldh, &wv[(kzs + 1) * wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U21 ==== */
+
+		    claset_("ALL", &jlen, &kzs, &c_b56, &c_b56, &wv[wv_offset]
+			    , ldwv);
+		    ctrmm_("R", "U", "N", "N", &jlen, &knz, &c_b57, &u[j2 + 1
+			    + (kzs + 1) * u_dim1], ldu, &wv[(kzs + 1) *
+			    wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U11 ==== */
+
+		    cgemm_("N", "N", &jlen, &i2, &j2, &c_b57, &h__[jrow + (
+			    incol + 1) * h_dim1], ldh, &u[u_offset], ldu, &
+			    c_b57, &wv[wv_offset], ldwv)
+			    ;
+
+/*                 ==== Copy left of H to right of scratch ==== */
+
+		    clacpy_("ALL", &jlen, &j2, &h__[jrow + (incol + 1) *
+			    h_dim1], ldh, &wv[(i2 + 1) * wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U21 ==== */
+
+		    i__5 = i4 - i2;
+		    ctrmm_("R", "L", "N", "N", &jlen, &i__5, &c_b57, &u[(i2 +
+			    1) * u_dim1 + 1], ldu, &wv[(i2 + 1) * wv_dim1 + 1]
+			    , ldwv);
+
+/*                 ==== Multiply by U22 ==== */
+
+		    i__5 = i4 - i2;
+		    i__7 = j4 - j2;
+		    cgemm_("N", "N", &jlen, &i__5, &i__7, &c_b57, &h__[jrow +
+			    (incol + 1 + j2) * h_dim1], ldh, &u[j2 + 1 + (i2
+			    + 1) * u_dim1], ldu, &c_b57, &wv[(i2 + 1) *
+			    wv_dim1 + 1], ldwv);
+
+/*                 ==== Copy it back ==== */
+
+		    clacpy_("ALL", &jlen, &kdu, &wv[wv_offset], ldwv, &h__[
+			    jrow + (incol + 1) * h_dim1], ldh);
+/* L190: */
+		}
+
+/*              ==== Multiply Z (also vertical) ==== */
+
+		if (*wantz) {
+		    i__4 = *ihiz;
+		    i__3 = *nv;
+		    for (jrow = *iloz; i__3 < 0 ? jrow >= i__4 : jrow <= i__4;
+			     jrow += i__3) {
+/* Computing MIN */
+			i__5 = *nv, i__7 = *ihiz - jrow + 1;
+			jlen = min(i__5,i__7);
+
+/*
+                      ==== Copy right of Z to left of scratch (first
+                      .     KZS columns get multiplied by zero) ====
+*/
+
+			clacpy_("ALL", &jlen, &knz, &z__[jrow + (incol + 1 +
+				j2) * z_dim1], ldz, &wv[(kzs + 1) * wv_dim1 +
+				1], ldwv);
+
+/*                    ==== Multiply by U12 ==== */
+
+			claset_("ALL", &jlen, &kzs, &c_b56, &c_b56, &wv[
+				wv_offset], ldwv);
+			ctrmm_("R", "U", "N", "N", &jlen, &knz, &c_b57, &u[j2
+				+ 1 + (kzs + 1) * u_dim1], ldu, &wv[(kzs + 1)
+				* wv_dim1 + 1], ldwv);
+
+/*                    ==== Multiply by U11 ==== */
+
+			cgemm_("N", "N", &jlen, &i2, &j2, &c_b57, &z__[jrow +
+				(incol + 1) * z_dim1], ldz, &u[u_offset], ldu,
+				 &c_b57, &wv[wv_offset], ldwv);
+
+/*                    ==== Copy left of Z to right of scratch ==== */
+
+			clacpy_("ALL", &jlen, &j2, &z__[jrow + (incol + 1) *
+				z_dim1], ldz, &wv[(i2 + 1) * wv_dim1 + 1],
+				ldwv);
+
+/*                    ==== Multiply by U21 ==== */
+
+			i__5 = i4 - i2;
+			ctrmm_("R", "L", "N", "N", &jlen, &i__5, &c_b57, &u[(
+				i2 + 1) * u_dim1 + 1], ldu, &wv[(i2 + 1) *
+				wv_dim1 + 1], ldwv);
+
+/*                    ==== Multiply by U22 ==== */
+
+			i__5 = i4 - i2;
+			i__7 = j4 - j2;
+			cgemm_("N", "N", &jlen, &i__5, &i__7, &c_b57, &z__[
+				jrow + (incol + 1 + j2) * z_dim1], ldz, &u[j2
+				+ 1 + (i2 + 1) * u_dim1], ldu, &c_b57, &wv[(
+				i2 + 1) * wv_dim1 + 1], ldwv);
+
+/*                    ==== Copy the result back to Z ==== */
+
+			clacpy_("ALL", &jlen, &kdu, &wv[wv_offset], ldwv, &
+				z__[jrow + (incol + 1) * z_dim1], ldz);
+/* L200: */
+		    }
+		}
+	    }
+	}
+/* L210: */
+    }
+
+/*     ==== End of CLAQR5 ==== */
+
+    return 0;
+} /* claqr5_ */
 
 /* Subroutine */ int clarcm_(integer *m, integer *n, real *a, integer *lda,
 	complex *b, integer *ldb, complex *c__, integer *ldc, real *rwork)
@@ -11311,10 +15493,10 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -11392,8 +15574,8 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
     }
 
     l = *m * *n + 1;
-    sgemm_("N", "N", m, n, m, &c_b871, &a[a_offset], lda, &rwork[1], m, &
-	    c_b1101, &rwork[l], m);
+    sgemm_("N", "N", m, n, m, &c_b894, &a[a_offset], lda, &rwork[1], m, &
+	    c_b1087, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -11415,8 +15597,8 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 	}
 /* L60: */
     }
-    sgemm_("N", "N", m, n, m, &c_b871, &a[a_offset], lda, &rwork[1], m, &
-	    c_b1101, &rwork[l], m);
+    sgemm_("N", "N", m, n, m, &c_b894, &a[a_offset], lda, &rwork[1], m, &
+	    c_b1087, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -11443,22 +15625,27 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 	work)
 {
     /* System generated locals */
-    integer c_dim1, c_offset;
+    integer c_dim1, c_offset, i__1;
     complex q__1;
 
     /* Local variables */
+    static integer i__;
+    static logical applyleft;
     extern /* Subroutine */ int cgerc_(integer *, integer *, complex *,
 	    complex *, integer *, complex *, integer *, complex *, integer *),
 	     cgemv_(char *, integer *, integer *, complex *, complex *,
 	    integer *, complex *, integer *, complex *, complex *, integer *);
     extern logical lsame_(char *, char *);
+    static integer lastc, lastv;
+    extern integer ilaclc_(integer *, integer *, complex *, integer *),
+	    ilaclr_(integer *, integer *, complex *, integer *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -11526,39 +15713,77 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
     --work;
 
     /* Function Body */
-    if (lsame_(side, "L")) {
+    applyleft = lsame_(side, "L");
+    lastv = 0;
+    lastc = 0;
+    if (tau->r != 0.f || tau->i != 0.f) {
+/*
+       Set up variables for scanning V.  LASTV begins pointing to the end
+       of V.
+*/
+	if (applyleft) {
+	    lastv = *m;
+	} else {
+	    lastv = *n;
+	}
+	if (*incv > 0) {
+	    i__ = (lastv - 1) * *incv + 1;
+	} else {
+	    i__ = 1;
+	}
+/*     Look for the last non-zero row in V. */
+	for(;;) { /* while(complicated condition) */
+	    i__1 = i__;
+	    if (!(lastv > 0 && (v[i__1].r == 0.f && v[i__1].i == 0.f)))
+	    	break;
+	    --lastv;
+	    i__ -= *incv;
+	}
+	if (applyleft) {
+/*     Scan for the last non-zero column in C(1:lastv,:). */
+	    lastc = ilaclc_(&lastv, n, &c__[c_offset], ldc);
+	} else {
+/*     Scan for the last non-zero row in C(:,1:lastv). */
+	    lastc = ilaclr_(m, &lastv, &c__[c_offset], ldc);
+	}
+    }
+/*
+       Note that lastc.eq.0 renders the BLAS operations null; no special
+       case is needed at this level.
+*/
+    if (applyleft) {
 
 /*        Form  H * C */
 
-	if (tau->r != 0.f || tau->i != 0.f) {
+	if (lastv > 0) {
 
-/*           w := C' * v */
+/*           w(1:lastc,1) := C(1:lastv,1:lastc)' * v(1:lastv,1) */
 
-	    cgemv_("Conjugate transpose", m, n, &c_b56, &c__[c_offset], ldc, &
-		    v[1], incv, &c_b55, &work[1], &c__1);
+	    cgemv_("Conjugate transpose", &lastv, &lastc, &c_b57, &c__[
+		    c_offset], ldc, &v[1], incv, &c_b56, &work[1], &c__1);
 
-/*           C := C - v * w' */
+/*           C(1:lastv,1:lastc) := C(...) - v(1:lastv,1) * w(1:lastc,1)' */
 
 	    q__1.r = -tau->r, q__1.i = -tau->i;
-	    cgerc_(m, n, &q__1, &v[1], incv, &work[1], &c__1, &c__[c_offset],
-		    ldc);
+	    cgerc_(&lastv, &lastc, &q__1, &v[1], incv, &work[1], &c__1, &c__[
+		    c_offset], ldc);
 	}
     } else {
 
 /*        Form  C * H */
 
-	if (tau->r != 0.f || tau->i != 0.f) {
+	if (lastv > 0) {
 
-/*           w := C * v */
+/*           w(1:lastc,1) := C(1:lastc,1:lastv) * v(1:lastv,1) */
 
-	    cgemv_("No transpose", m, n, &c_b56, &c__[c_offset], ldc, &v[1],
-		    incv, &c_b55, &work[1], &c__1);
+	    cgemv_("No transpose", &lastc, &lastv, &c_b57, &c__[c_offset],
+		    ldc, &v[1], incv, &c_b56, &work[1], &c__1);
 
-/*           C := C - w * v' */
+/*           C(1:lastc,1:lastv) := C(...) - w(1:lastc,1) * v(1:lastv,1)' */
 
 	    q__1.r = -tau->r, q__1.i = -tau->i;
-	    cgerc_(m, n, &q__1, &work[1], &c__1, &v[1], incv, &c__[c_offset],
-		    ldc);
+	    cgerc_(&lastc, &lastv, &q__1, &work[1], &c__1, &v[1], incv, &c__[
+		    c_offset], ldc);
 	}
     }
     return 0;
@@ -11586,19 +15811,23 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 	    integer *, complex *, complex *, integer *, complex *, integer *,
 	    complex *, complex *, integer *);
     extern logical lsame_(char *, char *);
+    static integer lastc;
     extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
 	    complex *, integer *), ctrmm_(char *, char *, char *, char *,
 	    integer *, integer *, complex *, complex *, integer *, complex *,
-	    integer *), clacgv_(integer *,
-	    complex *, integer *);
+	    integer *);
+    static integer lastv;
+    extern integer ilaclc_(integer *, integer *, complex *, integer *);
+    extern /* Subroutine */ int clacgv_(integer *, complex *, integer *);
+    extern integer ilaclr_(integer *, integer *, complex *, integer *);
     static char transt[1];
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -11720,6 +15949,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclr_(m, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V  =  (C1'*V1 + C2'*V2)  (stored in WORK)
 
                 W := C1'
@@ -11727,30 +15963,31 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(n, &c__[j + c_dim1], ldc, &work[j * work_dim1 + 1],
-			     &c__1);
-		    clacgv_(n, &work[j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[j + c_dim1], ldc, &work[j * work_dim1
+			    + 1], &c__1);
+		    clacgv_(&lastc, &work[j * work_dim1 + 1], &c__1);
 /* L10: */
 		}
 
 /*              W := W * V1 */
 
-		ctrmm_("Right", "Lower", "No transpose", "Unit", n, k, &c_b56,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*m > *k) {
+		ctrmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2'*V2 */
 
-		    i__1 = *m - *k;
-		    cgemm_("Conjugate transpose", "No transpose", n, k, &i__1,
-			     &c_b56, &c__[*k + 1 + c_dim1], ldc, &v[*k + 1 +
-			    v_dim1], ldv, &c_b56, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("Conjugate transpose", "No transpose", &lastc, k, &
+			    i__1, &c_b57, &c__[*k + 1 + c_dim1], ldc, &v[*k +
+			    1 + v_dim1], ldv, &c_b57, &work[work_offset],
+			    ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		ctrmm_("Right", "Upper", transt, "Non-unit", n, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", transt, "Non-unit", &lastc, k, &
+			c_b57, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V * W' */
 
@@ -11758,24 +15995,25 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 /*                 C2 := C2 - V2 * W' */
 
-		    i__1 = *m - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "Conjugate transpose", &i__1, n, k,
-			     &q__1, &v[*k + 1 + v_dim1], ldv, &work[
-			    work_offset], ldwork, &c_b56, &c__[*k + 1 +
+		    cgemm_("No transpose", "Conjugate transpose", &i__1, &
+			    lastc, k, &q__1, &v[*k + 1 + v_dim1], ldv, &work[
+			    work_offset], ldwork, &c_b57, &c__[*k + 1 +
 			    c_dim1], ldc);
 		}
 
 /*              W := W * V1' */
 
-		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", n, k,
-			&c_b56, &v[v_offset], ldv, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[v_offset], ldv, &work[
+			work_offset], ldwork);
 
 /*              C1 := C1 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = j + i__ * c_dim1;
 			i__4 = j + i__ * c_dim1;
@@ -11793,6 +16031,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclr_(n, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V  =  (C1*V1 + C2*V2)  (stored in WORK)
 
                 W := C1
@@ -11800,55 +16045,56 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(m, &c__[j * c_dim1 + 1], &c__1, &work[j *
+		    ccopy_(&lastc, &c__[j * c_dim1 + 1], &c__1, &work[j *
 			    work_dim1 + 1], &c__1);
 /* L40: */
 		}
 
 /*              W := W * V1 */
 
-		ctrmm_("Right", "Lower", "No transpose", "Unit", m, k, &c_b56,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*n > *k) {
+		ctrmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2 * V2 */
 
-		    i__1 = *n - *k;
-		    cgemm_("No transpose", "No transpose", m, k, &i__1, &
-			    c_b56, &c__[(*k + 1) * c_dim1 + 1], ldc, &v[*k +
-			    1 + v_dim1], ldv, &c_b56, &work[work_offset],
+		    i__1 = lastv - *k;
+		    cgemm_("No transpose", "No transpose", &lastc, k, &i__1, &
+			    c_b57, &c__[(*k + 1) * c_dim1 + 1], ldc, &v[*k +
+			    1 + v_dim1], ldv, &c_b57, &work[work_offset],
 			    ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		ctrmm_("Right", "Upper", trans, "Non-unit", m, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", trans, "Non-unit", &lastc, k, &c_b57,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V' */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - W * V2' */
 
-		    i__1 = *n - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "Conjugate transpose", m, &i__1, k,
-			     &q__1, &work[work_offset], ldwork, &v[*k + 1 +
-			    v_dim1], ldv, &c_b56, &c__[(*k + 1) * c_dim1 + 1],
-			     ldc);
+		    cgemm_("No transpose", "Conjugate transpose", &lastc, &
+			    i__1, k, &q__1, &work[work_offset], ldwork, &v[*k
+			    + 1 + v_dim1], ldv, &c_b57, &c__[(*k + 1) *
+			    c_dim1 + 1], ldc);
 		}
 
 /*              W := W * V1' */
 
-		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", m, k,
-			&c_b56, &v[v_offset], ldv, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[v_offset], ldv, &work[
+			work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
 			i__4 = i__ + j * c_dim1;
@@ -11876,6 +16122,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclr_(m, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V  =  (C1'*V1 + C2'*V2)  (stored in WORK)
 
                 W := C2'
@@ -11883,59 +16136,59 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(n, &c__[*m - *k + j + c_dim1], ldc, &work[j *
-			    work_dim1 + 1], &c__1);
-		    clacgv_(n, &work[j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[lastv - *k + j + c_dim1], ldc, &work[
+			    j * work_dim1 + 1], &c__1);
+		    clacgv_(&lastc, &work[j * work_dim1 + 1], &c__1);
 /* L70: */
 		}
 
 /*              W := W * V2 */
 
-		ctrmm_("Right", "Upper", "No transpose", "Unit", n, k, &c_b56,
-			 &v[*m - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
-		if (*m > *k) {
+		ctrmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1'*V1 */
 
-		    i__1 = *m - *k;
-		    cgemm_("Conjugate transpose", "No transpose", n, k, &i__1,
-			     &c_b56, &c__[c_offset], ldc, &v[v_offset], ldv, &
-			    c_b56, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("Conjugate transpose", "No transpose", &lastc, k, &
+			    i__1, &c_b57, &c__[c_offset], ldc, &v[v_offset],
+			    ldv, &c_b57, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		ctrmm_("Right", "Lower", transt, "Non-unit", n, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", transt, "Non-unit", &lastc, k, &
+			c_b57, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - V1 * W' */
 
-		    i__1 = *m - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "Conjugate transpose", &i__1, n, k,
-			     &q__1, &v[v_offset], ldv, &work[work_offset],
-			    ldwork, &c_b56, &c__[c_offset], ldc);
+		    cgemm_("No transpose", "Conjugate transpose", &i__1, &
+			    lastc, k, &q__1, &v[v_offset], ldv, &work[
+			    work_offset], ldwork, &c_b57, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2' */
 
-		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", n, k,
-			&c_b56, &v[*m - *k + 1 + v_dim1], ldv, &work[
-			work_offset], ldwork);
+		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[lastv - *k + 1 + v_dim1], ldv, &
+			work[work_offset], ldwork);
 
 /*              C2 := C2 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			i__3 = *m - *k + j + i__ * c_dim1;
-			i__4 = *m - *k + j + i__ * c_dim1;
+			i__3 = lastv - *k + j + i__ * c_dim1;
+			i__4 = lastv - *k + j + i__ * c_dim1;
 			r_cnjg(&q__2, &work[i__ + j * work_dim1]);
 			q__1.r = c__[i__4].r - q__2.r, q__1.i = c__[i__4].i -
 				q__2.i;
@@ -11950,6 +16203,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclr_(n, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V  =  (C1*V1 + C2*V2)  (stored in WORK)
 
                 W := C2
@@ -11957,58 +16217,58 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(m, &c__[(*n - *k + j) * c_dim1 + 1], &c__1, &work[
-			    j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[(lastv - *k + j) * c_dim1 + 1], &c__1,
+			     &work[j * work_dim1 + 1], &c__1);
 /* L100: */
 		}
 
 /*              W := W * V2 */
 
-		ctrmm_("Right", "Upper", "No transpose", "Unit", m, k, &c_b56,
-			 &v[*n - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
-		if (*n > *k) {
+		ctrmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1 * V1 */
 
-		    i__1 = *n - *k;
-		    cgemm_("No transpose", "No transpose", m, k, &i__1, &
-			    c_b56, &c__[c_offset], ldc, &v[v_offset], ldv, &
-			    c_b56, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("No transpose", "No transpose", &lastc, k, &i__1, &
+			    c_b57, &c__[c_offset], ldc, &v[v_offset], ldv, &
+			    c_b57, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		ctrmm_("Right", "Lower", trans, "Non-unit", m, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", trans, "Non-unit", &lastc, k, &c_b57,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V' */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - W * V1' */
 
-		    i__1 = *n - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "Conjugate transpose", m, &i__1, k,
-			     &q__1, &work[work_offset], ldwork, &v[v_offset],
-			    ldv, &c_b56, &c__[c_offset], ldc);
+		    cgemm_("No transpose", "Conjugate transpose", &lastc, &
+			    i__1, k, &q__1, &work[work_offset], ldwork, &v[
+			    v_offset], ldv, &c_b57, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2' */
 
-		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", m, k,
-			&c_b56, &v[*n - *k + 1 + v_dim1], ldv, &work[
-			work_offset], ldwork);
+		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[lastv - *k + 1 + v_dim1], ldv, &
+			work[work_offset], ldwork);
 
 /*              C2 := C2 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			i__3 = i__ + (*n - *k + j) * c_dim1;
-			i__4 = i__ + (*n - *k + j) * c_dim1;
+			i__3 = i__ + (lastv - *k + j) * c_dim1;
+			i__4 = i__ + (lastv - *k + j) * c_dim1;
 			i__5 = i__ + j * work_dim1;
 			q__1.r = c__[i__4].r - work[i__5].r, q__1.i = c__[
 				i__4].i - work[i__5].i;
@@ -12035,6 +16295,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclc_(k, m, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V'  =  (C1'*V1' + C2'*V2') (stored in WORK)
 
                 W := C1'
@@ -12042,56 +16309,58 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(n, &c__[j + c_dim1], ldc, &work[j * work_dim1 + 1],
-			     &c__1);
-		    clacgv_(n, &work[j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[j + c_dim1], ldc, &work[j * work_dim1
+			    + 1], &c__1);
+		    clacgv_(&lastc, &work[j * work_dim1 + 1], &c__1);
 /* L130: */
 		}
 
 /*              W := W * V1' */
 
-		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", n, k,
-			&c_b56, &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*m > *k) {
+		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[v_offset], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2'*V2' */
 
-		    i__1 = *m - *k;
-		    cgemm_("Conjugate transpose", "Conjugate transpose", n, k,
-			     &i__1, &c_b56, &c__[*k + 1 + c_dim1], ldc, &v[(*
-			    k + 1) * v_dim1 + 1], ldv, &c_b56, &work[
-			    work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("Conjugate transpose", "Conjugate transpose", &
+			    lastc, k, &i__1, &c_b57, &c__[*k + 1 + c_dim1],
+			    ldc, &v[(*k + 1) * v_dim1 + 1], ldv, &c_b57, &
+			    work[work_offset], ldwork)
+			    ;
 		}
 
 /*              W := W * T'  or  W * T */
 
-		ctrmm_("Right", "Upper", transt, "Non-unit", n, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", transt, "Non-unit", &lastc, k, &
+			c_b57, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V' * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - V2' * W' */
 
-		    i__1 = *m - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemm_("Conjugate transpose", "Conjugate transpose", &
-			    i__1, n, k, &q__1, &v[(*k + 1) * v_dim1 + 1], ldv,
-			     &work[work_offset], ldwork, &c_b56, &c__[*k + 1
-			    + c_dim1], ldc);
+			    i__1, &lastc, k, &q__1, &v[(*k + 1) * v_dim1 + 1],
+			     ldv, &work[work_offset], ldwork, &c_b57, &c__[*k
+			    + 1 + c_dim1], ldc);
 		}
 
 /*              W := W * V1 */
 
-		ctrmm_("Right", "Upper", "No transpose", "Unit", n, k, &c_b56,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = j + i__ * c_dim1;
 			i__4 = j + i__ * c_dim1;
@@ -12109,6 +16378,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclc_(k, n, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V'  =  (C1*V1' + C2*V2')  (stored in WORK)
 
                 W := C1
@@ -12116,55 +16392,56 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(m, &c__[j * c_dim1 + 1], &c__1, &work[j *
+		    ccopy_(&lastc, &c__[j * c_dim1 + 1], &c__1, &work[j *
 			    work_dim1 + 1], &c__1);
 /* L160: */
 		}
 
 /*              W := W * V1' */
 
-		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", m, k,
-			&c_b56, &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*n > *k) {
+		ctrmm_("Right", "Upper", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[v_offset], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2 * V2' */
 
-		    i__1 = *n - *k;
-		    cgemm_("No transpose", "Conjugate transpose", m, k, &i__1,
-			     &c_b56, &c__[(*k + 1) * c_dim1 + 1], ldc, &v[(*k
-			    + 1) * v_dim1 + 1], ldv, &c_b56, &work[
+		    i__1 = lastv - *k;
+		    cgemm_("No transpose", "Conjugate transpose", &lastc, k, &
+			    i__1, &c_b57, &c__[(*k + 1) * c_dim1 + 1], ldc, &
+			    v[(*k + 1) * v_dim1 + 1], ldv, &c_b57, &work[
 			    work_offset], ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		ctrmm_("Right", "Upper", trans, "Non-unit", m, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", trans, "Non-unit", &lastc, k, &c_b57,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - W * V2 */
 
-		    i__1 = *n - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "No transpose", m, &i__1, k, &q__1,
-			     &work[work_offset], ldwork, &v[(*k + 1) * v_dim1
-			    + 1], ldv, &c_b56, &c__[(*k + 1) * c_dim1 + 1],
-			    ldc);
+		    cgemm_("No transpose", "No transpose", &lastc, &i__1, k, &
+			    q__1, &work[work_offset], ldwork, &v[(*k + 1) *
+			    v_dim1 + 1], ldv, &c_b57, &c__[(*k + 1) * c_dim1
+			    + 1], ldc);
 		}
 
 /*              W := W * V1 */
 
-		ctrmm_("Right", "Upper", "No transpose", "Unit", m, k, &c_b56,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
+		ctrmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
 			i__4 = i__ + j * c_dim1;
@@ -12192,6 +16469,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclc_(k, m, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V'  =  (C1'*V1' + C2'*V2') (stored in WORK)
 
                 W := C2'
@@ -12199,59 +16483,60 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(n, &c__[*m - *k + j + c_dim1], ldc, &work[j *
-			    work_dim1 + 1], &c__1);
-		    clacgv_(n, &work[j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[lastv - *k + j + c_dim1], ldc, &work[
+			    j * work_dim1 + 1], &c__1);
+		    clacgv_(&lastc, &work[j * work_dim1 + 1], &c__1);
 /* L190: */
 		}
 
 /*              W := W * V2' */
 
-		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", n, k,
-			&c_b56, &v[(*m - *k + 1) * v_dim1 + 1], ldv, &work[
-			work_offset], ldwork);
-		if (*m > *k) {
+		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[(lastv - *k + 1) * v_dim1 + 1],
+			ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1'*V1' */
 
-		    i__1 = *m - *k;
-		    cgemm_("Conjugate transpose", "Conjugate transpose", n, k,
-			     &i__1, &c_b56, &c__[c_offset], ldc, &v[v_offset],
-			     ldv, &c_b56, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("Conjugate transpose", "Conjugate transpose", &
+			    lastc, k, &i__1, &c_b57, &c__[c_offset], ldc, &v[
+			    v_offset], ldv, &c_b57, &work[work_offset],
+			    ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		ctrmm_("Right", "Lower", transt, "Non-unit", n, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", transt, "Non-unit", &lastc, k, &
+			c_b57, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V' * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - V1' * W' */
 
-		    i__1 = *m - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemm_("Conjugate transpose", "Conjugate transpose", &
-			    i__1, n, k, &q__1, &v[v_offset], ldv, &work[
-			    work_offset], ldwork, &c_b56, &c__[c_offset], ldc);
+			    i__1, &lastc, k, &q__1, &v[v_offset], ldv, &work[
+			    work_offset], ldwork, &c_b57, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2 */
 
-		ctrmm_("Right", "Lower", "No transpose", "Unit", n, k, &c_b56,
-			 &v[(*m - *k + 1) * v_dim1 + 1], ldv, &work[
+		ctrmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
 			work_offset], ldwork);
 
 /*              C2 := C2 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			i__3 = *m - *k + j + i__ * c_dim1;
-			i__4 = *m - *k + j + i__ * c_dim1;
+			i__3 = lastv - *k + j + i__ * c_dim1;
+			i__4 = lastv - *k + j + i__ * c_dim1;
 			r_cnjg(&q__2, &work[i__ + j * work_dim1]);
 			q__1.r = c__[i__4].r - q__2.r, q__1.i = c__[i__4].i -
 				q__2.i;
@@ -12266,6 +16551,13 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaclc_(k, n, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaclr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V'  =  (C1*V1' + C2*V2')  (stored in WORK)
 
                 W := C2
@@ -12273,58 +16565,58 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    ccopy_(m, &c__[(*n - *k + j) * c_dim1 + 1], &c__1, &work[
-			    j * work_dim1 + 1], &c__1);
+		    ccopy_(&lastc, &c__[(lastv - *k + j) * c_dim1 + 1], &c__1,
+			     &work[j * work_dim1 + 1], &c__1);
 /* L220: */
 		}
 
 /*              W := W * V2' */
 
-		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", m, k,
-			&c_b56, &v[(*n - *k + 1) * v_dim1 + 1], ldv, &work[
-			work_offset], ldwork);
-		if (*n > *k) {
+		ctrmm_("Right", "Lower", "Conjugate transpose", "Unit", &
+			lastc, k, &c_b57, &v[(lastv - *k + 1) * v_dim1 + 1],
+			ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1 * V1' */
 
-		    i__1 = *n - *k;
-		    cgemm_("No transpose", "Conjugate transpose", m, k, &i__1,
-			     &c_b56, &c__[c_offset], ldc, &v[v_offset], ldv, &
-			    c_b56, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    cgemm_("No transpose", "Conjugate transpose", &lastc, k, &
+			    i__1, &c_b57, &c__[c_offset], ldc, &v[v_offset],
+			    ldv, &c_b57, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		ctrmm_("Right", "Lower", trans, "Non-unit", m, k, &c_b56, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		ctrmm_("Right", "Lower", trans, "Non-unit", &lastc, k, &c_b57,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - W * V1 */
 
-		    i__1 = *n - *k;
+		    i__1 = lastv - *k;
 		    q__1.r = -1.f, q__1.i = -0.f;
-		    cgemm_("No transpose", "No transpose", m, &i__1, k, &q__1,
-			     &work[work_offset], ldwork, &v[v_offset], ldv, &
-			    c_b56, &c__[c_offset], ldc);
+		    cgemm_("No transpose", "No transpose", &lastc, &i__1, k, &
+			    q__1, &work[work_offset], ldwork, &v[v_offset],
+			    ldv, &c_b57, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2 */
 
-		ctrmm_("Right", "Lower", "No transpose", "Unit", m, k, &c_b56,
-			 &v[(*n - *k + 1) * v_dim1 + 1], ldv, &work[
+		ctrmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b57, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
 			work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			i__3 = i__ + (*n - *k + j) * c_dim1;
-			i__4 = i__ + (*n - *k + j) * c_dim1;
+			i__3 = i__ + (lastv - *k + j) * c_dim1;
+			i__4 = i__ + (lastv - *k + j) * c_dim1;
 			i__5 = i__ + j * work_dim1;
 			q__1.r = c__[i__4].r - work[i__5].r, q__1.i = c__[
 				i__4].i - work[i__5].i;
@@ -12372,10 +16664,10 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -12454,11 +16746,11 @@ doublereal clanhs_(char *norm, integer *n, complex *a, integer *lda, real *
 	safmin = slamch_("S") / slamch_("E");
 	rsafmn = 1.f / safmin;
 
+	knt = 0;
 	if (dabs(beta) < safmin) {
 
 /*           XNORM, BETA may be inaccurate; scale X and recompute them */
 
-	    knt = 0;
 L10:
 	    ++knt;
 	    i__1 = *n - 1;
@@ -12478,37 +16770,25 @@ L10:
 	    alpha->r = q__1.r, alpha->i = q__1.i;
 	    r__1 = slapy3_(&alphr, &alphi, &xnorm);
 	    beta = -r_sign(&r__1, &alphr);
-	    r__1 = (beta - alphr) / beta;
-	    r__2 = -alphi / beta;
-	    q__1.r = r__1, q__1.i = r__2;
-	    tau->r = q__1.r, tau->i = q__1.i;
-	    q__2.r = alpha->r - beta, q__2.i = alpha->i;
-	    cladiv_(&q__1, &c_b56, &q__2);
-	    alpha->r = q__1.r, alpha->i = q__1.i;
-	    i__1 = *n - 1;
-	    cscal_(&i__1, alpha, &x[1], incx);
-
-/*           If ALPHA is subnormal, it may lose relative accuracy */
-
-	    alpha->r = beta, alpha->i = 0.f;
-	    i__1 = knt;
-	    for (j = 1; j <= i__1; ++j) {
-		q__1.r = safmin * alpha->r, q__1.i = safmin * alpha->i;
-		alpha->r = q__1.r, alpha->i = q__1.i;
-/* L20: */
-	    }
-	} else {
-	    r__1 = (beta - alphr) / beta;
-	    r__2 = -alphi / beta;
-	    q__1.r = r__1, q__1.i = r__2;
-	    tau->r = q__1.r, tau->i = q__1.i;
-	    q__2.r = alpha->r - beta, q__2.i = alpha->i;
-	    cladiv_(&q__1, &c_b56, &q__2);
-	    alpha->r = q__1.r, alpha->i = q__1.i;
-	    i__1 = *n - 1;
-	    cscal_(&i__1, alpha, &x[1], incx);
-	    alpha->r = beta, alpha->i = 0.f;
 	}
+	r__1 = (beta - alphr) / beta;
+	r__2 = -alphi / beta;
+	q__1.r = r__1, q__1.i = r__2;
+	tau->r = q__1.r, tau->i = q__1.i;
+	q__2.r = alpha->r - beta, q__2.i = alpha->i;
+	cladiv_(&q__1, &c_b57, &q__2);
+	alpha->r = q__1.r, alpha->i = q__1.i;
+	i__1 = *n - 1;
+	cscal_(&i__1, alpha, &x[1], incx);
+
+/*        If ALPHA is subnormal, it may lose relative accuracy */
+
+	i__1 = knt;
+	for (j = 1; j <= i__1; ++j) {
+	    beta *= safmin;
+/* L20: */
+	}
+	alpha->r = beta, alpha->i = 0.f;
     }
 
     return 0;
@@ -12525,21 +16805,22 @@ L10:
     complex q__1;
 
     /* Local variables */
-    static integer i__, j;
+    static integer i__, j, prevlastv;
     static complex vii;
     extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
 	    , complex *, integer *, complex *, integer *, complex *, complex *
 	    , integer *);
     extern logical lsame_(char *, char *);
+    static integer lastv;
     extern /* Subroutine */ int ctrmv_(char *, char *, char *, integer *,
 	    complex *, integer *, complex *, integer *), clacgv_(integer *, complex *, integer *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -12651,8 +16932,10 @@ L10:
     }
 
     if (lsame_(direct, "F")) {
+	prevlastv = *n;
 	i__1 = *k;
 	for (i__ = 1; i__ <= i__1; ++i__) {
+	    prevlastv = max(prevlastv,i__);
 	    i__2 = i__;
 	    if (tau[i__2].r == 0.f && tau[i__2].i == 0.f) {
 
@@ -12673,33 +16956,53 @@ L10:
 		i__2 = i__ + i__ * v_dim1;
 		v[i__2].r = 1.f, v[i__2].i = 0.f;
 		if (lsame_(storev, "C")) {
+/*                 Skip any trailing zeros. */
+		    i__2 = i__ + 1;
+		    for (lastv = *n; lastv >= i__2; --lastv) {
+			i__3 = lastv + i__ * v_dim1;
+			if (v[i__3].r != 0.f || v[i__3].i != 0.f) {
+			    goto L15;
+			}
+		    }
+L15:
+		    j = min(lastv,prevlastv);
 
-/*                 T(1:i-1,i) := - tau(i) * V(i:n,1:i-1)' * V(i:n,i) */
+/*                 T(1:i-1,i) := - tau(i) * V(i:j,1:i-1)' * V(i:j,i) */
 
-		    i__2 = *n - i__ + 1;
+		    i__2 = j - i__ + 1;
 		    i__3 = i__ - 1;
 		    i__4 = i__;
 		    q__1.r = -tau[i__4].r, q__1.i = -tau[i__4].i;
 		    cgemv_("Conjugate transpose", &i__2, &i__3, &q__1, &v[i__
 			    + v_dim1], ldv, &v[i__ + i__ * v_dim1], &c__1, &
-			    c_b55, &t[i__ * t_dim1 + 1], &c__1);
+			    c_b56, &t[i__ * t_dim1 + 1], &c__1);
 		} else {
+/*                 Skip any trailing zeros. */
+		    i__2 = i__ + 1;
+		    for (lastv = *n; lastv >= i__2; --lastv) {
+			i__3 = i__ + lastv * v_dim1;
+			if (v[i__3].r != 0.f || v[i__3].i != 0.f) {
+			    goto L16;
+			}
+		    }
+L16:
+		    j = min(lastv,prevlastv);
 
-/*                 T(1:i-1,i) := - tau(i) * V(1:i-1,i:n) * V(i,i:n)' */
+/*                 T(1:i-1,i) := - tau(i) * V(1:i-1,i:j) * V(i,i:j)' */
 
-		    if (i__ < *n) {
-			i__2 = *n - i__;
+		    if (i__ < j) {
+			i__2 = j - i__;
 			clacgv_(&i__2, &v[i__ + (i__ + 1) * v_dim1], ldv);
 		    }
 		    i__2 = i__ - 1;
-		    i__3 = *n - i__ + 1;
+		    i__3 = j - i__ + 1;
 		    i__4 = i__;
 		    q__1.r = -tau[i__4].r, q__1.i = -tau[i__4].i;
 		    cgemv_("No transpose", &i__2, &i__3, &q__1, &v[i__ *
 			    v_dim1 + 1], ldv, &v[i__ + i__ * v_dim1], ldv, &
-			    c_b55, &t[i__ * t_dim1 + 1], &c__1);
-		    if (i__ < *n) {
-			i__2 = *n - i__;
+			    c_b56, &t[i__ * t_dim1 + 1], &c__1);
+		    if (i__ < j) {
+			i__2 = j - i__;
 			clacgv_(&i__2, &v[i__ + (i__ + 1) * v_dim1], ldv);
 		    }
 		}
@@ -12714,10 +17017,16 @@ L10:
 		i__2 = i__ + i__ * t_dim1;
 		i__3 = i__;
 		t[i__2].r = tau[i__3].r, t[i__2].i = tau[i__3].i;
+		if (i__ > 1) {
+		    prevlastv = max(prevlastv,lastv);
+		} else {
+		    prevlastv = lastv;
+		}
 	    }
 /* L20: */
 	}
     } else {
+	prevlastv = 1;
 	for (i__ = *k; i__ >= 1; --i__) {
 	    i__1 = i__;
 	    if (tau[i__1].r == 0.f && tau[i__1].i == 0.f) {
@@ -12740,19 +17049,29 @@ L10:
 			vii.r = v[i__1].r, vii.i = v[i__1].i;
 			i__1 = *n - *k + i__ + i__ * v_dim1;
 			v[i__1].r = 1.f, v[i__1].i = 0.f;
+/*                    Skip any leading zeros. */
+			i__1 = i__ - 1;
+			for (lastv = 1; lastv <= i__1; ++lastv) {
+			    i__2 = lastv + i__ * v_dim1;
+			    if (v[i__2].r != 0.f || v[i__2].i != 0.f) {
+				goto L35;
+			    }
+			}
+L35:
+			j = max(lastv,prevlastv);
 
 /*
                       T(i+1:k,i) :=
-                              - tau(i) * V(1:n-k+i,i+1:k)' * V(1:n-k+i,i)
+                              - tau(i) * V(j:n-k+i,i+1:k)' * V(j:n-k+i,i)
 */
 
-			i__1 = *n - *k + i__;
+			i__1 = *n - *k + i__ - j + 1;
 			i__2 = *k - i__;
 			i__3 = i__;
 			q__1.r = -tau[i__3].r, q__1.i = -tau[i__3].i;
 			cgemv_("Conjugate transpose", &i__1, &i__2, &q__1, &v[
-				(i__ + 1) * v_dim1 + 1], ldv, &v[i__ * v_dim1
-				+ 1], &c__1, &c_b55, &t[i__ + 1 + i__ *
+				j + (i__ + 1) * v_dim1], ldv, &v[j + i__ *
+				v_dim1], &c__1, &c_b56, &t[i__ + 1 + i__ *
 				t_dim1], &c__1);
 			i__1 = *n - *k + i__ + i__ * v_dim1;
 			v[i__1].r = vii.r, v[i__1].i = vii.i;
@@ -12761,23 +17080,34 @@ L10:
 			vii.r = v[i__1].r, vii.i = v[i__1].i;
 			i__1 = i__ + (*n - *k + i__) * v_dim1;
 			v[i__1].r = 1.f, v[i__1].i = 0.f;
+/*                    Skip any leading zeros. */
+			i__1 = i__ - 1;
+			for (lastv = 1; lastv <= i__1; ++lastv) {
+			    i__2 = i__ + lastv * v_dim1;
+			    if (v[i__2].r != 0.f || v[i__2].i != 0.f) {
+				goto L36;
+			    }
+			}
+L36:
+			j = max(lastv,prevlastv);
 
 /*
                       T(i+1:k,i) :=
-                              - tau(i) * V(i+1:k,1:n-k+i) * V(i,1:n-k+i)'
+                              - tau(i) * V(i+1:k,j:n-k+i) * V(i,j:n-k+i)'
 */
 
-			i__1 = *n - *k + i__ - 1;
-			clacgv_(&i__1, &v[i__ + v_dim1], ldv);
+			i__1 = *n - *k + i__ - 1 - j + 1;
+			clacgv_(&i__1, &v[i__ + j * v_dim1], ldv);
 			i__1 = *k - i__;
-			i__2 = *n - *k + i__;
+			i__2 = *n - *k + i__ - j + 1;
 			i__3 = i__;
 			q__1.r = -tau[i__3].r, q__1.i = -tau[i__3].i;
 			cgemv_("No transpose", &i__1, &i__2, &q__1, &v[i__ +
-				1 + v_dim1], ldv, &v[i__ + v_dim1], ldv, &
-				c_b55, &t[i__ + 1 + i__ * t_dim1], &c__1);
-			i__1 = *n - *k + i__ - 1;
-			clacgv_(&i__1, &v[i__ + v_dim1], ldv);
+				1 + j * v_dim1], ldv, &v[i__ + j * v_dim1],
+				ldv, &c_b56, &t[i__ + 1 + i__ * t_dim1], &
+				c__1);
+			i__1 = *n - *k + i__ - 1 - j + 1;
+			clacgv_(&i__1, &v[i__ + j * v_dim1], ldv);
 			i__1 = i__ + (*n - *k + i__) * v_dim1;
 			v[i__1].r = vii.r, v[i__1].i = vii.i;
 		    }
@@ -12789,6 +17119,11 @@ L10:
 			    + 1 + (i__ + 1) * t_dim1], ldt, &t[i__ + 1 + i__ *
 			     t_dim1], &c__1)
 			    ;
+		    if (i__ > 1) {
+			prevlastv = min(prevlastv,lastv);
+		    } else {
+			prevlastv = lastv;
+		    }
 		}
 		i__1 = i__ + i__ * t_dim1;
 		i__2 = i__;
@@ -12803,2048 +17138,269 @@ L10:
 
 } /* clarft_ */
 
-/* Subroutine */ int clarfx_(char *side, integer *m, integer *n, complex *v,
-	complex *tau, complex *c__, integer *ldc, complex *work)
+/* Subroutine */ int clartg_(complex *f, complex *g, real *cs, complex *sn,
+	complex *r__)
 {
     /* System generated locals */
-    integer c_dim1, c_offset, i__1, i__2, i__3, i__4, i__5, i__6, i__7, i__8,
-	    i__9, i__10, i__11;
-    complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8, q__9, q__10,
-	    q__11, q__12, q__13, q__14, q__15, q__16, q__17, q__18, q__19;
+    integer i__1;
+    real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
+    complex q__1, q__2, q__3;
 
     /* Builtin functions */
+    double log(doublereal), pow_ri(real *, integer *), r_imag(complex *),
+	    sqrt(doublereal);
     void r_cnjg(complex *, complex *);
 
     /* Local variables */
-    static integer j;
-    static complex t1, t2, t3, t4, t5, t6, t7, t8, t9, v1, v2, v3, v4, v5, v6,
-	     v7, v8, v9, t10, v10, sum;
-    extern /* Subroutine */ int cgerc_(integer *, integer *, complex *,
-	    complex *, integer *, complex *, integer *, complex *, integer *);
-    extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int cgemv_(char *, integer *, integer *, complex *
-	    , complex *, integer *, complex *, integer *, complex *, complex *
-	    , integer *);
+    static real d__;
+    static integer i__;
+    static real f2, g2;
+    static complex ff;
+    static real di, dr;
+    static complex fs, gs;
+    static real f2s, g2s, eps, scale;
+    static integer count;
+    static real safmn2, safmx2;
+    extern doublereal slapy2_(real *, real *), slamch_(char *);
+    static real safmin;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
     =======
 
-    CLARFX applies a complex elementary reflector H to a complex m by n
-    matrix C, from either the left or the right. H is represented in the
-    form
+    CLARTG generates a plane rotation so that
 
-          H = I - tau * v * v'
+       [  CS  SN  ]     [ F ]     [ R ]
+       [  __      ]  .  [   ]  =  [   ]   where CS**2 + |SN|**2 = 1.
+       [ -SN  CS  ]     [ G ]     [ 0 ]
 
-    where tau is a complex scalar and v is a complex vector.
-
-    If tau = 0, then H is taken to be the unit matrix
-
-    This version uses inline code if H has order < 11.
+    This is a faster version of the BLAS1 routine CROTG, except for
+    the following differences:
+       F and G are unchanged on return.
+       If G=0, then CS=1 and SN=0.
+       If F=0, then CS=0 and SN is chosen so that R is real.
 
     Arguments
     =========
 
-    SIDE    (input) CHARACTER*1
-            = 'L': form  H * C
-            = 'R': form  C * H
+    F       (input) COMPLEX
+            The first component of vector to be rotated.
 
-    M       (input) INTEGER
-            The number of rows of the matrix C.
+    G       (input) COMPLEX
+            The second component of vector to be rotated.
 
-    N       (input) INTEGER
-            The number of columns of the matrix C.
+    CS      (output) REAL
+            The cosine of the rotation.
 
-    V       (input) COMPLEX array, dimension (M) if SIDE = 'L'
-                                          or (N) if SIDE = 'R'
-            The vector v in the representation of H.
+    SN      (output) COMPLEX
+            The sine of the rotation.
 
-    TAU     (input) COMPLEX
-            The value tau in the representation of H.
+    R       (output) COMPLEX
+            The nonzero component of the rotated vector.
 
-    C       (input/output) COMPLEX array, dimension (LDC,N)
-            On entry, the m by n matrix C.
-            On exit, C is overwritten by the matrix H * C if SIDE = 'L',
-            or C * H if SIDE = 'R'.
+    Further Details
+    ======= =======
 
-    LDC     (input) INTEGER
-            The leading dimension of the array C. LDA >= max(1,M).
+    3-5-96 - Modified with a new algorithm by W. Kahan and J. Demmel
 
-    WORK    (workspace) COMPLEX array, dimension (N) if SIDE = 'L'
-                                              or (M) if SIDE = 'R'
-            WORK is not referenced if H has order < 11.
+    This version has a few statements commented out for thread safety
+    (machine parameters are computed on each entry). 10 feb 03, SJH.
 
     =====================================================================
+
+       LOGICAL            FIRST
+       SAVE               FIRST, SAFMX2, SAFMIN, SAFMN2
+       DATA               FIRST / .TRUE. /
+
+       IF( FIRST ) THEN
 */
-
-
-    /* Parameter adjustments */
-    --v;
-    c_dim1 = *ldc;
-    c_offset = 1 + c_dim1;
-    c__ -= c_offset;
-    --work;
-
-    /* Function Body */
-    if (tau->r == 0.f && tau->i == 0.f) {
-	return 0;
-    }
-    if (lsame_(side, "L")) {
-
-/*        Form  H * C, where H has order m. */
-
-	switch (*m) {
-	    case 1:  goto L10;
-	    case 2:  goto L30;
-	    case 3:  goto L50;
-	    case 4:  goto L70;
-	    case 5:  goto L90;
-	    case 6:  goto L110;
-	    case 7:  goto L130;
-	    case 8:  goto L150;
-	    case 9:  goto L170;
-	    case 10:  goto L190;
-	}
-
+    safmin = slamch_("S");
+    eps = slamch_("E");
+    r__1 = slamch_("B");
+    i__1 = (integer) (log(safmin / eps) / log(slamch_("B")) / 2.f);
+    safmn2 = pow_ri(&r__1, &i__1);
+    safmx2 = 1.f / safmn2;
 /*
-          Code for general M
-
-          w := C'*v
+          FIRST = .FALSE.
+       END IF
+   Computing MAX
+   Computing MAX
 */
-
-	cgemv_("Conjugate transpose", m, n, &c_b56, &c__[c_offset], ldc, &v[1]
-		, &c__1, &c_b55, &work[1], &c__1);
-
-/*        C := C - tau * v * w' */
-
-	q__1.r = -tau->r, q__1.i = -tau->i;
-	cgerc_(m, n, &q__1, &v[1], &c__1, &work[1], &c__1, &c__[c_offset],
-		ldc);
-	goto L410;
+    r__7 = (r__1 = f->r, dabs(r__1)), r__8 = (r__2 = r_imag(f), dabs(r__2));
+/* Computing MAX */
+    r__9 = (r__3 = g->r, dabs(r__3)), r__10 = (r__4 = r_imag(g), dabs(r__4));
+    r__5 = dmax(r__7,r__8), r__6 = dmax(r__9,r__10);
+    scale = dmax(r__5,r__6);
+    fs.r = f->r, fs.i = f->i;
+    gs.r = g->r, gs.i = g->i;
+    count = 0;
+    if (scale >= safmx2) {
 L10:
-
-/*        Special code for 1 x 1 Householder */
-
-	q__3.r = tau->r * v[1].r - tau->i * v[1].i, q__3.i = tau->r * v[1].i
-		+ tau->i * v[1].r;
-	r_cnjg(&q__4, &v[1]);
-	q__2.r = q__3.r * q__4.r - q__3.i * q__4.i, q__2.i = q__3.r * q__4.i
-		+ q__3.i * q__4.r;
-	q__1.r = 1.f - q__2.r, q__1.i = 0.f - q__2.i;
-	t1.r = q__1.r, t1.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__1.r = t1.r * c__[i__3].r - t1.i * c__[i__3].i, q__1.i = t1.r *
-		    c__[i__3].i + t1.i * c__[i__3].r;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L20: */
+	++count;
+	q__1.r = safmn2 * fs.r, q__1.i = safmn2 * fs.i;
+	fs.r = q__1.r, fs.i = q__1.i;
+	q__1.r = safmn2 * gs.r, q__1.i = safmn2 * gs.i;
+	gs.r = q__1.r, gs.i = q__1.i;
+	scale *= safmn2;
+	if (scale >= safmx2) {
+	    goto L10;
 	}
-	goto L410;
-L30:
-
-/*        Special code for 2 x 2 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__2.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__2.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__3.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__3.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L40: */
+    } else if (scale <= safmn2) {
+	if (g->r == 0.f && g->i == 0.f) {
+	    *cs = 1.f;
+	    sn->r = 0.f, sn->i = 0.f;
+	    r__->r = f->r, r__->i = f->i;
+	    return 0;
 	}
-	goto L410;
-L50:
-
-/*        Special code for 3 x 3 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__3.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__3.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__4.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__4.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__2.r = q__3.r + q__4.r, q__2.i = q__3.i + q__4.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__5.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__5.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__1.r = q__2.r + q__5.r, q__1.i = q__2.i + q__5.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L60: */
+L20:
+	--count;
+	q__1.r = safmx2 * fs.r, q__1.i = safmx2 * fs.i;
+	fs.r = q__1.r, fs.i = q__1.i;
+	q__1.r = safmx2 * gs.r, q__1.i = safmx2 * gs.i;
+	gs.r = q__1.r, gs.i = q__1.i;
+	scale *= safmx2;
+	if (scale <= safmn2) {
+	    goto L20;
 	}
-	goto L410;
-L70:
+    }
+/* Computing 2nd power */
+    r__1 = fs.r;
+/* Computing 2nd power */
+    r__2 = r_imag(&fs);
+    f2 = r__1 * r__1 + r__2 * r__2;
+/* Computing 2nd power */
+    r__1 = gs.r;
+/* Computing 2nd power */
+    r__2 = r_imag(&gs);
+    g2 = r__1 * r__1 + r__2 * r__2;
+    if (f2 <= dmax(g2,1.f) * safmin) {
 
-/*        Special code for 4 x 4 Householder */
+/*        This is a rare case: F is very small. */
 
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__4.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__4.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__5.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__5.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__3.r = q__4.r + q__5.r, q__3.i = q__4.i + q__5.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__6.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__6.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__2.r = q__3.r + q__6.r, q__2.i = q__3.i + q__6.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__7.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__7.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__1.r = q__2.r + q__7.r, q__1.i = q__2.i + q__7.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L80: */
+	if (f->r == 0.f && f->i == 0.f) {
+	    *cs = 0.f;
+	    r__2 = g->r;
+	    r__3 = r_imag(g);
+	    r__1 = slapy2_(&r__2, &r__3);
+	    r__->r = r__1, r__->i = 0.f;
+/*           Do complex/real division explicitly with two real divisions */
+	    r__1 = gs.r;
+	    r__2 = r_imag(&gs);
+	    d__ = slapy2_(&r__1, &r__2);
+	    r__1 = gs.r / d__;
+	    r__2 = -r_imag(&gs) / d__;
+	    q__1.r = r__1, q__1.i = r__2;
+	    sn->r = q__1.r, sn->i = q__1.i;
+	    return 0;
 	}
-	goto L410;
-L90:
-
-/*        Special code for 5 x 5 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__5.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__5.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__6.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__6.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__4.r = q__5.r + q__6.r, q__4.i = q__5.i + q__6.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__7.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__7.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__3.r = q__4.r + q__7.r, q__3.i = q__4.i + q__7.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__8.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__8.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__2.r = q__3.r + q__8.r, q__2.i = q__3.i + q__8.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__9.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__9.i = v5.r *
-		    c__[i__6].i + v5.i * c__[i__6].r;
-	    q__1.r = q__2.r + q__9.r, q__1.i = q__2.i + q__9.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L100: */
+	r__1 = fs.r;
+	r__2 = r_imag(&fs);
+	f2s = slapy2_(&r__1, &r__2);
+/*
+          G2 and G2S are accurate
+          G2 is at least SAFMIN, and G2S is at least SAFMN2
+*/
+	g2s = sqrt(g2);
+/*
+          Error in CS from underflow in F2S is at most
+          UNFL / SAFMN2 .lt. sqrt(UNFL*EPS) .lt. EPS
+          If MAX(G2,ONE)=G2, then F2 .lt. G2*SAFMIN,
+          and so CS .lt. sqrt(SAFMIN)
+          If MAX(G2,ONE)=ONE, then F2 .lt. SAFMIN
+          and so CS .lt. sqrt(SAFMIN)/SAFMN2 = sqrt(EPS)
+          Therefore, CS = F2S/G2S / sqrt( 1 + (F2S/G2S)**2 ) = F2S/G2S
+*/
+	*cs = f2s / g2s;
+/*
+          Make sure abs(FF) = 1
+          Do complex/real division explicitly with 2 real divisions
+   Computing MAX
+*/
+	r__3 = (r__1 = f->r, dabs(r__1)), r__4 = (r__2 = r_imag(f), dabs(r__2)
+		);
+	if (dmax(r__3,r__4) > 1.f) {
+	    r__1 = f->r;
+	    r__2 = r_imag(f);
+	    d__ = slapy2_(&r__1, &r__2);
+	    r__1 = f->r / d__;
+	    r__2 = r_imag(f) / d__;
+	    q__1.r = r__1, q__1.i = r__2;
+	    ff.r = q__1.r, ff.i = q__1.i;
+	} else {
+	    dr = safmx2 * f->r;
+	    di = safmx2 * r_imag(f);
+	    d__ = slapy2_(&dr, &di);
+	    r__1 = dr / d__;
+	    r__2 = di / d__;
+	    q__1.r = r__1, q__1.i = r__2;
+	    ff.r = q__1.r, ff.i = q__1.i;
 	}
-	goto L410;
-L110:
-
-/*        Special code for 6 x 6 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	r_cnjg(&q__1, &v[6]);
-	v6.r = q__1.r, v6.i = q__1.i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__6.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__6.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__7.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__7.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__5.r = q__6.r + q__7.r, q__5.i = q__6.i + q__7.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__8.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__8.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__4.r = q__5.r + q__8.r, q__4.i = q__5.i + q__8.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__9.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__9.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__3.r = q__4.r + q__9.r, q__3.i = q__4.i + q__9.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__10.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__10.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__2.r = q__3.r + q__10.r, q__2.i = q__3.i + q__10.i;
-	    i__7 = j * c_dim1 + 6;
-	    q__11.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__11.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__1.r = q__2.r + q__11.r, q__1.i = q__2.i + q__11.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 6;
-	    i__3 = j * c_dim1 + 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L120: */
-	}
-	goto L410;
-L130:
-
-/*        Special code for 7 x 7 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	r_cnjg(&q__1, &v[6]);
-	v6.r = q__1.r, v6.i = q__1.i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	r_cnjg(&q__1, &v[7]);
-	v7.r = q__1.r, v7.i = q__1.i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__7.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__7.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__8.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__8.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__6.r = q__7.r + q__8.r, q__6.i = q__7.i + q__8.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__9.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__9.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__5.r = q__6.r + q__9.r, q__5.i = q__6.i + q__9.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__10.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__10.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__4.r = q__5.r + q__10.r, q__4.i = q__5.i + q__10.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__11.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__11.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__3.r = q__4.r + q__11.r, q__3.i = q__4.i + q__11.i;
-	    i__7 = j * c_dim1 + 6;
-	    q__12.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__12.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__2.r = q__3.r + q__12.r, q__2.i = q__3.i + q__12.i;
-	    i__8 = j * c_dim1 + 7;
-	    q__13.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__13.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__1.r = q__2.r + q__13.r, q__1.i = q__2.i + q__13.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 6;
-	    i__3 = j * c_dim1 + 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 7;
-	    i__3 = j * c_dim1 + 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L140: */
-	}
-	goto L410;
-L150:
-
-/*        Special code for 8 x 8 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	r_cnjg(&q__1, &v[6]);
-	v6.r = q__1.r, v6.i = q__1.i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	r_cnjg(&q__1, &v[7]);
-	v7.r = q__1.r, v7.i = q__1.i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	r_cnjg(&q__1, &v[8]);
-	v8.r = q__1.r, v8.i = q__1.i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__8.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__8.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__9.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__9.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__7.r = q__8.r + q__9.r, q__7.i = q__8.i + q__9.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__10.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__10.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__6.r = q__7.r + q__10.r, q__6.i = q__7.i + q__10.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__11.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__11.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__5.r = q__6.r + q__11.r, q__5.i = q__6.i + q__11.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__12.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__12.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__4.r = q__5.r + q__12.r, q__4.i = q__5.i + q__12.i;
-	    i__7 = j * c_dim1 + 6;
-	    q__13.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__13.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__3.r = q__4.r + q__13.r, q__3.i = q__4.i + q__13.i;
-	    i__8 = j * c_dim1 + 7;
-	    q__14.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__14.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__2.r = q__3.r + q__14.r, q__2.i = q__3.i + q__14.i;
-	    i__9 = j * c_dim1 + 8;
-	    q__15.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__15.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__1.r = q__2.r + q__15.r, q__1.i = q__2.i + q__15.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 6;
-	    i__3 = j * c_dim1 + 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 7;
-	    i__3 = j * c_dim1 + 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 8;
-	    i__3 = j * c_dim1 + 8;
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L160: */
-	}
-	goto L410;
-L170:
-
-/*        Special code for 9 x 9 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	r_cnjg(&q__1, &v[6]);
-	v6.r = q__1.r, v6.i = q__1.i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	r_cnjg(&q__1, &v[7]);
-	v7.r = q__1.r, v7.i = q__1.i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	r_cnjg(&q__1, &v[8]);
-	v8.r = q__1.r, v8.i = q__1.i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	r_cnjg(&q__1, &v[9]);
-	v9.r = q__1.r, v9.i = q__1.i;
-	r_cnjg(&q__2, &v9);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t9.r = q__1.r, t9.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__9.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__9.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__10.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__10.i = v2.r
-		    * c__[i__3].i + v2.i * c__[i__3].r;
-	    q__8.r = q__9.r + q__10.r, q__8.i = q__9.i + q__10.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__11.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__11.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__7.r = q__8.r + q__11.r, q__7.i = q__8.i + q__11.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__12.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__12.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__6.r = q__7.r + q__12.r, q__6.i = q__7.i + q__12.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__13.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__13.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__5.r = q__6.r + q__13.r, q__5.i = q__6.i + q__13.i;
-	    i__7 = j * c_dim1 + 6;
-	    q__14.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__14.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__4.r = q__5.r + q__14.r, q__4.i = q__5.i + q__14.i;
-	    i__8 = j * c_dim1 + 7;
-	    q__15.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__15.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__3.r = q__4.r + q__15.r, q__3.i = q__4.i + q__15.i;
-	    i__9 = j * c_dim1 + 8;
-	    q__16.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__16.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__2.r = q__3.r + q__16.r, q__2.i = q__3.i + q__16.i;
-	    i__10 = j * c_dim1 + 9;
-	    q__17.r = v9.r * c__[i__10].r - v9.i * c__[i__10].i, q__17.i =
-		    v9.r * c__[i__10].i + v9.i * c__[i__10].r;
-	    q__1.r = q__2.r + q__17.r, q__1.i = q__2.i + q__17.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 6;
-	    i__3 = j * c_dim1 + 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 7;
-	    i__3 = j * c_dim1 + 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 8;
-	    i__3 = j * c_dim1 + 8;
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 9;
-	    i__3 = j * c_dim1 + 9;
-	    q__2.r = sum.r * t9.r - sum.i * t9.i, q__2.i = sum.r * t9.i +
-		    sum.i * t9.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L180: */
-	}
-	goto L410;
-L190:
-
-/*        Special code for 10 x 10 Householder */
-
-	r_cnjg(&q__1, &v[1]);
-	v1.r = q__1.r, v1.i = q__1.i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	r_cnjg(&q__1, &v[2]);
-	v2.r = q__1.r, v2.i = q__1.i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	r_cnjg(&q__1, &v[3]);
-	v3.r = q__1.r, v3.i = q__1.i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	r_cnjg(&q__1, &v[4]);
-	v4.r = q__1.r, v4.i = q__1.i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	r_cnjg(&q__1, &v[5]);
-	v5.r = q__1.r, v5.i = q__1.i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	r_cnjg(&q__1, &v[6]);
-	v6.r = q__1.r, v6.i = q__1.i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	r_cnjg(&q__1, &v[7]);
-	v7.r = q__1.r, v7.i = q__1.i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	r_cnjg(&q__1, &v[8]);
-	v8.r = q__1.r, v8.i = q__1.i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	r_cnjg(&q__1, &v[9]);
-	v9.r = q__1.r, v9.i = q__1.i;
-	r_cnjg(&q__2, &v9);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t9.r = q__1.r, t9.i = q__1.i;
-	r_cnjg(&q__1, &v[10]);
-	v10.r = q__1.r, v10.i = q__1.i;
-	r_cnjg(&q__2, &v10);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t10.r = q__1.r, t10.i = q__1.i;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j * c_dim1 + 1;
-	    q__10.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__10.i = v1.r
-		    * c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j * c_dim1 + 2;
-	    q__11.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__11.i = v2.r
-		    * c__[i__3].i + v2.i * c__[i__3].r;
-	    q__9.r = q__10.r + q__11.r, q__9.i = q__10.i + q__11.i;
-	    i__4 = j * c_dim1 + 3;
-	    q__12.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__12.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__8.r = q__9.r + q__12.r, q__8.i = q__9.i + q__12.i;
-	    i__5 = j * c_dim1 + 4;
-	    q__13.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__13.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__7.r = q__8.r + q__13.r, q__7.i = q__8.i + q__13.i;
-	    i__6 = j * c_dim1 + 5;
-	    q__14.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__14.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__6.r = q__7.r + q__14.r, q__6.i = q__7.i + q__14.i;
-	    i__7 = j * c_dim1 + 6;
-	    q__15.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__15.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__5.r = q__6.r + q__15.r, q__5.i = q__6.i + q__15.i;
-	    i__8 = j * c_dim1 + 7;
-	    q__16.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__16.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__4.r = q__5.r + q__16.r, q__4.i = q__5.i + q__16.i;
-	    i__9 = j * c_dim1 + 8;
-	    q__17.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__17.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__3.r = q__4.r + q__17.r, q__3.i = q__4.i + q__17.i;
-	    i__10 = j * c_dim1 + 9;
-	    q__18.r = v9.r * c__[i__10].r - v9.i * c__[i__10].i, q__18.i =
-		    v9.r * c__[i__10].i + v9.i * c__[i__10].r;
-	    q__2.r = q__3.r + q__18.r, q__2.i = q__3.i + q__18.i;
-	    i__11 = j * c_dim1 + 10;
-	    q__19.r = v10.r * c__[i__11].r - v10.i * c__[i__11].i, q__19.i =
-		    v10.r * c__[i__11].i + v10.i * c__[i__11].r;
-	    q__1.r = q__2.r + q__19.r, q__1.i = q__2.i + q__19.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j * c_dim1 + 1;
-	    i__3 = j * c_dim1 + 1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 2;
-	    i__3 = j * c_dim1 + 2;
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 3;
-	    i__3 = j * c_dim1 + 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 4;
-	    i__3 = j * c_dim1 + 4;
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 5;
-	    i__3 = j * c_dim1 + 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 6;
-	    i__3 = j * c_dim1 + 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 7;
-	    i__3 = j * c_dim1 + 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 8;
-	    i__3 = j * c_dim1 + 8;
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 9;
-	    i__3 = j * c_dim1 + 9;
-	    q__2.r = sum.r * t9.r - sum.i * t9.i, q__2.i = sum.r * t9.i +
-		    sum.i * t9.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j * c_dim1 + 10;
-	    i__3 = j * c_dim1 + 10;
-	    q__2.r = sum.r * t10.r - sum.i * t10.i, q__2.i = sum.r * t10.i +
-		    sum.i * t10.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L200: */
-	}
-	goto L410;
+	r__1 = gs.r / g2s;
+	r__2 = -r_imag(&gs) / g2s;
+	q__2.r = r__1, q__2.i = r__2;
+	q__1.r = ff.r * q__2.r - ff.i * q__2.i, q__1.i = ff.r * q__2.i + ff.i
+		* q__2.r;
+	sn->r = q__1.r, sn->i = q__1.i;
+	q__2.r = *cs * f->r, q__2.i = *cs * f->i;
+	q__3.r = sn->r * g->r - sn->i * g->i, q__3.i = sn->r * g->i + sn->i *
+		g->r;
+	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	r__->r = q__1.r, r__->i = q__1.i;
     } else {
 
-/*        Form  C * H, where H has order n. */
-
-	switch (*n) {
-	    case 1:  goto L210;
-	    case 2:  goto L230;
-	    case 3:  goto L250;
-	    case 4:  goto L270;
-	    case 5:  goto L290;
-	    case 6:  goto L310;
-	    case 7:  goto L330;
-	    case 8:  goto L350;
-	    case 9:  goto L370;
-	    case 10:  goto L390;
-	}
-
 /*
-          Code for general N
-
-          w := C * v
+          This is the most common case.
+          Neither F2 nor F2/G2 are less than SAFMIN
+          F2S cannot overflow, and it is accurate
 */
 
-	cgemv_("No transpose", m, n, &c_b56, &c__[c_offset], ldc, &v[1], &
-		c__1, &c_b55, &work[1], &c__1);
-
-/*        C := C - tau * w * v' */
-
-	q__1.r = -tau->r, q__1.i = -tau->i;
-	cgerc_(m, n, &q__1, &work[1], &c__1, &v[1], &c__1, &c__[c_offset],
-		ldc);
-	goto L410;
-L210:
-
-/*        Special code for 1 x 1 Householder */
-
-	q__3.r = tau->r * v[1].r - tau->i * v[1].i, q__3.i = tau->r * v[1].i
-		+ tau->i * v[1].r;
-	r_cnjg(&q__4, &v[1]);
-	q__2.r = q__3.r * q__4.r - q__3.i * q__4.i, q__2.i = q__3.r * q__4.i
-		+ q__3.i * q__4.r;
-	q__1.r = 1.f - q__2.r, q__1.i = 0.f - q__2.i;
-	t1.r = q__1.r, t1.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__1.r = t1.r * c__[i__3].r - t1.i * c__[i__3].i, q__1.i = t1.r *
-		    c__[i__3].i + t1.i * c__[i__3].r;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L220: */
+	f2s = sqrt(g2 / f2 + 1.f);
+/*        Do the F2S(real)*FS(complex) multiply with two real multiplies */
+	r__1 = f2s * fs.r;
+	r__2 = f2s * r_imag(&fs);
+	q__1.r = r__1, q__1.i = r__2;
+	r__->r = q__1.r, r__->i = q__1.i;
+	*cs = 1.f / f2s;
+	d__ = f2 + g2;
+/*        Do complex/real division explicitly with two real divisions */
+	r__1 = r__->r / d__;
+	r__2 = r_imag(r__) / d__;
+	q__1.r = r__1, q__1.i = r__2;
+	sn->r = q__1.r, sn->i = q__1.i;
+	r_cnjg(&q__2, &gs);
+	q__1.r = sn->r * q__2.r - sn->i * q__2.i, q__1.i = sn->r * q__2.i +
+		sn->i * q__2.r;
+	sn->r = q__1.r, sn->i = q__1.i;
+	if (count != 0) {
+	    if (count > 0) {
+		i__1 = count;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+		    q__1.r = safmx2 * r__->r, q__1.i = safmx2 * r__->i;
+		    r__->r = q__1.r, r__->i = q__1.i;
+/* L30: */
+		}
+	    } else {
+		i__1 = -count;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+		    q__1.r = safmn2 * r__->r, q__1.i = safmn2 * r__->i;
+		    r__->r = q__1.r, r__->i = q__1.i;
+/* L40: */
+		}
+	    }
 	}
-	goto L410;
-L230:
-
-/*        Special code for 2 x 2 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__2.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__2.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__3.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__3.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L240: */
-	}
-	goto L410;
-L250:
-
-/*        Special code for 3 x 3 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__3.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__3.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__4.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__4.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__2.r = q__3.r + q__4.r, q__2.i = q__3.i + q__4.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__5.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__5.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__1.r = q__2.r + q__5.r, q__1.i = q__2.i + q__5.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L260: */
-	}
-	goto L410;
-L270:
-
-/*        Special code for 4 x 4 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__4.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__4.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__5.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__5.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__3.r = q__4.r + q__5.r, q__3.i = q__4.i + q__5.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__6.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__6.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__2.r = q__3.r + q__6.r, q__2.i = q__3.i + q__6.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__7.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__7.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__1.r = q__2.r + q__7.r, q__1.i = q__2.i + q__7.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L280: */
-	}
-	goto L410;
-L290:
-
-/*        Special code for 5 x 5 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__5.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__5.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__6.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__6.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__4.r = q__5.r + q__6.r, q__4.i = q__5.i + q__6.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__7.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__7.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__3.r = q__4.r + q__7.r, q__3.i = q__4.i + q__7.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__8.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__8.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__2.r = q__3.r + q__8.r, q__2.i = q__3.i + q__8.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__9.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__9.i = v5.r *
-		    c__[i__6].i + v5.i * c__[i__6].r;
-	    q__1.r = q__2.r + q__9.r, q__1.i = q__2.i + q__9.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L300: */
-	}
-	goto L410;
-L310:
-
-/*        Special code for 6 x 6 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	v6.r = v[6].r, v6.i = v[6].i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__6.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__6.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__7.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__7.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__5.r = q__6.r + q__7.r, q__5.i = q__6.i + q__7.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__8.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__8.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__4.r = q__5.r + q__8.r, q__4.i = q__5.i + q__8.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__9.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__9.i = v4.r *
-		    c__[i__5].i + v4.i * c__[i__5].r;
-	    q__3.r = q__4.r + q__9.r, q__3.i = q__4.i + q__9.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__10.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__10.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__2.r = q__3.r + q__10.r, q__2.i = q__3.i + q__10.i;
-	    i__7 = j + c_dim1 * 6;
-	    q__11.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__11.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__1.r = q__2.r + q__11.r, q__1.i = q__2.i + q__11.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 6;
-	    i__3 = j + c_dim1 * 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L320: */
-	}
-	goto L410;
-L330:
-
-/*        Special code for 7 x 7 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	v6.r = v[6].r, v6.i = v[6].i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	v7.r = v[7].r, v7.i = v[7].i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__7.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__7.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__8.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__8.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__6.r = q__7.r + q__8.r, q__6.i = q__7.i + q__8.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__9.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__9.i = v3.r *
-		    c__[i__4].i + v3.i * c__[i__4].r;
-	    q__5.r = q__6.r + q__9.r, q__5.i = q__6.i + q__9.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__10.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__10.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__4.r = q__5.r + q__10.r, q__4.i = q__5.i + q__10.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__11.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__11.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__3.r = q__4.r + q__11.r, q__3.i = q__4.i + q__11.i;
-	    i__7 = j + c_dim1 * 6;
-	    q__12.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__12.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__2.r = q__3.r + q__12.r, q__2.i = q__3.i + q__12.i;
-	    i__8 = j + c_dim1 * 7;
-	    q__13.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__13.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__1.r = q__2.r + q__13.r, q__1.i = q__2.i + q__13.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 6;
-	    i__3 = j + c_dim1 * 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 7;
-	    i__3 = j + c_dim1 * 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L340: */
-	}
-	goto L410;
-L350:
-
-/*        Special code for 8 x 8 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	v6.r = v[6].r, v6.i = v[6].i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	v7.r = v[7].r, v7.i = v[7].i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	v8.r = v[8].r, v8.i = v[8].i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__8.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__8.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__9.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__9.i = v2.r *
-		    c__[i__3].i + v2.i * c__[i__3].r;
-	    q__7.r = q__8.r + q__9.r, q__7.i = q__8.i + q__9.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__10.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__10.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__6.r = q__7.r + q__10.r, q__6.i = q__7.i + q__10.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__11.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__11.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__5.r = q__6.r + q__11.r, q__5.i = q__6.i + q__11.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__12.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__12.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__4.r = q__5.r + q__12.r, q__4.i = q__5.i + q__12.i;
-	    i__7 = j + c_dim1 * 6;
-	    q__13.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__13.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__3.r = q__4.r + q__13.r, q__3.i = q__4.i + q__13.i;
-	    i__8 = j + c_dim1 * 7;
-	    q__14.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__14.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__2.r = q__3.r + q__14.r, q__2.i = q__3.i + q__14.i;
-	    i__9 = j + (c_dim1 << 3);
-	    q__15.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__15.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__1.r = q__2.r + q__15.r, q__1.i = q__2.i + q__15.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 6;
-	    i__3 = j + c_dim1 * 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 7;
-	    i__3 = j + c_dim1 * 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 3);
-	    i__3 = j + (c_dim1 << 3);
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L360: */
-	}
-	goto L410;
-L370:
-
-/*        Special code for 9 x 9 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	v6.r = v[6].r, v6.i = v[6].i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	v7.r = v[7].r, v7.i = v[7].i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	v8.r = v[8].r, v8.i = v[8].i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	v9.r = v[9].r, v9.i = v[9].i;
-	r_cnjg(&q__2, &v9);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t9.r = q__1.r, t9.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__9.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__9.i = v1.r *
-		    c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__10.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__10.i = v2.r
-		    * c__[i__3].i + v2.i * c__[i__3].r;
-	    q__8.r = q__9.r + q__10.r, q__8.i = q__9.i + q__10.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__11.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__11.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__7.r = q__8.r + q__11.r, q__7.i = q__8.i + q__11.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__12.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__12.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__6.r = q__7.r + q__12.r, q__6.i = q__7.i + q__12.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__13.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__13.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__5.r = q__6.r + q__13.r, q__5.i = q__6.i + q__13.i;
-	    i__7 = j + c_dim1 * 6;
-	    q__14.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__14.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__4.r = q__5.r + q__14.r, q__4.i = q__5.i + q__14.i;
-	    i__8 = j + c_dim1 * 7;
-	    q__15.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__15.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__3.r = q__4.r + q__15.r, q__3.i = q__4.i + q__15.i;
-	    i__9 = j + (c_dim1 << 3);
-	    q__16.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__16.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__2.r = q__3.r + q__16.r, q__2.i = q__3.i + q__16.i;
-	    i__10 = j + c_dim1 * 9;
-	    q__17.r = v9.r * c__[i__10].r - v9.i * c__[i__10].i, q__17.i =
-		    v9.r * c__[i__10].i + v9.i * c__[i__10].r;
-	    q__1.r = q__2.r + q__17.r, q__1.i = q__2.i + q__17.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 6;
-	    i__3 = j + c_dim1 * 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 7;
-	    i__3 = j + c_dim1 * 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 3);
-	    i__3 = j + (c_dim1 << 3);
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 9;
-	    i__3 = j + c_dim1 * 9;
-	    q__2.r = sum.r * t9.r - sum.i * t9.i, q__2.i = sum.r * t9.i +
-		    sum.i * t9.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L380: */
-	}
-	goto L410;
-L390:
-
-/*        Special code for 10 x 10 Householder */
-
-	v1.r = v[1].r, v1.i = v[1].i;
-	r_cnjg(&q__2, &v1);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t1.r = q__1.r, t1.i = q__1.i;
-	v2.r = v[2].r, v2.i = v[2].i;
-	r_cnjg(&q__2, &v2);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t2.r = q__1.r, t2.i = q__1.i;
-	v3.r = v[3].r, v3.i = v[3].i;
-	r_cnjg(&q__2, &v3);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t3.r = q__1.r, t3.i = q__1.i;
-	v4.r = v[4].r, v4.i = v[4].i;
-	r_cnjg(&q__2, &v4);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t4.r = q__1.r, t4.i = q__1.i;
-	v5.r = v[5].r, v5.i = v[5].i;
-	r_cnjg(&q__2, &v5);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t5.r = q__1.r, t5.i = q__1.i;
-	v6.r = v[6].r, v6.i = v[6].i;
-	r_cnjg(&q__2, &v6);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t6.r = q__1.r, t6.i = q__1.i;
-	v7.r = v[7].r, v7.i = v[7].i;
-	r_cnjg(&q__2, &v7);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t7.r = q__1.r, t7.i = q__1.i;
-	v8.r = v[8].r, v8.i = v[8].i;
-	r_cnjg(&q__2, &v8);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t8.r = q__1.r, t8.i = q__1.i;
-	v9.r = v[9].r, v9.i = v[9].i;
-	r_cnjg(&q__2, &v9);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t9.r = q__1.r, t9.i = q__1.i;
-	v10.r = v[10].r, v10.i = v[10].i;
-	r_cnjg(&q__2, &v10);
-	q__1.r = tau->r * q__2.r - tau->i * q__2.i, q__1.i = tau->r * q__2.i
-		+ tau->i * q__2.r;
-	t10.r = q__1.r, t10.i = q__1.i;
-	i__1 = *m;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = j + c_dim1;
-	    q__10.r = v1.r * c__[i__2].r - v1.i * c__[i__2].i, q__10.i = v1.r
-		    * c__[i__2].i + v1.i * c__[i__2].r;
-	    i__3 = j + (c_dim1 << 1);
-	    q__11.r = v2.r * c__[i__3].r - v2.i * c__[i__3].i, q__11.i = v2.r
-		    * c__[i__3].i + v2.i * c__[i__3].r;
-	    q__9.r = q__10.r + q__11.r, q__9.i = q__10.i + q__11.i;
-	    i__4 = j + c_dim1 * 3;
-	    q__12.r = v3.r * c__[i__4].r - v3.i * c__[i__4].i, q__12.i = v3.r
-		    * c__[i__4].i + v3.i * c__[i__4].r;
-	    q__8.r = q__9.r + q__12.r, q__8.i = q__9.i + q__12.i;
-	    i__5 = j + (c_dim1 << 2);
-	    q__13.r = v4.r * c__[i__5].r - v4.i * c__[i__5].i, q__13.i = v4.r
-		    * c__[i__5].i + v4.i * c__[i__5].r;
-	    q__7.r = q__8.r + q__13.r, q__7.i = q__8.i + q__13.i;
-	    i__6 = j + c_dim1 * 5;
-	    q__14.r = v5.r * c__[i__6].r - v5.i * c__[i__6].i, q__14.i = v5.r
-		    * c__[i__6].i + v5.i * c__[i__6].r;
-	    q__6.r = q__7.r + q__14.r, q__6.i = q__7.i + q__14.i;
-	    i__7 = j + c_dim1 * 6;
-	    q__15.r = v6.r * c__[i__7].r - v6.i * c__[i__7].i, q__15.i = v6.r
-		    * c__[i__7].i + v6.i * c__[i__7].r;
-	    q__5.r = q__6.r + q__15.r, q__5.i = q__6.i + q__15.i;
-	    i__8 = j + c_dim1 * 7;
-	    q__16.r = v7.r * c__[i__8].r - v7.i * c__[i__8].i, q__16.i = v7.r
-		    * c__[i__8].i + v7.i * c__[i__8].r;
-	    q__4.r = q__5.r + q__16.r, q__4.i = q__5.i + q__16.i;
-	    i__9 = j + (c_dim1 << 3);
-	    q__17.r = v8.r * c__[i__9].r - v8.i * c__[i__9].i, q__17.i = v8.r
-		    * c__[i__9].i + v8.i * c__[i__9].r;
-	    q__3.r = q__4.r + q__17.r, q__3.i = q__4.i + q__17.i;
-	    i__10 = j + c_dim1 * 9;
-	    q__18.r = v9.r * c__[i__10].r - v9.i * c__[i__10].i, q__18.i =
-		    v9.r * c__[i__10].i + v9.i * c__[i__10].r;
-	    q__2.r = q__3.r + q__18.r, q__2.i = q__3.i + q__18.i;
-	    i__11 = j + c_dim1 * 10;
-	    q__19.r = v10.r * c__[i__11].r - v10.i * c__[i__11].i, q__19.i =
-		    v10.r * c__[i__11].i + v10.i * c__[i__11].r;
-	    q__1.r = q__2.r + q__19.r, q__1.i = q__2.i + q__19.i;
-	    sum.r = q__1.r, sum.i = q__1.i;
-	    i__2 = j + c_dim1;
-	    i__3 = j + c_dim1;
-	    q__2.r = sum.r * t1.r - sum.i * t1.i, q__2.i = sum.r * t1.i +
-		    sum.i * t1.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 1);
-	    i__3 = j + (c_dim1 << 1);
-	    q__2.r = sum.r * t2.r - sum.i * t2.i, q__2.i = sum.r * t2.i +
-		    sum.i * t2.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 3;
-	    i__3 = j + c_dim1 * 3;
-	    q__2.r = sum.r * t3.r - sum.i * t3.i, q__2.i = sum.r * t3.i +
-		    sum.i * t3.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 2);
-	    i__3 = j + (c_dim1 << 2);
-	    q__2.r = sum.r * t4.r - sum.i * t4.i, q__2.i = sum.r * t4.i +
-		    sum.i * t4.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 5;
-	    i__3 = j + c_dim1 * 5;
-	    q__2.r = sum.r * t5.r - sum.i * t5.i, q__2.i = sum.r * t5.i +
-		    sum.i * t5.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 6;
-	    i__3 = j + c_dim1 * 6;
-	    q__2.r = sum.r * t6.r - sum.i * t6.i, q__2.i = sum.r * t6.i +
-		    sum.i * t6.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 7;
-	    i__3 = j + c_dim1 * 7;
-	    q__2.r = sum.r * t7.r - sum.i * t7.i, q__2.i = sum.r * t7.i +
-		    sum.i * t7.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + (c_dim1 << 3);
-	    i__3 = j + (c_dim1 << 3);
-	    q__2.r = sum.r * t8.r - sum.i * t8.i, q__2.i = sum.r * t8.i +
-		    sum.i * t8.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 9;
-	    i__3 = j + c_dim1 * 9;
-	    q__2.r = sum.r * t9.r - sum.i * t9.i, q__2.i = sum.r * t9.i +
-		    sum.i * t9.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-	    i__2 = j + c_dim1 * 10;
-	    i__3 = j + c_dim1 * 10;
-	    q__2.r = sum.r * t10.r - sum.i * t10.i, q__2.i = sum.r * t10.i +
-		    sum.i * t10.r;
-	    q__1.r = c__[i__3].r - q__2.r, q__1.i = c__[i__3].i - q__2.i;
-	    c__[i__2].r = q__1.r, c__[i__2].i = q__1.i;
-/* L400: */
-	}
-	goto L410;
     }
-L410:
     return 0;
 
-/*     End of CLARFX */
+/*     End of CLARTG */
 
-} /* clarfx_ */
+} /* clartg_ */
 
 /* Subroutine */ int clascl_(char *type__, integer *kl, integer *ku, real *
 	cfrom, real *cto, integer *m, integer *n, complex *a, integer *lda,
@@ -14865,14 +17421,16 @@ L410:
     extern doublereal slamch_(char *);
     static real cfromc;
     extern /* Subroutine */ int xerbla_(char *, integer *);
-    static real bignum, smlnum;
+    static real bignum;
+    extern logical sisnan_(real *);
+    static real smlnum;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14923,7 +17481,7 @@ L410:
     N       (input) INTEGER
             The number of columns of the matrix A.  N >= 0.
 
-    A       (input/output) COMPLEX array, dimension (LDA,M)
+    A       (input/output) COMPLEX array, dimension (LDA,N)
             The matrix to be multiplied by CTO/CFROM.  See TYPE for the
             storage type.
 
@@ -14968,8 +17526,10 @@ L410:
 
     if (itype == -1) {
 	*info = -1;
-    } else if (*cfrom == 0.f) {
+    } else if (*cfrom == 0.f || sisnan_(cfrom)) {
 	*info = -4;
+    } else if (sisnan_(cto)) {
+	*info = -5;
     } else if (*m < 0) {
 	*info = -6;
     } else if (*n < 0 || itype == 4 && *n != *m || itype == 5 && *n != *m) {
@@ -15016,18 +17576,36 @@ L410:
 
 L10:
     cfrom1 = cfromc * smlnum;
-    cto1 = ctoc / bignum;
-    if (dabs(cfrom1) > dabs(ctoc) && ctoc != 0.f) {
-	mul = smlnum;
-	done = FALSE_;
-	cfromc = cfrom1;
-    } else if (dabs(cto1) > dabs(cfromc)) {
-	mul = bignum;
-	done = FALSE_;
-	ctoc = cto1;
-    } else {
+    if (cfrom1 == cfromc) {
+/*
+          CFROMC is an inf.  Multiply by a correctly signed zero for
+          finite CTOC, or a NaN if CTOC is infinite.
+*/
 	mul = ctoc / cfromc;
 	done = TRUE_;
+	cto1 = ctoc;
+    } else {
+	cto1 = ctoc / bignum;
+	if (cto1 == ctoc) {
+/*
+             CTOC is either 0 or an inf.  In both cases, CTOC itself
+             serves as the correct multiplication factor.
+*/
+	    mul = ctoc;
+	    done = TRUE_;
+	    cfromc = 1.f;
+	} else if (dabs(cfrom1) > dabs(ctoc) && ctoc != 0.f) {
+	    mul = smlnum;
+	    done = FALSE_;
+	    cfromc = cfrom1;
+	} else if (dabs(cto1) > dabs(cfromc)) {
+	    mul = bignum;
+	    done = FALSE_;
+	    ctoc = cto1;
+	} else {
+	    mul = ctoc / cfromc;
+	    done = TRUE_;
+	}
     }
 
     if (itype == 0) {
@@ -15191,10 +17769,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -15341,51 +17919,86 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
     =======
 
-    CLASR   performs the transformation
+    CLASR applies a sequence of real plane rotations to a complex matrix
+    A, from either the left or the right.
 
-       A := P*A,   when SIDE = 'L' or 'l'  (  Left-hand side )
+    When SIDE = 'L', the transformation takes the form
 
-       A := A*P',  when SIDE = 'R' or 'r'  ( Right-hand side )
+       A := P*A
 
-    where A is an m by n complex matrix and P is an orthogonal matrix,
-    consisting of a sequence of plane rotations determined by the
-    parameters PIVOT and DIRECT as follows ( z = m when SIDE = 'L' or 'l'
-    and z = n when SIDE = 'R' or 'r' ):
+    and when SIDE = 'R', the transformation takes the form
 
-    When  DIRECT = 'F' or 'f'  ( Forward sequence ) then
+       A := A*P**T
 
-       P = P( z - 1 )*...*P( 2 )*P( 1 ),
+    where P is an orthogonal matrix consisting of a sequence of z plane
+    rotations, with z = M when SIDE = 'L' and z = N when SIDE = 'R',
+    and P**T is the transpose of P.
 
-    and when DIRECT = 'B' or 'b'  ( Backward sequence ) then
+    When DIRECT = 'F' (Forward sequence), then
 
-       P = P( 1 )*P( 2 )*...*P( z - 1 ),
+       P = P(z-1) * ... * P(2) * P(1)
 
-    where  P( k ) is a plane rotation matrix for the following planes:
+    and when DIRECT = 'B' (Backward sequence), then
 
-       when  PIVOT = 'V' or 'v'  ( Variable pivot ),
-          the plane ( k, k + 1 )
+       P = P(1) * P(2) * ... * P(z-1)
 
-       when  PIVOT = 'T' or 't'  ( Top pivot ),
-          the plane ( 1, k + 1 )
+    where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
 
-       when  PIVOT = 'B' or 'b'  ( Bottom pivot ),
-          the plane ( k, z )
+       R(k) = (  c(k)  s(k) )
+            = ( -s(k)  c(k) ).
 
-    c( k ) and s( k )  must contain the  cosine and sine that define the
-    matrix  P( k ).  The two by two plane rotation part of the matrix
-    P( k ), R( k ), is assumed to be of the form
+    When PIVOT = 'V' (Variable pivot), the rotation is performed
+    for the plane (k,k+1), i.e., P(k) has the form
 
-       R( k ) = (  c( k )  s( k ) ).
-                ( -s( k )  c( k ) )
+       P(k) = (  1                                            )
+              (       ...                                     )
+              (              1                                )
+              (                   c(k)  s(k)                  )
+              (                  -s(k)  c(k)                  )
+              (                                1              )
+              (                                     ...       )
+              (                                            1  )
+
+    where R(k) appears as a rank-2 modification to the identity matrix in
+    rows and columns k and k+1.
+
+    When PIVOT = 'T' (Top pivot), the rotation is performed for the
+    plane (1,k+1), so P(k) has the form
+
+       P(k) = (  c(k)                    s(k)                 )
+              (         1                                     )
+              (              ...                              )
+              (                     1                         )
+              ( -s(k)                    c(k)                 )
+              (                                 1             )
+              (                                      ...      )
+              (                                             1 )
+
+    where R(k) appears in rows and columns 1 and k+1.
+
+    Similarly, when PIVOT = 'B' (Bottom pivot), the rotation is
+    performed for the plane (k,z), giving P(k) the form
+
+       P(k) = ( 1                                             )
+              (      ...                                      )
+              (             1                                 )
+              (                  c(k)                    s(k) )
+              (                         1                     )
+              (                              ...              )
+              (                                     1         )
+              (                 -s(k)                    c(k) )
+
+    where R(k) appears in rows and columns k and z.  The rotations are
+    performed without ever forming P(k) explicitly.
 
     Arguments
     =========
@@ -15394,13 +18007,7 @@ L10:
             Specifies whether the plane rotation matrix P is applied to
             A on the left or the right.
             = 'L':  Left, compute A := P*A
-            = 'R':  Right, compute A:= A*P'
-
-    DIRECT  (input) CHARACTER*1
-            Specifies whether P is a forward or backward sequence of
-            plane rotations.
-            = 'F':  Forward, P = P( z - 1 )*...*P( 2 )*P( 1 )
-            = 'B':  Backward, P = P( 1 )*P( 2 )*...*P( z - 1 )
+            = 'R':  Right, compute A:= A*P**T
 
     PIVOT   (input) CHARACTER*1
             Specifies the plane for which P(k) is a plane rotation
@@ -15408,6 +18015,12 @@ L10:
             = 'V':  Variable pivot, the plane (k,k+1)
             = 'T':  Top pivot, the plane (1,k+1)
             = 'B':  Bottom pivot, the plane (k,z)
+
+    DIRECT  (input) CHARACTER*1
+            Specifies whether P is a forward or backward sequence of
+            plane rotations.
+            = 'F':  Forward, P = P(z-1)*...*P(2)*P(1)
+            = 'B':  Backward, P = P(1)*P(2)*...*P(z-1)
 
     M       (input) INTEGER
             The number of rows of the matrix A.  If m <= 1, an immediate
@@ -15417,18 +18030,22 @@ L10:
             The number of columns of the matrix A.  If n <= 1, an
             immediate return is effected.
 
-    C, S    (input) REAL arrays, dimension
+    C       (input) REAL array, dimension
                     (M-1) if SIDE = 'L'
                     (N-1) if SIDE = 'R'
-            c(k) and s(k) contain the cosine and sine that define the
-            matrix P(k).  The two by two plane rotation part of the
-            matrix P(k), R(k), is assumed to be of the form
-            R( k ) = (  c( k )  s( k ) ).
-                     ( -s( k )  c( k ) )
+            The cosines c(k) of the plane rotations.
+
+    S       (input) REAL array, dimension
+                    (M-1) if SIDE = 'L'
+                    (N-1) if SIDE = 'R'
+            The sines s(k) of the plane rotations.  The 2-by-2 plane
+            rotation part of the matrix P(k), R(k), has the form
+            R(k) = (  c(k)  s(k) )
+                   ( -s(k)  c(k) ).
 
     A       (input/output) COMPLEX array, dimension (LDA,N)
-            The m by n matrix A.  On exit, A is overwritten by P*A if
-            SIDE = 'R' or by A*P' if SIDE = 'L'.
+            The M-by-N matrix A.  On exit, A is overwritten by P*A if
+            SIDE = 'R' or by A*P**T if SIDE = 'L'.
 
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(1,M).
@@ -15885,10 +18502,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -15997,10 +18614,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -16031,7 +18648,7 @@ L10:
             The last element of IPIV for which a row interchange will
             be done.
 
-    IPIV    (input) INTEGER array, dimension (M*abs(INCX))
+    IPIV    (input) INTEGER array, dimension (K2*abs(INCX))
             The vector of pivot indices.  Only the elements in positions
             K1 through K2 of IPIV are accessed.
             IPIV(K) = L implies rows K and L are to be interchanged.
@@ -16161,10 +18778,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -16185,7 +18802,7 @@ L10:
     Arguments
     =========
 
-    UPLO    (input) CHARACTER
+    UPLO    (input) CHARACTER*1
             Specifies whether the upper or lower triangular part of the
             Hermitian matrix A is stored:
             = 'U': Upper triangular
@@ -16330,7 +18947,7 @@ L10:
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__, &i__2, &q__1, &a[(i__ + 1) *
 			a_dim1 + 1], lda, &w[i__ + (iw + 1) * w_dim1], ldw, &
-			c_b56, &a[i__ * a_dim1 + 1], &c__1);
+			c_b57, &a[i__ * a_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		clacgv_(&i__2, &w[i__ + (iw + 1) * w_dim1], ldw);
 		i__2 = *n - i__;
@@ -16339,7 +18956,7 @@ L10:
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__, &i__2, &q__1, &w[(iw + 1) *
 			w_dim1 + 1], ldw, &a[i__ + (i__ + 1) * a_dim1], lda, &
-			c_b56, &a[i__ * a_dim1 + 1], &c__1);
+			c_b57, &a[i__ * a_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		clacgv_(&i__2, &a[i__ + (i__ + 1) * a_dim1], lda);
 		i__2 = i__ + i__ * a_dim1;
@@ -16367,32 +18984,32 @@ L10:
 /*              Compute W(1:i-1,i) */
 
 		i__2 = i__ - 1;
-		chemv_("Upper", &i__2, &c_b56, &a[a_offset], lda, &a[i__ *
-			a_dim1 + 1], &c__1, &c_b55, &w[iw * w_dim1 + 1], &
+		chemv_("Upper", &i__2, &c_b57, &a[a_offset], lda, &a[i__ *
+			a_dim1 + 1], &c__1, &c_b56, &w[iw * w_dim1 + 1], &
 			c__1);
 		if (i__ < *n) {
 		    i__2 = i__ - 1;
 		    i__3 = *n - i__;
-		    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &w[(
+		    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &w[(
 			    iw + 1) * w_dim1 + 1], ldw, &a[i__ * a_dim1 + 1],
-			    &c__1, &c_b55, &w[i__ + 1 + iw * w_dim1], &c__1);
+			    &c__1, &c_b56, &w[i__ + 1 + iw * w_dim1], &c__1);
 		    i__2 = i__ - 1;
 		    i__3 = *n - i__;
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemv_("No transpose", &i__2, &i__3, &q__1, &a[(i__ + 1) *
 			     a_dim1 + 1], lda, &w[i__ + 1 + iw * w_dim1], &
-			    c__1, &c_b56, &w[iw * w_dim1 + 1], &c__1);
+			    c__1, &c_b57, &w[iw * w_dim1 + 1], &c__1);
 		    i__2 = i__ - 1;
 		    i__3 = *n - i__;
-		    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[(
+		    cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[(
 			    i__ + 1) * a_dim1 + 1], lda, &a[i__ * a_dim1 + 1],
-			     &c__1, &c_b55, &w[i__ + 1 + iw * w_dim1], &c__1);
+			     &c__1, &c_b56, &w[i__ + 1 + iw * w_dim1], &c__1);
 		    i__2 = i__ - 1;
 		    i__3 = *n - i__;
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemv_("No transpose", &i__2, &i__3, &q__1, &w[(iw + 1) *
 			    w_dim1 + 1], ldw, &w[i__ + 1 + iw * w_dim1], &
-			    c__1, &c_b56, &w[iw * w_dim1 + 1], &c__1);
+			    c__1, &c_b57, &w[iw * w_dim1 + 1], &c__1);
 		}
 		i__2 = i__ - 1;
 		cscal_(&i__2, &tau[i__ - 1], &w[iw * w_dim1 + 1], &c__1);
@@ -16432,7 +19049,7 @@ L10:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("No transpose", &i__2, &i__3, &q__1, &a[i__ + a_dim1], lda,
-		     &w[i__ + w_dim1], ldw, &c_b56, &a[i__ + i__ * a_dim1], &
+		     &w[i__ + w_dim1], ldw, &c_b57, &a[i__ + i__ * a_dim1], &
 		    c__1);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &w[i__ + w_dim1], ldw);
@@ -16442,7 +19059,7 @@ L10:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cgemv_("No transpose", &i__2, &i__3, &q__1, &w[i__ + w_dim1], ldw,
-		     &a[i__ + a_dim1], lda, &c_b56, &a[i__ + i__ * a_dim1], &
+		     &a[i__ + a_dim1], lda, &c_b57, &a[i__ + i__ * a_dim1], &
 		    c__1);
 	    i__2 = i__ - 1;
 	    clacgv_(&i__2, &a[i__ + a_dim1], lda);
@@ -16472,30 +19089,30 @@ L10:
 /*              Compute W(i+1:n,i) */
 
 		i__2 = *n - i__;
-		chemv_("Lower", &i__2, &c_b56, &a[i__ + 1 + (i__ + 1) *
+		chemv_("Lower", &i__2, &c_b57, &a[i__ + 1 + (i__ + 1) *
 			a_dim1], lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &
-			c_b55, &w[i__ + 1 + i__ * w_dim1], &c__1);
+			c_b56, &w[i__ + 1 + i__ * w_dim1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &w[i__ +
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &w[i__ +
 			1 + w_dim1], ldw, &a[i__ + 1 + i__ * a_dim1], &c__1, &
-			c_b55, &w[i__ * w_dim1 + 1], &c__1);
+			c_b56, &w[i__ * w_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &a[i__ + 1 +
-			a_dim1], lda, &w[i__ * w_dim1 + 1], &c__1, &c_b56, &w[
+			a_dim1], lda, &w[i__ * w_dim1 + 1], &c__1, &c_b57, &w[
 			i__ + 1 + i__ * w_dim1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ +
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ +
 			1 + a_dim1], lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &
-			c_b55, &w[i__ * w_dim1 + 1], &c__1);
+			c_b56, &w[i__ * w_dim1 + 1], &c__1);
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &w[i__ + 1 +
-			w_dim1], ldw, &w[i__ * w_dim1 + 1], &c__1, &c_b56, &w[
+			w_dim1], ldw, &w[i__ * w_dim1 + 1], &c__1, &c_b57, &w[
 			i__ + 1 + i__ * w_dim1], &c__1);
 		i__2 = *n - i__;
 		cscal_(&i__2, &tau[i__], &w[i__ + 1 + i__ * w_dim1], &c__1);
@@ -16576,10 +19193,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17196,7 +19813,7 @@ L105:
 
 /*                 Scale x by 1/2. */
 
-		    csscal_(n, &c_b1794, &x[1], &c__1);
+		    csscal_(n, &c_b2023, &x[1], &c__1);
 		    *scale *= .5f;
 		}
 
@@ -17714,10 +20331,10 @@ L185:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17813,7 +20430,7 @@ L185:
 		i__2 = i__ - 1;
 		i__3 = *n - i__;
 		q__1.r = aii, q__1.i = 0.f;
-		cgemv_("No transpose", &i__2, &i__3, &c_b56, &a[(i__ + 1) *
+		cgemv_("No transpose", &i__2, &i__3, &c_b57, &a[(i__ + 1) *
 			a_dim1 + 1], lda, &a[i__ + (i__ + 1) * a_dim1], lda, &
 			q__1, &a[i__ * a_dim1 + 1], &c__1);
 		i__2 = *n - i__;
@@ -17844,7 +20461,7 @@ L185:
 		i__2 = *n - i__;
 		i__3 = i__ - 1;
 		q__1.r = aii, q__1.i = 0.f;
-		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b56, &a[i__ +
+		cgemv_("Conjugate transpose", &i__2, &i__3, &c_b57, &a[i__ +
 			1 + a_dim1], lda, &a[i__ + 1 + i__ * a_dim1], &c__1, &
 			q__1, &a[i__ + a_dim1], lda);
 		i__2 = i__ - 1;
@@ -17887,10 +20504,10 @@ L185:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17992,19 +20609,19 @@ L185:
 		ib = min(i__3,i__4);
 		i__3 = i__ - 1;
 		ctrmm_("Right", "Upper", "Conjugate transpose", "Non-unit", &
-			i__3, &ib, &c_b56, &a[i__ + i__ * a_dim1], lda, &a[
+			i__3, &ib, &c_b57, &a[i__ + i__ * a_dim1], lda, &a[
 			i__ * a_dim1 + 1], lda);
 		clauu2_("Upper", &ib, &a[i__ + i__ * a_dim1], lda, info);
 		if (i__ + ib <= *n) {
 		    i__3 = i__ - 1;
 		    i__4 = *n - i__ - ib + 1;
 		    cgemm_("No transpose", "Conjugate transpose", &i__3, &ib,
-			    &i__4, &c_b56, &a[(i__ + ib) * a_dim1 + 1], lda, &
-			    a[i__ + (i__ + ib) * a_dim1], lda, &c_b56, &a[i__
+			    &i__4, &c_b57, &a[(i__ + ib) * a_dim1 + 1], lda, &
+			    a[i__ + (i__ + ib) * a_dim1], lda, &c_b57, &a[i__
 			    * a_dim1 + 1], lda);
 		    i__3 = *n - i__ - ib + 1;
-		    cherk_("Upper", "No transpose", &ib, &i__3, &c_b871, &a[
-			    i__ + (i__ + ib) * a_dim1], lda, &c_b871, &a[i__
+		    cherk_("Upper", "No transpose", &ib, &i__3, &c_b894, &a[
+			    i__ + (i__ + ib) * a_dim1], lda, &c_b894, &a[i__
 			    + i__ * a_dim1], lda);
 		}
 /* L10: */
@@ -18021,19 +20638,19 @@ L185:
 		ib = min(i__3,i__4);
 		i__3 = i__ - 1;
 		ctrmm_("Left", "Lower", "Conjugate transpose", "Non-unit", &
-			ib, &i__3, &c_b56, &a[i__ + i__ * a_dim1], lda, &a[
+			ib, &i__3, &c_b57, &a[i__ + i__ * a_dim1], lda, &a[
 			i__ + a_dim1], lda);
 		clauu2_("Lower", &ib, &a[i__ + i__ * a_dim1], lda, info);
 		if (i__ + ib <= *n) {
 		    i__3 = i__ - 1;
 		    i__4 = *n - i__ - ib + 1;
 		    cgemm_("Conjugate transpose", "No transpose", &ib, &i__3,
-			    &i__4, &c_b56, &a[i__ + ib + i__ * a_dim1], lda, &
-			    a[i__ + ib + a_dim1], lda, &c_b56, &a[i__ +
+			    &i__4, &c_b57, &a[i__ + ib + i__ * a_dim1], lda, &
+			    a[i__ + ib + a_dim1], lda, &c_b57, &a[i__ +
 			    a_dim1], lda);
 		    i__3 = *n - i__ - ib + 1;
 		    cherk_("Lower", "Conjugate transpose", &ib, &i__3, &
-			    c_b871, &a[i__ + ib + i__ * a_dim1], lda, &c_b871,
+			    c_b894, &a[i__ + ib + i__ * a_dim1], lda, &c_b894,
 			     &a[i__ + i__ * a_dim1], lda);
 		}
 /* L20: */
@@ -18071,13 +20688,14 @@ L185:
     extern /* Subroutine */ int clacgv_(integer *, complex *, integer *),
 	    csscal_(integer *, real *, complex *, integer *), xerbla_(char *,
 	    integer *);
+    extern logical sisnan_(real *);
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -18176,7 +20794,7 @@ L185:
 		    , &c__1);
 	    q__1.r = r__1 - q__2.r, q__1.i = -q__2.i;
 	    ajj = q__1.r;
-	    if (ajj <= 0.f) {
+	    if (ajj <= 0.f || sisnan_(&ajj)) {
 		i__2 = j + j * a_dim1;
 		a[i__2].r = ajj, a[i__2].i = 0.f;
 		goto L30;
@@ -18194,7 +20812,7 @@ L185:
 		i__3 = *n - j;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("Transpose", &i__2, &i__3, &q__1, &a[(j + 1) * a_dim1
-			+ 1], lda, &a[j * a_dim1 + 1], &c__1, &c_b56, &a[j + (
+			+ 1], lda, &a[j * a_dim1 + 1], &c__1, &c_b57, &a[j + (
 			j + 1) * a_dim1], lda);
 		i__2 = j - 1;
 		clacgv_(&i__2, &a[j * a_dim1 + 1], &c__1);
@@ -18219,7 +20837,7 @@ L185:
 	    cdotc_(&q__2, &i__3, &a[j + a_dim1], lda, &a[j + a_dim1], lda);
 	    q__1.r = r__1 - q__2.r, q__1.i = -q__2.i;
 	    ajj = q__1.r;
-	    if (ajj <= 0.f) {
+	    if (ajj <= 0.f || sisnan_(&ajj)) {
 		i__2 = j + j * a_dim1;
 		a[i__2].r = ajj, a[i__2].i = 0.f;
 		goto L30;
@@ -18237,7 +20855,7 @@ L185:
 		i__3 = j - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		cgemv_("No transpose", &i__2, &i__3, &q__1, &a[j + 1 + a_dim1]
-			, lda, &a[j + a_dim1], lda, &c_b56, &a[j + 1 + j *
+			, lda, &a[j + a_dim1], lda, &c_b57, &a[j + 1 + j *
 			a_dim1], &c__1);
 		i__2 = j - 1;
 		clacgv_(&i__2, &a[j + a_dim1], lda);
@@ -18286,10 +20904,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -18400,8 +21018,8 @@ L40:
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		cherk_("Upper", "Conjugate transpose", &jb, &i__3, &c_b1150, &
-			a[j * a_dim1 + 1], lda, &c_b871, &a[j + j * a_dim1],
+		cherk_("Upper", "Conjugate transpose", &jb, &i__3, &c_b1136, &
+			a[j * a_dim1 + 1], lda, &c_b894, &a[j + j * a_dim1],
 			lda);
 		cpotf2_("Upper", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
@@ -18416,11 +21034,11 @@ L40:
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemm_("Conjugate transpose", "No transpose", &jb, &i__3,
 			    &i__4, &q__1, &a[j * a_dim1 + 1], lda, &a[(j + jb)
-			     * a_dim1 + 1], lda, &c_b56, &a[j + (j + jb) *
+			     * a_dim1 + 1], lda, &c_b57, &a[j + (j + jb) *
 			    a_dim1], lda);
 		    i__3 = *n - j - jb + 1;
 		    ctrsm_("Left", "Upper", "Conjugate transpose", "Non-unit",
-			     &jb, &i__3, &c_b56, &a[j + j * a_dim1], lda, &a[
+			     &jb, &i__3, &c_b57, &a[j + j * a_dim1], lda, &a[
 			    j + (j + jb) * a_dim1], lda);
 		}
 /* L10: */
@@ -18443,8 +21061,8 @@ L40:
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		cherk_("Lower", "No transpose", &jb, &i__3, &c_b1150, &a[j +
-			a_dim1], lda, &c_b871, &a[j + j * a_dim1], lda);
+		cherk_("Lower", "No transpose", &jb, &i__3, &c_b1136, &a[j +
+			a_dim1], lda, &c_b894, &a[j + j * a_dim1], lda);
 		cpotf2_("Lower", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
 		    goto L30;
@@ -18458,11 +21076,11 @@ L40:
 		    q__1.r = -1.f, q__1.i = -0.f;
 		    cgemm_("No transpose", "Conjugate transpose", &i__3, &jb,
 			    &i__4, &q__1, &a[j + jb + a_dim1], lda, &a[j +
-			    a_dim1], lda, &c_b56, &a[j + jb + j * a_dim1],
+			    a_dim1], lda, &c_b57, &a[j + jb + j * a_dim1],
 			    lda);
 		    i__3 = *n - j - jb + 1;
 		    ctrsm_("Right", "Lower", "Conjugate transpose", "Non-unit"
-			    , &i__3, &jb, &c_b56, &a[j + j * a_dim1], lda, &a[
+			    , &i__3, &jb, &c_b57, &a[j + j * a_dim1], lda, &a[
 			    j + jb + j * a_dim1], lda);
 		}
 /* L20: */
@@ -18496,10 +21114,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -18600,10 +21218,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -18694,11 +21312,11 @@ L40:
 */
 
 	ctrsm_("Left", "Upper", "Conjugate transpose", "Non-unit", n, nrhs, &
-		c_b56, &a[a_offset], lda, &b[b_offset], ldb);
+		c_b57, &a[a_offset], lda, &b[b_offset], ldb);
 
 /*        Solve U*X = B, overwriting B with X. */
 
-	ctrsm_("Left", "Upper", "No transpose", "Non-unit", n, nrhs, &c_b56, &
+	ctrsm_("Left", "Upper", "No transpose", "Non-unit", n, nrhs, &c_b57, &
 		a[a_offset], lda, &b[b_offset], ldb);
     } else {
 
@@ -18708,13 +21326,13 @@ L40:
           Solve L*X = B, overwriting B with X.
 */
 
-	ctrsm_("Left", "Lower", "No transpose", "Non-unit", n, nrhs, &c_b56, &
+	ctrsm_("Left", "Lower", "No transpose", "Non-unit", n, nrhs, &c_b57, &
 		a[a_offset], lda, &b[b_offset], ldb);
 
 /*        Solve L'*X = B, overwriting B with X. */
 
 	ctrsm_("Left", "Lower", "Conjugate transpose", "Non-unit", n, nrhs, &
-		c_b56, &a[a_offset], lda, &b[b_offset], ldb);
+		c_b57, &a[a_offset], lda, &b[b_offset], ldb);
     }
 
     return 0;
@@ -18723,24 +21341,62 @@ L40:
 
 } /* cpotrs_ */
 
-/* Subroutine */ int csrot_(integer *n, complex *cx, integer *incx, complex *
-	cy, integer *incy, real *c__, real *s)
+/* Subroutine */ int crot_(integer *n, complex *cx, integer *incx, complex *
+	cy, integer *incy, real *c__, complex *s)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    complex q__1, q__2, q__3;
+    complex q__1, q__2, q__3, q__4;
+
+    /* Builtin functions */
+    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, ix, iy;
-    static complex ctemp;
+    static complex stemp;
 
 
 /*
-       applies a plane rotation, where the cos and sin (c and s) are real
-       and the vectors cx and cy are complex.
-       jack dongarra, linpack, 3/11/78.
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
-    =====================================================================
+
+    Purpose
+    =======
+
+    CROT   applies a plane rotation, where the cos (C) is real and the
+    sin (S) is complex, and the vectors CX and CY are complex.
+
+    Arguments
+    =========
+
+    N       (input) INTEGER
+            The number of elements in the vectors CX and CY.
+
+    CX      (input/output) COMPLEX array, dimension (N)
+            On input, the vector X.
+            On output, CX is overwritten with C*X + S*Y.
+
+    INCX    (input) INTEGER
+            The increment between successive values of CY.  INCX <> 0.
+
+    CY      (input/output) COMPLEX array, dimension (N)
+            On input, the vector Y.
+            On output, CY is overwritten with -CONJG(S)*X + C*Y.
+
+    INCY    (input) INTEGER
+            The increment between successive values of CY.  INCX <> 0.
+
+    C       (input) REAL
+    S       (input) COMPLEX
+            C and S define a rotation
+               [  C          S  ]
+               [ -conjg(S)   C  ]
+            where C*C + S*CONJG(S) = 1.0.
+
+   =====================================================================
 */
 
 
@@ -18756,10 +21412,7 @@ L40:
 	goto L20;
     }
 
-/*
-          code for unequal increments or equal increments not equal
-            to 1
-*/
+/*     Code for unequal increments or equal increments not equal to 1 */
 
     ix = 1;
     iy = 1;
@@ -18774,25 +21427,28 @@ L40:
 	i__2 = ix;
 	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
 	i__3 = iy;
-	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__3.r = s->r * cy[i__3].r - s->i * cy[i__3].i, q__3.i = s->r * cy[
+		i__3].i + s->i * cy[i__3].r;
 	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
-	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	stemp.r = q__1.r, stemp.i = q__1.i;
 	i__2 = iy;
 	i__3 = iy;
 	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	r_cnjg(&q__4, s);
 	i__4 = ix;
-	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__3.r = q__4.r * cx[i__4].r - q__4.i * cx[i__4].i, q__3.i = q__4.r *
+		cx[i__4].i + q__4.i * cx[i__4].r;
 	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
 	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
 	i__2 = ix;
-	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	cx[i__2].r = stemp.r, cx[i__2].i = stemp.i;
 	ix += *incx;
 	iy += *incy;
 /* L10: */
     }
     return 0;
 
-/*        code for both increments equal to 1 */
+/*     Code for both increments equal to 1 */
 
 L20:
     i__1 = *n;
@@ -18800,22 +21456,25 @@ L20:
 	i__2 = i__;
 	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
 	i__3 = i__;
-	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__3.r = s->r * cy[i__3].r - s->i * cy[i__3].i, q__3.i = s->r * cy[
+		i__3].i + s->i * cy[i__3].r;
 	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
-	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	stemp.r = q__1.r, stemp.i = q__1.i;
 	i__2 = i__;
 	i__3 = i__;
 	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	r_cnjg(&q__4, s);
 	i__4 = i__;
-	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__3.r = q__4.r * cx[i__4].r - q__4.i * cx[i__4].i, q__3.i = q__4.r *
+		cx[i__4].i + q__4.i * cx[i__4].r;
 	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
 	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
 	i__2 = i__;
-	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	cx[i__2].r = stemp.r, cx[i__2].i = stemp.i;
 /* L30: */
     }
     return 0;
-} /* csrot_ */
+} /* crot_ */
 
 /* Subroutine */ int cstedc_(char *compz, integer *n, real *d__, real *e,
 	complex *z__, integer *ldz, complex *work, integer *lwork, real *
@@ -18834,7 +21493,7 @@ L20:
     /* Local variables */
     static integer i__, j, k, m;
     static real p;
-    static integer ii, ll, end, lgn;
+    static integer ii, ll, lgn;
     static real eps, tiny;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int cswap_(integer *, complex *, integer *,
@@ -18852,6 +21511,7 @@ L20:
 	    integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
+    static integer finish;
     extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
 	    real *, integer *, integer *, real *, integer *, integer *), sstedc_(char *, integer *, real *, real *, real *,
 	    integer *, real *, integer *, integer *, integer *, integer *), slaset_(char *, integer *, integer *, real *, real *,
@@ -18870,10 +21530,10 @@ L20:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -18926,21 +21586,24 @@ L20:
             The leading dimension of the array Z.  LDZ >= 1.
             If eigenvectors are desired, then LDZ >= max(1,N).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX    array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
             The dimension of the array WORK.
             If COMPZ = 'N' or 'I', or N <= 1, LWORK must be at least 1.
             If COMPZ = 'V' and N > 1, LWORK must be at least N*N.
+            Note that for COMPZ = 'V', then if N is less than or
+            equal to the minimum divide size, usually 25, then LWORK need
+            only be 1.
 
             If LWORK = -1, then a workspace query is assumed; the routine
-            only calculates the optimal size of the WORK array, returns
-            this value as the first entry of the WORK array, and no error
-            message related to LWORK is issued by XERBLA.
+            only calculates the optimal sizes of the WORK, RWORK and
+            IWORK arrays, returns these values as the first entries of
+            the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
-    RWORK   (workspace/output) REAL array,
-                                           dimension (LRWORK)
+    RWORK   (workspace/output) REAL array, dimension (MAX(1,LRWORK))
             On exit, if INFO = 0, RWORK(1) returns the optimal LRWORK.
 
     LRWORK  (input) INTEGER
@@ -18952,13 +21615,17 @@ L20:
                            that 2**k >= N.
             If COMPZ = 'I' and N > 1, LRWORK must be at least
                            1 + 4*N + 2*N**2 .
+            Note that for COMPZ = 'I' or 'V', then if N is less than or
+            equal to the minimum divide size, usually 25, then LRWORK
+            need only be max(1,2*(N-1)).
 
             If LRWORK = -1, then a workspace query is assumed; the
-            routine only calculates the optimal size of the RWORK array,
-            returns this value as the first entry of the RWORK array, and
-            no error message related to LRWORK is issued by XERBLA.
+            routine only calculates the optimal sizes of the WORK, RWORK
+            and IWORK arrays, returns these values as the first entries
+            of the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
-    IWORK   (workspace/output) INTEGER array, dimension (LIWORK)
+    IWORK   (workspace/output) INTEGER array, dimension (MAX(1,LIWORK))
             On exit, if INFO = 0, IWORK(1) returns the optimal LIWORK.
 
     LIWORK  (input) INTEGER
@@ -18968,11 +21635,15 @@ L20:
                                       6 + 6*N + 5*N*lg N.
             If COMPZ = 'I' or N > 1,  LIWORK must be at least
                                       3 + 5*N .
+            Note that for COMPZ = 'I' or 'V', then if N is less than or
+            equal to the minimum divide size, usually 25, then LIWORK
+            need only be 1.
 
             If LIWORK = -1, then a workspace query is assumed; the
-            routine only calculates the optimal size of the IWORK array,
-            returns this value as the first entry of the IWORK array, and
-            no error message related to LIWORK is issued by XERBLA.
+            routine only calculates the optimal sizes of the WORK, RWORK
+            and IWORK arrays, returns these values as the first entries
+            of the WORK, RWORK and IWORK arrays, and no error message
+            related to LWORK or LRWORK or LIWORK is issued by XERBLA.
 
     INFO    (output) INTEGER
             = 0:  successful exit.
@@ -19017,19 +21688,36 @@ L20:
     } else {
 	icompz = -1;
     }
-    if (*n <= 1 || icompz <= 0) {
-	lwmin = 1;
-	liwmin = 1;
-	lrwmin = 1;
-    } else {
-	lgn = (integer) (log((real) (*n)) / log(2.f));
-	if (pow_ii(&c__2, &lgn) < *n) {
-	    ++lgn;
-	}
-	if (pow_ii(&c__2, &lgn) < *n) {
-	    ++lgn;
-	}
-	if (icompz == 1) {
+    if (icompz < 0) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*ldz < 1 || icompz > 0 && *ldz < max(1,*n)) {
+	*info = -6;
+    }
+
+    if (*info == 0) {
+
+/*        Compute the workspace requirements */
+
+	smlsiz = ilaenv_(&c__9, "CSTEDC", " ", &c__0, &c__0, &c__0, &c__0, (
+		ftnlen)6, (ftnlen)1);
+	if (*n <= 1 || icompz == 0) {
+	    lwmin = 1;
+	    liwmin = 1;
+	    lrwmin = 1;
+	} else if (*n <= smlsiz) {
+	    lwmin = 1;
+	    liwmin = 1;
+	    lrwmin = *n - 1 << 1;
+	} else if (icompz == 1) {
+	    lgn = (integer) (log((real) (*n)) / log(2.f));
+	    if (pow_ii(&c__2, &lgn) < *n) {
+		++lgn;
+	    }
+	    if (pow_ii(&c__2, &lgn) < *n) {
+		++lgn;
+	    }
 	    lwmin = *n * *n;
 /* Computing 2nd power */
 	    i__1 = *n;
@@ -19042,25 +21730,17 @@ L20:
 	    lrwmin = (*n << 2) + 1 + (i__1 * i__1 << 1);
 	    liwmin = *n * 5 + 3;
 	}
-    }
-    if (icompz < 0) {
-	*info = -1;
-    } else if (*n < 0) {
-	*info = -2;
-    } else if (*ldz < 1 || icompz > 0 && *ldz < max(1,*n)) {
-	*info = -6;
-    } else if (*lwork < lwmin && ! lquery) {
-	*info = -8;
-    } else if (*lrwork < lrwmin && ! lquery) {
-	*info = -10;
-    } else if (*liwork < liwmin && ! lquery) {
-	*info = -12;
-    }
-
-    if (*info == 0) {
 	work[1].r = (real) lwmin, work[1].i = 0.f;
 	rwork[1] = (real) lrwmin;
 	iwork[1] = liwmin;
+
+	if (*lwork < lwmin && ! lquery) {
+	    *info = -8;
+	} else if (*lrwork < lrwmin && ! lquery) {
+	    *info = -10;
+	} else if (*liwork < liwmin && ! lquery) {
+	    *info = -12;
+	}
     }
 
     if (*info != 0) {
@@ -19084,9 +21764,6 @@ L20:
 	return 0;
     }
 
-    smlsiz = ilaenv_(&c__9, "CSTEDC", " ", &c__0, &c__0, &c__0, &c__0, (
-	    ftnlen)6, (ftnlen)1);
-
 /*
        If the following conditional clause is removed, then the routine
        will use the Divide and Conquer routine to compute only the
@@ -19094,14 +21771,15 @@ L20:
        (2 + 5N + 2N lg(N)) integer workspace.
        Since on many architectures SSTERF is much faster than any other
        algorithm for finding eigenvalues only, it is used here
-       as the default.
+       as the default. If the conditional clause is removed, then
+       information on the size of workspace needs to be changed.
 
        If COMPZ = 'N', use SSTERF to compute the eigenvalues.
 */
 
     if (icompz == 0) {
 	ssterf_(n, &d__[1], &e[1], info);
-	return 0;
+	goto L70;
     }
 
 /*
@@ -19110,161 +21788,156 @@ L20:
 */
 
     if (*n <= smlsiz) {
-	if (icompz == 0) {
-	    ssterf_(n, &d__[1], &e[1], info);
-	    return 0;
-	} else if (icompz == 2) {
-	    csteqr_("I", n, &d__[1], &e[1], &z__[z_offset], ldz, &rwork[1],
-		    info);
-	    return 0;
-	} else {
-	    csteqr_("V", n, &d__[1], &e[1], &z__[z_offset], ldz, &rwork[1],
-		    info);
-	    return 0;
-	}
-    }
 
-/*     If COMPZ = 'I', we simply call SSTEDC instead. */
+	csteqr_(compz, n, &d__[1], &e[1], &z__[z_offset], ldz, &rwork[1],
+		info);
 
-    if (icompz == 2) {
-	slaset_("Full", n, n, &c_b1101, &c_b871, &rwork[1], n);
-	ll = *n * *n + 1;
-	i__1 = *lrwork - ll + 1;
-	sstedc_("I", n, &d__[1], &e[1], &rwork[1], n, &rwork[ll], &i__1, &
-		iwork[1], liwork, info);
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    i__2 = *n;
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		i__3 = i__ + j * z_dim1;
-		i__4 = (j - 1) * *n + i__;
-		z__[i__3].r = rwork[i__4], z__[i__3].i = 0.f;
+    } else {
+
+/*        If COMPZ = 'I', we simply call SSTEDC instead. */
+
+	if (icompz == 2) {
+	    slaset_("Full", n, n, &c_b1087, &c_b894, &rwork[1], n);
+	    ll = *n * *n + 1;
+	    i__1 = *lrwork - ll + 1;
+	    sstedc_("I", n, &d__[1], &e[1], &rwork[1], n, &rwork[ll], &i__1, &
+		    iwork[1], liwork, info);
+	    i__1 = *n;
+	    for (j = 1; j <= i__1; ++j) {
+		i__2 = *n;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    i__3 = i__ + j * z_dim1;
+		    i__4 = (j - 1) * *n + i__;
+		    z__[i__3].r = rwork[i__4], z__[i__3].i = 0.f;
 /* L10: */
-	    }
+		}
 /* L20: */
+	    }
+	    goto L70;
 	}
-	return 0;
-    }
 
 /*
-       From now on, only option left to be handled is COMPZ = 'V',
-       i.e. ICOMPZ = 1.
+          From now on, only option left to be handled is COMPZ = 'V',
+          i.e. ICOMPZ = 1.
 
-       Scale.
+          Scale.
 */
 
-    orgnrm = slanst_("M", n, &d__[1], &e[1]);
-    if (orgnrm == 0.f) {
-	return 0;
-    }
+	orgnrm = slanst_("M", n, &d__[1], &e[1]);
+	if (orgnrm == 0.f) {
+	    goto L70;
+	}
 
-    eps = slamch_("Epsilon");
+	eps = slamch_("Epsilon");
 
-    start = 1;
+	start = 1;
 
-/*     while ( START <= N ) */
+/*        while ( START <= N ) */
 
 L30:
-    if (start <= *n) {
+	if (start <= *n) {
 
 /*
-       Let END be the position of the next subdiagonal entry such that
-       E( END ) <= TINY or END = N if no such subdiagonal exists.  The
-       matrix identified by the elements between START and END
-       constitutes an independent sub-problem.
+             Let FINISH be the position of the next subdiagonal entry
+             such that E( FINISH ) <= TINY or FINISH = N if no such
+             subdiagonal exists.  The matrix identified by the elements
+             between START and FINISH constitutes an independent
+             sub-problem.
 */
 
-	end = start;
+	    finish = start;
 L40:
-	if (end < *n) {
-	    tiny = eps * sqrt((r__1 = d__[end], dabs(r__1))) * sqrt((r__2 =
-		    d__[end + 1], dabs(r__2)));
-	    if ((r__1 = e[end], dabs(r__1)) > tiny) {
-		++end;
-		goto L40;
+	    if (finish < *n) {
+		tiny = eps * sqrt((r__1 = d__[finish], dabs(r__1))) * sqrt((
+			r__2 = d__[finish + 1], dabs(r__2)));
+		if ((r__1 = e[finish], dabs(r__1)) > tiny) {
+		    ++finish;
+		    goto L40;
+		}
 	    }
+
+/*           (Sub) Problem determined.  Compute its size and solve it. */
+
+	    m = finish - start + 1;
+	    if (m > smlsiz) {
+
+/*              Scale. */
+
+		orgnrm = slanst_("M", &m, &d__[start], &e[start]);
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b894, &m, &c__1, &d__[
+			start], &m, info);
+		i__1 = m - 1;
+		i__2 = m - 1;
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b894, &i__1, &c__1, &e[
+			start], &i__2, info);
+
+		claed0_(n, &m, &d__[start], &e[start], &z__[start * z_dim1 +
+			1], ldz, &work[1], n, &rwork[1], &iwork[1], info);
+		if (*info > 0) {
+		    *info = (*info / (m + 1) + start - 1) * (*n + 1) + *info %
+			     (m + 1) + start - 1;
+		    goto L70;
+		}
+
+/*              Scale back. */
+
+		slascl_("G", &c__0, &c__0, &c_b894, &orgnrm, &m, &c__1, &d__[
+			start], &m, info);
+
+	    } else {
+		ssteqr_("I", &m, &d__[start], &e[start], &rwork[1], &m, &
+			rwork[m * m + 1], info);
+		clacrm_(n, &m, &z__[start * z_dim1 + 1], ldz, &rwork[1], &m, &
+			work[1], n, &rwork[m * m + 1]);
+		clacpy_("A", n, &m, &work[1], n, &z__[start * z_dim1 + 1],
+			ldz);
+		if (*info > 0) {
+		    *info = start * (*n + 1) + finish;
+		    goto L70;
+		}
+	    }
+
+	    start = finish + 1;
+	    goto L30;
 	}
-
-/*        (Sub) Problem determined.  Compute its size and solve it. */
-
-	m = end - start + 1;
-	if (m > smlsiz) {
-	    *info = smlsiz;
-
-/*           Scale. */
-
-	    orgnrm = slanst_("M", &m, &d__[start], &e[start]);
-	    slascl_("G", &c__0, &c__0, &orgnrm, &c_b871, &m, &c__1, &d__[
-		    start], &m, info);
-	    i__1 = m - 1;
-	    i__2 = m - 1;
-	    slascl_("G", &c__0, &c__0, &orgnrm, &c_b871, &i__1, &c__1, &e[
-		    start], &i__2, info);
-
-	    claed0_(n, &m, &d__[start], &e[start], &z__[start * z_dim1 + 1],
-		    ldz, &work[1], n, &rwork[1], &iwork[1], info);
-	    if (*info > 0) {
-		*info = (*info / (m + 1) + start - 1) * (*n + 1) + *info % (m
-			+ 1) + start - 1;
-		return 0;
-	    }
-
-/*           Scale back. */
-
-	    slascl_("G", &c__0, &c__0, &c_b871, &orgnrm, &m, &c__1, &d__[
-		    start], &m, info);
-
-	} else {
-	    ssteqr_("I", &m, &d__[start], &e[start], &rwork[1], &m, &rwork[m *
-		     m + 1], info);
-	    clacrm_(n, &m, &z__[start * z_dim1 + 1], ldz, &rwork[1], &m, &
-		    work[1], n, &rwork[m * m + 1]);
-	    clacpy_("A", n, &m, &work[1], n, &z__[start * z_dim1 + 1], ldz);
-	    if (*info > 0) {
-		*info = start * (*n + 1) + end;
-		return 0;
-	    }
-	}
-
-	start = end + 1;
-	goto L30;
-    }
 
 /*
-       endwhile
+          endwhile
 
-       If the problem split any number of times, then the eigenvalues
-       will not be properly ordered.  Here we permute the eigenvalues
-       (and the associated eigenvectors) into ascending order.
+          If the problem split any number of times, then the eigenvalues
+          will not be properly ordered.  Here we permute the eigenvalues
+          (and the associated eigenvectors) into ascending order.
 */
 
-    if (m != *n) {
+	if (m != *n) {
 
-/*        Use Selection Sort to minimize swaps of eigenvectors */
+/*           Use Selection Sort to minimize swaps of eigenvectors */
 
-	i__1 = *n;
-	for (ii = 2; ii <= i__1; ++ii) {
-	    i__ = ii - 1;
-	    k = i__;
-	    p = d__[i__];
-	    i__2 = *n;
-	    for (j = ii; j <= i__2; ++j) {
-		if (d__[j] < p) {
-		    k = j;
-		    p = d__[j];
-		}
+	    i__1 = *n;
+	    for (ii = 2; ii <= i__1; ++ii) {
+		i__ = ii - 1;
+		k = i__;
+		p = d__[i__];
+		i__2 = *n;
+		for (j = ii; j <= i__2; ++j) {
+		    if (d__[j] < p) {
+			k = j;
+			p = d__[j];
+		    }
 /* L50: */
-	    }
-	    if (k != i__) {
-		d__[k] = d__[i__];
-		d__[i__] = p;
-		cswap_(n, &z__[i__ * z_dim1 + 1], &c__1, &z__[k * z_dim1 + 1],
-			 &c__1);
-	    }
+		}
+		if (k != i__) {
+		    d__[k] = d__[i__];
+		    d__[i__] = p;
+		    cswap_(n, &z__[i__ * z_dim1 + 1], &c__1, &z__[k * z_dim1
+			    + 1], &c__1);
+		}
 /* L60: */
+	    }
 	}
     }
 
+L70:
     work[1].r = (real) lwmin, work[1].i = 0.f;
     rwork[1] = (real) lrwmin;
     iwork[1] = liwmin;
@@ -19326,10 +21999,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -19462,7 +22135,7 @@ L40:
 */
 
     if (icompz == 2) {
-	claset_("Full", n, n, &c_b55, &c_b56, &z__[z_offset], ldz);
+	claset_("Full", n, n, &c_b56, &c_b57, &z__[z_offset], ldz);
     }
 
     nmaxit = *n * 30;
@@ -19612,7 +22285,7 @@ L60:
 /*        Form shift. */
 
 	g = (d__[l + 1] - p) / (e[l] * 2.f);
-	r__ = slapy2_(&g, &c_b871);
+	r__ = slapy2_(&g, &c_b894);
 	g = d__[m] - p + e[l] / (g + r_sign(&r__, &g));
 
 	s = 1.f;
@@ -19738,7 +22411,7 @@ L110:
 /*        Form shift. */
 
 	g = (d__[l - 1] - p) / (e[l - 1] * 2.f);
-	r__ = slapy2_(&g, &c_b871);
+	r__ = slapy2_(&g, &c_b894);
 	g = d__[m] - p + e[l - 1] / (g + r_sign(&r__, &g));
 
 	s = 1.f;
@@ -19917,10 +22590,10 @@ L160:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -19928,20 +22601,23 @@ L160:
 
     CTREVC computes some or all of the right and/or left eigenvectors of
     a complex upper triangular matrix T.
+    Matrices of this type are produced by the Schur factorization of
+    a complex general matrix:  A = Q*T*Q**H, as computed by CHSEQR.
 
     The right eigenvector x and the left eigenvector y of T corresponding
     to an eigenvalue w are defined by:
 
-                 T*x = w*x,     y'*T = w*y'
+                 T*x = w*x,     (y**H)*T = w*(y**H)
 
-    where y' denotes the conjugate transpose of the vector y.
+    where y**H denotes the conjugate transpose of the vector y.
+    The eigenvalues are not input to this routine, but are read directly
+    from the diagonal of T.
 
-    If all eigenvectors are requested, the routine may either return the
-    matrices X and/or Y of right or left eigenvectors of T, or the
-    products Q*X and/or Q*Y, where Q is an input unitary
-    matrix. If T was obtained from the Schur factorization of an
-    original matrix A = Q*T*Q', then Q*X and Q*Y are the matrices of
-    right or left eigenvectors of A.
+    This routine returns the matrices X and/or Y of right and left
+    eigenvectors of T, or the products Q*X and/or Q*Y, where Q is an
+    input matrix.  If Q is the unitary factor that reduces a matrix A to
+    Schur form T, then Q*X and Q*Y are the matrices of right and left
+    eigenvectors of A.
 
     Arguments
     =========
@@ -19954,17 +22630,17 @@ L160:
     HOWMNY  (input) CHARACTER*1
             = 'A':  compute all right and/or left eigenvectors;
             = 'B':  compute all right and/or left eigenvectors,
-                    and backtransform them using the input matrices
-                    supplied in VR and/or VL;
+                    backtransformed using the matrices supplied in
+                    VR and/or VL;
             = 'S':  compute selected right and/or left eigenvectors,
-                    specified by the logical array SELECT.
+                    as indicated by the logical array SELECT.
 
     SELECT  (input) LOGICAL array, dimension (N)
             If HOWMNY = 'S', SELECT specifies the eigenvectors to be
             computed.
-            If HOWMNY = 'A' or 'B', SELECT is not referenced.
-            To select the eigenvector corresponding to the j-th
-            eigenvalue, SELECT(j) must be set to .TRUE..
+            The eigenvector corresponding to the j-th eigenvalue is
+            computed if SELECT(j) = .TRUE..
+            Not referenced if HOWMNY = 'A' or 'B'.
 
     N       (input) INTEGER
             The order of the matrix T. N >= 0.
@@ -19982,19 +22658,16 @@ L160:
             Schur vectors returned by CHSEQR).
             On exit, if SIDE = 'L' or 'B', VL contains:
             if HOWMNY = 'A', the matrix Y of left eigenvectors of T;
-                             VL is lower triangular. The i-th column
-                             VL(i) of VL is the eigenvector corresponding
-                             to T(i,i).
             if HOWMNY = 'B', the matrix Q*Y;
             if HOWMNY = 'S', the left eigenvectors of T specified by
                              SELECT, stored consecutively in the columns
                              of VL, in the same order as their
                              eigenvalues.
-            If SIDE = 'R', VL is not referenced.
+            Not referenced if SIDE = 'R'.
 
     LDVL    (input) INTEGER
-            The leading dimension of the array VL.  LDVL >= max(1,N) if
-            SIDE = 'L' or 'B'; LDVL >= 1 otherwise.
+            The leading dimension of the array VL.  LDVL >= 1, and if
+            SIDE = 'L' or 'B', LDVL >= N.
 
     VR      (input/output) COMPLEX array, dimension (LDVR,MM)
             On entry, if SIDE = 'R' or 'B' and HOWMNY = 'B', VR must
@@ -20002,19 +22675,16 @@ L160:
             Schur vectors returned by CHSEQR).
             On exit, if SIDE = 'R' or 'B', VR contains:
             if HOWMNY = 'A', the matrix X of right eigenvectors of T;
-                             VR is upper triangular. The i-th column
-                             VR(i) of VR is the eigenvector corresponding
-                             to T(i,i).
             if HOWMNY = 'B', the matrix Q*X;
             if HOWMNY = 'S', the right eigenvectors of T specified by
                              SELECT, stored consecutively in the columns
                              of VR, in the same order as their
                              eigenvalues.
-            If SIDE = 'L', VR is not referenced.
+            Not referenced if SIDE = 'L'.
 
     LDVR    (input) INTEGER
-            The leading dimension of the array VR.  LDVR >= max(1,N) if
-             SIDE = 'R' or 'B'; LDVR >= 1 otherwise.
+            The leading dimension of the array VR.  LDVR >= 1, and if
+            SIDE = 'R' or 'B'; LDVR >= N.
 
     MM      (input) INTEGER
             The number of columns in the arrays VL and/or VR. MM >= M.
@@ -20232,7 +22902,7 @@ L160:
 		if (ki > 1) {
 		    i__1 = ki - 1;
 		    q__1.r = scale, q__1.i = 0.f;
-		    cgemv_("N", n, &i__1, &c_b56, &vr[vr_offset], ldvr, &work[
+		    cgemv_("N", n, &i__1, &c_b57, &vr[vr_offset], ldvr, &work[
 			    1], &c__1, &q__1, &vr[ki * vr_dim1 + 1], &c__1);
 		}
 
@@ -20348,7 +23018,7 @@ L80:
 		if (ki < *n) {
 		    i__2 = *n - ki;
 		    q__1.r = scale, q__1.i = 0.f;
-		    cgemv_("N", n, &i__2, &c_b56, &vl[(ki + 1) * vl_dim1 + 1],
+		    cgemv_("N", n, &i__2, &c_b57, &vl[(ki + 1) * vl_dim1 + 1],
 			     ldvl, &work[ki + 1], &c__1, &q__1, &vl[ki *
 			    vl_dim1 + 1], &c__1);
 		}
@@ -20382,6 +23052,193 @@ L130:
 
 } /* ctrevc_ */
 
+/* Subroutine */ int ctrexc_(char *compq, integer *n, complex *t, integer *
+	ldt, complex *q, integer *ldq, integer *ifst, integer *ilst, integer *
+	info)
+{
+    /* System generated locals */
+    integer q_dim1, q_offset, t_dim1, t_offset, i__1, i__2, i__3;
+    complex q__1;
+
+    /* Builtin functions */
+    void r_cnjg(complex *, complex *);
+
+    /* Local variables */
+    static integer k, m1, m2, m3;
+    static real cs;
+    static complex t11, t22, sn, temp;
+    extern /* Subroutine */ int crot_(integer *, complex *, integer *,
+	    complex *, integer *, real *, complex *);
+    extern logical lsame_(char *, char *);
+    static logical wantq;
+    extern /* Subroutine */ int clartg_(complex *, complex *, real *, complex
+	    *, complex *), xerbla_(char *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    CTREXC reorders the Schur factorization of a complex matrix
+    A = Q*T*Q**H, so that the diagonal element of T with row index IFST
+    is moved to row ILST.
+
+    The Schur form T is reordered by a unitary similarity transformation
+    Z**H*T*Z, and optionally the matrix Q of Schur vectors is updated by
+    postmultplying it with Z.
+
+    Arguments
+    =========
+
+    COMPQ   (input) CHARACTER*1
+            = 'V':  update the matrix Q of Schur vectors;
+            = 'N':  do not update Q.
+
+    N       (input) INTEGER
+            The order of the matrix T. N >= 0.
+
+    T       (input/output) COMPLEX array, dimension (LDT,N)
+            On entry, the upper triangular matrix T.
+            On exit, the reordered upper triangular matrix.
+
+    LDT     (input) INTEGER
+            The leading dimension of the array T. LDT >= max(1,N).
+
+    Q       (input/output) COMPLEX array, dimension (LDQ,N)
+            On entry, if COMPQ = 'V', the matrix Q of Schur vectors.
+            On exit, if COMPQ = 'V', Q has been postmultiplied by the
+            unitary transformation matrix Z which reorders T.
+            If COMPQ = 'N', Q is not referenced.
+
+    LDQ     (input) INTEGER
+            The leading dimension of the array Q.  LDQ >= max(1,N).
+
+    IFST    (input) INTEGER
+    ILST    (input) INTEGER
+            Specify the reordering of the diagonal elements of T:
+            The element with row index IFST is moved to row ILST by a
+            sequence of transpositions between adjacent elements.
+            1 <= IFST <= N; 1 <= ILST <= N.
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+
+    =====================================================================
+
+
+       Decode and test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    q_dim1 = *ldq;
+    q_offset = 1 + q_dim1;
+    q -= q_offset;
+
+    /* Function Body */
+    *info = 0;
+    wantq = lsame_(compq, "V");
+    if (! lsame_(compq, "N") && ! wantq) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*ldt < max(1,*n)) {
+	*info = -4;
+    } else if (*ldq < 1 || wantq && *ldq < max(1,*n)) {
+	*info = -6;
+    } else if (*ifst < 1 || *ifst > *n) {
+	*info = -7;
+    } else if (*ilst < 1 || *ilst > *n) {
+	*info = -8;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("CTREXC", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n == 1 || *ifst == *ilst) {
+	return 0;
+    }
+
+    if (*ifst < *ilst) {
+
+/*        Move the IFST-th diagonal element forward down the diagonal. */
+
+	m1 = 0;
+	m2 = -1;
+	m3 = 1;
+    } else {
+
+/*        Move the IFST-th diagonal element backward up the diagonal. */
+
+	m1 = -1;
+	m2 = 0;
+	m3 = -1;
+    }
+
+    i__1 = *ilst + m2;
+    i__2 = m3;
+    for (k = *ifst + m1; i__2 < 0 ? k >= i__1 : k <= i__1; k += i__2) {
+
+/*        Interchange the k-th and (k+1)-th diagonal elements. */
+
+	i__3 = k + k * t_dim1;
+	t11.r = t[i__3].r, t11.i = t[i__3].i;
+	i__3 = k + 1 + (k + 1) * t_dim1;
+	t22.r = t[i__3].r, t22.i = t[i__3].i;
+
+/*        Determine the transformation to perform the interchange. */
+
+	q__1.r = t22.r - t11.r, q__1.i = t22.i - t11.i;
+	clartg_(&t[k + (k + 1) * t_dim1], &q__1, &cs, &sn, &temp);
+
+/*        Apply transformation to the matrix T. */
+
+	if (k + 2 <= *n) {
+	    i__3 = *n - k - 1;
+	    crot_(&i__3, &t[k + (k + 2) * t_dim1], ldt, &t[k + 1 + (k + 2) *
+		    t_dim1], ldt, &cs, &sn);
+	}
+	i__3 = k - 1;
+	r_cnjg(&q__1, &sn);
+	crot_(&i__3, &t[k * t_dim1 + 1], &c__1, &t[(k + 1) * t_dim1 + 1], &
+		c__1, &cs, &q__1);
+
+	i__3 = k + k * t_dim1;
+	t[i__3].r = t22.r, t[i__3].i = t22.i;
+	i__3 = k + 1 + (k + 1) * t_dim1;
+	t[i__3].r = t11.r, t[i__3].i = t11.i;
+
+	if (wantq) {
+
+/*           Accumulate transformation in the matrix Q. */
+
+	    r_cnjg(&q__1, &sn);
+	    crot_(n, &q[k * q_dim1 + 1], &c__1, &q[(k + 1) * q_dim1 + 1], &
+		    c__1, &cs, &q__1);
+	}
+
+/* L10: */
+    }
+
+    return 0;
+
+/*     End of CTREXC */
+
+} /* ctrexc_ */
+
 /* Subroutine */ int ctrti2_(char *uplo, char *diag, integer *n, complex *a,
 	integer *lda, integer *info)
 {
@@ -20405,10 +23262,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -20494,7 +23351,7 @@ L130:
 	for (j = 1; j <= i__1; ++j) {
 	    if (nounit) {
 		i__2 = j + j * a_dim1;
-		c_div(&q__1, &c_b56, &a[j + j * a_dim1]);
+		c_div(&q__1, &c_b57, &a[j + j * a_dim1]);
 		a[i__2].r = q__1.r, a[i__2].i = q__1.i;
 		i__2 = j + j * a_dim1;
 		q__1.r = -a[i__2].r, q__1.i = -a[i__2].i;
@@ -20520,7 +23377,7 @@ L130:
 	for (j = *n; j >= 1; --j) {
 	    if (nounit) {
 		i__1 = j + j * a_dim1;
-		c_div(&q__1, &c_b56, &a[j + j * a_dim1]);
+		c_div(&q__1, &c_b57, &a[j + j * a_dim1]);
 		a[i__1].r = q__1.r, a[i__1].i = q__1.i;
 		i__1 = j + j * a_dim1;
 		q__1.r = -a[i__1].r, q__1.i = -a[i__1].i;
@@ -20578,10 +23435,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -20712,7 +23569,7 @@ L130:
 
 		i__4 = j - 1;
 		ctrmm_("Left", "Upper", "No transpose", diag, &i__4, &jb, &
-			c_b56, &a[a_offset], lda, &a[j * a_dim1 + 1], lda);
+			c_b57, &a[a_offset], lda, &a[j * a_dim1 + 1], lda);
 		i__4 = j - 1;
 		q__1.r = -1.f, q__1.i = -0.f;
 		ctrsm_("Right", "Upper", "No transpose", diag, &i__4, &jb, &
@@ -20740,7 +23597,7 @@ L130:
 
 		    i__1 = *n - j - jb + 1;
 		    ctrmm_("Left", "Lower", "No transpose", diag, &i__1, &jb,
-			    &c_b56, &a[j + jb + (j + jb) * a_dim1], lda, &a[j
+			    &c_b57, &a[j + jb + (j + jb) * a_dim1], lda, &a[j
 			    + jb + j * a_dim1], lda);
 		    i__1 = *n - j - jb + 1;
 		    q__1.r = -1.f, q__1.i = -0.f;
@@ -20779,10 +23636,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -20943,10 +23800,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -21012,7 +23869,7 @@ L130:
             reflector H(i) or G(i), which determines Q or P**H, as
             returned by CGEBRD in its array argument TAUQ or TAUP.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -21226,10 +24083,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -21266,7 +24123,7 @@ L130:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by CGEHRD.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -21422,10 +24279,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -21595,10 +24452,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -21638,7 +24495,7 @@ L130:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by CGELQF.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -21856,10 +24713,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -21900,7 +24757,7 @@ L130:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by CGEQRF.
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -22118,10 +24975,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -22333,10 +25190,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -22563,10 +25420,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -22653,16 +25510,17 @@ L130:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
             The dimension of the array WORK.
             If SIDE = 'L', LWORK >= max(1,N);
-            if SIDE = 'R', LWORK >= max(1,M).
-            For optimum performance LWORK >= N*NB if SIDE = 'L', and
-            LWORK >= M*NB if SIDE = 'R', where NB is the optimal
-            blocksize.
+            if SIDE = 'R', LWORK >= max(1,M);
+            if N = 0 or M = 0, LWORK >= 1.
+            For optimum performance LWORK >= max(1,N*NB) if SIDE = 'L',
+            and LWORK >= max(1,M*NB) if SIDE = 'R', where NB is the
+            optimal blocksize. (NB = 0 if M = 0 or N = 0.)
 
             If LWORK = -1, then a workspace query is assumed; the routine
             only calculates the optimal size of the WORK array, returns
@@ -22705,6 +25563,9 @@ L130:
 	nq = *n;
 	nw = *m;
     }
+    if (*m == 0 || *n == 0) {
+	nw = 0;
+    }
     if (! applyq && ! lsame_(vect, "P")) {
 	*info = -1;
     } else if (! left && ! lsame_(side, "R")) {
@@ -22730,48 +25591,54 @@ L130:
     }
 
     if (*info == 0) {
-	if (applyq) {
-	    if (left) {
+	if (nw > 0) {
+	    if (applyq) {
+		if (left) {
 /* Writing concatenation */
-		i__3[0] = 1, a__1[0] = side;
-		i__3[1] = 1, a__1[1] = trans;
-		s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-		i__1 = *m - 1;
-		i__2 = *m - 1;
-		nb = ilaenv_(&c__1, "CUNMQR", ch__1, &i__1, n, &i__2, &c_n1, (
-			ftnlen)6, (ftnlen)2);
+		    i__3[0] = 1, a__1[0] = side;
+		    i__3[1] = 1, a__1[1] = trans;
+		    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+		    i__1 = *m - 1;
+		    i__2 = *m - 1;
+		    nb = ilaenv_(&c__1, "CUNMQR", ch__1, &i__1, n, &i__2, &
+			    c_n1, (ftnlen)6, (ftnlen)2);
+		} else {
+/* Writing concatenation */
+		    i__3[0] = 1, a__1[0] = side;
+		    i__3[1] = 1, a__1[1] = trans;
+		    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+		    i__1 = *n - 1;
+		    i__2 = *n - 1;
+		    nb = ilaenv_(&c__1, "CUNMQR", ch__1, m, &i__1, &i__2, &
+			    c_n1, (ftnlen)6, (ftnlen)2);
+		}
 	    } else {
+		if (left) {
 /* Writing concatenation */
-		i__3[0] = 1, a__1[0] = side;
-		i__3[1] = 1, a__1[1] = trans;
-		s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-		i__1 = *n - 1;
-		i__2 = *n - 1;
-		nb = ilaenv_(&c__1, "CUNMQR", ch__1, m, &i__1, &i__2, &c_n1, (
-			ftnlen)6, (ftnlen)2);
+		    i__3[0] = 1, a__1[0] = side;
+		    i__3[1] = 1, a__1[1] = trans;
+		    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+		    i__1 = *m - 1;
+		    i__2 = *m - 1;
+		    nb = ilaenv_(&c__1, "CUNMLQ", ch__1, &i__1, n, &i__2, &
+			    c_n1, (ftnlen)6, (ftnlen)2);
+		} else {
+/* Writing concatenation */
+		    i__3[0] = 1, a__1[0] = side;
+		    i__3[1] = 1, a__1[1] = trans;
+		    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+		    i__1 = *n - 1;
+		    i__2 = *n - 1;
+		    nb = ilaenv_(&c__1, "CUNMLQ", ch__1, m, &i__1, &i__2, &
+			    c_n1, (ftnlen)6, (ftnlen)2);
+		}
 	    }
+/* Computing MAX */
+	    i__1 = 1, i__2 = nw * nb;
+	    lwkopt = max(i__1,i__2);
 	} else {
-	    if (left) {
-/* Writing concatenation */
-		i__3[0] = 1, a__1[0] = side;
-		i__3[1] = 1, a__1[1] = trans;
-		s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-		i__1 = *m - 1;
-		i__2 = *m - 1;
-		nb = ilaenv_(&c__1, "CUNMLQ", ch__1, &i__1, n, &i__2, &c_n1, (
-			ftnlen)6, (ftnlen)2);
-	    } else {
-/* Writing concatenation */
-		i__3[0] = 1, a__1[0] = side;
-		i__3[1] = 1, a__1[1] = trans;
-		s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-		i__1 = *n - 1;
-		i__2 = *n - 1;
-		nb = ilaenv_(&c__1, "CUNMLQ", ch__1, m, &i__1, &i__2, &c_n1, (
-			ftnlen)6, (ftnlen)2);
-	    }
+	    lwkopt = 1;
 	}
-	lwkopt = max(1,nw) * nb;
 	work[1].r = (real) lwkopt, work[1].i = 0.f;
     }
 
@@ -22780,11 +25647,11 @@ L130:
 	xerbla_("CUNMBR", &i__1);
 	return 0;
     } else if (lquery) {
+	return 0;
     }
 
 /*     Quick return if possible */
 
-    work[1].r = 1.f, work[1].i = 0.f;
     if (*m == 0 || *n == 0) {
 	return 0;
     }
@@ -22861,6 +25728,235 @@ L130:
 
 } /* cunmbr_ */
 
+/* Subroutine */ int cunmhr_(char *side, char *trans, integer *m, integer *n,
+	integer *ilo, integer *ihi, complex *a, integer *lda, complex *tau,
+	complex *c__, integer *ldc, complex *work, integer *lwork, integer *
+	info)
+{
+    /* System generated locals */
+    address a__1[2];
+    integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2;
+    char ch__1[2];
+
+    /* Builtin functions */
+    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
+
+    /* Local variables */
+    static integer i1, i2, nb, mi, nh, ni, nq, nw;
+    static logical left;
+    extern logical lsame_(char *, char *);
+    static integer iinfo;
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    extern /* Subroutine */ int cunmqr_(char *, char *, integer *, integer *,
+	    integer *, complex *, integer *, complex *, complex *, integer *,
+	    complex *, integer *, integer *);
+    static integer lwkopt;
+    static logical lquery;
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    CUNMHR overwrites the general complex M-by-N matrix C with
+
+                    SIDE = 'L'     SIDE = 'R'
+    TRANS = 'N':      Q * C          C * Q
+    TRANS = 'C':      Q**H * C       C * Q**H
+
+    where Q is a complex unitary matrix of order nq, with nq = m if
+    SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
+    IHI-ILO elementary reflectors, as returned by CGEHRD:
+
+    Q = H(ilo) H(ilo+1) . . . H(ihi-1).
+
+    Arguments
+    =========
+
+    SIDE    (input) CHARACTER*1
+            = 'L': apply Q or Q**H from the Left;
+            = 'R': apply Q or Q**H from the Right.
+
+    TRANS   (input) CHARACTER*1
+            = 'N': apply Q  (No transpose)
+            = 'C': apply Q**H (Conjugate transpose)
+
+    M       (input) INTEGER
+            The number of rows of the matrix C. M >= 0.
+
+    N       (input) INTEGER
+            The number of columns of the matrix C. N >= 0.
+
+    ILO     (input) INTEGER
+    IHI     (input) INTEGER
+            ILO and IHI must have the same values as in the previous call
+            of CGEHRD. Q is equal to the unit matrix except in the
+            submatrix Q(ilo+1:ihi,ilo+1:ihi).
+            If SIDE = 'L', then 1 <= ILO <= IHI <= M, if M > 0, and
+            ILO = 1 and IHI = 0, if M = 0;
+            if SIDE = 'R', then 1 <= ILO <= IHI <= N, if N > 0, and
+            ILO = 1 and IHI = 0, if N = 0.
+
+    A       (input) COMPLEX array, dimension
+                                 (LDA,M) if SIDE = 'L'
+                                 (LDA,N) if SIDE = 'R'
+            The vectors which define the elementary reflectors, as
+            returned by CGEHRD.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.
+            LDA >= max(1,M) if SIDE = 'L'; LDA >= max(1,N) if SIDE = 'R'.
+
+    TAU     (input) COMPLEX array, dimension
+                                 (M-1) if SIDE = 'L'
+                                 (N-1) if SIDE = 'R'
+            TAU(i) must contain the scalar factor of the elementary
+            reflector H(i), as returned by CGEHRD.
+
+    C       (input/output) COMPLEX array, dimension (LDC,N)
+            On entry, the M-by-N matrix C.
+            On exit, C is overwritten by Q*C or Q**H*C or C*Q**H or C*Q.
+
+    LDC     (input) INTEGER
+            The leading dimension of the array C. LDC >= max(1,M).
+
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
+            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+
+    LWORK   (input) INTEGER
+            The dimension of the array WORK.
+            If SIDE = 'L', LWORK >= max(1,N);
+            if SIDE = 'R', LWORK >= max(1,M).
+            For optimum performance LWORK >= N*NB if SIDE = 'L', and
+            LWORK >= M*NB if SIDE = 'R', where NB is the optimal
+            blocksize.
+
+            If LWORK = -1, then a workspace query is assumed; the routine
+            only calculates the optimal size of the WORK array, returns
+            this value as the first entry of the WORK array, and no error
+            message related to LWORK is issued by XERBLA.
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input arguments
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    --tau;
+    c_dim1 = *ldc;
+    c_offset = 1 + c_dim1;
+    c__ -= c_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+    nh = *ihi - *ilo;
+    left = lsame_(side, "L");
+    lquery = *lwork == -1;
+
+/*     NQ is the order of Q and NW is the minimum dimension of WORK */
+
+    if (left) {
+	nq = *m;
+	nw = *n;
+    } else {
+	nq = *n;
+	nw = *m;
+    }
+    if (! left && ! lsame_(side, "R")) {
+	*info = -1;
+    } else if (! lsame_(trans, "N") && ! lsame_(trans,
+	    "C")) {
+	*info = -2;
+    } else if (*m < 0) {
+	*info = -3;
+    } else if (*n < 0) {
+	*info = -4;
+    } else if (*ilo < 1 || *ilo > max(1,nq)) {
+	*info = -5;
+    } else if (*ihi < min(*ilo,nq) || *ihi > nq) {
+	*info = -6;
+    } else if (*lda < max(1,nq)) {
+	*info = -8;
+    } else if (*ldc < max(1,*m)) {
+	*info = -11;
+    } else if (*lwork < max(1,nw) && ! lquery) {
+	*info = -13;
+    }
+
+    if (*info == 0) {
+	if (left) {
+/* Writing concatenation */
+	    i__1[0] = 1, a__1[0] = side;
+	    i__1[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__1, &c__2, (ftnlen)2);
+	    nb = ilaenv_(&c__1, "CUNMQR", ch__1, &nh, n, &nh, &c_n1, (ftnlen)
+		    6, (ftnlen)2);
+	} else {
+/* Writing concatenation */
+	    i__1[0] = 1, a__1[0] = side;
+	    i__1[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__1, &c__2, (ftnlen)2);
+	    nb = ilaenv_(&c__1, "CUNMQR", ch__1, m, &nh, &nh, &c_n1, (ftnlen)
+		    6, (ftnlen)2);
+	}
+	lwkopt = max(1,nw) * nb;
+	work[1].r = (real) lwkopt, work[1].i = 0.f;
+    }
+
+    if (*info != 0) {
+	i__2 = -(*info);
+	xerbla_("CUNMHR", &i__2);
+	return 0;
+    } else if (lquery) {
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*m == 0 || *n == 0 || nh == 0) {
+	work[1].r = 1.f, work[1].i = 0.f;
+	return 0;
+    }
+
+    if (left) {
+	mi = nh;
+	ni = *n;
+	i1 = *ilo + 1;
+	i2 = 1;
+    } else {
+	mi = *m;
+	ni = nh;
+	i1 = 1;
+	i2 = *ilo + 1;
+    }
+
+    cunmqr_(side, trans, &mi, &ni, &nh, &a[*ilo + 1 + *ilo * a_dim1], lda, &
+	    tau[*ilo], &c__[i1 + i2 * c_dim1], ldc, &work[1], lwork, &iinfo);
+
+    work[1].r = (real) lwkopt, work[1].i = 0.f;
+    return 0;
+
+/*     End of CUNMHR */
+
+} /* cunmhr_ */
+
 /* Subroutine */ int cunml2_(char *side, char *trans, integer *m, integer *n,
 	integer *k, complex *a, integer *lda, complex *tau, complex *c__,
 	integer *ldc, complex *work, integer *info)
@@ -22886,10 +25982,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -23127,10 +26223,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -23195,7 +26291,7 @@ L130:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -23433,10 +26529,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -23501,7 +26597,7 @@ L130:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -23547,10 +26643,10 @@ L130:
 
     if (left) {
 	nq = *m;
-	nw = *n;
+	nw = max(1,*n);
     } else {
 	nq = *n;
-	nw = *m;
+	nw = max(1,*m);
     }
     if (! left && ! lsame_(side, "R")) {
 	*info = -1;
@@ -23566,27 +26662,33 @@ L130:
 	*info = -7;
     } else if (*ldc < max(1,*m)) {
 	*info = -10;
-    } else if (*lwork < max(1,nw) && ! lquery) {
-	*info = -12;
     }
 
     if (*info == 0) {
+	if (*m == 0 || *n == 0) {
+	    lwkopt = 1;
+	} else {
 
 /*
-          Determine the block size.  NB may be at most NBMAX, where NBMAX
-          is used to define the local array T.
+             Determine the block size.  NB may be at most NBMAX, where
+             NBMAX is used to define the local array T.
 
    Computing MIN
    Writing concatenation
 */
-	i__3[0] = 1, a__1[0] = side;
-	i__3[1] = 1, a__1[1] = trans;
-	s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-	i__1 = 64, i__2 = ilaenv_(&c__1, "CUNMQL", ch__1, m, n, k, &c_n1, (
-		ftnlen)6, (ftnlen)2);
-	nb = min(i__1,i__2);
-	lwkopt = max(1,nw) * nb;
+	    i__3[0] = 1, a__1[0] = side;
+	    i__3[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+	    i__1 = 64, i__2 = ilaenv_(&c__1, "CUNMQL", ch__1, m, n, k, &c_n1,
+		    (ftnlen)6, (ftnlen)2);
+	    nb = min(i__1,i__2);
+	    lwkopt = nw * nb;
+	}
 	work[1].r = (real) lwkopt, work[1].i = 0.f;
+
+	if (*lwork < nw && ! lquery) {
+	    *info = -12;
+	}
     }
 
     if (*info != 0) {
@@ -23599,8 +26701,7 @@ L130:
 
 /*     Quick return if possible */
 
-    if (*m == 0 || *n == 0 || *k == 0) {
-	work[1].r = 1.f, work[1].i = 0.f;
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -23729,10 +26830,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -23797,7 +26898,7 @@ L130:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -24025,10 +27126,10 @@ L130:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -24094,7 +27195,7 @@ L130:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) COMPLEX array, dimension (LWORK)
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER

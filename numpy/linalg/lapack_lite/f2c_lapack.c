@@ -29,10 +29,10 @@ them.
 
 /* Table of constant values */
 
-static integer c__0 = 0;
-static real c_b163 = 0.f;
-static real c_b164 = 1.f;
 static integer c__1 = 1;
+static real c_b172 = 0.f;
+static real c_b173 = 1.f;
+static integer c__0 = 0;
 
 integer ieeeck_(integer *ispec, real *zero, real *one)
 {
@@ -45,10 +45,10 @@ integer ieeeck_(integer *ispec, real *zero, real *one)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1998
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -148,7 +148,7 @@ integer ieeeck_(integer *ispec, real *zero, real *one)
 
     nan5 = neginf * negzro;
 
-    nan6 = nan5 * 0.f;
+    nan6 = nan5 * *zero;
 
     if (nan1 == nan1) {
 	ret_val = 0;
@@ -183,6 +183,292 @@ integer ieeeck_(integer *ispec, real *zero, real *one)
     return ret_val;
 } /* ieeeck_ */
 
+integer ilaclc_(integer *m, integer *n, complex *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1, i__2;
+
+    /* Local variables */
+    static integer i__;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILACLC scans A for its last non-zero column.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) COMPLEX array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*n == 0) {
+	ret_val = *n;
+    } else /* if(complicated condition) */ {
+	i__1 = *n * a_dim1 + 1;
+	i__2 = *m + *n * a_dim1;
+	if (a[i__1].r != 0.f || a[i__1].i != 0.f || (a[i__2].r != 0.f || a[
+		i__2].i != 0.f)) {
+	    ret_val = *n;
+	} else {
+/*     Now scan each column from the end, returning with the first non-zero. */
+	    for (ret_val = *n; ret_val >= 1; --ret_val) {
+		i__1 = *m;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+		    i__2 = i__ + ret_val * a_dim1;
+		    if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
+			return ret_val;
+		    }
+		}
+	    }
+	}
+    }
+    return ret_val;
+} /* ilaclc_ */
+
+integer ilaclr_(integer *m, integer *n, complex *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1, i__2;
+
+    /* Local variables */
+    static integer i__, j;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILACLR scans A for its last non-zero row.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) COMPLEX          array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*m == 0) {
+	ret_val = *m;
+    } else /* if(complicated condition) */ {
+	i__1 = *m + a_dim1;
+	i__2 = *m + *n * a_dim1;
+	if (a[i__1].r != 0.f || a[i__1].i != 0.f || (a[i__2].r != 0.f || a[
+		i__2].i != 0.f)) {
+	    ret_val = *m;
+	} else {
+/*     Scan up each column tracking the last zero row seen. */
+	    ret_val = 0;
+	    i__1 = *n;
+	    for (j = 1; j <= i__1; ++j) {
+		for (i__ = *m; i__ >= 1; --i__) {
+		    i__2 = i__ + j * a_dim1;
+		    if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
+			goto L10;
+		    }
+		}
+L10:
+		ret_val = max(ret_val,i__);
+	    }
+	}
+    }
+    return ret_val;
+} /* ilaclr_ */
+
+integer iladlc_(integer *m, integer *n, doublereal *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1;
+
+    /* Local variables */
+    static integer i__;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILADLC scans A for its last non-zero column.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*n == 0) {
+	ret_val = *n;
+    } else if (a[*n * a_dim1 + 1] != 0. || a[*m + *n * a_dim1] != 0.) {
+	ret_val = *n;
+    } else {
+/*     Now scan each column from the end, returning with the first non-zero. */
+	for (ret_val = *n; ret_val >= 1; --ret_val) {
+	    i__1 = *m;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		if (a[i__ + ret_val * a_dim1] != 0.) {
+		    return ret_val;
+		}
+	    }
+	}
+    }
+    return ret_val;
+} /* iladlc_ */
+
+integer iladlr_(integer *m, integer *n, doublereal *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1;
+
+    /* Local variables */
+    static integer i__, j;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILADLR scans A for its last non-zero row.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*m == 0) {
+	ret_val = *m;
+    } else if (a[*m + a_dim1] != 0. || a[*m + *n * a_dim1] != 0.) {
+	ret_val = *m;
+    } else {
+/*     Scan up each column tracking the last zero row seen. */
+	ret_val = 0;
+	i__1 = *n;
+	for (j = 1; j <= i__1; ++j) {
+	    for (i__ = *m; i__ >= 1; --i__) {
+		if (a[i__ + j * a_dim1] != 0.) {
+		    goto L10;
+		}
+	    }
+L10:
+	    ret_val = max(ret_val,i__);
+	}
+    }
+    return ret_val;
+} /* iladlr_ */
+
 integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
 	integer *n2, integer *n3, integer *n4, ftnlen name_len, ftnlen
 	opts_len)
@@ -198,17 +484,22 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
     static integer i__;
     static char c1[1], c2[2], c3[3], c4[2];
     static integer ic, nb, iz, nx;
-    static logical cname, sname;
+    static logical cname;
     static integer nbmin;
+    static logical sname;
     extern integer ieeeck_(integer *, real *, real *);
     static char subnam[6];
+    extern integer iparmq_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+
+    -- April 2009                                                      --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -217,6 +508,10 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
     ILAENV is called from the LAPACK routines to choose problem-dependent
     parameters for the local environment.  See ISPEC for a description of
     the parameters.
+
+    ILAENV returns an INTEGER
+    if ILAENV >= 0: ILAENV returns the value of the parameter specified by ISPEC
+    if ILAENV < 0:  if ILAENV = -k, the k-th argument had an illegal value.
 
     This version provides a set of parameters which should give good,
     but not optimal, performance on many of the currently available
@@ -241,7 +536,7 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
             = 3: the crossover point (in a block routine, for N less
                  than this value, an unblocked routine should be used)
             = 4: the number of shifts, used in the nonsymmetric
-                 eigenvalue routines
+                 eigenvalue routines (DEPRECATED)
             = 5: the minimum column dimension for blocking to be used;
                  rectangular blocks must have dimension at least k by m,
                  where k is given by ILAENV(2,...) and m by ILAENV(5,...)
@@ -250,13 +545,16 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
                  this value, a QR factorization is used first to reduce
                  the matrix to a triangular form.)
             = 7: the number of processors
-            = 8: the crossover point for the multishift QR and QZ methods
-                 for nonsymmetric eigenvalue problems.
+            = 8: the crossover point for the multishift QR method
+                 for nonsymmetric eigenvalue problems (DEPRECATED)
             = 9: maximum size of the subproblems at the bottom of the
                  computation tree in the divide-and-conquer algorithm
                  (used by xGELSD and xGESDD)
             =10: ieee NaN arithmetic can be trusted not to trap
             =11: infinity arithmetic can be trusted not to trap
+            12 <= ISPEC <= 16:
+                 xHSEQR or one of its subroutines,
+                 see IPARMQ for detailed explanation
 
     NAME    (input) CHARACTER*(*)
             The name of the calling subroutine, in either upper case or
@@ -274,10 +572,6 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
     N4      (input) INTEGER
             Problem dimensions for the subroutine NAME; these may not all
             be required.
-
-   (ILAENV) (output) INTEGER
-            >= 0: the value of the parameter specified by ISPEC
-            < 0:  if ILAENV = -k, the k-th argument had an illegal value.
 
     Further Details
     ===============
@@ -304,17 +598,22 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
 
 
     switch (*ispec) {
-	case 1:  goto L100;
-	case 2:  goto L100;
-	case 3:  goto L100;
-	case 4:  goto L400;
-	case 5:  goto L500;
-	case 6:  goto L600;
-	case 7:  goto L700;
-	case 8:  goto L800;
-	case 9:  goto L900;
-	case 10:  goto L1000;
-	case 11:  goto L1100;
+	case 1:  goto L10;
+	case 2:  goto L10;
+	case 3:  goto L10;
+	case 4:  goto L80;
+	case 5:  goto L90;
+	case 6:  goto L100;
+	case 7:  goto L110;
+	case 8:  goto L120;
+	case 9:  goto L130;
+	case 10:  goto L140;
+	case 11:  goto L150;
+	case 12:  goto L160;
+	case 13:  goto L160;
+	case 14:  goto L160;
+	case 15:  goto L160;
+	case 16:  goto L160;
     }
 
 /*     Invalid value for ISPEC */
@@ -322,7 +621,7 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
     ret_val = -1;
     return ret_val;
 
-L100:
+L10:
 
 /*     Convert NAME to upper case if the first character is lower case. */
 
@@ -341,7 +640,7 @@ L100:
 		if (ic >= 97 && ic <= 122) {
 		    *(unsigned char *)&subnam[i__ - 1] = (char) (ic - 32);
 		}
-/* L10: */
+/* L20: */
 	    }
 	}
 
@@ -358,7 +657,7 @@ L100:
 			162 && ic <= 169) {
 		    *(unsigned char *)&subnam[i__ - 1] = (char) (ic + 64);
 		}
-/* L20: */
+/* L30: */
 	    }
 	}
 
@@ -373,7 +672,7 @@ L100:
 		if (ic >= 225 && ic <= 250) {
 		    *(unsigned char *)&subnam[i__ - 1] = (char) (ic - 32);
 		}
-/* L30: */
+/* L40: */
 	    }
 	}
     }
@@ -389,12 +688,12 @@ L100:
     s_copy(c4, c3 + 1, (ftnlen)2, (ftnlen)2);
 
     switch (*ispec) {
-	case 1:  goto L110;
-	case 2:  goto L200;
-	case 3:  goto L300;
+	case 1:  goto L50;
+	case 2:  goto L60;
+	case 3:  goto L70;
     }
 
-L110:
+L50:
 
 /*
        ISPEC = 1:  block size
@@ -565,7 +864,7 @@ L110:
     ret_val = nb;
     return ret_val;
 
-L200:
+L60:
 
 /*     ISPEC = 2:  minimum block size */
 
@@ -657,7 +956,7 @@ L200:
     ret_val = nbmin;
     return ret_val;
 
-L300:
+L70:
 
 /*     ISPEC = 3:  crossover point */
 
@@ -719,42 +1018,42 @@ L300:
     ret_val = nx;
     return ret_val;
 
-L400:
+L80:
 
 /*     ISPEC = 4:  number of shifts (used by xHSEQR) */
 
     ret_val = 6;
     return ret_val;
 
-L500:
+L90:
 
 /*     ISPEC = 5:  minimum column dimension (not used) */
 
     ret_val = 2;
     return ret_val;
 
-L600:
+L100:
 
 /*     ISPEC = 6:  crossover point for SVD (used by xGELSS and xGESVD) */
 
     ret_val = (integer) ((real) min(*n1,*n2) * 1.6f);
     return ret_val;
 
-L700:
+L110:
 
 /*     ISPEC = 7:  number of processors (not used) */
 
     ret_val = 1;
     return ret_val;
 
-L800:
+L120:
 
 /*     ISPEC = 8:  crossover point for multishift (used by xHSEQR) */
 
     ret_val = 50;
     return ret_val;
 
-L900:
+L130:
 
 /*
        ISPEC = 9:  maximum size of the subproblems at the bottom of the
@@ -765,7 +1064,7 @@ L900:
     ret_val = 25;
     return ret_val;
 
-L1000:
+L140:
 
 /*
        ISPEC = 10: ieee NaN arithmetic can be trusted not to trap
@@ -774,11 +1073,11 @@ L1000:
 */
     ret_val = 1;
     if (ret_val == 1) {
-	ret_val = ieeeck_(&c__0, &c_b163, &c_b164);
+	ret_val = ieeeck_(&c__1, &c_b172, &c_b173);
     }
     return ret_val;
 
-L1100:
+L150:
 
 /*
        ISPEC = 11: infinity arithmetic can be trusted not to trap
@@ -787,11 +1086,574 @@ L1100:
 */
     ret_val = 1;
     if (ret_val == 1) {
-	ret_val = ieeeck_(&c__1, &c_b163, &c_b164);
+	ret_val = ieeeck_(&c__0, &c_b172, &c_b173);
     }
+    return ret_val;
+
+L160:
+
+/*     12 <= ISPEC <= 16: xHSEQR or one of its subroutines. */
+
+    ret_val = iparmq_(ispec, name__, opts, n1, n2, n3, n4, name_len, opts_len)
+	    ;
     return ret_val;
 
 /*     End of ILAENV */
 
 } /* ilaenv_ */
+
+integer ilaslc_(integer *m, integer *n, real *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1;
+
+    /* Local variables */
+    static integer i__;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILASLC scans A for its last non-zero column.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) REAL array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*n == 0) {
+	ret_val = *n;
+    } else if (a[*n * a_dim1 + 1] != 0.f || a[*m + *n * a_dim1] != 0.f) {
+	ret_val = *n;
+    } else {
+/*     Now scan each column from the end, returning with the first non-zero. */
+	for (ret_val = *n; ret_val >= 1; --ret_val) {
+	    i__1 = *m;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		if (a[i__ + ret_val * a_dim1] != 0.f) {
+		    return ret_val;
+		}
+	    }
+	}
+    }
+    return ret_val;
+} /* ilaslc_ */
+
+integer ilaslr_(integer *m, integer *n, real *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1;
+
+    /* Local variables */
+    static integer i__, j;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILASLR scans A for its last non-zero row.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) REAL array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*m == 0) {
+	ret_val = *m;
+    } else if (a[*m + a_dim1] != 0.f || a[*m + *n * a_dim1] != 0.f) {
+	ret_val = *m;
+    } else {
+/*     Scan up each column tracking the last zero row seen. */
+	ret_val = 0;
+	i__1 = *n;
+	for (j = 1; j <= i__1; ++j) {
+	    for (i__ = *m; i__ >= 1; --i__) {
+		if (a[i__ + j * a_dim1] != 0.f) {
+		    goto L10;
+		}
+	    }
+L10:
+	    ret_val = max(ret_val,i__);
+	}
+    }
+    return ret_val;
+} /* ilaslr_ */
+
+integer ilazlc_(integer *m, integer *n, doublecomplex *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1, i__2;
+
+    /* Local variables */
+    static integer i__;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILAZLC scans A for its last non-zero column.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) COMPLEX*16 array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*n == 0) {
+	ret_val = *n;
+    } else /* if(complicated condition) */ {
+	i__1 = *n * a_dim1 + 1;
+	i__2 = *m + *n * a_dim1;
+	if (a[i__1].r != 0. || a[i__1].i != 0. || (a[i__2].r != 0. || a[i__2]
+		.i != 0.)) {
+	    ret_val = *n;
+	} else {
+/*     Now scan each column from the end, returning with the first non-zero. */
+	    for (ret_val = *n; ret_val >= 1; --ret_val) {
+		i__1 = *m;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+		    i__2 = i__ + ret_val * a_dim1;
+		    if (a[i__2].r != 0. || a[i__2].i != 0.) {
+			return ret_val;
+		    }
+		}
+	    }
+	}
+    }
+    return ret_val;
+} /* ilazlc_ */
+
+integer ilazlr_(integer *m, integer *n, doublecomplex *a, integer *lda)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, ret_val, i__1, i__2;
+
+    /* Local variables */
+    static integer i__, j;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2)                        --
+
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+
+
+    Purpose
+    =======
+
+    ILAZLR scans A for its last non-zero row.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A.
+
+    A       (input) COMPLEX*16 array, dimension (LDA,N)
+            The m by n matrix A.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    =====================================================================
+
+
+       Quick test for the common case where one corner is non-zero.
+*/
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    /* Function Body */
+    if (*m == 0) {
+	ret_val = *m;
+    } else /* if(complicated condition) */ {
+	i__1 = *m + a_dim1;
+	i__2 = *m + *n * a_dim1;
+	if (a[i__1].r != 0. || a[i__1].i != 0. || (a[i__2].r != 0. || a[i__2]
+		.i != 0.)) {
+	    ret_val = *m;
+	} else {
+/*     Scan up each column tracking the last zero row seen. */
+	    ret_val = 0;
+	    i__1 = *n;
+	    for (j = 1; j <= i__1; ++j) {
+		for (i__ = *m; i__ >= 1; --i__) {
+		    i__2 = i__ + j * a_dim1;
+		    if (a[i__2].r != 0. || a[i__2].i != 0.) {
+			goto L10;
+		    }
+		}
+L10:
+		ret_val = max(ret_val,i__);
+	    }
+	}
+    }
+    return ret_val;
+} /* ilazlr_ */
+
+integer iparmq_(integer *ispec, char *name__, char *opts, integer *n, integer
+	*ilo, integer *ihi, integer *lwork, ftnlen name_len, ftnlen opts_len)
+{
+    /* System generated locals */
+    integer ret_val, i__1, i__2;
+    real r__1;
+
+    /* Builtin functions */
+    double log(doublereal);
+    integer i_nint(real *);
+
+    /* Local variables */
+    static integer nh, ns;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+         This program sets problem and machine dependent parameters
+         useful for xHSEQR and its subroutines. It is called whenever
+         ILAENV is called with 12 <= ISPEC <= 16
+
+    Arguments
+    =========
+
+         ISPEC  (input) integer scalar
+                ISPEC specifies which tunable parameter IPARMQ should
+                return.
+
+                ISPEC=12: (INMIN)  Matrices of order nmin or less
+                          are sent directly to xLAHQR, the implicit
+                          double shift QR algorithm.  NMIN must be
+                          at least 11.
+
+                ISPEC=13: (INWIN)  Size of the deflation window.
+                          This is best set greater than or equal to
+                          the number of simultaneous shifts NS.
+                          Larger matrices benefit from larger deflation
+                          windows.
+
+                ISPEC=14: (INIBL) Determines when to stop nibbling and
+                          invest in an (expensive) multi-shift QR sweep.
+                          If the aggressive early deflation subroutine
+                          finds LD converged eigenvalues from an order
+                          NW deflation window and LD.GT.(NW*NIBBLE)/100,
+                          then the next QR sweep is skipped and early
+                          deflation is applied immediately to the
+                          remaining active diagonal block.  Setting
+                          IPARMQ(ISPEC=14) = 0 causes TTQRE to skip a
+                          multi-shift QR sweep whenever early deflation
+                          finds a converged eigenvalue.  Setting
+                          IPARMQ(ISPEC=14) greater than or equal to 100
+                          prevents TTQRE from skipping a multi-shift
+                          QR sweep.
+
+                ISPEC=15: (NSHFTS) The number of simultaneous shifts in
+                          a multi-shift QR iteration.
+
+                ISPEC=16: (IACC22) IPARMQ is set to 0, 1 or 2 with the
+                          following meanings.
+                          0:  During the multi-shift QR sweep,
+                              xLAQR5 does not accumulate reflections and
+                              does not use matrix-matrix multiply to
+                              update the far-from-diagonal matrix
+                              entries.
+                          1:  During the multi-shift QR sweep,
+                              xLAQR5 and/or xLAQRaccumulates reflections and uses
+                              matrix-matrix multiply to update the
+                              far-from-diagonal matrix entries.
+                          2:  During the multi-shift QR sweep.
+                              xLAQR5 accumulates reflections and takes
+                              advantage of 2-by-2 block structure during
+                              matrix-matrix multiplies.
+                          (If xTRMM is slower than xGEMM, then
+                          IPARMQ(ISPEC=16)=1 may be more efficient than
+                          IPARMQ(ISPEC=16)=2 despite the greater level of
+                          arithmetic work implied by the latter choice.)
+
+         NAME    (input) character string
+                 Name of the calling subroutine
+
+         OPTS    (input) character string
+                 This is a concatenation of the string arguments to
+                 TTQRE.
+
+         N       (input) integer scalar
+                 N is the order of the Hessenberg matrix H.
+
+         ILO     (input) INTEGER
+         IHI     (input) INTEGER
+                 It is assumed that H is already upper triangular
+                 in rows and columns 1:ILO-1 and IHI+1:N.
+
+         LWORK   (input) integer scalar
+                 The amount of workspace available.
+
+    Further Details
+    ===============
+
+         Little is known about how best to choose these parameters.
+         It is possible to use different values of the parameters
+         for each of CHSEQR, DHSEQR, SHSEQR and ZHSEQR.
+
+         It is probably best to choose different parameters for
+         different matrices and different parameters at different
+         times during the iteration, but this has not been
+         implemented --- yet.
+
+
+         The best choices of most of the parameters depend
+         in an ill-understood way on the relative execution
+         rate of xLAQR3 and xLAQR5 and on the nature of each
+         particular eigenvalue problem.  Experiment may be the
+         only practical way to determine which choices are most
+         effective.
+
+         Following is a list of default values supplied by IPARMQ.
+         These defaults may be adjusted in order to attain better
+         performance in any particular computational environment.
+
+         IPARMQ(ISPEC=12) The xLAHQR vs xLAQR0 crossover point.
+                          Default: 75. (Must be at least 11.)
+
+         IPARMQ(ISPEC=13) Recommended deflation window size.
+                          This depends on ILO, IHI and NS, the
+                          number of simultaneous shifts returned
+                          by IPARMQ(ISPEC=15).  The default for
+                          (IHI-ILO+1).LE.500 is NS.  The default
+                          for (IHI-ILO+1).GT.500 is 3*NS/2.
+
+         IPARMQ(ISPEC=14) Nibble crossover point.  Default: 14.
+
+         IPARMQ(ISPEC=15) Number of simultaneous shifts, NS.
+                          a multi-shift QR iteration.
+
+                          If IHI-ILO+1 is ...
+
+                          greater than      ...but less    ... the
+                          or equal to ...      than        default is
+
+                                  0               30       NS =   2+
+                                 30               60       NS =   4+
+                                 60              150       NS =  10
+                                150              590       NS =  **
+                                590             3000       NS =  64
+                               3000             6000       NS = 128
+                               6000             infinity   NS = 256
+
+                      (+)  By default matrices of this order are
+                           passed to the implicit double shift routine
+                           xLAHQR.  See IPARMQ(ISPEC=12) above.   These
+                           values of NS are used only in case of a rare
+                           xLAHQR failure.
+
+                      (**) The asterisks (**) indicate an ad-hoc
+                           function increasing from 10 to 64.
+
+         IPARMQ(ISPEC=16) Select structured matrix multiply.
+                          (See ISPEC=16 above for details.)
+                          Default: 3.
+
+       ================================================================
+*/
+    if (*ispec == 15 || *ispec == 13 || *ispec == 16) {
+
+/*        ==== Set the number simultaneous shifts ==== */
+
+	nh = *ihi - *ilo + 1;
+	ns = 2;
+	if (nh >= 30) {
+	    ns = 4;
+	}
+	if (nh >= 60) {
+	    ns = 10;
+	}
+	if (nh >= 150) {
+/* Computing MAX */
+	    r__1 = log((real) nh) / log(2.f);
+	    i__1 = 10, i__2 = nh / i_nint(&r__1);
+	    ns = max(i__1,i__2);
+	}
+	if (nh >= 590) {
+	    ns = 64;
+	}
+	if (nh >= 3000) {
+	    ns = 128;
+	}
+	if (nh >= 6000) {
+	    ns = 256;
+	}
+/* Computing MAX */
+	i__1 = 2, i__2 = ns - ns % 2;
+	ns = max(i__1,i__2);
+    }
+
+    if (*ispec == 12) {
+
+
+/*
+          ===== Matrices of order smaller than NMIN get sent
+          .     to xLAHQR, the classic double shift algorithm.
+          .     This must be at least 11. ====
+*/
+
+	ret_val = 75;
+
+    } else if (*ispec == 14) {
+
+/*
+          ==== INIBL: skip a multi-shift qr iteration and
+          .    whenever aggressive early deflation finds
+          .    at least (NIBBLE*(window size)/100) deflations. ====
+*/
+
+	ret_val = 14;
+
+    } else if (*ispec == 15) {
+
+/*        ==== NSHFTS: The number of simultaneous shifts ===== */
+
+	ret_val = ns;
+
+    } else if (*ispec == 13) {
+
+/*        ==== NW: deflation window size.  ==== */
+
+	if (nh <= 500) {
+	    ret_val = ns;
+	} else {
+	    ret_val = ns * 3 / 2;
+	}
+
+    } else if (*ispec == 16) {
+
+/*
+          ==== IACC22: Whether to accumulate reflections
+          .     before updating the far-from-diagonal elements
+          .     and whether to use 2-by-2 block structure while
+          .     doing it.  A small amount of work could be saved
+          .     by making this choice dependent also upon the
+          .     NH=IHI-ILO+1.
+*/
+
+	ret_val = 0;
+	if (ns >= 14) {
+	    ret_val = 1;
+	}
+	if (ns >= 14) {
+	    ret_val = 2;
+	}
+
+    } else {
+/*        ===== invalid value of ispec ===== */
+	ret_val = -1;
+
+    }
+
+/*     ==== End of IPARMQ ==== */
+
+    return ret_val;
+} /* iparmq_ */
 
