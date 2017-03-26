@@ -157,22 +157,42 @@ class TestRandint(TestCase):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
+    def test_full_range(self):
+        # Test for ticket #1690
+
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
+            try:
+                self.rfunc(lbnd, ubnd, dtype=dt)
+            except Exception as e:
+                raise AssertionError("No error should have been raised, "
+                                     "but one was with the following "
+                                     "message:\n\n%s" % str(e))
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
         np.random.seed()
+
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
                 vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
@@ -208,6 +228,29 @@ class TestRandint(TestCase):
         val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
+
+    def test_int64_uint64_corner_case(self):
+        # When stored in Numpy arrays, `lbnd` is casted
+        # as np.int64, and `ubnd` is casted as np.uint64.
+        # Checking whether `lbnd` >= `ubnd` used to be
+        # done solely via direct comparison, which is incorrect
+        # because when Numpy tries to compare both numbers,
+        # it casts both to np.float64 because there is
+        # no integer superset of np.int64 and np.uint64. However,
+        # `ubnd` is too large to be represented in np.float64,
+        # causing it be round down to np.iinfo(np.int64).max,
+        # leading to a ValueError because `lbnd` now equals
+        # the new `ubnd`.
+
+        dt = np.int64
+        tgt = np.iinfo(np.int64).max
+        lbnd = np.int64(np.iinfo(np.int64).max)
+        ubnd = np.uint64(np.iinfo(np.int64).max + 1)
+
+        # None of these function calls should
+        # generate a ValueError now.
+        actual = np.random.randint(lbnd, ubnd, dtype=dt)
+        assert_equal(actual, tgt)
 
     def test_respect_dtype_singleton(self):
         # See gh-7203

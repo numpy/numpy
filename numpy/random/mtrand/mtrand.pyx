@@ -964,20 +964,31 @@ cdef class RandomState:
             high = low
             low = 0
 
+        # '_randint_type' is defined in
+        # 'generate_randint_helpers.py'
         key = np.dtype(dtype).name
-        if not key in _randint_type:
+        if key not in _randint_type:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
+
         lowbnd, highbnd, randfunc = _randint_type[key]
 
-        if low < lowbnd:
+        # TODO: Do not cast these inputs to Python int
+        #
+        # This is a workaround until gh-8851 is resolved (bug in NumPy
+        # integer comparison and subtraction involving uint64 and non-
+        # uint64). Afterwards, remove these two lines.
+        ilow = int(low)
+        ihigh = int(high)
+
+        if ilow < lowbnd:
             raise ValueError("low is out of bounds for %s" % (key,))
-        if high > highbnd:
+        if ihigh > highbnd:
             raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
+        if ilow >= ihigh:
             raise ValueError("low >= high")
 
         with self.lock:
-            ret = randfunc(low, high - 1, size, self.state_address)
+            ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
             if size is None:
                 if dtype in (np.bool, np.int, np.long):
