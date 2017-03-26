@@ -1679,21 +1679,10 @@ def gradient(f, *varargs, **kwargs):
     axes = kwargs.pop('axis', None)
     if axes is None:
         axes = tuple(range(N))
-    # check axes to have correct type and no duplicate entries
-    if isinstance(axes, int):
-        axes = (axes,)
-    if not isinstance(axes, tuple):
-        raise TypeError("A tuple of integers or a single integer is required")
-
-    # normalize axis values:
-    axes = tuple(x + N if x < 0 else x for x in axes)
-    if max(axes) >= N or min(axes) < 0:
-        raise ValueError("'axis' entry is out of bounds")
+    else:
+        axes = _nx._validate_axis(axes, N)
 
     len_axes = len(axes)
-    if len(set(axes)) != len_axes:
-        raise ValueError("duplicate value in 'axis'")
-
     n = len(varargs)
     if n == 0:
         dx = [1.0] * len_axes
