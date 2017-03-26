@@ -684,10 +684,10 @@ class TestNanFunctions_Median(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.nanmedian, d, axis=-5)
-        assert_raises(IndexError, np.nanmedian, d, axis=(0, -5))
-        assert_raises(IndexError, np.nanmedian, d, axis=4)
-        assert_raises(IndexError, np.nanmedian, d, axis=(0, 4))
+        assert_raises(np.AxisError, np.nanmedian, d, axis=-5)
+        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, -5))
+        assert_raises(np.AxisError, np.nanmedian, d, axis=4)
+        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, 4))
         assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
 
     def test_float_special(self):
@@ -843,10 +843,10 @@ class TestNanFunctions_Percentile(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=-5)
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, -5))
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=4)
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, 4))
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=-5)
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, -5))
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=4)
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, 4))
         assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
 
     def test_multiple_percentiles(self):

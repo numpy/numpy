@@ -2973,11 +2973,14 @@ class TestPercentile(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.percentile, d, axis=-5, q=25)
-        assert_raises(IndexError, np.percentile, d, axis=(0, -5), q=25)
-        assert_raises(IndexError, np.percentile, d, axis=4, q=25)
-        assert_raises(IndexError, np.percentile, d, axis=(0, 4), q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=-5, q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=(0, -5), q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=4, q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=(0, 4), q=25)
+        # each of these refers to the same axis twice
         assert_raises(ValueError, np.percentile, d, axis=(1, 1), q=25)
+        assert_raises(ValueError, np.percentile, d, axis=(-1, -1), q=25)
+        assert_raises(ValueError, np.percentile, d, axis=(3, -1), q=25)
 
     def test_keepdims(self):
         d = np.ones((3, 5, 7, 11))
@@ -3349,10 +3352,10 @@ class TestMedian(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.median, d, axis=-5)
-        assert_raises(IndexError, np.median, d, axis=(0, -5))
-        assert_raises(IndexError, np.median, d, axis=4)
-        assert_raises(IndexError, np.median, d, axis=(0, 4))
+        assert_raises(np.AxisError, np.median, d, axis=-5)
+        assert_raises(np.AxisError, np.median, d, axis=(0, -5))
+        assert_raises(np.AxisError, np.median, d, axis=4)
+        assert_raises(np.AxisError, np.median, d, axis=(0, 4))
         assert_raises(ValueError, np.median, d, axis=(1, 1))
 
     def test_keepdims(self):
