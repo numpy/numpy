@@ -3138,7 +3138,7 @@ Group 1
 
         Useful to release the GIL only if *loop_size* exceeds a
         minimum threshold, currently set to 500. Should be matched
-        with a .. c:macro::`NPY_END_THREADS` to regain the GIL.
+        with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
 """""""
