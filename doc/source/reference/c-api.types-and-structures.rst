@@ -60,7 +60,7 @@ hierarchy of actual Python types.
 PyArray_Type
 ------------
 
-.. c:var: PyArray_Type
+.. c:var:: PyArray_Type
 
    The Python type of the ndarray is :c:data:`PyArray_Type`. In C, every
    ndarray is a pointer to a :c:type:`PyArrayObject` structure. The ob_type
@@ -165,7 +165,7 @@ PyArray_Type
 PyArrayDescr_Type
 -----------------
 
-.. c:var: PyArrayDescr_Type
+.. c:var:: PyArrayDescr_Type
 
    The :c:data:`PyArrayDescr_Type` is the built-in type of the
    data-type-descriptor objects used to describe how the bytes comprising
@@ -237,55 +237,55 @@ PyArrayDescr_Type
     array like behavior. Each bit in this member is a flag which are named
     as:
 
-    .. c:var: NPY_ITEM_REFCOUNT
+    .. c:var:: NPY_ITEM_REFCOUNT
 
-    .. c:var: NPY_ITEM_HASOBJECT
+    .. c:var:: NPY_ITEM_HASOBJECT
 
         Indicates that items of this data-type must be reference
         counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
-    .. c:var: NPY_LIST_PICKLE
+    .. c:var:: NPY_LIST_PICKLE
 
         Indicates arrays of this data-type must be converted to a list
         before pickling.
 
-    .. c:var: NPY_ITEM_IS_POINTER
+    .. c:var:: NPY_ITEM_IS_POINTER
 
         Indicates the item is a pointer to some other data-type
 
-    .. c:var: NPY_NEEDS_INIT
+    .. c:var:: NPY_NEEDS_INIT
 
         Indicates memory for this data-type must be initialized (set
         to 0) on creation.
 
-    .. c:var: NPY_NEEDS_PYAPI
+    .. c:var:: NPY_NEEDS_PYAPI
 
         Indicates this data-type requires the Python C-API during
         access (so don't give up the GIL if array access is going to
         be needed).
 
-    .. c:var: NPY_USE_GETITEM
+    .. c:var:: NPY_USE_GETITEM
 
         On array access use the ``f->getitem`` function pointer
         instead of the standard conversion to an array scalar. Must
         use if you don't define an array scalar to go along with
         the data-type.
 
-    .. c:var: NPY_USE_SETITEM
+    .. c:var:: NPY_USE_SETITEM
 
         When creating a 0-d array from an array scalar use
         ``f->setitem`` instead of the standard copy from an array
         scalar. Must use if you don't define an array scalar to go
         along with the data-type.
 
-    .. c:var: NPY_FROM_FIELDS
+    .. c:var:: NPY_FROM_FIELDS
 
         The bits that are inherited for the parent data-type if these
         bits are set in any field of the data-type. Currently (
         :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
         :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
 
-    .. c:var: NPY_OBJECT_DTYPE_FLAGS
+    .. c:var:: NPY_OBJECT_DTYPE_FLAGS
 
         Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
         \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
@@ -648,7 +648,7 @@ for methods (tp_methods) and properties (tp_getset). The
 PyUFunc_Type
 ------------
 
-.. c:var: PyUFunc_Type
+.. c:var:: PyUFunc_Type
 
    The ufunc object is implemented by creation of the
    :c:data:`PyUFunc_Type`. It is a very simple type that implements only
@@ -801,7 +801,7 @@ PyUFunc_Type
 PyArrayIter_Type
 ----------------
 
-.. c:var: PyArrayIter_Type
+.. c:var:: PyArrayIter_Type
 
    This is an iterator object that makes it easy to loop over an
    N-dimensional array. It is the object returned from the flat
@@ -911,7 +911,7 @@ with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
 PyArrayMultiIter_Type
 ---------------------
 
-.. c:var: PyArrayMultiIter_Type
+.. c:var:: PyArrayMultiIter_Type
 
    This type provides an iterator that encapsulates the concept of
    broadcasting. It allows :math:`N` arrays to be broadcast together
@@ -973,7 +973,7 @@ PyArrayMultiIter_Type
 PyArrayNeighborhoodIter_Type
 ----------------------------
 
-.. c:var: PyArrayNeighborhoodIter_Type
+.. c:var:: PyArrayNeighborhoodIter_Type
 
    This is an iterator object that makes it easy to loop over an
    N-dimensional neighborhood.
@@ -987,7 +987,7 @@ PyArrayNeighborhoodIter_Type
 PyArrayFlags_Type
 -----------------
 
-.. c:var: PyArrayFlags_Type
+.. c:var:: PyArrayFlags_Type
 
    When the flags attribute is retrieved from Python, a special
    builtin object of this type is constructed. This special type makes
@@ -1226,7 +1226,7 @@ for completeness and assistance in understanding the code.
    to define a 1-d loop for a ufunc for every defined signature of a
    user-defined data-type.
 
-.. c:var: PyArrayMapIter_Type
+.. c:var:: PyArrayMapIter_Type
 
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables
