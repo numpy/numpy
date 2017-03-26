@@ -1,7 +1,8 @@
 Regenerating lapack_lite source
 ===============================
 
-:Author: David M. Cooke <cookedm@physics.mcmaster.ca>
+:Authors: * David M. Cooke <cookedm@physics.mcmaster.ca>
+          * Eric Wieser (upgraded lapack version on 2017-03-26)
 
 The ``numpy/linalg/f2c_*.c`` files are ``f2c``'d versions of the LAPACK routines
 required by the ``LinearAlgebra`` module, and wrapped by the ``lapack_lite``

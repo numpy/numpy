@@ -229,6 +229,18 @@ array, in the same way that ``sort`` already did. Additionally, the
 Note that this argument is not added at the end, so breaks any code that
 passed ``fill_value`` as a positional argument.
 
+Bundled version of LAPACK is now 3.2.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+NumPy comes bundled with a minimal implementation of lapack for systems without
+a lapack library installed, under the name of ``lapack_lite``. This has been
+upgraded from LAPACK 3.0.0 (June 30, 1999) to LAPACK 3.2.2 (June 30, 2010). See
+the `LAPACK changelogs`_ for details on the all the changes this entails.
+
+While no new features are exposed through ``numpy``, this fixes some bugs
+regarding "workspace" sizes, and in some places may use faster algorithms.
+
+.. _`LAPACK changelogs`: http://www.netlib.org/lapack/release_notes.html#_4_history_of_lapack_releases
+
 Changes
 =======
 
