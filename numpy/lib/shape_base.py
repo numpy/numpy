@@ -367,7 +367,8 @@ def dstack(tup):
 
     Notes
     -----
-    Equivalent to ``np.concatenate(tup, axis=2)``.
+    Equivalent to ``np.concatenate(tup, axis=2)`` if `tup` contains arrays that
+    are at least 3-dimensional.
 
     Examples
     --------
