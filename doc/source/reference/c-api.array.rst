@@ -204,7 +204,7 @@ From scratch
     new array is *descr*.
 
     If *subtype* is of an array subclass instead of the base
-    :c:data:`&PyArray_Type`, then *obj* is the object to pass to
+    :c:data:`&PyArray_Type<PyArray_Type>`, then *obj* is the object to pass to
     the :obj:`__array_finalize__` method of the subclass.
 
     If *data* is ``NULL``, then new memory will be allocated and *flags*
