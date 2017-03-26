@@ -43,6 +43,7 @@ from numpy.compat import (
     )
 from numpy import expand_dims as n_expand_dims
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import _validate_axis
 
 
 if sys.version_info[0] >= 3:
@@ -4369,10 +4370,7 @@ class MaskedArray(ndarray):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
-            axes = axis if isinstance(axis, tuple) else (axis,)
-            axes = tuple(normalize_axis_index(a, self.ndim) for a in axes)
-            if len(axes) != len(set(axes)):
-                raise ValueError("duplicate value in 'axis'")
+            axes = _validate_axis(axis, self.ndim)
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
