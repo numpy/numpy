@@ -4106,16 +4106,16 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
 static PyObject *
 normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"axis", "ndim", NULL};
+    static char *kwlist[] = {"axis", "ndim", "msg_prefix", NULL};
     int axis;
     int ndim;
+    PyObject *msg_prefix = Py_None;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii:normalize_axis_index",
-                                     kwlist, &axis, &ndim)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii|O:normalize_axis_index",
+                                     kwlist, &axis, &ndim, &msg_prefix)) {
         return NULL;
     }
-
-    if(check_and_adjust_axis(&axis, ndim) < 0) {
+    if (check_and_adjust_axis_msg(&axis, ndim, msg_prefix) < 0) {
         return NULL;
     }
 
