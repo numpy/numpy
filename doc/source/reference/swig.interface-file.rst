@@ -1003,7 +1003,7 @@ helpful when you encounter them.
   * Writing typemaps can be a bit nonintuitive.  If you have specific
     questions about writing `SWIG`_ typemaps for NumPy, the
     developers of ``numpy.i`` do monitor the
-    `Numpy-discussion <mailto:Numpy-discussion@scipy.org>`_ and
+    `Numpy-discussion <mailto:Numpy-discussion@python.org>`_ and
     `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
 
 A Final Note
