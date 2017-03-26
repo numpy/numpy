@@ -542,12 +542,13 @@ class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         res = linalg.inv(a)
         assert_(res.dtype.type is np.float64)
         assert_equal(a.shape, res.shape)
-        assert_(isinstance(a, ArraySubclass))
+        assert_(isinstance(res, ArraySubclass))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res = linalg.inv(a)
         assert_(res.dtype.type is np.complex64)
         assert_equal(a.shape, res.shape)
+        assert_(isinstance(res, ArraySubclass))
 
 
 class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -565,6 +566,24 @@ class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
+
+    def test_0_size(self):
+        # Check that all kinds of 0-sized arrays work
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        res = linalg.eigvals(a)
+        assert_(res.dtype.type is np.float64)
+        assert_equal((0, 1), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(res, np.ndarray))
+
+        a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
+        res = linalg.eigvals(a)
+        assert_(res.dtype.type is np.complex64)
+        assert_equal((0,), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(res, np.ndarray))
 
 
 class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -590,6 +609,28 @@ class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
+
+    def test_0_size(self):
+        # Check that all kinds of 0-sized arrays work
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        res, res_v = linalg.eig(a)
+        assert_(res_v.dtype.type is np.float64)
+        assert_(res.dtype.type is np.float64)
+        assert_equal(a.shape, res_v.shape)
+        assert_equal((0, 1), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(a, np.ndarray))
+
+        a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
+        res, res_v = linalg.eig(a)
+        assert_(res_v.dtype.type is np.complex64)
+        assert_(res.dtype.type is np.complex64)
+        assert_equal(a.shape, res_v.shape)
+        assert_equal((0,), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(a, np.ndarray))
 
 
 class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -618,6 +659,16 @@ class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
+
+    def test_0_size(self):
+        # These raise errors currently
+        # (which does not mean that it may not make sense)
+        a = np.zeros((0, 0), dtype=np.complex64)
+        assert_raises(linalg.LinAlgError, linalg.svd, a)
+        a = np.zeros((0, 1), dtype=np.complex64)
+        assert_raises(linalg.LinAlgError, linalg.svd, a)
+        a = np.zeros((1, 0), dtype=np.complex64)
+        assert_raises(linalg.LinAlgError, linalg.svd, a)
 
 
 class TestCondSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -711,6 +762,25 @@ class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(ph.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
             yield check, dtype
+
+    def test_0_size(self):
+        a = np.zeros((0, 0), dtype=np.complex64)
+        res = linalg.det(a)
+        assert_equal(res, 1.)
+        assert_(res.dtype.type is np.complex64)
+        res = linalg.slogdet(a)
+        assert_equal(res, (1, 0))
+        assert_(res[0].dtype.type is np.complex64)
+        assert_(res[1].dtype.type is np.float32)
+
+        a = np.zeros((0, 0), dtype=np.float64)
+        res = linalg.det(a)
+        assert_equal(res, 1.)
+        assert_(res.dtype.type is np.float64)
+        res = linalg.slogdet(a)
+        assert_equal(res, (1, 0))
+        assert_(res[0].dtype.type is np.float64)
+        assert_(res[1].dtype.type is np.float64)
 
 
 class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
@@ -857,6 +927,24 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
         w = np.linalg.eigvalsh(Kup, UPLO='u')
         assert_allclose(w, tgt, rtol=rtol)
 
+    def test_0_size(self):
+        # Check that all kinds of 0-sized arrays work
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        res = linalg.eigvalsh(a)
+        assert_(res.dtype.type is np.float64)
+        assert_equal((0, 1), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(res, np.ndarray))
+
+        a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
+        res = linalg.eigvalsh(a)
+        assert_(res.dtype.type is np.float32)
+        assert_equal((0,), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(res, np.ndarray))
+
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -915,6 +1003,28 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
         # Check 'u'
         w, v = np.linalg.eigh(Kup, UPLO='u')
         assert_allclose(w, tgt, rtol=rtol)
+
+    def test_0_size(self):
+        # Check that all kinds of 0-sized arrays work
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        res, res_v = linalg.eigh(a)
+        assert_(res_v.dtype.type is np.float64)
+        assert_(res.dtype.type is np.float64)
+        assert_equal(a.shape, res_v.shape)
+        assert_equal((0, 1), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(a, np.ndarray))
+
+        a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
+        res, res_v = linalg.eigh(a)
+        assert_(res_v.dtype.type is np.complex64)
+        assert_(res.dtype.type is np.float32)
+        assert_equal(a.shape, res_v.shape)
+        assert_equal((0,), res.shape)
+        # This is just for documentation, it might make sense to change:
+        assert_(isinstance(a, np.ndarray))
 
 
 class _TestNorm(object):
@@ -1349,6 +1459,35 @@ class TestQR(object):
             self.check_qr(m2)
             self.check_qr(m2.T)
             self.check_qr(matrix(m1))
+
+    def test_0_size(self):
+        # There may be good ways to do (some of this) reasonably:
+        a = np.zeros((0, 0))
+        assert_raises(linalg.LinAlgError, linalg.qr, a)
+        a = np.zeros((0, 1))
+        assert_raises(linalg.LinAlgError, linalg.qr, a)
+        a = np.zeros((1, 0))
+        assert_raises(linalg.LinAlgError, linalg.qr, a)
+
+
+class TestCholesky(object):
+    # TODO: are there no other tests for cholesky?
+
+    def test_0_size(self):
+        class ArraySubclass(np.ndarray):
+            pass
+        a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
+        res = linalg.cholesky(a)
+        assert_equal(a.shape, res.shape)
+        assert_(res.dtype.type is np.float64)
+        # for documentation purpose:
+        assert_(isinstance(res, np.ndarray))
+
+        a = np.zeros((1, 0, 0), dtype=np.complex64).view(ArraySubclass)
+        res = linalg.cholesky(a)
+        assert_equal(a.shape, res.shape)
+        assert_(res.dtype.type is np.complex64)
+        assert_(isinstance(res, np.ndarray))
 
 
 def test_byteorder_check():
