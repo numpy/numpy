@@ -366,21 +366,8 @@ def solve(a, b):
     # We use the b = (..., M,) logic, only if the number of extra dimensions
     # match exactly
     if b.ndim == a.ndim - 1:
-        if a.shape[-1] == 0 and b.shape[-1] == 0:
-            # Legal, but the ufunc cannot handle the 0-sized inner dims
-            # let the ufunc handle all wrong cases.
-            a = a.reshape(a.shape[:-1])
-            bc = broadcast(a, b)
-            return wrap(empty(bc.shape, dtype=result_t))
-
         gufunc = _umath_linalg.solve1
     else:
-        if b.size == 0:
-            if (a.shape[-1] == 0 and b.shape[-2] == 0) or b.shape[-1] == 0:
-                a = a[:,:1].reshape(a.shape[:-1] + (1,))
-                bc = broadcast(a, b)
-                return wrap(empty(bc.shape, dtype=result_t))
-
         gufunc = _umath_linalg.solve
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
@@ -520,10 +507,6 @@ def inv(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-
-    if a.shape[-1] == 0:
-        # The inner array is 0x0, the ufunc cannot handle this case
-        return wrap(empty_like(a, dtype=result_t))
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
@@ -905,8 +888,6 @@ def eigvals(a):
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        return empty(a.shape[-1:], dtype=result_t)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1009,8 +990,6 @@ def eigvalsh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        return empty(a.shape[-1:], dtype=result_t)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
@@ -1148,10 +1127,6 @@ def eig(a):
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        w = empty(a.shape[-1:], dtype=result_t)
-        vt = empty(a.shape, dtype=result_t)
-        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1289,10 +1264,6 @@ def eigh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        w = empty(a.shape[-1:], dtype=result_t)
-        vt = empty(a.shape, dtype=result_t)
-        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1766,11 +1737,6 @@ def slogdet(a):
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
-    if _isEmpty2d(a):
-        # determinant of empty matrix is 1
-        sign = ones(a.shape[:-2], dtype=result_t)
-        logdet = zeros(a.shape[:-2], dtype=real_t)
-        return sign, logdet
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     if isscalar(sign):
@@ -1834,9 +1800,6 @@ def det(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    # 0x0 matrices have determinant 1
-    if _isEmpty2d(a):
-        return ones(a.shape[:-2], dtype=result_t)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     if isscalar(r):
