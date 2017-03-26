@@ -460,12 +460,12 @@ Ufuncs allow other array-like classes to be passed seamlessly through
 the interface in that inputs of a particular class will induce the
 outputs to be of that same class. The mechanism by which this works is
 the following. If any of the inputs are not ndarrays and define the
-:obj:`__array_wrap__` method, then the class with the largest
-:obj:`__array_priority__` attribute determines the type of all the
+:obj:`~numpy.class.__array_wrap__` method, then the class with the largest
+:obj:`~numpy.class.__array_priority__` attribute determines the type of all the
 outputs (with the exception of any output arrays passed in). The
-:obj:`__array_wrap__` method of the input array will be called with the
+:obj:`~numpy.class.__array_wrap__` method of the input array will be called with the
 ndarray being returned from the ufunc as it's input. There are two
-calling styles of the :obj:`__array_wrap__` function supported. The first
+calling styles of the :obj:`~numpy.class.__array_wrap__` function supported. The first
 takes the ndarray as the first argument and a tuple of "context" as
 the second argument. The context is (ufunc, arguments, output argument
 number). This is the first call tried. If a TypeError occurs, then the

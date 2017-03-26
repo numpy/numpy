@@ -381,7 +381,7 @@ writeable). The syntax is
         so that data does not have to be copied. Objects that can be
         converted to an array include: 1) any nested sequence object,
         2) any object exposing the array interface, 3) any object with
-        an :obj:`__array__` method (which should return an ndarray),
+        an :obj:`~numpy.class.__array__` method (which should return an ndarray),
         and 4) any scalar object (becomes a zero-dimensional
         array). Sub-classes of the ndarray that otherwise fit the
         requirements will be passed through. If you want to ensure
