@@ -1752,11 +1752,9 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     a = asarray(a)
     b = asarray(b)
     # Check axisa and axisb are within bounds
-    axis_msg = "'axis{0}' out of bounds"
-    if axisa < -a.ndim or axisa >= a.ndim:
-        raise ValueError(axis_msg.format('a'))
-    if axisb < -b.ndim or axisb >= b.ndim:
-        raise ValueError(axis_msg.format('b'))
+    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
+    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
+
     # Move working axis to the end of the shape
     a = rollaxis(a, axisa, a.ndim)
     b = rollaxis(b, axisb, b.ndim)
@@ -1770,8 +1768,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     if a.shape[-1] == 3 or b.shape[-1] == 3:
         shape += (3,)
         # Check axisc is within bounds
-        if axisc < -len(shape) or axisc >= len(shape):
-            raise ValueError(axis_msg.format('c'))
+        axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
