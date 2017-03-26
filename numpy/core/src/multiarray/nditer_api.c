@@ -106,12 +106,6 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
         return NPY_FAIL;
     }
 
-    if (NAD_SHAPE(axisdata_del) == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "cannot remove a zero-sized axis from an iterator");
-        return NPY_FAIL;
-    }
-
     /* Adjust the permutation */
     for (idim = 0; idim < ndim-1; ++idim) {
         npy_int8 p = (idim < xdim) ? perm[idim] : perm[idim+1];
