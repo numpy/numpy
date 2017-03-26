@@ -37,7 +37,7 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.numeric import _validate_axis
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -820,7 +820,7 @@ def compress_nd(x, axis=None):
     if axis is None:
         axis = tuple(range(x.ndim))
     else:
-        axis = _validate_axis(axis, x.ndim)
+        axis = normalize_axis_tuple(axis, x.ndim)
 
     # Nothing is masked: return x
     if m is nomask or not m.any():

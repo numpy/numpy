@@ -1680,7 +1680,7 @@ def gradient(f, *varargs, **kwargs):
     if axes is None:
         axes = tuple(range(N))
     else:
-        axes = _nx._validate_axis(axes, N)
+        axes = _nx.normalize_axis_tuple(axes, N)
 
     len_axes = len(axes)
     n = len(varargs)
@@ -3972,7 +3972,7 @@ def _ureduce(a, func, **kwargs):
     if axis is not None:
         keepdim = list(a.shape)
         nd = a.ndim
-        axis = _nx._validate_axis(axis, nd)
+        axis = _nx.normalize_axis_tuple(axis, nd)
 
         for ax in axis:
             keepdim[ax] = 1
