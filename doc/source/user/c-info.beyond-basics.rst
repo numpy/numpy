@@ -500,13 +500,13 @@ The __array_finalize\__ method
    sub-type is created in such a fashion, however, neither the
    __new_\_ method nor the __init\__ method gets called. Instead, the
    sub-type is allocated and the appropriate instance-structure
-   members are filled in. Finally, the :obj:`__array_finalize__`
+   members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
    attribute is looked-up in the object dictionary. If it is present
    and not None, then it can be either a CObject containing a pointer
    to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
    single argument (which could be None).
 
-   If the :obj:`__array_finalize__` attribute is a CObject, then the pointer
+   If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
    must be a pointer to a function with the signature:
 
    .. code-block:: c
@@ -519,7 +519,7 @@ The __array_finalize\__ method
    is present). This routine can do anything it wants to. It should
    return a -1 on error and 0 otherwise.
 
-   If the :obj:`__array_finalize__` attribute is not None nor a CObject,
+   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a CObject,
    then it must be a Python method that takes the parent array as an
    argument (which could be None if there is no parent), and returns
    nothing. Errors in this method will be caught and handled.
@@ -533,14 +533,14 @@ The __array_priority\__ attribute
    This attribute allows simple but flexible determination of which sub-
    type should be considered "primary" when an operation involving two or
    more sub-types arises. In operations where different sub-types are
-   being used, the sub-type with the largest :obj:`__array_priority__`
+   being used, the sub-type with the largest :obj:`~numpy.class.__array_priority__`
    attribute will determine the sub-type of the output(s). If two sub-
-   types have the same :obj:`__array_priority__` then the sub-type of the
+   types have the same :obj:`~numpy.class.__array_priority__` then the sub-type of the
    first argument determines the output. The default
-   :obj:`__array_priority__` attribute returns a value of 0.0 for the base
+   :obj:`~numpy.class.__array_priority__` attribute returns a value of 0.0 for the base
    ndarray type and 1.0 for a sub-type. This attribute can also be
    defined by objects that are not sub-types of the ndarray and can be
-   used to determine which :obj:`__array_wrap__` method should be called for
+   used to determine which :obj:`~numpy.class.__array_wrap__` method should be called for
    the return output.
 
 The __array_wrap\__ method
@@ -550,11 +550,11 @@ The __array_wrap\__ method
 
    Any class or type can define this method which should take an ndarray
    argument and return an instance of the type. It can be seen as the
-   opposite of the :obj:`__array__` method. This method is used by the
+   opposite of the :obj:`~numpy.class.__array__` method. This method is used by the
    ufuncs (and other NumPy functions) to allow other objects to pass
    through. For Python >2.4, it can also be used to write a decorator
    that converts a function that works only with ndarrays to one that
-   works with any type with :obj:`__array__` and :obj:`__array_wrap__` methods.
+   works with any type with :obj:`~numpy.class.__array__` and :obj:`~numpy.class.__array_wrap__` methods.
 
 .. index::
    pair: ndarray; subtyping

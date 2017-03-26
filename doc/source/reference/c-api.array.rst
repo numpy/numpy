@@ -205,7 +205,7 @@ From scratch
 
     If *subtype* is of an array subclass instead of the base
     :c:data:`&PyArray_Type<PyArray_Type>`, then *obj* is the object to pass to
-    the :obj:`__array_finalize__` method of the subclass.
+    the :obj:`~numpy.class.__array_finalize__` method of the subclass.
 
     If *data* is ``NULL``, then new memory will be allocated and *flags*
     can be non-zero to indicate a Fortran-style contiguous array. If
@@ -378,7 +378,7 @@ From other objects
     expose the array interface), then a new array will be created (and
     filled from *op* using the sequence protocol). The new array will
     have :c:data:`NPY_DEFAULT` as its flags member. The *context* argument
-    is passed to the :obj:`__array__` method of *op* and is only used if
+    is passed to the :obj:`~numpy.class.__array__` method of *op* and is only used if
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
 
@@ -499,7 +499,7 @@ From other objects
     actually converting to an array. PyArray_FromAny calls this function
     to analyze its input.
 
-    In some cases, such as structured arrays and the __array__ interface,
+    In some cases, such as structured arrays and the :obj:`~numpy.class.__array__` interface,
     a data type needs to be used to make sense of the object.  When
     this is needed, provide a Descr for 'requested_dtype', otherwise
     provide NULL. This reference is not stolen. Also, if the requested
@@ -607,9 +607,9 @@ From other objects
 .. c:function:: PyObject* PyArray_FromArrayAttr(PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
     Return an ndarray object from a Python object that exposes the
-    :obj:`__array__` method. The :obj:`__array__` method can take 0, 1, or 2
+    :obj:`~numpy.class.__array__` method. The :obj:`~numpy.class.__array__` method can take 0, 1, or 2
     arguments ([dtype, context]) where *context* is used to pass
-    information about where the :obj:`__array__` method is being called
+    information about where the :obj:`~numpy.class.__array__` method is being called
     from (currently only used in ufuncs).
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny(PyObject* op, int typenum, int min_depth, int max_depth)
@@ -787,7 +787,7 @@ General check of Python Type
     conversion occurs. Otherwise, out will contain a borrowed
     reference to Py_NotImplemented and no error condition is set.
     This version allows setting of the type and context in the part of
-    the array interface that looks for the :obj:`__array__` attribute.
+    the array interface that looks for the :obj:`~numpy.class.__array__` attribute.
 
 .. c:function:: PyArray_IsZeroDim(op)
 
@@ -3188,7 +3188,7 @@ Priority
 
 .. c:function:: double PyArray_GetPriority(PyObject* obj, double def)
 
-    Return the :obj:`__array_priority__` attribute (converted to a
+    Return the :obj:`~numpy.class.__array_priority__` attribute (converted to a
     double) of *obj* or *def* if no attribute of that name
     exists. Fast returns that avoid the attribute lookup are provided
     for objects of type :c:data:`PyArray_Type`.
