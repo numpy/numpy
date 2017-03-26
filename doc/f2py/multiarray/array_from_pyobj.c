@@ -3,7 +3,7 @@
  *
  * Description:
  * ------------
- * Provides array_from_pyobj function that returns a contigious array
+ * Provides array_from_pyobj function that returns a contiguous array
  * object with the given dimensions and required storage order, either
  * in row-major (C) or column-major (Fortran) order. The function
  * array_from_pyobj is very flexible about its Python object argument

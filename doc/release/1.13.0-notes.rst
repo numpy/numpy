@@ -29,6 +29,17 @@ Future Changes
 Compatibility notes
 ===================
 
+
+Error type changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy.hstack()`` now throws ``ValueError`` instead of ``IndexError`` when
+  input is empty.
+* Functions taking an axis argument, when that argument is out of range, now
+  throw ``np.AxisError`` instead of a mixture of ``IndexError`` and
+  ``ValueError``. For backwards compatibility, ``AxisError`` subclasses both of
+  these.
+
 Tuple object dtypes
 ~~~~~~~~~~~~~~~~~~~
 
@@ -120,6 +131,16 @@ This means that, e.g., it is now possible to do the following:
     >>> np.gradient(f, dx, y)
     [array([[ 1. ,  1. , -0.5], [ 1. ,  1. , -0.5]]), 
      array([[ 2. ,  2. ,  2. ], [ 2. ,  1.7,  0.5]])]
+
+``np.heaviside`` computes the Heaviside function
+------------------------------------------------
+The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
+function::
+
+                       { 0   if x < 0,
+    heaviside(x, h0) = { h0  if x == 0,
+                       { 1   if x > 0.
+
 
 Improvements
 ============
@@ -214,6 +235,17 @@ Even when no elements needed to be drawn, ``np.random.randint`` and
 ``np.random.choice`` raised an error when the arguments described an empty
 distribution. This has been fixed so that e.g.
 ``np.random.choice([],0) == np.array([],dtype=float64)``.
+Bundled version of LAPACK is now 3.2.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+NumPy comes bundled with a minimal implementation of lapack for systems without
+a lapack library installed, under the name of ``lapack_lite``. This has been
+upgraded from LAPACK 3.0.0 (June 30, 1999) to LAPACK 3.2.2 (June 30, 2010). See
+the `LAPACK changelogs`_ for details on the all the changes this entails.
+
+While no new features are exposed through ``numpy``, this fixes some bugs
+regarding "workspace" sizes, and in some places may use faster algorithms.
+
+.. _`LAPACK changelogs`: http://www.netlib.org/lapack/release_notes.html#_4_history_of_lapack_releases
 
 Changes
 =======
@@ -289,7 +321,7 @@ Boolean indexing changes
 
 * Boolean indexes must match the dimension of the axis that they index.
 
-* Boolean indexes used on the lhs of an assigment must match the dimensions of
+* Boolean indexes used on the lhs of an assignment must match the dimensions of
   the rhs.
 
 * Boolean indexing into scalar arrays return a new 1-d array.  This means that

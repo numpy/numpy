@@ -98,6 +98,8 @@ Floating point routines
    copysign
    frexp
    ldexp
+   nextafter
+   spacing
 
 Arithmetic operations
 ---------------------
@@ -146,6 +148,7 @@ Miscellaneous
    absolute
    fabs
    sign
+   heaviside
    maximum
    minimum
    fmax

@@ -73,7 +73,7 @@ def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
-        for k in ['SYSTEMROOT', 'PATH']:
+        for k in ['SYSTEMROOT', 'PATH', 'HOME']:
             v = os.environ.get(k)
             if v is not None:
                 env[k] = v
@@ -346,7 +346,7 @@ def setup_package():
     metadata = dict(
         name = 'numpy',
         maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@scipy.org",
+        maintainer_email = "numpy-discussion@python.org",
         description = DOCLINES[0],
         long_description = "\n".join(DOCLINES[2:]),
         url = "http://www.numpy.org",

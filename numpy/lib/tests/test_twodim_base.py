@@ -15,7 +15,6 @@ from numpy import (
     )
 
 import numpy as np
-from numpy.compat import asbytes_nested
 
 
 def get_mat(n):
@@ -91,7 +90,7 @@ class TestEye(TestCase):
 
     def test_strings(self):
         assert_equal(eye(2, 2, dtype='S3'),
-                     asbytes_nested([['1', ''], ['', '1']]))
+                     [[b'1', b''], [b'', b'1']])
 
     def test_bool(self):
         assert_equal(eye(2, 2, dtype=bool), [[True, False], [False, True]])

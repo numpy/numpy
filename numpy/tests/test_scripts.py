@@ -9,7 +9,7 @@ from os.path import join as pathjoin, isfile, dirname, basename
 import sys
 from subprocess import Popen, PIPE
 import numpy as np
-from numpy.compat.py3k import basestring, asbytes
+from numpy.compat.py3k import basestring
 from nose.tools import assert_equal
 from numpy.testing.decorators import skipif
 from numpy.testing import assert_
@@ -71,7 +71,7 @@ def test_f2py():
             f2py_cmd = r"%s\Scripts\f2py.py" % exe_dir
 
         code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
-        success = stdout.strip() == asbytes('2')
+        success = stdout.strip() == b'2'
         assert_(success, "Warning: f2py not found in path")
     else:
         version = sys.version_info
@@ -84,7 +84,7 @@ def test_f2py():
         for f2py_cmd in f2py_cmds:
             try:
                 code, stdout, stderr = run_command([f2py_cmd, '-v'])
-                assert_equal(stdout.strip(), asbytes('2'))
+                assert_equal(stdout.strip(), b'2')
                 success = True
                 break
             except:

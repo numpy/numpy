@@ -30,7 +30,7 @@ retro-fit NumPy with multi-methods [4]_, which would solve the same
 problem. The mechanism here follows more closely the way Python enables
 classes to override ``__mul__`` and other binary operations.
 
-.. [1] http://docs.scipy.org/doc/numpy/user/basics.subclassing.html
+.. [1] http://docs.python.org/doc/numpy/user/basics.subclassing.html
 .. [2] https://github.com/scipy/scipy/issues/2123
 .. [3] https://github.com/scipy/scipy/issues/1569
 .. [4] http://technicaldiscovery.blogspot.com/2013/07/thoughts-after-scipy-2013-and-specific.html
@@ -103,7 +103,7 @@ Returning ``NotImplemented`` to user should not happen. Moreover::
                         <3x3 sparse matrix of type '<class 'numpy.int64'>'
                     with 8 stored elements in Compressed Sparse Row format>]], dtype=object)
 
-Here, it appears that the sparse matrix was converted to a object array
+Here, it appears that the sparse matrix was converted to an object array
 scalar, which was then multiplied with all elements of the ``b`` array.
 However, this behavior is more confusing than useful, and having a
 ``TypeError`` would be preferable.
@@ -111,7 +111,7 @@ However, this behavior is more confusing than useful, and having a
 Adding the ``__numpy_ufunc__`` functionality fixes this and would
 deprecate the other ufunc modifying functions.
 
-.. [5] http://mail.scipy.org/pipermail/numpy-discussion/2011-June/056945.html
+.. [5] http://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
 
 
 Proposed interface
@@ -136,7 +136,7 @@ Here:
 
 The ufunc's arguments are first normalized into a tuple of input data
 (``inputs``), and dict of keyword arguments. If there are output
-arguments they are handeled as follows:
+arguments they are handled as follows:
 
 - One positional output variable x is passed in the kwargs dict as ``out :
   x``.

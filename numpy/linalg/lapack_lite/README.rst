@@ -1,7 +1,8 @@
 Regenerating lapack_lite source
 ===============================
 
-:Author: David M. Cooke <cookedm@physics.mcmaster.ca>
+:Authors: * David M. Cooke <cookedm@physics.mcmaster.ca>
+          * Eric Wieser (upgraded lapack version on 2017-03-26)
 
 The ``numpy/linalg/f2c_*.c`` files are ``f2c``'d versions of the LAPACK routines
 required by the ``LinearAlgebra`` module, and wrapped by the ``lapack_lite``
@@ -27,10 +28,9 @@ similar to that done to generate the CLAPACK_ distribution.
 
 .. _CLAPACK: http://netlib.org/clapack/index.html
 
-The versions in the numpy git repo use the LAPACK source from the
-`Debian package lapack3`_, version 3.0.20000531a-6. It was found that these
-(being regularly maintained) worked better than the patches to the last
-released version of LAPACK available at the LAPACK_ page.
+The output C files in git use the LAPACK source from the LAPACK_ page, using
+version 3.2.2. Unfortunately, newer versions use newer FORTRAN features, which
+are increasingly not supported by ``f2c``. As these are found, the patch files
+will need to be changed to re-express new constructs with legacy constructs.
 
-.. _Debian package lapack3: https://archive.debian.net/source/etch/lapack3
 .. _LAPACK: http://netlib.org/lapack/index.html

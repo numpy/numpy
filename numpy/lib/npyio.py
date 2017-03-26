@@ -397,7 +397,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     try:
         # Code to distinguish from NumPy binary files and pickles.
-        _ZIP_PREFIX = asbytes('PK\x03\x04')
+        _ZIP_PREFIX = b'PK\x03\x04'
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
         # If the file size is less than N, we need to make sure not
@@ -856,7 +856,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         # Compile regex for comments beforehand
         comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile(asbytes('|').join(comments))
+        regex_comments = re.compile(b'|'.join(comments))
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
@@ -902,7 +902,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         raise ValueError('fname must be a string, file handle, or generator')
     X = []
 
-    def flatten_dtype(dt):
+    # not to be confused with the flatten_dtype we import...
+    def flatten_dtype_internal(dt):
         """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
@@ -922,7 +923,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype(tp)
+                flat_dt, flat_packing = flatten_dtype_internal(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
                 if tp.ndim > 0:
@@ -957,7 +958,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         line = asbytes(line)
         if comments is not None:
             line = regex_comments.split(asbytes(line), maxsplit=1)[0]
-        line = line.strip(asbytes('\r\n'))
+        line = line.strip(b'\r\n')
         if line:
             return line.split(delimiter)
         else:
@@ -986,7 +987,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype(dtype)
+        dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
@@ -1575,11 +1576,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if names is True:
                 if comments in first_line:
                     first_line = (
-                        asbytes('').join(first_line.split(comments)[1:]))
+                        b''.join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
-        first_line = asbytes('')
+        first_line = b''
         first_values = []
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
@@ -1604,7 +1605,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if names is True:
         names = validate_names([_bytes_to_name(_.strip())
                                 for _ in first_values])
-        first_line = asbytes('')
+        first_line = b''
     elif _is_string_like(names):
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
@@ -1643,7 +1644,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_missing_values = missing_values or ()
 
     # Define the list of missing_values (one column: one list)
-    missing_values = [list([asbytes('')]) for _ in range(nbcols)]
+    missing_values = [list([b'']) for _ in range(nbcols)]
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
@@ -1683,7 +1684,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 entry.append(value)
     # We have a string : apply it to all entries
     elif isinstance(user_missing_values, bytes):
-        user_value = user_missing_values.split(asbytes(","))
+        user_value = user_missing_values.split(b",")
         for entry in missing_values:
             entry.extend(user_value)
     # We have something else: apply it to all entries
@@ -1976,7 +1977,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask and names:
         for (name, conv) in zip(names or (), converters):
             missing_values = [conv(_) for _ in conv.missing_values
-                              if _ != asbytes('')]
+                              if _ != b'']
             for mval in missing_values:
                 outputmask[name] |= (output[name] == mval)
     # Construct the final array

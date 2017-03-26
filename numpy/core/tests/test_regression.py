@@ -18,7 +18,7 @@ from numpy.testing import (
         assert_raises, assert_warns, dec, suppress_warnings
         )
 from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
-from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
+from numpy.compat import asbytes, asunicode, long
 
 rlevel = 1
 
@@ -146,7 +146,7 @@ class TestRegression(TestCase):
     def test_unicode_swapping(self, level=rlevel):
         # Ticket #79
         ulen = 1
-        ucs_value = sixu('\U0010FFFF')
+        ucs_value = u'\U0010FFFF'
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua.newbyteorder()  # Should succeed.
 
@@ -366,9 +366,9 @@ class TestRegression(TestCase):
     def test_chararray_rstrip(self, level=rlevel):
         # Ticket #222
         x = np.chararray((1,), 5)
-        x[0] = asbytes('a   ')
+        x[0] = b'a   '
         x = x.rstrip()
-        assert_equal(x[0], asbytes('a'))
+        assert_equal(x[0], b'a')
 
     def test_object_array_shape(self, level=rlevel):
         # Ticket #239
@@ -415,23 +415,23 @@ class TestRegression(TestCase):
         test_data = [
             # (original, py2_pickle)
             (np.unicode_('\u6f2c'),
-             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
-                     "I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n.")),
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+             b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\n"
+             b"I0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."),
 
             (np.array([9e123], dtype=np.float64),
-             asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
-                     "p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\n"
-                     "p7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\n"
-                     "I0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb.")),
+             b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\n"
+             b"p1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\n"
+             b"p7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\n"
+             b"I0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb."),
 
             (np.array([(9e123,)], dtype=[('name', float)]),
-             asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n"
-                     "(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n"
-                     "(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n"
-                     "(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\n"
-                     "I-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\n"
-                     "bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb.")),
+             b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n"
+             b"(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n"
+             b"(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n"
+             b"(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\n"
+             b"I-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\n"
+             b"bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
         ]
 
         if sys.version_info[:2] >= (3, 4):
@@ -577,7 +577,7 @@ class TestRegression(TestCase):
 
     def test_numeric_carray_compare(self, level=rlevel):
         # Ticket #341
-        assert_equal(np.array(['X'], 'c'), asbytes('X'))
+        assert_equal(np.array(['X'], 'c'), b'X')
 
     def test_string_array_size(self, level=rlevel):
         # Ticket #342
@@ -691,8 +691,8 @@ class TestRegression(TestCase):
 
     def test_junk_in_string_fields_of_recarray(self, level=rlevel):
         # Ticket #483
-        r = np.array([[asbytes('abc')]], dtype=[('var1', '|S20')])
-        assert_(asbytes(r['var1'][0][0]) == asbytes('abc'))
+        r = np.array([[b'abc']], dtype=[('var1', '|S20')])
+        assert_(asbytes(r['var1'][0][0]) == b'abc')
 
     def test_take_output(self, level=rlevel):
         # Ensure that 'take' honours output parameter.
@@ -1175,7 +1175,7 @@ class TestRegression(TestCase):
 
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
-        b = np.array(asbytes_nested(['1', '2', '3']))
+        b = np.array([b'1', b'2', b'3'])
         assert_equal(a, b)
 
     def test_unaligned_unicode_access(self, level=rlevel):
@@ -1183,7 +1183,7 @@ class TestRegression(TestCase):
         for i in range(1, 9):
             msg = 'unicode offset: %d chars' % i
             t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
-            x = np.array([(asbytes('a'), sixu('b'))], dtype=t)
+            x = np.array([(b'a', u'b')], dtype=t)
             if sys.version_info[0] >= 3:
                 assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
             else:
@@ -1377,21 +1377,21 @@ class TestRegression(TestCase):
 
     def test_unicode_to_string_cast(self):
         # Ticket #1240.
-        a = np.array([[sixu('abc'), sixu('\u03a3')],
-                      [sixu('asdf'), sixu('erw')]],
+        a = np.array([[u'abc', u'\u03a3'],
+                      [u'asdf', u'erw']],
                      dtype='U')
         self.assertRaises(UnicodeEncodeError, np.array, a, 'S4')
 
     def test_mixed_string_unicode_array_creation(self):
-        a = np.array(['1234', sixu('123')])
+        a = np.array(['1234', u'123'])
         assert_(a.itemsize == 16)
-        a = np.array([sixu('123'), '1234'])
+        a = np.array([u'123', '1234'])
         assert_(a.itemsize == 16)
-        a = np.array(['1234', sixu('123'), '12345'])
+        a = np.array(['1234', u'123', '12345'])
         assert_(a.itemsize == 20)
-        a = np.array([sixu('123'), '1234', sixu('12345')])
+        a = np.array([u'123', '1234', u'12345'])
         assert_(a.itemsize == 20)
-        a = np.array([sixu('123'), '1234', sixu('1234')])
+        a = np.array([u'123', '1234', u'1234'])
         assert_(a.itemsize == 16)
 
     def test_misaligned_objects_segfault(self):
@@ -1499,7 +1499,7 @@ class TestRegression(TestCase):
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
-        np.fromstring(asbytes('aa, aa, 1.0'), sep=',')
+        np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
@@ -1593,7 +1593,7 @@ class TestRegression(TestCase):
 
         f.seek(40)
         data = f.read(3)
-        assert_equal(data, asbytes("\x01\x02\x03"))
+        assert_equal(data, b"\x01\x02\x03")
 
         f.seek(80)
         f.read(4)
@@ -1750,8 +1750,8 @@ class TestRegression(TestCase):
 
     def test_setting_rank0_string(self):
         "Ticket #1736"
-        s1 = asbytes("hello1")
-        s2 = asbytes("hello2")
+        s1 = b"hello1"
+        s2 = b"hello2"
         a = np.zeros((), dtype="S10")
         a[()] = s1
         assert_equal(a, np.array(s1))
@@ -1766,9 +1766,9 @@ class TestRegression(TestCase):
 
     def test_string_astype(self):
         "Ticket #1748"
-        s1 = asbytes('black')
-        s2 = asbytes('white')
-        s3 = asbytes('other')
+        s1 = b'black'
+        s2 = b'white'
+        s3 = b'other'
         a = np.array([[s1], [s2], [s3]])
         assert_equal(a.dtype, np.dtype('S5'))
         b = a.astype(np.dtype('S0'))
@@ -1776,7 +1776,7 @@ class TestRegression(TestCase):
 
     def test_ticket_1756(self):
         # Ticket #1756
-        s = asbytes('0123456789abcdef')
+        s = b'0123456789abcdef'
         a = np.array([s]*5)
         for i in range(1, 17):
             a1 = np.array(a, "|S%d" % i)
@@ -1843,10 +1843,10 @@ class TestRegression(TestCase):
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
-        data = asbytes("cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\n"
-                       "tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
-                       "I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
-                       "p13\ntp14\nb.")
+        data = (b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\n"
+                b"tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
+                b"I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
+                b"p13\ntp14\nb.")
         if sys.version_info[0] >= 3:
             # This should work:
             result = pickle.loads(data, encoding='latin1')
@@ -1862,21 +1862,21 @@ class TestRegression(TestCase):
         datas = [
             # (original, python2_pickle, koi8r_validity)
             (np.unicode_('\u6bd2'),
-             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
-                     "(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
-                     "tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
+             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n"
+              b"(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\n"
+              b"tp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n."),
              'invalid'),
 
             (np.float64(9e123),
-             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\n"
-                     "p2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\n"
-                     "bS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
+             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\n"
+              b"p2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\n"
+              b"bS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n."),
              'invalid'),
 
-            (np.bytes_(asbytes('\x9c')),  # different 8-bit code point in KOI8-R vs latin1
-             asbytes("cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\n"
-                     "I0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\n"
-                     "tp8\nRp9\n."),
+            (np.bytes_(b'\x9c'),  # different 8-bit code point in KOI8-R vs latin1
+             (b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\n"
+              b"I0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\n"
+              b"tp8\nRp9\n."),
              'different'),
         ]
         if sys.version_info[0] >= 3:
@@ -1973,7 +1973,7 @@ class TestRegression(TestCase):
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:
-            a = np.array([sixu('abcd')])
+            a = np.array([u'abcd'])
         assert_equal(a.dtype.itemsize, 16)
 
     def test_unique_stable(self):
@@ -2042,8 +2042,8 @@ class TestRegression(TestCase):
         import numpy as np
         a = np.array([['Hello', 'Foob']], dtype='U5', order='F')
         arr = np.ndarray(shape=[1, 2, 5], dtype='U1', buffer=a)
-        arr2 = np.array([[[sixu('H'), sixu('e'), sixu('l'), sixu('l'), sixu('o')],
-                          [sixu('F'), sixu('o'), sixu('o'), sixu('b'), sixu('')]]])
+        arr2 = np.array([[[u'H', u'e', u'l', u'l', u'o'],
+                          [u'F', u'o', u'o', u'b', u'']]])
         assert_array_equal(arr, arr2)
 
     def test_assign_from_sequence_error(self):
