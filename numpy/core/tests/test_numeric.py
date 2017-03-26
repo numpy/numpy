@@ -2425,11 +2425,11 @@ class TestMoveaxis(TestCase):
 
     def test_errors(self):
         x = np.random.randn(1, 2, 3)
-        assert_raises_regex(np.AxisError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'source.*out of bounds',
                             np.moveaxis, x, 3, 0)
-        assert_raises_regex(np.AxisError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'source.*out of bounds',
                             np.moveaxis, x, -4, 0)
-        assert_raises_regex(np.AxisError, 'invalid axis .* `destination`',
+        assert_raises_regex(np.AxisError, 'destination.*out of bounds',
                             np.moveaxis, x, 0, 5)
         assert_raises_regex(ValueError, 'repeated axis in `source`',
                             np.moveaxis, x, [0, 0], [0, 1])

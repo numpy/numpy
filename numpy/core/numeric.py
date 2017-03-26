@@ -441,7 +441,7 @@ def count_nonzero(a, axis=None):
         nullstr = a.dtype.type('')
         return (a != nullstr).sum(axis=axis, dtype=np.intp)
 
-    axis = asarray(_validate_axis(axis, a.ndim, 'axis'))
+    axis = asarray(_validate_axis(axis, a.ndim))
     counts = np.apply_along_axis(multiarray.count_nonzero, axis[0], a)
 
     if axis.size == 1:
@@ -1544,17 +1544,17 @@ def rollaxis(a, axis, start=0):
     return a.transpose(axes)
 
 
-def _validate_axis(axis, ndim, argname):
+def _validate_axis(axis, ndim, argname=None):
     try:
         axis = [operator.index(axis)]
     except TypeError:
         axis = list(axis)
-    axis = [a + ndim if a < 0 else a for a in axis]
-    if not builtins.all(0 <= a < ndim for a in axis):
-        raise AxisError('invalid axis for this array in `%s` argument' %
-                         argname)
+    axis = [normalize_axis_index(ax, ndim, argname) for ax in axis]
     if len(set(axis)) != len(axis):
-        raise ValueError('repeated axis in `%s` argument' % argname)
+        if argname:
+            raise ValueError('repeated axis in `%s` argument' % argname)
+        else:
+            raise ValueError('repeated axis')
     return axis
 
 
