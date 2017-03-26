@@ -3269,14 +3269,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         op[0] = NpyIter_GetOperandArray(iter)[0];
         op[1] = NpyIter_GetOperandArray(iter)[1];
 
-        if (PyArray_SIZE(op[0]) == 0) {
-            if (out == NULL) {
-                out = op[0];
-                Py_INCREF(out);
-            }
-            goto finish;
-        }
-
         if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
             goto fail;
         }
@@ -3621,35 +3613,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     if (out != NULL || ndim > 1 || !PyArray_ISALIGNED(arr) ||
             !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(arr))) {
         need_outer_iterator = 1;
-    }
-
-    /* Special case when the index array's size is zero */
-    if (ind_size == 0) {
-        if (out == NULL) {
-            npy_intp out_shape[NPY_MAXDIMS];
-            memcpy(out_shape, PyArray_SHAPE(arr),
-                            PyArray_NDIM(arr) * NPY_SIZEOF_INTP);
-            out_shape[axis] = 0;
-            Py_INCREF(op_dtypes[0]);
-            op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
-                                        &PyArray_Type, op_dtypes[0],
-                                        PyArray_NDIM(arr), out_shape, NULL, NULL,
-                                        0, NULL);
-            if (out == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            /* Allow any zero-sized output array in this case */
-            if (PyArray_SIZE(out) != 0) {
-                PyErr_SetString(PyExc_ValueError,
-                        "output operand shape for reduceat is "
-                        "incompatible with index array of shape (0,)");
-                goto fail;
-            }
-        }
-
-        goto finish;
     }
 
     if (need_outer_iterator) {
