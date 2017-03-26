@@ -347,3 +347,9 @@ other cases fail.
 The ``offset`` attribute in a ``memmap`` object is now set to the
 offset into the file. This is a behaviour change only for offsets
 greater than ``mmap.ALLOCATIONGRANULARITY``.
+
+``np.real`` and ``np.imag`` return scalars for scalar inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, ``np.real`` and ``np.imag`` used to return array objects when
+provided a scalar input, which was inconsistent with other functions like
+``np.angle`` and ``np.conj``.
