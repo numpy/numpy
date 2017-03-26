@@ -7002,7 +7002,6 @@ def where(condition, x=_NoValue, y=_NoValue):
 
     # Get the condition
     fc = filled(condition, 0).astype(MaskType)
-    notfc = np.logical_not(fc)
 
     # Get the data
     xv = getdata(x)
@@ -7015,18 +7014,19 @@ def where(condition, x=_NoValue, y=_NoValue):
         ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
 
     # Construct an empty array and fill it
-    d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    np.copyto(d._data, xv.astype(ndtype), where=fc)
-    np.copyto(d._data, yv.astype(ndtype), where=notfc)
+    data = np.where(fc, xv.astype(ndtype), yv.astype(ndtype))
+    d = data.view(MaskedArray)
 
     # Create an empty mask and fill it
-    mask = np.zeros(fc.shape, dtype=MaskType)
-    np.copyto(mask, getmask(x), where=fc)
-    np.copyto(mask, getmask(y), where=notfc)
-    mask |= getmaskarray(condition)
+    mask = np.where(fc, getmaskarray(x), getmaskarray(y))
+    np.copyto(mask, True, where=getmaskarray(condition))
 
+    if isinstance(mask.dtype.type, np.void):
+        needmask = np.any(np.ones(1, mask.dtype) == mask)
+    else:
+        needmask = np.any(mask)
     # Use d._mask instead of d.mask to avoid copies
-    d._mask = mask if mask.any() else nomask
+    d._mask = mask if needmask else nomask
 
     return d
 
