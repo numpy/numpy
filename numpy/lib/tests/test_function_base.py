@@ -902,9 +902,9 @@ class TestGradient(TestCase):
         # test maximal number of varargs
         assert_raises(TypeError, gradient, x, 1, 2, axis=1)
 
-        assert_raises(ValueError, gradient, x, axis=3)
-        assert_raises(ValueError, gradient, x, axis=-3)
-        assert_raises(TypeError, gradient, x, axis=[1,])
+        assert_raises(np.AxisError, gradient, x, axis=3)
+        assert_raises(np.AxisError, gradient, x, axis=-3)
+        # assert_raises(TypeError, gradient, x, axis=[1,])
         
     def test_timedelta64(self):
         # Make sure gradient() can handle special types like timedelta64
