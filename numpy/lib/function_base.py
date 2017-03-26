@@ -12,7 +12,7 @@ from numpy.core import linspace, atleast_1d, atleast_2d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute
+    integer, isscalar, absolute, AxisError
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -3972,21 +3972,15 @@ def _ureduce(a, func, **kwargs):
     if axis is not None:
         keepdim = list(a.shape)
         nd = a.ndim
-        try:
-            axis = operator.index(axis)
-            if axis >= nd or axis < -nd:
-                raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
-            keepdim[axis] = 1
-        except TypeError:
-            sax = set()
-            for x in axis:
-                if x >= nd or x < -nd:
-                    raise IndexError("axis %d out of bounds (%d)" % (x, nd))
-                if x in sax:
-                    raise ValueError("duplicate value in axis")
-                sax.add(x % nd)
-                keepdim[x] = 1
-            keep = sax.symmetric_difference(frozenset(range(nd)))
+        axis = _nx._validate_axis(axis, nd)
+
+        for ax in axis:
+            keepdim[ax] = 1
+
+        if len(axis) == 1:
+            kwargs['axis'] = axis[0]
+        else:
+            keep = set(range(nd)) - set(axis)
             nkeep = len(keep)
             # swap axis that should not be reduced to front
             for i, s in enumerate(sorted(keep)):
@@ -4742,7 +4736,8 @@ def delete(arr, obj, axis=None):
         if ndim != 1:
             arr = arr.ravel()
         ndim = arr.ndim
-        axis = ndim - 1
+        axis = -1
+
     if ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
@@ -4752,6 +4747,8 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy(order=arrorder)
+
+    axis = normalize_axis_index(axis, ndim)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
