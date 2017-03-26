@@ -703,7 +703,7 @@ class TestRandomDist(TestCase):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
