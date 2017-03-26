@@ -155,6 +155,20 @@ static void
     npy_intp ib2_n = is2_n*dn;
     npy_intp ib2_p = is2_p*dp;
     npy_intp ob_p  = os_p *dp;
+    if (dn == 0) {
+        /* No operand, need to zero the output */
+        BEGIN_OUTER_LOOP_3
+            char *op=args[2];
+            for (m = 0; m < dm; m++) {
+                for (p = 0; p < dp; p++) {
+                    *(@typ@ *)op = 0;
+                    op  +=  os_p;
+                }
+                op  +=  os_m - ob_p;
+            }
+        END_OUTER_LOOP
+        return;
+    }
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
         for (m = 0; m < dm; m++) {

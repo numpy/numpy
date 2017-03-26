@@ -542,6 +542,12 @@ class TestUfunc(TestCase):
         self.compare_matrix_multiply_results(np.long)
         self.compare_matrix_multiply_results(np.double)
 
+    def test_matrix_multiply_umath_empty(self):
+        res = umt.matrix_multiply(np.ones((0, 10)), np.ones((10, 0)))
+        assert_array_equal(res, np.zeros((0, 0)))
+        res = umt.matrix_multiply(np.ones((10, 0)), np.ones((0, 10)))
+        assert_array_equal(res, np.zeros((10, 10)))
+
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
