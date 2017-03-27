@@ -420,7 +420,8 @@ PyArrayDescr_Type
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
 
-    .. c:member:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
+    .. c:member:: void cast( \
+            void *from, void *to, npy_intp n, void *fromarr, void *toarr)
 
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
@@ -446,7 +447,9 @@ PyArrayDescr_Type
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
 
-    .. c:member:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
+    .. c:member:: void copyswapn( \
+            void *dest, npy_intp dstride, void *src, npy_intp sstride, \
+            npy_intp n, int swap, void *arr)
 
     .. c:member:: void copyswap(void *dest, void *src, int swap, void *arr)
 
@@ -472,7 +475,8 @@ PyArrayDescr_Type
         ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
         used to retrieve itemsize and field information for flexible arrays.
 
-    .. c:member:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
+    .. c:member:: int argmax( \
+            void* data, npy_intp n, npy_intp* max_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
@@ -481,7 +485,9 @@ PyArrayDescr_Type
         always 0. The index of the largest element is returned in
         ``max_ind``.
 
-    .. c:member:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
+    .. c:member:: void dotfunc( \
+            void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, \
+            npy_intp n, void* arr)
 
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
@@ -531,7 +537,8 @@ PyArrayDescr_Type
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
 
-    .. c:member:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
+    .. c:member:: void fillwithscalar( \
+            void* buffer, npy_intp length, void* value, void* arr)
 
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
@@ -546,7 +553,8 @@ PyArrayDescr_Type
         and :c:data:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
-    .. c:member:: int argsort(void* start, npy_intp* result, npy_intp length, void *arr)
+    .. c:member:: int argsort( \
+            void* start, npy_intp* result, npy_intp length, void *arr)
 
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
@@ -584,7 +592,8 @@ PyArrayDescr_Type
         can be cast to safely (this usually means without losing
         precision).
 
-    .. c:member:: void fastclip(void *in, npy_intp n_in, void *min, void *max, void *out)
+    .. c:member:: void fastclip( \
+            void *in, npy_intp n_in, void *min, void *max, void *out)
 
         A function that reads ``n_in`` items from ``in``, and writes to
         ``out`` the read value if it is within the limits pointed to by
@@ -592,7 +601,8 @@ PyArrayDescr_Type
         memory segments must be contiguous and behaved, and either
         ``min`` or ``max`` may be ``NULL``, but not both.
 
-    .. c:member:: void fastputmask(void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
+    .. c:member:: void fastputmask( \
+            void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
 
         A function that takes a pointer ``in`` to an array of ``n_in``
         items, a pointer ``mask`` to an array of ``n_in`` boolean
@@ -601,7 +611,10 @@ PyArrayDescr_Type
         in ``mask`` is non-zero, tiling ``vals`` as needed if
         ``nv < n_in``. All arrays must be contiguous and behaved.
 
-    .. c:member:: void fasttake(void *dest, void *src, npy_intp *indarray, npy_intp nindarray, npy_intp n_outer, npy_intp m_middle, npy_intp nelem, NPY_CLIPMODE clipmode)
+    .. c:member:: void fasttake( \
+            void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
+            npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
+            NPY_CLIPMODE clipmode)
 
         A function that takes a pointer ``src`` to a C contiguous,
         behaved segment, interpreted as a 3-dimensional array of shape
@@ -617,7 +630,8 @@ PyArrayDescr_Type
         indices smaller than 0 or larger than ``nindarray`` will be
         handled.
 
-    .. c:member:: int argmin(void* data, npy_intp n, npy_intp* min_ind, void* arr)
+    .. c:member:: int argmin( \
+            void* data, npy_intp n, npy_intp* min_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         smallest of ``n`` elements in ``arr`` beginning at the element
