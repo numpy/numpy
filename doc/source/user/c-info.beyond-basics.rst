@@ -428,10 +428,10 @@ type-object structure and populating it with functions and pointers to
 describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
-:c:data:`&PyArray_Type` is a pointer to the type-object table for the ndarray
+:c:data:`&PyArray_Type<PyArray_Type>` is a pointer to the type-object table for the ndarray
 while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
-turn, a pointer to the type- object table :c:data:`&PyArray_Type`). Finally
+turn, a pointer to the type- object table :c:data:`&PyArray_Type<PyArray_Type>`). Finally
 :c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
 every new Python type.
 
