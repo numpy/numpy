@@ -812,13 +812,10 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  */
 
 /**begin repeat
- * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
- *          npy_double, npy_double, npy_double, npy_double#
- * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
+ * #TYPE = INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64#
+ * #type = npy_int8, npy_uint8, npy_int16, npy_uint16, npy_int32, npy_uint32,
+ *         npy_int64, npy_uint64#
+ * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -1043,8 +1040,8 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #TYPE = INT8, INT16, INT32, INT64#
+ * #type = npy_int8, npy_int16, npy_int32, npy_int64#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1111,8 +1108,8 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #TYPE = UINT8, UINT16, UINT32, UINT64#
+ * #type = npy_uint8, npy_uint16, npy_uint32, npy_uint64#
  */
 
 NPY_NO_EXPORT void

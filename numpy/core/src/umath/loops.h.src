@@ -45,7 +45,7 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  */
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ * #TYPE = INT8, INT16, INT32, INT64#
  */
 
 /**begin repeat1
