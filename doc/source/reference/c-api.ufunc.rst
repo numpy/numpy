@@ -404,7 +404,7 @@ Importing the API
     created (and pointed to by a global variable) by import_ufunc. The
     global variable is either statically defined or allowed to be seen
     by other files depending on the state of
-    :c:data:`Py_UFUNC_UNIQUE_SYMBOL` and :c:data:`NO_IMPORT_UFUNC`.
+    :c:data:`PY_UFUNC_UNIQUE_SYMBOL` and :c:data:`NO_IMPORT_UFUNC`.
 
 .. index::
    pair: ufunc; C-API
