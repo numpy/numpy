@@ -138,6 +138,29 @@
         tout * out = (tout *)op1; \
         op; \
     }
+/*
+ * unfortunately gcc 6/7 regressed and we need to give it additional hints to
+ * vectorize inplace operations (PR80198)
+ * must only be used after op1 == ip1 or ip2 has been checked
+ * TODO: using ivdep might allow other compilers to vectorize too
+ */
+#if __GNUC__ >= 6
+#define IVDEP_LOOP _Pragma("GCC ivdep")
+#else
+#define IVDEP_LOOP
+#endif
+#define BASE_BINARY_LOOP_INP(tin, tout, op) \
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    IVDEP_LOOP \
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) { \
+        const tin in1 = *(tin *)ip1; \
+        const tin in2 = *(tin *)ip2; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
 #define BASE_BINARY_LOOP_S(tin, tout, cin, cinp, vin, vinp, op) \
     const tin cin = *(tin *)cinp; \
     BINARY_LOOP { \
@@ -145,15 +168,23 @@
         tout * out = (tout *)op1; \
         op; \
     }
+/* PR80198 again, scalar works without the pragma */
+#define BASE_BINARY_LOOP_S_INP(tin, tout, cin, cinp, vin, vinp, op) \
+    const tin cin = *(tin *)cinp; \
+    BINARY_LOOP { \
+        const tin vin = *(tin *)vinp; \
+        tout * out = (tout *)vinp; \
+        op; \
+    }
 #define BINARY_LOOP_FAST(tin, tout, op) \
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
         if (args[2] == args[0]) { \
-            BASE_BINARY_LOOP(tin, tout, op) \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else if (args[2] == args[1]) { \
-            BASE_BINARY_LOOP(tin, tout, op) \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else { \
             BASE_BINARY_LOOP(tin, tout, op) \
@@ -161,7 +192,7 @@
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
         if (args[1] == args[2]) { \
-            BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
         } \
         else { \
             BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
@@ -169,7 +200,7 @@
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
         if (args[0] == args[2]) { \
-            BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
         else { \
             BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
