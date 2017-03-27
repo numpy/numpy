@@ -234,7 +234,9 @@ an incomplete struct.
 Construction and Destruction
 ----------------------------
 
-.. c:function:: NpyIter* NpyIter_New(PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, PyArray_Descr* dtype)
+.. c:function:: NpyIter* NpyIter_New( \
+        PyArrayObject* op, npy_uint32 flags, NPY_ORDER order, \
+        NPY_CASTING casting, PyArray_Descr* dtype)
 
     Creates an iterator for the given numpy array object ``op``.
 
@@ -282,7 +284,9 @@ Construction and Destruction
                             dtype);
         Py_DECREF(dtype);
 
-.. c:function:: NpyIter* NpyIter_MultiNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes)
+.. c:function:: NpyIter* NpyIter_MultiNew( \
+        npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, \
+        NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes)
 
     Creates an iterator for broadcasting the ``nop`` array objects provided
     in ``op``, using regular NumPy broadcasting rules.
@@ -620,7 +624,10 @@ Construction and Destruction
             This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
             on the iterator.
 
-.. c:function:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
+.. c:function:: NpyIter* NpyIter_AdvancedNew( \
+        npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, \
+        NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, \
+        int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
     Extends :c:func:`NpyIter_MultiNew` with several advanced options providing
     more control over broadcasting and buffering.
@@ -765,7 +772,8 @@ Construction and Destruction
     non-NULL, the function may be safely called without holding
     the Python GIL.
 
-.. c:function:: int NpyIter_ResetToIterIndexRange(NpyIter* iter, npy_intp istart, npy_intp iend, char** errmsg)
+.. c:function:: int NpyIter_ResetToIterIndexRange( \
+        NpyIter* iter, npy_intp istart, npy_intp iend, char** errmsg)
 
     Resets the iterator and restricts it to the ``iterindex`` range
     ``[istart, iend)``.  See :c:func:`NpyIter_Copy` for an explanation of
@@ -792,7 +800,8 @@ Construction and Destruction
     non-NULL, the function may be safely called without holding
     the Python GIL.
 
-.. c:function:: int NpyIter_ResetBasePointers(NpyIter *iter, char** baseptrs, char** errmsg)
+.. c:function:: int NpyIter_ResetBasePointers( \
+        NpyIter *iter, char** baseptrs, char** errmsg)
 
     Resets the iterator back to its initial state, but using the values
     in ``baseptrs`` for the data instead of the pointers from the arrays
@@ -889,7 +898,8 @@ Construction and Destruction
     Gets the ``iterindex`` of the iterator, which is an index matching
     the iteration order of the iterator.
 
-.. c:function:: void NpyIter_GetIterIndexRange(NpyIter* iter, npy_intp* istart, npy_intp* iend)
+.. c:function:: void NpyIter_GetIterIndexRange( \
+        NpyIter* iter, npy_intp* istart, npy_intp* iend)
 
     Gets the ``iterindex`` sub-range that is being iterated.  If
     :c:data:`NPY_ITER_RANGED` was not specified, this always returns the
@@ -1042,7 +1052,8 @@ Construction and Destruction
     Fills ``nop`` flags. Sets ``outwriteflags[i]`` to 1 if
     ``op[i]`` can be written to, and to 0 if not.
 
-.. c:function:: int NpyIter_CreateCompatibleStrides(NpyIter* iter, npy_intp itemsize, npy_intp* outstrides)
+.. c:function:: int NpyIter_CreateCompatibleStrides( \
+        NpyIter* iter, npy_intp itemsize, npy_intp* outstrides)
 
     Builds a set of strides which are the same as the strides of an
     output array created using the :c:data:`NPY_ITER_ALLOCATE` flag, where NULL
@@ -1096,7 +1107,8 @@ Construction and Destruction
 Functions For Iteration
 -----------------------
 
-.. c:function:: NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* iter, char** errmsg)
+.. c:function:: NpyIter_IterNextFunc* NpyIter_GetIterNext( \
+        NpyIter* iter, char** errmsg)
 
     Returns a function pointer for iteration.  A specialized version
     of the function pointer may be calculated by this function
@@ -1194,7 +1206,8 @@ Functions For Iteration
             }
         } while (iternext());
 
-.. c:function:: NpyIter_GetMultiIndexFunc *NpyIter_GetGetMultiIndex(NpyIter* iter, char** errmsg)
+.. c:function:: NpyIter_GetMultiIndexFunc *NpyIter_GetGetMultiIndex( \
+        NpyIter* iter, char** errmsg)
 
     Returns a function pointer for getting the current multi-index
     of the iterator.  Returns NULL if the iterator is not tracking
@@ -1264,7 +1277,8 @@ functions provide that information.
     iteration, in particular if buffering is enabled.  This function
     may be safely called without holding the Python GIL.
 
-.. c:function:: void NpyIter_GetInnerFixedStrideArray(NpyIter* iter, npy_intp* out_strides)
+.. c:function:: void NpyIter_GetInnerFixedStrideArray( \
+        NpyIter* iter, npy_intp* out_strides)
 
     Gets an array of strides which are fixed, or will not change during
     the entire iteration.  For strides that may change, the value

@@ -1058,7 +1058,9 @@ What follows is the full specification of PyUFunc_FromFuncAndData, which
 automatically generates a ufunc from a C function with the correct signature.
 
 
-.. c:function:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func, void** data, char* types, int ntypes, int nin, int nout, int identity, char* name, char* doc, int unused)
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( \
+        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
+        int nin, int nout, int identity, char* name, char* doc, int unused)
 
     *func*
 
@@ -1067,7 +1069,8 @@ automatically generates a ufunc from a C function with the correct signature.
         ``PyUFuncGenericFunction`` function. This function has the following
         signature. An example of a valid 1d loop function is also given.
 
-    .. c:function:: void loop1d(char** args, npy_intp* dimensions, npy_intp* steps, void* data)
+    .. c:function:: void loop1d( \
+            char** args, npy_intp* dimensions, npy_intp* steps, void* data)
 
         *args*
 

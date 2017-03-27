@@ -90,11 +90,14 @@ that do not require a separate extraction of the module dictionary.
 These are documented in the Python documentation, but repeated here
 for convenience:
 
-.. c:function:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
+.. c:function:: int PyModule_AddObject( \
+        PyObject* module, char* name, PyObject* value)
 
-.. c:function:: int PyModule_AddIntConstant(PyObject* module, char* name, long value)
+.. c:function:: int PyModule_AddIntConstant( \
+        PyObject* module, char* name, long value)
 
-.. c:function:: int PyModule_AddStringConstant(PyObject* module, char* name, char* value)
+.. c:function:: int PyModule_AddStringConstant( \
+        PyObject* module, char* name, char* value)
 
     All three of these functions require the *module* object (the
     return value of Py_InitModule). The *name* is a string that
@@ -359,7 +362,8 @@ specific builtin data-type ( *e.g.* float), while specifying a
 particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
-.. c:function:: PyObject *PyArray_FROM_OTF(PyObject* obj, int typenum, int requirements)
+.. c:function:: PyObject *PyArray_FROM_OTF( \
+        PyObject* obj, int typenum, int requirements)
 
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
@@ -529,7 +533,8 @@ simpler forms exist that are easier to use.
     memory for the array can be set to zero if desired using
     :c:func:`PyArray_FILLWBYTE` (return_object, 0).
 
-.. c:function:: PyObject *PyArray_SimpleNewFromData( int nd, npy_intp* dims, int typenum, void* data)
+.. c:function:: PyObject *PyArray_SimpleNewFromData( \
+        int nd, npy_intp* dims, int typenum, void* data)
 
     Sometimes, you want to wrap memory allocated elsewhere into an
     ndarray object for downstream use. This routine makes it
