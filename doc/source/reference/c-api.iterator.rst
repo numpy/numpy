@@ -1250,7 +1250,7 @@ functions provide that information.
     This pointer may be cached before the iteration loop, calling
     ``iternext`` will not change it. This function may be safely
     called without holding the Python GIL.
-    
+
     **WARNING**: While the pointer may be cached, its values may
     change if the iterator is buffered.
 
@@ -1307,7 +1307,7 @@ Here is a conversion table for which functions to use with the new iterator:
 :c:func:`PyArrayIter_Check`            Will need to add this in Python exposure
 :c:func:`PyArray_ITER_RESET`           :c:func:`NpyIter_Reset`
 :c:func:`PyArray_ITER_NEXT`            Function pointer from :c:func:`NpyIter_GetIterNext`
-:c:func:`PyArray_ITER_DATA`            c:func:`NpyIter_GetDataPtrArray`
+:c:func:`PyArray_ITER_DATA`            :c:func:`NpyIter_GetDataPtrArray`
 :c:func:`PyArray_ITER_GOTO`            :c:func:`NpyIter_GotoMultiIndex`
 :c:func:`PyArray_ITER_GOTO1D`          :c:func:`NpyIter_GotoIndex` or
                                        :c:func:`NpyIter_GotoIterIndex`
