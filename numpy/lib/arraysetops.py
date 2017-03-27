@@ -533,6 +533,14 @@ def isin(elements, test_elements, **kwargs):
     >>> elements[mask]
     array([0, 6])"""
     elements = np.array(elements)
+    #The following enables values for test_elements that may be a set, 
+    #or any other kind of iterable that isn't array-like. array, called 
+    #with a set as the first parameter, returns a single-element array 
+    #with that set as its sole item. So to get the expected behavior, 
+    #test_elements is converted to a (possibly nested) list first. (If 
+    #test_elements is already a list, it is unchanged.)
+    #If, in a future release, someone changes how array handles sets 
+    #as a parameter, these two lines may need to be changed.
     if not hasattr(test_elements, '__array__'):
         test_elements = np.array(list(test_elements))
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
