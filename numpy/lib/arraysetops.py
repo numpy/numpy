@@ -534,7 +534,7 @@ def isin(elements, test_elements, **kwargs):
     array([0, 6])"""
     elements = np.array(elements)
     if not hasattr(test_elements, '__array__'):
-        test_elements = np.array([i for i in test_elements])
+        test_elements = np.array(list(test_elements))
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 
