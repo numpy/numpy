@@ -502,6 +502,33 @@ class TestPower(TestCase):
             assert_raises(ValueError, np.power, one, b)
             assert_raises(ValueError, np.power, one, minusone)
 
+    def test_power_mixedsign(self):
+        """
+        When given a signed and unsigned integer of the same size, the
+        result match the type of the first argument
+        """
+        inttypes = [
+            (np.int8, np.uint8),
+            (np.int16, np.uint16),
+            (np.int32, np.uint32),
+            (np.int64, np.uint64)
+        ]
+        for stype, utype in inttypes:
+            av = stype(6)
+            bv = utype(2)
+
+            for conv in [lambda x: x, np.array, lambda x: np.array([x])]:
+                a = conv(av)
+                b = conv(bv)
+
+                apb = np.power(a, b)
+                assert_equal(apb.dtype, a.dtype)
+                assert_equal(apb, 36)
+
+                bpa = np.power(b, a)
+                assert_equal(bpa.dtype, b.dtype)
+                assert_equal(bpa, 64)
+
 
 class TestFloat_power(TestCase):
     def test_type_conversion(self):

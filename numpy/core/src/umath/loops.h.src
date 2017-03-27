@@ -152,6 +152,23 @@ NPY_NO_EXPORT void
 U@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
+/**begin repeat
+ * #TYPE  = ( BYTE,  SHORT,  INT,  LONG,  LONGLONG,
+ *           UBYTE, USHORT, UINT, ULONG, ULONGLONG)*2#
+ * #C     = (b,h,i,l,q,
+ *           B,H,I,L,Q)*2#
+ * #C2    = (b,h,i,l,q)*2,
+ *          (B,H,I,L,Q)*2#
+ * #type  = (npy_byte , npy_short , npy_int , npy_long , npy_longlong,
+ *           npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong)*2#
+ * #type2 = (npy_byte , npy_short , npy_int , npy_long , npy_longlong )*2,
+ *          (npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong)*2#
+ * #SIGNED2 = 0*10,1*10#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@C@@C2@_@C@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                             FLOAT LOOPS                                 **

@@ -356,7 +356,27 @@ offset into the file. This is a behaviour change only for offsets
 greater than ``mmap.ALLOCATIONGRANULARITY``.
 
 ``np.real`` and ``np.imag`` return scalars for scalar inputs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------
 Previously, ``np.real`` and ``np.imag`` used to return array objects when
 provided a scalar input, which was inconsistent with other functions like
 ``np.angle`` and ``np.conj``.
+
+``np.power`` does not upcast integer types of the same size but different sign
+------------------------------------------------------------------------------
+Previously, ``np.power(uint, int)``, for some sized integer type would return a
+larger type than either ``uint`` or ``int``. This caused undesirable decaying
+to a ``float64`` when working with ``uint64`` and ``int64``.
+
+A consequence of this is that some overflows are more likely to occur
+.. code::
+
+   >>> u8 = np.uint8
+   >>> s8 = np.int8
+   >>> np.power(s8(2), s8(7))
+   -128  # same as before
+   >>> np.power(u8(2), u8(7))
+   128  # same as before
+   >>> np.power(s8(2), u8(7))
+   -128  # now int8, previously int16 and did not overflow
+   >>> np.power(u8(2), s8(7))
+   128   # now uint8, previously int16

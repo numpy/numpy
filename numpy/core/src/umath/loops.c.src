@@ -952,45 +952,6 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
-@TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        @type@ in1 = *(@type@ *)ip1;
-        @type@ in2 = *(@type@ *)ip2;
-        @type@ out;
-
-#if @SIGNED@
-        if (in2 < 0) {
-            NPY_ALLOW_C_API_DEF
-            NPY_ALLOW_C_API;
-            PyErr_SetString(PyExc_ValueError,
-                    "Integers to negative integer powers are not allowed.");
-            NPY_DISABLE_C_API;
-            return;
-        }
-#endif
-        if (in2 == 0) {
-            *((@type@ *)op1) = 1;
-            continue;
-        }
-        if (in1 == 1) {
-            *((@type@ *)op1) = 1;
-            continue;
-        }
-
-        out = in2 & 1 ? in1 : 1;
-        in2 >>= 1;
-        while (in2 > 0) {
-            in1 *= in1;
-            if (in2 & 1) {
-                out *= in1;
-            }
-            in2 >>= 1;
-        }
-        *((@type@ *) op1) = out;
-    }
-}
 
 NPY_NO_EXPORT void
 @TYPE@_fmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -1131,6 +1092,61 @@ NPY_NO_EXPORT void
     }
 }
 
+/**end repeat**/
+
+
+/**begin repeat
+ * #TYPE  = ( BYTE,  SHORT,  INT,  LONG,  LONGLONG,
+ *           UBYTE, USHORT, UINT, ULONG, ULONGLONG)*2#
+ * #C     = (b,h,i,l,q,
+ *           B,H,I,L,Q)*2#
+ * #C2    = (b,h,i,l,q)*2,
+ *          (B,H,I,L,Q)*2#
+ * #type  = (npy_byte , npy_short , npy_int , npy_long , npy_longlong,
+ *           npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong)*2#
+ * #type2 = (npy_byte , npy_short , npy_int , npy_long , npy_longlong )*2,
+ *          (npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong)*2#
+ * #SIGNED2 = 1*10,10*10#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@C@@C2@_@C@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        @type@ in1 = *(@type@ *)ip1;
+        @type2@ in2 = *(@type2@ *)ip2;
+        @type@ out;
+
+#if @SIGNED2@
+        if (in2 < 0) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            PyErr_SetString(PyExc_ValueError,
+                    "Integers to negative integer powers are not allowed.");
+            NPY_DISABLE_C_API;
+            return;
+        }
+#endif
+        if (in2 == 0) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+        if (in1 == 1) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+
+        out = in2 & 1 ? in1 : 1;
+        in2 >>= 1;
+        while (in2 > 0) {
+            in1 *= in1;
+            if (in2 & 1) {
+                out *= in1;
+            }
+            in2 >>= 1;
+        }
+        *((@type@ *) op1) = out;
+    }
+}
 /**end repeat**/
 
 /*

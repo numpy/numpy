@@ -366,7 +366,10 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.power'),
           None,
-          TD(ints),
+          [TypeDescription(i, FullTypeDescr, i+i2, i)
+           for i in ints
+           for i2 in [i.lower(), i.upper()]
+          ],
           TD(inexact, f='pow', astype={'e':'f'}),
           TD(O, f='npy_ObjectPower'),
           ),
