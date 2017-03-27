@@ -575,7 +575,7 @@ is obtained as :c:func:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
-(:c:data:`NPY_C_CONTIGUOUS` and :cdata`NPY_F_CONTIGUOUS`) indicate
+(:c:data:`NPY_C_CONTIGUOUS` and :c:data:`NPY_F_CONTIGUOUS`) indicate
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
