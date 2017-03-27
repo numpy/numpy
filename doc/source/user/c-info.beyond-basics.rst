@@ -284,8 +284,7 @@ functions for each conversion you want to support and then registering
 these functions with the data-type descriptor. A low-level casting
 function has the signature.
 
-.. c:function:: void castfunc( void* from, void* to, npy_intp n, void* fromarr,
-   void* toarr)
+.. c:function:: void castfunc( void* from, void* to, npy_intp n, void* fromarr, void* toarr)
 
     Cast ``n`` elements ``from`` one type ``to`` another. The data to
     cast from is in a contiguous, correctly-swapped and aligned chunk
@@ -358,8 +357,7 @@ previously created. Then you call :c:func:`PyUFunc_RegisterLoopForType`
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. c:function:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc,
-   int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
+.. c:function:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
 
     *ufunc*
 
