@@ -385,9 +385,9 @@ writeable). The syntax is
         and 4) any scalar object (becomes a zero-dimensional
         array). Sub-classes of the ndarray that otherwise fit the
         requirements will be passed through. If you want to ensure
-        a base-class ndarray, then use :c:data:`NPY_ENSUREARRAY` in the
+        a base-class ndarray, then use :c:data:`NPY_ARRAY_ENSUREARRAY` in the
         requirements flag. A copy is made only if necessary. If you
-        want to guarantee a copy, then pass in :c:data:`NPY_ENSURECOPY`
+        want to guarantee a copy, then pass in :c:data:`NPY_ARRAY_ENSURECOPY`
         to the requirements flag.
 
     *typenum*
@@ -415,7 +415,7 @@ writeable). The syntax is
 
         The object will be converted to the desired type only if it
         can be done without losing precision. Otherwise ``NULL`` will
-        be returned and an error raised. Use :c:data:`NPY_FORCECAST` in the
+        be returned and an error raised. Use :c:data:`NPY_ARRAY_FORCECAST` in the
         requirements flag to override this behavior.
 
     *requirements*
@@ -575,7 +575,7 @@ is obtained as :c:func:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
-(:c:data:`NPY_C_CONTIGUOUS` and :c:data:`NPY_F_CONTIGUOUS`) indicate
+(:c:data:`NPY_ARRAY_C_CONTIGUOUS` and :c:data:`NPY_ARRAY_F_CONTIGUOUS`) indicate
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
