@@ -496,9 +496,9 @@ def isin(elements, test_elements, **kwargs):
     ----------
     elements : array_like
         Input array.
-    test_elements : array_like
-        The values against which to test each value of `ar1`.
-        This argument is flattened.
+    test_elements : iterable
+        The values against which to test each value of `elements`.
+        This argument is flattened if it is an array or array_like.
     **kwargs: Keyword arguments passed to `in1d`.
 
     Returns
@@ -518,21 +518,23 @@ def isin(elements, test_elements, **kwargs):
 
     Examples
     --------
-    >>> test = np.array([[0, 2], [4, 6]])
-    >>> states = [1, 2, 4, 8]
-    >>> mask = np.isin(test, states)
+    >>> elements = np.array([[0, 2], [4, 6]])
+    >>> test_elements = {1, 2, 4, 8}
+    >>> mask = np.isin(elements, test_elements)
     >>> mask
     array([[ False,  True],
            [ True,  False]], dtype=bool)
-    >>> test[mask]
+    >>> elements[mask]
     array([2, 4])
-    >>> mask = np.isin(test, states, invert=True)
+    >>> mask = np.isin(elements, test_elements, invert=True)
     >>> mask
     array([[ True, False],
            [ False, True]], dtype=bool)
-    >>> test[mask]
+    >>> elements[mask]
     array([0, 6])"""
     elements = np.array(elements)
+    if has_attr(test_elements, '__iter__') and not has_attr(test_elements, '__getitem__'):
+        test_elements = np.array([i for i in test_elements])
     return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
 
 
