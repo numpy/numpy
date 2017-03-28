@@ -1678,7 +1678,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd,
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
@@ -1781,7 +1781,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArrayObject *dst = NULL, *src = NULL, *wheremask = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&O:copyto", kwlist,
                 &PyArray_Type, &dst,
                 &PyArray_Converter, &src,
                 &PyArray_CastingConverter, &casting,
@@ -1828,7 +1828,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     npy_bool is_f_order;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:empty", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
                 PyArray_OrderConverter, &order)) {
@@ -1871,7 +1871,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArrayObject *ret = NULL;
     int subok = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i:empty_like", kwlist,
                 &PyArray_Converter, &prototype,
                 &PyArray_DescrConverter2, &dtype,
                 &PyArray_OrderConverter, &order,
@@ -1907,7 +1907,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyObject *ret;
 
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|O:scalar", kwlist,
                 &PyArrayDescr_Type, &typecode, &obj)) {
         return NULL;
     }
@@ -1982,7 +1982,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:zeros", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
                 PyArray_OrderConverter, &order)) {
@@ -2020,7 +2020,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyArrayObject *array;
     npy_intp count;
 
-    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &array)) {
+    if (!PyArg_ParseTuple(args, "O&:count_nonzero", PyArray_Converter, &array)) {
         return NULL;
     }
 
@@ -2049,7 +2049,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s", kwlist,
+                "s#|O&" NPY_SSIZE_T_PYFMT "s:fromstring", kwlist,
                 &data, &s, PyArray_DescrConverter, &descr, &nin, &sep)) {
         Py_XDECREF(descr);
         return NULL;
@@ -2072,7 +2072,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s", kwlist,
+                "O|O&" NPY_SSIZE_T_PYFMT "s:fromfile", kwlist,
                 &file, PyArray_DescrConverter, &type, &nin, &sep)) {
         Py_XDECREF(type);
         return NULL;
@@ -2122,7 +2122,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "OO&|" NPY_SSIZE_T_PYFMT, kwlist,
+                "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
                 &iter, PyArray_DescrConverter, &descr, &nin)) {
         Py_XDECREF(descr);
         return NULL;
@@ -2139,7 +2139,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     PyArray_Descr *type = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT, kwlist,
+                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":frombuffer", kwlist,
                 &obj, PyArray_DescrConverter, &type, &nin, &offset)) {
         Py_XDECREF(type);
         return NULL;
@@ -2157,7 +2157,7 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     int axis = 0;
     static char *kwlist[] = {"seq", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:concatenate", kwlist,
                 &a0, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
@@ -2169,7 +2169,7 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *b0, *a0;
 
-    if (!PyArg_ParseTuple(args, "OO", &a0, &b0)) {
+    if (!PyArg_ParseTuple(args, "OO:innerproduct", &a0, &b0)) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(a0, b0));
@@ -2203,7 +2203,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
         return override;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist, &a, &v, &o)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct", kwlist, &a, &v, &o)) {
         return NULL;
     }
     if (o == Py_None) {
@@ -2233,7 +2233,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_DotFunc *vdot;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO:vdot", &op1, &op2)) {
         return NULL;
     }
 
@@ -2377,7 +2377,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
         return override;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matmul", kwlist,
                                      &in1, &in2, &out)) {
         return NULL;
     }
@@ -2855,7 +2855,7 @@ array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *a0;
 
-    if (!PyArg_ParseTuple(args, "O", &a0)) {
+    if (!PyArg_ParseTuple(args, "O:_fastCopyAndTranspose", &a0)) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_CopyAndTranspose(a0));
@@ -2868,7 +2868,7 @@ array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     int mode = 0;
     static char *kwlist[] = {"a", "v", "mode", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate", kwlist,
                 &a0, &shape, &mode)) {
         return NULL;
     }
@@ -2882,7 +2882,7 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     int mode = 0;
     static char *kwlist[] = {"a", "v", "mode", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate2", kwlist,
                 &a0, &shape, &mode)) {
         return NULL;
     }
@@ -2895,7 +2895,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd,
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
@@ -2971,7 +2971,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     evil_global_disable_warn_O4O8_flag = 1;
 
-    if (!PyArg_ParseTuple(args, "O!O&O&",
+    if (!PyArg_ParseTuple(args, "O!O&O&:_reconstruct",
                 &PyType_Type, &subtype,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &dtype)) {
@@ -3006,7 +3006,7 @@ array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
     int repr = 1;
     static char *kwlist[] = {"f", "repr", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi", kwlist, &op, &repr)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
         return NULL;
     }
     /* reset the array_repr function to built-in */
@@ -3232,7 +3232,7 @@ array_where(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
     PyObject *obj = NULL, *x = NULL, *y = NULL;
 
-    if (!PyArg_ParseTuple(args, "O|OO", &obj, &x, &y)) {
+    if (!PyArg_ParseTuple(args, "O|OO:where", &obj, &x, &y)) {
         return NULL;
     }
     return PyArray_Where(obj, x, y);
@@ -3245,7 +3245,7 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyObject *obj;
     static char *kwlist[] = {"keys", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist, &obj, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i:lexsort", kwlist, &obj, &axis)) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_LexSort(obj, axis));
@@ -3263,7 +3263,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     NPY_CASTING casting = NPY_SAFE_CASTING;
     static char *kwlist[] = {"from", "to", "casting", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&", kwlist,
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:can_cast", kwlist,
                 &from_obj,
                 PyArray_DescrConverter2, &d2,
                 PyArray_CastingConverter, &casting)) {
@@ -3315,7 +3315,7 @@ array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
     PyObject *ret = NULL;
-    if(!PyArg_ParseTuple(args, "O&O&",
+    if(!PyArg_ParseTuple(args, "O&O&:promote_types",
                 PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
         goto finish;
     }
@@ -3341,7 +3341,7 @@ array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArrayObject *array;
     PyObject *ret = NULL;
 
-    if(!PyArg_ParseTuple(args, "O", &array_in)) {
+    if(!PyArg_ParseTuple(args, "O:min_scalar_type", &array_in)) {
         return NULL;
     }
 
@@ -3438,7 +3438,7 @@ new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int size;
 
-    if(!PyArg_ParseTuple(args, "i", &size)) {
+    if(!PyArg_ParseTuple(args, "i:buffer", &size)) {
         return NULL;
     }
     return PyBuffer_New(size);
@@ -3454,7 +3454,7 @@ buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"object", "offset", "size", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O|" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT, kwlist,
+                "O|" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":get_buffer", kwlist,
                 &obj, &offset, &size)) {
         return NULL;
     }
@@ -3502,7 +3502,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"mem", "size", "readonly", "check", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O" NPY_SSIZE_T_PYFMT "|O&O&", kwlist,
+                "O" NPY_SSIZE_T_PYFMT "|O&O&:int_asbuffer", kwlist,
                 &mem, &size, PyArray_BoolConverter, &ro,
                 PyArray_BoolConverter, &check)) {
         return NULL;
@@ -3568,7 +3568,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"x", "precision", NULL};
     static char repr[100];
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI:format_longfloat", kwlist,
                 &obj, &precision)) {
         return NULL;
     }
@@ -3599,7 +3599,8 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     static char msg[] = "comparision must be '==', '!=', '<', '>', '<=', '>='";
     static char *kwlist[] = {"a1", "a2", "cmp", "rstrip", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&:compare_chararrays",
+                kwlist,
                 &array, &other, &cmp_str, &strlength,
                 PyArray_BoolConverter, &rstrip)) {
         return NULL;
@@ -3942,7 +3943,7 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     int kind = 0;
     int a = 0;
 
-    if (!PyArg_ParseTuple(args, "|i", &kind)) {
+    if (!PyArg_ParseTuple(args, "|i:test_interrupt", &kind)) {
         return NULL;
     }
     if (kind) {
@@ -3984,7 +3985,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
 
     max_work = default_max_work;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:shares_memory_impl", kwlist,
                                      &self_obj, &other_obj, &max_work_obj)) {
         return NULL;
     }
@@ -4109,8 +4110,8 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int axis;
     int ndim;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii", kwlist,
-                                     &axis, &ndim)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii:normalize_axis_index",
+                                     kwlist, &axis, &ndim)) {
         return NULL;
     }
 
