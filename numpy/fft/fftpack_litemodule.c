@@ -18,7 +18,7 @@ fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     npy_intp nsave;
     int npts, nrepeats, i;
 
-    if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if(!PyArg_ParseTuple(args, "OO:cfftf", &op1, &op2)) {
         return NULL;
     }
     data = (PyArrayObject *)PyArray_CopyFromObject(op1,
@@ -71,7 +71,7 @@ fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     npy_intp nsave;
     int npts, nrepeats, i;
 
-    if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if(!PyArg_ParseTuple(args, "OO:cfftb", &op1, &op2)) {
         return NULL;
     }
     data = (PyArrayObject *)PyArray_CopyFromObject(op1,
@@ -121,7 +121,7 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     npy_intp dim;
     long n;
 
-    if (!PyArg_ParseTuple(args, "l", &n)) {
+    if (!PyArg_ParseTuple(args, "l:cffti", &n)) {
         return NULL;
     }
     /*Magic size needed by npy_cffti*/
@@ -153,7 +153,7 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     npy_intp nsave;
     int npts, nrepeats, i, rstep;
 
-    if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if(!PyArg_ParseTuple(args, "OO:rfftf", &op1, &op2)) {
         return NULL;
     }
     data = (PyArrayObject *)PyArray_ContiguousFromObject(op1,
@@ -223,7 +223,7 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     npy_intp nsave;
     int npts, nrepeats, i;
 
-    if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
+    if(!PyArg_ParseTuple(args, "OO:rfftb", &op1, &op2)) {
         return NULL;
     }
     data = (PyArrayObject *)PyArray_ContiguousFromObject(op1,
@@ -282,7 +282,7 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
   npy_intp dim;
   long n;
 
-  if (!PyArg_ParseTuple(args, "l", &n)) {
+  if (!PyArg_ParseTuple(args, "l:rffti", &n)) {
       return NULL;
   }
   /*Magic size needed by npy_rffti*/

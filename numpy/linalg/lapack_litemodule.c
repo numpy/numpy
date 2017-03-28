@@ -110,7 +110,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *iwork;
     int lwork;
     int info;
-    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOi",
+    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOi:dgelsd",
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&iwork,&info));
 
@@ -143,7 +143,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii:dgeqrf",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
         /* check objects and convert to right storage order */
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeqrf"));
@@ -172,7 +172,7 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii:dorgqr",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
@@ -207,7 +207,7 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *rwork;
     PyObject *iwork;
     int info;
-    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOOi",
+    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOOi:zgelsd",
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&rwork,&iwork,&info));
 
@@ -239,7 +239,7 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii:zgeqrf",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
         TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeqrf"));
@@ -266,7 +266,7 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii:zungqr",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zungqr"));
         TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr"));
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
