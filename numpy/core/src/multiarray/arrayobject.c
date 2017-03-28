@@ -1620,7 +1620,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
      * strides, and swapped info For now, let's just use this to create an
      * empty, contiguous array of a specific type and shape.
      */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&:ndarray",
                                      kwlist, PyArray_IntpConverter,
                                      &dims,
                                      PyArray_DescrConverter,

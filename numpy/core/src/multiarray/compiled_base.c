@@ -101,7 +101,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
                 kwlist, &list, &weight, &mlength)) {
             goto fail;
     }
@@ -217,7 +217,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     static char *kwlist[] = {"x", "bins", "right", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:digitize", kwlist,
                                      &obj_x, &obj_bins, &right)) {
         goto fail;
     }
@@ -533,7 +533,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
                                      &x, &xp, &fp, &left, &right)) {
         return NULL;
     }
@@ -686,8 +686,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
+                                     kwlist, &x, &xp, &fp, &left, &right)) {
         return NULL;
     }
 
@@ -1409,13 +1409,13 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
 #if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "OO!", &obj, &PyUnicode_Type, &str)) {
+    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
         return NULL;
     }
 
     docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
 #else
-    if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str)) {
+    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
         return NULL;
     }
 
@@ -1805,7 +1805,7 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int axis = NPY_MAXDIMS;
     static char *kwlist[] = {"in", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:pack" , kwlist,
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
@@ -1819,7 +1819,7 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int axis = NPY_MAXDIMS;
     static char *kwlist[] = {"in", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:unpack" , kwlist,
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }

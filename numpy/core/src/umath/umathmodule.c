@@ -94,7 +94,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     Py_ssize_t fname_len = -1;
     int offset[2];
 
-    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
+    if (!PyArg_ParseTuple(args, "Oii:frompyfunc", &function, &nin, &nout)) {
         return NULL;
     }
     if (!PyCallable_Check(function)) {
@@ -210,13 +210,13 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     char *docstr, *newdocstr;
 
 #if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
     docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
 #else
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
          return NULL;
     }
