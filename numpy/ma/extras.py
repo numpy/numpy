@@ -749,7 +749,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     counts = count(asorted, axis=axis, keepdims=True)
     h = counts // 2
-
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
     l = np.where(odd, h, h-1)
