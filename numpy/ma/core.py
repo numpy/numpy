@@ -43,6 +43,7 @@ from numpy.compat import (
     )
 from numpy import expand_dims as n_expand_dims
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 
 
 if sys.version_info[0] >= 3:
@@ -4362,17 +4363,14 @@ class MaskedArray(ndarray):
 
             if self.shape is ():
                 if axis not in (None, 0):
-                    raise np.AxisError("'axis' entry is out of bounds")
+                    raise np.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
-            axes = axis if isinstance(axis, tuple) else (axis,)
-            axes = tuple(normalize_axis_index(a, self.ndim) for a in axes)
-            if len(axes) != len(set(axes)):
-                raise ValueError("duplicate value in 'axis'")
+            axes = normalize_axis_tuple(axis, self.ndim)
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
