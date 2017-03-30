@@ -1514,7 +1514,8 @@ def nonzero(a):
     array([[1, 0, 0],
            [0, 2, 0],
            [1, 1, 0]])
-    >>> (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
+    >>> np.nonzero(x)
+    (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
 
     >>> x[np.nonzero(x)]
     array([ 1.,  1.,  1.])
