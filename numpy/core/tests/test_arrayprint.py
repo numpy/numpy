@@ -141,7 +141,7 @@ class TestArray2String(TestCase):
 
         # for issue #5692
         A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
-        A[5:].fill(np.nan)
+        A[5:].fill(np.datetime64('NaT'))
         assert_equal(np.array2string(A),
                 "[('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) " +
                 "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
