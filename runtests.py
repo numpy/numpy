@@ -142,7 +142,7 @@ def main(argv):
         site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
-        os.environ['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
+        os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
