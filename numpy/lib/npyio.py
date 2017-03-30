@@ -1357,7 +1357,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                missing_values=None, filling_values=None, usecols=None,
                names=None, excludelist=None, deletechars=None,
                replace_space='_', autostrip=False, case_sensitive=True,
-               defaultfmt="f%i", unpack=None, usemask=False, loose=True,
+               defaultfmt="f%i", unpack=None, ndmin=0, usemask=False, loose=True,
                invalid_raise=True, max_rows=None):
     """
     Load data from a text file, with missing values handled as specified.
@@ -1430,6 +1430,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``
+    ndmin : int, optional
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise mono-dimensional axes will be squeezed.
+        Legal values: 0 (default), 1 or 2.
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
@@ -1473,12 +1477,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Examples
     ---------
-    >>> from io import StringIO
+    >>> from io import BytesIO
     >>> import numpy as np
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO("1,1.3,abcde")
+    >>> s = BytesIO(b"1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1505,7 +1509,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO("11.3abcde")
+    >>> s = BytesIO(b"11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
@@ -1984,9 +1988,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask:
         output = output.view(MaskedArray)
         output._mask = outputmask
+    # Verify that the array has at least dimensions `ndmin`.
+    # Check correctness of the values of `ndmin`
+    if ndmin not in [0, 1, 2]:
+        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
+    # Tweak the size and shape of the arrays - remove extraneous dimensions
+    if output.ndim > ndmin:
+        output = np.squeeze(output)
+    # and ensure we have the minimum number of dimensions asked for
+    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
+    if output.ndim < ndmin:
+        if ndmin == 1:
+            output = np.atleast_1d(output)
+        elif ndmin == 2:
+            output = np.atleast_2d(output).T
     if unpack:
-        return output.squeeze().T
-    return output.squeeze()
+        return output.T
+    return output
 
 
 def ndfromtxt(fname, **kwargs):
