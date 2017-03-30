@@ -1509,13 +1509,12 @@ def nonzero(a):
 
     Examples
     --------
-    >>> x = np.eye(3)
+    >>> x = np.array([[1,0,0], [0,2,0], [1,1,0]])
     >>> x
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
-    >>> np.nonzero(x)
-    (array([0, 1, 2]), array([0, 1, 2]))
+    array([[1, 0, 0],
+           [0, 2, 0],
+           [1, 1, 0]])
+    >>> (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
 
     >>> x[np.nonzero(x)]
     array([ 1.,  1.,  1.])
