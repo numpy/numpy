@@ -1981,6 +1981,123 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     return ret;
 }
 
+/*
+ * Validate the core dimensions of all the operands, and collect all of
+ * the labelled core dimensions into 'core_dim_sizes'.
+ * 
+ * Returns 0 on success, and -1 on failure
+ *
+ * The behavior has been changed in NumPy 1.10.0, and the following
+ * requirements must be fulfilled or an error will be raised:
+ *  * Arguments, both input and output, must have at least as many
+ *    dimensions as the corresponding number of core dimensions. In
+ *    previous versions, 1's were prepended to the shape as needed.
+ *  * Core dimensions with same labels must have exactly matching sizes.
+ *    In previous versions, core dimensions of size 1 would broadcast
+ *    against other core dimensions with the same label.
+ *  * All core dimensions must have their size specified by a passed in
+ *    input or output argument. In previous versions, core dimensions in
+ *    an output argument that were not specified in an input argument,
+ *    and whose size could not be inferred from a passed in output
+ *    argument, would have their size set to 1.
+ */
+static int
+_get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
+                   npy_intp* core_dim_sizes) {
+    int i;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
+    int nop = nin + nout;
+
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        core_dim_sizes[i] = -1;
+    }
+    for (i = 0; i < nop; ++i) {
+        if (op[i] != NULL) {
+            int idim;
+            int dim_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+
+            /* Check if operands have enough dimensions */
+            if (core_start_dim < 0) {
+                PyErr_Format(PyExc_ValueError,
+                        "%s: %s operand %d does not have enough "
+                        "dimensions (has %d, gufunc core with "
+                        "signature %s requires %d)",
+                        _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                        ufunc->core_signature, num_dims);
+                return -1;
+            }
+
+            /*
+             * Make sure every core dimension exactly matches all other core
+             * dimensions with the same label.
+             */
+            for (idim = 0; idim < num_dims; ++idim) {
+                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
+                npy_intp op_dim_size =
+                            PyArray_DIM(op[i], core_start_dim+idim);
+
+                if (core_dim_sizes[core_dim_index] == -1) {
+                    core_dim_sizes[core_dim_index] = op_dim_size;
+                }
+                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
+                    PyErr_Format(PyExc_ValueError,
+                            "%s: %s operand %d has a mismatch in its "
+                            "core dimension %d, with gufunc "
+                            "signature %s (size %zd is different "
+                            "from %zd)",
+                            _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                            i < nin ? i : i - nin, idim,
+                            ufunc->core_signature, op_dim_size,
+                            core_dim_sizes[core_dim_index]);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /*
+     * Make sure no core dimension is unspecified.
+     */
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        if (core_dim_sizes[i] == -1) {
+            break;
+        }
+    }
+    if (i != ufunc->core_num_dim_ix) {
+        /*
+         * There is at least one core dimension missing, find in which
+         * operand it comes up first (it has to be an output operand).
+         */
+        const int missing_core_dim = i;
+        int out_op;
+        for (out_op = nin; out_op < nop; ++out_op) {
+            int first_idx = ufunc->core_offsets[out_op];
+            int last_idx = first_idx + ufunc->core_num_dims[out_op];
+            for (i = first_idx; i < last_idx; ++i) {
+                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
+                    break;
+                }
+            }
+            if (i < last_idx) {
+                /* Change index offsets for error message */
+                out_op -= nin;
+                i -= first_idx;
+                break;
+            }
+        }
+        PyErr_Format(PyExc_ValueError,
+                     "%s: Output operand %d has core dimension %d "
+                     "unspecified, with gufunc signature %s",
+                     _get_ufunc_name(ufunc), out_op, i, ufunc->core_signature);
+        return -1;
+    }
+    return 0;
+}
+
 
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
@@ -1990,7 +2107,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int nin, nout;
     int i, j, idim, nop;
     const char *ufunc_name;
-    int retval = -1, subok = 1;
+    int retval = 0, subok = 1;
     int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
@@ -2096,110 +2213,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /*
-     * Validate the core dimensions of all the operands, and collect all of
-     * the labelled core dimensions into 'core_dim_sizes'.
-     *
-     * The behavior has been changed in NumPy 1.10.0, and the following
-     * requirements must be fulfilled or an error will be raised:
-     *  * Arguments, both input and output, must have at least as many
-     *    dimensions as the corresponding number of core dimensions. In
-     *    previous versions, 1's were prepended to the shape as needed.
-     *  * Core dimensions with same labels must have exactly matching sizes.
-     *    In previous versions, core dimensions of size 1 would broadcast
-     *    against other core dimensions with the same label.
-     *  * All core dimensions must have their size specified by a passed in
-     *    input or output argument. In previous versions, core dimensions in
-     *    an output argument that were not specified in an input argument,
-     *    and whose size could not be inferred from a passed in output
-     *    argument, would have their size set to 1.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        core_dim_sizes[i] = -1;
-    }
-    for (i = 0; i < nop; ++i) {
-        if (op[i] != NULL) {
-            int dim_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
-
-            /* Check if operands have enough dimensions */
-            if (core_start_dim < 0) {
-                PyErr_Format(PyExc_ValueError,
-                        "%s: %s operand %d does not have enough "
-                        "dimensions (has %d, gufunc core with "
-                        "signature %s requires %d)",
-                        ufunc_name, i < nin ? "Input" : "Output",
-                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                        ufunc->core_signature, num_dims);
-                retval = -1;
-                goto fail;
-            }
-
-            /*
-             * Make sure every core dimension exactly matches all other core
-             * dimensions with the same label.
-             */
-            for (idim = 0; idim < num_dims; ++idim) {
-                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
-                npy_intp op_dim_size =
-                            PyArray_DIM(op[i], core_start_dim+idim);
-
-                if (core_dim_sizes[core_dim_index] == -1) {
-                    core_dim_sizes[core_dim_index] = op_dim_size;
-                }
-                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
-                    PyErr_Format(PyExc_ValueError,
-                            "%s: %s operand %d has a mismatch in its "
-                            "core dimension %d, with gufunc "
-                            "signature %s (size %zd is different "
-                            "from %zd)",
-                            ufunc_name, i < nin ? "Input" : "Output",
-                            i < nin ? i : i - nin, idim,
-                            ufunc->core_signature, op_dim_size,
-                            core_dim_sizes[core_dim_index]);
-                    retval = -1;
-                    goto fail;
-                }
-            }
-        }
-    }
-
-    /*
-     * Make sure no core dimension is unspecified.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        if (core_dim_sizes[i] == -1) {
-            break;
-        }
-    }
-    if (i != ufunc->core_num_dim_ix) {
-        /*
-         * There is at least one core dimension missing, find in which
-         * operand it comes up first (it has to be an output operand).
-         */
-        const int missing_core_dim = i;
-        int out_op;
-        for (out_op = nin; out_op < nop; ++out_op) {
-            int first_idx = ufunc->core_offsets[out_op];
-            int last_idx = first_idx + ufunc->core_num_dims[out_op];
-            for (i = first_idx; i < last_idx; ++i) {
-                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
-                    break;
-                }
-            }
-            if (i < last_idx) {
-                /* Change index offsets for error message */
-                out_op -= nin;
-                i -= first_idx;
-                break;
-            }
-        }
-        PyErr_Format(PyExc_ValueError,
-                     "%s: Output operand %d has core dimension %d "
-                     "unspecified, with gufunc signature %s",
-                     ufunc_name, out_op, i, ufunc->core_signature);
-        retval = -1;
+    /* Collect the lengths of the labelled core dimensions */
+    retval = _get_coredim_sizes(ufunc, op, core_dim_sizes);
+    if(retval < 0) {
         goto fail;
     }
 
