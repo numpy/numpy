@@ -2226,7 +2226,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Fill in op_axes for all the operands */
     j = broadcast_ndim;
-    core_dim_ixs_size = 0;
     for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
@@ -2268,7 +2267,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
 
         op_axes[i] = op_axes_arrays[i];
-        core_dim_ixs_size += ufunc->core_num_dims[i];
     }
 
     /* Get the buffersize and errormask */
@@ -2383,6 +2381,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.
      */
+    core_dim_ixs_size = 0;
+    for (i = 0; i < nop; ++i) {
+        core_dim_ixs_size += ufunc->core_num_dims[i];
+    }
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     if (inner_strides == NULL) {
