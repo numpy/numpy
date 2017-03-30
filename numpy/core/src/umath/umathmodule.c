@@ -112,7 +112,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     if (self == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)self, &PyUFunc_Type);
+    PyObject_Init((PyObject *)self, &PySUFunc_Type);
 
     self->userloops = NULL;
     self->nin = nin;
@@ -344,6 +344,10 @@ PyMODINIT_FUNC initumath(void)
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
+        return RETVAL;
+    if (PyType_Ready(&PyGUFunc_Type) < 0)
+        return RETVAL;
+    if (PyType_Ready(&PySUFunc_Type) < 0)
         return RETVAL;
 
     /* Add some symbolic constants to the module */
