@@ -757,6 +757,15 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 /********* GENERIC UFUNC USING ITERATOR *********/
 
 /*
+ * Produce a name for the ufunc, if one is not already set
+ * This is used in the PyUFunc_handlefperr machinery, and in error messages
+ */
+static const char*
+_get_ufunc_name(PyUFuncObject *ufunc) {
+    return ufunc->name ? ufunc->name : "<unnamed ufunc>";
+}
+
+/*
  * Parses the positional and keyword arguments for a generic ufunc call.
  *
  * Note that if an error is returned, the caller must free the
@@ -779,13 +788,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
-    const char *ufunc_name;
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
     int has_sig = 0;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     *out_extobj = NULL;
     *out_typetup = NULL;
@@ -2037,7 +2044,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2598,7 +2605,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2838,7 +2845,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
@@ -3027,7 +3034,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *dtype;
     PyArrayObject *result;
     PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
@@ -3135,7 +3142,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3510,7 +3517,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
