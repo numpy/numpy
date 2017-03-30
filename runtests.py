@@ -183,8 +183,8 @@ def main(argv):
     if args.shell:
         shell = os.environ.get('SHELL', 'sh')
         print("Spawning a Unix shell...")
-        os.execv(shell, [shell] + extra_argv)
-        sys.exit(1)
+        subprocess.call([shell] + extra_argv)
+        sys.exit(0)
 
     if args.coverage:
         dst_dir = os.path.join(ROOT_DIR, 'build', 'coverage')
