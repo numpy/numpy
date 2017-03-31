@@ -53,6 +53,7 @@ def test_class_methods():
         yield check_cutdeg, Poly
         yield check_truncate, Poly
         yield check_trim, Poly
+        yield check_ufunc_override, Poly
 
 
 #
@@ -573,6 +574,13 @@ def check_mapparms(Poly):
     w = 2*d + 1
     p = Poly([1], domain=d, window=w)
     assert_almost_equal([1, 2], p.mapparms())
+
+
+def check_ufunc_override(Poly):
+    p = Poly([1, 2, 3])
+    x = np.ones(3)
+    assert_raises(TypeError, np.add, p, x)
+    assert_raises(TypeError, np.add, x, p)
 
 
 if __name__ == "__main__":
