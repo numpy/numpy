@@ -744,6 +744,24 @@ def _getconv(dtype):
     else:
         return asstr
 
+def _squeeze_to_ndmin(arr, ndmin):
+    """
+    Verify the number of dimensions of the array to match ndmin.
+    """
+    # Check correctness of the values of `ndmin`
+    if ndmin not in [0, 1, 2]:
+        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
+    # Tweak the size and shape of the arrays - remove extraneous dimensions
+    if arr.ndim > ndmin:
+        arr = np.squeeze(arr)
+    # and ensure we have the minimum number of dimensions asked for
+    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
+    if arr.ndim < ndmin:
+        if ndmin == 1:
+            arr = np.atleast_1d(arr)
+        elif ndmin == 2:
+            arr = np.atleast_2d(arr).T
+    return arr
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
@@ -1034,22 +1052,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # (1, 1, M) for a single row - remove the singleton dimension there
     if X.ndim == 3 and X.shape[:2] == (1, 1):
         X.shape = (1, -1)
-
-    # Verify that the array has at least dimensions `ndmin`.
-    # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
-        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
-    # Tweak the size and shape of the arrays - remove extraneous dimensions
-    if X.ndim > ndmin:
-        X = np.squeeze(X)
-    # and ensure we have the minimum number of dimensions asked for
-    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
-    if X.ndim < ndmin:
-        if ndmin == 1:
-            X = np.atleast_1d(X)
-        elif ndmin == 2:
-            X = np.atleast_2d(X).T
-
+    # Verify number of dimensions.
+    X = _squeeze_to_ndmin(X, ndmin)
     if unpack:
         if len(dtype_types) > 1:
             # For structured arrays, return an array for each field.
@@ -1357,8 +1361,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                missing_values=None, filling_values=None, usecols=None,
                names=None, excludelist=None, deletechars=None,
                replace_space='_', autostrip=False, case_sensitive=True,
-               defaultfmt="f%i", unpack=None, ndmin=0, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None):
+               defaultfmt="f%i", unpack=None, usemask=False, loose=True,
+               invalid_raise=True, max_rows=None, ndmin=0):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1430,10 +1434,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``
-    ndmin : int, optional
-        The returned array will have at least `ndmin` dimensions.
-        Otherwise mono-dimensional axes will be squeezed.
-        Legal values: 0 (default), 1 or 2.
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
@@ -1449,6 +1449,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to read the entire file.
 
         .. versionadded:: 1.10.0
+    ndmin : int, optional
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise mono-dimensional axes will be squeezed.
+        Legal values: 0 (default), 1 or 2.
+
+        .. versionadded:: 1.13.0
 
     Returns
     -------
@@ -1988,24 +1994,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask:
         output = output.view(MaskedArray)
         output._mask = outputmask
-    # Verify that the array has at least dimensions `ndmin`.
-    # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
-        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
-    # Tweak the size and shape of the arrays - remove extraneous dimensions
-    if output.ndim > ndmin:
-        output = np.squeeze(output)
-    # and ensure we have the minimum number of dimensions asked for
-    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
-    if output.ndim < ndmin:
-        if ndmin == 1:
-            output = np.atleast_1d(output)
-        elif ndmin == 2:
-            output = np.atleast_2d(output).T
+    # Verify number of dimensions.
+    output = _squeeze_to_ndmin(output, ndmin)
     if unpack:
         return output.T
     return output
-
 
 def ndfromtxt(fname, **kwargs):
     """
