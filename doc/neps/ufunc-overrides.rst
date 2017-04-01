@@ -171,21 +171,148 @@ The function dispatch proceeds as follows:
 If none of the input arguments has an ``__array_ufunc__`` method, the
 execution falls back on the default ufunc behaviour.
 
+
+Type casting hierarchy
+----------------------
+
+Similarly to the Python operator dispatch mechanism, writing ufunc
+dispatch methods requires some discipline in order to achieve
+predictable results.
+
+In particular, it is useful to maintain a clear idea of what types can
+be upcast to others, possibly indirectly (i.e. A->B->C is implemented
+but direct A->C not). Moreover, one should make sure the implementations of
+``__array_ufunc__``, which implicitly define the type casting hierarchy,
+don't contradict this.
+
+The following rules should be followed:
+
+1. The ``__array_ufunc__`` for type A should either return
+   `NotImplemented`, or return an output of type A (unless an
+   ``out=`` argument was given, in which case ``out`` is returned).
+
+2. For any two different types *A*, *B*, the relation "A can handle B" 
+   defined as::
+
+       a.__array_ufunc__(..., b, ...) is not NotImplemented
+
+   for instances *a* and *b* of *A* and *B*, defines the
+   edges B->A of a graph.
+
+   This graph must be a directed acyclic graph.
+
+Under these conditions, the transitive closure of the "can handle"
+relation defines a strict partial ordering of the types -- that is, the
+type casting hierarchy.
+
+In other words, for any given class A, all other classes that define
+``__array_ufunc__`` must belong to exactly one of the groups:
+
+- *Above A*: their ``__array_ufunc__`` can handle class A or some
+  member of the "above A" classes. In other words, these are the types
+  that A can be (indirectly) upcast to in ufuncs.
+
+- *Below A*: they can be handled by the ``__array_ufunc__`` of class A
+  or the ``__array_ufunc__`` of some member of the "below A" classes. In
+  other words, these are the types that can be (indirectly) upcast to A
+  in ufuncs.
+
+- *Incompatible*: neither above nor below A; types for which no
+  (indirect) upcasting is possible.
+
+This guarantees that expressions involving ufuncs either raise a
+`TypeError`, or the result type is independent of what ufuncs were
+called, what order they were called in, and what order their arguments
+were in.  Moreover, which ``__array_ufunc__`` payload code runs at each
+step is independent of the order of arguments of the ufuncs.
+
+Note also that while converting inputs that don't have
+``__array_ufunc__`` to `ndarray` via `np.asarray` is consistent with the
+type casting hierarchy, also returning `NotImplemented` is
+consistent. However, the numpy ufunc (legacy) behavior is to try to
+convert unknown objects to ndarrays.
+
+
+.. admonition:: Example
+
+   Type casting hierarchy
+
+   .. graphviz::
+
+      digraph array_ufuncs {
+         rankdir=BT;
+         A -> C;
+         B -> C;
+         D -> B;
+         ndarray -> A;
+         ndarray -> B;
+      }
+
+   The ``__array_ufunc__`` of type A can handle ndarrays, B can handle ndarray and D,
+   and C can handle A and B but not ndarrays or D.  The resulting graph is a DAG,
+   and defines a type casting hierarchy, with relations ``C > A >
+   ndarray``, ``C > B > ndarray``, ``C > B > D``. The type B is incompatible
+   relative to A and vice versa, and A and ndarray are incompatible relative to D.
+   Ufunc expressions involving these classes produce results of the highest type
+   involved or raise a TypeError.
+
+
 Subclass hierarchies
 --------------------
 
-Hierarchies of such containers (say, a masked quantity), are most easily
-constructed if methods consistently use :func:`super` to pass through
-the class hierarchy [7]_.  To support this, :class:`ndarray` has its own
-``__array_ufunc__`` method (which is equivalent to ``getattr(ufunc,
-method)(*inputs, **kwargs)``, i.e., if any of the (adjusted) inputs
-still defines ``__array_ufunc__`` that will be called in turn). This
-should be particularly useful for container-like subclasses of
-:class:`ndarray`, which add an attribute like a unit or mask to a
-regular :class:`ndarray`. Such classes can do possible adjustment of the
-arguments relevant to their own class, pass on to another class in the
-hierarchy using :func:`super` until the Ufunc is actually done, and then
-do possible adjustments of the outputs.
+Generally, it is desirable to mirror the class hierarchy in the ufunc
+type casting hierarchy. The recommendation is that an
+``__array_ufunc__`` implementation of a class should generally return
+`NotImplemented` unless the inputs are instances of the same class or
+superclasses.  This guarantees that in the type casting hierarchy,
+superclasses are below, subclasses above, and other classes are
+incompatible.  Exceptions to this need to check they respect the
+implicit type casting hierarchy.
+
+Subclasses can be easily constructed if methods consistently use
+:func:`super` to pass through the class hierarchy [7]_.  To support
+this, :class:`ndarray` has its own ``__array_ufunc__`` method,
+equivalent to::
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        out = kwargs.pop('out', None)
+        out_tuple = out if out is not None else ()
+
+        # Handle items of type(self), superclasses, and items
+        # without __array_ufunc__. Bail out in other cases.
+        items = []
+        for item in inputs + out_tuple:
+            if isinstance(self, type(item)) or not hasattr(item, '__array_ufunc__'):
+                # Cast to plain ndarrays
+                items.append(np.asarray(item))
+            else:
+                return NotImplemented
+
+        # Perform ufunc on the underlying ndarrays (no __array_ufunc__ dispatch)
+        result = getattr(ufunc, method)(*items, **kwargs)
+
+        # Cast output to type(self), unless `out` specified
+        if out is not None:
+            return result
+
+        if isinstance(result, tuple):
+            return tuple(x.view(type(self)) for x in result)
+        else:
+            return result.view(type(self))
+
+Note that, as a special case, the ufunc dispatch mechanism does not call
+the `__array_ufunc__` method for inputs of `ndarray` type. As a
+consequence, calling `ndarray.__array_ufunc__` will not result to a
+nested ufunc dispatch cycle.  Custom implementations of
+`__array_ufunc__` should generally avoid nested dispatch cycles.
+
+This should be particularly useful for subclasses of :class:`ndarray`,
+which only add an attribute like a unit or mask to a regular
+:class:`ndarray`. In their `__array_ufunc__` implementation, such
+classes can do possible adjustment of the arguments relevant to their
+own class, and pass on to superclass implementation using :func:`super`
+until the ufunc is actually done, and then do possible adjustments of
+the outputs.
 
 Turning Ufuncs off
 ------------------
@@ -193,9 +320,12 @@ Turning Ufuncs off
 For some classes, Ufuncs make no sense, and, like for other special
 methods [8]_, one can indicate Ufuncs are not available by setting
 ``__array_ufunc__`` to :obj:`None`.  Inside a Ufunc, this is
-equivalent to unconditionally return :obj:`NotImplemented`, and thus
+equivalent to unconditionally returning :obj:`NotImplemented`, and thus
 will lead to a :exc:`TypeError` (unless another operand implements
-``__array_ufunc__`` and knows how to deal with the class).
+``__array_ufunc__`` and specifically knows how to deal with the class).
+
+In the type casting hierarchy, this makes the type incompatible relative
+to `ndarray`.
 
 .. [7] https://rhettinger.wordpress.com/2011/05/26/super-considered-super/
 
@@ -217,10 +347,11 @@ binary operators in terms of Ufuncs. Here, one has to take some care.
 E.g., the simplest implementation would be::
 
     class ArrayLike(object):
+        ...
         def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
             ...
             return result
-        ...
+
         def __mul__(self, other):
             return self.__array_ufunc__(np.multiply, '__call__', self, other)
 
@@ -229,19 +360,27 @@ deal with arrays and ufuncs, but does know how to do multiplication::
 
     class MyObject(object):
         __array_ufunc__ = None
+        def __init__(self, value):
+            self.value = value
+        def __repr__(self):
+            return "MyObject({!r})".format(self.value)
         def __mul__(self, other):
-            return 1234
+            return MyObject(1234)
         def __rmul__(self, other):
-            return 4321
+            return MyObject(4321)
 
 In this case, standard Python override rules combined with the above
 discussion would imply::
 
-    mine = MyObject()
+    mine = MyObject(0)
     arr = ArrayLike([0])
 
-    mine * arr    # == 1234       OK
+    mine * arr    # == MyObject(1234)   OK
     arr * mine    # TypeError     surprising
+
+XXX: but it doesn't raise a TypeError, because `__mul__` calls
+directly `__array_ufunc__`, which sees the `__array_ufunc__ == None`, and
+bails out with `NotImplemented`?
 
 The reason why this would occur is: because ``MyObject`` is not an
 ``ArrayLike`` subclass, Python resolves the expression ``arr * mine`` by
