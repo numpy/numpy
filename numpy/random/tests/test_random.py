@@ -822,19 +822,26 @@ class TestRandomDist(TestCase):
         # DBL_MAX by increasing fmin a bit
         np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
-    def test_uniform_propogates_exeptions(self):
-        # Tests that uniform correctly propogates exceptions
-        # when called with a type which throws when converted to
-        # a float
+    def test_scalar_exception_propagation(self):
+        # Tests that exceptions are correctly propagated in distributions
+        # when called with objects that throw exceptions when converted to
+        # scalars.
         #
         # Regression test for gh: 8865
 
-        class ThrowableType(np.ndarray):
+        class ThrowingFloat(np.ndarray):
             def __float__(self):
-                raise ValueError
+                raise TypeError
 
-        x = np.array(1.0).view(ThrowableType)
-        assert_raises(ValueError, np.random.uniform, x, x)
+        throwing_float = np.array(1.0).view(ThrowingFloat)
+        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+
+        class ThrowingInteger(np.ndarray):
+            def __int__(self):
+                raise TypeError
+
+        throwing_int = np.array(1).view(ThrowingInteger)
+        assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)
 
     def test_vonmises(self):
         np.random.seed(self.seed)
