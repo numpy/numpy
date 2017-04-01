@@ -822,6 +822,20 @@ class TestRandomDist(TestCase):
         # DBL_MAX by increasing fmin a bit
         np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
+    def test_uniform_propogates_exeptions(self):
+        # Tests that uniform correctly propogates exceptions
+        # when called with a type which throws when converted to
+        # a float
+        #
+        # Regression test for gh: 8865
+
+        class ThrowableType(np.ndarray):
+            def __float__(self):
+                raise ValueError
+
+        x = np.array(1.0).view(ThrowableType)
+        assert_raises(ValueError, np.uniform, x, x)
+
     def test_vonmises(self):
         np.random.seed(self.seed)
         actual = np.random.vonmises(mu=1.23, kappa=1.54, size=(3, 2))

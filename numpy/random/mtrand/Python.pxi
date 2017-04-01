@@ -15,7 +15,7 @@ cdef extern from "Python.h":
     object PyString_FromStringAndSize(char* c_string, int length)
 
     # Float API
-    double PyFloat_AsDouble(object ob)
+    double PyFloat_AsDouble(object ob) except? -1.0
     long PyInt_AsLong(object ob)
 
     # Memory API
