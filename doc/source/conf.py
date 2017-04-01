@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
+              'sphinx.ext.graphviz',
               'matplotlib.sphinxext.plot_directive']
 
 # Add any paths that contain templates here, relative to this directory.
