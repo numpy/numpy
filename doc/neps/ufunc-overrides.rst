@@ -153,23 +153,30 @@ tuple in the ``out`` keyword argument.
 
 The function dispatch proceeds as follows:
 
-- If one of the input arguments implements ``__array_ufunc__`` it is
-  executed instead of the Ufunc.
+- If an input argument has a ``__array_ufunc__`` attribute, but its
+  value is ``ndarray.__array_ufunc__``, the attribute is considered to
+  be absent in what follows.  This happens for instances of `ndarray`
+  and those `ndarray` subclasses that did not override their inherited
+  ``__array_ufunc__`` implementation.
+
+- If one of the input arguments implements ``__array_ufunc__``, it is
+  executed instead of the ufunc.
 
 - If more than one of the input arguments implements ``__array_ufunc__``,
   they are tried in the following order: subclasses before superclasses,
-  otherwise left to right.  The first ``__array_ufunc__`` method returning
-  something else than :obj:`NotImplemented` determines the return value of
-  the Ufunc.
+  otherwise left to right.
+
+- The first ``__array_ufunc__`` method returning something else than
+  :obj:`NotImplemented` determines the return value of the Ufunc.
 
 - If all ``__array_ufunc__`` methods of the input arguments return
   :obj:`NotImplemented`, a :exc:`TypeError` is raised.
 
-- If a ``__array_ufunc__`` method raises an error, the error is propagated
-  immediately.
+- If a ``__array_ufunc__`` method raises an error, the error is
+  propagated immediately.
 
-If none of the input arguments has an ``__array_ufunc__`` method, the
-execution falls back on the default ufunc behaviour.
+- If none of the input arguments had an ``__array_ufunc__`` method, the
+  execution falls back on the default ufunc behaviour.
 
 
 Type casting hierarchy
@@ -301,7 +308,8 @@ equivalent to::
             return result.view(type(self))
 
 Note that, as a special case, the ufunc dispatch mechanism does not call
-the `__array_ufunc__` method for inputs of `ndarray` type. As a
+this `ndarray.__array_ufunc__` method, even for `ndarray` subclasses
+if they have not overridden the default `ndarray` implementation. As a
 consequence, calling `ndarray.__array_ufunc__` will not result to a
 nested ufunc dispatch cycle.  Custom implementations of
 `__array_ufunc__` should generally avoid nested dispatch cycles.
