@@ -834,7 +834,7 @@ class TestRandomDist(TestCase):
                 raise ValueError
 
         x = np.array(1.0).view(ThrowableType)
-        assert_raises(ValueError, np.uniform, x, x)
+        assert_raises(ValueError, np.random.uniform, x, x)
 
     def test_vonmises(self):
         np.random.seed(self.seed)
