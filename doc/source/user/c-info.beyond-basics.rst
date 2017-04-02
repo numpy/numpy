@@ -173,7 +173,7 @@ each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
 multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
-:c:type:`PyObject *`). The data from input number ``i`` is available using
+:c:type:`PyObject *<PyObject>`). The data from input number ``i`` is available using
 :c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
 size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
 feature follows.
@@ -284,8 +284,8 @@ functions for each conversion you want to support and then registering
 these functions with the data-type descriptor. A low-level casting
 function has the signature.
 
-.. c:function:: void castfunc( void* from, void* to, npy_intp n, void* fromarr,
-   void* toarr)
+.. c:function:: void castfunc( \
+        void* from, void* to, npy_intp n, void* fromarr, void* toarr)
 
     Cast ``n`` elements ``from`` one type ``to`` another. The data to
     cast from is in a contiguous, correctly-swapped and aligned chunk
@@ -358,8 +358,9 @@ previously created. Then you call :c:func:`PyUFunc_RegisterLoopForType`
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. c:function:: int PyUFunc_RegisterLoopForType( PyUFuncObject* ufunc,
-   int usertype, PyUFuncGenericFunction function, int* arg_types, void* data)
+.. c:function:: int PyUFunc_RegisterLoopForType( \
+        PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, \
+        int* arg_types, void* data)
 
     *ufunc*
 
@@ -430,10 +431,10 @@ type-object structure and populating it with functions and pointers to
 describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
-:c:data:`&PyArray_Type` is a pointer to the type-object table for the ndarray
+:c:data:`&PyArray_Type<PyArray_Type>` is a pointer to the type-object table for the ndarray
 while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
-turn, a pointer to the type- object table :c:data:`&PyArray_Type`). Finally
+turn, a pointer to the type- object table :c:data:`&PyArray_Type<PyArray_Type>`). Finally
 :c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
 every new Python type.
 
@@ -500,13 +501,13 @@ The __array_finalize\__ method
    sub-type is created in such a fashion, however, neither the
    __new_\_ method nor the __init\__ method gets called. Instead, the
    sub-type is allocated and the appropriate instance-structure
-   members are filled in. Finally, the :obj:`__array_finalize__`
+   members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
    attribute is looked-up in the object dictionary. If it is present
    and not None, then it can be either a CObject containing a pointer
    to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
    single argument (which could be None).
 
-   If the :obj:`__array_finalize__` attribute is a CObject, then the pointer
+   If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
    must be a pointer to a function with the signature:
 
    .. code-block:: c
@@ -519,7 +520,7 @@ The __array_finalize\__ method
    is present). This routine can do anything it wants to. It should
    return a -1 on error and 0 otherwise.
 
-   If the :obj:`__array_finalize__` attribute is not None nor a CObject,
+   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a CObject,
    then it must be a Python method that takes the parent array as an
    argument (which could be None if there is no parent), and returns
    nothing. Errors in this method will be caught and handled.
@@ -533,14 +534,14 @@ The __array_priority\__ attribute
    This attribute allows simple but flexible determination of which sub-
    type should be considered "primary" when an operation involving two or
    more sub-types arises. In operations where different sub-types are
-   being used, the sub-type with the largest :obj:`__array_priority__`
+   being used, the sub-type with the largest :obj:`~numpy.class.__array_priority__`
    attribute will determine the sub-type of the output(s). If two sub-
-   types have the same :obj:`__array_priority__` then the sub-type of the
+   types have the same :obj:`~numpy.class.__array_priority__` then the sub-type of the
    first argument determines the output. The default
-   :obj:`__array_priority__` attribute returns a value of 0.0 for the base
+   :obj:`~numpy.class.__array_priority__` attribute returns a value of 0.0 for the base
    ndarray type and 1.0 for a sub-type. This attribute can also be
    defined by objects that are not sub-types of the ndarray and can be
-   used to determine which :obj:`__array_wrap__` method should be called for
+   used to determine which :obj:`~numpy.class.__array_wrap__` method should be called for
    the return output.
 
 The __array_wrap\__ method
@@ -550,11 +551,11 @@ The __array_wrap\__ method
 
    Any class or type can define this method which should take an ndarray
    argument and return an instance of the type. It can be seen as the
-   opposite of the :obj:`__array__` method. This method is used by the
+   opposite of the :obj:`~numpy.class.__array__` method. This method is used by the
    ufuncs (and other NumPy functions) to allow other objects to pass
    through. For Python >2.4, it can also be used to write a decorator
    that converts a function that works only with ndarrays to one that
-   works with any type with :obj:`__array__` and :obj:`__array_wrap__` methods.
+   works with any type with :obj:`~numpy.class.__array__` and :obj:`~numpy.class.__array_wrap__` methods.
 
 .. index::
    pair: ndarray; subtyping

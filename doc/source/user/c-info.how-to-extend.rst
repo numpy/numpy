@@ -90,11 +90,14 @@ that do not require a separate extraction of the module dictionary.
 These are documented in the Python documentation, but repeated here
 for convenience:
 
-.. c:function:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
+.. c:function:: int PyModule_AddObject( \
+        PyObject* module, char* name, PyObject* value)
 
-.. c:function:: int PyModule_AddIntConstant(PyObject* module, char* name, long value)
+.. c:function:: int PyModule_AddIntConstant( \
+        PyObject* module, char* name, long value)
 
-.. c:function:: int PyModule_AddStringConstant(PyObject* module, char* name, char* value)
+.. c:function:: int PyModule_AddStringConstant( \
+        PyObject* module, char* name, char* value)
 
     All three of these functions require the *module* object (the
     return value of Py_InitModule). The *name* is a string that
@@ -210,9 +213,9 @@ The :c:func:`Py_BuildValue` (format_string, c_variables...) function makes
 it easy to build tuples of Python objects from C variables. Pay
 special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
-increments the reference count of the :c:type:`PyObject *` C-variable it
+increments the reference count of the :c:type:`PyObject *<PyObject>` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :c:type:`PyObject *` C-variable. You should use 'N' if you have
+corresponding :c:type:`PyObject *<PyObject>` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
@@ -359,7 +362,8 @@ specific builtin data-type ( *e.g.* float), while specifying a
 particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
-.. c:function:: PyObject *PyArray_FROM_OTF(PyObject* obj, int typenum, int requirements)
+.. c:function:: PyObject *PyArray_FROM_OTF( \
+        PyObject* obj, int typenum, int requirements)
 
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
@@ -381,13 +385,13 @@ writeable). The syntax is
         so that data does not have to be copied. Objects that can be
         converted to an array include: 1) any nested sequence object,
         2) any object exposing the array interface, 3) any object with
-        an :obj:`__array__` method (which should return an ndarray),
+        an :obj:`~numpy.class.__array__` method (which should return an ndarray),
         and 4) any scalar object (becomes a zero-dimensional
         array). Sub-classes of the ndarray that otherwise fit the
         requirements will be passed through. If you want to ensure
-        a base-class ndarray, then use :c:data:`NPY_ENSUREARRAY` in the
+        a base-class ndarray, then use :c:data:`NPY_ARRAY_ENSUREARRAY` in the
         requirements flag. A copy is made only if necessary. If you
-        want to guarantee a copy, then pass in :c:data:`NPY_ENSURECOPY`
+        want to guarantee a copy, then pass in :c:data:`NPY_ARRAY_ENSURECOPY`
         to the requirements flag.
 
     *typenum*
@@ -415,7 +419,7 @@ writeable). The syntax is
 
         The object will be converted to the desired type only if it
         can be done without losing precision. Otherwise ``NULL`` will
-        be returned and an error raised. Use :c:data:`NPY_FORCECAST` in the
+        be returned and an error raised. Use :c:data:`NPY_ARRAY_FORCECAST` in the
         requirements flag to override this behavior.
 
     *requirements*
@@ -529,7 +533,8 @@ simpler forms exist that are easier to use.
     memory for the array can be set to zero if desired using
     :c:func:`PyArray_FILLWBYTE` (return_object, 0).
 
-.. c:function:: PyObject *PyArray_SimpleNewFromData( int nd, npy_intp* dims, int typenum, void* data)
+.. c:function:: PyObject *PyArray_SimpleNewFromData( \
+        int nd, npy_intp* dims, int typenum, void* data)
 
     Sometimes, you want to wrap memory allocated elsewhere into an
     ndarray object for downstream use. This routine makes it
@@ -575,7 +580,7 @@ is obtained as :c:func:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
-(:c:data:`NPY_C_CONTIGUOUS` and :cdata`NPY_F_CONTIGUOUS`) indicate
+(:c:data:`NPY_ARRAY_C_CONTIGUOUS` and :c:data:`NPY_ARRAY_F_CONTIGUOUS`) indicate
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
