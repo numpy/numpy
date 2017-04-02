@@ -282,24 +282,21 @@ this, :class:`ndarray` has its own ``__array_ufunc__`` method,
 equivalent to::
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        out = kwargs.pop('out', None)
-        out_tuple = out if out is not None else ()
-
         # Handle items of type(self), superclasses, and items
         # without __array_ufunc__. Bail out in other cases.
-        items = []
-        for item in inputs + out_tuple:
+        for item in inputs:
             if isinstance(self, type(item)) or not hasattr(item, '__array_ufunc__'):
-                # Cast to plain ndarrays
-                items.append(np.asarray(item))
+                pass
             else:
                 return NotImplemented
 
         # Perform ufunc on the underlying ndarrays (no __array_ufunc__ dispatch)
+        items = [np.asarray(item) if isinstance(item, np.ndarray) else item
+                 for item in inputs]
         result = getattr(ufunc, method)(*items, **kwargs)
 
         # Cast output to type(self), unless `out` specified
-        if out is not None:
+        if kwargs['out']:
             return result
 
         if isinstance(result, tuple):
