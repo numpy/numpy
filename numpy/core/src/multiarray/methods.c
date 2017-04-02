@@ -1010,37 +1010,48 @@ array_getarray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *ufunc, *method_name, *normal_args, *ufunc_method, *result;
+    PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
+    PyObject *result = NULL;
 
     if (PyTuple_Size(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
                         "__array_ufunc__ requires at least 2 arguments");
         return NULL;
     }
-    ufunc = PyTuple_GET_ITEM(args, 0);
-    if (ufunc == NULL) {
-        return NULL;
-    }
-
-    method_name = PyTuple_GET_ITEM(args, 1);
-    if (method_name == NULL) {
-        return NULL;
-    }
-
     normal_args = PyTuple_GetSlice(args, 2, PyTuple_GET_SIZE(args));
     if (normal_args == NULL) {
         return NULL;
     }
-
-    ufunc_method = PyObject_GetAttr(ufunc, method_name);
-    if (ufunc_method == NULL) {
-        Py_DECREF(normal_args);
-        return NULL;
+    /* ndarray cannot handle overrides itself */
+    if (PyUFunc_HasOverride(normal_args, kwds, NULL)) {
+        result = Py_NotImplemented;
+        Py_INCREF(Py_NotImplemented);
+        goto cleanup;
     }
 
+    ufunc = PyTuple_GET_ITEM(args, 0);
+    if (ufunc == NULL) {
+        goto cleanup;
+    }
+
+    method_name = PyTuple_GET_ITEM(args, 1);
+    if (method_name == NULL) {
+        goto cleanup;
+    }
+
+    /*
+     * TODO(?): call into UFunc code at a later point, since here arguments are
+     * already normalized and we do not have to look for __array_ufunc__ again.
+     */
+    ufunc_method = PyObject_GetAttr(ufunc, method_name);
+    if (ufunc_method == NULL) {
+        goto cleanup;
+    }
     result = PyObject_Call(ufunc_method, normal_args, kwds);
-    Py_DECREF(normal_args);
     Py_DECREF(ufunc_method);
+
+cleanup:
+    Py_DECREF(normal_args);
     /* no need to DECREF borrowed references ufunc and method_name */
     return result;
 }
