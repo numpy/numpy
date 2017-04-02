@@ -64,14 +64,14 @@ NumPy provides several hooks that classes can customize:
    The method should return either the result of the operation, or
    :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the arguments has a :func:`__array_ufunc__` method, it is
-   executed *instead* of the ufunc.  If more than one of the input
+   If one of the input or output arguments has a :func:`__array_ufunc__`
+   method, it is executed *instead* of the ufunc.  If more than one of the
    arguments implements :func:`__array_ufunc__`, they are tried in the
-   order: subclasses before superclasses, otherwise left to right. The
-   first routine returning something other than :obj:`NotImplemented`
-   determines the result. If all of the :func:`__array_ufunc__`
-   operations return :obj:`NotImplemented`, a :exc:`TypeError` is
-   raised.
+   order: subclasses before superclasses, inputs before outputs, otherwise
+   left to right. The first routine returning something other than
+   :obj:`NotImplemented` determines the result. If all of the
+   :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
+   :exc:`TypeError` is raised.
 
    .. note:: In addition to ufuncs, :func:`__array_ufunc__` also
       overrides the behavior of :func:`numpy.dot` and :func:`numpy.matmul`.
@@ -80,7 +80,7 @@ NumPy provides several hooks that classes can customize:
       (which are overridden). We intend to extend this behaviour to other
       relevant functions.
 
-   Like with other methods in python, such as ``__hash__`` and
+   Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
    support ufuncs by setting ``__array_ufunc__ = None``. With this,
    inside ufuncs, your class will be treated as if it returned
@@ -99,20 +99,60 @@ NumPy provides several hooks that classes can customize:
    :class:`ndarray` will unconditionally return :obj:`NotImplemented`,
    so that your reverse methods will get called.
 
-   .. note:: If you subclass :class:`ndarray`:
+   The presence of :func:`__array_ufunc__` also influences how
+   :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
+   < obj`` when ``arr`` is an :class:`ndarray` and ``obj`` is an instance
+   of a custom class. There are two possibilities. If
+   ``obj.__array_ufunc__`` is present and not :obj:`None`, then
+   ``ndarray.__add__`` and friends will delegate to the ufunc machinery,
+   meaning that ``arr + obj`` becomes ``np.add(arr, obj)``, and then
+   :func:`~numpy.add` invokes ``obj.__array_ufunc__``. This is useful if you
+   want to define an object that acts like an array.
 
-      - We strongly recommend that you avoid confusion by neither setting
-        :func:`__array_ufunc__` to :obj:`None`, which makes no sense for
-        an array subclass, nor by defining it and also defining reverse
-        methods, which methods will be called by ``CPython`` in
-        preference over the :class:`ndarray` forward methods.
-      - :class:`ndarray` defines its own :func:`__array_ufunc__`, which
-        corresponds to ``getattr(ufunc, method)(*inputs, **kwargs)``. Hence,
-        a typical override of :func:`__array_ufunc__` would convert any
-        instances of one's own class, pass these on to its superclass using
-        ``super().__array_ufunc__(*inputs, **kwargs)``, and finally return
-        the results after possible back-conversion. This practice ensures
-        that it is possible to have a hierarchy of subclasses. See
+   Alternatively, if ``obj.__array_ufunc__`` is set to :obj:`None`, then as a
+   special case, special methods like ``ndarray.__add__`` will notice this
+   and *unconditionally* return :obj:`NotImplemented`, so that Python will
+   dispatch to ``obj.__radd__`` instead. This is useful if you want to define
+   a special object that interacts with arrays via binary operations, but
+   is not itself an array. For example, a units handling system might have
+   an object ``m`` representing the "meters" unit, and want to support the
+   syntax ``arr * m`` to represent that the array has units of "meters", but
+   not want to otherwise interact with arrays via ufuncs or otherwise. This
+   can be done by setting ``__array_ufunc__ = None`` and defining ``__mul__``
+   and ``__rmul__`` methods. (Note that this means that writing an
+   ``__array_ufunc__`` that always returns :obj:`NotImplemented` is not
+   quite the same as setting ``__array_ufunc__ = None``: in the former
+   case, ``arr + obj`` will raise :exc:`TypeError`, while in the latter
+   case it is possible to define a ``__radd__`` method to prevent this.)
+
+   The above does not hold for in-place operators, for which :class:`ndarray`
+   never returns :obj:`NotImplemented`.  Hence, ``arr += obj`` would always
+   lead to a :exc:`TypeError`.  This is because for arrays in-place operations
+   cannot generically be replaced by a simple reverse operation.  (For
+   instance, by default, ``arr[:] += obj`` would be translated to ``arr[:] =
+   arr[:] + obj``, which would likely be wrong.)
+
+   .. note:: If you define ``__array_ufunc__``:
+
+      - If you are not a subclass of :class:`ndarray`, we recommend your
+        class define special methods like ``__add__`` and ``__lt__`` that
+        delegate to ufuncs just like ndarray does.  We hope to provide a
+        helper mixin class for this.
+      - If you subclass :class:`ndarray`, we strongly recommend that you
+        avoid confusion by neither setting :func:`__array_ufunc__` to
+        :obj:`None`, which makes no sense for an array subclass, nor by
+        defining it and also defining reverse methods, which methods will
+        be called by ``CPython`` in preference over the :class:`ndarray`
+        forward methods.
+      - :class:`ndarray` defines its own :func:`__array_ufunc__`, which,
+        evaluates the ufunc if no arguments have overrides, and returns
+        :obj:`NotImplemented` otherwise. This may be useful for subclasses
+        for which :func:`__array_ufunc__` converts any instances of its own
+        class to :class:`ndarray`: it can then pass these on to its
+        superclass using ``super().__array_ufunc__(*inputs, **kwargs)``,
+        and finally return the results after possible back-conversion. The
+        advantage of this practice is that it ensures that it is possible
+        to have a hierarchy of subclasses that extend the behaviour. See
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
    .. note:: If a class defines the :func:`__array_ufunc__` method,

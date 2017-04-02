@@ -480,6 +480,9 @@ following.
 
             results = super(A, self).__array_ufunc__(ufunc, method,
                                                      *args, **kwargs)
+            if results is NotImplemented:
+                return NotImplemented
+
             if not isinstance(results, tuple):
                 if not isinstance(results, np.ndarray):
                     return results
@@ -508,27 +511,49 @@ which inputs and outputs it converted. Hence, e.g.,
 {'outputs': [0]}
 >>> a = np.arange(5.).view(A)
 >>> b = np.ones(1).view(A)
+>>> c = a + b
+>>> c.info
+{'inputs': [0, 1]}
 >>> a += b
 >>> a.info
 {'inputs': [0, 1], 'outputs': [0]}
 
-Note that one might also consider just doing ``getattr(ufunc,
-methods)(*inputs, **kwargs)`` instead of the ``super`` call. This would
-work (indeed, ``ndarray.__array_ufunc__`` effectively does just that), but
-by using ``super`` one can more easily have a class hierarchy.  E.g.,
-suppose we had another class ``B`` that defined ``__array_ufunc__`` and
-then made a subclass ``C`` depending on both, i.e., ``class C(A, B)``
-without yet another ``__array_ufunc__`` override.  Then any ufunc on an
-instance of ``C`` would pass on to ``A.__array_ufunc__``, the ``super``
-call in ``A`` would go to ``B.__array_ufunc__``, and the ``super`` call in
-``B`` would go to ``ndarray.__array_ufunc__``.
+Note that another approach would be to to use ``getattr(ufunc,
+methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
+the result would be identical, but there is a difference if another operand
+also defines ``__array_ufunc__``. E.g., lets assume that we evalulate
+``np.add(a, b)``, where ``b`` is an instance of another class ``B`` that has
+an override.  If you use ``super`` as in the example,
+``ndarray.__array_ufunc__`` will notice that ``b`` has an override, which
+means it cannot evaluate the result itself. Thus, it will return
+`NotImplemented` and so will our class ``A``. Then, control will be passed
+over to ``b``, which either knows how to deal with us and produces a result,
+or does not and returns `NotImplemented`, raising a ``TypeError``.
+
+If instead, we replace our ``super`` call with ``getattr(ufunc, method)``, we
+effectively do ``np.add(a.view(np.ndarray), b)``. Again, ``B.__array_ufunc__``
+will be called, but now it sees an ``ndarray`` as the other argument. Likely,
+it will know how to handle this, and return a new instance of the ``B`` class
+to us. Our example class is not set up to handle this, but it might well be
+the best approach if, e.g., one were to re-implement ``MaskedArray`` using
+ ``__array_ufunc__``.
+
+As a final note: if the ``super`` route is suited to a given class, an
+advantage of using it is that it helps in constructing class hierarchies.
+E.g., suppose that our other class ``B`` also used the ``super`` in its
+``__array_ufunc__`` implementation, and we created a class ``C`` that depended
+on both, i.e., ``class C(A, B)`` (with, for simplicity, not another
+``__array_ufunc__`` override). Then any ufunc on an instance of ``C`` would
+pass on to ``A.__array_ufunc__``, the ``super`` call in ``A`` would go to
+``B.__array_ufunc__``, and the ``super`` call in ``B`` would go to
+``ndarray.__array_ufunc__``, thus allowing ``A`` and ``B`` to collaborate.
 
 .. _array-wrap:
 
 ``__array_wrap__`` for ufuncs and other functions
 -------------------------------------------------
 
-Prior to numpy 1.13, the behaviour of ufuncs could be tuned using
+Prior to numpy 1.13, the behaviour of ufuncs could only be tuned using
 ``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
 change the output type of a ufunc, but, in constrast to
 ``__array_ufunc__``, did not allow one to make any changes to the inputs.
