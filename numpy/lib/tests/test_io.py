@@ -52,10 +52,9 @@ def strptime(s, fmt=None):
     2.5.
 
     """
-    if sys.version_info[0] >= 3:
-        return datetime(*time.strptime(s.decode('latin1'), fmt)[:3])
-    else:
-        return datetime(*time.strptime(s, fmt)[:3])
+    if type(s) == bytes:
+        s = s.decode("latin1")
+    return datetime(*time.strptime(s, fmt)[:3])
 
 
 class RoundtripTest(object):
@@ -869,6 +868,38 @@ class TestLoadTxt(object):
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
+    def test_encoding(self):
+        with NamedTemporaryFile() as e:
+            e.write('0.\n1.\n2.'.encode("UTF-16"))
+            e.seek(0)
+            x = np.loadtxt(e.name, encoding="UTF-16")
+            assert_array_equal(x, [0., 1., 2.])
+
+    def test_stringload(self):
+        # umlaute
+        nonascii = b'\xc3\xb6\xc3\xbc\xc3\xb6'.decode("UTF-8")
+        with NamedTemporaryFile() as e:
+            e.write(nonascii.encode("UTF-16"))
+            e.seek(0)
+            x = np.loadtxt(e.name, encoding="UTF-16", dtype=np.unicode)
+            assert_array_equal(x, nonascii)
+
+    def test_binary_load(self):
+        butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
+                b"20,2,3,\xc3\x95scar\n\r"
+        sutf8 = butf8.decode("UTF-8").replace("\r", "").splitlines()
+        with NamedTemporaryFile() as e:
+            e.write(butf8)
+            e.seek(0)
+            with open(e.name, "rb") as f:
+                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode)
+            assert_array_equal(x, sutf8)
+            # test broken latin1 conversion people now rely on
+            with open(e.name, "rb") as f:
+                x = np.loadtxt(f, encoding="UTF-8", dtype="S")
+            #lutf8 = butf8.decode("latin1").replace("\r", "").splitlines()
+            x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
+            assert_array_equal(x, np.array(x, dtype="S"))
 
 class Testfromregex(object):
     # np.fromregex expects files opened in binary mode.

@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import io
 import sys
 import os
 import re
@@ -731,7 +732,7 @@ def _getconv(dtype):
 
     def floatconv(x):
         x.lower()
-        if b'0x' in x:
+        if '0x' in x:
             return float.fromhex(asstr(x))
         return float(x)
 
@@ -758,7 +759,7 @@ def _getconv(dtype):
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0):
+            ndmin=0, encoding=None):
     """
     Load data from a text file.
 
@@ -861,16 +862,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Type conversions for Py3 convenience
     if comments is not None:
         if isinstance(comments, (basestring, bytes)):
-            comments = [asbytes(comments)]
-        else:
-            comments = [asbytes(comment) for comment in comments]
+            comments = [comments]
+
+        comments = [x.decode('latin1') if type(x) == bytes else x for x in comments]
 
         # Compile regex for comments beforehand
         comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile(b'|'.join(comments))
+        regex_comments = re.compile('|'.join(comments))
     user_converters = converters
-    if delimiter is not None:
-        delimiter = asbytes(delimiter)
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -904,9 +903,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 import bz2
                 fh = iter(bz2.BZ2File(fname))
             elif sys.version_info[0] == 2:
-                fh = iter(open(fname, 'U'))
+                fh = iter(io.open(fname, 'U', encoding=encoding))
             else:
-                fh = iter(open(fname))
+                fh = iter(open(fname, encoding=encoding))
         else:
             fh = iter(fname)
     except TypeError:
@@ -960,16 +959,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return tuple(ret)
 
     def split_line(line):
-        """Chop off comments, strip, and split at delimiter.
+        """Chop off comments, strip, and split at delimiter. """
+        # decode bytes, default to latin1
+        if type(line) == bytes:
+            if encoding is None:
+                line = line.decode('latin1')
+            else:
+                line = line.decode(encoding)
 
-        Note that although the file is opened as text, this function
-        returns bytes.
-
-        """
-        line = asbytes(line)
         if comments is not None:
-            line = regex_comments.split(asbytes(line), maxsplit=1)[0]
-        line = line.strip(b'\r\n')
+            line = regex_comments.split(line, maxsplit=1)[0]
+        line = line.strip('\r\n')
         if line:
             return line.split(delimiter)
         else:
@@ -1032,7 +1032,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                                  % line_num)
 
             # Convert each value according to its column and store
-            items = [conv(val) for (conv, val) in zip(converters, vals)]
+            items = []
+            for (conv, val) in zip(converters, vals):
+            # ugly hack as numpy treats bytes like strings in py2
+                if sys.version_info[0] >= 3 and conv == bytes:
+                    items.append(str(val))
+                else:
+                    try:
+                        items.append(conv(val))
+                    except UnicodeEncodeError:
+                        items.append(np.unicode(val))
+
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
             X.append(items)
@@ -1040,6 +1050,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if fown:
             fh.close()
 
+    if dtype == "S":
+        cod = "latin1" if encoding is None else encoding
+        X = [x.encode(cod) if type(x) != bytes else x for x in X]
     X = np.array(X, dtype)
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
@@ -1372,7 +1385,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                names=None, excludelist=None, deletechars=None,
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None):
+               invalid_raise=True, max_rows=None, encoding=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1536,15 +1549,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if max_rows < 1:
             raise ValueError("'max_rows' must be at least 1.")
 
-    # Py3 data conversions to bytes, for convenience
-    if comments is not None:
-        comments = asbytes(comments)
-    if isinstance(delimiter, unicode):
-        delimiter = asbytes(delimiter)
-    if isinstance(missing_values, (unicode, list, tuple)):
-        missing_values = asbytes_nested(missing_values)
-
-    #
     if usemask:
         from numpy.ma import MaskedArray, make_mask_descr
     # Check the input dictionary of converters
@@ -1561,9 +1565,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fname = str(fname)
         if isinstance(fname, basestring):
             if sys.version_info[0] == 2:
-                fhd = iter(np.lib._datasource.open(fname, 'rbU'))
+                fhd = iter(np.lib._datasource.open(fname, 'rU'))
             else:
-                fhd = iter(np.lib._datasource.open(fname, 'rb'))
+                fhd = iter(np.lib._datasource.open(fname, 'r'))
             own_fhd = True
         else:
             fhd = iter(fname)
@@ -1588,14 +1592,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         while not first_values:
             first_line = next(fhd)
+            # decode bytes, default to latin1
+            if type(first_line) == bytes:
+                if encoding is None:
+                    first_line = first_line.decode('latin1')
+                else:
+                    first_line = first_line.decode(encoding)
             if names is True:
                 if comments in first_line:
                     first_line = (
-                        b''.join(first_line.split(comments)[1:]))
+                        ''.join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
-        first_line = b''
+        first_line = ''
         first_values = []
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
@@ -1620,7 +1630,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if names is True:
         names = validate_names([_bytes_to_name(_.strip())
                                 for _ in first_values])
-        first_line = b''
+        first_line = ''
     elif _is_string_like(names):
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
@@ -1657,9 +1667,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Process the missing values ...............................
     # Rename missing_values for convenience
     user_missing_values = missing_values or ()
+    if isinstance(user_missing_values, bytes):
+        user_missing_values = user_missing_values.decode('latin1')
 
     # Define the list of missing_values (one column: one list)
-    missing_values = [list([b'']) for _ in range(nbcols)]
+    missing_values = [list(['']) for _ in range(nbcols)]
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
@@ -1698,8 +1710,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if value not in entry:
                 entry.append(value)
     # We have a string : apply it to all entries
-    elif isinstance(user_missing_values, bytes):
-        user_value = user_missing_values.split(b",")
+    elif isinstance(user_missing_values, basestring):
+        user_value = user_missing_values.split(",")
         for entry in missing_values:
             entry.extend(user_value)
     # We have something else: apply it to all entries
@@ -1787,11 +1799,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             testing_value = first_values[j]
         else:
             testing_value = None
-        converters[i].update(conv, locked=True,
+        user_conv = conv
+        if conv == bytes:
+            user_conv = asbytes
+        else:
+            def tobytes_first(x, conv):
+                if type(x) == bytes:
+                    return conv(x)
+                return conv(x.encode("latin1"))
+            import functools
+            user_conv = functools.partial(tobytes_first, conv=conv)
+        converters[i].update(user_conv, locked=True,
                              testing_value=testing_value,
                              default=filling_values[i],
                              missing_values=missing_values[i],)
-        uc_update.append((i, conv))
+        uc_update.append((i, user_conv))
     # Make sure we have the corrected keys in user_converters...
     user_converters.update(uc_update)
 
@@ -1992,7 +2014,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask and names:
         for (name, conv) in zip(names or (), converters):
             missing_values = [conv(_) for _ in conv.missing_values
-                              if _ != b'']
+                              if _ != '']
             for mval in missing_values:
                 outputmask[name] |= (output[name] == mval)
     # Construct the final array
