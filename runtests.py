@@ -181,8 +181,8 @@ def main(argv):
         sys.exit(0)
 
     if args.shell:
-        shell = os.environ.get('SHELL', 'sh')
-        print("Spawning a Unix shell...")
+        shell = os.environ.get('SHELL', 'cmd' if os.name == 'nt' else 'sh')
+        print("Spawning a shell ({})...".format(shell))
         subprocess.call([shell] + extra_argv)
         sys.exit(0)
 
