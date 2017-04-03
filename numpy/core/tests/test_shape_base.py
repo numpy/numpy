@@ -352,24 +352,14 @@ class TestBlock(TestCase):
                              [1, 1],
                              [2, 2],
                              [2, 2]])
-        result = block(A, B)
-        assert_equal(expected, result)
-
-    def test_block_needless_brackts(self):
-        A = np.ones((2, 2))
-        B = 2 * A
-        expected = np.array([[1, 1],
-                             [1, 1],
-                             [2, 2],
-                             [2, 2]])
-        result = block([A], [B])  # here are the needless brackets
+        result = block([[A], [B]])
         assert_equal(expected, result)
 
     def test_block_with_1d_arrays_row_wise(self):
         # # # 1-D vectors are treated as row arrays
         a = np.array([1, 2, 3])
         b = np.array([2, 3, 4])
-        expected = np.array([[1, 2, 3, 2, 3, 4]])
+        expected = np.array([1, 2, 3, 2, 3, 4])
         result = block([a, b])
         assert_equal(expected, result)
 
@@ -378,7 +368,7 @@ class TestBlock(TestCase):
         b = np.array([2, 3, 4])
         expected = np.array([[1, 2, 3, 2, 3, 4],
                              [1, 2, 3, 2, 3, 4]])
-        result = block([a, b], [a, b])
+        result = block([[a, b], [a, b]])
         assert_equal(expected, result)
 
     def test_block_with_1d_arrays_column_wise(self):
@@ -387,20 +377,20 @@ class TestBlock(TestCase):
         b = np.array([2, 3, 4])
         expected = np.array([[1, 2, 3],
                              [2, 3, 4]])
-        result = block(a, b)
+        result = block([[a], [b]])
         assert_equal(expected, result)
 
     def test_block_mixed_1d_and_2d(self):
         A = np.ones((2, 2))
         B = np.array([2, 2])
-        result = block(A, B)
+        result = block([[A], [B]])
         expected = np.array([[1, 1],
                              [1, 1],
                              [2, 2]])
         assert_equal(expected, result)
 
-    def test_block_complex(self):
-        # # # a bit more complex
+    def test_block_complicated(self):
+        # a bit more complicated
         One = np.array([[1, 1, 1]])
         Two = np.array([[2, 2, 2]])
         Three = np.array([[3, 3, 3, 3, 3, 3]])
@@ -409,11 +399,11 @@ class TestBlock(TestCase):
         six = np.array([6, 6, 6, 6, 6])
         Zeros = np.zeros((2, 6))
 
-        result = block([One, Two],
-                       Three,
-                       four,
-                       [five, six],
-                       Zeros)
+        result = block([[One, Two],
+                        Three,
+                        four,
+                        [five, six],
+                        Zeros])
         expected = np.array([[1, 1, 1, 2, 2, 2],
                              [3, 3, 3, 3, 3, 3],
                              [4, 4, 4, 4, 4, 4],
@@ -423,26 +413,81 @@ class TestBlock(TestCase):
         assert_equal(result, expected)
 
         # additional [] around rows should not have any influence
-        result = block([One, Two],
-                       Three,
-                       [four],
-                       [five, six],
-                       Zeros)
+        result = block([[One, Two],
+                        Three,
+                        [four],
+                        [five, six],
+                        Zeros])
         assert_equal(result, expected)
 
-        result = block([One, Two],
-                       [Three],
-                       [four],
-                       [five, six],
-                       Zeros)
+        result = block([[One, Two],
+                        [Three],
+                        [four],
+                        [five, six],
+                        Zeros])
         assert_equal(result, expected)
 
-        result = block([One, Two],
-                       [Three],
-                       [four],
-                       [five, six],
-                       [Zeros])
+        result = block([[One, Two],
+                        [Three],
+                        [four],
+                        [five, six],
+                        [Zeros]])
         assert_equal(result, expected)
+
+    def test_3d(self):
+        a000 = np.ones((2, 2, 2), int) * 1
+
+        a100 = np.ones((3, 2, 2), int) * 2
+        a010 = np.ones((2, 3, 2), int) * 3
+        a001 = np.ones((2, 2, 3), int) * 4
+
+        a011 = np.ones((2, 3, 3), int) * 5
+        a101 = np.ones((3, 2, 3), int) * 6
+        a110 = np.ones((3, 3, 2), int) * 7
+
+        a111 = np.ones((3, 3, 3), int) * 8
+
+        result = np.block([
+            [
+                [a000, a001],
+                [a010, a011],
+            ],
+            [
+                [a100, a101],
+                [a110, a111],
+            ]
+        ])
+        expected = array([[[1, 1, 4, 4, 4],
+                           [1, 1, 4, 4, 4],
+                           [3, 3, 5, 5, 5],
+                           [3, 3, 5, 5, 5],
+                           [3, 3, 5, 5, 5]],
+
+                          [[1, 1, 4, 4, 4],
+                           [1, 1, 4, 4, 4],
+                           [3, 3, 5, 5, 5],
+                           [3, 3, 5, 5, 5],
+                           [3, 3, 5, 5, 5]],
+
+                          [[2, 2, 6, 6, 6],
+                           [2, 2, 6, 6, 6],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8]],
+
+                          [[2, 2, 6, 6, 6],
+                           [2, 2, 6, 6, 6],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8]],
+
+                          [[2, 2, 6, 6, 6],
+                           [2, 2, 6, 6, 6],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8],
+                           [7, 7, 8, 8, 8]]])
+
+        assert_array_equal(result, expected)
 
     def test_block_with_mismatched_shape(self):
         a = np.array([0, 0])
@@ -450,8 +495,13 @@ class TestBlock(TestCase):
         assert_raises(ValueError, np.block, (a, b))
         assert_raises(ValueError, np.block, (b, a))
 
-    def test_not_list_or_tuple_as_input(self):
-        assert_raises(TypeError, np.block)
+    def test_no_lists(self):
+        assert_equal(np.block(1),         np.array(1))
+        assert_equal(np.block(np.eye(3)), np.eye(3))
+
+    def test_empty_input(self):
+        assert_raises(ValueError, np.block, [])
+        assert_raises(ValueError, np.block, [[]])
 
 
 if __name__ == "__main__":

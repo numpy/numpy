@@ -179,6 +179,9 @@ can themselves be arrays. For instance::
            [ 1.,  1.,  0.,  3.,  0.],
            [ 1.,  1.,  0.,  0.,  3.]])
 
+While primarily useful for block matrices, this works for arbitrary dimensions
+of arrays.
+
 It is similar to Matlab's square bracket notation for creating block matrices.
 
 Improvements
