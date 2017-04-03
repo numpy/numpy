@@ -2235,6 +2235,18 @@ class TestRegression(TestCase):
         a = np.ones(1, dtype=('O', [('name', 'O')]))
         assert_equal(a[0], 1)
 
+    def test_correct_hash_dict(self):
+        # gh-8887 - __hash__ would be None despite tp_hash being set
+        all_types = set(np.typeDict.values()) - {np.void}
+        for t in all_types:
+            val = t()
+
+            try:
+                hash(val)
+            except TypeError as e:
+                assert_equal(t.__hash__, None)
+            else:
+                assert_(t.__hash__ != None)
 
 if __name__ == "__main__":
     run_module_suite()

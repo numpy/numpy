@@ -4367,14 +4367,14 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     Py##child##ArrType_Type.tp_bases =                                  \
         Py_BuildValue("(OO)", &Py##parent2##ArrType_Type,               \
                       &Py##parent1##_Type);                             \
+    Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;       \
     if (PyType_Ready(&Py##child##ArrType_Type) < 0) {                   \
         PyErr_Print();                                                  \
         PyErr_Format(PyExc_SystemError,                                 \
                      "could not initialize Py%sArrType_Type",           \
                      #child);                                           \
         return -1;                                                      \
-    }                                                                   \
-    Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
+    }
 
 /*
  * In Py3K, int is no longer a fixed-width integer type, so don't
