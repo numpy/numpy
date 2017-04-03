@@ -264,7 +264,7 @@ def hstack(tup):
     dstack : Stack arrays in sequence depth wise (along third axis).
     concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
-    block : Create block arrays.
+    block : Assemble arrays from blocks.
 
     Notes
     -----
@@ -319,7 +319,7 @@ def stack(arrays, axis=0):
     --------
     concatenate : Join a sequence of arrays along an existing axis.
     split : Split array into a list of multiple sub-arrays of equal size.
-    block : Create block arrays.
+    block : Assemble arrays from blocks.
 
     Examples
     --------
@@ -363,7 +363,7 @@ def stack(arrays, axis=0):
 
 def block(*arrays):
     """
-    Create a block array consisting of other arrays.
+    Assemble an array from nested lists of blocks.
 
     You can create a 2-D blocked array with the same notation you use for
     `np.array`.

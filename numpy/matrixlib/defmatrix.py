@@ -1137,8 +1137,8 @@ def bmat(obj, ldict=None, gdict=None):
     Parameters
     ----------
     obj : str or array_like
-        Input data.  Names of variables in the current scope may be
-        referenced, even if `obj` is a string.
+        Input data. If a string, variables in the current scope may be
+        referenced by name.
     ldict : dict, optional
         A dictionary that replaces local operands in current frame.
         Ignored if `obj` is not a string or `gdict` is `None`.
@@ -1153,7 +1153,9 @@ def bmat(obj, ldict=None, gdict=None):
 
     See Also
     --------
-    matrix
+    block :
+        A generalization of this function for N-d arrays, that returns normal
+        `ndarray`s.
 
     Examples
     --------
