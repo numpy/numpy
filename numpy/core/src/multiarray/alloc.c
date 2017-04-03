@@ -2,12 +2,25 @@
 #include <Python.h>
 #include "structmember.h"
 
+#if PY_VERSION_HEX >= 0x03060000
+#include <pymem.h>
+/* public api in 3.7 */
+#if PY_VERSION_HEX < 0x03070000
+#define PyTraceMalloc_Track _PyTraceMalloc_Track
+#define PyTraceMalloc_Untrack _PyTraceMalloc_Untrack
+#endif
+#else
+#define PyTraceMalloc_Track(...)
+#define PyTraceMalloc_Untrack(...)
+#endif
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
 #include "numpy/arrayobject.h"
 #include <numpy/npy_common.h>
 #include "npy_config.h"
+#include "alloc.h"
 
 #include <assert.h>
 
@@ -192,6 +205,7 @@ PyDataMem_NEW(size_t size)
         }
         NPY_DISABLE_C_API
     }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -213,6 +227,7 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
         }
         NPY_DISABLE_C_API
     }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -222,6 +237,7 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
 NPY_NO_EXPORT void
 PyDataMem_FREE(void *ptr)
 {
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     free(ptr);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
@@ -243,6 +259,10 @@ PyDataMem_RENEW(void *ptr, size_t size)
     void *result;
 
     result = realloc(ptr, size);
+    if (result != ptr) {
+	PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API

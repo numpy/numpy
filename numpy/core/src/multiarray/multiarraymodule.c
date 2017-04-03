@@ -60,6 +60,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "compiled_base.h"
 #include "mem_overlap.h"
+#include "alloc.h"
 
 #include "get_attr_string.h"
 
@@ -4623,6 +4624,10 @@ PyMODINIT_FUNC initmultiarray(void) {
      * This is for backward compatibility with existing code.
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
+
+    s = PyInt_FromLong(NPY_TRACE_DOMAIN);
+    PyDict_SetItemString(d, "tracemalloc_domain", s);
+    Py_DECREF(s);
 
     s = PyUString_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
