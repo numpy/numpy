@@ -2106,7 +2106,7 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__",
-                                   newargs, NULL, &override, 2);
+                                   newargs, NULL, &override, 2, 1);
     Py_DECREF(newargs);
 
     if (errval) {

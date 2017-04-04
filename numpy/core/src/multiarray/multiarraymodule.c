@@ -2196,7 +2196,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
     }
 
     errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__", args, kwds,
-                                   &override, 2);
+                                   &override, 2, 1);
     if (errval) {
         return NULL;
     }
@@ -2370,7 +2370,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     }
 
     errval = PyUFunc_CheckOverride((PyUFuncObject*)matmul, "__call__",
-                                   args, kwds, &override, 2);
+                                   args, kwds, &override, 2, 1);
     if (errval) {
         return NULL;
     }

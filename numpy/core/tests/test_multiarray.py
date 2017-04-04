@@ -3115,13 +3115,17 @@ class TestBinop(object):
         assert_equal(np.modf(dummy, a), (0,))
         assert_equal(np.modf(dummy, None, a), (1,))
         assert_equal(np.modf(dummy, dummy, a), (1,))
-        assert_equal(np.modf(dummy, out=a), (0,))
-        assert_equal(np.modf(dummy, out=(a,)), (0,))
         assert_equal(np.modf(dummy, out=(a, None)), (0,))
         assert_equal(np.modf(dummy, out=(a, dummy)), (0,))
         assert_equal(np.modf(dummy, out=(None, a)), (1,))
         assert_equal(np.modf(dummy, out=(dummy, a)), (1,))
         assert_equal(np.modf(a, out=(dummy, a)), 0)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            assert_equal(np.modf(dummy, out=a), (0,))
+            assert_(w[0].category is DeprecationWarning)
+        assert_raises(TypeError, np.modf, dummy, out=(a,))
+
         # 2 inputs, 1 output
         assert_equal(np.add(a, dummy), 0)
         assert_equal(np.add(dummy, a), 1)

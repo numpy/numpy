@@ -1720,6 +1720,17 @@ class TestSpecialMethods(TestCase):
                               'keepdims': 'keep0',
                               'axis': 'axis0'})
 
+        # reduce, output equal to None removed.
+        res = np.multiply.reduce(a, out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.reduce(a, out=(None,))
+        assert_equal(res[4], {})
+
+        # reduce, wrong args
+        assert_raises(TypeError, np.multiply.reduce, a, out=())
+        assert_raises(TypeError, np.multiply.reduce, a, out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.reduce, a, 'axis0', axis='axis0')
+
         # accumulate, pos args
         res = np.multiply.accumulate(a, 'axis0', 'dtype0', 'out0')
         assert_equal(res[0], a)
@@ -1741,6 +1752,19 @@ class TestSpecialMethods(TestCase):
                               'out': ('out0',),
                               'axis': 'axis0'})
 
+        # accumulate, output equal to None removed.
+        res = np.multiply.accumulate(a, out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.accumulate(a, out=(None,))
+        assert_equal(res[4], {})
+
+        # accumulate, wrong args
+        assert_raises(TypeError, np.multiply.accumulate, a, out=())
+        assert_raises(TypeError, np.multiply.accumulate, a,
+                      out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.accumulate, a,
+                      'axis0', axis='axis0')
+
         # reduceat, pos args
         res = np.multiply.reduceat(a, [4, 2], 'axis0', 'dtype0', 'out0')
         assert_equal(res[0], a)
@@ -1761,6 +1785,19 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[4], {'dtype':'dtype0',
                               'out': ('out0',),
                               'axis': 'axis0'})
+
+        # reduceat, output equal to None removed.
+        res = np.multiply.reduceat(a, [4, 2], out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.reduceat(a, [4, 2], out=(None,))
+        assert_equal(res[4], {})
+
+        # reduceat, wrong args
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+                      out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+                      'axis0', axis='axis0')
 
         # outer
         res = np.multiply.outer(a, 42)
@@ -1811,6 +1848,29 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][0], 'out0')
         assert_equal(res7['out'][1], 'out1')
 
+        # While we're at it, check that default output is never passed on.
+        assert_(np.sin(a, None) == {})
+        assert_(np.sin(a, out=None) == {})
+        assert_(np.sin(a, out=(None,)) == {})
+        assert_(np.modf(a, None) == {})
+        assert_(np.modf(a, None, None) == {})
+        assert_(np.modf(a, out=(None, None)) == {})
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            assert_(np.modf(a, out=None) == {})
+            assert_(w[0].category is DeprecationWarning)
+
+        # don't give positional and output argument, or too many arguments.
+        # wrong number of arguments in the tuple is an error too.
+        assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
+        assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
+        assert_raises(TypeError, np.multiply, a, b, out=('one', 'two'))
+        assert_raises(TypeError, np.multiply, a, out=())
+        assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
+        assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
+        assert_raises(TypeError, np.modf, a, out=('one', 'two', 'three'))
+        assert_raises(TypeError, np.modf, a, out=('one',))
+
     def test_ufunc_override_exception(self):
 
         class A(object):
@@ -1829,19 +1889,27 @@ class TestSpecialMethods(TestCase):
                 return self, ufunc, method, inputs, kwargs
 
         a = A()
-        res = np.core.umath_tests.inner1d(a, a)
+        inner1d = np.core.umath_tests.inner1d
+        res = inner1d(a, a)
         assert_equal(res[0], a)
-        assert_equal(res[1], np.core.umath_tests.inner1d)
+        assert_equal(res[1], inner1d)
         assert_equal(res[2], '__call__')
         assert_equal(res[3], (a, a))
         assert_equal(res[4], {})
 
-        res = np.core.umath_tests.inner1d(1, 1, out=a)
+        res = inner1d(1, 1, out=a)
         assert_equal(res[0], a)
-        assert_equal(res[1], np.core.umath_tests.inner1d)
+        assert_equal(res[1], inner1d)
         assert_equal(res[2], '__call__')
         assert_equal(res[3], (1, 1))
         assert_equal(res[4], {'out': (a,)})
+
+        # wrong number of arguments in the tuple is an error too.
+        assert_raises(TypeError, inner1d, a, out='two')
+        assert_raises(TypeError, inner1d, a, a, 'one', out='two')
+        assert_raises(TypeError, inner1d, a, a, 'one', 'two')
+        assert_raises(TypeError, inner1d, a, a, out=('one', 'two'))
+        assert_raises(TypeError, inner1d, a, a, out=())
 
     def test_ufunc_override_with_super(self):
 
