@@ -343,7 +343,7 @@ class TestBlock(TestCase):
         assert_equal(desired, result)
         # with tuples
         result = block((A, B))
-        assert_almost_equal(desired, result)
+        assert_equal(desired, result)
 
     def test_block_simple_column_wise(self):
         A = np.ones((2, 2))
@@ -353,7 +353,7 @@ class TestBlock(TestCase):
                              [2, 2],
                              [2, 2]])
         result = block(A, B)
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_needless_brackts(self):
         A = np.ones((2, 2))
@@ -363,7 +363,7 @@ class TestBlock(TestCase):
                              [2, 2],
                              [2, 2]])
         result = block([A], [B])  # here are the needless brackets
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_with_1d_arrays_row_wise(self):
         # # # 1-D vectors are treated as row arrays
@@ -371,7 +371,7 @@ class TestBlock(TestCase):
         b = np.array([2, 3, 4])
         expected = np.array([[1, 2, 3, 2, 3, 4]])
         result = block([a, b])
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_with_1d_arrays_multiple_rows(self):
         a = np.array([1, 2, 3])
@@ -379,7 +379,7 @@ class TestBlock(TestCase):
         expected = np.array([[1, 2, 3, 2, 3, 4],
                              [1, 2, 3, 2, 3, 4]])
         result = block([a, b], [a, b])
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_with_1d_arrays_column_wise(self):
         # # # 1-D vectors are treated as row arrays
@@ -388,7 +388,7 @@ class TestBlock(TestCase):
         expected = np.array([[1, 2, 3],
                              [2, 3, 4]])
         result = block(a, b)
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_mixed_1d_and_2d(self):
         A = np.ones((2, 2))
@@ -397,7 +397,7 @@ class TestBlock(TestCase):
         expected = np.array([[1, 1],
                              [1, 1],
                              [2, 2]])
-        assert_almost_equal(expected, result)
+        assert_equal(expected, result)
 
     def test_block_complex(self):
         # # # a bit more complex
@@ -420,7 +420,7 @@ class TestBlock(TestCase):
                              [5, 6, 6, 6, 6, 6],
                              [0, 0, 0, 0, 0, 0],
                              [0, 0, 0, 0, 0, 0]])
-        assert_almost_equal(result, expected)
+        assert_equal(result, expected)
 
         # additional [] around rows should not have any influence
         result = block([One, Two],
@@ -428,21 +428,21 @@ class TestBlock(TestCase):
                        [four],
                        [five, six],
                        Zeros)
-        assert_almost_equal(result, expected)
+        assert_equal(result, expected)
 
         result = block([One, Two],
                        [Three],
                        [four],
                        [five, six],
                        Zeros)
-        assert_almost_equal(result, expected)
+        assert_equal(result, expected)
 
         result = block([One, Two],
                        [Three],
                        [four],
                        [five, six],
                        [Zeros])
-        assert_almost_equal(result, expected)
+        assert_equal(result, expected)
 
     def test_block_with_mismatched_shape(self):
         a = np.array([0, 0])
