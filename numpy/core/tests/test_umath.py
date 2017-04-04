@@ -1868,9 +1868,11 @@ class TestSpecialMethods(TestCase):
                             out_args.append(output)
                     kwargs['out'] = tuple(out_args)
 
-                info = {key: no for (key, no) in (('inputs', in_no),
-                                                  ('outputs', out_no))
-                        if no != []}
+                info = {}
+                if in_no:
+                    info['inputs'] = in_no
+                if out_no:
+                    info['outputs'] = out_no
 
                 results = super(A, self).__array_ufunc__(ufunc, method,
                                                          *args, **kwargs)

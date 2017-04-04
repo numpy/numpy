@@ -431,20 +431,21 @@ The signature of ``__array_ufunc__`` is::
 
     def __array_ufunc__(ufunc, method, *inputs, **kwargs):
 
-   - *ufunc* is the ufunc object that was called.
-   - *method* is a string indicating which Ufunc method was called
-     (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
-     ``"accumulate"``, ``"outer"``, ``"inner"``).
-   - *inputs* is a tuple of the input arguments to the ``ufunc``.
-   - *kwargs* is a dictionary containing the optional input arguments
-     of the ufunc. If given, any ``out`` arguments, both positional
-     and keyword, are passed as a :obj:`tuple` in *kwargs*.
+    - *ufunc* is the ufunc object that was called.
+    - *method* is a string indicating how the Ufunc was called, either
+      ``"__call__"`` to indicate it was called directly, or one of its
+      :ref:`methods<ufuncs.methods>`: ``"reduce"``, ``"accumulate"``,
+      ``"reduceat"``, ``"outer"``, or ``"at"``.
+    - *inputs* is a tuple of the input arguments to the ``ufunc``
+    - *kwargs* contains any optional or keyword arguments passed to the
+      function. This includes any ``out`` arguments, which are always
+      contained in a tuple.
 
 A typical implementation would convert any inputs or ouputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case
-``test_ufunc_override_with_super`` in ``core/tests/test_umath.pu``, is the
+``test_ufunc_override_with_super`` in ``core/tests/test_umath.py``, is the
 following.
 
 .. testcode::
@@ -462,9 +463,9 @@ following.
                 else:
                     args.append(input_)
 
-            outputs = kwargs.pop('out', [])
+            outputs = kwargs.pop('out', None)
             out_no = []
-            if outputs:
+            if outputs is not None:
                 out_args = []
                 for j, output in enumerate(outputs):
                     if isinstance(output, A):
@@ -474,9 +475,11 @@ following.
                         out_args.append(output)
                 kwargs['out'] = tuple(out_args)
 
-            info = {key: no for (key, no) in (('inputs', in_no),
-                                              ('outputs', out_no))
-                    if no != []}
+            info = {}
+            if in_no:
+                info['inputs'] = in_no
+            if out_no:
+                info['outputs'] = out_no
 
             results = super(A, self).__array_ufunc__(ufunc, method,
                                                      *args, **kwargs)
@@ -488,7 +491,7 @@ following.
                     return results
                 results = (results,)
 
-            if outputs == []:
+            if outputs is None:
                 outputs = [None] * len(results)
             results = tuple(result.view(A) if output is None else output
                             for result, output in zip(results, outputs))

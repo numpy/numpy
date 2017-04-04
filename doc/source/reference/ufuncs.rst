@@ -416,6 +416,8 @@ possess. None of the attributes can be set.
    ufunc.types
    ufunc.identity
 
+.. _ufuncs.methods:
+
 Methods
 -------
 
