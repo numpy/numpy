@@ -2145,8 +2145,8 @@ def fromfunction(function, shape, **kwargs):
         The function is called with N parameters, where N is the rank of
         `shape`.  Each parameter represents the coordinates of the array
         varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters in turn be (0, 0), (0, 1),
-        (1, 0), (1, 1).
+        were ``(2, 2)``, then the parameters would be
+        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.
