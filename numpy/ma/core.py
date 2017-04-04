@@ -6958,8 +6958,8 @@ def where(condition, x=_NoValue, y=_NoValue):
         The condition to meet. For each True element, yield the corresponding
         element from `x`, otherwise from `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same shape
-        as condition, or be broadcast-able to that shape.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
