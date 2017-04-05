@@ -184,7 +184,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (ret == NULL) {
         return NULL;
     }
-    fd2 = PyNumber_AsSsize_t(ret, NULL);
+    fd2 = (int) PyNumber_AsSsize_t(ret, NULL);
     Py_DECREF(ret);
 
     /* Convert to FILE* handle */

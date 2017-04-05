@@ -463,7 +463,8 @@ dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
     PyArray_Descr *descr=PyArray_DESCR(self);
     PyObject *op = NULL, *sp = NULL;
     char *ostring;
-    npy_intp i, N, ret = 0;
+    npy_intp i, N;
+    int ret = 0;
 
 #define CHECK_MEMORY do {                           \
         if (extend(string, *n, max_n) == NULL) {    \
@@ -1201,7 +1202,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         PyObject *key, *value, *temp2;
         PyObject *op;
         Py_ssize_t pos = 0;
-        npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
+        int result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
@@ -1534,7 +1535,7 @@ NPY_NO_EXPORT int
 PyArray_ElementStrides(PyObject *obj)
 {
     PyArrayObject *arr;
-    int itemsize;
+    npy_intp itemsize;
     int i, ndim;
     npy_intp *strides;
 
