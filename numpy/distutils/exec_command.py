@@ -252,7 +252,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
                                 universal_newlines=True)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
-        return '', 127
+        return 127, ''
     text, err = proc.communicate()
     # Another historical oddity
     if text[-1:] == '\n':
