@@ -2541,8 +2541,7 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     for (i = 0; i < nop; ++i) {
         PyObject *obj = PyTuple_GET_ITEM(args, i+1);
 
-        op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
+        op[i] = (PyArrayObject *)PyArray_FROM_OF(obj, NPY_ARRAY_ENSUREARRAY);
         if (op[i] == NULL) {
             goto fail;
         }
@@ -2683,8 +2682,7 @@ einsum_sub_op_from_lists(PyObject *args,
             }
         }
 
-        op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
+        op[i] = (PyArrayObject *)PyArray_FROM_OF(obj, NPY_ARRAY_ENSUREARRAY);
         if (op[i] == NULL) {
             goto fail;
         }

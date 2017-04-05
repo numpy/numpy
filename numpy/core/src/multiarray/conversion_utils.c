@@ -45,8 +45,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return NPY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0,
-                                NPY_ARRAY_CARRAY, NULL);
+        *address = PyArray_FROM_OF(object, NPY_ARRAY_CARRAY);
         if (*address == NULL) {
             return NPY_FAIL;
         }
