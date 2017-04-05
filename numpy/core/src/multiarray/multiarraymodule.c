@@ -594,8 +594,7 @@ PyArray_Concatenate(PyObject *op, int axis)
             narrays = iarrays;
             goto fail;
         }
-        arrays[iarrays] = (PyArrayObject *)PyArray_FromAny(item, NULL,
-                                            0, 0, 0, NULL);
+        arrays[iarrays] = (PyArrayObject *)PyArray_FROM_O(item);
         Py_DECREF(item);
         if (arrays[iarrays] == NULL) {
             narrays = iarrays;
@@ -1088,7 +1087,7 @@ PyArray_CopyAndTranspose(PyObject *op)
     PyArray_Dims new_axes;
 
     /* Make sure we have an array */
-    arr = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, NULL);
+    arr = (PyArrayObject *)PyArray_FROM_O(op);
     if (arr == NULL) {
         return NULL;
     }
@@ -3085,7 +3084,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     PyArrayObject *arr, *ax, *ay;
     PyObject *ret = NULL;
 
-    arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0, NULL);
+    arr = (PyArrayObject *)PyArray_FROM_O(condition);
     if (arr == NULL) {
         return NULL;
     }
@@ -3101,8 +3100,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         return NULL;
     }
 
-    ax = (PyArrayObject*)PyArray_FromAny(x, NULL, 0, 0, 0 ,NULL);
-    ay = (PyArrayObject*)PyArray_FromAny(y, NULL, 0, 0, 0 ,NULL);
+    ax = (PyArrayObject*)PyArray_FROM_O(x);
+    ay = (PyArrayObject*)PyArray_FROM_O(y);
     if (ax == NULL || ay == NULL) {
         goto fail;
     }
@@ -3282,8 +3281,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     else if (PyArray_IsScalar(from_obj, Generic) ||
                                 PyArray_IsPythonNumber(from_obj)) {
         PyArrayObject *arr;
-        arr = (PyArrayObject *)PyArray_FromAny(from_obj,
-                                        NULL, 0, 0, 0, NULL);
+        arr = (PyArrayObject *)PyArray_FROM_O(from_obj);
         if (arr == NULL) {
             goto finish;
         }
@@ -3345,7 +3343,7 @@ array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL, 0, 0, 0, NULL);
+    array = (PyArrayObject *)PyArray_FROM_O(array_in);
     if (array == NULL) {
         return NULL;
     }
@@ -3385,8 +3383,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         else if (PyArray_IsScalar(obj, Generic) ||
                                     PyArray_IsPythonNumber(obj)) {
-            arr[narr] = (PyArrayObject *)PyArray_FromAny(obj,
-                                        NULL, 0, 0, 0, NULL);
+            arr[narr] = (PyArrayObject *)PyArray_FROM_O(obj);
             if (arr[narr] == NULL) {
                 goto finish;
             }
@@ -3997,7 +3994,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     else {
         /* Use FromAny to enable checking overlap for objects exposing array
            interfaces etc. */
-        self = (PyArrayObject*)PyArray_FromAny(self_obj, NULL, 0, 0, 0, NULL);
+        self = (PyArrayObject*)PyArray_FROM_O(self_obj);
         if (self == NULL) {
             goto fail;
         }
@@ -4008,7 +4005,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
         Py_INCREF(other);
     }
     else {
-        other = (PyArrayObject*)PyArray_FromAny(other_obj, NULL, 0, 0, 0, NULL);
+        other = (PyArrayObject*)PyArray_FROM_O(other_obj);
         if (other == NULL) {
             goto fail;
         }

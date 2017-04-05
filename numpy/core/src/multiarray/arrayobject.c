@@ -1362,8 +1362,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1440,8 +1439,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
