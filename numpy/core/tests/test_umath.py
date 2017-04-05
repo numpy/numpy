@@ -456,7 +456,12 @@ class TestPower(TestCase):
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
-        assert_((x**2.00001).dtype is (x**2.0).dtype)
+        res = x**2.0
+        assert_((x**2.00001).dtype is res.dtype)
+        assert_array_equal(res, [1, 4, 9])
+        # check the inplace operation on the casted copy doesn't mess with x
+        assert_(not np.may_share_memory(res, x))
+        assert_array_equal(x, [1, 2, 3])
 
         # Check that the fast path ignores 1-element not 0-d arrays
         res = x ** np.array([[[2]]])
