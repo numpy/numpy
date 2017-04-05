@@ -1786,8 +1786,8 @@ _attr_name_as_utf8(PyObject *attr_name)
         PyString_AsString uses the "Default encoding", which is probabably good
         enough
         */
-        attr_name_utf8 = PyString_AsString(attr_name);
-        if (attr_name_utf8 == NULL) {
+        c_attr_name = PyString_AsString(attr_name);
+        if (c_attr_name == NULL) {
             return NULL;
         }
     }
