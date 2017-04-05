@@ -1770,6 +1770,79 @@ array_free(PyObject * v)
     PyObject_Free(v);
 }
 
+static const char *
+_attr_name_as_utf8(PyObject *attr_name)
+{
+    const char *c_attr_name;
+    if (PyUString_Check(attr_name)) {
+        c_attr_name = PyUString_AsUTF8(attr_name);
+        if (c_attr_name == NULL) {
+            return NULL;
+        }
+    }
+#if !defined(NPY_PY3K)
+    else if (PyUnicode_Check(attr_name)) {
+        /*
+        PyString_AsString uses the "Default encoding", which is probabably good
+        enough
+        */
+        attr_name_utf8 = PyString_AsString(attr_name);
+        if (attr_name_utf8 == NULL) {
+            return NULL;
+        }
+    }
+#endif
+    else {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+    return c_attr_name;
+}
+
+static PyObject *
+array_getattro(PyArrayObject *arr, PyObject *attr_name)
+{
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    PyMethodDef *method;
+    PyObject *result;
+    const char *c_attr_name;
+
+    PyObject *etype, *evalue, *etraceback;
+
+    /* look up with the normal mechanism first - we don't allow overrides */
+    result = PyObject_GenericGetAttr((PyObject *)arr, attr_name);
+    if (result != NULL) {
+        return result;
+    }
+    PyErr_Fetch(&etype, &evalue, &etraceback);
+
+    /* convert name to utf8 char* for strcmp */
+    c_attr_name = _attr_name_as_utf8(attr_name);
+    if (c_attr_name == NULL) {
+        goto fail;
+    }
+
+    /* Look up the method name in the list of extras */
+    method = descr->typeobj->tp_methods;
+    if (method != NULL) {
+        for (; method->ml_name != NULL; method++) {
+            if (strcmp(method->ml_name, c_attr_name) == 0) {
+                goto succeed;
+            }
+        }
+    }
+
+fail:
+    /* Rethrow the normal error, if our custom lookup didn't help */
+    PyErr_Restore(etype, evalue, etraceback);
+    return NULL;
+
+succeed:
+    Py_XDECREF(etype);
+    Py_XDECREF(evalue);
+    Py_XDECREF(etraceback);
+    return PyCFunction_New(method, (PyObject *)arr);
+}
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 #if defined(NPY_PY3K)
@@ -1802,7 +1875,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (hashfunc)0,                                /* tp_hash */
     (ternaryfunc)0,                             /* tp_call */
     (reprfunc)array_str,                        /* tp_str */
-    (getattrofunc)0,                            /* tp_getattro */
+    (getattrofunc)array_getattro,               /* tp_getattro */
     (setattrofunc)0,                            /* tp_setattro */
     &array_as_buffer,                           /* tp_as_buffer */
     (Py_TPFLAGS_DEFAULT

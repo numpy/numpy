@@ -2417,6 +2417,42 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+static PyObject *
+array_dir(PyArrayObject *arr, PyObject *NPY_UNUSED(args))
+{
+    PyObject *super;
+    PyObject *base_dir;
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    PyMethodDef *method;
+
+    /* invoke super().__dir__() */
+    super = PyObject_CallFunctionObjArgs(
+        &PySuper_Type, &PyArray_Type, arr);
+    if (super == NULL) {
+        return NULL;
+    }
+    base_dir = PyObject_CallMethod(super, "__dir__", "");
+    if (base_dir == NULL) {
+        return NULL;
+    }
+
+    /* Append any dtype-specific methods */
+    method = descr->typeobj->tp_methods;
+    if (method != NULL) {
+        for (; method->ml_name != NULL; method++) {
+            PyObject *name = PyUString_FromString(method->ml_name);
+            if (name == NULL) {
+                return NULL;
+            }
+            if (PyList_Append(base_dir, name) < 0) {
+                return NULL;
+            }
+        }
+    }
+
+    return base_dir;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2429,6 +2465,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
         METH_VARARGS, NULL},
+
+    /* for augmenting dtypes */
+    {"__dir__",
+        (PyCFunction) array_dir,
+        METH_NOARGS, NULL},
 
     /* for the sys module */
     {"__sizeof__",
