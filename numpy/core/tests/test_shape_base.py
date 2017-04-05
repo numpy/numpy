@@ -399,33 +399,12 @@ class TestBlock(TestCase):
         six_1d = np.array([6, 6, 6, 6, 6])
         zero_2d = np.zeros((2, 6))
 
-        result = block([[one_2d, two_2d],
-                        three_2d,
-                        four_1d,
-                        [five_0d, six_1d],
-                        zero_2d])
         expected = np.array([[1, 1, 1, 2, 2, 2],
                              [3, 3, 3, 3, 3, 3],
                              [4, 4, 4, 4, 4, 4],
                              [5, 6, 6, 6, 6, 6],
                              [0, 0, 0, 0, 0, 0],
                              [0, 0, 0, 0, 0, 0]])
-        assert_equal(result, expected)
-
-        # additional [] around rows should not have any influence
-        result = block([[one_2d, two_2d],
-                        three_2d,
-                        [four_1d],
-                        [five_0d, six_1d],
-                        zero_2d])
-        assert_equal(result, expected)
-
-        result = block([[one_2d, two_2d],
-                        [three_2d],
-                        [four_1d],
-                        [five_0d, six_1d],
-                        zero_2d])
-        assert_equal(result, expected)
 
         result = block([[one_2d, two_2d],
                         [three_2d],
@@ -453,7 +432,7 @@ class TestBlock(TestCase):
                 two
             ],
             [five, six],
-            zero
+            [zero]
         ])
         expected = np.array([[1, 1, 1, 2, 2, 2],
                              [3, 3, 3, 2, 2, 2],
@@ -529,9 +508,22 @@ class TestBlock(TestCase):
         assert_equal(np.block(1),         np.array(1))
         assert_equal(np.block(np.eye(3)), np.eye(3))
 
-    def test_empty_input(self):
-        assert_raises(ValueError, np.block, [])
-        assert_raises(ValueError, np.block, [[]])
+    def test_invalid_nesting(self):
+        msg = 'depths are mismatched'
+        assert_raises_regex(ValueError, msg, np.block, [1, [2]])
+        assert_raises_regex(ValueError, msg, np.block, [1, []])
+        assert_raises_regex(ValueError, msg, np.block, [[1], 2])
+        assert_raises_regex(ValueError, msg, np.block, [[], 2])
+        assert_raises_regex(ValueError, msg, np.block, [
+            [[1], [2]],
+            [[3, 4]],
+            [5]  # missing brackets
+        ])
+
+    def test_empty_lists(self):
+        assert_raises_regex(ValueError, 'empty', np.block, [])
+        assert_raises_regex(ValueError, 'empty', np.block, [[]])
+        assert_raises_regex(ValueError, 'empty', np.block, [[1], []])
 
 
 if __name__ == "__main__":
