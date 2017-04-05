@@ -65,7 +65,8 @@ def have_compiler():
         cmd = compiler.compiler  # Unix compilers
     except AttributeError:
         try:
-            compiler.initialize()  # MSVC is different
+            if not compiler.initialized:
+                compiler.initialize()  # MSVC is different
         except DistutilsError:
             return False
         cmd = [compiler.cc]
