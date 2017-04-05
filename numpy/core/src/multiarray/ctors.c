@@ -2558,7 +2558,7 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
+        new = PyArray_FROM_OF(op, NPY_ARRAY_ENSUREARRAY);
     }
     Py_XDECREF(op);
     return new;
