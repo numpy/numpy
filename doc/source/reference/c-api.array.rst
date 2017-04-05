@@ -665,7 +665,7 @@ From other objects
     This function **steals a reference** to ``op`` and makes sure that
     ``op`` is a base-class ndarray. It special cases array scalars,
     but otherwise calls :c:func:`PyArray_FromAny` ( ``op``, NULL, 0, 0,
-    :c:data:`NPY_ARRAY_ENSUREARRAY`).
+    :c:data:`NPY_ARRAY_ENSUREARRAY`, NULL).
 
 .. c:function:: PyObject* PyArray_FromString( \
         char* string, npy_intp slen, PyArray_Descr* dtype, npy_intp num, \
