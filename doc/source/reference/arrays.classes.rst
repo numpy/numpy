@@ -88,17 +88,6 @@ NumPy provides several hooks that classes can customize:
    unless another class also provides a :func:`__array_ufunc__` method
    which knows what to do with your class).
 
-   The presence of :func:`__array_ufunc__` also influences how binary
-   and comparison operators are dealt with, such as ``__add__``,
-   ``__gt__``, etc.  If it is not :obj:`None`, the assumption is that
-   your code can handle such operations via the ufunc mechanism, and
-   hence forward methods on :class:`ndarray` will call the ufuncs
-   unconditionally (i.e., even if your class has defined reverse
-   methods such as ``__radd__``, ``__le__``, etc.). If
-   ``__array_ufunc__ = None``, however, forward methods on
-   :class:`ndarray` will unconditionally return :obj:`NotImplemented`,
-   so that your reverse methods will get called.
-
    The presence of :func:`__array_ufunc__` also influences how
    :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
    < obj`` when ``arr`` is an :class:`ndarray` and ``obj`` is an instance
