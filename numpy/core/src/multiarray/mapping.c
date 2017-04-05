@@ -379,7 +379,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         if (!PyArray_Check(obj)) {
             PyArrayObject *tmp_arr;
-            tmp_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            tmp_arr = (PyArrayObject *)PyArray_FROM_O(obj);
             if (tmp_arr == NULL) {
                 /* TODO: Should maybe replace the error here? */
                 goto failed_building_indices;

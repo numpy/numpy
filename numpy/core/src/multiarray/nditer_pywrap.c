@@ -694,8 +694,8 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             if (op_flags[iop]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
                 fromanyflags |= NPY_ARRAY_UPDATEIFCOPY;
             }
-            ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iop],
-                                            NULL, 0, 0, fromanyflags, NULL);
+            ao = (PyArrayObject *)PyArray_FROM_OF((PyObject *)op[iop],
+                                                  fromanyflags);
             if (ao == NULL) {
                 if (PyErr_Occurred() &&
                             PyErr_ExceptionMatches(PyExc_TypeError)) {

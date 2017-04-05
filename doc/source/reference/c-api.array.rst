@@ -385,8 +385,9 @@ From other objects
     *dtype* argument needs to be a :c:type:`PyArray_Descr` structure
     indicating the desired data-type (including required
     byteorder). The *dtype* argument may be NULL, indicating that any
-    data-type (and byteorder) is acceptable. Unless ``FORCECAST`` is
-    present in ``flags``, this call will generate an error if the data
+    data-type (and byteorder) is acceptable. Unless
+    :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
+    this call will generate an error if the data
     type cannot be safely obtained from the object. If you want to use
     ``NULL`` for the *dtype* and ensure the array is notswapped then
     use :c:func:`PyArray_CheckFromAny`. A value of 0 for either of the
@@ -397,13 +398,13 @@ From other objects
     may be 0. Also, if *op* is not already an array (or does not
     expose the array interface), then a new array will be created (and
     filled from *op* using the sequence protocol). The new array will
-    have :c:data:`NPY_DEFAULT` as its flags member. The *context* argument
+    have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context* argument
     is passed to the :obj:`~numpy.class.__array__` method of *op* and is only used if
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
 
     In versions 1.6 and earlier of NumPy, the following flags
-    did not have the _ARRAY_ macro namespace in them. That form
+    did not have the ``_ARRAY_`` macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
     .. c:var:: NPY_ARRAY_C_CONTIGUOUS
@@ -533,7 +534,7 @@ From other objects
     If writing to the value in 'op' is desired, set the boolean
     'writeable' to 1.  This raises an error when 'op' is a scalar, list
     of lists, or other non-writeable 'op'. This differs from passing
-    NPY_ARRAY_WRITEABLE to PyArray_FromAny, where the writeable array may
+    :c:data:`NPY_ARRAY_WRITEABLE` to PyArray_FromAny, where the writeable array may
     be a copy of the input.
 
     When success (0 return value) is returned, either out_arr
@@ -647,7 +648,7 @@ From other objects
     object, *op*, of (non-flexible) type given by the enumerated
     *typenum*, of minimum depth *min_depth*, and of maximum depth
     *max_depth*. Equivalent to a call to :c:func:`PyArray_FromAny` with
-    requirements set to :c:data:`NPY_DEFAULT` and the type_num member of the
+    requirements set to :c:data:`NPY_ARRAY_DEFAULT` and the type_num member of the
     type argument set to *typenum*.
 
 .. c:function:: PyObject *PyArray_FromObject( \
@@ -665,7 +666,7 @@ From other objects
     This function **steals a reference** to ``op`` and makes sure that
     ``op`` is a base-class ndarray. It special cases array scalars,
     but otherwise calls :c:func:`PyArray_FromAny` ( ``op``, NULL, 0, 0,
-    :c:data:`NPY_ARRAY_ENSUREARRAY`).
+    :c:data:`NPY_ARRAY_ENSUREARRAY`, NULL).
 
 .. c:function:: PyObject* PyArray_FromString( \
         char* string, npy_intp slen, PyArray_Descr* dtype, npy_intp num, \
@@ -773,7 +774,7 @@ From other objects
     Similar to :c:func:`PyArray_FromAny` except the data-type is
     specified using a typenumber. :c:func:`PyArray_DescrFromType`
     (*typenum*) is passed directly to :c:func:`PyArray_FromAny`. This
-    macro also adds :c:data:`NPY_DEFAULT` to requirements if
+    macro also adds :c:data:`NPY_ARRAY_DEFAULT` to requirements if
     :c:data:`NPY_ARRAY_ENSURECOPY` is passed in as requirements.
 
 .. c:function:: PyObject *PyArray_CheckAxis( \
