@@ -11,7 +11,10 @@ import sys
 
 from numpy.compat import basestring
 from .multiarray import dtype, array, ndarray
-import ctypes
+try:
+    import ctypes
+except ImportError:
+    ctypes = None
 from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
@@ -222,9 +225,9 @@ class _missing_ctypes(object):
 
 class _ctypes(object):
     def __init__(self, array, ptr=None):
-        try:
+        if ctypes:
             self._ctypes = ctypes
-        except ImportError:
+        else:
             self._ctypes = _missing_ctypes()
         self._arr = array
         self._data = ptr
