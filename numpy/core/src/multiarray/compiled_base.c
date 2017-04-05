@@ -874,7 +874,7 @@ static int sequence_to_arrays(PyObject *seq,
             return -1;
         }
 
-        op[i] = (PyArrayObject *)PyArray_FromAny(item, NULL, 0, 0, 0, NULL);
+        op[i] = (PyArrayObject *)PyArray_FROM_O(item);
         if (op[i] == NULL) {
             while (--i >= 0) {
                 Py_DECREF(op[i]);
@@ -1209,8 +1209,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
 
     if (!PyArray_Check(indices0)) {
-        indices = (PyArrayObject*)PyArray_FromAny(indices0,
-                                                    NULL, 0, 0, 0, NULL);
+        indices = (PyArrayObject*)PyArray_FROM_O(indices0);
         if (indices == NULL) {
             goto fail;
         }

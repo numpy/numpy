@@ -1364,8 +1364,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     /* Claim a reference to timezone for later */
     Py_XINCREF(timezone_obj);
 
-    op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
-                                    NULL, 0, 0, 0, NULL);
+    op[0] = (PyArrayObject *)PyArray_FROM_O(arr_in);
     if (op[0] == NULL) {
         goto fail;
     }

@@ -755,7 +755,7 @@ array_real_set(PyArrayObject *self, PyObject *val)
         Py_INCREF(self);
         ret = self;
     }
-    new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+    new = (PyArrayObject *)PyArray_FROM_O(val);
     if (new == NULL) {
         Py_DECREF(ret);
         return -1;
@@ -816,7 +816,7 @@ array_imag_set(PyArrayObject *self, PyObject *val)
         if (ret == NULL) {
             return -1;
         }
-        new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+        new = (PyArrayObject *)PyArray_FROM_O(val);
         if (new == NULL) {
             Py_DECREF(ret);
             return -1;
