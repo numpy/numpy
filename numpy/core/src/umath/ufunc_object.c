@@ -4370,8 +4370,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override,
-                                   ufunc->nin, ufunc->nout);
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5088,8 +5087,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
     /* Note: `nin` and `nout` are not used in the normalization */
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override,
-                                   ufunc->nin, ufunc->nout);
+    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5167,8 +5165,7 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
 
     /* `nin` and `nout`, the last two arguments, are not actually used */
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override,
-                                   1, ufunc->nout);
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5185,8 +5182,7 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
 
     /* `nin` and `nout`, the last two arguments, are not actually used */
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override,
-                                   1, ufunc->nout);
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5203,8 +5199,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
 
     /* `nin` and `nout`, the last two arguments, are not actually used */
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override,
-                                   ufunc->nin, ufunc->nout);
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5269,8 +5264,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     NPY_BEGIN_THREADS_DEF;
 
     /* `nin` and `nout`, the last two arguments, are not actually used */
-    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override,
-                                   ufunc->nin + 1, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
     if (errval) {
         return NULL;
     }

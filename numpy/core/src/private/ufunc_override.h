@@ -11,6 +11,5 @@ PyUFunc_HasOverride(PyObject *args, PyObject *kwds,
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds,
-                      PyObject **result,
-                      int nin, int nout);
+                      PyObject **result);
 #endif
