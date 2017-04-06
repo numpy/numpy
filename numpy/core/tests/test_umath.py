@@ -1577,13 +1577,13 @@ class TestSpecialMethods(TestCase):
         a = A()
         b = np.matrix([1])
         res0 = np.multiply(a, b)
-        res1 = np.dot(a, b)
+        res1 = np.matmul(a, b)
 
         # self
         assert_equal(res0[0], a)
         assert_equal(res1[0], a)
         assert_equal(res0[1], np.multiply)
-        assert_equal(res1[1], np.dot)
+        assert_equal(res1[1], np.matmul)
         assert_equal(res0[2], '__call__')
         assert_equal(res1[2], '__call__')
         assert_equal(res0[3], (a, b))
@@ -1878,7 +1878,7 @@ class TestSpecialMethods(TestCase):
                 raise ValueError("oops")
 
         a = A()
-        for func in [np.divide, np.dot]:
+        for func in [np.divide, np.matmul]:
             assert_raises(ValueError, func, a, a)
 
     def test_gufunc_override(self):

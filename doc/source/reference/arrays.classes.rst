@@ -74,11 +74,12 @@ NumPy provides several hooks that classes can customize:
    :exc:`TypeError` is raised.
 
    .. note:: In addition to ufuncs, :func:`__array_ufunc__` also
-      overrides the behavior of :func:`numpy.dot` and :func:`numpy.matmul`.
-      This even though these are not ufuncs, but they can be thought of as
-      :ref:`generalized universal functions<c-api.generalized-ufuncs>`
-      (which are overridden). We intend to extend this behaviour to other
-      relevant functions.
+      overrides the behavior of :func:`numpy.matmul`, even though it
+      is not a ufunc. But it can be thought of as :ref:`generalized
+      universal functions<c-api.generalized-ufuncs>` (which are
+      overridden). Indeed, we intend to rewrite :func:`numpy.matmul`
+      as such, and possibly do the same to other relevant functions,
+      such as :func:`numpy.median`, :func:`numpy.argsort`, etc.
 
    Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*

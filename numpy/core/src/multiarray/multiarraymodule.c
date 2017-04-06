@@ -2179,41 +2179,22 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 static PyObject *
 array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
-    static PyUFuncObject *cached_npy_dot = NULL;
-    int errval;
-    PyObject *override = NULL;
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
     char* kwlist[] = {"a", "b", "out", NULL };
 
-    if (cached_npy_dot == NULL) {
-        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
-        cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
-                                              PyModule_GetDict(module), "dot");
-
-        Py_INCREF(cached_npy_dot);
-        Py_DECREF(module);
-    }
-
-    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__", args, kwds,
-                                   &override, 2, 1);
-    if (errval) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct",
+                                     kwlist, &a, &v, &o)) {
         return NULL;
     }
-    else if (override) {
-        return override;
-    }
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct", kwlist, &a, &v, &o)) {
-        return NULL;
-    }
-    if (o == Py_None) {
-        o = NULL;
-    }
-    if (o != NULL && !PyArray_Check(o)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "'out' must be an array");
-        return NULL;
+    if (o) {
+        if (o == Py_None) {
+            o = NULL;
+        }
+        else if (!PyArray_Check(o)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
     }
     ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
     return PyArray_Return(ret);

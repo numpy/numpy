@@ -2080,11 +2080,7 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static PyUFuncObject *cached_npy_dot = NULL;
-    int errval;
-    PyObject *override = NULL;
-    PyObject *a = (PyObject *)self, *b, *o = Py_None;
-    PyObject *newargs;
+    PyObject *a = (PyObject *)self, *b, *o = NULL;
     PyArrayObject *ret;
     char* kwlist[] = {"b", "out", NULL };
 
@@ -2093,36 +2089,15 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (cached_npy_dot == NULL) {
-        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
-        cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
-                                              PyModule_GetDict(module), "dot");
-
-        Py_INCREF(cached_npy_dot);
-        Py_DECREF(module);
-    }
-
-    if ((newargs = PyTuple_Pack(3, a, b, o)) == NULL) {
-        return NULL;
-    }
-    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__",
-                                   newargs, NULL, &override, 2, 1);
-    Py_DECREF(newargs);
-
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
-    }
-
-    if (o == Py_None) {
-        o = NULL;
-    }
-    if (o != NULL && !PyArray_Check(o)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "'out' must be an array");
-        return NULL;
+    if (o != NULL) {
+        if (o == Py_None) {
+            o = NULL;
+        }
+        else if (!PyArray_Check(o)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "'out' must be an array");
+            return NULL;
+        }
     }
     ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
     return PyArray_Return(ret);
