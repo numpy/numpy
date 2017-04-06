@@ -548,16 +548,16 @@ classes, we will provide a mixin class that provides overrides for all
 binary operators.
 
 
-Extension to other numpy functions
-----------------------------------
+Future extensions to other functions
+------------------------------------
 
-The ``__array_ufunc__`` method is also used to override
-:func:`~numpy.matmul`, since while this function is not a Ufunc, it is
-very similar.  Indeed, :func:`~numpy.matmul` may well be implemented as
-a (generalized) Ufunc in the future, as may happen with some other
-functions, such as :func:`~numpy.median`, :func:`~numpy.min`,
-:func:`~numpy.argsort`, etc. (in which case it will thus become possible
-to override these as well).
+Some numpy functions could be implemented as (generalized) Ufunc, in
+which case it would be possible for them to be overridden by the
+``__array_ufunc__`` method.  A prime candidate is :func:`~numpy.matmul`,
+which currently is not a Ufunc, but could be relatively easily be
+rewritten as a (set of) generalized Ufuncs. The same may happen with
+functions such as :func:`~numpy.median`, :func:`~numpy.min`, and
+:func:`~numpy.argsort`.
 
 Demo
 ====
@@ -576,16 +576,17 @@ proposed in this NEP.  Here is a demo highlighting the functionality.::
 
     In [4]: b = B()
 
-    In [5]: np.matmul(a, b)
+    In [5]: np.negative(b)
     Out[5]: 'B'
 
     In [6]: np.multiply(a, b)
     Out[6]: 'B'
 
-As a simple example, one could add the following ``__array_ufunc__`` to
-SciPy's sparse matrices (just for ``np.matmul`` and ``np.multiply`` as
-these are the two most common cases where users would attempt to use
-sparse matrices with ufuncs)::
+As a simple example, once ``np.matmul`` is covered as well (see above),
+one could add the following ``__array_ufunc__`` to SciPy's sparse
+matrices (just for ``np.matmul`` and ``np.multiply`` as these are the
+two most common cases where users would attempt to use sparse matrices
+with ufuncs)::
 
     def __array_ufunc__(self, func, method, pos, inputs, **kwargs):
         """Method for compatibility with NumPy's ufuncs and matmul

@@ -2187,7 +2187,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
                                      kwlist, &a, &v, &o)) {
         return NULL;
     }
-    if (o) {
+    if (o != NULL) {
         if (o == Py_None) {
             o = NULL;
         }
@@ -2327,14 +2327,10 @@ fail:
  * out:        Either NULL, or an array into which the output should be placed.
  *
  * Returns NULL on error.
- * Returns NotImplemented on priority override.
  */
 static PyObject *
 array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
 {
-    static PyObject *matmul = NULL;
-    int errval;
-    PyObject *override = NULL;
     PyObject *in1, *in2, *out = NULL;
     char* kwlist[] = {"a", "b", "out", NULL };
     PyArrayObject *ap1, *ap2, *ret = NULL;
@@ -2345,39 +2341,25 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     char *subscripts;
     PyArrayObject *ops[2];
 
-    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
-    if (matmul == NULL) {
-        return NULL;
-    }
-
-    errval = PyUFunc_CheckOverride((PyUFuncObject*)matmul, "__call__",
-                                   args, kwds, &override, 2, 1);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
-    }
-
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matmul", kwlist,
                                      &in1, &in2, &out)) {
         return NULL;
     }
 
-    if (out == Py_None) {
-        out = NULL;
-    }
-    if (out != NULL && !PyArray_Check(out)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "'out' must be an array");
-        return NULL;
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
     }
 
     dtype = PyArray_DescrFromObject(in1, NULL);
     dtype = PyArray_DescrFromObject(in2, dtype);
     if (dtype == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot find a common data type.");
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
         return NULL;
     }
     typenum = dtype->type_num;
@@ -2385,7 +2367,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     if (typenum == NPY_OBJECT) {
         /* matmul is not currently implemented for object arrays */
         PyErr_SetString(PyExc_TypeError,
-                "Object arrays are not currently supported");
+                        "Object arrays are not currently supported");
         Py_DECREF(dtype);
         return NULL;
     }
@@ -2407,7 +2389,7 @@ array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         /* Scalars are rejected */
         PyErr_SetString(PyExc_ValueError,
-                "Scalar operands are not allowed, use '*' instead");
+                        "Scalar operands are not allowed, use '*' instead");
         return NULL;
     }
 
