@@ -4209,8 +4209,8 @@ def percentile(a, q, axis=None, out=None,
     Notes
     -----
     Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the mimumum to the
-    maximum in in a sorted copy of ``V``. The values and distances of
+    ``V`` is the value ``q/100`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
     will determine the percentile if the normalized ranking does not
     match the location of ``q`` exactly. This function is the same as
