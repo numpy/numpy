@@ -202,8 +202,8 @@ class dummy_ctype(object):
         self._cls = cls
     def __mul__(self, other):
         return self
-    def __call__(self, other):
-        return cls(other)
+    def __call__(self, *other):
+        return self._cls(other)
 
 def _getintp_ctype():
     if ctypes is None:
