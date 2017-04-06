@@ -454,15 +454,10 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
         }
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-            PySequence_Check(op) && PySequence_Size(op) > 0) {
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
-    }
-    /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
     }
 #if defined(NPY_PY3K)
     if (PyBytes_Check(op)) {
@@ -560,10 +555,9 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
         }
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
-            && PySequence_Check(op) && PySequence_Size(op) != 0) {
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
-                "cannot set an array element with a sequence");
+                "setting an array element with a sequence");
         return -1;
     }
 #if defined(NPY_PY3K)
