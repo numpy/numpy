@@ -551,13 +551,13 @@ binary operators.
 Extension to other numpy functions
 ----------------------------------
 
-The ``__array_ufunc__`` method is used to override :func:`~numpy.dot`
-and :func:`~numpy.matmul` as well, since while these functions are not
-Ufuncs, they are very similar.  Indeed, :func:`~numpy.matmul` may well
-be implemented as a (generalized) Ufunc in the future, as may happen
-with some other functions, such as :func:`~numpy.median`,
-:func:`~numpy.min`, etc. (in which it will become possible to override
-these as well).
+The ``__array_ufunc__`` method is also used to override
+:func:`~numpy.matmul`, since while this function is not a Ufunc, it is
+very similar.  Indeed, :func:`~numpy.matmul` may well be implemented as
+a (generalized) Ufunc in the future, as may happen with some other
+functions, such as :func:`~numpy.median`, :func:`~numpy.min`,
+:func:`~numpy.argsort`, etc. (in which case it will thus become possible
+to override these as well).
 
 Demo
 ====
@@ -576,19 +576,19 @@ proposed in this NEP.  Here is a demo highlighting the functionality.::
 
     In [4]: b = B()
 
-    In [5]: np.dot(a, b)
+    In [5]: np.matmul(a, b)
     Out[5]: 'B'
 
     In [6]: np.multiply(a, b)
     Out[6]: 'B'
 
 As a simple example, one could add the following ``__array_ufunc__`` to
-SciPy's sparse matrices (just for ``np.dot`` and ``np.multiply`` as
+SciPy's sparse matrices (just for ``np.matmul`` and ``np.multiply`` as
 these are the two most common cases where users would attempt to use
 sparse matrices with ufuncs)::
 
     def __array_ufunc__(self, func, method, pos, inputs, **kwargs):
-        """Method for compatibility with NumPy's ufuncs and dot
+        """Method for compatibility with NumPy's ufuncs and matmul
         functions.
         """
 
@@ -599,7 +599,7 @@ sparse matrices with ufuncs)::
         if func is np.multiply:
             return self.multiply(*without_self)
 
-        elif func is np.dot:
+        elif func is np.matmul:
             if pos == 0:
                 return self.__mul__(inputs[1])
             if pos == 1:
@@ -617,19 +617,19 @@ So we now get the expected behavior when using ufuncs with sparse matrices.::
 
         In [4]: asp = sp.csr_matrix(a); bsp = sp.csr_matrix(b)
 
-        In [5]: np.dot(a,b)
+        In [5]: np.matmul(a,b)
         Out[5]: 
         array([[2, 4, 8],
                [2, 4, 8],
-                [2, 2, 3]])
+               [2, 2, 3]])
 
-        In [6]: np.dot(asp,b)
+        In [6]: np.matmul(asp,b)
         Out[6]: 
         array([[2, 4, 8],
                [2, 4, 8],
                [2, 2, 3]], dtype=int64)
 
-        In [7]: np.dot(asp, bsp).A
+        In [7]: np.matmul(asp, bsp).A
         Out[7]: 
         array([[2, 4, 8],
                [2, 4, 8],

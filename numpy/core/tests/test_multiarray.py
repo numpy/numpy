@@ -2406,30 +2406,6 @@ class TestMethods(TestCase):
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
-    def test_dot_override(self):
-        class B(object):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return "B"
-
-        class C(object):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return NotImplemented
-
-        class D(object):
-            __array_ufunc__ = None
-
-        a = np.array([[1]])
-        b = B()
-        c = C()
-        d = D()
-
-        assert_equal(np.dot(a, b), "B")
-        assert_equal(a.dot(b), "B")
-        assert_raises(TypeError, np.dot, c, a)
-        assert_raises(TypeError, a.dot, c)
-        assert_raises(TypeError, np.dot, d, a)
-        assert_raises(TypeError, a.dot, d)
-
     def test_dot_type_mismatch(self):
         c = 1.
         A = np.array((1,1), dtype='i,i')
