@@ -437,34 +437,41 @@ class _Recurser(object):
 
 def block(arrays):
     """
-    Assemble an array from nested lists of blocks.
+    Assemble an nd-array from nested lists of blocks.
 
-    You can create a 2-D blocked array with the same notation you use for
-    `np.array`.
+    Blocks in the innermost lists are `concatenate`d along the last
+    dimension (-1), then these are `concatenate`d along the second-last
+    dimension (-2), and so on until the outermost list is reached
+
+    Blocks can be of any dimension, but will not be broadcasted using the normal
+    rules. Instead, leading axes of size 1 are inserted, to make ``block.ndim``
+    the same for all blocks. This is primarily useful for working with scalars,
+    and means that code like ``np.block([v, 1])`` is valid, where
+    ``v.ndim == 1``.
+
+    When the nested list is two levels deep, this allows block matrices to be
+    constructed from their components.
 
     .. versionadded:: 1.13.0
 
     Parameters
     ----------
     arrays : nested list of ndarrays or scalars
-        Elements of the innermost lists are `concatenate`d along the last
-        dimension, then theses are concatenated along the second-last
-        dimensions, etc.
-
         If passed a single ndarray or scalar (a nested list of depth 0), this
-        is returned unmodified.
+        is returned unmodified (and not copied).
 
-        Elements shapes must match along the appropiate axes (without
-        broadcasting), but leading 1s will be appended as necessary to make the
-        dimensions match.
+        Elements shapes must match along the appropriate axes (without
+        broadcasting), but leading 1s will be prepended to the shape as
+        necessary to make the dimensions match.
 
     Returns
     -------
-    blocked : ndarray
+    block_array : ndarray
         The array assembled from the given blocks.
-        The dimensionality of the output is determined by the dimensionality of
-        all the inputs, and the degree to which the input list is nested -
-        whichever is greatest.
+
+        The dimensionality of the output is equal to the greatest of:
+        * the dimensionality of all the inputs
+        * the depth to which the input list is nested
 
     Raises
     ------
@@ -484,7 +491,33 @@ def block(arrays):
 
     Notes
     -----
-    ``block`` is similar to Matlab's "square bracket stacking": ``[A B; C D]``
+
+    When called with only scalars, ``np.block`` is equivalent to an ndarray
+    call. So ``np.block([[1, 2], [3, 4]])`` is equivalent to
+    ``np.array([[1, 2], [3, 4]])``.
+
+    This function does not enforce that the blocks lie on a fixed grid.
+    ``np.block([[a, b], [c, d]])`` is not restricted to arrays of the form::
+
+        AAAbb
+        AAAbb
+        cccDD
+
+    But is also allowed to produce, for some ``a, b, c, d``::
+
+        AAAbb
+        AAAbb
+        cDDDD
+
+    Since concatenation happens along the last axis first, `block` is _not_
+    capable of producing the following directly::
+
+        AAAbb
+        cccbb
+        cccDD
+
+    Matlab's "square bracket stacking", ``[A, B, ...; p, q, ...]``, is
+    equivalent to ``np.block([[A, B, ...], [p, q, ...]])``.
 
     Examples
     --------
