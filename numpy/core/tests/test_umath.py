@@ -1577,19 +1577,19 @@ class TestSpecialMethods(TestCase):
         a = A()
         b = np.matrix([1])
         res0 = np.multiply(a, b)
-        res1 = np.matmul(a, b)
+        res1 = np.multiply(b, b, out=a)
 
         # self
         assert_equal(res0[0], a)
         assert_equal(res1[0], a)
         assert_equal(res0[1], np.multiply)
-        assert_equal(res1[1], np.matmul)
+        assert_equal(res1[1], np.multiply)
         assert_equal(res0[2], '__call__')
         assert_equal(res1[2], '__call__')
         assert_equal(res0[3], (a, b))
-        assert_equal(res1[3], (a, b))
+        assert_equal(res1[3], (b, b))
         assert_equal(res0[4], {})
-        assert_equal(res1[4], {})
+        assert_equal(res1[4], {'out': (a,)})
 
     def test_ufunc_override_mro(self):
 
@@ -1878,8 +1878,9 @@ class TestSpecialMethods(TestCase):
                 raise ValueError("oops")
 
         a = A()
-        for func in [np.divide, np.matmul]:
-            assert_raises(ValueError, func, a, a)
+        assert_raises(ValueError, np.negative, 1, out=a)
+        assert_raises(ValueError, np.negative, a)
+        assert_raises(ValueError, np.divide, 1., a)
 
     def test_gufunc_override(self):
         # gufunc are just ufunc instances, but follow a different path,

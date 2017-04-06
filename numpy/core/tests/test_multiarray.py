@@ -5254,43 +5254,6 @@ class MatmulCommon():
         res = self.matmul(m12, m21)
         assert_equal(res, tgt12_21)
 
-    def test_array_ufunc_override(self):
-
-        class B(np.ndarray):
-            def __new__(cls, *args, **kwargs):
-                return np.array(*args, **kwargs).view(cls)
-
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return "B"
-
-        class C(np.ndarray):
-            def __new__(cls, *args, **kwargs):
-                return np.array(*args, **kwargs).view(cls)
-
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return NotImplemented
-
-        class D(np.ndarray):
-            def __new__(cls, *args, **kwargs):
-                return np.array(*args, **kwargs).view(cls)
-
-            __array_ufunc__ = None
-
-        a = np.ones(2)
-        b = B([1, 2])
-        c = C([1, 2])
-        d = D([1, 2])
-        assert_equal(self.matmul(b, a), "B")
-        assert_equal(self.matmul(a, b), "B")
-        assert_equal(self.matmul(b, c), "B")
-        assert_equal(self.matmul(c, b), "B")
-        assert_equal(self.matmul(b, d), "B")
-        assert_equal(self.matmul(d, b), "B")
-        assert_raises(TypeError, self.matmul, a, c)
-        assert_raises(TypeError, self.matmul, c, a)
-        assert_raises(TypeError, self.matmul, d, a)
-        assert_raises(TypeError, self.matmul, a, d)
-
 
 class TestMatmul(MatmulCommon, TestCase):
     matmul = np.matmul

@@ -73,13 +73,14 @@ NumPy provides several hooks that classes can customize:
    :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
    :exc:`TypeError` is raised.
 
-   .. note:: In addition to ufuncs, :func:`__array_ufunc__` also
-      overrides the behavior of :func:`numpy.matmul`, even though it
-      is not a ufunc. But it can be thought of as :ref:`generalized
-      universal functions<c-api.generalized-ufuncs>` (which are
-      overridden). Indeed, we intend to rewrite :func:`numpy.matmul`
-      as such, and possibly do the same to other relevant functions,
-      such as :func:`numpy.median`, :func:`numpy.argsort`, etc.
+   .. note:: We intend to re-implement numpy functions as (generalized)
+       Ufunc, in which case it will become possible for them to be
+       overridden by the ``__array_ufunc__`` method.  A prime candidate is
+       :func:`~numpy.matmul`, which currently is not a Ufunc, but could be
+       relatively easily be rewritten as a (set of) generalized Ufuncs. The
+       same may happen with functions such as :func:`~numpy.median`,
+       :func:`~numpy.min`, and :func:`~numpy.argsort`.
+
 
    Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
