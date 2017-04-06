@@ -11,12 +11,13 @@
 
 static int
 normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
-                        PyObject **normal_args, PyObject **normal_kwds,
-                        int nin, int nout)
+                        PyObject **normal_args, PyObject **normal_kwds)
 {
     /* ufunc.__call__(*args, **kwds) */
     int i;
     int not_all_none;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
     int nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
 
@@ -325,17 +326,11 @@ fail:
  *
  * Returns 0 on success and 1 on exception. On success, *result contains the
  * result of the operation, if any. If *result is NULL, there is no override.
- *
- * TODO: the ufunc really should always be a ufunc, so that we can rely on
- * using, e.g., ufunc->nin, ufunc->nout, etc. Right now, we cannot, since we
- * also use this function to override np.dot and np.matmul. This should be
- * fixed.
  */
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds,
-                      PyObject **result,
-                      int nin, int nout)
+                      PyObject **result)
 {
     int i;
     int j;
@@ -376,6 +371,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         normal_kwds = PyDict_Copy(kwds);
         out = PyDict_GetItemString(normal_kwds, "out");
         if (out != NULL) {
+            int nout = ufunc->nout;
+            
             if (PyTuple_Check(out)) {
                 int all_none = 1;
 
@@ -449,7 +446,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /* ufunc.__call__ */
     if (strcmp(method, "__call__") == 0) {
         status = normalize___call___args(ufunc, args, &normal_args,
-                                         &normal_kwds, nin, nout);
+                                         &normal_kwds);
     }
     /* ufunc.reduce and ufunc.accumulate */
     else if ((strcmp(method, "reduce") == 0) ||
