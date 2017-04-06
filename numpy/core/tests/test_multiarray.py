@@ -404,6 +404,21 @@ class TestAssignment(TestCase):
         # this would crash for the same reason
         np.array([np.array(u'\xe5\xe4\xf6')])
 
+    def test_stringlike_empty_list(self):
+        # gh-8902
+        u = np.array([u'done'])
+        b = np.array([b'done'])
+
+        class bad_sequence(object):
+            def __getitem__(self): pass
+            def __len__(self): raise RuntimeError
+
+        assert_raises(ValueError, operator.setitem, u, 0, [])
+        assert_raises(ValueError, operator.setitem, b, 0, [])
+
+        assert_raises(ValueError, operator.setitem, u, 0, bad_sequence())
+        assert_raises(ValueError, operator.setitem, b, 0, bad_sequence())
+
     def test_longdouble_assignment(self):
         # only relevant if longdouble is larger than float
         # we're looking for loss of precision
