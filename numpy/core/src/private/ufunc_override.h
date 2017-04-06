@@ -2,14 +2,14 @@
 #define __UFUNC_OVERRIDE_H
 
 #include "npy_config.h"
-#include "numpy/ufuncobject.h"
 
+/*
+ * Check whether a set of input and output args have a non-default
+ *  `__array_ufunc__` method. Returns the number of overrides, setting
+ * corresponding objects in PyObject array with_override (if not NULL).
+ * returns -1 on failure.
+ */
 NPY_NO_EXPORT int
-PyUFunc_HasOverride(PyObject *args, PyObject *kwds,
-                    PyObject **with_override);
-
-NPY_NO_EXPORT int
-PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-                      PyObject *args, PyObject *kwds,
-                      PyObject **result);
+PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
+                     PyObject **with_override);
 #endif
