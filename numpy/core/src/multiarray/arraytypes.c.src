@@ -374,6 +374,20 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     /* ensure alignment */
     npy_longdouble temp;
 
+    /* Handle case of assigning from an array scalar */
+    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
+        PyObject *temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                          (PyArrayObject *)op);
+        if (temp == NULL) {
+            return -1;
+        }
+        else {
+            int res = LONGDOUBLE_setitem(temp, ov, ap);
+            Py_DECREF(temp);
+            return res;
+        }
+    }
+
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
     }

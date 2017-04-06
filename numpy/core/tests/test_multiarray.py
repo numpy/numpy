@@ -404,6 +404,35 @@ class TestAssignment(TestCase):
         # this would crash for the same reason
         np.array([np.array(u'\xe5\xe4\xf6')])
 
+    def test_longdouble_assignment(self):
+        # only relevant if longdouble is larger than float
+        # we're looking for loss of precision
+
+        # gh-8902
+        tinyb = np.nextafter(np.longdouble(0), 1)
+        tinya =  np.nextafter(np.longdouble(0), -1)
+        tiny1d = np.array([tinya])
+        assert_equal(tiny1d[0], tinya)
+
+        # scalar = scalar
+        tiny1d[0] = tinyb
+        assert_equal(tiny1d[0], tinyb)
+
+        # 0d = scalar
+        tiny1d[0, ...] = tinya
+        assert_equal(tiny1d[0], tinya)
+
+        # 0d = 0d
+        tiny1d[0, ...] = tinyb[...]
+        assert_equal(tiny1d[0], tinyb)
+
+        # scalar = 0d
+        tiny1d[0] = tinyb[...]
+        assert_equal(tiny1d[0], tinyb)
+
+        arr = np.array([np.array(tinya)])
+        assert_equal(arr[0], tinya)
+
 
 class TestDtypedescr(TestCase):
     def test_construction(self):
