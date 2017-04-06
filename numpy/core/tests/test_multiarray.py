@@ -12,6 +12,7 @@ import functools
 import ctypes
 import os
 import gc
+from contextlib import contextmanager
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -380,6 +381,28 @@ class TestAssignment(TestCase):
 
         assert_raises((AttributeError, TypeError), assign, C())
         assert_raises(ValueError, assign, [1])
+
+    def test_unicode_assignment(self):
+        # gh-5049
+        from numpy.core.numeric import set_string_function
+
+        @contextmanager
+        def inject_str(s):
+            """ replace ndarray.__str__ temporarily """
+            set_string_function(lambda x: s, repr=False)
+            try:
+                yield
+            finally:
+                set_string_function(None, repr=False)
+
+        a1d = np.array([u'test'])
+        a0d = np.array(u'done')
+        with inject_str(u'bad'):
+            a1d[0] = a0d  # previously this would invoke __str__
+        assert_equal(a1d[0], u'done')
+
+        # this would crash for the same reason
+        np.array([np.array(u'\xe5\xe4\xf6')])
 
 
 class TestDtypedescr(TestCase):

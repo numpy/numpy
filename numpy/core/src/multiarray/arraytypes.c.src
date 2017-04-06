@@ -426,6 +426,20 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     char *buffer;
 #endif
 
+    /* Handle case of assigning from an array scalar */
+    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
+        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                (PyArrayObject *)op);
+        if (temp == NULL) {
+            return -1;
+        }
+        else {
+            int res = UNICODE_setitem(temp, ov, ap);
+            Py_DECREF(temp);
+            return res;
+        }
+    }
+
     if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
             PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
