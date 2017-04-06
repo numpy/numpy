@@ -44,7 +44,7 @@
 #include "mem_overlap.h"
 
 #include "ufunc_object.h"
-#include "ufunc_override.h"
+#include "override.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0

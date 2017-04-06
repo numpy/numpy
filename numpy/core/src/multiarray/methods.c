@@ -1023,7 +1023,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    if (PyUFunc_HasOverride(normal_args, kwds, NULL)) {
+    if (PyUFunc_WithOverride(normal_args, kwds, NULL)) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
