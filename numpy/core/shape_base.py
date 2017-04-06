@@ -456,7 +456,7 @@ def block(arrays):
 
     Parameters
     ----------
-    arrays : nested list of ndarrays or scalars
+    arrays : nested list of array_like or scalars (but not tuples)
         If passed a single ndarray or scalar (a nested list of depth 0), this
         is returned unmodified (and not copied).
 
@@ -597,6 +597,19 @@ def block(arrays):
     list_ndim = None
     any_empty = False
     for index, value, entering in rec.walk(arrays):
+        if type(value) is tuple:
+            # not strictly necessary, but saves us from:
+            #  - more than one way to do things - no point treating tuples like
+            #    lists
+            #  - horribly confusing behaviour that results when tuples are
+            #    treated like ndarray
+            raise TypeError(
+                '{} is a tuple. '
+                'Only lists can be used to arrange blocks, and np.block does '
+                'not allow implicit conversion from tuple to ndarray.'.format(
+                    format_index(index)
+                )
+            )
         if not entering:
             curr_depth = len(index)
         elif len(value) == 0:

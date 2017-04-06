@@ -341,9 +341,6 @@ class TestBlock(TestCase):
                             [1, 1, 2, 2]])
         result = block([a_2d, b_2d])
         assert_equal(desired, result)
-        # with tuples
-        result = block((a_2d, b_2d))
-        assert_equal(desired, result)
 
     def test_block_simple_column_wise(self):
         a_2d = np.ones((2, 2))
@@ -501,8 +498,8 @@ class TestBlock(TestCase):
     def test_block_with_mismatched_shape(self):
         a = np.array([0, 0])
         b = np.eye(2)
-        assert_raises(ValueError, np.block, (a, b))
-        assert_raises(ValueError, np.block, (b, a))
+        assert_raises(ValueError, np.block, [a, b])
+        assert_raises(ValueError, np.block, [b, a])
 
     def test_no_lists(self):
         assert_equal(np.block(1),         np.array(1))
@@ -524,6 +521,10 @@ class TestBlock(TestCase):
         assert_raises_regex(ValueError, 'empty', np.block, [])
         assert_raises_regex(ValueError, 'empty', np.block, [[]])
         assert_raises_regex(ValueError, 'empty', np.block, [[1], []])
+
+    def test_tuple(self):
+        assert_raises_regex(TypeError, 'tuple', np.block, ([1, 2], [3, 4]))
+        assert_raises_regex(TypeError, 'tuple', np.block, [(1, 2), (3, 4)])
 
 
 if __name__ == "__main__":
