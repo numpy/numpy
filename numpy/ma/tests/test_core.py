@@ -4376,15 +4376,26 @@ class TestMaskedFields(TestCase):
                                    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0])),
                           dtype=[('a', bool), ('b', bool)])
         # No mask
-        self.assertTrue(isinstance(a[1], MaskedArray))
+        assert_equal(type(a[1]), mvoid)
+        assert_equal(type(a[1,...]), MaskedArray)
+
         # One element masked
-        self.assertTrue(isinstance(a[0], MaskedArray))
+        assert_equal(type(a[0]), mvoid)
         assert_equal_records(a[0]._data, a._data[0])
         assert_equal_records(a[0]._mask, a._mask[0])
+
+        assert_equal(type(a[0,...]), MaskedArray)
+        assert_equal_records(a[0,...]._data, a._data[0,...])
+        assert_equal_records(a[0,...]._mask, a._mask[0,...])
+
         # All element masked
-        self.assertTrue(isinstance(a[-2], MaskedArray))
+        assert_equal(type(a[-2]), mvoid)
         assert_equal_records(a[-2]._data, a._data[-2])
         assert_equal_records(a[-2]._mask, a._mask[-2])
+
+        assert_equal(type(a[-2, ...]), MaskedArray)
+        assert_equal_records(a[-2, ...]._data, a._data[-2, ...])
+        assert_equal_records(a[-2, ...]._mask, a._mask[-2, ...])
 
     def test_setitem(self):
         # Issue 4866: check that one can set individual items in [record][col]
@@ -4427,6 +4438,38 @@ class TestMaskedFields(TestCase):
         # check that len() works for mvoid (Github issue #576)
         for rec in self.data['base']:
             assert_equal(len(rec), len(self.data['ddtype']))
+
+
+class TestMaskedObjectArray(TestCase):
+
+    def test_getitem(self):
+        arr = np.ma.array([None, None])
+        for dt in [float, object]:
+            a0 = np.eye(2).astype(dt)
+            a1 = np.eye(3).astype(dt)
+            arr[0] = a0
+            arr[1] = a1
+
+            assert_(arr[0] is a0)
+            assert_(arr[1] is a1)
+            assert_(isinstance(arr[0,...], MaskedArray))
+            assert_(isinstance(arr[1,...], MaskedArray))
+            assert_(arr[0,...][()] is a0)
+            assert_(arr[1,...][()] is a1)
+
+            arr[0] = np.ma.masked
+
+            assert_(arr[1] is a1)
+            assert_(isinstance(arr[0,...], MaskedArray))
+            assert_(isinstance(arr[1,...], MaskedArray))
+            assert_equal(arr[0,...].mask, True)
+            assert_(arr[1,...][()] is a1)
+
+            # gh-5962 - object arrays of arrays do something special
+            assert_equal(arr[0].data, a0)
+            assert_equal(arr[0].mask, True)
+            assert_equal(arr[0,...][()].data, a0)
+            assert_equal(arr[0,...][()].mask, True)
 
 
 class TestMaskedView(TestCase):
