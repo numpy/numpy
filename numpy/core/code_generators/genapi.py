@@ -292,6 +292,20 @@ def should_rebuild(targets, source_files):
         return True
     return False
 
+def write_file(filename, data):
+    """
+    Write data to filename
+    Only write changed data to avoid updating timestamps unnecessarily
+    """
+    if os.path.exists(filename):
+        with open(filename) as f:
+            if data == f.read():
+                return
+
+    with open(filename, 'w') as fid:
+        fid.write(data)
+
+
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi(object):
     def __init__(self, name, index, ptr_cast, api_name):
