@@ -20,6 +20,10 @@ Dropped Support
 Deprecations
 ============
 
+ * ``np.ma.argsort`` should be called with an explicit `axis` argument when
+   applied to arrays with more than 2 dimensions, as the default value of
+   this argument (``None``) is inconsistent with the rest of numpy (``-1``).
+
 
 Build System Changes
 ====================

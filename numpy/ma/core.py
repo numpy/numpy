@@ -93,6 +93,33 @@ nomask = MaskType(0)
 class MaskedArrayFutureWarning(FutureWarning):
     pass
 
+def _deprecate_argsort_axis(arr, axis):
+    """
+    Takes the array argsort was called upon, and the axis argument
+    it was called with.
+
+    np.ma.argsort has a long-term bug where the default of the axis argument
+    is wrong (gh-8701), which now must be kept for backwards compatibiity.
+    Thankfully, this only makes a difference when arrays are 2- or more-
+    dimensional, so we only need a warning then.
+    """
+    if axis is np._NoValue:
+        if arr.ndim <= 1:
+            # no warning needed - switch to -1 to avoid surprising subclasses
+            return -1
+        else:
+            # 2017-04-10, numpy 1.13.0
+            warnings.warn(
+                "Unlike np.argsort, np.sort, np.ma.sort, and the "
+                "documentation for this function, the default is "
+                "axis=None, not axis=-1. In future, the default will be "
+                "-1. To squash this warning, specify the axis argument "
+                "explicitly.",
+                MaskedArrayFutureWarning, stacklevel=2)
+            return None
+    else:
+        return axis
+
 
 def doc_note(initialdoc, note):
     """
@@ -5228,7 +5255,7 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=None, kind='quicksort', order=None,
+    def argsort(self, axis=np._NoValue, kind='quicksort', order=None,
                 endwith=True, fill_value=None):
         """
         Return an ndarray of indices that sort the array along the
@@ -5283,6 +5310,8 @@ class MaskedArray(ndarray):
         array([1, 0, 2])
 
         """
+
+        axis = _deprecate_argsort_axis(self, axis)
 
         if fill_value is None:
             if endwith:
@@ -6503,9 +6532,10 @@ def power(a, b, third=None):
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
-def argsort(a, axis=None, kind='quicksort', order=None, endwith=True, fill_value=None):
+def argsort(a, axis=np._NoValue, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
+    axis = _deprecate_argsort_axis(a, axis)
 
     if isinstance(a, MaskedArray):
         return a.argsort(axis=axis, kind=kind, order=order,
