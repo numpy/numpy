@@ -2030,5 +2030,42 @@ def test_load_refcount():
         gc.enable()
     assert_equal(n_objects_in_cycles, 0)
 
+class test_genfromtxt():
+    # Verifies shape of one dimensional data after genfromtxt is called with ndmin argument.
+    def test_scalar(self):
+        data = BytesIO(b"1")
+        test = np.genfromtxt(data, delimiter=",", ndmin=1)
+        assert_equal(test.shape, (1,))
+    
+    def test_1col(self):
+        data = BytesIO(b"1\n2\n3\n4")
+        test = genfromtxt(data, delimiter=",", ndmin=2)
+        assert_equal(test.shape, (4, 1))
+    
+    def test_1row(self):
+        data = BytesIO(b"1,2,3,4")
+        test = genfromtxt(data, delimiter=",", ndmin=2)
+        assert_equal(test.shape, (1, 4))
+    
+    def test__1colT(self):
+        data = BytesIO(b"1\n2\n3\n4")
+        test = genfromtxt(data, delimiter=",", unpack=True, ndmin=2)
+        assert_equal(test.shape, (1, 4))
+    
+    def test_1rowT(self):
+        data = BytesIO(b"1,2,3,4")
+        test = genfromtxt(data, delimiter=",", unpack=True, ndmin=2)
+        assert_equal(test.shape, (4, 1))
+    
+    def test_2d(self):
+        data = BytesIO(b"1,2,3,4\n5,6,7,8")
+        test = genfromtxt(data, delimiter=",")
+        assert_equal(test.shape, (2, 4))
+    
+    def test_2dT(self):
+        data = BytesIO(b"1,2,3,4\n5,6,7,8")
+        test = genfromtxt(data, delimiter=",", unpack=True)
+        assert_equal(test.shape, (4, 2))
+
 if __name__ == "__main__":
     run_module_suite()
