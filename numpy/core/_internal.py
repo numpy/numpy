@@ -8,7 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
-import numpy as np
+
 from numpy.compat import basestring
 from .multiarray import dtype, array, ndarray
 try:
@@ -207,6 +207,7 @@ class dummy_ctype(object):
 
 def _getintp_ctype():
     if ctypes is None:
+        import numpy as np
         return dummy_ctype(np.intp) 
     val = _getintp_ctype.cache
     if val is not None:
