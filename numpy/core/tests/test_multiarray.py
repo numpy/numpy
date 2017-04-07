@@ -21,6 +21,7 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.compat import strchar, unicode
+from numpy.core import _internal
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
@@ -6725,6 +6726,30 @@ class TestUnicodeArrayNonzero(TestCase):
         a = np.array(['eggs'], dtype=np.unicode)
         a[0] = ' \0 \0'
         self.assertTrue(a)
+
+
+class TestCTypes(TestCase):
+    def setUp(self):
+        self.test_arr = np.array([[1, 2, 3], [4, 5, 6]])
+
+    def test_ctypes_is_available(self):
+        _ctypes = np.array(self.test_arr).ctypes
+
+        self.assertEqual(ctypes, _ctypes._ctypes)
+        assert_equal(_ctypes._arr.shape, (2, 3))
+        assert_array_equal(_ctypes._arr, self.test_arr)
+
+    def test_ctypes_is_not_available(self):
+        _internal.ctypes = None
+        try:
+            _ctypes = np.array(self.test_arr).ctypes
+
+            self.assertIsInstance(_ctypes._ctypes, _internal._missing_ctypes)
+            assert_equal(_ctypes._arr.shape, (2, 3))
+            assert_array_equal(_ctypes._arr, self.test_arr)
+        finally:
+            _internal.ctypes = ctypes
+
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
