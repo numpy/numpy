@@ -204,6 +204,8 @@ class dummy_ctype(object):
         return self
     def __call__(self, *other):
         return self._cls(other)
+    def __eq__(self, other):
+        return self._cls == other._cls
 
 def _getintp_ctype():
     if ctypes is None:
