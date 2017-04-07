@@ -746,7 +746,7 @@ def _getconv(dtype):
 
 def _squeeze_to_ndmin(arr, ndmin):
     """
-    Verify the number of dimensions of the array to match ndmin.
+    Verifies the number of dimensions of the array to match ndmin.
     """
     # Check correctness of the values of `ndmin`
     if ndmin not in [0, 1, 2]:
