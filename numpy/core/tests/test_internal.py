@@ -39,7 +39,8 @@ class GetIntPCtypeTest(InternalBaseTest):
     """Tests for the _getintp_ctype function."""
 
     def test_ctypes_is_available(self):
-        assert_equal(_internal._getintp_ctype(), ctypes.c_long)
+        valid_ctypes = [ctypes.c_int, ctypes.c_long, ctypes.c_longlong]
+        self.assertIn(_internal._getintp_ctype(), valid_ctypes)
 
     def test_ctypes_is_not_available(self):
         _internal.ctypes = None
