@@ -1430,7 +1430,7 @@ def getmask(a):
 get_mask = getmask
 
 
-def getmaskarray(arr):
+def getmaskarray(arr, readonly=False):
     """
     Return the mask of a masked array, or full boolean array of False.
 
@@ -1442,6 +1442,8 @@ def getmaskarray(arr):
     ----------
     arr : array_like
         Input `MaskedArray` for which the mask is required.
+    readonly : bool
+        If True, return a read-only array that uses less memory.
 
     See Also
     --------
@@ -1481,7 +1483,8 @@ def getmaskarray(arr):
     """
     mask = getmask(arr)
     if mask is nomask:
-        mask = make_mask_none(np.shape(arr), getattr(arr, 'dtype', None))
+        mask = make_mask_none(
+            np.shape(arr), getattr(arr, 'dtype', None), readonly=readon)
     return mask
 
 
@@ -1638,7 +1641,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
         return result
 
 
-def make_mask_none(newshape, dtype=None):
+def make_mask_none(newshape, dtype=None, readonly=False):
     """
     Return a boolean mask of the given shape, filled with False.
 
@@ -1653,6 +1656,8 @@ def make_mask_none(newshape, dtype=None):
     dtype : {None, dtype}, optional
         If None, use a MaskType instance. Otherwise, use a new datatype with
         the same fields as `dtype`, converted to boolean types.
+    readonly : bool
+        If True, return a read-only array that uses less memory.
 
     Returns
     -------
@@ -1682,10 +1687,29 @@ def make_mask_none(newshape, dtype=None):
 
     """
     if dtype is None:
-        result = np.zeros(newshape, dtype=MaskType)
+        dtype = MaskType
     else:
-        result = np.zeros(newshape, dtype=make_mask_descr(dtype))
-    return result
+        dtype = make_mask_descr(dtype)
+
+    if not readonly:
+        return np.zeros(newshape, dtype=dtype)
+
+    else:
+        # build a buffer of the single scalar mask
+        if dtype == MaskType:
+            buff = np.ma.nomask
+        else:
+            buff = np.zeros((), dtype=dtype)
+            buff.flags.writeable = False
+
+        # duplicate it using zero strides
+        # like np.lib.stride_tricks.as_strided, but faster
+        return np.array(
+            buffer=buff,
+            shape=newshape,
+            strides=(0,)*len(newshape),
+            dtype=dtype
+        )
 
 
 def mask_or(m1, m2, copy=False, shrink=True):
