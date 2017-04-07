@@ -6733,7 +6733,7 @@ class TestCTypes(TestCase):
         test_arr = np.array([[1, 2, 3], [4, 5, 6]])
 
         self.assertEqual(ctypes, test_arr.ctypes._ctypes)
-        assert_equal(list(test_arr.ctypes.shape), (2, 3))
+        assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
 
     def test_ctypes_is_not_available(self):
         from numpy.core import _internal
@@ -6743,7 +6743,7 @@ class TestCTypes(TestCase):
 
             self.assertIsInstance(
                 test_arr.ctypes._ctypes, _internal._missing_ctypes)
-            assert_equal(list(test_arr.ctypes.shape), (2, 3))
+            assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
         finally:
             _internal.ctypes = ctypes
 
