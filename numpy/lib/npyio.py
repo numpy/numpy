@@ -2000,6 +2000,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         return output.T
     return output
 
+
 def ndfromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a file and return it as a single array.
