@@ -6729,24 +6729,21 @@ class TestUnicodeArrayNonzero(TestCase):
 
 
 class TestCTypes(TestCase):
-    def setUp(self):
-        self.test_arr = np.array([[1, 2, 3], [4, 5, 6]])
 
     def test_ctypes_is_available(self):
-        _ctypes = np.array(self.test_arr).ctypes
+        test_arr = np.array([[1, 2, 3], [4, 5, 6]])
 
-        self.assertEqual(ctypes, _ctypes._ctypes)
-        assert_equal(_ctypes._arr.shape, (2, 3))
-        assert_array_equal(_ctypes._arr, self.test_arr)
+        self.assertEqual(ctypes, test_arr.ctypes._ctypes)
+        assert_equal(test_arr.shape, (2, 3))
 
     def test_ctypes_is_not_available(self):
         _internal.ctypes = None
         try:
-            _ctypes = np.array(self.test_arr).ctypes
+            test_arr = np.array([[1, 2, 3], [4, 5, 6]])
 
-            self.assertIsInstance(_ctypes._ctypes, _internal._missing_ctypes)
-            assert_equal(_ctypes._arr.shape, (2, 3))
-            assert_array_equal(_ctypes._arr, self.test_arr)
+            self.assertIsInstance(
+                test_arr.ctypes._ctypes, _internal._missing_ctypes)
+            assert_equal(test_arr.shape, (2, 3))
         finally:
             _internal.ctypes = ctypes
 

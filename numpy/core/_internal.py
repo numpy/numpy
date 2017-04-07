@@ -208,21 +208,22 @@ class dummy_ctype(object):
         return self._cls == other._cls
 
 def _getintp_ctype():
-    if ctypes is None:
-        import numpy as np
-        return dummy_ctype(np.intp) 
     val = _getintp_ctype.cache
     if val is not None:
         return val
-    char = dtype('p').char
-    if (char == 'i'):
-        val = ctypes.c_int
-    elif char == 'l':
-        val = ctypes.c_long
-    elif char == 'q':
-        val = ctypes.c_longlong
+    if ctypes is None:
+        import numpy as np
+        val = dummy_ctype(np.intp)
     else:
-        val = ctypes.c_long
+        char = dtype('p').char
+        if (char == 'i'):
+            val = ctypes.c_int
+        elif char == 'l':
+            val = ctypes.c_long
+        elif char == 'q':
+            val = ctypes.c_longlong
+        else:
+            val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
 _getintp_ctype.cache = None
