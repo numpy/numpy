@@ -39,7 +39,19 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
             return cache[nelem].ptrs[--(cache[nelem].available)];
         }
     }
-    return alloc(nelem * esz);
+#ifdef _PyPyGC_AddMemoryPressure
+    {
+        size_t size = nelem * esz;
+        void * ret = alloc(size);
+        if (ret != NULL)
+        {
+            _PyPyPyGC_AddMemoryPressure(size);
+        }
+        return ret;
+    }
+#else
+     return alloc(nelem * esz);
+#endif
 }
 
 /*
