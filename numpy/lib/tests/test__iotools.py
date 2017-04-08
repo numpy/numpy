@@ -207,7 +207,7 @@ class TestStringConverter(object):
     def test_string_to_object(self):
         "Make sure that string-to-object functions are properly recognized"
         conv = StringConverter(_bytes_to_date)
-        assert_equal(conv._mapper[-2][0](0), 0j)
+        assert_equal(conv._mapper[-3][0](0), 0j)
         assert_(hasattr(conv, 'default'))
 
     def test_keep_default(self):

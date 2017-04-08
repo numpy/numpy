@@ -8,7 +8,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, bytes, asbytes_nested, basestring
+from numpy.compat import asbytes, asunicode, bytes, asbytes_nested, basestring
 
 if sys.version_info[0] >= 3:
     from builtins import bool, int, float, complex, object, str
@@ -541,6 +541,7 @@ class StringConverter(object):
     _mapper.extend([(nx.floating, float, nx.nan),
                     (nx.complexfloating, _bytes_to_complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
+                    (nx.unicode_, asunicode, '???'),
                     (nx.string_, asbytes, '???')])
 
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)

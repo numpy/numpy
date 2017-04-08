@@ -1927,13 +1927,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
     if loose:
-        rows = list(
+        rows = [list(x) for x in
             zip(*[[conv._loose_call(_r) for _r in map(itemgetter(i), rows)]
-                  for (i, conv) in enumerate(converters)]))
+                  for (i, conv) in enumerate(converters)])]
     else:
-        rows = list(
+        rows = [list(x) for x in
             zip(*[[conv._strict_call(_r) for _r in map(itemgetter(i), rows)]
-                  for (i, conv) in enumerate(converters)]))
+                  for (i, conv) in enumerate(converters)])]
 
     # Reset the dtype
     data = rows
@@ -1942,16 +1942,36 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column_types = [conv.type for conv in converters]
         # Find the columns with strings...
         strcolidx = [i for (i, v) in enumerate(column_types)
-                     if v in (type('S'), np.string_)]
+                     if v == np.unicode_]
+
+        typestr = 'U'
+        if byte_converters:
+            # convert strings back to bytes for backward compatibility
+            try:
+                for j, row in enumerate(data):
+                    for i in strcolidx:
+                        row[i] = row[i].encode('latin1')
+                typestr = 'S'
+            except UnicodeEncodeError:
+                # we must use unicode, revert encoding
+                for k in range(0, j + 1):
+                    for i in strcolidx:
+                        if isinstance(data[k][i], bytes):
+                            data[k][i] = data[k][i].decode('latin1')
+        data = [tuple(x) for x in data]
+
         # ... and take the largest number of chars.
         for i in strcolidx:
-            column_types[i] = "|S%i" % max(len(row[i]) for row in data)
+            column_types[i] = "|%s%i" % (typestr, max(len(row[i]) for row in data))
         #
         if names is None:
             # If the dtype is uniform, don't define names, else use ''
             base = set([c.type for c in converters if c._checked])
             if len(base) == 1:
-                (ddtype, mdtype) = (list(base)[0], bool)
+                if strcolidx:
+                    (ddtype, mdtype) = (typestr, bool)
+                else:
+                    (ddtype, mdtype) = (list(base)[0], bool)
             else:
                 ddtype = [(defaultfmt % i, dt)
                           for (i, dt) in enumerate(column_types)]
@@ -1965,6 +1985,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
     else:
+        data = [tuple(x) for x in data]
         # Overwrite the initial dtype names if needed
         if names and dtype.names:
             dtype.names = names

@@ -10,6 +10,7 @@ import warnings
 import gc
 from io import BytesIO
 from datetime import datetime
+import locale
 
 import numpy as np
 import numpy.ma as ma
@@ -21,6 +22,14 @@ from numpy.testing import (
     assert_raises, assert_allclose, assert_array_equal, temppath, dec, IS_PYPY,
     suppress_warnings
 )
+
+def can_encode(v):
+    """ check if bytes can be decoded with default encoding """
+    try:
+        v.encode(locale.getpreferredencoding())
+        return False # no skipping
+    except UnicodeEncodeError:
+        return True
 
 
 class TextIO(BytesIO):
@@ -466,7 +475,26 @@ class TestSaveTxt(object):
         assert_array_equal(a, b)
 
 
-class TestLoadTxt(object):
+class LoadTxtBase:
+    def test_encoding(self):
+        with temppath() as path:
+            with open(path, "wb") as f:
+                f.write('0.\n1.\n2.'.encode("UTF-16"))
+            x = getattr(np, self.loadfunc)(path, encoding="UTF-16")
+            assert_array_equal(x, [0., 1., 2.])
+
+    def test_stringload(self):
+        # umlaute
+        nonascii = b'\xc3\xb6\xc3\xbc\xc3\xb6'.decode("UTF-8")
+        with temppath() as path:
+            with open(path, "wb") as f:
+                f.write(nonascii.encode("UTF-16"))
+            x = getattr(np, self.loadfunc)(path, encoding="UTF-16", dtype=np.unicode)
+            assert_array_equal(x, nonascii)
+
+
+class TestLoadTxt(LoadTxtBase):
+    loadfunc = 'loadtxt'
     def test_record(self):
         c = TextIO()
         c.write('1 2\n3 4')
@@ -868,22 +896,7 @@ class TestLoadTxt(object):
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
-    def test_encoding(self):
-        with temppath() as path:
-            with open(path, "wb") as f:
-                f.write('0.\n1.\n2.'.encode("UTF-16"))
-            x = np.loadtxt(path, encoding="UTF-16")
-            assert_array_equal(x, [0., 1., 2.])
-
-    def test_stringload(self):
-        # umlaute
-        nonascii = b'\xc3\xb6\xc3\xbc\xc3\xb6'.decode("UTF-8")
-        with temppath() as path:
-            with open(path, "wb") as f:
-                f.write(nonascii.encode("UTF-16"))
-            x = np.loadtxt(path, encoding="UTF-16", dtype=np.unicode)
-            assert_array_equal(x, nonascii)
-
+    @np.testing.dec.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968')
     def test_binary_load(self):
         butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
                 b"20,2,3,\xc3\x95scar\n\r"
@@ -897,7 +910,6 @@ class TestLoadTxt(object):
             # test broken latin1 conversion people now rely on
             with open(path, "rb") as f:
                 x = np.loadtxt(f, encoding="UTF-8", dtype="S")
-            #lutf8 = butf8.decode("latin1").replace("\r", "").splitlines()
             x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
             assert_array_equal(x, np.array(x, dtype="S"))
 
@@ -939,8 +951,8 @@ class Testfromregex(object):
 #####--------------------------------------------------------------------------
 
 
-class TestFromTxt(object):
-    #
+class TestFromTxt(LoadTxtBase):
+    loadfunc = 'genfromtxt'
     def test_record(self):
         # Test w/ explicit dtype
         data = TextIO('1 2\n3 4')
@@ -1712,6 +1724,78 @@ M   33  21.99
         test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
                              dtype=None, comments=None, delimiter=',')
         assert_equal(test[1], b' testNonetherestofthedata')
+
+    def test_latin1(self):
+        latin1 = b'\xf6\xfc\xf6'
+        norm = b"norm1,norm2,norm3\n"
+        enc = b"test1,testNonethe" + latin1 + b",test3\n"
+        s = norm + enc + norm
+        test = np.genfromtxt(TextIO(s),
+                             dtype=None, comments=None, delimiter=',')
+        assert_equal(test[1, 0], b"test1")
+        assert_equal(test[1, 1], b"testNonethe" + latin1)
+        assert_equal(test[1, 2], b"test3")
+
+        test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
+                             dtype=None, comments=None, delimiter=',')
+        assert_equal(test['f0'], 0)
+        assert_equal(test['f1'], b"testNonethe" + latin1)
+
+    def test_utf8_byte_encoding(self):
+        utf8 = b"\xcf\x96"
+        norm = b"norm1,norm2,norm3\n"
+        enc = b"test1,testNonethe" + utf8 + b",test3\n"
+        s = norm + enc + norm
+        test = np.genfromtxt(TextIO(s),
+                             dtype=None, comments=None, delimiter=',')
+        ctl = np.array([
+                 [b'norm1', b'norm2', b'norm3'],
+                 [b'test1', b'testNonethe' + utf8, b'test3'],
+                 [b'norm1', b'norm2', b'norm3']])
+        assert_array_equal(test, ctl)
+
+    def test_utf8_file(self):
+        utf8 = b"\xcf\x96"
+        latin1 = b"\xf6\xfc\xf6"
+        with temppath() as path:
+            with open(path, "wb") as f:
+                f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)
+            test = np.genfromtxt(path, dtype=None, comments=None,
+                                 delimiter=',', encoding="UTF-8")
+            ctl = np.array([
+                     ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"],
+                     ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"]],
+                     dtype=np.unicode)
+            assert_array_equal(test, ctl)
+
+            # test a mixed dtype
+            with open(path, "wb") as f:
+                f.write(b"0,testNonethe" + utf8)
+            test = np.genfromtxt(path, dtype=None, comments=None,
+                                 delimiter=',', encoding="UTF-8")
+            assert_equal(test['f0'], 0)
+            assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
+
+    @np.testing.dec.skipif(can_encode(b"\xcf\x96".decode('UTF-8')))
+    def test_utf8_file_nodtype_unicode(self):
+        # bytes encoding with non-latin1 -> unicode upcast
+        utf8 = b"\xcf\x96"
+        latin1 = b"\xf6\xfc\xf6"
+        with temppath() as path:
+            with io.open(path, "wt",
+                         encoding=locale.getpreferredencoding()) as f:
+                f.write(u"norm1,norm2,norm3\n")
+                f.write(u"norm1," + latin1.decode("latin1") + u",norm3\n")
+                f.write(u"test1,testNonethe" + utf8.decode("UTF-8") +
+                        u",test3\n")
+            test = np.genfromtxt(path, dtype=None, comments=None,
+                                 delimiter=',')
+            ctl = np.array([
+                     ["norm1", "norm2", "norm3"],
+                     ["norm1", latin1.decode("latin1"), "norm3"],
+                     ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"]],
+                     dtype=np.unicode)
+            assert_array_equal(test, ctl)
 
     def test_recfromtxt(self):
         #
