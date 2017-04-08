@@ -1824,11 +1824,7 @@ M   33  21.99
         # Test that we can load data from a filename as well as a file
         # object
         tgt = np.arange(6).reshape((2, 3))
-        if sys.version_info[0] >= 3:
-            # python 3k is known to fail for '\r'
-            linesep = ('\n', '\r\n')
-        else:
-            linesep = ('\n', '\r\n', '\r')
+        linesep = ('\n', '\r\n', '\r')
 
         for sep in linesep:
             data = '0 1 2' + sep + '3 4 5'
@@ -1837,6 +1833,22 @@ M   33  21.99
                     f.write(data)
                 res = np.genfromtxt(name)
             assert_array_equal(res, tgt)
+
+    def test_gft_from_gzip(self):
+        # Test that we can load data from a gzipped file
+        wanted = np.arange(6).reshape((2, 3))
+        linesep = ('\n', '\r\n', '\r')
+
+        for sep in linesep:
+            data = '0 1 2' + sep + '3 4 5'
+            s = BytesIO()
+            with gzip.GzipFile(fileobj=s, mode='w') as g:
+                g.write(asbytes(data))
+
+            with temppath(suffix='.gz2') as name:
+                with open(name, 'w') as f:
+                    f.write(data)
+                assert_array_equal(np.genfromtxt(name), wanted)
 
     def test_gft_using_generator(self):
         # gft doesn't work with unicode.
