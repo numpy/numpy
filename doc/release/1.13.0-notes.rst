@@ -7,10 +7,12 @@ This release supports Python 2.7 and 3.4 - 3.6.
 Highlights
 ==========
 
- * Reuse of temporaries, operations like ``a + b + c`` will create fewer
-   temporaries on some platforms.
+ * Operations like ``a + b + c`` will reuse temporaries on some platforms,
+   resulting less memory use and faster execution.
  * Inplace operations check if inputs overlap outputs and create temporaries
    to avoid problems.
+ * Improved ability for classes to override default ufunc behavior. See
+   ``__array_ufunc__`` below.
 
 
 Dropped Support
@@ -99,6 +101,16 @@ used instead.
 
 New Features
 ============
+
+``__array_ufunc__`` added
+-------------------------
+This is the renamed and redesigned ``__numpy_ufunc__``. Any class, ndarray
+subclass or not, can define this method or set it to ``None`` in order to
+override the behavior of NumPy's ufuncs. This works quite similarly to Python's
+``__mul__`` and other binary operation routines. See the documentation for a
+more detailed description of the implementation and behavior of this new
+option. The API is provisional, we do not yet guarantee backward compatibility
+as modifications may be made pending feedback.
 
 ``PyArray_MapIterArrayCopyIfOverlap`` added to NumPy C-API
 ----------------------------------------------------------
