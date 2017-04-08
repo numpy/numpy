@@ -20,7 +20,8 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asbytes_nested, bytes, basestring, unicode, is_pathlib_path
+    asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
+    is_pathlib_path
     )
 
 if sys.version_info[0] >= 3:
@@ -753,6 +754,8 @@ def _getconv(dtype):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
         return asbytes
+    elif issubclass(typ, np.unicode_):
+        return asunicode
     else:
         return asstr
 
@@ -895,13 +898,21 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if is_pathlib_path(fname):
             fname = str(fname)
         if _is_string_like(fname):
-            fh = iter(np.lib._datasource.open(fname, 'rt', encoding=encoding))
+            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            fencoding = getattr(fh, 'encoding', 'latin1')
+            fh = iter(fh)
             fown = True
         else:
             fh = iter(fname)
+            fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError:
         raise ValueError('fname must be a string, file handle, or generator')
     X = []
+    # input may be a python2 io stream, we must assume local encoding
+    # TOOD emit portability warning?
+    if fencoding is None:
+        import locale
+        fencoding = locale.getpreferredencoding()
 
     # not to be confused with the flatten_dtype we import...
     def flatten_dtype_internal(dt):
@@ -1022,17 +1033,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 raise ValueError("Wrong number of columns at line %d"
                                  % line_num)
 
+            converters = [conv if conv != bytes else
+                          lambda x: x.encode(fencoding) for conv in converters]
             # Convert each value according to its column and store
-            items = []
-            for (conv, val) in zip(converters, vals):
-            # ugly hack as numpy treats bytes like strings in py2
-                if sys.version_info[0] >= 3 and conv == bytes:
-                    items.append(str(val))
-                else:
-                    try:
-                        items.append(conv(val))
-                    except UnicodeEncodeError:
-                        items.append(np.unicode(val))
+            items = [conv(val) for (conv, val) in zip(converters, vals)]
 
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
@@ -1041,9 +1045,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if fown:
             fh.close()
 
-    if dtype == "S":
-        cod = "latin1" if encoding is None else encoding
-        X = [x.encode(cod) if type(x) != bytes else x for x in X]
     X = np.array(X, dtype)
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
