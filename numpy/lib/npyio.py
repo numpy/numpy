@@ -2053,6 +2053,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                         ishomogeneous &= (ttype == dtype.type)
                         if ttype == np.string_:
                             ttype = "|S%i" % max(len(row[i]) for row in data)
+                        elif ttype == np.unicode_:
+                            ttype = "|U%i" % max(len(row[i]) for row in data)
                         descr.append(('', ttype))
                     else:
                         descr.append(('', dtype))

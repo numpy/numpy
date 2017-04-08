@@ -1309,6 +1309,18 @@ M   33  21.99
                            dtype=[('', '|S10'), ('', float)])
         assert_equal(test, control)
 
+    def test_utf8_userconverters_with_explicit_dtype(self):
+        utf8 = b'\xcf\x96'
+        with temppath() as path:
+            with open(path, 'wb') as f:
+                f.write(b'skip,skip,2001-01-01' + utf8 + b',1.0,skip')
+            test = np.genfromtxt(path, delimiter=",", names=None, dtype=float,
+                                 usecols=(2, 3), converters={2: np.unicode},
+                                 encoding='UTF-8')
+        control = np.array([('2001-01-01' + utf8.decode('UTF-8'), 1.)],
+                           dtype=[('', '|U11'), ('', float)])
+        assert_equal(test, control)
+
     def test_spacedelimiter(self):
         # Test space delimiter
         data = TextIO("1  2  3  4   5\n6  7  8  9  10")
