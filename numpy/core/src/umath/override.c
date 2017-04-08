@@ -409,7 +409,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             /* Check for sub-types to the right of obj. */
             for (j = i + 1; j < noa; j++) {
                 other_obj = with_override[j];
-                if (PyObject_Type(other_obj) != PyObject_Type(obj) &&
+                if (other_obj != NULL &&
+                    PyObject_Type(other_obj) != PyObject_Type(obj) &&
                     PyObject_IsInstance(other_obj,
                                         PyObject_Type(override_obj))) {
                     override_obj = NULL;
