@@ -389,6 +389,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
 
+    This function has been deprecated: use `isin` instead.
+
+    Deprecated since version 1.13.0.
+
     Parameters
     ----------
     ar1 : (M,) array_like
@@ -486,7 +490,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def isin(elements, test_elements, **kwargs):
+def isin(elements, test_elements, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second array.
     Returns a boolean array of the same shape as `elements` that is True
@@ -499,7 +503,14 @@ def isin(elements, test_elements, **kwargs):
     test_elements : iterable
         The values against which to test each value of `elements`.
         This argument is flattened if it is an array or array_like.
-    **kwargs: Keyword arguments passed to `in1d`.
+    assume_unique : bool, optional
+        If True, the input arrays are both assumed to be unique, which
+        can speed up the calculation.  Default is False.
+    invert : bool, optional
+        If True, the values in the returned array are inverted (that is,
+        False where an element of `ar1` is in `ar2` and True otherwise).
+        Default is False. ``np.isin(a, b, invert=True)`` is equivalent
+        to (but is faster than) ``np.invert(np.isin(a, b))``.
 
     Returns
     -------
@@ -514,6 +525,11 @@ def isin(elements, test_elements, **kwargs):
                             performing set operations on arrays.
     Notes
     -----
+
+    `isin` can be considered as an element-wise function version of the
+    python keyword `in`. ``isin(a, b)`` is roughly equivalent to
+    ``np.array([item in b for item in a])`` if `a` is a 1-D sequence.
+
     .. versionadded:: 1.13.0
 
     Examples
@@ -533,17 +549,18 @@ def isin(elements, test_elements, **kwargs):
     >>> elements[mask]
     array([0, 6])"""
     elements = np.array(elements)
-    #The following enables values for test_elements that may be a set, 
-    #or any other kind of iterable that isn't array-like. array, called 
-    #with a set as the first parameter, returns a single-element array 
-    #with that set as its sole item. So to get the expected behavior, 
-    #test_elements is converted to a (possibly nested) list first. (If 
+    #The following enables values for test_elements that may be a set,
+    #or any other kind of iterable that isn't array-like. array, called
+    #with a set as the first parameter, returns a single-element array
+    #with that set as its sole item. So to get the expected behavior,
+    #test_elements is converted to a (possibly nested) list first. (If
     #test_elements is already a list, it is unchanged.)
-    #If, in a future release, someone changes how array handles sets 
+    #If, in a future release, someone changes how array handles sets
     #as a parameter, these two lines may need to be changed.
     if not hasattr(test_elements, '__array__'):
         test_elements = np.array(list(test_elements))
-    return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
+    return in1d(elements, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(elements.shape)
 
 
 def union1d(ar1, ar2):

@@ -1145,6 +1145,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
+    This function has been deprecated: use `isin` instead.
+
+    Deprecated since version 1.13.0.
+
+
     See Also
     --------
     isin       : Version of this function that preserves the shape of ar1.
@@ -1178,7 +1183,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx][rev_idx]
 
 
-def isin(elements, test_elements, **kwargs):
+def isin(elements, test_elements, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
     array.
@@ -1197,7 +1202,8 @@ def isin(elements, test_elements, **kwargs):
 
     """
     elements = ma.array(elements)
-    return in1d(elements, test_elements, **kwargs).reshape(elements.shape)
+    return in1d(elements, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(elements.shape)
 
 
 def union1d(ar1, ar2):
