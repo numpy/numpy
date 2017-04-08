@@ -762,7 +762,7 @@ def _getconv(dtype):
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding=None):
+            ndmin=0, encoding='bytes'):
     """
     Load data from a text file.
 
@@ -873,6 +873,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         comments = (re.escape(comment) for comment in comments)
         regex_comments = re.compile('|'.join(comments))
     user_converters = converters
+
+    byte_converters = False
+    if encoding == 'bytes':
+        encoding = None
+        byte_converters = True
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -1019,7 +1024,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 except ValueError:
                     # Unused converter specified
                     continue
-            converters[i] = conv
+            if byte_converters:
+                # converters may use decode to workaround numpy's oldd behaviour,
+                # so encode the string again before passing to the user converter
+                def tobytes_first(x, conv):
+                    if type(x) == bytes:
+                        return conv(x)
+                    return conv(x.encode("latin1"))
+                import functools
+                user_conv = functools.partial(tobytes_first, conv=conv)
+                converters[i] = user_conv
+            else:
+                converters[i] = conv
 
         # Parse each line, including the first
         for i, line in enumerate(itertools.chain([first_line], fh)):
@@ -1377,7 +1393,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                names=None, excludelist=None, deletechars=None,
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding=None):
+               invalid_raise=True, max_rows=None, encoding='bytes'):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1549,6 +1565,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         raise TypeError(
             "The input argument 'converter' should be a valid dictionary "
             "(got '%s' instead)" % type(user_converters))
+
+    byte_converters = False
+    if encoding == 'bytes':
+        encoding = None
+        byte_converters = True
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
@@ -1791,7 +1812,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         user_conv = conv
         if conv == bytes:
             user_conv = asbytes
-        else:
+        elif byte_converters:
+            # converters may use decode to workaround numpy's oldd behaviour,
+            # so encode the string again before passing to the user converter
             def tobytes_first(x, conv):
                 if type(x) == bytes:
                     return conv(x)
