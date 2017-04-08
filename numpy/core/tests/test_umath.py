@@ -7,6 +7,7 @@ import itertools
 
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
+from numpy.core import umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
@@ -1620,7 +1621,7 @@ class TestSpecialMethods(TestCase):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
-        class CSub(object):
+        class CSub(C):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
@@ -1889,8 +1890,8 @@ class TestSpecialMethods(TestCase):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return self, ufunc, method, inputs, kwargs
 
+        inner1d = ncu_tests.inner1d
         a = A()
-        inner1d = np.core.umath_tests.inner1d
         res = inner1d(a, a)
         assert_equal(res[0], a)
         assert_equal(res[1], inner1d)
