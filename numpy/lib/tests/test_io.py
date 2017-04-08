@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile
 import time
 import warnings
 import gc
+import io
 from io import BytesIO
 from datetime import datetime
 import locale
@@ -18,9 +19,9 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    run_module_suite, assert_warns, assert_, assert_raises_regex,
-    assert_raises, assert_allclose, assert_array_equal, temppath, dec, IS_PYPY,
-    suppress_warnings
+    run_module_suite, assert_warns, assert_,
+    assert_raises_regex, assert_raises, assert_allclose,
+    assert_array_equal, temppath, tempdir, dec, IS_PYPY, suppress_warnings
 )
 
 def can_encode(v):
@@ -474,6 +475,24 @@ class TestSaveTxt(object):
         b = np.loadtxt(w)
         assert_array_equal(a, b)
 
+    def test_unicode(self):
+        utf8 = b'\xcf\x96'.decode('UTF-8')
+        a = np.array([utf8], dtype=np.unicode)
+        with tempdir() as tmpdir:
+            # set encoding as on windows it may not be unicode even on py3
+            np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
+                       encoding='UTF-8')
+
+    def test_unicode_roundtrip(self):
+        utf8 = b'\xcf\x96'.decode('UTF-8')
+        a = np.array([utf8], dtype=np.unicode)
+        with tempdir() as tmpdir:
+            np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
+                       encoding='UTF-16')
+            b = np.loadtxt(os.path.join(tmpdir, 'test.csv'), encoding='UTF-16',
+                           dtype=np.unicode)
+            assert_array_equal(a, b)
+
 
 class LoadTxtBase:
     def test_encoding(self):
@@ -491,6 +510,28 @@ class LoadTxtBase:
                 f.write(nonascii.encode("UTF-16"))
             x = getattr(np, self.loadfunc)(path, encoding="UTF-16", dtype=np.unicode)
             assert_array_equal(x, nonascii)
+
+    def test_converters_decode(self):
+        # test converters that decode strings
+        c = TextIO()
+        c.write(b'\xcf\x96')
+        c.seek(0)
+        x = getattr(np, self.loadfunc)(c, dtype=np.unicode,
+                       converters={0: lambda x: x.decode('UTF-8')})
+        a = np.array([b'\xcf\x96'.decode('UTF-8')])
+        assert_array_equal(x, a)
+
+    def test_converters_nodecode(self):
+        # test native string converters enabled by setting an encoding
+        utf8 = b'\xcf\x96'.decode('UTF-8')
+        with temppath() as path:
+            with io.open(path, 'wt', encoding='UTF-8') as f:
+                f.write(utf8)
+            x = getattr(np, self.loadfunc)(path, dtype=np.unicode,
+                                           converters={0: lambda x: x + 't'},
+                                           encoding='UTF-8')
+            a = np.array([utf8 + 't'])
+            assert_array_equal(x, a)
 
 
 class TestLoadTxt(LoadTxtBase):

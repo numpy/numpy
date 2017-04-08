@@ -1093,7 +1093,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
-            footer='', comments='# '):
+            footer='', comments='# ', encoding=None):
     """
     Save an array to a text file.
 
@@ -1215,19 +1215,47 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     if is_pathlib_path(fname):
         fname = str(fname)
     if _is_string_like(fname):
+        # datasource doesn't support creating a new file ...
+        open(fname, 'wt').close()
+        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
-        if fname.endswith('.gz'):
-            import gzip
-            fh = gzip.open(fname, 'wb')
-        else:
-            if sys.version_info[0] >= 3:
-                fh = open(fname, 'wb')
-            else:
-                fh = open(fname, 'w')
     elif hasattr(fname, 'write'):
         fh = fname
     else:
         raise ValueError('fname must be a string or file handle')
+
+    class WriteWrap(object):
+        """ convert to unicode in py2 or to bytes on bytestream inputs """
+        def __init__(self, fh, encoding):
+            self.fh = fh
+            self.encoding = encoding if encoding else 'latin1'
+            self.do_write = self.first_write
+
+        def close(self):
+            self.fh.close()
+
+        def write(self, v):
+            self.do_write(v)
+
+        def write_bytes(self, v):
+            if isinstance(v, bytes):
+                self.fh.write(v)
+            else:
+                self.fh.write(v.encode(self.encoding))
+
+        def write_normal(self, v):
+            self.fh.write(asunicode(v))
+
+        def first_write(self, v):
+            try:
+                self.write_normal(v)
+                self.write = self.write_normal
+            except TypeError:
+                # input is probably a bytestream
+                self.write_bytes(v)
+                self.write = self.write_bytes
+
+    fh = WriteWrap(fh, encoding)
 
     try:
         X = np.asarray(X)
@@ -1275,25 +1303,27 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + header + newline))
+            fh.write(comments + header + newline)
         if iscomplex_X:
             for row in X:
                 row2 = []
                 for number in row:
                     row2.append(number.real)
                     row2.append(number.imag)
-                fh.write(asbytes(format % tuple(row2) + newline))
+                fh.write(format % tuple(row2) + newline)
         else:
             for row in X:
                 try:
-                    fh.write(asbytes(format % tuple(row) + newline))
+                    v = format % tuple(row) + newline
                 except TypeError:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format))
+                fh.write(v)
+
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + footer + newline))
+            fh.write(comments + footer + newline)
     finally:
         if own_fh:
             fh.close()
