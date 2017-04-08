@@ -895,17 +895,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if is_pathlib_path(fname):
             fname = str(fname)
         if _is_string_like(fname):
+            fh = iter(np.lib._datasource.open(fname, 'rt', encoding=encoding))
             fown = True
-            if fname.endswith('.gz'):
-                import gzip
-                fh = iter(gzip.GzipFile(fname))
-            elif fname.endswith('.bz2'):
-                import bz2
-                fh = iter(bz2.BZ2File(fname))
-            elif sys.version_info[0] == 2:
-                fh = iter(io.open(fname, 'U', encoding=encoding))
-            else:
-                fh = iter(open(fname, encoding=encoding))
         else:
             fh = iter(fname)
     except TypeError:
@@ -1564,10 +1555,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if is_pathlib_path(fname):
             fname = str(fname)
         if isinstance(fname, basestring):
-            if sys.version_info[0] == 2:
-                fhd = iter(np.lib._datasource.open(fname, 'rU'))
-            else:
-                fhd = iter(np.lib._datasource.open(fname, 'r'))
+            fhd = iter(np.lib._datasource.open(fname, 'rt', encoding=encoding))
             own_fhd = True
         else:
             fhd = iter(fname)

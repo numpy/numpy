@@ -38,8 +38,43 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import shutil
+import io
 
 _open = open
+
+def _bz2open(fn, mode, encoding, newline):
+    """ wrapper to open bz2 in text mode """
+    import bz2
+    if sys.version_info[0] >= 3:
+        return bz2.open(fn, mode=mode, encoding=encoding, newline=newline)
+
+    if "t" in mode:
+        raise ValueError("bz2 files not supported in python2")
+    else:
+        return bz2.BZ2File(fn, mode.replace("t", ""))
+
+def _gzipopen(fn, mode, encoding, newline):
+    """ wrapper to open gzip in text mode """
+    import gzip
+    if sys.version_info[0] >= 3:
+        return gzip.open(fn, mode=mode, encoding=encoding, newline=newline)
+
+    class GzipWrap(gzip.GzipFile):
+        def read1(self, n):
+            return self.read(n)
+
+    gz_mode = mode.replace("t", "")
+    if isinstance(fn, (str, bytes)):
+        binary_file = GzipWrap(fn, gz_mode)
+    elif hasattr(fn, "read") or hasattr(fn, "write"):
+        binary_file = GzipWrap(None, gz_mode, fileobj=fn)
+    else:
+        raise TypeError("filename must be a str or bytes object, or a file")
+
+    if "t" in mode:
+        return io.TextIOWrapper(binary_file, encoding, newline=newline)
+    else:
+        return binary_file
 
 
 # Using a class instead of a module-level dictionary
@@ -73,19 +108,18 @@ class _FileOpeners(object):
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: open}
+        self._file_openers = {None: io.open}
 
     def _load(self):
         if self._loaded:
             return
         try:
-            import bz2
-            self._file_openers[".bz2"] = bz2.BZ2File
+            self._file_openers[".bz2"] = _bz2open
         except ImportError:
             pass
         try:
             import gzip
-            self._file_openers[".gz"] = gzip.open
+            self._file_openers[".gz"] = _gzipopen
         except ImportError:
             pass
         self._loaded = True
@@ -115,7 +149,7 @@ class _FileOpeners(object):
 
 _file_openers = _FileOpeners()
 
-def open(path, mode='r', destpath=os.curdir):
+def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
     Open `path` with `mode` and return the file object.
 
@@ -148,7 +182,7 @@ def open(path, mode='r', destpath=os.curdir):
     """
 
     ds = DataSource(destpath)
-    return ds.open(path, mode)
+    return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
 class DataSource (object):
@@ -458,7 +492,7 @@ class DataSource (object):
                 return False
         return False
 
-    def open(self, path, mode='r'):
+    def open(self, path, mode='r', encoding=None, newline=None):
         """
         Open and return file-like object.
 
@@ -496,7 +530,8 @@ class DataSource (object):
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")
-            return _file_openers[ext](found, mode=mode)
+            return _file_openers[ext](found, mode=mode,
+                                      encoding=encoding, newline=newline)
         else:
             raise IOError("%s not found." % path)
 
@@ -619,7 +654,7 @@ class Repository (DataSource):
         """
         return DataSource.exists(self, self._fullpath(path))
 
-    def open(self, path, mode='r'):
+    def open(self, path, mode='r', encoding=None, newline=None):
         """
         Open and return file-like object prepending Repository base URL.
 
@@ -643,7 +678,8 @@ class Repository (DataSource):
             File object.
 
         """
-        return DataSource.open(self, self._fullpath(path), mode)
+        return DataSource.open(self, self._fullpath(path), mode,
+                               encoding=encoding, newline=newline)
 
     def listdir(self):
         """
