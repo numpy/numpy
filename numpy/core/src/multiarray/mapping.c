@@ -228,7 +228,6 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
                 multi_DECREF(result, i);
                 return -1;
             }
-            Py_INCREF(result[i]);
         }
         return n;
     }
@@ -283,7 +282,6 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
              * unpacking
              */
             if (tmp_obj == NULL) {
-                multi_DECREF(result, i);
                 PyErr_Clear();
                 break;
             }
@@ -305,8 +303,8 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
     }
     /* got to the end, never found an indication that we should have unpacked */
     else {
-        /* we already filled result, so empty it first */
-        multi_DECREF(result, n);
+        /* we partially filled result, so empty it first */
+        multi_DECREF(result, i);
 
         Py_INCREF(index);
         result[0] = index;
