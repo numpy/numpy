@@ -27,7 +27,7 @@ objects. e.g. SciPy's sparse matrices [2]_ [3]_.
 Here we propose adding a mechanism to override ufuncs based on the ufunc
 checking each of it's arguments for a ``__array_ufunc__`` method.
 On discovery of ``__array_ufunc__`` the ufunc will hand off the
-operation to the method. 
+operation to the method.
 
 This covers some of the same ground as Travis Oliphant's proposal to
 retro-fit NumPy with multi-methods [4]_, which would solve the same
@@ -37,6 +37,14 @@ specifically addresses how binary operators and ufuncs should interact.
 (Note that in earlier iterations, the override was called
 ``__numpy_ufunc__``. An implementation was made, but had not quite the
 right behaviour, hence the change in name.)
+
+The ``__array_ufunc__`` as described below requires that any
+corresponding Python binary operations (``__mul__`` et al.) should be
+implemented in a specific way and be compatible with Numpy's ndarray
+semantics. Objects that do not satisfy this cannot override any Numpy
+ufuncs.  We do not specify a future-compatible path by which this
+requirement can be relaxed --- any changes here require corresponding
+changes in 3rd party code.
 
 .. [1] http://docs.python.org/doc/numpy/user/basics.subclassing.html
 .. [2] https://github.com/scipy/scipy/issues/2123
@@ -117,8 +125,10 @@ scalar, which was then multiplied with all elements of the ``b`` array.
 However, this behavior is more confusing than useful, and having a
 :exc:`TypeError` would be preferable.
 
-Adding the ``__array_ufunc__`` functionality fixes this and would
-deprecate the other ufunc modifying functions.
+This proposal will *not* resolve the issue with scipy.sparse matrices,
+which have multiplication semantics incompatible with numpy arrays.
+However, the aim is to enable writing other custom array types that have
+strictly ndarray compatible semantics.
 
 .. [5] http://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
 
@@ -427,18 +437,32 @@ incompatible relative to :class:`ndarray`.
 In combination with Python's binary operations
 ----------------------------------------------
 
-The ``__array_ufunc__`` mechanism is fully independent of Python's
-standard operator override mechanism, and the two do not interact
-directly.
+The Python operator override mechanism in :class:`ndarray` is coupled to
+the ``__array_ufunc__`` mechanism. :class:`ndarray` returns
+:obj:`NotImplemented` from ``ndarray.__mul__(self, other)`` and other
+binary operation methods if ``other.__array_ufunc__ is None``. If the
+``__array_ufunc__`` attribute is absent, :obj:`NotImplemented` is
+returned if ``other.__array_priority__ > self.__array_priority__``.  In
+other cases, :class:`ndarray` calls the corresponding ufunc. The
+resulting behavior can modified by overriding the corresponding ufunc
+via implementing ``__array_ufunc__``.
 
-They have indirect interactions, however, because NumPy's
-:class:`ndarray` type implements its binary operations via Ufuncs.  For
-most numerical classes, the easiest way to override binary operations is
-thus to define ``__array_ufunc__`` and override the corresponding
-Ufunc. The class can then, like :class:`ndarray` itself, define the
-binary operators in terms of Ufuncs. Here, one has to take some care to
-ensure that one allows for other classes to indicate they are not
-compatible, i.e., implementations should be something like::
+A class wishing to modify the interaction with :class:`ndarray` in
+binary operations has two options:
+
+1. Implement ``__array_ufunc__`` and follow Numpy semantics for Python
+   binary operations (see below).
+
+2. Set ``__array_ufunc__ = None``, and implement Python binary
+   operations freely.  In this case, ufuncs will raise :exc:`TypeError`
+   in combination with ndarray inputs.
+
+For most numerical classes, the easiest way to override binary
+operations is thus to define ``__array_ufunc__`` and override the
+corresponding Ufunc. The class can then, like :class:`ndarray` itself,
+define the binary operators in terms of Ufuncs. Here, one has to take
+some care to ensure that one allows for other classes to indicate they
+are not compatible, i.e., implementations should be something like::
 
     class ArrayLike(object):
         ...
@@ -453,6 +477,8 @@ compatible, i.e., implementations should be something like::
             return np.multiply(self, other)
 
         def __rmul__(self, other):
+            if getattr(other, '__array_ufunc__', False) is None:
+                return NotImplemented
             return np.multiply(other, self)
 
         def __imul__(self, other):
@@ -559,83 +585,7 @@ rewritten as a (set of) generalized Ufuncs. The same may happen with
 functions such as :func:`~numpy.median`, :func:`~numpy.min`, and
 :func:`~numpy.argsort`.
 
-Demo
-====
 
-A pull request [8]_ has been made including the changes and revisions
-proposed in this NEP.  Here is a demo highlighting the functionality.::
-
-    In [1]: import numpy as np;
-
-    In [2]: a = np.array([1])
-
-    In [3]: class B():
-       ...:     def __array_ufunc__(self, func, method, pos, inputs, **kwargs):
-       ...:         return "B"
-       ...:     
-
-    In [4]: b = B()
-
-    In [5]: np.negative(b)
-    Out[5]: 'B'
-
-    In [6]: np.multiply(a, b)
-    Out[6]: 'B'
-
-As a simple example, once ``np.matmul`` is covered as well (see above),
-one could add the following ``__array_ufunc__`` to SciPy's sparse
-matrices (just for ``np.matmul`` and ``np.multiply`` as these are the
-two most common cases where users would attempt to use sparse matrices
-with ufuncs)::
-
-    def __array_ufunc__(self, func, method, pos, inputs, **kwargs):
-        """Method for compatibility with NumPy's ufuncs and matmul
-        functions.
-        """
-
-        without_self = list(inputs)
-        without_self.pop(self)
-        without_self = tuple(without_self)
-
-        if func is np.multiply:
-            return self.multiply(*without_self)
-
-        elif func is np.matmul:
-            if pos == 0:
-                return self.__mul__(inputs[1])
-            if pos == 1:
-                return self.__rmul__(inputs[0])
-        else:
-            return NotImplemented
-
-So we now get the expected behavior when using ufuncs with sparse matrices.::
-
-        In [1]: import numpy as np; import scipy.sparse as sp
-
-        In [2]: a = np.random.randint(3, size=(3,3))
-
-        In [3]: b = np.random.randint(3, size=(3,3))
-
-        In [4]: asp = sp.csr_matrix(a); bsp = sp.csr_matrix(b)
-
-        In [5]: np.matmul(a,b)
-        Out[5]: 
-        array([[2, 4, 8],
-               [2, 4, 8],
-               [2, 2, 3]])
-
-        In [6]: np.matmul(asp,b)
-        Out[6]: 
-        array([[2, 4, 8],
-               [2, 4, 8],
-               [2, 2, 3]], dtype=int64)
-
-        In [7]: np.matmul(asp, bsp).A
-        Out[7]: 
-        array([[2, 4, 8],
-               [2, 4, 8],
-               [2, 2, 3]], dtype=int64)
-                            
 .. Local Variables:
 .. mode: rst
 .. coding: utf-8
