@@ -134,6 +134,7 @@ strictly ndarray compatible semantics.
 
 .. [6] https://github.com/numpy/numpy/issues/5844
 
+
 Proposed interface
 ==================
 
@@ -194,65 +195,62 @@ override their inherited ``__array_ufunc__`` implementation.
 Type casting hierarchy
 ----------------------
 
-Similarly to the Python operator dispatch mechanism, writing ufunc
-dispatch methods requires some discipline in order to achieve
-predictable results.
+The Python operator override mechanism gives much freedom in how to
+write the override methods, and it requires some discipline in order to
+achieve predictable results. Here, we discuss an approach for
+understanding some of the implications, which can provide input in the
+design.
 
-In particular, it is useful to maintain a clear idea of what types can
-be upcast to others, possibly indirectly (i.e. A->B->C is implemented
-but direct A->C not). Moreover, one should make sure the implementations of
-``__array_ufunc__``, which implicitly define the type casting hierarchy,
-don't contradict this.
+It is useful to maintain a clear idea of what types can be "upcast" to
+others, possibly indirectly (e.g. indirect A->B->C is implemented but
+direct A->C not). If the implementations of ``__array_ufunc__`` follow a
+coherent type casting hierarchy, it can be used to understand results of
+operations.
 
-It is useful to think of the typecasting hierarchy as a graph (see below
-for example graphs that work and that fail because of cyclic
-dependencies) in which, for any given class A, all other classes that
-define ``__array_ufunc__`` must belong to exactly one of three groups
-(making this an directed acyclic graph):
+Type casting can be expressed as a `graph <https://en.wikipedia.org/wiki/Graph_theory>`__
+defined as follows:
 
-- *Above A*: their ``__array_ufunc__`` can handle class A or some
-  member of the "above A" classes. In other words, these are the types
-  that A can be (indirectly) upcast to in ufuncs.
+    For each ``__array_ufunc__`` method, draw directed edges from each
+    possible input type to each possible output type.
 
-- *Below A*: they can be handled by the ``__array_ufunc__`` of class A
-  or the ``__array_ufunc__`` of some member of the "below A" classes. In
-  other words, these are the types that can be (indirectly) upcast to A
-  in ufuncs.
+    That is, in each case where ``y = x.__array_ufunc__(a, b, c, ...)``
+    does something else than returning ``NotImplemented`` or raising an error,
+    draw edges ``type(a) -> type(y)``, ``type(b) -> type(y)``, ...
+
+If the resulting graph is *acyclic*, it defines a coherent type casting
+hierarchy (unambiguous partial ordering between types).  In this case,
+operations involving multiple types generally predictably produce result
+of the "highest" type, or raise a :exc:`TypeError`.  See examples at the
+end of this section.
+
+If the graph has cycles, the ``__array_ufunc__`` type casting is not
+well-defined, and things such as ``type(multiply(a, b)) !=
+type(multiply(b, a))`` or ``type(add(a, add(b, c))) != type(add(add(a,
+b), c))`` are not excluded (and then probably always possible).
+
+If the type casting hierarchy is well defined, for each class A, all
+other classes that define ``__array_ufunc__`` belong to exactly one of
+three groups:
+
+- *Above A*: the types that A can be (indirectly) upcast to in ufuncs.
+
+- *Below A*: the types that can be (indirectly) upcast to A in ufuncs.
 
 - *Incompatible*: neither above nor below A; types for which no
-  (indirect) upcasting is possible.  Neither can handle the other.
+  (indirect) upcasting is possible.
 
-Given this grouping, to ensure that expressions involving ufuncs either
-raise a :exc:`TypeError`, or have a result type that is independent of
-what ufuncs were called, what order they were called in, and what order
-their arguments were in, the above implies that ``__array_ufunc__`` for
-type A should:
-
-- Return an object of type A if all other arguments are of types below A.
-
-- Return :obj:`NotImplemented` if any argument has a type that is above
-  A or with which it is incompatible.
-
-With the above, one can convert relations between types to edges in a
-`graph<https://en.wikipedia.org/wiki/Graph_theory>`_ by defining "can
-handle" as follows: if for instances ``a`` and ``b`` of types A and B,
-``a.__array_ufunc__(..., b, ...)`` returns a result other than
-:obj:`NotImplemented` (and does not raise an error), then a can handle
-b and B->A is an edge of the graph.
-  
-Note that there are, as always, exceptions.  For instance, for a
-quantity class, the results of most ufuncs should be quantities, but
-this is not the case for comparison operators. For those, a quantity
-class would return a plain array.
-
-Note also that the legacy behaviour of numpy ufunc is to try to convert
+Note that the legacy behaviour of numpy ufuncs is to try to convert
 unknown objects to :class:`ndarray` via :func:`np.asarray`.  This is
-equivalent to placing :class:`ndarray` at the very top of the graph, and
-is thus a consistent type hierarchy (although one that causes the
-problems that motivate this NEP...).  By instead letting
-:class:`ndarray` return `NotImplemented` if any argument defines
-``__array_ufunc__``, we provide the option for other classes to have
-:class:`ndarray` at the bottom of the type hierarchy.
+equivalent to placing :class:`ndarray` above these objects in the graph.
+Since we above defined :class:`ndarray` to return `NotImplemented` for
+classes with custom ``__array_ufunc__``, this puts :class:`ndarray`
+below such classes in the type hierarchy, allowing the operations to be
+overridden.
+
+In view of the above, binary ufuncs describing transitive operations
+should aim to define a well-defined casting hierarchy.  This is likely
+also a sensible approach to all ufuncs --- exceptions to this should
+consider carefully if any surprising behavior results.
 
 .. admonition:: Example
 
@@ -262,19 +260,20 @@ problems that motivate this NEP...).  By instead letting
 
       digraph array_ufuncs {
          rankdir=BT;
-         A -> C;
-         B -> C;
-         D -> B;
-         ndarray -> A;
-         ndarray -> B;
+         A -> C [label="C"];
+         B -> C [label="C"];
+         D -> B [label="B"];
+         ndarray -> C [label="A"];
+         ndarray -> B [label="B"];
       }
 
-   The ``__array_ufunc__`` of type A can handle ndarrays, B can handle
-   ndarray and D, and C can handle A and B but not ndarrays or D.  The
+   The ``__array_ufunc__`` of type A can handle ndarrays returning C,
+   B can handle ndarray and D returning B, and C can handle A and B returning C,
+   but not ndarrays or D.  The
    result is a directed acyclic graph, and defines a type casting
-   hierarchy, with relations ``C > A > ndarray``, ``C > B > ndarray``,
-   ``C > B > D``. The type B is incompatible relative to A and vice
-   versa, and A and ndarray are incompatible relative to D.  Ufunc
+   hierarchy, with relations ``C > A``, ``C > ndarray``, ``C > B > ndarray``,
+   ``C > B > D``. The type A is incompatible with B, D, ndarray,
+   and D is incompatible with A and ndarray.  Ufunc
    expressions involving these classes should produce results of the
    highest type involved or raise a :exc:`TypeError`.
 
@@ -286,8 +285,8 @@ problems that motivate this NEP...).  By instead letting
 
       digraph array_ufuncs {
          rankdir=BT;
-         A -> B;
-         B -> A;
+         A -> B [label="B"];
+         B -> A [label="A"];
       }
 
 
@@ -303,9 +302,9 @@ problems that motivate this NEP...).  By instead letting
 
       digraph array_ufuncs {
          rankdir=BT;
-         A -> B;
-         B -> C;
-         C -> A;
+         A -> B [label="B"];
+         B -> C [label="C"];
+         C -> A [label="A"];
       }
 
 
@@ -324,9 +323,17 @@ type casting hierarchy. The recommendation is that an
 `NotImplemented` unless the inputs are instances of the same class or
 superclasses.  This guarantees that in the type casting hierarchy,
 superclasses are below, subclasses above, and other classes are
-incompatible (sadly, the terminology for graphs and classes has reversed
-vertical sense).  Exceptions to this need to check they respect the
+incompatible.  Exceptions to this need to check they respect the
 implicit type casting hierarchy.
+
+.. note::
+
+   Note that type casting hierarchy and class hierarchy are here defined
+   to go the "opposite" directions.  It would in principle also be
+   consistent to have ``__array_ufunc__`` handle also instances of
+   subclasses. In this case, the "subclasses first" dispatch rule would
+   ensure a relatively similar outcome. However, the behavior is then less
+   explicitly specified.
 
 Subclasses can be easily constructed if methods consistently use
 :func:`super` to pass through the class hierarchy [7]_.  To support
