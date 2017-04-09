@@ -283,21 +283,36 @@ array_inplace_right_shift(PyArrayObject *m1, PyObject *m2);
 static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_add, array_add);
+    if (try_binary_elide(m1, m2, &array_inplace_add, &res, 1)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.add);
 }
 
 static PyObject *
 array_subtract(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_subtract, array_subtract);
+    if (try_binary_elide(m1, m2, &array_inplace_subtract, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.subtract);
 }
 
 static PyObject *
 array_multiply(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, array_multiply);
+    if (try_binary_elide(m1, m2, &array_inplace_multiply, &res, 1)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
 
@@ -305,7 +320,12 @@ array_multiply(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_divide(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_divide, array_divide);
+    if (try_binary_elide(m1, m2, &array_inplace_divide, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -343,11 +363,12 @@ array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 }
 #endif
 
-/* Determine if object is a scalar and if so, convert the object
- *   to a double and place it in the out_exponent argument
- *   and return the "scalar kind" as a result.   If the object is
- *   not a scalar (or if there are other error conditions)
- *   return NPY_NOSCALAR, and out_exponent is undefined.
+/*
+ * Determine if object is a scalar and if so, convert the object
+ * to a double and place it in the out_exponent argument
+ * and return the "scalar kind" as a result.   If the object is
+ * not a scalar (or if there are other error conditions)
+ * return NPY_NOSCALAR, and out_exponent is undefined.
  */
 static NPY_SCALARKIND
 is_scalar_with_conversion(PyObject *o2, double* out_exponent)
@@ -458,7 +479,8 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
 
             if (inplace || can_elide_temp_unary(a1)) {
                 return PyArray_GenericInplaceUnaryFunction(a1, fastop);
-            } else {
+            }
+            else {
                 return PyArray_GenericUnaryFunction(a1, fastop);
             }
         }
@@ -546,35 +568,60 @@ array_invert(PyArrayObject *m1)
 static PyObject *
 array_left_shift(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_lshift, array_left_shift);
+    if (try_binary_elide(m1, m2, &array_inplace_left_shift, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.left_shift);
 }
 
 static PyObject *
 array_right_shift(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_rshift, array_right_shift);
+    if (try_binary_elide(m1, m2, &array_inplace_right_shift, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.right_shift);
 }
 
 static PyObject *
 array_bitwise_and(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_and, array_bitwise_and);
+    if (try_binary_elide(m1, m2, &array_inplace_bitwise_and, &res, 1)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_and);
 }
 
 static PyObject *
 array_bitwise_or(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_or, array_bitwise_or);
+    if (try_binary_elide(m1, m2, &array_inplace_bitwise_or, &res, 1)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_or);
 }
 
 static PyObject *
 array_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_xor, array_bitwise_xor);
+    if (try_binary_elide(m1, m2, &array_inplace_bitwise_xor, &res, 1)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.bitwise_xor);
 }
 
@@ -655,14 +702,26 @@ array_inplace_bitwise_xor(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_floor_divide(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_floor_divide, array_floor_divide);
+    if (try_binary_elide(m1, m2, &array_inplace_floor_divide, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.floor_divide);
 }
 
 static PyObject *
 array_true_divide(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *res;
+
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_true_divide, array_true_divide);
+    if (PyArray_CheckExact(m1) &&
+            (PyArray_ISFLOAT(m1) || PyArray_ISCOMPLEX(m1)) &&
+            try_binary_elide(m1, m2, &array_inplace_true_divide, &res, 0)) {
+        return res;
+    }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
 }
 
@@ -708,6 +767,7 @@ static PyObject *
 array_divmod(PyArrayObject *op1, PyObject *op2)
 {
     PyObject *divp, *modp, *result;
+
     BINOP_GIVE_UP_IF_NEEDED(op1, op2, nb_divmod, array_divmod);
 
     divp = array_floor_divide(op1, op2);
