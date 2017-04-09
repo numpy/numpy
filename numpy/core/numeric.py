@@ -1639,7 +1639,7 @@ def moveaxis(a, source, destination):
 
     >>> np.transpose(x).shape
     (5, 4, 3)
-    >>> np.swapaxis(x, 0, -1).shape
+    >>> np.swapaxes(x, 0, -1).shape
     (5, 4, 3)
     >>> np.moveaxis(x, [0, 1], [-1, -2]).shape
     (5, 4, 3)
