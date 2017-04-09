@@ -164,14 +164,21 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * > or the newaxis object, but not for integer arrays or other embedded
  * > sequences.
  *
+ * The rationale for only unpacking `2*NPY_MAXDIMS` items is the assumption
+ * that the longest possible index that is allowed to produce a result is
+ * `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. This assumption turns out to be
+ * wrong (we could add one more item, an Ellipsis), but we keep it for
+ * compatibility.
+ *
  * @param  index   The index object, which may or may not be a tuple. This is a
  *                 borrowed reference.
  * @param  result  An empty buffer of 2*NPY_MAXDIMS PyObject* to write each
- *                 index component to. The references written are new..
- *                 This function will in some cases clobber the array beyond
- *                 the last item unpacked.
+ *                 index component to. The references written are new.
  *
  * @returns        The number of items in `result`, or -1 if an error occured.
+ *                 The entries in `result` at and beyond this index should be
+ *                 assumed to contain garbage, even if they were initialized
+ *                 to NULL, so are not safe to Py_XDECREF.
  */
 NPY_NO_EXPORT npy_intp
 unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
@@ -234,7 +241,9 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
 
     /*
      * At this point, we're left with a non-tuple, non-array, sequence:
-     * typically, a list
+     * typically, a list. We use some somewhat-arbirary heuristics from here
+     * onwards to decided whether to treat that list as a single index, or a
+     * list of indices. It might be worth deprecating this behaviour (gh-4434).
      *
      * Sequences < NPY_MAXDIMS with any slice objects
      * or newaxis, Ellipsis or other arrays or sequences
