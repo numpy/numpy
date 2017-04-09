@@ -139,6 +139,15 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
+NPY_NO_EXPORT NPY_INLINE void
+multi_DECREF(PyObject **objects, npy_intp n)
+{
+    npy_intp i;
+    for (i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
 /**
  * Turn an index argument into a c-array of `PyObject *`s, one for each index.
  *
@@ -158,7 +167,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
  * @param  index   The index object, which may or may not be a tuple. This is a
  *                 borrowed reference.
  * @param  result  An empty buffer of 2*NPY_MAXDIMS PyObject* to write each
- *                 index component to. The references written are borrowed.
+ *                 index component to. The references written are new..
  *                 This function will in some cases clobber the array beyond
  *                 the last item unpacked.
  *
@@ -180,6 +189,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         }
         for (i = 0; i < n; i++) {
             result[i] = PyTuple_GET_ITEM(index, i);
+            Py_INCREF(result[i]);
         }
         return n;
     }
@@ -196,6 +206,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
             || PyArray_Check(index)
             || !PySequence_Check(index)) {
 
+        Py_INCREF(index);
         result[0] = index;
         return 1;
     }
@@ -214,8 +225,10 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         for (i = 0; i < n; i++) {
             result[i] = PySequence_GetItem(index, i);
             if (result[i] == NULL) {
+                multi_DECREF(result, i);
                 return -1;
             }
+            Py_INCREF(result[i]);
         }
         return n;
     }
@@ -233,6 +246,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
     n = PySequence_Size(index);
     if (n < 0) {
         PyErr_Clear();
+        Py_INCREF(index);
         result[0] = index;
         return 1;
     }
@@ -240,6 +254,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
     /* for some reason, anything that's long but not too long is turned into
      * a single index. The *2 is missing here for backward-compatibility. */
     if (n >= NPY_MAXDIMS) {
+        Py_INCREF(index);
         result[0] = index;
         return 1;
     }
@@ -253,6 +268,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         if (commit_to_unpack) {
             /* propagate errors */
             if (tmp_obj == NULL) {
+                multi_DECREF(result, i);
                 return -1;
             }
         }
@@ -260,6 +276,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
             /* if getitem fails (unusual) before we've committed, then
              * commit to not unpacking */
             if (tmp_obj == NULL) {
+                multi_DECREF(result, i);
                 PyErr_Clear();
                 break;
             }
@@ -273,18 +290,18 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
                 commit_to_unpack = 1;
             }
         }
-
-        Py_DECREF(tmp_obj);
     }
 
     /* unpacking was the right thing to do, and we already did it */
     if (commit_to_unpack) {
         return n;
     }
-
     /* got to the end, never found an indication that we should have unpacked */
     else {
-        /* we already filled result, but it doesn't matter */
+        /* we already filled result, so empty it first */
+        multi_DECREF(result, n);
+
+        Py_INCREF(index);
         result[0] = index;
         return 1;
     }
@@ -757,6 +774,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     *ndim = new_ndim + fancy_ndim;
     *out_fancy_ndim = fancy_ndim;
 
+    multi_DECREF(raw_indices, index_ndim);
 
     return index_type;
 
@@ -764,6 +782,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }
+    multi_DECREF(raw_indices, index_ndim);
     return -1;
 }
 
