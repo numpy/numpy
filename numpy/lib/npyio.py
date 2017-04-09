@@ -1329,7 +1329,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             fh.close()
 
 
-def fromregex(file, regexp, dtype):
+def fromregex(file, regexp, dtype, encoding=None):
     """
     Construct an array from a text file, using regular expression parsing.
 
@@ -1386,16 +1386,22 @@ def fromregex(file, regexp, dtype):
     """
     own_fh = False
     if not hasattr(file, "read"):
-        file = open(file, 'rb')
+        file = np.lib._datasource.open(file, 'rt', encoding=encoding)
         own_fh = True
 
     try:
-        if not hasattr(regexp, 'match'):
-            regexp = re.compile(asbytes(regexp))
         if not isinstance(dtype, np.dtype):
             dtype = np.dtype(dtype)
 
-        seq = regexp.findall(file.read())
+        content = file.read()
+        if isinstance(content, bytes) and not isinstance(regexp, bytes):
+            regexp = asbytes(regexp)
+        elif not isinstance(content, bytes) and isinstance(regexp, bytes):
+            regexp = regexp.decode('latin1')
+
+        if not hasattr(regexp, 'match'):
+            regexp = re.compile(regexp)
+        seq = regexp.findall(content)
         if seq and not isinstance(seq[0], tuple):
             # Only one group is in the regexp.
             # Create the new array as a single data-type and then

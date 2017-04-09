@@ -12,6 +12,7 @@ import io
 from io import BytesIO
 from datetime import datetime
 import locale
+import re
 
 import numpy as np
 import numpy.ma as ma
@@ -955,7 +956,6 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, np.array(x, dtype="S"))
 
 class Testfromregex(object):
-    # np.fromregex expects files opened in binary mode.
     def test_record(self):
         c = TextIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -987,6 +987,22 @@ class Testfromregex(object):
         x = np.fromregex(c, r"(\d+)\s+...", dt)
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
+
+    def test_record_unicode(self):
+        utf8 = b'\xcf\x96'
+        with temppath() as path:
+            with open(path, 'wb') as f:
+                f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
+
+            dt = [('num', np.float64), ('val', 'U4')]
+            x = np.fromregex(path, r"(?u)([0-9.]+)\s+(\w+)", dt, encoding='UTF-8')
+            a = np.array([(1.312, 'foo' + utf8.decode('UTF-8')), (1.534, 'bar'),
+                           (4.444, 'qux')], dtype=dt)
+            assert_array_equal(x, a)
+
+            regexp = re.compile(r"([0-9.]+)\s+(\w+)", re.UNICODE)
+            x = np.fromregex(path, regexp, dt, encoding='UTF-8')
+            assert_array_equal(x, a)
 
 
 #####--------------------------------------------------------------------------
