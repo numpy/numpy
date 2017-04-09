@@ -817,6 +817,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Legal values: 0 (default), 1 or 2.
 
         .. versionadded:: 1.6.0
+    encoding: string, optional
+        Encoding used to decode the inputfile. Does not apply to input streams.
+        The special value 'bytes' enables backward compatibility workarounds
+        that ensures you receive byte arrays as results if possible and passes
+        latin1 encoded strings to converters. Override this value to receive
+        unicode arrays and pass strings as input to converters.
+        If set to None the system default is used.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -1137,6 +1146,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         ``numpy.loadtxt``.
 
         .. versionadded:: 1.7.0
+    encoding: string, optional
+        Encoding used to encode the outputfile. Does not apply to output
+        streams.
+
+        .. versionadded:: 1.14.0
 
 
     See Also
@@ -1346,6 +1360,10 @@ def fromregex(file, regexp, dtype, encoding=None):
         Groups in the regular expression correspond to fields in the dtype.
     dtype : dtype or list of dtypes
         Dtype for the structured array.
+    encoding: string, optional
+        Encoding used to decode the inputfile. Does not apply to input streams.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -1517,6 +1535,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to read the entire file.
 
         .. versionadded:: 1.10.0
+    encoding: string, optional
+        Encoding used to decode the inputfile. Does not apply to input streams.
+        The special value 'bytes' enables backward compatibility workarounds
+        that ensures you receive byte arrays as results if possible and passes
+        latin1 encoded strings to converters. Override this value to receive
+        unicode arrays and pass strings as input to converters.
+        If set to None the system default is used.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
