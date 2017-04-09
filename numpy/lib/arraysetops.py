@@ -500,9 +500,10 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
     ----------
     elements : array_like
         Input array.
-    test_elements : iterable
+    test_elements : array_like
         The values against which to test each value of `elements`.
         This argument is flattened if it is an array or array_like.
+        See notes for behavior with non-array-like parameters.
     assume_unique : bool, optional
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
@@ -528,14 +529,19 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
 
     `isin` can be considered as an element-wise function version of the
     python keyword `in`. ``isin(a, b)`` is roughly equivalent to
-    ``np.array([item in b for item in a])`` if `a` is a 1-D sequence.
+    ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.
+    
+    If `test_elements` is a set (or other non-sequence collection) it will 
+    be converted to an object array with one element, rather than an array 
+    of the values contained in `test_elements`. Converting the set to 
+    a list usually gives the desired behavior.
 
     .. versionadded:: 1.13.0
 
     Examples
     --------
     >>> elements = np.array([[0, 2], [4, 6]])
-    >>> test_elements = {1, 2, 4, 8}
+    >>> test_elements = [1, 2, 4, 8]
     >>> mask = np.isin(elements, test_elements)
     >>> mask
     array([[ False,  True],
@@ -549,16 +555,6 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
     >>> elements[mask]
     array([0, 6])"""
     elements = np.array(elements)
-    #The following enables values for test_elements that may be a set,
-    #or any other kind of iterable that isn't array-like. array, called
-    #with a set as the first parameter, returns a single-element array
-    #with that set as its sole item. So to get the expected behavior,
-    #test_elements is converted to a (possibly nested) list first. (If
-    #test_elements is already a list, it is unchanged.)
-    #If, in a future release, someone changes how array handles sets
-    #as a parameter, these two lines may need to be changed.
-    if not hasattr(test_elements, '__array__'):
-        test_elements = np.array(list(test_elements))
     return in1d(elements, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(elements.shape)
 
