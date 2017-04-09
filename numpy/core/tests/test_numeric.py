@@ -288,6 +288,17 @@ class TestBoolArray(TestCase):
         np.abs(self.t, out=self.o)
         assert_array_equal(self.o, self.t)
 
+        # test scalar array specialization
+        norm = np.zeros(114, dtype=bool)[1:]
+        scalar_f = np.ndarray(buffer=np.zeros((), dtype=bool), strides=(0,),
+                              shape=norm.shape, dtype=bool)
+        scalar_t = np.ndarray(buffer=np.ones((), dtype=bool), strides=(0,),
+                              shape=norm.shape, dtype=bool)
+        assert_array_equal(~scalar_f, ~norm)
+        assert_array_equal(np.abs(scalar_f), norm)
+        assert_array_equal(~scalar_t, norm)
+        assert_array_equal(np.abs(scalar_t), ~norm)
+
     def test_logical_and_or_xor(self):
         assert_array_equal(self.t | self.t, self.t)
         assert_array_equal(self.f | self.f, self.f)
@@ -310,16 +321,44 @@ class TestBoolArray(TestCase):
 
         assert_array_equal(self.nm & self.t, self.nm)
         assert_array_equal(self.im & self.f, False)
+        assert_array_equal(self.t & self.nm, self.nm)
+        assert_array_equal(self.f & self.im, False)
         assert_array_equal(self.nm & True, self.nm)
         assert_array_equal(self.im & False, self.f)
+        assert_array_equal(True  & self.nm, self.nm)
+        assert_array_equal(False & self.im, self.f)
         assert_array_equal(self.nm | self.t, self.t)
         assert_array_equal(self.im | self.f, self.im)
+        assert_array_equal(self.t | self.nm, self.t)
+        assert_array_equal(self.f | self.im, self.im)
         assert_array_equal(self.nm | True, self.t)
         assert_array_equal(self.im | False, self.im)
+        assert_array_equal(True  | self.nm , self.t)
+        assert_array_equal(False | self.im, self.im)
         assert_array_equal(self.nm ^ self.t, self.im)
         assert_array_equal(self.im ^ self.f, self.im)
+        assert_array_equal(self.t ^ self.nm, self.im)
+        assert_array_equal(self.f ^ self.im, self.im)
         assert_array_equal(self.nm ^ True, self.im)
         assert_array_equal(self.im ^ False, self.im)
+        assert_array_equal(True  ^ self.nm, self.im)
+        assert_array_equal(False ^ self.im, self.im)
+
+        # test scalar array specialization
+        norm = np.zeros(114, dtype=bool)[1:]
+        scalar_f = np.ndarray(buffer=np.zeros((), dtype=bool), strides=(0,),
+                              shape=norm.shape, dtype=bool)
+        scalar_t = np.ndarray(buffer=np.ones((), dtype=bool), strides=(0,),
+                              shape=norm.shape, dtype=bool)
+        assert_array_equal(scalar_f & scalar_t, norm)
+        assert_array_equal(scalar_t & scalar_t, ~norm)
+        assert_array_equal(scalar_f & scalar_f, norm)
+        assert_array_equal(scalar_f | scalar_t, ~norm)
+        assert_array_equal(scalar_t | scalar_t, ~norm)
+        assert_array_equal(scalar_f | scalar_f, norm)
+        assert_array_equal(scalar_f ^ scalar_t, ~norm)
+        assert_array_equal(scalar_t ^ scalar_t, norm)
+        assert_array_equal(scalar_f ^ scalar_f, norm)
 
 
 class TestBoolCmp(TestCase):

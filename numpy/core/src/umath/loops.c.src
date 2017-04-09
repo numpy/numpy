@@ -703,6 +703,27 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 }
 /**end repeat**/
 
+#define BOOL_SCALAR_OP(cond, in_idx, inp, value) \
+    if (!(cond)) { \
+        if (steps[in_idx] == 1 && steps[2] == 1) { \
+            memcpy(args[2], args[in_idx], dimensions[0]); \
+        } \
+        else { \
+            BINARY_LOOP { \
+                *op1 = *inp; \
+            } \
+        } \
+    } \
+    else { \
+        if (steps[2] == 1) { \
+            memset(args[2], value, dimensions[0]); \
+        } \
+        else { \
+            BINARY_LOOP { \
+                *op1 = value; \
+            } \
+        } \
+    }
 
 /**begin repeat
  * #kind = logical_and, logical_or#
@@ -763,7 +784,24 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         }
     }
     else {
-        if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
+        /*
+         * scalar operations can occur e.g. in masked arrays where a
+         * stride 0 array is used to represent no or full mask
+         */
+        if (steps[0] == 0) {
+            if (steps[1] == 0) {
+                /* only the memset part of the loop */
+                const npy_bool res = (*args[0] @OP@ *args[1]);
+                BOOL_SCALAR_OP(1, 1, ip2, res);
+            }
+            else {
+                BOOL_SCALAR_OP((*args[0] @SC@ 0), 1, ip2, !@and@);
+            }
+        }
+        else if (steps[1] == 0) {
+            BOOL_SCALAR_OP((*args[1] @SC@ 0), 0, ip1, !@and@);
+        }
+        else if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
             return;
         }
         else {
@@ -788,9 +826,14 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         return;
     }
     else {
-        UNARY_LOOP {
-            npy_bool in1 = *(npy_bool *)ip1;
-            *((npy_bool *)op1) = in1 @OP@ 0;
+        if (steps[0] == 0 && steps[1] == 1) {
+            memset(args[1], *args[0] @OP@ 0, dimensions[0]);
+        }
+        else {
+            UNARY_LOOP {
+                npy_bool in1 = *(npy_bool *)ip1;
+                *((npy_bool *)op1) = in1 @OP@ 0;
+            }
         }
     }
 }
