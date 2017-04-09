@@ -179,7 +179,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
     npy_intp n, i;
     npy_bool commit_to_unpack;
 
-    /* fast route for passing a tuple */
+    /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
         n = PyTuple_GET_SIZE(index);
         if (n > NPY_MAXDIMS * 2) {
@@ -211,7 +211,7 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         return 1;
     }
 
-    /* passing a tuple subclass - needs to handle errors */
+    /* Passing a tuple subclass - needs to handle errors */
     if (PyTuple_Check(index)) {
         n = PySequence_Size(index);
         if (n < 0) {
@@ -233,7 +233,8 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         return n;
     }
 
-    /* At this point, we're left with a non-tuple, non-array, sequence:
+    /*
+     * At this point, we're left with a non-tuple, non-array, sequence:
      * typically, a list
      *
      * Sequences < NPY_MAXDIMS with any slice objects
@@ -251,16 +252,20 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
         return 1;
     }
 
-    /* for some reason, anything that's long but not too long is turned into
-     * a single index. The *2 is missing here for backward-compatibility. */
+    /*
+     * For some reason, anything that's long but not too long is turned into
+     * a single index. The *2 is missing here for backward-compatibility.
+     */
     if (n >= NPY_MAXDIMS) {
         Py_INCREF(index);
         result[0] = index;
         return 1;
     }
 
-    /* Some other type of short sequence - assume we should unpack it like a
-     * tuple, until we find something that proves us wrong */
+    /*
+     * Some other type of short sequence - assume we should unpack it like a
+     * tuple, and then decide whether that was actually necessary.
+     */
     commit_to_unpack = 0;
     for (i = 0; i < n; i++) {
         PyObject *tmp_obj = result[i] = PySequence_GetItem(index, i);
@@ -273,8 +278,10 @@ unpack_indices(PyObject *index, PyObject *result[2*NPY_MAXDIMS])
             }
         }
         else {
-            /* if getitem fails (unusual) before we've committed, then
-             * commit to not unpacking */
+            /*
+             * if getitem fails (unusual) before we've committed, then stop
+             * unpacking
+             */
             if (tmp_obj == NULL) {
                 multi_DECREF(result, i);
                 PyErr_Clear();
