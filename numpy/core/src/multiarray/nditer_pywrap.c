@@ -15,6 +15,7 @@
 #include <numpy/arrayobject.h>
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "alloc.h"
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -758,7 +759,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     &op_axes_in,
                     PyArray_IntpConverter, &itershape,
                     &buffersize)) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         return -1;
     }
 
@@ -804,7 +805,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
     else if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         itershape.ptr = NULL;
     }
 
@@ -832,7 +833,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
 
     /* Release the references we got to the ops and dtypes */
     for (iop = 0; iop < nop; ++iop) {
@@ -843,7 +844,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);

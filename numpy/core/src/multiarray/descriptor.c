@@ -16,6 +16,7 @@
 #include "_datetime.h"
 #include "common.h"
 #include "descriptor.h"
+#include "alloc.h"
 
 /*
  * offset:    A starting offset.
@@ -306,7 +307,7 @@ _convert_from_tuple(PyObject *obj)
         int i;
 
         if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             goto fail;
@@ -320,12 +321,12 @@ _convert_from_tuple(PyObject *obj)
                     && PyNumber_Check(val))
                 || (shape.len == 0
                     && PyTuple_Check(val))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             return type;
         }
         newdescr = PyArray_DescrNewFromType(NPY_VOID);
         if (newdescr == NULL) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             goto fail;
         }
 
@@ -335,14 +336,14 @@ _convert_from_tuple(PyObject *obj)
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
                                 "dimension smaller then zero.");
-                PyDimMem_FREE(shape.ptr);
+                npy_free_cache_dim_obj(shape);
                 goto fail;
             }
             if (shape.ptr[i] > NPY_MAX_INT) {
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
                                 "dimension does not fit into a C int.");
-                PyDimMem_FREE(shape.ptr);
+                npy_free_cache_dim_obj(shape);
                 goto fail;
             }
         }
@@ -351,12 +352,12 @@ _convert_from_tuple(PyObject *obj)
             PyErr_SetString(PyExc_ValueError,
                             "invalid shape in fixed-type tuple: dtype size in "
                             "bytes must fit into a C int.");
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             goto fail;
         }
         newdescr->elsize = type->elsize * items;
         if (newdescr->elsize == -1) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             goto fail;
         }
 
@@ -381,7 +382,7 @@ _convert_from_tuple(PyObject *obj)
          */
         newdescr->subarray->shape = PyTuple_New(shape.len);
         if (newdescr->subarray->shape == NULL) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             goto fail;
         }
         for (i=0; i < shape.len; i++) {
@@ -391,12 +392,12 @@ _convert_from_tuple(PyObject *obj)
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
                 Py_DECREF(newdescr->subarray->shape);
                 newdescr->subarray->shape = NULL;
-                PyDimMem_FREE(shape.ptr);
+                npy_free_cache_dim_obj(shape);
                 goto fail;
             }
         }
 
-        PyDimMem_FREE(shape.ptr);
+        npy_free_cache_dim_obj(shape);
         type = newdescr;
     }
     return type;

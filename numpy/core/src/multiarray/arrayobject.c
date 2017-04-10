@@ -1518,14 +1518,14 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
     }
 
-    PyDimMem_FREE(dims.ptr);
-    PyDimMem_FREE(strides.ptr);
+    npy_free_cache_dim_obj(dims);
+    npy_free_cache_dim_obj(strides);
     return (PyObject *)ret;
 
  fail:
     Py_XDECREF(descr);
-    PyDimMem_FREE(dims.ptr);
-    PyDimMem_FREE(strides.ptr);
+    npy_free_cache_dim_obj(dims);
+    npy_free_cache_dim_obj(strides);
     return NULL;
 }
 

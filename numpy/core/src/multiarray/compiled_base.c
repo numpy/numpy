@@ -10,6 +10,7 @@
 #include "npy_config.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
+#include "alloc.h"
 
 
 /*
@@ -1091,7 +1092,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return PyArray_Return(ret);
 
@@ -1100,7 +1101,7 @@ fail:
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return NULL;
 }
@@ -1352,7 +1353,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     Py_DECREF(ret_arr);
     Py_XDECREF(indices);
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
 
     return ret_tuple;
@@ -1362,7 +1363,7 @@ fail:
     Py_XDECREF(ret_arr);
     Py_XDECREF(dtype);
     Py_XDECREF(indices);
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return NULL;
 }

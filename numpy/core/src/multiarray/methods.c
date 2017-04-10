@@ -21,6 +21,7 @@
 #include "shape.h"
 
 #include "methods.h"
+#include "alloc.h"
 
 
 /* NpyArg_ParseKeywords
@@ -201,11 +202,11 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
     }
     ret = PyArray_Newshape(self, &newshape, order);
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     return ret;
 
  fail:
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     return NULL;
 }
 
@@ -1112,7 +1113,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER);
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     if (ret == NULL) {
         return NULL;
     }
@@ -1780,7 +1781,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
     if (PyArray_DIMS(self) != NULL) {
-        PyDimMem_FREE(PyArray_DIMS(self));
+        npy_free_cache_dim_array(self);
         fa->dimensions = NULL;
     }
 
@@ -1789,7 +1790,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     fa->nd = nd;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(3*nd);
+        fa->dimensions = npy_alloc_cache_dim(3*nd);
         if (fa->dimensions == NULL) {
             return PyErr_NoMemory();
         }
@@ -1817,7 +1818,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             fa->data = PyDataMem_NEW(num);
             if (PyArray_DATA(self) == NULL) {
                 fa->nd = 0;
-                PyDimMem_FREE(PyArray_DIMS(self));
+                npy_free_cache_dim_array(self);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -1861,7 +1862,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (PyArray_DATA(self) == NULL) {
             fa->nd = 0;
             fa->data = PyDataMem_NEW(PyArray_DESCR(self)->elsize);
-            PyDimMem_FREE(PyArray_DIMS(self));
+            npy_free_cache_dim_array(self);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2003,7 +2004,7 @@ array_transpose(PyArrayObject *self, PyObject *args)
             return NULL;
         }
         ret = PyArray_Transpose(self, &permute);
-        PyDimMem_FREE(permute.ptr);
+        npy_free_cache_dim_obj(permute);
     }
 
     return ret;
