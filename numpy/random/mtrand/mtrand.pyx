@@ -4828,6 +4828,7 @@ cdef class RandomState:
         cdef npy_intp i, j
         for i in reversed(range(1, n)):
             j = rk_interval(i, self.internal_state)
+            if i == j : continue # i == j is not needed and memcpy is undefined.
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
