@@ -1926,7 +1926,7 @@ class TestSpecialMethods(TestCase):
                     else:
                         args.append(input_)
 
-                outputs = kwargs.pop('out', [])
+                outputs = kwargs.pop('out', None)
                 out_no = []
                 if outputs:
                     out_args = []
@@ -1937,6 +1937,8 @@ class TestSpecialMethods(TestCase):
                         else:
                             out_args.append(output)
                     kwargs['out'] = tuple(out_args)
+                else:
+                    outputs = (None,) * ufunc.nout
 
                 info = {}
                 if in_no:
@@ -1946,19 +1948,26 @@ class TestSpecialMethods(TestCase):
 
                 results = super(A, self).__array_ufunc__(ufunc, method,
                                                          *args, **kwargs)
-                if not isinstance(results, tuple):
-                    if not isinstance(results, np.ndarray):
-                        return results
+                if results is NotImplemented:
+                    return NotImplemented
+
+                if ufunc.nout == 1:
                     results = (results,)
 
-                if outputs == []:
-                    outputs = [None] * len(results)
-                results = tuple(result.view(A) if output is None else output
+                results = tuple((np.asarray(result).view(A)
+                                 if output is None else output)
                                 for result, output in zip(results, outputs))
                 if isinstance(results[0], A):
                     results[0].info = info
 
                 return results[0] if len(results) == 1 else results
+
+        class B(object):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                if any(isinstance(input_, A) for input_ in inputs):
+                    return "A!"
+                else:
+                    return NotImplemented
 
         d = np.arange(5.)
         a = np.arange(5.).view(A)
@@ -1994,6 +2003,16 @@ class TestSpecialMethods(TestCase):
         c = np.add(a, b, out=a)
         assert_(c is a)
         assert_equal(c.info, {'inputs': [0, 1], 'outputs': [0]})
+        # some tests with a non-ndarray subclass
+        a = np.arange(5.)
+        b = B()
+        assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_(b.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_raises(TypeError, np.add, a, b)
+        a = a.view(A)
+        assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_(b.__array_ufunc__(np.add, '__call__', a, b) == "A!")
+        assert_(np.add(a, b) == "A!")
 
 
 class TestChoose(TestCase):
