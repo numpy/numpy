@@ -19,6 +19,7 @@
 
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "common.h" /* for convert_shape_to_string */
+#include "alloc.h"
 
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
@@ -316,7 +317,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return NULL;
     }
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
-    PyDimMem_FREE(newdims.ptr);
+    npy_free_cache_dim_obj(newdims);
     return ret;
 }
 

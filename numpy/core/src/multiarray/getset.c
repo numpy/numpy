@@ -18,6 +18,7 @@
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
+#include "alloc.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -65,12 +66,12 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     }
 
     /* Free old dimensions and strides */
-    PyDimMem_FREE(PyArray_DIMS(self));
+    npy_free_cache_dim_array(self);
     nd = PyArray_NDIM(ret);
     ((PyArrayObject_fields *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fields *)self)->dimensions = PyDimMem_NEW(3*nd);
+        ((PyArrayObject_fields *)self)->dimensions = npy_alloc_cache_dim(3*nd);
         if (PyArray_DIMS(self) == NULL) {
             Py_DECREF(ret);
             PyErr_SetString(PyExc_MemoryError,"");
@@ -158,11 +159,11 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     memcpy(PyArray_STRIDES(self), newstrides.ptr, sizeof(npy_intp)*newstrides.len);
     PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
                               NPY_ARRAY_ALIGNED);
-    PyDimMem_FREE(newstrides.ptr);
+    npy_free_cache_dim_obj(newstrides);
     return 0;
 
  fail:
-    PyDimMem_FREE(newstrides.ptr);
+    npy_free_cache_dim_obj(newstrides);
     return -1;
 }
 
@@ -560,7 +561,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         if (temp == NULL) {
             return -1;
         }
-        PyDimMem_FREE(PyArray_DIMS(self));
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
         ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
         ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);

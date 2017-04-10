@@ -1853,12 +1853,12 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     ret = (PyArrayObject *)PyArray_Empty(shape.len, shape.ptr,
                                             typecode, is_f_order);
 
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(typecode);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return NULL;
 }
 
@@ -2007,12 +2007,12 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     ret = (PyArrayObject *)PyArray_Zeros(shape.len, shape.ptr,
                                         typecode, (int) is_f_order);
 
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(typecode);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 }
 
@@ -2947,7 +2947,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     ret = PyArray_NewFromDescr(subtype, dtype,
             (int)shape.len, shape.ptr, NULL, NULL, 0, NULL);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
 
     evil_global_disable_warn_O4O8_flag = 0;
 
@@ -2957,7 +2957,7 @@ fail:
     evil_global_disable_warn_O4O8_flag = 0;
 
     Py_XDECREF(dtype);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return NULL;
 }
 
