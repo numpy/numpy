@@ -126,8 +126,11 @@ npy_free_cache(void * p, npy_uintp sz)
 NPY_NO_EXPORT void *
 npy_alloc_cache_dim(npy_uintp sz)
 {
-    /* dims + strides */
-    if (NPY_UNLIKELY(sz < 2)) {
+    /*
+     * make sure any temporary allocation can be used for array metadata which
+     * uses one memory block for both dimensions and strides
+     */
+    if (sz < 2) {
         sz = 2;
     }
     return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
@@ -137,8 +140,8 @@ npy_alloc_cache_dim(npy_uintp sz)
 NPY_NO_EXPORT void
 npy_free_cache_dim(void * p, npy_uintp sz)
 {
-    /* dims + strides */
-    if (NPY_UNLIKELY(sz < 2)) {
+    /* see npy_alloc_cache_dim */
+    if (sz < 2) {
         sz = 2;
     }
     _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache,
