@@ -465,7 +465,7 @@ following.
 
             outputs = kwargs.pop('out', None)
             out_no = []
-            if outputs is not None:
+            if outputs:
                 out_args = []
                 for j, output in enumerate(outputs):
                     if isinstance(output, A):
@@ -474,6 +474,8 @@ following.
                     else:
                         out_args.append(output)
                 kwargs['out'] = tuple(out_args)
+            else:
+                outputs = (None,) * ufunc.nout
 
             info = {}
             if in_no:
@@ -486,14 +488,11 @@ following.
             if results is NotImplemented:
                 return NotImplemented
 
-            if not isinstance(results, tuple):
-                if not isinstance(results, np.ndarray):
-                    return results
+            if ufunc.nout == 1:
                 results = (results,)
 
-            if outputs is None:
-                outputs = [None] * len(results)
-            results = tuple(result.view(A) if output is None else output
+            results = tuple((np.asarray(result).view(A)
+                             if output is None else output)
                             for result, output in zip(results, outputs))
             if isinstance(results[0], A):
                 results[0].info = info
