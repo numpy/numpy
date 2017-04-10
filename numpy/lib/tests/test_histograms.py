@@ -431,7 +431,7 @@ class TestHistogramOptimBinNums(object):
 
     def test_empty(self):
         estimator_list = ['fd', 'scott', 'rice', 'sturges',
-                          'doane', 'sqrt', 'auto']
+                          'doane', 'sqrt', 'auto', 'stone']
         # check it can deal with empty data
         for estimator in estimator_list:
             a, b = histogram([], bins=estimator)
@@ -447,11 +447,11 @@ class TestHistogramOptimBinNums(object):
         # Some basic sanity checking, with some fixed data.
         # Checking for the correct number of bins
         basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,
-                             'doane': 8, 'sqrt': 8, 'auto': 7},
+                             'doane': 8, 'sqrt': 8, 'auto': 7, 'stone': 2},
                       500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10,
-                             'doane': 12, 'sqrt': 23, 'auto': 10},
+                             'doane': 12, 'sqrt': 23, 'auto': 10, 'stone': 9},
                       5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14,
-                             'doane': 17, 'sqrt': 71, 'auto': 17}}
+                             'doane': 17, 'sqrt': 71, 'auto': 17, 'stone': 20}}
 
         for testlen, expectedResults in basic_test.items():
             # Create some sort of non uniform data to test with
@@ -471,11 +471,11 @@ class TestHistogramOptimBinNums(object):
         precalculated.
         """
         small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
-                         'doane': 1, 'sqrt': 1},
+                         'doane': 1, 'sqrt': 1, 'stone': 1},
                      2: {'fd': 2, 'scott': 1, 'rice': 3, 'sturges': 2,
-                         'doane': 1, 'sqrt': 2},
+                         'doane': 1, 'sqrt': 2, 'stone': 1},
                      3: {'fd': 2, 'scott': 2, 'rice': 3, 'sturges': 3,
-                         'doane': 3, 'sqrt': 2}}
+                         'doane': 3, 'sqrt': 2, 'stone': 1}}
 
         for testlen, expectedResults in small_dat.items():
             testdat = np.arange(testlen)
@@ -499,7 +499,7 @@ class TestHistogramOptimBinNums(object):
         """
         novar_dataset = np.ones(100)
         novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
-                            'doane': 1, 'sqrt': 1, 'auto': 1}
+                            'doane': 1, 'sqrt': 1, 'auto': 1, 'stone': 1}
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
@@ -538,11 +538,31 @@ class TestHistogramOptimBinNums(object):
         xcenter = np.linspace(-10, 10, 50)
         outlier_dataset = np.hstack((np.linspace(-110, -100, 5), xcenter))
 
-        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11}
+        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11, 'stone': 6}
 
         for estimator, numbins in outlier_resultdict.items():
             a, b = np.histogram(outlier_dataset, estimator)
             assert_equal(len(a), numbins)
+
+    def test_scott_vs_ise(self):
+        """Verify that Scott's rule and the ISE based method converges for normally distributed data"""
+
+        def nbins_ratio(seed, size):
+            rng = np.random.RandomState(seed)
+            x = rng.normal(loc=0, scale=2, size=size)
+            a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
+            return a / (a + b)
+
+        ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
+              for seed in range(256)]
+
+        # the average difference between the two methods decreases as the dataset size increases.
+        assert_almost_equal(abs(np.mean(ll, axis=0) - 0.5),
+                            [0.1065248,
+                             0.0968844,
+                             0.0331818,
+                             0.0178057],
+                            decimal=3)
 
     def test_simple_range(self):
         """
@@ -555,11 +575,11 @@ class TestHistogramOptimBinNums(object):
         # Checking for the correct number of bins
         basic_test = {
                       50:   {'fd': 8,  'scott': 8,  'rice': 15,
-                             'sturges': 14, 'auto': 14},
+                             'sturges': 14, 'auto': 14, 'stone': 8},
                       500:  {'fd': 15, 'scott': 16, 'rice': 32,
-                             'sturges': 20, 'auto': 20},
+                             'sturges': 20, 'auto': 20, 'stone': 80},
                       5000: {'fd': 33, 'scott': 33, 'rice': 69,
-                             'sturges': 27, 'auto': 33}
+                             'sturges': 27, 'auto': 33, 'stone': 80}
                      }
 
         for testlen, expectedResults in basic_test.items():
