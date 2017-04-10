@@ -490,15 +490,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def isin(elements, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False):
     """
-    Test whether each element of an array is also present in a second array.
+    Calculates `element in test_elements`, broadcasting over `element` only.
     Returns a boolean array of the same shape as `elements` that is True
     where an element of `elements` is in `test_elements` and False otherwise.
 
     Parameters
     ----------
-    elements : array_like
+    element : array_like
         Input array.
     test_elements : array_like
         The values against which to test each value of `elements`.
@@ -516,7 +516,7 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
     Returns
     -------
     isin : ndarray, bool
-        Has the same shape as `elements`. The values `elements[isin]`
+        Has the same shape as `element`. The values `elements[isin]`
         are in `test_elements`.
 
     See Also
@@ -527,36 +527,36 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
     Notes
     -----
 
-    `isin` can be considered as an element-wise function version of the
-    python keyword `in`. ``isin(a, b)`` is roughly equivalent to
+    `isin` is an element-wise function version of the python keyword `in`.
+    ``isin(a, b)`` is roughly equivalent to
     ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.
-    
-    If `test_elements` is a set (or other non-sequence collection) it will 
-    be converted to an object array with one element, rather than an array 
-    of the values contained in `test_elements`. Converting the set to 
+
+    If `test_elements` is a set (or other non-sequence collection) it will
+    be converted to an object array with one element, rather than an array
+    of the values contained in `test_elements`. Converting the set to
     a list usually gives the desired behavior.
 
     .. versionadded:: 1.13.0
 
     Examples
     --------
-    >>> elements = np.array([[0, 2], [4, 6]])
+    >>> element = np.array([[0, 2], [4, 6]])
     >>> test_elements = [1, 2, 4, 8]
-    >>> mask = np.isin(elements, test_elements)
+    >>> mask = np.isin(element, test_elements)
     >>> mask
     array([[ False,  True],
            [ True,  False]], dtype=bool)
-    >>> elements[mask]
+    >>> element[mask]
     array([2, 4])
-    >>> mask = np.isin(elements, test_elements, invert=True)
+    >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
            [ False, True]], dtype=bool)
-    >>> elements[mask]
+    >>> element[mask]
     array([0, 6])"""
-    elements = np.array(elements)
-    return in1d(elements, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(elements.shape)
+    element = np.array(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
 
 
 def union1d(ar1, ar2):

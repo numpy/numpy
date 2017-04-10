@@ -1183,12 +1183,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx][rev_idx]
 
 
-def isin(elements, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False):
     """
-    Test whether each element of an array is also present in a second
-    array.
+    Calculates `element in test_elements`, broadcasting over
+    `element` only.
 
-    The output is always a masked array of the same shape as `elements`.
+    The output is always a masked array of the same shape as `element`.
     See `numpy.isin` for more details.
 
     See Also
@@ -1201,9 +1201,9 @@ def isin(elements, test_elements, assume_unique=False, invert=False):
     .. versionadded:: 1.13.0
 
     """
-    elements = ma.array(elements)
-    return in1d(elements, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(elements.shape)
+    element = ma.array(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
 
 
 def union1d(ar1, ar2):
