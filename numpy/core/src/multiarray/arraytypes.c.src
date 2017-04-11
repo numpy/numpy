@@ -274,7 +274,7 @@ static int
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
+        if (PyArray_IsZeroDim(op)) {
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
                                     (PyArrayObject *)op);
@@ -375,7 +375,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     npy_longdouble temp;
 
     /* Handle case of assigning from an array scalar */
-    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
+    if (PyArray_IsZeroDim(op)) {
         PyObject *temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
                                           (PyArrayObject *)op);
         if (temp == NULL) {
@@ -441,7 +441,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
 #endif
 
     /* Handle case of assigning from an array scalar */
-    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
+    if (PyArray_IsZeroDim(op)) {
         temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
                                 (PyArrayObject *)op);
         if (temp == NULL) {
@@ -542,7 +542,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     PyObject *temp = NULL;
 
     /* Handle case of assigning from an array scalar */
-    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
+    if (PyArray_IsZeroDim(op)) {
         temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
                                 (PyArrayObject *)op);
         if (temp == NULL) {
