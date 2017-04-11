@@ -1426,8 +1426,16 @@ def getmask(a):
 
 get_mask = getmask
 
+def _viewmaskarray(arr, allow_readonly=True):
+    mask = getmask(arr)
+    if mask is nomask:
+        mask = make_mask_none(
+            np.shape(arr),
+            dtype=getattr(arr, 'dtype', None),
+            writeable=not allow_readonly)
+    return mask
 
-def getmaskarray(arr, nomask_as_readonly=False):
+def getmaskarray(arr, allow_readonly=False):
     """
     Return the mask of a masked array, or full boolean array of False.
 
@@ -1439,9 +1447,9 @@ def getmaskarray(arr, nomask_as_readonly=False):
     ----------
     arr : array_like
         Input `MaskedArray` for which the mask is required.
-    nomask_as_readonly : bool
-        If True, return a read-only array that uses less memory when the mask
-        is `nomask`.
+    allow_readonly : bool, optional
+        If True, allow this function to produce a readonly array when doing so
+        would increase performance. The default is False.
 
     See Also
     --------
@@ -1479,16 +1487,8 @@ def getmaskarray(arr, nomask_as_readonly=False):
            [False, False]], dtype=bool)
 
     """
-    mask = getmask(arr)
-    if mask is nomask:
-        mask = make_mask_none(
-            np.shape(arr),
-            dtype=getattr(arr, 'dtype', None),
-            readonly=nomask_as_readonly)
-    return mask
+    return _viewmaskarray(arr, allow_readonly)
 
-def _viewmaskarray(arr):
-    return getmaskarray(arr, nomask_as_readonly=True)
 
 def is_mask(m):
     """
@@ -1643,7 +1643,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
         return result
 
 
-def make_mask_none(newshape, dtype=None, readonly=False):
+def make_mask_none(newshape, dtype=None, writeable=True):
     """
     Return a boolean mask of the given shape, filled with False.
 
@@ -1658,8 +1658,9 @@ def make_mask_none(newshape, dtype=None, readonly=False):
     dtype : {None, dtype}, optional
         If None, use a MaskType instance. Otherwise, use a new datatype with
         the same fields as `dtype`, converted to boolean types.
-    readonly : bool
-        If True, return a read-only array that uses less memory.
+    writeable : bool
+        If True, return a normal array. If false, return a broadcasting array
+        that only stores one element of memory, but as a result is readonly.
 
     Returns
     -------
@@ -1693,7 +1694,7 @@ def make_mask_none(newshape, dtype=None, readonly=False):
     else:
         dtype = make_mask_descr(dtype)
 
-    if not readonly:
+    if writeable:
         return np.zeros(newshape, dtype=dtype)
 
     else:
@@ -3015,7 +3016,7 @@ class MaskedArray(ndarray):
             except ValueError:
                 self._mask = nomask
             except (TypeError, AttributeError):
-                # When _mask.shape is not writable (because it's a void)
+                # When _mask.shape is not writeable (because it's a void)
                 pass
         # Finalize the fill_value for structured arrays
         if self.dtype.names:
