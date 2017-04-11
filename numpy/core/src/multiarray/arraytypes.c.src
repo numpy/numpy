@@ -33,6 +33,7 @@
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
 #include <limits.h>
+#include <assert.h>
 
 /*
  *****************************************************************************
@@ -68,6 +69,26 @@ static PyObject *
 MyPyFloat_FromHalf(npy_half h)
 {
     return PyFloat_FromDouble(npy_half_to_double(h));
+}
+
+/* Handle case of assigning from an array scalar in setitem */
+static int
+convert_to_scalar_and_retry(PyObject *op, void *ov, void *vap,
+                      int (*setitem)(PyObject *op, void *ov, void *vap))
+{
+    PyObject *temp;
+
+    assert(PyArray_IsZeroDim(op));
+    temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                      (PyArrayObject *)op);
+    if (temp == NULL) {
+        return -1;
+    }
+    else {
+        int res = setitem(temp, ov, vap);
+        Py_DECREF(temp);
+        return res;
+    }
 }
 
 
@@ -378,18 +399,8 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     /* ensure alignment */
     npy_longdouble temp;
 
-    /* Handle case of assigning from an array scalar */
     if (PyArray_IsZeroDim(op)) {
-        PyObject *temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
-                                          (PyArrayObject *)op);
-        if (temp == NULL) {
-            return -1;
-        }
-        else {
-            int res = LONGDOUBLE_setitem(temp, ov, ap);
-            Py_DECREF(temp);
-            return res;
-        }
+        return convert_to_scalar_and_retry(op, ov, vap, LONGDOUBLE_setitem);
     }
 
     if (PyArray_IsScalar(op, LongDouble)) {
@@ -444,18 +455,8 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     char *buffer;
 #endif
 
-    /* Handle case of assigning from an array scalar */
     if (PyArray_IsZeroDim(op)) {
-        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
-                                (PyArrayObject *)op);
-        if (temp == NULL) {
-            return -1;
-        }
-        else {
-            int res = UNICODE_setitem(temp, ov, ap);
-            Py_DECREF(temp);
-            return res;
-        }
+        return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
     }
 
     if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
@@ -545,18 +546,8 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    /* Handle case of assigning from an array scalar */
     if (PyArray_IsZeroDim(op)) {
-        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
-                                (PyArrayObject *)op);
-        if (temp == NULL) {
-            return -1;
-        }
-        else {
-            int res = STRING_setitem(temp, ov, ap);
-            Py_DECREF(temp);
-            return res;
-        }
+        return convert_to_scalar_and_retry(op, ov, vap, STRING_setitem);
     }
 
     if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
