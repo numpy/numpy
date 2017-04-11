@@ -12,6 +12,7 @@ import functools
 import ctypes
 import os
 import gc
+from contextlib import contextmanager
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -380,6 +381,72 @@ class TestAssignment(TestCase):
 
         assert_raises((AttributeError, TypeError), assign, C())
         assert_raises(ValueError, assign, [1])
+
+    def test_unicode_assignment(self):
+        # gh-5049
+        from numpy.core.numeric import set_string_function
+
+        @contextmanager
+        def inject_str(s):
+            """ replace ndarray.__str__ temporarily """
+            set_string_function(lambda x: s, repr=False)
+            try:
+                yield
+            finally:
+                set_string_function(None, repr=False)
+
+        a1d = np.array([u'test'])
+        a0d = np.array(u'done')
+        with inject_str(u'bad'):
+            a1d[0] = a0d  # previously this would invoke __str__
+        assert_equal(a1d[0], u'done')
+
+        # this would crash for the same reason
+        np.array([np.array(u'\xe5\xe4\xf6')])
+
+    def test_stringlike_empty_list(self):
+        # gh-8902
+        u = np.array([u'done'])
+        b = np.array([b'done'])
+
+        class bad_sequence(object):
+            def __getitem__(self): pass
+            def __len__(self): raise RuntimeError
+
+        assert_raises(ValueError, operator.setitem, u, 0, [])
+        assert_raises(ValueError, operator.setitem, b, 0, [])
+
+        assert_raises(ValueError, operator.setitem, u, 0, bad_sequence())
+        assert_raises(ValueError, operator.setitem, b, 0, bad_sequence())
+
+    def test_longdouble_assignment(self):
+        # only relevant if longdouble is larger than float
+        # we're looking for loss of precision
+
+        # gh-8902
+        tinyb = np.nextafter(np.longdouble(0), 1)
+        tinya =  np.nextafter(np.longdouble(0), -1)
+        tiny1d = np.array([tinya])
+        assert_equal(tiny1d[0], tinya)
+
+        # scalar = scalar
+        tiny1d[0] = tinyb
+        assert_equal(tiny1d[0], tinyb)
+
+        # 0d = scalar
+        tiny1d[0, ...] = tinya
+        assert_equal(tiny1d[0], tinya)
+
+        # 0d = 0d
+        tiny1d[0, ...] = tinyb[...]
+        assert_equal(tiny1d[0], tinyb)
+
+        # scalar = 0d
+        tiny1d[0] = tinyb[...]
+        assert_equal(tiny1d[0], tinyb)
+
+        arr = np.array([np.array(tinya)])
+        assert_equal(arr[0], tinya)
 
 
 class TestDtypedescr(TestCase):
