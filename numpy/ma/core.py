@@ -1699,19 +1699,19 @@ def make_mask_none(newshape, dtype=None, readonly=False):
     else:
         # build a buffer of the single scalar mask
         if dtype == MaskType:
-            buff = np.ma.nomask
+            # optimization - bytes->buffer is faster than np.ma.nomask->buffer
+            buff = b'\0'  # np.ma.nomask
         else:
             buff = np.zeros((), dtype=dtype)
             buff.flags.writeable = False
 
         # duplicate it using zero strides
         # like np.lib.stride_tricks.as_strided, but faster
-        return np.ndarray(
-            buffer=buff,
-            shape=newshape,
-            strides=(0,)*len(newshape),
-            dtype=dtype
-        )
+        offset = 0
+        strides = (0,)*len(newshape)
+
+        # optimization - positional arguments, for speed
+        return np.ndarray(newshape, dtype, buff, offset, strides)
 
 
 def mask_or(m1, m2, copy=False, shrink=True):
