@@ -103,8 +103,10 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     in_dims = list(range(nd))
     inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis+1:] + [axis])
 
-    # compute indices for the iteration axes
+    # compute indices for the iteration axes, and append a trailing ellipsis to
+    # prevent 0d arrays decaying to scalars, which fixes gh-8642
     inds = ndindex(inarr_view.shape[:-1])
+    inds = (ind + (Ellipsis,) for ind in inds)
 
     # invoke the function on the first item
     try:
