@@ -275,6 +275,10 @@ static int
     }
     else {
         if (PyArray_IsZeroDim(op)) {
+            /*
+             * TODO: Elsewhere in this file we use PyArray_ToScalar. Is this
+             *       better or worse? Possibly an optimization.
+             */
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
                                     (PyArrayObject *)op);
