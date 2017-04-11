@@ -208,9 +208,8 @@ def main(argv):
 
         if not args.bench_compare:
             cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
-            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
-            os.execvp(cmd[0], cmd)
-            sys.exit(1)
+            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            sys.exit(ret)
         else:
             commits = [x.strip() for x in args.bench_compare.split(',')]
             if len(commits) == 1:
@@ -233,21 +232,16 @@ def main(argv):
                     print("*"*80)
 
             # Fix commit ids (HEAD is local to current repo)
-            p = subprocess.Popen(['git', 'rev-parse', commit_b],
-                                 stdout=subprocess.PIPE)
-            out, err = p.communicate()
+            out = subprocess.check_output(['git', 'rev-parse', commit_b])
             commit_b = out.strip()
 
-            p = subprocess.Popen(['git', 'rev-parse', commit_a],
-                                 stdout=subprocess.PIPE)
-            out, err = p.communicate()
+            out = subprocess.check_output(['git', 'rev-parse', commit_a])
             commit_a = out.strip()
 
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
                    commit_a, commit_b] + bench_args
-            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
-            os.execvp(cmd[0], cmd)
-            sys.exit(1)
+            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            sys.exit(ret)
 
     test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
