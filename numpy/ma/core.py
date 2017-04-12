@@ -2556,7 +2556,7 @@ def flatten_structured_array(a):
         out = np.array([tuple(flatten_sequence(d.item())) for d in a._data])
         out = out.view(MaskedArray)
         out._mask = np.array([tuple(flatten_sequence(d.item()))
-                              for d in getmaskarray(a)])
+                              for d in _viewmaskarray(a)])
     else:
         out = np.array([tuple(flatten_sequence(d.item())) for d in a])
     if len(inishape) > 1:
