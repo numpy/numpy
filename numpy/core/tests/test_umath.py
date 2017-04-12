@@ -1951,13 +1951,16 @@ class TestSpecialMethods(TestCase):
                 if results is NotImplemented:
                     return NotImplemented
 
+                if method == 'at':
+                    return
+
                 if ufunc.nout == 1:
                     results = (results,)
 
                 results = tuple((np.asarray(result).view(A)
                                  if output is None else output)
                                 for result, output in zip(results, outputs))
-                if isinstance(results[0], A):
+                if results and isinstance(results[0], A):
                     results[0].info = info
 
                 return results[0] if len(results) == 1 else results
@@ -1970,8 +1973,8 @@ class TestSpecialMethods(TestCase):
                     return NotImplemented
 
         d = np.arange(5.)
-        a = np.arange(5.).view(A)
         # 1 input, 1 output
+        a = np.arange(5.).view(A)
         b = np.sin(a)
         check = np.sin(d)
         assert_(np.all(check == b))
@@ -1984,6 +1987,7 @@ class TestSpecialMethods(TestCase):
         b = np.sin(a, out=a)
         assert_(np.all(check == b))
         assert_equal(b.info, {'inputs': [0], 'outputs': [0]})
+
         # 1 input, 2 outputs
         a = np.arange(5.).view(A)
         b1, b2 = np.modf(a)
@@ -1997,6 +2001,7 @@ class TestSpecialMethods(TestCase):
         assert_(c1 is a)
         assert_(c2 is b)
         assert_equal(c1.info, {'inputs': [0], 'outputs': [0, 1]})
+
         # 2 input, 1 output
         a = np.arange(5.).view(A)
         b = np.arange(5.).view(A)
