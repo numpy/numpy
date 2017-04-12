@@ -1201,7 +1201,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     .. versionadded:: 1.13.0
 
     """
-    element = ma.array(element)
+    element = ma.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
 

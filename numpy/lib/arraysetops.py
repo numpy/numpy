@@ -493,15 +493,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 def isin(element, test_elements, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over `element` only.
-    Returns a boolean array of the same shape as `elements` that is True
-    where an element of `elements` is in `test_elements` and False otherwise.
+    Returns a boolean array of the same shape as `element` that is True
+    where an element of `element` is in `test_elements` and False otherwise.
 
     Parameters
     ----------
     element : array_like
         Input array.
     test_elements : array_like
-        The values against which to test each value of `elements`.
+        The values against which to test each value of `element`.
         This argument is flattened if it is an array or array_like.
         See notes for behavior with non-array-like parameters.
     assume_unique : bool, optional
@@ -516,7 +516,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     Returns
     -------
     isin : ndarray, bool
-        Has the same shape as `element`. The values `elements[isin]`
+        Has the same shape as `element`. The values `element[isin]`
         are in `test_elements`.
 
     See Also
@@ -531,10 +531,12 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     ``isin(a, b)`` is roughly equivalent to
     ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.
 
-    If `test_elements` is a set (or other non-sequence collection) it will
-    be converted to an object array with one element, rather than an array
-    of the values contained in `test_elements`. Converting the set to
-    a list usually gives the desired behavior.
+    `element` and `test_elements` are converted to arrays if they are not
+    already. If `test_elements` is a set (or other non-sequence collection)
+    it will be converted to an object array with one element, rather than an
+    array of the values contained in `test_elements`. This is a consequence of
+    the `array` constructor's way of handling non-sequence collections.
+    Converting the set to a list usually gives the desired behavior.
 
     .. versionadded:: 1.13.0
 
@@ -554,7 +556,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
            [ False, True]], dtype=bool)
     >>> element[mask]
     array([0, 6])"""
-    element = np.array(element)
+    element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
 

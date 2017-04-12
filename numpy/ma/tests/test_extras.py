@@ -1437,21 +1437,25 @@ class TestArraySetOps(TestCase):
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
-        # if in1d is deprecated, would need to change those tests to test
+        # if in1d is removed, would need to change those tests to test
         # isin instead.
         a = np.arange(24).reshape([2, 3, 4])
         mask = np.zeros([2, 3, 4])
         mask[1, 2, 0] = 1
         a = array(a, mask=mask)
-        #masked:   N   Y   N   Y  N  Y   N   Y   N
-        b = array([0, 10, 20, 30, 1, 3, 11, 22, 33],
-                  mask=[0, 1, 0, 1, 0, 1, 0, 1, 0])
+        values = [0, 10, 20, 30,  1,  3, 11, 22, 33]
+        mask   = [0,  1,  0,  1,  0,  1,  0,  1,  0]
+        b = array(values, mask=mask)
         ec = zeros((2, 3, 4), dtype=bool)
         ec[0, 0, 0] = True
         ec[0, 0, 1] = True
         ec[0, 2, 3] = True
         c = isin(a, b)
+        assert_(isinstance(c, MaskedArray))
         assert_array_equal(c, ec)
+        #compare np.isin to ma.isin
+        d = np.isin(a, b)
+        assert_array_equal(c, d)
 
     def test_in1d(self):
         # Test in1d
