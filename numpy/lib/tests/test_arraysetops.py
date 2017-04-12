@@ -81,11 +81,14 @@ class TestSetOps(TestCase):
         # the tests for in1d cover most of isin's behavior
         # if in1d is removed, would need to change those tests to test
         # isin instead.
-        
-        isin_slow = np.vectorize(lambda a, b: a in np.asarray(b),
-                                 excluded={'b'})
-        def assert_isin_equal(a, b): 
-            assert_array_equal(isin(a, b), isin_slow(a, b))
+        def _isin_slow(a, b):
+            b = np.asarray(b).flatten().tolist()
+            return a in b
+        isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
+        def assert_isin_equal(a, b):
+            x = isin(a, b)
+            y = isin_slow(a, b)
+            assert_array_equal(x, y)
         #multidimensional arrays in both arguments
         a = np.arange(24).reshape([2, 3, 4])
         b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
@@ -94,14 +97,14 @@ class TestSetOps(TestCase):
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
-        #scalar as:
+        #zero-d scalar as:
         #1st arg
         assert_isin_equal(5, b)
         #2nd arg
-        assert_isin_equal(a, 5)
+        assert_isin_equal(a, 6)
         #both args
         assert_isin_equal(5, 6)
-        #zero-d array-like as...
+        #empty array-like as:
         x = []
         #1st arg
         assert_isin_equal(x, b)
