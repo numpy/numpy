@@ -488,13 +488,16 @@ following.
             if results is NotImplemented:
                 return NotImplemented
 
+            if method == 'at':
+                return
+
             if ufunc.nout == 1:
                 results = (results,)
 
             results = tuple((np.asarray(result).view(A)
                              if output is None else output)
                             for result, output in zip(results, outputs))
-            if isinstance(results[0], A):
+            if results and isinstance(results[0], A):
                 results[0].info = info
 
             return results[0] if len(results) == 1 else results
