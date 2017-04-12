@@ -169,7 +169,7 @@ The function dispatch proceeds as follows:
 - If one of the input or output arguments implements
   ``__array_ufunc__``, it is executed instead of the ufunc.
 
-- If more than one of the input arguments implements ``__array_ufunc__``,
+- If more than one of the arguments implements ``__array_ufunc__``,
   they are tried in the following order: subclasses before superclasses,
   inputs before outputs, otherwise left to right.
 
@@ -343,7 +343,7 @@ equivalent to::
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         # Cannot handle items that have __array_ufunc__ (other than our own).
         outputs = kwargs.get('out', ())
-        for item in inputs + outputs):
+        for item in inputs + outputs:
             if (hasattr(item, '__array_ufunc__') and
                     type(item).__array_ufunc__ is not ndarray.__array_ufunc__):
                 return NotImplemented
@@ -372,8 +372,9 @@ the superclass implementation using :func:`super` until the ufunc is
 actually done, and then do possible adjustments of the outputs.
 
 In general, custom implementations of `__array_ufunc__` should avoid
-nested dispatch cycles.  However, for some subclasses, it may be better
-to use ``getattr(ufunc, method)(*items, **kwargs)``. For instance, for a
+nested dispatch cycles, where one not just calls the ufunc via
+``getattr(ufunc, method)(*items, **kwargs)``, but catches possible
+exceptions, etc.  As always, there may be exceptions. For instance, for a
 class like :class:`MaskedArray`, which only cares that whatever
 it contains is an :class:`ndarray` subclass, a reimplementation with
 ``__array_ufunc__`` may well be more easily done by directly applying
@@ -385,8 +386,8 @@ the implementation would be something like::
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         # for simplicity, outputs are ignored here.
-        unmasked_items = [item.data if isinstance(item, MaskedArray)
-                          else item]
+        unmasked_items = tuple((item.data if isinstance(item, MaskedArray)
+                                else item) for item in inputs)
         try:
             unmasked_result = getattr(ufunc, method)(*unmasked_items, **kwargs)
         except TypeError:
@@ -549,7 +550,7 @@ with ``mine`` and will thus return :obj:`NotImplemented`.  Then, the
 ufunc turns to ``mine.__array_ufunc__``. But this is :obj:`None`,
 equivalent to returning :obj:`NotImplemented`, so a :exc:`TypeError` is
 raised.  In option (2), we pass directly to ``arr.__array_ufunc__``,
-which will return :obj:`NotImplemted`, which we catch.
+which will return :obj:`NotImplemented`, which we catch.
 
 .. note :: the reason for not allowing in-place operations to return
    :obj:`NotImplemented` is that these cannot generically be replaced by
