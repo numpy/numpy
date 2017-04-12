@@ -1324,7 +1324,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
         totlist = np.logical_or.reduce(condlist, axis=0)
         # Only able to stack vertically if the array is 1d or less
         if x.ndim <= 1:
-            condlist = np.vstack([condlist, ~totlist])
+            totlist = np.any(condlist, axis=0, keepdims=True)
+            condlist = np.concatenate([condlist, ~totlist], axis=0)
         else:
             condlist = [asarray(c, dtype=bool) for c in condlist]
             totlist = condlist[0]
@@ -2965,7 +2966,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
-    >>> X = np.vstack((x,y))
+    >>> X = np.stack((x, y), axis=0)
     >>> print(np.cov(X))
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
@@ -3003,7 +3004,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         y = array(y, copy=False, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
             y = y.T
-        X = np.vstack((X, y))
+        X = np.concatenate((X, y), axis=0)
 
     if ddof is None:
         if bias == 0:
