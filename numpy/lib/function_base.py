@@ -1321,17 +1321,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
         x = x[None]
         zerod = True
     if n == n2 - 1:  # compute the "otherwise" condition.
-        totlist = np.logical_or.reduce(condlist, axis=0)
-        # Only able to stack vertically if the array is 1d or less
-        if x.ndim <= 1:
-            totlist = np.any(condlist, axis=0, keepdims=True)
-            condlist = np.concatenate([condlist, ~totlist], axis=0)
-        else:
-            condlist = [asarray(c, dtype=bool) for c in condlist]
-            totlist = condlist[0]
-            for k in range(1, n):
-                totlist |= condlist[k]
-            condlist.append(~totlist)
+        condelse = ~np.any(condlist, axis=0, keepdims=True)
+        condlist = np.concatenate([condlist, condelse], axis=0)
         n += 1
 
     y = zeros(x.shape, x.dtype)
