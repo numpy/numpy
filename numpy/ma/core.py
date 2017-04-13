@@ -5673,10 +5673,7 @@ class MaskedArray(ndarray):
             "`mini` is deprecated; use the `min` method or "
             "`np.ma.minimum.reduce instead.",
             DeprecationWarning, stacklevel=2)
-        if axis is None:
-            return minimum(self)
-        else:
-            return minimum.reduce(self, axis)
+        return minimum.reduce(self, axis)
 
     def max(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -6371,9 +6368,18 @@ class _extrema_operation(object):
 
     """
 
+    @property
+    def __name__(self):
+        return self.ufunc.__name__
+
     def __call__(self, a, b=None):
         "Executes the call behavior."
         if b is None:
+            # 2016-04-13, 1.13.0
+            warnings.warn(
+                "Single-argument form of np.ma.{0} is deprecated. Use "
+                "np.ma.{0}.reduce instead.".format(self.__name__),
+                DeprecationWarning, stacklevel=2)
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
 
