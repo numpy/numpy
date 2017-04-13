@@ -389,9 +389,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise.
 
-    This function has been deprecated: use `isin` instead.
-
-    Deprecated since version 1.13.0.
+    .. deprecated:: 1.13.0
+                    Replaced by :func:`isin`.
 
     Parameters
     ----------

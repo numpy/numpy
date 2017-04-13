@@ -97,20 +97,19 @@ class TestSetOps(TestCase):
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
-        #zero-d scalar as:
-        #1st arg
+        #zero-d array:
+        f = np.array([3])
+        assert_isin_equal(f, b)
+        assert_isin_equal(a, f)
+        assert_isin_equal(f, f)
+        #scalar:
         assert_isin_equal(5, b)
-        #2nd arg
         assert_isin_equal(a, 6)
-        #both args
         assert_isin_equal(5, 6)
-        #empty array-like as:
+        #empty array-like:
         x = []
-        #1st arg
         assert_isin_equal(x, b)
-        #2nd arg
         assert_isin_equal(a, x)
-        #both args
         assert_isin_equal(x, x)
 
     def test_in1d(self):
