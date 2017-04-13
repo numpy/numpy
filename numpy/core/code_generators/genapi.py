@@ -417,14 +417,17 @@ def merge_api_dicts(dicts):
 
 def check_api_dict(d):
     """Check that an api dict is valid (does not use the same index twice)."""
+    # remove the extra value fields that aren't the index
+    index_d = {k: v[0] for k, v in d.items()}
+
     # We have if a same index is used twice: we 'revert' the dict so that index
     # become keys. If the length is different, it means one index has been used
     # at least twice
-    revert_dict = dict([(v, k) for k, v in d.items()])
-    if not len(revert_dict) == len(d):
+    revert_dict = {v: k for k, v in index_d.items()}
+    if not len(revert_dict) == len(index_d):
         # We compute a dict index -> list of associated items
         doubled = {}
-        for name, index in d.items():
+        for name, index in index_d.items():
             try:
                 doubled[index].append(name)
             except KeyError:
@@ -436,9 +439,9 @@ Same index has been used twice in api definition: %s
         raise ValueError(msg)
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
-    indexes = set(v[0] for v in d.values())
+    indexes = set(index_d.values())
     expected = set(range(len(indexes)))
-    if not indexes == expected:
+    if indexes != expected:
         diff = expected.symmetric_difference(indexes)
         msg = "There are some holes in the API indexing: " \
               "(symmetric diff is %s)" % diff
