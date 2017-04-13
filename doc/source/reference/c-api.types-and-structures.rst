@@ -218,7 +218,7 @@ PyArrayDescr_Type
     interface typestring notation). A 'b' represents Boolean, a 'i'
     represents signed integer, a 'u' represents unsigned integer, 'f'
     represents floating point, 'c' represents complex floating point, 'S'
-    represents 8-bit character string, 'U' represents 32-bit/character
+    represents 8-bit zero-terminated bytes, 'U' represents 32-bit/character
     unicode string, and 'V' represents arbitrary.
 
 .. c:member:: char PyArray_Descr.type
@@ -300,7 +300,7 @@ PyArrayDescr_Type
     .. c:function:: PyDataType_REFCHK(PyArray_Descr *dtype)
 
         Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
- 	:c:data:`NPY_ITEM_REFCOUNT`).
+        :c:data:`NPY_ITEM_REFCOUNT`).
 
 .. c:member:: int PyArray_Descr.type_num
 
