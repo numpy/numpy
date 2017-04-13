@@ -29,9 +29,10 @@ Deprecations
 * Use of the C-API ``NPY_CHAR`` type number deprecated since version 1.7 will
   now raise deprecation warnings at runtime. Extensions built with older f2py
   versions need to be recompiled to remove the warning.
-* ``np.ma.argsort`` should be called with an explicit `axis` argument when
-  applied to arrays with more than 2 dimensions, as the default value of
-  this argument (``None``) is inconsistent with the rest of numpy (``-1``).
+* ``np.ma.argsort``, ``np.ma.minimum.reduce``, and ``np.ma.maximum.reduce``
+  should be called with an explicit `axis` argument when applied to arrays with
+  more than 2 dimensions, as the default value of this argument (``None``) is
+  inconsistent with the rest of numpy (``-1``, ``0``, and ``0``, respectively).
 * ``np.ma.MaskedArray.mini`` is deprecated, as it almost duplicates the
   functionality of ``np.MaskedArray.min``. Exactly equivalent behaviour
   can be obtained with ``np.ma.minimum.reduce``.

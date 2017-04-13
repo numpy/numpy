@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import TestCase, run_module_suite, assert_warns
 from numpy.ma.testutils import assert_equal
-
+from numpy.ma.core import MaskedArrayFutureWarning
 
 class TestArgsort(TestCase):
 	""" gh-8701 """
@@ -43,6 +43,31 @@ class TestMinimumMaximum(TestCase):
 
     def test_maximum(self):
         assert_warns(DeprecationWarning, np.ma.maximum, np.ma.array([1, 2]))
+
+    def test_axis_default(self):
+        # NumPy 1.13, 2017-05-06
+
+        data1d = np.ma.arange(6)
+        data2d = data1d.reshape(2, 3)
+
+        ma_min = np.ma.minimum.reduce
+        ma_max = np.ma.maximum.reduce
+
+        # check that the default axis is still None, but warns on 2d arrays
+        result = assert_warns(MaskedArrayFutureWarning, ma_max, data2d)
+        assert_equal(result, ma_max(data2d, axis=None))
+
+        result = assert_warns(MaskedArrayFutureWarning, ma_min, data2d)
+        assert_equal(result, ma_min(data2d, axis=None))
+
+        # no warnings on 1d, as both new and old defaults are equivalent
+        result = ma_min(data1d)
+        assert_equal(result, ma_min(data1d, axis=None))
+        assert_equal(result, ma_min(data1d, axis=0))
+
+        result = ma_max(data1d)
+        assert_equal(result, ma_max(data1d, axis=None))
+        assert_equal(result, ma_max(data1d, axis=0))
 
 
 if __name__ == "__main__":
