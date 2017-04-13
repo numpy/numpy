@@ -101,7 +101,7 @@ class TestSetOps(TestCase):
         assert_isin_equal(c, d)
         
         #zero-d array:
-        f = np.array([3])
+        f = np.array(3)
         assert_isin_equal(f, b)
         assert_isin_equal(a, f)
         assert_isin_equal(f, f)
