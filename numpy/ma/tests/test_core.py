@@ -1049,8 +1049,8 @@ class TestMaskedArrayArithmetic(TestCase):
         xr = np.ravel(x)
         xmr = ravel(xm)
         # following are true because of careful selection of data
-        assert_equal(max(xr), maximum(xmr))
-        assert_equal(min(xr), minimum(xmr))
+        assert_equal(max(xr), maximum.reduce(xmr))
+        assert_equal(min(xr), minimum.reduce(xmr))
 
         assert_equal(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3])
         assert_equal(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9])
@@ -1060,12 +1060,12 @@ class TestMaskedArrayArithmetic(TestCase):
         y[0] = masked
         assert_equal(minimum(x, y), where(less(x, y), x, y))
         assert_equal(maximum(x, y), where(greater(x, y), x, y))
-        assert_(minimum(x) == 0)
-        assert_(maximum(x) == 4)
+        assert_(minimum.reduce(x) == 0)
+        assert_(maximum.reduce(x) == 4)
 
         x = arange(4).reshape(2, 2)
         x[-1, -1] = masked
-        assert_equal(maximum(x), 2)
+        assert_equal(maximum.reduce(x), 2)
 
     def test_minimummaximum_func(self):
         a = np.ones((2, 2))

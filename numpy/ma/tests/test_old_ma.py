@@ -182,8 +182,8 @@ class TestMa(TestCase):
         xmr = ravel(xm)
 
         # true because of careful selection of data
-        self.assertTrue(eq(max(xr), maximum(xmr)))
-        self.assertTrue(eq(min(xr), minimum(xmr)))
+        self.assertTrue(eq(max(xr), maximum.reduce(xmr)))
+        self.assertTrue(eq(min(xr), minimum.reduce(xmr)))
 
     def test_testAddSumProd(self):
         # Test add, sum, product.
@@ -444,8 +444,8 @@ class TestMa(TestCase):
         y[0] = masked
         assert_(eq(minimum(x, y), where(less(x, y), x, y)))
         assert_(eq(maximum(x, y), where(greater(x, y), x, y)))
-        assert_(minimum(x) == 0)
-        assert_(maximum(x) == 4)
+        assert_(minimum.reduce(x) == 0)
+        assert_(maximum.reduce(x) == 4)
 
     def test_testTakeTransposeInnerOuter(self):
         # Test of take, transpose, inner, outer products
