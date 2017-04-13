@@ -31,7 +31,9 @@ Deprecations
 * ``np.ma.argsort`` should be called with an explicit `axis` argument when
   applied to arrays with more than 2 dimensions, as the default value of
   this argument (``None``) is inconsistent with the rest of numpy (``-1``).
-
+* ``np.ma.MaskedArray.mini`` is deprecated, as it almost duplicates the
+  functionality of ``np.MaskedArray.min``. Exactly equivalent behaviour
+  can be obtained with ``np.ma.minimum.reduce``.
 
 Build System Changes
 ====================
