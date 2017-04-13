@@ -1518,11 +1518,14 @@ def matrix_rank(M, tol=None):
     ----------
     M : {(M,), (..., M, N)} array_like
         input vector or stack of matrices
-    tol : {None, float}, optional
-       threshold below which SVD values are considered zero. If `tol` is
-       None, and ``S`` is an array with singular values for `M`, and
-       ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
-       set to ``S.max() * max(M.shape) * eps``.
+    tol : (...) array_like, float, optional
+        threshold below which SVD values are considered zero. If `tol` is
+        None, and ``S`` is an array with singular values for `M`, and
+        ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
+        set to ``S.max() * max(M.shape) * eps``.
+
+        .. versionchanged:: 1.14
+           Broadcasted against the stack of matrices
 
     Notes
     -----
@@ -1589,6 +1592,8 @@ def matrix_rank(M, tol=None):
     S = svd(M, compute_uv=False)
     if tol is None:
         tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+    else:
+        tol = asarray(tol)[...,newaxis]
     return (S > tol).sum(axis=-1)
 
 
