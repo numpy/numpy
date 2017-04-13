@@ -1528,7 +1528,8 @@ def matrix_rank(M, tol=None):
     Parameters
     ----------
     M : {(M,), (..., M, N)} array_like
-        input vector or stack of matrices
+        input vector or stack of matrices. The ability to handle stacked
+        matrices was added in Numpy 1.13.0.
     tol : {None, float}, optional
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
