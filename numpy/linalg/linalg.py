@@ -1527,8 +1527,8 @@ def matrix_rank(M, tol=None):
 
     Parameters
     ----------
-    M : {(M,), (M, N)} array_like
-        array of <=2 dimensions
+    M : {(M,), (..., M, N)} array_like
+        input vector or stack of matrices
     tol : {None, float}, optional
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
@@ -1595,14 +1595,12 @@ def matrix_rank(M, tol=None):
     0
     """
     M = asarray(M)
-    if M.ndim > 2:
-        raise TypeError('array should have 2 or fewer dimensions')
     if M.ndim < 2:
         return int(not all(M==0))
     S = svd(M, compute_uv=False)
     if tol is None:
-        tol = S.max() * max(M.shape) * finfo(S.dtype).eps
-    return sum(S > tol)
+        tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+    return (S > tol).sum(axis=-1)
 
 
 # Generalized inverse
