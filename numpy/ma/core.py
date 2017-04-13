@@ -6383,24 +6383,34 @@ class _extrema_operation(object):
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
 
-    def reduce(self, target, axis=None):
+    def reduce(self, target, axis=np._NoValue):
         "Reduce target along the given axis."
         target = narray(target, copy=False, subok=True)
         m = getmask(target)
-        if axis is not None:
-            kargs = {'axis': axis}
+
+        if axis is np._NoValue and target.ndim > 1:
+            # 2017-05-06, Numpy 1.13.0: warn on axis default
+            warnings.warn(
+                "In the future the default for ma.{0}.reduce will be axis=0, "
+                "not the current None, to match np.{0}.reduce. "
+                "Explicitly pass 0 or None to silence this warning.".format(
+                    self.__name__
+                ),
+                MaskedArrayFutureWarning, stacklevel=2)
+            axis = None
+
+        if axis is not np._NoValue:
+            kwargs = dict(axis=axis)
         else:
-            kargs = {}
-            target = target.ravel()
-            if not (m is nomask):
-                m = m.ravel()
+            kwargs = dict()
+
         if m is nomask:
-            t = self.ufunc.reduce(target, **kargs)
+            t = self.ufunc.reduce(target, **kwargs)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
-            t = self.ufunc.reduce(target, **kargs)
-            m = umath.logical_and.reduce(m, **kargs)
+            t = self.ufunc.reduce(target, **kwargs)
+            m = umath.logical_and.reduce(m, **kwargs)
             if hasattr(t, '_mask'):
                 t._mask = m
             elif m:
@@ -6433,7 +6443,6 @@ class _minimum_operation(_extrema_operation):
 In one argument case, returns the scalar minimum.
         """
         self.ufunc = umath.minimum
-        self.afunc = amin
         self.compare = less
         self.fill_value_func = minimum_fill_value
 
@@ -6447,7 +6456,6 @@ class _maximum_operation(_extrema_operation):
            In one argument case returns the scalar maximum.
         """
         self.ufunc = umath.maximum
-        self.afunc = amax
         self.compare = greater
         self.fill_value_func = maximum_fill_value
 

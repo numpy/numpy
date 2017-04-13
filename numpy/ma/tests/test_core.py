@@ -1065,7 +1065,7 @@ class TestMaskedArrayArithmetic(TestCase):
 
         x = arange(4).reshape(2, 2)
         x[-1, -1] = masked
-        assert_equal(maximum.reduce(x), 2)
+        assert_equal(maximum.reduce(x, axis=None), 2)
 
     def test_minimummaximum_func(self):
         a = np.ones((2, 2))
