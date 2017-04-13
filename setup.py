@@ -357,6 +357,7 @@ def setup_package():
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
+        setup_requires=['cython'],
     )
 
     if "--force" in sys.argv:
