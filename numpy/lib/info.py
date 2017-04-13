@@ -136,19 +136,19 @@ Threading Tricks
 ParallelExec     Execute commands in parallel thread.
 ================ ===================
 
-1D Array Set Operations
+Array Set Operations
 -----------------------
-Set operations for 1D numeric arrays based on sort() function.
+Set operations for numeric arrays based on sort() function.
 
 ================ ===================
-ediff1d          Array difference (auxiliary function).
 unique           Unique elements of an array.
+isin             Test whether each element of an ND array is present 
+                 anywhere within a second array.
+ediff1d          Array difference (auxiliary function).
 intersect1d      Intersection of 1D arrays with unique elements.
 setxor1d         Set exclusive-or of 1D arrays with unique elements.
 in1d             Test whether elements in a 1D array are also present in
                  another array.
-isin             Test whether each element of one (possibly multidimensional) 
-                 array is present anywhere within a second array.
 union1d          Union of 1D arrays with unique elements.
 setdiff1d        Set difference of 1D arrays with unique elements.
 ================ ===================
