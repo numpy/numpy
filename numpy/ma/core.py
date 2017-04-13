@@ -5621,6 +5621,14 @@ class MaskedArray(ndarray):
         """
         Return the array minimum along the specified axis.
 
+        .. deprecated:: 1.13.0
+           This function is identical to both:
+
+            * ``self.min(keepdims=True, axis=axis).squeeze(axis=axis)``
+            * ``np.ma.minimum.reduce(self, axis=axis)``
+
+           Typically though, ``self.min(axis=axis)`` is sufficient.
+
         Parameters
         ----------
         axis : int, optional
@@ -5650,7 +5658,21 @@ class MaskedArray(ndarray):
         >>> print(x.mini(axis=1))
         [0 2 4]
 
+        There is a small difference between `mini` and `min`:
+
+        >>> x[:,1].mini(axis=0)
+        masked_array(data = --,
+                     mask = True,
+               fill_value = 999999)
+        >>> x[:,1].min(axis=0)
+        masked
         """
+
+        # 2016-04-13, 1.13.0, gh-8764
+        warnings.warn(
+            "`mini` is deprecated; use the `min` method or "
+            "`np.ma.minimum.reduce instead.",
+            DeprecationWarning, stacklevel=2)
         if axis is None:
             return minimum(self)
         else:
