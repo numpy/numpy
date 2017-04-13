@@ -28,7 +28,6 @@ typedef struct {
 static data_cache_bucket datacache[NBUCKETS_DATA];
 static dim_cache_bucket dimcache[NBUCKETS_DIM];
 
-
 /*
  * array data cache, sz is number of bytes to allocate
  */
@@ -37,7 +36,7 @@ npy_alloc_cache(npy_uintp sz)
 {
     if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
         return datacache[sz-1].ptrs[--(datacache[sz-1].available)];
-    }
+    }  
     return PyDataMem_NEW(sz);
 }
 
@@ -155,7 +154,7 @@ NPY_NO_EXPORT void *
 PyDataMem_NEW(size_t size)
 {
     void *result;
-
+  
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
@@ -166,6 +165,13 @@ PyDataMem_NEW(size_t size)
         }
         NPY_DISABLE_C_API
     }
+
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
+  
     return result;
 }
 
@@ -187,6 +193,13 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
         }
         NPY_DISABLE_C_API
     }
+  
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
+  
     return result;
 }
 
@@ -226,5 +239,11 @@ PyDataMem_RENEW(void *ptr, size_t size)
         }
         NPY_DISABLE_C_API
     }
+  
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
     return result;
 }

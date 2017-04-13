@@ -57,7 +57,7 @@ Tests
   where ``<type>`` is integer, real, logical, complex, or character.
   Test scripts options are described below.
 
-  A test is considered succesful if the last printed line is "ok".
+  A test is considered successful if the last printed line is "ok".
 
   If you get import errors like::
 

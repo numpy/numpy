@@ -37,6 +37,7 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -816,18 +817,11 @@ def compress_nd(x, axis=None):
     x = asarray(x)
     m = getmask(x)
     # Set axis to tuple of ints
-    if isinstance(axis, int):
-        axis = (axis,)
-    elif axis is None:
+    if axis is None:
         axis = tuple(range(x.ndim))
-    elif not isinstance(axis, tuple):
-        raise ValueError('Invalid type for axis argument')
-    # Check axis input
-    axis = [ax + x.ndim if ax < 0 else ax for ax in axis]
-    if not all(0 <= ax < x.ndim for ax in axis):
-        raise ValueError("'axis' entry is out of bounds")
-    if len(axis) != len(set(axis)):
-        raise ValueError("duplicate value in 'axis'")
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim)
+
     # Nothing is masked: return x
     if m is nomask or not m.any():
         return x._data

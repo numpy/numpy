@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 exec_command
 
@@ -56,13 +55,10 @@ __all__ = ['exec_command', 'find_executable']
 
 import os
 import sys
-import shlex
 import subprocess
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
-
 
 def temp_file_name():
     fo, name = make_temp_file()
@@ -147,7 +143,7 @@ def _supports_fileno(stream):
     """
     if hasattr(stream, 'fileno'):
         try:
-            r = stream.fileno()
+            stream.fileno()
             return True
         except IOError:
             return False
@@ -233,8 +229,6 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     if use_tee is None:
         use_tee = os.name=='posix'
 
-    executable = None
-
     if os.name == 'posix' and use_shell:
         # On POSIX, subprocess always uses /bin/sh, override
         sh = os.environ.get('SHELL', '/bin/sh')
@@ -254,22 +248,16 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     try:
         proc = subprocess.Popen(command, shell=use_shell, env=env,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
                                 universal_newlines=True)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
-        return '', 127
+        return 127, ''
     text, err = proc.communicate()
-    # Only append stderr if the command failed, as otherwise
-    # the output may become garbled for parsing
-    if proc.returncode:
-        if text:
-            text += "\n"
-        text += err
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
-    if use_tee:
+    if use_tee and text:
         print(text)
     return proc.returncode, text
 
@@ -284,174 +272,4 @@ def _quote_arg(arg):
         return '"%s"' % arg
     return arg
 
-
-def test_nt(**kws):
-    pythonexe = get_pythonexe()
-    echo = find_executable('echo')
-    using_cygwin_echo = echo != 'echo'
-    if using_cygwin_echo:
-        log.warn('Using cygwin echo in win32 environment is not supported')
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'AAA\',\'\')"')
-        assert s==0 and o=='', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'AAA\')"',
-                         AAA='Tere')
-        assert s==0 and o=='Tere', (s, o)
-
-        os.environ['BBB'] = 'Hi'
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
-        assert s==0 and o=='Hi', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"',
-                         BBB='Hey')
-        assert s==0 and o=='Hey', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
-        assert s==0 and o=='Hi', (s, o)
-    elif 0:
-        s, o=exec_command('echo Hello')
-        assert s==0 and o=='Hello', (s, o)
-
-        s, o=exec_command('echo a%AAA%')
-        assert s==0 and o=='a', (s, o)
-
-        s, o=exec_command('echo a%AAA%', AAA='Tere')
-        assert s==0 and o=='aTere', (s, o)
-
-        os.environ['BBB'] = 'Hi'
-        s, o=exec_command('echo a%BBB%')
-        assert s==0 and o=='aHi', (s, o)
-
-        s, o=exec_command('echo a%BBB%', BBB='Hey')
-        assert s==0 and o=='aHey', (s, o)
-        s, o=exec_command('echo a%BBB%')
-        assert s==0 and o=='aHi', (s, o)
-
-        s, o=exec_command('this_is_not_a_command')
-        assert s and o!='', (s, o)
-
-        s, o=exec_command('type not_existing_file')
-        assert s and o!='', (s, o)
-
-    s, o=exec_command('echo path=%path%')
-    assert s==0 and o!='', (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.stderr.write(sys.platform)"' \
-                     % pythonexe)
-    assert s==0 and o=='win32', (s, o)
-
-    s, o=exec_command('%s -c "raise \'Ignore me.\'"' % pythonexe)
-    assert s==1 and o, (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"'\
-                     % pythonexe)
-    assert s==0 and o=='012', (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.exit(15)"' % pythonexe)
-    assert s==15 and o=='', (s, o)
-
-    s, o=exec_command('%s -c "print \'Heipa\'"' % pythonexe)
-    assert s==0 and o=='Heipa', (s, o)
-
-    print ('ok')
-
-def test_posix(**kws):
-    s, o=exec_command("echo Hello",**kws)
-    assert s==0 and o=='Hello', (s, o)
-
-    s, o=exec_command('echo $AAA',**kws)
-    assert s==0 and o=='', (s, o)
-
-    s, o=exec_command('echo "$AAA"',AAA='Tere',**kws)
-    assert s==0 and o=='Tere', (s, o)
-
-
-    s, o=exec_command('echo "$AAA"',**kws)
-    assert s==0 and o=='', (s, o)
-
-    os.environ['BBB'] = 'Hi'
-    s, o=exec_command('echo "$BBB"',**kws)
-    assert s==0 and o=='Hi', (s, o)
-
-    s, o=exec_command('echo "$BBB"',BBB='Hey',**kws)
-    assert s==0 and o=='Hey', (s, o)
-
-    s, o=exec_command('echo "$BBB"',**kws)
-    assert s==0 and o=='Hi', (s, o)
-
-
-    s, o=exec_command('this_is_not_a_command',**kws)
-    assert s!=0 and o!='', (s, o)
-
-    s, o=exec_command('echo path=$PATH',**kws)
-    assert s==0 and o!='', (s, o)
-
-    s, o=exec_command('python -c "import sys,os;sys.stderr.write(os.name)"',**kws)
-    assert s==0 and o=='posix', (s, o)
-
-    s, o=exec_command('python -c "raise \'Ignore me.\'"',**kws)
-    assert s==1 and o, (s, o)
-
-    s, o=exec_command('python -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"',**kws)
-    assert s==0 and o=='012', (s, o)
-
-    s, o=exec_command('python -c "import sys;sys.exit(15)"',**kws)
-    assert s==15 and o=='', (s, o)
-
-    s, o=exec_command('python -c "print \'Heipa\'"',**kws)
-    assert s==0 and o=='Heipa', (s, o)
-
-    print ('ok')
-
-def test_execute_in(**kws):
-    pythonexe = get_pythonexe()
-    tmpfile = temp_file_name()
-    fn = os.path.basename(tmpfile)
-    tmpdir = os.path.dirname(tmpfile)
-    f = open(tmpfile, 'w')
-    f.write('Hello')
-    f.close()
-
-    s, o = exec_command('%s -c "print \'Ignore the following IOError:\','\
-                       'open(%r,\'r\')"' % (pythonexe, fn),**kws)
-    assert s and o!='', (s, o)
-    s, o = exec_command('%s -c "print open(%r,\'r\').read()"' % (pythonexe, fn),
-                       execute_in = tmpdir,**kws)
-    assert s==0 and o=='Hello', (s, o)
-    os.remove(tmpfile)
-    print ('ok')
-
-def test_svn(**kws):
-    s, o = exec_command(['svn', 'status'],**kws)
-    assert s, (s, o)
-    print ('svn ok')
-
-def test_cl(**kws):
-    if os.name=='nt':
-        s, o = exec_command(['cl', '/V'],**kws)
-        assert s, (s, o)
-        print ('cl ok')
-
-if os.name=='posix':
-    test = test_posix
-elif os.name in ['nt', 'dos']:
-    test = test_nt
-else:
-    raise NotImplementedError('exec_command tests for ', os.name)
-
 ############################################################
-
-if __name__ == "__main__":
-
-    test(use_tee=0)
-    test(use_tee=1)
-    test_execute_in(use_tee=0)
-    test_execute_in(use_tee=1)
-    test_svn(use_tee=1)
-    test_cl(use_tee=1)

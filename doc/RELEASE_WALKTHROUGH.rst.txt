@@ -1,0 +1,170 @@
+This file contains a walkthrough of the NumPy 1.12.0 release on Fedora Linux.
+The commands can be copied into the command line, but be sure to
+replace 1.12.0 by the correct version.
+
+Release  Walkthrough
+====================
+
+Building the release
+--------------------
+
+Checkout the branch for the release, make sure it is up to date, and clean the
+repository::
+
+    $ git checkout maintenance/1.12.x
+    $ git pull upstream maintenance/1.12.x
+    $ git submodule update
+    $ git clean -xdf
+
+Look at the git log to get the hash of the last commit in the release, then
+check it out::
+
+    $ git log
+    $ git checkout f59a2fbbd497dbaf3a2e405a41e52dc5e331bfa7
+
+Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
+
+    $ gvim pavement.py setup.py
+    $ git commit -a -m"REL: NumPy 1.12.0 release."
+
+Sanity check::
+
+    $ python runtests.py -m "full"
+    $ python3 runtests.py -m "full"
+
+Tag it,and build the source distribution archives::
+
+    $ git tag -s v1.12.0
+    $ paver sdist # sdist will do a git clean -xdf, so we omit that
+
+Check that the files in ``release/installers`` have the correct versions, then
+push the tag upstream; generation of the wheels for PyPI needs it::
+
+    $ git push upstream v1.12.0
+
+Trigger the wheels build. This can take a while. The numpy-wheels repository is
+cloned from `<https://github.com/MacPython/numpy-wheels>`_. Start with a pull
+as the repo may have been accessed and changed by someone else and a push will
+fail. The ``.travis.yml`` and ``appveyor.yml`` files need to be edited to make
+sure they have the correct version, search for ``BUILD_COMMIT``. If you get
+nervous at the amount of time taken -- the builds can take several hours-- you
+can check the build progress by following the links provided at
+`<https://github.com/MacPython/numpy-wheels>`_ to check the travis and appveyor
+build status.
+
+    $ cd ../numpy-wheels
+    $ git pull origin master
+    $ gvim .travis.yml appveyor.yml
+    $ git commit -a
+    $ git push origin HEAD
+
+Upload to PyPI
+--------------
+
+Upload to PyPI using the ``wheel-uploader``. The terryfy repository is
+cloned from `<https://github.com/MacPython/terryfy>`_. Uploading can be a
+hassle due to the site itself having problems. If you get strange messages, put
+it off for the next day. To begin, check if all the needed wheels have been
+built. There should be 22 of them at `<https://wheels.scipy.org>`_, 4 for Mac,
+8 for Windows, and 10 for Linux. Here the wheelhouse directory is in the home
+directory. Then upload the wheels. You will need to sign every file separately
+in the process, keeping the pass phrase in the clipboard and pasting it in will
+make that easier::
+
+    $ cd ../terryfy
+    $ git pull origin master
+    $ CDN_URL=https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
+    $ ./wheel-uploader -r warehouse -u $CDN_URL -s -v -w ~/wheelhouse -t win numpy 1.12.0
+    $ ./wheel-uploader -r warehouse -u $CDN_URL -s -v -w ~/wheelhouse -t manylinux1 numpy 1.12.0
+    $ ./wheel-uploader -r warehouse -u $CDN_URL -s -v -w ~/wheelhouse -t macosx numpy 1.12.0
+
+If one of the commands breaks in the middle, you may need to manually upload
+the rest of the files using twine because wheel-uploader always starts from the
+beginning and PyPI does not allow the same file to be uploaded twice.
+
+The source files should be uploaded last to avoid problems. PyPI will only allow
+a single source distribution, here it is the zip archive::
+
+    $ cd ../numpy
+    $ twine upload -s release/installers/numpy-1.12.0.zip
+
+If this is not a final release, log into PyPI and hide the new directory while
+making sure the last final release is visible.
+
+Upload tarballs to github
+-------------------------
+We want to post the hash values for the files uploaded to PyPI in the release
+generated README file, so first copy the wheels into the installers directory
+and remove the now unneeded signature files::
+
+    $ cp ~/wheelhouse/numpy-1.12.0* release/installers
+    $ rm release/installers/*.asc
+
+Generate the ``release/Changelog`` and ``release/README`` files::
+
+    $ paver write_release_and_log
+
+Go to `<https://github.com/numpy/numpy/releases>`_, there should be a
+``v1.12.0 tag``, hit the edit button for that tag. There are two ways to add
+files, using an editable text window and as binary uploads.
+
+- Cut-and-paste the ``release/README.md`` file contents into the text window.
+- Upload ``release/installers/numpy-1.12.0.tar.gz`` as a binary file.
+- Upload ``release/installers/numpy-1.12.0.zip`` as a binary file.
+- Upload ``release/README`` as a binary file.
+- Upload ``release/Changelog`` as a binary file (maybe).
+- Check the pre-release button for pre-releases.
+- Hit the ``{Publish,Update} release`` button at the bottom.
+
+
+Upload documents to docs.scipy.org
+----------------------------------
+
+This step is only needed for final releases and can be skipped for
+pre-releases. You will also need upload permission for the document server, if
+you do not have permission ping Pauli Virtanen or Ralf Gommers to generate and
+upload the documentation. Otherwise::
+
+    $ pushd doc
+    $ make dist
+    $ make upload USERNAME=<yourname> RELEASE=v1.12.0
+    $ popd
+
+If the release series is a new one, you will need to rebuild and upload the
+``docs.scipy.org`` front page::
+
+    $ cd ../docs.scipy.org
+    $ gvim index.rst
+
+Note: there is discussion about moving the docs to github. This section will be
+updated when/if that happens.
+
+
+Announce the release on scipy.org
+---------------------------------
+
+This assumes that you have forked `<https://github.com/scipy/scipy.org>`_::
+
+    $ cd ../scipy.org
+    $ git checkout master
+    $ git pull upstream master
+    $ git checkout -b numpy-1.12.0
+    $ gvim www/index.rst # edit the News section
+    $ git commit -a
+    $ git push origin HEAD
+
+Now go to your fork and make a pull request for the branch.
+
+Announce to mailing lists
+-------------------------
+
+The release should be announced on the numpy-discussion, scipy-devel,
+scipy-user, and python-announce-list mailing lists. Look at previous
+announcements for the basic template. The contributor list can be generated as
+follows::
+
+    $ cd ../numpy
+    $ ./tools/announce.py  $GITHUB v1.11.0..v1.12.0 > tmp.rst
+
+The contents of ``tmp.rst`` can then be cut and pasted into the announcement
+email.

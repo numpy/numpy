@@ -29,14 +29,13 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
-from numpy.compat import asbytes
 
 # For Python2/3 compatibility
-_N = asbytes('N')
-_V = asbytes('V')
-_A = asbytes('A')
-_S = asbytes('S')
-_L = asbytes('L')
+_N = b'N'
+_V = b'V'
+_A = b'A'
+_S = b'S'
+_L = b'L'
 
 fortran_int = intc
 
@@ -976,9 +975,9 @@ def eigvalsh(a, UPLO='L'):
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
     array([ 0.17157288,  5.82842712])
-    
+
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -1262,7 +1261,7 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -1528,8 +1527,8 @@ def matrix_rank(M, tol=None):
 
     Parameters
     ----------
-    M : {(M,), (M, N)} array_like
-        array of <=2 dimensions
+    M : {(M,), (..., M, N)} array_like
+        input vector or stack of matrices
     tol : {None, float}, optional
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
@@ -1596,14 +1595,12 @@ def matrix_rank(M, tol=None):
     0
     """
     M = asarray(M)
-    if M.ndim > 2:
-        raise TypeError('array should have 2 or fewer dimensions')
     if M.ndim < 2:
         return int(not all(M==0))
     S = svd(M, compute_uv=False)
     if tol is None:
-        tol = S.max() * max(M.shape) * finfo(S.dtype).eps
-    return sum(S > tol)
+        tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+    return (S > tol).sum(axis=-1)
 
 
 # Generalized inverse
@@ -2358,14 +2355,13 @@ def multi_dot(arrays):
     >>> # or
     >>> A.dot(B).dot(C).dot(D)
 
-
-    Example: multiplication costs of different parenthesizations
-    ------------------------------------------------------------
-
+    Notes
+    -----
     The cost for a matrix multiplication can be calculated with the
     following function::
 
-        def cost(A, B): return A.shape[0] * A.shape[1] * B.shape[1]
+        def cost(A, B):
+            return A.shape[0] * A.shape[1] * B.shape[1]
 
     Let's assume we have three matrices
     :math:`A_{10x100}, B_{100x5}, C_{5x50}$`.

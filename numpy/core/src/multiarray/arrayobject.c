@@ -1362,8 +1362,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1440,8 +1439,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1620,7 +1618,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
      * strides, and swapped info For now, let's just use this to create an
      * empty, contiguous array of a specific type and shape.
      */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&:ndarray",
                                      kwlist, PyArray_IntpConverter,
                                      &dims,
                                      PyArray_DescrConverter,

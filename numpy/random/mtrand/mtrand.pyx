@@ -143,7 +143,6 @@ cdef extern from "initarray.h":
 import_array()
 
 cimport cython
-import copy
 import numpy as np
 import operator
 import warnings
@@ -4829,6 +4828,7 @@ cdef class RandomState:
         cdef npy_intp i, j
         for i in reversed(range(1, n)):
             j = rk_interval(i, self.internal_state)
+            if i == j : continue # i == j is not needed and memcpy is undefined.
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
@@ -4872,7 +4872,7 @@ cdef class RandomState:
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
         else:
-            arr = copy.copy(x)
+            arr = np.array(x)
         self.shuffle(arr)
         return arr
 

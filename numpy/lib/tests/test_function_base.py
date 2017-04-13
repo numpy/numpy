@@ -902,9 +902,9 @@ class TestGradient(TestCase):
         # test maximal number of varargs
         assert_raises(TypeError, gradient, x, 1, 2, axis=1)
 
-        assert_raises(ValueError, gradient, x, axis=3)
-        assert_raises(ValueError, gradient, x, axis=-3)
-        assert_raises(TypeError, gradient, x, axis=[1,])
+        assert_raises(np.AxisError, gradient, x, axis=3)
+        assert_raises(np.AxisError, gradient, x, axis=-3)
+        # assert_raises(TypeError, gradient, x, axis=[1,])
         
     def test_timedelta64(self):
         # Make sure gradient() can handle special types like timedelta64
@@ -2507,10 +2507,15 @@ class TestBincount(TestCase):
         x = np.array([0, 1, 0, 1, 1])
         y = np.bincount(x, minlength=3)
         assert_array_equal(y, np.array([2, 3, 0]))
+        x = []
+        y = np.bincount(x, minlength=0)
+        assert_array_equal(y, np.array([]))
 
     def test_with_minlength_smaller_than_maxvalue(self):
         x = np.array([0, 1, 1, 2, 2, 3, 3])
         y = np.bincount(x, minlength=2)
+        assert_array_equal(y, np.array([1, 2, 2, 2]))
+        y = np.bincount(x, minlength=0)
         assert_array_equal(y, np.array([1, 2, 2, 2]))
 
     def test_with_minlength_and_weights(self):
@@ -2535,22 +2540,16 @@ class TestBincount(TestCase):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "must be positive",
+                            "must be non-negative",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError,
-                            "must be positive",
-                            lambda: np.bincount(x, minlength=0))
 
         x = np.arange(5)
         assert_raises_regex(TypeError,
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "minlength must be positive",
+                            "minlength must be non-negative",
                             lambda: np.bincount(x, minlength=-1))
-        assert_raises_regex(ValueError,
-                            "minlength must be positive",
-                            lambda: np.bincount(x, minlength=0))
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_dtype_reference_leaks(self):
@@ -2974,11 +2973,14 @@ class TestPercentile(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.percentile, d, axis=-5, q=25)
-        assert_raises(IndexError, np.percentile, d, axis=(0, -5), q=25)
-        assert_raises(IndexError, np.percentile, d, axis=4, q=25)
-        assert_raises(IndexError, np.percentile, d, axis=(0, 4), q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=-5, q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=(0, -5), q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=4, q=25)
+        assert_raises(np.AxisError, np.percentile, d, axis=(0, 4), q=25)
+        # each of these refers to the same axis twice
         assert_raises(ValueError, np.percentile, d, axis=(1, 1), q=25)
+        assert_raises(ValueError, np.percentile, d, axis=(-1, -1), q=25)
+        assert_raises(ValueError, np.percentile, d, axis=(3, -1), q=25)
 
     def test_keepdims(self):
         d = np.ones((3, 5, 7, 11))
@@ -3350,10 +3352,10 @@ class TestMedian(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.median, d, axis=-5)
-        assert_raises(IndexError, np.median, d, axis=(0, -5))
-        assert_raises(IndexError, np.median, d, axis=4)
-        assert_raises(IndexError, np.median, d, axis=(0, 4))
+        assert_raises(np.AxisError, np.median, d, axis=-5)
+        assert_raises(np.AxisError, np.median, d, axis=(0, -5))
+        assert_raises(np.AxisError, np.median, d, axis=4)
+        assert_raises(np.AxisError, np.median, d, axis=(0, 4))
         assert_raises(ValueError, np.median, d, axis=(1, 1))
 
     def test_keepdims(self):

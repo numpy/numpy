@@ -12,7 +12,7 @@ from numpy.core import linspace, atleast_1d, atleast_2d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute
+    integer, isscalar, absolute, AxisError
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -1679,21 +1679,10 @@ def gradient(f, *varargs, **kwargs):
     axes = kwargs.pop('axis', None)
     if axes is None:
         axes = tuple(range(N))
-    # check axes to have correct type and no duplicate entries
-    if isinstance(axes, int):
-        axes = (axes,)
-    if not isinstance(axes, tuple):
-        raise TypeError("A tuple of integers or a single integer is required")
-
-    # normalize axis values:
-    axes = tuple(x + N if x < 0 else x for x in axes)
-    if max(axes) >= N or min(axes) < 0:
-        raise ValueError("'axis' entry is out of bounds")
+    else:
+        axes = _nx.normalize_axis_tuple(axes, N)
 
     len_axes = len(axes)
-    if len(set(axes)) != len_axes:
-        raise ValueError("duplicate value in 'axis'")
-
     n = len(varargs)
     if n == 0:
         dx = [1.0] * len_axes
@@ -3983,21 +3972,15 @@ def _ureduce(a, func, **kwargs):
     if axis is not None:
         keepdim = list(a.shape)
         nd = a.ndim
-        try:
-            axis = operator.index(axis)
-            if axis >= nd or axis < -nd:
-                raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
-            keepdim[axis] = 1
-        except TypeError:
-            sax = set()
-            for x in axis:
-                if x >= nd or x < -nd:
-                    raise IndexError("axis %d out of bounds (%d)" % (x, nd))
-                if x in sax:
-                    raise ValueError("duplicate value in axis")
-                sax.add(x % nd)
-                keepdim[x] = 1
-            keep = sax.symmetric_difference(frozenset(range(nd)))
+        axis = _nx.normalize_axis_tuple(axis, nd)
+
+        for ax in axis:
+            keepdim[ax] = 1
+
+        if len(axis) == 1:
+            kwargs['axis'] = axis[0]
+        else:
+            keep = set(range(nd)) - set(axis)
             nkeep = len(keep)
             # swap axis that should not be reduced to front
             for i, s in enumerate(sorted(keep)):
@@ -4226,8 +4209,8 @@ def percentile(a, q, axis=None, out=None,
     Notes
     -----
     Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the mimumum to the
-    maximum in in a sorted copy of ``V``. The values and distances of
+    ``V`` is the value ``q/100`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
     will determine the percentile if the normalized ranking does not
     match the location of ``q`` exactly. This function is the same as
@@ -4601,12 +4584,12 @@ def meshgrid(*xi, **kwargs):
     'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
     illustrated by the following code snippet::
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[i,j], yv[i,j]
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
@@ -4625,14 +4608,14 @@ def meshgrid(*xi, **kwargs):
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
-    >>> xv, yv = meshgrid(x, y)
+    >>> xv, yv = np.meshgrid(x, y)
     >>> xv
     array([[ 0. ,  0.5,  1. ],
            [ 0. ,  0.5,  1. ]])
     >>> yv
     array([[ 0.,  0.,  0.],
            [ 1.,  1.,  1.]])
-    >>> xv, yv = meshgrid(x, y, sparse=True)  # make sparse output arrays
+    >>> xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
     >>> xv
     array([[ 0. ,  0.5,  1. ]])
     >>> yv
@@ -4643,7 +4626,7 @@ def meshgrid(*xi, **kwargs):
 
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = meshgrid(x, y, sparse=True)
+    >>> xx, yy = np.meshgrid(x, y, sparse=True)
     >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
     >>> h = plt.contourf(x,y,z)
 
@@ -4753,7 +4736,8 @@ def delete(arr, obj, axis=None):
         if ndim != 1:
             arr = arr.ravel()
         ndim = arr.ndim
-        axis = ndim - 1
+        axis = -1
+
     if ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
@@ -4763,6 +4747,8 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy(order=arrorder)
+
+    axis = normalize_axis_index(axis, ndim)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]

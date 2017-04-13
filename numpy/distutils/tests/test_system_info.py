@@ -60,6 +60,7 @@ def have_compiler():
     """ Return True if there appears to be an executable compiler
     """
     compiler = ccompiler.new_compiler()
+    compiler.customize(None)
     try:
         cmd = compiler.compiler  # Unix compilers
     except AttributeError:
@@ -201,6 +202,7 @@ class TestSystemInfoReading(TestCase):
     def test_compile1(self):
         # Compile source and link the first source
         c = ccompiler.new_compiler()
+        c.customize(None)
         previousDir = os.getcwd()
         try:
             # Change directory to not screw up directories
@@ -218,6 +220,7 @@ class TestSystemInfoReading(TestCase):
         # Compile source and link the second source
         tsi = self.c_temp2
         c = ccompiler.new_compiler()
+        c.customize(None)
         extra_link_args = tsi.calc_extra_info()['extra_link_args']
         previousDir = os.getcwd()
         try:

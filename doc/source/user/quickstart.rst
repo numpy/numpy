@@ -274,7 +274,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold='nan')
+    >>> np.set_printoptions(threshold=np.nan)
 
 
 Basic Operations

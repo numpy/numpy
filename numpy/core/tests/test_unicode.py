@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import asbytes, unicode, sixu
+from numpy.compat import unicode
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_array_equal)
 
@@ -32,7 +32,7 @@ if sys.version_info[:2] >= (3, 3):
         else:
             return np.prod(v.shape) * v.itemsize
 else:
-    if len(buffer(sixu('u'))) == 4:
+    if len(buffer(u'u')) == 4:
         ucs4 = True
     else:
         ucs4 = False
@@ -45,9 +45,9 @@ else:
 # In both cases below we need to make sure that the byte swapped value (as
 # UCS4) is still a valid unicode:
 # Value that can be represented in UCS2 interpreters
-ucs2_value = sixu('\u0900')
+ucs2_value = u'\u0900'
 # Value that cannot be represented in UCS2 interpreters (but can in UCS4)
-ucs4_value = sixu('\U00100900')
+ucs4_value = u'\U00100900'
 
 
 def test_string_cast():
@@ -78,9 +78,9 @@ class create_zeros(object):
         # Check the length of the data buffer
         self.assertTrue(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        self.assertTrue(ua_scalar == sixu(''))
+        self.assertTrue(ua_scalar == u'')
         # Encode to ascii and double check
-        self.assertTrue(ua_scalar.encode('ascii') == asbytes(''))
+        self.assertTrue(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars
         if ucs4:
             self.assertTrue(buffer_length(ua_scalar) == 0)

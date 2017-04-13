@@ -3933,7 +3933,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&", reduceat_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
                                         &op,
                                         &obj_ind,
                                         &axes_in,
@@ -3951,7 +3951,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     else if (operation == UFUNC_ACCUMULATE) {
         PyObject *bad_keepdimarg = NULL;
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O", accumulate_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O:accumulate",
+                                        accumulate_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -3971,7 +3972,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", reduce_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i:reduce",
+                                        reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -4549,7 +4551,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *val;
     static char *msg = "Error object must be a list of length 3";
 
-    if (!PyArg_ParseTuple(args, "O", &val)) {
+    if (!PyArg_ParseTuple(args, "O:seterrobj", &val)) {
         return NULL;
     }
     if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
@@ -5283,7 +5285,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO|O:at", &op1, &idx, &op2)) {
         return NULL;
     }
 

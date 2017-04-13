@@ -583,30 +583,28 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
          *  (thus, the input should be up-cast)
          */
         else if (exponent == 2.0) {
-            fastop = n_ops.multiply;
+            fastop = n_ops.square;
             if (inplace) {
-                return PyArray_GenericInplaceBinaryFunction
-                    (a1, (PyObject *)a1, fastop);
+                return PyArray_GenericInplaceUnaryFunction(a1, fastop);
             }
             else {
-                PyArray_Descr *dtype = NULL;
-                PyObject *res;
-
                 /* We only special-case the FLOAT_SCALAR and integer types */
                 if (kind == NPY_FLOAT_SCALAR && PyArray_ISINTEGER(a1)) {
-                    dtype = PyArray_DescrFromType(NPY_DOUBLE);
+                    PyObject *res;
+                    PyArray_Descr *dtype = PyArray_DescrFromType(NPY_DOUBLE);
                     a1 = (PyArrayObject *)PyArray_CastToType(a1, dtype,
                             PyArray_ISFORTRAN(a1));
                     if (a1 == NULL) {
                         return NULL;
                     }
+                    /* cast always creates a new array */
+                    res = PyArray_GenericInplaceUnaryFunction(a1, fastop);
+                    Py_DECREF(a1);
+                    return res;
                 }
                 else {
-                    Py_INCREF(a1);
+                    return PyArray_GenericUnaryFunction(a1, fastop);
                 }
-                res = PyArray_GenericBinaryFunction(a1, (PyObject *)a1, fastop);
-                Py_DECREF(a1);
-                return res;
             }
         }
     }
@@ -614,10 +612,14 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
 }
 
 static PyObject *
-array_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
+array_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
 {
-    /* modulo is ignored! */
     PyObject *value;
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
     GIVE_UP_IF_HAS_RIGHT_BINOP(a1, o2, "__pow__", "__rpow__", 0, nb_power);
     value = fast_scalar_power(a1, o2, 0);
     if (!value) {

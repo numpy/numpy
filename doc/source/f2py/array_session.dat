@@ -39,7 +39,7 @@ copied an array using copy_ND_array: size=6, elsize=8
 >>> print b
 [[ 1.  4.  5.]
  [ 2.  5.  6.]]
->>> a is b                       # a and b are acctually the same objects
+>>> a is b                       # a and b are actually the same objects
 1
 >>> print arr.foo([1,2,3])       # different rank arrays are allowed
 copied an array using PyArray_CopyFromObject: size=3, elsize=8

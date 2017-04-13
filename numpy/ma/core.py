@@ -39,10 +39,11 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
 from numpy.compat import (
-    getargspec, formatargspec, long, basestring, unicode, bytes, sixu
+    getargspec, formatargspec, long, basestring, unicode, bytes
     )
 from numpy import expand_dims as n_expand_dims
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 
 
 if sys.version_info[0] >= 3:
@@ -159,7 +160,7 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': '???',
-                  'U': sixu('N/A')
+                  'U': u'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -4362,17 +4363,14 @@ class MaskedArray(ndarray):
 
             if self.shape is ():
                 if axis not in (None, 0):
-                    raise np.AxisError("'axis' entry is out of bounds")
+                    raise np.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
-            axes = axis if isinstance(axis, tuple) else (axis,)
-            axes = tuple(normalize_axis_index(a, self.ndim) for a in axes)
-            if len(axes) != len(set(axes)):
-                raise ValueError("duplicate value in 'axis'")
+            axes = normalize_axis_tuple(axis, self.ndim)
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
@@ -6960,8 +6958,8 @@ def where(condition, x=_NoValue, y=_NoValue):
         The condition to meet. For each True element, yield the corresponding
         element from `x`, otherwise from `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same shape
-        as condition, or be broadcast-able to that shape.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
@@ -6991,44 +6989,42 @@ def where(condition, x=_NoValue, y=_NoValue):
      [6.0 -- 8.0]]
 
     """
-    missing = (x is _NoValue, y is _NoValue).count(True)
 
+    # handle the single-argument case
+    missing = (x is _NoValue, y is _NoValue).count(True)
     if missing == 1:
         raise ValueError("Must provide both 'x' and 'y' or neither.")
     if missing == 2:
-        return filled(condition, 0).nonzero()
+        return nonzero(condition)
 
-    # Both x and y are provided
+    # we only care if the condition is true - false or masked pick y
+    cf = filled(condition, False)
+    xd = getdata(x)
+    yd = getdata(y)
 
-    # Get the condition
-    fc = filled(condition, 0).astype(MaskType)
-    notfc = np.logical_not(fc)
+    # we need the full arrays here for correct final dimensions
+    cm = getmaskarray(condition)
+    xm = getmaskarray(x)
+    ym = getmaskarray(y)
 
-    # Get the data
-    xv = getdata(x)
-    yv = getdata(y)
-    if x is masked:
-        ndtype = yv.dtype
-    elif y is masked:
-        ndtype = xv.dtype
-    else:
-        ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
+    # deal with the fact that masked.dtype == float64, but we don't actually
+    # want to treat it as that.
+    if x is masked and y is not masked:
+        xd = np.zeros((), dtype=yd.dtype)
+        xm = np.ones((),  dtype=ym.dtype)
+    elif y is masked and x is not masked:
+        yd = np.zeros((), dtype=xd.dtype)
+        ym = np.ones((),  dtype=xm.dtype)
 
-    # Construct an empty array and fill it
-    d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    np.copyto(d._data, xv.astype(ndtype), where=fc)
-    np.copyto(d._data, yv.astype(ndtype), where=notfc)
+    data = np.where(cf, xd, yd)
+    mask = np.where(cf, xm, ym)
+    mask = np.where(cm, np.ones((), dtype=mask.dtype), mask)
 
-    # Create an empty mask and fill it
-    mask = np.zeros(fc.shape, dtype=MaskType)
-    np.copyto(mask, getmask(x), where=fc)
-    np.copyto(mask, getmask(y), where=notfc)
-    mask |= getmaskarray(condition)
+    # collapse the mask, for backwards compatibility
+    if mask.dtype == np.bool_ and not mask.any():
+        mask = nomask
 
-    # Use d._mask instead of d.mask to avoid copies
-    d._mask = mask if mask.any() else nomask
-
-    return d
+    return masked_array(data, mask=mask)
 
 
 def choose(indices, choices, out=None, mode='raise'):

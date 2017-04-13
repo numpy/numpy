@@ -7,7 +7,10 @@ This release supports Python 2.7 and 3.4 - 3.6.
 Highlights
 ==========
 
- * Operations like `a + b + c` will create less temporaries on some platforms
+ * Reuse of temporaries, operations like ``a + b + c`` will create fewer
+   temporaries on some platforms.
+ * Inplace operations check if inputs overlap outputs and create temporaries
+   to avoid problems.
 
 
 Dropped Support
@@ -29,8 +32,18 @@ Future Changes
 Compatibility notes
 ===================
 
+Error type changes
+------------------
+
+* ``numpy.hstack()`` now throws ``ValueError`` instead of ``IndexError`` when
+  input is empty.
+* Functions taking an axis argument, when that argument is out of range, now
+  throw ``np.AxisError`` instead of a mixture of ``IndexError`` and
+  ``ValueError``. For backwards compatibility, ``AxisError`` subclasses both of
+  these.
+
 Tuple object dtypes
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Support has been removed for certain obscure dtypes that were unintentionally
 allowed, of the form ``(old_dtype, new_dtype)``, where either of the dtypes
@@ -39,19 +52,19 @@ is or contains the ``object`` dtype. As an exception, dtypes of the form
 existing use.
 
 DeprecationWarning to error
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 See Changes section for more detail.
 
 * ``partition``, TypeError when non-integer partition index is used.
-* ``NpyIter_AdvancedNew``, ValueError when `oa_ndim == 0` and `op_axes` is NULL
+* ``NpyIter_AdvancedNew``, ValueError when ``oa_ndim == 0`` and ``op_axes`` is NULL
 * ``negative(bool_)``, TypeError when negative applied to booleans.
 * ``subtract(bool_, bool_)``, TypeError when subtracting boolean from boolean.
 * ``np.equal, np.not_equal``, object identity doesn't override failed comparison.
 * ``np.equal, np.not_equal``, object identity doesn't override non-boolean comparison.
-* Boolean indexing deprecated behavior dropped. See Changes below for details.
+* Deprecated boolean indexing behavior dropped. See Changes below for details.
 
 FutureWarning to changed behavior
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 See Changes section for more detail.
 
 * ``numpy.average`` preserves subclasses
@@ -59,7 +72,7 @@ See Changes section for more detail.
 * ``np.equal, np.not_equal``, object identity doesn't override comparison result.
 
 dtypes are now always true
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Previously ``bool(dtype)`` would fall back to the default python
 implementation, which checked if ``len(dtype) > 0``. Since ``dtype`` objects
@@ -68,7 +81,7 @@ would evaluate to ``False``, which was unintuitive. Now ``bool(dtype) == True``
 for all dtypes.
 
 ``__getslice__`` and ``__setslice__`` have been removed from ``ndarray``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------------------
 When subclassing np.ndarray in Python 2.7, it is no longer _necessary_ to
 implement ``__*slice__`` on the derived class, as ``__*item__`` will intercept
 these calls correctly.
@@ -79,40 +92,44 @@ obvious exception of any code that tries to directly call
 this case, ``.__getitem__(slice(start, end))`` will act as a replacement.
 
 
-C API
-~~~~~
-
-
 New Features
 ============
 
+``PyArray_MapIterArrayCopyIfOverlap`` added to NumPy C-API
+----------------------------------------------------------
+Similar to ``PyArray_MapIterArray`` but with an additional ``copy_if_overlap``
+argument. If ``copy_if_overlap != 0``,  checks if input has memory overlap with
+any of the other arrays and make copies as appropriate to avoid problems if the
+input is modified during the iteration. See the documentation for more complete
+documentation.
+
 Temporary elision
 -----------------
-On platforms providing the `backtrace` function NumPy will now not create
+On platforms providing the ``backtrace`` function NumPy will now not create
 temporaries in expression when possible.
-For example `d = a + b + c` is transformed to `d = a + b; d += c` which can
+For example ``d = a + b + c`` is transformed to ``d = a + b; d += c`` which can
 improve performance for large arrays as less memory bandwidth is required to
 perform the operation.
 
 ``axes`` argument for ``unique``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
 ``np.gradient`` now supports unevenly spaced data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------
 Users can now specify a not-constant spacing for data. 
 In particular ``np.gradient`` can now take:
 
 1. A single scalar to specify a sample distance for all dimensions.
 2. N scalars to specify a constant sample distance for each dimension.
-   i.e. `dx`, `dy`, `dz`, ...
+   i.e. ``dx``, ``dy``, ``dz``, ...
 3. N arrays to specify the coordinates of the values along each dimension of F.
    The length of the array must match the size of the corresponding dimension
 4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
-This means that, e.g., it is now possible to do the following:
+This means that, e.g., it is now possible to do the following::
     
     >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float)
     >>> dx = 2.
@@ -121,11 +138,33 @@ This means that, e.g., it is now possible to do the following:
     [array([[ 1. ,  1. , -0.5], [ 1. ,  1. , -0.5]]), 
      array([[ 2. ,  2. ,  2. ], [ 2. ,  1.7,  0.5]])]
 
+``np.heaviside`` computes the Heaviside function
+------------------------------------------------
+The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
+function:
+.. code::
+                       { 0   if x < 0,
+    heaviside(x, h0) = { h0  if x == 0,
+                       { 1   if x > 0.
+
+Support for returning arrays of arbitrary dimensions in ``apply_along_axis``
+----------------------------------------------------------------------------
+Previously, only scalars or 1D arrays could be returned by the function passed
+to ``apply_along_axis``. Now, it can return an array of any dimensionality
+(including 0D), and the shape of this array replaces the axis of the array
+being iterated over.
+
+``.ndim`` property added to ``dtype`` to complement ``.shape``
+--------------------------------------------------------------
+For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
+for ``len(d.shape)``.
+
+
 Improvements
 ============
 
 Partial support for 64-bit f2py extensions with MinGW
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 Extensions that incorporate Fortran libraries can now be built using the free
 MinGW_ toolset, also under Python 3.5. This works best for extensions that only
 do calculations and uses the runtime modestly (reading and writing from files,
@@ -142,45 +181,34 @@ programs with a PySide1/Qt4 front-end.
 .. _issues: https://mingwpy.github.io/issues.html
 
 Performance improvements for ``packbits`` and ``unpackbits``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------
 The functions ``numpy.packbits`` with boolean input and ``numpy.unpackbits`` have
 been optimized to be a significantly faster for contiguous data.
 
 Fix for PPC long double floating point information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 In previous versions of numpy, the ``finfo`` function returned invalid
 information about the `double double`_ format of the ``longdouble`` float type
 on Power PC (PPC).  The invalid values resulted from the failure of the numpy
-algorithm to deal with the `variable number of digits in the significand
-<https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm>`_
-that are a feature of PPC long doubles.  This release by-passes the failing
+algorithm to deal with the variable number of digits in the significand
+that are a feature of `PPC long doubles`.  This release by-passes the failing
 algorithm by using heuristics to detect the presence of the PPC double double
 format.  A side-effect of using these heuristics is that the ``finfo``
 function is faster than previous releases.
+
+.. _PPC long doubles: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm
 
 .. _issues: https://github.com/numpy/numpy/issues/2669
 
 .. _double double: https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
 
-Support for returning arrays of arbitrary dimensionality in `apply_along_axis`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Previously, only scalars or 1D arrays could be returned by the function passed
-to `apply_along_axis`. Now, it can return an array of any dimensionality
-(including 0D), and the shape of this array replaces the axis of the array
-being iterated over.
-
-``.ndim`` property added to ``dtype`` to complement ``.shape``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
-for ``len(d.shape)``.
-
 Better default repr for ``ndarray`` subclasses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 Subclasses of ndarray with no ``repr`` specialization now correctly indent
 their data and type lines.
 
 More reliable comparisons of masked arrays
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------
 Comparisons of masked arrays were buggy for masked scalars and failed for
 structured arrays with dimension higher than one. Both problems are now
 solved. In the process, it was ensured that in getting the result for a
@@ -190,29 +218,41 @@ identical to what one gets by comparing an unstructured masked array and then
 doing ``.all()`` over some axis.
 
 np.matrix with booleans elements can now be created using the string syntax
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------------------------
 ``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
 ``np.matrix('True')``. Now, this works as expected.
 
 More ``linalg`` operations now accept empty vectors and matrices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------------------
 All of the following functions in ``np.linalg`` now work when given input
-arrays with a 0 in the last two dimensions: `det``, ``slogdet``, ``pinv``,
+arrays with a 0 in the last two dimensions: ``det``, ``slogdet``, ``pinv``,
 ``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
 
 ``argsort`` on masked arrays takes the same default arguments as ``sort``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------------------
 By default, ``argsort`` now places the masked values at the end of the sorted
 array, in the same way that ``sort`` already did. Additionally, the
 ``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
 Note that this argument is not added at the end, so breaks any code that
 passed ``fill_value`` as a positional argument.
 
+Bundled version of LAPACK is now 3.2.2
+--------------------------------------
+NumPy comes bundled with a minimal implementation of lapack for systems without
+a lapack library installed, under the name of ``lapack_lite``. This has been
+upgraded from LAPACK 3.0.0 (June 30, 1999) to LAPACK 3.2.2 (June 30, 2010). See
+the `LAPACK changelogs`_ for details on the all the changes this entails.
+
+While no new features are exposed through ``numpy``, this fixes some bugs
+regarding "workspace" sizes, and in some places may use faster algorithms.
+
+.. _`LAPACK changelogs`: http://www.netlib.org/lapack/release_notes.html#_4_history_of_lapack_releases
+
 Changes
 =======
 
 Ufunc behavior for overlapping inputs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------
 
 Operations where ufunc input and output operands have memory overlap
 produced undefined results in previous Numpy versions, due to data
@@ -229,51 +269,51 @@ not be made even if the arrays overlap, if it can be deduced copies
 are not necessary.  As an example,``np.add(a, b, out=a)`` will not
 involve copies.
 
-To illustrate a previously undefined operation
+To illustrate a previously undefined operation::
 
->>> x = np.arange(16).astype(float)
->>> np.add(x[1:], x[:-1], out=x[1:])
+    >>> x = np.arange(16).astype(float)
+    >>> np.add(x[1:], x[:-1], out=x[1:])
 
-In Numpy 1.13.0 the last line is guaranteed to be equivalent to
+In Numpy 1.13.0 the last line is guaranteed to be equivalent to::
 
->>> np.add(x[1:].copy(), x[:-1].copy(), out=x[1:])
+    >>> np.add(x[1:].copy(), x[:-1].copy(), out=x[1:])
 
-A similar operation with simple non-problematic data dependence is
+A similar operation with simple non-problematic data dependence is::
 
->>> x = np.arange(16).astype(float)
->>> np.add(x[1:], x[:-1], out=x[:-1])
+    >>> x = np.arange(16).astype(float)
+    >>> np.add(x[1:], x[:-1], out=x[:-1])
 
 It will continue to produce the same results as in previous Numpy
 versions, and will not involve unnecessary temporary copies.
 
-The change applies also to in-place binary operations, for example:
+The change applies also to in-place binary operations, for example::
 
->>> x = np.random.rand(500, 500)
->>> x += x.T
+    >>> x = np.random.rand(500, 500)
+    >>> x += x.T
 
 This statement is now guaranteed to be equivalent to ``x[...] = x + x.T``,
 whereas in previous Numpy versions the results were undefined.
 
 ``average`` now preserves subclasses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 For ndarray subclasses, ``numpy.average`` will now return an instance of the
 subclass, matching the behavior of most other numpy functions such as ``mean``.
 As a consequence, also calls that returned a scalar may now return a subclass
 array scalar.
 
 ``array == None`` and ``array != None`` do element-wise comparison
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------------
 Previously these operations returned scalars ``False`` and ``True`` respectively.
 
 ``np.equal, np.not_equal`` for object arrays ignores object identity
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------------------
 Previously, these functions always treated identical objects as equal. This had
 the effect of overriding comparison failures, comparison of objects that did
 not return booleans, such as np.arrays, and comparison of objects where the
 results differed from object identity, such as NaNs.
 
 Boolean indexing changes
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 * Boolean array-likes (such as lists of python bools) are always treated as
   boolean indexes.
 
@@ -282,14 +322,14 @@ Boolean indexing changes
 
 * Boolean indexes must match the dimension of the axis that they index.
 
-* Boolean indexes used on the lhs of an assigment must match the dimensions of
+* Boolean indexes used on the lhs of an assignment must match the dimensions of
   the rhs.
 
 * Boolean indexing into scalar arrays return a new 1-d array.  This means that
   ``array(1)[array(True)]`` gives ``array([1])`` and not the original array.
 
 ``np.random.multivariate_normal`` behavior with bad covariance matrix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------------------
 
 It is now possible to adjust the behavior the function will have when dealing
 with the covariance matrix by using two new keyword arguments:
@@ -303,14 +343,20 @@ with the covariance matrix by using two new keyword arguments:
   the behavior used on previous releases.
 
 ``assert_array_less`` compares ``np.inf`` and ``-np.inf`` now
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 Previously, ``np.testing.assert_array_less`` ignored all infinite values. This
 is not the expected behavior both according to documentation and intuitively.
 Now, -inf < x < inf is considered ``True`` for any real number x and all
 other cases fail.
 
 ``offset`` attribute value in ``memmap`` objects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------
 The ``offset`` attribute in a ``memmap`` object is now set to the
 offset into the file. This is a behaviour change only for offsets
 greater than ``mmap.ALLOCATIONGRANULARITY``.
+
+``np.real`` and ``np.imag`` return scalars for scalar inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, ``np.real`` and ``np.imag`` used to return array objects when
+provided a scalar input, which was inconsistent with other functions like
+``np.angle`` and ``np.conj``.
