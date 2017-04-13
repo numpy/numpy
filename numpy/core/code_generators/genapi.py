@@ -441,10 +441,12 @@ def check_api_dict(d):
                 doubled[index].append(name)
             except KeyError:
                 doubled[index] = [name]
-        msg = """\
-Same index has been used twice in api definition: %s
-""" % ['index %d -> %s' % (index, names) for index, names in doubled.items() \
-                                          if len(names) != 1]
+        msg = "Same index has been used twice in api definition: {}".format(
+            ''.join(
+                '\n\tindex %d -> %s' % (index, names)
+                for index, names in doubled.items() if len(names) != 1
+            )
+        )
         raise ValueError(msg)
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
