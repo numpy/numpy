@@ -71,7 +71,7 @@ Array scalar type     Related Python type
 :class:`int_`         :class:`IntType` (Python 2 only)
 :class:`float_`       :class:`FloatType`
 :class:`complex_`     :class:`ComplexType`
-:class:`str_`         :class:`StringType`
+:class:`bytes_`       :class:`BytesType`
 :class:`unicode_`     :class:`UnicodeType`
 ====================  ================================
 
@@ -193,14 +193,16 @@ size: the data they describe can be of different length in different
 arrays. (In the character codes ``#`` is an integer denoting how many
 elements the data type consists of.)
 
-===================  =============================  ========
-:class:`str_`        compatible: Python str         ``'S#'``
-:class:`unicode_`    compatible: Python unicode     ``'U#'``
-:class:`void`                                       ``'V#'``
-===================  =============================  ========
+===================  ==============================  ========
+:class:`bytes_`      compatible: Python bytes        ``'S#'``
+:class:`unicode_`    compatible: Python unicode/str  ``'U#'``
+:class:`void`                                        ``'V#'``
+===================  ==============================  ========
 
 
 .. warning::
+
+   See :ref:`Note on string types<string-dtype-note>`.
 
    Numeric Compatibility: If you used old typecode characters in your
    Numeric code (which was never recommended), you will need to change
