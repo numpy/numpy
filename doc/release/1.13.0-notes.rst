@@ -34,6 +34,10 @@ Deprecations
 * ``np.ma.MaskedArray.mini`` is deprecated, as it almost duplicates the
   functionality of ``np.MaskedArray.min``. Exactly equivalent behaviour
   can be obtained with ``np.ma.minimum.reduce``.
+* The single-argument form of ``np.ma.minimum`` and ``np.ma.maximum`` is
+  deprecated. ``np.maximum``. ``np.ma.minimum(x)`` should now be spelt
+  ``np.ma.minimum.reduce(x)``, which is consistent with how this would be done
+  with ``np.minimum``.
 
 Build System Changes
 ====================

@@ -37,5 +37,13 @@ class TestArgsort(TestCase):
 		return self._test_base(np.ma.MaskedArray.argsort, np.ma.MaskedArray)
 
 
+class TestMinimumMaximum(TestCase):
+    def test_minimum(self):
+        assert_warns(DeprecationWarning, np.ma.minimum, np.ma.array([1, 2]))
+
+    def test_maximum(self):
+        assert_warns(DeprecationWarning, np.ma.maximum, np.ma.array([1, 2]))
+
+
 if __name__ == "__main__":
     run_module_suite()
