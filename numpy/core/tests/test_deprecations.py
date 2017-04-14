@@ -421,5 +421,12 @@ class TestClassicIntDivision(_DeprecationTestCase):
                 dt2 = dt1
 
 
+class TestNPY_CHAR(_DeprecationTestCase):
+    def test_npy_char_deprecation(self):
+        from numpy.core.multiarray_tests import npy_char_deprecation
+        self.assert_deprecated(npy_char_deprecation)
+        assert_(npy_char_deprecation() == 'S1')
+
+
 if __name__ == "__main__":
     run_module_suite()

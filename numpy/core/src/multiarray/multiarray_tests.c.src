@@ -1,6 +1,7 @@
 /* -*-c-*- */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <Python.h>
+#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
@@ -608,6 +609,13 @@ incref_elide_l(PyObject *dummy, PyObject *args)
     return res;
 }
 
+/* used to test NPY_CHAR usage emits deprecation warning */
+static PyObject*
+npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyArray_Descr * descr = PyArray_DescrFromType(NPY_CHAR);
+    return (PyObject *)descr;
+}
 
 #if !defined(NPY_PY3K)
 static PyObject *
@@ -1576,6 +1584,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"incref_elide_l",
         incref_elide_l,
         METH_VARARGS, NULL},
+    {"npy_char_deprecation",
+        npy_char_deprecation,
+        METH_NOARGS, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",
         int_subclass,
