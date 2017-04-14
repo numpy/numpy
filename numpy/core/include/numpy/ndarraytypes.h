@@ -15,7 +15,17 @@
         #define NPY_ALLOW_THREADS 0
 #endif
 
+#ifndef __has_extension
+#define __has_extension(x) 0
+#endif
 
+#if !defined(_NPY_NO_DEPRECATIONS) && \
+    ((defined(__GNUC__)&& __GNUC__ >= 6) || \
+     __has_extension(attribute_deprecated_with_message))
+#define NPY_ATTR_DEPRECATE(text) __attribute__ ((deprecated (text)))
+#else
+#define NPY_ATTR_DEPRECATE(text)
+#endif
 
 /*
  * There are several places in the code where an array of dimensions
@@ -71,12 +81,15 @@ enum NPY_TYPES {    NPY_BOOL=0,
 
                     NPY_NTYPES,
                     NPY_NOTYPE,
-                    NPY_CHAR,      /* special flag */
+                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
                     NPY_USERDEF=256,  /* leave room for characters */
 
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
+#ifdef _MSC_VER
+#pragma deprecated(NPY_CHAR)
+#endif
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
