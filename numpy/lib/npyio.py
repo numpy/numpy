@@ -1220,19 +1220,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fmt = asstr(fmt)
     delimiter = asstr(delimiter)
 
-    own_fh = False
-    if is_pathlib_path(fname):
-        fname = str(fname)
-    if _is_string_like(fname):
-        # datasource doesn't support creating a new file ...
-        open(fname, 'wt').close()
-        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
-        own_fh = True
-    elif hasattr(fname, 'write'):
-        fh = fname
-    else:
-        raise ValueError('fname must be a string or file handle')
-
     class WriteWrap(object):
         """ convert to unicode in py2 or to bytes on bytestream inputs """
         def __init__(self, fh, encoding):
@@ -1264,7 +1251,22 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.write_bytes(v)
                 self.write = self.write_bytes
 
-    fh = WriteWrap(fh, encoding)
+    own_fh = False
+    if is_pathlib_path(fname):
+        fname = str(fname)
+    if _is_string_like(fname):
+        # datasource doesn't support creating a new file ...
+        open(fname, 'wt').close()
+        fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
+        own_fh = True
+        # need to convert str to unicode for text io output
+        if sys.version_info[0] == 2:
+            fh = WriteWrap(fh, encoding)
+    elif hasattr(fname, 'write'):
+        # wrap to handle byte output streams
+        fh = WriteWrap(fname, encoding)
+    else:
+        raise ValueError('fname must be a string or file handle')
 
     try:
         X = np.asarray(X)

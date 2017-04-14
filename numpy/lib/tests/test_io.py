@@ -494,6 +494,14 @@ class TestSaveTxt(object):
                            dtype=np.unicode)
             assert_array_equal(a, b)
 
+    def test_unicode_bytestream(self):
+        utf8 = b'\xcf\x96'.decode('UTF-8')
+        a = np.array([utf8], dtype=np.unicode)
+        s = BytesIO()
+        np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
+        s.seek(0)
+        assert_equal(s.read().decode('UTF-8'), utf8 + '\n')
+
 
 class LoadTxtBase:
     def test_encoding(self):
