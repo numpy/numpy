@@ -55,6 +55,16 @@ class TextIO(BytesIO):
 
 MAJVER, MINVER = sys.version_info[:2]
 IS_64BIT = sys.maxsize > 2**32
+try:
+    import bz2
+    HAS_BZ2 = True
+except ImportError:
+    HAS_BZ2 = False
+try:
+    import lzma
+    HAS_LZMA = True
+except ImportError:
+    HAS_LZMA = False
 
 
 def strptime(s, fmt=None):
@@ -487,12 +497,21 @@ class TestSaveTxt(object):
     def test_unicode_roundtrip(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
         a = np.array([utf8], dtype=np.unicode)
+        # our gz wrapper support encoding
+        suffixes = ['', '.gz']
+        # stdlib 2 versions do not support encoding
+        if MAJVER > 2:
+            if HAS_BZ2:
+                suffixes.append('.bz2')
+            if HAS_LZMA:
+                suffixes.extend(['.xz', '.lzma'])
         with tempdir() as tmpdir:
-            np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
-                       encoding='UTF-16')
-            b = np.loadtxt(os.path.join(tmpdir, 'test.csv'), encoding='UTF-16',
-                           dtype=np.unicode)
-            assert_array_equal(a, b)
+            for suffix in suffixes:
+                np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
+                           fmt=['%s'], encoding='UTF-16-LE')
+                b = np.loadtxt(os.path.join(tmpdir, 'test.csv' + suffix),
+                               encoding='UTF-16-LE', dtype=np.unicode)
+                assert_array_equal(a, b)
 
     def test_unicode_bytestream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
@@ -504,6 +523,36 @@ class TestSaveTxt(object):
 
 
 class LoadTxtBase:
+    def check_compressed(self, fopen, suffixes):
+        # Test that we can load data from a compressed file
+        wanted = np.arange(6).reshape((2, 3))
+        linesep = ('\n', '\r\n', '\r')
+        for sep in linesep:
+            data = '0 1 2' + sep + '3 4 5'
+            for suffix in suffixes:
+                with temppath(suffix=suffix) as name:
+                    with fopen(name, mode='wt', encoding='UTF-32-LE') as f:
+                        f.write(data)
+                    res = getattr(np, self.loadfunc)(name,
+                                                     encoding='UTF-32-LE')
+                    assert_array_equal(res, wanted)
+                    res = getattr(np, self.loadfunc)(
+                                 fopen(name, "rt", encoding='UTF-32-LE'))
+                    assert_array_equal(res, wanted)
+
+    # Python2 .open does not support encoding
+    @np.testing.dec.skipif(MAJVER == 2)
+    def test_compressed_gzip(self):
+        self.check_compressed(gzip.open, ('.gz',))
+
+    @np.testing.dec.skipif(MAJVER == 2 or not HAS_BZ2)
+    def test_compressed_gzip(self):
+        self.check_compressed(bz2.open, ('.bz2',))
+
+    @np.testing.dec.skipif(MAJVER == 2 or not HAS_LZMA)
+    def test_compressed_gzip(self):
+        self.check_compressed(lzma.open, ('.xz', '.lzma'))
+
     def test_encoding(self):
         with temppath() as path:
             with open(path, "wb") as f:

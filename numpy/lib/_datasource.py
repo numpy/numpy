@@ -122,6 +122,12 @@ class _FileOpeners(object):
             self._file_openers[".gz"] = _gzipopen
         except ImportError:
             pass
+        try:
+            import lzma
+            self._file_openers[".xz"] = lzma.open
+            self._file_openers[".lzma"] = lzma.open
+        except ImportError:
+            pass
         self._loaded = True
 
     def keys(self):
