@@ -6,6 +6,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
@@ -4415,6 +4416,17 @@ PyArray_DescrFromType(int type)
         return NULL;
     }
     else if ((type == NPY_CHAR) || (type == NPY_CHARLTR)) {
+        if (type == NPY_CHAR) {
+            /*
+             * warning added 2017-04-25, 1.13
+             * deprecated in 1.7
+             * */
+            if (DEPRECATE("The NPY_CHAR type_num is deprecated. "
+                          "Please port your code to use "
+                          "NPY_STRING instead.") < 0) {
+                return NULL;
+            }
+        }
         ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;
