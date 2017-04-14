@@ -1981,13 +1981,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
     if loose:
-        rows = [list(x) for x in
+        rows = list(
             zip(*[[conv._loose_call(_r) for _r in map(itemgetter(i), rows)]
-                  for (i, conv) in enumerate(converters)])]
+                  for (i, conv) in enumerate(converters)]))
     else:
-        rows = [list(x) for x in
+        rows = list(
             zip(*[[conv._strict_call(_r) for _r in map(itemgetter(i), rows)]
-                  for (i, conv) in enumerate(converters)])]
+                  for (i, conv) in enumerate(converters)]))
 
     # Reset the dtype
     data = rows
@@ -1999,20 +1999,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                      if v == np.unicode_]
 
         typestr = 'U'
-        if byte_converters:
+        if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
             try:
-                for j, row in enumerate(data):
+                for j in range(len(data)):
+                    row = list(data[j])
                     for i in strcolidx:
                         row[i] = row[i].encode('latin1')
+                    data[j] = tuple(row)
                 typestr = 'S'
             except UnicodeEncodeError:
                 # we must use unicode, revert encoding
                 for k in range(0, j + 1):
+                    row = list(data[k])
                     for i in strcolidx:
-                        if isinstance(data[k][i], bytes):
-                            data[k][i] = data[k][i].decode('latin1')
-        data = [tuple(x) for x in data]
+                        if isinstance(row[i], bytes):
+                            row[i] = row[i].decode('latin1')
+                    data[k] = tuple(row)
 
         # ... and take the largest number of chars.
         for i in strcolidx:
@@ -2039,7 +2042,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
     else:
-        data = [tuple(x) for x in data]
         # Overwrite the initial dtype names if needed
         if names and dtype.names:
             dtype.names = names
