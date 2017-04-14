@@ -65,7 +65,7 @@ c2py_map = {'double': 'float',
 c2capi_map = {'double': 'NPY_DOUBLE',
               'float': 'NPY_FLOAT',
               'long_double': 'NPY_DOUBLE',           # forced casting
-              'char': 'NPY_CHAR',
+              'char': 'NPY_STRING',
               'unsigned_char': 'NPY_UBYTE',
               'signed_char': 'NPY_BYTE',
               'short': 'NPY_SHORT',
@@ -77,7 +77,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
               'complex_float': 'NPY_CFLOAT',
               'complex_double': 'NPY_CDOUBLE',
               'complex_long_double': 'NPY_CDOUBLE',   # forced casting
-              'string': 'NPY_CHAR'}
+              'string': 'NPY_STRING'}
 
 # These new maps aren't used anyhere yet, but should be by default
 #  unless building numeric or numarray extensions.
@@ -99,10 +99,7 @@ if using_newcore:
                   'complex_float': 'NPY_CFLOAT',
                   'complex_double': 'NPY_CDOUBLE',
                   'complex_long_double': 'NPY_CDOUBLE',
-                  # f2py 2e is not ready for NPY_STRING (must set itemisize
-                  # etc)
-                  'string': 'NPY_CHAR',
-                  #'string':'NPY_STRING'
+                  'string':'NPY_STRING'
 
                   }
 c2pycode_map = {'double': 'd',
