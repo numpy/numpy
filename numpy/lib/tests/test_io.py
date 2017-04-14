@@ -512,6 +512,12 @@ class LoadTxtBase:
             x = getattr(np, self.loadfunc)(path, encoding="UTF-16", dtype=np.unicode)
             assert_array_equal(x, nonascii)
 
+    def test_binary_decode(self):
+        utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
+        v = getattr(np, self.loadfunc)(BytesIO(utf16), dtype=np.unicode,
+                                       encoding='UTF-16')
+        assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
+
     def test_converters_decode(self):
         # test converters that decode strings
         c = TextIO()
@@ -1809,6 +1815,12 @@ M   33  21.99
                              dtype=None, comments=None, delimiter=',')
         assert_equal(test['f0'], 0)
         assert_equal(test['f1'], b"testNonethe" + latin1)
+
+    def test_binary_decode_autodtype(self):
+        utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
+        v = getattr(np, self.loadfunc)(BytesIO(utf16), dtype=None,
+                                       encoding='UTF-16')
+        assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
 
     def test_utf8_byte_encoding(self):
         utf8 = b"\xcf\x96"
