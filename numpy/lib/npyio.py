@@ -922,9 +922,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     except TypeError:
         raise ValueError('fname must be a string, file handle, or generator')
     X = []
-    # input may be a python2 io stream, we must assume local encoding
+
+    # input may be a python2 io stream
+    if encoding is not None and encoding != 'bytes':
+        fencoding = encoding
+    # we must assume local encoding
     # TOOD emit portability warning?
-    if fencoding is None:
+    elif fencoding is None:
         import locale
         fencoding = locale.getpreferredencoding()
 
