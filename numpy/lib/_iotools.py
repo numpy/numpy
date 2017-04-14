@@ -21,6 +21,17 @@ _bytes_to_complex = complex
 _bytes_to_name = str
 
 
+def _decode_line(line, encoding=None):
+    """ decode bytes from binary input streams, default to latin1 """
+    if type(line) == bytes:
+        if encoding is None:
+            line = line.decode('latin1')
+        else:
+            line = line.decode(encoding)
+
+    return line
+
+
 def _is_string_like(obj):
     """
     Check whether obj behaves like a string.
@@ -209,12 +220,7 @@ class LineSplitter(object):
 
     def _delimited_splitter(self, line):
         """Chop off comments, strip, and split at delimiter. """
-        # decode bytes, default to latin1
-        if type(line) == bytes:
-            if self.encoding is None:
-                line = line.decode('latin1')
-            else:
-                line = line.decode(self.encoding)
+        line = _decode_line(line, self.encoding)
 
         if self.comments is not None:
             line = line.split(self.comments)[0]
@@ -225,12 +231,8 @@ class LineSplitter(object):
     #
 
     def _fixedwidth_splitter(self, line):
-        # decode bytes, default to latin1
-        if type(line) == bytes:
-            if self.encoding is None:
-                line = line.decode('latin1')
-            else:
-                line = line.decode(self.encoding)
+        line = _decode_line(line, self.encoding)
+
         if self.comments is not None:
             line = line.split(self.comments)[0]
         line = line.strip("\r\n")
@@ -242,12 +244,8 @@ class LineSplitter(object):
     #
 
     def _variablewidth_splitter(self, line):
-        # decode bytes, default to latin1
-        if type(line) == bytes:
-            if self.encoding is None:
-                line = line.decode('latin1')
-            else:
-                line = line.decode(self.encoding)
+        line = _decode_line(line, self.encoding)
+
         if self.comments is not None:
             line = line.split(self.comments)[0]
         if not line:

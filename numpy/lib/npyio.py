@@ -16,7 +16,7 @@ from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
-    has_nested_fields, flatten_dtype, easy_dtype, _bytes_to_name
+    has_nested_fields, flatten_dtype, easy_dtype, _bytes_to_name, _decode_line
     )
 
 from numpy.compat import (
@@ -876,7 +876,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if isinstance(comments, (basestring, bytes)):
             comments = [comments]
 
-        comments = [x.decode('latin1') if type(x) == bytes else x for x in comments]
+        comments = [_decode_line(x) for x in comments]
 
         # Compile regex for comments beforehand
         comments = (re.escape(comment) for comment in comments)
@@ -976,12 +976,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def split_line(line):
         """Chop off comments, strip, and split at delimiter. """
-        # decode bytes, default to latin1
-        if type(line) == bytes:
-            if encoding is None:
-                line = line.decode('latin1')
-            else:
-                line = line.decode(encoding)
+        line = _decode_line(line, encoding=encoding)
 
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
@@ -1664,13 +1659,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     first_values = None
     try:
         while not first_values:
-            first_line = next(fhd)
-            # decode bytes, default to latin1
-            if type(first_line) == bytes:
-                if encoding is None:
-                    first_line = first_line.decode('latin1')
-                else:
-                    first_line = first_line.decode(encoding)
+            first_line = _decode_line(next(fhd), encoding)
             if names is True:
                 if comments in first_line:
                     first_line = (
