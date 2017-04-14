@@ -417,6 +417,8 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    MaskedArray.__getitem__
    MaskedArray.__setitem__
    MaskedArray.__delitem__
+   MaskedArray.__getslice__
+   MaskedArray.__setslice__
    MaskedArray.__contains__
 
 

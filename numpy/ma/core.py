@@ -3346,6 +3346,26 @@ class MaskedArray(ndarray):
             except (AttributeError, TypeError):
                 pass
 
+    def __getslice__(self, i, j):
+        """
+        x.__getslice__(i, j) <==> x[i:j]
+
+        Return the slice described by (i, j).  The use of negative indices
+        is not supported.
+
+        """
+        return self.__getitem__(slice(i, j))
+
+    def __setslice__(self, i, j, value):
+        """
+        x.__setslice__(i, j, value) <==> x[i:j]=value
+
+        Set the slice (i,j) of a to value. If value is masked, mask those
+        locations.
+
+        """
+        self.__setitem__(slice(i, j), value)
+
     def __setmask__(self, mask, copy=False):
         """
         Set the mask.
