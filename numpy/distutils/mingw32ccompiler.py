@@ -98,17 +98,28 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         elif self.linker_dll == 'gcc':
             self.linker = 'g++'
 
-        # **changes: eric jones 4/11/01
-        # 1. Check for import library on Windows.  Build if it doesn't exist.
-
-        build_import_library()
-
-        # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
-        msvcr_success = build_msvcr_library()
-        msvcr_dbg_success = build_msvcr_library(debug=True)
-        if msvcr_success or msvcr_dbg_success:
-            # add preprocessor statement for using customized msvcr lib
-            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
+        p = subprocess.Popen(['gcc', '--version'], shell=True,
+                             stdout=subprocess.PIPE)
+        out_string = p.stdout.read()
+        p.stdout.close()
+        
+        # Before build with MinGW-W64 generate the python import library
+        # with gendef and dlltool according to the MingW-W64 FAQ. 
+        # Use the MinGW-W64 provided msvc runtime import libraries.
+        # Don't call build_import_library() and build_msvcr_library.
+        
+        if 'MinGW-W64' not in str(out_string):
+            
+            # **changes: eric jones 4/11/01
+            # 1. Check for import library on Windows.  Build if it doesn't exist.            
+            build_import_library()
+            
+            # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
+            msvcr_success = build_msvcr_library()
+            msvcr_dbg_success = build_msvcr_library(debug=True)
+            if msvcr_success or msvcr_dbg_success:
+                # add preprocessor statement for using customized msvcr lib
+                self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # Define the MSVC version as hint for MinGW
         msvcr_version = msvc_runtime_version()
@@ -130,10 +141,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(
-                    compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
-                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
-                    linker_exe='gcc -g',
-                    linker_so='gcc -g -shared')
+                    compiler='gcc -march=x86-64 -mtune=generic -DMS_WIN64 -O2 -msse2 -Wall',
+                    compiler_so='gcc -march=x86-64 -mtune=generic -DMS_WIN64 -O2 -msse2 -Wall -Wstrict-prototypes',
+                    linker_exe='gcc',
+                    linker_so='gcc -shared -Wl,-gc-sections -Wl,-s')
         else:
             if self.gcc_version <= "3.0.0":
                 self.set_executables(
@@ -152,10 +163,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                     linker_so='g++ -mno-cygwin -shared')
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
-                self.set_executables(compiler='gcc -O2 -Wall',
-                                     compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
+                # i686 build needs '-mincoming-stack-boundary=2' due to ABI incompatibility to Win32 ABI
+                self.set_executables(compiler='gcc -O2 -march=core2 -mtune=generic -mfpmath=sse -msse2 -mincoming-stack-boundary=2 -Wall',
+                                     compiler_so='gcc -O2 -march=core2 -mtune=generic  -mfpmath=sse -msse2 -mincoming-stack-boundary=2 -Wall -Wstrict-prototypes',
                                      linker_exe='g++ ',
-                                     linker_so='g++ -shared')
+                                     linker_so='g++ -shared -Wl,-gc-sections -Wl,-s')
         # added for python2.3 support
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']

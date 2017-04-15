@@ -20,6 +20,8 @@ TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 # XXX: handle cross compilation
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
+def is_win32():
+    return sys.platform == "win32" and platform.architecture()[0] == "32bit"
 
 if is_win64():
     #_EXTRAFLAGS = ["-fno-leading-underscore"]
@@ -141,7 +143,7 @@ class GnuFCompiler(FCompiler):
 
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
-            opt.append("-shared")
+            opt.append("-shared -Wl,-gc-sections -Wl,-s")
         if sys.platform.startswith('sunos'):
             # SunOS often has dynamically loaded symbols defined in the
             # static library libg2c.a  The linker doesn't like this.  To
@@ -213,9 +215,17 @@ class GnuFCompiler(FCompiler):
             # With this compiler version building Fortran BLAS/LAPACK
             # with -O3 caused failures in lib.lapack heevr,syevr tests.
             opt = ['-O2']
+        elif v and v>='4.6.0':
+            if is_win32():
+                # use -mincoming-stack-boundary=2 
+                # due to the change to 16 byte stack alignment since GCC 4.6
+                # but 32 bit Windows ABI defines 4 bytes stack alignment
+                opt = ['-O2 -march=core2 -mtune=generic -mfpmath=sse -msse2 -mincoming-stack-boundary=2'] 
+            else:
+                opt = ['-O2 -march=x86-64 -DMS_WIN64 -mtune=generic -msse2'] 
         else:
-            opt = ['-O3']
-        opt.append('-funroll-loops')
+            opt = ['-O2'] 
+        # opt.append()
         return opt
 
     def _c_arch_flags(self):
@@ -357,10 +367,7 @@ class Gnu95FCompiler(GnuFCompiler):
         return ""
 
     def get_flags_opt(self):
-        if is_win64():
-            return ['-O0']
-        else:
-            return GnuFCompiler.get_flags_opt(self)
+        return GnuFCompiler.get_flags_opt(self)
 
 def _can_target(cmd, arch):
     """Return true if the architecture supports the -arch flag"""
@@ -386,9 +393,13 @@ if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
 
-    compiler = GnuFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    try:
+        compiler = GnuFCompiler()
+        compiler.customize()
+        print(compiler.get_version())
+    except Exception:
+        msg = get_exception()
+        print(msg)
 
     try:
         compiler = Gnu95FCompiler()
