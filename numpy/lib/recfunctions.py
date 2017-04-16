@@ -901,6 +901,11 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Make temporary arrays of just the keys
     r1k = drop_fields(r1, [n for n in r1names if n not in key])
     r2k = drop_fields(r2, [n for n in r2names if n not in key])
+    
+    # Keys need to be in same order
+    r1k = r1k[list(key)]
+    r2k = r2k[list(key)]
+    
 
     # Concatenate the two arrays for comparison
     aux = ma.concatenate((r1k, r2k))
@@ -950,9 +955,9 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
                 current[0] += r1postfix
                 desc[0] += r2postfix
                 ndtype.insert(nameidx + 1, desc)
-        #... we haven't: just add the description to the current list
+        # ... we haven't: just add the description to the current list
         else:
-            names.extend(desc[0])
+            names.append(desc[0])
             ndtype.append(desc)
     # Revert the elements to tuples
     ndtype = [tuple(_) for _ in ndtype]
