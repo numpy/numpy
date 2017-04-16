@@ -1867,6 +1867,12 @@ M   33  21.99
         assert_equal(test[1, 0], b"test1")
         assert_equal(test[1, 1], b"testNonethe" + latin1)
         assert_equal(test[1, 2], b"test3")
+        test = np.genfromtxt(TextIO(s),
+                             dtype=None, comments=None, delimiter=',',
+                             encoding='latin1')
+        assert_equal(test[1, 0], u"test1")
+        assert_equal(test[1, 1], u"testNonethe" + latin1.decode('latin1'))
+        assert_equal(test[1, 2], u"test3")
 
         test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
                              dtype=None, comments=None, delimiter=',')
