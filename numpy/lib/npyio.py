@@ -883,10 +883,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         regex_comments = re.compile('|'.join(comments))
     user_converters = converters
 
-    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
+    else:
+        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -924,7 +925,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     X = []
 
     # input may be a python2 io stream
-    if encoding is not None and encoding != 'bytes':
+    if encoding is not None:
         fencoding = encoding
     # we must assume local encoding
     # TOOD emit portability warning?
@@ -1036,14 +1037,16 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 # converters may use decode to workaround numpy's oldd behaviour,
                 # so encode the string again before passing to the user converter
                 def tobytes_first(x, conv):
-                    if type(x) == bytes:
+                    if type(x) is bytes:
                         return conv(x)
                     return conv(x.encode("latin1"))
                 import functools
-                user_conv = functools.partial(tobytes_first, conv=conv)
-                converters[i] = user_conv
+                converters[i] = functools.partial(tobytes_first, conv=conv)
             else:
                 converters[i] = conv
+
+        converters = [conv if conv is not bytes else
+                      lambda x: x.encode(fencoding) for conv in converters]
 
         # Parse each line, including the first
         for i, line in enumerate(itertools.chain([first_line], fh)):
@@ -1057,8 +1060,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 raise ValueError("Wrong number of columns at line %d"
                                  % line_num)
 
-            converters = [conv if conv != bytes else
-                          lambda x: x.encode(fencoding) for conv in converters]
             # Convert each value according to its column and store
             items = [conv(val) for (conv, val) in zip(converters, vals)]
 
@@ -1228,7 +1229,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         """ convert to unicode in py2 or to bytes on bytestream inputs """
         def __init__(self, fh, encoding):
             self.fh = fh
-            self.encoding = encoding if encoding else 'latin1'
+            self.encoding = encoding
             self.do_write = self.first_write
 
         def close(self):
@@ -1265,10 +1266,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         own_fh = True
         # need to convert str to unicode for text io output
         if sys.version_info[0] == 2:
-            fh = WriteWrap(fh, encoding)
+            fh = WriteWrap(fh, encoding or 'latin1')
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
-        fh = WriteWrap(fname, encoding)
+        fh = WriteWrap(fname, encoding or 'latin1')
     else:
         raise ValueError('fname must be a string or file handle')
 
@@ -1416,7 +1417,7 @@ def fromregex(file, regexp, dtype, encoding=None):
         if isinstance(content, bytes) and not isinstance(regexp, bytes):
             regexp = asbytes(regexp)
         elif not isinstance(content, bytes) and isinstance(regexp, bytes):
-            regexp = regexp.decode('latin1')
+            regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
             regexp = re.compile(regexp)
@@ -1630,10 +1631,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             "The input argument 'converter' should be a valid dictionary "
             "(got '%s' instead)" % type(user_converters))
 
-    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
+    else:
+        byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
@@ -1866,18 +1868,19 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             testing_value = first_values[j]
         else:
             testing_value = None
-        user_conv = conv
-        if conv == bytes:
+        if conv is bytes:
             user_conv = asbytes
         elif byte_converters:
             # converters may use decode to workaround numpy's oldd behaviour,
             # so encode the string again before passing to the user converter
             def tobytes_first(x, conv):
-                if type(x) == bytes:
+                if type(x) is bytes:
                     return conv(x)
                 return conv(x.encode("latin1"))
             import functools
             user_conv = functools.partial(tobytes_first, conv=conv)
+        else:
+            user_conv = conv
         converters[i].update(user_conv, locked=True,
                              testing_value=testing_value,
                              default=filling_values[i],
@@ -2080,10 +2083,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Keep the dtype of the current converter
                     if i in user_converters:
                         ishomogeneous &= (ttype == dtype.type)
-                        if ttype == np.string_:
-                            ttype = "|S%i" % max(len(row[i]) for row in data)
-                        elif ttype == np.unicode_:
-                            ttype = "|U%i" % max(len(row[i]) for row in data)
+                        if np.issubdtype(ttype, np.character):
+                            ttype = (ttype, max(len(row[i]) for row in data))
                         descr.append(('', ttype))
                     else:
                         descr.append(('', dtype))

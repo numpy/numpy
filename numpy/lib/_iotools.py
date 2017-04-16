@@ -19,7 +19,7 @@ else:
 
 def _decode_line(line, encoding=None):
     """ decode bytes from binary input streams, default to latin1 """
-    if type(line) == bytes:
+    if type(line) is bytes:
         if encoding is None:
             line = line.decode('latin1')
         else:
