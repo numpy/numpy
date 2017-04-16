@@ -759,6 +759,8 @@ def _getconv(dtype):
     else:
         return asstr
 
+# amount of lines loadtxt reads in one chunk, can be overriden for testing
+_loadtxt_chunksize = 50000
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
@@ -922,7 +924,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError:
         raise ValueError('fname must be a string, file handle, or generator')
-    X = []
 
     # input may be a python2 io stream
     if encoding is not None:
@@ -991,6 +992,32 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             return []
 
+    def read_data(chunk_size):
+        # Parse each line, including the first
+        X = []
+        for i, line in enumerate(itertools.chain([first_line], fh)):
+            vals = split_line(line)
+            if len(vals) == 0:
+                continue
+            if usecols:
+                vals = [vals[j] for j in usecols]
+            if len(vals) != N:
+                line_num = i + skiprows + 1
+                raise ValueError("Wrong number of columns at line %d"
+                                 % line_num)
+
+            # Convert each value according to its column and store
+            items = [conv(val) for (conv, val) in zip(converters, vals)]
+
+            # Then pack it according to the dtype's nesting
+            items = pack_items(items, packing)
+            X.append(items)
+            if len(X) > chunk_size:
+                yield X
+                X = []
+        if X:
+            yield X
+
     try:
         # Make sure we're dealing with a proper dtype
         dtype = np.dtype(dtype)
@@ -1048,29 +1075,27 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         converters = [conv if conv is not bytes else
                       lambda x: x.encode(fencoding) for conv in converters]
 
-        # Parse each line, including the first
-        for i, line in enumerate(itertools.chain([first_line], fh)):
-            vals = split_line(line)
-            if len(vals) == 0:
-                continue
-            if usecols:
-                vals = [vals[j] for j in usecols]
-            if len(vals) != N:
-                line_num = i + skiprows + 1
-                raise ValueError("Wrong number of columns at line %d"
-                                 % line_num)
-
-            # Convert each value according to its column and store
-            items = [conv(val) for (conv, val) in zip(converters, vals)]
-
-            # Then pack it according to the dtype's nesting
-            items = pack_items(items, packing)
-            X.append(items)
+        # read data in chunks and fill it into an array via resize
+        # over-allocating and shrinking the array later may be faster but is
+        # probably not relevant compared to the cost of actually reading and
+        # converting the data
+        X = None
+        for x in read_data(_loadtxt_chunksize):
+            if X is None:
+                X = np.array(x, dtype)
+            else:
+                nshape = list(X.shape)
+                pos = nshape[0]
+                nshape[0] += len(x)
+                X.resize(nshape)
+                X[pos:, ...] = x
     finally:
         if fown:
             fh.close()
 
-    X = np.array(X, dtype)
+    if X is None:
+        X = np.array([], dtype)
+
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
     if X.ndim == 3 and X.shape[:2] == (1, 1):

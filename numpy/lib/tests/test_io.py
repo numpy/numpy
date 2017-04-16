@@ -600,6 +600,13 @@ class LoadTxtBase:
 
 class TestLoadTxt(LoadTxtBase):
     loadfunc = 'loadtxt'
+    def setUp(self):
+        # lower chunksize for testing
+        self.orig_chunk = np.lib.npyio._loadtxt_chunksize
+        np.lib.npyio._loadtxt_chunksize = 1
+    def tearDown(self):
+        np.lib.npyio._loadtxt_chunksize = self.orig_chunk
+
     def test_record(self):
         c = TextIO()
         c.write('1 2\n3 4')
