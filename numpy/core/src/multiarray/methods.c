@@ -2416,6 +2416,48 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+#ifndef NPY_PY3K
+
+static PyObject *
+array_getslice(PyArrayObject *self, PyObject *args)
+{
+    PyObject *start, *stop, *slice;
+    if (!PyArg_ParseTuple(args, "OO:__getslice__", &start, &stop)) {
+        return NULL;
+    }
+
+    slice = PySlice_New(start, stop, NULL);
+    if (slice == NULL) {
+        return NULL;
+    }
+
+    /* Deliberately delegate to subclasses */
+    return PyObject_GetItem((PyObject *)self, slice);
+}
+
+static PyObject *
+array_setslice(PyArrayObject *self, PyObject *args)
+{
+    PyObject *start, *stop, *value, *slice;
+    if (!PyArg_ParseTuple(args, "OOO:__setslice__", &start, &stop, &value)) {
+        return NULL;
+    }
+
+    slice = PySlice_New(start, stop, NULL);
+    if (slice == NULL) {
+        return NULL;
+    }
+
+    /* Deliberately delegate to subclasses */
+    if (PyObject_SetItem((PyObject *)self, slice, value) < 0) {
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+#endif
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2459,6 +2501,23 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__complex__",
         (PyCFunction) array_complex,
         METH_VARARGS, NULL},
+
+#ifndef NPY_PY3K
+    /*
+     * While we could put these in `tp_sequence`, its' easier to define them
+     * in terms of PyObject* arguments.
+     * 
+     * We must provide these for compatibility with code that calls them
+     * directly. They are already deprecated at a language level in python 2.7,
+     * but are removed outright in python 3.
+     */
+    {"__getslice__",
+        (PyCFunction) array_getslice,
+        METH_VARARGS, NULL},
+    {"__setslice__",
+        (PyCFunction) array_setslice,
+        METH_VARARGS, NULL},
+#endif
 
     /* Original and Extended methods added 2005 */
     {"all",
