@@ -412,6 +412,64 @@ So:
   >>> v.info
   'information'
 
+.. _ndarray-serialization:
+
+Pickling a ``np.ndarray`` subclass
+--------------------------------------------------------
+
+Pickling is the standard process to serialize python objects using the
+``pickle`` package. This serialization capability is usually required
+by the ``multiprocess`` package when parallelizing code.
+
+In order to properly pickle a subclass of ``np.ndarray``, two more methods
+need to be defined in our class definition:
+
+``np.ndarray`` uses the ``__reduce__`` method to tell pickle how the array
+should be serialized. The ``__setstate__`` method sets all the class attributes
+based on the received ``state``.
+
+.. testcode::
+
+  import numpy as np
+
+  class RealisticInfoArray(np.ndarray):
+
+      def __new__(cls, input_array, info=None):
+          # Input array is an already formed ndarray instance
+          # We first cast to be our class type
+          obj = np.asarray(input_array).view(cls)
+          # add the new attribute to the created instance
+          obj.info = info
+          # Finally, we must return the newly created object:
+          return obj
+
+      def __array_finalize__(self, obj):
+          # see InfoArray.__array_finalize__ for comments
+          if obj is None: return
+          self.info = getattr(obj, 'info', None)
+
+      def __reduce__(self):
+          npState = np.ndarray.__reduce__(self)
+          # npState[2] contains the state of the np.ndarray.
+          # We append our attributes to the state
+          myState = npState[2] + (self.info,)
+          # We return the __reduce__ tuple, with our custom state
+          return (npState[0], npState[1], myState)
+
+      def __setstate__(self, state):
+          # We restore the info using the last state element
+          # as appended in __reduce__
+          self.info = state[-1]
+          # We call the original __setstate__ method, with the
+          # original state given by np.ndarray.__reduce__
+          np.ndarray.__setstate__(self, state[0:-1])
+
+
+Without these two additional methods, our subclass would not serialize
+the ``info`` attribute, and it would be lost when using pickle, for instance
+if we tried to use our class with the ``multiprocessing`` module.
+
+
 .. _array-wrap:
 
 ``__array_wrap__`` for ufuncs
