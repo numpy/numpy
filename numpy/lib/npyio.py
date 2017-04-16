@@ -1651,7 +1651,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             "or generator. Got %s instead." % type(fname))
 
     split_line = LineSplitter(delimiter=delimiter, comments=comments,
-                              autostrip=autostrip, encoding=encoding)._handyman
+                              autostrip=autostrip, encoding=encoding)
     validate_names = NameValidator(excludelist=excludelist,
                                    deletechars=deletechars,
                                    case_sensitive=case_sensitive,

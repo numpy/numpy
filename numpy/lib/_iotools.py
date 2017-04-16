@@ -216,8 +216,6 @@ class LineSplitter(object):
 
     def _delimited_splitter(self, line):
         """Chop off comments, strip, and split at delimiter. """
-        line = _decode_line(line, self.encoding)
-
         if self.comments is not None:
             line = line.split(self.comments)[0]
         line = line.strip(" \r\n")
@@ -227,8 +225,6 @@ class LineSplitter(object):
     #
 
     def _fixedwidth_splitter(self, line):
-        line = _decode_line(line, self.encoding)
-
         if self.comments is not None:
             line = line.split(self.comments)[0]
         line = line.strip("\r\n")
@@ -240,8 +236,6 @@ class LineSplitter(object):
     #
 
     def _variablewidth_splitter(self, line):
-        line = _decode_line(line, self.encoding)
-
         if self.comments is not None:
             line = line.split(self.comments)[0]
         if not line:
@@ -251,7 +245,7 @@ class LineSplitter(object):
     #
 
     def __call__(self, line):
-        return self._handyman(line)
+        return self._handyman(_decode_line(line, self.encoding))
 
 
 class NameValidator(object):
