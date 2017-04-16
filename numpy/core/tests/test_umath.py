@@ -697,6 +697,12 @@ class TestHypot(TestCase, object):
         assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
         assert_almost_equal(ncu.hypot(0, 0), 0)
 
+    def test_reduce(self):
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0, 0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([9.0, 12.0, 20.0]), 25.0)
+        assert_equal(ncu.hypot.reduce([]), 0.0)
+
 
 def assert_hypot_isnan(x, y):
     with np.errstate(invalid='ignore'):
@@ -1087,6 +1093,23 @@ class TestBool(TestCase):
 
         out = [False, True, True, False]
         assert_equal(np.bitwise_xor(arg1, arg2), out)
+
+    def test_reduce(self):
+        none = np.array([0, 0, 0, 0], bool)
+        some = np.array([1, 0, 1, 1], bool)
+        every = np.array([1, 1, 1, 1], bool)
+        empty = np.array([], bool)
+
+        arrs = [none, some, every, empty]
+
+        for arr in arrs:
+            assert_equal(np.logical_and.reduce(arr), all(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_or.reduce(arr), any(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_xor.reduce(arr), arr.sum() % 2 == 1)
 
 
 class TestBitwiseUFuncs(TestCase):
