@@ -16,7 +16,7 @@ from numpy.core.multiarray import packbits, unpackbits
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
-    has_nested_fields, flatten_dtype, easy_dtype, _bytes_to_name, _decode_line
+    has_nested_fields, flatten_dtype, easy_dtype, _decode_line
     )
 
 from numpy.compat import (
@@ -1696,8 +1696,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Check the names and overwrite the dtype.names if needed
     if names is True:
-        names = validate_names([_bytes_to_name(_.strip())
-                                for _ in first_values])
+        names = validate_names([str(_.strip()) for _ in first_values])
         first_line = ''
     elif _is_string_like(names):
         names = validate_names([_.strip() for _ in names.split(',')])

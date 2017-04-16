@@ -17,10 +17,6 @@ else:
     from __builtin__ import bool, int, float, complex, object, unicode, str
 
 
-_bytes_to_complex = complex
-_bytes_to_name = str
-
-
 def _decode_line(line, encoding=None):
     """ decode bytes from binary input streams, default to latin1 """
     if type(line) == bytes:
@@ -537,7 +533,7 @@ class StringConverter(object):
         _mapper.append((nx.int64, int, -1))
 
     _mapper.extend([(nx.floating, float, nx.nan),
-                    (nx.complexfloating, _bytes_to_complex, nx.nan + 0j),
+                    (nx.complexfloating, complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
                     (nx.unicode_, asunicode, '???'),
                     (nx.string_, asbytes, '???')])
