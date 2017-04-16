@@ -15,7 +15,7 @@ DataSource files can originate locally or remotely:
 - URLs (http, ftp, ...) : 'http://www.scipy.org/not/real/data.txt'
 
 DataSource files can also be compressed or uncompressed.  Currently only
-gzip and bz2 are supported.
+gzip, bz2 and xz are supported.
 
 Example::
 
@@ -42,26 +42,37 @@ import io
 
 _open = open
 
-def _bz2open(fn, mode, encoding, newline):
+def _check_mode(mode, encoding, newline):
+    if "t" in mode:
+        if "b" in mode:
+            raise ValueError("Invalid mode: %r" % (mode,))
+    else:
+        if encoding is not None:
+            raise ValueError("Argument 'encoding' not supported in binary mode")
+        if newline is not None:
+            raise ValueError("Argument 'newline' not supported in binary mode")
+
+def _python2_bz2open(fn, mode, encoding, newline):
     """ wrapper to open bz2 in text mode """
     import bz2
-    if sys.version_info[0] >= 3:
-        return bz2.open(fn, mode=mode, encoding=encoding, newline=newline)
+
+    _check_mode(mode, encoding, newline)
 
     if "t" in mode:
-        raise ValueError("bz2 files not supported in python2")
+        # BZ2File is missing necessary functions for TextIOWrapper
+        raise ValueError("bz2 text files not supported in python2")
     else:
-        return bz2.BZ2File(fn, mode.replace("t", ""))
+        return bz2.BZ2File(fn, mode)
 
-def _gzipopen(fn, mode, encoding, newline):
+def _python2_gzipopen(fn, mode, encoding, newline):
     """ wrapper to open gzip in text mode """
     import gzip
-    if sys.version_info[0] >= 3:
-        return gzip.open(fn, mode=mode, encoding=encoding, newline=newline)
-
+    # gzip is lacking read1 needed for TextIOWrapper
     class GzipWrap(gzip.GzipFile):
         def read1(self, n):
             return self.read(n)
+
+    _check_mode(mode, encoding, newline)
 
     gz_mode = mode.replace("t", "")
     if isinstance(fn, (str, bytes)):
@@ -79,7 +90,7 @@ def _gzipopen(fn, mode, encoding, newline):
 
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
-# deferring the import of bz2 and gzip until needed
+# deferring the import of lzma, bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
 class _FileOpeners(object):
@@ -90,7 +101,7 @@ class _FileOpeners(object):
     supported file format. Attribute lookup is implemented in such a way
     that an instance of `_FileOpeners` itself can be indexed with the keys
     of that dictionary. Currently uncompressed files as well as files
-    compressed with ``gzip`` or ``bz2`` compression are supported.
+    compressed with ``gzip``, ``bz2`` or ``xz`` compression are supported.
 
     Notes
     -----
@@ -100,7 +111,7 @@ class _FileOpeners(object):
     Examples
     --------
     >>> np.lib._datasource._file_openers.keys()
-    [None, '.bz2', '.gz']
+    [None, '.bz2', '.gz', '.xz', '.lzma']
     >>> np.lib._datasource._file_openers['.gz'] is gzip.open
     True
 
@@ -114,12 +125,19 @@ class _FileOpeners(object):
         if self._loaded:
             return
         try:
-            self._file_openers[".bz2"] = _bz2open
+            import bz2
+            if sys.version_info[0] >= 3:
+                self._file_openers[".bz2"] = bz2.open
+            else:
+                self._file_openers[".bz2"] = _python2_bz2open
         except ImportError:
             pass
         try:
             import gzip
-            self._file_openers[".gz"] = _gzipopen
+            if sys.version_info[0] >= 3:
+                self._file_openers[".gz"] = gzip.open
+            else:
+                self._file_openers[".gz"] = _python2_gzipopen
         except ImportError:
             pass
         try:
@@ -142,7 +160,7 @@ class _FileOpeners(object):
         -------
         keys : list
             The keys are None for uncompressed files and the file extension
-            strings (i.e. ``'.gz'``, ``'.bz2'``) for supported compression
+            strings (i.e. ``'.gz'``, ``'.xz'``) for supported compression
             methods.
 
         """
