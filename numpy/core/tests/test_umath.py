@@ -685,6 +685,10 @@ class TestLogAddExp(_FilterInvalids):
         assert_(np.isnan(np.logaddexp(0, np.nan)))
         assert_(np.isnan(np.logaddexp(np.nan, np.nan)))
 
+    def test_reduce(self):
+        assert_equal(np.logaddexp.identity, -np.inf)
+        assert_equal(np.logaddexp.reduce([]), -np.inf)
+
 
 class TestLog1p(object):
     def test_log1p(self):
