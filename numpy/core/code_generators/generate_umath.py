@@ -1040,14 +1040,16 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
-        mlist.append(textwrap.dedent("""\
-        f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
-                                    %d, %d, %s, "%s",
-                                    "%s", 0);""") % (name, name, name,
-                                                len(uf.type_descriptions),
-                                                uf.nin, uf.nout,
-                                                uf.identity,
-                                                name, docstring))
+        fmt = textwrap.dedent("""\
+            f = PyUFunc_FromFuncAndData(
+                {name}_functions, {name}_data, {name}_signatures, {nloops},
+                {nin}, {nout}, {identity}, "{name}",
+                "{doc}", 0
+            );""")
+        mlist.append(fmt.format(
+            name=name, nloops=len(uf.type_descriptions),
+            nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring
+        ))
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
