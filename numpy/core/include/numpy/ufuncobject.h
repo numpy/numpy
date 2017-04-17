@@ -223,7 +223,8 @@ typedef struct _tagPyUFuncObject {
          */
         npy_uint32 *core_dim_flags;
 
-
+        /* Identity for reduction, when identity == PyUFunc_IdentityValue */
+        PyObject *identity_value;
 
 } PyUFuncObject;
 
@@ -299,6 +300,12 @@ typedef struct _tagPyUFuncObject {
  * This case allows reduction with multiple axes at once.
  */
 #define PyUFunc_ReorderableNone -2
+/*
+ * UFunc unit is in identity_value, and the order of operations can be reordered
+ * This case allows reduction with multiple axes at once.
+ */
+#define PyUFunc_IdentityValue -3
+
 
 #define UFUNC_REDUCE 0
 #define UFUNC_ACCUMULATE 1

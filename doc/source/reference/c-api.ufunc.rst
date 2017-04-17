@@ -169,8 +169,12 @@ Functions
     :param identity:
 
         Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
-        :c:data:`PyUFunc_None`. This specifies what should be returned when
+        :c:data:`PyUFunc_MinusOne`, or :c:data:`PyUFunc_None`.
+        This specifies what should be returned when
         an empty array is passed to the reduce method of the ufunc.
+        The special value :c:data:`PyUFunc_IdentityValue` may only be used with
+        the :c:func:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity` method, to
+        allow an arbitrary python object to be used as the identity.
 
     :param name:
         The name for the ufunc as a ``NULL`` terminated string.  Specifying
@@ -205,6 +209,21 @@ Functions
         The signature for the new gufunc. Setting it to NULL is equivalent
         to calling PyUFunc_FromFuncAndData. A copy of the string is made,
         so the passed in buffer can be freed.
+
+.. c:function:: PyObject* PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+        PyUFuncGenericFunction *func, void **data, char *types, int ntypes, \
+        int nin, int nout, int identity, char *name, char *doc, int unused, char *signature,
+        PyObject *identity_value)
+
+   This function is very similar to `PyUFunc_FromFuncAndDataAndSignature` above,
+   but has an extra *identity_value* argument, to define an arbitrary identity
+   for the ufunc when ``identity`` is passed as ``PyUFunc_IdentityValue``.
+
+   :param identity_value:
+        The identity for the new gufunc. Must be passed as ``NULL`` unless the
+        ``identity`` argument is ``PyUFunc_IdentityValue``. Setting it to NULL
+        is equivalent to calling PyUFunc_FromFuncAndDataAndSignature.
+
 
 .. c:function:: int PyUFunc_RegisterLoopForType( \
         PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, \

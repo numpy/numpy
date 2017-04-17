@@ -2453,6 +2453,11 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
         *reorderable = 0;
         Py_RETURN_NONE;
 
+    case PyUFunc_IdentityValue:
+        *reorderable = 1;
+        Py_INCREF(ufunc->identity_value);
+        return ufunc->identity_value;
+
     default:
         PyErr_Format(PyExc_ValueError,
                 "ufunc %s has an invalid identity", ufunc_get_name_cstr(ufunc));
@@ -4833,6 +4838,20 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      const char *name, const char *doc,
                                      int unused, const char *signature)
 {
+    return PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+        func, data, types, ntypes, nin, nout, identity, name, doc,
+        unused, signature, NULL);
+}
+
+/*UFUNC_API*/
+NPY_NO_EXPORT PyObject *
+PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, void **data,
+                                     char *types, int ntypes,
+                                     int nin, int nout, int identity,
+                                     const char *name, const char *doc,
+                                     int unused, const char *signature,
+                                     PyObject *identity_value)
+{
     PyUFuncObject *ufunc;
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -4853,6 +4872,10 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->nout = nout;
     ufunc->nargs = nin+nout;
     ufunc->identity = identity;
+    if (ufunc->identity == PyUFunc_IdentityValue) {
+        Py_INCREF(identity_value);
+    }
+    ufunc->identity_value = identity_value;
 
     ufunc->functions = func;
     ufunc->data = data;
@@ -4874,6 +4897,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 
     ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*ufunc->nargs);
     if (ufunc->op_flags == NULL) {
+        Py_DECREF(ufunc);
         return PyErr_NoMemory();
     }
     memset(ufunc->op_flags, 0, sizeof(npy_uint32)*ufunc->nargs);
@@ -5230,6 +5254,9 @@ ufunc_dealloc(PyUFuncObject *ufunc)
     PyArray_free(ufunc->op_flags);
     Py_XDECREF(ufunc->userloops);
     Py_XDECREF(ufunc->obj);
+    if (ufunc->identity == PyUFunc_IdentityValue) {
+        Py_DECREF(ufunc->identity_value);
+    }
     PyArray_free(ufunc);
 }
 
