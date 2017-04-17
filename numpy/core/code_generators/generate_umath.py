@@ -462,7 +462,7 @@ defdict = {
           TD(O, f='npy_ObjectLogicalOr'),
           ),
 'logical_xor':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.logical_xor'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?'),
@@ -779,7 +779,7 @@ defdict = {
           TD(O, f='PyNumber_Remainder'),
           ),
 'hypot':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.hypot'),
           None,
           TD(flts, f='hypot', astype={'e':'f'}),

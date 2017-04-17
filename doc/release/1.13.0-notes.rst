@@ -248,6 +248,11 @@ regarding "workspace" sizes, and in some places may use faster algorithms.
 
 .. _`LAPACK changelogs`: http://www.netlib.org/lapack/release_notes.html#_4_history_of_lapack_releases
 
+``reduce`` of ``np.hypot.reduce`` and ``np.logical_xor`` allowed in more cases
+------------------------------------------------------------------------------
+This now works on empty arrays, returning 0, and can reduce over multiple axes.
+Previously, a ``ValueError`` was thrown in these cases.
+
 Changes
 =======
 
