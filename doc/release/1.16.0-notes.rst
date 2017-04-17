@@ -102,8 +102,13 @@ for unraveling. ``dims`` remains supported, but is now deprecated.
 C API changes
 =============
 
-The :c:data:`NPY_API_VERSION` was incremented to 0x0000D since
-``core_dim_flags`` and ``core_dim_sizes`` were added to :c:type:`PyUFuncObject`.
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D, due to the addition
+of:
+
+* :c:member:`PyUFuncObject.core_dim_flags`
+* :c:member:`PyUFuncObject.core_dim_sizes`
+* :c:member:`PyUFuncObject.identity_value`
+* :c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
 
 New Features
 ============
