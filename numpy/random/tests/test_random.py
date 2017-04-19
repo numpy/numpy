@@ -7,7 +7,6 @@ from numpy.testing import (
         assert_warns, assert_no_warnings, assert_array_equal,
         assert_array_almost_equal, suppress_warnings)
 from numpy import random
-from numpy.compat import asbytes
 import sys
 import warnings
 
@@ -384,16 +383,16 @@ class TestRandomDist(TestCase):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        desired = b'\x82Ui\x9e\xff\x97+Wf\xa5'
         assert_equal(actual, desired)
 
     def test_shuffle(self):
@@ -704,7 +703,7 @@ class TestRandomDist(TestCase):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -822,6 +821,27 @@ class TestRandomDist(TestCase):
         # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
         # DBL_MAX by increasing fmin a bit
         np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
+
+    def test_scalar_exception_propagation(self):
+        # Tests that exceptions are correctly propagated in distributions
+        # when called with objects that throw exceptions when converted to
+        # scalars.
+        #
+        # Regression test for gh: 8865
+
+        class ThrowingFloat(np.ndarray):
+            def __float__(self):
+                raise TypeError
+
+        throwing_float = np.array(1.0).view(ThrowingFloat)
+        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+
+        class ThrowingInteger(np.ndarray):
+            def __int__(self):
+                raise TypeError
+
+        throwing_int = np.array(1).view(ThrowingInteger)
+        assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)
 
     def test_vonmises(self):
         np.random.seed(self.seed)

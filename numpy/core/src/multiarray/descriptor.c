@@ -152,7 +152,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
     PyObject *dict;
 
-    if (!PyArg_ParseTuple(args, "O", &dict)) {
+    if (!PyArg_ParseTuple(args, "O:set_typeDict", &dict)) {
         return NULL;
     }
     /* Decrement old reference (if any)*/
@@ -1950,6 +1950,25 @@ arraydescr_shape_get(PyArray_Descr *self)
     return Py_BuildValue("(O)", self->subarray->shape);
 }
 
+static PyObject *
+arraydescr_ndim_get(PyArray_Descr *self)
+{
+    if (!PyDataType_HASSUBARRAY(self)) {
+        return PyInt_FromLong(0);
+    }
+    /*TODO
+     * self->subarray->shape should always be a tuple,
+     * so this check should be unnecessary
+     */
+    if (PyTuple_Check(self->subarray->shape)) {
+        Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
+        return PyInt_FromLong(ndim);
+    }
+    /* consistent with arraydescr_shape_get */
+    return PyInt_FromLong(1);
+}
+
+
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
@@ -2208,6 +2227,9 @@ static PyGetSetDef arraydescr_getsets[] = {
     {"shape",
         (getter)arraydescr_shape_get,
         NULL, NULL, NULL},
+    {"ndim",
+        (getter)arraydescr_ndim_get,
+        NULL, NULL, NULL},
     {"isbuiltin",
         (getter)arraydescr_isbuiltin_get,
         NULL, NULL, NULL},
@@ -2245,7 +2267,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!:dtype", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
@@ -2544,7 +2566,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags, &metadata)) {
             PyErr_Clear();
@@ -2552,21 +2575,24 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
             return NULL;
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii)", &version,
+        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+                    &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
             return NULL;
@@ -2574,7 +2600,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii)",
+        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
@@ -3060,7 +3086,7 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 {
     char endian=NPY_SWAP;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
+    if (!PyArg_ParseTuple(args, "|O&:newbyteorder", PyArray_ByteorderConverter,
                 &endian)) {
         return NULL;
     }

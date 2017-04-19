@@ -101,7 +101,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
                 kwlist, &list, &weight, &mlength)) {
             goto fail;
     }
@@ -117,10 +117,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     else {
         minlength = PyArray_PyIntAsIntp(mlength);
-        if (minlength <= 0) {
+        if (minlength < 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
-                                "minlength must be positive");
+                                "minlength must be non-negative");
             }
             goto fail;
         }
@@ -217,7 +217,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     static char *kwlist[] = {"x", "bins", "right", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:digitize", kwlist,
                                      &obj_x, &obj_bins, &right)) {
         goto fail;
     }
@@ -533,7 +533,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
                                      &x, &xp, &fp, &left, &right)) {
         return NULL;
     }
@@ -686,8 +686,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
+                                     kwlist, &x, &xp, &fp, &left, &right)) {
         return NULL;
     }
 
@@ -874,7 +874,7 @@ static int sequence_to_arrays(PyObject *seq,
             return -1;
         }
 
-        op[i] = (PyArrayObject *)PyArray_FromAny(item, NULL, 0, 0, 0, NULL);
+        op[i] = (PyArrayObject *)PyArray_FROM_O(item);
         if (op[i] == NULL) {
             while (--i >= 0) {
                 Py_DECREF(op[i]);
@@ -1209,8 +1209,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
 
     if (!PyArray_Check(indices0)) {
-        indices = (PyArrayObject*)PyArray_FromAny(indices0,
-                                                    NULL, 0, 0, 0, NULL);
+        indices = (PyArrayObject*)PyArray_FROM_O(indices0);
         if (indices == NULL) {
             goto fail;
         }
@@ -1409,13 +1408,13 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
 #if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "OO!", &obj, &PyUnicode_Type, &str)) {
+    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
         return NULL;
     }
 
     docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
 #else
-    if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str)) {
+    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
         return NULL;
     }
 
@@ -1509,7 +1508,7 @@ pack_inner(const char *inptr,
         __m128i zero = _mm_setzero_si128();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 2);
+        vn_out -= (vn_out & 1);
         for (index = 0; index < vn_out; index += 2) {
             unsigned int r;
             /* swap as packbits is "big endian", note x86 can load unaligned */
@@ -1805,7 +1804,7 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int axis = NPY_MAXDIMS;
     static char *kwlist[] = {"in", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:pack" , kwlist,
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
@@ -1819,7 +1818,7 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int axis = NPY_MAXDIMS;
     static char *kwlist[] = {"in", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:unpack" , kwlist,
                 &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }

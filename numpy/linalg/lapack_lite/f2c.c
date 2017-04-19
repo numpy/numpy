@@ -1,3 +1,12 @@
+/*
+  Functions here are copied from the source code for libf2c.
+
+  Typically each function there is in its own file.
+
+  We don't link against libf2c directly, because we can't guarantee
+  it is available, and shipping a static library isn't portable.
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +18,7 @@ extern void s_wsfe(cilist *f) {;}
 extern void e_wsfe(void) {;}
 extern void do_fio(integer *c, char *s, ftnlen l) {;}
 
-/* You'll want this if you redo the *_lite.c files with the -C option
+/* You'll want this if you redo the f2c_*.c files with the -C option
  * to f2c for checking array subscripts. (It's not suggested you do that
  * for production use, of course.) */
 extern int
@@ -184,6 +193,17 @@ return( (*x)>=0 ?
 
 
 #ifdef KR_headers
+double floor();
+integer i_nint(x) real *x;
+#else
+#undef abs
+integer i_nint(real *x)
+#endif
+{
+return (integer)(*x >= 0 ? floor(*x + .5) : -floor(.5 - *x));
+}
+
+#ifdef KR_headers
 double pow();
 double pow_dd(ap, bp) doublereal *ap, *bp;
 #else
@@ -263,6 +283,79 @@ if(n != 0)
 	}
 return(pow);
 }
+
+#ifdef KR_headers
+VOID pow_zi(p, a, b) 	/* p = a**b  */
+ doublecomplex *p, *a; integer *b;
+#else
+extern void z_div(doublecomplex*, doublecomplex*, doublecomplex*);
+void pow_zi(doublecomplex *p, doublecomplex *a, integer *b) 	/* p = a**b  */
+#endif
+{
+	integer n;
+	unsigned long u;
+	double t;
+	doublecomplex q, x;
+	static doublecomplex one = {1.0, 0.0};
+
+	n = *b;
+	q.r = 1;
+	q.i = 0;
+
+	if(n == 0)
+		goto done;
+	if(n < 0)
+		{
+		n = -n;
+		z_div(&x, &one, a);
+		}
+	else
+		{
+		x.r = a->r;
+		x.i = a->i;
+		}
+
+	for(u = n; ; )
+		{
+		if(u & 01)
+			{
+			t = q.r * x.r - q.i * x.i;
+			q.i = q.r * x.i + q.i * x.r;
+			q.r = t;
+			}
+		if(u >>= 1)
+			{
+			t = x.r * x.r - x.i * x.i;
+			x.i = 2 * x.r * x.i;
+			x.r = t;
+			}
+		else
+			break;
+		}
+ done:
+	p->i = q.i;
+	p->r = q.r;
+	}
+
+#ifdef KR_headers
+VOID pow_ci(p, a, b) 	/* p = a**b  */
+ complex *p, *a; integer *b;
+#else
+extern void pow_zi(doublecomplex*, doublecomplex*, integer*);
+void pow_ci(complex *p, complex *a, integer *b) 	/* p = a**b  */
+#endif
+{
+doublecomplex p1, a1;
+
+a1.r = a->r;
+a1.i = a->i;
+
+pow_zi(&p1, &a1, b);
+
+p->r = p1.r;
+p->i = p1.i;
+}
+
 /* Unless compiled with -DNO_OVERWRITE, this variant of s_cat allows the
  * target of a concatenation to appear on its right-hand side (contrary
  * to the Fortran 77 Standard, but in accordance with Fortran 90).

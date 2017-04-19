@@ -91,8 +91,12 @@ def test_instances():
 
 
 def assert_ma_equal(discovered, ma_like):
+    # Check MachAr-like objects same as calculated MachAr instances
     for key, value in discovered.__dict__.items():
         assert_equal(value, getattr(ma_like, key))
+        if hasattr(value, 'shape'):
+            assert_equal(value.shape, getattr(ma_like, key).shape)
+            assert_equal(value.dtype, getattr(ma_like, key).dtype)
 
 
 def test_known_types():

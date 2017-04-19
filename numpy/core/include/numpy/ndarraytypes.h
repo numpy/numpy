@@ -1008,6 +1008,12 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_DELAY_BUFALLOC             0x00000800
 /* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
 #define NPY_ITER_DONT_NEGATE_STRIDES        0x00001000
+/*
+ * If output operands overlap with other operands (based on heuristics that
+ * has false positives but no false negatives), make temporary copies to
+ * eliminate overlap.
+ */
+#define NPY_ITER_COPY_IF_OVERLAP            0x00002000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
@@ -1039,6 +1045,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
+/* Assume iterator order data access for COPY_IF_OVERLAP */
+#define NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE 0x40000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

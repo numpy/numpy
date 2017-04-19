@@ -2392,7 +2392,8 @@ def _selected_real_kind_func(p, r=0, radix=0):
         return 4
     if p < 16:
         return 8
-    if platform.machine().lower().startswith('power'):
+    machine = platform.machine().lower()
+    if machine.startswith('power') or machine.startswith('ppc64'):
         if p <= 20:
             return 16
     else:
@@ -2929,9 +2930,9 @@ def analyzeargs(block):
     return block
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z', re.I)
-determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(P<name>[\w]+)|)\Z', re.I)
+determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_3 = re.compile(
-    r'\A[+-]?[\d.]+[\d+-de.]*(_(P<name>[\w]+)|)\Z', re.I)
+    r'\A[+-]?[\d.]+[\d+\-de.]*(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_4 = re.compile(r'\A\(.*\)\Z', re.I)
 determineexprtype_re_5 = re.compile(r'\A(?P<name>\w+)\s*\(.*?\)\s*\Z', re.I)
 

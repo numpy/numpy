@@ -5,6 +5,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
 
 from . import numeric as _nx
 from .numeric import asanyarray, newaxis
+from .multiarray import normalize_axis_index
 
 def atleast_1d(*arys):
     """
@@ -48,7 +49,7 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1)
         else:
             result = ary
@@ -98,9 +99,9 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:]
         else:
             result = ary
@@ -162,11 +163,11 @@ def atleast_3d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:, newaxis]
-        elif len(ary.shape) == 2:
+        elif ary.ndim == 2:
             result = ary[:,:, newaxis]
         else:
             result = ary
@@ -264,7 +265,8 @@ def hstack(tup):
 
     Notes
     -----
-    Equivalent to ``np.concatenate(tup, axis=1)``
+    Equivalent to ``np.concatenate(tup, axis=1)`` if `tup` contains arrays that
+    are at least 2-dimensional.
 
     Examples
     --------
@@ -282,7 +284,7 @@ def hstack(tup):
     """
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
-    if arrs[0].ndim == 1:
+    if arrs and arrs[0].ndim == 1:
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
@@ -347,11 +349,7 @@ def stack(arrays, axis=0):
         raise ValueError('all input arrays must have the same shape')
 
     result_ndim = arrays[0].ndim + 1
-    if not -result_ndim <= axis < result_ndim:
-        msg = 'axis {0} out of bounds [-{1}, {1})'.format(axis, result_ndim)
-        raise IndexError(msg)
-    if axis < 0:
-        axis += result_ndim
+    axis = normalize_axis_index(axis, result_ndim)
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]

@@ -1667,6 +1667,8 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
+        else:
+            info['include_dirs'] = self.get_include_dirs()
         if platform.system() == 'Windows':
             # The check for windows is needed because has_cblas uses the
             # same compiler that was used to compile Python and msvc is

@@ -462,7 +462,7 @@ defdict = {
           TD(O, f='npy_ObjectLogicalOr'),
           ),
 'logical_xor':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.logical_xor'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?'),
@@ -549,6 +549,12 @@ defdict = {
           None,
           TD(ints, simd=[('avx2', ints)]),
           TD(O, f='PyNumber_Rshift'),
+          ),
+'heaviside':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.heaviside'),
+          None,
+          TD(flts, f='heaviside', astype={'e':'f'}),
           ),
 'degrees':
     Ufunc(1, 1, None,
@@ -773,7 +779,7 @@ defdict = {
           TD(O, f='PyNumber_Remainder'),
           ),
 'hypot':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.hypot'),
           None,
           TD(flts, f='hypot', astype={'e':'f'}),

@@ -9,8 +9,7 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, asanyarray, array, isnan, \
-                obj2sctype, zeros
+from numpy.core.numeric import asarray, asanyarray, array, isnan, zeros
 from .ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
@@ -104,9 +103,10 @@ def asfarray(a, dtype=_nx.float_):
         dtype = _nx.float_
     return asarray(a, dtype=dtype)
 
+
 def real(val):
     """
-    Return the real part of the elements of the array.
+    Return the real part of the complex argument.
 
     Parameters
     ----------
@@ -115,9 +115,10 @@ def real(val):
 
     Returns
     -------
-    out : ndarray
-        Output array. If `val` is real, the type of `val` is used for the
-        output.  If `val` has complex elements, the returned type is float.
+    out : ndarray or scalar
+        The real component of the complex argument. If `val` is real, the type
+        of `val` is used for the output.  If `val` has complex elements, the
+        returned type is float.
 
     See Also
     --------
@@ -134,13 +135,19 @@ def real(val):
     >>> a.real = np.array([9, 8, 7])
     >>> a
     array([ 9.+2.j,  8.+4.j,  7.+6.j])
+    >>> np.real(1 + 1j)
+    1.0
 
     """
-    return asanyarray(val).real
+    try:
+        return val.real
+    except AttributeError:
+        return asanyarray(val).real
+
 
 def imag(val):
     """
-    Return the imaginary part of the elements of the array.
+    Return the imaginary part of the complex argument.
 
     Parameters
     ----------
@@ -149,9 +156,10 @@ def imag(val):
 
     Returns
     -------
-    out : ndarray
-        Output array. If `val` is real, the type of `val` is used for the
-        output.  If `val` has complex elements, the returned type is float.
+    out : ndarray or scalar
+        The imaginary component of the complex argument. If `val` is real,
+        the type of `val` is used for the output.  If `val` has complex
+        elements, the returned type is float.
 
     See Also
     --------
@@ -165,9 +173,15 @@ def imag(val):
     >>> a.imag = np.array([8, 10, 12])
     >>> a
     array([ 1. +8.j,  3.+10.j,  5.+12.j])
+    >>> np.imag(1 + 1j)
+    1.0
 
     """
-    return asanyarray(val).imag
+    try:
+        return val.imag
+    except AttributeError:
+        return asanyarray(val).imag
+
 
 def iscomplex(x):
     """
@@ -268,12 +282,10 @@ def iscomplexobj(x):
     """
     try:
         dtype = x.dtype
+        type_ = dtype.type
     except AttributeError:
-        dtype = asarray(x).dtype
-    try:
-        return issubclass(dtype.type, _nx.complexfloating)
-    except AttributeError:
-        return False
+        type_ = asarray(x).dtype.type
+    return issubclass(type_, _nx.complexfloating)
 
 
 def isrealobj(x):
@@ -317,7 +329,7 @@ def _getmaxmin(t):
     f = getlimits.finfo(t)
     return f.max, f.min
 
-def nan_to_num(x):
+def nan_to_num(x, copy=True):
     """
     Replace nan with zero and inf with finite numbers.
 
@@ -329,6 +341,13 @@ def nan_to_num(x):
     ----------
     x : array_like
         Input data.
+    copy : bool, optional
+        Whether to create a copy of `x` (True) or to replace values
+        in-place (False). The in-place operation only occurs if
+        casting to an array does not require a copy.
+        Default is True.
+
+        .. versionadded:: 1.13
 
     Returns
     -------
@@ -363,7 +382,7 @@ def nan_to_num(x):
             -1.28000000e+002,   1.28000000e+002])
 
     """
-    x = _nx.array(x, subok=True)
+    x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
     if not issubclass(xtype, _nx.inexact):
         return x

@@ -38,7 +38,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000a - 1.10.x
 # 0x0000000a - 1.11.x
 # 0x0000000a - 1.12.x
-C_API_VERSION = 0x0000000a
+# 0x0000000b - 1.13.x
+C_API_VERSION = 0x0000000b
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -106,7 +107,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
+        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
+        "backtrace"]
 
 
 OPTIONAL_HEADERS = [
@@ -114,7 +116,8 @@ OPTIONAL_HEADERS = [
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
-                "xlocale.h"  # see GH#8367
+                "xlocale.h",  # see GH#8367
+                "dlfcn.h", # dladdr
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a

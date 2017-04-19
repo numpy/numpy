@@ -76,19 +76,24 @@ class Core(Benchmark):
         np.tril(self.l10x10)
 
 
-class MA(Benchmark):
+class Temporaries(Benchmark):
     def setup(self):
-        self.l100 = range(100)
-        self.t100 = ([True] * 100)
+        self.amid = np.ones(50000)
+        self.bmid = np.ones(50000)
+        self.alarge = np.ones(1000000)
+        self.blarge = np.ones(1000000)
 
-    def time_masked_array(self):
-        np.ma.masked_array()
+    def time_mid(self):
+        (self.amid * 2) + self.bmid
 
-    def time_masked_array_l100(self):
-        np.ma.masked_array(self.l100)
+    def time_mid2(self):
+        (self.amid + self.bmid) - 2
 
-    def time_masked_array_l100_t100(self):
-        np.ma.masked_array(self.l100, self.t100)
+    def time_large(self):
+        (self.alarge * 2) + self.blarge
+
+    def time_large2(self):
+        (self.alarge + self.blarge) - 2
 
 
 class CorrConv(Benchmark):
@@ -117,8 +122,8 @@ class CountNonzero(Benchmark):
     ]
 
     def setup(self, numaxes, size, dtype):
-        self.x = np.empty(shape=(
-            numaxes, size), dtype=dtype)
+        self.x = np.arange(numaxes * size).reshape(numaxes, size)
+        self.x = (self.x % 3).astype(dtype)
 
     def time_count_nonzero(self, numaxes, size, dtype):
         np.count_nonzero(self.x)
@@ -162,3 +167,8 @@ class UnpackBits(Benchmark):
 
     def time_unpackbits_axis1(self):
         np.unpackbits(self.d2, axis=1)
+
+
+class Indices(Benchmark):
+    def time_indices(self):
+        np.indices((1000, 500))

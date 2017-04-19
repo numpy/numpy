@@ -9,12 +9,7 @@ specified.
 from __future__ import division, absolute_import, print_function
 
 import sys, os, re
-try:
-    import hashlib
-    md5new = hashlib.md5
-except ImportError:
-    import md5
-    md5new = md5.new
+import hashlib
 
 import textwrap
 
@@ -135,7 +130,7 @@ class Function(object):
         return '\n'.join(lines)
 
     def api_hash(self):
-        m = md5new()
+        m = hashlib.md5()
         m.update(remove_whitespace(self.return_type))
         m.update('\000')
         m.update(self.name)
@@ -291,6 +286,20 @@ def should_rebuild(targets, source_files):
     if newer_group(sources, targets[0], missing='newer'):
         return True
     return False
+
+def write_file(filename, data):
+    """
+    Write data to filename
+    Only write changed data to avoid updating timestamps unnecessarily
+    """
+    if os.path.exists(filename):
+        with open(filename) as f:
+            if data == f.read():
+                return
+
+    with open(filename, 'w') as fid:
+        fid.write(data)
+
 
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi(object):
@@ -465,11 +474,11 @@ def fullapi_hash(api_dicts):
             a.extend(name)
             a.extend(','.join(map(str, data)))
 
-    return md5new(''.join(a).encode('ascii')).hexdigest()
+    return hashlib.md5(''.join(a).encode('ascii')).hexdigest()
 
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
-VERRE = re.compile('(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
+VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
 
 def get_versions_hash():
     d = []
@@ -490,7 +499,7 @@ def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]
     functions = get_api_functions(tagname, order_file)
-    m = md5new(tagname)
+    m = hashlib.md5(tagname)
     for func in functions:
         print(func)
         ah = func.api_hash()

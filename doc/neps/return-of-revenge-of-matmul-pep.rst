@@ -1173,11 +1173,11 @@ Collected here for reference:
   https://mail.python.org/pipermail/python-ideas/2014-March/027053.html
 
 * numpy-discussion thread on whether to keep ``@@``:
-  http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069448.html
+  http://mail.python.org/pipermail/numpy-discussion/2014-March/069448.html
 
 * numpy-discussion threads on precedence/associativity of ``@``:
-  * http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069444.html
-  * http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069605.html
+  * http://mail.python.org/pipermail/numpy-discussion/2014-March/069444.html
+  * http://mail.python.org/pipermail/numpy-discussion/2014-March/069605.html
 
 
 References
@@ -1286,7 +1286,7 @@ References
 
 .. [#broadcasting] http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
-.. [#matmul-other-langs] http://mail.scipy.org/pipermail/scipy-user/2014-February/035499.html
+.. [#matmul-other-langs] http://mail.python.org/pipermail/scipy-user/2014-February/035499.html
 
 .. [#github-details] Counts were produced by manually entering the
    string ``"import foo"`` or ``"from foo import"`` (with quotes) into
@@ -1358,20 +1358,20 @@ References
    elementwise multiplication, and ``%`` for matrix multiplication:
    https://mail.python.org/pipermail/matrix-sig/1995-August/000002.html
 
-.. [#atat-discussion] http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069502.html
+.. [#atat-discussion] http://mail.python.org/pipermail/numpy-discussion/2014-March/069502.html
 
 .. [#associativity-discussions]
-   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069444.html
-   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069605.html
+   http://mail.python.org/pipermail/numpy-discussion/2014-March/069444.html
+   http://mail.python.org/pipermail/numpy-discussion/2014-March/069605.html
 
 .. [#oil-industry-versus-right-associativity]
-   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069610.html
+   http://mail.python.org/pipermail/numpy-discussion/2014-March/069610.html
 
 .. [#numpy-associativity-counts]
-   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069578.html
+   http://mail.python.org/pipermail/numpy-discussion/2014-March/069578.html
 
 .. [#group-associativity]
-   http://mail.scipy.org/pipermail/numpy-discussion/2014-March/069530.html
+   http://mail.python.org/pipermail/numpy-discussion/2014-March/069530.html
 
 
 Copyright

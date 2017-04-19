@@ -33,6 +33,7 @@
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
 #include <limits.h>
+#include <assert.h>
 
 /*
  *****************************************************************************
@@ -68,6 +69,26 @@ static PyObject *
 MyPyFloat_FromHalf(npy_half h)
 {
     return PyFloat_FromDouble(npy_half_to_double(h));
+}
+
+/* Handle case of assigning from an array scalar in setitem */
+static int
+convert_to_scalar_and_retry(PyObject *op, void *ov, void *vap,
+                      int (*setitem)(PyObject *op, void *ov, void *vap))
+{
+    PyObject *temp;
+
+    assert(PyArray_IsZeroDim(op));
+    temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                      (PyArrayObject *)op);
+    if (temp == NULL) {
+        return -1;
+    }
+    else {
+        int res = setitem(temp, ov, vap);
+        Py_DECREF(temp);
+        return res;
+    }
 }
 
 
@@ -274,7 +295,11 @@ static int
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
+        if (PyArray_IsZeroDim(op)) {
+            /*
+             * TODO: Elsewhere in this file we use PyArray_ToScalar. Is this
+             *       better or worse? Possibly an optimization.
+             */
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
                                     (PyArrayObject *)op);
@@ -374,6 +399,10 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     /* ensure alignment */
     npy_longdouble temp;
 
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, LONGDOUBLE_setitem);
+    }
+
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
     }
@@ -426,15 +455,14 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     char *buffer;
 #endif
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-            PySequence_Check(op) && PySequence_Size(op) > 0) {
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
+    }
+
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
-    }
-    /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
     }
 #if defined(NPY_PY3K)
     if (PyBytes_Check(op)) {
@@ -518,24 +546,13 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    /* Handle case of assigning from an array scalar */
-    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
-        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
-                                (PyArrayObject *)op);
-        if (temp == NULL) {
-            return -1;
-        }
-        else {
-            int res = STRING_setitem(temp, ov, ap);
-            Py_DECREF(temp);
-            return res;
-        }
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, STRING_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
-            && PySequence_Check(op) && PySequence_Size(op) != 0) {
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
-                "cannot set an array element with a sequence");
+                "setting an array element with a sequence");
         return -1;
     }
 #if defined(NPY_PY3K)

@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
-from numpy.compat import asbytes, sixu
 from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
@@ -1139,6 +1138,94 @@ def test_iter_common_dtype():
     assert_equal(i.dtypes[1], np.dtype('c16'))
     assert_equal(i.dtypes[2], np.dtype('c16'))
 
+def test_iter_copy_if_overlap():
+    # Ensure the iterator makes copies on read/write overlap, if requested
+
+    # Copy not needed, 1 op
+    for flag in ['readonly', 'writeonly', 'readwrite']:
+        a = arange(10)
+        i = nditer([a], ['copy_if_overlap'], [[flag]])
+        assert_(i.operands[0] is a)
+
+    # Copy needed, 2 ops, read-write overlap
+    x = arange(10)
+    a = x[1:]
+    b = x[:-1]
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
+    assert_(not np.shares_memory(*i.operands))
+
+    # Copy not needed with elementwise, 2 ops, exactly same arrays
+    x = arange(10)
+    a = x
+    b = x
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly', 'overlap_assume_elementwise'],
+                                             ['readwrite', 'overlap_assume_elementwise']])
+    assert_(i.operands[0] is a and i.operands[1] is b)
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
+    assert_(i.operands[0] is a and not np.shares_memory(i.operands[1], b))
+
+    # Copy not needed, 2 ops, no overlap
+    x = arange(10)
+    a = x[::2]
+    b = x[1::2]
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['writeonly']])
+    assert_(i.operands[0] is a and i.operands[1] is b)
+
+    # Copy needed, 2 ops, read-write overlap
+    x = arange(4, dtype=np.int8)
+    a = x[3:]
+    b = x.view(np.int32)[:1]
+    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['writeonly']])
+    assert_(not np.shares_memory(*i.operands))
+
+    # Copy needed, 3 ops, read-write overlap
+    for flag in ['writeonly', 'readwrite']:
+        x = np.ones([10, 10])
+        a = x
+        b = x.T
+        c = x
+        i = nditer([a, b, c], ['copy_if_overlap'],
+                   [['readonly'], ['readonly'], [flag]])
+        a2, b2, c2 = i.operands
+        assert_(not np.shares_memory(a2, c2))
+        assert_(not np.shares_memory(b2, c2))
+
+    # Copy not needed, 3 ops, read-only overlap
+    x = np.ones([10, 10])
+    a = x
+    b = x.T
+    c = x
+    i = nditer([a, b, c], ['copy_if_overlap'],
+               [['readonly'], ['readonly'], ['readonly']])
+    a2, b2, c2 = i.operands
+    assert_(a is a2)
+    assert_(b is b2)
+    assert_(c is c2)
+
+    # Copy not needed, 3 ops, read-only overlap
+    x = np.ones([10, 10])
+    a = x
+    b = np.ones([10, 10])
+    c = x.T
+    i = nditer([a, b, c], ['copy_if_overlap'],
+               [['readonly'], ['writeonly'], ['readonly']])
+    a2, b2, c2 = i.operands
+    assert_(a is a2)
+    assert_(b is b2)
+    assert_(c is c2)
+
+    # Copy not needed, 3 ops, write-only overlap
+    x = np.arange(7)
+    a = x[:3]
+    b = x[3:6]
+    c = x[4:7]
+    i = nditer([a, b, c], ['copy_if_overlap'],
+               [['readonly'], ['writeonly'], ['writeonly']])
+    a2, b2, c2 = i.operands
+    assert_(a is a2)
+    assert_(b is b2)
+    assert_(c is c2)
+
 def test_iter_op_axes():
     # Check that custom axes work
 
@@ -2030,7 +2117,7 @@ def test_iter_buffering_string():
     assert_raises(TypeError, nditer, a, ['buffered'], ['readonly'],
                   op_dtypes='S2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='S6')
-    assert_equal(i[0], asbytes('abc'))
+    assert_equal(i[0], b'abc')
     assert_equal(i[0].dtype, np.dtype('S6'))
 
     a = np.array(['abc', 'a', 'abcd'], dtype=np.unicode)
@@ -2038,7 +2125,7 @@ def test_iter_buffering_string():
     assert_raises(TypeError, nditer, a, ['buffered'], ['readonly'],
                     op_dtypes='U2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='U6')
-    assert_equal(i[0], sixu('abc'))
+    assert_equal(i[0], u'abc')
     assert_equal(i[0].dtype, np.dtype('U6'))
 
 def test_iter_buffering_growinner():
@@ -2320,7 +2407,11 @@ def test_iter_reduction():
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[...] += x
+        # Use a for loop instead of ``y[...] += x``
+        # (equivalent to ``y[...] = y[...].copy() + x``),
+        # because y has zero strides we use for the reduction
+        for j in range(len(y)):
+            y[j] += x[j]
     # Since no axes were specified, should have allocated a scalar
     assert_equal(i.operands[1].ndim, 0)
     assert_equal(i.operands[1], np.sum(a))
@@ -2371,7 +2462,11 @@ def test_iter_buffering_reduction():
     assert_equal(i[1].strides, (0,))
     # Do the reduction
     for x, y in i:
-        y[...] += x
+        # Use a for loop instead of ``y[...] += x``
+        # (equivalent to ``y[...] = y[...].copy() + x``),
+        # because y has zero strides we use for the reduction
+        for j in range(len(y)):
+            y[j] += x[j]
     assert_equal(b, np.sum(a, axis=1))
 
     # Iterator inner double loop was wrong on this one

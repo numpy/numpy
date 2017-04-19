@@ -103,8 +103,9 @@ class RoundtripTest(object):
             if not isinstance(target_file, BytesIO):
                 target_file.close()
                 # holds an open file descriptor so it can't be deleted on win
-                if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
-                    os.remove(target_file.name)
+                if 'arr_reloaded' in locals():
+                    if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
+                        os.remove(target_file.name)
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -532,7 +533,7 @@ class TestLoadTxt(TestCase):
         c.write('# comment\n1,2,3,5\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',',
-                       comments=unicode('#'))
+                       comments=u'#')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 

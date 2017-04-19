@@ -41,6 +41,10 @@ def ix_(*args):
     Parameters
     ----------
     args : 1-D sequences
+        Each sequence should be of integer or boolean type.
+        Boolean sequences will be interpreted as boolean masks for the
+        corresponding dimension (equivalent to passing in
+        ``np.nonzero(boolean_sequence)``).
 
     Returns
     -------
@@ -58,12 +62,21 @@ def ix_(*args):
     >>> a
     array([[0, 1, 2, 3, 4],
            [5, 6, 7, 8, 9]])
-    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid = np.ix_([0, 1], [2, 4])
     >>> ixgrid
     (array([[0],
            [1]]), array([[2, 4]]))
     >>> ixgrid[0].shape, ixgrid[1].shape
     ((2, 1), (1, 2))
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
+    >>> ixgrid = np.ix_([True, True], [2, 4])
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+    >>> ixgrid = np.ix_([True, True], [False, False, True, False, True])
     >>> a[ixgrid]
     array([[2, 4],
            [7, 9]])
@@ -450,11 +463,18 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-
-    For detailed documentation, see `r_`.
+    
+    See Also
+    --------
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    r_ : For more detailed documentation.
 
     Examples
     --------
+    >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
     array([[1, 2, 3, 0, 0, 4, 5, 6]])
 
@@ -658,8 +678,8 @@ s_ = IndexExpression(maketuple=False)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
-    For an array `a` with ``a.ndim > 2``, the diagonal is the list of
-    locations with indices ``a[i, i, ..., i]`` all identical. This function
+    For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
+    locations with indices ``a[i, ..., i]`` all identical. This function
     modifies the input array in-place, it does not return a value.
 
     Parameters

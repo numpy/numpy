@@ -456,7 +456,12 @@ class TestPower(TestCase):
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
-        assert_((x**2.00001).dtype is (x**2.0).dtype)
+        res = x**2.0
+        assert_((x**2.00001).dtype is res.dtype)
+        assert_array_equal(res, [1, 4, 9])
+        # check the inplace operation on the casted copy doesn't mess with x
+        assert_(not np.may_share_memory(res, x))
+        assert_array_equal(x, [1, 2, 3])
 
         # Check that the fast path ignores 1-element not 0-d arrays
         res = x ** np.array([[[2]]])
@@ -691,6 +696,12 @@ class TestHypot(TestCase, object):
     def test_simple(self):
         assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
         assert_almost_equal(ncu.hypot(0, 0), 0)
+
+    def test_reduce(self):
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0, 0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([9.0, 12.0, 20.0]), 25.0)
+        assert_equal(ncu.hypot.reduce([]), 0.0)
 
 
 def assert_hypot_isnan(x, y):
@@ -1083,6 +1094,23 @@ class TestBool(TestCase):
         out = [False, True, True, False]
         assert_equal(np.bitwise_xor(arg1, arg2), out)
 
+    def test_reduce(self):
+        none = np.array([0, 0, 0, 0], bool)
+        some = np.array([1, 0, 1, 1], bool)
+        every = np.array([1, 1, 1, 1], bool)
+        empty = np.array([], bool)
+
+        arrs = [none, some, every, empty]
+
+        for arr in arrs:
+            assert_equal(np.logical_and.reduce(arr), all(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_or.reduce(arr), any(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_xor.reduce(arr), arr.sum() % 2 == 1)
+
 
 class TestBitwiseUFuncs(TestCase):
 
@@ -1197,6 +1225,28 @@ class TestRadians(TestCase):
         assert_almost_equal(ncu.radians(-90.0), -0.5*np.pi)
 
 
+class TestHeavside(TestCase):
+    def test_heaviside(self):
+        x = np.array([[-30.0, -0.1, 0.0, 0.2], [7.5, np.nan, np.inf, -np.inf]])
+        expectedhalf = np.array([[0.0, 0.0, 0.5, 1.0], [1.0, np.nan, 1.0, 0.0]])
+        expected1 = expectedhalf.copy()
+        expected1[0, 2] = 1
+
+        h = ncu.heaviside(x, 0.5)
+        assert_equal(h, expectedhalf)
+
+        h = ncu.heaviside(x, 1.0)
+        assert_equal(h, expected1)
+
+        x = x.astype(np.float32)
+
+        h = ncu.heaviside(x, np.float32(0.5))
+        assert_equal(h, expectedhalf.astype(np.float32))
+
+        h = ncu.heaviside(x, np.float32(1.0))
+        assert_equal(h, expected1.astype(np.float32))
+
+
 class TestSign(TestCase):
     def test_sign(self):
         a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])
@@ -1269,22 +1319,20 @@ class TestAbsoluteNegative(TestCase):
                 np.negative(inp, out=out)
                 assert_equal(out, tgt, err_msg=msg)
 
-                # will throw invalid flag depending on compiler optimizations
-                with np.errstate(invalid='ignore'):
-                    for v in [np.nan, -np.inf, np.inf]:
-                        for i in range(inp.size):
-                            d = np.arange(inp.size, dtype=dt)
-                            inp[:] = -d
-                            inp[i] = v
-                            d[i] = -v if v == -np.inf else v
-                            assert_array_equal(np.abs(inp), d, err_msg=msg)
-                            np.abs(inp, out=out)
-                            assert_array_equal(out, d, err_msg=msg)
+                for v in [np.nan, -np.inf, np.inf]:
+                    for i in range(inp.size):
+                        d = np.arange(inp.size, dtype=dt)
+                        inp[:] = -d
+                        inp[i] = v
+                        d[i] = -v if v == -np.inf else v
+                        assert_array_equal(np.abs(inp), d, err_msg=msg)
+                        np.abs(inp, out=out)
+                        assert_array_equal(out, d, err_msg=msg)
 
-                            assert_array_equal(-inp, -1*inp, err_msg=msg)
-                            d = -1 * inp
-                            np.negative(inp, out=out)
-                            assert_array_equal(out, d, err_msg=msg)
+                        assert_array_equal(-inp, -1*inp, err_msg=msg)
+                        d = -1 * inp
+                        np.negative(inp, out=out)
+                        assert_array_equal(out, d, err_msg=msg)
 
     def test_lower_align(self):
         # check data that is not aligned to element size
@@ -1422,6 +1470,19 @@ class TestSpecialMethods(TestCase):
         a = A()
         self.assertRaises(RuntimeError, ncu.maximum, a, a)
 
+    def test_none_wrap(self):
+        # Tests that issue #8507 is resolved. Previously, this would segfault
+
+        class A(object):
+            def __array__(self):
+                return np.zeros(1)
+
+            def __array_wrap__(self, arr, context=None):
+                return None
+
+        a = A()
+        assert_equal(ncu.maximum(a, a), None)
+
     def test_default_prepare(self):
 
         class with_wrap(object):
@@ -1450,6 +1511,22 @@ class TestSpecialMethods(TestCase):
         a = np.array(1).view(type=with_prepare)
         x = np.add(a, a)
         assert_equal(x, np.array(2))
+        assert_equal(type(x), with_prepare)
+
+    def test_prepare_out(self):
+
+        class with_prepare(np.ndarray):
+            __array_priority__ = 10
+
+            def __array_prepare__(self, arr, context):
+                return np.array(arr).view(type=with_prepare)
+
+        a = np.array([1]).view(type=with_prepare)
+        x = np.add(a, a, a)
+        # Returned array is new, because of the strange
+        # __array_prepare__ above
+        assert_(not np.shares_memory(x, a))
+        assert_equal(x, np.array([2]))
         assert_equal(type(x), with_prepare)
 
     def test_failing_prepare(self):
@@ -2096,6 +2173,12 @@ def test_nextafterf():
             "Long double support buggy on win32, ticket 1664.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
+
+def test_nextafter_0():
+    for t, direction in itertools.product(np.sctypes['float'], (1, -1)):
+        tiny = np.finfo(t).tiny
+        assert_(0. < direction * np.nextafter(t(0), t(direction)) < tiny)
+        assert_equal(np.nextafter(t(0), t(direction)) / t(2.1), direction * 0.0)
 
 def _test_spacing(t):
     one = t(1)

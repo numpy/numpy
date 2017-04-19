@@ -5,7 +5,7 @@ Replacing Trac with a different bug tracker
 :Author: David Cournapeau, Stefan van der Walt
 
 Some release managers of both numpy and scipy are becoming more and more
-disatisfied with the current development workflow, in particular for bug
+dissatisfied with the current development workflow, in particular for bug
 tracking. This document is a tentative to explain some problematic scenario,
 current trac limitations, and what can be done about it.
 
@@ -28,7 +28,7 @@ The workflow for a release is roughly as follows:
 
 Most of those tasks are quite inefficient in the current trac as used on scipy:
 
-        * it is hard to keep track of issues. In particular, everytime one goes
+        * it is hard to keep track of issues. In particular, every time one goes
           to trac, we don't really know what's new from what's not. If you
           think of issues as emails, the current situation would be like not
           having read/unread feature.
@@ -77,7 +77,7 @@ may solve some of the issues.
 
         * Multi-project support: we have three trac instances, one for scipy,
           one for numpy, one for scikits. Creating accounts, maintaining and
-          updating each of them is a maintainance burden. Nobody likes to do
+          updating each of them is a maintenance burden. Nobody likes to do
           this kind of work, so anything which can reduce the burden is a plus.
           Also, it happens quite frequently that a bug against numpy is filled
           on scipy trac and vice and versa. You have to handle this manually,
@@ -132,7 +132,7 @@ Pros:
         * Support most features (except xmlrpc ?). Multi-project, etc...
 
         * (subjective): I (cdavid) find the out-of-the-box experience with
-          redmine much more enjoyable. More informations are available easily,
+          redmine much more enjoyable. More information is available easily,
           less clicks, more streamlined. See
           http://www.redmine.org/wiki/redmine/TheyAreUsingRedmine for examples
 

@@ -4,9 +4,11 @@ import sys
 import itertools
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_raises, assert_equal
+from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal,
+                           assert_array_equal, assert_allclose, dec)
 
 from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
+from numpy.core import umath_tests
 from numpy.lib.stride_tricks import as_strided
 from numpy.compat import long
 
@@ -84,7 +86,7 @@ def _check_assignment(srcidx, dstidx):
 
 
 def test_overlapping_assignments():
-    """Test automatically generated assignments which overlap in memory."""
+    # Test automatically generated assignments which overlap in memory.
 
     inds = _indices(ndims)
 
@@ -95,6 +97,7 @@ def test_overlapping_assignments():
         yield _check_assignment, srcidx, dstidx
 
 
+@dec.slow
 def test_diophantine_fuzz():
     # Fuzz test the diophantine solver
     rng = np.random.RandomState(1234)
@@ -107,7 +110,6 @@ def test_diophantine_fuzz():
 
         min_count = 500//(ndim + 1)
 
-        numbers = []
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
             A_max = 1 + rng.randint(0, 11, dtype=np.intp)**6
@@ -252,12 +254,11 @@ def test_may_share_memory_manual():
     check_may_share_memory_exact(x, x.copy())
 
 
-def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
-    # Check that overlap problems with common strides are solved with
-    # little work.
-    x = np.zeros([17,34,71,97], dtype=np.int16)
-
+def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     rng = np.random.RandomState(1234)
+
+    if equal_size and same_steps:
+        raise ValueError()
 
     def random_slice(n, step):
         start = rng.randint(0, n+1, dtype=np.intp)
@@ -267,30 +268,92 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
             step *= -1
         return slice(start, stop, step)
 
-    feasible = 0
-    infeasible = 0
+    def random_slice_fixed_size(n, step, size):
+        start = rng.randint(0, n+1 - size*step)
+        stop = start + (size-1)*step + 1
+        if rng.randint(0, 2) == 0:
+            stop, start = start-1, stop-1
+            if stop < 0:
+                stop = None
+            step *= -1
+        return slice(start, stop, step)
 
-    while min(feasible, infeasible) < min_count:
+    # First a few regular views
+    yield x, x
+    for j in range(1, 7, 3):
+        yield x[j:], x[:-j]
+        yield x[...,j:], x[...,:-j]
+
+    # An array with zero stride internal overlap
+    strides = list(x.strides)
+    strides[0] = 0
+    xp = as_strided(x, shape=x.shape, strides=strides)
+    yield x, xp
+    yield xp, xp
+
+    # An array with non-zero stride internal overlap
+    strides = list(x.strides)
+    if strides[0] > 1:
+        strides[0] = 1
+    xp = as_strided(x, shape=x.shape, strides=strides)
+    yield x, xp
+    yield xp, xp
+
+    # Then discontiguous views
+    while True:
         steps = tuple(rng.randint(1, 11, dtype=np.intp)
                       if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
-        if same_steps:
+        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
+
+        t1 = np.arange(x.ndim)
+        rng.shuffle(t1)
+
+        if equal_size:
+            t2 = t1
+        else:
+            t2 = np.arange(x.ndim)
+            rng.shuffle(t2)
+
+        a = x[s1]
+
+        if equal_size:
+            if a.size == 0:
+                continue
+
+            steps2 = tuple(rng.randint(1, max(2, p//(1+pa)))
+                           if rng.randint(0, 5) == 0 else 1
+                           for p, s, pa in zip(x.shape, s1, a.shape))
+            s2 = tuple(random_slice_fixed_size(p, s, pa)
+                       for p, s, pa in zip(x.shape, steps2, a.shape))
+        elif same_steps:
             steps2 = steps
         else:
             steps2 = tuple(rng.randint(1, 11, dtype=np.intp)
                            if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                            for j in range(x.ndim))
 
-        t1 = np.arange(x.ndim)
-        rng.shuffle(t1)
+        if not equal_size:
+            s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
 
-        t2 = np.arange(x.ndim)
-        rng.shuffle(t2)
-
-        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
-        s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
-        a = x[s1].transpose(t1)
+        a = a.transpose(t1)
         b = x[s2].transpose(t2)
+
+        yield a, b
+
+
+def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
+    # Check that overlap problems with common strides are solved with
+    # little work.
+    x = np.zeros([17,34,71,97], dtype=np.int16)
+
+    feasible = 0
+    infeasible = 0
+
+    pair_iter = iter_random_view_pairs(x, same_steps)
+
+    while min(feasible, infeasible) < min_count:
+        a, b = next(pair_iter)
 
         bounds_overlap = np.may_share_memory(a, b)
         may_share_answer = np.may_share_memory(a, b)
@@ -299,11 +362,10 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
 
         if easy_answer != exact_answer:
             # assert_equal is slow...
-            assert_equal(easy_answer, exact_answer, err_msg=repr((s1, s2)))
+            assert_equal(easy_answer, exact_answer)
 
         if may_share_answer != bounds_overlap:
-            assert_equal(may_share_answer, bounds_overlap,
-                         err_msg=repr((s1, s2)))
+            assert_equal(may_share_answer, bounds_overlap)
 
         if bounds_overlap:
             if exact_answer:
@@ -312,6 +374,7 @@ def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
                 infeasible += 1
 
 
+@dec.slow
 def test_may_share_memory_easy_fuzz():
     # Check that overlap problems with common strides are always
     # solved with little work.
@@ -321,6 +384,7 @@ def test_may_share_memory_easy_fuzz():
                                      min_count=2000)
 
 
+@dec.slow
 def test_may_share_memory_harder_fuzz():
     # Overlap problems with not necessarily common strides take more
     # work.
@@ -522,6 +586,367 @@ def test_non_ndarray_inputs():
 
         assert_(np.shares_memory(cls(x[1::3]), x[::2]))
         assert_(np.may_share_memory(cls(x[1::3]), x[::2]))
+
+
+def view_element_first_byte(x):
+    """Construct an array viewing the first byte of each element of `x`"""
+    from numpy.lib.stride_tricks import DummyArray
+    interface = dict(x.__array_interface__)
+    interface['typestr'] = '|b1'
+    interface['descr'] = [('', '|b1')]
+    return np.asarray(DummyArray(interface, x))
+
+
+def assert_copy_equivalent(operation, args, out, **kwargs):
+    """
+    Check that operation(*args, out=out) produces results
+    equivalent to out[...] = operation(*args, out=out.copy())
+    """
+
+    kwargs['out'] = out
+    kwargs2 = dict(kwargs)
+    kwargs2['out'] = out.copy()
+
+    out_orig = out.copy()
+    out[...] = operation(*args, **kwargs2)
+    expected = out.copy()
+    out[...] = out_orig
+
+    got = operation(*args, **kwargs).copy()
+
+    if (got != expected).any():
+        assert_equal(got, expected)
+
+
+class TestUFunc(object):
+    """
+    Test ufunc call memory overlap handling
+    """
+
+    def check_unary_fuzz(self, operation, get_out_axis_size, dtype=np.int16,
+                             count=5000):
+        shapes = [7, 13, 8, 21, 29, 32]
+
+        rng = np.random.RandomState(1234)
+
+        for ndim in range(1, 6):
+            x = rng.randint(0, 2**16, size=shapes[:ndim]).astype(dtype)
+
+            it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
+
+            min_count = count // (ndim + 1)**2
+
+            overlapping = 0
+            while overlapping < min_count:
+                a, b = next(it)
+
+                a_orig = a.copy()
+                b_orig = b.copy()
+
+                if get_out_axis_size is None:
+                    assert_copy_equivalent(operation, [a], out=b)
+
+                    if np.shares_memory(a, b):
+                        overlapping += 1
+                else:
+                    for axis in itertools.chain(range(ndim), [None]):
+                        a[...] = a_orig
+                        b[...] = b_orig
+
+                        # Determine size for reduction axis (None if scalar)
+                        outsize, scalarize = get_out_axis_size(a, b, axis)
+                        if outsize == 'skip':
+                            continue
+
+                        # Slice b to get an output array of the correct size
+                        sl = [slice(None)] * ndim
+                        if axis is None:
+                            if outsize is None:
+                                sl = [slice(0, 1)] + [0]*(ndim - 1)
+                            else:
+                                sl = [slice(0, outsize)] + [0]*(ndim - 1)
+                        else:
+                            if outsize is None:
+                                k = b.shape[axis]//2
+                                if ndim == 1:
+                                    sl[axis] = slice(k, k + 1)
+                                else:
+                                    sl[axis] = k
+                            else:
+                                assert b.shape[axis] >= outsize
+                                sl[axis] = slice(0, outsize)
+                        b_out = b[tuple(sl)]
+
+                        if scalarize:
+                            b_out = b_out.reshape([])
+
+                        if np.shares_memory(a, b_out):
+                            overlapping += 1
+
+                        # Check result
+                        assert_copy_equivalent(operation, [a], out=b_out, axis=axis)
+
+    @dec.slow
+    def test_unary_ufunc_call_fuzz(self):
+        self.check_unary_fuzz(np.invert, None, np.int16)
+
+    def test_binary_ufunc_accumulate_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            if axis is None:
+                if a.ndim == 1:
+                    return a.size, False
+                else:
+                    return 'skip', False  # accumulate doesn't support this
+            else:
+                return a.shape[axis], False
+
+        self.check_unary_fuzz(np.add.accumulate, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_reduce_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            return None, (axis is None or a.ndim == 1)
+
+        self.check_unary_fuzz(np.add.reduce, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_reduceat_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            if axis is None:
+                if a.ndim == 1:
+                    return a.size, False
+                else:
+                    return 'skip', False  # reduceat doesn't support this
+            else:
+                return a.shape[axis], False
+
+        def do_reduceat(a, out, axis):
+            if axis is None:
+                size = len(a)
+                step = size//len(out)
+            else:
+                size = a.shape[axis]
+                step = a.shape[axis] // out.shape[axis]
+            idx = np.arange(0, size, step)
+            return np.add.reduceat(a, idx, out=out, axis=axis)
+
+        self.check_unary_fuzz(do_reduceat, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_reduceat_manual(self):
+        def check(ufunc, a, ind, out):
+            c1 = ufunc.reduceat(a.copy(), ind.copy(), out=out.copy())
+            c2 = ufunc.reduceat(a, ind, out=out)
+            assert_array_equal(c1, c2)
+
+        # Exactly same input/output arrays
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1].copy(), a)
+
+        # Overlap with index
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1], a)
+
+    def test_unary_gufunc_fuzz(self):
+        shapes = [7, 13, 8, 21, 29, 32]
+        gufunc = umath_tests.euclidean_pdist
+
+        rng = np.random.RandomState(1234)
+
+        for ndim in range(2, 6):
+            x = rng.rand(*shapes[:ndim])
+
+            it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
+
+            min_count = 500 // (ndim + 1)**2
+
+            overlapping = 0
+            while overlapping < min_count:
+                a, b = next(it)
+
+                if min(a.shape[-2:]) < 2 or min(b.shape[-2:]) < 2 or a.shape[-1] < 2:
+                    continue
+
+                # Ensure the shapes are so that euclidean_pdist is happy
+                if b.shape[-1] > b.shape[-2]:
+                    b = b[...,0,:]
+                else:
+                    b = b[...,:,0]
+
+                n = a.shape[-2]
+                p = n * (n - 1) // 2
+                if p <= b.shape[-1] and p > 0:
+                    b = b[...,:p]
+                else:
+                    n = max(2, int(np.sqrt(b.shape[-1]))//2)
+                    p = n * (n - 1) // 2
+                    a = a[...,:n,:]
+                    b = b[...,:p]
+
+                # Call
+                if np.shares_memory(a, b):
+                    overlapping += 1
+
+                with np.errstate(over='ignore', invalid='ignore'):
+                    assert_copy_equivalent(gufunc, [a], out=b)
+
+    def test_ufunc_at_manual(self):
+        def check(ufunc, a, ind, b=None):
+            a0 = a.copy()
+            if b is None:
+                ufunc.at(a0, ind.copy())
+                c1 = a0.copy()
+                ufunc.at(a, ind)
+                c2 = a.copy()
+            else:
+                ufunc.at(a0, ind.copy(), b.copy())
+                c1 = a0.copy()
+                ufunc.at(a, ind, b)
+                c2 = a.copy()
+            assert_array_equal(c1, c2)
+
+        # Overlap with index
+        a = np.arange(10000, dtype=np.int16)
+        check(np.invert, a[::-1], a)
+
+        # Overlap with second data array
+        a = np.arange(100, dtype=np.int16)
+        ind = np.arange(0, 100, 2, dtype=np.int16)
+        check(np.add, a, ind, a[25:75])
+
+    def test_unary_ufunc_1d_manual(self):
+        # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
+
+        def check(a, b):
+            a_orig = a.copy()
+            b_orig = b.copy()
+
+            b0 = b.copy()
+            c1 = ufunc(a, out=b0)
+            c2 = ufunc(a, out=b)
+            assert_array_equal(c1, c2)
+
+            # Trigger "fancy ufunc loop" code path
+            mask = view_element_first_byte(b).view(np.bool_)
+
+            a[...] = a_orig
+            b[...] = b_orig
+            c1 = ufunc(a, out=b.copy(), where=mask.copy()).copy()
+
+            a[...] = a_orig
+            b[...] = b_orig
+            c2 = ufunc(a, out=b, where=mask.copy()).copy()
+
+            # Also, mask overlapping with output
+            a[...] = a_orig
+            b[...] = b_orig
+            c3 = ufunc(a, out=b, where=mask).copy()
+
+            assert_array_equal(c1, c2)
+            assert_array_equal(c1, c3)
+
+        dtypes = [np.int8, np.int16, np.int32, np.int64, np.float32,
+                  np.float64, np.complex64, np.complex128]
+        dtypes = [np.dtype(x) for x in dtypes]
+
+        for dtype in dtypes:
+            if np.issubdtype(dtype, np.integer):
+                ufunc = np.invert
+            else:
+                ufunc = np.reciprocal
+
+            n = 1000
+            k = 10
+            indices = [
+                np.index_exp[:n],
+                np.index_exp[k:k+n],
+                np.index_exp[n-1::-1],
+                np.index_exp[k+n-1:k-1:-1],
+                np.index_exp[:2*n:2],
+                np.index_exp[k:k+2*n:2],
+                np.index_exp[2*n-1::-2],
+                np.index_exp[k+2*n-1:k-1:-2],
+            ]
+
+            for xi, yi in itertools.product(indices, indices):
+                v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                x = v[xi]
+                y = v[yi]
+
+                with np.errstate(all='ignore'):
+                    check(x, y)
+
+                    # Scalar cases
+                    check(x[:1], y)
+                    check(x[-1:], y)
+                    check(x[:1].reshape([]), y)
+                    check(x[-1:].reshape([]), y)
+
+    def test_unary_ufunc_where_same(self):
+        # Check behavior at wheremask overlap
+        ufunc = np.invert
+
+        def check(a, out, mask):
+            c1 = ufunc(a, out=out.copy(), where=mask.copy())
+            c2 = ufunc(a, out=out, where=mask)
+            assert_array_equal(c1, c2)
+
+        # Check behavior with same input and output arrays
+        x = np.arange(100).astype(np.bool_)
+        check(x, x, x)
+        check(x, x.copy(), x)
+        check(x, x, x.copy())
+
+    @dec.slow
+    def test_binary_ufunc_1d_manual(self):
+        ufunc = np.add
+
+        def check(a, b, c):
+            c0 = c.copy()
+            c1 = ufunc(a, b, out=c0)
+            c2 = ufunc(a, b, out=c)
+            assert_array_equal(c1, c2)
+
+        for dtype in [np.int8, np.int16, np.int32, np.int64,
+                      np.float32, np.float64, np.complex64, np.complex128]:
+            # Check different data dependency orders
+
+            n = 1000
+            k = 10
+
+            indices = []
+            for p in [1, 2]:
+                indices.extend([
+                    np.index_exp[:p*n:p],
+                    np.index_exp[k:k+p*n:p],
+                    np.index_exp[p*n-1::-p],
+                    np.index_exp[k+p*n-1:k-1:-p],
+                ])
+
+            for x, y, z in itertools.product(indices, indices, indices):
+                v = np.arange(6*n).astype(dtype)
+                x = v[x]
+                y = v[y]
+                z = v[z]
+
+                check(x, y, z)
+
+                # Scalar cases
+                check(x[:1], y, z)
+                check(x[-1:], y, z)
+                check(x[:1].reshape([]), y, z)
+                check(x[-1:].reshape([]), y, z)
+                check(x, y[:1], z)
+                check(x, y[-1:], z)
+                check(x, y[:1].reshape([]), z)
+                check(x, y[-1:].reshape([]), z)
+
+    def test_inplace_op_simple_manual(self):
+        rng = np.random.RandomState(1234)
+        x = rng.rand(200, 200)  # bigger than bufsize
+
+        x += x.T
+        assert_array_equal(x - x.T, 0)
 
 
 if __name__ == "__main__":

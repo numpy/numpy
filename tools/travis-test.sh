@@ -175,6 +175,9 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   DIR=/chroot
   setup_chroot $DIR
+  # the chroot'ed environment will not have the current locale,
+  # avoid any warnings which may disturb testing
+  export LANG=C LC_ALL=C
   # run again in chroot with this time testing
   sudo linux32 chroot $DIR bash -c \
     "cd numpy && PYTHON=python PIP=pip IN_CHROOT=1 $0 test"

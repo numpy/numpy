@@ -680,9 +680,9 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
-    npy_intp *axes, axis;
-    npy_intp i, n;
-    npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
+    npy_intp *axes;
+    int i, n;
+    int permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
     int flags;
 
@@ -704,13 +704,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
             reverse_permutation[i] = -1;
         }
         for (i = 0; i < n; i++) {
-            axis = axes[i];
-            if (axis < 0) {
-                axis = PyArray_NDIM(ap) + axis;
-            }
-            if (axis < 0 || axis >= PyArray_NDIM(ap)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid axis for this array");
+            int axis = axes[i];
+            if (check_and_adjust_axis(&axis, PyArray_NDIM(ap)) < 0) {
                 return NULL;
             }
             if (reverse_permutation[axis] != -1) {

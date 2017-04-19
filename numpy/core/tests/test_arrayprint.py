@@ -4,7 +4,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import sixu
 from numpy.testing import (
      TestCase, run_module_suite, assert_, assert_equal
 )
@@ -13,6 +12,28 @@ class TestArrayRepr(object):
     def test_nan_inf(self):
         x = np.array([np.nan, np.inf])
         assert_equal(repr(x), 'array([ nan,  inf])')
+
+    def test_subclass(self):
+        class sub(np.ndarray): pass
+
+        # one dimensional
+        x1d = np.array([1, 2]).view(sub)
+        assert_equal(repr(x1d), 'sub([1, 2])')
+
+        # two dimensional
+        x2d = np.array([[1, 2], [3, 4]]).view(sub)
+        assert_equal(repr(x2d),
+            'sub([[1, 2],\n'
+            '     [3, 4]])')
+
+        # two dimensional with flexible dtype
+        xstruct = np.ones((2,2), dtype=[('a', 'i4')]).view(sub)
+        assert_equal(repr(xstruct),
+            "sub([[(1,), (1,)],\n"
+            "     [(1,), (1,)]],\n"
+            "    dtype=[('a', '<i4')])"
+        )
+
 
 class TestComplexArray(TestCase):
     def test_str(self):
@@ -120,7 +141,7 @@ class TestArray2String(TestCase):
 
         # for issue #5692
         A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
-        A[5:].fill(np.nan)
+        A[5:].fill(np.datetime64('NaT'))
         assert_equal(np.array2string(A),
                 "[('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) " +
                 "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
@@ -201,7 +222,7 @@ def test_unicode_object_array():
         expected = "array(['é'], dtype=object)"
     else:
         expected = "array([u'\\xe9'], dtype=object)"
-    x = np.array([sixu('\xe9')], dtype=object)
+    x = np.array([u'\xe9'], dtype=object)
     assert_equal(repr(x), expected)
 
 

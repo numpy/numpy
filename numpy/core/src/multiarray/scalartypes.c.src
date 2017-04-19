@@ -149,10 +149,16 @@ gentype_free(PyObject *v)
 
 
 static PyObject *
-gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
+gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
     PyObject *arr, *ret, *arg2;
     char *msg="unsupported operand type(s) for ** or pow()";
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
 
     if (!PyArray_IsScalar(m1, Generic)) {
         if (PyArray_Check(m1)) {
@@ -1515,7 +1521,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
     PyArray_Descr *outcode=NULL;
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "|O&", &PyArray_DescrConverter,
+    if (!PyArg_ParseTuple(args, "|O&:__array__", &PyArray_DescrConverter,
                 &outcode)) {
         Py_XDECREF(outcode);
         return NULL;
@@ -1591,7 +1597,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 {
     npy_bool inplace = NPY_FALSE;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace)) {
+    if (!PyArg_ParseTuple(args, "|O&:byteswap", PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
     if (inplace) {
@@ -1835,7 +1841,7 @@ gentype_dump(PyObject *self, PyObject *args)
     PyObject *file = NULL;
     int ret;
 
-    if (!PyArg_ParseTuple(args, "O", &file)) {
+    if (!PyArg_ParseTuple(args, "O:dump", &file)) {
         return NULL;
     }
     ret = PyArray_Dump(self, file, 2);
@@ -2596,6 +2602,7 @@ static PyObject *
      */
     _WORK@work@
 
+    /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
         return NULL;
     }
@@ -2712,6 +2719,7 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
+    /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|OO", &obj, &meta_obj)) {
         return NULL;
     }
@@ -2770,7 +2778,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_U
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+    if (!PyArg_ParseTuple(args, "|O:bool_", &obj)) {
         return NULL;
     }
     if (obj == NULL) {
@@ -2930,7 +2938,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
     PyObject *new = NULL;
     char *destptr;
 
-    if (!PyArg_ParseTuple(args, "O", &obj)) {
+    if (!PyArg_ParseTuple(args, "O:void", &obj)) {
         return NULL;
     }
     /*

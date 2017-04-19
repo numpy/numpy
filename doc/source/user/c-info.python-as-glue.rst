@@ -414,7 +414,7 @@ Python with compiled code while still allowing for separate
 distribution of the extension module. The only draw-back is that it
 requires the existence of a Fortran compiler in order for a user to
 install the code. However, with the existence of the free-compilers
-g77, gfortran, and g95, as well as high-quality commerical compilers,
+g77, gfortran, and g95, as well as high-quality commercial compilers,
 this restriction is not particularly onerous. In my opinion, Fortran
 is still the easiest way to write fast and clear code for scientific
 computing. It handles complex numbers, and multi-dimensional indexing
@@ -643,7 +643,7 @@ order to check the data types and array bounds of objects passed to
 the underlying subroutine. This additional layer of checking (not to
 mention the conversion from ctypes objects to C-data-types that ctypes
 itself performs), will make the interface slower than a hand-written
-extension-module interface. However, this overhead should be neglible
+extension-module interface. However, this overhead should be negligible
 if the C-routine being called is doing any significant amount of work.
 If you are a great Python programmer with weak C skills, ctypes is an
 easy way to write a useful interface to a (shared) library of compiled
@@ -761,7 +761,7 @@ associated. As a result, one can pass this ctypes attribute object
 directly to a function expecting a pointer to the data in your
 ndarray. The caller must be sure that the ndarray object is of the
 correct type, shape, and has the correct flags set or risk nasty
-crashes if the data-pointer to inappropriate arrays are passsed in.
+crashes if the data-pointer to inappropriate arrays are passed in.
 
 To implement the second method, NumPy provides the class-factory
 function :func:`ndpointer` in the :mod:`ctypeslib` module. This
@@ -783,7 +783,7 @@ attributes that may be convenient when passing additional information
 about the array into a ctypes function. The attributes **data**,
 **shape**, and **strides** can provide ctypes compatible types
 corresponding to the data-area, the shape, and the strides of the
-array. The data attribute reutrns a ``c_void_p`` representing a
+array. The data attribute returns a ``c_void_p`` representing a
 pointer to the data area. The shape and strides attributes each return
 an array of ctypes integers (or None representing a NULL pointer, if a
 0-d array). The base ctype of the array is a ctype integer of the same
@@ -935,7 +935,7 @@ The ``code.c`` file also contains the function ``dfilter2d``:
 A possible advantage this code has over the Fortran-equivalent code is
 that it takes arbitrarily strided (i.e. non-contiguous arrays) and may
 also run faster depending on the optimization capability of your
-compiler. But, it is a obviously more complicated than the simple code
+compiler. But, it is an obviously more complicated than the simple code
 in ``filter.f``. This code must be compiled into a shared library. On my
 Linux system this is accomplished using::
 
@@ -1149,7 +1149,7 @@ but the interface file looks a lot like a C/C++ header file. While SIP
 is not a full C++ parser, it understands quite a bit of C++ syntax as
 well as its own special directives that allow modification of how the
 Python binding is accomplished. It also allows the user to define
-mappings between Python types and C/C++ structrues and classes.
+mappings between Python types and C/C++ structures and classes.
 
 
 Boost Python

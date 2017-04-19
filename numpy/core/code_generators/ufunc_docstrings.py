@@ -55,7 +55,7 @@ add_newdoc('numpy.core.umath', 'absolute',
     Plot the function over the complex plane:
 
     >>> xx = x + 1j * x[:, np.newaxis]
-    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10])
+    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
     """)
@@ -915,6 +915,50 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
     """)
 
+add_newdoc('numpy.core.umath', 'heaviside',
+    """
+    Compute the Heaviside step function.
+
+    The Heaviside step function is defined as::
+
+                             0   if x < 0
+        heaviside(x, h0) =  h0   if x == 0
+                             1   if x > 0
+
+    where `h0` is often taken to be 0.5, but 0 and 1 are also sometimes used.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+    h0 : array_like
+        The value of the function at x = 0.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
+
+    Returns
+    -------
+    out : ndarray
+        The output array, element-wise Heaviside step function of `x`.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    References
+    ----------
+    .. Wikipedia, "Heaviside step function",
+       https://en.wikipedia.org/wiki/Heaviside_step_function
+
+    Examples
+    --------
+    >>> np.heaviside([-1.5, 0, 2.0], 0.5)
+    array([ 0. ,  0.5,  1. ])
+    >>> np.heaviside([-1.5, 0, 2.0], 1)
+    array([ 0.,  1.,  1.])
+    """)
+
 add_newdoc('numpy.core.umath', 'divide',
     """
     Divide arguments element-wise.
@@ -1071,12 +1115,12 @@ add_newdoc('numpy.core.umath', 'exp',
 
     >>> plt.subplot(121)
     >>> plt.imshow(np.abs(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='gray')
     >>> plt.title('Magnitude of exp(x)')
 
     >>> plt.subplot(122)
     >>> plt.imshow(np.angle(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='hsv')
     >>> plt.title('Phase (angle) of exp(x)')
     >>> plt.show()
 

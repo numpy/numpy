@@ -169,6 +169,10 @@ add_newdoc('numpy.core', 'nditer',
             with one per iteration dimension, to be tracked.
           * "common_dtype" causes all the operands to be converted to
             a common data type, with copying or buffering as necessary.
+          * "copy_if_overlap" causes the iterator to determine if read
+            operands have overlap with write operands, and make temporary
+            copies as necessary to avoid overlap. False positives (needless
+            copying) are possible in some cases.
           * "delay_bufalloc" delays allocation of the buffers until
             a reset() call is made. Allows "allocate" operands to
             be initialized before their values are copied into the buffers.
@@ -208,6 +212,9 @@ add_newdoc('numpy.core', 'nditer',
             copies those elements indicated by this mask.
           * 'writemasked' indicates that only elements where the chosen
             'arraymask' operand is True will be written to.
+          * "overlap_assume_elementwise" can be used to mark operands that are
+            accessed only in the iterator order, to allow less conservative
+            copying when "copy_if_overlap" is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -1445,8 +1452,8 @@ add_newdoc('numpy.core.multiarray', 'where',
     condition : array_like, bool
         When True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same
-        shape as `condition`.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
@@ -5100,7 +5107,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
-    bincount(x, weights=None, minlength=None)
+    bincount(x, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -6348,6 +6355,15 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('ndim',
+    """
+    Number of dimensions of the sub-array if this data type describes a
+    sub-array, and ``0`` otherwise.
+
+    .. versionadded:: 1.13.0
+
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('str',
     """The array-protocol typestring of this data-type object."""))
 
@@ -6719,6 +6735,57 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     >>> # Number of Saturdays in 2011
     ... np.busday_count('2011', '2012', weekmask='Sat')
     53
+    """)
+
+add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
+    """
+    normalize_axis_index(axis, ndim, msg_prefix=None)
+
+    Normalizes an axis index, `axis`, such that is a valid positive index into
+    the shape of array with `ndim` dimensions. Raises an AxisError with an
+    appropriate message if this is not possible.
+
+    Used internally by all axis-checking logic.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    axis : int
+        The un-normalized index of the axis. Can be negative
+    ndim : int
+        The number of dimensions of the array that `axis` should be normalized
+        against
+    msg_prefix : str
+        A prefix to put before the message, typically the name of the argument
+
+    Returns
+    -------
+    normalized_axis : int
+        The normalized axis index, such that `0 <= normalized_axis < ndim`
+
+    Raises
+    ------
+    AxisError
+        If the axis index is invalid, when `-ndim <= axis < ndim` is false.
+
+    Examples
+    --------
+    >>> normalize_axis_index(0, ndim=3)
+    0
+    >>> normalize_axis_index(1, ndim=3)
+    1
+    >>> normalize_axis_index(-1, ndim=3)
+    2
+
+    >>> normalize_axis_index(3, ndim=3)
+    Traceback (most recent call last):
+    ...
+    AxisError: axis 3 is out of bounds for array of dimension 3
+    >>> normalize_axis_index(-4, ndim=3, msg_prefix='axes_arg')
+    Traceback (most recent call last):
+    ...
+    AxisError: axes_arg: axis -4 is out of bounds for array of dimension 3
     """)
 
 ##############################################################################

@@ -23,19 +23,19 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, isscalar, object_
+    broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
     )
+from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
-from numpy.compat import asbytes
 
 # For Python2/3 compatibility
-_N = asbytes('N')
-_V = asbytes('V')
-_A = asbytes('A')
-_S = asbytes('S')
-_L = asbytes('L')
+_N = b'N'
+_V = b'V'
+_A = b'A'
+_S = b'S'
+_L = b'L'
 
 fortran_int = intc
 
@@ -191,15 +191,15 @@ def _fastCopyAndTranspose(type, *arrays):
 
 def _assertRank2(*arrays):
     for a in arrays:
-        if len(a.shape) != 2:
+        if a.ndim != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % len(a.shape))
+                    'two-dimensional' % a.ndim)
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
-        if len(a.shape) < 2:
+        if a.ndim < 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % len(a.shape))
+                    'at least two-dimensional' % a.ndim)
 
 def _assertSquareness(*arrays):
     for a in arrays:
@@ -216,9 +216,13 @@ def _assertFinite(*arrays):
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
 
+def _isEmpty2d(arr):
+    # check size first for efficiency
+    return arr.size == 0 and product(arr.shape[-2:]) == 0
+
 def _assertNoEmpty2d(*arrays):
     for a in arrays:
-        if a.size == 0 and product(a.shape[-2:]) == 0:
+        if _isEmpty2d(a):
             raise LinAlgError("Arrays cannot be empty")
 
 
@@ -230,7 +234,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=len(b.shape))``.
+    ``tensordot(a, x, axes=b.ndim)``.
 
     Parameters
     ----------
@@ -897,11 +901,12 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        return empty(a.shape[-1:], dtype=result_t)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -970,9 +975,9 @@ def eigvalsh(a, UPLO='L'):
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
     array([ 0.17157288,  5.82842712])
-    
+
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -1001,10 +1006,11 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        return empty(a.shape[-1:], dtype=result_t)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
@@ -1142,6 +1148,10 @@ def eig(a):
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        w = empty(a.shape[-1:], dtype=result_t)
+        vt = empty(a.shape, dtype=result_t)
+        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1251,7 +1261,7 @@ def eigh(a, UPLO='L'):
             [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
 
     >>> # demonstrate the treatment of the imaginary part of the diagonal
-    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]]) 
+    >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
     array([[ 5.+2.j,  9.-2.j],
            [ 0.+2.j,  2.-1.j]])
@@ -1279,6 +1289,10 @@ def eigh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+    if _isEmpty2d(a):
+        w = empty(a.shape[-1:], dtype=result_t)
+        vt = empty(a.shape, dtype=result_t)
+        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1513,8 +1527,8 @@ def matrix_rank(M, tol=None):
 
     Parameters
     ----------
-    M : {(M,), (M, N)} array_like
-        array of <=2 dimensions
+    M : {(M,), (..., M, N)} array_like
+        input vector or stack of matrices
     tol : {None, float}, optional
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
@@ -1581,14 +1595,12 @@ def matrix_rank(M, tol=None):
     0
     """
     M = asarray(M)
-    if M.ndim > 2:
-        raise TypeError('array should have 2 or fewer dimensions')
     if M.ndim < 2:
         return int(not all(M==0))
     S = svd(M, compute_uv=False)
     if tol is None:
-        tol = S.max() * max(M.shape) * finfo(S.dtype).eps
-    return sum(S > tol)
+        tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+    return (S > tol).sum(axis=-1)
 
 
 # Generalized inverse
@@ -1657,7 +1669,9 @@ def pinv(a, rcond=1e-15 ):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
+    if _isEmpty2d(a):
+        res = empty(a.shape[:-2] + (a.shape[-1], a.shape[-2]), dtype=a.dtype)
+        return wrap(res)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]
@@ -1748,11 +1762,15 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
+    if _isEmpty2d(a):
+        # determinant of empty matrix is 1
+        sign = ones(a.shape[:-2], dtype=result_t)
+        logdet = zeros(a.shape[:-2], dtype=real_t)
+        return sign, logdet
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     if isscalar(sign):
@@ -1813,10 +1831,12 @@ def det(a):
 
     """
     a = asarray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
+    # 0x0 matrices have determinant 1
+    if _isEmpty2d(a):
+        return ones(a.shape[:-2], dtype=result_t)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     if isscalar(r):
@@ -1914,10 +1934,11 @@ def lstsq(a, b, rcond=-1):
     import math
     a, _ = _makearray(a)
     b, wrap = _makearray(b)
-    is_1d = len(b.shape) == 1
+    is_1d = b.ndim == 1
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
+    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
@@ -1932,6 +1953,14 @@ def lstsq(a, b, rcond=-1):
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
+    # This line:
+    #  * is incorrect, according to the LAPACK documentation
+    #  * raises a ValueError if min(m,n) == 0
+    #  * should not be calculated here anyway, as LAPACK should calculate
+    #    `liwork` for us. But that only works if our version of lapack does
+    #    not have this bug:
+    #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
+    #    Lapack_lite does have that bug...
     nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
     iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
     if isComplexType(t):
@@ -2225,13 +2254,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
-        if row_axis < 0:
-            row_axis += nd
-        if col_axis < 0:
-            col_axis += nd
-        if not (0 <= row_axis < nd and 0 <= col_axis < nd):
-            raise ValueError('Invalid axis %r for an array with shape %r' %
-                             (axis, x.shape))
+        row_axis = normalize_axis_index(row_axis, nd)
+        col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
@@ -2331,14 +2355,13 @@ def multi_dot(arrays):
     >>> # or
     >>> A.dot(B).dot(C).dot(D)
 
-
-    Example: multiplication costs of different parenthesizations
-    ------------------------------------------------------------
-
+    Notes
+    -----
     The cost for a matrix multiplication can be calculated with the
     following function::
 
-        def cost(A, B): return A.shape[0] * A.shape[1] * B.shape[1]
+        def cost(A, B):
+            return A.shape[0] * A.shape[1] * B.shape[1]
 
     Let's assume we have three matrices
     :math:`A_{10x100}, B_{100x5}, C_{5x50}$`.

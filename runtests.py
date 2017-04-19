@@ -142,7 +142,7 @@ def main(argv):
         site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
-        os.environ['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
+        os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -181,10 +181,10 @@ def main(argv):
         sys.exit(0)
 
     if args.shell:
-        shell = os.environ.get('SHELL', 'sh')
-        print("Spawning a Unix shell...")
-        os.execv(shell, [shell] + extra_argv)
-        sys.exit(1)
+        shell = os.environ.get('SHELL', 'cmd' if os.name == 'nt' else 'sh')
+        print("Spawning a shell ({})...".format(shell))
+        subprocess.call([shell] + extra_argv)
+        sys.exit(0)
 
     if args.coverage:
         dst_dir = os.path.join(ROOT_DIR, 'build', 'coverage')
@@ -208,9 +208,8 @@ def main(argv):
 
         if not args.bench_compare:
             cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
-            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
-            os.execvp(cmd[0], cmd)
-            sys.exit(1)
+            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            sys.exit(ret)
         else:
             commits = [x.strip() for x in args.bench_compare.split(',')]
             if len(commits) == 1:
@@ -233,21 +232,16 @@ def main(argv):
                     print("*"*80)
 
             # Fix commit ids (HEAD is local to current repo)
-            p = subprocess.Popen(['git', 'rev-parse', commit_b],
-                                 stdout=subprocess.PIPE)
-            out, err = p.communicate()
+            out = subprocess.check_output(['git', 'rev-parse', commit_b])
             commit_b = out.strip()
 
-            p = subprocess.Popen(['git', 'rev-parse', commit_a],
-                                 stdout=subprocess.PIPE)
-            out, err = p.communicate()
+            out = subprocess.check_output(['git', 'rev-parse', commit_a])
             commit_a = out.strip()
 
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
                    commit_a, commit_b] + bench_args
-            os.chdir(os.path.join(ROOT_DIR, 'benchmarks'))
-            os.execvp(cmd[0], cmd)
-            sys.exit(1)
+            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            sys.exit(ret)
 
     test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 

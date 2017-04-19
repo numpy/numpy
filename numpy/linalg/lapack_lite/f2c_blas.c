@@ -16,35 +16,48 @@ extern doublereal dlamch_(char *);
 
 extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
+/*
+f2c knows the exact rules for precedence, and so omits parentheses where not
+strictly necessary. Since this is generated code, we don't really care if
+it's readable, and we know what is written is correct. So don't warn about
+them.
+*/
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif
 
 
 /* Table of constant values */
 
 static complex c_b21 = {1.f,0.f};
-static integer c__1 = 1;
-static doublecomplex c_b1077 = {1.,0.};
+static doublecomplex c_b1078 = {1.,0.};
 
 /* Subroutine */ int caxpy_(integer *n, complex *ca, complex *cx, integer *
 	incx, complex *cy, integer *incy)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    real r__1, r__2;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
 
     /* Local variables */
     static integer i__, ix, iy;
+    extern doublereal scabs1_(complex *);
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       CAXPY constant times a vector plus a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -54,7 +67,7 @@ static doublecomplex c_b1077 = {1.,0.};
     if (*n <= 0) {
 	return 0;
     }
-    if ((r__1 = ca->r, dabs(r__1)) + (r__2 = r_imag(ca), dabs(r__2)) == 0.f) {
+    if (scabs1_(ca) == 0.f) {
 	return 0;
     }
     if (*incx == 1 && *incy == 1) {
@@ -117,11 +130,19 @@ L20:
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       CCOPY copies a vector x to a vector y.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -188,12 +209,20 @@ L20:
 
 
 /*
+    Purpose
+    =======
+
        forms the dot product of two vectors, conjugating the first
        vector.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack,  3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -267,11 +296,19 @@ L20:
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       CDOTU forms the dot product of two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -370,7 +407,7 @@ L20:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -466,6 +503,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -474,6 +513,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -539,8 +580,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (((alpha->r == 0.f && alpha->i == 0.f) ||
-	    (*k == 0)) && (beta->r == 1.f && beta->i == 0.f))) {
+    if (*m == 0 || *n == 0 || (alpha->r == 0.f && alpha->i == 0.f || *k == 0)
+	    && (beta->r == 1.f && beta->i == 0.f)) {
 	return 0;
     }
 
@@ -593,7 +634,7 @@ L20:
 			c__[i__3].r = 0.f, c__[i__3].i = 0.f;
 /* L50: */
 		    }
-		} else if ((beta->r != 1.f) || (beta->i != 0.f)) {
+		} else if (beta->r != 1.f || beta->i != 0.f) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -608,7 +649,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = l + j * b_dim1;
-		    if ((b[i__3].r != 0.f) || (b[i__3].i != 0.f)) {
+		    if (b[i__3].r != 0.f || b[i__3].i != 0.f) {
 			i__3 = l + j * b_dim1;
 			q__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3].i,
 				q__1.i = alpha->r * b[i__3].i + alpha->i * b[
@@ -731,7 +772,7 @@ L20:
 			c__[i__3].r = 0.f, c__[i__3].i = 0.f;
 /* L160: */
 		    }
-		} else if ((beta->r != 1.f) || (beta->i != 0.f)) {
+		} else if (beta->r != 1.f || beta->i != 0.f) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -746,7 +787,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * b_dim1;
-		    if ((b[i__3].r != 0.f) || (b[i__3].i != 0.f)) {
+		    if (b[i__3].r != 0.f || b[i__3].i != 0.f) {
 			r_cnjg(&q__2, &b[j + l * b_dim1]);
 			q__1.r = alpha->r * q__2.r - alpha->i * q__2.i,
 				q__1.i = alpha->r * q__2.i + alpha->i *
@@ -783,7 +824,7 @@ L20:
 			c__[i__3].r = 0.f, c__[i__3].i = 0.f;
 /* L210: */
 		    }
-		} else if ((beta->r != 1.f) || (beta->i != 0.f)) {
+		} else if (beta->r != 1.f || beta->i != 0.f) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -798,7 +839,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * b_dim1;
-		    if ((b[i__3].r != 0.f) || (b[i__3].i != 0.f)) {
+		    if (b[i__3].r != 0.f || b[i__3].i != 0.f) {
 			i__3 = j + l * b_dim1;
 			q__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3].i,
 				q__1.i = alpha->r * b[i__3].i + alpha->i * b[
@@ -1026,7 +1067,7 @@ L20:
     Purpose
     =======
 
-    CGEMV  performs one of the matrix-vector operations
+    CGEMV performs one of the matrix-vector operations
 
        y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,   or
 
@@ -1035,7 +1076,7 @@ L20:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -1106,6 +1147,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1114,6 +1157,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1149,8 +1194,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0.f && alpha->i == 0.f && (
-	    beta->r == 1.f && beta->i == 0.f))) {
+    if (*m == 0 || *n == 0 || alpha->r == 0.f && alpha->i == 0.f && (beta->r
+	    == 1.f && beta->i == 0.f)) {
 	return 0;
     }
 
@@ -1186,7 +1231,7 @@ L20:
        First form  y := beta*y.
 */
 
-    if ((beta->r != 1.f) || (beta->i != 0.f)) {
+    if (beta->r != 1.f || beta->i != 0.f) {
 	if (*incy == 1) {
 	    if (beta->r == 0.f && beta->i == 0.f) {
 		i__1 = leny;
@@ -1244,7 +1289,7 @@ L20:
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
-		if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 		    i__2 = jx;
 		    q__1.r = alpha->r * x[i__2].r - alpha->i * x[i__2].i,
 			    q__1.i = alpha->r * x[i__2].i + alpha->i * x[i__2]
@@ -1271,7 +1316,7 @@ L20:
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
-		if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 		    i__2 = jx;
 		    q__1.r = alpha->r * x[i__2].r - alpha->i * x[i__2].i,
 			    q__1.i = alpha->r * x[i__2].i + alpha->i * x[i__2]
@@ -1417,7 +1462,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -1467,6 +1512,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1475,6 +1522,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1507,7 +1556,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0.f && alpha->i == 0.f)) {
+    if (*m == 0 || *n == 0 || alpha->r == 0.f && alpha->i == 0.f) {
 	return 0;
     }
 
@@ -1525,7 +1574,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.f) || (y[i__2].i != 0.f)) {
+	    if (y[i__2].r != 0.f || y[i__2].i != 0.f) {
 		r_cnjg(&q__2, &y[jy]);
 		q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			alpha->r * q__2.i + alpha->i * q__2.r;
@@ -1554,7 +1603,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.f) || (y[i__2].i != 0.f)) {
+	    if (y[i__2].r != 0.f || y[i__2].i != 0.f) {
 		r_cnjg(&q__2, &y[jy]);
 		q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			alpha->r * q__2.i + alpha->i * q__2.r;
@@ -1608,7 +1657,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -1658,6 +1707,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1666,6 +1717,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1698,7 +1751,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0.f && alpha->i == 0.f)) {
+    if (*m == 0 || *n == 0 || alpha->r == 0.f && alpha->i == 0.f) {
 	return 0;
     }
 
@@ -1716,7 +1769,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.f) || (y[i__2].i != 0.f)) {
+	    if (y[i__2].r != 0.f || y[i__2].i != 0.f) {
 		i__2 = jy;
 		q__1.r = alpha->r * y[i__2].r - alpha->i * y[i__2].i, q__1.i =
 			 alpha->r * y[i__2].i + alpha->i * y[i__2].r;
@@ -1745,7 +1798,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.f) || (y[i__2].i != 0.f)) {
+	    if (y[i__2].r != 0.f || y[i__2].i != 0.f) {
 		i__2 = jy;
 		q__1.r = alpha->r * y[i__2].r - alpha->i * y[i__2].i, q__1.i =
 			 alpha->r * y[i__2].i + alpha->i * y[i__2].r;
@@ -1805,7 +1858,7 @@ L20:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -1876,6 +1929,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1884,6 +1939,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1916,8 +1973,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (alpha->r == 0.f && alpha->i == 0.f && (beta->r == 1.f &&
-	     beta->i == 0.f))) {
+    if (*n == 0 || alpha->r == 0.f && alpha->i == 0.f && (beta->r == 1.f &&
+	    beta->i == 0.f)) {
 	return 0;
     }
 
@@ -1942,7 +1999,7 @@ L20:
        First form  y := beta*y.
 */
 
-    if ((beta->r != 1.f) || (beta->i != 0.f)) {
+    if (beta->r != 1.f || beta->i != 0.f) {
 	if (*incy == 1) {
 	    if (beta->r == 0.f && beta->i == 0.f) {
 		i__1 = *n;
@@ -2212,7 +2269,7 @@ L20:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -2282,6 +2339,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -2290,6 +2349,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -2322,7 +2383,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (alpha->r == 0.f && alpha->i == 0.f)) {
+    if (*n == 0 || alpha->r == 0.f && alpha->i == 0.f) {
 	return 0;
     }
 
@@ -2331,7 +2392,7 @@ L20:
        unity.
 */
 
-    if ((*incx != 1) || (*incy != 1)) {
+    if (*incx != 1 || *incy != 1) {
 	if (*incx > 0) {
 	    kx = 1;
 	} else {
@@ -2361,8 +2422,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = j;
 		i__3 = j;
-		if (((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) || (((y[i__3]
-			.r != 0.f) || (y[i__3].i != 0.f)))) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f || (y[i__3].r != 0.f
+			|| y[i__3].i != 0.f)) {
 		    r_cnjg(&q__2, &y[j]);
 		    q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			    alpha->r * q__2.i + alpha->i * q__2.r;
@@ -2417,8 +2478,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
 		i__3 = jy;
-		if (((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) || (((y[i__3]
-			.r != 0.f) || (y[i__3].i != 0.f)))) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f || (y[i__3].r != 0.f
+			|| y[i__3].i != 0.f)) {
 		    r_cnjg(&q__2, &y[jy]);
 		    q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			    alpha->r * q__2.i + alpha->i * q__2.r;
@@ -2484,8 +2545,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = j;
 		i__3 = j;
-		if (((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) || (((y[i__3]
-			.r != 0.f) || (y[i__3].i != 0.f)))) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f || (y[i__3].r != 0.f
+			|| y[i__3].i != 0.f)) {
 		    r_cnjg(&q__2, &y[j]);
 		    q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			    alpha->r * q__2.i + alpha->i * q__2.r;
@@ -2540,8 +2601,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
 		i__3 = jy;
-		if (((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) || (((y[i__3]
-			.r != 0.f) || (y[i__3].i != 0.f)))) {
+		if (x[i__2].r != 0.f || x[i__2].i != 0.f || (y[i__3].r != 0.f
+			|| y[i__3].i != 0.f)) {
 		    r_cnjg(&q__2, &y[jy]);
 		    q__1.r = alpha->r * q__2.r - alpha->i * q__2.i, q__1.i =
 			    alpha->r * q__2.i + alpha->i * q__2.r;
@@ -2644,7 +2705,7 @@ L20:
     hermitian matrix and  A and B  are  n by k matrices in the first case
     and  k by n  matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -2747,6 +2808,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -2758,6 +2821,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -2806,8 +2871,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((alpha->r == 0.f && alpha->i == 0.f) || (*k == 0)) && *
-	    beta == 1.f)) {
+    if (*n == 0 || (alpha->r == 0.f && alpha->i == 0.f || *k == 0) && *beta ==
+	     1.f) {
 	return 0;
     }
 
@@ -2923,8 +2988,8 @@ L20:
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
 		    i__4 = j + l * b_dim1;
-		    if (((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) || (((b[
-			    i__4].r != 0.f) || (b[i__4].i != 0.f)))) {
+		    if (a[i__3].r != 0.f || a[i__3].i != 0.f || (b[i__4].r !=
+			    0.f || b[i__4].i != 0.f)) {
 			r_cnjg(&q__2, &b[j + l * b_dim1]);
 			q__1.r = alpha->r * q__2.r - alpha->i * q__2.i,
 				q__1.i = alpha->r * q__2.i + alpha->i *
@@ -3007,8 +3072,8 @@ L20:
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
 		    i__4 = j + l * b_dim1;
-		    if (((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) || (((b[
-			    i__4].r != 0.f) || (b[i__4].i != 0.f)))) {
+		    if (a[i__3].r != 0.f || a[i__3].i != 0.f || (b[i__4].r !=
+			    0.f || b[i__4].i != 0.f)) {
 			r_cnjg(&q__2, &b[j + l * b_dim1]);
 			q__1.r = alpha->r * q__2.r - alpha->i * q__2.i,
 				q__1.i = alpha->r * q__2.i + alpha->i *
@@ -3293,7 +3358,7 @@ L20:
     matrix and  A  is an  n by k  matrix in the  first case and a  k by n
     matrix in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -3377,6 +3442,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -3388,6 +3455,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -3431,7 +3500,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.f) || (*k == 0)) && *beta == 1.f)) {
+    if (*n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
 	return 0;
     }
 
@@ -3543,7 +3612,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
-		    if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+		    if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			r_cnjg(&q__2, &a[j + l * a_dim1]);
 			q__1.r = *alpha * q__2.r, q__1.i = *alpha * q__2.i;
 			temp.r = q__1.r, temp.i = q__1.i;
@@ -3606,7 +3675,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
-		    if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+		    if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			r_cnjg(&q__2, &a[j + l * a_dim1]);
 			q__1.r = *alpha * q__2.r, q__1.i = *alpha * q__2.i;
 			temp.r = q__1.r, temp.i = q__1.i;
@@ -3772,18 +3841,26 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       CSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack,  3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -3820,6 +3897,141 @@ L20:
     return 0;
 } /* cscal_ */
 
+/* Subroutine */ int csrot_(integer *n, complex *cx, integer *incx, complex *
+	cy, integer *incy, real *c__, real *s)
+{
+    /* System generated locals */
+    integer i__1, i__2, i__3, i__4;
+    complex q__1, q__2, q__3;
+
+    /* Local variables */
+    static integer i__, ix, iy;
+    static complex ctemp;
+
+
+/*
+    Purpose
+    =======
+
+    CSROT applies a plane rotation, where the cos and sin (c and s) are real
+    and the vectors cx and cy are complex.
+    jack dongarra, linpack, 3/11/78.
+
+    Arguments
+    ==========
+
+    N        (input) INTEGER
+             On entry, N specifies the order of the vectors cx and cy.
+             N must be at least zero.
+             Unchanged on exit.
+
+    CX       (input) COMPLEX array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCX ) ).
+             Before entry, the incremented array CX must contain the n
+             element vector cx. On exit, CX is overwritten by the updated
+             vector cx.
+
+    INCX     (input) INTEGER
+             On entry, INCX specifies the increment for the elements of
+             CX. INCX must not be zero.
+             Unchanged on exit.
+
+    CY       (input) COMPLEX array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCY ) ).
+             Before entry, the incremented array CY must contain the n
+             element vector cy. On exit, CY is overwritten by the updated
+             vector cy.
+
+    INCY     (input) INTEGER
+             On entry, INCY specifies the increment for the elements of
+             CY. INCY must not be zero.
+             Unchanged on exit.
+
+    C        (input) REAL
+             On entry, C specifies the cosine, cos.
+             Unchanged on exit.
+
+    S        (input) REAL
+             On entry, S specifies the sine, sin.
+             Unchanged on exit.
+
+    =====================================================================
+*/
+
+
+    /* Parameter adjustments */
+    --cy;
+    --cx;
+
+    /* Function Body */
+    if (*n <= 0) {
+	return 0;
+    }
+    if (*incx == 1 && *incy == 1) {
+	goto L20;
+    }
+
+/*
+          code for unequal increments or equal increments not equal
+            to 1
+*/
+
+    ix = 1;
+    iy = 1;
+    if (*incx < 0) {
+	ix = (-(*n) + 1) * *incx + 1;
+    }
+    if (*incy < 0) {
+	iy = (-(*n) + 1) * *incy + 1;
+    }
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = ix;
+	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
+	i__3 = iy;
+	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	i__2 = iy;
+	i__3 = iy;
+	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	i__4 = ix;
+	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
+	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
+	i__2 = ix;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	ix += *incx;
+	iy += *incy;
+/* L10: */
+    }
+    return 0;
+
+/*        code for both increments equal to 1 */
+
+L20:
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = i__;
+	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
+	i__3 = i__;
+	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	i__2 = i__;
+	i__3 = i__;
+	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	i__4 = i__;
+	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
+	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
+	i__2 = i__;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+/* L30: */
+    }
+    return 0;
+} /* csrot_ */
+
 /* Subroutine */ int csscal_(integer *n, real *sa, complex *cx, integer *incx)
 {
     /* System generated locals */
@@ -3835,18 +4047,26 @@ L20:
 
 
 /*
-       scales a complex vector by a real constant.
+    Purpose
+    =======
+
+       CSSCAL scales a complex vector by a real constant.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -3897,11 +4117,19 @@ L20:
 
 
 /*
-       interchanges two vectors.
+    Purpose
+    =======
+
+      CSWAP interchanges two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -3995,7 +4223,7 @@ L20:
 
        op( A ) = A   or   op( A ) = A'   or   op( A ) = conjg( A' ).
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -4089,6 +4317,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -4097,6 +4327,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -4148,7 +4380,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -4181,7 +4413,7 @@ L20:
 		    i__2 = *m;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * b_dim1;
-			if ((b[i__3].r != 0.f) || (b[i__3].i != 0.f)) {
+			if (b[i__3].r != 0.f || b[i__3].i != 0.f) {
 			    i__3 = k + j * b_dim1;
 			    q__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3]
 				    .i, q__1.i = alpha->r * b[i__3].i +
@@ -4219,7 +4451,7 @@ L20:
 		for (j = 1; j <= i__1; ++j) {
 		    for (k = *m; k >= 1; --k) {
 			i__2 = k + j * b_dim1;
-			if ((b[i__2].r != 0.f) || (b[i__2].i != 0.f)) {
+			if (b[i__2].r != 0.f || b[i__2].i != 0.f) {
 			    i__2 = k + j * b_dim1;
 			    q__1.r = alpha->r * b[i__2].r - alpha->i * b[i__2]
 				    .i, q__1.i = alpha->r * b[i__2].i +
@@ -4402,7 +4634,7 @@ L20:
 		    i__1 = j - 1;
 		    for (k = 1; k <= i__1; ++k) {
 			i__2 = k + j * a_dim1;
-			if ((a[i__2].r != 0.f) || (a[i__2].i != 0.f)) {
+			if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
 			    i__2 = k + j * a_dim1;
 			    q__1.r = alpha->r * a[i__2].r - alpha->i * a[i__2]
 				    .i, q__1.i = alpha->r * a[i__2].i +
@@ -4450,7 +4682,7 @@ L20:
 		    i__2 = *n;
 		    for (k = j + 1; k <= i__2; ++k) {
 			i__3 = k + j * a_dim1;
-			if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+			if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			    i__3 = k + j * a_dim1;
 			    q__1.r = alpha->r * a[i__3].r - alpha->i * a[i__3]
 				    .i, q__1.i = alpha->r * a[i__3].i +
@@ -4485,7 +4717,7 @@ L20:
 		    i__2 = k - 1;
 		    for (j = 1; j <= i__2; ++j) {
 			i__3 = j + k * a_dim1;
-			if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+			if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			    if (noconj) {
 				i__3 = j + k * a_dim1;
 				q__1.r = alpha->r * a[i__3].r - alpha->i * a[
@@ -4531,7 +4763,7 @@ L20:
 			    temp.r = q__1.r, temp.i = q__1.i;
 			}
 		    }
-		    if ((temp.r != 1.f) || (temp.i != 0.f)) {
+		    if (temp.r != 1.f || temp.i != 0.f) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + k * b_dim1;
@@ -4550,7 +4782,7 @@ L20:
 		    i__1 = *n;
 		    for (j = k + 1; j <= i__1; ++j) {
 			i__2 = j + k * a_dim1;
-			if ((a[i__2].r != 0.f) || (a[i__2].i != 0.f)) {
+			if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
 			    if (noconj) {
 				i__2 = j + k * a_dim1;
 				q__1.r = alpha->r * a[i__2].r - alpha->i * a[
@@ -4596,7 +4828,7 @@ L20:
 			    temp.r = q__1.r, temp.i = q__1.i;
 			}
 		    }
-		    if ((temp.r != 1.f) || (temp.i != 0.f)) {
+		    if (temp.r != 1.f || temp.i != 0.f) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + k * b_dim1;
@@ -4649,7 +4881,7 @@ L20:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -4720,6 +4952,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -4728,6 +4962,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -4795,7 +5031,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = j;
-		    if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		    if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 			i__2 = j;
 			temp.r = x[i__2].r, temp.i = x[i__2].i;
 			i__2 = j - 1;
@@ -4828,7 +5064,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = jx;
-		    if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		    if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 			i__2 = jx;
 			temp.r = x[i__2].r, temp.i = x[i__2].i;
 			ix = kx;
@@ -4864,7 +5100,7 @@ L20:
 	    if (*incx == 1) {
 		for (j = *n; j >= 1; --j) {
 		    i__1 = j;
-		    if ((x[i__1].r != 0.f) || (x[i__1].i != 0.f)) {
+		    if (x[i__1].r != 0.f || x[i__1].i != 0.f) {
 			i__1 = j;
 			temp.r = x[i__1].r, temp.i = x[i__1].i;
 			i__1 = j + 1;
@@ -4897,7 +5133,7 @@ L20:
 		jx = kx;
 		for (j = *n; j >= 1; --j) {
 		    i__1 = jx;
-		    if ((x[i__1].r != 0.f) || (x[i__1].i != 0.f)) {
+		    if (x[i__1].r != 0.f || x[i__1].i != 0.f) {
 			i__1 = jx;
 			temp.r = x[i__1].r, temp.i = x[i__1].i;
 			ix = kx;
@@ -5189,7 +5425,7 @@ L20:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -5283,6 +5519,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -5291,6 +5529,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -5342,7 +5582,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -5372,7 +5612,7 @@ L20:
 	    if (upper) {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -5386,7 +5626,7 @@ L20:
 		    }
 		    for (k = *m; k >= 1; --k) {
 			i__2 = k + j * b_dim1;
-			if ((b[i__2].r != 0.f) || (b[i__2].i != 0.f)) {
+			if (b[i__2].r != 0.f || b[i__2].i != 0.f) {
 			    if (nounit) {
 				i__2 = k + j * b_dim1;
 				c_div(&q__1, &b[k + j * b_dim1], &a[k + k *
@@ -5415,7 +5655,7 @@ L20:
 	    } else {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -5430,7 +5670,7 @@ L20:
 		    i__2 = *m;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * b_dim1;
-			if ((b[i__3].r != 0.f) || (b[i__3].i != 0.f)) {
+			if (b[i__3].r != 0.f || b[i__3].i != 0.f) {
 			    if (nounit) {
 				i__3 = k + j * b_dim1;
 				c_div(&q__1, &b[k + j * b_dim1], &a[k + k *
@@ -5577,7 +5817,7 @@ L20:
 	    if (upper) {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -5592,7 +5832,7 @@ L20:
 		    i__2 = j - 1;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * a_dim1;
-			if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+			if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			    i__3 = *m;
 			    for (i__ = 1; i__ <= i__3; ++i__) {
 				i__4 = i__ + j * b_dim1;
@@ -5628,7 +5868,7 @@ L20:
 		}
 	    } else {
 		for (j = *n; j >= 1; --j) {
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + j * b_dim1;
@@ -5643,7 +5883,7 @@ L20:
 		    i__1 = *n;
 		    for (k = j + 1; k <= i__1; ++k) {
 			i__2 = k + j * a_dim1;
-			if ((a[i__2].r != 0.f) || (a[i__2].i != 0.f)) {
+			if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
 			    i__2 = *m;
 			    for (i__ = 1; i__ <= i__2; ++i__) {
 				i__3 = i__ + j * b_dim1;
@@ -5710,7 +5950,7 @@ L20:
 		    i__1 = k - 1;
 		    for (j = 1; j <= i__1; ++j) {
 			i__2 = j + k * a_dim1;
-			if ((a[i__2].r != 0.f) || (a[i__2].i != 0.f)) {
+			if (a[i__2].r != 0.f || a[i__2].i != 0.f) {
 			    if (noconj) {
 				i__2 = j + k * a_dim1;
 				temp.r = a[i__2].r, temp.i = a[i__2].i;
@@ -5734,7 +5974,7 @@ L20:
 			}
 /* L310: */
 		    }
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + k * b_dim1;
@@ -5774,7 +6014,7 @@ L20:
 		    i__2 = *n;
 		    for (j = k + 1; j <= i__2; ++j) {
 			i__3 = j + k * a_dim1;
-			if ((a[i__3].r != 0.f) || (a[i__3].i != 0.f)) {
+			if (a[i__3].r != 0.f || a[i__3].i != 0.f) {
 			    if (noconj) {
 				i__3 = j + k * a_dim1;
 				temp.r = a[i__3].r, temp.i = a[i__3].i;
@@ -5798,7 +6038,7 @@ L20:
 			}
 /* L360: */
 		    }
-		    if ((alpha->r != 1.f) || (alpha->i != 0.f)) {
+		    if (alpha->r != 1.f || alpha->i != 0.f) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + k * b_dim1;
@@ -5854,7 +6094,7 @@ L20:
     No test for singularity or near-singularity is included in this
     routine. Such tests must be performed before calling this routine.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -5925,6 +6165,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -5933,6 +6175,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -5999,7 +6243,7 @@ L20:
 	    if (*incx == 1) {
 		for (j = *n; j >= 1; --j) {
 		    i__1 = j;
-		    if ((x[i__1].r != 0.f) || (x[i__1].i != 0.f)) {
+		    if (x[i__1].r != 0.f || x[i__1].i != 0.f) {
 			if (nounit) {
 			    i__1 = j;
 			    c_div(&q__1, &x[j], &a[j + j * a_dim1]);
@@ -6026,7 +6270,7 @@ L20:
 		jx = kx + (*n - 1) * *incx;
 		for (j = *n; j >= 1; --j) {
 		    i__1 = jx;
-		    if ((x[i__1].r != 0.f) || (x[i__1].i != 0.f)) {
+		    if (x[i__1].r != 0.f || x[i__1].i != 0.f) {
 			if (nounit) {
 			    i__1 = jx;
 			    c_div(&q__1, &x[jx], &a[j + j * a_dim1]);
@@ -6058,7 +6302,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = j;
-		    if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		    if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 			if (nounit) {
 			    i__2 = j;
 			    c_div(&q__1, &x[j], &a[j + j * a_dim1]);
@@ -6087,7 +6331,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = jx;
-		    if ((x[i__2].r != 0.f) || (x[i__2].i != 0.f)) {
+		    if (x[i__2].r != 0.f || x[i__2].i != 0.f) {
 			if (nounit) {
 			    i__2 = jx;
 			    c_div(&q__1, &x[jx], &a[j + j * a_dim1]);
@@ -6333,12 +6577,20 @@ L20:
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       DAXPY constant times a vector plus a vector.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6413,21 +6665,24 @@ L40:
 doublereal dcabs1_(doublecomplex *z__)
 {
     /* System generated locals */
-    doublereal ret_val;
-    static doublecomplex equiv_0[1];
+    doublereal ret_val, d__1, d__2;
 
-    /* Local variables */
-#define t ((doublereal *)equiv_0)
-#define zz (equiv_0)
+    /* Builtin functions */
+    double d_imag(doublecomplex *);
 
-    zz->r = z__->r, zz->i = z__->i;
-    ret_val = abs(t[0]) + abs(t[1]);
+/*
+    Purpose
+    =======
+
+    DCABS1 computes absolute value of a double complex number
+
+    =====================================================================
+*/
+
+
+    ret_val = (d__1 = z__->r, abs(d__1)) + (d__2 = d_imag(z__), abs(d__2));
     return ret_val;
 } /* dcabs1_ */
-
-#undef zz
-#undef t
-
 
 /* Subroutine */ int dcopy_(integer *n, doublereal *dx, integer *incx,
 	doublereal *dy, integer *incy)
@@ -6440,12 +6695,20 @@ doublereal dcabs1_(doublecomplex *z__)
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       DCOPY copies a vector, x, to a vector, y.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6530,12 +6793,20 @@ doublereal ddot_(integer *n, doublereal *dx, integer *incx, doublereal *dy,
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       DDOT forms the dot product of two vectors.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6642,7 +6913,7 @@ L60:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -6738,6 +7009,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -6746,6 +7019,8 @@ L60:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -6809,8 +7084,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (((*alpha == 0.) || (*k == 0)) && *beta ==
-	     1.)) {
+    if (*m == 0 || *n == 0 || (*alpha == 0. || *k == 0) && *beta == 1.) {
 	return 0;
     }
 
@@ -6997,7 +7271,7 @@ L60:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -7068,6 +7342,8 @@ L60:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7076,6 +7352,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -7111,7 +7389,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (*alpha == 0. && *beta == 1.)) {
+    if (*m == 0 || *n == 0 || *alpha == 0. && *beta == 1.) {
 	return 0;
     }
 
@@ -7284,7 +7562,7 @@ L60:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -7334,6 +7612,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7342,6 +7622,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -7374,7 +7656,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (*alpha == 0.)) {
+    if (*m == 0 || *n == 0 || *alpha == 0.) {
 	return 0;
     }
 
@@ -7446,23 +7728,29 @@ doublereal dnrm2_(integer *n, doublereal *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
     DNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        DNRM2 := sqrt( x'*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to DLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
 
     /* Function Body */
-    if ((*n < 1) || (*incx < 1)) {
+    if (*n < 1 || *incx < 1) {
 	norm = 0.;
     } else if (*n == 1) {
 	norm = abs(x[1]);
@@ -7515,11 +7803,19 @@ doublereal dnrm2_(integer *n, doublereal *x, integer *incx)
 
 
 /*
-       applies a plane rotation.
+    Purpose
+    =======
+
+       DROT applies a plane rotation.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -7581,19 +7877,27 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       DSCAL scales a vector by a constant.
        uses unrolled loops for increment equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -7657,12 +7961,20 @@ L40:
 
 
 /*
+    Purpose
+    =======
+
        interchanges two vectors.
        uses unrolled loops for increments equal one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -7765,7 +8077,7 @@ L40:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -7834,6 +8146,8 @@ L40:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7842,6 +8156,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -7874,7 +8190,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (*alpha == 0. && *beta == 1.)) {
+    if (*n == 0 || *alpha == 0. && *beta == 1.) {
 	return 0;
     }
 
@@ -8053,7 +8369,7 @@ L40:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8120,6 +8436,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -8128,6 +8446,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8160,7 +8480,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (*alpha == 0.)) {
+    if (*n == 0 || *alpha == 0.) {
 	return 0;
     }
 
@@ -8169,7 +8489,7 @@ L40:
        unity.
 */
 
-    if ((*incx != 1) || (*incy != 1)) {
+    if (*incx != 1 || *incy != 1) {
 	if (*incx > 0) {
 	    kx = 1;
 	} else {
@@ -8197,7 +8517,7 @@ L40:
 	if (*incx == 1 && *incy == 1) {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[j] != 0.) || (y[j] != 0.)) {
+		if (x[j] != 0. || y[j] != 0.) {
 		    temp1 = *alpha * y[j];
 		    temp2 = *alpha * x[j];
 		    i__2 = j;
@@ -8212,7 +8532,7 @@ L40:
 	} else {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[jx] != 0.) || (y[jy] != 0.)) {
+		if (x[jx] != 0. || y[jy] != 0.) {
 		    temp1 = *alpha * y[jy];
 		    temp2 = *alpha * x[jx];
 		    ix = kx;
@@ -8238,7 +8558,7 @@ L40:
 	if (*incx == 1 && *incy == 1) {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[j] != 0.) || (y[j] != 0.)) {
+		if (x[j] != 0. || y[j] != 0.) {
 		    temp1 = *alpha * y[j];
 		    temp2 = *alpha * x[j];
 		    i__2 = *n;
@@ -8253,7 +8573,7 @@ L40:
 	} else {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[jx] != 0.) || (y[jy] != 0.)) {
+		if (x[jx] != 0. || y[jy] != 0.) {
 		    temp1 = *alpha * y[jy];
 		    temp2 = *alpha * x[jx];
 		    ix = jx;
@@ -8313,7 +8633,7 @@ L40:
     and  A and B  are  n by k  matrices  in the  first  case  and  k by n
     matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8414,6 +8734,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -8423,6 +8745,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8471,7 +8795,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.) || (*k == 0)) && *beta == 1.)) {
+    if (*n == 0 || (*alpha == 0. || *k == 0) && *beta == 1.) {
 	return 0;
     }
 
@@ -8550,8 +8874,7 @@ L40:
 		}
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
-		    if ((a[j + l * a_dim1] != 0.) || (b[j + l * b_dim1] != 0.)
-			    ) {
+		    if (a[j + l * a_dim1] != 0. || b[j + l * b_dim1] != 0.) {
 			temp1 = *alpha * b[j + l * b_dim1];
 			temp2 = *alpha * a[j + l * a_dim1];
 			i__3 = j;
@@ -8584,8 +8907,7 @@ L40:
 		}
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
-		    if ((a[j + l * a_dim1] != 0.) || (b[j + l * b_dim1] != 0.)
-			    ) {
+		    if (a[j + l * a_dim1] != 0. || b[j + l * b_dim1] != 0.) {
 			temp1 = *alpha * b[j + l * b_dim1];
 			temp2 = *alpha * a[j + l * a_dim1];
 			i__3 = *n;
@@ -8694,7 +9016,7 @@ L40:
     and  A  is an  n by k  matrix in the first case and a  k by n  matrix
     in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8777,6 +9099,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -8785,6 +9109,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8828,7 +9154,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.) || (*k == 0)) && *beta == 1.)) {
+    if (*n == 0 || (*alpha == 0. || *k == 0) && *beta == 1.) {
 	return 0;
     }
 
@@ -9038,7 +9364,7 @@ L40:
 
        op( A ) = A   or   op( A ) = A'.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -9132,6 +9458,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -9140,6 +9468,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9190,7 +9520,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -9458,7 +9788,7 @@ L40:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -9529,6 +9859,8 @@ L40:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -9537,6 +9869,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9788,7 +10122,7 @@ L40:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -9882,6 +10216,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -9891,6 +10227,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9941,7 +10279,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -10231,12 +10569,20 @@ doublereal dzasum_(integer *n, doublecomplex *zx, integer *incx)
 
 
 /*
-       takes the sum of the absolute values.
+    Purpose
+    =======
+
+       DZASUM takes the sum of the absolute values.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
@@ -10244,7 +10590,7 @@ doublereal dzasum_(integer *n, doublecomplex *zx, integer *incx)
     /* Function Body */
     ret_val = 0.;
     stemp = 0.;
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return ret_val;
     }
     if (*incx == 1) {
@@ -10290,23 +10636,29 @@ doublereal dznrm2_(integer *n, doublecomplex *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
     DZNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        DZNRM2 := sqrt( conjg( x' )*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to ZLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
 
     /* Function Body */
-    if ((*n < 1) || (*incx < 1)) {
+    if (*n < 1 || *incx < 1) {
 	norm = 0.;
     } else {
 	scale = 0.;
@@ -10363,31 +10715,36 @@ doublereal dznrm2_(integer *n, doublecomplex *x, integer *incx)
 integer icamax_(integer *n, complex *cx, integer *incx)
 {
     /* System generated locals */
-    integer ret_val, i__1, i__2;
-    real r__1, r__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
+    integer ret_val, i__1;
 
     /* Local variables */
     static integer i__, ix;
     static real smax;
+    extern doublereal scabs1_(complex *);
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       ICAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
 
     /* Function Body */
     ret_val = 0;
-    if ((*n < 1) || (*incx <= 0)) {
+    if (*n < 1 || *incx <= 0) {
 	return ret_val;
     }
     ret_val = 1;
@@ -10401,19 +10758,15 @@ integer icamax_(integer *n, complex *cx, integer *incx)
 /*        code for increment not equal to 1 */
 
     ix = 1;
-    smax = (r__1 = cx[1].r, dabs(r__1)) + (r__2 = r_imag(&cx[1]), dabs(r__2));
+    smax = scabs1_(&cx[1]);
     ix += *incx;
     i__1 = *n;
     for (i__ = 2; i__ <= i__1; ++i__) {
-	i__2 = ix;
-	if ((r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[ix]), dabs(
-		r__2)) <= smax) {
+	if (scabs1_(&cx[ix]) <= smax) {
 	    goto L5;
 	}
 	ret_val = i__;
-	i__2 = ix;
-	smax = (r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[ix]),
-		dabs(r__2));
+	smax = scabs1_(&cx[ix]);
 L5:
 	ix += *incx;
 /* L10: */
@@ -10423,18 +10776,14 @@ L5:
 /*        code for increment equal to 1 */
 
 L20:
-    smax = (r__1 = cx[1].r, dabs(r__1)) + (r__2 = r_imag(&cx[1]), dabs(r__2));
+    smax = scabs1_(&cx[1]);
     i__1 = *n;
     for (i__ = 2; i__ <= i__1; ++i__) {
-	i__2 = i__;
-	if ((r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[i__]), dabs(
-		r__2)) <= smax) {
+	if (scabs1_(&cx[i__]) <= smax) {
 	    goto L30;
 	}
 	ret_val = i__;
-	i__2 = i__;
-	smax = (r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[i__]),
-		dabs(r__2));
+	smax = scabs1_(&cx[i__]);
 L30:
 	;
     }
@@ -10453,19 +10802,27 @@ integer idamax_(integer *n, doublereal *dx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       IDAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dx;
 
     /* Function Body */
     ret_val = 0;
-    if ((*n < 1) || (*incx <= 0)) {
+    if (*n < 1 || *incx <= 0) {
 	return ret_val;
     }
     ret_val = 1;
@@ -10523,19 +10880,27 @@ integer isamax_(integer *n, real *sx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       ISAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sx;
 
     /* Function Body */
     ret_val = 0;
-    if ((*n < 1) || (*incx <= 0)) {
+    if (*n < 1 || *incx <= 0) {
 	return ret_val;
     }
     ret_val = 1;
@@ -10593,19 +10958,27 @@ integer izamax_(integer *n, doublecomplex *zx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       IZAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, 1/15/85.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
 
     /* Function Body */
     ret_val = 0;
-    if ((*n < 1) || (*incx <= 0)) {
+    if (*n < 1 || *incx <= 0) {
 	return ret_val;
     }
     ret_val = 1;
@@ -10651,115 +11024,6 @@ L30:
     return ret_val;
 } /* izamax_ */
 
-logical lsame_(char *ca, char *cb)
-{
-    /* System generated locals */
-    logical ret_val;
-
-    /* Local variables */
-    static integer inta, intb, zcode;
-
-
-/*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
-
-
-    Purpose
-    =======
-
-    LSAME returns .TRUE. if CA is the same letter as CB regardless of
-    case.
-
-    Arguments
-    =========
-
-    CA      (input) CHARACTER*1
-    CB      (input) CHARACTER*1
-            CA and CB specify the single characters to be compared.
-
-   =====================================================================
-
-
-       Test if the characters are equal
-*/
-
-    ret_val = *(unsigned char *)ca == *(unsigned char *)cb;
-    if (ret_val) {
-	return ret_val;
-    }
-
-/*     Now test for equivalence if both characters are alphabetic. */
-
-    zcode = 'Z';
-
-/*
-       Use 'Z' rather than 'A' so that ASCII can be detected on Prime
-       machines, on which ICHAR returns a value with bit 8 set.
-       ICHAR('A') on Prime machines returns 193 which is the same as
-       ICHAR('A') on an EBCDIC machine.
-*/
-
-    inta = *(unsigned char *)ca;
-    intb = *(unsigned char *)cb;
-
-    if ((zcode == 90) || (zcode == 122)) {
-
-/*
-          ASCII is assumed - ZCODE is the ASCII code of either lower or
-          upper case 'Z'.
-*/
-
-	if (inta >= 97 && inta <= 122) {
-	    inta += -32;
-	}
-	if (intb >= 97 && intb <= 122) {
-	    intb += -32;
-	}
-
-    } else if ((zcode == 233) || (zcode == 169)) {
-
-/*
-          EBCDIC is assumed - ZCODE is the EBCDIC code of either lower or
-          upper case 'Z'.
-*/
-
-	if (((inta >= 129 && inta <= 137) || (inta >= 145 && inta <= 153)) ||
-		(inta >= 162 && inta <= 169)) {
-	    inta += 64;
-	}
-	if (((intb >= 129 && intb <= 137) || (intb >= 145 && intb <= 153)) ||
-		(intb >= 162 && intb <= 169)) {
-	    intb += 64;
-	}
-
-    } else if ((zcode == 218) || (zcode == 250)) {
-
-/*
-          ASCII is assumed, on Prime machines - ZCODE is the ASCII code
-          plus 128 of either lower or upper case 'Z'.
-*/
-
-	if (inta >= 225 && inta <= 250) {
-	    inta += -32;
-	}
-	if (intb >= 225 && intb <= 250) {
-	    intb += -32;
-	}
-    }
-    ret_val = inta == intb;
-
-/*
-       RETURN
-
-       End of LSAME
-*/
-
-    return ret_val;
-} /* lsame_ */
-
 /* Subroutine */ int saxpy_(integer *n, real *sa, real *sx, integer *incx,
 	real *sy, integer *incy)
 {
@@ -10771,12 +11035,20 @@ logical lsame_(char *ca, char *cb)
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       SAXPY constant times a vector plus a vector.
        uses unrolled loop for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -10848,6 +11120,28 @@ L40:
     return 0;
 } /* saxpy_ */
 
+doublereal scabs1_(complex *z__)
+{
+    /* System generated locals */
+    real ret_val, r__1, r__2;
+
+    /* Builtin functions */
+    double r_imag(complex *);
+
+
+/*
+    Purpose
+    =======
+
+    SCABS1 computes absolute value of a complex number
+
+    =====================================================================
+*/
+
+    ret_val = (r__1 = z__->r, dabs(r__1)) + (r__2 = r_imag(z__), dabs(r__2));
+    return ret_val;
+} /* scabs1_ */
+
 doublereal scasum_(integer *n, complex *cx, integer *incx)
 {
     /* System generated locals */
@@ -10863,13 +11157,21 @@ doublereal scasum_(integer *n, complex *cx, integer *incx)
 
 
 /*
-       takes the sum of the absolute values of a complex vector and
+    Purpose
+    =======
+
+       SCASUM takes the sum of the absolute values of a complex vector and
        returns a single precision result.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
@@ -10877,7 +11179,7 @@ doublereal scasum_(integer *n, complex *cx, integer *incx)
     /* Function Body */
     ret_val = 0.f;
     stemp = 0.f;
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return ret_val;
     }
     if (*incx == 1) {
@@ -10927,23 +11229,29 @@ doublereal scnrm2_(integer *n, complex *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
     SCNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        SCNRM2 := sqrt( conjg( x' )*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to CLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
 
     /* Function Body */
-    if ((*n < 1) || (*incx < 1)) {
+    if (*n < 1 || *incx < 1) {
 	norm = 0.f;
     } else {
 	scale = 0.f;
@@ -11008,12 +11316,20 @@ doublereal scnrm2_(integer *n, complex *x, integer *incx)
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       SCOPY copies a vector, x, to a vector, y.
        uses unrolled loops for increments equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -11097,12 +11413,20 @@ doublereal sdot_(integer *n, real *sx, integer *incx, real *sy, integer *incy)
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       SDOT forms the dot product of two vectors.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -11208,7 +11532,7 @@ L60:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -11304,6 +11628,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -11312,6 +11638,8 @@ L60:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -11375,8 +11703,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (((*alpha == 0.f) || (*k == 0)) && *beta
-	    == 1.f)) {
+    if (*m == 0 || *n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
 	return 0;
     }
 
@@ -11563,7 +11890,7 @@ L60:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -11634,6 +11961,8 @@ L60:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -11642,6 +11971,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -11677,7 +12008,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (*alpha == 0.f && *beta == 1.f)) {
+    if (*m == 0 || *n == 0 || *alpha == 0.f && *beta == 1.f) {
 	return 0;
     }
 
@@ -11849,7 +12180,7 @@ L60:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -11899,6 +12230,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -11907,6 +12240,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -11939,7 +12274,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (*alpha == 0.f)) {
+    if (*m == 0 || *n == 0 || *alpha == 0.f) {
 	return 0;
     }
 
@@ -12011,23 +12346,29 @@ doublereal snrm2_(integer *n, real *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
     SNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
-       SNRM2 := sqrt( x'*x )
+       SNRM2 := sqrt( x'*x ).
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to SLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
 
     /* Function Body */
-    if ((*n < 1) || (*incx < 1)) {
+    if (*n < 1 || *incx < 1) {
 	norm = 0.f;
     } else if (*n == 1) {
 	norm = dabs(x[1]);
@@ -12080,11 +12421,19 @@ doublereal snrm2_(integer *n, real *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
        applies a plane rotation.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -12145,19 +12494,27 @@ L20:
 
 
 /*
+    Purpose
+    =======
+
        scales a vector by a constant.
        uses unrolled loops for increment equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -12221,12 +12578,20 @@ L40:
 
 
 /*
+    Purpose
+    =======
+
        interchanges two vectors.
        uses unrolled loops for increments equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -12329,7 +12694,7 @@ L40:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12398,6 +12763,8 @@ L40:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -12406,6 +12773,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -12438,7 +12807,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (*alpha == 0.f && *beta == 1.f)) {
+    if (*n == 0 || *alpha == 0.f && *beta == 1.f) {
 	return 0;
     }
 
@@ -12616,7 +12985,7 @@ L40:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12683,6 +13052,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -12691,6 +13062,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -12723,7 +13096,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (*alpha == 0.f)) {
+    if (*n == 0 || *alpha == 0.f) {
 	return 0;
     }
 
@@ -12732,7 +13105,7 @@ L40:
        unity.
 */
 
-    if ((*incx != 1) || (*incy != 1)) {
+    if (*incx != 1 || *incy != 1) {
 	if (*incx > 0) {
 	    kx = 1;
 	} else {
@@ -12760,7 +13133,7 @@ L40:
 	if (*incx == 1 && *incy == 1) {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[j] != 0.f) || (y[j] != 0.f)) {
+		if (x[j] != 0.f || y[j] != 0.f) {
 		    temp1 = *alpha * y[j];
 		    temp2 = *alpha * x[j];
 		    i__2 = j;
@@ -12775,7 +13148,7 @@ L40:
 	} else {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[jx] != 0.f) || (y[jy] != 0.f)) {
+		if (x[jx] != 0.f || y[jy] != 0.f) {
 		    temp1 = *alpha * y[jy];
 		    temp2 = *alpha * x[jx];
 		    ix = kx;
@@ -12801,7 +13174,7 @@ L40:
 	if (*incx == 1 && *incy == 1) {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[j] != 0.f) || (y[j] != 0.f)) {
+		if (x[j] != 0.f || y[j] != 0.f) {
 		    temp1 = *alpha * y[j];
 		    temp2 = *alpha * x[j];
 		    i__2 = *n;
@@ -12816,7 +13189,7 @@ L40:
 	} else {
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
-		if ((x[jx] != 0.f) || (y[jy] != 0.f)) {
+		if (x[jx] != 0.f || y[jy] != 0.f) {
 		    temp1 = *alpha * y[jy];
 		    temp2 = *alpha * x[jx];
 		    ix = jx;
@@ -12876,7 +13249,7 @@ L40:
     and  A and B  are  n by k  matrices  in the  first  case  and  k by n
     matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12977,6 +13350,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -12986,6 +13361,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13034,7 +13411,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.f) || (*k == 0)) && *beta == 1.f)) {
+    if (*n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
 	return 0;
     }
 
@@ -13113,8 +13490,8 @@ L40:
 		}
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
-		    if ((a[j + l * a_dim1] != 0.f) || (b[j + l * b_dim1] !=
-			    0.f)) {
+		    if (a[j + l * a_dim1] != 0.f || b[j + l * b_dim1] != 0.f)
+			    {
 			temp1 = *alpha * b[j + l * b_dim1];
 			temp2 = *alpha * a[j + l * a_dim1];
 			i__3 = j;
@@ -13147,8 +13524,8 @@ L40:
 		}
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
-		    if ((a[j + l * a_dim1] != 0.f) || (b[j + l * b_dim1] !=
-			    0.f)) {
+		    if (a[j + l * a_dim1] != 0.f || b[j + l * b_dim1] != 0.f)
+			    {
 			temp1 = *alpha * b[j + l * b_dim1];
 			temp2 = *alpha * a[j + l * a_dim1];
 			i__3 = *n;
@@ -13257,7 +13634,7 @@ L40:
     and  A  is an  n by k  matrix in the first case and a  k by n  matrix
     in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -13340,6 +13717,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -13348,6 +13727,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13391,7 +13772,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.f) || (*k == 0)) && *beta == 1.f)) {
+    if (*n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
 	return 0;
     }
 
@@ -13601,7 +13982,7 @@ L40:
 
        op( A ) = A   or   op( A ) = A'.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -13695,6 +14076,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -13703,6 +14086,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13753,7 +14138,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -14021,7 +14406,7 @@ L40:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -14092,6 +14477,8 @@ L40:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -14100,6 +14487,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -14351,7 +14740,7 @@ L40:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -14445,6 +14834,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -14454,6 +14845,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -14504,7 +14897,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -14780,63 +15173,6 @@ L40:
 /*     End of STRSM . */
 
 } /* strsm_ */
-#if 0
-/* Subroutine */ int xerbla_(char *srname, integer *info)
-{
-    /* Format strings */
-    static char fmt_9999[] = "(\002 ** On entry to \002,a6,\002 parameter nu"
-	    "mber \002,i2,\002 had \002,\002an illegal value\002)";
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-    /* Subroutine */ int s_stop(char *, ftnlen);
-
-    /* Fortran I/O blocks */
-    static cilist io___425 = { 0, 6, 0, fmt_9999, 0 };
-
-
-/*
-    -- LAPACK auxiliary routine (preliminary version) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
-
-
-    Purpose
-    =======
-
-    XERBLA  is an error handler for the LAPACK routines.
-    It is called by an LAPACK routine if an input parameter has an
-    invalid value.  A message is printed and execution stops.
-
-    Installers may consider modifying the STOP statement in order to
-    call system-specific exception-handling facilities.
-
-    Arguments
-    =========
-
-    SRNAME  (input) CHARACTER*6
-            The name of the routine which called XERBLA.
-
-    INFO    (input) INTEGER
-            The position of the invalid parameter in the parameter list
-            of the calling routine.
-*/
-
-
-    s_wsfe(&io___425);
-    do_fio(&c__1, srname, (ftnlen)6);
-    do_fio(&c__1, (char *)&(*info), (ftnlen)sizeof(integer));
-    e_wsfe();
-
-    s_stop("", (ftnlen)0);
-
-
-/*     End of XERBLA */
-
-    return 0;
-} /* xerbla_ */
-#endif
 
 /* Subroutine */ int zaxpy_(integer *n, doublecomplex *za, doublecomplex *zx,
 	integer *incx, doublecomplex *zy, integer *incy)
@@ -14851,9 +15187,18 @@ L40:
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       ZAXPY constant times a vector plus a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -14927,11 +15272,19 @@ L20:
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       ZCOPY copies a vector, x, to a vector, y.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 4/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zy;
@@ -14998,9 +15351,18 @@ L20:
 
 
 /*
-       forms the dot product of a vector.
+    Purpose
+    =======
+
+    ZDOTC forms the dot product of a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -15075,9 +15437,18 @@ L20:
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       ZDOTU forms the dot product of two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -15139,6 +15510,141 @@ L20:
     return ;
 } /* zdotu_ */
 
+/* Subroutine */ int zdrot_(integer *n, doublecomplex *cx, integer *incx,
+	doublecomplex *cy, integer *incy, doublereal *c__, doublereal *s)
+{
+    /* System generated locals */
+    integer i__1, i__2, i__3, i__4;
+    doublecomplex z__1, z__2, z__3;
+
+    /* Local variables */
+    static integer i__, ix, iy;
+    static doublecomplex ctemp;
+
+
+/*
+    Purpose
+    =======
+
+    Applies a plane rotation, where the cos and sin (c and s) are real
+    and the vectors cx and cy are complex.
+    jack dongarra, linpack, 3/11/78.
+
+    Arguments
+    ==========
+
+    N        (input) INTEGER
+             On entry, N specifies the order of the vectors cx and cy.
+             N must be at least zero.
+             Unchanged on exit.
+
+    CX       (input) COMPLEX*16 array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCX ) ).
+             Before entry, the incremented array CX must contain the n
+             element vector cx. On exit, CX is overwritten by the updated
+             vector cx.
+
+    INCX     (input) INTEGER
+             On entry, INCX specifies the increment for the elements of
+             CX. INCX must not be zero.
+             Unchanged on exit.
+
+    CY       (input) COMPLEX*16 array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCY ) ).
+             Before entry, the incremented array CY must contain the n
+             element vector cy. On exit, CY is overwritten by the updated
+             vector cy.
+
+    INCY     (input) INTEGER
+             On entry, INCY specifies the increment for the elements of
+             CY. INCY must not be zero.
+             Unchanged on exit.
+
+    C        (input) DOUBLE PRECISION
+             On entry, C specifies the cosine, cos.
+             Unchanged on exit.
+
+    S        (input) DOUBLE PRECISION
+             On entry, S specifies the sine, sin.
+             Unchanged on exit.
+
+   =====================================================================
+*/
+
+
+    /* Parameter adjustments */
+    --cy;
+    --cx;
+
+    /* Function Body */
+    if (*n <= 0) {
+	return 0;
+    }
+    if (*incx == 1 && *incy == 1) {
+	goto L20;
+    }
+
+/*
+          code for unequal increments or equal increments not equal
+            to 1
+*/
+
+    ix = 1;
+    iy = 1;
+    if (*incx < 0) {
+	ix = (-(*n) + 1) * *incx + 1;
+    }
+    if (*incy < 0) {
+	iy = (-(*n) + 1) * *incy + 1;
+    }
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = ix;
+	z__2.r = *c__ * cx[i__2].r, z__2.i = *c__ * cx[i__2].i;
+	i__3 = iy;
+	z__3.r = *s * cy[i__3].r, z__3.i = *s * cy[i__3].i;
+	z__1.r = z__2.r + z__3.r, z__1.i = z__2.i + z__3.i;
+	ctemp.r = z__1.r, ctemp.i = z__1.i;
+	i__2 = iy;
+	i__3 = iy;
+	z__2.r = *c__ * cy[i__3].r, z__2.i = *c__ * cy[i__3].i;
+	i__4 = ix;
+	z__3.r = *s * cx[i__4].r, z__3.i = *s * cx[i__4].i;
+	z__1.r = z__2.r - z__3.r, z__1.i = z__2.i - z__3.i;
+	cy[i__2].r = z__1.r, cy[i__2].i = z__1.i;
+	i__2 = ix;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	ix += *incx;
+	iy += *incy;
+/* L10: */
+    }
+    return 0;
+
+/*        code for both increments equal to 1 */
+
+L20:
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = i__;
+	z__2.r = *c__ * cx[i__2].r, z__2.i = *c__ * cx[i__2].i;
+	i__3 = i__;
+	z__3.r = *s * cy[i__3].r, z__3.i = *s * cy[i__3].i;
+	z__1.r = z__2.r + z__3.r, z__1.i = z__2.i + z__3.i;
+	ctemp.r = z__1.r, ctemp.i = z__1.i;
+	i__2 = i__;
+	i__3 = i__;
+	z__2.r = *c__ * cy[i__3].r, z__2.i = *c__ * cy[i__3].i;
+	i__4 = i__;
+	z__3.r = *s * cx[i__4].r, z__3.i = *s * cx[i__4].i;
+	z__1.r = z__2.r - z__3.r, z__1.i = z__2.i - z__3.i;
+	cy[i__2].r = z__1.r, cy[i__2].i = z__1.i;
+	i__2 = i__;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+/* L30: */
+    }
+    return 0;
+} /* zdrot_ */
+
 /* Subroutine */ int zdscal_(integer *n, doublereal *da, doublecomplex *zx,
 	integer *incx)
 {
@@ -15151,18 +15657,26 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       ZDSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -15240,7 +15754,7 @@ L20:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -15336,6 +15850,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -15344,6 +15860,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -15409,8 +15927,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (((alpha->r == 0. && alpha->i == 0.) || (*
-	    k == 0)) && (beta->r == 1. && beta->i == 0.))) {
+    if (*m == 0 || *n == 0 || (alpha->r == 0. && alpha->i == 0. || *k == 0) &&
+	     (beta->r == 1. && beta->i == 0.)) {
 	return 0;
     }
 
@@ -15463,7 +15981,7 @@ L20:
 			c__[i__3].r = 0., c__[i__3].i = 0.;
 /* L50: */
 		    }
-		} else if ((beta->r != 1.) || (beta->i != 0.)) {
+		} else if (beta->r != 1. || beta->i != 0.) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -15478,7 +15996,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = l + j * b_dim1;
-		    if ((b[i__3].r != 0.) || (b[i__3].i != 0.)) {
+		    if (b[i__3].r != 0. || b[i__3].i != 0.) {
 			i__3 = l + j * b_dim1;
 			z__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3].i,
 				z__1.i = alpha->r * b[i__3].i + alpha->i * b[
@@ -15601,7 +16119,7 @@ L20:
 			c__[i__3].r = 0., c__[i__3].i = 0.;
 /* L160: */
 		    }
-		} else if ((beta->r != 1.) || (beta->i != 0.)) {
+		} else if (beta->r != 1. || beta->i != 0.) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -15616,7 +16134,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * b_dim1;
-		    if ((b[i__3].r != 0.) || (b[i__3].i != 0.)) {
+		    if (b[i__3].r != 0. || b[i__3].i != 0.) {
 			d_cnjg(&z__2, &b[j + l * b_dim1]);
 			z__1.r = alpha->r * z__2.r - alpha->i * z__2.i,
 				z__1.i = alpha->r * z__2.i + alpha->i *
@@ -15653,7 +16171,7 @@ L20:
 			c__[i__3].r = 0., c__[i__3].i = 0.;
 /* L210: */
 		    }
-		} else if ((beta->r != 1.) || (beta->i != 0.)) {
+		} else if (beta->r != 1. || beta->i != 0.) {
 		    i__2 = *m;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			i__3 = i__ + j * c_dim1;
@@ -15668,7 +16186,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * b_dim1;
-		    if ((b[i__3].r != 0.) || (b[i__3].i != 0.)) {
+		    if (b[i__3].r != 0. || b[i__3].i != 0.) {
 			i__3 = j + l * b_dim1;
 			z__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3].i,
 				z__1.i = alpha->r * b[i__3].i + alpha->i * b[
@@ -15906,7 +16424,7 @@ L20:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -15977,6 +16495,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -15985,6 +16505,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16020,8 +16542,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0. && alpha->i == 0. && (
-	    beta->r == 1. && beta->i == 0.))) {
+    if (*m == 0 || *n == 0 || alpha->r == 0. && alpha->i == 0. && (beta->r ==
+	    1. && beta->i == 0.)) {
 	return 0;
     }
 
@@ -16057,7 +16579,7 @@ L20:
        First form  y := beta*y.
 */
 
-    if ((beta->r != 1.) || (beta->i != 0.)) {
+    if (beta->r != 1. || beta->i != 0.) {
 	if (*incy == 1) {
 	    if (beta->r == 0. && beta->i == 0.) {
 		i__1 = leny;
@@ -16115,7 +16637,7 @@ L20:
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
-		if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		if (x[i__2].r != 0. || x[i__2].i != 0.) {
 		    i__2 = jx;
 		    z__1.r = alpha->r * x[i__2].r - alpha->i * x[i__2].i,
 			    z__1.i = alpha->r * x[i__2].i + alpha->i * x[i__2]
@@ -16142,7 +16664,7 @@ L20:
 	    i__1 = *n;
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
-		if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		if (x[i__2].r != 0. || x[i__2].i != 0.) {
 		    i__2 = jx;
 		    z__1.r = alpha->r * x[i__2].r - alpha->i * x[i__2].i,
 			    z__1.i = alpha->r * x[i__2].i + alpha->i * x[i__2]
@@ -16289,7 +16811,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -16339,6 +16861,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16347,6 +16871,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16379,7 +16905,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0. && alpha->i == 0.)) {
+    if (*m == 0 || *n == 0 || alpha->r == 0. && alpha->i == 0.) {
 	return 0;
     }
 
@@ -16397,7 +16923,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.) || (y[i__2].i != 0.)) {
+	    if (y[i__2].r != 0. || y[i__2].i != 0.) {
 		d_cnjg(&z__2, &y[jy]);
 		z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			alpha->r * z__2.i + alpha->i * z__2.r;
@@ -16426,7 +16952,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.) || (y[i__2].i != 0.)) {
+	    if (y[i__2].r != 0. || y[i__2].i != 0.) {
 		d_cnjg(&z__2, &y[jy]);
 		z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			alpha->r * z__2.i + alpha->i * z__2.r;
@@ -16481,7 +17007,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -16531,6 +17057,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16539,6 +17067,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16571,7 +17101,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (((*m == 0) || (*n == 0)) || (alpha->r == 0. && alpha->i == 0.)) {
+    if (*m == 0 || *n == 0 || alpha->r == 0. && alpha->i == 0.) {
 	return 0;
     }
 
@@ -16589,7 +17119,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.) || (y[i__2].i != 0.)) {
+	    if (y[i__2].r != 0. || y[i__2].i != 0.) {
 		i__2 = jy;
 		z__1.r = alpha->r * y[i__2].r - alpha->i * y[i__2].i, z__1.i =
 			 alpha->r * y[i__2].i + alpha->i * y[i__2].r;
@@ -16618,7 +17148,7 @@ L20:
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    i__2 = jy;
-	    if ((y[i__2].r != 0.) || (y[i__2].i != 0.)) {
+	    if (y[i__2].r != 0. || y[i__2].i != 0.) {
 		i__2 = jy;
 		z__1.r = alpha->r * y[i__2].r - alpha->i * y[i__2].i, z__1.i =
 			 alpha->r * y[i__2].i + alpha->i * y[i__2].r;
@@ -16678,7 +17208,7 @@ L20:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -16749,6 +17279,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16757,6 +17289,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16789,8 +17323,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (alpha->r == 0. && alpha->i == 0. && (beta->r == 1. &&
-	    beta->i == 0.))) {
+    if (*n == 0 || alpha->r == 0. && alpha->i == 0. && (beta->r == 1. &&
+	    beta->i == 0.)) {
 	return 0;
     }
 
@@ -16815,7 +17349,7 @@ L20:
        First form  y := beta*y.
 */
 
-    if ((beta->r != 1.) || (beta->i != 0.)) {
+    if (beta->r != 1. || beta->i != 0.) {
 	if (*incy == 1) {
 	    if (beta->r == 0. && beta->i == 0.) {
 		i__1 = *n;
@@ -17086,7 +17620,7 @@ L20:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -17156,6 +17690,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -17164,6 +17700,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -17196,7 +17734,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (alpha->r == 0. && alpha->i == 0.)) {
+    if (*n == 0 || alpha->r == 0. && alpha->i == 0.) {
 	return 0;
     }
 
@@ -17205,7 +17743,7 @@ L20:
        unity.
 */
 
-    if ((*incx != 1) || (*incy != 1)) {
+    if (*incx != 1 || *incy != 1) {
 	if (*incx > 0) {
 	    kx = 1;
 	} else {
@@ -17235,8 +17773,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = j;
 		i__3 = j;
-		if (((x[i__2].r != 0.) || (x[i__2].i != 0.)) || (((y[i__3].r
-			!= 0.) || (y[i__3].i != 0.)))) {
+		if (x[i__2].r != 0. || x[i__2].i != 0. || (y[i__3].r != 0. ||
+			y[i__3].i != 0.)) {
 		    d_cnjg(&z__2, &y[j]);
 		    z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			    alpha->r * z__2.i + alpha->i * z__2.r;
@@ -17291,8 +17829,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
 		i__3 = jy;
-		if (((x[i__2].r != 0.) || (x[i__2].i != 0.)) || (((y[i__3].r
-			!= 0.) || (y[i__3].i != 0.)))) {
+		if (x[i__2].r != 0. || x[i__2].i != 0. || (y[i__3].r != 0. ||
+			y[i__3].i != 0.)) {
 		    d_cnjg(&z__2, &y[jy]);
 		    z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			    alpha->r * z__2.i + alpha->i * z__2.r;
@@ -17358,8 +17896,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = j;
 		i__3 = j;
-		if (((x[i__2].r != 0.) || (x[i__2].i != 0.)) || (((y[i__3].r
-			!= 0.) || (y[i__3].i != 0.)))) {
+		if (x[i__2].r != 0. || x[i__2].i != 0. || (y[i__3].r != 0. ||
+			y[i__3].i != 0.)) {
 		    d_cnjg(&z__2, &y[j]);
 		    z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			    alpha->r * z__2.i + alpha->i * z__2.r;
@@ -17414,8 +17952,8 @@ L20:
 	    for (j = 1; j <= i__1; ++j) {
 		i__2 = jx;
 		i__3 = jy;
-		if (((x[i__2].r != 0.) || (x[i__2].i != 0.)) || (((y[i__3].r
-			!= 0.) || (y[i__3].i != 0.)))) {
+		if (x[i__2].r != 0. || x[i__2].i != 0. || (y[i__3].r != 0. ||
+			y[i__3].i != 0.)) {
 		    d_cnjg(&z__2, &y[jy]);
 		    z__1.r = alpha->r * z__2.r - alpha->i * z__2.i, z__1.i =
 			    alpha->r * z__2.i + alpha->i * z__2.r;
@@ -17518,7 +18056,7 @@ L20:
     hermitian matrix and  A and B  are  n by k matrices in the first case
     and  k by n  matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -17621,6 +18159,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -17632,6 +18172,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to DBLE( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -17680,8 +18222,8 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((alpha->r == 0. && alpha->i == 0.) || (*k == 0)) && *
-	    beta == 1.)) {
+    if (*n == 0 || (alpha->r == 0. && alpha->i == 0. || *k == 0) && *beta ==
+	    1.) {
 	return 0;
     }
 
@@ -17797,8 +18339,8 @@ L20:
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
 		    i__4 = j + l * b_dim1;
-		    if (((a[i__3].r != 0.) || (a[i__3].i != 0.)) || (((b[i__4]
-			    .r != 0.) || (b[i__4].i != 0.)))) {
+		    if (a[i__3].r != 0. || a[i__3].i != 0. || (b[i__4].r !=
+			    0. || b[i__4].i != 0.)) {
 			d_cnjg(&z__2, &b[j + l * b_dim1]);
 			z__1.r = alpha->r * z__2.r - alpha->i * z__2.i,
 				z__1.i = alpha->r * z__2.i + alpha->i *
@@ -17881,8 +18423,8 @@ L20:
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
 		    i__4 = j + l * b_dim1;
-		    if (((a[i__3].r != 0.) || (a[i__3].i != 0.)) || (((b[i__4]
-			    .r != 0.) || (b[i__4].i != 0.)))) {
+		    if (a[i__3].r != 0. || a[i__3].i != 0. || (b[i__4].r !=
+			    0. || b[i__4].i != 0.)) {
 			d_cnjg(&z__2, &b[j + l * b_dim1]);
 			z__1.r = alpha->r * z__2.r - alpha->i * z__2.i,
 				z__1.i = alpha->r * z__2.i + alpha->i *
@@ -18167,7 +18709,7 @@ L20:
     matrix and  A  is an  n by k  matrix in the  first case and a  k by n
     matrix in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -18251,6 +18793,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -18262,6 +18806,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to DBLE( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -18305,7 +18851,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if ((*n == 0) || (((*alpha == 0.) || (*k == 0)) && *beta == 1.)) {
+    if (*n == 0 || (*alpha == 0. || *k == 0) && *beta == 1.) {
 	return 0;
     }
 
@@ -18417,7 +18963,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
-		    if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+		    if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			d_cnjg(&z__2, &a[j + l * a_dim1]);
 			z__1.r = *alpha * z__2.r, z__1.i = *alpha * z__2.i;
 			temp.r = z__1.r, temp.i = z__1.i;
@@ -18480,7 +19026,7 @@ L20:
 		i__2 = *k;
 		for (l = 1; l <= i__2; ++l) {
 		    i__3 = j + l * a_dim1;
-		    if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+		    if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			d_cnjg(&z__2, &a[j + l * a_dim1]);
 			z__1.r = *alpha * z__2.r, z__1.i = *alpha * z__2.i;
 			temp.r = z__1.r, temp.i = z__1.i;
@@ -18646,18 +19192,26 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       ZSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
 
     /* Function Body */
-    if ((*n <= 0) || (*incx <= 0)) {
+    if (*n <= 0 || *incx <= 0) {
 	return 0;
     }
     if (*incx == 1) {
@@ -18706,11 +19260,19 @@ L20:
 
 
 /*
-       interchanges two vectors.
+    Purpose
+    =======
+
+       ZSWAP interchanges two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zy;
@@ -18804,7 +19366,7 @@ L20:
 
        op( A ) = A   or   op( A ) = A'   or   op( A ) = conjg( A' ).
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -18898,6 +19460,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -18906,6 +19470,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -18957,7 +19523,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -18990,7 +19556,7 @@ L20:
 		    i__2 = *m;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * b_dim1;
-			if ((b[i__3].r != 0.) || (b[i__3].i != 0.)) {
+			if (b[i__3].r != 0. || b[i__3].i != 0.) {
 			    i__3 = k + j * b_dim1;
 			    z__1.r = alpha->r * b[i__3].r - alpha->i * b[i__3]
 				    .i, z__1.i = alpha->r * b[i__3].i +
@@ -19028,7 +19594,7 @@ L20:
 		for (j = 1; j <= i__1; ++j) {
 		    for (k = *m; k >= 1; --k) {
 			i__2 = k + j * b_dim1;
-			if ((b[i__2].r != 0.) || (b[i__2].i != 0.)) {
+			if (b[i__2].r != 0. || b[i__2].i != 0.) {
 			    i__2 = k + j * b_dim1;
 			    z__1.r = alpha->r * b[i__2].r - alpha->i * b[i__2]
 				    .i, z__1.i = alpha->r * b[i__2].i +
@@ -19211,7 +19777,7 @@ L20:
 		    i__1 = j - 1;
 		    for (k = 1; k <= i__1; ++k) {
 			i__2 = k + j * a_dim1;
-			if ((a[i__2].r != 0.) || (a[i__2].i != 0.)) {
+			if (a[i__2].r != 0. || a[i__2].i != 0.) {
 			    i__2 = k + j * a_dim1;
 			    z__1.r = alpha->r * a[i__2].r - alpha->i * a[i__2]
 				    .i, z__1.i = alpha->r * a[i__2].i +
@@ -19259,7 +19825,7 @@ L20:
 		    i__2 = *n;
 		    for (k = j + 1; k <= i__2; ++k) {
 			i__3 = k + j * a_dim1;
-			if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+			if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			    i__3 = k + j * a_dim1;
 			    z__1.r = alpha->r * a[i__3].r - alpha->i * a[i__3]
 				    .i, z__1.i = alpha->r * a[i__3].i +
@@ -19294,7 +19860,7 @@ L20:
 		    i__2 = k - 1;
 		    for (j = 1; j <= i__2; ++j) {
 			i__3 = j + k * a_dim1;
-			if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+			if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			    if (noconj) {
 				i__3 = j + k * a_dim1;
 				z__1.r = alpha->r * a[i__3].r - alpha->i * a[
@@ -19340,7 +19906,7 @@ L20:
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 		    }
-		    if ((temp.r != 1.) || (temp.i != 0.)) {
+		    if (temp.r != 1. || temp.i != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + k * b_dim1;
@@ -19359,7 +19925,7 @@ L20:
 		    i__1 = *n;
 		    for (j = k + 1; j <= i__1; ++j) {
 			i__2 = j + k * a_dim1;
-			if ((a[i__2].r != 0.) || (a[i__2].i != 0.)) {
+			if (a[i__2].r != 0. || a[i__2].i != 0.) {
 			    if (noconj) {
 				i__2 = j + k * a_dim1;
 				z__1.r = alpha->r * a[i__2].r - alpha->i * a[
@@ -19405,7 +19971,7 @@ L20:
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 		    }
-		    if ((temp.r != 1.) || (temp.i != 0.)) {
+		    if (temp.r != 1. || temp.i != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + k * b_dim1;
@@ -19458,7 +20024,7 @@ L20:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -19529,6 +20095,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -19537,6 +20105,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -19604,7 +20174,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = j;
-		    if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		    if (x[i__2].r != 0. || x[i__2].i != 0.) {
 			i__2 = j;
 			temp.r = x[i__2].r, temp.i = x[i__2].i;
 			i__2 = j - 1;
@@ -19637,7 +20207,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = jx;
-		    if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		    if (x[i__2].r != 0. || x[i__2].i != 0.) {
 			i__2 = jx;
 			temp.r = x[i__2].r, temp.i = x[i__2].i;
 			ix = kx;
@@ -19673,7 +20243,7 @@ L20:
 	    if (*incx == 1) {
 		for (j = *n; j >= 1; --j) {
 		    i__1 = j;
-		    if ((x[i__1].r != 0.) || (x[i__1].i != 0.)) {
+		    if (x[i__1].r != 0. || x[i__1].i != 0.) {
 			i__1 = j;
 			temp.r = x[i__1].r, temp.i = x[i__1].i;
 			i__1 = j + 1;
@@ -19706,7 +20276,7 @@ L20:
 		jx = kx;
 		for (j = *n; j >= 1; --j) {
 		    i__1 = jx;
-		    if ((x[i__1].r != 0.) || (x[i__1].i != 0.)) {
+		    if (x[i__1].r != 0. || x[i__1].i != 0.) {
 			i__1 = jx;
 			temp.r = x[i__1].r, temp.i = x[i__1].i;
 			ix = kx;
@@ -19999,7 +20569,7 @@ L20:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -20093,6 +20663,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -20101,6 +20673,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -20152,7 +20726,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -20182,7 +20756,7 @@ L20:
 	    if (upper) {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -20196,7 +20770,7 @@ L20:
 		    }
 		    for (k = *m; k >= 1; --k) {
 			i__2 = k + j * b_dim1;
-			if ((b[i__2].r != 0.) || (b[i__2].i != 0.)) {
+			if (b[i__2].r != 0. || b[i__2].i != 0.) {
 			    if (nounit) {
 				i__2 = k + j * b_dim1;
 				z_div(&z__1, &b[k + j * b_dim1], &a[k + k *
@@ -20225,7 +20799,7 @@ L20:
 	    } else {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -20240,7 +20814,7 @@ L20:
 		    i__2 = *m;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * b_dim1;
-			if ((b[i__3].r != 0.) || (b[i__3].i != 0.)) {
+			if (b[i__3].r != 0. || b[i__3].i != 0.) {
 			    if (nounit) {
 				i__3 = k + j * b_dim1;
 				z_div(&z__1, &b[k + j * b_dim1], &a[k + k *
@@ -20387,7 +20961,7 @@ L20:
 	    if (upper) {
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + j * b_dim1;
@@ -20402,7 +20976,7 @@ L20:
 		    i__2 = j - 1;
 		    for (k = 1; k <= i__2; ++k) {
 			i__3 = k + j * a_dim1;
-			if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+			if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			    i__3 = *m;
 			    for (i__ = 1; i__ <= i__3; ++i__) {
 				i__4 = i__ + j * b_dim1;
@@ -20421,7 +20995,7 @@ L20:
 /* L210: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b1077, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b1078, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
@@ -20438,7 +21012,7 @@ L20:
 		}
 	    } else {
 		for (j = *n; j >= 1; --j) {
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + j * b_dim1;
@@ -20453,7 +21027,7 @@ L20:
 		    i__1 = *n;
 		    for (k = j + 1; k <= i__1; ++k) {
 			i__2 = k + j * a_dim1;
-			if ((a[i__2].r != 0.) || (a[i__2].i != 0.)) {
+			if (a[i__2].r != 0. || a[i__2].i != 0.) {
 			    i__2 = *m;
 			    for (i__ = 1; i__ <= i__2; ++i__) {
 				i__3 = i__ + j * b_dim1;
@@ -20472,7 +21046,7 @@ L20:
 /* L260: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b1077, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b1078, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
@@ -20499,11 +21073,11 @@ L20:
 		for (k = *n; k >= 1; --k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b1077, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b1078, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b1077, &z__2);
+			    z_div(&z__1, &c_b1078, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__1 = *m;
@@ -20520,7 +21094,7 @@ L20:
 		    i__1 = k - 1;
 		    for (j = 1; j <= i__1; ++j) {
 			i__2 = j + k * a_dim1;
-			if ((a[i__2].r != 0.) || (a[i__2].i != 0.)) {
+			if (a[i__2].r != 0. || a[i__2].i != 0.) {
 			    if (noconj) {
 				i__2 = j + k * a_dim1;
 				temp.r = a[i__2].r, temp.i = a[i__2].i;
@@ -20544,7 +21118,7 @@ L20:
 			}
 /* L310: */
 		    }
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 			    i__2 = i__ + k * b_dim1;
@@ -20563,11 +21137,11 @@ L20:
 		for (k = 1; k <= i__1; ++k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b1077, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b1078, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b1077, &z__2);
+			    z_div(&z__1, &c_b1078, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__2 = *m;
@@ -20584,7 +21158,7 @@ L20:
 		    i__2 = *n;
 		    for (j = k + 1; j <= i__2; ++j) {
 			i__3 = j + k * a_dim1;
-			if ((a[i__3].r != 0.) || (a[i__3].i != 0.)) {
+			if (a[i__3].r != 0. || a[i__3].i != 0.) {
 			    if (noconj) {
 				i__3 = j + k * a_dim1;
 				temp.r = a[i__3].r, temp.i = a[i__3].i;
@@ -20608,7 +21182,7 @@ L20:
 			}
 /* L360: */
 		    }
-		    if ((alpha->r != 1.) || (alpha->i != 0.)) {
+		    if (alpha->r != 1. || alpha->i != 0.) {
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
 			    i__3 = i__ + k * b_dim1;
@@ -20665,7 +21239,7 @@ L20:
     No test for singularity or near-singularity is included in this
     routine. Such tests must be performed before calling this routine.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -20736,6 +21310,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -20744,6 +21320,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -20810,7 +21388,7 @@ L20:
 	    if (*incx == 1) {
 		for (j = *n; j >= 1; --j) {
 		    i__1 = j;
-		    if ((x[i__1].r != 0.) || (x[i__1].i != 0.)) {
+		    if (x[i__1].r != 0. || x[i__1].i != 0.) {
 			if (nounit) {
 			    i__1 = j;
 			    z_div(&z__1, &x[j], &a[j + j * a_dim1]);
@@ -20837,7 +21415,7 @@ L20:
 		jx = kx + (*n - 1) * *incx;
 		for (j = *n; j >= 1; --j) {
 		    i__1 = jx;
-		    if ((x[i__1].r != 0.) || (x[i__1].i != 0.)) {
+		    if (x[i__1].r != 0. || x[i__1].i != 0.) {
 			if (nounit) {
 			    i__1 = jx;
 			    z_div(&z__1, &x[jx], &a[j + j * a_dim1]);
@@ -20869,7 +21447,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = j;
-		    if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		    if (x[i__2].r != 0. || x[i__2].i != 0.) {
 			if (nounit) {
 			    i__2 = j;
 			    z_div(&z__1, &x[j], &a[j + j * a_dim1]);
@@ -20898,7 +21476,7 @@ L20:
 		i__1 = *n;
 		for (j = 1; j <= i__1; ++j) {
 		    i__2 = jx;
-		    if ((x[i__2].r != 0.) || (x[i__2].i != 0.)) {
+		    if (x[i__2].r != 0. || x[i__2].i != 0.) {
 			if (nounit) {
 			    i__2 = jx;
 			    z_div(&z__1, &x[jx], &a[j + j * a_dim1]);
@@ -21132,3 +21710,4 @@ L20:
 /*     End of ZTRSV . */
 
 } /* ztrsv_ */
+

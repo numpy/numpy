@@ -36,6 +36,8 @@ from .core import (
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -380,11 +382,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
+    axis = normalize_axis_index(axis, nd)
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -717,8 +715,15 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if axis is None:
         axis = 0
-    elif axis < 0:
-        axis += asorted.ndim
+    else:
+        axis = normalize_axis_index(axis, asorted.ndim)
+
+    if asorted.shape[axis] == 0:
+        # for empty axis integer indices fail so use slicing to get same result
+        # as median (which is mean of empty slice = nan)
+        indexer = [slice(None)] * asorted.ndim
+        indexer[axis] = slice(0, 0)
+        return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
         counts = count(asorted)
@@ -812,18 +817,11 @@ def compress_nd(x, axis=None):
     x = asarray(x)
     m = getmask(x)
     # Set axis to tuple of ints
-    if isinstance(axis, int):
-        axis = (axis,)
-    elif axis is None:
+    if axis is None:
         axis = tuple(range(x.ndim))
-    elif not isinstance(axis, tuple):
-        raise ValueError('Invalid type for axis argument')
-    # Check axis input
-    axis = [ax + x.ndim if ax < 0 else ax for ax in axis]
-    if not all(0 <= ax < x.ndim for ax in axis):
-        raise ValueError("'axis' entry is out of bounds")
-    if len(axis) != len(set(axis)):
-        raise ValueError("duplicate value in 'axis'")
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim)
+
     # Nothing is masked: return x
     if m is nomask or not m.any():
         return x._data
