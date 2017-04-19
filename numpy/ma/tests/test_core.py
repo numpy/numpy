@@ -4471,6 +4471,22 @@ class TestMaskedObjectArray(TestCase):
             assert_equal(arr[0,...][()].data, a0)
             assert_equal(arr[0,...][()].mask, True)
 
+    def test_nested_ma(self):
+
+        arr = np.ma.array([None, None])
+        # set the first object to be an unmasked masked constant. A little fiddly
+        arr[0,...] = np.array([np.ma.masked], object)[0,...]
+
+        # check the above line did what we were aiming for
+        assert_(arr.data[0] is np.ma.masked)
+
+        # test that getitem returned the value by identity
+        assert_(arr[0] is np.ma.masked)
+
+        # now mask the masked value!
+        arr[0] = np.ma.masked
+        assert_(arr[0] is np.ma.masked)
+
 
 class TestMaskedView(TestCase):
 
