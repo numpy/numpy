@@ -229,19 +229,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
                         assert_warns(DeprecationWarning, f, arg1, arg2)
 
 
-class TestAlterdotRestoredotDeprecations(_DeprecationTestCase):
-    """The alterdot/restoredot functions are deprecated.
-
-    These functions no longer do anything in numpy 1.10, so
-    they should not be used.
-
-    """
-
-    def test_alterdot_restoredot_deprecation(self):
-        self.assert_deprecated(np.alterdot)
-        self.assert_deprecated(np.restoredot)
-
-
 class TestDatetime64Timezone(_DeprecationTestCase):
     """Parsing of datetime64 with timezones deprecated in 1.11.0, because
     datetime64 is now timezone naive rather than UTC only.
