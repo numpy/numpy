@@ -2784,9 +2784,10 @@ class MaskedArray(ndarray):
         # Check that we're not erasing the mask.
         if isinstance(data, MaskedArray) and (data.shape != _data.shape):
             copy = True
-        # Careful, cls might not always be MaskedArray.
+
+        # Here, we copy the _view_, so that we can attach new properties to it
         # we must never do .view(MaskedConstant), as that would create a new
-        # instance of np.ma.masked, which would be confusing
+        # instance of np.ma.masked, which make identity comparison fail
         if isinstance(data, cls) and subok and not isinstance(data, MaskedConstant):
             _data = ndarray.view(_data, type(data))
         else:
