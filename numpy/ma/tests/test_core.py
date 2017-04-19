@@ -4375,27 +4375,19 @@ class TestMaskedFields(TestCase):
         a.mask = np.array(list(zip([0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
                                    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0])),
                           dtype=[('a', bool), ('b', bool)])
-        # No mask
-        assert_equal(type(a[1]), mvoid)
-        assert_equal(type(a[1,...]), MaskedArray)
 
-        # One element masked
-        assert_equal(type(a[0]), mvoid)
-        assert_equal_records(a[0]._data, a._data[0])
-        assert_equal_records(a[0]._mask, a._mask[0])
+        def _test_index(i):
+            assert_equal(type(a[i]), mvoid)
+            assert_equal_records(a[i]._data, a._data[i])
+            assert_equal_records(a[i]._mask, a._mask[i])
 
-        assert_equal(type(a[0,...]), MaskedArray)
-        assert_equal_records(a[0,...]._data, a._data[0,...])
-        assert_equal_records(a[0,...]._mask, a._mask[0,...])
+            assert_equal(type(a[i, ...]), MaskedArray)
+            assert_equal_records(a[i,...]._data, a._data[i,...])
+            assert_equal_records(a[i,...]._mask, a._mask[i,...])
 
-        # All element masked
-        assert_equal(type(a[-2]), mvoid)
-        assert_equal_records(a[-2]._data, a._data[-2])
-        assert_equal_records(a[-2]._mask, a._mask[-2])
-
-        assert_equal(type(a[-2, ...]), MaskedArray)
-        assert_equal_records(a[-2, ...]._data, a._data[-2, ...])
-        assert_equal_records(a[-2, ...]._mask, a._mask[-2, ...])
+        _test_index(1)   # No mask
+        _test_index(0)   # One element masked
+        _test_index(-2)  # All element masked
 
     def test_setitem(self):
         # Issue 4866: check that one can set individual items in [record][col]
