@@ -120,7 +120,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
         return ['-fPIC']
 
     def get_flags_opt(self):  # Scipy test failures with -O2
-        return ['-openmp -fp-model strict -O1']
+        return ['-xhost -openmp -fp-model strict -O1']
 
     def get_flags_arch(self):
         return ['']
