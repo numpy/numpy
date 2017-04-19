@@ -3244,7 +3244,9 @@ class MaskedArray(ndarray):
                 return mvoid(dout, mask=mout, hardmask=self._hardmask)
 
             # special case introduced in gh-5962
-            elif self.dtype.type is np.object_ and isinstance(dout, np.ndarray):
+            elif (self.dtype.type is np.object_ and
+                  isinstance(dout, np.ndarray) and
+                  dout is not masked):
                 # If masked, turn into a MaskedArray, with everything masked.
                 if mout:
                     return MaskedArray(dout, mask=True)
