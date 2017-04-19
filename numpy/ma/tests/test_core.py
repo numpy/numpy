@@ -4657,6 +4657,14 @@ class TestMaskedConstant(TestCase):
     def test_operator(self):
         self._do_add_test(lambda a, b: a + b)
 
+    def test_ctor(self):
+        m = np.ma.array(np.ma.masked)
+
+        # most importantly, we do not want to create a new MaskedConstant
+        # instance
+        assert_(not isinstance(m, np.ma.core.MaskedConstant))
+        assert_(m is not np.ma.masked)
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
