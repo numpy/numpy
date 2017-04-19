@@ -18,8 +18,6 @@ Performance tuning
 .. autosummary::
    :toctree: generated/
 
-   alterdot
-   restoredot
    setbufsize
    getbufsize
 

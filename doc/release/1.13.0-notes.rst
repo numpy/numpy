@@ -62,6 +62,7 @@ See Changes section for more detail.
 * ``np.equal, np.not_equal``, object identity doesn't override failed comparison.
 * ``np.equal, np.not_equal``, object identity doesn't override non-boolean comparison.
 * Deprecated boolean indexing behavior dropped. See Changes below for details.
+* Deprecated ``np.alterdot()`` and ``np.restoredot()`` removed.
 
 FutureWarning to changed behavior
 ---------------------------------
