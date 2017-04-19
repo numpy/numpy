@@ -2426,9 +2426,9 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat*/
     (ssizeargfunc)NULL,                     /*sq_repeat*/
     (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
-    (ssizessizeargfunc)NULL,                /*sq_slice*/
+    (ssizessizeargfunc)npyiter_seq_slice,   /*sq_slice*/
     (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
-    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
+    (ssizessizeobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sq_inplace_concat */
     (ssizeargfunc)NULL,                     /*sq_inplace_repeat */

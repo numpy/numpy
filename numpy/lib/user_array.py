@@ -51,8 +51,14 @@ class container(object):
     def __getitem__(self, index):
         return self._rc(self.array[index])
 
+    def __getslice__(self, i, j):
+        return self._rc(self.array[i:j])
+
     def __setitem__(self, index, value):
         self.array[index] = asarray(value, self.dtype)
+
+    def __setslice__(self, i, j, value):
+        self.array[i:j] = asarray(value, self.dtype)
 
     def __abs__(self):
         return self._rc(absolute(self.array))

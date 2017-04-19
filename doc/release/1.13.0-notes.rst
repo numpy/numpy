@@ -80,17 +80,6 @@ implement ``__len__`` as the number of record fields, ``bool`` of scalar dtypes
 would evaluate to ``False``, which was unintuitive. Now ``bool(dtype) == True``
 for all dtypes.
 
-``__getslice__`` and ``__setslice__`` have been removed from ``ndarray``
-------------------------------------------------------------------------
-When subclassing np.ndarray in Python 2.7, it is no longer _necessary_ to
-implement ``__*slice__`` on the derived class, as ``__*item__`` will intercept
-these calls correctly.
-
-Any code that did implement these will work exactly as before, with the
-obvious exception of any code that tries to directly call
-``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``). In
-this case, ``.__getitem__(slice(start, end))`` will act as a replacement.
-
 
 New Features
 ============
