@@ -93,6 +93,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_Size PyUnicode_Size
 #define PyUString_InternFromString PyUnicode_InternFromString
 #define PyUString_Format PyUnicode_Format
+#define PyUString_AsUTF8 PyUnicode_AsUTF8
 
 #else
 
@@ -122,6 +123,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_Size PyString_Size
 #define PyUString_InternFromString PyString_InternFromString
 #define PyUString_Format PyString_Format
+#define PyUString_AsUTF8 PyString_AsString
 
 #endif /* NPY_PY3K */
 
@@ -191,7 +193,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (ret == NULL) {
         return NULL;
     }
-    fd2 = PyNumber_AsSsize_t(ret, NULL);
+    fd2 = (int) PyNumber_AsSsize_t(ret, NULL);
     Py_DECREF(ret);
 
     /* Convert to FILE* handle */

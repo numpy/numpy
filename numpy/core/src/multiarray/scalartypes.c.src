@@ -1887,6 +1887,18 @@ static PyObject *
 }
 /**end repeat**/
 
+static PyObject *
+voidtype_keys(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    PyArrayObject *arr = PyArray_FROM_O(self);
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    if (!PyDataType_HASFIELDS(descr)) {
+        PyErr_SetString(PyExc_TypeError, "Only structured arrays can be used as mappings");
+        return NULL;
+    }
+    return PyObject_CallMethod(descr->fields, "keys", "");
+}
+
 /*
  * need to fill in doc-strings for these methods on import -- copy from
  * array docstrings
@@ -2122,6 +2134,11 @@ static PyMethodDef voidtype_methods[] = {
     {"setfield",
         (PyCFunction)voidtype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
+
+    {"keys",
+        (PyCFunction)voidtype_keys,
+        METH_NOARGS, NULL},
+
     {NULL, NULL, 0, NULL}
 };
 
