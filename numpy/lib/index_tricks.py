@@ -12,7 +12,7 @@ from numpy.core.numerictypes import find_common_type, issubdtype
 from . import function_base
 import numpy.matrixlib as matrix
 from .function_base import diff
-from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.multiarray import ravel_multi_index, unravel_index, as_index_tuple
 from numpy.lib.stride_tricks import as_strided
 
 makemat = matrix.matrix

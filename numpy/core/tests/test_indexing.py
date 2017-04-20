@@ -511,6 +511,98 @@ class TestIndexing(TestCase):
         arr[slices] = 10
         assert_array_equal(arr, 10.)
 
+    def test_as_index_tuple(self):
+        from numpy.core.multiarray import as_index_tuple
+
+        arr = np.array([1])
+        sl = np.s_[:]
+        ell = Ellipsis
+        obj = object()
+
+        # scalars are wrapped in a 1-tuple
+        assert_equal(as_index_tuple(1),    (1,))
+        assert_equal(as_index_tuple(ell),  (ell,))
+        assert_equal(as_index_tuple(None), (None,))
+        assert_equal(as_index_tuple(sl),   (sl,))
+        assert_equal(as_index_tuple(arr),  (arr,))
+        assert_equal(as_index_tuple(obj),  (obj,))
+
+        # tuples are untouched
+        assert_equal(as_index_tuple((1, 2, 3)),    (1, 2, 3))
+        assert_equal(as_index_tuple((1, 2, ell)),  (1, 2, ell))
+        assert_equal(as_index_tuple((1, 2, None)), (1, 2, None))
+        assert_equal(as_index_tuple((1, 2, sl)),   (1, 2, sl))
+        assert_equal(as_index_tuple((1, 2, arr)),  (1, 2, arr))
+
+        # sequences of scalars are wrapped
+        assert_equal(as_index_tuple([1, 2, 3]), ([1, 2, 3],))
+
+        # sequences containing slice objects or ellipses are tuple-ified
+        assert_equal(as_index_tuple([1, 2, ell]),  (1, 2, ell))
+        assert_equal(as_index_tuple([1, 2, None]), (1, 2, None))
+        assert_equal(as_index_tuple([1, 2, sl]),   (1, 2, sl))
+        assert_equal(as_index_tuple([1, 2, arr]),  (1, 2, arr))
+
+        # unless they are >= np.MAXDIMS, in which case they are always wrapped
+        nd = np.MAXDIMS
+        assert_equal(as_index_tuple(nd * [1]),    (nd * [1],))
+        assert_equal(as_index_tuple(nd * [ell]),  (nd * [ell],))
+        assert_equal(as_index_tuple(nd * [None]), (nd * [None],))
+        assert_equal(as_index_tuple(nd * [sl]),   (nd * [sl],))
+        assert_equal(as_index_tuple(nd * [arr]),  (nd * [arr],))
+
+    def test_as_index_tuple_broken_getitem(self):
+        from numpy.core.multiarray import as_index_tuple
+
+        # test sequences with a broken __getitem__
+        def make_broken_sequence(base, items):
+            class Broken(base):
+                def __len__(self):
+                    return len(items)
+                def __getitem__(self, i):
+                    val = items[i]
+                    if isinstance(val, Exception):
+                        raise val
+                    return val
+            return Broken()
+
+        # error comes first, so just treat as a scalar
+        idx = make_broken_sequence(object, [1, ValueError(), None])
+        assert_raises(ValueError, operator.getitem, idx, 1)
+        assert_equal(as_index_tuple(idx),  (idx,))
+
+        # none comes first, so commit to making the tuple
+        idx = make_broken_sequence(object, [1, None, ValueError()])
+        assert_raises(ValueError, operator.getitem, idx, 2)
+        assert_raises(ValueError, as_index_tuple, idx)
+
+        # tuples subclasses error in both cases
+        idx = make_broken_sequence(tuple, [1, ValueError(), None])
+        assert_raises(ValueError, operator.getitem, idx, 1)
+        assert_raises(ValueError, as_index_tuple, idx)
+
+        idx = make_broken_sequence(tuple, [1, None, ValueError()])
+        assert_raises(ValueError, operator.getitem, idx, 2)
+        assert_raises(ValueError, as_index_tuple, idx)
+
+    def test_as_index_tuple_broken_len(self):
+        from numpy.core.multiarray import as_index_tuple
+
+        def make_badlen_sequence(base):
+            class cls(base):
+                def __len__(self): raise ValueError
+                def __getitem__(self, i): raise IndexError
+            return cls()
+
+        idx = make_badlen_sequence(object)
+        assert_raises(ValueError, len, idx)
+        assert_equal(as_index_tuple(idx), (idx,))
+
+        idx = make_badlen_sequence(tuple)
+        assert_raises(ValueError, len, idx)
+        assert_raises(ValueError, as_index_tuple, idx)
+
+
 class TestFieldIndexing(TestCase):
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it

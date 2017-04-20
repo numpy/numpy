@@ -47,6 +47,9 @@ array_subscript(PyArrayObject *self, PyObject *op);
 NPY_NO_EXPORT int
 array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *v);
 
+NPY_NO_EXPORT PyObject *
+as_index_tuple(PyObject *NPY_UNUSED(self), PyObject *args);
+
 /*
  * Prototypes for Mapping calls --- not part of the C-API
  * because only useful as part of a getitem call.
