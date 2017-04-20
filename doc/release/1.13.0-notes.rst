@@ -160,6 +160,10 @@ being iterated over.
 For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
 for ``len(d.shape)``.
 
+``np.linalg.matrix_rank`` now works for stacked arrays
+------------------------------------------------------
+``matrix_rank`` was previously limited to arrays of dimension <= 2.
+
 
 Improvements
 ============
