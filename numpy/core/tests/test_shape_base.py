@@ -335,24 +335,24 @@ def test_stack():
 
 class TestBlock(TestCase):
     def test_block_simple_row_wise(self):
-        A = np.ones((2, 2))
-        B = 2 * A
+        a_2d = np.ones((2, 2))
+        b_2d = 2 * a_2d
         desired = np.array([[1, 1, 2, 2],
                             [1, 1, 2, 2]])
-        result = block([A, B])
+        result = block([a_2d, b_2d])
         assert_equal(desired, result)
         # with tuples
-        result = block((A, B))
+        result = block((a_2d, b_2d))
         assert_equal(desired, result)
 
     def test_block_simple_column_wise(self):
-        A = np.ones((2, 2))
-        B = 2 * A
+        a_2d = np.ones((2, 2))
+        b_2d = 2 * a_2d
         expected = np.array([[1, 1],
                              [1, 1],
                              [2, 2],
                              [2, 2]])
-        result = block([[A], [B]])
+        result = block([[a_2d], [b_2d]])
         assert_equal(expected, result)
 
     def test_block_with_1d_arrays_row_wise(self):
@@ -373,17 +373,17 @@ class TestBlock(TestCase):
 
     def test_block_with_1d_arrays_column_wise(self):
         # # # 1-D vectors are treated as row arrays
-        a = np.array([1, 2, 3])
-        b = np.array([2, 3, 4])
+        a_1d = np.array([1, 2, 3])
+        b_1d = np.array([2, 3, 4])
         expected = np.array([[1, 2, 3],
                              [2, 3, 4]])
-        result = block([[a], [b]])
+        result = block([[a_1d], [b_1d]])
         assert_equal(expected, result)
 
     def test_block_mixed_1d_and_2d(self):
-        A = np.ones((2, 2))
-        B = np.array([2, 2])
-        result = block([[A], [B]])
+        a_2d = np.ones((2, 2))
+        b_1d = np.array([2, 2])
+        result = block([[a_2d], [b_1d]])
         expected = np.array([[1, 1],
                              [1, 1],
                              [2, 2]])
@@ -391,19 +391,19 @@ class TestBlock(TestCase):
 
     def test_block_complicated(self):
         # a bit more complicated
-        One = np.array([[1, 1, 1]])
-        Two = np.array([[2, 2, 2]])
-        Three = np.array([[3, 3, 3, 3, 3, 3]])
-        four = np.array([4, 4, 4, 4, 4, 4])
-        five = np.array([5])
-        six = np.array([6, 6, 6, 6, 6])
-        Zeros = np.zeros((2, 6))
+        one_2d = np.array([[1, 1, 1]])
+        two_2d = np.array([[2, 2, 2]])
+        three_2d = np.array([[3, 3, 3, 3, 3, 3]])
+        four_1d = np.array([4, 4, 4, 4, 4, 4])
+        five_0d = np.array(5)
+        six_1d = np.array([6, 6, 6, 6, 6])
+        zero_2d = np.zeros((2, 6))
 
-        result = block([[One, Two],
-                        Three,
-                        four,
-                        [five, six],
-                        Zeros])
+        result = block([[one_2d, two_2d],
+                        three_2d,
+                        four_1d,
+                        [five_0d, six_1d],
+                        zero_2d])
         expected = np.array([[1, 1, 1, 2, 2, 2],
                              [3, 3, 3, 3, 3, 3],
                              [4, 4, 4, 4, 4, 4],
@@ -413,25 +413,25 @@ class TestBlock(TestCase):
         assert_equal(result, expected)
 
         # additional [] around rows should not have any influence
-        result = block([[One, Two],
-                        Three,
-                        [four],
-                        [five, six],
-                        Zeros])
+        result = block([[one_2d, two_2d],
+                        three_2d,
+                        [four_1d],
+                        [five_0d, six_1d],
+                        zero_2d])
         assert_equal(result, expected)
 
-        result = block([[One, Two],
-                        [Three],
-                        [four],
-                        [five, six],
-                        Zeros])
+        result = block([[one_2d, two_2d],
+                        [three_2d],
+                        [four_1d],
+                        [five_0d, six_1d],
+                        zero_2d])
         assert_equal(result, expected)
 
-        result = block([[One, Two],
-                        [Three],
-                        [four],
-                        [five, six],
-                        [Zeros]])
+        result = block([[one_2d, two_2d],
+                        [three_2d],
+                        [four_1d],
+                        [five_0d, six_1d],
+                        [zero_2d]])
         assert_equal(result, expected)
 
     def test_3d(self):
