@@ -16,7 +16,18 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
-from functools import reduce
+import functools
+if sys.version_info[0] >= 3:
+    try:
+        from _thread import get_ident
+    except ImportError:
+        from _dummy_thread import get_ident
+else:
+    try:
+        from thread import get_ident
+    except ImportError:
+        from dummy_thread import get_ident
+
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import (array, format_longfloat, datetime_as_string,
@@ -342,6 +353,39 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                        _summaryEdgeItems, summary_insert)[:-1]
     return lst
 
+
+def _recursive_guard(fillvalue='...'):
+    """
+    Like the python 3.2 reprlib.recursive_repr, but forwards *args and **kwargs
+
+    Decorates a function such that if it calls itself with the same first
+    argument, it returns `fillvalue` instead of recursing.
+
+    Largely copied from reprlib.recursive_repr
+    """
+
+    def decorating_function(f):
+        repr_running = set()
+
+        @functools.wraps(f)
+        def wrapper(self, *args, **kwargs):
+            key = id(self), get_ident()
+            if key in repr_running:
+                return fillvalue
+            repr_running.add(key)
+            try:
+                return f(self, *args, **kwargs)
+            finally:
+                repr_running.discard(key)
+
+        return wrapper
+
+    return decorating_function
+
+
+# gracefully handle recursive calls - this comes up when object arrays contain
+# themselves
+@_recursive_guard()
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=repr, formatter=None):
@@ -460,7 +504,7 @@ def array2string(a, max_line_width=None, precision=None,
             lst = format_function(arr[0])
         else:
             lst = style(x)
-    elif reduce(product, a.shape) == 0:
+    elif functools.reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
     else:
