@@ -434,6 +434,36 @@ class TestBlock(TestCase):
                         [zero_2d]])
         assert_equal(result, expected)
 
+    def test_nested(self):
+        one = np.array([1, 1, 1])
+        two = np.array([[2, 2, 2], [2, 2, 2], [2, 2, 2]])
+        three = np.array([3, 3, 3])
+        four = np.array([4, 4, 4])
+        five = np.array(5)
+        six = np.array([6, 6, 6, 6, 6])
+        zero = np.zeros((2, 6))
+
+        result = np.block([
+            [
+                np.block([
+                   [one],
+                   [three],
+                   [four]
+                ]),
+                two
+            ],
+            [five, six],
+            zero
+        ])
+        expected = np.array([[1, 1, 1, 2, 2, 2],
+                             [3, 3, 3, 2, 2, 2],
+                             [4, 4, 4, 2, 2, 2],
+                             [5, 6, 6, 6, 6, 6],
+                             [0, 0, 0, 0, 0, 0],
+                             [0, 0, 0, 0, 0, 0]])
+
+        assert_equal(result, expected)
+
     def test_3d(self):
         a000 = np.ones((2, 2, 2), int) * 1
 
