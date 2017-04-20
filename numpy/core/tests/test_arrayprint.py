@@ -34,6 +34,24 @@ class TestArrayRepr(object):
             "    dtype=[('a', '<i4')])"
         )
 
+    def test_self_containing(self):
+        arr0d = np.array(None)
+        arr0d[()] = arr0d
+        assert_equal(repr(arr0d),
+            'array(array(..., dtype=object), dtype=object)')
+
+        arr1d = np.array([None, None])
+        arr1d[1] = arr1d
+        assert_equal(repr(arr1d),
+            'array([None, array(..., dtype=object)], dtype=object)')
+
+        first = np.array(None)
+        second = np.array(None)
+        first[()] = second
+        second[()] = first
+        assert_equal(repr(first),
+            'array(array(array(..., dtype=object), dtype=object), dtype=object)')
+
 
 class TestComplexArray(TestCase):
     def test_str(self):
