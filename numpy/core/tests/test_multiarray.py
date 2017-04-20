@@ -6633,6 +6633,14 @@ class TestWhere(TestCase):
         assert_equal(np.where(True, a, b), "abcd")
         assert_equal(np.where(False, b, a), "abcd")
 
+    def test_empty_result(self):
+        # pass empty where result through an assignment which reads the data of
+        # empty arrays, error detectable with valgrind, see gh-8922
+        x = np.zeros((1, 1))
+        ibad = np.vstack(np.where(x == 99.))
+        assert_array_equal(ibad,
+                           np.atleast_2d(np.array([[],[]], dtype=np.intp)))
+
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
