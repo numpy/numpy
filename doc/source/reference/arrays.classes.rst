@@ -127,8 +127,8 @@ NumPy provides several hooks that classes can customize:
 
       - If you are not a subclass of :class:`ndarray`, we recommend your
         class define special methods like ``__add__`` and ``__lt__`` that
-        delegate to ufuncs just like ndarray does.  We hope to provide a
-        helper mixin class for this.
+        delegate to ufuncs just like ndarray does.  An easy way to do this
+        is to subclass from :class:`~numpy.lib.mixins.NDArrayOperatorsMixin`.
       - If you subclass :class:`ndarray`, we strongly recommend that you
         avoid confusion by neither setting :func:`__array_ufunc__` to
         :obj:`None`, which makes no sense for an array subclass, nor by
