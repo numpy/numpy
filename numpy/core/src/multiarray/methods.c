@@ -1030,15 +1030,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     ufunc = PyTuple_GET_ITEM(args, 0);
-    if (ufunc == NULL) {
-        goto cleanup;
-    }
-
     method_name = PyTuple_GET_ITEM(args, 1);
-    if (method_name == NULL) {
-        goto cleanup;
-    }
-
     /*
      * TODO(?): call into UFunc code at a later point, since here arguments are
      * already normalized and we do not have to look for __array_ufunc__ again.

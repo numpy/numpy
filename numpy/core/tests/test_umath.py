@@ -1698,6 +1698,11 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[3], (1, a))
         assert_equal(res[4], {'foo': 'bar', 'answer': 42})
 
+        # __call__, wrong args
+        assert_raises(TypeError, np.multiply, a)
+        assert_raises(TypeError, np.multiply, a, a, a, a)
+        assert_raises(TypeError, np.multiply, a, a, sig='a', signature='a')
+
         # reduce, positional args
         res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
         assert_equal(res[0], a)
@@ -1808,12 +1813,20 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[3], (a, 42))
         assert_equal(res[4], {})
 
+        # outer, wrong args
+        assert_raises(TypeError, np.multiply.outer, a)
+        assert_raises(TypeError, np.multiply.outer, a, a, a, a)
+
         # at
         res = np.multiply.at(a, [4, 2], 'b0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'at')
         assert_equal(res[3], (a, [4, 2], 'b0'))
+
+        # at, wrong args
+        assert_raises(TypeError, np.multiply.at, a)
+        assert_raises(TypeError, np.multiply.at, a, a, a, a)
 
     def test_ufunc_override_out(self):
 
