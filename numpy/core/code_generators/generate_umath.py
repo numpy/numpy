@@ -398,6 +398,14 @@ defdict = {
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
+'positive':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.positive'),
+          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          TD(ints+flts+timedeltaonly),
+          TD(cmplx, f='pos'),
+          TD(O, f='PyNumber_Positive'),
+          ),
 'sign':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),

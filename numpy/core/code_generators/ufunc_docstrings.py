@@ -2537,6 +2537,27 @@ add_newdoc('numpy.core.umath', 'negative',
 
     """)
 
+add_newdoc('numpy.core.umath', 'positive',
+    """
+    Numerical positive, element-wise.
+
+    Parameters
+    ----------
+    x : array_like or scalar
+        Input array.
+
+    Returns
+    -------
+    y : ndarray or scalar
+        Returned array or scalar: `y = +x`.
+
+    Notes
+    -----
+    Equivalent to `x.copy()`, but only defined for types that support
+    arithmetic.
+
+    """)
+
 add_newdoc('numpy.core.umath', 'not_equal',
     """
     Return (x1 != x2) element-wise.
