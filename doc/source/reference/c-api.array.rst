@@ -3129,8 +3129,8 @@ Internal Flexibility
 
         **add**, **subtract**, **multiply**, **divide**,
         **remainder**, **power**, **square**, **reciprocal**,
-        **ones_like**, **sqrt**, **negative**, **absolute**,
-        **invert**, **left_shift**, **right_shift**,
+        **ones_like**, **sqrt**, **negative**, **positive**,
+        **absolute**, **invert**, **left_shift**, **right_shift**,
         **bitwise_and**, **bitwise_xor**, **bitwise_or**,
         **less**, **less_equal**, **equal**, **not_equal**,
         **greater**, **greater_equal**, **floor_divide**,
