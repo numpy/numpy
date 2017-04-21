@@ -286,7 +286,7 @@ class TestFromrecords(object):
         assert_equal(rec['f0'], ['test', 'test', 'test'])
         assert_equal(rec['f1'], ['', '', ''])
 
-        dt = np.dtype([('f0', '|S4'), ('f1', '|S')])
+        dt = np.dtype([('f0', '|S4'), ('f1', '|S0')])
         rec = np.rec.fromarrays(cols, dtype=dt)
         assert_equal(rec.itemsize, 4)
         assert_equal(rec['f0'], [b'test', b'test', b'test'])

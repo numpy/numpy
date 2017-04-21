@@ -100,7 +100,7 @@ def test_array_array():
 
     # test array_struct interface
     a = np.array([(1, 4.0, 'Hello'), (2, 6.0, 'World')],
-                 dtype=[('f0', int), ('f1', float), ('f2', str)])
+                 dtype=[('f0', int), ('f1', float), ('f2', str, 5)])
     o = type("o", (object,),
              dict(__array_struct__=a.__array_struct__))
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
