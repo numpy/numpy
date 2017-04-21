@@ -2042,9 +2042,9 @@ class TestCreationFuncs(object):
     def setup(self):
         dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
         # void, bytes, str
-        variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
+        variable_sized = {tp for tp in dtypes if tp.itemsize is None}
         self.dtypes = sorted(dtypes - variable_sized |
-                             {np.dtype(tp.str.replace("0", str(i)))
+                             {np.dtype((tp, i))
                               for tp in variable_sized for i in range(1, 10)},
                              key=lambda dtype: dtype.str)
         self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}

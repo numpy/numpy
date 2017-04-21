@@ -1792,8 +1792,6 @@ static PyMemberDef arraydescr_members[] = {
         T_INT, offsetof(PyArray_Descr, type_num), READONLY, NULL},
     {"byteorder",
         T_CHAR, offsetof(PyArray_Descr, byteorder), READONLY, NULL},
-    {"itemsize",
-        T_INT, offsetof(PyArray_Descr, elsize), READONLY, NULL},
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
@@ -1965,6 +1963,14 @@ arraydescr_ndim_get(PyArray_Descr *self)
     return PyInt_FromLong(1);
 }
 
+static PyObject *
+arraydescr_itemsize_get(PyArray_Descr *self)
+{
+    if (PyDataType_ISUNSIZED(self)) {
+        Py_RETURN_NONE;
+    }
+    return PyInt_FromLong(self->elsize);
+}
 
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
@@ -2248,6 +2254,9 @@ static PyGetSetDef arraydescr_getsets[] = {
         NULL, NULL},
     {"hasobject",
         (getter)arraydescr_hasobject_get,
+        NULL, NULL, NULL},
+    {"itemsize",
+        (getter)arraydescr_itemsize_get,
         NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
