@@ -8,6 +8,7 @@ from numpy.version import version as __version__
 from .type_check import *
 from .index_tricks import *
 from .function_base import *
+from .mixins import *
 from .nanfunctions import *
 from .shape_base import *
 from .stride_tricks import *
@@ -29,6 +30,7 @@ __all__ = ['emath', 'math']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
+__all__ += mixins.__all__
 __all__ += shape_base.__all__
 __all__ += stride_tricks.__all__
 __all__ += twodim_base.__all__
