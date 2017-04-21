@@ -610,9 +610,6 @@ class TestDtypeAttributes(TestCase):
         new_dtype = np.dtype(dtype.descr)
         assert_equal(new_dtype.itemsize, 16)
 
-
-class TestDtypeAttributes(TestCase):
-
     def test_name_builtin(self):
         for t in np.typeDict.values():
             name = t.__name__
