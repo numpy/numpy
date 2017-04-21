@@ -5067,6 +5067,14 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
+    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
                      "method outer is not allowed in ufunc with non-trivial"\
@@ -5084,15 +5092,6 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (PySequence_Length(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "exactly two arguments expected");
         return NULL;
-    }
-
-    /* Note: `nin` and `nout` are not used in the normalization */
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
     }
 
     tmp = PySequence_GetItem(args, 0);
@@ -5164,7 +5163,6 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin` and `nout`, the last two arguments, are not actually used */
     errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
     if (errval) {
         return NULL;
@@ -5181,7 +5179,6 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin` and `nout`, the last two arguments, are not actually used */
     errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
     if (errval) {
         return NULL;
@@ -5198,7 +5195,6 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin` and `nout`, the last two arguments, are not actually used */
     errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
     if (errval) {
         return NULL;
@@ -5263,7 +5259,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* `nin` and `nout`, the last two arguments, are not actually used */
     errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
     if (errval) {
         return NULL;
