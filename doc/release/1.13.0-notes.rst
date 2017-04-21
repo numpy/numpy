@@ -160,6 +160,29 @@ being iterated over.
 For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
 for ``len(d.shape)``.
 
+``np.block`` function for creating blocked arrays
+-------------------------------------------------
+Add a new ``block`` function to the current stacking functions ``vstack``,
+``hstack``, and ``stack``. This allows concatenation across multiple axes
+simultaneously, with a similar syntax to array creation, but where elements
+can themselves be arrays. For instance::
+
+    >>> A = np.eye(2) * 2
+    >>> B = np.eye(3) * 3
+    >>> np.block([
+    ...     [A,               np.zeros((2, 3))],
+    ...     [np.ones((3, 2)), B               ]
+    ... ])
+    array([[ 2.,  0.,  0.,  0.,  0.],
+           [ 0.,  2.,  0.,  0.,  0.],
+           [ 1.,  1.,  3.,  0.,  0.],
+           [ 1.,  1.,  0.,  3.,  0.],
+           [ 1.,  1.,  0.,  0.,  3.]])
+
+While primarily useful for block matrices, this works for arbitrary dimensions
+of arrays.
+
+It is similar to Matlab's square bracket notation for creating block matrices.
 
 Improvements
 ============
