@@ -833,6 +833,12 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
+}
+
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
@@ -1181,6 +1187,15 @@ TIMEDELTA_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
         else {
             *((npy_timedelta *)op1) = -in1;
         }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = +in1;
     }
 }
 
@@ -1886,6 +1901,15 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = +in1;
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /* Sign of nan is nan */
@@ -2185,6 +2209,15 @@ HALF_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = in1^0x8000u;
+    }
+}
+
+NPY_NO_EXPORT void
+HALF_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_half in1 = *(npy_half *)ip1;
+        *((npy_half *)op1) = +in1;
     }
 }
 

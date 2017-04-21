@@ -1057,6 +1057,7 @@ class TestBool(TestCase):
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool_)
         assert_raises(TypeError, np.negative, a)
+        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
 
     def test_truth_table_logical(self):
@@ -1347,6 +1348,25 @@ class TestAbsoluteNegative(TestCase):
         np.negative(np.ones_like(d), out=d)
         np.abs(d, out=d)
         np.abs(np.ones_like(d), out=d)
+
+
+class TestPositive(TestCase):
+    def test_valid(self):
+        valid_dtypes = [int, float, complex, object]
+        for dtype in valid_dtypes:
+            x = np.arange(5, dtype=dtype)
+            result = np.positive(x)
+            assert_equal(x, result, err_msg=str(dtype))
+
+    def test_invalid(self):
+        with assert_raises(TypeError):
+            np.positive(True)
+        with assert_raises(TypeError):
+            np.positive(np.datetime64('2000-01-01'))
+        with assert_raises(TypeError):
+            np.positive(np.array(['foo'], dtype=str))
+        with assert_raises(TypeError):
+            np.positive(np.array(['bar'], dtype=object))
 
 
 class TestSpecialMethods(TestCase):

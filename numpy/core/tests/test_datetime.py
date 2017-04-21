@@ -794,6 +794,12 @@ class TestDateTime(TestCase):
             assert_equal(np.negative(tdb), tda)
             assert_equal(np.negative(tdb).dtype, tda.dtype)
 
+            # positive ufunc
+            assert_equal(np.positive(tda), tda)
+            assert_equal(np.positive(tda).dtype, tda.dtype)
+            assert_equal(np.positive(tdb), tdb)
+            assert_equal(np.positive(tdb).dtype, tdb.dtype)
+
             # absolute ufunc
             assert_equal(np.absolute(tdb), tda)
             assert_equal(np.absolute(tdb).dtype, tda.dtype)

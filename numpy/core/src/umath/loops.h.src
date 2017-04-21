@@ -61,6 +61,9 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 NPY_NO_EXPORT void
 @S@@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
+NPY_NO_EXPORT void
+@S@@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 /**begin repeat2
  * #isa = , _avx2#
  */
@@ -235,6 +238,8 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
@@ -382,6 +387,9 @@ C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 
 NPY_NO_EXPORT void
 TIMEDELTA_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+TIMEDELTA_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
