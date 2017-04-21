@@ -8,7 +8,7 @@ Highlights
 ==========
 
  * Operations like ``a + b + c`` will reuse temporaries on some platforms,
-   resulting less memory use and faster execution.
+   resulting in less memory use and faster execution.
  * Inplace operations check if inputs overlap outputs and create temporaries
    to avoid problems.
  * Improved ability for classes to override default ufunc behavior. See
