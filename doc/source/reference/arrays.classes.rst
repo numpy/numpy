@@ -120,8 +120,9 @@ NumPy provides several hooks that classes can customize:
    never returns :obj:`NotImplemented`.  Hence, ``arr += obj`` would always
    lead to a :exc:`TypeError`.  This is because for arrays in-place operations
    cannot generically be replaced by a simple reverse operation.  (For
-   instance, by default, ``arr[:] += obj`` would be translated to ``arr[:] =
-   arr[:] + obj``, which would likely be wrong.)
+   instance, by default, ``arr += obj`` would be translated to ``arr =
+   arr + obj``, i.e., ``arr`` would be replaced, contrary to what is expected
+   for in-place array operations.)
 
    .. note:: If you define ``__array_ufunc__``:
 
@@ -129,12 +130,15 @@ NumPy provides several hooks that classes can customize:
         class define special methods like ``__add__`` and ``__lt__`` that
         delegate to ufuncs just like ndarray does.  An easy way to do this
         is to subclass from :class:`~numpy.lib.mixins.NDArrayOperatorsMixin`.
-      - If you subclass :class:`ndarray`, we strongly recommend that you
-        avoid confusion by neither setting :func:`__array_ufunc__` to
-        :obj:`None`, which makes no sense for an array subclass, nor by
-        defining it and also defining reverse methods, which methods will
-        be called by ``CPython`` in preference over the :class:`ndarray`
-        forward methods.
+      - If you subclass :class:`ndarray`, we recommend that you put all your
+        override logic in ``__array_ufunc__`` and not also override special
+        methods. This ensures the class hierarchy is determined in only one
+        place rather than separately by the ufunc machinery and by the binary
+        operation rules (which gives preference to special methods of
+        subclasses; the alternative way to enforce a one-place only hierarchy,
+        of setting :func:`__array_ufunc__` to :obj:`None`, would seem very
+        unexpected and thus confusing, as then the subclass would not work at
+        all with ufuncs).
       - :class:`ndarray` defines its own :func:`__array_ufunc__`, which,
         evaluates the ufunc if no arguments have overrides, and returns
         :obj:`NotImplemented` otherwise. This may be useful for subclasses
@@ -172,8 +176,8 @@ NumPy provides several hooks that classes can customize:
    the subclass and update metadata before returning the array to the
    ufunc for computation.
 
-   .. note:: It is hoped to eventually deprecate this method in favour of
-             :func:`__array_ufunc__`.
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
 
 .. py:method:: class.__array_wrap__(array, context=None)
 
@@ -187,6 +191,9 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
+
 .. py:attribute:: class.__array_priority__
 
    The value of this attribute is used to determine what type of
@@ -194,8 +201,8 @@ NumPy provides several hooks that classes can customize:
    possibility for the Python type of the returned object. Subclasses
    inherit a default value of 0.0 for this attribute.
 
-   .. note:: It is hoped to eventually deprecate this attribute in favour
-             of :func:`__array_ufunc__`.
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
 
 .. py:method:: class.__array__([dtype])
 
