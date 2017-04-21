@@ -1204,6 +1204,44 @@ class TestBool(object):
             assert_equal(np.count_nonzero(a), builtins.sum(a.tolist()))
 
 
+class TestZeroSizeFlexible(object):
+    @staticmethod
+    def _zeros(shape, dtype=str):
+        # not constructable directly
+        dtype = np.dtype([('x', dtype, 0)])
+        return np.zeros(shape, dtype=dtype)['x']
+
+    def test_create(self):
+        zs = self._zeros(10, bytes)
+        assert_equal(zs.itemsize, 0)
+        zs = self._zeros(10, np.void)
+        assert_equal(zs.itemsize, 0)
+        zs = self._zeros(10, unicode)
+        assert_equal(zs.itemsize, 0)
+
+    def _test_sort_partition(self, name, kinds, **kwargs):
+        # Previously, these would all hang
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            sort_method = getattr(zs, name)
+            sort_func = getattr(np, name)
+            for kind in kinds:
+                sort_method(kind=kind, **kwargs)
+                sort_func(zs, kind=kind, **kwargs)
+
+    def test_sort(self):
+        self._test_sort_partition('sort', kinds='qhm')
+
+    def test_argsort(self):
+        self._test_sort_partition('argsort', kinds='qhm')
+
+    def test_partition(self):
+        self._test_sort_partition('partition', kinds=['introselect'], kth=2)
+
+    def test_argpartition(self):
+        self._test_sort_partition('argpartition', kinds=['introselect'], kth=2)
+
+
 class TestMethods(object):
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
