@@ -4319,7 +4319,7 @@ static PyArray_Descr @from@_Descr = {
     /* type_num */
     NPY_@from@,
     /* elsize */
-    0,
+    -1,
     /* alignment */
     _ALIGN(@align@),
     /* subarray */

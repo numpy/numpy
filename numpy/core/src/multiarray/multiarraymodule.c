@@ -1964,7 +1964,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     }
     else {
         if (obj == NULL) {
-            if (typecode->elsize == 0) {
+            if (PyDataType_ISUNSIZED(typecode)) {
                 typecode->elsize = 1;
             }
             dptr = PyArray_malloc(typecode->elsize);

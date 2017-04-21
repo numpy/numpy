@@ -933,27 +933,31 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     /* Check datatype element size */
-    nbytes = descr->elsize;
     if (PyDataType_ISUNSIZED(descr)) {
         if (!PyDataType_ISFLEXIBLE(descr)) {
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
         }
-        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
-                 data == NULL) {
+        else {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;
             }
-            if (descr->type_num == NPY_STRING) {
-                nbytes = descr->elsize = 1;
-            }
-            else {
-                nbytes = descr->elsize = sizeof(npy_ucs4);
+            switch (descr->type_num) {
+                case NPY_STRING:
+                    descr->elsize = 1;
+                    break;
+                case NPY_UNICODE:
+                    descr->elsize = sizeof(npy_ucs4);
+                    break;
+                case NPY_VOID:
+                default:
+                    descr->elsize = 0;
             }
         }
     }
+    nbytes = descr->elsize;
 
     /* Check dimensions and multiply them to nbytes */
     is_empty = 0;
@@ -3396,6 +3400,13 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         Py_DECREF(dtype);
         return NULL;
     }
+    if (PyDataType_ISUNSIZED(dtype)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Flexible dtypes must have an explicit size");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
     if (dtype->elsize == 0) {
         /* Nothing to read, just create an empty array of the requested type */
         return PyArray_NewFromDescr_int(&PyArray_Type,

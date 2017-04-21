@@ -1362,7 +1362,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
     int check_num = NPY_NOTYPE + 10;
     PyObject *item;
-    int elsize = 0;
+    int elsize = -1;
     char endian = '=';
 
     *at = NULL;
@@ -1535,7 +1535,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
                         break;
 
                     default:
-                        if (elsize == 0) {
+                        if (elsize == -1) {
                             check_num = NPY_NOTYPE+10;
                         }
                         /* Support for generic processing c8, i4, f8, etc...*/

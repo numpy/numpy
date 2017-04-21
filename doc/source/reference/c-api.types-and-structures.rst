@@ -312,7 +312,7 @@ PyArrayDescr_Type
     For data types that are always the same size (such as long), this
     holds the size of the data type. For flexible data types where
     different arrays can have a different elementsize, this should be
-    0.
+    -1.
 
 .. c:member:: int PyArray_Descr.alignment
 
