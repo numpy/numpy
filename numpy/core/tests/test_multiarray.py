@@ -1252,6 +1252,16 @@ class TestZeroSizeFlexible(object):
             zs.resize(25)
             zs.resize((10, 10))
 
+    def test_view(self):
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+
+            # viewing as itself should be allowed
+            assert_equal(zs.view(dt).dtype, np.dtype(dt))
+
+            # viewing as any non-empty type gives an empty result
+            assert_equal(zs.view((dt, 1)).shape, (0,))
+
 
 class TestMethods(object):
     def test_compress(self):
