@@ -1207,6 +1207,10 @@ class TestBool(object):
 class TestZeroSizeFlexible(object):
     @staticmethod
     def _zeros(shape, dtype=str):
+        dtype = np.dtype(dtype)
+        if dtype == np.void:
+            return np.zeros(shape, dtype=(dtype, 0))
+
         # not constructable directly
         dtype = np.dtype([('x', dtype, 0)])
         return np.zeros(shape, dtype=dtype)['x']
@@ -1240,6 +1244,13 @@ class TestZeroSizeFlexible(object):
 
     def test_argpartition(self):
         self._test_sort_partition('argpartition', kinds=['introselect'], kth=2)
+
+    def test_resize(self):
+        # previously an error
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            zs.resize(25)
+            zs.resize((10, 10))
 
 
 class TestMethods(object):
