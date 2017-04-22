@@ -1796,6 +1796,30 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
  */
 
 
+static NPY_INLINE void
+_basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
+             npy_intp n, int elsize) {
+    if (src == NULL) {
+        return;
+    }
+    if (sstride == elsize && dstride == elsize) {
+        memcpy(dst, src, n*elsize);
+    }
+    else {
+        _unaligned_strided_byte_copy(dst, dstride, src, sstride,
+                n, elsize);
+    }
+}
+
+static NPY_INLINE void
+_basic_copy(void *dst, void *src, int elsize) {
+    if (src == NULL) {
+        return;
+    }
+    memcpy(dst, src, elsize);
+}
+
+
 /**begin repeat
  *
  * #fname = SHORT, USHORT, INT, UINT,
@@ -1815,15 +1839,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
                    npy_intp n, int swap, void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                    n, sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
     if (swap) {
         _strided_byte_swap(dst, dstride, n, sizeof(@type@));
     }
@@ -1832,11 +1849,9 @@ static void
 static void
 @fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
 
-    if (src != NULL) {
-        /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
-    }
     if (swap) {
         char *a, *b, c;
 
@@ -1908,15 +1923,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
         npy_intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                    n, sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
     /* ignore swap */
 }
 
@@ -1924,10 +1932,8 @@ static void
 @fname@_copyswap (void *dst, void *src, int NPY_UNUSED(swap),
         void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
-    }
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
     /* ignore swap */
 }
 
@@ -1945,17 +1951,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
         npy_intp n, int swap, void *NPY_UNUSED(arr))
 {
-
-    if (src != NULL) {
-        /* copy first if needed */
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride, n,
-                    sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
 
     if (swap) {
         _strided_byte_swap(dst, dstride, n, NPY_SIZEOF_@fsize@);
@@ -1967,8 +1964,8 @@ static void
 static void
 @fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
-    if (src != NULL) /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
 
     if (swap) {
         char *a, *b, c;
@@ -2137,17 +2134,10 @@ static void
 STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                   npy_intp n, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
-    if (src != NULL && arr != NULL) {
-        int itemsize = PyArray_DESCR(arr)->elsize;
-
-        if (dstride == itemsize && sstride == itemsize) {
-            memcpy(dst, src, itemsize * n);
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride, n,
-                    itemsize);
-        }
+    if (arr == NULL) {
+        return;
     }
+    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2216,16 +2206,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (src != NULL) {
-        int elsize = PyArray_DESCR(arr)->elsize;
-        if (sstride == elsize && dstride == elsize) {
-            memcpy(dst, src, n*elsize);
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                n, elsize);
-        }
-    }
+    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2282,9 +2263,9 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (src != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize);
-    }
+
+    /* copy first if needed */
+    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2299,15 +2280,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         return;
     }
     itemsize = PyArray_DESCR(arr)->elsize;
-    if (src != NULL) {
-        if (dstride == itemsize && sstride == itemsize) {
-            memcpy(dst, src, n * itemsize);
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src,
-                    sstride, n, itemsize);
-        }
-    }
+    _basic_copyn(dst, dstride, src, sstride, n, itemsize);
 
     if (swap) {
         int i;
@@ -2330,9 +2303,11 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 static void
 STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
-    if (src != NULL && arr != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize);
+    if (arr == NULL) {
+        return;
     }
+    /* copy first if needed */
+    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
 }
 
 static void
@@ -2344,16 +2319,14 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         return;
     }
     itemsize = PyArray_DESCR(arr)->elsize;
-    if (src != NULL) {
-        memcpy(dst, src, itemsize);
-    }
+    _basic_copy(dst, src, itemsize);
 
     if (swap) {
         int i;
         char *_dst;
         itemsize = itemsize / 4;
 
-        _dst = dst;       
+        _dst = dst;
         for (i=0; i < itemsize; i++) {
             npy_bswap4_unaligned(_dst);
             _dst += 4;
