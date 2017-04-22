@@ -15,6 +15,7 @@
 
 #include "_datetime.h"
 #include "common.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "descriptor.h"
 #include "alloc.h"
 
@@ -304,7 +305,8 @@ _convert_from_tuple(PyObject *obj)
         PyArray_Dims shape = {NULL, -1};
         PyArray_Descr *newdescr;
         npy_intp items;
-        int i;
+        int i, overflowed;
+        int nbytes;
 
         if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
             npy_free_cache_dim_obj(shape);
@@ -348,14 +350,21 @@ _convert_from_tuple(PyObject *obj)
             }
         }
         items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
-        if ((items < 0) || (items > (NPY_MAX_INT / type->elsize))) {
+        if (items < 0 || items > NPY_MAX_INT) {
+            overflowed = 1;
+        }
+        else {
+            overflowed = npy_mul_with_overflow_int(
+                &nbytes, type->elsize, (int) items);
+        }
+        if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
                             "invalid shape in fixed-type tuple: dtype size in "
                             "bytes must fit into a C int.");
             npy_free_cache_dim_obj(shape);
             goto fail;
         }
-        newdescr->elsize = type->elsize * items;
+        newdescr->elsize = nbytes;
         if (newdescr->elsize == -1) {
             npy_free_cache_dim_obj(shape);
             goto fail;
