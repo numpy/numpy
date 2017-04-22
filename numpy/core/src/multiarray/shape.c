@@ -61,6 +61,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     newsize = 1;
     for(k = 0; k < new_nd; k++) {
         if (new_dimensions[k] == 0) {
+            newsize = 0;
             break;
         }
         if (new_dimensions[k] < 0) {
