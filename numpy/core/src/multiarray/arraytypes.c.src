@@ -2217,7 +2217,14 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         return;
     }
     if (src != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize * n);
+        int elsize = PyArray_DESCR(arr)->elsize;
+        if (sstride == elsize && dstride == elsize) {
+            memcpy(dst, src, n*elsize);
+        }
+        else {
+            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
+                n, elsize);
+        }
     }
     return;
 }
