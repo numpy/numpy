@@ -1262,6 +1262,15 @@ class TestZeroSizeFlexible(object):
             # viewing as any non-empty type gives an empty result
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
+    def test_pickle(self):
+        import pickle
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            p = pickle.dumps(zs)
+            zs2 = pickle.loads(p)
+
+            assert_equal(zs.dtype, zs2.dtype)
+
 
 class TestMethods(object):
     def test_compress(self):
