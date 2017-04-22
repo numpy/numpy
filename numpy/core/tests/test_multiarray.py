@@ -1462,6 +1462,17 @@ class TestMethods(TestCase):
             msg = "bogus comparison object sort, kind=%s" % kind
             c.sort(kind=kind)
 
+    def test_void_sort(self):
+        # gh-8210 - previously segfaulted
+        for i in range(4):
+            arr = np.empty(1000, 'V4')
+            arr[::-1].sort()
+
+        dt = np.dtype([('val', 'i4', (1,))])
+        for i in range(4):
+            arr = np.empty(1000, dt)
+            arr[::-1].sort()
+
     def test_sort_degraded(self):
         # test degraded dataset would take minutes to run with normal qsort
         d = np.arange(1000000)
