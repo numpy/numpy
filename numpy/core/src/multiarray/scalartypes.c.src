@@ -495,10 +495,61 @@ static PyObject *
 }
 /**end repeat**/
 
-static PyObject *
-voidtype_str(PyObject *self)
+
+/*
+ * Convert array of bytes to a string representation much like bytes.__repr__,
+ * but convert all bytes (including ASCII) to the `\x00` notation with
+ * uppercase hex codes (FF not ff).
+ *
+ * Largely copied from _Py_strhex_impl in CPython implementation
+ */
+static NPY_INLINE PyObject *
+_void_to_hex(const char* argbuf, const Py_ssize_t arglen,
+             const char *schars, const char *bprefix, const char *echars)
 {
-    if (PyDataType_HASFIELDS(((PyVoidScalarObject*)self)->descr)) {
+    PyObject *retval;
+    int extrachars, slen;
+    char *retbuf;
+    Py_ssize_t i, j;
+    char const *hexdigits = "0123456789ABCDEF";
+
+    extrachars = strlen(schars) + strlen(echars);
+    slen = extrachars + arglen*(2 + strlen(bprefix));
+
+    if (arglen > (PY_SSIZE_T_MAX / 2) - extrachars) {
+        return PyErr_NoMemory();
+    }
+
+    retbuf = (char *)PyMem_Malloc(slen);
+    if (!retbuf) {
+        return PyErr_NoMemory();
+    }
+
+    memcpy(retbuf, schars, strlen(schars));
+    j = strlen(schars);
+
+    for (i = 0; i < arglen; i++) {
+        unsigned char c;
+        memcpy(&retbuf[j], bprefix, strlen(bprefix));
+        j += strlen(bprefix);
+        c = (argbuf[i] >> 4) & 0xf;
+        retbuf[j++] = hexdigits[c];
+        c = argbuf[i] & 0xf;
+        retbuf[j++] = hexdigits[c];
+    }
+    memcpy(&retbuf[j], echars, strlen(echars));
+
+    retval = PyUString_FromStringAndSize(retbuf, slen);
+    PyMem_Free(retbuf);
+
+    return retval;
+}
+
+static PyObject *
+voidtype_repr(PyObject *self)
+{
+    PyVoidScalarObject *s = (PyVoidScalarObject*) self;
+    if (PyDataType_HASFIELDS(s->descr)) {
         static PyObject *reprfunc = NULL;
 
         npy_cache_import("numpy.core.arrayprint",
@@ -509,18 +560,25 @@ voidtype_str(PyObject *self)
 
         return PyObject_CallFunction(reprfunc, "O", self);
     }
-    else {
-        PyObject *item, *item_str;
+    return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+}
 
-        item = gentype_generic_method(self, NULL, NULL, "item");
-        if (item == NULL) {
+static PyObject *
+voidtype_str(PyObject *self)
+{
+    PyVoidScalarObject *s = (PyVoidScalarObject*) self;
+    if (PyDataType_HASFIELDS(s->descr)) {
+        static PyObject *reprfunc = NULL;
+
+        npy_cache_import("numpy.core.arrayprint",
+                         "_void_scalar_repr", &reprfunc);
+        if (reprfunc == NULL) {
             return NULL;
         }
 
-        item_str = PyObject_Str(item);
-        Py_DECREF(item);
-        return item_str;
+        return PyObject_CallFunction(reprfunc, "O", self);
     }
+    return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }
 
 static PyObject *
@@ -4006,7 +4064,7 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
-    PyVoidArrType_Type.tp_repr = voidtype_str;
+    PyVoidArrType_Type.tp_repr = voidtype_repr;
     PyVoidArrType_Type.tp_str = voidtype_str;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;

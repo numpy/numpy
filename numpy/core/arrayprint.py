@@ -291,6 +291,9 @@ def _object_format(o):
 def repr_format(x):
     return repr(x)
 
+def str_format(x):
+    return str(x)
+
 def _get_formatdict(data, **opt):
     prec, fmode = opt['precision'], opt['floatmode']
     supp, sign = opt['suppress'], opt['sign']
@@ -307,6 +310,7 @@ def _get_formatdict(data, **opt):
         'datetime': lambda: DatetimeFormat(data),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
+        'void': lambda: str_format,
         'numpystr': lambda: repr_format,
         'str': lambda: str}
 
@@ -366,6 +370,8 @@ def _get_format_function(data, **options):
         return formatdict['datetime']()
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
+    elif issubclass(dtypeobj, _nt.void):
+        return formatdict['void']()
     else:
         return formatdict['numpystr']()
 
@@ -470,6 +476,7 @@ def array2string(a, max_line_width=None, precision=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
+            - 'void' : type `numpy.void`
             - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
