@@ -9,8 +9,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                          npy_intp *dims, npy_intp *strides, void *data,
-                         int flags, PyObject *obj, int zeroed,
-                         int allow_emptystring);
+                         int flags, PyObject *obj, int zeroed);
 
 NPY_NO_EXPORT PyObject *PyArray_New(PyTypeObject *, int nd, npy_intp *,
                              int, npy_intp *, void *, int, int, PyObject *);

@@ -637,7 +637,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
                                flags,
-                               (PyObject *)self, 0, 1);
+                               (PyObject *)self, 0);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

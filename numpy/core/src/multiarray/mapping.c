@@ -1428,7 +1428,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_BYTES(arr) + offset,
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                                    (PyObject *)arr, 0);
         if (*view == NULL) {
             return 0;
         }
@@ -1559,7 +1559,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                                     PyArray_STRIDES(arr),
                                     PyArray_DATA(arr),
                                     PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                                    (PyObject *)arr, 0);
         if (*view == NULL) {
             return 0;
         }

@@ -899,8 +899,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                          npy_intp *dims, npy_intp *strides, void *data,
-                         int flags, PyObject *obj, int zeroed,
-                         int allow_emptystring)
+                         int flags, PyObject *obj, int zeroed)
 {
     PyArrayObject_fields *fa;
     int i, is_empty;
@@ -919,8 +918,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                                          newstrides, nd);
         ret = PyArray_NewFromDescr_int(subtype, descr, nd, newdims,
                                        newstrides,
-                                       data, flags, obj, zeroed,
-                                       allow_emptystring);
+                                       data, flags, obj, zeroed);
         return ret;
     }
 
@@ -1148,7 +1146,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
                                     dims, strides, data,
-                                    flags, obj, 0, 0);
+                                    flags, obj, 0);
 }
 
 /*NUMPY_API
@@ -2851,7 +2849,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
                                                     type,
                                                     nd, dims,
                                                     NULL, NULL,
-                                                    is_f_order, NULL, 1, 0);
+                                                    is_f_order, NULL, 1);
 
     if (ret == NULL) {
         return NULL;
@@ -3413,7 +3411,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
                                         dtype,
                                         1, &num,
                                         NULL, NULL,
-                                        0, NULL, 0, 1);
+                                        0, NULL, 0);
     }
     if ((sep == NULL) || (strlen(sep) == 0)) {
         ret = array_fromfile_binary(fp, dtype, num, &nread);

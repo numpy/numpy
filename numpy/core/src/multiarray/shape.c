@@ -270,7 +270,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                                        ndim, dimensions,
                                        strides,
                                        PyArray_DATA(self),
-                                       flags, (PyObject *)self, 0, 1);
+                                       flags, (PyObject *)self, 0);
 
     if (ret == NULL) {
         goto fail;

@@ -592,7 +592,7 @@ wrap_copy_swap_function(int aligned,
      */
     Py_INCREF(dtype);
     data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type, dtype,
-                            1, &shape, NULL, NULL, 0, NULL, 0, 1);
+                            1, &shape, NULL, NULL, 0, NULL, 0);
     if (data->arr == NULL) {
         PyArray_free(data);
         return NPY_FAIL;
@@ -1448,7 +1448,7 @@ get_nbo_cast_transfer_function(int aligned,
         }
     }
     data->aip = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
-                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
+                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0);
     if (data->aip == NULL) {
         PyArray_free(data);
         return NPY_FAIL;
@@ -1472,7 +1472,7 @@ get_nbo_cast_transfer_function(int aligned,
         }
     }
     data->aop = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
-                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
+                            tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
         PyArray_free(data);

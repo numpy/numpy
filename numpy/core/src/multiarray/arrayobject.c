@@ -1465,7 +1465,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      (int)dims.len,
                                      dims.ptr,
                                      strides.ptr, NULL, is_f_order, NULL,
-                                     0, 1);
+                                     0);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1502,7 +1502,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      dims.len, dims.ptr,
                                      strides.ptr,
                                      offset + (char *)buffer.ptr,
-                                     buffer.flags, NULL, 0, 1);
+                                     buffer.flags, NULL, 0);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
