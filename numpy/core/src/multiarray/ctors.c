@@ -937,7 +937,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
-        } else if (PyDataType_ISSTRING(descr) && !allow_emptystring) {
+        }
+        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
+                 data == NULL) {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;

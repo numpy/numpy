@@ -1073,6 +1073,9 @@ class TestStructured(TestCase):
         xx = x['S'].reshape((2, 2))
         assert_equal(xx.itemsize, 0)
         assert_equal(xx, [[b'', b''], [b'', b'']])
+        # check for no uninitialized memory due to viewing S0 array
+        assert_equal(xx[:].dtype, xx.dtype)
+        assert_array_equal(eval(repr(xx), dict(array=np.array)), xx)
 
         b = io.BytesIO()
         np.save(b, xx)
