@@ -88,18 +88,23 @@ class NDArrayOperatorsMixin(object):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 out = kwargs.get('out', ())
                 for x in inputs + out:
-                    # Only support operations with instances of _HANDLED_TYPES
-                    # and superclass instances of this type
+                    # Only support operations with instances of _HANDLED_TYPES,
+                    # or instances of ArrayLike that are superclasses of this
+                    # object's type.
                     if not (isinstance(x, self._HANDLED_TYPES) or
-                            isinstance(self, type(x))):
+                            (isinstance(x, ArrayLike) and
+                             isinstance(self, type(x)))):
                         return NotImplemented
 
-                # Defer to the implementation of the ufunc on unwrapped values
-                inputs = tuple(x.value if isinstance(self, type(x)) else x
+                # Defer to the implementation of the ufunc on unwrapped values.
+                # Use ArrayLike instead of type(self) for isinstance to allow
+                # subclasses that don't override __array_ufunc__ to handle
+                # ArrayLike objects.
+                inputs = tuple(x.value if isinstance(x, ArrayLike) else x
                                for x in inputs)
                 if out:
                     kwargs['out'] = tuple(
-                        x.value if isinstance(self, type(x)) else x
+                        x.value if isinstance(x, ArrayLike) else x
                         for x in out)
                 result = getattr(ufunc, method)(*inputs, **kwargs)
 
