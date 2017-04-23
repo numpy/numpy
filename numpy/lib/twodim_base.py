@@ -569,9 +569,9 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         The bi-dimensional histogram of samples `x` and `y`. Values in `x`
         are histogrammed along the first dimension and values in `y` are
         histogrammed along the second dimension.
-    xedges : ndarray, shape(nx,)
+    xedges : ndarray, shape(nx+1,)
         The bin edges along the first dimension.
-    yedges : ndarray, shape(ny,)
+    yedges : ndarray, shape(ny+1,)
         The bin edges along the second dimension.
 
     See Also
