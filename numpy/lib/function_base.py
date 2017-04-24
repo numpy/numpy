@@ -653,24 +653,25 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         weights = weights.ravel()
     a = a.ravel()
 
-    # Do not modify the original value of range so we can check for `None`
-    if range is None:
-        if a.size == 0:
-            # handle empty arrays. Can't determine range, so use 0-1.
-            mn, mx = 0.0, 1.0
+    if not iterable(bins):
+        # Do not modify the original value of range so we can check for `None`
+        if range is None:
+            if a.size == 0:
+                # handle empty arrays. Can't determine range, so use 0-1.
+                mn, mx = 0.0, 1.0
+            else:
+                mn, mx = a.min() + 0.0, a.max() + 0.0
         else:
-            mn, mx = a.min() + 0.0, a.max() + 0.0
-    else:
-        mn, mx = [mi + 0.0 for mi in range]
-    if mn > mx:
-        raise ValueError(
-            'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([mn, mx])):
-        raise ValueError(
-            'range parameter must be finite.')
-    if mn == mx:
-        mn -= 0.5
-        mx += 0.5
+            mn, mx = [mi + 0.0 for mi in range]
+        if mn > mx:
+            raise ValueError(
+                'max must be larger than min in range parameter.')
+        if not np.all(np.isfinite([mn, mx])):
+            raise ValueError(
+                'range parameter must be finite.')
+        if mn == mx:
+            mn -= 0.5
+            mx += 0.5
 
     if isinstance(bins, basestring):
         # if `bins` is a string for an automatic method,
