@@ -338,7 +338,6 @@ gentype_str(PyObject *self)
     return ret;
 }
 
-
 static PyObject *
 gentype_repr(PyObject *self)
 {
@@ -351,6 +350,20 @@ gentype_repr(PyObject *self)
         Py_DECREF(arr);
     }
     return ret;
+}
+
+static PyObject *
+genint_type_str(PyObject *self)
+{
+    PyObject  *item, *item_str;
+    item = gentype_generic_method(self, NULL, NULL, "item");
+    if (item == NULL) {
+        return NULL;
+    }
+
+    item_str = PyObject_Str(item);
+    Py_DECREF(item);
+    return item_str;
 }
 
 /*
@@ -4184,6 +4197,19 @@ initialize_numeric_types(void)
     PyTimedeltaArrType_Type.tp_@name@ = timedeltatype_@name@;
 
     /**end repeat**/
+
+
+    /**begin repeat
+     * #Type = Bool, Byte, UByte, Short, UShort, Int, UInt, Long,
+     *         ULong, LongLong, ULongLong#
+     */
+
+    /* both str/repr use genint_type_str to avoid trailing "L" of longs */
+    Py@Type@ArrType_Type.tp_str = genint_type_str;
+    Py@Type@ArrType_Type.tp_repr = genint_type_str;
+
+    /**end repeat**/
+
 
     PyHalfArrType_Type.tp_print = halftype_print;
     PyFloatArrType_Type.tp_print = floattype_print;
