@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 import warnings
+import fnmatch
 import itertools
 
 from numpy.testing.utils import _gen_alignment_data
@@ -11,8 +12,9 @@ from numpy.core import umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    dec, assert_allclose, assert_no_warnings, suppress_warnings
+    assert_raises_regex, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
+    suppress_warnings
 )
 
 
@@ -1895,6 +1897,22 @@ class TestSpecialMethods(TestCase):
         assert_raises(ValueError, np.negative, 1, out=a)
         assert_raises(ValueError, np.negative, a)
         assert_raises(ValueError, np.divide, 1., a)
+
+    def test_ufunc_override_not_implemented(self):
+
+        class A(object):
+            __array_ufunc__ = None
+
+        msg = ("operand type(s) do not implement __array_ufunc__("
+               "<ufunc 'negative'>, '__call__', <*>): 'A'")
+        with assert_raises_regex(TypeError, fnmatch.translate(msg)):
+            np.negative(A())
+
+        msg = ("operand type(s) do not implement __array_ufunc__("
+               "<ufunc 'add'>, '__call__', <*>, <object *>, out=(1,)): "
+               "'A', 'object', 'int'")
+        with assert_raises_regex(TypeError, fnmatch.translate(msg)):
+            np.add(A(), object(), out=1)
 
     def test_gufunc_override(self):
         # gufunc are just ufunc instances, but follow a different path,
