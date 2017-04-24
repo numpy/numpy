@@ -1936,7 +1936,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
-    return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
+    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
 
 def set_string_function(f, repr=True):
