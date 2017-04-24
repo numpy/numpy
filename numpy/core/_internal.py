@@ -645,3 +645,15 @@ class AxisError(ValueError, IndexError):
                 msg = "{}: {}".format(msg_prefix, msg)
 
         super(AxisError, self).__init__(msg)
+
+
+def array_ufunc_errmsg_formatter(ufunc, method, *inputs, **kwargs):
+    """ Format the error message for when __array_ufunc__ gives up. """
+    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
+                            ['{}={!r}'.format(k, v)
+                             for k, v in kwargs.items()])
+    args = inputs + kwargs.get('out', ())
+    types_string = ', '.join(repr(type(arg).__name__) for arg in args)
+    return ('operand type(s) do not implement __array_ufunc__'
+            '({!r}, {!r}, {}): {}'
+            .format(ufunc, method, args_string, types_string))

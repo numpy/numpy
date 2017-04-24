@@ -353,7 +353,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         out = PyDict_GetItemString(normal_kwds, "out");
         if (out != NULL) {
             int nout = ufunc->nout;
-            
+
             if (PyTuple_Check(out)) {
                 int all_none = 1;
 
@@ -528,8 +528,20 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         /* Check if there is a method left to call */
         if (!override_obj) {
             /* No acceptable override found. */
-            PyErr_SetString(PyExc_TypeError,
-                            "__array_ufunc__ not implemented for this type.");
+            static PyObject *errmsg_formatter = NULL;
+            PyObject *errmsg;
+
+            npy_cache_import("numpy.core._internal",
+                             "array_ufunc_errmsg_formatter",
+                             &errmsg_formatter);
+            if (errmsg_formatter != NULL) {
+                errmsg = PyObject_Call(errmsg_formatter, override_args,
+                                       normal_kwds);
+                if (errmsg != NULL) {
+                    PyErr_SetObject(PyExc_TypeError, errmsg);
+                    Py_DECREF(errmsg);
+                }
+            }
             goto fail;
         }
 
