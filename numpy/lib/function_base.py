@@ -1874,6 +1874,23 @@ def diff(a, n=1, axis=-1):
     will contain `False` when consecutive elements are the same and
     `True` when they differ.
 
+    For unsigned integer arrays, the results will also be unsigned. This should
+    not be surprising, as the result is consistent with calculating the
+    difference directly:
+
+    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
+    >>> np.diff(u8_arr)
+    array([255], dtype=uint8)
+    >>> u8_arr[1,...] - u8_arr[0,...]
+    array(255, np.uint8)
+
+    If this is not desirable, then the array should be cast to a larger integer
+    type first:
+
+    >>> i16_arr = u8_arr.astype(np.int16)
+    >>> np.diff(i16_arr)
+    array([-1], dtype=int16)
+
     Examples
     --------
     >>> x = np.array([1, 2, 4, 7, 0])
