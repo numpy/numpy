@@ -1,0 +1,528 @@
+#define _UMATHMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define NO_IMPORT_ARRAY
+#include "npy_config.h"
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/halffloat.h"
+#include "ufunc_type_resolution.h"
+#include "logical_gufuncs.h"
+#include "lowlevel_strided_loops.h"
+
+
+/* define the basic real version similar to the macro for complex numbers */
+#define REQ(a,b) ((a) == (b))
+#define RNE(a,b) ((a) != (b))
+#define RLT(a,b) ((a) < (b))
+#define RLE(a,b) ((a) <= (b))
+#define RGT(a,b) ((a) > (b))
+#define RGE(a,b) ((a) >= (b))
+
+#define HEQ(a,b) (npy_half_eq(a, b))
+#define HNE(a,b) (npy_half_ne(a, b))
+#define HLT(a,b) (npy_half_lt(a, b))
+#define HLE(a,b) (npy_half_le(a, b))
+#define HGT(a,b) (npy_half_gt(a, b))
+#define HGE(a,b) (npy_half_ge(a, b))
+
+/* create the family of functions using a template  */
+
+#define BLOCK_SIZE 32
+
+/**begin repeat
+ * #TYPE = npy_bool,npy_int8,npy_uint8,npy_int16,npy_uint16,
+ *         npy_int32,npy_uint32,npy_int64,npy_uint64,
+ *         npy_half,npy_float,npy_double,npy_longdouble,
+ *         npy_cfloat,npy_cdouble,npy_clongdouble#
+ * #OP_PREFIX = R,R,R,R,R,R,R,R,R,H,R,R,R,PyArray_C,PyArray_C,PyArray_C#
+ * #ISBOOL = != 0,,,,,,,,,,,,,,,#
+ * #VECTORIZE = 1*9,0,1,1,0,1,1,0#
+ */
+
+/**begin repeat1
+ * #OP = EQ,NE,LT,LE,GT,GE#
+ * #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
+ */
+
+/**begin repeat2
+ * #fname = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
+
+/**begin repeat3
+ * #isa = , _avx#
+ * #CHK = 1, defined HAVE_ATTRIBUTE_TARGET_AVX && defined DO_VECTORIZE#
+ * #ATTR = , NPY_GCC_TARGET_AVX#
+ */
+#if @VECTORIZE@
+#define DO_VECTORIZE
+#endif
+
+#if @CHK@
+#define HAVE_@TYPE@_@fname@_@OPNAME@@isa@
+static NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_@fname@_@OPNAME@@isa@(char **args, npy_intp *dimensions,
+                             npy_intp* steps, void* data)
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        i = 0;
+        /* main loop in chunks with auto vectorize simd instructions */
+        if (@VECTORIZE@ && a_I == sizeof(@TYPE@) && b_I == sizeof(@TYPE@)) {
+            for (i=0; i < npy_blocked_end(0, 1, BLOCK_SIZE, nI);
+                 i+=BLOCK_SIZE) {
+                unsigned int true_count = 0, j;
+                for (j=0 ; j<BLOCK_SIZE ; j++){
+                    @TYPE@ a = (*(@TYPE@ *)a_i) @ISBOOL@;
+                    @TYPE@ b = (*(@TYPE@ *)b_i) @ISBOOL@;
+                    true_count += @INV@@OP_PREFIX@@OP@(a, b);
+                    a_i += a_I;
+                    b_i += b_I;
+                }
+                if (true_count != BLOCK_SIZE) {
+                    *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                    i = nI;
+                    break;
+                }
+            }
+        }
+
+        /* check remaining elements */
+        for ( ; i < nI; i++) {
+            @TYPE@ a = (*(@TYPE@ *)a_i) @ISBOOL@;
+            @TYPE@ b = (*(@TYPE@ *)b_i) @ISBOOL@;
+            if (@INV@@OP_PREFIX@@OP@(a, b)) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+#endif
+
+#undef DO_VECTORIZE
+
+/**end repeat3**/
+/**end repeat2**/
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = npy_datetime, npy_timedelta#
+ */
+
+/**begin repeat1
+ * #NAME = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
+
+/**begin repeat2
+ * #OPNAME = equal,less,less_equal,greater,greater_equal#
+ * #OP = ==,<,<=,>,>=#
+ */
+
+static  void
+@TYPE@_@NAME@_@OPNAME@(char **args, npy_intp *dimensions,
+                       npy_intp* steps, void* data)
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            @TYPE@ a = *(@TYPE@ *)a_i;
+            @TYPE@ b = *(@TYPE@ *)b_i;
+            npy_bool res = @INV@(a @OP@ b);
+
+            if ((a == NPY_DATETIME_NAT || b == NPY_DATETIME_NAT) && @INV@res) {
+                NPY_ALLOW_C_API_DEF;
+                NPY_ALLOW_C_API;
+                /* 2016-01-18, 1.11 */
+                if (DEPRECATE_FUTUREWARNING(
+                                "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
+                                "will always be False.") < 0) {
+                    NPY_DISABLE_C_API;
+                    return;
+                }
+                NPY_DISABLE_C_API;
+            }
+
+            if (res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+
+/**end repeat2**/
+
+static  void
+@TYPE@_@NAME@_not_equal(char **args, npy_intp *dimensions,
+                        npy_intp* steps, void* data)
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            @TYPE@ a = *(@TYPE@ *)a_i;
+            @TYPE@ b = *(@TYPE@ *)b_i;
+            npy_bool res = @INV@(a != b);
+
+            if (a == NPY_DATETIME_NAT && b == NPY_DATETIME_NAT) {
+                NPY_ALLOW_C_API_DEF
+                NPY_ALLOW_C_API;
+                /* 2016-01-18, 1.11 */
+                if (DEPRECATE_FUTUREWARNING(
+                                    "In the future, NAT != NAT will be True "
+                                    "rather than False.") < 0) {
+                    NPY_DISABLE_C_API;
+                    return;
+                }
+                NPY_DISABLE_C_API;
+            }
+
+            if (res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #NAME = all,any#
+ * #ALL_OR_ANY = NPY_TRUE,NPY_FALSE#
+ * #INV = ,!#
+ */
+
+/**begin repeat1
+ * #OPNAME = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP = EQ, NE, GT, GE, LT, LE#
+ */
+NPY_NO_EXPORT void
+OBJECT_@NAME@_@OPNAME@(char **args, npy_intp *dimensions,
+                       npy_intp *steps, void *NPY_UNUSED(func))
+{
+    npy_intp n;
+    npy_intp N = dimensions[0], nI = dimensions[1];
+    char *a_n = args[0], *b_n = args[1], *c_n = args[2];
+    npy_intp a_N = steps[0], b_N = steps[1], c_N = steps[2];
+    npy_intp a_I = steps[3], b_I = steps[4];
+
+    for (n = 0; n < N; n++) {
+        npy_intp i;
+        char * a_i = a_n;
+        char * b_i = b_n;
+
+        *((npy_bool *)c_n) = @ALL_OR_ANY@;
+
+        for (i=0; i < nI; i++) {
+            int res;
+            PyObject *ret_obj;
+            PyObject * a = *(PyObject **)a_i;
+            PyObject * b = *(PyObject **)b_i;
+
+            a = a ? a : Py_None;
+            b = b ? b : Py_None;
+
+            /*
+             * Do not use RichCompareBool because it includes an identity check
+             * for == and !=. This is wrong for elementwise behaviour, since it
+             * means that NaN can be equal to NaN and an array is equal to
+             * itself.
+             */
+            ret_obj = PyObject_RichCompare(a, b, Py_@OP@);
+            if (ret_obj == NULL) {
+                return;
+            }
+            res = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (res == -1) {
+                return;
+            }
+
+            if (@INV@res) {
+                a_i += a_I;
+                b_i += b_I;
+            } else {
+                *((npy_bool *)c_n) = !@ALL_OR_ANY@;
+                break;
+            }
+        }
+
+        a_n += a_N;
+        b_n += b_N;
+        c_n += c_N;
+    }
+}
+/**end repeat**/
+
+/* create type arrays for each gufunc, which are all identical */
+static char types[] = {NPY_BOOL, NPY_BOOL, NPY_BOOL,
+                       NPY_BYTE, NPY_BYTE, NPY_BOOL,
+                       NPY_UBYTE, NPY_UBYTE, NPY_BOOL,
+                       NPY_SHORT, NPY_SHORT, NPY_BOOL,
+                       NPY_USHORT, NPY_USHORT, NPY_BOOL,
+
+                       NPY_INT, NPY_INT, NPY_BOOL,
+                       NPY_UINT, NPY_UINT, NPY_BOOL,
+                       NPY_LONG, NPY_LONG, NPY_BOOL,
+                       NPY_ULONG, NPY_ULONG, NPY_BOOL,
+
+                       NPY_LONGLONG, NPY_LONGLONG, NPY_BOOL,
+                       NPY_ULONGLONG, NPY_ULONGLONG, NPY_BOOL,
+                       NPY_HALF, NPY_HALF, NPY_BOOL,
+                       NPY_FLOAT, NPY_FLOAT, NPY_BOOL,
+                       NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL,
+
+                       NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_BOOL,
+                       NPY_CFLOAT, NPY_CFLOAT, NPY_BOOL,
+                       NPY_CDOUBLE, NPY_CDOUBLE, NPY_BOOL,
+                       NPY_CLONGDOUBLE, NPY_CLONGDOUBLE, NPY_BOOL,
+
+                       NPY_OBJECT, NPY_OBJECT, NPY_BOOL,
+                       NPY_DATETIME, NPY_DATETIME, NPY_BOOL,
+                       NPY_TIMEDELTA, NPY_TIMEDELTA, NPY_BOOL};
+
+
+/* create array of nulls for "data" for each gufunc type */
+
+static void *array_of_nulls[] = {
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL,
+    (void *)NULL
+};
+
+
+/* define docstrings */
+
+/**begin repeat
+* #name = equal,not_equal,less,less_equal,greater,greater_equal,
+*         equal,not_equal,less,less_equal,greater,greater_equal#
+* #prefix = all*6, any*6#
+* #op = ==,!=,<,<=,>,>=,==,!=,<,<=,>,>=#
+* #res1 = True,False,False,True,False,True,
+*         True,False,False,True,False,True#
+* #res2 = array([ True False  True]),
+*         array([False  True False]),
+*         array([False  True False]),
+*         array([ True  True  True]),
+*         array([False False False]),
+*         array([ True False  True]),
+*         array([ True False  True]),
+*         array([False  True False]),
+*         array([False  True False]),
+*         array([ True  True  True]),
+*         array([False False False]),
+*         array([ True False  True])#
+*/
+
+static char const * const @prefix@_@name@_doc =
+    "Return True if x1 @op@ x2 for @prefix@ elements along the last axis, "
+    "False\n"
+    "otherwise.  Similar to (x1 @op@ x2).@prefix@(axis=-1), except the last "
+    "dimension\n"
+    "of x1 and x2 must be equal and greater than 1.\n"
+    "\n"
+    "Parameters\n"
+    "----------\n"
+    "x1, x2 : array_like\n"
+    "    Input arrays of the same shape.\n"
+    "\n"
+    "Returns\n"
+    "-------\n"
+    "out : ndarray or bool\n"
+    "   Output array of bools, or a single bool if x1 and x2 are 1D.\n"
+    "\n"
+    "\n"
+    "Examples\n"
+    "-------\n"
+    ">>> np.@prefix@_@name@(np.arange(3), np.arange(3))\n"
+    "@res1@\n"
+    ">>> np.@prefix@_@name@([[1, 2], [0, 0], [1, 2]], [1, 2])\n"
+    "@res2@";
+
+/**end repeat**/
+
+/* function to create and register all gufuncs */
+
+/*
+ * define bad integer names to sized names to assign long and longlong to the
+ * int64 functions (or int and long to int32)
+ * this avoids code duplication
+ */
+#define NPY_FUNCNAME__(type, name, suffix) type##_##name##suffix
+#define NPY_FUNCNAME_(type, name, suffix) NPY_FUNCNAME__(type, name, suffix)
+#define NPY_FUNCNAME(type, name, suffix) NPY_FUNCNAME_(type, name, suffix)
+
+/**begin repeat
+ * #name = byte, short, int, long, longlong#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG#
+ */
+/**begin repeat1
+ * #SIZE = 1, 2, 4, 8#
+ * #BITS = 8, 16, 32, 64#
+ */
+#if NPY_SIZEOF_@NAME@ == @SIZE@
+#define npy_@name@ npy_int@BITS@
+#define npy_u@name@ npy_uint@BITS@
+
+/**begin repeat2
+ * #OPNAME = equal,not_equal,less,less_equal,greater,greater_equal#
+ */
+/**begin repeat3
+ * #fname = all,any#
+ */
+#ifdef HAVE_npy_int@BITS@_@fname@_@OPNAME@_avx
+#define HAVE_npy_@name@_@fname@_@OPNAME@_avx
+#endif
+#ifdef HAVE_npy_uint@BITS@_@fname@_@OPNAME@_avx
+#define HAVE_npy_u@name@_@fname@_@OPNAME@_avx
+#endif
+/**end repeat3**/
+/**end repeat2**/
+
+#endif
+/**end repeat1**/
+/**end repeat**/
+
+void InitLogicalGufuncs(PyObject *dictionary,
+                        PyUFunc_FromFuncAndDataAndSignature_t createPyUFunc)
+{
+    PyObject *f;
+
+/**begin repeat
+ * #NAME = all_equal,all_not_equal,all_less,all_less_equal,all_greater,
+ *         all_greater_equal,any_equal,any_not_equal,any_less,any_less_equal,
+ *         any_greater,any_greater_equal#
+ */
+
+    { /* open bracket surrounding inner repeat */
+
+        static PyUFuncGenericFunction @NAME@_funcs_base[] = {
+
+/**begin repeat1
+ * #TYPE = npy_bool,npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,
+ *         npy_long,npy_ulong,npy_longlong,npy_ulonglong,
+ *         npy_half,npy_float,npy_double,
+ *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+ */
+            NPY_FUNCNAME(@TYPE@,@NAME@,),
+
+/**end repeat1**/
+            OBJECT_@NAME@,
+            npy_datetime_@NAME@,
+            npy_timedelta_@NAME@
+        };
+        static PyUFuncGenericFunction @NAME@_funcs_avx[] = {
+
+/**begin repeat1
+ * #TYPE = npy_bool,npy_byte,npy_ubyte,npy_short,npy_ushort,npy_int,npy_uint,
+ *         npy_long,npy_ulong,npy_longlong,npy_ulonglong,
+ *         npy_half,npy_float,npy_double,
+ *         npy_longdouble,npy_cfloat,npy_cdouble,npy_clongdouble#
+ */
+#ifdef HAVE_@TYPE@_@NAME@_avx
+            NPY_FUNCNAME(@TYPE@,@NAME@,_avx),
+#else
+            NPY_FUNCNAME(@TYPE@,@NAME@,),
+#endif
+
+/**end repeat1**/
+            OBJECT_@NAME@,
+            npy_datetime_@NAME@,
+            npy_timedelta_@NAME@
+        };
+
+        PyUFuncGenericFunction * funcs = @NAME@_funcs_base;
+
+#ifdef HAVE_ATTRIBUTE_TARGET_AVX
+        if (NPY_CPU_SUPPORTS_AVX) {
+            funcs = @NAME@_funcs_avx;
+        }
+#endif
+
+        assert(sizeof(array_of_nulls) / sizeof(void*) == sizeof(types) / 3);
+        assert(sizeof(@NAME@_funcs_base) / sizeof(void*) == sizeof(types) / 3);
+        assert(sizeof(@NAME@_funcs_avx) / sizeof(void*) == sizeof(types) / 3);
+        f = createPyUFunc(funcs,
+                          array_of_nulls,
+                          types,
+                          sizeof(types) / 3,  /* number of types */
+                          2,                  /* number of inputs */
+                          1,                  /* number of outputs */
+                          PyUFunc_None,
+                          "@NAME@",
+                          (char*) @NAME@_doc,
+                          0,              /* unused */
+                          "(i),(i)->()");
+
+        ((PyUFuncObject *)f)->type_resolver =
+            &PyUFunc_SimpleBinaryComparisonTypeResolver;
+        PyDict_SetItemString(dictionary, "@NAME@", f);
+        Py_DECREF(f);
+
+    }; /* close bracket surrounding inner repeat */
+
+/**end repeat**/
+}

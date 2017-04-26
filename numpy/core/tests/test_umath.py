@@ -179,6 +179,8 @@ class TestComparisons(TestCase):
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
         assert_raises(ValueError, np.equal, a, a)
+        assert_raises(ValueError, np.all_equal, a, a)
+        assert_raises(ValueError, np.any_equal, a, a)
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):
@@ -187,16 +189,22 @@ class TestComparisons(TestCase):
 
         a = np.array([FunkyType()])
         assert_raises(TypeError, np.equal, a, a)
+        assert_raises(TypeError, np.all_equal, a, a)
+        assert_raises(TypeError, np.any_equal, a, a)
 
         # Check identity doesn't override comparison mismatch.
         a = np.array([np.nan], dtype=object)
         assert_equal(np.equal(a, a), [False])
+        assert_equal(np.all_equal(a, a), False)
+        assert_equal(np.any_equal(a, a), False)
 
     def test_ignore_object_identity_in_not_equal(self):
         # Check error raised when comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
         assert_raises(ValueError, np.not_equal, a, a)
+        assert_raises(ValueError, np.all_not_equal, a, a)
+        assert_raises(ValueError, np.any_not_equal, a, a)
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):
@@ -205,10 +213,14 @@ class TestComparisons(TestCase):
 
         a = np.array([FunkyType()])
         assert_raises(TypeError, np.not_equal, a, a)
+        assert_raises(TypeError, np.all_not_equal, a, a)
+        assert_raises(TypeError, np.any_not_equal, a, a)
 
         # Check identity doesn't override comparison mismatch.
         a = np.array([np.nan], dtype=object)
         assert_equal(np.not_equal(a, a), [True])
+        assert_equal(np.all_not_equal(a, a), True)
+        assert_equal(np.any_not_equal(a, a), True)
 
 
 class TestDivision(TestCase):
