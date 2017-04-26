@@ -71,14 +71,15 @@ def fix(x, out=None):
     array([ 2.,  2., -2., -2.])
 
     """
-    x = nx.asanyarray(x)
-    y1 = nx.floor(x)
-    y2 = nx.ceil(x)
-    if out is None:
-        out = nx.asanyarray(y1)
-    out[...] = nx.where(x >= 0, y1, y2)
-    return out
+    # promote back to an array if flattened
+    res = nx.asanyarray(nx.ceil(x, out=out))
+    res = nx.floor(x, out=res, where=nx.greater_equal(x, 0))
 
+    # when no out argument is passed and no subclasses are involved, flatten
+    # scalars
+    if out is None and type(res) is nx.ndarray:
+        res = res[()]
+    return res
 
 @_deprecate_out_named_y
 def isposinf(x, out=None):
@@ -137,11 +138,7 @@ def isposinf(x, out=None):
     array([0, 0, 1])
 
     """
-    if y is None:
-        x = nx.asarray(x)
-        out = nx.empty(x.shape, dtype=nx.bool_)
-    nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
-    return out
+    return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
 
 
 @_deprecate_out_named_y
@@ -202,8 +199,4 @@ def isneginf(x, out=None):
     array([1, 0, 0])
 
     """
-    if out is None:
-        x = nx.asarray(x)
-        out = nx.empty(x.shape, dtype=nx.bool_)
-    nx.logical_and(nx.isinf(x), nx.signbit(x), out)
-    return out
+    return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
