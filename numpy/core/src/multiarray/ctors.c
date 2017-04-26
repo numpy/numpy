@@ -3831,10 +3831,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING
@@ -3859,10 +3861,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING
