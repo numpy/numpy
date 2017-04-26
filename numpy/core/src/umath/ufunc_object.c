@@ -1177,6 +1177,15 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         if (dtype == NULL) {
                             goto fail;
                         }
+                        if (value == Py_True) {
+                            /*
+                             * Optimization: where=True is the same as no
+                             * where argument. This lets us document it as a
+                             * default argument
+                             */
+                            bad_arg = 0;
+                            break;
+                        }
                         *out_wheremask = (PyArrayObject *)PyArray_FromAny(
                                                             value, dtype,
                                                             0, 0, 0, NULL);
