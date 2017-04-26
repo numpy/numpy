@@ -3,7 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal
+    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    assert_warns
     )
 
 
@@ -60,6 +61,12 @@ class TestUfunclike(TestCase):
         assert_array_equal(f, nx.array([1, -1]))
         assert_(isinstance(f, MyArray))
         assert_equal(f.metadata, 'foo')
+
+    def test_deprecated(self):
+        # NumPy 1.13.0, 2017-04-26
+        assert_warns(DeprecationWarning, ufl.fix, [1, 2], y=nx.empty(2))
+        assert_warns(DeprecationWarning, ufl.isposinf, [1, 2], y=nx.empty(2))
+        assert_warns(DeprecationWarning, ufl.isneginf, [1, 2], y=nx.empty(2))
 
 if __name__ == "__main__":
     run_module_suite()
