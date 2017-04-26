@@ -20,6 +20,10 @@ Dropped Support
 Deprecations
 ============
 
+* Calling ``np.fix``, ``np.isposinf``, and ``np.isneginf`` with ``f(x, y=out)``
+  is deprecated - the argument should be passed as ``f(x, out=out)``, which
+  matches other ufunc-like interfaces.
+
 
 Build System Changes
 ====================
