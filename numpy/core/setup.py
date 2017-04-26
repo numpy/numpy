@@ -20,6 +20,12 @@ from setup_common import *
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 
+# Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
+# bogus value for affected strides in order to help smoke out bad stride usage
+# when relaxed stride checking is enabled.
+NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
+NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -436,8 +442,13 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+
+            # Use bogus stride debug aid when relaxed strides are enabled
+            if NPY_RELAXED_STRIDES_DEBUG:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
             # Get long double representation
             if sys.platform != 'darwin':
@@ -541,6 +552,9 @@ def configuration(parent_package='',top_path=None):
 
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+
+            if NPY_RELAXED_STRIDES_DEBUG:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers=['inttypes.h']):
