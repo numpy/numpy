@@ -332,6 +332,13 @@ New ``positive`` ufunc
 This ufunc corresponds to unary `+`, but unlike `+` on an ndarray it will raise
 an error if array values do not support numeric operations.
 
+Better ``repr`` of object arrays
+--------------------------------
+Object arrays that contain themselves no longer cause a recursion error.
+
+Object arrays that contain ``list`` objects are now printed in a way that makes
+clear the difference between a 2d object array, and a 1d object array of lists.
+
 Changes
 =======
 
