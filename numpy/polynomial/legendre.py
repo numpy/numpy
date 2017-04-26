@@ -1507,9 +1507,6 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     .. [1] Wikipedia, "Curve fitting",
            http://en.wikipedia.org/wiki/Curve_fitting
 
-    Examples
-    --------
-
     """
     x = np.asarray(x) + 0.0
     y = np.asarray(y) + 0.0
