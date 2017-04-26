@@ -102,6 +102,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
             - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+            - 'object' : `np.object_` arrays
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
