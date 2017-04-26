@@ -4051,8 +4051,8 @@ class TestIO(TestCase):
     def test_io_open_buffered_fromfile(self):
         # gh-6632
         self.x.tofile(self.filename)
-        f = io.open(self.filename, 'rb', buffering=-1)
-        y = np.fromfile(f, dtype=self.dtype)
+        with io.open(self.filename, 'rb', buffering=-1) as f:
+            y = np.fromfile(f, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
     def test_file_position_after_fromfile(self):
