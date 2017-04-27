@@ -137,7 +137,7 @@ needs_right_binop_forward(PyObject *self, PyObject *other,
         return 0;
     }
     if ((!inplace_op && PyType_IsSubtype(Py_TYPE(other), Py_TYPE(self))) ||
-        !PyArray_Check(self)) {
+        (!PyArray_Check(self) && !PyArray_CheckScalar(self))) {
         /*
          * Bail out if Python would already have called the right-hand
          * operation.

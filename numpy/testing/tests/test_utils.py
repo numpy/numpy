@@ -1294,5 +1294,29 @@ def test_clear_and_catch_warnings_inherit():
     assert_equal(my_mod.__warningregistry__, {})
 
 
+class CustomArray(np.ndarray):
+    __numpy_ufunc__ = ""
+    def __radd__(self, a):
+        return a + 42
+    def __rmul__(self, a):
+        return a + 42
+
+
+class TestCustomArray(unittest.TestCase):
+    """Test of user arrays that inherent from ndarray"""
+
+    def test_radd(self):
+        res = np.int32(0) + CustomArray((1,))
+        self.assertEqual(res, 42)
+        res = np.array([0]) + CustomArray((1,))
+        self.assertEqual(res, 42)
+
+    def test_rmul(self):
+        res = np.int32(0) * CustomArray((1,))
+        self.assertEqual(res, 42)
+        res = np.array([0]) * CustomArray((1,))
+        self.assertEqual(res, 42)
+
+
 if __name__ == '__main__':
     run_module_suite()
