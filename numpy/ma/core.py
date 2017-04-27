@@ -3933,13 +3933,17 @@ class MaskedArray(ndarray):
 
     def _delegate_binop(self, other):
         # This emulates the logic in
-        # multiarray/number.c:PyArray_GenericBinaryFunction
-        if (not isinstance(other, np.ndarray)
-                and not hasattr(other, "__numpy_ufunc__")):
+        #     private/binop_override.h:forward_binop_should_defer
+        if isinstance(other, type(self)):
+            return False
+        array_ufunc = getattr(other, "__array_ufunc__", False)
+        if array_ufunc is False:
             other_priority = getattr(other, "__array_priority__", -1000000)
-            if self.__array_priority__ < other_priority:
-                return True
-        return False
+            return self.__array_priority__ < other_priority
+        else:
+            # If array_ufunc is not None, it will be called inside the ufunc;
+            # None explicitly tells us to not call the ufunc, i.e., defer.
+            return array_ufunc is None
 
     def _comparison(self, other, compare):
         """Compare self with other using operator.eq or operator.ne.

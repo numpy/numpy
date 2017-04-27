@@ -1008,6 +1008,48 @@ array_getarray(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
+array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
+    PyObject *result = NULL;
+
+    if (PyTuple_Size(args) < 2) {
+        PyErr_SetString(PyExc_TypeError,
+                        "__array_ufunc__ requires at least 2 arguments");
+        return NULL;
+    }
+    normal_args = PyTuple_GetSlice(args, 2, PyTuple_GET_SIZE(args));
+    if (normal_args == NULL) {
+        return NULL;
+    }
+    /* ndarray cannot handle overrides itself */
+    if (PyUFunc_WithOverride(normal_args, kwds, NULL)) {
+        result = Py_NotImplemented;
+        Py_INCREF(Py_NotImplemented);
+        goto cleanup;
+    }
+
+    ufunc = PyTuple_GET_ITEM(args, 0);
+    method_name = PyTuple_GET_ITEM(args, 1);
+    /*
+     * TODO(?): call into UFunc code at a later point, since here arguments are
+     * already normalized and we do not have to look for __array_ufunc__ again.
+     */
+    ufunc_method = PyObject_GetAttr(ufunc, method_name);
+    if (ufunc_method == NULL) {
+        goto cleanup;
+    }
+    result = PyObject_Call(ufunc_method, normal_args, kwds);
+    Py_DECREF(ufunc_method);
+
+cleanup:
+    Py_DECREF(normal_args);
+    /* no need to DECREF borrowed references ufunc and method_name */
+    return result;
+}
+
+
+static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
@@ -2030,11 +2072,7 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static PyUFuncObject *cached_npy_dot = NULL;
-    int errval;
-    PyObject *override = NULL;
-    PyObject *a = (PyObject *)self, *b, *o = Py_None;
-    PyObject *newargs;
+    PyObject *a = (PyObject *)self, *b, *o = NULL;
     PyArrayObject *ret;
     char* kwlist[] = {"b", "out", NULL };
 
@@ -2043,36 +2081,15 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (cached_npy_dot == NULL) {
-        PyObject *module = PyImport_ImportModule("numpy.core.multiarray");
-        cached_npy_dot = (PyUFuncObject*)PyDict_GetItemString(
-                                              PyModule_GetDict(module), "dot");
-
-        Py_INCREF(cached_npy_dot);
-        Py_DECREF(module);
-    }
-
-    if ((newargs = PyTuple_Pack(3, a, b, o)) == NULL) {
-        return NULL;
-    }
-    errval = PyUFunc_CheckOverride(cached_npy_dot, "__call__",
-                                   newargs, NULL, &override, 2);
-    Py_DECREF(newargs);
-
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
-    }
-
-    if (o == Py_None) {
-        o = NULL;
-    }
-    if (o != NULL && !PyArray_Check(o)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "'out' must be an array");
-        return NULL;
+    if (o != NULL) {
+        if (o == Py_None) {
+            o = NULL;
+        }
+        else if (!PyArray_Check(o)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "'out' must be an array");
+            return NULL;
+        }
     }
     ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
     return PyArray_Return(ret);
@@ -2471,6 +2488,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
         METH_VARARGS, NULL},
+    {"__array_ufunc__",
+        (PyCFunction)array_ufunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
 
     /* for the sys module */
     {"__sizeof__",
