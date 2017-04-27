@@ -152,6 +152,18 @@ class TestNanFunctions_MinMax(TestCase):
                 assert_(res != np.nan)
                 assert_(len(w) == 0)
 
+    def test_object_array(self):
+        arr = np.array([[1.0, 2.0], [np.nan, 4.0], [np.nan, np.nan]], dtype=object)
+        assert_equal(np.nanmin(arr), 1.0)
+        assert_equal(np.nanmin(arr, axis=0), [1.0, 2.0])
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            # assert_equal does not work on object arrays of nan
+            assert_equal(list(np.nanmin(arr, axis=1)), [1.0, 4.0, np.nan])
+            assert_(len(w) == 1, 'no warning raised')
+            assert_(issubclass(w[0].category, RuntimeWarning))
+
 
 class TestNanFunctions_ArgminArgmax(TestCase):
 
