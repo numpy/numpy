@@ -5,53 +5,54 @@ import sys
 
 from numpy.core import umath as um
 
-# None of this module should be exposed in top-level NumPy module.
+# Nothing should be exposed in the top-level NumPy module.
 __all__ = []
 
 
+def _disables_array_ufunc(obj):
+    """True when __array_ufunc__ is set to None."""
+    try:
+        return obj.__array_ufunc__ is None
+    except AttributeError:
+        return False
+
+
 def _binary_method(ufunc):
+    """Implement a forward binary method with a ufunc, e.g., __add__."""
     def func(self, other):
-        try:
-            if other.__array_ufunc__ is None:
-                return NotImplemented
-        except AttributeError:
-            pass
-        return self.__array_ufunc__(ufunc, '__call__', self, other)
+        if _disables_array_ufunc(other):
+            return NotImplemented
+        return ufunc(self, other)
     return func
 
 
 def _reflected_binary_method(ufunc):
+    """Implement a reflected binary method with a ufunc, e.g., __radd__."""
     def func(self, other):
-        try:
-            if other.__array_ufunc__ is None:
-                return NotImplemented
-        except AttributeError:
-            pass
-        return self.__array_ufunc__(ufunc, '__call__', other, self)
+        if _disables_array_ufunc(other):
+            return NotImplemented
+        return ufunc(other, self)
     return func
 
 
 def _inplace_binary_method(ufunc):
+    """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
     def func(self, other):
-        result = self.__array_ufunc__(
-            ufunc, '__call__', self, other, out=(self,))
-        if result is NotImplemented:
-            raise TypeError('unsupported operand types for in-place '
-                            'arithmetic: %s and %s'
-                            % (type(self).__name__, type(other).__name__))
-        return result
+        return ufunc(self, other, out=(self,))
     return func
 
 
 def _numeric_methods(ufunc):
+    """Implement forward, reflected and inplace binary methods with a ufunc."""
     return (_binary_method(ufunc),
             _reflected_binary_method(ufunc),
             _inplace_binary_method(ufunc))
 
 
 def _unary_method(ufunc):
+    """Implement a unary special method with a ufunc."""
     def func(self):
-        return self.__array_ufunc__(ufunc, '__call__', self)
+        return ufunc(self)
     return func
 
 
@@ -88,18 +89,14 @@ class NDArrayOperatorsMixin(object):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 out = kwargs.get('out', ())
                 for x in inputs + out:
-                    # Only support operations with instances of _HANDLED_TYPES,
-                    # or instances of ArrayLike that are superclasses of this
-                    # object's type.
-                    if not (isinstance(x, self._HANDLED_TYPES) or
-                            (isinstance(x, ArrayLike) and
-                             isinstance(self, type(x)))):
+                    # Only support operations with instances of _HANDLED_TYPES.
+                    # Use ArrayLike instead of type(self) for isinstance to
+                    # allow subclasses that don't override __array_ufunc__ to
+                    # handle ArrayLike objects.
+                    if not isinstance(x, self._HANDLED_TYPES + (ArrayLike,)):
                         return NotImplemented
 
                 # Defer to the implementation of the ufunc on unwrapped values.
-                # Use ArrayLike instead of type(self) for isinstance to allow
-                # subclasses that don't override __array_ufunc__ to handle
-                # ArrayLike objects.
                 inputs = tuple(x.value if isinstance(x, ArrayLike) else x
                                for x in inputs)
                 if out:
@@ -138,6 +135,8 @@ class NDArrayOperatorsMixin(object):
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
     """
+    # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
+    # overrides NEP.
 
     # comparisons don't have reflected and in-place versions
     __lt__ = _binary_method(um.less)

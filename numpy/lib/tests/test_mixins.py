@@ -26,18 +26,14 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         out = kwargs.get('out', ())
         for x in inputs + out:
-            # Only support operations with instances of _HANDLED_TYPES,
-            # or instances of ArrayLike that are superclasses of this
-            # object's type.
-            if not (isinstance(x, self._HANDLED_TYPES) or
-                    (isinstance(x, ArrayLike) and
-                     isinstance(self, type(x)))):
+            # Only support operations with instances of _HANDLED_TYPES.
+            # Use ArrayLike instead of type(self) for isinstance to
+            # allow subclasses that don't override __array_ufunc__ to
+            # handle ArrayLike objects.
+            if not isinstance(x, self._HANDLED_TYPES + (ArrayLike,)):
                 return NotImplemented
 
         # Defer to the implementation of the ufunc on unwrapped values.
-        # Use ArrayLike instead of type(self) for isinstance to allow
-        # subclasses that don't override __array_ufunc__ to handle
-        # ArrayLike objects.
         inputs = tuple(x.value if isinstance(x, ArrayLike) else x
                        for x in inputs)
         if out:
@@ -136,11 +132,12 @@ class TestNDArrayOperatorsMixin(TestCase):
     def test_object(self):
         x = ArrayLike(0)
         obj = object()
-        assert_equal(x.__add__(obj), NotImplemented)
         with assert_raises(TypeError):
             x + obj
         with assert_raises(TypeError):
             obj + x
+        with assert_raises(TypeError):
+            x += obj
 
     def test_unary_methods(self):
         array = np.array([-1, 0, 1, 2])
