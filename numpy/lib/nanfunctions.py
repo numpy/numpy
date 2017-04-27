@@ -61,14 +61,10 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    is_new = not isinstance(a, np.ndarray)
-    if is_new:
-        a = np.array(a)
+    a = np.array(a, subok=True, copy=True)
+
     if not issubclass(a.dtype.type, np.inexact):
         return a, None
-    if not is_new:
-        # need copy
-        a = np.array(a, subok=True)
 
     mask = np.isnan(a)
     np.copyto(a, val, where=mask)
