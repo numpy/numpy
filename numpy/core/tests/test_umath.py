@@ -2519,33 +2519,29 @@ class TestObjects:
         nums = [0.0, 100.0, np.int32(1), np.float32(1), 2**200, 2**201]
         vals = cnums + nums + cvals
 
-        # note this does not test whether python longs work in some cases, since
-        # numpy cannot handle python longs internally so the reference
-        # value can't be computed.
+        # this does not test whether python longs work in all cases, since
+        # numpy cannot handle python longs internally so the reference value
+        # can't be computed.
 
         for val in vals:
             vobj = np.array([val], dtype=object)
             for u in self.unary_ufuncs:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    try:
-                        result = u([val])
-                    except Exception as e:
-                        continue
-                    robj = u(vobj)
+                try:
+                    result = u([val])
+                except Exception as e:
+                    continue
+                robj = u(vobj)
                 assert_allclose(robj[0], result[0], rtol=1e-4, 
                     err_msg="in call `{0}({1})`".format(u.__name__, val))
 
         for val in vals:
             vobj = np.array([val], dtype=object)
             for u in self.unary_funcs_2:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    try:
-                        r1, r2 = u([val])
-                    except:
-                        continue
-                    nr1, nr2 = u(vobj)
+                try:
+                    r1, r2 = u([val])
+                except:
+                    continue
+                nr1, nr2 = u(vobj)
                 assert_allclose(nr1[0], r1[0], rtol=1e-4, 
                     err_msg="in call `{0}({1})`".format(u.__name__, val))
 
@@ -2554,13 +2550,16 @@ class TestObjects:
                 aobj = np.array([vala], dtype=object)
                 bobj = np.array([valb], dtype=object)
                 for u in self.binary_ufuncs:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        try:
-                            result = u([vala], [valb])
-                        except:
-                            continue
+                    try:
+                        result = u([vala], [valb])
+                    except:
+                        continue
+
+                    # avoid warnings about invalid values in some systems
+                    with suppress_warnings() as sup:
+                        sup.filter(RuntimeWarning)
                         robj = u(aobj, bobj)
+
                     assert_allclose(robj[0], result[0], rtol=1e-4,
                         err_msg="in call `{0}({1}, {1})`".format(u.__name__,
                                                              vala, valb))

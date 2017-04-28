@@ -598,7 +598,7 @@ class FloatFormat(object):
         self.max_str_len = 0
         try:
             self.fillFormat(data)
-        except (TypeError, ValueError, NotImplementedError):
+        except (TypeError, NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
             # instantiated in formatdict.
             pass

@@ -2189,6 +2189,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if not issubclass(x.dtype.type, (inexact, object_)):
         x = x.astype(float)
+    elif issubclass(x.dtype.type, object_):
+        x = x*1.0
 
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:

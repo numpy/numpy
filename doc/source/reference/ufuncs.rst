@@ -510,6 +510,7 @@ Math operations
     mod
     fmod
     absolute
+    fabs
     rint
     sign
     heaviside
