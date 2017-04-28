@@ -50,17 +50,22 @@
  *   where setting a special-method name to None is a signal that that method
  *   cannot be used.
  *
- * So for 1.13, we are going to try the following rules. a.__add__(b) will
- * be implemented as follows:
+ * So for 1.13, we are going to try the following rules.
+ *
+ * For binops like a.__add__(b):
  * - If b does not define __array_ufunc__, apply the legacy rule:
  *   - If not isinstance(b, a.__class__), and b.__array_priority__ is higher
  *     than a.__array_priority__, return NotImplemented
  * - If b does define __array_ufunc__ but it is None, return NotImplemented
  * - Otherwise, call the corresponding ufunc.
  *
- * For reversed operations like b.__radd__(a), and for in-place operations
- * like a.__iadd__(b), we:
- * - Call the corresponding ufunc
+ * For in-place operations like a.__iadd__(b)
+ * - If b does not define __array_ufunc__, apply the legacy rule:
+ *   - If not isinstance(b, a.__class__), and b.__array_priority__ is higher
+ *     than a.__array_priority__, return NotImplemented
+ * - Otherwise, call the corresponding ufunc.
+ *
+ * For reversed operations like b.__radd__(a) we call the corresponding ufunc.
  *
  * Rationale for __radd__: This is because by the time the reversed operation
  * is called, there are only two possibilities: The first possibility is that
@@ -77,8 +82,11 @@
  * above, because if __iadd__ returns NotImplemented then Python will silently
  * convert the operation into an out-of-place operation, i.e. 'a += b' will
  * silently become 'a = a + b'. We don't want to allow this for arrays,
- * because it will create unexpected memory allocations, break views,
- * etc.
+ * because it will create unexpected memory allocations, break views, etc.
+ * However, backwards compatibility requires that we follow the rules of
+ * __array_priority__ for arrays that define it. For classes that use the new
+ * __array_ufunc__ mechanism we simply defer to the ufunc. That has the effect
+ * that when the other array has__array_ufunc = None a TypeError will be raised.
  *
  * In the future we might change these rules further. For example, we plan to
  * eventually deprecate __array_priority__ in cases where __array_ufunc__ is
@@ -86,7 +94,7 @@
  */
 
 static int
-binop_override_forward_binop_should_defer(PyObject *self, PyObject *other)
+binop_should_defer(PyObject *self, PyObject *other, int inplace)
 {
     /*
      * This function assumes that self.__binop__(other) is underway and
@@ -123,7 +131,7 @@ binop_override_forward_binop_should_defer(PyObject *self, PyObject *other)
      */
     attr = PyArray_GetAttrString_SuppressException(other, "__array_ufunc__");
     if (attr) {
-        defer = (attr == Py_None);
+        defer = !inplace && (attr == Py_None);
         Py_DECREF(attr);
         return defer;
     }
@@ -171,7 +179,16 @@ binop_override_forward_binop_should_defer(PyObject *self, PyObject *other)
 #define BINOP_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)           \
     do {                                                                \
         if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&           \
-            binop_override_forward_binop_should_defer((PyObject*)m1, (PyObject*)m2)) { \
+            binop_should_defer((PyObject*)m1, (PyObject*)m2, 0)) {      \
+            Py_INCREF(Py_NotImplemented);                               \
+            return Py_NotImplemented;                                   \
+        }                                                               \
+    } while (0)
+
+#define INPLACE_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)         \
+    do {                                                                \
+        if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&           \
+            binop_should_defer((PyObject*)m1, (PyObject*)m2, 1)) {      \
             Py_INCREF(Py_NotImplemented);                               \
             return Py_NotImplemented;                                   \
         }                                                               \
@@ -187,7 +204,7 @@ binop_override_forward_binop_should_defer(PyObject *self, PyObject *other)
  */
 #define RICHCMP_GIVE_UP_IF_NEEDED(m1, m2)                               \
     do {                                                                \
-        if (binop_override_forward_binop_should_defer((PyObject*)m1, (PyObject*)m2)) { \
+        if (binop_should_defer((PyObject*)m1, (PyObject*)m2, 0)) {      \
             Py_INCREF(Py_NotImplemented);                               \
             return Py_NotImplemented;                                   \
         }                                                               \

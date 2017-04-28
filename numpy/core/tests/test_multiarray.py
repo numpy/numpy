@@ -2942,7 +2942,7 @@ class TestBinop(object):
                 return MyType()
 
         def check(obj, binop_override_expected, ufunc_override_expected,
-                  check_scalar=True):
+                  inplace_override_expected, check_scalar=True):
             for op, (ufunc, has_inplace, dtype) in ops.items():
                 check_objs = [np.arange(3, 5, dtype=dtype)]
                 if check_scalar:
@@ -2957,6 +2957,7 @@ class TestBinop(object):
                         else:
                             return result
 
+                    # arr __op__ obj
                     if binop_override_expected:
                         assert_equal(arr_method(obj), NotImplemented)
                     elif ufunc_override_expected:
@@ -2972,7 +2973,7 @@ class TestBinop(object):
                         else:
                             assert_raises((TypeError, Coerced),
                                           arr_method, obj)
-
+                    # obj __op__ arr
                     arr_rmethod = getattr(arr, "__r{0}__".format(op))
                     if ufunc_override_expected:
                         res = norm(arr_rmethod(obj))
@@ -2981,8 +2982,8 @@ class TestBinop(object):
                             assert_equal(res[1], ufunc)
                     else:
                         if (isinstance(obj, np.ndarray) and
-                            (type(obj).__array_ufunc__ is
-                             np.ndarray.__array_ufunc__)):
+                                (type(obj).__array_ufunc__ is
+                                 np.ndarray.__array_ufunc__)):
                             # __array__ gets ignored
                             res = norm(arr_rmethod(obj))
                             assert_(res.__class__ is obj.__class__)
@@ -2991,10 +2992,13 @@ class TestBinop(object):
                             assert_raises((TypeError, Coerced),
                                           arr_rmethod, obj)
 
+                    # arr __iop__ obj
                     # array scalars don't have in-place operators
                     if has_inplace and isinstance(arr, np.ndarray):
                         arr_imethod = getattr(arr, "__i{0}__".format(op))
-                        if ufunc_override_expected:
+                        if inplace_override_expected:
+                            assert_equal(arr_method(obj), NotImplemented)
+                        elif ufunc_override_expected:
                             res = arr_imethod(obj)
                             assert_equal(res[0], "__array_ufunc__")
                             if ufunc is not None:
@@ -3003,8 +3007,8 @@ class TestBinop(object):
                                 assert_(res[-1]["out"][0] is arr)
                         else:
                             if (isinstance(obj, np.ndarray) and
-                                (type(obj).__array_ufunc__ is
-                                 np.ndarray.__array_ufunc__)):
+                                    (type(obj).__array_ufunc__ is
+                                    np.ndarray.__array_ufunc__)):
                                 # __array__ gets ignored
                                 assert_(arr_imethod(obj) is arr)
                             else:
@@ -3027,24 +3031,24 @@ class TestBinop(object):
                         assert_equal(norm(ufunc(obj, arr))[0],
                                      "__array_ufunc__")
 
-        # No array priority, no numpy ufunc -> nothing called
-        check(make_obj(object), False, False)
-        # Negative array priority, no numpy ufunc -> nothing called
+        # No array priority, no array_ufunc -> nothing called
+        check(make_obj(object), False, False, False)
+        # Negative array priority, no array_ufunc -> nothing called
         # (has to be very negative, because scalar priority is -1000000.0)
-        check(make_obj(object, array_priority=-2**30), False, False)
-        # Positive array priority, no numpy ufunc -> binops only
-        check(make_obj(object, array_priority=1), True, False)
-        # ndarray ignores array priority for ndarray subclasses
-        check(make_obj(np.ndarray, array_priority=1), False, False,
+        check(make_obj(object, array_priority=-2**30), False, False, False)
+        # Positive array priority, no array_ufunc -> binops and iops only
+        check(make_obj(object, array_priority=1), True, False, True)
+        # ndarray ignores array_priority for ndarray subclasses
+        check(make_obj(np.ndarray, array_priority=1), False, False, False,
               check_scalar=False)
-        # Positive array priority and numpy ufunc -> numpy ufunc only
+        # Positive array_priority and array_ufunc -> array_ufunc only
         check(make_obj(object, array_priority=1,
-                       array_ufunc=array_ufunc_impl), False, True)
+                       array_ufunc=array_ufunc_impl), False, True, False)
         check(make_obj(np.ndarray, array_priority=1,
-                       array_ufunc=array_ufunc_impl), False, True)
+                       array_ufunc=array_ufunc_impl), False, True, False)
         # array_ufunc set to None -> defer binops only
-        check(make_obj(object, array_ufunc=None), True, False)
-        check(make_obj(np.ndarray, array_ufunc=None), True, False,
+        check(make_obj(object, array_ufunc=None), True, False, False)
+        check(make_obj(np.ndarray, array_ufunc=None), True, False, False,
               check_scalar=False)
 
     def test_ufunc_override_normalize_signature(self):
