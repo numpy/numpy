@@ -2513,6 +2513,10 @@ class TestObjects:
             np.maximum, np.minimum, np.fmax, np.fmin, np.fmod, np.logaddexp,
             np.logaddexp2, np.copysign, np.ldexp, np.hypot, np.nextafter]
 
+        self.bool_unary_ufuncs = [np.isnan, np.isinf, np.logical_not,
+                                  np.isfinite, np.signbit]
+        self.bool_binary_ufuncs = [np.logical_and, np.logical_or, np.logical_xor]
+
     def test_ufunc_builtin_numeric_objects(self):
         cnums = [-1, 1, 0, np.nan, np.inf, -np.inf]
         cvals = [complex(a,b) for a in cnums for b in cnums]
@@ -2535,7 +2539,8 @@ class TestObjects:
                         continue
                     robj = u(vobj)
                     assert_allclose(robj[0], result[0], rtol=1e-4,
-                        err_msg="in call `{0}({1})`".format(u.__name__, val))
+                                    err_msg="in call `{0}({1}({2}))`".format(
+                                        u.__name__, type(val).__name__, val))
 
         for val in vals:
             vobj = np.array([val], dtype=object)
@@ -2548,7 +2553,8 @@ class TestObjects:
                         continue
                     nr1, nr2 = u(vobj)
                     assert_allclose(nr1[0], r1[0], rtol=1e-4,
-                        err_msg="in call `{0}({1})`".format(u.__name__, val))
+                                    err_msg="in call `{0}({1}({2}))`".format(
+                                        u.__name__, type(val).__name__, val))
 
         for vala in vals:
             for valb in vals:
@@ -2563,8 +2569,17 @@ class TestObjects:
                             continue
                         robj = u(aobj, bobj)
                         assert_allclose(robj[0], result[0], rtol=1e-4,
-                            err_msg="in call `{0}({1}, {1})`".format(u.__name__,
-                                                                 vala, valb))
+                            err_msg="in call `{0}({1}({2}), {3}({4}))`".format(
+                                        u.__name__, type(vala).__name__, vala, 
+                                                    type(valb).__name__, valb))
+
+        # test that boolean ufuncs return boolean type
+        val = np.array([1], dtype='O')
+        for u in [np.isnan, np.isinf, np.logical_not, np.isfinite, np.signbit]:
+            assert_(u(val).dtype.type is np.bool_)
+
+        for u in [np.logical_and, np.logical_or, np.logical_xor]:
+            assert_(u(val, val).dtype.type is np.bool_)
 
 
 def test_rint_big_int():

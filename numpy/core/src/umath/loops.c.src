@@ -2734,12 +2734,12 @@ _is_float_complex(PyObject *op)
 }
 
 /**begin repeat
- * #func = isnan, isinf, isfinite, signbit, arccos, arccosh, arcsin, arcsinh,
-           arctan, arctanh, cos, sin, tan, cosh, sinh, tanh, exp, expm1, log,
-           log10, log1p, sqrt, ceil, trunc, fabs, floor, arctan2, conjugate,
-           square, reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
-           radians, deg2rad, exp2, log2, cbrt, rint, spacing#
-   #out_bool = 1, 1, 1, 1, 0*38#
+ * #func = isnan, isinf, isfinite, signbit, logical_not, arccos, arccosh,
+           arcsin, arcsinh, arctan, arctanh, cos, sin, tan, cosh, sinh, tanh,
+           exp, expm1, log, log10, log1p, sqrt, ceil, trunc, fabs, floor,
+           arctan2, conjugate, square, reciprocal, _ones_like, sign, degrees,
+           rad2deg, radians, deg2rad, exp2, log2, cbrt, rint, spacing#
+   #out_bool = 1, 1, 1, 1, 1, 0*37#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
@@ -2815,6 +2815,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
  * #func = logical_and, logical_or, logical_xor, maximum, minimum, fmax, fmin,
            logaddexp, logaddexp2, copysign, ldexp, hypot, remainder, fmod,
            nextafter#
+   #out_bool = 1, 1, 1, 0*12#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
@@ -2841,7 +2842,9 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
     for (i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
+#if !@out_bool@
         PyObject **out = (PyObject **)op1;
+#endif
 
         in1 = in1 ? in1 : Py_None;
         in2 = in2 ? in2 : Py_None;
@@ -2877,8 +2880,13 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
             return;
         }
          
+#if @out_bool@
+        *((npy_bool *)op1) = PyObject_IsTrue(ret);
+        Py_DECREF(ret);
+#else
         Py_XDECREF(*out);
         *out = ret;
+#endif
     }
 }
 /**end repeat**/
