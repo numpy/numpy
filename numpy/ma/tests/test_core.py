@@ -3942,6 +3942,38 @@ class TestMaskedArrayFunctions(TestCase):
         control = np.find_common_type([np.int32, np.float32], [])
         assert_equal(test, control)
 
+    def test_where_broadcast(self):
+        # Issue 8599
+        x = np.arange(9).reshape(3, 3)
+        y = np.zeros(3)
+        core = np.where([1, 0, 1], x, y)
+        ma = where([1, 0, 1], x, y)
+
+        assert_equal(core, ma)
+        assert_equal(core.dtype, ma.dtype)
+
+    def test_where_structured(self):
+        # Issue 8600
+        dt = np.dtype([('a', int), ('b', int)])
+        x = np.array([(1, 2), (3, 4), (5, 6)], dtype=dt)
+        y = np.array((10, 20), dtype=dt)
+        core = np.where([0, 1, 1], x, y)
+        ma = np.where([0, 1, 1], x, y)
+
+        assert_equal(core, ma)
+        assert_equal(core.dtype, ma.dtype)
+
+    def test_where_structured_masked(self):
+        dt = np.dtype([('a', int), ('b', int)])
+        x = np.array([(1, 2), (3, 4), (5, 6)], dtype=dt)
+
+        ma = where([0, 1, 1], x, masked)
+        expected = masked_where([1, 0, 0], x)
+
+        assert_equal(ma.dtype, expected.dtype)
+        assert_equal(ma, expected)
+        assert_equal(ma.mask, expected.mask)
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
@@ -4343,16 +4375,19 @@ class TestMaskedFields(TestCase):
         a.mask = np.array(list(zip([0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
                                    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0])),
                           dtype=[('a', bool), ('b', bool)])
-        # No mask
-        self.assertTrue(isinstance(a[1], MaskedArray))
-        # One element masked
-        self.assertTrue(isinstance(a[0], MaskedArray))
-        assert_equal_records(a[0]._data, a._data[0])
-        assert_equal_records(a[0]._mask, a._mask[0])
-        # All element masked
-        self.assertTrue(isinstance(a[-2], MaskedArray))
-        assert_equal_records(a[-2]._data, a._data[-2])
-        assert_equal_records(a[-2]._mask, a._mask[-2])
+
+        def _test_index(i):
+            assert_equal(type(a[i]), mvoid)
+            assert_equal_records(a[i]._data, a._data[i])
+            assert_equal_records(a[i]._mask, a._mask[i])
+
+            assert_equal(type(a[i, ...]), MaskedArray)
+            assert_equal_records(a[i,...]._data, a._data[i,...])
+            assert_equal_records(a[i,...]._mask, a._mask[i,...])
+
+        _test_index(1)   # No mask
+        _test_index(0)   # One element masked
+        _test_index(-2)  # All element masked
 
     def test_setitem(self):
         # Issue 4866: check that one can set individual items in [record][col]
@@ -4395,6 +4430,54 @@ class TestMaskedFields(TestCase):
         # check that len() works for mvoid (Github issue #576)
         for rec in self.data['base']:
             assert_equal(len(rec), len(self.data['ddtype']))
+
+
+class TestMaskedObjectArray(TestCase):
+
+    def test_getitem(self):
+        arr = np.ma.array([None, None])
+        for dt in [float, object]:
+            a0 = np.eye(2).astype(dt)
+            a1 = np.eye(3).astype(dt)
+            arr[0] = a0
+            arr[1] = a1
+
+            assert_(arr[0] is a0)
+            assert_(arr[1] is a1)
+            assert_(isinstance(arr[0,...], MaskedArray))
+            assert_(isinstance(arr[1,...], MaskedArray))
+            assert_(arr[0,...][()] is a0)
+            assert_(arr[1,...][()] is a1)
+
+            arr[0] = np.ma.masked
+
+            assert_(arr[1] is a1)
+            assert_(isinstance(arr[0,...], MaskedArray))
+            assert_(isinstance(arr[1,...], MaskedArray))
+            assert_equal(arr[0,...].mask, True)
+            assert_(arr[1,...][()] is a1)
+
+            # gh-5962 - object arrays of arrays do something special
+            assert_equal(arr[0].data, a0)
+            assert_equal(arr[0].mask, True)
+            assert_equal(arr[0,...][()].data, a0)
+            assert_equal(arr[0,...][()].mask, True)
+
+    def test_nested_ma(self):
+
+        arr = np.ma.array([None, None])
+        # set the first object to be an unmasked masked constant. A little fiddly
+        arr[0,...] = np.array([np.ma.masked], object)[0,...]
+
+        # check the above line did what we were aiming for
+        assert_(arr.data[0] is np.ma.masked)
+
+        # test that getitem returned the value by identity
+        assert_(arr[0] is np.ma.masked)
+
+        # now mask the masked value!
+        arr[0] = np.ma.masked
+        assert_(arr[0] is np.ma.masked)
 
 
 class TestMaskedView(TestCase):
@@ -4581,6 +4664,14 @@ class TestMaskedConstant(TestCase):
 
     def test_operator(self):
         self._do_add_test(lambda a, b: a + b)
+
+    def test_ctor(self):
+        m = np.ma.array(np.ma.masked)
+
+        # most importantly, we do not want to create a new MaskedConstant
+        # instance
+        assert_(not isinstance(m, np.ma.core.MaskedConstant))
+        assert_(m is not np.ma.masked)
 
 
 def test_masked_array():

@@ -3,10 +3,10 @@ C-API for NumPy
 ===============
 
 :Author:          Travis Oliphant
-:Discussions to:  `numpy-discussion@scipy.org`__
+:Discussions to:  `numpy-discussion@python.org`__
 :Created:         October 2005
 
-__ http://www.scipy.org/Mailing_Lists
+__ http://scipy.org/scipylib/mailing-lists.html
 
 The C API of NumPy is (mostly) backward compatible with Numeric.
 

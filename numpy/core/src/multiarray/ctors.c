@@ -29,6 +29,8 @@
 #include "alloc.h"
 #include <assert.h>
 
+#include "get_attr_string.h"
+
 /*
  * Reading from a file or a string.
  *
@@ -937,7 +939,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
-        } else if (PyDataType_ISSTRING(descr) && !allow_emptystring) {
+        }
+        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
+                 data == NULL) {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;
@@ -2535,7 +2539,8 @@ PyArray_FromDims(int nd, int *d, int type)
 /* end old calls */
 
 /*NUMPY_API
- * This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY)
+ * This is a quick wrapper around
+ * PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)
  * that special cases Arrays and PyArray_Scalars up front
  * It *steals a reference* to the object
  * It also guarantees that the result is PyArray_Type
@@ -2558,7 +2563,7 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
+        new = PyArray_FROM_OF(op, NPY_ARRAY_ENSUREARRAY);
     }
     Py_XDECREF(op);
     return new;
@@ -3828,10 +3833,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING
@@ -3856,10 +3863,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING

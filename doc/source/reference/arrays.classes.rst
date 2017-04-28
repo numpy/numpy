@@ -39,77 +39,123 @@ Special attributes and methods
 
 NumPy provides several hooks that classes can customize:
 
-.. method:: class.__numpy_ufunc__(ufunc, method, i, inputs, **kwargs)
+.. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
 
-   .. versionadded:: 1.11
+   .. versionadded:: 1.13
 
-   Any class (ndarray subclass or not) can define this method to
-   override behavior of NumPy's ufuncs. This works quite similarly to
-   Python's ``__mul__`` and other binary operation routines.
+   .. note:: The API is `provisional
+             <https://docs.python.org/3/glossary.html#term-provisional-api>`_,
+             i.e., we do not yet guarantee backward compatibility.
+
+   Any class, ndarray subclass or not, can define this method or set it to
+   :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
+   quite similarly to Python's ``__mul__`` and other binary operation routines.
 
    - *ufunc* is the ufunc object that was called.
    - *method* is a string indicating which Ufunc method was called
      (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
      ``"accumulate"``, ``"outer"``, ``"inner"``).
-   - *i* is the index of *self* in *inputs*.
-   - *inputs* is a tuple of the input arguments to the ``ufunc``
+   - *inputs* is a tuple of the input arguments to the ``ufunc``.
    - *kwargs* is a dictionary containing the optional input arguments
-     of the ufunc. The ``out`` argument is always contained in
-     *kwargs*, if given. See the discussion in :ref:`ufuncs` for
-     details.
+     of the ufunc. If given, any ``out`` arguments, both positional
+     and keyword, are passed as a :obj:`tuple` in *kwargs*. See the
+     discussion in :ref:`ufuncs` for details.
 
    The method should return either the result of the operation, or
-   :obj:`NotImplemented` if the operation requested is not
-   implemented.
+   :obj:`NotImplemented` if the operation requested is not implemented.
 
-   If one of the arguments has a :func:`__numpy_ufunc__` method, it is
-   executed *instead* of the ufunc.  If more than one of the input
-   arguments implements :func:`__numpy_ufunc__`, they are tried in the
-   order: subclasses before superclasses, otherwise left to right. The
-   first routine returning something else than :obj:`NotImplemented`
-   determines the result. If all of the :func:`__numpy_ufunc__`
-   operations return :obj:`NotImplemented`, a :exc:`TypeError` is
-   raised.
+   If one of the input or output arguments has a :func:`__array_ufunc__`
+   method, it is executed *instead* of the ufunc.  If more than one of the
+   arguments implements :func:`__array_ufunc__`, they are tried in the
+   order: subclasses before superclasses, inputs before outputs, otherwise
+   left to right. The first routine returning something other than
+   :obj:`NotImplemented` determines the result. If all of the
+   :func:`__array_ufunc__` operations return :obj:`NotImplemented`, a
+   :exc:`TypeError` is raised.
 
-   If an :class:`ndarray` subclass defines the :func:`__numpy_ufunc__`
-   method, this disables the :func:`__array_wrap__`,
-   :func:`__array_prepare__`, :data:`__array_priority__` mechanism
-   described below.
+   .. note:: We intend to re-implement numpy functions as (generalized)
+       Ufunc, in which case it will become possible for them to be
+       overridden by the ``__array_ufunc__`` method.  A prime candidate is
+       :func:`~numpy.matmul`, which currently is not a Ufunc, but could be
+       relatively easily be rewritten as a (set of) generalized Ufuncs. The
+       same may happen with functions such as :func:`~numpy.median`,
+       :func:`~numpy.min`, and :func:`~numpy.argsort`.
 
-   .. note:: In addition to ufuncs, :func:`__numpy_ufunc__` also
-      overrides the behavior of :func:`numpy.dot` even though it is
-      not an Ufunc.
 
-   .. note:: If you also define right-hand binary operator override
-      methods (such as ``__rmul__``) or comparison operations (such as
-      ``__gt__``) in your class, they take precedence over the
-      :func:`__numpy_ufunc__` mechanism when resolving results of
-      binary operations (such as ``ndarray_obj * your_obj``).
+   Like with some other special methods in python, such as ``__hash__`` and
+   ``__iter__``, it is possible to indicate that your class does *not*
+   support ufuncs by setting ``__array_ufunc__ = None``. With this,
+   inside ufuncs, your class will be treated as if it returned
+   :obj:`NotImplemented` (which will lead to an :exc:`TypeError`
+   unless another class also provides a :func:`__array_ufunc__` method
+   which knows what to do with your class).
 
-      The technical special case is: ``ndarray.__mul__`` returns
-      ``NotImplemented`` if the other object is *not* a subclass of
-      :class:`ndarray`, and defines both ``__numpy_ufunc__`` and
-      ``__rmul__``. Similar exception applies for the other operations
-      than multiplication.
+   The presence of :func:`__array_ufunc__` also influences how
+   :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
+   < obj`` when ``arr`` is an :class:`ndarray` and ``obj`` is an instance
+   of a custom class. There are two possibilities. If
+   ``obj.__array_ufunc__`` is present and not :obj:`None`, then
+   ``ndarray.__add__`` and friends will delegate to the ufunc machinery,
+   meaning that ``arr + obj`` becomes ``np.add(arr, obj)``, and then
+   :func:`~numpy.add` invokes ``obj.__array_ufunc__``. This is useful if you
+   want to define an object that acts like an array.
 
-      In such a case, when computing a binary operation such as
-      ``ndarray_obj * your_obj``, your ``__numpy_ufunc__`` method
-      *will not* be called.  Instead, the execution passes on to your
-      right-hand ``__rmul__`` operation, as per standard Python
-      operator override rules.
+   Alternatively, if ``obj.__array_ufunc__`` is set to :obj:`None`, then as a
+   special case, special methods like ``ndarray.__add__`` will notice this
+   and *unconditionally* return :obj:`NotImplemented`, so that Python will
+   dispatch to ``obj.__radd__`` instead. This is useful if you want to define
+   a special object that interacts with arrays via binary operations, but
+   is not itself an array. For example, a units handling system might have
+   an object ``m`` representing the "meters" unit, and want to support the
+   syntax ``arr * m`` to represent that the array has units of "meters", but
+   not want to otherwise interact with arrays via ufuncs or otherwise. This
+   can be done by setting ``__array_ufunc__ = None`` and defining ``__mul__``
+   and ``__rmul__`` methods. (Note that this means that writing an
+   ``__array_ufunc__`` that always returns :obj:`NotImplemented` is not
+   quite the same as setting ``__array_ufunc__ = None``: in the former
+   case, ``arr + obj`` will raise :exc:`TypeError`, while in the latter
+   case it is possible to define a ``__radd__`` method to prevent this.)
 
-      Similar special case applies to *in-place operations*: If you
-      define ``__rmul__``, then ``ndarray_obj *= your_obj`` *will not*
-      call your ``__numpy_ufunc__`` implementation. Instead, the
-      default Python behavior ``ndarray_obj = ndarray_obj * your_obj``
-      occurs.
+   The above does not hold for in-place operators, for which :class:`ndarray`
+   never returns :obj:`NotImplemented`.  Hence, ``arr += obj`` would always
+   lead to a :exc:`TypeError`.  This is because for arrays in-place operations
+   cannot generically be replaced by a simple reverse operation.  (For
+   instance, by default, ``arr += obj`` would be translated to ``arr =
+   arr + obj``, i.e., ``arr`` would be replaced, contrary to what is expected
+   for in-place array operations.)
 
-      Note that the above discussion applies only to Python's builtin
-      binary operation mechanism. ``np.multiply(ndarray_obj,
-      your_obj)`` always calls only your ``__numpy_ufunc__``, as
-      expected.
+   .. note:: If you define ``__array_ufunc__``:
 
-.. method:: class.__array_finalize__(obj)
+      - If you are not a subclass of :class:`ndarray`, we recommend your
+        class define special methods like ``__add__`` and ``__lt__`` that
+        delegate to ufuncs just like ndarray does.  An easy way to do this
+        is to subclass from :class:`~numpy.lib.mixins.NDArrayOperatorsMixin`.
+      - If you subclass :class:`ndarray`, we recommend that you put all your
+        override logic in ``__array_ufunc__`` and not also override special
+        methods. This ensures the class hierarchy is determined in only one
+        place rather than separately by the ufunc machinery and by the binary
+        operation rules (which gives preference to special methods of
+        subclasses; the alternative way to enforce a one-place only hierarchy,
+        of setting :func:`__array_ufunc__` to :obj:`None`, would seem very
+        unexpected and thus confusing, as then the subclass would not work at
+        all with ufuncs).
+      - :class:`ndarray` defines its own :func:`__array_ufunc__`, which,
+        evaluates the ufunc if no arguments have overrides, and returns
+        :obj:`NotImplemented` otherwise. This may be useful for subclasses
+        for which :func:`__array_ufunc__` converts any instances of its own
+        class to :class:`ndarray`: it can then pass these on to its
+        superclass using ``super().__array_ufunc__(*inputs, **kwargs)``,
+        and finally return the results after possible back-conversion. The
+        advantage of this practice is that it ensures that it is possible
+        to have a hierarchy of subclasses that extend the behaviour. See
+        :ref:`Subclassing ndarray <basics.subclassing>` for details.
+
+   .. note:: If a class defines the :func:`__array_ufunc__` method,
+      this disables the :func:`__array_wrap__`,
+      :func:`__array_prepare__`, :data:`__array_priority__` mechanism
+      described below for ufuncs (which may eventually be deprecated).
+
+.. py:method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
    new array from *obj*, where *obj* is a subclass (subtype) of the
@@ -118,7 +164,7 @@ NumPy provides several hooks that classes can customize:
    to update meta-information from the "parent." Subclasses inherit
    a default implementation of this method that does nothing.
 
-.. method:: class.__array_prepare__(array, context=None)
+.. py:method:: class.__array_prepare__(array, context=None)
 
    At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
    method is called on the input object with the highest array
@@ -130,7 +176,10 @@ NumPy provides several hooks that classes can customize:
    the subclass and update metadata before returning the array to the
    ufunc for computation.
 
-.. method:: class.__array_wrap__(array, context=None)
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
+
+.. py:method:: class.__array_wrap__(array, context=None)
 
    At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
    is called on the input object with the highest array priority, or
@@ -142,14 +191,20 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
-.. data:: class.__array_priority__
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
+
+.. py:attribute:: class.__array_priority__
 
    The value of this attribute is used to determine what type of
    object to return in situations where there is more than one
    possibility for the Python type of the returned object. Subclasses
    inherit a default value of 0.0 for this attribute.
 
-.. method:: class.__array__([dtype])
+   .. note:: For ufuncs, it is hoped to eventually deprecate this method in
+             favour of :func:`__array_ufunc__`.
+
+.. py:method:: class.__array__([dtype])
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc

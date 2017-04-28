@@ -20,6 +20,12 @@ from setup_common import *
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
 
+# Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
+# bogus value for affected strides in order to help smoke out bad stride usage
+# when relaxed stride checking is enabled.
+NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
+NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -436,8 +442,13 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+
+            # Use bogus stride debug aid when relaxed strides are enabled
+            if NPY_RELAXED_STRIDES_DEBUG:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
             # Get long double representation
             if sys.platform != 'darwin':
@@ -541,6 +552,9 @@ def configuration(parent_package='',top_path=None):
 
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+
+            if NPY_RELAXED_STRIDES_DEBUG:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers=['inttypes.h']):
@@ -734,6 +748,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'ufunc_override.h'),
+            join('src', 'private', 'binop_override.h'),
             join('src', 'private', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -804,6 +820,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'ufunc_override.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -857,7 +874,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
-            join('src', 'private', 'mem_overlap.c')]
+            join('src', 'umath', 'override.c'),
+            join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'ufunc_override.c')]
 
     umath_deps = [
             generate_umath_py,
@@ -866,10 +885,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'common.h'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
+            join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
-            join('src', 'private', 'ufunc_override.h')] + npymath_sources
+            join('src', 'private', 'ufunc_override.h'),
+            join('src', 'private', 'binop_override.h')] + npymath_sources
 
     config.add_extension('umath',
                          sources=umath_src +

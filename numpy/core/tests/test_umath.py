@@ -3,15 +3,18 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 import warnings
+import fnmatch
 import itertools
 
 from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
+from numpy.core import umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    dec, assert_allclose, assert_no_warnings, suppress_warnings
+    assert_raises_regex, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
+    suppress_warnings
 )
 
 
@@ -456,7 +459,12 @@ class TestPower(TestCase):
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
-        assert_((x**2.00001).dtype is (x**2.0).dtype)
+        res = x**2.0
+        assert_((x**2.00001).dtype is res.dtype)
+        assert_array_equal(res, [1, 4, 9])
+        # check the inplace operation on the casted copy doesn't mess with x
+        assert_(not np.may_share_memory(res, x))
+        assert_array_equal(x, [1, 2, 3])
 
         # Check that the fast path ignores 1-element not 0-d arrays
         res = x ** np.array([[[2]]])
@@ -691,6 +699,12 @@ class TestHypot(TestCase, object):
     def test_simple(self):
         assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
         assert_almost_equal(ncu.hypot(0, 0), 0)
+
+    def test_reduce(self):
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([3.0, 4.0, 0]), 5.0)
+        assert_almost_equal(ncu.hypot.reduce([9.0, 12.0, 20.0]), 25.0)
+        assert_equal(ncu.hypot.reduce([]), 0.0)
 
 
 def assert_hypot_isnan(x, y):
@@ -1082,6 +1096,23 @@ class TestBool(TestCase):
 
         out = [False, True, True, False]
         assert_equal(np.bitwise_xor(arg1, arg2), out)
+
+    def test_reduce(self):
+        none = np.array([0, 0, 0, 0], bool)
+        some = np.array([1, 0, 1, 1], bool)
+        every = np.array([1, 1, 1, 1], bool)
+        empty = np.array([], bool)
+
+        arrs = [none, some, every, empty]
+
+        for arr in arrs:
+            assert_equal(np.logical_and.reduce(arr), all(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_or.reduce(arr), any(arr))
+
+        for arr in arrs:
+            assert_equal(np.logical_xor.reduce(arr), arr.sum() % 2 == 1)
 
 
 class TestBitwiseUFuncs(TestCase):
@@ -1540,51 +1571,30 @@ class TestSpecialMethods(TestCase):
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
-    def test_ufunc_override_disabled(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        # This test should be removed when __numpy_ufunc__ is re-enabled.
-
-        class MyArray(object):
-            def __numpy_ufunc__(self, *args, **kwargs):
-                self._numpy_ufunc_called = True
-
-        my_array = MyArray()
-        real_array = np.ones(10)
-        assert_raises(TypeError, lambda: real_array + my_array)
-        assert_raises(TypeError, np.add, real_array, my_array)
-        assert not hasattr(my_array, "_numpy_ufunc_called")
-
-
     def test_ufunc_override(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
-                return self, func, method, pos, inputs, kwargs
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
+                return self, func, method, inputs, kwargs
 
         a = A()
         b = np.matrix([1])
         res0 = np.multiply(a, b)
-        res1 = np.dot(a, b)
+        res1 = np.multiply(b, b, out=a)
 
         # self
         assert_equal(res0[0], a)
         assert_equal(res1[0], a)
         assert_equal(res0[1], np.multiply)
-        assert_equal(res1[1], np.dot)
+        assert_equal(res1[1], np.multiply)
         assert_equal(res0[2], '__call__')
         assert_equal(res1[2], '__call__')
-        assert_equal(res0[3], 0)
-        assert_equal(res1[3], 0)
-        assert_equal(res0[4], (a, b))
-        assert_equal(res1[4], (a, b))
-        assert_equal(res0[5], {})
-        assert_equal(res1[5], {})
+        assert_equal(res0[3], (a, b))
+        assert_equal(res1[3], (b, b))
+        assert_equal(res0[4], {})
+        assert_equal(res1[4], {'out': (a,)})
 
     def test_ufunc_override_mro(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         # Some multi arg functions for testing.
         def tres_mul(a, b, c):
@@ -1598,23 +1608,23 @@ class TestSpecialMethods(TestCase):
         four_mul_ufunc = np.frompyfunc(quatro_mul, 4, 1)
 
         class A(object):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "A"
 
         class ASub(A):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "ASub"
 
         class B(object):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return "B"
 
         class C(object):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
-        class CSub(object):
-            def __numpy_ufunc__(self, func, method, pos, inputs, **kwargs):
+        class CSub(C):
+            def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return NotImplemented
 
         a = A()
@@ -1676,12 +1686,10 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
 
     def test_ufunc_override_methods(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
-                return self, ufunc, method, pos, inputs, kwargs
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return self, ufunc, method, inputs, kwargs
 
         # __call__
         a = A()
@@ -1689,21 +1697,24 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], '__call__')
-        assert_equal(res[3], 1)
-        assert_equal(res[4], (1, a))
-        assert_equal(res[5], {'foo': 'bar', 'answer': 42})
+        assert_equal(res[3], (1, a))
+        assert_equal(res[4], {'foo': 'bar', 'answer': 42})
+
+        # __call__, wrong args
+        assert_raises(TypeError, np.multiply, a)
+        assert_raises(TypeError, np.multiply, a, a, a, a)
+        assert_raises(TypeError, np.multiply, a, a, sig='a', signature='a')
 
         # reduce, positional args
         res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a,))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'keepdims': 'keep0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'keepdims': 'keep0',
+                              'axis': 'axis0'})
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
@@ -1711,23 +1722,32 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a,))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'keepdims': 'keep0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'keepdims': 'keep0',
+                              'axis': 'axis0'})
+
+        # reduce, output equal to None removed.
+        res = np.multiply.reduce(a, out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.reduce(a, out=(None,))
+        assert_equal(res[4], {})
+
+        # reduce, wrong args
+        assert_raises(TypeError, np.multiply.reduce, a, out=())
+        assert_raises(TypeError, np.multiply.reduce, a, out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.reduce, a, 'axis0', axis='axis0')
 
         # accumulate, pos args
         res = np.multiply.accumulate(a, 'axis0', 'dtype0', 'out0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'accumulate')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a,))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # accumulate, kwargs
         res = np.multiply.accumulate(a, axis='axis0', dtype='dtype0',
@@ -1735,22 +1755,33 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'accumulate')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a,))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0'})
+
+        # accumulate, output equal to None removed.
+        res = np.multiply.accumulate(a, out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.accumulate(a, out=(None,))
+        assert_equal(res[4], {})
+
+        # accumulate, wrong args
+        assert_raises(TypeError, np.multiply.accumulate, a, out=())
+        assert_raises(TypeError, np.multiply.accumulate, a,
+                      out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.accumulate, a,
+                      'axis0', axis='axis0')
 
         # reduceat, pos args
         res = np.multiply.reduceat(a, [4, 2], 'axis0', 'dtype0', 'out0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduceat')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a, [4, 2]))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a, [4, 2]))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0'})
 
         # reduceat, kwargs
         res = np.multiply.reduceat(a, [4, 2], axis='axis0', dtype='dtype0',
@@ -1758,39 +1789,55 @@ class TestSpecialMethods(TestCase):
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduceat')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a, [4, 2]))
-        assert_equal(res[5], {'dtype':'dtype0',
-                               'out': 'out0',
-                               'axis': 'axis0'})
+        assert_equal(res[3], (a, [4, 2]))
+        assert_equal(res[4], {'dtype':'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0'})
+
+        # reduceat, output equal to None removed.
+        res = np.multiply.reduceat(a, [4, 2], out=None)
+        assert_equal(res[4], {})
+        res = np.multiply.reduceat(a, [4, 2], out=(None,))
+        assert_equal(res[4], {})
+
+        # reduceat, wrong args
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+                      out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+                      'axis0', axis='axis0')
 
         # outer
         res = np.multiply.outer(a, 42)
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'outer')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a, 42))
-        assert_equal(res[5], {})
+        assert_equal(res[3], (a, 42))
+        assert_equal(res[4], {})
+
+        # outer, wrong args
+        assert_raises(TypeError, np.multiply.outer, a)
+        assert_raises(TypeError, np.multiply.outer, a, a, a, a)
 
         # at
         res = np.multiply.at(a, [4, 2], 'b0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'at')
-        assert_equal(res[3], 0)
-        assert_equal(res[4], (a, [4, 2], 'b0'))
+        assert_equal(res[3], (a, [4, 2], 'b0'))
+
+        # at, wrong args
+        assert_raises(TypeError, np.multiply.at, a)
+        assert_raises(TypeError, np.multiply.at, a, a, a, a)
 
     def test_ufunc_override_out(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return kwargs
 
         class B(object):
-            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return kwargs
 
         a = A()
@@ -1802,12 +1849,12 @@ class TestSpecialMethods(TestCase):
         res4 = np.multiply(a, 4, 'out_arg')
         res5 = np.multiply(a, 5, out='out_arg')
 
-        assert_equal(res0['out'], 'out_arg')
-        assert_equal(res1['out'], 'out_arg')
-        assert_equal(res2['out'], 'out_arg')
-        assert_equal(res3['out'], 'out_arg')
-        assert_equal(res4['out'], 'out_arg')
-        assert_equal(res5['out'], 'out_arg')
+        assert_equal(res0['out'][0], 'out_arg')
+        assert_equal(res1['out'][0], 'out_arg')
+        assert_equal(res2['out'][0], 'out_arg')
+        assert_equal(res3['out'][0], 'out_arg')
+        assert_equal(res4['out'][0], 'out_arg')
+        assert_equal(res5['out'][0], 'out_arg')
 
         # ufuncs with multiple output modf and frexp.
         res6 = np.modf(a, 'out0', 'out1')
@@ -1817,17 +1864,192 @@ class TestSpecialMethods(TestCase):
         assert_equal(res7['out'][0], 'out0')
         assert_equal(res7['out'][1], 'out1')
 
+        # While we're at it, check that default output is never passed on.
+        assert_(np.sin(a, None) == {})
+        assert_(np.sin(a, out=None) == {})
+        assert_(np.sin(a, out=(None,)) == {})
+        assert_(np.modf(a, None) == {})
+        assert_(np.modf(a, None, None) == {})
+        assert_(np.modf(a, out=(None, None)) == {})
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', DeprecationWarning)
+            assert_(np.modf(a, out=None) == {})
+            assert_(w[0].category is DeprecationWarning)
+
+        # don't give positional and output argument, or too many arguments.
+        # wrong number of arguments in the tuple is an error too.
+        assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
+        assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
+        assert_raises(TypeError, np.multiply, a, b, out=('one', 'two'))
+        assert_raises(TypeError, np.multiply, a, out=())
+        assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
+        assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
+        assert_raises(TypeError, np.modf, a, out=('one', 'two', 'three'))
+        assert_raises(TypeError, np.modf, a, out=('one',))
+
     def test_ufunc_override_exception(self):
-        # 2016-01-29: NUMPY_UFUNC_DISABLED
-        return
 
         class A(object):
-            def __numpy_ufunc__(self, *a, **kwargs):
+            def __array_ufunc__(self, *a, **kwargs):
                 raise ValueError("oops")
 
         a = A()
-        for func in [np.divide, np.dot]:
-            assert_raises(ValueError, func, a, a)
+        assert_raises(ValueError, np.negative, 1, out=a)
+        assert_raises(ValueError, np.negative, a)
+        assert_raises(ValueError, np.divide, 1., a)
+
+    def test_ufunc_override_not_implemented(self):
+
+        class A(object):
+            __array_ufunc__ = None
+
+        msg = ("operand type(s) do not implement __array_ufunc__("
+               "<ufunc 'negative'>, '__call__', <*>): 'A'")
+        with assert_raises_regex(TypeError, fnmatch.translate(msg)):
+            np.negative(A())
+
+        msg = ("operand type(s) do not implement __array_ufunc__("
+               "<ufunc 'add'>, '__call__', <*>, <object *>, out=(1,)): "
+               "'A', 'object', 'int'")
+        with assert_raises_regex(TypeError, fnmatch.translate(msg)):
+            np.add(A(), object(), out=1)
+
+    def test_gufunc_override(self):
+        # gufunc are just ufunc instances, but follow a different path,
+        # so check __array_ufunc__ overrides them properly.
+        class A(object):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return self, ufunc, method, inputs, kwargs
+
+        inner1d = ncu_tests.inner1d
+        a = A()
+        res = inner1d(a, a)
+        assert_equal(res[0], a)
+        assert_equal(res[1], inner1d)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], (a, a))
+        assert_equal(res[4], {})
+
+        res = inner1d(1, 1, out=a)
+        assert_equal(res[0], a)
+        assert_equal(res[1], inner1d)
+        assert_equal(res[2], '__call__')
+        assert_equal(res[3], (1, 1))
+        assert_equal(res[4], {'out': (a,)})
+
+        # wrong number of arguments in the tuple is an error too.
+        assert_raises(TypeError, inner1d, a, out='two')
+        assert_raises(TypeError, inner1d, a, a, 'one', out='two')
+        assert_raises(TypeError, inner1d, a, a, 'one', 'two')
+        assert_raises(TypeError, inner1d, a, a, out=('one', 'two'))
+        assert_raises(TypeError, inner1d, a, a, out=())
+
+    def test_ufunc_override_with_super(self):
+
+        class A(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                args = []
+                in_no = []
+                for i, input_ in enumerate(inputs):
+                    if isinstance(input_, A):
+                        in_no.append(i)
+                        args.append(input_.view(np.ndarray))
+                    else:
+                        args.append(input_)
+
+                outputs = kwargs.pop('out', None)
+                out_no = []
+                if outputs:
+                    out_args = []
+                    for j, output in enumerate(outputs):
+                        if isinstance(output, A):
+                            out_no.append(j)
+                            out_args.append(output.view(np.ndarray))
+                        else:
+                            out_args.append(output)
+                    kwargs['out'] = tuple(out_args)
+                else:
+                    outputs = (None,) * ufunc.nout
+
+                info = {}
+                if in_no:
+                    info['inputs'] = in_no
+                if out_no:
+                    info['outputs'] = out_no
+
+                results = super(A, self).__array_ufunc__(ufunc, method,
+                                                         *args, **kwargs)
+                if results is NotImplemented:
+                    return NotImplemented
+
+                if method == 'at':
+                    return
+
+                if ufunc.nout == 1:
+                    results = (results,)
+
+                results = tuple((np.asarray(result).view(A)
+                                 if output is None else output)
+                                for result, output in zip(results, outputs))
+                if results and isinstance(results[0], A):
+                    results[0].info = info
+
+                return results[0] if len(results) == 1 else results
+
+        class B(object):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                if any(isinstance(input_, A) for input_ in inputs):
+                    return "A!"
+                else:
+                    return NotImplemented
+
+        d = np.arange(5.)
+        # 1 input, 1 output
+        a = np.arange(5.).view(A)
+        b = np.sin(a)
+        check = np.sin(d)
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'inputs': [0]})
+        b = np.sin(d, out=(a,))
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'outputs': [0]})
+        assert_(b is a)
+        a = np.arange(5.).view(A)
+        b = np.sin(a, out=a)
+        assert_(np.all(check == b))
+        assert_equal(b.info, {'inputs': [0], 'outputs': [0]})
+
+        # 1 input, 2 outputs
+        a = np.arange(5.).view(A)
+        b1, b2 = np.modf(a)
+        assert_equal(b1.info, {'inputs': [0]})
+        b1, b2 = np.modf(d, out=(None, a))
+        assert_(b2 is a)
+        assert_equal(b1.info, {'outputs': [1]})
+        a = np.arange(5.).view(A)
+        b = np.arange(5.).view(A)
+        c1, c2 = np.modf(a, out=(a, b))
+        assert_(c1 is a)
+        assert_(c2 is b)
+        assert_equal(c1.info, {'inputs': [0], 'outputs': [0, 1]})
+
+        # 2 input, 1 output
+        a = np.arange(5.).view(A)
+        b = np.arange(5.).view(A)
+        c = np.add(a, b, out=a)
+        assert_(c is a)
+        assert_equal(c.info, {'inputs': [0, 1], 'outputs': [0]})
+        # some tests with a non-ndarray subclass
+        a = np.arange(5.)
+        b = B()
+        assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_(b.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_raises(TypeError, np.add, a, b)
+        a = a.view(A)
+        assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
+        assert_(b.__array_ufunc__(np.add, '__call__', a, b) == "A!")
+        assert_(np.add(a, b) == "A!")
+
 
 class TestChoose(TestCase):
     def test_mixed(self):

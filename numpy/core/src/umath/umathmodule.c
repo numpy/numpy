@@ -94,7 +94,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     Py_ssize_t fname_len = -1;
     int offset[2];
 
-    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
+    if (!PyArg_ParseTuple(args, "Oii:frompyfunc", &function, &nin, &nout)) {
         return NULL;
     }
     if (!PyCallable_Check(function)) {
@@ -210,13 +210,13 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     char *docstr, *newdocstr;
 
 #if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
     docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
 #else
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
          return NULL;
     }
@@ -266,7 +266,7 @@ intern_strings(void)
     npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__");
     npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
-    npy_um_str_ufunc = PyUString_InternFromString("__numpy_ufunc__");
+    npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__");
     npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME);
 
     return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&

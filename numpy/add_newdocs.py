@@ -1452,8 +1452,8 @@ add_newdoc('numpy.core.multiarray', 'where',
     condition : array_like, bool
         When True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same
-        shape as `condition`.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
@@ -5107,7 +5107,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
-    bincount(x, weights=None, minlength=None)
+    bincount(x, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -6739,7 +6739,7 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
 
 add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
     """
-    normalize_axis_index(axis, ndim)
+    normalize_axis_index(axis, ndim, msg_prefix=None)
 
     Normalizes an axis index, `axis`, such that is a valid positive index into
     the shape of array with `ndim` dimensions. Raises an AxisError with an
@@ -6756,6 +6756,8 @@ add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
     ndim : int
         The number of dimensions of the array that `axis` should be normalized
         against
+    msg_prefix : str
+        A prefix to put before the message, typically the name of the argument
 
     Returns
     -------
@@ -6780,6 +6782,10 @@ add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
     Traceback (most recent call last):
     ...
     AxisError: axis 3 is out of bounds for array of dimension 3
+    >>> normalize_axis_index(-4, ndim=3, msg_prefix='axes_arg')
+    Traceback (most recent call last):
+    ...
+    AxisError: axes_arg: axis -4 is out of bounds for array of dimension 3
     """)
 
 ##############################################################################

@@ -96,15 +96,15 @@ This behavior can be overwritten by setting the optional argument
 
    >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
-   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|S5")
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
           ['3', ' xxx', ' 4']],
-         dtype='|S5')
+         dtype='|U5')
    >>> # With autostrip
-   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|S5", autostrip=True)
+   >>> np.genfromtxt(BytesIO(data), delimiter=",", dtype="|U5", autostrip=True)
    array([['1', 'abc', '2'],
           ['3', 'xxx', '4']],
-         dtype='|S5')
+         dtype='|U5')
 
 
 The :keyword:`comments` argument
@@ -212,7 +212,7 @@ Acceptable values for this argument are:
   (see below).  Note that ``dtype=float`` is the default for
   :func:`~numpy.genfromtxt`.
 * a sequence of types, such as ``dtype=(int, float, float)``.
-* a comma-separated string, such as ``dtype="i4,f8,|S3"``.
+* a comma-separated string, such as ``dtype="i4,f8,|U3"``.
 * a dictionary with two keys ``'names'`` and ``'formats'``.
 * a sequence of tuples ``(name, type)``, such as
   ``dtype=[('A', int), ('B', float)]``.

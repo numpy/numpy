@@ -103,24 +103,24 @@ Output type determination
 The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 
-All output arrays will be passed to the :obj:`__array_prepare__` and
-:obj:`__array_wrap__` methods of the input (besides
+All output arrays will be passed to the :obj:`~class.__array_prepare__` and
+:obj:`~class.__array_wrap__` methods of the input (besides
 :class:`ndarrays <ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`__array_priority__` of any other input to the
-universal function. The default :obj:`__array_priority__` of the
-ndarray is 0.0, and the default :obj:`__array_priority__` of a subtype
-is 1.0. Matrices have :obj:`__array_priority__` equal to 10.0.
+the highest :obj:`~class.__array_priority__` of any other input to the
+universal function. The default :obj:`~class.__array_priority__` of the
+ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
+is 1.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`__array__` method is used for the output, results will be
-written to the object returned by :obj:`__array__`. Then, if the class
-also has an :obj:`__array_prepare__` method, it is called so metadata
+with an :obj:`~class.__array__` method is used for the output, results will be
+written to the object returned by :obj:`~class.__array__`. Then, if the class
+also has an :obj:`~class.__array_prepare__` method, it is called so metadata
 may be determined based on the context of the ufunc (the context
 consisting of the ufunc itself, the arguments passed to the ufunc, and
 the ufunc domain.) The array object returned by
-:obj:`__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`__array_wrap__` method, the returned
+:obj:`~class.__array_prepare__` is passed to the ufunc for computation.
+Finally, if the class also has an :obj:`~class.__array_wrap__` method, the returned
 :class:`ndarray` result will be passed to that method just before
 passing control back to the caller.
 
@@ -415,6 +415,8 @@ possess. None of the attributes can be set.
    ufunc.ntypes
    ufunc.types
    ufunc.identity
+
+.. _ufuncs.methods:
 
 Methods
 -------

@@ -27,6 +27,8 @@
 
 #include <stdlib.h>
 
+#include "binop_override.h"
+
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
@@ -151,63 +153,14 @@ gentype_free(PyObject *v)
 static PyObject *
 gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
-    PyObject *arr, *ret, *arg2;
-    char *msg="unsupported operand type(s) for ** or pow()";
-
     if (modulo != Py_None) {
         /* modular exponentiation is not implemented (gh-8804) */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
 
-    if (!PyArray_IsScalar(m1, Generic)) {
-        if (PyArray_Check(m1)) {
-            ret = Py_TYPE(m1)->tp_as_number->nb_power(m1,m2, Py_None);
-        }
-        else {
-            if (!PyArray_IsScalar(m2, Generic)) {
-                PyErr_SetString(PyExc_TypeError, msg);
-                return NULL;
-            }
-            arr = PyArray_FromScalar(m2, NULL);
-            if (arr == NULL) {
-                return NULL;
-            }
-            ret = Py_TYPE(arr)->tp_as_number->nb_power(m1, arr, Py_None);
-            Py_DECREF(arr);
-        }
-        return ret;
-    }
-    if (!PyArray_IsScalar(m2, Generic)) {
-        if (PyArray_Check(m2)) {
-            ret = Py_TYPE(m2)->tp_as_number->nb_power(m1,m2, Py_None);
-        }
-        else {
-            if (!PyArray_IsScalar(m1, Generic)) {
-                PyErr_SetString(PyExc_TypeError, msg);
-                return NULL;
-            }
-            arr = PyArray_FromScalar(m1, NULL);
-            if (arr == NULL) {
-                return NULL;
-            }
-            ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, m2, Py_None);
-            Py_DECREF(arr);
-        }
-        return ret;
-    }
-    arr = arg2 = NULL;
-    arr = PyArray_FromScalar(m1, NULL);
-    arg2 = PyArray_FromScalar(m2, NULL);
-    if (arr == NULL || arg2 == NULL) {
-        Py_XDECREF(arr);
-        Py_XDECREF(arg2);
-        return NULL;
-    }
-    ret = Py_TYPE(arr)->tp_as_number->nb_power(arr, arg2, Py_None);
-    Py_DECREF(arr);
-    Py_DECREF(arg2);
-    return ret;
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_power, gentype_power);
+    return PyArray_Type.tp_as_number->nb_power(m1, m2, Py_None);
 }
 
 static PyObject *
@@ -249,6 +202,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
     return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
 }
 
@@ -262,6 +216,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
     return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
 }
 /**end repeat**/
@@ -306,8 +261,8 @@ gentype_multiply(PyObject *m1, PyObject *m2)
         }
         return PySequence_Repeat(m2, repeat);
     }
-
     /* All normal cases are handled by PyArray's multiply */
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, gentype_multiply);
     return PyArray_Type.tp_as_number->nb_multiply(m1, m2);
 }
 
@@ -1521,7 +1476,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
     PyArray_Descr *outcode=NULL;
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "|O&", &PyArray_DescrConverter,
+    if (!PyArg_ParseTuple(args, "|O&:__array__", &PyArray_DescrConverter,
                 &outcode)) {
         Py_XDECREF(outcode);
         return NULL;
@@ -1597,7 +1552,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 {
     npy_bool inplace = NPY_FALSE;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace)) {
+    if (!PyArg_ParseTuple(args, "|O&:byteswap", PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
     if (inplace) {
@@ -1841,7 +1796,7 @@ gentype_dump(PyObject *self, PyObject *args)
     PyObject *file = NULL;
     int ret;
 
-    if (!PyArg_ParseTuple(args, "O", &file)) {
+    if (!PyArg_ParseTuple(args, "O:dump", &file)) {
         return NULL;
     }
     ret = PyArray_Dump(self, file, 2);
@@ -2602,6 +2557,7 @@ static PyObject *
      */
     _WORK@work@
 
+    /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
         return NULL;
     }
@@ -2718,6 +2674,7 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
+    /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|OO", &obj, &meta_obj)) {
         return NULL;
     }
@@ -2776,7 +2733,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_U
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+    if (!PyArg_ParseTuple(args, "|O:bool_", &obj)) {
         return NULL;
     }
     if (obj == NULL) {
@@ -2936,7 +2893,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
     PyObject *new = NULL;
     char *destptr;
 
-    if (!PyArg_ParseTuple(args, "O", &obj)) {
+    if (!PyArg_ParseTuple(args, "O:void", &obj)) {
         return NULL;
     }
     /*

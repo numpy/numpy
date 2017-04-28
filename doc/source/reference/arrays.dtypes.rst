@@ -85,9 +85,9 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
-   dtype('|S16')
+   dtype('|U16')
    >>> dt['grades']
    dtype(('float64',(2,)))
 
@@ -178,11 +178,17 @@ Built-in Python types
     :class:`bool`     :class:`bool\_`
     :class:`float`    :class:`float\_`
     :class:`complex`  :class:`cfloat`
-    :class:`str`      :class:`string`
+    :class:`bytes`    :class:`bytes\_`
+    :class:`str`      :class:`bytes\_` (Python2) or :class:`unicode\_` (Python3)
     :class:`unicode`  :class:`unicode\_`
     :class:`buffer`   :class:`void`
     (all others)      :class:`object_`
     ================  ===============
+
+    Note that ``str`` refers to either null terminated bytes or unicode strings
+    depending on the Python version. In code targetting both Python 2 and 3
+    ``np.unicode_`` should be used as a dtype for strings.
+    See :ref:`Note on string types<string-dtype-note>`.
 
     .. admonition:: Example
 
@@ -225,7 +231,9 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    supported kinds are
 
    ================   ========================
-   ``'b'``            boolean
+   ``'?'``            boolean
+   ``'b'``            (signed) byte
+   ``'B'``            unsigned byte
    ``'i'``            (signed) integer
    ``'u'``            unsigned integer
    ``'f'``            floating-point
@@ -233,8 +241,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'m'``            timedelta
    ``'M'``            datetime
    ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   (byte-)string
-   ``'U'``            Unicode
+   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
+   ``'U'``            Unicode string
    ``'V'``            raw data (:class:`void`)
    ================   ========================
 
@@ -243,7 +251,19 @@ Array-protocol type strings (see :ref:`arrays.interface`)
       >>> dt = np.dtype('i4')   # 32-bit signed integer
       >>> dt = np.dtype('f8')   # 64-bit floating-point number
       >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('a25')  # 25-character string
+      >>> dt = np.dtype('a25')  # 25-length zero-terminated bytes
+      >>> dt = np.dtype('U25')  # 25-character string
+
+   .. _string-dtype-note:
+
+   .. admonition:: Note on string types
+
+    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
+    remain zero-terminated bytes and ``np.string_`` continues to map to
+    ``np.bytes_``.
+    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
+    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
+    used.
 
 String with comma-separated fields
 
@@ -297,8 +317,7 @@ Type strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype((void, 10))  # 10-byte wide data block
-       >>> dt = np.dtype((str, 35))   # 35-character string
+       >>> dt = np.dtype((np.void, 10))  # 10-byte wide data block
        >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
@@ -315,7 +334,7 @@ Type strings
     .. admonition:: Example
 
        >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('S10', 1))                 # 10-character string
+       >>> dt = np.dtype(('U10', 1))                 # 10-character string
        >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
@@ -421,7 +440,7 @@ Type strings
        byte position 0), ``col2`` (32-bit float at byte position 10),
        and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('S10', 0), 'col2': (float32, 10),
+       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (float32, 10),
            'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``

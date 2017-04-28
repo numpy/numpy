@@ -71,7 +71,7 @@ matrix:
     - python: 2.7
       env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
     - python: 2.7
-      env: USE_WHEEL=1
+      env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 2.7
       env:
        - BLAS=None

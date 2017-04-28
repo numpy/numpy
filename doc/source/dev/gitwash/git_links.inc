@@ -8,36 +8,6 @@
    __not_case_sensitive__, so only one target definition is needed for
    nipy, NIPY, Nipy, etc...
 
-.. PROJECTNAME placeholders
-.. _PROJECTNAME: http://neuroimaging.scipy.org
-.. _`PROJECTNAME github`: http://github.com/nipy
-.. _`PROJECTNAME mailing list`: http://projects.scipy.org/mailman/listinfo/nipy-devel
-
-.. nipy
-.. _nipy: http://nipy.org/nipy
-.. _`nipy github`: http://github.com/nipy/nipy
-.. _`nipy mailing list`: http://mail.scipy.org/mailman/listinfo/nipy-devel
-
-.. ipython
-.. _ipython: http://ipython.scipy.org
-.. _`ipython github`: http://github.com/ipython/ipython
-.. _`ipython mailing list`: http://mail.scipy.org/mailman/listinfo/IPython-dev
-
-.. dipy
-.. _dipy: http://nipy.org/dipy
-.. _`dipy github`: http://github.com/Garyfallidis/dipy
-.. _`dipy mailing list`: http://mail.scipy.org/mailman/listinfo/nipy-devel
-
-.. nibabel
-.. _nibabel: http://nipy.org/nibabel
-.. _`nibabel github`: http://github.com/nipy/nibabel
-.. _`nibabel mailing list`: http://mail.scipy.org/mailman/listinfo/nipy-devel
-
-.. marsbar
-.. _marsbar: http://marsbar.sourceforge.net
-.. _`marsbar github`: http://github.com/matthew-brett/marsbar
-.. _`MarsBaR mailing list`: https://lists.sourceforge.net/lists/listinfo/marsbar-users
-
 .. git stuff
 .. _git: http://git-scm.com/
 .. _github: http://github.com
@@ -75,7 +45,7 @@
 .. _tangled working copy problem: http://tomayko.com/writings/the-thing-about-git 
 .. _git management: http://kerneltrap.org/Linux/Git_Management
 .. _linux git workflow: http://www.mail-archive.com/dri-devel@lists.sourceforge.net/msg39091.html
-.. _ipython git workflow: http://mail.scipy.org/pipermail/ipython-dev/2010-October/006746.html
+.. _ipython git workflow: http://mail.python.org/pipermail/ipython-dev/2010-October/006746.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
 .. _git foundation: http://matthew-brett.github.com/pydagogue/foundation.html
 .. _numpy/master: https://github.com/numpy/numpy

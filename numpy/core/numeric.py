@@ -53,7 +53,7 @@ __all__ = [
     'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
     'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
     'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
-    'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
+    'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'array2string',
     'get_printoptions', 'set_printoptions', 'array_repr', 'array_str',
     'set_string_function', 'little_endian', 'require', 'fromiter',
@@ -441,7 +441,7 @@ def count_nonzero(a, axis=None):
         nullstr = a.dtype.type('')
         return (a != nullstr).sum(axis=axis, dtype=np.intp)
 
-    axis = asarray(_validate_axis(axis, a.ndim, 'axis'))
+    axis = asarray(normalize_axis_tuple(axis, a.ndim))
     counts = np.apply_along_axis(multiarray.count_nonzero, axis[0], a)
 
     if axis.size == 1:
@@ -1154,62 +1154,6 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 
-def alterdot():
-    """
-    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
-
-    Typically, as a user of NumPy, you do not explicitly call this
-    function. If NumPy is built with an accelerated BLAS, this function is
-    automatically called when NumPy is imported.
-
-    When NumPy is built with an accelerated BLAS like ATLAS, these
-    functions are replaced to make use of the faster implementations.  The
-    faster implementations only affect float32, float64, complex64, and
-    complex128 arrays. Furthermore, the BLAS API only includes
-    matrix-matrix, matrix-vector, and vector-vector products. Products of
-    arrays with larger dimensionalities use the built in functions and are
-    not accelerated.
-
-    .. note:: Deprecated in NumPy 1.10.0
-              The cblas functions have been integrated into the multarray
-              module and alterdot now longer does anything. It will be
-              removed in NumPy 1.11.0.
-
-    See Also
-    --------
-    restoredot : `restoredot` undoes the effects of `alterdot`.
-
-    """
-    # 2014-08-13, 1.10
-    warnings.warn("alterdot no longer does anything.",
-                  DeprecationWarning, stacklevel=2)
-
-
-def restoredot():
-    """
-    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
-    implementations.
-
-    Typically, the user will only need to call this when troubleshooting
-    and installation problem, reproducing the conditions of a build without
-    an accelerated BLAS, or when being very careful about benchmarking
-    linear algebra operations.
-
-    .. note:: Deprecated in NumPy 1.10.0
-              The cblas functions have been integrated into the multarray
-              module and restoredot now longer does anything. It will be
-              removed in NumPy 1.11.0.
-
-    See Also
-    --------
-    alterdot : `restoredot` undoes the effects of `alterdot`.
-
-    """
-    # 2014-08-13, 1.10
-    warnings.warn("restoredot no longer does anything.",
-                  DeprecationWarning, stacklevel=2)
-
-
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes for arrays >= 1-D.
@@ -1460,16 +1404,14 @@ def roll(a, shift, axis=None):
         return roll(a.ravel(), shift, 0).reshape(a.shape)
 
     else:
+        axis = normalize_axis_tuple(axis, a.ndim, allow_duplicate=True)
         broadcasted = broadcast(shift, axis)
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
         shifts = {ax: 0 for ax in range(a.ndim)}
         for sh, ax in broadcasted:
-            if -a.ndim <= ax < a.ndim:
-                shifts[ax % a.ndim] += sh
-            else:
-                raise ValueError("'axis' entry is out of bounds")
+            shifts[ax] += sh
 
         rolls = [((slice(None), slice(None)),)] * a.ndim
         for ax, offset in shifts.items():
@@ -1544,17 +1486,59 @@ def rollaxis(a, axis, start=0):
     return a.transpose(axes)
 
 
-def _validate_axis(axis, ndim, argname):
+def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
+    """
+    Normalizes an axis argument into a tuple of non-negative integer axes.
+
+    This handles shorthands such as ``1`` and converts them to ``(1,)``,
+    as well as performing the handling of negative indices covered by
+    `normalize_axis_index`.
+
+    By default, this forbids axes from being specified multiple times.
+
+    Used internally by multi-axis-checking logic.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    axis : int, iterable of int
+        The un-normalized index or indices of the axis.
+    ndim : int
+        The number of dimensions of the array that `axis` should be normalized
+        against.
+    argname : str, optional
+        A prefix to put before the error message, typically the name of the
+        argument.
+    allow_duplicate : bool, optional
+        If False, the default, disallow an axis from being specified twice.
+
+    Returns
+    -------
+    normalized_axes : tuple of int
+        The normalized axis index, such that `0 <= normalized_axis < ndim`
+
+    Raises
+    ------
+    AxisError
+        If any axis provided is out of range
+    ValueError
+        If an axis is repeated
+
+    See also
+    --------
+    normalize_axis_index : normalizing a single scalar axis
+    """
     try:
         axis = [operator.index(axis)]
     except TypeError:
-        axis = list(axis)
-    axis = [a + ndim if a < 0 else a for a in axis]
-    if not builtins.all(0 <= a < ndim for a in axis):
-        raise AxisError('invalid axis for this array in `%s` argument' %
-                         argname)
-    if len(set(axis)) != len(axis):
-        raise ValueError('repeated axis in `%s` argument' % argname)
+        axis = tuple(axis)
+    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
+    if not allow_duplicate and len(set(axis)) != len(axis):
+        if argname:
+            raise ValueError('repeated axis in `{}` argument'.format(argname))
+        else:
+            raise ValueError('repeated axis')
     return axis
 
 
@@ -1599,7 +1583,7 @@ def moveaxis(a, source, destination):
 
     >>> np.transpose(x).shape
     (5, 4, 3)
-    >>> np.swapaxis(x, 0, -1).shape
+    >>> np.swapaxes(x, 0, -1).shape
     (5, 4, 3)
     >>> np.moveaxis(x, [0, 1], [-1, -2]).shape
     (5, 4, 3)
@@ -1614,8 +1598,8 @@ def moveaxis(a, source, destination):
         a = asarray(a)
         transpose = a.transpose
 
-    source = _validate_axis(source, a.ndim, 'source')
-    destination = _validate_axis(destination, a.ndim, 'destination')
+    source = normalize_axis_tuple(source, a.ndim, 'source')
+    destination = normalize_axis_tuple(destination, a.ndim, 'destination')
     if len(source) != len(destination):
         raise ValueError('`source` and `destination` arguments must have '
                          'the same number of elements')
@@ -1752,11 +1736,9 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     a = asarray(a)
     b = asarray(b)
     # Check axisa and axisb are within bounds
-    axis_msg = "'axis{0}' out of bounds"
-    if axisa < -a.ndim or axisa >= a.ndim:
-        raise ValueError(axis_msg.format('a'))
-    if axisb < -b.ndim or axisb >= b.ndim:
-        raise ValueError(axis_msg.format('b'))
+    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
+    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
+
     # Move working axis to the end of the shape
     a = rollaxis(a, axisa, a.ndim)
     b = rollaxis(b, axisb, b.ndim)
@@ -1770,8 +1752,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     if a.shape[-1] == 3 or b.shape[-1] == 3:
         shape += (3,)
         # Check axisc is within bounds
-        if axisc < -len(shape) or axisc >= len(shape):
-            raise ValueError(axis_msg.format('c'))
+        axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
@@ -2108,8 +2089,8 @@ def fromfunction(function, shape, **kwargs):
         The function is called with N parameters, where N is the rank of
         `shape`.  Each parameter represents the coordinates of the array
         varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters in turn be (0, 0), (0, 1),
-        (1, 0), (1, 1).
+        were ``(2, 2)``, then the parameters would be
+        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.

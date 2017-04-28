@@ -44,7 +44,7 @@
 #include "mem_overlap.h"
 
 #include "ufunc_object.h"
-#include "ufunc_override.h"
+#include "override.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -1176,6 +1176,15 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         dtype = PyArray_DescrFromType(NPY_BOOL);
                         if (dtype == NULL) {
                             goto fail;
+                        }
+                        if (value == Py_True) {
+                            /*
+                             * Optimization: where=True is the same as no
+                             * where argument. This lets us document it as a
+                             * default argument
+                             */
+                            bad_arg = 0;
+                            break;
                         }
                         *out_wheremask = (PyArrayObject *)PyArray_FromAny(
                                                             value, dtype,
@@ -3933,7 +3942,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&", reduceat_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
                                         &op,
                                         &obj_ind,
                                         &axes_in,
@@ -3951,7 +3960,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     else if (operation == UFUNC_ACCUMULATE) {
         PyObject *bad_keepdimarg = NULL;
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O", accumulate_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O:accumulate",
+                                        accumulate_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -3971,7 +3981,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", reduce_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i:reduce",
+                                        reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -4368,8 +4379,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override,
-                                   ufunc->nin);
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -4549,7 +4559,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *val;
     static char *msg = "Error object must be a list of length 3";
 
-    if (!PyArg_ParseTuple(args, "O", &val)) {
+    if (!PyArg_ParseTuple(args, "O:seterrobj", &val)) {
         return NULL;
     }
     if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
@@ -5066,6 +5076,14 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
+    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
                      "method outer is not allowed in ufunc with non-trivial"\
@@ -5083,15 +5101,6 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (PySequence_Length(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "exactly two arguments expected");
         return NULL;
-    }
-
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override, 0);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
     }
 
     tmp = PySequence_GetItem(args, 0);
@@ -5163,8 +5172,7 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5180,8 +5188,7 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5197,8 +5204,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5262,8 +5268,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
     if (errval) {
         return NULL;
     }
@@ -5283,7 +5288,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO|O:at", &op1, &idx, &op2)) {
         return NULL;
     }
 

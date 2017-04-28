@@ -631,4 +631,29 @@ class TooHardError(RuntimeError):
     pass
 
 class AxisError(ValueError, IndexError):
-    pass
+    """ Axis supplied was invalid. """
+    def __init__(self, axis, ndim=None, msg_prefix=None):
+        # single-argument form just delegates to base class
+        if ndim is None and msg_prefix is None:
+            msg = axis
+
+        # do the string formatting here, to save work in the C code
+        else:
+            msg = ("axis {} is out of bounds for array of dimension {}"
+                   .format(axis, ndim))
+            if msg_prefix is not None:
+                msg = "{}: {}".format(msg_prefix, msg)
+
+        super(AxisError, self).__init__(msg)
+
+
+def array_ufunc_errmsg_formatter(ufunc, method, *inputs, **kwargs):
+    """ Format the error message for when __array_ufunc__ gives up. """
+    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
+                            ['{}={!r}'.format(k, v)
+                             for k, v in kwargs.items()])
+    args = inputs + kwargs.get('out', ())
+    types_string = ', '.join(repr(type(arg).__name__) for arg in args)
+    return ('operand type(s) do not implement __array_ufunc__'
+            '({!r}, {!r}, {}): {}'
+            .format(ufunc, method, args_string, types_string))

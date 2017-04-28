@@ -125,31 +125,20 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @S@@TYPE@_fmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+@S@@TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 /**end repeat1**/
 
-NPY_NO_EXPORT void
-U@TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-U@TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-U@TYPE@_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-U@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
 /*

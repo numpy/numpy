@@ -1026,7 +1026,7 @@ cdef class RandomState:
         -----------
         a : 1-D array-like or int
             If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if a was np.arange(n)
+            If an int, the random sample is generated as if a were np.arange(a)
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -1040,7 +1040,7 @@ cdef class RandomState:
 
         Returns
         --------
-        samples : 1-D ndarray, shape (size,)
+        samples : single item or ndarray
             The generated random samples
 
         Raises
@@ -4412,8 +4412,8 @@ cdef class RandomState:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (*cov* is a multiple of the identity matrix)
-          - Diagonal covariance (*cov* has non-negative elements, and only on
+          - Spherical covariance (`cov` is a multiple of the identity matrix)
+          - Diagonal covariance (`cov` has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -4828,6 +4828,7 @@ cdef class RandomState:
         cdef npy_intp i, j
         for i in reversed(range(1, n)):
             j = rk_interval(i, self.internal_state)
+            if i == j : continue # i == j is not needed and memcpy is undefined.
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)

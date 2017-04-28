@@ -43,6 +43,7 @@ from numpy.compat import (
     )
 from numpy import expand_dims as n_expand_dims
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 
 
 if sys.version_info[0] >= 3:
@@ -2783,11 +2784,14 @@ class MaskedArray(ndarray):
         # Check that we're not erasing the mask.
         if isinstance(data, MaskedArray) and (data.shape != _data.shape):
             copy = True
-        # Careful, cls might not always be MaskedArray.
-        if not isinstance(data, cls) or not subok:
-            _data = ndarray.view(_data, cls)
-        else:
+
+        # Here, we copy the _view_, so that we can attach new properties to it
+        # we must never do .view(MaskedConstant), as that would create a new
+        # instance of np.ma.masked, which make identity comparison fail
+        if isinstance(data, cls) and subok and not isinstance(data, MaskedConstant):
             _data = ndarray.view(_data, type(data))
+        else:
+            _data = ndarray.view(_data, cls)
         # Backwards compatibility w/ numpy.core.ma.
         if hasattr(data, '_mask') and not isinstance(data, ndarray):
             _data._mask = data._mask
@@ -3182,29 +3186,80 @@ class MaskedArray(ndarray):
         Return the item described by i, as a masked array.
 
         """
-        dout = self.data[indx]
         # We could directly use ndarray.__getitem__ on self.
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet
         # So it's easier to stick to the current version
+        dout = self.data[indx]
         _mask = self._mask
+
+        def _is_scalar(m):
+            return not isinstance(m, np.ndarray)
+
+        def _scalar_heuristic(arr, elem):
+            """
+            Return whether `elem` is a scalar result of indexing `arr`, or None
+            if undecidable without promoting nomask to a full mask
+            """
+            # obviously a scalar
+            if not isinstance(elem, np.ndarray):
+                return True
+
+            # object array scalar indexing can return anything
+            elif arr.dtype.type is np.object_:
+                if arr.dtype is not elem.dtype:
+                    # elem is an array, but dtypes do not match, so must be
+                    # an element
+                    return True
+
+            # well-behaved subclass that only returns 0d arrays when
+            # expected - this is not a scalar
+            elif type(arr).__getitem__ == ndarray.__getitem__:
+                return False
+
+            return None
+
+        if _mask is not nomask:
+            # _mask cannot be a subclass, so it tells us whether we should
+            # expect a scalar. It also cannot be of dtype object.
+            mout = _mask[indx]
+            scalar_expected = _is_scalar(mout)
+
+        else:
+            # attempt to apply the heuristic to avoid constructing a full mask
+            mout = nomask
+            scalar_expected = _scalar_heuristic(self.data, dout)
+            if scalar_expected is None:
+                # heuristics have failed
+                # construct a full array, so we can be certain. This is costly.
+                # we could also fall back on ndarray.__getitem__(self.data, indx)
+                scalar_expected = _is_scalar(getmaskarray(self)[indx])
+
         # Did we extract a single item?
-        if not getattr(dout, 'ndim', False):
+        if scalar_expected:
             # A record
             if isinstance(dout, np.void):
-                mask = _mask[indx]
                 # We should always re-cast to mvoid, otherwise users can
                 # change masks on rows that already have masked values, but not
                 # on rows that have no masked values, which is inconsistent.
-                dout = mvoid(dout, mask=mask, hardmask=self._hardmask)
+                return mvoid(dout, mask=mout, hardmask=self._hardmask)
+
+            # special case introduced in gh-5962
+            elif (self.dtype.type is np.object_ and
+                  isinstance(dout, np.ndarray) and
+                  dout is not masked):
+                # If masked, turn into a MaskedArray, with everything masked.
+                if mout:
+                    return MaskedArray(dout, mask=True)
+                else:
+                    return dout
+
             # Just a scalar
-            elif _mask is not nomask and _mask[indx]:
-                return masked
-        elif self.dtype.type is np.object_ and self.dtype is not dout.dtype:
-            # self contains an object array of arrays (yes, that happens).
-            # If masked, turn into a MaskedArray, with everything masked.
-            if _mask is not nomask and _mask[indx]:
-                return MaskedArray(dout, mask=True)
+            else:
+                if mout:
+                    return masked
+                else:
+                    return dout
         else:
             # Force dout to MA
             dout = dout.view(type(self))
@@ -3237,10 +3292,9 @@ class MaskedArray(ndarray):
                         dout._fill_value = dout._fill_value.flat[0]
                 dout._isfield = True
             # Update the mask if needed
-            if _mask is not nomask:
-                dout._mask = _mask[indx]
+            if mout is not nomask:
                 # set shape to match that of data; this is needed for matrices
-                dout._mask.shape = dout.shape
+                dout._mask = reshape(mout, dout.shape)
                 dout._sharedmask = True
                 # Note: Don't try to check for m.any(), that'll take too long
         return dout
@@ -3879,13 +3933,17 @@ class MaskedArray(ndarray):
 
     def _delegate_binop(self, other):
         # This emulates the logic in
-        # multiarray/number.c:PyArray_GenericBinaryFunction
-        if (not isinstance(other, np.ndarray)
-                and not hasattr(other, "__numpy_ufunc__")):
+        #     private/binop_override.h:forward_binop_should_defer
+        if isinstance(other, type(self)):
+            return False
+        array_ufunc = getattr(other, "__array_ufunc__", False)
+        if array_ufunc is False:
             other_priority = getattr(other, "__array_priority__", -1000000)
-            if self.__array_priority__ < other_priority:
-                return True
-        return False
+            return self.__array_priority__ < other_priority
+        else:
+            # If array_ufunc is not None, it will be called inside the ufunc;
+            # None explicitly tells us to not call the ufunc, i.e., defer.
+            return array_ufunc is None
 
     def _comparison(self, other, compare):
         """Compare self with other using operator.eq or operator.ne.
@@ -4362,17 +4420,14 @@ class MaskedArray(ndarray):
 
             if self.shape is ():
                 if axis not in (None, 0):
-                    raise np.AxisError("'axis' entry is out of bounds")
+                    raise np.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
                 if kwargs.get('keepdims', False):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
-            axes = axis if isinstance(axis, tuple) else (axis,)
-            axes = tuple(normalize_axis_index(a, self.ndim) for a in axes)
-            if len(axes) != len(set(axes)):
-                raise ValueError("duplicate value in 'axis'")
+            axes = normalize_axis_tuple(axis, self.ndim)
             items = 1
             for ax in axes:
                 items *= self.shape[ax]
@@ -6960,8 +7015,8 @@ def where(condition, x=_NoValue, y=_NoValue):
         The condition to meet. For each True element, yield the corresponding
         element from `x`, otherwise from `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same shape
-        as condition, or be broadcast-able to that shape.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
@@ -6991,44 +7046,42 @@ def where(condition, x=_NoValue, y=_NoValue):
      [6.0 -- 8.0]]
 
     """
-    missing = (x is _NoValue, y is _NoValue).count(True)
 
+    # handle the single-argument case
+    missing = (x is _NoValue, y is _NoValue).count(True)
     if missing == 1:
         raise ValueError("Must provide both 'x' and 'y' or neither.")
     if missing == 2:
-        return filled(condition, 0).nonzero()
+        return nonzero(condition)
 
-    # Both x and y are provided
+    # we only care if the condition is true - false or masked pick y
+    cf = filled(condition, False)
+    xd = getdata(x)
+    yd = getdata(y)
 
-    # Get the condition
-    fc = filled(condition, 0).astype(MaskType)
-    notfc = np.logical_not(fc)
+    # we need the full arrays here for correct final dimensions
+    cm = getmaskarray(condition)
+    xm = getmaskarray(x)
+    ym = getmaskarray(y)
 
-    # Get the data
-    xv = getdata(x)
-    yv = getdata(y)
-    if x is masked:
-        ndtype = yv.dtype
-    elif y is masked:
-        ndtype = xv.dtype
-    else:
-        ndtype = np.find_common_type([xv.dtype, yv.dtype], [])
+    # deal with the fact that masked.dtype == float64, but we don't actually
+    # want to treat it as that.
+    if x is masked and y is not masked:
+        xd = np.zeros((), dtype=yd.dtype)
+        xm = np.ones((),  dtype=ym.dtype)
+    elif y is masked and x is not masked:
+        yd = np.zeros((), dtype=xd.dtype)
+        ym = np.ones((),  dtype=xm.dtype)
 
-    # Construct an empty array and fill it
-    d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    np.copyto(d._data, xv.astype(ndtype), where=fc)
-    np.copyto(d._data, yv.astype(ndtype), where=notfc)
+    data = np.where(cf, xd, yd)
+    mask = np.where(cf, xm, ym)
+    mask = np.where(cm, np.ones((), dtype=mask.dtype), mask)
 
-    # Create an empty mask and fill it
-    mask = np.zeros(fc.shape, dtype=MaskType)
-    np.copyto(mask, getmask(x), where=fc)
-    np.copyto(mask, getmask(y), where=notfc)
-    mask |= getmaskarray(condition)
+    # collapse the mask, for backwards compatibility
+    if mask.dtype == np.bool_ and not mask.any():
+        mask = nomask
 
-    # Use d._mask instead of d.mask to avoid copies
-    d._mask = mask if mask.any() else nomask
-
-    return d
+    return masked_array(data, mask=mask)
 
 
 def choose(indices, choices, out=None, mode='raise'):
