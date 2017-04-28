@@ -1012,6 +1012,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
+    int num_override_args;
 
     if (PyTuple_Size(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
@@ -1023,7 +1024,11 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    if (PyUFunc_WithOverride(normal_args, kwds, NULL)) {
+    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL);
+    if (num_override_args == -1) {
+        return NULL;
+    }
+    if (num_override_args) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
@@ -2527,7 +2532,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /*
      * While we could put these in `tp_sequence`, its' easier to define them
      * in terms of PyObject* arguments.
-     * 
+     *
      * We must provide these for compatibility with code that calls them
      * directly. They are already deprecated at a language level in python 2.7,
      * but are removed outright in python 3.

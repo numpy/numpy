@@ -317,7 +317,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     int j;
     int status;
 
-    int noa;
+    int num_override_args;
     PyObject *with_override[NPY_MAXARGS];
 
     PyObject *obj;
@@ -334,9 +334,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /*
      * Check inputs for overrides
      */
-    noa = PyUFunc_WithOverride(args, kwds, with_override);
+    num_override_args = PyUFunc_WithOverride(args, kwds, with_override);
+    if (num_override_args == -1) {
+        goto fail;
+    }
     /* No overrides, bail out.*/
-    if (noa == 0) {
+    if (num_override_args == 0) {
         *result = NULL;
         return 0;
     }
@@ -496,7 +499,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         *result = NULL;
 
         /* Choose an overriding argument */
-        for (i = 0; i < noa; i++) {
+        for (i = 0; i < num_override_args; i++) {
             obj = with_override[i];
             if (obj == NULL) {
                 continue;
@@ -506,7 +509,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             override_obj = obj;
 
             /* Check for sub-types to the right of obj. */
-            for (j = i + 1; j < noa; j++) {
+            for (j = i + 1; j < num_override_args; j++) {
                 other_obj = with_override[j];
                 if (other_obj != NULL &&
                     PyObject_Type(other_obj) != PyObject_Type(obj) &&
@@ -550,12 +553,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                                              "__array_ufunc__");
         if (array_ufunc == NULL) {
             goto fail;
-        }
-
-        /* If None, try next one (i.e., as if it returned NotImplemented) */
-        if (array_ufunc == Py_None) {
-            Py_DECREF(array_ufunc);
-            continue;
         }
 
         *result = PyObject_Call(array_ufunc, override_args, normal_kwds);
