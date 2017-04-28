@@ -1901,7 +1901,8 @@ class TestSpecialMethods(TestCase):
     def test_ufunc_override_not_implemented(self):
 
         class A(object):
-            __array_ufunc__ = None
+            def __array_ufunc__(self, *args, **kwargs):
+                return NotImplemented
 
         msg = ("operand type(s) do not implement __array_ufunc__("
                "<ufunc 'negative'>, '__call__', <*>): 'A'")
@@ -1913,6 +1914,36 @@ class TestSpecialMethods(TestCase):
                "'A', 'object', 'int'")
         with assert_raises_regex(TypeError, fnmatch.translate(msg)):
             np.add(A(), object(), out=1)
+
+    def test_ufunc_override_disabled(self):
+
+        class OptOut(object):
+            __array_ufunc__ = None
+
+        opt_out = OptOut()
+
+        # ufuncs always raise
+        msg = "operand 'OptOut' does not support ufuncs"
+        with assert_raises_regex(TypeError, msg):
+            np.add(opt_out, 1)
+        with assert_raises_regex(TypeError, msg):
+            np.add(1, opt_out)
+        with assert_raises_regex(TypeError, msg):
+            np.negative(opt_out)
+
+        # opt-outs still hold even when other arguments have pathological
+        # __array_ufunc__ implementations
+
+        class GreedyArray(object):
+            def __array_ufunc__(self, *args, **kwargs):
+                return self
+
+        greedy = GreedyArray()
+        assert_(np.negative(greedy) is greedy)
+        with assert_raises_regex(TypeError, msg):
+            np.add(greedy, opt_out)
+        with assert_raises_regex(TypeError, msg):
+            np.add(greedy, 1, out=opt_out)
 
     def test_gufunc_override(self):
         # gufunc are just ufunc instances, but follow a different path,
