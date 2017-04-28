@@ -2727,22 +2727,19 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
 NPY_NO_EXPORT int
 _is_float_complex(PyObject *op)
 {
-    if (PyFloat_Check(op)) {
-        return 1;
-    }
-    else if (PyComplex_Check(op)) {
+    if (PyFloat_Check(op) || PyComplex_Check(op)) {
         return 1;
     }
     return 0;
 }
 
 /**begin repeat
- * #func = arccos, arccosh, arcsin, arcsinh, arctan, arctanh, cos, sin,
-           tan, cosh, sinh, tanh, exp, expm1, log, log10, log1p, sqrt, ceil,
-           trunc, fabs, floor, arctan2, isnan, isinf, conjugate, square,
-           reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
-           radians, deg2rad, exp2, log2, cbrt, isfinite, rint, signbit,
-           spacing#
+ * #func = isnan, isinf, isfinite, signbit, arccos, arccosh, arcsin, arcsinh,
+           arctan, arctanh, cos, sin, tan, cosh, sinh, tanh, exp, expm1, log,
+           log10, log1p, sqrt, ceil, trunc, fabs, floor, arctan2, conjugate,
+           square, reciprocal, _ones_like, sign, logical_not, degrees, rad2deg,
+           radians, deg2rad, exp2, log2, cbrt, rint, spacing#
+   #out_bool = 1, 1, 1, 1, 0*38#
  */
 NPY_NO_EXPORT void
 OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
@@ -2766,25 +2763,27 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1) {
+    for (i = 0; i < n; i++, ip1 += is1, op1 += os1) {
         PyObject *in1 = *(PyObject **)ip1;
+#if !@out_bool@
         PyObject **out = (PyObject **)op1;
+#endif
 
         in1 = in1 ? in1 : Py_None;
 
-        if ( PyArray_CheckScalar(in1) || PyArray_Check(in1) ){
+        if (PyArray_CheckScalar(in1) || PyArray_Check(in1)) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
         }
         else if (_is_float_complex(in1)) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
-            if (ret != NULL){
+            if (ret != NULL) {
                 arr = (PyArrayObject*)PyArray_FromScalar(ret, NULL);
                 Py_DECREF(ret);
                 ret = PyArray_GETITEM(arr, PyArray_DATA(arr));
                 Py_XDECREF(arr);
             }
         }
-        else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
+        else if ((attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
                 PyCallable_Check(attr)) {
             ret = PyObject_CallFunctionObjArgs(attr, NULL);
             Py_DECREF(attr);
@@ -2801,8 +2800,13 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
             return;
         }
 
+#if @out_bool@
+        *((npy_bool *)op1) = PyObject_IsTrue(ret);
+        Py_DECREF(ret);
+#else
         Py_XDECREF(*out);
         *out = ret;
+#endif
     }
 }
 /**end repeat**/
@@ -2834,7 +2838,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) {
+    for (i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
@@ -2845,7 +2849,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
     
         if (_is_float_complex(in1) && _is_float_complex(in2)) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, in2, NULL);
-            if (ret != NULL){
+            if (ret != NULL) {
                 arr = (PyArrayObject*)PyArray_FromScalar(ret, NULL);
                 Py_DECREF(ret);
                 ret = PyArray_GETITEM(arr, PyArray_DATA(arr));
@@ -2856,12 +2860,12 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
                  PyArray_Check(in1) || PyArray_Check(in2) ) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, in2, NULL);
         }
-        else if ( (attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
+        else if ((attr = PyObject_GetAttrString(in1, "@func@")) != NULL && 
                 PyCallable_Check(attr)) {
             ret = PyObject_CallFunctionObjArgs(attr, in2, NULL);
             Py_DECREF(attr);
         }
-        else{
+        else {
             /* clear any error from attr lookup */
             PyErr_Clear();
             Py_XDECREF(attr);
@@ -2903,14 +2907,14 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
         return;
     }
 
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2) {
+    for (i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2) {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out1 = (PyObject **)op1;
         PyObject **out2 = (PyObject **)op2;
 
         in1 = in1 ? in1 : Py_None;
 
-        if ( PyArray_CheckScalar(in1) ){
+        if ( PyArray_CheckScalar(in1) ) {
             ret = PyObject_CallFunctionObjArgs(ufunc, in1, NULL);
         }
         else if (_is_float_complex(in1)) {
@@ -2934,7 +2938,7 @@ OBJECT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
             return;
         }
 
-        if (!PyTuple_Check(ret) || PyTuple_Size(ret) != 2){
+        if (!PyTuple_Check(ret) || PyTuple_Size(ret) != 2) {
             Py_XDECREF(ret);
             return;
         }

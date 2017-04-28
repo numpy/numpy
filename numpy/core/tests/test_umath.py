@@ -2526,43 +2526,45 @@ class TestObjects:
         for val in vals:
             vobj = np.array([val], dtype=object)
             for u in self.unary_ufuncs:
-                try:
-                    result = u([val])
-                except Exception as e:
-                    continue
-                robj = u(vobj)
-                assert_allclose(robj[0], result[0], rtol=1e-4, 
-                    err_msg="in call `{0}({1})`".format(u.__name__, val))
+                # suppress warnings about division by 0, overflow, etc
+                with suppress_warnings() as sup:
+                    sup.filter(RuntimeWarning)
+                    try:
+                        result = u([val])
+                    except Exception as e:
+                        continue
+                    robj = u(vobj)
+                    assert_allclose(robj[0], result[0], rtol=1e-4,
+                        err_msg="in call `{0}({1})`".format(u.__name__, val))
 
         for val in vals:
             vobj = np.array([val], dtype=object)
             for u in self.unary_funcs_2:
-                try:
-                    r1, r2 = u([val])
-                except:
-                    continue
-                nr1, nr2 = u(vobj)
-                assert_allclose(nr1[0], r1[0], rtol=1e-4, 
-                    err_msg="in call `{0}({1})`".format(u.__name__, val))
+                with suppress_warnings() as sup:
+                    sup.filter(RuntimeWarning)
+                    try:
+                        r1, r2 = u([val])
+                    except:
+                        continue
+                    nr1, nr2 = u(vobj)
+                    assert_allclose(nr1[0], r1[0], rtol=1e-4,
+                        err_msg="in call `{0}({1})`".format(u.__name__, val))
 
         for vala in vals:
             for valb in vals:
                 aobj = np.array([vala], dtype=object)
                 bobj = np.array([valb], dtype=object)
                 for u in self.binary_ufuncs:
-                    try:
-                        result = u([vala], [valb])
-                    except:
-                        continue
-
-                    # avoid warnings about invalid values in some systems
                     with suppress_warnings() as sup:
                         sup.filter(RuntimeWarning)
+                        try:
+                            result = u([vala], [valb])
+                        except:
+                            continue
                         robj = u(aobj, bobj)
-
-                    assert_allclose(robj[0], result[0], rtol=1e-4,
-                        err_msg="in call `{0}({1}, {1})`".format(u.__name__,
-                                                             vala, valb))
+                        assert_allclose(robj[0], result[0], rtol=1e-4,
+                            err_msg="in call `{0}({1}, {1})`".format(u.__name__,
+                                                                 vala, valb))
 
 
 def test_rint_big_int():
