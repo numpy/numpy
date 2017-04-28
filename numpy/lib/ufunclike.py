@@ -8,8 +8,36 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
+import warnings
+import functools
 
-def fix(x, y=None):
+def _deprecate_out_named_y(f):
+    """
+    Allow the out argument to be passed as the name `y` (deprecated)
+
+    In future, this decorator should be removed.
+    """
+    @functools.wraps(f)
+    def func(x, out=None, **kwargs):
+        if 'y' in kwargs:
+            if 'out' in kwargs:
+                raise TypeError(
+                    "{} got multiple values for argument 'out'/'y'"
+                    .format(f.__name__)
+                )
+            out = kwargs.pop('y')
+            # NumPy 1.13.0, 2017-04-26
+            warnings.warn(
+                "The name of the out argument to {} has changed from `y` to "
+                "`out`, to match other ufuncs.".format(f.__name__),
+                DeprecationWarning, stacklevel=3)
+        return f(x, out=out, **kwargs)
+
+    return func
+
+
+@_deprecate_out_named_y
+def fix(x, out=None):
     """
     Round to nearest integer towards zero.
 
@@ -43,15 +71,18 @@ def fix(x, y=None):
     array([ 2.,  2., -2., -2.])
 
     """
-    x = nx.asanyarray(x)
-    y1 = nx.floor(x)
-    y2 = nx.ceil(x)
-    if y is None:
-        y = nx.asanyarray(y1)
-    y[...] = nx.where(x >= 0, y1, y2)
-    return y
+    # promote back to an array if flattened
+    res = nx.asanyarray(nx.ceil(x, out=out))
+    res = nx.floor(x, out=res, where=nx.greater_equal(x, 0))
 
-def isposinf(x, y=None):
+    # when no out argument is passed and no subclasses are involved, flatten
+    # scalars
+    if out is None and type(res) is nx.ndarray:
+        res = res[()]
+    return res
+
+@_deprecate_out_named_y
+def isposinf(x, out=None):
     """
     Test element-wise for positive infinity, return result as bool array.
 
@@ -64,7 +95,7 @@ def isposinf(x, y=None):
 
     Returns
     -------
-    y : ndarray
+    out : ndarray
         A boolean array with the same dimensions as the input.
         If second argument is not supplied then a boolean array is returned
         with values True where the corresponding element of the input is
@@ -74,7 +105,7 @@ def isposinf(x, y=None):
         If a second argument is supplied the result is stored there. If the
         type of that array is a numeric type the result is represented as zeros
         and ones, if the type is boolean then as False and True.
-        The return value `y` is then a reference to that array.
+        The return value `out` is then a reference to that array.
 
     See Also
     --------
@@ -107,13 +138,11 @@ def isposinf(x, y=None):
     array([0, 0, 1])
 
     """
-    if y is None:
-        x = nx.asarray(x)
-        y = nx.empty(x.shape, dtype=nx.bool_)
-    nx.logical_and(nx.isinf(x), ~nx.signbit(x), y)
-    return y
+    return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
 
-def isneginf(x, y=None):
+
+@_deprecate_out_named_y
+def isneginf(x, out=None):
     """
     Test element-wise for negative infinity, return result as bool array.
 
@@ -121,13 +150,13 @@ def isneginf(x, y=None):
     ----------
     x : array_like
         The input array.
-    y : array_like, optional
+    out : array_like, optional
         A boolean array with the same shape and type as `x` to store the
         result.
 
     Returns
     -------
-    y : ndarray
+    out : ndarray
         A boolean array with the same dimensions as the input.
         If second argument is not supplied then a numpy boolean array is
         returned with values True where the corresponding element of the
@@ -137,7 +166,7 @@ def isneginf(x, y=None):
         If a second argument is supplied the result is stored there. If the
         type of that array is a numeric type the result is represented as
         zeros and ones, if the type is boolean then as False and True. The
-        return value `y` is then a reference to that array.
+        return value `out` is then a reference to that array.
 
     See Also
     --------
@@ -170,8 +199,4 @@ def isneginf(x, y=None):
     array([1, 0, 0])
 
     """
-    if y is None:
-        x = nx.asarray(x)
-        y = nx.empty(x.shape, dtype=nx.bool_)
-    nx.logical_and(nx.isinf(x), nx.signbit(x), y)
-    return y
+    return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
