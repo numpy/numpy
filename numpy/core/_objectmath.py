@@ -2,6 +2,12 @@
 Pure python implementations of ufuncs for Object type.
 Makes use of math module for some ufuncs.
 
+These are the last-resort fallback functions used to evaluate ufuncs on object
+array. Before these are used, numpy will first 1. look for a Python built-in
+function corresponding to the ufunc, and call it 2. try to convert built-in
+python scalars to numpy types, then use of the ufunc, and 3.  check for a
+user-defined method on the item with the same name as the ufunc.
+
 """
 from __future__ import division, absolute_import, print_function
 import math
