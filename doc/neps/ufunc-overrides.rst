@@ -15,6 +15,8 @@ A Mechanism for Overriding Ufuncs
 :Author: Nathaniel Smith
 
 :Author: Marten van Kerkwijk
+
+:Author: Stephan Hoyer
 :Date: 2017-03-31
 
 Executive summary
@@ -425,6 +427,7 @@ position: it is above all subclasses of :class:`ndarray`, in that it can
 cast them to its own type, but it does not itself know how to interact
 with them in ufuncs.
 
+.. [7] https://rhettinger.wordpress.com/2011/05/26/super-considered-super/
 
 Turning Ufuncs off
 ------------------
@@ -432,40 +435,49 @@ Turning Ufuncs off
 For some classes, Ufuncs make no sense, and, like for some other special
 methods such as ``__hash__`` and ``__iter__`` [8]_, one can indicate
 Ufuncs are not available by setting ``__array_ufunc__`` to :obj:`None`.
-Inside a Ufunc, this is equivalent to unconditionally returning
-:obj:`NotImplemented`, and thus will lead to a :exc:`TypeError` (unless
-another operand implements ``__array_ufunc__`` and specifically knows
-how to deal with the class).
+If a Ufunc is called on any operand that sets ``__array_ufunc__ = None``,
+it will unconditionally raise :exc:`TypeError`.
 
 In the type casting hierarchy, this makes it explicit that the type is
 incompatible relative to :class:`ndarray`.
 
-.. [7] https://rhettinger.wordpress.com/2011/05/26/super-considered-super/
-
 .. [8] https://docs.python.org/3/reference/datamodel.html#specialnames
 
-In combination with Python's binary operations
-----------------------------------------------
+Behavior in combination with Python's binary operations
+-------------------------------------------------------
 
 The Python operator override mechanism in :class:`ndarray` is coupled to
-the ``__array_ufunc__`` mechanism. :class:`ndarray` returns
-:obj:`NotImplemented` from ``ndarray.__mul__(self, other)`` and other
-binary operation methods if ``other.__array_ufunc__ is None``. If the
-``__array_ufunc__`` attribute is absent, :obj:`NotImplemented` is
-returned if ``other.__array_priority__ > self.__array_priority__``.  In
-other cases, :class:`ndarray` calls the corresponding ufunc. The
-resulting behavior can modified by overriding the corresponding ufunc
-via implementing ``__array_ufunc__``.
+the ``__array_ufunc__`` mechanism. For the special methods calls such as
+``ndarray.__mul__(self, other)`` that Python calls for implementing
+binary operations such as ``*`` and ``+``, NumPy's :class:`ndarray`
+implements the following behavior:
+
+- If ``other.__array_ufunc__ is None``, or if the ``__array_ufunc__``
+  attribute is absent on ``other`` and
+  ``other.__array_priority__ > self.__array_priority__``, :class:`ndarray`
+  returns :obj:`NotImplemented`. Control reverts to Python, which in turn
+  will try calling a corresponding reflexive method on ``other`` (e.g.,
+  ``other.__rmul__``), if present.
+- In all other cases, :class:`ndarray` unilaterally calls the corresponding
+  Ufunc. Ufuncs never return ``NotImplemented``, so **reflexive methods
+  such as** ``other.__rmul__`` **cannot be used to override arithmetic with
+  NumPy arrays if** ``__array_ufunc__`` **is set**. Instead, the
+  resulting behavior can modified by implementing ``__array_ufunc__``
+  in a consistent fashion for the corresponding Ufunc (e.g., ``np.multiply``).
+  See :ref:`neps.ufunc-overrides.list-operations`.
 
 A class wishing to modify the interaction with :class:`ndarray` in
-binary operations has two options:
+binary operations therefore has two options:
 
 1. Implement ``__array_ufunc__`` and follow Numpy semantics for Python
    binary operations (see below).
 
 2. Set ``__array_ufunc__ = None``, and implement Python binary
-   operations freely.  In this case, ufuncs will raise :exc:`TypeError`
-   in combination with ndarray inputs.
+   operations freely.  In this case, ufuncs called on this argument will
+   raise :exc:`TypeError`.
+
+Recommendations for implementing binary operations
+--------------------------------------------------
 
 For most numerical classes, the easiest way to override binary
 operations is thus to define ``__array_ufunc__`` and override the
@@ -473,6 +485,12 @@ corresponding Ufunc. The class can then, like :class:`ndarray` itself,
 define the binary operators in terms of Ufuncs. Here, one has to take
 some care to ensure that one allows for other classes to indicate they
 are not compatible, i.e., implementations should be something like::
+
+    def _disables_array_ufunc(obj):
+        try:
+            return obj.__array_ufunc__ is None
+        except AttributeError:
+            return False
 
     class ArrayLike(object):
         ...
@@ -482,12 +500,12 @@ are not compatible, i.e., implementations should be something like::
 
         # Option 1: call ufunc directly
         def __mul__(self, other):
-            if getattr(other, '__array_ufunc__', False) is None:
+            if _disables_array_ufunc(other):
                 return NotImplemented
             return np.multiply(self, other)
 
         def __rmul__(self, other):
-            if getattr(other, '__array_ufunc__', False) is None:
+            if _disables_array_ufunc(other):
                 return NotImplemented
             return np.multiply(other, self)
 
@@ -547,12 +565,10 @@ For the fourth example, with the in-place operators, we have here
 followed :class:`ndarray` and ensure we never return
 :obj:`NotImplemented`, but rather raise a :exc:`TypeError`. In
 option (1) this happens indirectly: we pass to ``np.multiply``, which
-calls ``arr.__array_ufunc__``. This, however, will not know what to do
-with ``mine`` and will thus return :obj:`NotImplemented`.  Then, the
-ufunc turns to ``mine.__array_ufunc__``. But this is :obj:`None`,
-equivalent to returning :obj:`NotImplemented`, so a :exc:`TypeError` is
-raised.  In option (2), we pass directly to ``arr.__array_ufunc__``,
-which will return :obj:`NotImplemented`, which we catch.
+in turn immediately raises :exc:`TypeError`, because one of its operands
+(``out[0]``) disables Ufuncs.  In option (2), we pass directly to
+``arr.__array_ufunc__``, which will return :obj:`NotImplemented`, which
+we catch.
 
 .. note :: the reason for not allowing in-place operations to return
    :obj:`NotImplemented` is that these cannot generically be replaced by
@@ -575,14 +591,78 @@ For option (2), the relevant example is the fourth, with ``arr *=
 mine``: if we had let the :obj:`NotImplemented` pass, python would have
 replaced this with ``arr = mine.__rmul__(arr)``, which is not wanted.
 
+Because the semantics of Ufunc overrides and Python's binary operations
+are nearly identical, in most cases options (1) and (2) will
+yield the same result with the same implementation of ``__array_ufunc__``.
+One exception is the order in which implementations are tried when the
+second argument is a subclass of the first argument, due to a Python
+bug [9]_ expected to be fixed in Python 3.7.
+
+In general, we recommend adopting option (1), which is the option most
+similar to that used by :class:`ndarray` itself. Note that option (1)
+is viral, in the sense that any other class that wishes to support binary
+operations with your class now must also follow these rules for supporting
+binary arithmetic with :class:`ndarray` (i.e., they must either implement
+``__array_ufunc__`` or set it to :obj:`None`). We believe this is a good
+thing, because it ensures the consistency of ufuncs and arithmetic on all
+objects that support them.
+
+To make implementing such array-like classes easier, the mixin class
+:class:`~numpy.lib.mixins.NDArrayOperatorsMixin` provides option (1) style
+overrides for all binary operators with corresponding Ufuncs. Classes
+that wish to implement ``__array_ufunc__`` for compatible versions
+of NumPy but that also need to support binary arithmetic with NumPy arrays
+on older versions, should ensure that ``__array_ufunc__`` can also be used
+to implement all binary operations they support.
+
 Finally, we note that we had extensive discussion about whether it might
 make more sense to ask classes like ``MyObject`` to implement a full
 ``__array_ufunc__`` [6]_. In the end, allowing classes to opt out was
 preferred, and the above reasoning led us to agree on a similar
-implementation for :class:`ndarray` itself. To help implement array-like
-classes, the mixin class :class:`~numpy.lib.mixins.NDArrayOperatorsMixin`
-provides overrides for all binary operators with corresponding ufuncs.
+implementation for :class:`ndarray` itself. We decided to require disabling
+ufuncs to opt out to ensure that a class cannot define Ufuncs to return
+different results than the corresponding binary operations (i.e., if
+``np.add(x, y)`` is defined, it should match ``x + y``).
 
+.. [9] http://bugs.python.org/issue30140
+
+.. _neps.ufunc-overrides.list-operations:
+
+List of binary operations and NumPy Ufuncs
+------------------------------------------
+
+Here is a full list of Python binary operations and the corresponding NumPy
+Ufuncs used by :class:`ndarray`:
+
+====== ============ =========================================
+Symbol Operator     NumPy Ufunc(s)
+====== ============ =========================================
+``<``  ``lt``       :func:`less`
+``<=`` ``le``       :func:`less_equal`
+``==`` ``eq``       :func:`equal`
+``!=`` ``ne``       :func:`not_equal`
+``>``  ``gt``       :func:`greater`
+``>=`` ``ge``       :func:`greater_equal`
+``+``  ``add``      :func:`add`
+``-``  ``sub``      :func:`subtract`
+``*``  ``mul``      :func:`multiply`
+``/``  ``truediv``  :func:`true_divide`
+       (Python 3)
+``/``  ``div``      :func:`divide`
+       (Python 2)
+``//`` ``floordiv`` :func:`floor_divide`
+``%``  ``mod``      :func:`mod`
+``**`` ``pow``      :func:`power`
+``<<`` ``lshift``   :func:`left_shift`
+``>>`` ``rshift``   :func:`right_shift`
+``&``  ``and_``     :func:`bitwise_and`
+``^``  ``xor_``     :func:`bitwise_xor`
+``|``  ``or_``      :func:`bitwise_or`
+\      ``divmod``   :func:`floor_divide`, :func:`mod` [*]_
+``@``  ``matmul``   Not yet implemented
+====== ============ =========================================
+
+.. [*] In the future, NumPy may switch to use a single ufunc ``divmod_`` instead.
 
 Future extensions to other functions
 ------------------------------------
