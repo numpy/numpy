@@ -415,3 +415,10 @@ greater than ``mmap.ALLOCATIONGRANULARITY``.
 Previously, ``np.real`` and ``np.imag`` used to return array objects when
 provided a scalar input, which was inconsistent with other functions like
 ``np.angle`` and ``np.conj``.
+
+The polynomial convenience classes cannot be passed to ufuncs
+-------------------------------------------------------------
+The ABCPolyBase class, from which the convenience classes are derived, sets
+``__array_ufun__ = None`` in order of opt out of ufuncs. If a polynomial
+convenience class instance is passed as an argument to a ufunc, a ``TypeError``
+will now be raised.
