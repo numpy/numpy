@@ -1139,8 +1139,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
-    .. deprecated:: 1.13.0
-                    Replaced by :func:`isin`.
+    We recommend using :func:`isin` instead of `in1d` for new code.
 
     See Also
     --------

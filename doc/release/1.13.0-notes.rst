@@ -22,8 +22,6 @@ Dropped Support
 Deprecations
 ============
 
-* ``in1d`` is now deprecated in favor of ``isin``.
-
 * Calling ``np.fix``, ``np.isposinf``, and ``np.isneginf`` with ``f(x, y=out)``
   is deprecated - the argument should be passed as ``f(x, out=out)``, which
   matches other ufunc-like interfaces.
@@ -136,12 +134,12 @@ In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
-``isin`` function, replacing ``in1d``
+``isin`` function, improving on ``in1d``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The new function ``isin`` tests whether each element of an N-dimensonal 
-array is present anywhere within a second array. It is an enhancement 
-and replacement of ``in1d`` that preserves the shape of the first array. 
-                                        
+The new function ``isin`` tests whether each element of an N-dimensonal
+array is present anywhere within a second array. It is an enhancement
+of ``in1d`` that preserves the shape of the first array.
+
 ``np.gradient`` now supports unevenly spaced data
 ------------------------------------------------
 Users can now specify a not-constant spacing for data.
