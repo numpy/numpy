@@ -45,6 +45,7 @@
 
 #include "ufunc_object.h"
 #include "override.h"
+#include "npy_import.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -5559,29 +5560,6 @@ static struct PyMethodDef ufunc_methods[] = {
  *****************************************************************************/
 
 
-/* construct the string y1,y2,...,yn */
-static PyObject *
-_makeargs(int num, char *ltr, int null_if_none)
-{
-    PyObject *str;
-    int i;
-
-    switch (num) {
-    case 0:
-        if (null_if_none) {
-            return NULL;
-        }
-        return PyString_FromString("");
-    case 1:
-        return PyString_FromString(ltr);
-    }
-    str = PyString_FromFormat("%s1, %s2", ltr, ltr);
-    for (i = 3; i <= num; ++i) {
-        PyString_ConcatAndDel(&str, PyString_FromFormat(", %s%d", ltr, i));
-    }
-    return str;
-}
-
 static char
 _typecharfromnum(int num) {
     PyArray_Descr *descr;
@@ -5596,47 +5574,30 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc)
 {
+    static PyObject *_sig_formatter;
+    PyObject *doc;
+
+    npy_cache_import(
+        "numpy.core._internal",
+        "_ufunc_doc_signature_formatter",
+        &_sig_formatter);
+
+    if (_sig_formatter == NULL) {
+        return NULL;
+    }
+
     /*
      * Put docstring first or FindMethod finds it... could so some
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
-     * construct name(x1, x2, ...,[ out1, out2, ...]) __doc__
      */
-    PyObject *outargs, *inargs, *doc;
-    outargs = _makeargs(ufunc->nout, "out", 1);
-    inargs = _makeargs(ufunc->nin, "x", 0);
-
-    if (ufunc->doc == NULL) {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs));
-        }
-        else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs),
-                                        PyString_AS_STRING(outargs));
-            Py_DECREF(outargs);
-        }
+    doc = PyObject_CallFunctionObjArgs(
+        _sig_formatter, (PyObject *)ufunc, NULL);
+    if (doc == NULL) {
+        return NULL;
     }
-    else {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       ufunc->doc);
-        }
-        else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       PyString_AS_STRING(outargs),
-                                       ufunc->doc);
-            Py_DECREF(outargs);
-        }
-    }
-    Py_DECREF(inargs);
+    PyUString_ConcatAndDel(&doc,
+        PyUString_FromFormat("\n\n%s", ufunc->doc));
     return doc;
 }
 
