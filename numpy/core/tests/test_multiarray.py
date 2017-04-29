@@ -3423,8 +3423,13 @@ class TestArgmax(TestCase):
 
     def test_combinations(self):
         for arr, pos in self.nan_arr:
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning,
+                           "invalid value encountered in reduce")
+                max_val = np.max(arr)
+
             assert_equal(np.argmax(arr), pos, err_msg="%r" % arr)
-            assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r" % arr)
+            assert_equal(arr[np.argmax(arr)], max_val, err_msg="%r" % arr)
 
     def test_output_shape(self):
         # see also gh-616
@@ -3552,8 +3557,13 @@ class TestArgmin(TestCase):
 
     def test_combinations(self):
         for arr, pos in self.nan_arr:
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning,
+                           "invalid value encountered in reduce")
+                min_val = np.min(arr)
+
             assert_equal(np.argmin(arr), pos, err_msg="%r" % arr)
-            assert_equal(arr[np.argmin(arr)], np.min(arr), err_msg="%r" % arr)
+            assert_equal(arr[np.argmin(arr)], min_val, err_msg="%r" % arr)
 
     def test_minimum_signed_integers(self):
 

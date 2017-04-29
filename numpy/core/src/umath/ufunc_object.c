@@ -2867,7 +2867,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                    keepdims, 0,
                                    assign_identity,
                                    reduce_loop,
-                                   ufunc, buffersize, ufunc_name);
+                                   ufunc, buffersize, ufunc_name, errormask);
 
     Py_DECREF(dtype);
     return result;

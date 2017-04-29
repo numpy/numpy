@@ -1299,8 +1299,11 @@ class TestMinMax(TestCase):
                     inp[:] = np.arange(inp.size, dtype=dt)
                     inp[i] = np.nan
                     emsg = lambda: '%r\n%s' % (inp, msg)
-                    assert_(np.isnan(inp.max()), msg=emsg)
-                    assert_(np.isnan(inp.min()), msg=emsg)
+                    with suppress_warnings() as sup:
+                        sup.filter(RuntimeWarning,
+                                   "invalid value encountered in reduce")
+                        assert_(np.isnan(inp.max()), msg=emsg)
+                        assert_(np.isnan(inp.min()), msg=emsg)
 
                     inp[i] = 1e10
                     assert_equal(inp.max(), 1e10, err_msg=msg)
