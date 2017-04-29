@@ -99,6 +99,24 @@ now issue a DeprecationWarning - ``.__getitem__(slice(start, end))`` should be
 used instead.
 
 
+C API
+-----
+
+GUfuncs on empty arrays and NpyIter axis removal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now allowed to remove a zero-sized axis from NpyIter. Which may mean
+that code removing axes from NpyIter has to add an additional check when
+accessing the removed dimensions later on.
+
+The largest followup change is that gufuncs are now allowed to have zero-sized
+inner dimensions. This means that a gufunc now has to anticipate an empty inner
+dimension, while this was never possible and an error raised instead.
+
+For most gufuncs no change should be necessary. However, it is now possible
+for gufuncs with a signature such as ``(..., N, M) -> (..., M)`` to return
+a valid result if ``N=0`` without further wrapping code.
+
+
 New Features
 ============
 
