@@ -100,9 +100,9 @@ the header data HEADER_LEN.
 The next HEADER_LEN bytes form the header data describing the array's
 format. It is an ASCII string which contains a Python literal expression
 of a dictionary. It is terminated by a newline (``\\n``) and padded with
-spaces (``\\x20``) to make the total length of
-``magic string + 4 + HEADER_LEN`` be evenly divisible by 16 for alignment
-purposes.
+spaces (``\\x20``) to make the total of
+``len(magic string) + 2 + len(length) + HEADER_LEN`` be evenly divisible
+by 64 for alignment purposes.
 
 The dictionary contains three keys:
 
@@ -163,6 +163,7 @@ else:
 
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
+ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
@@ -304,26 +305,31 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a
-    # 16-byte boundary.  Hopefully, some system, possibly memory-mapping,
-    # can take advantage of our premature optimization.
-    current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
-    topad = 16 - (current_header_len % 16)
-    header = header + ' '*topad + '\n'
-    header = asbytes(_filter_header(header))
+    header = _filter_header(header)
 
-    hlen = len(header)
-    if hlen < 256*256 and version in (None, (1, 0)):
+    hlen = len(header) + 1 # 1 for newline
+    padlen1 = ARRAY_ALIGN - ((MAGIC_LEN + 2 + hlen) % ARRAY_ALIGN)
+    padlen2 = ARRAY_ALIGN - ((MAGIC_LEN + 4 + hlen) % ARRAY_ALIGN)
+
+    if hlen + padlen1 < 2**16 and version in (None, (1, 0)):
         version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen)
-    elif hlen < 2**32 and version in (None, (2, 0)):
+        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen1)
+        topad = padlen1
+    elif hlen + padlen2 < 2**32 and version in (None, (2, 0)):
         version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen)
+        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen2)
+        topad = padlen2
     else:
         msg = "Header length %s too big for version=%s"
         msg %= (hlen, version)
         raise ValueError(msg)
+
+    # Pad the header with spaces and a final newline such that the magic
+    # string, the header-length short and the header are aligned on a
+    # ARRAY_ALIGN byte boundary.  This supports memory mapping on systems
+    # like Linux where mmap() offset must be page-aligned.
+    header = header + ' '*topad + '\n'
+    header = asbytes(header)
 
     fp.write(header_prefix)
     fp.write(header)
@@ -479,7 +485,7 @@ def _read_array_header(fp, version):
         raise ValueError("Invalid version %r" % version)
 
     # The header is a pretty-printed string representation of a literal
-    # Python dictionary with trailing newlines padded to a 16-byte
+    # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
     # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool

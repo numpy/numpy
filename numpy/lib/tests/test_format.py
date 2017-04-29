@@ -615,6 +615,11 @@ def test_version_2_0():
         format.write_array(f, d)
         assert_(w[0].category is UserWarning)
 
+    # check alignment of data portion
+    f.seek(0)
+    header = f.readline()
+    assert_(len(header) % format.ARRAY_ALIGN == 0)
+
     f.seek(0)
     n = format.read_array(f)
     assert_array_equal(d, n)
@@ -758,6 +763,7 @@ def test_read_array_header_1_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_1_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
@@ -770,6 +776,7 @@ def test_read_array_header_2_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_2_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
