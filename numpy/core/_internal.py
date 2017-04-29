@@ -670,3 +670,48 @@ def array_ufunc_errmsg_formatter(ufunc, method, *inputs, **kwargs):
     return ('operand type(s) do not implement __array_ufunc__'
             '({!r}, {!r}, {}): {}'
             .format(ufunc, method, args_string, types_string))
+
+def _ufunc_doc_signature_formatter(ufunc):
+    """
+    Builds a signature string which resembles PEP 457
+
+    This is used to construct the first line of the docstring
+    """
+
+    # input arguments are simple
+    if ufunc.nin == 1:
+        in_args = 'x'
+    else:
+        in_args = ', '.join('x{}'.format(i+1) for i in range(ufunc.nin))
+
+    # output arguments are both keyword or positional
+    if ufunc.nout == 0:
+        out_args = ', /, out=()'
+    elif ufunc.nout == 1:
+        out_args = ', /, out=None'
+    else:
+        out_args = '[, {positional}], / [, out={default}]'.format(
+            positional=', '.join(
+                'out{}'.format(i+1) for i in range(ufunc.nout)),
+            default=repr((None,)*ufunc.nout)
+        )
+
+    # keyword only args depend on whether this is a gufunc
+    kwargs = (
+        ", casting='same_kind'"
+        ", order='K'"
+        ", dtype=None"
+        ", subok=True"
+        "[, signature"
+        ", extobj]"
+    )
+    if ufunc.signature is None:
+        kwargs = ", where=True" + kwargs
+
+    # join all the parts together
+    return '{name}({in_args}{out_args}, *{kwargs})'.format(
+        name=ufunc.__name__,
+        in_args=in_args,
+        out_args=out_args,
+        kwargs=kwargs
+    )
