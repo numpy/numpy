@@ -23,6 +23,7 @@
 
 #include "lowlevel_strided_loops.h"
 #include "reduction.h"
+#include "extobj.h"  /* for _check_ufunc_fperr */
 
 /*
  * Allocates a result array for a reduction operation, with
@@ -437,6 +438,7 @@ PyArray_InitializeReduceResult(
  * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
+ * errormask   : forwarded from _get_bufsize_errmask
  *
  * TODO FIXME: if you squint, this is essentially an second independent
  * implementation of generalized ufuncs with signature (i)->(), plus a few
@@ -458,7 +460,8 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       int subok,
                       PyArray_AssignReduceIdentityFunc *assign_identity,
                       PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname)
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask)
 {
     PyArrayObject *result = NULL, *op_view = NULL;
     npy_intp skip_first_count = 0;
@@ -555,6 +558,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         goto fail;
     }
 
+    /* Start with the floating-point exception flags cleared */
+    PyUFunc_clearfperr();
+
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
@@ -585,6 +591,12 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
             goto fail;
         }
+    }
+    
+    /* Check whether any errors occurred during the loop */
+    if (PyErr_Occurred() ||
+            _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+        goto fail;
     }
 
     NpyIter_Deallocate(iter);

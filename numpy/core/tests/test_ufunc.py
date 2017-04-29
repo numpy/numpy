@@ -10,6 +10,7 @@ from numpy.testing import (
     assert_no_warnings
 )
 
+import warnings
 
 class TestUfuncKwargs(TestCase):
     def test_kwarg_exact(self):
@@ -375,8 +376,17 @@ class TestUfunc(TestCase):
                       128, 1024, 1235):
                 tgt = dt(v * (v + 1) / 2)
                 d = np.arange(1, v + 1, dtype=dt)
-                assert_almost_equal(np.sum(d), tgt)
-                assert_almost_equal(np.sum(d[::-1]), tgt)
+
+                # warning if sum overflows, which it does in float16
+                overflow = not np.isfinite(tgt)
+
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    assert_almost_equal(np.sum(d), tgt)
+                    assert_equal(len(w), 1 * overflow)
+
+                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    assert_equal(len(w), 2 * overflow)
 
             d = np.ones(500, dtype=dt)
             assert_almost_equal(np.sum(d[::2]), 250.)
