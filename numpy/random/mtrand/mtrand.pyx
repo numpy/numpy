@@ -22,8 +22,8 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "randint_helpers.pxi"
 include "numpy.pxd"
+include "randint_helpers.pxi"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
@@ -973,8 +973,8 @@ cdef class RandomState:
             raise ValueError("low is out of bounds for %s" % (key,))
         if high > highbnd:
             raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
-            raise ValueError("low >= high")
+        if low >= high and np.prod(size) != 0:
+            raise ValueError("Range cannot be empty (low >= high) unless no samples are taken")
 
         with self.lock:
             ret = randfunc(low, high - 1, size, self.state_address)
@@ -1100,14 +1100,14 @@ cdef class RandomState:
                 pop_size = operator.index(a.item())
             except TypeError:
                 raise ValueError("a must be 1-dimensional or an integer")
-            if pop_size <= 0:
-                raise ValueError("a must be greater than 0")
+            if pop_size <= 0 and np.prod(size) != 0:
+                raise ValueError("a must be greater than 0 unless no samples are taken")
         elif a.ndim != 1:
             raise ValueError("a must be 1-dimensional")
         else:
             pop_size = a.shape[0]
-            if pop_size is 0:
-                raise ValueError("a must be non-empty")
+            if pop_size is 0 and np.prod(size) != 0:
+                raise ValueError("a cannot be empty unless no samples are taken")
 
         if p is not None:
             d = len(p)
