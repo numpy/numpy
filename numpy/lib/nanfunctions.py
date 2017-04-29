@@ -61,17 +61,19 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    is_new = not isinstance(a, np.ndarray)
-    if is_new:
-        a = np.array(a)
-    if not issubclass(a.dtype.type, np.inexact):
-        return a, None
-    if not is_new:
-        # need copy
-        a = np.array(a, subok=True)
+    a = np.array(a, subok=True, copy=True)
 
-    mask = np.isnan(a)
-    np.copyto(a, val, where=mask)
+    if a.dtype == np.object_:
+        # object arrays do not support `isnan` (gh-9009), so make a guess
+        mask = a != a
+    elif issubclass(a.dtype.type, np.inexact):
+        mask = np.isnan(a)
+    else:
+        mask = None
+
+    if mask is not None:
+        np.copyto(a, val, where=mask)
+
     return a, mask
 
 
@@ -232,8 +234,9 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
-        # Fast, but not safe for subclasses of ndarray
+    if type(a) is np.ndarray and a.dtype != np.object_:
+        # Fast, but not safe for subclasses of ndarray, or object arrays,
+        # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
             warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
@@ -339,8 +342,9 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
-        # Fast, but not safe for subclasses of ndarray
+    if type(a) is np.ndarray and a.dtype != np.object_:
+        # Fast, but not safe for subclasses of ndarray, or object arrays,
+        # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
             warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=2)
