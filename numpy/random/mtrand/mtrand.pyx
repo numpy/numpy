@@ -914,13 +914,15 @@ cdef class RandomState:
 
         Parameters
         ----------
-        low : int
+        low : int or array_like of ints
             Lowest (signed) integer to be drawn from the distribution (unless
             ``high=None``, in which case this parameter is one above the
-            *highest* such integer).
-        high : int, optional
+            *highest* such integer). Note that if `low` is array_like, all elements must be
+            integers.
+        high : int or array_like of ints, optional
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
+            Note that if `high` is array_like, all elements must be integers.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -959,42 +961,78 @@ cdef class RandomState:
         array([[4, 0, 2, 1],
                [3, 2, 2, 0]])
 
+        Generate a 1 x 3 array with 3 different upper bounds:
+        >>> np.random.randint(1, [3, 5, 10])
+        array([2, 2, 9])
+
+        Generate a 1 x 3 array with 3 different lower bounds:
+        >>> np.random.randint([1, 5, 7], 10)
+        array([9, 8, 7])
+
+        Generate a 1 x 3 array with 3 different lower and upper bounds:
+        >>> np.random.randint([1, 5, 7], [13, 30, 45])
+        array([12,  5, 18])
+
+        Generate a 2 x 4 array of ints of the data type np.uint8:
+        >>>> np.random.randint(np.iinfo(np.uint8).min,
+                           np.iinfo(np.uint8).max + 1,
+                           size=(2, 4), dtype=np.uint8)
+        array([[ 35, 252,  90, 214],
+               [ 47,  23, 214, 185]], dtype=uint8)
+
         """
         if high is None:
             high = low
             low = 0
 
-        # '_randint_type' is defined in
-        # 'generate_randint_helpers.py'
         key = np.dtype(dtype).name
         if key not in _randint_type:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
 
-        lowbnd, highbnd, randfunc = _randint_type[key]
+        lowbnd, highbnd, func = _randint_type[key]
 
-        # TODO: Do not cast these inputs to Python int
-        #
-        # This is a workaround until gh-8851 is resolved (bug in NumPy
-        # integer comparison and subtraction involving uint64 and non-
-        # uint64). Afterwards, remove these two lines.
-        ilow = int(low)
-        ihigh = int(high)
+        low = np.array(low)
+        high = np.array(high)
 
-        if ilow < lowbnd:
-            raise ValueError("low is out of bounds for %s" % (key,))
-        if ihigh > highbnd:
-            raise ValueError("high is out of bounds for %s" % (key,))
-        if ilow >= ihigh:
-            raise ValueError("low >= high")
+        if low.shape == high.shape == ():
+            # TODO: Do not cast these inputs to Python int
+            #
+            # This is a workaround until gh-8851 is resolved (bug in NumPy
+            # integer comparison and subtraction involving uint64 and non-
+            # uint64). Afterwards, remove these two lines.
+            ilow = int(low)
+            ihigh = int(high)
 
-        with self.lock:
-            ret = randfunc(ilow, ihigh - 1, size, self.state_address)
+            if ilow < lowbnd:
+                raise ValueError("low is out of bounds for %s" % (key,))
+            if ihigh > highbnd:
+                raise ValueError("high is out of bounds for %s" % (key,))
+            if ilow >= ihigh:
+                raise ValueError("low >= high")
 
-            if size is None:
-                if dtype in (np.bool, np.int, np.long):
-                    return dtype(ret)
+            with self.lock:
+                ret = func(ilow, ihigh - 1, size, self.state_address)
 
-            return ret
+                if size is None:
+                    if dtype in (np.bool, np.int, np.long):
+                        return dtype(ret)
+
+                return ret
+        else:
+            if np.any(low < lowbnd):
+                raise ValueError("low is out of bounds for %s" % (key,))
+            if np.any(high > highbnd):
+                raise ValueError("high is out of bounds for %s" % (key,))
+
+            # We have to check whether `low` >= `high` in both ways
+            # to avoid issues of overflow and rounding when comparing
+            # an np.uint64 against np.iinfo(np.int64).max
+            if np.any(high - 1 - low < 0) and np.any(low >= high):
+                raise ValueError("low >= high")
+
+            with self.lock:
+                return func(low, high - np.ones((), dtype=high.dtype),
+                            size, self.state_address)
 
     def bytes(self, npy_intp length):
         """
