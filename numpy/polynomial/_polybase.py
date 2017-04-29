@@ -64,8 +64,8 @@ class ABCPolyBase(object):
     # Not hashable
     __hash__ = None
 
-    # Don't let participate in array operations. Value doesn't matter.
-    __array_priority__ = 1000
+    # Opt out of numpy ufuncs and Python ops with ndarray subclasses.
+    __array_ufunc__ = None
 
     # Limit runaway size. T_n^m has degree n*m
     maxpower = 100
