@@ -2314,12 +2314,19 @@ class TestAttributes(TestCase):
     def test_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')
-        assert_(add.__doc__.startswith('add(x1, x2[, out])\n\n'))
         self.assertTrue(add.ntypes >= 18)  # don't fail if types added
         self.assertTrue('ii->i' in add.types)
         assert_equal(add.nin, 2)
         assert_equal(add.nout, 1)
         assert_equal(add.identity, 0)
+
+    def test_doc(self):
+        # don't bother checking the long list of kwargs, which are likely to
+        # change
+        assert_(ncu.add.__doc__.startswith(
+            "add(x1, x2, /, out=None, *, where=True"))
+        assert_(ncu.frexp.__doc__.startswith(
+            "frexp(x[, out1, out2], / [, out=(None, None)], *, where=True"))
 
 
 class TestSubclass(TestCase):
