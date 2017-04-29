@@ -9,68 +9,24 @@
 #include <numpy/npy_common.h>
 #include "npy_config.h"
 
-#include <assert.h>
-
-#define NBUCKETS 1024 /* number of buckets for data*/
+#define NBUCKETS_DATA 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 7 /* number of cache entries per bucket */
+#define NCACHE_DATA 7 /* number of cache entries per data bucket */
+#define NCACHE_DIM 7 /* number of cache entries per dim bucket */
+
 /* this structure fits neatly into a cacheline */
 typedef struct {
     npy_uintp available; /* number of cached pointers */
-    void * ptrs[NCACHE];
-} cache_bucket;
-static cache_bucket datacache[NBUCKETS];
-static cache_bucket dimcache[NBUCKETS_DIM];
+    void * ptrs[NCACHE_DATA];
+} data_cache_bucket;
 
-/*
- * very simplistic small memory block cache to avoid more expensive libc
- * allocations
- * base function for data cache with 1 byte buckets and dimension cache with
- * sizeof(npy_intp) byte buckets
- */
-static NPY_INLINE void *
-_npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
-                 cache_bucket * cache, void * (*alloc)(size_t))
-{
-    assert((esz == 1 && cache == datacache) ||
-           (esz == sizeof(npy_intp) && cache == dimcache));
-    if (nelem < msz) {
-        if (cache[nelem].available > 0) {
-            return cache[nelem].ptrs[--(cache[nelem].available)];
-        }
-    }
-#ifdef _PyPyGC_AddMemoryPressure
-    {
-        size_t size = nelem * esz;
-        void * ret = alloc(size);
-        if (ret != NULL)
-        {
-            _PyPyPyGC_AddMemoryPressure(size);
-        }
-        return ret;
-    }
-#else
-     return alloc(nelem * esz);
-#endif
-}
+typedef struct {
+    npy_uintp available; /* number of cached pointers */
+    void * ptrs[NCACHE_DIM];
+} dim_cache_bucket;
 
-/*
- * return pointer p to cache, nelem is number of elements of the cache bucket
- * size (1 or sizeof(npy_intp)) of the block pointed too
- */
-static NPY_INLINE void
-_npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
-                cache_bucket * cache, void (*dealloc)(void *))
-{
-    if (p != NULL && nelem < msz) {
-        if (cache[nelem].available < NCACHE) {
-            cache[nelem].ptrs[cache[nelem].available++] = p;
-            return;
-        }
-    }
-    dealloc(p);
-}
-
+static data_cache_bucket datacache[NBUCKETS_DATA];
+static dim_cache_bucket dimcache[NBUCKETS_DIM];
 
 /*
  * array data cache, sz is number of bytes to allocate
@@ -78,32 +34,38 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
 NPY_NO_EXPORT void *
 npy_alloc_cache(npy_uintp sz)
 {
-    return _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
+    if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
+        return datacache[sz-1].ptrs[--(datacache[sz-1].available)];
+    }  
+    return PyDataMem_NEW(sz);
 }
 
-/* zero initialized data, sz is number of bytes to allocate */
+/*
+ * zero initialized data, sz is number of bytes to allocate
+ */
 NPY_NO_EXPORT void *
 npy_alloc_cache_zero(npy_uintp sz)
 {
-    void * p;
-    NPY_BEGIN_THREADS_DEF;
-    if (sz < NBUCKETS) {
-        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
-        if (p) {
-            memset(p, 0, sz);
-        }
+    void * p;    
+    if (sz > 0 && sz-1 < NBUCKETS_DATA && datacache[sz-1].available > 0) {
+        p = datacache[sz-1].ptrs[--(datacache[sz-1].available)];
+        memset(p, 0, sz);
         return p;
     }
-    NPY_BEGIN_THREADS;
+    
     p = PyDataMem_NEW_ZEROED(sz, 1);
-    NPY_END_THREADS;
     return p;
 }
 
 NPY_NO_EXPORT void
 npy_free_cache(void * p, npy_uintp sz)
 {
-    _npy_free_cache(p, sz, NBUCKETS, datacache, &PyDataMem_FREE);
+    if (p != NULL && sz > 0 && sz-1 < NBUCKETS_DATA &&
+            datacache[sz-1].available < NCACHE_DATA) {
+        datacache[sz-1].ptrs[datacache[sz-1].available++] = p;
+        return ;
+    }
+    PyDataMem_FREE(p);
 }
 
 /*
@@ -113,12 +75,18 @@ npy_free_cache(void * p, npy_uintp sz)
 NPY_NO_EXPORT void *
 npy_alloc_cache_dim(npy_uintp sz)
 {
+    void * p;
     /* dims + strides */
     if (NPY_UNLIKELY(sz < 2)) {
         sz = 2;
     }
-    return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
-                            &PyArray_malloc);
+
+    if (sz-2 < NBUCKETS_DIM && dimcache[sz-2].available > 0) {
+        return dimcache[sz-2].ptrs[--(dimcache[sz-2].available)];
+    }
+    /* type of dimension elements is npy_intp */
+    p = PyArray_malloc(sz * sizeof(npy_intp));
+    return p;
 }
 
 NPY_NO_EXPORT void
@@ -128,8 +96,13 @@ npy_free_cache_dim(void * p, npy_uintp sz)
     if (NPY_UNLIKELY(sz < 2)) {
         sz = 2;
     }
-    _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache,
-                    &PyArray_free);
+    
+    if (p != NULL && sz-2 < NBUCKETS_DIM &&
+            dimcache[sz-2].available < NCACHE_DIM) {
+        dimcache[sz-2].ptrs[dimcache[sz-2].available++] = p;
+        return ;
+    }
+    PyArray_free(p);
 }
 
 
@@ -181,7 +154,7 @@ NPY_NO_EXPORT void *
 PyDataMem_NEW(size_t size)
 {
     void *result;
-
+  
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
@@ -192,6 +165,13 @@ PyDataMem_NEW(size_t size)
         }
         NPY_DISABLE_C_API
     }
+
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
+  
     return result;
 }
 
@@ -213,6 +193,13 @@ PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
         }
         NPY_DISABLE_C_API
     }
+  
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
+  
     return result;
 }
 
@@ -252,5 +239,11 @@ PyDataMem_RENEW(void *ptr, size_t size)
         }
         NPY_DISABLE_C_API
     }
+  
+#ifdef _PyPyGC_AddMemoryPressure
+    if (result != NULL){
+        _PyPyPyGC_AddMemoryPressure(size);
+    }
+#endif
     return result;
 }
