@@ -30,6 +30,8 @@ Deprecations
 Build System Changes
 ====================
 
+ * ``numpy.distutils`` now automatically determines C-file dependencies with
+   GCC compatible compilers.
 
 Future Changes
 ==============
@@ -153,7 +155,7 @@ for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
 ``np.gradient`` now supports unevenly spaced data
-------------------------------------------------
+-------------------------------------------------
 Users can now specify a not-constant spacing for data.
 In particular ``np.gradient`` can now take:
 
@@ -218,10 +220,20 @@ of arrays.
 
 It is similar to Matlab's square bracket notation for creating block matrices.
 
-Numpy may be built with relaxed stride checking debugging
+Support for tracemalloc in Python 3.6
+-------------------------------------
+NumPy now supports memory tracing with tracemalloc_ module of Python 3.6 or
+newer. Memory allocations from NumPy are placed into the domain defined by
+``numpy.lib.tracemalloc_domain``.
+Note that NumPy allocation will not show up in tracemalloc_ of earlier Python
+versions.
+
+.. _tracemalloc: https://docs.python.org/3/library/tracemalloc.html
+
+NumPy may be built with relaxed stride checking debugging
 ---------------------------------------------------------
 Setting NPY_RELAXED_STRIDES_DEBUG=1 in the enviroment when relaxed stride
-checking is enabled will cause numpy to be compiled with the affected strides
+checking is enabled will cause NumPy to be compiled with the affected strides
 set to the maximum value of npy_intp in order to help detect invalid usage of
 the strides in downstream projects. When enabled, invalid usage often results
 in an error being raised, but the exact type of error depends on the details of
@@ -259,9 +271,9 @@ been optimized to be a significantly faster for contiguous data.
 
 Fix for PPC long double floating point information
 --------------------------------------------------
-In previous versions of numpy, the ``finfo`` function returned invalid
+In previous versions of NumPy, the ``finfo`` function returned invalid
 information about the `double double`_ format of the ``longdouble`` float type
-on Power PC (PPC).  The invalid values resulted from the failure of the numpy
+on Power PC (PPC).  The invalid values resulted from the failure of the NumPy
 algorithm to deal with the variable number of digits in the significand
 that are a feature of `PPC long doubles`.  This release by-passes the failing
 algorithm by using heuristics to detect the presence of the PPC double double
@@ -269,8 +281,6 @@ format.  A side-effect of using these heuristics is that the ``finfo``
 function is faster than previous releases.
 
 .. _PPC long doubles: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm
-
-.. _issues: https://github.com/numpy/numpy/issues/2669
 
 .. _double double: https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
 
@@ -300,14 +310,6 @@ All of the following functions in ``np.linalg`` now work when given input
 arrays with a 0 in the last two dimensions: ``det``, ``slogdet``, ``pinv``,
 ``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
 
-``argsort`` on masked arrays takes the same default arguments as ``sort``
--------------------------------------------------------------------------
-By default, ``argsort`` now places the masked values at the end of the sorted
-array, in the same way that ``sort`` already did. Additionally, the
-``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
-Note that this argument is not added at the end, so breaks any code that
-passed ``fill_value`` as a positional argument.
-
 Bundled version of LAPACK is now 3.2.2
 --------------------------------------
 NumPy comes bundled with a minimal implementation of lapack for systems without
@@ -332,8 +334,8 @@ Ufunc behavior for overlapping inputs
 -------------------------------------
 
 Operations where ufunc input and output operands have memory overlap
-produced undefined results in previous Numpy versions, due to data
-dependency issues. In Numpy 1.13.0, results from such operations are
+produced undefined results in previous NumPy versions, due to data
+dependency issues. In NumPy 1.13.0, results from such operations are
 now defined to be the same as for equivalent operations where there is
 no memory overlap.
 
@@ -351,7 +353,7 @@ To illustrate a previously undefined operation::
     >>> x = np.arange(16).astype(float)
     >>> np.add(x[1:], x[:-1], out=x[1:])
 
-In Numpy 1.13.0 the last line is guaranteed to be equivalent to::
+In NumPy 1.13.0 the last line is guaranteed to be equivalent to::
 
     >>> np.add(x[1:].copy(), x[:-1].copy(), out=x[1:])
 
@@ -360,7 +362,7 @@ A similar operation with simple non-problematic data dependence is::
     >>> x = np.arange(16).astype(float)
     >>> np.add(x[1:], x[:-1], out=x[:-1])
 
-It will continue to produce the same results as in previous Numpy
+It will continue to produce the same results as in previous NumPy
 versions, and will not involve unnecessary temporary copies.
 
 The change applies also to in-place binary operations, for example::
@@ -369,12 +371,20 @@ The change applies also to in-place binary operations, for example::
     >>> x += x.T
 
 This statement is now guaranteed to be equivalent to ``x[...] = x + x.T``,
-whereas in previous Numpy versions the results were undefined.
+whereas in previous NumPy versions the results were undefined.
+
+``argsort`` on masked arrays takes the same default arguments as ``sort``
+-------------------------------------------------------------------------
+By default, ``argsort`` now places the masked values at the end of the sorted
+array, in the same way that ``sort`` already did. Additionally, the
+``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
+Note that this argument is not added at the end, so breaks any code that
+passed ``fill_value`` as a positional argument.
 
 ``average`` now preserves subclasses
 ------------------------------------
 For ndarray subclasses, ``numpy.average`` will now return an instance of the
-subclass, matching the behavior of most other numpy functions such as ``mean``.
+subclass, matching the behavior of most other NumPy functions such as ``mean``.
 As a consequence, also calls that returned a scalar may now return a subclass
 array scalar.
 
