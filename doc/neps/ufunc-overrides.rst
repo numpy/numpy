@@ -620,8 +620,8 @@ make more sense to ask classes like ``MyObject`` to implement a full
 ``__array_ufunc__`` [6]_. In the end, allowing classes to opt out was
 preferred, and the above reasoning led us to agree on a similar
 implementation for :class:`ndarray` itself. We decided to require disabling
-ufuncs to opt out to ensure that a class cannot define Ufuncs to return
-different results than the corresponding binary operations (i.e., if
+ufuncs to opt out in order to ensure that a class cannot define Ufuncs to
+return different results than the corresponding binary operations (i.e., if
 ``np.add(x, y)`` is defined, it should match ``x + y``).
 
 .. [9] http://bugs.python.org/issue30140
@@ -658,8 +658,8 @@ Symbol Operator     NumPy Ufunc(s)
 ``&``  ``and_``     :func:`bitwise_and`
 ``^``  ``xor_``     :func:`bitwise_xor`
 ``|``  ``or_``      :func:`bitwise_or`
-\      ``divmod``   :func:`floor_divide`, :func:`mod` [*]_
-``@``  ``matmul``   Not yet implemented
+NA     ``divmod``   :func:`floor_divide`, :func:`mod` [*]_
+``@``  ``matmul``   Not yet implemented as a ufunc
 ====== ============ =========================================
 
 .. [*] In the future, NumPy may switch to use a single ufunc ``divmod_`` instead.
