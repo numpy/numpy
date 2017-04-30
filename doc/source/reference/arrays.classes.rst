@@ -81,14 +81,11 @@ NumPy provides several hooks that classes can customize:
        same may happen with functions such as :func:`~numpy.median`,
        :func:`~numpy.min`, and :func:`~numpy.argsort`.
 
-
    Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
-   support ufuncs by setting ``__array_ufunc__ = None``. With this,
-   inside ufuncs, your class will be treated as if it returned
-   :obj:`NotImplemented` (which will lead to an :exc:`TypeError`
-   unless another class also provides a :func:`__array_ufunc__` method
-   which knows what to do with your class).
+   support ufuncs by setting ``__array_ufunc__ = None``. Ufuncs always raise
+   :exc:`TypeError` when called on an object that sets
+   ``__array_ufunc__ = None``.
 
    The presence of :func:`__array_ufunc__` also influences how
    :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
@@ -102,10 +99,9 @@ NumPy provides several hooks that classes can customize:
 
    Alternatively, if ``obj.__array_ufunc__`` is set to :obj:`None`, then as a
    special case, special methods like ``ndarray.__add__`` will notice this
-   and *unconditionally* return :obj:`NotImplemented`, so that Python will
-   dispatch to ``obj.__radd__`` instead. This is useful if you want to define
-   a special object that interacts with arrays via binary operations, but
-   is not itself an array. For example, a units handling system might have
+   and *unconditionally* raise :exc:`TypeError`. This is useful if you want to
+   create objects that interact with arrays via binary operations, but
+   are not themselves arrays. For example, a units handling system might have
    an object ``m`` representing the "meters" unit, and want to support the
    syntax ``arr * m`` to represent that the array has units of "meters", but
    not want to otherwise interact with arrays via ufuncs or otherwise. This
