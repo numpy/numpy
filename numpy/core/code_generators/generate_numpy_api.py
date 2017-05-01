@@ -231,18 +231,23 @@ def do_generate_api(targets, sources):
         module_list.append(api_item.internal_define())
 
     # Write to header
+    fid = open(header_file, 'w')
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
-    genapi.write_file(header_file, s)
+    fid.write(s)
+    fid.close()
 
     # Write to c-code
+    fid = open(c_file, 'w')
     s = c_template % ',\n'.join(init_list)
-    genapi.write_file(c_file, s)
+    fid.write(s)
+    fid.close()
 
     # write to documentation
-    s = c_api_header
+    fid = open(doc_file, 'w')
+    fid.write(c_api_header)
     for func in numpyapi_list:
-        s += func.to_ReST()
-        s += '\n\n'
-    genapi.write_file(doc_file, s)
+        fid.write(func.to_ReST())
+        fid.write('\n\n')
+    fid.close()
 
     return targets
