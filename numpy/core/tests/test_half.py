@@ -323,6 +323,7 @@ class TestHalf(TestCase):
         assert_equal(np.conjugate(b), b)
         assert_equal(np.absolute(b), [2, 5, 1, 4, 3])
         assert_equal(np.negative(b), [2, -5, -1, -4, -3])
+        assert_equal(np.positive(b), b)
         assert_equal(np.sign(b), [-1, 1, 1, 1, 1])
         assert_equal(np.modf(b), ([0, 0, 0, 0, 0], b))
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))

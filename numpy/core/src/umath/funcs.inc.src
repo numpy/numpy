@@ -188,6 +188,14 @@ nc_neg@c@(@ctype@ *a, @ctype@ *r)
 }
 
 static void
+nc_pos@c@(@ctype@ *a, @ctype@ *r)
+{
+    r->real = +a->real;
+    r->imag = +a->imag;
+    return;
+}
+
+static void
 nc_sqrt@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_csqrt@c@(*x);
