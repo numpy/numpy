@@ -4,12 +4,11 @@ import os
 import re
 import sys
 import types
-import shlex
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
 from distutils.errors import DistutilsExecError, DistutilsModuleError, \
-                             DistutilsPlatformError, CompileError
+                             DistutilsPlatformError
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
@@ -19,44 +18,6 @@ from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       quote_args, get_num_build_jobs
 
-
-def _needs_build(obj):
-    """
-    Check if an objects needs to be rebuild based on its dependencies
-
-    Parameters
-    ----------
-    obj : str
-        object file
-
-    Returns
-    -------
-    bool
-    """
-    # defined in unixcompiler.py
-    dep_file = obj + '.d'
-    if not os.path.exists(dep_file):
-        return True
-
-    # dep_file is a makefile containing 'object: dependencies'
-    # formated like posix shell (spaces escaped, \ line continuations)
-    with open(dep_file, "r") as f:
-        deps = [x for x in shlex.split(f.read(), posix=True)
-                if x != "\n" and not x.endswith(":")]
-
-    try:
-        t_obj = os.stat(obj).st_mtime
-
-        # check if any of the dependencies is newer than the object
-        # the dependencies includes the source used to create the object
-        for f in deps:
-            if os.stat(f).st_mtime > t_obj:
-                return True
-    except OSError:
-        # no object counts as newer (shouldn't happen if dep_file exists)
-        return True
-
-    return False
 
 def replace_method(klass, method_name, func):
     if sys.version_info[0] < 3:
@@ -230,8 +191,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     def single_compile(args):
         obj, (src, ext) = args
-        if _needs_build(obj):
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
@@ -429,30 +389,6 @@ def CCompiler_customize(self, dist, need_cxx=0):
                 log.warn("#### %s #######" % (self.compiler,))
             if not hasattr(self, 'compiler_cxx'):
                 log.warn('Missing compiler_cxx fix for ' + self.__class__.__name__)
-
-
-    # check if compiler supports gcc style automatic dependencies
-    # run on every extension so skip for known good compilers
-    if hasattr(self, 'compiler') and ('gcc' in self.compiler[0] or
-                                      'g++' in self.compiler[0] or
-                                      'clang' in self.compiler[0]):
-        self._auto_depends = True
-    elif os.name == 'posix':
-        import tempfile
-        import shutil
-        tmpdir = tempfile.mkdtemp()
-        try:
-            fn = os.path.join(tmpdir, "file.c")
-            with open(fn, "w") as f:
-                f.write("int a;\n")
-            self.compile([fn], output_dir=tmpdir,
-                         extra_preargs=['-MMD', '-MF', fn + '.d'])
-            self._auto_depends = True
-        except CompileError:
-            self._auto_depends = False
-        finally:
-            shutil.rmtree(tmpdir)
-
     return
 
 replace_method(CCompiler, 'customize', CCompiler_customize)

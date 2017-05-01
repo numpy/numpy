@@ -35,7 +35,6 @@ GTAGS
 *.dll
 *.exe
 *.o
-*.o.d
 *.py[ocd]
 *.so
 
@@ -124,7 +123,6 @@ numpy/core/src/multiarray/nditer_templ.c
 numpy/core/src/multiarray/scalartypes.c
 numpy/core/src/npymath/ieee754.c
 numpy/core/src/npymath/npy_math_complex.c
-numpy/core/src/npymath/npy_math_internal.h
 numpy/core/src/npysort/binsearch.c
 numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
