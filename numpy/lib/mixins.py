@@ -70,8 +70,8 @@ class NDArrayOperatorsMixin(object):
     implement.
 
     This class does not yet implement the special operators corresponding
-    to ``divmod``, unary ``+`` or ``matmul`` (``@``), because these operation
-    do not yet have corresponding NumPy ufuncs.
+    to ``divmod`` or ``matmul`` (``@``), because these operation do not yet
+    have corresponding NumPy ufuncs.
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
@@ -174,5 +174,6 @@ class NDArrayOperatorsMixin(object):
 
     # unary methods
     __neg__ = _unary_method(um.negative, 'neg')
+    __pos__ = _unary_method(um.positive, 'pos')
     __abs__ = _unary_method(um.absolute, 'abs')
     __invert__ = _unary_method(um.invert, 'invert')
