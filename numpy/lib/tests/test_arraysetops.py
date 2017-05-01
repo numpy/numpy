@@ -8,7 +8,8 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_array_equal, assert_equal, assert_raises
     )
 from numpy.lib.arraysetops import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d,
+    crosstab
     )
 
 
@@ -210,6 +211,19 @@ class TestSetOps(TestCase):
         aux2 = union1d(a, b)
         c2 = setdiff1d(aux2, aux1)
         assert_array_equal(c1, c2)
+
+    def test_crosstab(self):
+        a = np.array([2, 2, 2, 3, 3, 3, 3])
+        b = np.array([7, 9, 8, 9, 7, 9, 7])
+        items, counts = crosstab(a, b)
+        assert_array_equal(items[0], [2, 3])
+        assert_array_equal(items[1], [7, 8, 9])
+        assert_array_equal(counts, [[1, 1, 1], [2, 0, 2]])
+
+        # Edge case: single empty sequence.
+        xvals, counts = crosstab([])
+        assert_array_equal(xvals[0], [])
+        assert_array_equal(counts, [])
 
 
 class TestUnique(TestCase):
