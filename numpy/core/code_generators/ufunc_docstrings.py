@@ -792,11 +792,6 @@ add_newdoc('numpy.core.umath', 'cos',
     y : ndarray
         The corresponding cosine values.
 
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
-
     Notes
     -----
     If `out` is provided, the function writes the result into it,
@@ -3269,11 +3264,6 @@ add_newdoc('numpy.core.umath', 'sinh',
     y : ndarray
         The corresponding hyperbolic sine values.
 
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
-
     Notes
     -----
     If `out` is provided, the function writes the result into it,
@@ -3459,11 +3449,6 @@ add_newdoc('numpy.core.umath', 'tan',
     y : ndarray
       The corresponding tangent values.
 
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
-
     Notes
     -----
     If `out` is provided, the function writes the result into it,
@@ -3510,11 +3495,6 @@ add_newdoc('numpy.core.umath', 'tanh',
     -------
     y : ndarray
         The corresponding hyperbolic tangent values.
-
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
 
     Notes
     -----
