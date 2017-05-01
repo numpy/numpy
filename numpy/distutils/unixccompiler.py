@@ -10,6 +10,7 @@ from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
 from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.compat import get_exception
+from numpy.distutils.misc_util import _commandline_dep_string
 
 if sys.version_info[0] < 3:
     from . import log
@@ -58,6 +59,10 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     except DistutilsExecError:
         msg = str(get_exception())
         raise CompileError(msg)
+
+    # add commandline flags to dependency file
+    with open(obj + '.d', 'a') as f:
+        f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
 replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
 
