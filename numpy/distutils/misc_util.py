@@ -541,6 +541,18 @@ def _get_directories(list_of_sources):
             direcs.append(d[0])
     return direcs
 
+def _commandline_dep_string(cc_args, extra_postargs, pp_opts):
+    """
+    Return commandline representation used to determine if a file needs
+    to be recompiled
+    """
+    cmdline = 'commandline: '
+    cmdline += ' '.join(cc_args)
+    cmdline += ' '.join(extra_postargs)
+    cmdline += ' '.join(pp_opts) + '\n'
+    return cmdline
+
+
 def get_dependencies(sources):
     #XXX scan sources for include statements
     return _get_headers(_get_directories(sources))
