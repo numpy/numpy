@@ -23,7 +23,12 @@
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
-#include <x86intrin.h>
+#if defined(_MSC_VER)
+     /* Microsoft C/C++-compatible compiler */
+     #include <intrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+     /* GCC-compatible compiler, targeting x86/x86-64 */
+     #include <x86intrin.h>
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
