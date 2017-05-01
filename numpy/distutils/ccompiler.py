@@ -17,10 +17,11 @@ from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args, get_num_build_jobs
+                                      quote_args, get_num_build_jobs, \
+                                      _commandline_dep_string
 
 
-def _needs_build(obj):
+def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     """
     Check if an objects needs to be rebuild based on its dependencies
 
@@ -40,9 +41,20 @@ def _needs_build(obj):
 
     # dep_file is a makefile containing 'object: dependencies'
     # formated like posix shell (spaces escaped, \ line continuations)
+    # the last line contains the compiler commandline arguments as some
+    # projects may compile an extension multiple times with different
+    # arguments
     with open(dep_file, "r") as f:
-        deps = [x for x in shlex.split(f.read(), posix=True)
-                if x != "\n" and not x.endswith(":")]
+        lines = f.readlines()
+
+    cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
+    last_cmdline = lines[-1]
+    if last_cmdline != cmdline:
+        return True
+
+    contents = ''.join(lines[:-1])
+    deps = [x for x in shlex.split(contents, posix=True)
+            if x != "\n" and not x.endswith(":")]
 
     try:
         t_obj = os.stat(obj).st_mtime
@@ -230,7 +242,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     def single_compile(args):
         obj, (src, ext) = args
-        if _needs_build(obj):
+        if _needs_build(obj, cc_args, extra_postargs, pp_opts):
             self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
     if isinstance(self, FCompiler):
