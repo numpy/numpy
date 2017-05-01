@@ -102,6 +102,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
             - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+            - 'object' : `np.object_` arrays
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -241,6 +242,13 @@ def _boolFormatter(x):
     else:
         return 'False'
 
+def _object_format(o):
+    """ Object arrays containing lists should be printed unambiguously """
+    if type(o) is list:
+        fmt = 'list({!r})'
+    else:
+        fmt = '{!r}'
+    return fmt.format(o)
 
 def repr_format(x):
     return repr(x)
@@ -256,6 +264,7 @@ def _get_formatdict(data, precision, suppress_small, formatter):
                   'longcomplexfloat': lambda: LongComplexFormat(precision),
                   'datetime': lambda: DatetimeFormat(data),
                   'timedelta': lambda: TimedeltaFormat(data),
+                  'object': lambda: _object_format,
                   'numpystr': lambda: repr_format,
                   'str': lambda: str}
 
@@ -326,6 +335,8 @@ def _get_format_function(data, precision, suppress_small, formatter):
         return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
+    elif issubclass(dtypeobj, _nt.object_):
+        return formatdict['object']()
     else:
         return formatdict['numpystr']()
 

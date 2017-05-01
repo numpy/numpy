@@ -52,6 +52,14 @@ class TestArrayRepr(object):
         assert_equal(repr(first),
             'array(array(array(..., dtype=object), dtype=object), dtype=object)')
 
+    def test_containing_list(self):
+        # printing square brackets directly would be ambiguuous
+        arr1d = np.array([None, None])
+        arr1d[0] = [1, 2]
+        arr1d[1] = [3]
+        assert_equal(repr(arr1d),
+            'array([list([1, 2]), list([3])], dtype=object)')
+
 
 class TestComplexArray(TestCase):
     def test_str(self):
