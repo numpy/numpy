@@ -286,6 +286,8 @@ them by defining certain special methods.  For details, see
 :class:`ufunc`
 ==============
 
+.. _ufuncs.kwargs:
+
 Optional keyword arguments
 --------------------------
 
