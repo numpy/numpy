@@ -429,6 +429,8 @@ with them in ufuncs.
 
 .. [7] https://rhettinger.wordpress.com/2011/05/26/super-considered-super/
 
+.. _neps.ufunc-overrides.turning-ufuncs-off:
+
 Turning Ufuncs off
 ------------------
 
@@ -452,19 +454,22 @@ the ``__array_ufunc__`` mechanism. For the special methods calls such as
 binary operations such as ``*`` and ``+``, NumPy's :class:`ndarray`
 implements the following behavior:
 
-- If ``other.__array_ufunc__ is None``, or if the ``__array_ufunc__``
-  attribute is absent on ``other`` and
-  ``other.__array_priority__ > self.__array_priority__``, :class:`ndarray`
+- If ``other.__array_ufunc__ is None``, :class:`ndarray`
   returns :obj:`NotImplemented`. Control reverts to Python, which in turn
   will try calling a corresponding reflexive method on ``other`` (e.g.,
   ``other.__rmul__``), if present.
-- In all other cases, :class:`ndarray` unilaterally calls the corresponding
-  Ufunc. Ufuncs never return ``NotImplemented``, so **reflexive methods
-  such as** ``other.__rmul__`` **cannot be used to override arithmetic with
-  NumPy arrays if** ``__array_ufunc__`` **is set**. Instead, the
-  resulting behavior can modified by implementing ``__array_ufunc__``
-  in a consistent fashion for the corresponding Ufunc (e.g., ``np.multiply``).
-  See :ref:`neps.ufunc-overrides.list-operations`.
+- If the ``__array_ufunc__`` attribute is absent on ``other`` and
+  ``other.__array_priority__ > self.__array_priority__``, :class:`ndarray`
+  also returns :obj:`NotImplemented` (and the logic proceeds as in the
+  previous case). This ensures backwards compatibility with old versions
+  of NumPy.
+- Otherwise, :class:`ndarray` unilaterally calls the corresponding Ufunc.
+  Ufuncs never return ``NotImplemented``, so **reflexive methods such
+  as** ``other.__rmul__`` **cannot be used to override arithmetic with
+  NumPy arrays if** ``__array_ufunc__`` **is set**. Instead, the resulting
+  behavior can be modified by implementing ``__array_ufunc__`` in a
+  consistent fashion for the corresponding Ufunc (e.g., ``np.multiply``, see
+  :ref:`neps.ufunc-overrides.list-of-operators`).
 
 A class wishing to modify the interaction with :class:`ndarray` in
 binary operations therefore has two options:
@@ -474,7 +479,8 @@ binary operations therefore has two options:
 
 2. Set ``__array_ufunc__ = None``, and implement Python binary
    operations freely.  In this case, ufuncs called on this argument will
-   raise :exc:`TypeError`.
+   raise :exc:`TypeError` (see
+   :ref:`neps.ufunc-overrides.turning-ufuncs-off`).
 
 Recommendations for implementing binary operations
 --------------------------------------------------
@@ -612,27 +618,31 @@ To make implementing such array-like classes easier, the mixin class
 overrides for all binary operators with corresponding Ufuncs. Classes
 that wish to implement ``__array_ufunc__`` for compatible versions
 of NumPy but that also need to support binary arithmetic with NumPy arrays
-on older versions, should ensure that ``__array_ufunc__`` can also be used
+on older versions should ensure that ``__array_ufunc__`` can also be used
 to implement all binary operations they support.
 
 Finally, we note that we had extensive discussion about whether it might
 make more sense to ask classes like ``MyObject`` to implement a full
 ``__array_ufunc__`` [6]_. In the end, allowing classes to opt out was
 preferred, and the above reasoning led us to agree on a similar
-implementation for :class:`ndarray` itself. We decided to require disabling
-ufuncs to opt out in order to ensure that a class cannot define Ufuncs to
-return different results than the corresponding binary operations (i.e., if
-``np.add(x, y)`` is defined, it should match ``x + y``).
+implementation for :class:`ndarray` itself. The opt-out mechanism requires
+disabling Ufuncs so a class cannot define a Ufuncs to return a different
+result than the corresponding binary operations (i.e., if
+``np.add(x, y)`` is defined, it should match ``x + y``). Our goal was to
+simply the dispatch logic for binary operations with NumPy arrays
+as much as possible, by making it possible to use Python's dispatch rules
+or NumPy's dispatch rules, but not some mixture of both at the same time.
 
 .. [9] http://bugs.python.org/issue30140
 
-.. _neps.ufunc-overrides.list-operations:
+.. _neps.ufunc-overrides.list-of-operators:
 
-List of binary operations and NumPy Ufuncs
-------------------------------------------
+List of operators and NumPy Ufuncs
+----------------------------------
 
-Here is a full list of Python binary operations and the corresponding NumPy
-Ufuncs used by :class:`ndarray`:
+Here is a full list of Python binary operators and the corresponding NumPy
+Ufuncs used by :class:`ndarray` and
+:class:`~numpy.lib.mixins.NDArrayOperatorsMixin`:
 
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
@@ -658,11 +668,23 @@ Symbol Operator     NumPy Ufunc(s)
 ``&``  ``and_``     :func:`bitwise_and`
 ``^``  ``xor_``     :func:`bitwise_xor`
 ``|``  ``or_``      :func:`bitwise_or`
-NA     ``divmod``   :func:`floor_divide`, :func:`mod` [*]_
+NA     ``divmod``   :func:`floor_divide`, :func:`mod` [10]_
 ``@``  ``matmul``   Not yet implemented as a ufunc
 ====== ============ =========================================
 
-.. [*] In the future, NumPy may switch to use a single ufunc ``divmod_`` instead.
+And here is the list of unary operators:
+
+====== ============ =========================================
+Symbol Operator     NumPy Ufunc(s)
+====== ============ =========================================
+``-``  ``neg``      :func:`negative`
+``+``  ``pos``      :func:`positive` [11]_
+NA     ``abs``      :func:`absolute`
+``~``  ``invert``   :func:`invert`
+====== ============ =========================================
+
+.. [10] In the future, NumPy may switch to use a single ufunc ``divmod_`` instead.
+.. [11] :class:`ndarray` currently does a copy instead of using this ufunc.
 
 Future extensions to other functions
 ------------------------------------
