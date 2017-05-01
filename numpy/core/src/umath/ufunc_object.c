@@ -757,6 +757,15 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 /********* GENERIC UFUNC USING ITERATOR *********/
 
 /*
+ * Produce a name for the ufunc, if one is not already set
+ * This is used in the PyUFunc_handlefperr machinery, and in error messages
+ */
+static const char*
+_get_ufunc_name(PyUFuncObject *ufunc) {
+    return ufunc->name ? ufunc->name : "<unnamed ufunc>";
+}
+
+/*
  * Parses the positional and keyword arguments for a generic ufunc call.
  *
  * Note that if an error is returned, the caller must free the
@@ -779,13 +788,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
-    const char *ufunc_name;
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
     int has_sig = 0;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     *out_extobj = NULL;
     *out_typetup = NULL;
@@ -1983,6 +1990,123 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     return ret;
 }
 
+/*
+ * Validate the core dimensions of all the operands, and collect all of
+ * the labelled core dimensions into 'core_dim_sizes'.
+ * 
+ * Returns 0 on success, and -1 on failure
+ *
+ * The behavior has been changed in NumPy 1.10.0, and the following
+ * requirements must be fulfilled or an error will be raised:
+ *  * Arguments, both input and output, must have at least as many
+ *    dimensions as the corresponding number of core dimensions. In
+ *    previous versions, 1's were prepended to the shape as needed.
+ *  * Core dimensions with same labels must have exactly matching sizes.
+ *    In previous versions, core dimensions of size 1 would broadcast
+ *    against other core dimensions with the same label.
+ *  * All core dimensions must have their size specified by a passed in
+ *    input or output argument. In previous versions, core dimensions in
+ *    an output argument that were not specified in an input argument,
+ *    and whose size could not be inferred from a passed in output
+ *    argument, would have their size set to 1.
+ */
+static int
+_get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
+                   npy_intp* core_dim_sizes) {
+    int i;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
+    int nop = nin + nout;
+
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        core_dim_sizes[i] = -1;
+    }
+    for (i = 0; i < nop; ++i) {
+        if (op[i] != NULL) {
+            int idim;
+            int dim_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+
+            /* Check if operands have enough dimensions */
+            if (core_start_dim < 0) {
+                PyErr_Format(PyExc_ValueError,
+                        "%s: %s operand %d does not have enough "
+                        "dimensions (has %d, gufunc core with "
+                        "signature %s requires %d)",
+                        _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                        ufunc->core_signature, num_dims);
+                return -1;
+            }
+
+            /*
+             * Make sure every core dimension exactly matches all other core
+             * dimensions with the same label.
+             */
+            for (idim = 0; idim < num_dims; ++idim) {
+                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
+                npy_intp op_dim_size =
+                            PyArray_DIM(op[i], core_start_dim+idim);
+
+                if (core_dim_sizes[core_dim_index] == -1) {
+                    core_dim_sizes[core_dim_index] = op_dim_size;
+                }
+                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
+                    PyErr_Format(PyExc_ValueError,
+                            "%s: %s operand %d has a mismatch in its "
+                            "core dimension %d, with gufunc "
+                            "signature %s (size %zd is different "
+                            "from %zd)",
+                            _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                            i < nin ? i : i - nin, idim,
+                            ufunc->core_signature, op_dim_size,
+                            core_dim_sizes[core_dim_index]);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /*
+     * Make sure no core dimension is unspecified.
+     */
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        if (core_dim_sizes[i] == -1) {
+            break;
+        }
+    }
+    if (i != ufunc->core_num_dim_ix) {
+        /*
+         * There is at least one core dimension missing, find in which
+         * operand it comes up first (it has to be an output operand).
+         */
+        const int missing_core_dim = i;
+        int out_op;
+        for (out_op = nin; out_op < nop; ++out_op) {
+            int first_idx = ufunc->core_offsets[out_op];
+            int last_idx = first_idx + ufunc->core_num_dims[out_op];
+            for (i = first_idx; i < last_idx; ++i) {
+                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
+                    break;
+                }
+            }
+            if (i < last_idx) {
+                /* Change index offsets for error message */
+                out_op -= nin;
+                i -= first_idx;
+                break;
+            }
+        }
+        PyErr_Format(PyExc_ValueError,
+                     "%s: Output operand %d has core dimension %d "
+                     "unspecified, with gufunc signature %s",
+                     _get_ufunc_name(ufunc), out_op, i, ufunc->core_signature);
+        return -1;
+    }
+    return 0;
+}
+
 
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
@@ -1992,7 +2116,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int nin, nout;
     int i, j, idim, nop;
     const char *ufunc_name;
-    int retval = -1, subok = 1;
+    int retval = 0, subok = 1;
     int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
@@ -2046,7 +2170,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2098,110 +2222,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /*
-     * Validate the core dimensions of all the operands, and collect all of
-     * the labelled core dimensions into 'core_dim_sizes'.
-     *
-     * The behavior has been changed in NumPy 1.10.0, and the following
-     * requirements must be fulfilled or an error will be raised:
-     *  * Arguments, both input and output, must have at least as many
-     *    dimensions as the corresponding number of core dimensions. In
-     *    previous versions, 1's were prepended to the shape as needed.
-     *  * Core dimensions with same labels must have exactly matching sizes.
-     *    In previous versions, core dimensions of size 1 would broadcast
-     *    against other core dimensions with the same label.
-     *  * All core dimensions must have their size specified by a passed in
-     *    input or output argument. In previous versions, core dimensions in
-     *    an output argument that were not specified in an input argument,
-     *    and whose size could not be inferred from a passed in output
-     *    argument, would have their size set to 1.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        core_dim_sizes[i] = -1;
-    }
-    for (i = 0; i < nop; ++i) {
-        if (op[i] != NULL) {
-            int dim_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
-
-            /* Check if operands have enough dimensions */
-            if (core_start_dim < 0) {
-                PyErr_Format(PyExc_ValueError,
-                        "%s: %s operand %d does not have enough "
-                        "dimensions (has %d, gufunc core with "
-                        "signature %s requires %d)",
-                        ufunc_name, i < nin ? "Input" : "Output",
-                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                        ufunc->core_signature, num_dims);
-                retval = -1;
-                goto fail;
-            }
-
-            /*
-             * Make sure every core dimension exactly matches all other core
-             * dimensions with the same label.
-             */
-            for (idim = 0; idim < num_dims; ++idim) {
-                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
-                npy_intp op_dim_size =
-                            PyArray_DIM(op[i], core_start_dim+idim);
-
-                if (core_dim_sizes[core_dim_index] == -1) {
-                    core_dim_sizes[core_dim_index] = op_dim_size;
-                }
-                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
-                    PyErr_Format(PyExc_ValueError,
-                            "%s: %s operand %d has a mismatch in its "
-                            "core dimension %d, with gufunc "
-                            "signature %s (size %zd is different "
-                            "from %zd)",
-                            ufunc_name, i < nin ? "Input" : "Output",
-                            i < nin ? i : i - nin, idim,
-                            ufunc->core_signature, op_dim_size,
-                            core_dim_sizes[core_dim_index]);
-                    retval = -1;
-                    goto fail;
-                }
-            }
-        }
-    }
-
-    /*
-     * Make sure no core dimension is unspecified.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        if (core_dim_sizes[i] == -1) {
-            break;
-        }
-    }
-    if (i != ufunc->core_num_dim_ix) {
-        /*
-         * There is at least one core dimension missing, find in which
-         * operand it comes up first (it has to be an output operand).
-         */
-        const int missing_core_dim = i;
-        int out_op;
-        for (out_op = nin; out_op < nop; ++out_op) {
-            int first_idx = ufunc->core_offsets[out_op];
-            int last_idx = first_idx + ufunc->core_num_dims[out_op];
-            for (i = first_idx; i < last_idx; ++i) {
-                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
-                    break;
-                }
-            }
-            if (i < last_idx) {
-                /* Change index offsets for error message */
-                out_op -= nin;
-                i -= first_idx;
-                break;
-            }
-        }
-        PyErr_Format(PyExc_ValueError,
-                     "%s: Output operand %d has core dimension %d "
-                     "unspecified, with gufunc signature %s",
-                     ufunc_name, out_op, i, ufunc->core_signature);
-        retval = -1;
+    /* Collect the lengths of the labelled core dimensions */
+    retval = _get_coredim_sizes(ufunc, op, core_dim_sizes);
+    if(retval < 0) {
         goto fail;
     }
 
@@ -2212,7 +2235,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Fill in op_axes for all the operands */
     j = broadcast_ndim;
-    core_dim_ixs_size = 0;
     for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
@@ -2254,7 +2276,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
 
         op_axes[i] = op_axes_arrays[i];
-        core_dim_ixs_size += ufunc->core_num_dims[i];
     }
 
     /* Get the buffersize and errormask */
@@ -2369,6 +2390,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.
      */
+    core_dim_ixs_size = 0;
+    for (i = 0; i < nop; ++i) {
+        core_dim_ixs_size += ufunc->core_num_dims[i];
+    }
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     if (inner_strides == NULL) {
@@ -2607,7 +2632,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2847,7 +2872,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
@@ -3036,7 +3061,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *dtype;
     PyArrayObject *result;
     PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
@@ -3144,7 +3169,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3511,7 +3536,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
