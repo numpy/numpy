@@ -316,6 +316,10 @@ class memmap(ndarray):
         if self.base is not None and hasattr(self.base, 'flush'):
             self.base.flush()
 
+    def resize(self, new_shape):
+        self._mmap.resize(self.itemsize*np.prod(new_shape))
+        super(memmap, self).resize(new_shape, mustown=False)
+
     def __array_wrap__(self, arr, context=None):
         arr = super(memmap, self).__array_wrap__(arr, context)
 

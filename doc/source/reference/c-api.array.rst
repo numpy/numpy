@@ -1735,16 +1735,20 @@ Shape Manipulation
 
 .. c:function:: PyObject* PyArray_Resize( \
         PyArrayObject* self, PyArray_Dims* newshape, int refcheck, \
-        NPY_ORDER fortran)
+        NPY_ORDER fortran, int mustown)
 
     Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, refcheck
-    ``=`` *refcheck*, order= fortran ). This function only works on
+    ``=`` *refcheck*, order= fortran, mustown ``=`` *mustown* ). This function only works on
     single-segment arrays. It changes the shape of *self* inplace and
     will reallocate the memory for *self* if *newshape* has a
     different total number of elements then the old shape. If
     reallocation is necessary, then *self* must own its data, have
     *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
     (unless refcheck is 0) not be referenced by any other array.
+    If *mustown* is 0, all array metadata is modified according to the resize
+    operation, but the data itself is not changed in any way.
+    This is useful if the data is managed by someone else, such as memmap, and
+    has already been resized as necessary.
     The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
     or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
     it could be used to determine how the resize operation should view
