@@ -420,6 +420,18 @@ class TestClassicIntDivision(_DeprecationTestCase):
                 self.assert_deprecated(op.div, args=(a,b))
                 dt2 = dt1
 
+class TestNonNumericConjugate(_DeprecationTestCase):
+    """
+    Deprecate no-op behavior of ndarray.conjugate on non-numeric dtypes,
+    which conflicts with the error behavior of np.conjugate.
+    """
+    def test_conjugate(self):
+        for a in np.array(5), np.array(5j):
+            self.assert_not_deprecated(a.conjugate)
+        for a in (np.array('s'), np.array('2016', 'M'),
+                np.array((1, 2), [('a', int), ('b', int)])):
+            self.assert_deprecated(a.conjugate)
+
 
 class TestNPY_CHAR(_DeprecationTestCase):
     # 2017-05-03, 1.13.0
