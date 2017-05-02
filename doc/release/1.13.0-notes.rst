@@ -40,6 +40,8 @@ Deprecations
   deprecated. ``np.maximum``. ``np.ma.minimum(x)`` should now be spelt
   ``np.ma.minimum.reduce(x)``, which is consistent with how this would be done
   with ``np.minimum``.
+* Calling ``ndarray.conjugate`` on non-numeric dtypes is deprecated (it
+  should match the behavior of ``np.conjugate``, which throws an error).
 
 Build System Changes
 ====================
