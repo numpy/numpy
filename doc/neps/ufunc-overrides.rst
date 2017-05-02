@@ -629,7 +629,7 @@ implementation for :class:`ndarray` itself. The opt-out mechanism requires
 disabling Ufuncs so a class cannot define a Ufuncs to return a different
 result than the corresponding binary operations (i.e., if
 ``np.add(x, y)`` is defined, it should match ``x + y``). Our goal was to
-simply the dispatch logic for binary operations with NumPy arrays
+simplify the dispatch logic for binary operations with NumPy arrays
 as much as possible, by making it possible to use Python's dispatch rules
 or NumPy's dispatch rules, but not some mixture of both at the same time.
 
