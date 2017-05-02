@@ -3694,19 +3694,6 @@ static void
 #define _HALF_LESS_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(a, b))
 #define _HALF_GREATER_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(b, a))
 
-/* The following function provides Optimization for INT_fastclip using avx2 extension.
-First it checks if AVX2 attribute is present or not.If AVX2 support is present, then it
-breaks down the Algorithm into two parts.
-1. First it looks at total length of the input array and find out how many bytes are unaligned
-   with respect to 256 bytes. Because avx2 registers used here are 256 bytes in size.
-2. Then for the portion it is aligned with 256 bytes, it loops over the data and loads into one of the vector registers.
-3. It loads vector registers vec_max_256 as vector of maximum value and vec_min_max as vector of minimum values, each of 4 Bytes.
-4. Parallel comparision is made between loaded data and vec_max_256 first and do a vectorized min operation betwwen data and max value. If data is greater than max value , it gets replaced by max value, otherwise with data.
-5. We then use the register where result of above min comparison is tored and do a max operation between the data and min value. If data is lesser than the min value , it gets replaced by min value, otherwise with data. 
-6. After that we take care of the unaligned portion by simply looping over it, like the previous algorithm was doing.
-7. For a simple benchmark, this algorithm gave around 40-50% performance boost.
-*/
-
 /**begin repeat
  *
  * #name = BOOL,
@@ -3719,6 +3706,7 @@ breaks down the Algorithm into two parts.
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
+ * #isint = 1*10, 0*7#
  * #isfloat = 0*11, 1*4, 0*2#
  * #isnan = nop*11, npy_half_isnan, npy_isnan*3, nop*2#
  * #lt = _LESS_THAN*11, _HALF_LESS_THAN, _LESS_THAN*5#
@@ -3729,70 +3717,88 @@ static void
 {
     npy_intp i;
     @type@ max_val = 0, min_val = 0;
+    
+// The following portion provides Optimization for INT_fastclip using avx2 extension.
+    #if HAVE_ATTRIBUTE_TARGET_AVX2 && @isint@ && NPY_BITSOF_@type@ == 32
 
-#if HAVE_ATTRIBUTE_TARGET_AVX2 && @type@==npy_int && NPY_BITSOF_@type@ == 32 
-    int unaligned = ni%8;
-    __m128i vec_max,vec_min;
-    __m256i vec_max_256,vec_min_256,vec_array;
-
+/*It looks at total length of the input array and find out how many bytes are unaligned
+   with respect to 256 bytes. Because avx2 registers used here are 256 bytes in size.*/
+        int unaligned = ni%8;
+// Declaration of vector registers uing avx2
+        __m128i vec_max,vec_min;
+        __m256i vec_max_256,vec_min_256,vec_array;
     if (max != NULL) {
-       max_val = *max;
-       vec_max = _mm_set1_epi32(max_val);
-       vec_max_256 = _mm256_broadcastd_epi32(vec_max);
+        max_val = *max;
+//Setting up vector registers with all value as 32 byte maximum value
+        vec_max = _mm_set1_epi32(max_val);
+        vec_max_256 = _mm256_broadcastd_epi32(vec_max);
     }
     if (min != NULL) {
         min_val = *min;
+//Setting up vector registers with all value as 32 byte minimum value
         vec_min = _mm_set1_epi32(min_val);
         vec_min_256 = _mm256_broadcastd_epi32(vec_min);
-	
     }
+
+/* Parallel comparision is made between loaded data and vec_max_256 first 
+   and do a vectorized min operation betwwen data and max value. If data is
+   greater than max value , it gets replaced by max value, otherwise with 
+   data.We then use the register where result of above min comparison is stored
+   and do a max operation between the data and min value. If data is lesser than
+   the min value , it gets replaced by min value, otherwise with data.After that
+   we take care of the unaligned portion by simply looping over it, like the previous
+   algorithm was doing. For a simple benchmark, this algorithm gave around 40-50% 
+   performance boost.
+*/
+
     if (max == NULL) {
-	for(i=0;i<ni/8;i++){
-           vec_array = _mm256_loadu_si256(in+(i*8));
-           vec_array = _mm256_max_epi32(vec_array,vec_min_256);
-           _mm256_storeu_si256(out+(i*8),vec_array);
-       }
-       for(npy_int j=0;j<unaligned;j++){
-             if (in[i*8+j]<min_val) {
+        for(i=0;i<ni/8;i++){
+            vec_array = _mm256_loadu_si256(in+(i*8));
+            vec_array = _mm256_max_epi32(vec_array,vec_min_256);
+            _mm256_storeu_si256(out+(i*8),vec_array);
+        }
+        for(npy_int j=0;j<unaligned;j++){
+            if (in[i*8+j]<min_val) {
                 out[i*8+j]   = min_val;
             }
-	}
-    	
+        }
     }
     else if (min == NULL) {
-	for(i=0;i<ni/8;i++){
-       vec_array = _mm256_loadu_si256(in+(i*8));
-       vec_array = _mm256_min_epi32(vec_array,vec_max_256);
-       _mm256_storeu_si256(out+(i*8),vec_array);
-   }
-       for(npy_int j=0;j<unaligned;j++){
-             if (in[i*8+j]>max_val) {
+        for(i=0;i<ni/8;i++){
+            vec_array = _mm256_loadu_si256(in+(i*8));
+            vec_array = _mm256_min_epi32(vec_array,vec_max_256);
+            _mm256_storeu_si256(out+(i*8),vec_array);
+        }
+        for(npy_int j=0;j<unaligned;j++){
+            if (in[i*8+j]>max_val) {
                 out[i*8+j]   = max_val;
             }
-	}
-   }
-   else {
-  	for(i=0;i<ni/8;i++){
-           vec_array = _mm256_loadu_si256(in+(i*8));
-           vec_array = _mm256_max_epi32(vec_array,vec_min_256);
-           vec_array = _mm256_min_epi32(vec_array,vec_max_256);
-           _mm256_storeu_si256(out+(i*8),vec_array);
-       }
-       for(npy_int j=0;j<unaligned;j++){
+        }
+    }
+    else {
+        for(i=0;i<ni/8;i++){
+            vec_array = _mm256_loadu_si256(in+(i*8));
+            vec_array = _mm256_max_epi32(vec_array,vec_min_256);
+            vec_array = _mm256_min_epi32(vec_array,vec_max_256);
+            _mm256_storeu_si256(out+(i*8),vec_array);
+        }
+        for(npy_int j=0;j<unaligned;j++){
             if (in[i*8+j]<min_val) {
-                    out[i*8+j]   = min_val;
-                }
-                else if (in[i*8+j]>max_val) {
-                    out[i*8+j]   = max_val;
-                }
+                out[i*8+j]   = min_val;
+            }
+            else if (in[i*8+j]>max_val) {
+                out[i*8+j]   = max_val;
+            }
+        }
+    }
 
-       }
-#else
+/**** The optimization portion ends here. ***/
 
+    #else
     if (max != NULL) {
         max_val = *max;
-#if @isfloat@
-        /* NaNs result in no clipping, so optimize the case away */
+        #if @isfloat@
+            /* NaNs result in no clipping, so optimize the case away */
         if (@isnan@(max_val)) {
             if (min == NULL) {
                 memmove(out, in, ni * sizeof(@type@));
@@ -3800,11 +3806,11 @@ static void
             }
             max = NULL;
         }
-#endif
+        #endif
     }
     if (min != NULL) {
         min_val = *min;
-#if @isfloat@
+        #if @isfloat@
         if (@isnan@(min_val)) {
             if (max == NULL) {
                 memmove(out, in, ni * sizeof(@type@));
@@ -3812,7 +3818,7 @@ static void
             }
             min = NULL;
         }
-#endif
+        #endif
     }
     if (max == NULL) {
         for (i = 0; i < ni; i++) {
@@ -3836,11 +3842,11 @@ static void
     }
     else {
         /*
-         * Visual Studio 2015 loop vectorizer handles NaN in an unexpected
-         * manner, see: https://github.com/numpy/numpy/issues/7601
-         */
+        * Visual Studio 2015 loop vectorizer handles NaN in an unexpected
+        * manner, see: https://github.com/numpy/numpy/issues/7601
+        */
         #if (_MSC_VER == 1900)
-        #pragma loop( no_vector )
+            #pragma loop( no_vector )
         #endif
         for (i = 0; i < ni; i++) {
             if (@lt@(in[i], min_val)) {
@@ -3854,10 +3860,9 @@ static void
             }
         }
     }
-#endif
+    #endif
 }
 /**end repeat**/
-//#endif
 
 
 #undef _LESS_THAN
