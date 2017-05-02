@@ -1173,7 +1173,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self)) {
+    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
+            PyArray_ISUSERDEF(self)) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
