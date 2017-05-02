@@ -25,6 +25,9 @@ Deprecations
 * Calling ``np.fix``, ``np.isposinf``, and ``np.isneginf`` with ``f(x, y=out)``
   is deprecated - the argument should be passed as ``f(x, out=out)``, which
   matches other ufunc-like interfaces.
+* Use of the C-API ``NPY_CHAR`` type number deprecated since version 1.7 will
+  now raise deprecation warnings at runtime. Extensions built with older f2py
+  versions need to be recompiled to remove the warning.
 
 
 Build System Changes
