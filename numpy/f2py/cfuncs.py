@@ -1153,8 +1153,9 @@ def buildcfuncs():
             m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
     k = 'string'
     m = 'pyarr_from_p_%s1' % k
+    # NPY_CHAR compatibility, NPY_STRING with itemsize 1
     cppmacros[
-        m] = '#define %s(v,dims) (PyArray_SimpleNewFromData(1,dims,NPY_CHAR,(char *)v))' % (m)
+        m] = '#define %s(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))' % (m)
 
 
 ############ Auxiliary functions for sorting needs ###################
