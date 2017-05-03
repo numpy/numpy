@@ -422,6 +422,7 @@ class TestClassicIntDivision(_DeprecationTestCase):
 
 
 class TestNPY_CHAR(_DeprecationTestCase):
+    # 2017-05-03, 1.13.0
     def test_npy_char_deprecation(self):
         from numpy.core.multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
