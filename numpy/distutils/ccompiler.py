@@ -5,6 +5,7 @@ import re
 import sys
 import types
 import shlex
+import time
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
@@ -19,6 +20,15 @@ from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       quote_args, get_num_build_jobs, \
                                       _commandline_dep_string
+
+# globals for parallel build management
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
+_job_semaphore = None
+_global_lock = threading.Lock()
+_processing_files = set()
 
 
 def _needs_build(obj, cc_args, extra_postargs, pp_opts):
@@ -211,6 +221,16 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # This method is effective only with Python >=2.3 distutils.
     # Any changes here should be applied also to fcompiler.compile
     # method to support pre Python 2.3 distutils.
+    global _job_semaphore
+
+    jobs = get_num_build_jobs()
+
+    # setup semaphore to not exceed number of compile jobs when parallelized at
+    # extension level (python >= 3.5)
+    with _global_lock:
+        if _job_semaphore is None:
+            _job_semaphore = threading.Semaphore(jobs)
+
     if not sources:
         return []
     # FIXME:RELATIVE_IMPORT
@@ -242,8 +262,30 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     def single_compile(args):
         obj, (src, ext) = args
-        if _needs_build(obj, cc_args, extra_postargs, pp_opts):
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        if not _needs_build(obj, cc_args, extra_postargs, pp_opts):
+            return
+
+        # check if we are currently already processing the same object
+        # happens when using the same source in multiple extensions
+        while True:
+            # need explicit lock as there is no atomic check and add with GIL
+            with _global_lock:
+                # file not being worked on, start working
+                if obj not in _processing_files:
+                    _processing_files.add(obj)
+                    break
+            # wait for the processing to end
+            time.sleep(0.1)
+
+        try:
+            # retrieve slot from our #job semaphore and build
+            with _job_semaphore:
+                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        finally:
+            # register being done processing
+            with _global_lock:
+                _processing_files.remove(obj)
+
 
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
@@ -269,7 +311,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     else:
         build_items = build.items()
 
-    jobs = get_num_build_jobs()
     if len(build) > 1 and jobs > 1:
         # build parallel
         import multiprocessing.pool
