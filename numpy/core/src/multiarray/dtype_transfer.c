@@ -2750,9 +2750,9 @@ get_fields_transfer_function(int aligned,
 
         const char *msg =
             "Assignment between structured arrays with different field names "
-            "will change in numpy 1.13.\n\n"
+            "will change in numpy 1.14.\n\n"
             "Previously fields in the dst would be set to the value of the "
-            "identically-named field in the src. In numpy 1.13 fields will "
+            "identically-named field in the src. In numpy 1.14 fields will "
             "instead be assigned 'by position': The Nth field of the dst "
             "will be set to the Nth field of the src array.\n\n"
             "See the release notes for details";
