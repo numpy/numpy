@@ -470,24 +470,8 @@ def __dtype_from_pep3118(stream, is_subdtype):
         itemsize=0
     )
     offset = 0
-    explicit_name = False
-    this_explicit_name = False
     common_alignment = 1
     is_padding = False
-
-    dummy_name_index = [0]
-
-
-    def next_dummy_name():
-        dummy_name_index[0] += 1
-
-    def get_dummy_name():
-        while True:
-            name = 'f%d' % dummy_name_index[0]
-            if name not in field_spec['names']:
-                return name
-            next_dummy_name()
-
 
     # Parse spec
     while stream:
@@ -583,24 +567,18 @@ def __dtype_from_pep3118(stream, is_subdtype):
             value = dtype((value, shape))
 
         # Field name
-        this_explicit_name = False
         if stream.consume(':'):
             name = stream.consume_until(':')
-            explicit_name = True
-            this_explicit_name = True
         else:
-            name = get_dummy_name()
+            name = None
 
-        if not is_padding or this_explicit_name:
-            if name in field_spec['names']:
+        if not (is_padding and name is None):
+            if name is not None and name in field_spec['names']:
                 raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
                                    % name)
             field_spec['names'].append(name)
             field_spec['formats'].append(value)
             field_spec['offsets'].append(offset)
-
-            if not this_explicit_name:
-                next_dummy_name()
 
         offset += value.itemsize
         offset += extra_offset
@@ -612,17 +590,32 @@ def __dtype_from_pep3118(stream, is_subdtype):
         field_spec['itemsize'] += (-offset) % common_alignment
 
     # Check if this was a simple 1-item type, and unwrap it
-    if (len(field_spec['names']) == 1
+    if (field_spec['names'] == [None]
             and field_spec['offsets'][0] == 0
             and field_spec['itemsize'] == field_spec['formats'][0].itemsize
-            and not explicit_name
             and not is_subdtype):
         ret = field_spec['formats'][0]
     else:
+        _fix_names(field_spec)
         ret = dtype(field_spec)
 
     # Finished
     return ret, common_alignment
+
+def _fix_names(field_spec):
+    """ Replace names which are None with the next unused f%d name """
+    names = field_spec['names']
+    for i, name in enumerate(names):
+        if name is not None:
+            continue
+
+        j = 0
+        while True:
+            name = 'f{}'.format(j)
+            if name not in names:
+                break
+            j = j + 1
+        names[i] = name
 
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""

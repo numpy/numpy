@@ -5927,6 +5927,13 @@ class TestPEP3118Dtype(object):
         self._check("(0)I:a:f:b:", [('a', 'I', (0,)), ('b', 'f')])
         self._check("(0)I:b:f:a:", [('b', 'I', (0,)), ('a', 'f')])
 
+    def test_unnamed_fields(self):
+        self._check('ii',     [('f0', 'i'), ('f1', 'i')])
+        self._check('ii:f0:', [('f1', 'i'), ('f0', 'i')])
+
+        self._check('i', 'i')
+        self._check('i:f0:', [('f0', 'i')])
+
 class TestNewBufferProtocol(object):
     def _check_roundtrip(self, obj):
         obj = np.asarray(obj)
