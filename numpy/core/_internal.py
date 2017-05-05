@@ -459,10 +459,16 @@ def _dtype_from_pep3118(spec):
 
     stream = Stream(spec)
 
-    return __dtype_from_pep3118(stream, is_subdtype=False)
+    dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
+    return dtype
 
 def __dtype_from_pep3118(stream, is_subdtype):
-    fields = {}
+    field_spec = dict(
+        names=[],
+        formats=[],
+        offsets=[],
+        itemsize=0
+    )
     offset = 0
     explicit_name = False
     this_explicit_name = False
@@ -478,7 +484,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
     def get_dummy_name():
         while True:
             name = 'f%d' % dummy_name_index[0]
-            if name not in fields:
+            if name not in field_spec['names']:
                 return name
             next_dummy_name()
 
@@ -586,35 +592,37 @@ def __dtype_from_pep3118(stream, is_subdtype):
             name = get_dummy_name()
 
         if not is_padding or this_explicit_name:
-            if name in fields:
+            if name in field_spec['names']:
                 raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
                                    % name)
-            fields[name] = (value, offset)
+            field_spec['names'].append(name)
+            field_spec['formats'].append(value)
+            field_spec['offsets'].append(offset)
+
             if not this_explicit_name:
                 next_dummy_name()
 
         offset += value.itemsize
         offset += extra_offset
 
-    # Check if this was a simple 1-item type
-    if (len(fields) == 1 and not explicit_name and
-            fields['f0'][1] == 0 and not is_subdtype):
-        ret = fields['f0'][0]
-    else:
-        ret = dtype(fields)
+        field_spec['itemsize'] = offset
 
-    # Trailing padding must be explicitly added
-    padding = offset - ret.itemsize
+    # extra final padding for aligned types
     if stream.byteorder == '@':
-        padding += (-offset) % common_alignment
-    if is_padding and not this_explicit_name:
-        ret = _add_trailing_padding(ret, padding)
+        field_spec['itemsize'] += (-offset) % common_alignment
+
+    # Check if this was a simple 1-item type, and unwrap it
+    if (len(field_spec['names']) == 1
+            and field_spec['offsets'][0] == 0
+            and field_spec['itemsize'] == field_spec['formats'][0].itemsize
+            and not explicit_name
+            and not is_subdtype):
+        ret = field_spec['formats'][0]
+    else:
+        ret = dtype(field_spec)
 
     # Finished
-    if is_subdtype:
-        return ret, common_alignment
-    else:
-        return ret
+    return ret, common_alignment
 
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""
