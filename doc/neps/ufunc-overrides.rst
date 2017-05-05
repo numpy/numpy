@@ -466,10 +466,11 @@ implements the following behavior:
 - Otherwise, :class:`ndarray` unilaterally calls the corresponding Ufunc.
   Ufuncs never return ``NotImplemented``, so **reflexive methods such
   as** ``other.__rmul__`` **cannot be used to override arithmetic with
-  NumPy arrays if** ``__array_ufunc__`` **is set**. Instead, the resulting
-  behavior can be modified by implementing ``__array_ufunc__`` in a
-  consistent fashion for the corresponding Ufunc (e.g., ``np.multiply``, see
-  :ref:`neps.ufunc-overrides.list-of-operators`).
+  NumPy arrays if** ``__array_ufunc__`` **is set** to any value other than
+  ``None``. Instead, their behavior needs to be changed by implementing
+  ``__array_ufunc__`` in a fashion consistent with the corresponding Ufunc,
+  e.g., ``np.multiply``. See :ref:`neps.ufunc-overrides.list-of-operators`
+  for a list of affected operators and their corresponding ufuncs.
 
 A class wishing to modify the interaction with :class:`ndarray` in
 binary operations therefore has two options:
