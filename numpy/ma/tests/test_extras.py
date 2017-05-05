@@ -308,6 +308,16 @@ class TestConcatenator(TestCase):
     def test_matrix_builder(self):
         assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
 
+    def test_matrix(self):
+        actual = mr_['r', 1, 2, 3]
+        expected = np.ma.array(np.r_['r', 1, 2, 3])
+        assert_array_equal(actual, expected)
+
+        # outer type is masked array, inner type is matrix
+        assert_equal(type(actual), type(expected))
+        assert_equal(type(actual.data), type(expected.data))
+
+
 class TestNotMasked(TestCase):
     # Tests notmasked_edges and notmasked_contiguous.
 
