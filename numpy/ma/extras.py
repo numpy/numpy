@@ -1463,6 +1463,10 @@ class MAxisConcatenator(AxisConcatenator):
     """
     concatenate = staticmethod(concatenate)
 
+    @staticmethod
+    def makemat(arr):
+        return array(arr.data.view(np.matrix), mask=arr.mask)
+
     def __getitem__(self, key):
         # matrix builder syntax, like 'a, b; c, d'
         if isinstance(key, str):

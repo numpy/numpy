@@ -15,8 +15,6 @@ from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
 from numpy.lib.stride_tricks import as_strided
 
-makemat = matrixlib.matrix
-
 
 __all__ = [
     'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
@@ -238,6 +236,8 @@ class AxisConcatenator(object):
     """
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
+    makemat = staticmethod(matrixlib.matrix)
+
     def __init__(self, axis=0, matrix=False, ndmin=1, trans1d=-1):
         self.axis = axis
         self.matrix = matrix
@@ -341,7 +341,7 @@ class AxisConcatenator(object):
 
         if matrix:
             oldndim = res.ndim
-            res = makemat(res)
+            res = self.makemat(res)
             if oldndim == 1 and col:
                 res = res.T
         return res
