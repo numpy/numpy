@@ -619,33 +619,24 @@ def __dtype_from_pep3118(stream, is_subdtype):
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""
     if value.fields is None:
-        vfields = {'f0': (value, 0)}
+        field_spec = dict(
+            names=['f0'],
+            formats=[value],
+            offsets=[0],
+            itemsize=value.itemsize
+        )
     else:
-        vfields = dict(value.fields)
+        fields = value.fields
+        names = value.names
+        field_spec = dict(
+            names=names,
+            formats=[fields[name][0] for name in names],
+            offsets=[fields[name][1] for name in names],
+            itemsize=value.itemsize
+        )
 
-    if (value.names and value.names[-1] == '' and
-           value[''].char == 'V'):
-        # A trailing padding field is already present
-        vfields[''] = ('V%d' % (vfields[''][0].itemsize + padding),
-                       vfields[''][1])
-        value = dtype(vfields)
-    else:
-        # Get a free name for the padding field
-        j = 0
-        while True:
-            name = 'pad%d' % j
-            if name not in vfields:
-                vfields[name] = ('V%d' % padding, value.itemsize)
-                break
-            j += 1
-
-        value = dtype(vfields)
-        if '' not in vfields:
-            # Strip out the name of the padding field
-            names = list(value.names)
-            names[-1] = ''
-            value.names = tuple(names)
-    return value
+    field_spec['itemsize'] += padding
+    return dtype(field_spec)
 
 def _prod(a):
     p = 1
@@ -660,7 +651,7 @@ def _gcd(a, b):
     return a
 
 def _lcm(a, b):
-    return a / _gcd(a, b) * b
+    return a // _gcd(a, b) * b
 
 # Exception used in shares_memory()
 class TooHardError(RuntimeError):
