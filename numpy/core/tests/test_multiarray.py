@@ -5831,12 +5831,8 @@ from numpy.core._internal import _dtype_from_pep3118
 class TestPEP3118Dtype(object):
     def _check(self, spec, wanted):
         dt = np.dtype(wanted)
-        if isinstance(wanted, list) and isinstance(wanted[-1], tuple):
-            if wanted[-1][0] == '':
-                names = list(dt.names)
-                names[-1] = ''
-                dt.names = tuple(names)
-        assert_equal(_dtype_from_pep3118(spec), dt,
+        actual = _dtype_from_pep3118(spec)
+        assert_equal(actual, dt,
                      err_msg="spec %r != dtype %r" % (spec, wanted))
 
     def test_native_padding(self):
@@ -5860,21 +5856,24 @@ class TestPEP3118Dtype(object):
         # Trailing padding should be included, *and*, the item size
         # should match the alignment if in aligned mode
         align = np.dtype('i').alignment
+        size = np.dtype('i').itemsize
 
-        def VV(n):
-            return 'V%d' % (align*(1 + (n-1)//align))
+        def aligned(n):
+            return align*(1 + (n-1)//align)
 
-        self._check('ix', [('f0', 'i'), ('', VV(1))])
-        self._check('ixx', [('f0', 'i'), ('', VV(2))])
-        self._check('ixxx', [('f0', 'i'), ('', VV(3))])
-        self._check('ixxxx', [('f0', 'i'), ('', VV(4))])
-        self._check('i7x', [('f0', 'i'), ('', VV(7))])
+        base = dict(formats=['i'], names=['f0'])
 
-        self._check('^ix', [('f0', 'i'), ('', 'V1')])
-        self._check('^ixx', [('f0', 'i'), ('', 'V2')])
-        self._check('^ixxx', [('f0', 'i'), ('', 'V3')])
-        self._check('^ixxxx', [('f0', 'i'), ('', 'V4')])
-        self._check('^i7x', [('f0', 'i'), ('', 'V7')])
+        self._check('ix',    dict(itemsize=aligned(size + 1), **base))
+        self._check('ixx',   dict(itemsize=aligned(size + 2), **base))
+        self._check('ixxx',  dict(itemsize=aligned(size + 3), **base))
+        self._check('ixxxx', dict(itemsize=aligned(size + 4), **base))
+        self._check('i7x',   dict(itemsize=aligned(size + 7), **base))
+
+        self._check('^ix',    dict(itemsize=size + 1, **base))
+        self._check('^ixx',   dict(itemsize=size + 2, **base))
+        self._check('^ixxx',  dict(itemsize=size + 3, **base))
+        self._check('^ixxxx', dict(itemsize=size + 4, **base))
+        self._check('^i7x',   dict(itemsize=size + 7, **base))
 
     def test_native_padding_3(self):
         dt = np.dtype(
@@ -5904,11 +5903,17 @@ class TestPEP3118Dtype(object):
     def test_intra_padding(self):
         # Natively aligned sub-arrays may require some internal padding
         align = np.dtype('i').alignment
+        size = np.dtype('i').itemsize
 
-        def VV(n):
-            return 'V%d' % (align*(1 + (n-1)//align))
+        def aligned(n):
+            return (align*(1 + (n-1)//align))
 
-        self._check('(3)T{ix}', ({'f0': ('i', 0), '': (VV(1), 4)}, (3,)))
+        self._check('(3)T{ix}', (dict(
+            names=['f0'],
+            formats=['i'],
+            offsets=[0],
+            itemsize=aligned(size + 1)
+        ), (3,)))
 
     def test_char_vs_string(self):
         dt = np.dtype('c')
