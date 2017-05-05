@@ -16,7 +16,7 @@ __all__ = [
     'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
     'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
     'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
+    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
@@ -1131,6 +1131,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
+
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
@@ -1138,8 +1139,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
+    We recommend using :func:`isin` instead of `in1d` for new code.
+
     See Also
     --------
+    isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
 
     Notes
@@ -1168,6 +1172,29 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx]
     else:
         return flag[indx][rev_idx]
+
+
+def isin(element, test_elements, assume_unique=False, invert=False):
+    """
+    Calculates `element in test_elements`, broadcasting over
+    `element` only.
+
+    The output is always a masked array of the same shape as `element`.
+    See `numpy.isin` for more details.
+
+    See Also
+    --------
+    in1d       : Flattened version of this function.
+    numpy.isin : Equivalent function for ndarrays.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    """
+    element = ma.asarray(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
 
 
 def union1d(ar1, ar2):
