@@ -28,6 +28,8 @@ Deprecations
 * Use of the C-API ``NPY_CHAR`` type number deprecated since version 1.7 will
   now raise deprecation warnings at runtime. Extensions built with older f2py
   versions need to be recompiled to remove the warning.
+* Calling ``ndarray.conjugate`` on non-numeric dtypes is deprecated (it
+  should match the behavior of ``np.conjugate``, which throws an error).
 
 
 Build System Changes
