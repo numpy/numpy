@@ -1500,7 +1500,7 @@ add_newdoc('numpy.core.multiarray', 'where',
     Find the indices of elements of `x` that are in `goodvalues`.
 
     >>> goodvalues = [3, 4, 7]
-    >>> ix = np.in1d(x.ravel(), goodvalues).reshape(x.shape)
+    >>> ix = np.isin(x, goodvalues)
     >>> ix
     array([[False, False, False],
            [ True,  True, False],

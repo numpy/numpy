@@ -8,7 +8,7 @@ from numpy.testing import (
     run_module_suite, TestCase, assert_array_equal, assert_equal, assert_raises
     )
 from numpy.lib.arraysetops import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d
+    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
 
 
@@ -76,6 +76,46 @@ class TestSetOps(TestCase):
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
         assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
         assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
+
+    def test_isin(self):
+        # the tests for in1d cover most of isin's behavior
+        # if in1d is removed, would need to change those tests to test
+        # isin instead.
+        def _isin_slow(a, b):
+            b = np.asarray(b).flatten().tolist()
+            return a in b
+        isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
+        def assert_isin_equal(a, b):
+            x = isin(a, b)
+            y = isin_slow(a, b)
+            assert_array_equal(x, y)
+            
+        #multidimensional arrays in both arguments
+        a = np.arange(24).reshape([2, 3, 4])
+        b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
+        assert_isin_equal(a, b)
+        
+        #array-likes as both arguments
+        c = [(9, 8), (7, 6)]
+        d = (9, 7)
+        assert_isin_equal(c, d)
+        
+        #zero-d array:
+        f = np.array(3)
+        assert_isin_equal(f, b)
+        assert_isin_equal(a, f)
+        assert_isin_equal(f, f)
+        
+        #scalar:
+        assert_isin_equal(5, b)
+        assert_isin_equal(a, 6)
+        assert_isin_equal(5, 6)
+        
+        #empty array-like:
+        x = []
+        assert_isin_equal(x, b)
+        assert_isin_equal(a, x)
+        assert_isin_equal(x, x)
 
     def test_in1d(self):
         # we use two different sizes for the b array here to test the

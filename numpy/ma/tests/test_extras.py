@@ -28,7 +28,7 @@ from numpy.ma.extras import (
     median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like,
+    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
     diagflat
     )
 import numpy.ma.extras as mae
@@ -1434,6 +1434,27 @@ class TestArraySetOps(TestCase):
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
         assert_array_equal([], setxor1d([], []))
+
+    def test_isin(self):
+        # the tests for in1d cover most of isin's behavior
+        # if in1d is removed, would need to change those tests to test
+        # isin instead.
+        a = np.arange(24).reshape([2, 3, 4])
+        mask = np.zeros([2, 3, 4])
+        mask[1, 2, 0] = 1
+        a = array(a, mask=mask)
+        b = array(data=[0, 10, 20, 30,  1,  3, 11, 22, 33],
+                  mask=[0,  1,  0,  1,  0,  1,  0,  1,  0])
+        ec = zeros((2, 3, 4), dtype=bool)
+        ec[0, 0, 0] = True
+        ec[0, 0, 1] = True
+        ec[0, 2, 3] = True
+        c = isin(a, b)
+        assert_(isinstance(c, MaskedArray))
+        assert_array_equal(c, ec)
+        #compare results of np.isin to ma.isin
+        d = np.isin(a, b[~b.mask]) & ~a.mask
+        assert_array_equal(c, d)
 
     def test_in1d(self):
         # Test in1d
