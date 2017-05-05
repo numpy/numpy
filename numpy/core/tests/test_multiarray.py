@@ -5922,6 +5922,11 @@ class TestPEP3118Dtype(object):
         dt = np.dtype([('f0', 'S1', (4,)), ('f1', 'S4')])
         self._check('4c4s', dt)
 
+    def test_field_order(self):
+        # gh-9053 - previously, we relied on dictionary key order
+        self._check("(0)I:a:f:b:", [('a', 'I', (0,)), ('b', 'f')])
+        self._check("(0)I:b:f:a:", [('b', 'I', (0,)), ('a', 'f')])
+
 class TestNewBufferProtocol(object):
     def _check_roundtrip(self, obj):
         obj = np.asarray(obj)
