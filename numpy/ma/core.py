@@ -5621,6 +5621,14 @@ class MaskedArray(ndarray):
         """
         Return the array minimum along the specified axis.
 
+        .. deprecated:: 1.13.0
+           This function is identical to both:
+
+            * ``self.min(keepdims=True, axis=axis).squeeze(axis=axis)``
+            * ``np.ma.minimum.reduce(self, axis=axis)``
+
+           Typically though, ``self.min(axis=axis)`` is sufficient.
+
         Parameters
         ----------
         axis : int, optional
@@ -5650,11 +5658,22 @@ class MaskedArray(ndarray):
         >>> print(x.mini(axis=1))
         [0 2 4]
 
+        There is a small difference between `mini` and `min`:
+
+        >>> x[:,1].mini(axis=0)
+        masked_array(data = --,
+                     mask = True,
+               fill_value = 999999)
+        >>> x[:,1].min(axis=0)
+        masked
         """
-        if axis is None:
-            return minimum(self)
-        else:
-            return minimum.reduce(self, axis)
+
+        # 2016-04-13, 1.13.0, gh-8764
+        warnings.warn(
+            "`mini` is deprecated; use the `min` method or "
+            "`np.ma.minimum.reduce instead.",
+            DeprecationWarning, stacklevel=2)
+        return minimum.reduce(self, axis)
 
     def max(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -6348,31 +6367,52 @@ class _extrema_operation(object):
       `_minimum_operation`.
 
     """
+    def __init__(self, ufunc, compare, fill_value):
+        self.ufunc = ufunc
+        self.compare = compare
+        self.fill_value_func = fill_value
+        self.__doc__ = ufunc.__doc__
+        self.__name__ = ufunc.__name__
 
     def __call__(self, a, b=None):
         "Executes the call behavior."
         if b is None:
+            # 2016-04-13, 1.13.0
+            warnings.warn(
+                "Single-argument form of np.ma.{0} is deprecated. Use "
+                "np.ma.{0}.reduce instead.".format(self.__name__),
+                DeprecationWarning, stacklevel=2)
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
 
-    def reduce(self, target, axis=None):
+    def reduce(self, target, axis=np._NoValue):
         "Reduce target along the given axis."
         target = narray(target, copy=False, subok=True)
         m = getmask(target)
-        if axis is not None:
-            kargs = {'axis': axis}
+
+        if axis is np._NoValue and target.ndim > 1:
+            # 2017-05-06, Numpy 1.13.0: warn on axis default
+            warnings.warn(
+                "In the future the default for ma.{0}.reduce will be axis=0, "
+                "not the current None, to match np.{0}.reduce. "
+                "Explicitly pass 0 or None to silence this warning.".format(
+                    self.__name__
+                ),
+                MaskedArrayFutureWarning, stacklevel=2)
+            axis = None
+
+        if axis is not np._NoValue:
+            kwargs = dict(axis=axis)
         else:
-            kargs = {}
-            target = target.ravel()
-            if not (m is nomask):
-                m = m.ravel()
+            kwargs = dict()
+
         if m is nomask:
-            t = self.ufunc.reduce(target, **kargs)
+            t = self.ufunc.reduce(target, **kwargs)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
-            t = self.ufunc.reduce(target, **kargs)
-            m = umath.logical_and.reduce(m, **kargs)
+            t = self.ufunc.reduce(target, **kwargs)
+            m = umath.logical_and.reduce(m, **kwargs)
             if hasattr(t, '_mask'):
                 t._mask = m
             elif m:
@@ -6394,34 +6434,6 @@ class _extrema_operation(object):
             result = result.view(MaskedArray)
         result._mask = m
         return result
-
-
-class _minimum_operation(_extrema_operation):
-
-    "Object to calculate minima"
-
-    def __init__(self):
-        """minimum(a, b) or minimum(a)
-In one argument case, returns the scalar minimum.
-        """
-        self.ufunc = umath.minimum
-        self.afunc = amin
-        self.compare = less
-        self.fill_value_func = minimum_fill_value
-
-
-class _maximum_operation(_extrema_operation):
-
-    "Object to calculate maxima"
-
-    def __init__(self):
-        """maximum(a, b) or maximum(a)
-           In one argument case returns the scalar maximum.
-        """
-        self.ufunc = umath.maximum
-        self.afunc = amax
-        self.compare = greater
-        self.fill_value_func = maximum_fill_value
 
 def min(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -6518,9 +6530,9 @@ copy = _frommethod('copy')
 diagonal = _frommethod('diagonal')
 harden_mask = _frommethod('harden_mask')
 ids = _frommethod('ids')
-maximum = _maximum_operation()
+maximum = _extrema_operation(umath.maximum, greater, maximum_fill_value)
 mean = _frommethod('mean')
-minimum = _minimum_operation()
+minimum = _extrema_operation(umath.minimum, less, minimum_fill_value)
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
