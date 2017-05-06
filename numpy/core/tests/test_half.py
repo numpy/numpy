@@ -317,6 +317,7 @@ class TestHalf(TestCase):
 
         assert_equal(np.floor_divide(a, b), [0, 0, 2, 1, 0])
         assert_equal(np.remainder(a, b), [0, 1, 0, 0, 2])
+        assert_equal(np.divmod(a, b), ([0, 0, 2, 1, 0], [0, 1, 0, 0, 2]))
         assert_equal(np.square(b), [4, 25, 1, 16, 9])
         assert_equal(np.reciprocal(b), [-0.5, 0.199951171875, 1, 0.25, 0.333251953125])
         assert_equal(np.ones_like(b), [1, 1, 1, 1, 1])

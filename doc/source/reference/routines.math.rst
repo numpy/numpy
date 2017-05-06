@@ -121,6 +121,7 @@ Arithmetic operations
    mod
    modf
    remainder
+   divmod
 
 Handling complex numbers
 ------------------------

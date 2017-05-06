@@ -286,6 +286,13 @@ class TestRemainder(TestCase):
                 else:
                     assert_(b > rem >= 0, msg)
 
+                div, rem = np.divmod(a, b)
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
     def test_float_remainder_exact(self):
         # test that float results are exact for small integers. This also
         # holds for the same integers scaled by powers of two.
@@ -312,6 +319,10 @@ class TestRemainder(TestCase):
             assert_equal(div, tgtdiv, err_msg=msg)
             assert_equal(rem, tgtrem, err_msg=msg)
 
+            div, rem = np.divmod(fa, fb)
+            assert_equal(div, tgtdiv, err_msg=msg)
+            assert_equal(rem, tgtrem, err_msg=msg)
+
     def test_float_remainder_roundoff(self):
         # gh-6127
         dt = np.typecodes['Float']
@@ -324,6 +335,13 @@ class TestRemainder(TestCase):
                 div = np.floor_divide(a, b)
                 rem = np.remainder(a, b)
                 # Equal assertion should hold when fmod is used
+                assert_equal(div*b + rem, a, err_msg=msg)
+                if sg2 == -1:
+                    assert_(b < rem <= 0, msg)
+                else:
+                    assert_(b > rem >= 0, msg)
+
+                div, rem = np.divmod(a, b)
                 assert_equal(div*b + rem, a, err_msg=msg)
                 if sg2 == -1:
                     assert_(b < rem <= 0, msg)
