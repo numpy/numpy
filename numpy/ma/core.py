@@ -6367,10 +6367,12 @@ class _extrema_operation(object):
       `_minimum_operation`.
 
     """
-
-    @property
-    def __name__(self):
-        return self.ufunc.__name__
+    def __init__(self, ufunc, compare, fill_value):
+        self.ufunc = ufunc
+        self.compare = compare
+        self.fill_value_func = fill_value
+        self.__doc__ = ufunc.__doc__
+        self.__name__ = ufunc.__name__
 
     def __call__(self, a, b=None):
         "Executes the call behavior."
@@ -6432,32 +6434,6 @@ class _extrema_operation(object):
             result = result.view(MaskedArray)
         result._mask = m
         return result
-
-
-class _minimum_operation(_extrema_operation):
-
-    "Object to calculate minima"
-
-    def __init__(self):
-        """minimum(a, b) or minimum(a)
-In one argument case, returns the scalar minimum.
-        """
-        self.ufunc = umath.minimum
-        self.compare = less
-        self.fill_value_func = minimum_fill_value
-
-
-class _maximum_operation(_extrema_operation):
-
-    "Object to calculate maxima"
-
-    def __init__(self):
-        """maximum(a, b) or maximum(a)
-           In one argument case returns the scalar maximum.
-        """
-        self.ufunc = umath.maximum
-        self.compare = greater
-        self.fill_value_func = maximum_fill_value
 
 def min(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -6554,9 +6530,9 @@ copy = _frommethod('copy')
 diagonal = _frommethod('diagonal')
 harden_mask = _frommethod('harden_mask')
 ids = _frommethod('ids')
-maximum = _maximum_operation()
+maximum = _extrema_operation(umath.maximum, greater, maximum_fill_value)
 mean = _frommethod('mean')
-minimum = _minimum_operation()
+minimum = _extrema_operation(umath.minimum, less, minimum_fill_value)
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
