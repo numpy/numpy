@@ -375,6 +375,7 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
 
+
 class TestAccumulateKeepDims(_DeprecationTestCase):
     """
     Deprecate the keepdims argument to np.ufunc.accumulate, which was never used or documented
@@ -398,6 +399,7 @@ class TestTestDeprecated(object):
 
         test_case_instance.assert_deprecated(foo)
         test_case_instance.tearDown()
+
 
 class TestClassicIntDivision(_DeprecationTestCase):
     """
