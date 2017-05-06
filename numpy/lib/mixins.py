@@ -70,8 +70,7 @@ class NDArrayOperatorsMixin(object):
     implement.
 
     This class does not yet implement the special operators corresponding
-    to ``divmod`` or ``matmul`` (``@``), because these operation do not yet
-    have corresponding NumPy ufuncs.
+    to ``matmul`` (``@``), because ``np.matmul`` is not yet a NumPy ufunc.
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
@@ -161,7 +160,10 @@ class NDArrayOperatorsMixin(object):
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(
         um.floor_divide, 'floordiv')
-    __mod__, __rmod__, __imod__ = _numeric_methods(um.mod, 'mod')
+    __mod__, __rmod__, __imod__ = _numeric_methods(um.remainder, 'mod')
+    __divmod__ = _binary_method(um.divmod, 'divmod')
+    __rdivmod__ = _reflected_binary_method(um.divmod, 'divmod')
+    # __idivmod__ does not exist
     # TODO: handle the optional third argument for __pow__?
     __pow__, __rpow__, __ipow__ = _numeric_methods(um.power, 'pow')
     __lshift__, __rlshift__, __ilshift__ = _numeric_methods(
