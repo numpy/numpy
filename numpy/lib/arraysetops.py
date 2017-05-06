@@ -522,6 +522,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     in1d                  : Flattened version of this function.
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
     Notes
     -----
 
