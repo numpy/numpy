@@ -83,6 +83,7 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(multiply);
     SET(divide);
     SET(remainder);
+    SET(divmod);
     SET(power);
     SET(square);
     SET(reciprocal);
@@ -135,6 +136,7 @@ PyArray_GetNumericOps(void)
     GET(multiply);
     GET(divide);
     GET(remainder);
+    GET(divmod);
     GET(power);
     GET(square);
     GET(reciprocal);
@@ -344,6 +346,12 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
+static PyObject *
+array_divmod(PyArrayObject *m1, PyObject *m2)
+{
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_divmod, array_divmod);
+    return PyArray_GenericBinaryFunction(m1, m2, n_ops.divmod);
+}
 
 #if PY_VERSION_HEX >= 0x03050000
 /* Need this to be version dependent on account of the slot check */
@@ -793,37 +801,6 @@ _array_nonzero(PyArrayObject *mp)
                         "Use a.any() or a.all()");
         return -1;
     }
-}
-
-
-
-static PyObject *
-array_divmod(PyArrayObject *op1, PyObject *op2)
-{
-    PyObject *divp, *modp, *result;
-
-    BINOP_GIVE_UP_IF_NEEDED(op1, op2, nb_divmod, array_divmod);
-
-    divp = array_floor_divide(op1, op2);
-    if (divp == NULL) {
-        return NULL;
-    }
-    else if(divp == Py_NotImplemented) {
-        return divp;
-    }
-    modp = array_remainder(op1, op2);
-    if (modp == NULL) {
-        Py_DECREF(divp);
-        return NULL;
-    }
-    else if(modp == Py_NotImplemented) {
-        Py_DECREF(divp);
-        return modp;
-    }
-    result = Py_BuildValue("OO", divp, modp);
-    Py_DECREF(divp);
-    Py_DECREF(modp);
-    return result;
 }
 
 

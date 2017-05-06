@@ -189,30 +189,34 @@ class TestPower(TestCase):
             assert_raises(TypeError, operator.pow, np.array(t(a)), b, c)
 
 
-class TestModulus(TestCase):
+def floordiv_and_mod(x, y):
+    return (x // y, x % y)
 
-    floordiv = operator.floordiv
-    mod = operator.mod
+
+def _signs(dt):
+    if dt in np.typecodes['UnsignedInteger']:
+        return (+1,)
+    else:
+        return (+1, -1)
+
+
+class TestModulus(TestCase):
 
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
-                    continue
-                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
-                    continue
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*71, dtype=dt1)[()]
-                b = np.array(sg2*19, dtype=dt2)[()]
-                div = self.floordiv(a, b)
-                rem = self.mod(a, b)
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*71, dtype=dt1)[()]
+                    b = np.array(sg2*19, dtype=dt2)[()]
+                    div, rem = op(a, b)
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_modulus_exact(self):
         # test that float results are exact for small integers. This also
@@ -231,42 +235,42 @@ class TestModulus(TestCase):
         tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
         tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
 
-        for dt in np.typecodes['Float']:
-            msg = 'dtype: %s' % (dt,)
-            fa = a.astype(dt)
-            fb = b.astype(dt)
-            # use list comprehension so a_ and b_ are scalars
-            div = [self.floordiv(a_, b_) for  a_, b_ in zip(fa, fb)]
-            rem = [self.mod(a_, b_) for a_, b_ in zip(fa, fb)]
-            assert_equal(div, tgtdiv, err_msg=msg)
-            assert_equal(rem, tgtrem, err_msg=msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt in np.typecodes['Float']:
+                msg = 'op: %s, dtype: %s' % (op.__name__, dt)
+                fa = a.astype(dt)
+                fb = b.astype(dt)
+                # use list comprehension so a_ and b_ are scalars
+                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                assert_equal(div, tgtdiv, err_msg=msg)
+                assert_equal(rem, tgtrem, err_msg=msg)
 
     def test_float_modulus_roundoff(self):
         # gh-6127
         dt = np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*78*6e-8, dtype=dt1)[()]
-                b = np.array(sg2*6e-8, dtype=dt2)[()]
-                div = self.floordiv(a, b)
-                rem = self.mod(a, b)
-                # Equal assertion should hold when fmod is used
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*78*6e-8, dtype=dt1)[()]
+                    b = np.array(sg2*6e-8, dtype=dt2)[()]
+                    div, rem = op(a, b)
+                    # Equal assertion should hold when fmod is used
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_modulus_corner_cases(self):
         # Check remainder magnitude.
         for dt in np.typecodes['Float']:
             b = np.array(1.0, dtype=dt)
             a = np.nextafter(np.array(0.0, dtype=dt), -b)
-            rem = self.mod(a, b)
+            rem = operator.mod(a, b)
             assert_(rem <= b, 'dt: %s' % dt)
-            rem = self.mod(-a, -b)
+            rem = operator.mod(-a, -b)
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
@@ -277,14 +281,14 @@ class TestModulus(TestCase):
                 fzer = np.array(0.0, dtype=dt)
                 finf = np.array(np.inf, dtype=dt)
                 fnan = np.array(np.nan, dtype=dt)
-                rem = self.mod(fone, fzer)
+                rem = operator.mod(fone, fzer)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 # MSVC 2008 returns NaN here, so disable the check.
-                #rem = self.mod(fone, finf)
+                #rem = operator.mod(fone, finf)
                 #assert_(rem == fone, 'dt: %s' % dt)
-                rem = self.mod(fone, fnan)
+                rem = operator.mod(fone, fnan)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
-                rem = self.mod(finf, fone)
+                rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
 
 
