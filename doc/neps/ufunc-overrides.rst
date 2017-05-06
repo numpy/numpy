@@ -662,15 +662,15 @@ Symbol Operator     NumPy Ufunc(s)
 ``/``  ``div``      :func:`divide`
        (Python 2)
 ``//`` ``floordiv`` :func:`floor_divide`
-``%``  ``mod``      :func:`mod`
+``%``  ``mod``      :func:`remainder`
+NA     ``divmod``   :func:`divmod`
 ``**`` ``pow``      :func:`power`
 ``<<`` ``lshift``   :func:`left_shift`
 ``>>`` ``rshift``   :func:`right_shift`
 ``&``  ``and_``     :func:`bitwise_and`
 ``^``  ``xor_``     :func:`bitwise_xor`
 ``|``  ``or_``      :func:`bitwise_or`
-NA     ``divmod``   :func:`floor_divide`, :func:`mod` [10]_
-``@``  ``matmul``   Not yet implemented as a ufunc
+``@``  ``matmul``   Not yet implemented as a ufunc [10]_
 ====== ============ =========================================
 
 And here is the list of unary operators:
@@ -684,7 +684,10 @@ NA     ``abs``      :func:`absolute`
 ``~``  ``invert``   :func:`invert`
 ====== ============ =========================================
 
-.. [10] In the future, NumPy may switch to use a single ufunc ``divmod_`` instead.
+.. [10] Because NumPy's :func:`matmul` is not a ufunc, it is
+        `currently not possible <https://github.com/numpy/numpy/issues/9028>`_
+        to override ``numpy_array @ other`` with ``other`` taking precedence
+        if ``other`` implements ``__array_func__``.
 .. [11] :class:`ndarray` currently does a copy instead of using this ufunc.
 
 Future extensions to other functions
