@@ -264,34 +264,34 @@ class TestDivision(TestCase):
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
 
+def floor_divide_and_remainder(x, y):
+    return (np.floor_divide(x, y), np.remainder(x, y))
+
+
+def _signs(dt):
+    if dt in np.typecodes['UnsignedInteger']:
+        return (+1,)
+    else:
+        return (+1, -1)
+
+
 class TestRemainder(TestCase):
 
     def test_remainder_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
-                    continue
-                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
-                    continue
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*71, dtype=dt1)
-                b = np.array(sg2*19, dtype=dt2)
-                div = np.floor_divide(a, b)
-                rem = np.remainder(a, b)
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
-
-                div, rem = np.divmod(a, b)
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floor_divide_and_remainder, np.divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*71, dtype=dt1)
+                    b = np.array(sg2*19, dtype=dt2)
+                    div, rem = op(a, b)
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_remainder_exact(self):
         # test that float results are exact for small integers. This also
@@ -310,43 +310,32 @@ class TestRemainder(TestCase):
         tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
         tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
 
-        for dt in np.typecodes['Float']:
-            msg = 'dtype: %s' % (dt,)
-            fa = a.astype(dt)
-            fb = b.astype(dt)
-            div = np.floor_divide(fa, fb)
-            rem = np.remainder(fa, fb)
-            assert_equal(div, tgtdiv, err_msg=msg)
-            assert_equal(rem, tgtrem, err_msg=msg)
-
-            div, rem = np.divmod(fa, fb)
-            assert_equal(div, tgtdiv, err_msg=msg)
-            assert_equal(rem, tgtrem, err_msg=msg)
+        for op in [floor_divide_and_remainder, np.divmod]:
+            for dt in np.typecodes['Float']:
+                msg = 'op: %s, dtype: %s' % (op.__name__, dt)
+                fa = a.astype(dt)
+                fb = b.astype(dt)
+                div, rem = op(fa, fb)
+                assert_equal(div, tgtdiv, err_msg=msg)
+                assert_equal(rem, tgtrem, err_msg=msg)
 
     def test_float_remainder_roundoff(self):
         # gh-6127
         dt = np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*78*6e-8, dtype=dt1)
-                b = np.array(sg2*6e-8, dtype=dt2)
-                div = np.floor_divide(a, b)
-                rem = np.remainder(a, b)
-                # Equal assertion should hold when fmod is used
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
-
-                div, rem = np.divmod(a, b)
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floor_divide_and_remainder, np.divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*78*6e-8, dtype=dt1)
+                    b = np.array(sg2*6e-8, dtype=dt2)
+                    div, rem = op(a, b)
+                    # Equal assertion should hold when fmod is used
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_remainder_corner_cases(self):
         # Check remainder magnitude.

@@ -2894,7 +2894,7 @@ add_newdoc('numpy.core.umath', 'divmod',
     out1 : ndarray
         Element-wise quotient resulting from floor division.
     out2 : ndarray
-        Element-wise remainder from division.
+        Element-wise remainder from floor division.
 
     See Also
     --------

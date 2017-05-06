@@ -346,9 +346,10 @@ an error if array values do not support numeric operations.
 
 New ``divmod`` ufunc
 --------------------
-This ufunc corresponds to the Python builtin `divmod`. ``np.divmod(x, y)``
-calculates a result equivalent to
-``(np.floor_divide(x, y), np.remainder(x, y))`` but faster.
+This ufunc corresponds to the Python builtin `divmod`, and is used to implement
+`divmod` when called on numpy arrays. ``np.divmod(x, y)`` calculates a result
+equivalent to ``(np.floor_divide(x, y), np.remainder(x, y))`` but is
+approximately twice as fast as calling the functions separately.
 
 Better ``repr`` of object arrays
 --------------------------------
