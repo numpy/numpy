@@ -368,6 +368,12 @@ New ``positive`` ufunc
 This ufunc corresponds to unary `+`, but unlike `+` on an ndarray it will raise
 an error if array values do not support numeric operations.
 
+New ``divmod`` ufunc
+--------------------
+This ufunc corresponds to the Python builtin `divmod`. ``np.divmod(x, y)``
+calculates a result equivalent to
+``(np.floor_divide(x, y), np.remainder(x, y))`` but faster.
+
 Better ``repr`` of object arrays
 --------------------------------
 Object arrays that contain themselves no longer cause a recursion error.

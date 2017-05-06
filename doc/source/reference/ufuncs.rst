@@ -510,6 +510,7 @@ Math operations
     remainder
     mod
     fmod
+    divmod
     absolute
     fabs
     rint
