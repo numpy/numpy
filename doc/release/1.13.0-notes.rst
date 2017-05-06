@@ -28,6 +28,9 @@ Deprecations
 * Use of the C-API ``NPY_CHAR`` type number deprecated since version 1.7 will
   now raise deprecation warnings at runtime. Extensions built with older f2py
   versions need to be recompiled to remove the warning.
+* ``np.ma.argsort`` should be called with an explicit `axis` argument when
+  applied to arrays with more than 2 dimensions, as the default value of
+  this argument (``None``) is inconsistent with the rest of numpy (``-1``).
 
 
 Build System Changes
