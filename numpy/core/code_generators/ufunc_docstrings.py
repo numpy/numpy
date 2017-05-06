@@ -1290,6 +1290,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     See Also
     --------
     remainder : Remainder complementary to floor_divide.
+    divmod : Simultaneous floor division and remainder.
     divide : Standard division.
     floor : Round a number to the nearest integer toward minus infinity.
     ceil : Round a number to the nearest integer toward infinity.
@@ -2474,6 +2475,11 @@ add_newdoc('numpy.core.umath', 'modf',
     -----
     For integer input the return values are floats.
 
+    See Also
+    --------
+    divmod : ``divmod(x, 1)`` is equivalent to ``modf`` with the return values
+             switched, except it always has a positive remainder.
+
     Examples
     --------
     >>> np.modf([0, 3.5])
@@ -2540,6 +2546,8 @@ add_newdoc('numpy.core.umath', 'negative',
 add_newdoc('numpy.core.umath', 'positive',
     """
     Numerical positive, element-wise.
+
+    .. versionadded:: 1.13.0
 
     Parameters
     ----------
@@ -2843,6 +2851,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     See Also
     --------
     floor_divide : Equivalent of Python ``//`` operator.
+    divmod : Simultaneous floor division and remainder.
     fmod : Equivalent of the Matlab(TM) ``rem`` function.
     divide, floor
 
@@ -2857,6 +2866,47 @@ add_newdoc('numpy.core.umath', 'remainder',
     array([0, 1])
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'divmod',
+    """
+    Return element-wise quotient and remainder simultaneously.
+
+    .. versionadded:: 1.13.0
+
+    ``np.divmod(x, y)`` is equivalent to ``(x // y, x % y)``, but faster
+    because it avoids redundant work. It is used to implement the Python
+    built-in function ``divmod`` on NumPy arrays.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Dividend array.
+    x2 : array_like
+        Divisor array.
+    out : tuple of ndarray, optional
+        Arrays into which the output is placed. Their types are preserved and
+        must be of the right shape to hold the output.
+
+    Returns
+    -------
+    out1 : ndarray
+        Element-wise quotient resulting from floor division.
+    out2 : ndarray
+        Element-wise remainder from division.
+
+    See Also
+    --------
+    floor_divide : Equivalent to Python's ``//`` operator.
+    remainder : Equivalent to Python's ``%`` operator.
+    modf : Equivalent to ``divmod(x, 1)`` for positive ``x`` with the return
+           values switched.
+
+    Examples
+    --------
+    >>> np.divmod(np.arange(5), 3)
+    (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
     """)
 
