@@ -11,7 +11,10 @@ import sys
 
 from numpy.compat import basestring
 from .multiarray import dtype, array, ndarray
-import ctypes
+try:
+    import ctypes
+except ImportError:
+    ctypes = None
 from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
@@ -194,19 +197,33 @@ def _commastring(astr):
 
     return result
 
+class dummy_ctype(object):
+    def __init__(self, cls):
+        self._cls = cls
+    def __mul__(self, other):
+        return self
+    def __call__(self, *other):
+        return self._cls(other)
+    def __eq__(self, other):
+        return self._cls == other._cls
+
 def _getintp_ctype():
     val = _getintp_ctype.cache
     if val is not None:
         return val
-    char = dtype('p').char
-    if (char == 'i'):
-        val = ctypes.c_int
-    elif char == 'l':
-        val = ctypes.c_long
-    elif char == 'q':
-        val = ctypes.c_longlong
+    if ctypes is None:
+        import numpy as np
+        val = dummy_ctype(np.intp)
     else:
-        val = ctypes.c_long
+        char = dtype('p').char
+        if (char == 'i'):
+            val = ctypes.c_int
+        elif char == 'l':
+            val = ctypes.c_long
+        elif char == 'q':
+            val = ctypes.c_longlong
+        else:
+            val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
 _getintp_ctype.cache = None
@@ -222,9 +239,9 @@ class _missing_ctypes(object):
 
 class _ctypes(object):
     def __init__(self, array, ptr=None):
-        try:
+        if ctypes:
             self._ctypes = ctypes
-        except ImportError:
+        else:
             self._ctypes = _missing_ctypes()
         self._arr = array
         self._data = ptr
@@ -250,14 +267,10 @@ class _ctypes(object):
         return self._data
 
     def get_shape(self):
-        if self._zerod:
-            return None
-        return (_getintp_ctype()*self._arr.ndim)(*self._arr.shape)
+        return self.shape_as(_getintp_ctype())
 
     def get_strides(self):
-        if self._zerod:
-            return None
-        return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
+        return self.strides_as(_getintp_ctype())
 
     def get_as_parameter(self):
         return self._ctypes.c_void_p(self._data)
