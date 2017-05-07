@@ -1841,11 +1841,11 @@ class TestFillingValues(TestCase):
                          "h", "D", "W", "M", "Y"):
             control = numpy.datetime64("NaT", timecode)
             test = default_fill_value(numpy.dtype("<M8[" + timecode + "]"))
-            assert_equal(test, control)
+            np.testing.utils.assert_equal(test, control)
 
             control = numpy.timedelta64("NaT", timecode)
             test = default_fill_value(numpy.dtype("<m8[" + timecode + "]"))
-            assert_equal(test, control)
+            np.testing.utils.assert_equal(test, control)
 
     def test_extremum_fill_value(self):
         # Tests extremum fill values for flexible type.
