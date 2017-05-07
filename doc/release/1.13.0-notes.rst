@@ -4,6 +4,7 @@ NumPy 1.13.0 Release Notes
 
 This release supports Python 2.7 and 3.4 - 3.6.
 
+  
 Highlights
 ==========
 
@@ -45,11 +46,20 @@ Deprecations
 Build System Changes
 ====================
 
- * ``numpy.distutils`` now automatically determines C-file dependencies with
-   GCC compatible compilers.
+* ``numpy.distutils`` now automatically determines C-file dependencies with
+  GCC compatible compilers.
+
 
 Future Changes
 ==============
+
+* Assignment between structured arrays with different field names will change
+  in NumPy 1.14. Previously, fields in the dst would be set to the value of the
+  identically-named field in the src. In numpy 1.14 fields will instead be
+  assigned 'by position': The n-th field of the dst will be set to the n-th
+  field of the src array. Note that the ``FutureWarning`` raised in NumPy 1.12
+  incorrectly reported this change as scheduled for NumPy 1.13 rather than
+  NumPy 1.14.
 
 
 Compatibility notes
