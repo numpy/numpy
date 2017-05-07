@@ -6759,6 +6759,28 @@ class TestUnicodeArrayNonzero(TestCase):
         a[0] = ' \0 \0'
         self.assertTrue(a)
 
+
+class TestCTypes(TestCase):
+
+    def test_ctypes_is_available(self):
+        test_arr = np.array([[1, 2, 3], [4, 5, 6]])
+
+        self.assertEqual(ctypes, test_arr.ctypes._ctypes)
+        assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
+
+    def test_ctypes_is_not_available(self):
+        from numpy.core import _internal
+        _internal.ctypes = None
+        try:
+            test_arr = np.array([[1, 2, 3], [4, 5, 6]])
+
+            self.assertIsInstance(
+                test_arr.ctypes._ctypes, _internal._missing_ctypes)
+            assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
+        finally:
+            _internal.ctypes = ctypes
+
+
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
     a = np.arange(5)
