@@ -167,6 +167,11 @@ In an N-dimensional array, the user can now choose the axis along which to look
 for duplicate N-1-dimensional elements using ``numpy.unique``. The original
 behaviour is recovered if ``axis=None`` (default).
 
+``np.isnat`` function to test for NaT special datetime and timedelta values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``np.isnat`` can now be used to find the positions of special NaT values
+within datetime and timedelta arrays. This is analogous to ``np.isnan``.
+
 ``isin`` function, improving on ``in1d``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The new function ``isin`` tests whether each element of an N-dimensonal
@@ -466,6 +471,17 @@ Previously, ``np.testing.assert_array_less`` ignored all infinite values. This
 is not the expected behavior both according to documentation and intuitively.
 Now, -inf < x < inf is considered ``True`` for any real number x and all
 other cases fail.
+
+``assert_array_`` and masked arrays ``assert_equal`` hide less warnings
+-----------------------------------------------------------------------
+Some warnings that were previously hidden by the ``assert_array_``
+functions are not hidden anymore. In most cases the warnings should be
+correct and, should they occur, will require changes to the tests using
+these functions.
+For the masked array ``assert_equal`` version, warnings may occur when
+comparing NaT. The function presently does not handle NaT or NaN
+specifically and it may be best to avoid it at this time should a warning
+show up due to this change.
 
 ``offset`` attribute value in ``memmap`` objects
 ------------------------------------------------
