@@ -1480,7 +1480,7 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Parameters
     ----------
-    x1 : array_like
+    x : array_like
         Only integer and boolean types are handled.
     $PARAMS
 
@@ -3164,7 +3164,7 @@ add_newdoc('numpy.core.umath', 'spacing',
 
     Parameters
     ----------
-    x1 : array_like
+    x : array_like
         Values to find the spacing of.
     $PARAMS
 
