@@ -1019,6 +1019,44 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
+def search(a, v):
+    """
+    Find indices into array `a` where elements in `v` match those in `a`,
+    such that `a[indices] == v`. `v` must be a subset of `a`.
+    If a value in `v` matches multiple occurrences of the same value in `a`,
+    only the index of the first matching value in `a` is returned.
+
+    Parameters
+    ----------
+    a : 1-D array_like
+        Input array to search.
+    v : array_like
+        Values to search for in `a`.
+
+    Returns
+    -------
+    indices : array of ints
+        Array of indices into `a` with the same shape as `v`.
+
+    See Also
+    --------
+    searchsorted: Find indices where elements should be inserted to maintain order.
+
+    Notes
+    -----
+
+    ``search(a, v)`` is roughly equivalent to
+    ``np.array([a.index(item) for item in v])`` if `a` and `v` are 1-D sequences.
+
+    Adapted from http://stackoverflow.com/a/8251668
+    """
+    a = np.ravel(a)
+    if not np.isin(v, a).all():
+        raise ValueError("array `v` is not a subset of input array `a`")
+    asortis = a.argsort()
+    return asortis[a.searchsorted(v, sorter=asortis)]
+
+
 def searchsorted(a, v, side='left', sorter=None):
     """
     Find indices where elements should be inserted to maintain order.
