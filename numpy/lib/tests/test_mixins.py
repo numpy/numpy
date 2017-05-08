@@ -56,11 +56,47 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
         return '%s(%r)' % (type(self).__name__, self.value)
 
 
+def wrap_array_like(result):
+    if type(result) is tuple:
+        return tuple(ArrayLike(r) for r in result)
+    else:
+        return ArrayLike(result)
+
+
 def _assert_equal_type_and_value(result, expected, err_msg=None):
     assert_equal(type(result), type(expected), err_msg=err_msg)
-    assert_equal(result.value, expected.value, err_msg=err_msg)
-    assert_equal(getattr(result.value, 'dtype', None),
-                 getattr(expected.value, 'dtype', None), err_msg=err_msg)
+    if isinstance(result, tuple):
+        assert_equal(len(result), len(expected), err_msg=err_msg)
+        for result_item, expected_item in zip(result, expected):
+            _assert_equal_type_and_value(result_item, expected_item, err_msg)
+    else:
+        assert_equal(result.value, expected.value, err_msg=err_msg)
+        assert_equal(getattr(result.value, 'dtype', None),
+                     getattr(expected.value, 'dtype', None), err_msg=err_msg)
+
+
+_ALL_BINARY_OPERATORS = [
+    operator.lt,
+    operator.le,
+    operator.eq,
+    operator.ne,
+    operator.gt,
+    operator.ge,
+    operator.add,
+    operator.sub,
+    operator.mul,
+    operator.truediv,
+    operator.floordiv,
+    # TODO: test div on Python 2, only
+    operator.mod,
+    divmod,
+    pow,
+    operator.lshift,
+    operator.rshift,
+    operator.and_,
+    operator.xor,
+    operator.or_,
+]
 
 
 class TestNDArrayOperatorsMixin(TestCase):
@@ -148,34 +184,19 @@ class TestNDArrayOperatorsMixin(TestCase):
                    operator.invert]:
             _assert_equal_type_and_value(op(array_like), ArrayLike(op(array)))
 
-    def test_binary_methods(self):
+    def test_forward_binary_methods(self):
         array = np.array([-1, 0, 1, 2])
         array_like = ArrayLike(array)
-        operators = [
-            operator.lt,
-            operator.le,
-            operator.eq,
-            operator.ne,
-            operator.gt,
-            operator.ge,
-            operator.add,
-            operator.sub,
-            operator.mul,
-            operator.truediv,
-            operator.floordiv,
-            # TODO: test div on Python 2, only
-            operator.mod,
-            # divmod is not yet implemented
-            pow,
-            operator.lshift,
-            operator.rshift,
-            operator.and_,
-            operator.xor,
-            operator.or_,
-        ]
-        for op in operators:
-            expected = ArrayLike(op(array, 1))
+        for op in _ALL_BINARY_OPERATORS:
+            expected = wrap_array_like(op(array, 1))
             actual = op(array_like, 1)
+            err_msg = 'failed for operator {}'.format(op)
+            _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
+
+    def test_reflected_binary_methods(self):
+        for op in _ALL_BINARY_OPERATORS:
+            expected = wrap_array_like(op(2, 1))
+            actual = op(2, ArrayLike(1))
             err_msg = 'failed for operator {}'.format(op)
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
@@ -185,15 +206,12 @@ class TestNDArrayOperatorsMixin(TestCase):
         _assert_equal_type_and_value(array, ArrayLike([-1, -2, 3, 4]))
 
     def test_ufunc_two_outputs(self):
-        def check(result):
-            assert_(type(result) is tuple)
-            assert_equal(len(result), 2)
-            mantissa, exponent = np.frexp(2 ** -3)
-            _assert_equal_type_and_value(result[0], ArrayLike(mantissa))
-            _assert_equal_type_and_value(result[1], ArrayLike(exponent))
-
-        check(np.frexp(ArrayLike(2 ** -3)))
-        check(np.frexp(ArrayLike(np.array(2 ** -3))))
+        mantissa, exponent = np.frexp(2 ** -3)
+        expected = (ArrayLike(mantissa), ArrayLike(exponent))
+        _assert_equal_type_and_value(
+            np.frexp(ArrayLike(2 ** -3)), expected)
+        _assert_equal_type_and_value(
+            np.frexp(ArrayLike(np.array(2 ** -3))), expected)
 
 
 if __name__ == "__main__":

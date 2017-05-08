@@ -786,6 +786,13 @@ defdict = {
           TD(intflt),
           TD(O, f='PyNumber_Remainder'),
           ),
+'divmod':
+    Ufunc(2, 2, None,
+          docstrings.get('numpy.core.umath.divmod'),
+          None,
+          TD(intflt),
+          TD(O, f='PyNumber_Divmod'),
+          ),
 'hypot':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.hypot'),

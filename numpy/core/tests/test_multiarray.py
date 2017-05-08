@@ -2881,7 +2881,7 @@ class TestBinop(object):
             'truediv':  (np.true_divide, True, float),
             'floordiv': (np.floor_divide, True, float),
             'mod':      (np.remainder, True, float),
-            'divmod':   (None, False, float),
+            'divmod':   (np.divmod, False, float),
             'pow':      (np.power, True, int),
             'lshift':   (np.left_shift, True, int),
             'rshift':   (np.right_shift, True, int),
@@ -2944,13 +2944,15 @@ class TestBinop(object):
         def check(obj, binop_override_expected, ufunc_override_expected,
                   inplace_override_expected, check_scalar=True):
             for op, (ufunc, has_inplace, dtype) in ops.items():
+                err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
+                           % (op, ufunc, has_inplace, dtype))
                 check_objs = [np.arange(3, 5, dtype=dtype)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:
                     arr_method = getattr(arr, "__{0}__".format(op))
 
-                    def norm(result):
+                    def first_out_arg(result):
                         if op == "divmod":
                             assert_(isinstance(result, tuple))
                             return result[0]
@@ -2959,77 +2961,78 @@ class TestBinop(object):
 
                     # arr __op__ obj
                     if binop_override_expected:
-                        assert_equal(arr_method(obj), NotImplemented)
+                        assert_equal(arr_method(obj), NotImplemented, err_msg)
                     elif ufunc_override_expected:
-                        assert_equal(norm(arr_method(obj))[0],
-                                     "__array_ufunc__")
+                        assert_equal(arr_method(obj)[0], "__array_ufunc__",
+                                     err_msg)
                     else:
                         if (isinstance(obj, np.ndarray) and
                             (type(obj).__array_ufunc__ is
                              np.ndarray.__array_ufunc__)):
                             # __array__ gets ignored
-                            res = norm(arr_method(obj))
-                            assert_(res.__class__ is obj.__class__)
+                            res = first_out_arg(arr_method(obj))
+                            assert_(res.__class__ is obj.__class__, err_msg)
                         else:
                             assert_raises((TypeError, Coerced),
-                                          arr_method, obj)
+                                          arr_method, obj, err_msg=err_msg)
                     # obj __op__ arr
                     arr_rmethod = getattr(arr, "__r{0}__".format(op))
                     if ufunc_override_expected:
-                        res = norm(arr_rmethod(obj))
-                        assert_equal(res[0], "__array_ufunc__")
-                        if ufunc is not None:
-                            assert_equal(res[1], ufunc)
+                        res = arr_rmethod(obj)
+                        assert_equal(res[0], "__array_ufunc__",
+                                     err_msg=err_msg)
+                        assert_equal(res[1], ufunc, err_msg=err_msg)
                     else:
                         if (isinstance(obj, np.ndarray) and
                                 (type(obj).__array_ufunc__ is
                                  np.ndarray.__array_ufunc__)):
                             # __array__ gets ignored
-                            res = norm(arr_rmethod(obj))
-                            assert_(res.__class__ is obj.__class__)
+                            res = first_out_arg(arr_rmethod(obj))
+                            assert_(res.__class__ is obj.__class__, err_msg)
                         else:
                             # __array_ufunc__ = "asdf" creates a TypeError
                             assert_raises((TypeError, Coerced),
-                                          arr_rmethod, obj)
+                                          arr_rmethod, obj, err_msg=err_msg)
 
                     # arr __iop__ obj
                     # array scalars don't have in-place operators
                     if has_inplace and isinstance(arr, np.ndarray):
                         arr_imethod = getattr(arr, "__i{0}__".format(op))
                         if inplace_override_expected:
-                            assert_equal(arr_method(obj), NotImplemented)
+                            assert_equal(arr_method(obj), NotImplemented,
+                                         err_msg=err_msg)
                         elif ufunc_override_expected:
                             res = arr_imethod(obj)
-                            assert_equal(res[0], "__array_ufunc__")
-                            if ufunc is not None:
-                                assert_equal(res[1], ufunc)
-                                assert_(type(res[-1]["out"]) is tuple)
-                                assert_(res[-1]["out"][0] is arr)
+                            assert_equal(res[0], "__array_ufunc__", err_msg)
+                            assert_equal(res[1], ufunc, err_msg)
+                            assert_(type(res[-1]["out"]) is tuple, err_msg)
+                            assert_(res[-1]["out"][0] is arr, err_msg)
                         else:
                             if (isinstance(obj, np.ndarray) and
                                     (type(obj).__array_ufunc__ is
                                     np.ndarray.__array_ufunc__)):
                                 # __array__ gets ignored
-                                assert_(arr_imethod(obj) is arr)
+                                assert_(arr_imethod(obj) is arr, err_msg)
                             else:
                                 assert_raises((TypeError, Coerced),
-                                              arr_imethod, obj)
+                                              arr_imethod, obj,
+                                              err_msg=err_msg)
 
                     op_fn = getattr(operator, op, None)
                     if op_fn is None:
                         op_fn = getattr(operator, op + "_", None)
                     if op_fn is None:
                         op_fn = getattr(builtins, op)
-                    assert_equal(op_fn(obj, arr), "forward")
+                    assert_equal(op_fn(obj, arr), "forward", err_msg)
                     if not isinstance(obj, np.ndarray):
                         if binop_override_expected:
-                            assert_equal(op_fn(arr, obj), "reverse")
+                            assert_equal(op_fn(arr, obj), "reverse", err_msg)
                         elif ufunc_override_expected:
-                            assert_equal(norm(op_fn(arr, obj))[0],
-                                         "__array_ufunc__")
-                    if ufunc_override_expected and ufunc is not None:
-                        assert_equal(norm(ufunc(obj, arr))[0],
-                                     "__array_ufunc__")
+                            assert_equal(op_fn(arr, obj)[0], "__array_ufunc__",
+                                         err_msg)
+                    if ufunc_override_expected:
+                        assert_equal(ufunc(obj, arr)[0], "__array_ufunc__",
+                                     err_msg)
 
         # No array priority, no array_ufunc -> nothing called
         check(make_obj(object), False, False, False)

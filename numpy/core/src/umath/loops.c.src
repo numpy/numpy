@@ -1114,6 +1114,34 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        /* see FIXME note for divide above */
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ quo = in1 / in2;
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = quo;
+                *((@type@ *)op2) = rem;
+            }
+            else {
+                *((@type@ *)op1) = quo - 1;
+                *((@type@ *)op2) = rem + in2;
+            }
+        }
+    }
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1164,6 +1192,24 @@ NPY_NO_EXPORT void
         }
         else {
             *((@type@ *)op1) = in1 % in2;
+        }
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            *((@type@ *)op1)= in1/in2;
+            *((@type@ *)op2) = in1 % in2;
         }
     }
 }
@@ -1841,6 +1887,16 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_divmod@c@(in1, in2, (@type@ *)op2);
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     char * margs[] = {args[0], args[0], args[1]};
@@ -2165,6 +2221,16 @@ HALF_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
         npy_half_divmod(in1, in2, (npy_half *)op1);
+    }
+}
+
+NPY_NO_EXPORT void
+HALF_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        *((npy_half *)op1) = npy_half_divmod(in1, in2, (npy_half *)op2);
     }
 }
 
