@@ -495,7 +495,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
           dtype=[('a', '<i4')])
     """
     if _is_string_like(drop_names):
-        drop_names = [drop_names, ]
+        drop_names = [drop_names]
     else:
         drop_names = set(drop_names)
 
@@ -518,6 +518,31 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     if not newdtype:
         return None
 
+    output = np.empty(base.shape, dtype=newdtype)
+    output = recursive_fill_fields(base, output)
+    return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
+
+
+def _keep_fields(base, keep_names, usemask=True, asrecarray=False):
+    """
+    Return a new array keeping only the fields in `keep_names`,
+    and preserving the order of those fields.
+
+    Parameters
+    ----------
+    base : array
+        Input array
+    keep_names : string or sequence
+        String or sequence of strings corresponding to the names of the
+        fields to keep. Order of the names will be preserved.
+    usemask : {False, True}, optional
+        Whether to return a masked array or not.
+    asrecarray : string or sequence, optional
+        Whether to return a recarray or a mrecarray (`asrecarray=True`) or
+        a plain ndarray or masked array with flexible dtype. The default
+        is False.
+    """
+    newdtype = [(n, base.dtype[n]) for n in keep_names]
     output = np.empty(base.shape, dtype=newdtype)
     output = recursive_fill_fields(base, output)
     return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
@@ -877,11 +902,14 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
         key = (key,)
 
     # Check the keys
+    if len(set(key)) != len(key):
+        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
+        raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:
-            raise ValueError('r1 does not have key field %s' % name)
+            raise ValueError('r1 does not have key field %r' % name)
         if name not in r2.dtype.names:
-            raise ValueError('r2 does not have key field %s' % name)
+            raise ValueError('r2 does not have key field %r' % name)
 
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()
@@ -899,8 +927,10 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
         raise ValueError(msg)
 
     # Make temporary arrays of just the keys
-    r1k = drop_fields(r1, [n for n in r1names if n not in key])
-    r2k = drop_fields(r2, [n for n in r2names if n not in key])
+    #  (use order of keys in `r1` for back-compatibility)
+    key1 = [ n for n in r1names if n in key ]
+    r1k = _keep_fields(r1, key1)
+    r2k = _keep_fields(r2, key1)
 
     # Concatenate the two arrays for comparison
     aux = ma.concatenate((r1k, r2k))
