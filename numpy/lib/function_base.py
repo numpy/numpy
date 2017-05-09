@@ -2906,7 +2906,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
-        contain observations.
+        contain observations. Setting this parameter to ``False`` is equivalent
+        to transposing the input array.
     bias : bool, optional
         Default normalization (False) is by ``(N - 1)``, where ``N`` is the
         number of observations given (unbiased estimate). If `bias` is True,
