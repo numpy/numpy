@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""
+r"""
 collectinput - Collects all files that are included to a main Latex document
                with \input or \include commands. These commands must be
                in separate lines.
