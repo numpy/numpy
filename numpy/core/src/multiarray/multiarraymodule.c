@@ -3557,7 +3557,7 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     char *cmp_str;
     Py_ssize_t strlength;
     PyObject *res = NULL;
-    static char msg[] = "comparision must be '==', '!=', '<', '>', '<=', '>='";
+    static char msg[] = "comparison must be '==', '!=', '<', '>', '<=', '>='";
     static char *kwlist[] = {"a1", "a2", "cmp", "rstrip", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&:compare_chararrays",

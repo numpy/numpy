@@ -23,7 +23,7 @@ class TestArgsort(TestCase):
             np.ma.core.MaskedArrayFutureWarning, argsort, arr_2d)
         assert_equal(result, argsort(arr_2d, axis=None))
 
-        # should be no warnings for explictly specifiying it
+        # should be no warnings for explicitly specifying it
         argsort(arr_2d, axis=None)
         argsort(arr_2d, axis=-1)
 

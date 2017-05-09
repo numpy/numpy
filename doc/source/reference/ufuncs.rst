@@ -177,7 +177,7 @@ Casting Rules
 .. note::
 
    In NumPy 1.6.0, a type promotion API was created to encapsulate the
-   mechansim for determining output types. See the functions
+   mechanism for determining output types. See the functions
    :func:`result_type`, :func:`promote_types`, and
    :func:`min_scalar_type` for more details.
 

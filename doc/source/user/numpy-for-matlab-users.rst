@@ -162,7 +162,7 @@ There are pros and cons to using both:
    -  ``:)`` ``A*B`` is matrix multiplication, so more convenient for
       linear algebra.
    -  ``<:(`` Element-wise multiplication requires calling a function,
-      ``multipy(A,B)``.
+      ``multiply(A,B)``.
    -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
       does not work elementwise but ``/`` does.
 

@@ -157,7 +157,7 @@ Main goal:
 ==========
 
 Our goal is to generate Python C/API functions py_fun and py_cun such
-that their usage in Python would be identical. The cruical part of
+that their usage in Python would be identical. The crucial part of
 their implementation are in functions that take a PyObject and
 return a PyArrayObject such that it is contiguous and its data pointer
 is suitable for passing on to the arguments of C or Fortran functions.

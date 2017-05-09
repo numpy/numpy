@@ -1954,7 +1954,7 @@ def masked_where(condition, a, copy=True):
 
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
-        raise IndexError("Inconsistant shape between the condition and the input"
+        raise IndexError("Inconsistent shape between the condition and the input"
                          " (got %s and %s)" % (cshape, ashape))
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
@@ -4655,7 +4655,7 @@ class MaskedArray(ndarray):
 
         self._data.put(indices, values, mode=mode)
 
-        # short circut if neither self nor values are masked
+        # short circuit if neither self nor values are masked
         if self._mask is nomask and getmask(values) is nomask:
             return
 
@@ -5889,7 +5889,7 @@ class MaskedArray(ndarray):
         Parameters
         ----------
         fill_value : scalar, optional
-            Value used to fill in the masked values. Deafult is None, in which
+            Value used to fill in the masked values. Default is None, in which
             case `MaskedArray.fill_value` is used.
         order : {'C','F','A'}, optional
             Order of the data item in the copy. Default is 'C'.

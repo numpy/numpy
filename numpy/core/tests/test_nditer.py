@@ -1386,7 +1386,7 @@ def test_iter_allocate_output_itorder():
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
 
 def test_iter_allocate_output_opaxes():
-    # Specifing op_axes should work
+    # Specifying op_axes should work
 
     a = arange(24, dtype='i4').reshape(2, 3, 4)
     i = nditer([None, a], [], [['writeonly', 'allocate'], ['readonly']],

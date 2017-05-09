@@ -407,7 +407,7 @@ def test_writeable():
     _, result = broadcast_arrays(0, original)
     assert_equal(result.flags.writeable, False)
 
-    # regresssion test for GH6491
+    # regression test for GH6491
     shape = (2,)
     strides = [0]
     tricky_array = as_strided(np.array(0), shape, strides)
