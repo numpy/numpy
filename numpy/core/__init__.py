@@ -14,13 +14,15 @@ for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
 
 try:
     from . import multiarray
-except ImportError:
+except ImportError as exc:
     msg = """
 Importing the multiarray numpy extension module failed.  Most
 likely you are trying to import a failed build of numpy.
 If you're working with a numpy git repo, try `git clean -xdf` (removes all
 files not under version control).  Otherwise reinstall numpy.
-"""
+
+Original error was: %s
+""" % (exc,)
     raise ImportError(msg)
 
 for envkey in env_added:
