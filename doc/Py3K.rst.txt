@@ -721,7 +721,7 @@ keep in mind.
    warnings if they are initialized in the old way.
 
 2) The compare slot has been made reserved in order to preserve binary
-   compatibily while the tp_compare function went away. The tp_richcompare
+   compatibility while the tp_compare function went away. The tp_richcompare
    function has replaced it and we need to use that slot instead. This will
    likely require modifications in the searchsorted functions and generic sorts
    that currently use the compare function.

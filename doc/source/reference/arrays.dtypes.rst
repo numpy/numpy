@@ -186,7 +186,7 @@ Built-in Python types
     ================  ===============
 
     Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targetting both Python 2 and 3
+    depending on the Python version. In code targeting both Python 2 and 3
     ``np.unicode_`` should be used as a dtype for strings.
     See :ref:`Note on string types<string-dtype-note>`.
 

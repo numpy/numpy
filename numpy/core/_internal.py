@@ -132,7 +132,7 @@ def _array_descr(descriptor):
 # Note that the name numpy.core._internal._reconstruct is embedded in
 # pickles of ndarrays made with NumPy before release 1.0
 # so don't remove the name here, or you'll
-# break backward compatibilty.
+# break backward compatibility.
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 

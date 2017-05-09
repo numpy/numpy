@@ -4270,7 +4270,7 @@ class TestResize(TestCase):
         x.resize()
         assert_array_equal(x, np.eye(3))
 
-    def test_invalid_arguements(self):
+    def test_invalid_arguments(self):
         self.assertRaises(TypeError, np.eye(3).resize, 'hi')
         self.assertRaises(ValueError, np.eye(3).resize, -1)
         self.assertRaises(TypeError, np.eye(3).resize, order=1)

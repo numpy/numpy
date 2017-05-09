@@ -280,7 +280,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
         npy_intp *mystrides;
 
         mystrides = newstrides + oldnd;
-        /* Make new strides -- alwasy C-contiguous */
+        /* Make new strides -- always C-contiguous */
         tempsize = (*des)->elsize;
         for (i = numnew - 1; i >= 0; i--) {
             mystrides[i] = tempsize;

@@ -30,7 +30,7 @@ class MachAr(object):
     eps : float
         Floating-point number ``beta**machep`` (floating point precision)
     negep : int
-        Exponent of the smallest power of `ibeta` that, substracted
+        Exponent of the smallest power of `ibeta` that, subtracted
         from 1.0, gives something different from 1.0.
     epsneg : float
         Floating-point number ``beta**negep``.

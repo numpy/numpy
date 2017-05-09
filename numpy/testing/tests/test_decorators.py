@@ -110,7 +110,7 @@ def test_skip_generators_hardcoded():
         for j in g2(10):
             pass
     except KnownFailureException:
-        raise Exception('Marked incorretly as known failure')
+        raise Exception('Marked incorrectly as known failure')
     except DidntSkipException:
         pass
 
@@ -144,7 +144,7 @@ def test_skip_generators_callable():
         for j in g2(10):
             pass
     except KnownFailureException:
-        raise Exception('Marked incorretly as known failure')
+        raise Exception('Marked incorrectly as known failure')
     except DidntSkipException:
         pass
 

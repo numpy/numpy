@@ -1607,7 +1607,7 @@ def gradient(f, *varargs, **kwargs):
 
     Notes
     -----
-    Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continous
+    Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
     derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
     spacing the finite difference coefficients are computed by minimising
     the consistency error :math:`\\eta_{i}`:

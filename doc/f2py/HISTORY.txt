@@ -601,7 +601,7 @@ Public Release 2.32.225-1419
   - "From sky" program group is created only if ``groupcounter<1``.
     See TODO.txt.
   - Added support for ``dimension(n:*)``, ``dimension(*:n)``. They are
-    treated as ``dimesnion(*)`` by f2py.
+    treated as ``dimension(*)`` by f2py.
   - Fixed parameter substitution (this fixes TODO item by Patrick
     LeGresley, 22 Aug 2001).
 

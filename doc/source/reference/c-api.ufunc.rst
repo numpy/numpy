@@ -200,7 +200,7 @@ Functions
     or :c:data:`Py_None`. The callable object will only be used if
     :c:data:`UFUNC_ERR_CALL` is set as the desired error checking
     method. This routine manages the GIL and is safe to call even
-    after releasing the GIL. If an error in the IEEE-compatibile
+    after releasing the GIL. If an error in the IEEE-compatible
     hardware is determined a -1 is returned, otherwise a 0 is
     returned.
 

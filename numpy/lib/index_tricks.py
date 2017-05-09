@@ -254,7 +254,7 @@ class AxisConcatenator(object):
         if not isinstance(key, tuple):
             key = (key,)
 
-        # copy attributes, since they can be overriden in the first argument
+        # copy attributes, since they can be overridden in the first argument
         trans1d = self.trans1d
         ndmin = self.ndmin
         matrix = self.matrix

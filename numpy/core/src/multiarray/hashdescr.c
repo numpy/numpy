@@ -253,7 +253,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 }
 
 /*
- * Return 0 if successfull
+ * Return 0 if successful
  */
 static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 {

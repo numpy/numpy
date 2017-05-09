@@ -4559,7 +4559,7 @@ class TestMaskedView(TestCase):
 
 class TestOptionalArgs(TestCase):
     def test_ndarrayfuncs(self):
-        # test axis arg behaves the same as ndarray (including mutliple axes)
+        # test axis arg behaves the same as ndarray (including multiple axes)
 
         d = np.arange(24.0).reshape((2,3,4))
         m = np.zeros(24, dtype=bool).reshape((2,3,4))

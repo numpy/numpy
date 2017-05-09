@@ -643,7 +643,7 @@ class TestEinSum(TestCase):
 
     def test_einsum_fixed_collapsingbug(self):
         # Issue #5147.
-        # The bug only occured when output argument of einssum was used.
+        # The bug only occurred when output argument of einssum was used.
         x = np.random.normal(0, 1, (5, 5, 5, 5))
         y1 = np.zeros((5, 5))
         np.einsum('aabb->ab', x, out=y1)

@@ -490,7 +490,7 @@ static void init_constants(void)
 
    dst_row_strides: number of elements between different row. Matrix is
                     considered row-major
-   dst_column_strides: number of elements between differnt columns in the
+   dst_column_strides: number of elements between different columns in the
                     destination buffer
    rows: number of rows of the matrix
    columns: number of columns of the matrix

@@ -339,7 +339,7 @@ def who(vardict=None):
 #-----------------------------------------------------------------------------
 
 
-# NOTE:  pydoc defines a help function which works simliarly to this
+# NOTE:  pydoc defines a help function which works similarly to this
 #  except it uses a pager to take over the screen.
 
 # combine name and arguments and split to multiple lines of width

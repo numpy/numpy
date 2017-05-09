@@ -1,6 +1,6 @@
 """
-Tests which scan for certain occurances in the code, they may not find
-all of these occurances but should catch almost all.
+Tests which scan for certain occurrences in the code, they may not find
+all of these occurrences but should catch almost all.
 """
 
 

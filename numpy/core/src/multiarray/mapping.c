@@ -3305,7 +3305,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * The mapiter object must be created new each time.  It does not work
  * to bind to a new array, and continue.
  *
- * This was the orginal intention, but currently that does not work.
+ * This was the original intention, but currently that does not work.
  * Do not expose the MapIter_Type to Python.
  *
  * The original mapiter(indexobj); mapiter.bind(a); idea is now fully

@@ -223,7 +223,7 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
-    /* clearing is done for backward compatiblity */
+    /* clearing is done for backward compatibility */
     int retstatus = npy_clear_floatstatus();
 
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);

@@ -429,7 +429,7 @@ array_nbytes_get(PyArrayObject *self)
  * Also needing change: strides, itemsize
  *
  * Either itemsize is exactly the same or the array is single-segment
- * (contiguous or fortran) with compatibile dimensions The shape and strides
+ * (contiguous or fortran) with compatible dimensions The shape and strides
  * will be adjusted in that case as well.
  */
 static int
