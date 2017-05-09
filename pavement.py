@@ -1,4 +1,4 @@
-"""
+r"""
 This paver file is intended to help with the release process as much as
 possible. It relies on virtualenv to generate 'bootstrap' environments as
 independent from the user system as possible (e.g. to make sure the sphinx doc
@@ -157,8 +157,8 @@ if sys.platform =="darwin":
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
-        "3.4": ["C:\Python34\python.exe"],
-        "2.7": ["C:\Python27\python.exe"],
+        "3.4": [r"C:\Python34\python.exe"],
+        "2.7": [r"C:\Python27\python.exe"],
     }
     # XXX: find out which env variable is necessary to avoid the pb with python
     # 2.6 and random module when importing tempfile
@@ -409,7 +409,7 @@ def macosx_version():
         raise ValueError("Not darwin ??")
     st = subprocess.Popen(["sw_vers"], stdout=subprocess.PIPE)
     out = st.stdout.readlines()
-    ver = re.compile("ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
+    ver = re.compile(r"ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
     for i in out:
         m = ver.match(i)
         if m:
