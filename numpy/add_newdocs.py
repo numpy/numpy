@@ -5421,40 +5421,19 @@ add_newdoc('numpy.core', 'ufunc',
     """
     Functions that operate element by element on whole arrays.
 
-    To see the documentation for a specific ufunc, use np.info().  For
-    example, np.info(np.sin).  Because ufuncs are written in C
+    To see the documentation for a specific ufunc, use `info`.  For
+    example, ``np.info(np.sin)``.  Because ufuncs are written in C
     (for speed) and linked into Python with NumPy's ufunc facility,
     Python's help() function finds this page whenever help() is called
     on a ufunc.
 
-    A detailed explanation of ufuncs can be found in the "ufuncs.rst"
-    file in the NumPy reference guide.
+    A detailed explanation of ufuncs can be found in the docs for :ref:`ufuncs`.
 
-    Unary ufuncs:
-    =============
+    Calling ufuncs:
+    ===============
 
-    op(X, out=None)
-    Apply op to X elementwise
-
-    Parameters
-    ----------
-    X : array_like
-        Input array.
-    out : array_like
-        An array to store the output. Must be the same shape as `X`.
-
-    Returns
-    -------
-    r : array_like
-        `r` will have the same shape as `X`; if out is provided, `r`
-        will be equal to out.
-
-    Binary ufuncs:
-    ==============
-
-    op(X, Y, out=None)
-    Apply `op` to `X` and `Y` elementwise. May "broadcast" to make
-    the shapes of `X` and `Y` congruent.
+    op(*x[, out], where=True, **kwargs)
+    Apply `op` to the arguments `*x` elementwise, broadcasting the arguments.
 
     The broadcasting rules are:
 
@@ -5463,18 +5442,23 @@ add_newdoc('numpy.core', 'ufunc',
 
     Parameters
     ----------
-    X : array_like
-        First input array.
-    Y : array_like
-        Second input array.
-    out : array_like
-        An array to store the output. Must be the same shape as the
-        output would have.
+    *x : array_like
+        Input arrays.
+    out : ndarray or tuple of ndarray, optional
+        Alternate array object(s) in which to put the result; if provided, it
+        must have a shape that the inputs broadcast to.
+    where : array_like, optional
+        Values of True indicate to calculate the ufunc at that position, values
+        of False indicate to leave the value in the output alone.
+    **kwargs
+        For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
     Returns
     -------
-    r : array_like
-        The return value; if out is provided, `r` will be equal to out.
+    r : ndarray or tuple of ndarray
+        `r` will have the shape that the arrays in `x` broadcast to; if `out` is
+        provided, `r` will be equal to `out`. If the function has more than one
+        output, then the result will be a tuple of arrays.
 
     """)
 
