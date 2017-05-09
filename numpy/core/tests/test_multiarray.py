@@ -6404,6 +6404,28 @@ class TestConversion(TestCase):
                 assert_(np.array(-1, dtype=dt1) == np.array(-1, dtype=dt2),
                         "type %s and %s failed" % (dt1, dt2))
 
+    def test_to_bool_scalar(self):
+        assert_equal(bool(np.array([False])), False)
+        assert_equal(bool(np.array([True])), True)
+        assert_equal(bool(np.array([[42]])), True)
+        assert_raises(ValueError, bool, np.array([1, 2]))
+
+        class NotConvertible(object):
+            def __bool__(self):
+                raise NotImplementedError
+            __nonzero__ = __bool__  # python 2
+
+        assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
+        assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
+
+        self_containing = np.array([None])
+        self_containing[0] = self_containing
+        try:
+            Error = RecursionError
+        except NameError:
+            Error = RuntimeError  # python < 3.5
+        assert_raises(Error, bool, self_containing)  # previously stack overflow
+
 
 class TestWhere(TestCase):
     def test_basic(self):
