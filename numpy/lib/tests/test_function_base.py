@@ -2787,7 +2787,7 @@ class TestPercentile(TestCase):
                                    interpolation="higher").shape, (3, 3, 5, 6))
 
     def test_scalar_q(self):
-        # test for no empty dimensions for compatiblity with old percentile
+        # test for no empty dimensions for compatibility with old percentile
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50), 5.5)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))
@@ -2808,7 +2808,7 @@ class TestPercentile(TestCase):
         assert_equal(np.percentile(x, 50, axis=1, out=out), r1)
         assert_equal(out, r1)
 
-        # test for no empty dimensions for compatiblity with old percentile
+        # test for no empty dimensions for compatibility with old percentile
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50, interpolation='lower'), 5.)
         self.assertTrue(np.isscalar(np.percentile(x, 50)))

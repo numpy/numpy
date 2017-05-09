@@ -294,7 +294,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
 
 
-/* For back-ward compatability -- Not recommended */
+/* For backward compatibility -- Not recommended */
 
 /*NUMPY_API
  * Reshape

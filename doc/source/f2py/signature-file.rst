@@ -284,7 +284,7 @@ Other statements:
       module`` block then the second multiline block is inserted
       after the definition of external routines.
 
-      When used inside ``<routine singature>``, then given C code will
+      When used inside ``<routine signature>``, then given C code will
       be inserted to the corresponding wrapper function just after
       declaring variables but before any C statements. So, ``usercode``
       follow-up can contain both declarations and C statements.

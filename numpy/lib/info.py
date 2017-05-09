@@ -103,7 +103,7 @@ roots            Find roots of polynomial given coefficients
 polyint          Integrate polynomial
 polyder          Differentiate polynomial
 polyadd          Add polynomials
-polysub          Substract polynomials
+polysub          Subtract polynomials
 polymul          Multiply polynomials
 polydiv          Divide polynomials
 polyval          Evaluate polynomial at given argument

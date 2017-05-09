@@ -234,7 +234,7 @@ normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask)
     /* Sort the dates */
     qsort(dates, count, sizeof(npy_datetime), &qsort_datetime_compare);
 
-    /* Sweep throught the array, eliminating unnecessary values */
+    /* Sweep through the array, eliminating unnecessary values */
     trimcount = 0;
     for (i = 0; i < count; ++i) {
         npy_datetime date = dates[i];

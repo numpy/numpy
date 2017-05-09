@@ -214,7 +214,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
 /*
  * This is identical to PyArray_GetDTypeTransferFunction, but returns a
  * transfer function which also takes a mask as a parameter.  The mask is used
- * to determine which values to copy, and data is transfered exactly when
+ * to determine which values to copy, and data is transferred exactly when
  * mask[i*mask_stride] is true.
  *
  * If move_references is true, values which are not copied to the
@@ -286,7 +286,7 @@ PyArray_CastRawArrays(npy_intp count,
  * count:
  *      How many elements to transfer
  * src_itemsize:
- *      How big each element is.  If transfering between elements of different
+ *      How big each element is.  If transferring between elements of different
  *      sizes, for example a casting operation, the 'stransfer' function
  *      should be specialized for that, in which case 'stransfer' will use
  *      this parameter as the source item size.

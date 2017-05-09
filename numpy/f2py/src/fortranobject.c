@@ -370,7 +370,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
                 Py_DECREF(arr);
             }
         } else return (fp->defs[i].func==NULL?-1:0);
-        return 0; /* succesful */
+        return 0; /* successful */
     }
     if (fp->dict == NULL) {
         fp->dict = PyDict_New();

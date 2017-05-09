@@ -186,7 +186,7 @@ def apply_over_axes(func, a, axes):
     Notes
     ------
     This function is equivalent to tuple axis arguments to reorderable ufuncs
-    with keepdims=True. Tuple axis arguments to ufuncs have been availabe since
+    with keepdims=True. Tuple axis arguments to ufuncs have been available since
     version 1.7.0.
 
     Examples
