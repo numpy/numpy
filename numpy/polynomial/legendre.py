@@ -619,7 +619,7 @@ def legpow(c, pow, maxpower=16):
     """Raise a Legendre series to a power.
 
     Returns the Legendre series `c` raised to the power `pow`. The
-    arguement `c` is a sequence of coefficients ordered from low to high.
+    argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters

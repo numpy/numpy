@@ -268,7 +268,7 @@ versions.
 
 NumPy may be built with relaxed stride checking debugging
 ---------------------------------------------------------
-Setting NPY_RELAXED_STRIDES_DEBUG=1 in the enviroment when relaxed stride
+Setting NPY_RELAXED_STRIDES_DEBUG=1 in the environment when relaxed stride
 checking is enabled will cause NumPy to be compiled with the affected strides
 set to the maximum value of npy_intp in order to help detect invalid usage of
 the strides in downstream projects. When enabled, invalid usage often results

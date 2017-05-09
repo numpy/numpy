@@ -1,5 +1,5 @@
 """
-This paver file is intented to help with the release process as much as
+This paver file is intended to help with the release process as much as
 possible. It relies on virtualenv to generate 'bootstrap' environments as
 independent from the user system as possible (e.g. to make sure the sphinx doc
 is built against the built numpy, not an installed one).

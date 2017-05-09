@@ -794,7 +794,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def compress_nd(x, axis=None):
-    """Supress slices from multiple dimensions which contain masked values.
+    """Suppress slices from multiple dimensions which contain masked values.
 
     Parameters
     ----------
@@ -803,10 +803,10 @@ def compress_nd(x, axis=None):
         elements are masked, `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
-        Which dimensions to supress slices from can be configured with this
+        Which dimensions to suppress slices from can be configured with this
         parameter.
-        - If axis is a tuple of ints, those are the axes to supress slices from.
-        - If axis is an int, then that is the only axis to supress slices from.
+        - If axis is a tuple of ints, those are the axes to suppress slices from.
+        - If axis is an int, then that is the only axis to suppress slices from.
         - If axis is None, all axis are selected.
 
     Returns

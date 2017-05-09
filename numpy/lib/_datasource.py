@@ -43,7 +43,7 @@ _open = open
 
 
 # Using a class instead of a module-level dictionary
-# to reduce the inital 'import numpy' overhead by
+# to reduce the initial 'import numpy' overhead by
 # deferring the import of bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
