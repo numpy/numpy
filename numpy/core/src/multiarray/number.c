@@ -789,7 +789,17 @@ _array_nonzero(PyArrayObject *mp)
 
     n = PyArray_SIZE(mp);
     if (n == 1) {
-        return PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
+        int res;
+        if (Py_EnterRecursiveCall(" while converting array to bool")) {
+            return -1;
+        }
+        res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
+        /* nonzero has no way to indicate an error, but one can occur */
+        if (PyErr_Occurred()) {
+            res = -1;
+        }
+        Py_LeaveRecursiveCall();
+        return res;
     }
     else if (n == 0) {
         return 0;
