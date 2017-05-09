@@ -794,6 +794,10 @@ _array_nonzero(PyArrayObject *mp)
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
+        /* nonzero has no way to indicate an error, but one can occur */
+        if (PyErr_Occurred()) {
+            res = -1;
+        }
         Py_LeaveRecursiveCall();
         return res;
     }
