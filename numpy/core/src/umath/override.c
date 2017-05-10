@@ -476,6 +476,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
+    /*
+     * Set override arguments. The first is set to None here but will be
+     * overridden below.  We increase all references since SET_ITEM steals
+     * them and they will be DECREF'd when the tuple is deleted.
+     */
     /* PyTuple_SET_ITEM steals reference */
     Py_INCREF(Py_None);
     PyTuple_SET_ITEM(override_args, 0, Py_None);
@@ -527,9 +532,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
             /* override_obj had no subtypes to the right. */
             if (override_obj) {
-                /* We won't call this one again */
-                with_override[i] = NULL;
                 override_array_ufunc = array_ufunc_methods[i];
+                /* We won't call this one again (references decref'd below) */
+                with_override[i] = NULL;
+                array_ufunc_methods[i] = NULL;
                 break;
             }
         }
@@ -554,14 +560,15 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             goto fail;
         }
 
-        /* Set the self argument, since we have an unbound method */
-        Py_INCREF(override_obj);
+        /*
+         * Set the self argument of our unbound method.
+         * This also steals the reference, so no need to DECREF after.
+         */
         PyTuple_SetItem(override_args, 0, override_obj);
-
         /* Call the method */
         *result = PyObject_Call(
             override_array_ufunc, override_args, normal_kwds);
-
+        Py_DECREF(override_array_ufunc);
         if (*result == NULL) {
             /* Exception occurred */
             goto fail;
@@ -576,19 +583,18 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             break;
         }
     }
-
+    status = 0;
     /* Override found, return it. */
-    Py_XDECREF(method_name);
-    Py_XDECREF(normal_kwds);
-    Py_DECREF(override_args);
-    return 0;
-
+    goto cleanup;
 fail:
+    status = -1;
+cleanup:
     for (i = 0; i < num_override_args; i++) {
+        Py_XDECREF(with_override[i]);
         Py_XDECREF(array_ufunc_methods[i]);
     }
     Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
     Py_XDECREF(override_args);
-    return 1;
+    return status;
 }
