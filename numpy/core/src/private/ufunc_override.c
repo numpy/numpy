@@ -56,9 +56,9 @@ get_non_default_array_ufunc(PyObject *obj)
 /*
  * Check whether a set of input and output args have a non-default
  *  `__array_ufunc__` method. Return the number of overrides, setting
- * corresponding objects in PyObject array with_override (if not NULL)
- * using borrowed references, and the corresponding __array_ufunc__ methods
- * in methods, using new references
+ * corresponding objects in PyObject array with_override and the corresponding
+ * __array_ufunc__ methods in methods (both only if not NULL, and both using
+ * new references).
  *
  * returns -1 on failure.
  */
@@ -134,6 +134,7 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
                 goto fail;
             }
             if (with_override != NULL) {
+                Py_INCREF(obj);
                 with_override[num_override_args] = obj;
             }
             if (methods != NULL) {
