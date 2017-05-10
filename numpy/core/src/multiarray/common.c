@@ -329,7 +329,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
@@ -362,7 +362,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array struct interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
@@ -397,7 +397,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array__");
     if (ip != NULL) {
         Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
