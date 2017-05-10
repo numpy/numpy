@@ -4,49 +4,39 @@
 static NPY_INLINE npy_bool
 _is_basic_python_type(PyTypeObject *tp)
 {
-    PyTypeObject const * const known_types[] = {
+    return (
         /* Basic number types */
-        &PyBool_Type,
+        tp == &PyBool_Type ||
 #if !defined(NPY_PY3K)
-        &PyInt_Type,
+        tp == &PyInt_Type ||
 #endif
-        &PyLong_Type,
-        &PyFloat_Type,
-        &PyComplex_Type,
+        tp == &PyLong_Type ||
+        tp == &PyFloat_Type ||
+        tp == &PyComplex_Type ||
 
         /* Basic sequence types */
-        &PyList_Type,
-        &PyTuple_Type,
-        &PyDict_Type,
-        &PySet_Type,
-        &PyFrozenSet_Type,
-        &PyUnicode_Type,
-        &PyBytes_Type,
+        tp == &PyList_Type ||
+        tp == &PyTuple_Type ||
+        tp == &PyDict_Type ||
+        tp == &PySet_Type ||
+        tp == &PyFrozenSet_Type ||
+        tp == &PyUnicode_Type ||
+        tp == &PyBytes_Type ||
 #if !defined(NPY_PY3K)
-        &PyString_Type,
+        tp == &PyString_Type ||
 #endif
 
         /* other builtins */
-        &PySlice_Type,
-        Py_TYPE(Py_None),
-        Py_TYPE(Py_Ellipsis),
-        Py_TYPE(Py_NotImplemented),
+        tp == &PySlice_Type ||
+        tp == Py_TYPE(Py_None) ||
+        tp == Py_TYPE(Py_Ellipsis) ||
+        tp == Py_TYPE(Py_NotImplemented) ||
 
         /* TODO: ndarray, but we can't see PyArray_Type here */
 
-        /* sentinel */
-        NULL
-    };
-    PyTypeObject const * const * check_tp = known_types;
-
-    while (*check_tp) {
-        if (tp == *check_tp) {
-            return NPY_TRUE;
-        }
-        check_tp++;
-    }
-
-    return NPY_FALSE;
+        /* sentinel to swallow trailing || */
+        NPY_FALSE
+    );
 }
 
 /*
