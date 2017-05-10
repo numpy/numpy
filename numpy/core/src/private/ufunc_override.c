@@ -37,8 +37,7 @@ has_non_default_array_ufunc(PyObject *obj)
         return 0;
     }
     /* does the class define __array_ufunc__? */
-    cls_array_ufunc = PyArray_GetAttrString_SuppressException(
-                          (PyObject *)Py_TYPE(obj), "__array_ufunc__");
+    cls_array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
     if (cls_array_ufunc == NULL) {
         return 0;
     }
@@ -58,7 +57,7 @@ disables_array_ufunc(PyObject *obj)
     PyObject *array_ufunc;
     int disables;
 
-    array_ufunc = PyObject_GetAttrString(obj, "__array_ufunc__");
+    array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
     disables = (array_ufunc == Py_None);
     Py_XDECREF(array_ufunc);
     return disables;

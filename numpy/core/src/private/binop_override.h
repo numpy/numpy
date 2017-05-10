@@ -121,15 +121,14 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
         self == NULL ||
         Py_TYPE(self) == Py_TYPE(other) ||
         PyArray_CheckExact(other) ||
-        PyArray_CheckAnyScalarExact(other) ||
-	_is_basic_python_type(other)) {
+        PyArray_CheckAnyScalarExact(other)) {
         return 0;
     }
     /*
      * Classes with __array_ufunc__ are living in the future, and only need to
      * check whether __array_ufunc__ equals None.
      */
-    attr = PyArray_GetAttrString_SuppressException(other, "__array_ufunc__");
+    attr = PyArray_LookupSpecial(other, "__array_ufunc__");
     if (attr) {
         defer = !inplace && (attr == Py_None);
         Py_DECREF(attr);
