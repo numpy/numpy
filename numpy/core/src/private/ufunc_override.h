@@ -11,5 +11,5 @@
  */
 NPY_NO_EXPORT int
 PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
-                     PyObject **with_override);
+                     PyObject **with_override, PyObject **methods);
 #endif

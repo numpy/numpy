@@ -319,6 +319,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     int num_override_args;
     PyObject *with_override[NPY_MAXARGS];
+    PyObject *array_ufunc_methods[NPY_MAXARGS];
 
     PyObject *obj;
     PyObject *other_obj;
@@ -334,7 +335,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /*
      * Check inputs for overrides
      */
-    num_override_args = PyUFunc_WithOverride(args, kwds, with_override);
+    num_override_args = PyUFunc_WithOverride(
+        args, kwds, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -468,25 +470,27 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     len = PyTuple_GET_SIZE(normal_args);
-    override_args = PyTuple_New(len + 2);
+    override_args = PyTuple_New(len + 3);
     if (override_args == NULL) {
         goto fail;
     }
 
-    Py_INCREF(ufunc);
     /* PyTuple_SET_ITEM steals reference */
-    PyTuple_SET_ITEM(override_args, 0, (PyObject *)ufunc);
+    Py_INCREF(Py_None);
+    PyTuple_SET_ITEM(override_args, 0, Py_None);
+    Py_INCREF(ufunc);
+    PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
     method_name = PyUString_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }
     Py_INCREF(method_name);
-    PyTuple_SET_ITEM(override_args, 1, method_name);
+    PyTuple_SET_ITEM(override_args, 2, method_name);
     for (i = 0; i < len; i++) {
         PyObject *item = PyTuple_GET_ITEM(normal_args, i);
 
         Py_INCREF(item);
-        PyTuple_SET_ITEM(override_args, i + 2, item);
+        PyTuple_SET_ITEM(override_args, i + 3, item);
     }
     Py_DECREF(normal_args);
 
@@ -494,6 +498,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     while (1) {
         PyObject *array_ufunc;
         PyObject *override_obj;
+        PyObject *override_array_ufunc;
 
         override_obj = NULL;
         *result = NULL;
@@ -524,6 +529,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             if (override_obj) {
                 /* We won't call this one again */
                 with_override[i] = NULL;
+                override_array_ufunc = array_ufunc_methods[i];
                 break;
             }
         }
@@ -548,15 +554,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             goto fail;
         }
 
-        /* Access the override */
-        array_ufunc = PyObject_GetAttrString(override_obj,
-                                             "__array_ufunc__");
-        if (array_ufunc == NULL) {
-            goto fail;
-        }
+        /* Set the self argument, since we have an unbound method */
+        Py_INCREF(override_obj);
+        PyTuple_SetItem(override_args, 0, override_obj);
 
-        *result = PyObject_Call(array_ufunc, override_args, normal_kwds);
-        Py_DECREF(array_ufunc);
+        /* Call the method */
+        *result = PyObject_Call(
+            override_array_ufunc, override_args, normal_kwds);
 
         if (*result == NULL) {
             /* Exception occurred */
@@ -580,6 +584,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     return 0;
 
 fail:
+    for (i = 0; i < num_override_args; i++) {
+        Py_XDECREF(array_ufunc_methods[i]);
+    }
     Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
     Py_XDECREF(override_args);
