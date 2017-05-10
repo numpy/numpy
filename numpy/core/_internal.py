@@ -695,9 +695,10 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
-    return ('operand type(s) do not implement __array_ufunc__'
-            '({!r}, {!r}, {}): {}'
+    return ('operand type(s) all returned NotImplemented from '
+            '__array_ufunc__({!r}, {!r}, {}): {}'
             .format(ufunc, method, args_string, types_string))
+
 
 def _ufunc_doc_signature_formatter(ufunc):
     """
