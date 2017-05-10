@@ -45,9 +45,9 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
      */
     int i;
     int not_all_none;
-    int nin = ufunc->nin;
-    int nout = ufunc->nout;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nin = ufunc->nin;
+    npy_intp nout = ufunc->nout;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
 
     if (nargs < nin) {
@@ -119,7 +119,7 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.reduce(a[, axis, dtype, out, keepdims])
      */
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     int i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
@@ -163,7 +163,7 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.accumulate(a[, axis, dtype, out])
      */
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     int i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
@@ -209,7 +209,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
     int i;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
     static char *kwlist[] = {"array", "indices", "axis", "dtype", "out"};
 
@@ -255,8 +255,8 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
      * all positional arguments should be inputs.
      * for the keywords, we only need to check 'sig' vs 'signature'.
      */
-    int nin = ufunc->nin;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nin = ufunc->nin;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
 
     if (nargs < nin) {
         PyErr_Format(PyExc_TypeError,
@@ -285,7 +285,7 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
                   PyObject **normal_args, PyObject **normal_kwds)
 {
     /* ufunc.at(a, indices[, b]) */
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nargs = PyTuple_GET_SIZE(args);
 
     if (nargs < 2 || nargs > 3) {
         PyErr_Format(PyExc_TypeError,
