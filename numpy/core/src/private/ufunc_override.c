@@ -32,8 +32,8 @@ has_non_default_array_ufunc(PyObject *obj)
                                                      "__array_ufunc__");
     }
 
-    /* Fast return for ndarray */
-    if ((PyObject *)Py_TYPE(obj) == ndarray) {
+    /* Fast return for ndarray and basic types */
+    if ((PyObject *)Py_TYPE(obj) == ndarray || _is_basic_python_type(obj)) {
         return 0;
     }
     /* does the class define __array_ufunc__? */
