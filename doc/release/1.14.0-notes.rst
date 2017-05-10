@@ -1,0 +1,45 @@
+==========================
+NumPy 1.14.0 Release Notes
+==========================
+
+This release supports Python 2.7 and 3.4 - 3.6.
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+
+Future Changes
+==============
+
+
+Build System Changes
+====================
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
