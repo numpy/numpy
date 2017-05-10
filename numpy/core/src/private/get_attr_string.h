@@ -53,7 +53,7 @@ _is_basic_python_type(PyTypeObject *tp)
  *
  * Returns attribute value on success, NULL on failure.
  */
-static PyObject *
+static NPY_INLINE PyObject *
 maybe_get_attr(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
@@ -94,7 +94,7 @@ maybe_get_attr(PyObject *obj, char *name)
  *
  * In future, could be made more like _Py_LookupSpecial
  */
-static PyObject *
+static NPY_INLINE PyObject *
 PyArray_LookupSpecial(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
@@ -115,7 +115,7 @@ PyArray_LookupSpecial(PyObject *obj, char *name)
  *
  * Kept for backwards compatibility. In future, we should deprecate this.
  */
-static PyObject *
+static NPY_INLINE PyObject *
 PyArray_LookupSpecial_OnInstance(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
