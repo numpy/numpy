@@ -496,7 +496,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
-        PyObject *array_ufunc;
         PyObject *override_obj;
         PyObject *override_array_ufunc;
 

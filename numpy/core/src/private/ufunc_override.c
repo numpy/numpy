@@ -28,7 +28,6 @@ get_non_default_array_ufunc(PyObject *obj)
     static PyObject *ndarray = NULL;
     static PyObject *ndarray_array_ufunc = NULL;
     PyObject *cls_array_ufunc;
-    int non_default;
 
     /* on first entry, import and cache ndarray and its __array_ufunc__ */
     if (ndarray == NULL) {
