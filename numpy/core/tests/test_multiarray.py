@@ -30,7 +30,7 @@ from numpy.core.multiarray_tests import (
     )
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_raises, assert_warns,
-    assert_equal, assert_almost_equal, assert_array_equal,
+    assert_equal, assert_almost_equal, assert_array_equal, assert_raises_regex,
     assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
     assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
     )
@@ -1537,6 +1537,9 @@ class TestMethods(TestCase):
         assert_equal(r.id, np.array([21, 32, 14]))
         assert_equal(r.word, np.array(['my', 'first', 'name']))
         assert_equal(r.number, np.array([3.1, 4.5, 6.2]))
+
+        assert_raises_regex(ValueError, 'duplicate',
+            lambda: r.sort(order=['id', 'id']))
 
         if sys.byteorder == 'little':
             strtype = '>i2'
