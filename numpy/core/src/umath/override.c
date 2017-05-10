@@ -43,7 +43,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.__call__(*args, **kwds)
      */
-    int i;
+    npy_intp i;
     int not_all_none;
     npy_intp nin = ufunc->nin;
     npy_intp nout = ufunc->nout;
@@ -52,13 +52,14 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 
     if (nargs < nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc() missing %d of %d required positional argument(s)",
-                     nin - nargs, nin);
+                     "ufunc() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
+                     "required positional argument(s)", nin - nargs, nin);
         return -1;
     }
     if (nargs > nin+nout) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc() takes from %d to %d arguments but %d were given",
+                     "ufunc() takes from %"NPY_INTP_FMT" to %"NPY_INTP_FMT
+                     "arguments but %"NPY_INTP_FMT" were given",
                      nin, nin+nout, nargs);
         return -1;
     }
@@ -72,8 +73,8 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     if (nargs > nin) {
         if(PyDict_GetItemString(*normal_kwds, "out")) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('out') and position (%d)",
-                         nin);
+                         "argument given by name ('out') and position "
+                         "(%"NPY_INTP_FMT")", nin);
             return -1;
         }
         for (i = nin; i < nargs; i++) {
@@ -120,14 +121,14 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
      * ufunc.reduce(a[, axis, dtype, out, keepdims])
      */
     npy_intp nargs = PyTuple_GET_SIZE(args);
-    int i;
+    npy_intp i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
 
     if (nargs < 1 || nargs > 5) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.reduce() takes from 1 to 5 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, 1);
@@ -138,8 +139,8 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 1; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -164,14 +165,14 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
      * ufunc.accumulate(a[, axis, dtype, out])
      */
     npy_intp nargs = PyTuple_GET_SIZE(args);
-    int i;
+    npy_intp i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
 
     if (nargs < 1 || nargs > 4) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.accumulate() takes from 1 to 4 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, 1);
@@ -182,8 +183,8 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 1; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -208,7 +209,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
      * ufunc.reduceat(a, indicies[, axis, dtype, out])
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
-    int i;
+    npy_intp i;
     npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
     static char *kwlist[] = {"array", "indices", "axis", "dtype", "out"};
@@ -216,7 +217,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     if (nargs < 2 || nargs > 5) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.reduceat() takes from 2 to 4 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     /* a and indicies */
@@ -228,8 +229,8 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 2; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -260,14 +261,14 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
 
     if (nargs < nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() missing %d of %d required positional "
-                     "argument(s)", nin - nargs, nin);
+                     "ufunc.outer() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
+                     "required positional " "argument(s)", nin - nargs, nin);
         return -1;
     }
     if (nargs > nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() takes %d arguments but %d were given",
-                     nin, nargs);
+                     "ufunc.outer() takes %"NPY_INTP_FMT" arguments but"
+                     "%"NPY_INTP_FMT" were given", nin, nargs);
         return -1;
     }
 
@@ -290,7 +291,7 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
     if (nargs < 2 || nargs > 3) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.at() takes from 2 to 3 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, nargs);
