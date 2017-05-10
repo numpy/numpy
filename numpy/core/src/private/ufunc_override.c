@@ -12,13 +12,18 @@
  * is not the default, i.e., the object is not an ndarray, and its
  * __array_ufunc__ is not the same as that of ndarray.
  *
+ * Returns a new reference, the value of type(obj).__array_ufunc__
+ *
+ * If the __array_ufunc__ matches that of ndarray, or does not exist, return
+ * NULL.
+ *
  * Note that since this module is used with both multiarray and umath, we do
  * not have access to PyArray_Type and therewith neither to PyArray_CheckExact
  * nor to the default __array_ufunc__ method, so instead we import locally.
  * TODO: Can this really not be done more smartly?
  */
-static int
-has_non_default_array_ufunc(PyObject *obj)
+static PyObject *
+get_non_default_array_ufunc(PyObject *obj)
 {
     static PyObject *ndarray = NULL;
     static PyObject *ndarray_array_ufunc = NULL;
@@ -34,46 +39,33 @@ has_non_default_array_ufunc(PyObject *obj)
 
     /* Fast return for ndarray */
     if ((PyObject *)Py_TYPE(obj) == ndarray) {
-        return 0;
+        return NULL;
     }
     /* does the class define __array_ufunc__? */
     cls_array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
     if (cls_array_ufunc == NULL) {
-        return 0;
+        return NULL;
     }
     /* is it different from ndarray.__array_ufunc__? */
-    non_default = (cls_array_ufunc != ndarray_array_ufunc);
+    if (cls_array_ufunc != ndarray_array_ufunc) {
+        return cls_array_ufunc;
+    }
     Py_DECREF(cls_array_ufunc);
-    return non_default;
-}
-
-/*
- * Check whether an object sets __array_ufunc__ = None. The __array_func__
- * attribute must already be known to exist.
- */
-static int
-disables_array_ufunc(PyObject *obj)
-{
-    PyObject *array_ufunc;
-    int disables;
-
-    array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
-    disables = (array_ufunc == Py_None);
-    Py_XDECREF(array_ufunc);
-    return disables;
+    return NULL;
 }
 
 /*
  * Check whether a set of input and output args have a non-default
  *  `__array_ufunc__` method. Return the number of overrides, setting
  * corresponding objects in PyObject array with_override (if not NULL)
- * using borrowed references.
+ * using borrowed references, and the corresponding __array_ufunc__ methods
+ * in methods, using new references
  *
  * returns -1 on failure.
  */
 NPY_NO_EXPORT int
 PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
-                     PyObject **with_override)
+                     PyObject **with_override, PyObject **methods)
 {
     int i;
 
@@ -115,6 +107,7 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
     }
 
     for (i = 0; i < nargs + nout_kwd; ++i) {
+        PyObject *method;
         if (i < nargs) {
             obj = PyTuple_GET_ITEM(args, i);
         }
@@ -131,16 +124,21 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
          * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
          * any ndarray subclass instances that did not override __array_ufunc__.
          */
-        if (has_non_default_array_ufunc(obj)) {
-            if (disables_array_ufunc(obj)) {
+        method = get_non_default_array_ufunc(obj);
+        if (method != NULL) {
+            if (method == Py_None) {
                 PyErr_Format(PyExc_TypeError,
                              "operand '%.200s' does not support ufuncs "
                              "(__array_ufunc__=None)",
                              obj->ob_type->tp_name);
+                Py_DECREF(method);
                 goto fail;
             }
             if (with_override != NULL) {
                 with_override[num_override_args] = obj;
+            }
+            if (methods != NULL) {
+                methods[num_override_args] = method;
             }
             ++num_override_args;
         }
@@ -148,5 +146,10 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
     return num_override_args;
 
 fail:
+    if (methods != NULL) {
+        for (i = 0; i < num_override_args; i++) {
+            Py_XDECREF(methods[i]);
+        }
+    }
     return -1;
 }

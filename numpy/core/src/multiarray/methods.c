@@ -1024,7 +1024,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL);
+    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL, NULL);
     if (num_override_args == -1) {
         return NULL;
     }
