@@ -1931,14 +1931,14 @@ class TestSpecialMethods(TestCase):
             def __array_ufunc__(self, *args, **kwargs):
                 return NotImplemented
 
-        msg = ("operand type(s) do not implement __array_ufunc__("
-               "<ufunc 'negative'>, '__call__', <*>): 'A'")
+        msg = ("operand type(s) all returned NotImplemented from "
+               "__array_ufunc__(<ufunc 'negative'>, '__call__', <*>): 'A'")
         with assert_raises_regex(TypeError, fnmatch.translate(msg)):
             np.negative(A())
 
-        msg = ("operand type(s) do not implement __array_ufunc__("
-               "<ufunc 'add'>, '__call__', <*>, <object *>, out=(1,)): "
-               "'A', 'object', 'int'")
+        msg = ("operand type(s) all returned NotImplemented from "
+               "__array_ufunc__(<ufunc 'add'>, '__call__', <*>, <object *>, "
+               "out=(1,)): 'A', 'object', 'int'")
         with assert_raises_regex(TypeError, fnmatch.translate(msg)):
             np.add(A(), object(), out=1)
 
