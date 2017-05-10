@@ -753,7 +753,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_struct__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (e != NULL) {
         int nd = -1;
         if (NpyCapsule_Check(e)) {
@@ -778,7 +778,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_interface__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (e != NULL) {
         int nd = -1;
         if (PyDict_Check(e)) {
@@ -2062,7 +2062,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_GetAttrString_SuppressException(input, "__array_struct__");
+    attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
     if (attr == NULL) {
         return Py_NotImplemented;
     }
@@ -2176,7 +2176,7 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_GetAttrString_SuppressException(origin,
+    iface = PyArray_LookupSpecial_OnInstance(origin,
                                                     "__array_interface__");
     if (iface == NULL) {
         return Py_NotImplemented;
@@ -2409,7 +2409,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_GetAttrString_SuppressException(op, "__array__");
+    array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         return Py_NotImplemented;
     }

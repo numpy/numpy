@@ -688,7 +688,7 @@ class AxisError(ValueError, IndexError):
         super(AxisError, self).__init__(msg)
 
 
-def array_ufunc_errmsg_formatter(ufunc, method, *inputs, **kwargs):
+def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
     args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
                             ['{}={!r}'.format(k, v)

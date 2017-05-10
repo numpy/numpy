@@ -43,22 +43,23 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.__call__(*args, **kwds)
      */
-    int i;
+    npy_intp i;
     int not_all_none;
-    int nin = ufunc->nin;
-    int nout = ufunc->nout;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nin = ufunc->nin;
+    npy_intp nout = ufunc->nout;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
 
     if (nargs < nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc() missing %d of %d required positional argument(s)",
-                     nin - nargs, nin);
+                     "ufunc() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
+                     "required positional argument(s)", nin - nargs, nin);
         return -1;
     }
     if (nargs > nin+nout) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc() takes from %d to %d arguments but %d were given",
+                     "ufunc() takes from %"NPY_INTP_FMT" to %"NPY_INTP_FMT
+                     "arguments but %"NPY_INTP_FMT" were given",
                      nin, nin+nout, nargs);
         return -1;
     }
@@ -72,8 +73,8 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     if (nargs > nin) {
         if(PyDict_GetItemString(*normal_kwds, "out")) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('out') and position (%d)",
-                         nin);
+                         "argument given by name ('out') and position "
+                         "(%"NPY_INTP_FMT")", nin);
             return -1;
         }
         for (i = nin; i < nargs; i++) {
@@ -119,15 +120,15 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.reduce(a[, axis, dtype, out, keepdims])
      */
-    int nargs = PyTuple_GET_SIZE(args);
-    int i;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
+    npy_intp i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
 
     if (nargs < 1 || nargs > 5) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.reduce() takes from 1 to 5 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, 1);
@@ -138,8 +139,8 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 1; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -163,15 +164,15 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     /*
      * ufunc.accumulate(a[, axis, dtype, out])
      */
-    int nargs = PyTuple_GET_SIZE(args);
-    int i;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
+    npy_intp i;
     PyObject *obj;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
 
     if (nargs < 1 || nargs > 4) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.accumulate() takes from 1 to 4 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, 1);
@@ -182,8 +183,8 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 1; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -208,15 +209,15 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
      * ufunc.reduceat(a, indicies[, axis, dtype, out])
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
-    int i;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp i;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
     static char *kwlist[] = {"array", "indices", "axis", "dtype", "out"};
 
     if (nargs < 2 || nargs > 5) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.reduceat() takes from 2 to 4 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     /* a and indicies */
@@ -228,8 +229,8 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     for (i = 2; i < nargs; i++) {
         if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position (%d)",
-                         kwlist[i], i);
+                         "argument given by name ('%s') and position "
+                         "(%"NPY_INTP_FMT")", kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -255,19 +256,19 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
      * all positional arguments should be inputs.
      * for the keywords, we only need to check 'sig' vs 'signature'.
      */
-    int nin = ufunc->nin;
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nin = ufunc->nin;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
 
     if (nargs < nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() missing %d of %d required positional "
-                     "argument(s)", nin - nargs, nin);
+                     "ufunc.outer() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
+                     "required positional " "argument(s)", nin - nargs, nin);
         return -1;
     }
     if (nargs > nin) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() takes %d arguments but %d were given",
-                     nin, nargs);
+                     "ufunc.outer() takes %"NPY_INTP_FMT" arguments but"
+                     "%"NPY_INTP_FMT" were given", nin, nargs);
         return -1;
     }
 
@@ -285,12 +286,12 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
                   PyObject **normal_args, PyObject **normal_kwds)
 {
     /* ufunc.at(a, indices[, b]) */
-    int nargs = PyTuple_GET_SIZE(args);
+    npy_intp nargs = PyTuple_GET_SIZE(args);
 
     if (nargs < 2 || nargs > 3) {
         PyErr_Format(PyExc_TypeError,
                      "ufunc.at() takes from 2 to 3 positional "
-                     "arguments but %d were given", nargs);
+                     "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
     *normal_args = PyTuple_GetSlice(args, 0, nargs);
@@ -319,6 +320,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     int num_override_args;
     PyObject *with_override[NPY_MAXARGS];
+    PyObject *array_ufunc_methods[NPY_MAXARGS];
 
     PyObject *obj;
     PyObject *other_obj;
@@ -334,7 +336,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /*
      * Check inputs for overrides
      */
-    num_override_args = PyUFunc_WithOverride(args, kwds, with_override);
+    num_override_args = PyUFunc_WithOverride(
+        args, kwds, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -468,32 +471,34 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     len = PyTuple_GET_SIZE(normal_args);
-    override_args = PyTuple_New(len + 2);
+    override_args = PyTuple_New(len + 3);
     if (override_args == NULL) {
         goto fail;
     }
 
-    Py_INCREF(ufunc);
     /* PyTuple_SET_ITEM steals reference */
-    PyTuple_SET_ITEM(override_args, 0, (PyObject *)ufunc);
+    Py_INCREF(Py_None);
+    PyTuple_SET_ITEM(override_args, 0, Py_None);
+    Py_INCREF(ufunc);
+    PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
     method_name = PyUString_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }
     Py_INCREF(method_name);
-    PyTuple_SET_ITEM(override_args, 1, method_name);
+    PyTuple_SET_ITEM(override_args, 2, method_name);
     for (i = 0; i < len; i++) {
         PyObject *item = PyTuple_GET_ITEM(normal_args, i);
 
         Py_INCREF(item);
-        PyTuple_SET_ITEM(override_args, i + 2, item);
+        PyTuple_SET_ITEM(override_args, i + 3, item);
     }
     Py_DECREF(normal_args);
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
-        PyObject *array_ufunc;
         PyObject *override_obj;
+        PyObject *override_array_ufunc;
 
         override_obj = NULL;
         *result = NULL;
@@ -524,6 +529,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             if (override_obj) {
                 /* We won't call this one again */
                 with_override[i] = NULL;
+                override_array_ufunc = array_ufunc_methods[i];
                 break;
             }
         }
@@ -548,15 +554,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             goto fail;
         }
 
-        /* Access the override */
-        array_ufunc = PyObject_GetAttrString(override_obj,
-                                             "__array_ufunc__");
-        if (array_ufunc == NULL) {
-            goto fail;
-        }
+        /* Set the self argument, since we have an unbound method */
+        Py_INCREF(override_obj);
+        PyTuple_SetItem(override_args, 0, override_obj);
 
-        *result = PyObject_Call(array_ufunc, override_args, normal_kwds);
-        Py_DECREF(array_ufunc);
+        /* Call the method */
+        *result = PyObject_Call(
+            override_array_ufunc, override_args, normal_kwds);
 
         if (*result == NULL) {
             /* Exception occurred */
@@ -580,6 +584,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     return 0;
 
 fail:
+    for (i = 0; i < num_override_args; i++) {
+        Py_XDECREF(array_ufunc_methods[i]);
+    }
     Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
     Py_XDECREF(override_args);

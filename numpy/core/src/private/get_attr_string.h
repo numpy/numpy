@@ -1,37 +1,45 @@
 #ifndef __GET_ATTR_STRING_H
 #define __GET_ATTR_STRING_H
 
-static NPY_INLINE int
-_is_basic_python_type(PyObject * obj)
+static NPY_INLINE npy_bool
+_is_basic_python_type(PyTypeObject *tp)
 {
-    if (obj == Py_None ||
-            PyBool_Check(obj) ||
-            /* Basic number types */
+    return (
+        /* Basic number types */
+        tp == &PyBool_Type ||
 #if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-            PyString_CheckExact(obj) ||
+        tp == &PyInt_Type ||
 #endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            PyComplex_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj) ||
-            PyDict_CheckExact(obj) ||
-            PyAnySet_CheckExact(obj) ||
-            PyUnicode_CheckExact(obj) ||
-            PyBytes_CheckExact(obj) ||
-            PySlice_Check(obj)) {
+        tp == &PyLong_Type ||
+        tp == &PyFloat_Type ||
+        tp == &PyComplex_Type ||
 
-        return 1;
-    }
+        /* Basic sequence types */
+        tp == &PyList_Type ||
+        tp == &PyTuple_Type ||
+        tp == &PyDict_Type ||
+        tp == &PySet_Type ||
+        tp == &PyFrozenSet_Type ||
+        tp == &PyUnicode_Type ||
+        tp == &PyBytes_Type ||
+#if !defined(NPY_PY3K)
+        tp == &PyString_Type ||
+#endif
 
-    return 0;
+        /* other builtins */
+        tp == &PySlice_Type ||
+        tp == Py_TYPE(Py_None) ||
+        tp == Py_TYPE(Py_Ellipsis) ||
+        tp == Py_TYPE(Py_NotImplemented) ||
+
+        /* TODO: ndarray, but we can't see PyArray_Type here */
+
+        /* sentinel to swallow trailing || */
+        NPY_FALSE
+    );
 }
 
 /*
- * PyArray_GetAttrString_SuppressException:
- *
  * Stripped down version of PyObject_GetAttrString,
  * avoids lookups for None, tuple, and List objects,
  * and doesn't create a PyErr since this code ignores it.
@@ -43,18 +51,13 @@ _is_basic_python_type(PyObject * obj)
  *
  * 'name' is the attribute to search for.
  *
- * Returns attribute value on success, 0 on failure.
+ * Returns attribute value on success, NULL on failure.
  */
-static PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
+static NPY_INLINE PyObject *
+maybe_get_attr(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
     PyObject *res = (PyObject *)NULL;
-
-    /* We do not need to check for special attributes on trivial types */
-    if (_is_basic_python_type(obj)) {
-        return NULL;
-    }
 
     /* Attribute referenced by (char *)name */
     if (tp->tp_getattr != NULL) {
@@ -80,6 +83,49 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
         }
     }
     return res;
+}
+
+/*
+ * Lookup a special method, following the python approach of looking up
+ * on the type object, rather than on the instance itself.
+ *
+ * Assumes that the special method is a numpy-specific one, so does not look
+ * at builtin types, nor does it look at a base ndarray.
+ *
+ * In future, could be made more like _Py_LookupSpecial
+ */
+static NPY_INLINE PyObject *
+PyArray_LookupSpecial(PyObject *obj, char *name)
+{
+    PyTypeObject *tp = Py_TYPE(obj);
+
+    /* We do not need to check for special attributes on trivial types */
+    if (_is_basic_python_type(tp)) {
+        return NULL;
+    }
+
+    return maybe_get_attr((PyObject *)tp, name);
+}
+
+/*
+ * PyArray_LookupSpecial_OnInstance:
+ *
+ * Implements incorrect special method lookup rules, that break the python
+ * convention, and looks on the instance, not the type.
+ *
+ * Kept for backwards compatibility. In future, we should deprecate this.
+ */
+static NPY_INLINE PyObject *
+PyArray_LookupSpecial_OnInstance(PyObject *obj, char *name)
+{
+    PyTypeObject *tp = Py_TYPE(obj);
+
+    /* We do not need to check for special attributes on trivial types */
+    if (_is_basic_python_type(tp)) {
+        return NULL;
+    }
+
+    return maybe_get_attr(obj, name);
 }
 
 #endif
