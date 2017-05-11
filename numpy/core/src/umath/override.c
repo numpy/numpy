@@ -144,14 +144,16 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
-        if (obj != Py_None) {
-            if (i == 3) {
-                obj = PyTuple_GetSlice(args, 3, 4);
+        if (i == 3) {
+            /* remove out=None */
+            if (obj == Py_None) {
+                continue;
             }
-            PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-            if (i == 3) {
-                Py_DECREF(obj);
-            }
+            obj = PyTuple_GetSlice(args, 3, 4);
+        }
+        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        if (i == 3) {
+            Py_DECREF(obj);
         }
     }
     return 0;
@@ -188,14 +190,16 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
-        if (obj != Py_None) {
-            if (i == 3) {
-                obj = PyTuple_GetSlice(args, 3, 4);
+        if (i == 3) {
+            /* remove out=None */
+            if (obj == Py_None) {
+                continue;
             }
-            PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-            if (i == 3) {
-                Py_DECREF(obj);
-            }
+            obj = PyTuple_GetSlice(args, 3, 4);
+        }
+        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        if (i == 3) {
+            Py_DECREF(obj);
         }
     }
     return 0;
@@ -234,14 +238,16 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
-        if (obj != Py_None) {
-            if (i == 4) {
-                obj = PyTuple_GetSlice(args, 4, 5);
+        if (i == 4) {
+            /* remove out=None */
+            if (obj == Py_None) {
+                continue;
             }
-            PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-            if (i == 4) {
-                Py_DECREF(obj);
-            }
+            obj = PyTuple_GetSlice(args, 4, 5);
+        }
+        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        if (i == 4) {
+            Py_DECREF(obj);
         }
     }
     return 0;
