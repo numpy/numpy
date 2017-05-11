@@ -99,7 +99,7 @@ class TestExecCommand(TestCase):
         self.pyexe = get_pythonexe()
 
     def check_nt(self, **kws):
-        s, o = exec_command.exec_command('echo path=%path%')
+        s, o = exec_command.exec_command('cmd /C echo path=%path%')
         self.assertEqual(s, 0)
         self.assertNotEqual(o, '')
 
