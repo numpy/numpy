@@ -3292,7 +3292,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     """
-    a.byteswap(inplace)
+    a.byteswap(inplace=False)
 
     Swap the bytes of the array elements
 
@@ -3315,7 +3315,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> A = np.array([1, 256, 8755], dtype=np.int16)
     >>> map(hex, A)
     ['0x1', '0x100', '0x2233']
-    >>> A.byteswap(True)
+    >>> A.byteswap(inplace=True)
     array([  256,     1, 13090], dtype=int16)
     >>> map(hex, A)
     ['0x100', '0x1', '0x3322']
