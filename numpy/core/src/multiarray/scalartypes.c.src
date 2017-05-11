@@ -1548,11 +1548,13 @@ static Py_ssize_t
 gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
 
 static PyObject *
-gentype_byteswap(PyObject *self, PyObject *args)
+gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 {
     npy_bool inplace = NPY_FALSE;
+    static char *kwlist[] = {"inplace", NULL};
 
-    if (!PyArg_ParseTuple(args, "|O&:byteswap", PyArray_BoolConverter, &inplace)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:byteswap", kwlist,
+                                     PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
     if (inplace) {
@@ -1628,7 +1630,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
      * However, as a special case, void-scalar assignment broadcasts
      * differently from ndarrays when assigning to an object field: Assignment
      * to an ndarray object field broadcasts, but assignment to a void-scalar
-     * object-field should not, in order to allow nested ndarrays. 
+     * object-field should not, in order to allow nested ndarrays.
      * These lines should then behave identically:
      *
      *     b = np.zeros(1, dtype=[('x', 'O')])
@@ -1867,7 +1869,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)gentype_astype,
         METH_VARARGS, NULL},
