@@ -2010,7 +2010,8 @@ class TestSpecialMethods(TestCase):
         assert_raises(ValueError, inner1d, a, a, out=())
 
     def test_ufunc_override_with_super(self):
-
+        # NOTE: this class is given as an example in doc/subclassing.py;
+        # if you make any changes here, do update it there too.
         class A(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 args = []
