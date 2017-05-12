@@ -565,7 +565,7 @@ array_negative(PyArrayObject *m1)
 static PyObject *
 array_absolute(PyArrayObject *m1)
 {
-    if (can_elide_temp_unary(m1)) {
+    if (can_elide_temp_unary(m1) && !PyArray_ISCOMPLEX(m1)) {
         return PyArray_GenericInplaceUnaryFunction(m1, n_ops.absolute);
     }
     return PyArray_GenericUnaryFunction(m1, n_ops.absolute);
