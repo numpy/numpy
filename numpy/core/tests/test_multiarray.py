@@ -3139,6 +3139,27 @@ class TestBinop(object):
         assert_equal(A[0], 30)
         assert_(isinstance(A, OutClass))
 
+    def test_pow_override_with_errors(self):
+        # regression test for gh-9112
+        class PowerOnly(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                if ufunc is not np.power:
+                    raise NotImplementedError
+                return "POWER!"
+        # explicit cast to float, to ensure the fast power path is taken.
+        a = np.array(5., dtype=np.float64).view(PowerOnly)
+        assert_equal(a ** 2.5, "POWER!")
+        with assert_raises(NotImplementedError):
+            a ** 0.5
+        with assert_raises(NotImplementedError):
+            a ** 0
+        with assert_raises(NotImplementedError):
+            a ** 1
+        with assert_raises(NotImplementedError):
+            a ** -1
+        with assert_raises(NotImplementedError):
+            a ** 2
+
 
 class TestCAPI(TestCase):
     def test_IsPythonScalar(self):
