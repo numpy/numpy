@@ -5444,9 +5444,11 @@ add_newdoc('numpy.core', 'ufunc',
     ----------
     *x : array_like
         Input arrays.
-    out : ndarray or tuple of ndarray, optional
+    out : ndarray, None, or tuple of ndarray and None, optional
         Alternate array object(s) in which to put the result; if provided, it
-        must have a shape that the inputs broadcast to.
+        must have a shape that the inputs broadcast to. A tuple of arrays
+        (possible only as a keyword argument) must have length equal to the
+        number of outputs; use `None` for outputs to be allocated by the ufunc.
     where : array_like, optional
         Values of True indicate to calculate the ufunc at that position, values
         of False indicate to leave the value in the output alone.
@@ -5667,9 +5669,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         The type used to represent the intermediate results. Defaults
         to the data-type of the output array if this is provided, or
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided, a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5741,9 +5748,14 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
         The data-type used to represent the intermediate results. Defaults
         to the data-type of the output array if such is provided, or the
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
     keepdims : bool
         Has no effect. Deprecated, and will be removed in future.
 
@@ -5820,9 +5832,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
         The type used to represent the intermediate results. Defaults
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
 
     Returns
     -------

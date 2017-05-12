@@ -19,9 +19,11 @@ def get(name):
 
 # common parameter text to all ufuncs
 _params_text = textwrap.dedent("""
-    out : ndarray or tuple of ndarray, optional
-        Alternate array object(s) in which to put the result; if provided, it
-        must have a shape that the inputs broadcast to.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the inputs broadcast to. If not provided or `None`,
+        a freshly-allocated array is returned. A tuple (possible only as a
+        keyword argument) must have length equal to the number of outputs.
     where : array_like, optional
         Values of True indicate to calculate the ufunc at that position, values
         of False indicate to leave the value in the output alone.
