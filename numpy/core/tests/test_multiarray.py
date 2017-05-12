@@ -2853,6 +2853,9 @@ class TestBinop(object):
         d = f.astype(np.float64)
         assert_equal(((f + f) + d).dtype, np.dtype('f8'))
 
+        c = np.ones(100000, dtype=np.complex)
+        assert_equal(abs(c * 2.0).dtype, np.dtype('f8'))
+
     def test_elide_broadcast(self):
         # test no elision on broadcast to higher dimension
         # only triggers elision code path in debug mode as triggering it in
