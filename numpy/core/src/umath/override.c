@@ -366,11 +366,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         if (out != NULL) {
             int nout = ufunc->nout;
 
-            if (PyTuple_Check(out)) {
+            if (PyTuple_CheckExact(out)) {
                 int all_none = 1;
 
                 if (PyTuple_GET_SIZE(out) != nout) {
-                    PyErr_Format(PyExc_TypeError,
+                    PyErr_Format(PyExc_ValueError,
                                  "The 'out' tuple must have exactly "
                                  "%d entries: one per ufunc output", nout);
                     goto fail;

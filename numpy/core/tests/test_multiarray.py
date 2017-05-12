@@ -3040,7 +3040,7 @@ class TestBinop(object):
             warnings.filterwarnings('always', '', DeprecationWarning)
             assert_equal(np.modf(dummy, out=a), (0,))
             assert_(w[0].category is DeprecationWarning)
-        assert_raises(TypeError, np.modf, dummy, out=(a,))
+        assert_raises(ValueError, np.modf, dummy, out=(a,))
 
         # 2 inputs, 1 output
         assert_equal(np.add(a, dummy), 0)
