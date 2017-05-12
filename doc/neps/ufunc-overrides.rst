@@ -166,7 +166,8 @@ Hence, the arguments are normalized: only the required input arguments
 passed on as a dict of keyword arguments (``kwargs``). In particular, if
 there are output arguments, positional are otherwise, that are not
 :obj:`None`, they are passed on as a tuple in the ``out`` keyword
-argument.
+argument (even for the ``reduce``, ``accumulate``, and ``reduceat`` methods
+where in all current cases only a single output makes sense).
 
 The function dispatch proceeds as follows:
 

@@ -536,3 +536,11 @@ The ABCPolyBase class, from which the convenience classes are derived, sets
 ``__array_ufun__ = None`` in order of opt out of ufuncs. If a polynomial
 convenience class instance is passed as an argument to a ufunc, a ``TypeError``
 will now be raised.
+
+Output arguments to ufuncs can be tuples also for ufunc methods
+---------------------------------------------------------------
+For calls to ufuncs, it was already possible, and recommended, to use an
+``out`` argument with a tuple for ufuncs with multiple outputs. This has now
+been extended to output arguments in the ``reduce``, ``accumulate``, and
+``reduceat`` methods. This is mostly for compatibility with ``__array_ufunc``;
+there are no ufuncs yet that have more than one output.
