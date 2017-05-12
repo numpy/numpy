@@ -1084,7 +1084,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                                     "positional and keyword argument");
                             goto fail;
                         }
-                        if (PyTuple_Check(value)) {
+                        if (PyTuple_CheckExact(value)) {
                             if (PyTuple_GET_SIZE(value) != nout) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "The 'out' tuple must have exactly "
@@ -3894,6 +3894,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
+    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
     static char *reduce_kwlist[] = {
@@ -3927,7 +3928,20 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                      _reduce_type[operation]);
         return NULL;
     }
-
+    /* if there is a tuple of 1 for `out` in kwds, unpack it */
+    if (kwds != NULL) {
+        PyObject *out_obj = PyDict_GetItem(kwds, npy_um_str_out);
+        if (out_obj != NULL && PyTuple_CheckExact(out_obj)) {
+            if (PyTuple_GET_SIZE(out_obj) != 1) {
+                PyErr_SetString(PyExc_ValueError,
+                                "The 'out' tuple must have exactly one entry");
+                return NULL;
+            }
+            out_obj = PyTuple_GET_ITEM(out_obj, 0);
+            PyDict_SetItem(kwds, npy_um_str_out, out_obj);
+        }
+    }
+            
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
