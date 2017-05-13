@@ -317,7 +317,7 @@ def column_stack(tup):
 
     See Also
     --------
-    hstack, vstack, concatenate
+    stack, hstack, vstack, concatenate
 
     Examples
     --------
