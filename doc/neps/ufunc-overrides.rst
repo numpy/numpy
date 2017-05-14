@@ -664,13 +664,13 @@ Symbol Operator     NumPy Ufunc(s)
 ``//`` ``floordiv`` :func:`floor_divide`
 ``%``  ``mod``      :func:`remainder`
 NA     ``divmod``   :func:`divmod`
-``**`` ``pow``      :func:`power`
+``**`` ``pow``      :func:`power` [10]_
 ``<<`` ``lshift``   :func:`left_shift`
 ``>>`` ``rshift``   :func:`right_shift`
 ``&``  ``and_``     :func:`bitwise_and`
 ``^``  ``xor_``     :func:`bitwise_xor`
 ``|``  ``or_``      :func:`bitwise_or`
-``@``  ``matmul``   Not yet implemented as a ufunc [10]_
+``@``  ``matmul``   Not yet implemented as a ufunc [11]_
 ====== ============ =========================================
 
 And here is the list of unary operators:
@@ -679,16 +679,22 @@ And here is the list of unary operators:
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
 ``-``  ``neg``      :func:`negative`
-``+``  ``pos``      :func:`positive` [11]_
+``+``  ``pos``      :func:`positive` [12]_
 NA     ``abs``      :func:`absolute`
 ``~``  ``invert``   :func:`invert`
 ====== ============ =========================================
 
-.. [10] Because NumPy's :func:`matmul` is not a ufunc, it is
+.. [10] class :`ndarray` takes short cuts for ``__pow__`` for the
+        cases where the power equals ``1`` (:func:`positive`),
+        ``-1`` (:func:`reciprocal`), ``2`` (:func:`square`), ``0`` (an
+        otherwise private ``_ones_like`` ufunc), and ``0.5``
+        (:func:`sqrt`), and the array is float or complex (or integer
+        for square).
+.. [11] Because NumPy's :func:`matmul` is not a ufunc, it is
         `currently not possible <https://github.com/numpy/numpy/issues/9028>`_
         to override ``numpy_array @ other`` with ``other`` taking precedence
         if ``other`` implements ``__array_func__``.
-.. [11] :class:`ndarray` currently does a copy instead of using this ufunc.
+.. [12] :class:`ndarray` currently does a copy instead of using this ufunc.
 
 Future extensions to other functions
 ------------------------------------
