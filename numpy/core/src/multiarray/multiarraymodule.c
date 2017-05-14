@@ -4666,23 +4666,15 @@ PyMODINIT_FUNC initmultiarray(void) {
     ADDCONST(MAY_SHARE_EXACT);
 #undef ADDCONST
 
-    Py_INCREF(&PyArray_Type);
     PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
-    Py_INCREF(&PyArrayIter_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
-    Py_INCREF(&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
-    Py_INCREF(&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
-    Py_INCREF(&PyArrayDescr_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-
-    Py_INCREF(&PyArrayFlags_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
 
     /* Business day calendar object */
-    Py_INCREF(&NpyBusDayCalendar_Type);
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
