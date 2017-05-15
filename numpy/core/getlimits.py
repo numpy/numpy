@@ -558,13 +558,3 @@ class iinfo(object):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
                                     self.min, self.max, self.dtype)
 
-if __name__ == '__main__':
-    f = finfo(ntypes.single)
-    print('single epsilon:', f.eps)
-    print('single tiny:', f.tiny)
-    f = finfo(ntypes.float)
-    print('float epsilon:', f.eps)
-    print('float tiny:', f.tiny)
-    f = finfo(ntypes.longfloat)
-    print('longfloat epsilon:', f.eps)
-    print('longfloat tiny:', f.tiny)
