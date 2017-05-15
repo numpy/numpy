@@ -1019,12 +1019,10 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
-def search(a, v):
+def search(a, v, fill_value=None, which='first'):
     """
-    Find indices into array `a` where elements in `v` match those in `a`,
-    such that `a[indices] == v`. `v` must be a subset of `a`.
-    If a value in `v` matches multiple occurrences of the same value in `a`,
-    only the index of the first matching value in `a` is returned.
+    Find indices into flattened array `a` where elements in `v` match those
+    in `a`, such that`a[indices] == v`.
 
     Parameters
     ----------
@@ -1032,6 +1030,13 @@ def search(a, v):
         Input array to search.
     v : array_like
         Values to search for in `a`.
+    fill_value : scalar or `None`
+        Index value to return for elements in `v` that are not in `a`.
+        If `None`, raise an error for such missing elements.
+    which : {'first', 'last'}
+        If an element in `v` matches multiple occurrences of the same
+        element in `a`, return only the index of the first or last matching
+        element in `a`.
 
     Returns
     -------
@@ -1040,21 +1045,46 @@ def search(a, v):
 
     See Also
     --------
-    searchsorted: Find indices where elements should be inserted to maintain order.
+    searchsorted: Find indices into sorted array `a` where elements in `v`
+                  should be inserted to maintain order.
 
     Notes
     -----
-
-    ``search(a, v)`` is roughly equivalent to
+    ``np.search(a, v)`` is roughly equivalent to
     ``np.array([a.index(item) for item in v])`` if `a` and `v` are 1-D sequences.
 
     Adapted from http://stackoverflow.com/a/8251668
+
+    Examples
+    --------
+    >>> a = [3, -1, -2, -4, 1, 1, -1, 0, -3, 3]
+    >>> v = [[15, 1, -3, -2, -4], [-1, 3, 2, 1, 0]]
+    >>> np.search(a, v, fill_value=-1)
+    array([[-1,  4,  8,  2,  3],
+           [ 1,  0, -1,  4,  7]])
+    >>> np.search(a, v, fill_value=-1, which='last')
+    array([[-1,  5,  8,  2,  3],
+           [ 6,  9, -1,  5,  7]])
+    >>> np.search(a, v)
+    ValueError: array `v` is not a subset of input array `a`
+
     """
     a = np.ravel(a)
-    if not np.isin(v, a).all():
-        raise ValueError("array `v` is not a subset of input array `a`")
-    asortis = a.argsort()
-    return asortis[a.searchsorted(v, sorter=asortis)]
+    sortis = a.argsort()
+    lis = a.searchsorted(v, side='left', sorter=sortis)
+    ris = a.searchsorted(v, side='right', sorter=sortis)
+    sideis = {'first':lis, 'last':ris-1}[which]
+    hits = lis != ris # elements in v that are in a
+    misses = np.logical_not(hits) # elements in v that are not in a
+    if fill_value is None:
+        if misses.any():
+            raise ValueError("array `v` is not a subset of input array `a`")
+        indices = sortis[sideis]
+    else:
+        indices = np.zeros_like(v, dtype=int)
+        indices[hits] = sortis[sideis[hits]]
+        indices[misses] = fill_value
+    return indices
 
 
 def searchsorted(a, v, side='left', sorter=None):
