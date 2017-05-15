@@ -2798,76 +2798,6 @@ class TestBinop(object):
         assert_equal(a, 5)
         assert_equal(b, 3)
 
-    def test_extension_incref_elide(self):
-        # test extension (e.g. cython) calling PyNumber_* slots without
-        # increasing the reference counts
-        #
-        # def incref_elide(a):
-        #    d = input.copy() # refcount 1
-        #    return d, d + d # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide
-        d = np.ones(100000)
-        orig, res = incref_elide(d)
-        d + d
-        # the return original should not be changed to an inplace operation
-        assert_array_equal(orig, d)
-        assert_array_equal(res, d + d)
-
-    def test_extension_incref_elide_stack(self):
-        # scanning if the refcount == 1 object is on the python stack to check
-        # that we are called directly from python is flawed as object may still
-        # be above the stack pointer and we have no access to the top of it
-        #
-        # def incref_elide_l(d):
-        #    return l[4] + l[4] # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide_l
-        # padding with 1 makes sure the object on the stack is not overwriten
-        l = [1, 1, 1, 1, np.ones(100000)]
-        res = incref_elide_l(l)
-        # the return original should not be changed to an inplace operation
-        assert_array_equal(l[4], np.ones(100000))
-        assert_array_equal(res, l[4] + l[4])
-
-    def test_temporary_with_cast(self):
-        # check that we don't elide into a temporary which would need casting
-        d = np.ones(200000, dtype=np.int64)
-        assert_equal(((d + d) + 2**222).dtype, np.dtype('O'))
-
-        r = ((d + d) / 2)
-        assert_equal(r.dtype, np.dtype('f8'))
-
-        r = np.true_divide((d + d), 2)
-        assert_equal(r.dtype, np.dtype('f8'))
-
-        r = ((d + d) / 2.)
-        assert_equal(r.dtype, np.dtype('f8'))
-
-        r = ((d + d) // 2)
-        assert_equal(r.dtype, np.dtype(np.int64))
-
-        # commutative elision into the astype result
-        f = np.ones(100000, dtype=np.float32)
-        assert_equal(((f + f) + f.astype(np.float64)).dtype, np.dtype('f8'))
-
-        # no elision into f + f
-        d = f.astype(np.float64)
-        assert_equal(((f + f) + d).dtype, np.dtype('f8'))
-
-    def test_elide_broadcast(self):
-        # test no elision on broadcast to higher dimension
-        # only triggers elision code path in debug mode as triggering it in
-        # normal mode needs 256kb large matching dimension, so a lot of memory
-        d = np.ones((2000, 1), dtype=int)
-        b = np.ones((2000), dtype=np.bool)
-        r = (1 - d) + b
-        assert_equal(r, 1)
-        assert_equal(r.shape, (2000, 2000))
-
-    def test_elide_scalar(self):
-        # check inplace op does not create ndarray from scalars
-        a = np.bool_()
-        assert_(type(~(a & a)) is np.bool_)
-
     # ndarray.__rop__ always calls ufunc
     # ndarray.__iop__ always calls ufunc
     # ndarray.__op__, __rop__:
@@ -3141,6 +3071,88 @@ class TestBinop(object):
         np.multiply(C, B, out=A)
         assert_equal(A[0], 30)
         assert_(isinstance(A, OutClass))
+
+
+class TestTemporaryElide(TestCase):
+    # elision is only triggered on relatively large arrays
+
+    def test_extension_incref_elide(self):
+        # test extension (e.g. cython) calling PyNumber_* slots without
+        # increasing the reference counts
+        #
+        # def incref_elide(a):
+        #    d = input.copy() # refcount 1
+        #    return d, d + d # PyNumber_Add without increasing refcount
+        from numpy.core.multiarray_tests import incref_elide
+        d = np.ones(100000)
+        orig, res = incref_elide(d)
+        d + d
+        # the return original should not be changed to an inplace operation
+        assert_array_equal(orig, d)
+        assert_array_equal(res, d + d)
+
+    def test_extension_incref_elide_stack(self):
+        # scanning if the refcount == 1 object is on the python stack to check
+        # that we are called directly from python is flawed as object may still
+        # be above the stack pointer and we have no access to the top of it
+        #
+        # def incref_elide_l(d):
+        #    return l[4] + l[4] # PyNumber_Add without increasing refcount
+        from numpy.core.multiarray_tests import incref_elide_l
+        # padding with 1 makes sure the object on the stack is not overwriten
+        l = [1, 1, 1, 1, np.ones(100000)]
+        res = incref_elide_l(l)
+        # the return original should not be changed to an inplace operation
+        assert_array_equal(l[4], np.ones(100000))
+        assert_array_equal(res, l[4] + l[4])
+
+    def test_temporary_with_cast(self):
+        # check that we don't elide into a temporary which would need casting
+        d = np.ones(200000, dtype=np.int64)
+        assert_equal(((d + d) + 2**222).dtype, np.dtype('O'))
+
+        r = ((d + d) / 2)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = np.true_divide((d + d), 2)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = ((d + d) / 2.)
+        assert_equal(r.dtype, np.dtype('f8'))
+
+        r = ((d + d) // 2)
+        assert_equal(r.dtype, np.dtype(np.int64))
+
+        # commutative elision into the astype result
+        f = np.ones(100000, dtype=np.float32)
+        assert_equal(((f + f) + f.astype(np.float64)).dtype, np.dtype('f8'))
+
+        # no elision into lower type
+        d = f.astype(np.float64)
+        assert_equal(((f + f) + d).dtype, d.dtype)
+        l = np.ones(100000, dtype=np.longdouble)
+        assert_equal(((d + d) + l).dtype, l.dtype)
+
+        # test unary abs with different output dtype
+        for dt in (np.complex64, np.complex128, np.clongdouble):
+            c = np.ones(100000, dtype=dt)
+            r = abs(c * 2.0)
+            assert_equal(r.dtype, np.dtype('f%d' % (c.itemsize // 2)))
+
+    def test_elide_broadcast(self):
+        # test no elision on broadcast to higher dimension
+        # only triggers elision code path in debug mode as triggering it in
+        # normal mode needs 256kb large matching dimension, so a lot of memory
+        d = np.ones((2000, 1), dtype=int)
+        b = np.ones((2000), dtype=np.bool)
+        r = (1 - d) + b
+        assert_equal(r, 1)
+        assert_equal(r.shape, (2000, 2000))
+
+    def test_elide_scalar(self):
+        # check inplace op does not create ndarray from scalars
+        a = np.bool_()
+        assert_(type(~(a & a)) is np.bool_)
 
 
 class TestCAPI(TestCase):
