@@ -4607,15 +4607,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
         return RETVAL;
     }
-/* FIXME
- * There is no error handling here
- */
+
     c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
-    PyDict_SetItemString(d, "_ARRAY_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
+    if (c_api == NULL) {
         goto err;
     }
+    PyDict_SetItemString(d, "_ARRAY_API", c_api);
+    Py_DECREF(c_api);
 
     /*
      * PyExc_Exception should catch all the standard errors that are
@@ -4633,10 +4631,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-/* FIXME
- * There is no error handling here
- */
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
+    if (s == NULL) {
+        goto err;
+    }
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
