@@ -137,6 +137,11 @@ invokes``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``) will
 now issue a DeprecationWarning - ``.__getitem__(slice(start, end))`` should be
 used instead.
 
+Indexing MaskedArrays/Constants with ``...`` (ellipsis) now returns MaskedArray
+-------------------------------------------------------------------------------
+This behavior mirrors that of np.ndarray, and accounts for nested arrays in
+MaskedArrays of object dtype, and ellipsis combined with other forms of
+indexing.
 
 C API changes
 =============
