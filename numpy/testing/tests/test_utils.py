@@ -272,9 +272,7 @@ class TestEqual(TestArrayEqual):
                 "\nArrays are not equal\n\n"
                 "(shapes (2,), (1, 2) mismatch)\n"
                 " x: array([1, 2])\n"
-                " y: [repr failed for <matrix>: The truth value of an array "
-                "with more than one element is ambiguous. Use a.any() or "
-                "a.all()]")
+                " y: matrix([[1 2]])")
 
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
