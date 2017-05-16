@@ -239,8 +239,8 @@ of ``in1d`` that preserves the shape of the first array.
 
 Temporary elision
 -----------------
-On platforms providing the ``backtrace`` function NumPy will now not create
-temporaries in expression when possible.
+On platforms providing the ``backtrace`` function NumPy will try to avoid
+creating temporaries in expression involving basic numeric types.
 For example ``d = a + b + c`` is transformed to ``d = a + b; d += c`` which can
 improve performance for large arrays as less memory bandwidth is required to
 perform the operation.
