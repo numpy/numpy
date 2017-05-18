@@ -1755,15 +1755,18 @@ class TestSpecialMethods(TestCase):
                               'keepdims': 'keep0',
                               'axis': 'axis0'})
 
-        # reduce, output equal to None removed.
-        res = np.multiply.reduce(a, out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.reduce(a, out=(None,))
-        assert_equal(res[4], {})
+        # reduce, output equal to None removed, but not other explicit ones,
+        # even if they are at their default value.
+        res = np.multiply.reduce(a, 0, None, None, False)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
+        res = np.multiply.reduce(a, out=None, axis=0, keepdims=True)
+        assert_equal(res[4], {'axis': 0, 'keepdims': True})
+        res = np.multiply.reduce(a, None, out=(None,), dtype=None)
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduce, wrong args
-        assert_raises(TypeError, np.multiply.reduce, a, out=())
-        assert_raises(TypeError, np.multiply.reduce, a, out=('out0', 'out1'))
+        assert_raises(ValueError, np.multiply.reduce, a, out=())
+        assert_raises(ValueError, np.multiply.reduce, a, out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.reduce, a, 'axis0', axis='axis0')
 
         # accumulate, pos args
@@ -1788,14 +1791,16 @@ class TestSpecialMethods(TestCase):
                               'axis': 'axis0'})
 
         # accumulate, output equal to None removed.
-        res = np.multiply.accumulate(a, out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.accumulate(a, out=(None,))
-        assert_equal(res[4], {})
+        res = np.multiply.accumulate(a, 0, None, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None})
+        res = np.multiply.accumulate(a, out=None, axis=0, dtype='dtype1')
+        assert_equal(res[4], {'axis': 0, 'dtype': 'dtype1'})
+        res = np.multiply.accumulate(a, None, out=(None,), dtype=None)
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # accumulate, wrong args
-        assert_raises(TypeError, np.multiply.accumulate, a, out=())
-        assert_raises(TypeError, np.multiply.accumulate, a,
+        assert_raises(ValueError, np.multiply.accumulate, a, out=())
+        assert_raises(ValueError, np.multiply.accumulate, a,
                       out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.accumulate, a,
                       'axis0', axis='axis0')
@@ -1822,14 +1827,16 @@ class TestSpecialMethods(TestCase):
                               'axis': 'axis0'})
 
         # reduceat, output equal to None removed.
-        res = np.multiply.reduceat(a, [4, 2], out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.reduceat(a, [4, 2], out=(None,))
-        assert_equal(res[4], {})
+        res = np.multiply.reduceat(a, [4, 2], 0, None, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None})
+        res = np.multiply.reduceat(a, [4, 2], axis=None, out=None, dtype='dt')
+        assert_equal(res[4], {'axis': None, 'dtype': 'dt'})
+        res = np.multiply.reduceat(a, [4, 2], None, None, out=(None,))
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduceat, wrong args
-        assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
-        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+        assert_raises(ValueError, np.multiply.reduce, a, [4, 2], out=())
+        assert_raises(ValueError, np.multiply.reduce, a, [4, 2],
                       out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
                       'axis0', axis='axis0')
@@ -1907,12 +1914,12 @@ class TestSpecialMethods(TestCase):
         # wrong number of arguments in the tuple is an error too.
         assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
         assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
-        assert_raises(TypeError, np.multiply, a, b, out=('one', 'two'))
-        assert_raises(TypeError, np.multiply, a, out=())
+        assert_raises(ValueError, np.multiply, a, b, out=('one', 'two'))
+        assert_raises(ValueError, np.multiply, a, out=())
         assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
         assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
-        assert_raises(TypeError, np.modf, a, out=('one', 'two', 'three'))
-        assert_raises(TypeError, np.modf, a, out=('one',))
+        assert_raises(ValueError, np.modf, a, out=('one', 'two', 'three'))
+        assert_raises(ValueError, np.modf, a, out=('one',))
 
     def test_ufunc_override_exception(self):
 
@@ -1999,11 +2006,12 @@ class TestSpecialMethods(TestCase):
         assert_raises(TypeError, inner1d, a, out='two')
         assert_raises(TypeError, inner1d, a, a, 'one', out='two')
         assert_raises(TypeError, inner1d, a, a, 'one', 'two')
-        assert_raises(TypeError, inner1d, a, a, out=('one', 'two'))
-        assert_raises(TypeError, inner1d, a, a, out=())
+        assert_raises(ValueError, inner1d, a, a, out=('one', 'two'))
+        assert_raises(ValueError, inner1d, a, a, out=())
 
     def test_ufunc_override_with_super(self):
-
+        # NOTE: this class is given as an example in doc/subclassing.py;
+        # if you make any changes here, do update it there too.
         class A(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 args = []
@@ -2041,6 +2049,8 @@ class TestSpecialMethods(TestCase):
                     return NotImplemented
 
                 if method == 'at':
+                    if isinstance(inputs[0], A):
+                        inputs[0].info = info
                     return
 
                 if ufunc.nout == 1:
@@ -2107,6 +2117,70 @@ class TestSpecialMethods(TestCase):
         assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
         assert_(b.__array_ufunc__(np.add, '__call__', a, b) == "A!")
         assert_(np.add(a, b) == "A!")
+        # regression check for gh-9102 -- tests ufunc.reduce implicitly.
+        d = np.array([[1, 2, 3], [1, 2, 3]])
+        a = d.view(A)
+        c = a.any()
+        check = d.any()
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        c = a.max()
+        check = d.max()
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        b = np.array(0).view(A)
+        c = a.max(out=b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        check = a.max(axis=0)
+        b = np.zeros_like(check).view(A)
+        c = a.max(axis=0, out=b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        # simple explicit tests of reduce, accumulate, reduceat
+        check = np.add.reduce(d, axis=1)
+        c = np.add.reduce(a, axis=1)
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        b = np.zeros_like(c)
+        c = np.add.reduce(a, 1, None, b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        check = np.add.accumulate(d, axis=0)
+        c = np.add.accumulate(a, axis=0)
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        b = np.zeros_like(c)
+        c = np.add.accumulate(a, 0, None, b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        indices = [0, 2, 1]
+        check = np.add.reduceat(d, indices, axis=1)
+        c = np.add.reduceat(a, indices, axis=1)
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        b = np.zeros_like(c)
+        c = np.add.reduceat(a, indices, 1, None, b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        # and a few tests for at
+        d = np.array([[1, 2, 3], [1, 2, 3]])
+        check = d.copy()
+        a = d.copy().view(A)
+        np.add.at(check, ([0, 1], [0, 2]), 1.)
+        np.add.at(a, ([0, 1], [0, 2]), 1.)
+        assert_equal(a, check)
+        assert_(a.info, {'inputs': [0]})
+        b = np.array(1.).view(A)
+        a = d.copy().view(A)
+        np.add.at(a, ([0, 1], [0, 2]), b)
+        assert_equal(a, check)
+        assert_(a.info, {'inputs': [0, 2]})
 
 
 class TestChoose(TestCase):
