@@ -429,9 +429,9 @@ Attempting to call these methods on other ufuncs will cause a
 :exc:`ValueError`. The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
-will take place and may be negative, but must be an integer. The
+will take place and may be negative, in which case it counts from the last to the first axis. *axis* can be an integer, or if in :meth:`ufunc.reduce`, it can also be `None` or `tuple of ints` . The
 *dtype* keyword allows you to manage a very common problem that arises
-when naively using :ref:`{op}.reduce <ufunc.reduce>`. Sometimes you may
+when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
 array. This commonly happens if you have an array of single-byte
