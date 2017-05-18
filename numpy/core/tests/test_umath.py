@@ -1755,11 +1755,14 @@ class TestSpecialMethods(TestCase):
                               'keepdims': 'keep0',
                               'axis': 'axis0'})
 
-        # reduce, output equal to None removed.
-        res = np.multiply.reduce(a, out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.reduce(a, out=(None,))
-        assert_equal(res[4], {})
+        # reduce, output equal to None removed, but not other explicit ones,
+        # even if they are at their default value.
+        res = np.multiply.reduce(a, 0, None, None, False)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
+        res = np.multiply.reduce(a, out=None, axis=0, keepdims=True)
+        assert_equal(res[4], {'axis': 0, 'keepdims': True})
+        res = np.multiply.reduce(a, None, out=(None,), dtype=None)
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduce, wrong args
         assert_raises(TypeError, np.multiply.reduce, a, out=())
@@ -1788,10 +1791,12 @@ class TestSpecialMethods(TestCase):
                               'axis': 'axis0'})
 
         # accumulate, output equal to None removed.
-        res = np.multiply.accumulate(a, out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.accumulate(a, out=(None,))
-        assert_equal(res[4], {})
+        res = np.multiply.accumulate(a, 0, None, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None})
+        res = np.multiply.accumulate(a, out=None, axis=0, dtype='dtype1')
+        assert_equal(res[4], {'axis': 0, 'dtype': 'dtype1'})
+        res = np.multiply.accumulate(a, None, out=(None,), dtype=None)
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # accumulate, wrong args
         assert_raises(TypeError, np.multiply.accumulate, a, out=())
@@ -1822,10 +1827,12 @@ class TestSpecialMethods(TestCase):
                               'axis': 'axis0'})
 
         # reduceat, output equal to None removed.
-        res = np.multiply.reduceat(a, [4, 2], out=None)
-        assert_equal(res[4], {})
-        res = np.multiply.reduceat(a, [4, 2], out=(None,))
-        assert_equal(res[4], {})
+        res = np.multiply.reduceat(a, [4, 2], 0, None, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None})
+        res = np.multiply.reduceat(a, [4, 2], axis=None, out=None, dtype='dt')
+        assert_equal(res[4], {'axis': None, 'dtype': 'dt'})
+        res = np.multiply.reduceat(a, [4, 2], None, None, out=(None,))
+        assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduceat, wrong args
         assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
@@ -2107,6 +2114,14 @@ class TestSpecialMethods(TestCase):
         assert_(a.__array_ufunc__(np.add, '__call__', a, b) is NotImplemented)
         assert_(b.__array_ufunc__(np.add, '__call__', a, b) == "A!")
         assert_(np.add(a, b) == "A!")
+        # regression check for gh-9102
+        a = np.array([[1, 2, 3], [1, 2, 3]]).view(A)
+        c = a.max()
+        assert_equal(c, 3)
+        assert_(c.info, {'inputs': [0]})
+        c = a.any()
+        assert_equal(c, True)
+        assert_(c.info, {'inputs': [0]})
 
 
 class TestChoose(TestCase):
