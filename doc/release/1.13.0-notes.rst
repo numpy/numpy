@@ -53,6 +53,9 @@ Deprecations
   with ``np.minimum``.
 * Calling ``ndarray.conjugate`` on non-numeric dtypes is deprecated (it
   should match the behavior of ``np.conjugate``, which throws an error).
+* Calling ``expand_dims`` when the ``axis`` keyword does not satisfy
+  ``-a.ndim - 1 <= axis <= a.ndim``, where ``a`` is the array being reshaped,
+  is deprecated.
 
 
 Future Changes
