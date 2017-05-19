@@ -431,7 +431,7 @@ keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
 will take place and may be negative, 
 in which case it counts from the last to the first axis. 
-Generally, it is an integer, though for `:meth:`ufunc.reduce`, it can also be a
+Generally, it is an integer, though for :meth:`ufunc.reduce`, it can also be a
 a tuple of `int` to reduce over several axes at once, or `None`, to reduce over
 all axes. 
 The *dtype* keyword allows you to manage a very common problem that arises
