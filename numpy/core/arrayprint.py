@@ -245,12 +245,6 @@ def _leading_trailing(a):
         b = _nc.concatenate(tuple(l))
     return b
 
-def _boolFormatter(x):
-    if x:
-        return ' True'
-    else:
-        return 'False'
-
 def _object_format(o):
     """ Object arrays containing lists should be printed unambiguously """
     if type(o) is list:
@@ -264,7 +258,7 @@ def repr_format(x):
 
 def _get_formatdict(data, precision, suppress_small, formatter):
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
-    formatdict = {'bool': lambda: _boolFormatter,
+    formatdict = {'bool': lambda: BoolFormat(data),
                   'int': lambda: IntegerFormat(data),
                   'float': lambda: FloatFormat(data, precision, suppress_small),
                   'longfloat': lambda: LongFloatFormat(precision),
@@ -626,7 +620,8 @@ class FloatFormat(object):
         with _nc.errstate(all='ignore'):
             special = isnan(data) | isinf(data)
             valid = not_equal(data, 0) & ~special
-            non_zero = absolute(data.compress(valid))
+            valid_data = data.compress(valid)
+            non_zero = absolute(valid_data)
             if len(non_zero) == 0:
                 max_val = 0.
                 min_val = 0.
@@ -648,6 +643,8 @@ class FloatFormat(object):
                 format = '%+'
             else:
                 format = '%'
+                if not np.any(np.signbit(valid_data)):
+                    self.max_str_len -= 1
             format = format + '%d.%de' % (self.max_str_len, self.precision)
         else:
             format = '%%.%df' % (self.precision,)
@@ -666,6 +663,8 @@ class FloatFormat(object):
                 format = '%#+'
             else:
                 format = '%#'
+                if not np.any(np.signbit(valid_data)):
+                    self.max_str_len -= 1
             format = format + '%d.%df' % (self.max_str_len, precision)
 
         self.special_fmt = '%%%ds' % (self.max_str_len,)
@@ -712,6 +711,23 @@ def _digits(x, precision, format):
         return precision - len(s) + len(z)
     else:
         return 0
+
+
+class BoolFormat(object):
+    def __init__(self, data):
+        try:
+            max_str_len = 4 if all(data) else 5
+            self.format = '%' + str(max_str_len) + 's'
+        except (TypeError, NotImplementedError):
+            # if reduce(data) fails, this instance will not be called, just
+            # instantiated in formatdict.
+            pass
+        except ValueError:
+            # this occurs when everything is NA
+            pass
+
+    def __call__(self, x):
+        return self.format % ('True' if x else 'False')
 
 
 class IntegerFormat(object):
