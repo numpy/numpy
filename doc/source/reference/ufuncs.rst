@@ -429,11 +429,9 @@ Attempting to call these methods on other ufuncs will cause a
 :exc:`ValueError`. The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
-will take place and may be negative, 
-in which case it counts from the last to the first axis. 
-Generally, it is an integer, though for :meth:`ufunc.reduce`, it can also be
-a tuple of `int` to reduce over several axes at once, or `None`, to reduce over
-all axes. 
+will take place (with negative values counting backwards). Generally, it is an
+integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
+reduce over several axes at once, or `None`, to reduce over all axes. 
 The *dtype* keyword allows you to manage a very common problem that arises
 when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
