@@ -266,7 +266,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     flag = np.empty(aux.shape, dtype=np.bool)
     flag[:1] = True
-    np.not_equal(aux[:-1], aux[1:], out=flag[1:])
+    flag[1:] = aux[:-1] != aux[1:]
 
     if not optional_returns:
         ret = aux[flag]
