@@ -263,9 +263,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         else:
             ret = (ar,)
             if return_index:
-                ret += (np.empty(0, np.bool),)
+                ret += (np.empty(0, np.intp),)
             if return_inverse:
-                ret += (np.empty(0, np.bool),)
+                ret += (np.empty(0, np.intp),)
             if return_counts:
                 ret += (np.empty(0, np.intp),)
         return ret
