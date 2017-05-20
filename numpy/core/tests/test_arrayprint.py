@@ -242,6 +242,28 @@ class TestPrintOptions:
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
 
+    def test_0d_arrays(self):
+        if sys.version_info[0] >= 3:
+            assert_equal(str(np.array('café', np.unicode_)), 'café')
+            assert_equal(repr(np.array('café', np.unicode_)),
+                         "array('café',\n      dtype='<U4')")
+            assert_equal(str(np.array('café', np.unicode_)), 'café')
+        else:
+            assert_equal(repr(np.array(u'café', np.unicode_)),
+                         "array(u'caf\\xe9',\n      dtype='<U4')")
+        assert_equal(str(np.array('test', np.str_)), 'test')
+
+        a = np.zeros(1, dtype=[('a', '<i4', (3,))])
+        assert_equal(str(a[0]), '([0, 0, 0],)')
+
+        assert_equal(repr(np.datetime64('2005-02-25')[...]),
+            "array(numpy.datetime64('2005-02-25'), dtype='datetime64[D]')")
+
+        # 0d arrays are *not* affected by printoptions
+        x = np.array(1)
+        np.set_printoptions(formatter={'all':lambda x: "test"})
+        assert_equal(repr(x), "array(1)")
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:

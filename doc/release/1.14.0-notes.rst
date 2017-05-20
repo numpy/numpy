@@ -43,3 +43,14 @@ Improvements
 
 Changes
 =======
+
+0d arrays now print their elements like numpy scalars
+-----------------------------------------------------
+0d arrays used to be printed by calling ``style(a.item())`` where
+style was either ``str`` or ``repr``. Now they are printed as ``style(a[()])``.
+
+integer scalars are now unaffected by ``np.set_string_function``
+----------------------------------------------------------------
+Previously the str/repr of integer scalars could be controlled by
+``np.set_string_function``, unlike most other numpy scalars. This is no longer
+the case.
