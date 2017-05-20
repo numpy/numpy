@@ -1098,7 +1098,7 @@ automatically generates a ufunc from a C function with the correct signature.
         .. code-block:: c
 
             static void
-            double_add(char *args, npy_intp *dimensions, npy_intp *steps,
+            double_add(char **args, npy_intp *dimensions, npy_intp *steps,
                void *extra)
             {
                 npy_intp i;
