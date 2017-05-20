@@ -115,6 +115,12 @@ class TestArray2String(TestCase):
         assert_(np.array2string(a) == '[0 1 2]')
         assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
 
+    def test_style_keyword(self):
+        """This should only apply to 0-D arrays. See #1218."""
+        stylestr = np.array2string(np.array(1.5),
+                                   style=lambda x: "Value in 0-D array: " + str(x))
+        assert_(stylestr == 'Value in 0-D array: 1.5')
+
     def test_format_function(self):
         """Test custom format function for each element in array."""
         def _format_function(x):
@@ -235,14 +241,6 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
-
-    def test_0d_arrays(self):
-        assert_equal(repr(np.datetime64('2005-02-25')[...]),
-                     "array('2005-02-25', dtype='datetime64[D]')")
-
-        x = np.array(1)
-        np.set_printoptions(formatter={'all':lambda x: "test"})
-        assert_equal(repr(x), "array(test)")
 
 def test_unicode_object_array():
     import sys

@@ -15,13 +15,6 @@ __docformat__ = 'restructuredtext'
 # and by Perry Greenfield 2000-4-1 for numarray
 # and by Travis Oliphant  2005-8-22 for numpy
 
-
-# Note: Both scalartypes.c.src and arrayprint.py implement strs for numpy
-# scalars but for different purposes. scalartypes.c.src has str/reprs for when
-# the scalar is printed on its own, while arrayprint.py has strs for when
-# scalars are printed inside an ndarray. Only the latter strs are currently
-# user-customizable.
-
 import sys
 import functools
 if sys.version_info[0] >= 3:
@@ -35,14 +28,12 @@ else:
     except ImportError:
         from dummy_thread import get_ident
 
-import numpy as np
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import (array, format_longfloat, datetime_as_string,
                          datetime_data, dtype)
 from .fromnumeric import ravel
 from .numeric import asarray
-import warnings
 
 if sys.version_info[0] >= 3:
     _MAXINT = sys.maxsize
@@ -408,7 +399,7 @@ def _recursive_guard(fillvalue='...'):
 @_recursive_guard()
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 style=np._NoValue, formatter=None):
+                 style=repr, formatter=None):
     """
     Return a string representation of an array.
 
@@ -434,10 +425,9 @@ def array2string(a, max_line_width=None, precision=None,
 
         The length of the prefix string is used to align the
         output correctly.
-    style : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.14.0
+    style : function, optional
+        A function that accepts an ndarray and returns a string.  Used only
+        when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -504,11 +494,6 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
-    # Deprecation 05-16-2017  v1.14
-    if style is not np._NoValue:
-        warnings.warn("'style' argument is deprecated and no longer functional",
-                      DeprecationWarning, stacklevel=3)
-
     if max_line_width is None:
         max_line_width = _line_width
 
@@ -521,7 +506,16 @@ def array2string(a, max_line_width=None, precision=None,
     if formatter is None:
         formatter = _formatter
 
-    if a.size == 0:
+    if a.shape == ():
+        x = a.item()
+        if a.dtype.fields is not None:
+            arr = array([x], dtype=a.dtype)
+            format_function = _get_format_function(
+                    arr, precision, suppress_small, formatter)
+            lst = format_function(arr[0])
+        else:
+            lst = style(x)
+    elif functools.reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
     else:
@@ -548,7 +542,7 @@ def _formatArray(a, format_function, rank, max_line_len,
 
     """
     if rank == 0:
-        return format_function(a[()]) + '\n'
+        raise ValueError("rank shouldn't be zero.")
 
     if summary_insert and 2*edge_items < len(a):
         leading_items = edge_items
@@ -815,21 +809,22 @@ class DatetimeFormat(object):
 
 class TimedeltaFormat(object):
     def __init__(self, data):
-        nat_value = array(['NaT'], dtype=data.dtype)[0]
-        int_dtype = dtype(data.dtype.byteorder + 'i8')
-        int_view = data.view(int_dtype)
-        v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
-        if len(v) > 0:
-            # Max str length of non-NaT elements
-            max_str_len = max(len(str(maximum.reduce(v))),
-                              len(str(minimum.reduce(v))))
-        else:
-            max_str_len = 0
-        if len(v) < len(data):
-            # data contains a NaT
-            max_str_len = max(max_str_len, 5)
-        self.format = '%' + str(max_str_len) + 'd'
-        self._nat = "'NaT'".rjust(max_str_len)
+        if data.dtype.kind == 'm':
+            nat_value = array(['NaT'], dtype=data.dtype)[0]
+            int_dtype = dtype(data.dtype.byteorder + 'i8')
+            int_view = data.view(int_dtype)
+            v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
+            if len(v) > 0:
+                # Max str length of non-NaT elements
+                max_str_len = max(len(str(maximum.reduce(v))),
+                                  len(str(minimum.reduce(v))))
+            else:
+                max_str_len = 0
+            if len(v) < len(data):
+                # data contains a NaT
+                max_str_len = max(max_str_len, 5)
+            self.format = '%' + str(max_str_len) + 'd'
+            self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
         # TODO: After NAT == NAT deprecation should be simplified:
