@@ -9,7 +9,7 @@ import threading
 
 from numpy.compat import integer_types
 from numpy.core import (
-        asarray, concatenate, arange, take, integer, empty
+        asarray, concatenate, arange, take, integer, empty, float16, float32, float64, int8, int16, int32, int64
         )
 
 # Created by Pearu Peterson, September 2002
@@ -124,10 +124,9 @@ def ifftshift(x, axes=None):
         p2 = n-(n+1)//2
         mylist = concatenate((arange(p2, n), arange(p2)))
         y = take(y, mylist, k)
-    return y
+    return y    
 
-
-def fftfreq(n, d=1.0):
+def fftfreq(n, d=1.0, t=6):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
@@ -146,6 +145,15 @@ def fftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
+    t : int, optional
+        dtype for returned frequencies. Defaults to 6.
+        0: int8
+        1: int16
+        2: int32
+        3: int64
+        4: float16
+        5: float32
+        6: float64
 
     Returns
     -------
@@ -172,11 +180,28 @@ def fftfreq(n, d=1.0):
     results[:N] = p1
     p2 = arange(-(n//2), 0, dtype=int)
     results[N:] = p2
-    return results * val
+
+    frequencies = results * val
+    if t==0:
+        return int8(frequencies)
+    elif t==1:
+        return int16(frequencies)
+    if t==2:
+        return int32(frequencies)
+    elif t==3:
+        return int64(frequencies)
+    elif t==4:
+        return float16(frequencies)
+    elif t==5:
+        return float32(frequencies)
+    elif t==6:
+        return float64(frequencies)
+    else:
+        raise ValueError("Parameter t should be 0, 1, 2, 3, 4, 5 or 6. Instead got %s." % t)
     #return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
 
 
-def rfftfreq(n, d=1.0):
+def rfftfreq(n, d=1.0, t=6):
     """
     Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
@@ -199,6 +224,15 @@ def rfftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
+    t : int, optional
+        dtype for returned frequencies. Defaults to 6.
+        0: int8
+        1: int16
+        2: int32
+        3: int64
+        4: float16
+        5: float32
+        6: float64
 
     Returns
     -------
@@ -224,7 +258,23 @@ def rfftfreq(n, d=1.0):
     val = 1.0/(n*d)
     N = n//2 + 1
     results = arange(0, N, dtype=int)
-    return results * val
+    frequencies = results * val
+    if t==0:
+        return int8(frequencies)
+    elif t==1:
+        return int16(frequencies)
+    if t==2:
+        return int32(frequencies)
+    elif t==3:
+        return int64(frequencies)
+    elif t==4:
+        return float16(frequencies)
+    elif t==5:
+        return float32(frequencies)
+    elif t==6:
+        return float64(frequencies)
+    else:
+        raise ValueError("Parameter t should be 0, 1, 2, 3, 4, 5 or 6. Instead got %s." % t)
 
 
 class _FFTCache(object):
