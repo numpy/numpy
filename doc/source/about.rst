@@ -40,8 +40,7 @@ Our main means of communication are:
 
 - `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (no longer used)
 
-More information about the development of NumPy can be found at
-http://scipy.org/Developer_Zone
+More information about the development of NumPy can be found at our `Developer Zone <http://scipy.org/Developer_Zone>`__.
 
 If you want to fix issues in this documentation, the easiest way
 is to participate in `our ongoing documentation marathon
