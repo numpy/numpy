@@ -588,7 +588,7 @@ NpyIter_Copy(NpyIter *iter)
                 }
                 else {
                     itemsize = dtypes[iop]->elsize;
-                    buffers[iop] = PyArray_malloc(itemsize*buffersize);
+                    buffers[iop] = PyDataMem_NEW(itemsize*buffersize);
                     if (buffers[iop] == NULL) {
                         out_of_memory = 1;
                     }
@@ -670,7 +670,7 @@ NpyIter_Deallocate(NpyIter *iter)
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
         for(iop = 0; iop < nop; ++iop, ++buffers) {
-            PyArray_free(*buffers);
+            PyDataMem_FREE(*buffers);
         }
         /* read bufferdata */
         transferdata = NBF_READTRANSFERDATA(bufferdata);

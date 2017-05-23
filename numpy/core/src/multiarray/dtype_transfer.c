@@ -156,7 +156,7 @@ typedef struct {
 static NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
 {
     _strided_zero_pad_data *newdata =
-            (_strided_zero_pad_data *)PyArray_malloc(
+            (_strided_zero_pad_data *)PyDataMem_NEW(
                                     sizeof(_strided_zero_pad_data));
     if (newdata == NULL) {
         return NULL;
@@ -260,14 +260,14 @@ PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
         return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
     }
     else {
-        _strided_zero_pad_data *d = PyArray_malloc(
+        _strided_zero_pad_data *d = PyDataMem_NEW(
                                         sizeof(_strided_zero_pad_data));
         if (d == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
         d->dst_itemsize = dst_itemsize;
-        d->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
+        d->base.free = (NpyAuxData_FreeFunc *)&PyDataMem_FREE;
         d->base.clone = &_strided_zero_pad_data_clone;
 
         if (unicode_swap) {
@@ -304,7 +304,7 @@ static void _align_wrap_data_free(NpyAuxData *data)
     NPY_AUXDATA_FREE(d->wrappeddata);
     NPY_AUXDATA_FREE(d->todata);
     NPY_AUXDATA_FREE(d->fromdata);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* transfer data copy function */
@@ -322,7 +322,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE*d->dst_itemsize;
 
     /* Allocate the data, and populate it */
-    newdata = (_align_wrap_data *)PyArray_malloc(datasize);
+    newdata = (_align_wrap_data *)PyDataMem_NEW(datasize);
     if (newdata == NULL) {
         return NULL;
     }
@@ -333,7 +333,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
     if (newdata->wrappeddata != NULL) {
         newdata->wrappeddata = NPY_AUXDATA_CLONE(d->wrappeddata);
         if (newdata->wrappeddata == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -341,7 +341,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
         newdata->todata = NPY_AUXDATA_CLONE(d->todata);
         if (newdata->todata == NULL) {
             NPY_AUXDATA_FREE(newdata->wrappeddata);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -350,7 +350,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
         if (newdata->fromdata == NULL) {
             NPY_AUXDATA_FREE(newdata->wrappeddata);
             NPY_AUXDATA_FREE(newdata->todata);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -484,7 +484,7 @@ wrap_aligned_contig_transfer_function(
                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_itemsize;
 
     /* Allocate the data, and populate it */
-    data = (_align_wrap_data *)PyArray_malloc(datasize);
+    data = (_align_wrap_data *)PyDataMem_NEW(datasize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -529,14 +529,14 @@ static void _wrap_copy_swap_data_free(NpyAuxData *data)
 {
     _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
     Py_DECREF(d->arr);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* wrap copy swap data copy function */
 static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
 {
     _wrap_copy_swap_data *newdata =
-        (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
+        (_wrap_copy_swap_data *)PyDataMem_NEW(sizeof(_wrap_copy_swap_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -571,7 +571,7 @@ wrap_copy_swap_function(int aligned,
     npy_intp shape = 1;
 
     /* Allocate the data for the copy swap */
-    data = (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
+    data = (_wrap_copy_swap_data *)PyDataMem_NEW(sizeof(_wrap_copy_swap_data));
     if (data == NULL) {
         PyErr_NoMemory();
         *out_stransfer = NULL;
@@ -592,7 +592,7 @@ wrap_copy_swap_function(int aligned,
     data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type, dtype,
                             1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->arr == NULL) {
-        PyArray_free(data);
+        PyDataMem_FREE(data);
         return NPY_FAIL;
     }
 
@@ -617,14 +617,14 @@ static void _strided_cast_data_free(NpyAuxData *data)
     _strided_cast_data *d = (_strided_cast_data *)data;
     Py_DECREF(d->aip);
     Py_DECREF(d->aop);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* strided cast data copy function */
 static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
 {
     _strided_cast_data *newdata =
-            (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
+            (_strided_cast_data *)PyDataMem_NEW(sizeof(_strided_cast_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -759,15 +759,15 @@ typedef struct {
 static void _strided_datetime_cast_data_free(NpyAuxData *data)
 {
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
-    PyArray_free(d->tmp_buffer);
-    PyArray_free(data);
+    PyDataMem_FREE(d->tmp_buffer);
+    PyDataMem_FREE(data);
 }
 
 /* strided datetime cast data copy function */
 static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 {
     _strided_datetime_cast_data *newdata =
-            (_strided_datetime_cast_data *)PyArray_malloc(
+            (_strided_datetime_cast_data *)PyDataMem_NEW(
                                         sizeof(_strided_datetime_cast_data));
     if (newdata == NULL) {
         return NULL;
@@ -775,9 +775,9 @@ static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 
     memcpy(newdata, data, sizeof(_strided_datetime_cast_data));
     if (newdata->tmp_buffer != NULL) {
-        newdata->tmp_buffer = PyArray_malloc(newdata->src_itemsize + 1);
+        newdata->tmp_buffer = PyDataMem_NEW(newdata->src_itemsize + 1);
         if (newdata->tmp_buffer == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -999,7 +999,7 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyDataMem_NEW(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1064,7 +1064,7 @@ get_nbo_datetime_to_string_transfer_function(int aligned,
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyDataMem_NEW(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1179,7 +1179,7 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyDataMem_NEW(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1190,10 +1190,10 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
     data->base.free = &_strided_datetime_cast_data_free;
     data->base.clone = &_strided_datetime_cast_data_clone;
     data->src_itemsize = src_dtype->elsize;
-    data->tmp_buffer = PyArray_malloc(data->src_itemsize + 1);
+    data->tmp_buffer = PyDataMem_NEW(data->src_itemsize + 1);
     if (data->tmp_buffer == NULL) {
         PyErr_NoMemory();
-        PyArray_free(data);
+        PyDataMem_FREE(data);
         *out_stransfer = NULL;
         *out_transferdata = NULL;
         return NPY_FAIL;
@@ -1418,7 +1418,7 @@ get_nbo_cast_transfer_function(int aligned,
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
+    data = (_strided_cast_data *)PyDataMem_NEW(sizeof(_strided_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
         *out_stransfer = NULL;
@@ -1441,14 +1441,14 @@ get_nbo_cast_transfer_function(int aligned,
     else {
         tmp_dtype = PyArray_DescrNewByteorder(src_dtype, NPY_NATIVE);
         if (tmp_dtype == NULL) {
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
     }
     data->aip = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
                             tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->aip == NULL) {
-        PyArray_free(data);
+        PyDataMem_FREE(data);
         return NPY_FAIL;
     }
     /*
@@ -1465,7 +1465,7 @@ get_nbo_cast_transfer_function(int aligned,
         tmp_dtype = PyArray_DescrNewByteorder(dst_dtype, NPY_NATIVE);
         if (tmp_dtype == NULL) {
             Py_DECREF(data->aip);
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
     }
@@ -1473,7 +1473,7 @@ get_nbo_cast_transfer_function(int aligned,
                             tmp_dtype, 1, &shape, NULL, NULL, 0, NULL, 0, 1);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
-        PyArray_free(data);
+        PyDataMem_FREE(data);
         return NPY_FAIL;
     }
 
@@ -1599,7 +1599,7 @@ static void _one_to_n_data_free(NpyAuxData *data)
     _one_to_n_data *d = (_one_to_n_data *)data;
     NPY_AUXDATA_FREE(d->data);
     NPY_AUXDATA_FREE(d->data_finish_src);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* transfer data copy function */
@@ -1609,7 +1609,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     _one_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
-    newdata = (_one_to_n_data *)PyArray_malloc(sizeof(_one_to_n_data));
+    newdata = (_one_to_n_data *)PyDataMem_NEW(sizeof(_one_to_n_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -1617,7 +1617,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     if (d->data != NULL) {
         newdata->data = NPY_AUXDATA_CLONE(d->data);
         if (newdata->data == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -1625,7 +1625,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
         newdata->data_finish_src = NPY_AUXDATA_CLONE(d->data_finish_src);
         if (newdata->data_finish_src == NULL) {
             NPY_AUXDATA_FREE(newdata->data);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -1706,7 +1706,7 @@ wrap_transfer_function_one_to_n(
     _one_to_n_data *data;
 
 
-    data = PyArray_malloc(sizeof(_one_to_n_data));
+    data = PyDataMem_NEW(sizeof(_one_to_n_data));
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -1801,7 +1801,7 @@ static void _n_to_n_data_free(NpyAuxData *data)
 {
     _n_to_n_data *d = (_n_to_n_data *)data;
     NPY_AUXDATA_FREE(d->data);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* transfer data copy function */
@@ -1811,7 +1811,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
     _n_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
-    newdata = (_n_to_n_data *)PyArray_malloc(sizeof(_n_to_n_data));
+    newdata = (_n_to_n_data *)PyDataMem_NEW(sizeof(_n_to_n_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -1819,7 +1819,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
     if (newdata->data != NULL) {
         newdata->data = NPY_AUXDATA_CLONE(d->data);
         if (newdata->data == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -1885,7 +1885,7 @@ wrap_transfer_function_n_to_n(
 {
     _n_to_n_data *data;
 
-    data = PyArray_malloc(sizeof(_n_to_n_data));
+    data = PyDataMem_NEW(sizeof(_n_to_n_data));
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -1982,7 +1982,7 @@ static void _subarray_broadcast_data_free(NpyAuxData *data)
     NPY_AUXDATA_FREE(d->data);
     NPY_AUXDATA_FREE(d->data_decsrcref);
     NPY_AUXDATA_FREE(d->data_decdstref);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* transfer data copy function */
@@ -1996,7 +1996,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
                         run_count*sizeof(_subarray_broadcast_offsetrun);
 
     /* Allocate the data and populate it */
-    newdata = (_subarray_broadcast_data *)PyArray_malloc(structsize);
+    newdata = (_subarray_broadcast_data *)PyDataMem_NEW(structsize);
     if (newdata == NULL) {
         return NULL;
     }
@@ -2004,7 +2004,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
     if (d->data != NULL) {
         newdata->data = NPY_AUXDATA_CLONE(d->data);
         if (newdata->data == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -2012,7 +2012,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
         newdata->data_decsrcref = NPY_AUXDATA_CLONE(d->data_decsrcref);
         if (newdata->data_decsrcref == NULL) {
             NPY_AUXDATA_FREE(newdata->data);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -2021,7 +2021,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
         if (newdata->data_decdstref == NULL) {
             NPY_AUXDATA_FREE(newdata->data);
             NPY_AUXDATA_FREE(newdata->data_decsrcref);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -2147,7 +2147,7 @@ get_subarray_broadcast_transfer_function(int aligned,
                         dst_size*sizeof(_subarray_broadcast_offsetrun);
 
     /* Allocate the data and populate it */
-    data = (_subarray_broadcast_data *)PyArray_malloc(structsize);
+    data = (_subarray_broadcast_data *)PyDataMem_NEW(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -2164,7 +2164,7 @@ get_subarray_broadcast_transfer_function(int aligned,
                     0,
                     &data->stransfer, &data->data,
                     out_needs_api) != NPY_SUCCEED) {
-        PyArray_free(data);
+        PyDataMem_FREE(data);
         return NPY_FAIL;
     }
     data->base.free = &_subarray_broadcast_data_free;
@@ -2184,7 +2184,7 @@ get_subarray_broadcast_transfer_function(int aligned,
                         &data->data_decsrcref,
                         out_needs_api) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE(data->data);
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
     }
@@ -2204,7 +2204,7 @@ get_subarray_broadcast_transfer_function(int aligned,
                         out_needs_api) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE(data->data);
             NPY_AUXDATA_FREE(data->data_decsrcref);
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
     }
@@ -2440,7 +2440,7 @@ static void _field_transfer_data_free(NpyAuxData *data)
     for (i = 0; i < field_count; ++i) {
         NPY_AUXDATA_FREE(fields[i].data);
     }
-    PyArray_free(d);
+    PyDataMem_FREE(d);
 }
 
 /* transfer data copy function */
@@ -2455,7 +2455,7 @@ static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
                     field_count * sizeof(_single_field_transfer);
 
     /* Allocate the data and populate it */
-    newdata = (_field_transfer_data *)PyArray_malloc(structsize);
+    newdata = (_field_transfer_data *)PyDataMem_NEW(structsize);
     if (newdata == NULL) {
         return NULL;
     }
@@ -2470,7 +2470,7 @@ static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
                 for (i = i-1; i >= 0; --i) {
                     NPY_AUXDATA_FREE(newfields[i].data);
                 }
-                PyArray_free(newdata);
+                PyDataMem_FREE(newdata);
                 return NULL;
             }
         }
@@ -2547,7 +2547,7 @@ get_fields_transfer_function(int aligned,
         structsize = sizeof(_field_transfer_data) +
                         (field_count + 1) * sizeof(_single_field_transfer);
         /* Allocate the data and populate it */
-        data = (_field_transfer_data *)PyArray_malloc(structsize);
+        data = (_field_transfer_data *)PyDataMem_NEW(structsize);
         if (data == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
@@ -2561,7 +2561,7 @@ get_fields_transfer_function(int aligned,
             tup = PyDict_GetItem(dst_dtype->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             if (PyArray_GetDTypeTransferFunction(0,
@@ -2574,7 +2574,7 @@ get_fields_transfer_function(int aligned,
                 for (i = i-1; i >= 0; --i) {
                     NPY_AUXDATA_FREE(fields[i].data);
                 }
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             fields[i].src_offset = 0;
@@ -2596,7 +2596,7 @@ get_fields_transfer_function(int aligned,
                 for (i = 0; i < field_count; ++i) {
                     NPY_AUXDATA_FREE(fields[i].data);
                 }
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             fields[field_count].src_offset = 0;
@@ -2629,7 +2629,7 @@ get_fields_transfer_function(int aligned,
         structsize = sizeof(_field_transfer_data) +
                         field_count * sizeof(_single_field_transfer);
         /* Allocate the data and populate it */
-        data = (_field_transfer_data *)PyArray_malloc(structsize);
+        data = (_field_transfer_data *)PyDataMem_NEW(structsize);
         if (data == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
@@ -2642,7 +2642,7 @@ get_fields_transfer_function(int aligned,
         tup = PyDict_GetItem(src_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
         field_count = 0;
@@ -2657,7 +2657,7 @@ get_fields_transfer_function(int aligned,
                                     &fields[field_count].stransfer,
                                     &fields[field_count].data,
                                     out_needs_api) != NPY_SUCCEED) {
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             fields[field_count].src_offset = 0;
@@ -2674,7 +2674,7 @@ get_fields_transfer_function(int aligned,
                             &fields[field_count].data,
                             out_needs_api) != NPY_SUCCEED) {
                     NPY_AUXDATA_FREE(fields[0].data);
-                    PyArray_free(data);
+                    PyDataMem_FREE(data);
                     return NPY_FAIL;
                 }
                 fields[field_count].src_offset = src_offset;
@@ -2692,7 +2692,7 @@ get_fields_transfer_function(int aligned,
                                     &fields[field_count].stransfer,
                                     &fields[field_count].data,
                                     out_needs_api) != NPY_SUCCEED) {
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             fields[field_count].src_offset = src_offset;
@@ -2724,7 +2724,7 @@ get_fields_transfer_function(int aligned,
                         for (i = field_count-1; i >= 0; --i) {
                             NPY_AUXDATA_FREE(fields[i].data);
                         }
-                        PyArray_free(data);
+                        PyDataMem_FREE(data);
                         return NPY_FAIL;
                     }
                     fields[field_count].src_offset = src_offset;
@@ -2792,7 +2792,7 @@ get_fields_transfer_function(int aligned,
         structsize = sizeof(_field_transfer_data) +
                         field_count * sizeof(_single_field_transfer);
         /* Allocate the data and populate it */
-        data = (_field_transfer_data *)PyArray_malloc(structsize);
+        data = (_field_transfer_data *)PyDataMem_NEW(structsize);
         if (data == NULL) {
             PyErr_NoMemory();
             Py_XDECREF(used_names_dict);
@@ -2810,7 +2810,7 @@ get_fields_transfer_function(int aligned,
                 for (i = i-1; i >= 0; --i) {
                     NPY_AUXDATA_FREE(fields[i].data);
                 }
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 Py_XDECREF(used_names_dict);
                 return NPY_FAIL;
             }
@@ -2821,7 +2821,7 @@ get_fields_transfer_function(int aligned,
                     for (i = i-1; i >= 0; --i) {
                         NPY_AUXDATA_FREE(fields[i].data);
                     }
-                    PyArray_free(data);
+                    PyDataMem_FREE(data);
                     Py_XDECREF(used_names_dict);
                     return NPY_FAIL;
                 }
@@ -2835,7 +2835,7 @@ get_fields_transfer_function(int aligned,
                     for (i = i-1; i >= 0; --i) {
                         NPY_AUXDATA_FREE(fields[i].data);
                     }
-                    PyArray_free(data);
+                    PyDataMem_FREE(data);
                     Py_XDECREF(used_names_dict);
                     return NPY_FAIL;
                 }
@@ -2857,7 +2857,7 @@ get_fields_transfer_function(int aligned,
                     for (i = i-1; i >= 0; --i) {
                         NPY_AUXDATA_FREE(fields[i].data);
                     }
-                    PyArray_free(data);
+                    PyDataMem_FREE(data);
                     Py_XDECREF(used_names_dict);
                     return NPY_FAIL;
                 }
@@ -2882,7 +2882,7 @@ get_fields_transfer_function(int aligned,
                         for (i = field_count-1; i >= 0; --i) {
                             NPY_AUXDATA_FREE(fields[i].data);
                         }
-                        PyArray_free(data);
+                        PyDataMem_FREE(data);
                         Py_XDECREF(used_names_dict);
                         return NPY_FAIL;
                     }
@@ -2896,7 +2896,7 @@ get_fields_transfer_function(int aligned,
                             for (i = field_count-1; i >= 0; --i) {
                                 NPY_AUXDATA_FREE(fields[i].data);
                             }
-                            PyArray_free(data);
+                            PyDataMem_FREE(data);
                             return NPY_FAIL;
                         }
                         fields[field_count].src_offset = src_offset;
@@ -2942,7 +2942,7 @@ get_decsrcref_fields_transfer_function(int aligned,
     structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
     /* Allocate the data and populate it */
-    data = (_field_transfer_data *)PyArray_malloc(structsize);
+    data = (_field_transfer_data *)PyDataMem_NEW(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -2957,7 +2957,7 @@ get_decsrcref_fields_transfer_function(int aligned,
         tup = PyDict_GetItem(src_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
         if (PyDataType_REFCHK(src_fld_dtype)) {
@@ -2973,7 +2973,7 @@ get_decsrcref_fields_transfer_function(int aligned,
                 for (i = field_count-1; i >= 0; --i) {
                     NPY_AUXDATA_FREE(fields[i].data);
                 }
-                PyArray_free(data);
+                PyDataMem_FREE(data);
                 return NPY_FAIL;
             }
             fields[field_count].src_offset = src_offset;
@@ -3013,7 +3013,7 @@ get_setdestzero_fields_transfer_function(int aligned,
     structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
     /* Allocate the data and populate it */
-    data = (_field_transfer_data *)PyArray_malloc(structsize);
+    data = (_field_transfer_data *)PyDataMem_NEW(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
@@ -3027,7 +3027,7 @@ get_setdestzero_fields_transfer_function(int aligned,
         tup = PyDict_GetItem(dst_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
         if (get_setdstzero_transfer_function(0,
@@ -3039,7 +3039,7 @@ get_setdestzero_fields_transfer_function(int aligned,
             for (i = i-1; i >= 0; --i) {
                 NPY_AUXDATA_FREE(fields[i].data);
             }
-            PyArray_free(data);
+            PyDataMem_FREE(data);
             return NPY_FAIL;
         }
         fields[i].src_offset = 0;
@@ -3074,7 +3074,7 @@ static void _masked_wrapper_transfer_data_free(NpyAuxData *data)
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
     NPY_AUXDATA_FREE(d->transferdata);
     NPY_AUXDATA_FREE(d->decsrcref_transferdata);
-    PyArray_free(data);
+    PyDataMem_FREE(data);
 }
 
 /* transfer data copy function */
@@ -3084,7 +3084,7 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
     _masked_wrapper_transfer_data *newdata;
 
     /* Allocate the data and populate it */
-    newdata = (_masked_wrapper_transfer_data *)PyArray_malloc(
+    newdata = (_masked_wrapper_transfer_data *)PyDataMem_NEW(
                                     sizeof(_masked_wrapper_transfer_data));
     if (newdata == NULL) {
         return NULL;
@@ -3095,7 +3095,7 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
     if (newdata->transferdata != NULL) {
         newdata->transferdata = NPY_AUXDATA_CLONE(newdata->transferdata);
         if (newdata->transferdata == NULL) {
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -3104,7 +3104,7 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
                         NPY_AUXDATA_CLONE(newdata->decsrcref_transferdata);
         if (newdata->decsrcref_transferdata == NULL) {
             NPY_AUXDATA_FREE(newdata->transferdata);
-            PyArray_free(newdata);
+            PyDataMem_FREE(newdata);
             return NULL;
         }
     }
@@ -3247,7 +3247,7 @@ typedef struct {
 static NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
 {
     _dst_memset_zero_data *newdata =
-            (_dst_memset_zero_data *)PyArray_malloc(
+            (_dst_memset_zero_data *)PyDataMem_NEW(
                                     sizeof(_dst_memset_zero_data));
     if (newdata == NULL) {
         return NULL;
@@ -3326,13 +3326,13 @@ get_setdstzero_transfer_function(int aligned,
     /* If there are no references, just set the whole thing to zero */
     if (!PyDataType_REFCHK(dst_dtype)) {
         data = (_dst_memset_zero_data *)
-                        PyArray_malloc(sizeof(_dst_memset_zero_data));
+                        PyDataMem_NEW(sizeof(_dst_memset_zero_data));
         if (data == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
 
-        data->base.free = (NpyAuxData_FreeFunc *)(&PyArray_free);
+        data->base.free = (NpyAuxData_FreeFunc *)(&PyDataMem_FREE);
         data->base.clone = &_dst_memset_zero_data_clone;
         data->dst_itemsize = dst_dtype->elsize;
 
@@ -3848,7 +3848,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
     }
 
     /* Create the wrapper function's auxdata */
-    data = (_masked_wrapper_transfer_data *)PyArray_malloc(
+    data = (_masked_wrapper_transfer_data *)PyDataMem_NEW(
                             sizeof(_masked_wrapper_transfer_data));
     if (data == NULL) {
         PyErr_NoMemory();

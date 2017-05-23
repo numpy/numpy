@@ -3192,6 +3192,10 @@ Memory management
     constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
     :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
     the Python memory allocator is used.
+    These functions should not be used to allocate array data as they do not
+    guarantee sufficient alignment for all numeric types.
+    PyDataMem_NEW/FREE/RENEW should be used for that purpose.
+
 
 
 Threading support

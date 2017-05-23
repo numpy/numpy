@@ -340,6 +340,11 @@ struct NpyAuxData_tag {
 
 #define NPY_USE_PYMEM 1
 
+/*
+ * these functions should not be used to allocate array data as they do not
+ * guarantee sufficient alignment for all numeric types
+ * PyDataMem_* should be used for that purpose
+ */
 #if NPY_USE_PYMEM == 1
    /* numpy sometimes calls PyArray_malloc() with the GIL released. On Python
       3.3 and older, it was safe to call PyMem_Malloc() with the GIL released.
