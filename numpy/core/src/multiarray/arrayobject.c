@@ -1345,6 +1345,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         result = PyArray_GenericBinaryFunction(self, other, n_ops.less_equal);
         break;
     case Py_EQ:
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1392,7 +1393,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(self,
                 (PyObject *)other,
                 n_ops.equal);
@@ -1418,6 +1418,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_NE:
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1465,7 +1466,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
                 n_ops.not_equal);
         if (result == NULL) {
