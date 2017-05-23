@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.test_rational import rational
 from numpy.testing import (
     run_module_suite, assert_equal, assert_array_equal,
     assert_raises, assert_
@@ -316,6 +317,13 @@ def test_as_strided():
     a = np.empty((4,), dtype=dt)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
+
+    # Custom dtypes should not be lost (gh-9161)
+    r = [rational(i) for i in range(4)]
+    a = np.array(r, dtype=rational)
+    a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
+    assert_equal(a.dtype, a_view.dtype)
+    assert_array_equal([r] * 3, a_view)
 
 def as_strided_writeable():
     arr = np.ones(10)
