@@ -1718,8 +1718,6 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
  * a date time unit enum value. The 'metastr' parameter
  * is used for error messages, and may be NULL.
  *
- * Generic units have no representation as a string in this form.
- *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
@@ -1760,6 +1758,9 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr)
             case 'a':
                 return NPY_FR_as;
         }
+    }
+    else if (len == 7 && !strncmp(str, "generic", 7)) {
+        return NPY_FR_GENERIC;
     }
 
     /* If nothing matched, it's an error */
