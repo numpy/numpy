@@ -2935,7 +2935,7 @@ class MaskedArray(ndarray):
         Copies some attributes of obj to self.
 
         """
-        if obj is not None and isinstance(obj, ndarray):
+        if isinstance(obj, ndarray):
             _baseclass = type(obj)
         else:
             _baseclass = ndarray
