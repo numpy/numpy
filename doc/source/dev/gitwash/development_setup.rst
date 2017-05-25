@@ -105,6 +105,11 @@ Note that we've used ``git://`` for the URL rather than ``https://``.  The
 (or deliberately) write to the upstream repo, and we are only going to
 use it to merge into our own code.
 
+But git protocol is commonly blocked by big corporate firewalls. 
+To prevent this, you can use SSH or HTTPS. 
+To change the url, you can use ``git remote set-url upstream new-url``.
+For more info, visit `git protocols`_.
+
 Just for your own satisfaction, show yourself that you now have a new
 'remote', with ``git remote -v show``, giving you something like::
 
