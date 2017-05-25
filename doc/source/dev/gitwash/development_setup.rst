@@ -62,7 +62,7 @@ Overview
 
    git clone https://github.com/your-user-name/numpy.git
    cd numpy
-   git remote add upstream git://github.com/numpy/numpy.git
+   git remote add upstream https://github.com/numpy/numpy.git
 
 In detail
 =========
@@ -95,26 +95,16 @@ Linking your repository to the upstream repo
 ::
 
    cd numpy
-   git remote add upstream git://github.com/numpy/numpy.git
+   git remote add upstream https://github.com/numpy/numpy.git
 
 ``upstream`` here is just the arbitrary name we're using to refer to the
 main NumPy_ repository at `NumPy github`_.
 
-Note that we've used ``git://`` for the URL rather than ``https://``.  The
-``git://`` URL is read only.  This means we that we can't accidentally
-(or deliberately) write to the upstream repo, and we are only going to
-use it to merge into our own code.
-
-But git protocol is commonly blocked by big corporate firewalls. 
-To prevent this, you can use SSH or HTTPS. 
-To change the url, you can use ``git remote set-url upstream new-url``.
-For more info, visit `git protocols`_.
-
 Just for your own satisfaction, show yourself that you now have a new
 'remote', with ``git remote -v show``, giving you something like::
 
-   upstream	git://github.com/numpy/numpy.git (fetch)
-   upstream	git://github.com/numpy/numpy.git (push)
+   upstream	https://github.com/numpy/numpy.git (fetch)
+   upstream	https://github.com/numpy/numpy.git (push)
    origin	https://github.com/your-user-name/numpy.git (fetch)
    origin	https://github.com/your-user-name/numpy.git (push)
 
@@ -143,7 +133,7 @@ Your config file should now look something like (from
            url = https://github.com/your-user-name/numpy.git
            fetch = +refs/heads/*:refs/remotes/origin/*
    [remote "upstream"]
-           url = git://github.com/numpy/numpy.git
+           url = https://github.com/numpy/numpy.git
            fetch = +refs/heads/*:refs/remotes/upstream/*
            fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
    [branch "master"]
