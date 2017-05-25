@@ -2438,6 +2438,29 @@ class TestMethods(TestCase):
             assert_raises(ValueError, np.dot, a, b, out=b[::2])
             assert_raises(ValueError, np.dot, a, b, out=b.T)
 
+    def test_dot_zero_strides(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        for dt in types:
+            # stride is zero
+            a0 = np.broadcast_to(np.zeros(1, dt), (2))
+            # non-zero
+            a1 = np.zeros(2, dt)
+
+            # zero, zero
+            b0 = np.broadcast_to(np.zeros(1, dt), (2, 2))
+            # zero, non-zero
+            b1 = np.broadcast_to(np.zeros(2, dt), (2, 2))
+            # non-zero, zero
+            b2 = np.broadcast_to(np.zeros(2, dt)[:, None], (2, 2))
+            # non-zero, non-zero
+            b3 = np.zeros((2, 2), dt)
+
+            for a, b in itertools.product([a0, a1], [b0, b1, b2, b3]):
+                c = a.dot(b)
+                assert_equal(c, [0, 0])
+                d = b.dot(a)
+                assert_equal(d, [0, 0])
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])

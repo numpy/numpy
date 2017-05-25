@@ -636,6 +636,17 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
                 goto fail;
             }
         }
+        if (PyArray_STRIDE(ap2, 0) == 0) {
+            /* We need to make a copy because gemv forbids incX == 0  */
+            PyObject *new;
+
+            new = PyArray_Copy(ap2);
+            Py_DECREF (ap2);
+            ap2 = (PyArrayObject *)new;
+            if (new == NULL) {
+              goto fail;
+            }
+        }
         NPY_BEGIN_ALLOW_THREADS
         if (PyArray_ISCONTIGUOUS(ap1)) {
             Order = CblasRowMajor;
@@ -661,6 +672,18 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             ap2 = (PyArrayObject *)new;
             if (new == NULL) {
                 goto fail;
+            }
+        }
+        if ((ap1shape == _row && PyArray_STRIDE(ap1, 1) == 0) ||
+                (ap1shape != _row && PyArray_STRIDE(ap1, 0) == 0)) {
+            /* We need to make a copy because gemv forbids incX == 0  */
+            PyObject *new;
+
+            new = PyArray_Copy(ap1);
+            Py_DECREF (ap1);
+            ap1 = (PyArrayObject *)new;
+            if (new == NULL) {
+              goto fail;
             }
         }
         NPY_BEGIN_ALLOW_THREADS
