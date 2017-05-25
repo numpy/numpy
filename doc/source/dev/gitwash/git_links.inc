@@ -56,6 +56,7 @@
 .. _learn git: https://www.atlassian.com/git/tutorials/
 .. _filing pull requests: https://help.github.com/articles/using-pull-requests/#initiating-the-pull-request
 .. _pull request review: https://help.github.com/articles/using-pull-requests/#reviewing-the-pull-request
+.. _`git protocols`: https://git-scm.com/book/id/v2/Git-on-the-Server-The-Protocols
 
 
 .. other stuff
