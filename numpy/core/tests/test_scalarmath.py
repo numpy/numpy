@@ -10,7 +10,7 @@ from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings
+    suppress_warnings, dec,
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -401,9 +401,22 @@ class TestConversion(TestCase):
     def test_longdouble_int(self):
         # gh-627
         x = np.longdouble(np.inf)
+        assert_raises(OverflowError, int, x)
+        with suppress_warnings() as sup:
+            sup.record(np.ComplexWarning)
+            x = np.clongdouble(np.inf)
+            assert_raises(OverflowError, int, x)
+            self.assertEqual(len(sup.log), 1)
+
+    @dec.knownfailureif(not IS_PYPY)
+    def test_clongdouble___int__(self):
+        x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
-        x = np.clongdouble(np.inf)
-        assert_raises(OverflowError, x.__int__)
+        with suppress_warnings() as sup:
+            sup.record(np.ComplexWarning)
+            x = np.clongdouble(np.inf)
+            assert_raises(OverflowError, x.__int__)
+            self.assertEqual(len(sup.log), 1)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
