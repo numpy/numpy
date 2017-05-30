@@ -672,6 +672,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         mn -= 0.5
         mx += 0.5
 
+    mn, mx = a.dtype.type(mn), a.dtype.type(mn)
+
     if isinstance(bins, basestring):
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
