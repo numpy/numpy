@@ -45,6 +45,7 @@ Misc Functions
 - `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
 - `chebweight` -- Chebyshev weight function.
 - `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
+- `chebinterp` -- approximate a function with Chebyshev polynomials.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
@@ -102,7 +103,7 @@ __all__ = [
     'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
     'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight']
+    'chebgauss', 'chebweight', 'chebinterp']
 
 chebtrim = pu.trimcoef
 
@@ -1828,6 +1829,74 @@ def chebcompanion(c):
     bot[...] = top
     mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
+
+
+def chebinterp(func, n, interval, args=()):
+    """Approximate a function using Chebyshev polynomial interpolation.
+
+    Returns the n Chebyshev series coefficients that approximate the given
+    function over the specified interval.
+
+    Parameters
+    ----------
+    func : function
+        The function to be approximated. It must be a function of a single
+        variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
+        that can be passed in the `args` parameter.
+
+    n : integer
+        The highest degree of Chebyshev polynomial that is used to approximate
+        the function.
+
+    interval : tuple
+        The interval in which the function is being approximated.
+
+    args : tuple, optional
+        Extra arguments to be used in the function call.
+
+    Returns
+    -------
+    c : array_like
+        1-D array of length `n` of Chebyshev series coefficients ordered from 
+        low to high degree. 
+
+    Notes
+    -----
+    The Chebyshev series coefficients that result from this process approximate
+    the function as if it were on the interval [-1, 1]. You will have to
+    compute the y-values of the Chebyshev series using the interval [-1, 1] and
+    display the plot with the original `interval` to visually compare the
+    original function and the Chebyshev polynomial interpolation approximation.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import numpy.polynomial.chebyshev as C
+    >>> def f(x):
+    ...   return np.tanh(x)+0.5
+    ... 
+    >>> C.chebinterp(f, [0, 2*np.pi], 8)
+    array([ 1.30198814,  0.3540514 , -0.25209078,  0.14032589, -0.05706644,
+            0.01226391,  0.00367748, -0.00455335])
+
+    .. versionadded::1.13.0
+
+    """
+    if len(interval) != 2:
+        raise TypeError("Expected interval tuple to have length 2.")
+
+    a, b = interval
+    xk = chebpts1(n)
+
+    c = np.zeros(n)
+    for j in range(n):
+        for x in xk:
+            myargs = (0.5*(x*(b-a)+(b+a)),) + args
+            c[j] += func(*myargs)*np.cos(j*np.arccos(x))
+        c[j] *= 2/n
+    c[0] *= 0.5
+
+    return c
 
 
 def chebroots(c):
