@@ -52,6 +52,7 @@ Misc Functions
 - `chebline` -- Chebyshev series representing given straight line.
 - `cheb2poly` -- convert a Chebyshev series to a polynomial.
 - `poly2cheb` -- convert a polynomial to a Chebyshev series.
+- `chebinterp` -- approximate a function with Chebyshev polynomials.
 
 Classes
 -------
@@ -87,6 +88,7 @@ References
 """
 from __future__ import division, absolute_import, print_function
 
+import numbers
 import warnings
 import numpy as np
 import numpy.linalg as la
@@ -102,7 +104,7 @@ __all__ = [
     'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
     'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight']
+    'chebgauss', 'chebweight', 'chebinterp']
 
 chebtrim = pu.trimcoef
 
@@ -1886,6 +1888,55 @@ def chebroots(c):
     return r
 
 
+def chebinterp(func, deg, args=()):
+    """Return the Chebyshev series instance that interpolates a given function
+    at the Chebyshev points of the first kind over the interval [-1, 1].
+
+    Parameters
+    ----------
+    func : function
+        The function to be approximated. It must be a function of a single
+        variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
+        that can be passed in the `args` parameter.
+    deg : int
+        Degree of the resulting polynomial expressed in a Chebyshev basis.
+    args : tuple, optional
+        Extra arguments to be used in the function call.
+
+    Returns
+    -------
+    new_series : series
+        A series that represents the polynomial interpolation
+        to the function.
+
+    Examples
+    --------
+    >>> from numpy import tanh, pi
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebinterp(lambda x: tanh(x)+0.5, 8, domain=[0, 2*np.pi])
+    array([ 1.30198814,  0.3540514 , -0.25209078,  0.14032589, -0.05706644,
+            0.01226391,  0.00367748, -0.00455335])
+
+    .. versionadded:: 1.14.0
+
+    """
+    ideg = int(deg)
+    if ideg != deg:
+        raise ValueError("deg must be integer")
+    if ideg < 0:
+        raise ValueError("deg must be non-negative")
+
+    degp1 = deg+1
+    xcheb = chebpts1(degp1)
+    yfunc = func(xcheb, *args)
+    m = chebvander(xcheb, deg)
+    c = np.dot(m.T, yfunc)
+    c[0] /= degp1
+    c[1:] /= 0.5*degp1
+
+    return c
+
+
 def chebgauss(deg):
     """
     Gauss-Chebyshev quadrature.
@@ -2068,6 +2119,13 @@ class Chebyshev(ABCPolyBase):
     _line = staticmethod(chebline)
     _roots = staticmethod(chebroots)
     _fromroots = staticmethod(chebfromroots)
+
+    @classmethod
+    def fromfunction(cls, func, deg, domain=None, args=()):
+        """Wrapper method for chebinterp()"""
+        xfunc = lambda x: func(pu.mapdomain(x, [-1, 1], domain))
+        coef = chebinterp(xfunc, deg, args)
+        return cls(coef, domain=domain, window=chebdomain)
 
     # Virtual properties
     nickname = 'cheb'
