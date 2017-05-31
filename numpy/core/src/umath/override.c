@@ -472,39 +472,15 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         status = -1;
     }
     if (status != 0) {
-        Py_XDECREF(normal_args);
         goto fail;
     }
 
-    len = PyTuple_GET_SIZE(normal_args);
-    override_args = PyTuple_New(len + 3);
-    if (override_args == NULL) {
-        goto fail;
-    }
-
-    /*
-     * Set override arguments. The first is set to None here but will be
-     * overridden below.  We increase all references since SET_ITEM steals
-     * them and they will be DECREF'd when the tuple is deleted.
-     */
-    /* PyTuple_SET_ITEM steals reference */
-    Py_INCREF(Py_None);
-    PyTuple_SET_ITEM(override_args, 0, Py_None);
-    Py_INCREF(ufunc);
-    PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
     method_name = PyUString_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }
-    Py_INCREF(method_name);
-    PyTuple_SET_ITEM(override_args, 2, method_name);
-    for (i = 0; i < len; i++) {
-        PyObject *item = PyTuple_GET_ITEM(normal_args, i);
 
-        Py_INCREF(item);
-        PyTuple_SET_ITEM(override_args, i + 3, item);
-    }
-    Py_DECREF(normal_args);
+    len = PyTuple_GET_SIZE(normal_args);
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
@@ -545,6 +521,26 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                 break;
             }
         }
+        /*
+         * Set override arguments for each call since the tuple must
+         * not be mutated after use in PyPy
+         * We increase all references since SET_ITEM steals
+         * them and they will be DECREF'd when the tuple is deleted.
+         */
+        override_args = PyTuple_New(len + 3);
+        if (override_args == NULL) {
+            goto fail;
+        }
+        Py_INCREF(ufunc);
+        PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
+        Py_INCREF(method_name);
+        PyTuple_SET_ITEM(override_args, 2, method_name);
+        for (i = 0; i < len; i++) {
+            PyObject *item = PyTuple_GET_ITEM(normal_args, i);
+
+            Py_INCREF(item);
+            PyTuple_SET_ITEM(override_args, i + 3, item);
+        }
 
         /* Check if there is a method left to call */
         if (!override_obj) {
@@ -555,7 +551,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             npy_cache_import("numpy.core._internal",
                              "array_ufunc_errmsg_formatter",
                              &errmsg_formatter);
+
             if (errmsg_formatter != NULL) {
+                /* All tuple items must be set before use */
+                Py_INCREF(Py_None);
+                PyTuple_SET_ITEM(override_args, 0, Py_None);
                 errmsg = PyObject_Call(errmsg_formatter, override_args,
                                        normal_kwds);
                 if (errmsg != NULL) {
@@ -563,6 +563,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                     Py_DECREF(errmsg);
                 }
             }
+            Py_DECREF(override_args);
             goto fail;
         }
 
@@ -570,11 +571,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
          * Set the self argument of our unbound method.
          * This also steals the reference, so no need to DECREF after.
          */
-        PyTuple_SetItem(override_args, 0, override_obj);
+        PyTuple_SET_ITEM(override_args, 0, override_obj);
         /* Call the method */
         *result = PyObject_Call(
             override_array_ufunc, override_args, normal_kwds);
         Py_DECREF(override_array_ufunc);
+        Py_DECREF(override_args);
         if (*result == NULL) {
             /* Exception occurred */
             goto fail;
@@ -599,8 +601,8 @@ cleanup:
         Py_XDECREF(with_override[i]);
         Py_XDECREF(array_ufunc_methods[i]);
     }
+    Py_XDECREF(normal_args);
     Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
-    Py_XDECREF(override_args);
     return status;
 }
