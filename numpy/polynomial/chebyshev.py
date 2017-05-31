@@ -1221,7 +1221,7 @@ def chebval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1281,7 +1281,7 @@ def chebgrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1334,7 +1334,7 @@ def chebval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1398,7 +1398,7 @@ def chebgrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1509,7 +1509,7 @@ def chebvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1573,7 +1573,7 @@ def chebvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1809,7 +1809,7 @@ def chebcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1831,11 +1831,10 @@ def chebcompanion(c):
     return mat
 
 
-def chebinterp(func, n, interval, args=()):
+def chebinterp(func, deg, x=None, args=(), domain=None, window=None):
     """Approximate a function using Chebyshev polynomial interpolation.
 
-    Returns the n Chebyshev series coefficients that approximate the given
-    function over the specified interval.
+    Return the Chebyshev series instance that interpolates a given function.
 
     Parameters
     ----------
@@ -1843,57 +1842,57 @@ def chebinterp(func, n, interval, args=()):
         The function to be approximated. It must be a function of a single
         variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
         that can be passed in the `args` parameter.
-
-    n : integer
-        The highest degree of Chebyshev polynomial that is used to approximate
-        the function.
-
-    interval : tuple
-        The interval in which the function is being approximated.
-
+    deg : int or 1-D array_like
+        Degree(s) of the fitting Chebyshev polynomials. If `deg` is a single
+        integer all terms up to and including the `deg`'th term are included in
+        the interpolation.
+    x : array_like, shape (M,), optional
+        Defines window of interpolation. The window of the series
+        is given by the lowest and highest members of this list.
     args : tuple, optional
         Extra arguments to be used in the function call.
+    domain : [beg, end], optional
+        Unused. Overridden to `[-1, 1]` for Chebyshev polynomial interpolation.
+    window : [beg, end], optional
+        Window to use for the returned series. The default value is the
+        extrema of `x`.
 
     Returns
     -------
-    c : array_like
-        1-D array of length `n` of Chebyshev series coefficients ordered from 
-        low to high degree. 
+    new_series : series
+        A series that represents the polynomial interpolation
+        to the function.
 
-    Notes
-    -----
-    The Chebyshev series coefficients that result from this process approximate
-    the function as if it were on the interval [-1, 1]. You will have to
-    compute the y-values of the Chebyshev series using the interval [-1, 1] and
-    display the plot with the original `interval` to visually compare the
-    original function and the Chebyshev polynomial interpolation approximation.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> from numpy import tanh, pi
     >>> import numpy.polynomial.chebyshev as C
-    >>> def f(x):
-    ...   return np.tanh(x)+0.5
-    ... 
-    >>> C.chebinterp(f, [0, 2*np.pi], 8)
+    >>> C.chebinterp(lambda x: tanh(x)+0.5, [0, 2*pi], 8)
     array([ 1.30198814,  0.3540514 , -0.25209078,  0.14032589, -0.05706644,
             0.01226391,  0.00367748, -0.00455335])
 
-    .. versionadded::1.13.0
+    .. versionadded:: 1.14.0
 
     """
-    if len(interval) != 2:
-        raise TypeError("Expected interval tuple to have length 2.")
+    warnings.warn("Defaulting to Chebyshev nodes and domain for "
+                  "polynomial interpolation")
+    domain = chebdomain
+    if window is None:  # here in case people want to use it as its own method
+        try:
+            window = pu.getdomain(x)
+        except:
+            warnings.warn("window defaulting to Chebyshev domain")
+            window = chebdomain
+    x = chebpts1(deg)
+    xfunc = pu.mapdomain(x, domain, window)
 
-    a, b = interval
-    xk = chebpts1(n)
-
-    c = np.zeros(n)
-    for j in range(n):
-        for x in xk:
-            myargs = (0.5*(x*(b-a)+(b+a)),) + args
-            c[j] += func(*myargs)*np.cos(j*np.arccos(x))
-        c[j] *= 2/n
+    c = np.zeros(deg)
+    for j in range(deg):
+        for k in range(deg):
+            myargs = (xfunc[k],) + args
+            c[j] += func(*myargs)*np.cos(j*np.arccos(x[k]))
+        c[j] *= 2/deg
     c[0] *= 0.5
 
     return c
@@ -2135,6 +2134,7 @@ class Chebyshev(ABCPolyBase):
     _der = staticmethod(chebder)
     _fit = staticmethod(chebfit)
     _line = staticmethod(chebline)
+    _interp = staticmethod(chebinterp)
     _roots = staticmethod(chebroots)
     _fromroots = staticmethod(chebfromroots)
 
