@@ -1529,12 +1529,6 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     if (!writeable) {
         tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp != Py_NotImplemented) {
-            if (writeable
-                && PyArray_FailUnlessWriteable((PyArrayObject *)tmp,
-                                               "array interface object") < 0) {
-                Py_DECREF(tmp);
-                return -1;
-            }
             *out_arr = (PyArrayObject *)tmp;
             return (*out_arr) == NULL ? -1 : 0;
         }
