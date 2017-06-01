@@ -4607,15 +4607,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
         return RETVAL;
     }
-/* FIXME
- * There is no error handling here
- */
+
     c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
-    PyDict_SetItemString(d, "_ARRAY_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
+    if (c_api == NULL) {
         goto err;
     }
+    PyDict_SetItemString(d, "_ARRAY_API", c_api);
+    Py_DECREF(c_api);
 
     /*
      * PyExc_Exception should catch all the standard errors that are
@@ -4633,10 +4631,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-/* FIXME
- * There is no error handling here
- */
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
+    if (s == NULL) {
+        goto err;
+    }
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
@@ -4666,23 +4664,15 @@ PyMODINIT_FUNC initmultiarray(void) {
     ADDCONST(MAY_SHARE_EXACT);
 #undef ADDCONST
 
-    Py_INCREF(&PyArray_Type);
     PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
-    Py_INCREF(&PyArrayIter_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
-    Py_INCREF(&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
-    Py_INCREF(&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
-    Py_INCREF(&PyArrayDescr_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-
-    Py_INCREF(&PyArrayFlags_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
 
     /* Business day calendar object */
-    Py_INCREF(&NpyBusDayCalendar_Type);
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);

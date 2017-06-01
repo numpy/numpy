@@ -1,0 +1,56 @@
+==========================
+NumPy 1.14.0 Release Notes
+==========================
+
+This release supports Python 2.7 and 3.4 - 3.6.
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+
+Future Changes
+==============
+
+
+Build System Changes
+====================
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
+
+0d arrays now print their elements like other arrays
+----------------------------------------------------
+0d arrays now use the array2string formatters to print their elements, like
+other arrays. The `style` argument of array2string is now non-functional.
+
+integer scalars are now unaffected by ``np.set_string_function``
+----------------------------------------------------------------
+Previously the str/repr of integer scalars could be controlled by
+``np.set_string_function``, unlike most other numpy scalars. This is no longer
+the case.

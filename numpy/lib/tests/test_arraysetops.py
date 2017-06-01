@@ -355,6 +355,16 @@ class TestUnique(TestCase):
         a2, a2_inv = np.unique(a, return_inverse=True)
         assert_array_equal(a2_inv, np.zeros(5))
 
+        # test for ticket #9137
+        a = []
+        a1_idx = np.unique(a, return_index=True)[1]
+        a2_inv = np.unique(a, return_inverse=True)[1]
+        a3_idx, a3_inv = np.unique(a, return_index=True, return_inverse=True)[1:]
+        assert_equal(a1_idx.dtype, np.intp)
+        assert_equal(a2_inv.dtype, np.intp)
+        assert_equal(a3_idx.dtype, np.intp)
+        assert_equal(a3_inv.dtype, np.intp)
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,

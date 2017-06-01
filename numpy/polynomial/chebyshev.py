@@ -45,6 +45,7 @@ Misc Functions
 - `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
 - `chebweight` -- Chebyshev weight function.
 - `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
+- `chebinterp` -- approximate a function with Chebyshev polynomials.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
@@ -102,7 +103,7 @@ __all__ = [
     'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
     'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight']
+    'chebgauss', 'chebweight', 'chebinterp']
 
 chebtrim = pu.trimcoef
 
@@ -1220,7 +1221,7 @@ def chebval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1280,7 +1281,7 @@ def chebgrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1333,7 +1334,7 @@ def chebval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1397,7 +1398,7 @@ def chebgrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1508,7 +1509,7 @@ def chebvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1572,7 +1573,7 @@ def chebvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1808,7 +1809,7 @@ def chebcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1828,6 +1829,73 @@ def chebcompanion(c):
     bot[...] = top
     mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
+
+
+def chebinterp(func, deg, x=None, args=(), domain=None, window=None):
+    """Approximate a function using Chebyshev polynomial interpolation.
+
+    Return the Chebyshev series instance that interpolates a given function.
+
+    Parameters
+    ----------
+    func : function
+        The function to be approximated. It must be a function of a single
+        variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
+        that can be passed in the `args` parameter.
+    deg : int or 1-D array_like
+        Degree(s) of the fitting Chebyshev polynomials. If `deg` is a single
+        integer all terms up to and including the `deg`'th term are included in
+        the interpolation.
+    x : array_like, shape (M,), optional
+        Defines window of interpolation. The window of the series
+        is given by the lowest and highest members of this list.
+    args : tuple, optional
+        Extra arguments to be used in the function call.
+    domain : [beg, end], optional
+        Unused. Overridden to `[-1, 1]` for Chebyshev polynomial interpolation.
+    window : [beg, end], optional
+        Window to use for the returned series. The default value is the
+        extrema of `x`.
+
+    Returns
+    -------
+    new_series : series
+        A series that represents the polynomial interpolation
+        to the function.
+
+
+    Examples
+    --------
+    >>> from numpy import tanh, pi
+    >>> import numpy.polynomial.chebyshev as C
+    >>> C.chebinterp(lambda x: tanh(x)+0.5, [0, 2*pi], 8)
+    array([ 1.30198814,  0.3540514 , -0.25209078,  0.14032589, -0.05706644,
+            0.01226391,  0.00367748, -0.00455335])
+
+    .. versionadded:: 1.14.0
+
+    """
+    warnings.warn("Defaulting to Chebyshev nodes and domain for "
+                  "polynomial interpolation")
+    domain = chebdomain
+    if window is None:  # here in case people want to use it as its own method
+        try:
+            window = pu.getdomain(x)
+        except:
+            warnings.warn("window defaulting to Chebyshev domain")
+            window = chebdomain
+    x = chebpts1(deg)
+    xfunc = pu.mapdomain(x, domain, window)
+
+    c = np.zeros(deg)
+    for j in range(deg):
+        for k in range(deg):
+            myargs = (xfunc[k],) + args
+            c[j] += func(*myargs)*np.cos(j*np.arccos(x[k]))
+        c[j] *= 2/deg
+    c[0] *= 0.5
+
+    return c
 
 
 def chebroots(c):
@@ -2066,6 +2134,7 @@ class Chebyshev(ABCPolyBase):
     _der = staticmethod(chebder)
     _fit = staticmethod(chebfit)
     _line = staticmethod(chebline)
+    _interp = staticmethod(chebinterp)
     _roots = staticmethod(chebroots)
     _fromroots = staticmethod(chebfromroots)
 

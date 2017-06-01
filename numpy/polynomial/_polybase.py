@@ -123,6 +123,10 @@ class ABCPolyBase(object):
         pass
 
     @abstractmethod
+    def _interp(self):
+        pass
+
+    @abstractmethod
     def _roots(self):
         pass
 
@@ -808,6 +812,52 @@ class ABCPolyBase(object):
         else:
             coef = res
             return cls(coef, domain=domain, window=window)
+
+    @classmethod
+    def interp(cls, func, deg, x=None, args=(), domain=None, window=None):
+        """Approximate a function using polynomial interpolation.
+
+        Return the series instance that interpolates a given function.
+
+        Parameters
+        ----------
+        func : function
+            The function to be approximated. It must be a function of a single
+            variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
+            that can be passed in the `args` parameter.
+        deg : int or 1-D array_like
+            Degree(s) of the fitting polynomials. All terms up to and including the
+            `deg`'th term are included in the interpolation.
+        x : array_like, shape (M,), optional
+            x-coordinates of the M interpolation points. The window of the series
+            is set by the extrema of this list if `window` is not set.
+        args : tuple, optional
+            Extra arguments to be used in the function call.
+        domain : [beg, end], optional
+            Domain to use for the returned series.
+        window : [beg, end], optional
+            Window to use for the returned series. The default value is the
+            extrema of `x`.
+
+        Returns
+        -------
+        new_series : series
+            A series that represents the Chebyshev polynomial interpolation
+            to the function.
+
+        .. versionadded:: 1.14.0
+
+        """
+        if domain is None:
+            domain = cls.domain
+        if window is None:
+            try:
+                window = pu.getdomain(x)
+            except:
+                window = domain
+        
+        coef = cls._interp(func, deg, x=x, args=args, domain=domain, window=window)
+        return cls(coef, domain=domain, window=window)
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None):
