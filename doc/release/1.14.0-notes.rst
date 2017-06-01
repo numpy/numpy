@@ -304,3 +304,10 @@ source to the destination.
 Using field "titles" in multiple-field indexing is now disallowed, as is
 repeating a field name in a multiple-field index.
 
+Removed unneeded whitespace in float and bool array printing
+------------------------------------------------------------
+The ``repr`` of float arrays now omits the whitespace character previsouly used
+to display the sign if possible, for example if the array has all-positive
+values.  Similarly, the ``repr`` of bool arrays with only one element now omits
+the whitespace before a ``True`` value, so that ``repr(array([True]))`` now
+returns ``'array([True])'`` instead of ``'array([ True])'``.
