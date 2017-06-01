@@ -96,7 +96,7 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
+    PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
     npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
     npy_intp i;
@@ -114,7 +114,15 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     len = PyArray_SIZE(lst);
 
-    if (mlength == Py_None) {
+    if (mlength == NULL) {
+        minlength = 0;
+    }
+    else if (mlength == Py_None) {
+        /* NumPy 1.14, 2017-06-01 */
+        if (DEPRECATE("0 should be passed as minlength instead of None; "
+                      "this will error in future.") < 0) {
+            goto fail;
+        }
         minlength = 0;
     }
     else {

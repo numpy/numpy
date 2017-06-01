@@ -463,5 +463,11 @@ class TestTruthTestingEmptyArrays(_DeprecationTestCase):
         self.assert_deprecated(bool, args=(np.zeros((0, 0)),))
 
 
+class TestBincount(_DeprecationTestCase):
+    # 2017-06-01, 1.14.0
+    def test_bincount_minlength(self):
+        self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
+
+
 if __name__ == "__main__":
     run_module_suite()
