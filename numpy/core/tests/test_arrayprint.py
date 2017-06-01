@@ -244,6 +244,33 @@ class TestPrintOptions(object):
         np.set_printoptions(formatter={'all':lambda x: "test"})
         assert_equal(repr(x), "array(test)")
 
+    def test_float_spacing(self):
+        x = np.array([1., 2., 3.])
+        y = np.array([1., 2., -10.])
+        z = np.array([100., 2., -1.])
+
+        assert_equal(repr(x), 'array([1., 2., 3.])')
+        assert_equal(repr(y), 'array([  1.,   2., -10.])')
+        assert_equal(repr(np.array(y[0])), 'array(1.)')
+        assert_equal(repr(np.array(y[-1])), 'array(-10.)')
+        assert_equal(repr(z), 'array([ 100.,    2.,   -1.])')
+
+        assert_equal(repr(np.array([np.nan, np.inf])), 'array([nan, inf])')
+        assert_equal(repr(np.array([np.nan, -np.inf])), 'array([ nan, -inf])')
+
+    def test_bool_spacing(self):
+        assert_equal(repr(np.array([True,  True])),
+                     'array([ True,  True], dtype=bool)')
+        assert_equal(repr(np.array([True, False])),
+                     'array([ True, False], dtype=bool)')
+        assert_equal(repr(np.array([True])),
+                     'array([True], dtype=bool)')
+        assert_equal(repr(np.array(True)),
+                     'array(True, dtype=bool)')
+        assert_equal(repr(np.array(False)),
+                     'array(False, dtype=bool)')
+
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:

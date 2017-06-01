@@ -251,12 +251,6 @@ def _leading_trailing(a):
         b = concatenate(tuple(l))
     return b
 
-def _boolFormatter(x):
-    if x:
-        return ' True'
-    else:
-        return 'False'
-
 def _object_format(o):
     """ Object arrays containing lists should be printed unambiguously """
     if type(o) is list:
@@ -270,7 +264,7 @@ def repr_format(x):
 
 def _get_formatdict(data, precision, suppress_small, formatter):
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
-    formatdict = {'bool': lambda: _boolFormatter,
+    formatdict = {'bool': lambda: BoolFormat(data),
                   'int': lambda: IntegerFormat(data),
                   'float': lambda: FloatFormat(data, precision, suppress_small),
                   'longfloat': lambda: LongFloatFormat(precision),
@@ -627,15 +621,19 @@ class FloatFormat(object):
 
     def fillFormat(self, data):
         with errstate(all='ignore'):
-            special = isnan(data) | isinf(data)
+            hasinf = isinf(data)
+            special = isnan(data) | hasinf
             valid = not_equal(data, 0) & ~special
-            non_zero = absolute(data.compress(valid))
+            non_zero = data.compress(valid)
+            abs_non_zero = absolute(non_zero)
             if len(non_zero) == 0:
                 max_val = 0.
                 min_val = 0.
+                min_val_sgn = 0.
             else:
-                max_val = maximum.reduce(non_zero)
-                min_val = minimum.reduce(non_zero)
+                max_val = maximum.reduce(abs_non_zero)
+                min_val = minimum.reduce(abs_non_zero)
+                min_val_sgn = minimum.reduce(non_zero)
                 if max_val >= 1.e8:
                     self.exp_format = True
                 if not self.suppress_small and (min_val < 0.0001
@@ -643,28 +641,34 @@ class FloatFormat(object):
                     self.exp_format = True
 
         if self.exp_format:
-            self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
-            self.max_str_len = 8 + self.precision
-            if self.large_exponent:
-                self.max_str_len += 1
+            large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
+            self.large_exponent = large_exponent
+            pad_sign = self.sign or any(non_zero < 0)
+            self.max_str_len = pad_sign + 6 + self.precision + large_exponent
+
             if self.sign:
                 format = '%+'
             else:
                 format = '%'
             format = format + '%d.%de' % (self.max_str_len, self.precision)
         else:
-            format = '%%.%df' % (self.precision,)
-            if len(non_zero):
-                precision = max([_digits(x, self.precision, format)
-                                 for x in non_zero])
+            if len(non_zero) and self.precision > 0:
+                precision = self.precision
+                trim_zero = lambda s: precision - (len(s) - len(s.rstrip('0')))
+                fmt = '%%.%df' % (precision,)
+                precision = max(trim_zero(fmt % x) for x in abs_non_zero)
             else:
                 precision = 0
-            precision = min(self.precision, precision)
-            self.max_str_len = len(str(int(max_val))) + precision + 2
+
+            int_len = len(str(int(max_val)))
+            pad_sign = self.sign or (len(str(int(min_val_sgn))) > int_len)
+            self.max_str_len = pad_sign + int_len + 1 + precision
+
             if any(special):
+                neginf = any(data[hasinf] < 0)
                 self.max_str_len = max(self.max_str_len,
                                        len(_nan_str),
-                                       len(_inf_str)+1)
+                                       len(_inf_str) + neginf)
             if self.sign:
                 format = '%#+'
             else:
@@ -705,16 +709,6 @@ class FloatFormat(object):
             s = z + ' '*(len(s)-len(z))
         return s
 
-
-def _digits(x, precision, format):
-    if precision > 0:
-        s = format % x
-        z = s.rstrip('0')
-        return precision - len(s) + len(z)
-    else:
-        return 0
-
-
 class IntegerFormat(object):
     def __init__(self, data):
         try:
@@ -734,6 +728,17 @@ class IntegerFormat(object):
             return self.format % x
         else:
             return "%s" % x
+
+class BoolFormat(object):
+    def __init__(self, data):
+        # add an extra space so " True" and "False" have the same length and
+        # array elements align nicely when printed, but only for arrays with
+        # more than one element.
+        self.truestr = ' True' if data.size > 1 else 'True'
+
+    def __call__(self, x):
+        return self.truestr if x else "False"
+
 
 class LongFloatFormat(object):
     # XXX Have to add something to determine the width to use a la FloatFormat
