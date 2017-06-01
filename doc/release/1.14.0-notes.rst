@@ -23,6 +23,8 @@ Deprecations
 
 * Truth testing on an empty array is deprecated. To check if an array is not
   empty, use ``array.size > 0``.
+* Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
+  ``minlength=0`` should be used.
 
 Future Changes
 ==============
