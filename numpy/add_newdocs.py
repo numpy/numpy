@@ -5141,7 +5141,7 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is non-positive.
+        values, or if `minlength` is negative.
     TypeError
         If the type of the input is float or complex.
 
