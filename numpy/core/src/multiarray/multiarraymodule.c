@@ -315,6 +315,29 @@ PyArray_Free(PyObject *op, void *ptr)
     return 0;
 }
 
+/*
+ * Get the ndarray subclass with the highest priority
+ */
+NPY_NO_EXPORT PyTypeObject *
+PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
+    PyTypeObject *subtype = &PyArray_Type;
+    double priority = NPY_PRIORITY;
+    int i;
+
+    /* Get the priority subtype for the array */
+    for (i = 0; i < narrays; ++i) {
+        if (Py_TYPE(arrays[i]) != subtype) {
+            double pr = PyArray_GetPriority((PyObject *)(arrays[i]), 0.0);
+            if (pr > priority) {
+                priority = pr;
+                subtype = Py_TYPE(arrays[i]);
+            }
+        }
+    }
+
+    return subtype;
+}
+
 
 /*
  * Concatenates a list of ndarrays.
@@ -395,23 +418,12 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
     else {
         npy_intp s, strides[NPY_MAXDIMS];
         int strideperm[NPY_MAXDIMS];
-        PyArray_Descr *dtype = NULL;
-        PyTypeObject *subtype = &PyArray_Type;
-        double priority = NPY_PRIORITY;
 
         /* Get the priority subtype for the array */
-        for (iarrays = 0; iarrays < narrays; ++iarrays) {
-            if (Py_TYPE(arrays[iarrays]) != subtype) {
-                double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-                if (pr > priority) {
-                    priority = pr;
-                    subtype = Py_TYPE(arrays[iarrays]);
-                }
-            }
-        }
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
         /* Get the resulting dtype from combining all the arrays */
-        dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
         if (dtype == NULL) {
             return NULL;
         }
@@ -520,24 +532,13 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         Py_INCREF(ret);
     }
     else {
-        PyArray_Descr *dtype = NULL;
         npy_intp stride;
-        double priority = NPY_PRIORITY;
-        PyTypeObject *subtype = &PyArray_Type;
 
         /* Get the priority subtype for the array */
-        for (iarrays = 0; iarrays < narrays; ++iarrays) {
-            if (Py_TYPE(arrays[iarrays]) != subtype) {
-                double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-                if (pr > priority) {
-                    priority = pr;
-                    subtype = Py_TYPE(arrays[iarrays]);
-                }
-            }
-        }
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
         /* Get the resulting dtype from combining all the arrays */
-        dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
         if (dtype == NULL) {
             return NULL;
         }
