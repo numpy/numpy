@@ -5792,10 +5792,18 @@ class MaskedArray(ndarray):
         maskindices = getmask(indices)
         if maskindices is not nomask:
             indices = indices.filled(0)
-        # Get the data, promoting scalars to 0d arrays with [...] so that
-        # .view works correctly
+
+        # we need to do this in case we inject extra dimensions
+        if axis is not None:
+            axis = normalize_axis_index(axis, self.ndim)
+
         if out is None:
-            out = _data.take(indices, axis=axis, mode=mode)[...].view(cls)
+            # We need an array in order to cast to masked array - but if indices
+            # is a scalar, then this returns a scalar. There's no reliable way
+            # to convert it back to an array - so we add a dimension and then
+            # remove it again
+            out_aug = _data.take([indices], axis=axis, mode=mode)
+            out = out_aug.squeeze(axis=0 if axis is None else axis).view(cls)
         else:
             np.take(_data, indices, axis=axis, mode=mode, out=out)
         # Get the mask

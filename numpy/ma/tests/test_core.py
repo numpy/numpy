@@ -3163,6 +3163,20 @@ class TestMaskedArrayMethods(TestCase):
                      array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
         assert_equal(take(x, [0, 2], axis=1),
                      array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
+        assert_equal(take(x, [0, 2], axis=-1),
+                     array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
+
+    def test_take_string(self):
+        x = masked_array(['hello', 'world'], mask=[0, 1])
+        assert_equal(x.take(0), 'hello')
+        assert_equal(x.take(1), np.ma.masked)
+        assert_equal(x.take([0, 1]), x)
+
+    def test_take_object(self):
+        x = masked_array([None, np.array([1, 2])], mask=[0, 1])
+        assert_equal(x.take(0), x[0])
+        assert_equal(x.take(1), x[1])
+        assert_equal(x.take([0, 1]), x)
 
     def test_take_masked_indices(self):
         # Test take w/ masked indices
