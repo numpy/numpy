@@ -137,7 +137,7 @@ sub-types).
 
 .. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
 
-    Returns 0 if *obj* is not a sub-class of bigndarray. Otherwise,
+    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
     returns the total number of elements in the array. Safer version
     of :c:func:`PyArray_SIZE` (*obj*).
 
@@ -303,7 +303,7 @@ From scratch
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
     Fill the array pointed to by *obj* ---which must be a (subclass
-    of) bigndarray---with the contents of *val* (evaluated as a byte).
+    of) ndarray---with the contents of *val* (evaluated as a byte).
     This macro calls memset, so obj must be contiguous.
 
 .. c:function:: PyObject* PyArray_Zeros( \
@@ -433,9 +433,9 @@ From other objects
 
     .. c:var:: NPY_ARRAY_ENSUREARRAY
 
-        Make sure the result is a base-class ndarray or bigndarray. By
-        default, if *op* is an instance of a subclass of the
-        bigndarray, an instance of that same subclass is returned. If
+        Make sure the result is a base-class ndarray. By
+        default, if *op* is an instance of a subclass of
+        ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
     .. c:var:: NPY_ARRAY_FORCECAST
@@ -1483,8 +1483,7 @@ specify desired properties of the new array.
 
 .. c:var:: NPY_ARRAY_ENSUREARRAY
 
-    Make sure the resulting object is an actual ndarray (or bigndarray),
-    and not a sub-class.
+    Make sure the resulting object is an actual ndarray, and not a sub-class.
 
 .. c:var:: NPY_ARRAY_NOTSWAPPED
 
