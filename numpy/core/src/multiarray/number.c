@@ -59,16 +59,18 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
  * Those not present will not be changed
  */
 
-/* FIXME - macro contains a return */
-#define SET(op)   temp = PyDict_GetItemString(dict, #op); \
-    if (temp != NULL) { \
-        if (!(PyCallable_Check(temp))) { \
-            return -1; \
-        } \
-        Py_INCREF(temp); \
-        Py_XDECREF(n_ops.op); \
-        n_ops.op = temp; \
-    }
+#define SET(op)   if (ret_code != -1) { \
+		temp = PyDict_GetItemString(dict, #op); \
+		if (temp != NULL) { \
+			if (!(PyCallable_Check(temp))) { \
+				ret_code = -1; \
+			} else { \
+				Py_INCREF(temp); \
+				Py_XDECREF(n_ops.op); \
+				n_ops.op = temp; \
+			} \
+		} \
+	}
 
 
 /*NUMPY_API
@@ -77,6 +79,7 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
 NPY_NO_EXPORT int
 PyArray_SetNumericOps(PyObject *dict)
 {
+	short ret_code = 0;
     PyObject *temp = NULL;
     SET(add);
     SET(subtract);
@@ -115,13 +118,12 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(minimum);
     SET(rint);
     SET(conjugate);
-    return 0;
+    return ret_code;
 }
 
-/* FIXME - macro contains goto */
-#define GET(op) if (n_ops.op &&                                         \
+#define GET(op) if (!do_fail && n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
-        goto fail;
+        do_fail = 1;
 
 /*NUMPY_API
   Get dictionary showing number functions that all arrays will use
@@ -129,6 +131,7 @@ PyArray_SetNumericOps(PyObject *dict)
 NPY_NO_EXPORT PyObject *
 PyArray_GetNumericOps(void)
 {
+	short do_fail = 0;
     PyObject *dict;
     if ((dict = PyDict_New())==NULL)
         return NULL;
@@ -168,6 +171,7 @@ PyArray_GetNumericOps(void)
     GET(minimum);
     GET(rint);
     GET(conjugate);
+	if (do_fail) goto fail;
     return dict;
 
  fail:
