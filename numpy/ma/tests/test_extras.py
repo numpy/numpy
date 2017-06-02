@@ -1122,6 +1122,7 @@ class TestCov(TestCase):
                             (np.cov(xf, rowvar=False, bias=True) *
                              x.shape[0] / frac))
 
+
 class TestCorrcoef(TestCase):
 
     def setUp(self):
