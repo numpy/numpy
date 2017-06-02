@@ -1158,7 +1158,7 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
 add_newdoc('numpy.core.multiarray', 'concatenate',
     """
-    concatenate((a1, a2, ...), axis=0)
+    concatenate((a1, a2, ...), axis=0, out=None)
 
     Join a sequence of arrays along an existing axis.
 
@@ -1169,6 +1169,10 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
         corresponding to `axis` (the first, by default).
     axis : int, optional
         The axis along which the arrays will be joined.  Default is 0.
+    out : ndarray, optional
+        If provided, the destination to place the result. The shape must be
+        correct, matching that of what concatenate would have returned if no
+        out argument were specified.
 
     Returns
     -------
