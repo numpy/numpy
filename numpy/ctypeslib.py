@@ -63,6 +63,9 @@ try:
 except ImportError:
     ctypes = None
 
+def is_debug_interpreter():
+    return hasattr(sys, 'gettotalrefcount')
+
 if ctypes is None:
     def _dummy(*args, **kwds):
         """
@@ -121,21 +124,25 @@ else:
             warnings.warn("All features of ctypes interface may not work " \
                           "with ctypes < 1.0.1", stacklevel=2)
 
-        ext = os.path.splitext(libname)[1]
+        filename, ext = os.path.splitext(libname)
+        if is_debug_interpreter() and not (
+            len(filename) > 2 and filename[:-2] == '_d'):
+            filename += '_d'
+
         if not ext:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
             from numpy.distutils.misc_util import get_shared_lib_extension
             so_ext = get_shared_lib_extension()
-            libname_ext = [libname + so_ext]
+            libname_ext = [filename + so_ext]
             # mac, windows and linux >= py3.2 shared library and loadable
             # module have different extensions so try both
             so_ext2 = get_shared_lib_extension(is_python_ext=True)
             if not so_ext2 == so_ext:
-                libname_ext.insert(0, libname + so_ext2)
+                libname_ext.insert(0, filename + so_ext2)
         else:
-            libname_ext = [libname]
+            libname_ext = [filename + ext]
 
         loader_path = os.path.abspath(loader_path)
         if not os.path.isdir(loader_path):
