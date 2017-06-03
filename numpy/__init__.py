@@ -155,12 +155,14 @@ else:
     # Allow distributors to run custom init code
     from . import _distributor_init
 
+    # linalg needs to be imported first so our xerbla get linked.
+    # We should maybe make it a standlone module.
+    from . import linalg
     from . import core
     from .core import *
     from . import compat
     from . import lib
     from .lib import *
-    from . import linalg
     from . import fft
     from . import polynomial
     from . import random

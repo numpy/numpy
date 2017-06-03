@@ -1532,6 +1532,8 @@ def test_xerbla_override():
 
     XERBLA_OK = 255
 
+    XERBLA_OK = 255
+
     try:
         pid = os.fork()
     except (OSError, AttributeError):
