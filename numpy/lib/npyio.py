@@ -424,7 +424,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
                                  "non-pickled data")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except:
+            except Exception:
                 raise IOError(
                     "Failed to interpret file %s as a pickle" % repr(file))
     finally:

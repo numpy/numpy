@@ -4531,7 +4531,7 @@ def add_newdoc(place, obj, doc):
         elif isinstance(doc, list):
             for val in doc:
                 add_docstring(getattr(new, val[0]), val[1].strip())
-    except:
+    except Exception:
         pass
 
 

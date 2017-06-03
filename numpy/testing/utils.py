@@ -210,7 +210,7 @@ elif sys.platform[:5] == 'linux':
             l = f.readline().split(' ')
             f.close()
             return int(l[22])
-        except:
+        except Exception:
             return
 else:
     def memusage():
@@ -239,7 +239,7 @@ if sys.platform[:5] == 'linux':
             l = f.readline().split(' ')
             f.close()
             return int(l[13])
-        except:
+        except Exception:
             return int(100*(time.time()-_load_time[0]))
 else:
     # os.getpid is not in all platforms available.

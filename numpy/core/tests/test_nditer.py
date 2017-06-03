@@ -2641,7 +2641,7 @@ def test_iter_element_deletion():
         del it[1:2]
     except TypeError:
         pass
-    except:
+    except Exception:
         raise AssertionError
 
 def test_iter_allocated_array_dtypes():

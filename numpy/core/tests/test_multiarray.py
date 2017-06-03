@@ -6355,7 +6355,7 @@ def test_flat_element_deletion():
         del it[1:2]
     except TypeError:
         pass
-    except:
+    except Exception:
         raise AssertionError
 
 

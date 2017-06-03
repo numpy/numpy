@@ -276,7 +276,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
@@ -294,7 +294,7 @@ class MaskedRecords(MaskedArray, object):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         # Let's try to set the field
         try:

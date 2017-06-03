@@ -1068,7 +1068,7 @@ class _MaskedBinaryOperation:
             # any errors, just abort; impossible to guarantee masked values
             try:
                 np.copyto(result, da, casting='unsafe', where=m)
-            except:
+            except Exception:
                 pass
 
         # Transforms to a (subclass of) MaskedArray
@@ -1214,7 +1214,7 @@ class _DomainedBinaryOperation:
             # only add back if it can be cast safely
             if np.can_cast(masked_da.dtype, result.dtype, casting='safe'):
                 result += masked_da
-        except:
+        except Exception:
             pass
 
         # Transforms to a (subclass of) MaskedArray

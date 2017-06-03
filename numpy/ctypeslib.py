@@ -283,7 +283,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         if num is None:
             try:
                 flags = [x.strip().upper() for x in flags]
-            except:
+            except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
     try:

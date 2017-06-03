@@ -461,7 +461,7 @@ def is_sequence(seq):
         return False
     try:
         len(seq)
-    except:
+    except Exception:
         return False
     return True
 
@@ -1836,7 +1836,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:
@@ -1873,7 +1873,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:

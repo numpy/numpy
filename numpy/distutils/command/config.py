@@ -441,7 +441,7 @@ int main (void)
                 src, obj, exe = self._link(body, headers, include_dirs,
                                            libraries, library_dirs, lang)
                 grabber.restore()
-            except:
+            except Exception:
                 output = grabber.data
                 grabber.restore()
                 raise

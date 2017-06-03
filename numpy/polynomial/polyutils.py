@@ -182,7 +182,7 @@ def as_series(alist, trim=True):
     else:
         try:
             dtype = np.common_type(*arrays)
-        except:
+        except Exception:
             raise ValueError("Coefficient arrays have no common type")
         ret = [np.array(a, copy=1, dtype=dtype) for a in arrays]
     return ret

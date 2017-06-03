@@ -59,7 +59,7 @@ def exc_iter(*args):
 
     try:
         yield iterate()
-    except:
+    except Exception:
         import traceback
         msg = "At: %r\n%s" % (repr(value[0]),
                               traceback.format_exc())

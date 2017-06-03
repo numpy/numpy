@@ -1067,7 +1067,7 @@ class TestVectorize(TestCase):
         import random
         try:
             vectorize(random.randrange)  # Should succeed
-        except:
+        except Exception:
             raise AssertionError()
 
     def test_keywords2_ticket_2100(self):

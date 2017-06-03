@@ -811,7 +811,7 @@ def test_large_file_support():
         # avoid actually writing 5GB
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
-    except:
+    except Exception:
         raise SkipTest("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:

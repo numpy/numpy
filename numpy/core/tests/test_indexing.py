@@ -847,7 +847,7 @@ class TestMultiIndexingAutomated(TestCase):
                 try:
                     flat_indx = np.ravel_multi_index(np.nonzero(indx),
                                     arr.shape[ax:ax+indx.ndim], mode='raise')
-                except:
+                except Exception:
                     error_unless_broadcast_to_empty = True
                     # fill with 0s instead, and raise error later
                     flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
@@ -946,7 +946,7 @@ class TestMultiIndexingAutomated(TestCase):
                         try:
                             mi = np.ravel_multi_index(indx[1:], orig_slice,
                                                       mode='raise')
-                        except:
+                        except Exception:
                             # This happens with 0-sized orig_slice (sometimes?)
                             # here it is a ValueError, but indexing gives a:
                             raise IndexError('invalid index into 0-sized')

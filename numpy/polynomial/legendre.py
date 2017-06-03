@@ -1026,7 +1026,7 @@ def legval2d(x, y, c):
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = legval(x, c)
@@ -1139,7 +1139,7 @@ def legval3d(x, y, z, c):
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = legval(x, c)

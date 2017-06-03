@@ -737,7 +737,7 @@ class TestMedian(TestCase):
                 for axis, over in args:
                     try:
                         np.ma.median(x, axis=axis, overwrite_input=over)
-                    except:
+                    except Exception:
                         raise AssertionError(msg % (mask, ndmin, axis, over))
 
                 # Invalid axis values should raise exception

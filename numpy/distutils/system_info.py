@@ -1782,7 +1782,7 @@ class openblas_lapack_info(openblas_info):
         # Add the additional "extra" arguments
         try:
             extra_args = info['extra_link_args']
-        except:
+        except Exception:
             extra_args = []
         try:
             with open(src, 'wt') as f:
