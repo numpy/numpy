@@ -1512,8 +1512,13 @@ array_subscript(PyArrayObject *self, PyObject *op)
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             goto finish;
         }
-        result = (PyObject *) PyArray_Scalar(item, PyArray_DESCR(self),
+        if (PyTypeNum_ISUSERDEF(PyArray_DESCR(self)->type_num)) {
+            result = (PyObject *) PyArray_GETITEM(self, item);
+        }
+        else {
+            result = (PyObject *) PyArray_Scalar(item, PyArray_DESCR(self),
                                              (PyObject *)self);
+        }
         /* Because the index is full integer, we do not need to decref */
         return result;
     }
