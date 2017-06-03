@@ -1258,5 +1258,28 @@ class TestCApiAccess(TestCase):
         assert_array_equal(a[-1], [10, 10])
 
 
+def test_boolean_indexing_len_ok():
+    a = np.arange(4.0)
+    a[a>1.0] = [100.0, 101.0]
+    assert_equal(a, [0., 1., 100., 101.])
+
+def test_boolean_indexing_zero_len_raises():
+    a = np.arange(4.0)
+    def f(a):
+        a[a>1.0] = []
+    assert_raises(ValueError, f, a)
+
+def test_boolean_indexing_unit_len_raises():
+    """Unit length list is a special case in that it is treated as a scalar broadcast of element [0]."""
+    a = np.arange(4.0)
+    a[a>1.0] = [10.0]
+    assert_equal(a, [0., 1., 10., 10.])
+
+def test_boolean_indexing_over_len_raises():
+    a = np.arange(4.0)
+    def f(a):
+        a[a>1.0] = [100.0, 101.0, 102.0]
+    assert_raises(ValueError, f, a)
+
 if __name__ == "__main__":
     run_module_suite()
