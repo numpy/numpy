@@ -1154,6 +1154,43 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 
+def tensorprod(a, b, out=None):
+    """
+    Returns the tensor product of two tensors.
+    
+    Given two tensors `a` and `b`, its tensor product `c` is
+    ``c[i1, i2, i3, ..., iM, j1, j2, j3, ..., jN] = a[i1, i2, i3, ..., iM] *
+    b[j1, j2, j3, ..., jN]``.
+    
+    Equivalent ``numpy.outer(a, b, out=out).reshape(a.shape+b.shape)``.
+    
+    Parameters
+    ----------
+    a : array_like, a.ndim >= 1
+        First input tensor.
+    b : array_like, b.ndim >= 1
+        Second input tensor.
+    out : ndarray, out.ndim = a.ndim + b.ndim
+        A location where the result is stored
+    
+    Returns
+    -------
+    out : ndarray, out.ndim = a.ndim + b.ndim
+        ``out[i1, i2, i3, ..., iM, j1, j2, j3, ..., jN] = a[i1, i2, i3, ..., 
+        iM] * b[j1, j2, j3, ..., jN]``
+    
+    See also
+    --------
+    outer, einsum, tensordot
+    
+    References
+    ----------
+    .. [1] : Holzapfel, Gerhard A. Nonlinear solid mechanics. Vol. 24. 
+             Chichester: Wiley, 2000.
+    """
+    return np.outer(a, b, out=out).reshape(a.shape+b.shape)
+
+
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes for arrays >= 1-D.
