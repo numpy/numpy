@@ -422,7 +422,7 @@ object: ::
         [37, 40, 43],
         [46, 49, 52]])
 
-For this reason it is possible to use the output from the np.where()
+For this reason it is possible to use the output from the np.nonzero()
 function directly as an index since it always returns a tuple of index
 arrays.
 

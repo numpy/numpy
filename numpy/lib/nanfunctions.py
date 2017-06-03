@@ -837,7 +837,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     See nanmedian for parameter usage
     """
     c = np.isnan(arr1d)
-    s = np.where(c)[0]
+    s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         return np.nan
@@ -1161,7 +1161,7 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     See nanpercentile for parameter usage
     """
     c = np.isnan(arr1d)
-    s = np.where(c)[0]
+    s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         if q.ndim == 0:
