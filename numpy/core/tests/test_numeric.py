@@ -509,13 +509,16 @@ class TestSeterr(TestCase):
 class TestFloatExceptions(TestCase):
     def assert_raises_fpe(self, fpeerr, flop, x, y):
         ftype = type(x)
+        if ftype == np.ndarray:
+            ftype = str(ftype) + str(x.dtype)
+
         try:
             flop(x, y)
             assert_(False,
                     "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
         except FloatingPointError as exc:
-            assert_(str(exc).find(fpeerr) >= 0,
-                    "Type %s raised wrong fpe error '%s'." % (ftype, exc))
+            assert_(str(exc).find(fpeerr) >= 0, "Type %s raised wrong fpe "
+                    "error '%s', not '%s'." % (ftype, exc, fpeerr))
 
     def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
         # Check that fpe exception is raised.
@@ -602,6 +605,57 @@ class TestFloatExceptions(TestCase):
                 self.assertEqual(len(w), 4)
                 self.assertTrue("underflow" in str(w[-1].message))
 
+
+    def grab_int_assertions(self, min, max, one):
+        'Utility function to test and collect assertion about integers'
+        underflow = 'underflow'
+        overflow = 'overflow'
+        zerodiv = 'divide by zero'
+        assertions = ((underflow, lambda a,b:a-b, min, one),
+                      (overflow,  lambda a,b:a+b, max, one),
+                      (zerodiv,   lambda a,b:a/b, max, one-one),
+                      (overflow,  lambda a,b:a*b, max, one+one))
+        errors = []
+        for x in assertions:
+            try:
+                self.assert_raises_fpe(*x)
+            except AssertionError as e:
+                errors.append(str(e))
+        return errors
+
+    def test_seterr_for_arrays_of_ints(self):
+        "Seterr should apply to arrays of integer types, see gh-593"
+        err = seterr(all='raise')
+        raised=[]
+        try:
+            for typecode in np.typecodes['AllInteger']:
+                itype = np.obj2sctype(typecode)
+                iinfo = np.iinfo(itype)
+                min = itype([iinfo.min])
+                max = itype([iinfo.max])
+                one = itype(1)
+                raised.extend(self.grab_int_assertions(min, max, one))
+            pretty_repr = "%d errors:\n  " % len(raised) + "\n  ".join(raised)
+            assert_(len(raised) == 0, pretty_repr)
+        finally:
+            seterr(**err)
+
+    def test_seterr_for_ints(self):
+        "Seterr should apply to integer types"
+        err = seterr(all='raise')
+        raised = []
+        try:
+            for typecode in np.typecodes['AllInteger']:
+                itype = np.obj2sctype(typecode)
+                iinfo = np.iinfo(itype)
+                min = itype(iinfo.min)
+                max = itype(iinfo.max)
+                one = itype(1)
+                raised.extend(self.grab_int_assertions(min, max, one))
+            pretty_repr = "%d errors:\n  " % len(raised) + "\n  ".join(raised)
+            assert_(len(raised) == 0, pretty_repr)
+        finally:
+            seterr(**err)
 
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):

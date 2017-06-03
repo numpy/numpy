@@ -2668,8 +2668,10 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
     Set how floating-point errors are handled.
 
-    Note that operations on integer scalar types (such as `int16`) are
-    handled like floating point, and are affected by these settings.
+    Note that operations on **scalars** of integer types (such as `int16`) are
+    handled like floating point, and are affected by these settings. However,
+    operations on **arrays** of integer types are currently note handled, see
+    https://github.com/numpy/numpy/issues/593 for details.
 
     Parameters
     ----------
@@ -2732,6 +2734,9 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     FloatingPointError: overflow encountered in short_scalars
+
+    >>> np.int16([32000]) * 3 # arrays don't have error handling see gh-593
+    array([30464], dtype=int16)
 
     >>> old_settings = np.seterr(all='print')
     >>> np.geterr()
