@@ -4005,8 +4005,9 @@ def _ureduce(a, func, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
+        keepdim = tuple(keepdim)
     else:
-        keepdim = [1] * a.ndim
+        keepdim = (1,) * a.ndim
 
     r = func(a, **kwargs)
     return r, keepdim
@@ -4268,10 +4269,7 @@ def percentile(a, q, axis=None, out=None,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
-        if q.ndim == 0:
-            return r.reshape(k)
-        else:
-            return r.reshape([len(q)] + k)
+        return r.reshape(q.shape + k)
     else:
         return r
 
