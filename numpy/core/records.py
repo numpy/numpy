@@ -496,7 +496,11 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = super(recarray, self).__getitem__(indx)
+        try:
+            obj = super(recarray, self).__getitem__(indx)
+        except:
+            del self  # prevents reference leaks
+            raise
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element
