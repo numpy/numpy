@@ -57,7 +57,7 @@ class GnuFCompiler(FCompiler):
                     return ('gfortran', m.group(1))
         else:
             # Output probably from --version, try harder:
-            m = re.search(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
+            m = re.search(r'95.*?([0-9-.]+)', version_string)
             if m:
                 return ('gfortran', m.group(1))
             m = re.search(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
