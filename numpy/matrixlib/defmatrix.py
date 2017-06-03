@@ -311,6 +311,8 @@ class matrix(N.ndarray):
             return N.dot(self, other)
         return NotImplemented
 
+    dot = __mul__
+
     def __rmul__(self, other):
         return N.dot(other, self)
 
@@ -362,6 +364,7 @@ class matrix(N.ndarray):
             return self[0, 0]
         else:
             return self
+    
 
     # Necessary because base-class tolist expects dimension
     #  reduction by x[0]
