@@ -676,6 +676,7 @@ class TestCreation(TestCase):
 
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        types = list(types) + ['(8,8)i4']
         for dt in types:
             d = np.zeros((13,), dtype=dt)
             assert_equal(np.count_nonzero(d), 0)
