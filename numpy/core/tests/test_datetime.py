@@ -1523,11 +1523,12 @@ class TestDateTime(TestCase):
 
         # datetime, integer|timedelta works as well
         # produces arange (start, start + stop) in this case
-        a = np.arange('1969', 18, 3, dtype='M8')
+        a = np.arange('1969', np.timedelta64(18), 3, dtype='M8')
         assert_equal(a.dtype, np.dtype('M8[Y]'))
         assert_equal(a,
             np.datetime64('1969') + np.arange(18, step=3))
-        a = np.arange('1969-12-19', 22, np.timedelta64(2), dtype='M8')
+        a = np.arange('1969-12-19', np.timedelta64(22), 
+                      np.timedelta64(2), dtype='M8')
         assert_equal(a.dtype, np.dtype('M8[D]'))
         assert_equal(a,
             np.datetime64('1969-12-19') + np.arange(22, step=2))
@@ -1546,6 +1547,12 @@ class TestDateTime(TestCase):
         d = np.array('2010-01-04', dtype="M8[D]")
         assert_equal(np.arange(d, d + 1), d)
         assert_raises(ValueError, np.arange, d)
+
+    def test_datetime_arange_int(self):
+        a = np.arange(-2, 4, dtype='M8[Y]')
+        assert_equal(a,
+                     np.array(['1968', '1969', '1970', '1971', '1972', '1973'],
+                              dtype='datetime64[Y]'))
 
     def test_timedelta_arange(self):
         a = np.arange(3, 10, dtype='m8')

@@ -3328,10 +3328,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         type_nums[2] = NPY_TIMEDELTA;
     }
     else {
-        if (PyInt_Check(objs[1]) ||
-                        PyLong_Check(objs[1]) ||
-                        PyArray_IsScalar(objs[1], Integer) ||
-                        is_any_numpy_timedelta(objs[1])) {
+        if (is_any_numpy_timedelta(objs[1])) {
             type_nums[1] = NPY_TIMEDELTA;
         }
         else {
