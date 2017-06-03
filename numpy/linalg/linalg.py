@@ -1285,8 +1285,9 @@ def svd(a, full_matrices=1, compute_uv=1):
     """
     Singular Value Decomposition.
 
-    Factors the matrix `a` as ``u * np.diag(s) * v``, where `u` and `v`
-    are unitary and `s` is a 1-d array of `a`'s singular values.
+    Factors the matrix `a` as ``u * S * v``, where `u` and `v` are unitary and 
+    `S` is a matrix with shape ``(a.shape[0], a.shape[1])`` with 
+    ``np.diag(S) = s``, where `s` is a 1-d array of `a`'s singular values.
 
     Parameters
     ----------
