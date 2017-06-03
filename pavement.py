@@ -477,7 +477,7 @@ def _create_dmg(pyver, src_dir, volname=None):
 def dmg(options):
     try:
         pyver = options.dmg.python_version
-    except:
+    except Exception:
         pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
 

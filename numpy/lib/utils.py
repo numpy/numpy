@@ -557,7 +557,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 if len(arglist) > 1:
                     arglist[1] = "("+arglist[1]
                     arguments = ", ".join(arglist[1:])
-        except:
+        except Exception:
             pass
 
         if len(name+arguments) > maxwidth:
@@ -689,7 +689,7 @@ def source(object, output=sys.stdout):
     try:
         print("In file: %s\n" % inspect.getsourcefile(object), file=output)
         print(inspect.getsource(object), file=output)
-    except:
+    except Exception:
         print("Not available for this object.", file=output)
 
 

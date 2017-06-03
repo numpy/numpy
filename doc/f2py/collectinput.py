@@ -34,11 +34,11 @@ else:
     from commands import getoutput
 
 try: fn=sys.argv[2]
-except:
+except Exception:
     try: fn='inputless_'+sys.argv[1]
-    except: stdoutflag=1
+    except Exception: stdoutflag=1
 try: fi=sys.argv[1]
-except: fi=()
+except Exception: fi=()
 if not stdoutflag:
     sys.stdout=open(fn, 'w')
 
@@ -63,9 +63,9 @@ for l in fileinput.input(fi):
         if i>-1:
             fn=l[i+1:]
             try: f=open(fn, 'r'); flag=1; f.close()
-            except:
+            except Exception:
                 try: f=open(fn+'.tex', 'r'); flag=1;fn=fn+'.tex'; f.close()
-                except: flag=0
+                except Exception: flag=0
             if flag==0:
                 sys.stderr.write('Could not open a file: '+fn+'\n')
                 print(l+l1)

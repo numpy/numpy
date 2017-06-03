@@ -1807,7 +1807,7 @@ class TestRegression(TestCase):
             a['f2'] = 1
         except ValueError:
             pass
-        except:
+        except Exception:
             raise AssertionError
 
     def test_ticket_1608(self):

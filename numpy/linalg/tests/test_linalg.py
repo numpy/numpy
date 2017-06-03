@@ -1550,7 +1550,7 @@ def test_xerbla_override():
             np.linalg.lapack_lite.xerbla()
         except ValueError:
             pass
-        except:
+        except Exception:
             os._exit(os.EX_CONFIG)
 
         try:
