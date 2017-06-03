@@ -480,6 +480,14 @@ class TestLoadTxt(TestCase):
         y = np.loadtxt(d, dtype=mydescriptor)
         assert_array_equal(y, b)
 
+    def test_tab_delimited_spaces(self):
+        "Test using an explicit dtype with a line of tab delimited spaces"
+        data = StringIO("aa\tbb\n \t \ncc\tdd")
+        dt=np.dtype([('label', 'S2'), ('comment', 'S2')])
+        test = np.loadtxt(data, delimiter="\t", dtype=dt)
+        control = np.array([('aa','bb'), (' ', ' '),('cc','dd')], dtype=dt)
+        assert_array_equal(test, control)
+    
     def test_array(self):
         c = TextIO()
         c.write('1 2\n3 4')
