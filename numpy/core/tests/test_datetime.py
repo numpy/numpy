@@ -248,6 +248,36 @@ class TestDateTime(TestCase):
         arr = np.array([b, dt])
         assert_equal(arr.dtype, np.dtype('O'))
 
+    def test_datetime_array_find_type(self):
+        dt = np.datetime64('1970-01-01', 'M')
+        arr = np.array([dt])
+        assert_equal(arr.dtype, np.dtype('M8[M]'))
+
+        # at the moment, we don't automatically convert these to datetime64
+
+        dt = datetime.date(1970, 1, 1)
+        arr = np.array([dt])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
+        arr = np.array([dt])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        # find "supertype" for non-dates and dates
+
+        b = np.bool_(True)
+        dt = np.datetime64('1970-01-01', 'M')
+        arr = np.array([b, dt])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        dt = datetime.date(1970, 1, 1)
+        arr = np.array([b, dt])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
+        arr = np.array([b, dt])
+        assert_equal(arr.dtype, np.dtype('O'))
+
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
