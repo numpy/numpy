@@ -75,7 +75,7 @@ if sys.version_info[0] < 3:
 
 class ComplexWarning(RuntimeWarning):
     """
-    The warning raised when casting a complex dtype to a real dtype.
+    The warning raised when casting a complex data-type to a real data-type.
 
     As implemented, casting a complex number to a real discards its imaginary
     part, but this behavior may not be what the user actually wants.

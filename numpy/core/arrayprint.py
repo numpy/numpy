@@ -247,7 +247,7 @@ def _leading_trailing(a):
 
 def _boolFormatter(x):
     if x:
-        return ' True'
+        return 'True'
     else:
         return 'False'
 
