@@ -609,6 +609,10 @@ class TestRegression(TestCase):
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
+    def test_reshape_invalid_axis(self):
+        # Make sure that reshape surfaces axis conversion errors
+        assert_raises(TypeError, np.reshape([1,2], (2, None)))
+
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
     @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)

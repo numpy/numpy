@@ -305,7 +305,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
     PyObject *ret;
     PyArray_Dims newdims;
 
-    if (!PyArray_IntpConverter(shape, &newdims)) {
+    if (PyArray_IntpConverter(shape, &newdims) < 0) {
         return NULL;
     }
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
