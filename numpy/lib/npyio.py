@@ -1197,6 +1197,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     else:
         raise ValueError('fname must be a string or file handle')
 
+    # In Python 2.x, it was possible to do np.savetxt(filename, zip(a,b,c)) -
+    # but in Python 3.x, we need to first convert the zip iterator to a list
+    # of tuples for asarray to work.
+    if sys.version_info[0] >= 3 and isinstance(X, zip):
+        X = list(X)
+
     try:
         X = np.asarray(X)
 
