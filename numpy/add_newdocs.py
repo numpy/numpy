@@ -4033,6 +4033,11 @@ add_newdoc('numpy.core.multiarray', 'putmask',
     If `values` is not the same size as `a` and `mask` then it will repeat.
     This gives behavior different from ``a[mask] = values``.
 
+    .. note:: The `putmask` functionality is also provided by `copyto`, which
+              can be significantly faster and in addition is NA-aware
+              (`preservena` keyword).  Replacing `putmask` with
+              ``np.copyto(a, values, where=mask)`` is recommended.
+
     Parameters
     ----------
     a : array_like
