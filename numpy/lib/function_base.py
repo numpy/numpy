@@ -47,7 +47,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'meshgridify', 'delete', 'insert', 'append', 'interp',
+    'add_newdoc_ufunc'
     ]
 
 
@@ -4669,6 +4670,67 @@ def meshgrid(*xi, **kwargs):
         output = [x.copy() for x in output]
 
     return output
+
+
+def meshgridify(*xi, **kwargs):
+    """
+    Converts tabular data to meshgrid format.
+
+    Returns array of function values `f` fitting to meshgrid arrays created
+    from `xi`. If no `f` is given, only a meshgrid from `xi` is returned.
+
+    Parameters
+    ----------
+    x1, x2,..., xn : array_like
+        1-D arrays representing the coordinates of a grid.
+    f : array-like, optional
+        Function values for coordinate tuples in `xi`.
+
+    Returns
+    -------
+    X1, X2,..., Xn, Z : ndarray
+        Returns meshgrid arrays X1, X2, ..., Xn with dimensions n, created from
+        the coordinate vectors `x1`, `x2`, ..., `xn`. When `f` is given, an
+        array fitting to the coordinates given in X1, X2, ..., Xn is also
+        returned.
+
+    See Also
+    --------
+    np.meshgrid : Construct a multi-dimensional "meshgrid".
+
+    Examples
+    --------
+    If there is no function to apply to a meshgrid to obtain the according
+    function values, but only a table of coordinate-value pairs is given, the
+    conventional `meshgrid` function is not applicable and meshgridify is very
+    useful.
+
+    >>> X, Y, Z = meshgridify([1, 1, 2, 2], [3, 4, 3, 4], f=[0, 1, 2, 3])
+
+    For example, for direct contourplotting of tabular data.
+
+    >>> x = np.array(0, 0, 0, 1, 1, 1, 2, 2, 2)
+    >>> y = np.array(0, 1, 2, 0, 1, 2, 0, 1, 2)
+    >>> z = np.array(0, 1, 2, 1, 2, 3, 2, 3, 4)
+    >>> h = plt.contourf(*meshgridify(x, y, f=z))
+    """
+    f = kwargs.pop('f', None)
+    nvalues = [len(x) for x in xi]
+    if f is not None:
+        nvalues.append(len(f))
+
+    if len(set(nvalues)) > 1:
+        raise ValueError("All input arrays must have the same length.")
+
+    unique_xi = [np.unique(x) for x in xi]
+    if f is None:
+        return meshgrid(*unique_xi, **kwargs)
+
+    mgrid = meshgrid(*unique_xi, **kwargs)
+    raveled_mgrid = [m.ravel() for m in mgrid]
+    value_dict = dict(zip(zip(*xi), f))
+    result = [value_dict.get(key, np.nan) for key in zip(*raveled_mgrid)]
+    return mgrid + [np.array(result).reshape(mgrid[0].shape)]
 
 
 def delete(arr, obj, axis=None):
