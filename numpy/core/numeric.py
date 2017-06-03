@@ -1073,7 +1073,7 @@ def convolve(a, v, mode='full'):
     return multiarray.correlate(a, v[::-1], mode)
 
 
-def outer(a, b, out=None):
+def outer(a, b, out=None, flatten=True):
     """
     Compute the outer product of two vectors.
 
@@ -1088,21 +1088,27 @@ def outer(a, b, out=None):
 
     Parameters
     ----------
-    a : (M,) array_like
+    a : (M...) array_like
         First input vector.  Input is flattened if
-        not already 1-dimensional.
-    b : (N,) array_like
+        not already 1-dimensional and `flatten` is true.
+    b : (N...) array_like
         Second input vector.  Input is flattened if
-        not already 1-dimensional.
-    out : (M, N) ndarray, optional
+        not already 1-dimensional and `flatten` is true.
+    out : (M..., N...) ndarray, optional
         A location where the result is stored
 
         .. versionadded:: 1.9.0
 
+    flatten : bool, optional
+        Whether to flatten the inputs before computing the outer product.
+        Defaults to True.
+
+        .. versionadded:: 1.13.0
+
     Returns
     -------
-    out : (M, N) ndarray
-        ``out[i, j] = a[i] * b[j]``
+    out : (M..., N...) ndarray
+        ``out[i..., j...] = a[i...] * b[j...]``
 
     See also
     --------
@@ -1149,10 +1155,10 @@ def outer(a, b, out=None):
            [c, cc, ccc]], dtype=object)
 
     """
-    a = asarray(a)
-    b = asarray(b)
-    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
-
+    if flatten:
+        a = asarray(a).ravel()
+        b = asarray(b).ravel()
+    return multiply.outer(a, b, out=out)
 
 def tensordot(a, b, axes=2):
     """
