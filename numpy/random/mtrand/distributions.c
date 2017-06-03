@@ -473,7 +473,7 @@ long rk_negative_binomial(rk_state *state, double n, double p)
 {
     double Y;
 
-    Y = rk_gamma(state, n, (1-p)/p);
+    Y = rk_gamma(state, n, p/(1-p));
     return rk_poisson(state, Y);
 }
 
