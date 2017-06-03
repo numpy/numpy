@@ -1767,7 +1767,18 @@ class openblas_lapack_info(openblas_info):
     notfounderror = BlasNotFoundError
 
     def check_embedded_lapack(self, info):
-        res = False
+
+        # Enable the user to force embedded lapack.
+        # This can be used to bypass the following test
+        # which will often fail for gnu compiler env's
+        # Specifically the gfortran library might be necessary
+        # if OpenBLAS has been compiled without lapack support.
+        res = self.cp.has_option(self.section,'embedded_lapack')
+        if res:
+            res = self.cp.getboolean(self.section,'embedded_lapack')
+            if res:
+                return res
+
         c = distutils.ccompiler.new_compiler()
         c.customize('')
         tmpdir = tempfile.mkdtemp()

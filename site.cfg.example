@@ -122,6 +122,23 @@
 # multiprocessing.
 # (This problem does not exist with multithreaded ATLAS.)
 #
+# **Notice**: If you have build OpenBLAS without LAPACK support you are encouraged
+# to have this:
+#   [openblas]
+#   libraries = lapack,openblas
+# to force OpenBLAS usage and external lapack, be sure to have the lapack 
+# directory in the library_dirs path.
+# However, this might experience linking problems if you require threaded and/or
+# gfortran support as the default C-compiler will not necessarily add correct 
+# link paths.
+# To force numpy to disregard direct checking you can add this option to the
+# openblas section:
+#   [openblas]
+#   embedded_lapack = True
+# which will disable the check. If you experience later linker problems you have
+# errors elsewhere.
+# If it is False it will check for embedded lapack manually.
+#
 # http://docs.python.org/3.4/library/multiprocessing.html#contexts-and-start-methods
 # https://github.com/xianyi/OpenBLAS/issues/294
 #
