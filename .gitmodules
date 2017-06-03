@@ -1,6 +1,8 @@
 [submodule "doc/scipy-sphinx-theme"]
-	path = doc/scipy-sphinx-theme
-	url = https://github.com/scipy/scipy-sphinx-theme.git
+    path = doc/scipy-sphinx-theme
+    url = https://github.com/scipy/scipy-sphinx-theme.git
+    ignore = dirty
 [submodule "doc/sphinxext"]
-	path = doc/sphinxext
-	url = https://github.com/numpy/numpydoc.git
+    path = doc/sphinxext
+    url = https://github.com/numpy/numpydoc.git
+    ignore = dirty
