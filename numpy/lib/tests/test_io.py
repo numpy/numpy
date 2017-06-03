@@ -460,6 +460,20 @@ class TestSaveTxt(TestCase):
         b = np.loadtxt(w)
         assert_array_equal(a, b)
 
+    def test_newline(self):
+        a = np.array([(1, 2, 3)], dtype=np.int)
+        a = a.reshape((3, 1))
+        for newline in ['\n', '\r\n', '\r']:
+            filename = mktemp()
+            np.savetxt(filename, a, fmt='%i', newline=newline)
+            b = np.loadtxt(filename)
+            assert_array_equal(a.flat, b)
+            f = open(filename, 'rb')
+            d = f.read()
+            f.close()
+            os.unlink(filename)
+            assert_equal(d, newline.join(['1', '2', '3', '']))
+
 
 class TestLoadTxt(TestCase):
     def test_record(self):
