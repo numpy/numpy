@@ -5725,6 +5725,9 @@ static PyGetSetDef ufunc_getset[] = {
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    {"__qualname__",
+        (getter)ufunc_get_name,
+        NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
