@@ -747,7 +747,7 @@ def _getconv(dtype):
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0):
+            ndmin=0, skipfun=None):
     """
     Load data from a text file.
 
@@ -800,6 +800,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
+    skipfun : function, optional
+        Lines of the file where skipfun returns True are not appended.
 
         .. versionadded:: 1.6.0
 
@@ -1024,7 +1026,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             items = [conv(val) for (conv, val) in zip(converters, vals)]
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
-            X.append(items)
+            if skipfun is not None:
+                if not skipfun(items):
+                    X.append(items)
+            else:
+                X.append(items)
     finally:
         if fown:
             fh.close()
