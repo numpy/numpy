@@ -256,3 +256,223 @@ def broadcast_arrays(*args, **kwargs):
     # broadcast_to. This will require a deprecation cycle.
     return [_broadcast_to(array, shape, subok=subok, readonly=False)
             for array in args]
+
+
+def expand_view(new_array, reps_after=tuple(), reps_before=tuple()):
+    """
+        Behaves like NumPy tile except that it always returns a view and not a
+        copy. Though, it differs in that additional dimensions are added for
+        repetition as opposed to repeating in the same one. Also, it allows
+        repetitions to be specified before or after unlike tile. Though, will
+        behave identical to tile if the keyword is not specified.
+
+        Uses strides to trick NumPy into providing a view.
+
+        Args:
+            new_array(numpy.ndarray):            array to tile.
+
+            reps_after(tuple):                   repetitions dimension size to
+                                                 add before (if int will turn
+                                                 into tuple).
+
+            reps_before(tuple):                  repetitions dimension size to
+                                                 add after (if int will turn
+                                                 into tuple).
+
+        Returns:
+            (numpy.ndarray):                     a view of a numpy array with
+                                                 tiling in various dimension.
+
+        Examples:
+            >>> numpy.arange(6).reshape(2,3)
+            array([[0, 1, 2],
+                   [3, 4, 5]])
+
+            >>> expand_view(numpy.arange(6).reshape(2,3))
+            array([[0, 1, 2],
+                   [3, 4, 5]])
+
+            >>> a = numpy.arange(6).reshape(2,3); a is expand_view(a)
+            False
+
+            >>> expand_view(numpy.arange(6).reshape(2,3), 1)
+            array([[[0],
+                    [1],
+                    [2]],
+            <BLANKLINE>
+                   [[3],
+                    [4],
+                    [5]]])
+
+            >>> expand_view(numpy.arange(6).reshape(2,3), (1,))
+            array([[[0],
+                    [1],
+                    [2]],
+            <BLANKLINE>
+                   [[3],
+                    [4],
+                    [5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_after=1)
+            array([[[0],
+                    [1],
+                    [2]],
+            <BLANKLINE>
+                   [[3],
+                    [4],
+                    [5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_after=(1,))
+            array([[[0],
+                    [1],
+                    [2]],
+            <BLANKLINE>
+                   [[3],
+                    [4],
+                    [5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_before=1)
+            array([[[0, 1, 2],
+                    [3, 4, 5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_before=(1,))
+            array([[[0, 1, 2],
+                    [3, 4, 5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_before=(3,))
+            array([[[0, 1, 2],
+                    [3, 4, 5]],
+            <BLANKLINE>
+                   [[0, 1, 2],
+                    [3, 4, 5]],
+            <BLANKLINE>
+                   [[0, 1, 2],
+                    [3, 4, 5]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_after=(4,))
+            array([[[0, 0, 0, 0],
+                    [1, 1, 1, 1],
+                    [2, 2, 2, 2]],
+            <BLANKLINE>
+                   [[3, 3, 3, 3],
+                    [4, 4, 4, 4],
+                    [5, 5, 5, 5]]])
+
+            >>> expand_view(
+            ...     numpy.arange(6).reshape((2,3)),
+            ...     reps_before=(3,),
+            ...     reps_after=(4,)
+            ... )
+            array([[[[0, 0, 0, 0],
+                     [1, 1, 1, 1],
+                     [2, 2, 2, 2]],
+            <BLANKLINE>
+                    [[3, 3, 3, 3],
+                     [4, 4, 4, 4],
+                     [5, 5, 5, 5]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[0, 0, 0, 0],
+                     [1, 1, 1, 1],
+                     [2, 2, 2, 2]],
+            <BLANKLINE>
+                    [[3, 3, 3, 3],
+                     [4, 4, 4, 4],
+                     [5, 5, 5, 5]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[0, 0, 0, 0],
+                     [1, 1, 1, 1],
+                     [2, 2, 2, 2]],
+            <BLANKLINE>
+                    [[3, 3, 3, 3],
+                     [4, 4, 4, 4],
+                     [5, 5, 5, 5]]]])
+
+            >>> expand_view(numpy.arange(6).reshape((2,3)), reps_after = (4,3))
+            array([[[[0, 0, 0],
+                     [0, 0, 0],
+                     [0, 0, 0],
+                     [0, 0, 0]],
+            <BLANKLINE>
+                    [[1, 1, 1],
+                     [1, 1, 1],
+                     [1, 1, 1],
+                     [1, 1, 1]],
+            <BLANKLINE>
+                    [[2, 2, 2],
+                     [2, 2, 2],
+                     [2, 2, 2],
+                     [2, 2, 2]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[3, 3, 3],
+                     [3, 3, 3],
+                     [3, 3, 3],
+                     [3, 3, 3]],
+            <BLANKLINE>
+                    [[4, 4, 4],
+                     [4, 4, 4],
+                     [4, 4, 4],
+                     [4, 4, 4]],
+            <BLANKLINE>
+                    [[5, 5, 5],
+                     [5, 5, 5],
+                     [5, 5, 5],
+                     [5, 5, 5]]]])
+
+            >>> expand_view(
+            ...     numpy.arange(6).reshape((2,3)),
+            ...     reps_before=(4,3),
+            ... )
+            array([[[[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]]],
+            <BLANKLINE>
+            <BLANKLINE>
+                   [[[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]],
+            <BLANKLINE>
+                    [[0, 1, 2],
+                     [3, 4, 5]]]])
+    """
+
+    if not isinstance(reps_after, tuple):
+        reps_after = (reps_after,)
+
+    if not isinstance(reps_before, tuple):
+        reps_before = (reps_before,)
+
+    return(as_strided(
+        new_array,
+        reps_before + new_array.shape + reps_after,
+        len(reps_before) * (0,) + new_array.strides + len(reps_after) * (0,)
+    ))
