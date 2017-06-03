@@ -1036,13 +1036,13 @@ def analyzeline(m, case, line):
             try:
                 del groupcache[groupcounter]['vars'][name][
                     groupcache[groupcounter]['vars'][name]['attrspec'].index('external')]
-            except:
+            except Exception:
                 pass
         if block in ['function', 'subroutine']:  # set global attributes
             try:
                 groupcache[groupcounter]['vars'][name] = appenddecl(
                     groupcache[groupcounter]['vars'][name], groupcache[groupcounter - 2]['vars'][''])
-            except:
+            except Exception:
                 pass
             if case == 'callfun':  # return type
                 if result and result in groupcache[groupcounter]['vars']:
@@ -1052,7 +1052,7 @@ def analyzeline(m, case, line):
             # if groupcounter>1: # name is interfaced
             try:
                 groupcache[groupcounter - 2]['interfaced'].append(name)
-            except:
+            except Exception:
                 pass
         if block == 'function':
             t = typespattern[0].match(m.group('before') + ' ' + name)
@@ -1174,7 +1174,7 @@ def analyzeline(m, case, line):
         for e in markoutercomma(ll).split('@,@'):
             try:
                 k, initexpr = [x.strip() for x in e.split('=')]
-            except:
+            except Exception:
                 outmess(
                     'analyzeline: could not extract name,expr in parameter statement "%s" of "%s"\n' % (e, ll))
                 continue
@@ -1251,7 +1251,7 @@ def analyzeline(m, case, line):
                     if '-' in r:
                         try:
                             begc, endc = [x.strip() for x in r.split('-')]
-                        except:
+                        except Exception:
                             outmess(
                                 'analyzeline: expected "<char>-<char>" instead of "%s" in range list of implicit statement\n' % r)
                             continue
@@ -1790,7 +1790,7 @@ def setmesstext(block):
 
     try:
         filepositiontext = 'In: %s:%s\n' % (block['from'], block['name'])
-    except:
+    except Exception:
         pass
 
 
@@ -2108,7 +2108,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
     try:
         c = int(myeval(e, {}, {}))
         return 0, c, None
-    except:
+    except Exception:
         pass
     if getlincoef_re_1.match(e):
         return 1, 0, e
@@ -2150,7 +2150,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                 c2 = myeval(ee, {}, {})
                 if (a * 0.5 + b == c and a * 1.5 + b == c2):
                     return a, b, x
-            except:
+            except Exception:
                 pass
             break
     return None, None, None
@@ -2162,11 +2162,11 @@ def getarrlen(dl, args, star='*'):
     edl = []
     try:
         edl.append(myeval(dl[0], {}, {}))
-    except:
+    except Exception:
         edl.append(dl[0])
     try:
         edl.append(myeval(dl[1], {}, {}))
-    except:
+    except Exception:
         edl.append(dl[1])
     if isinstance(edl[0], int):
         p1 = 1 - edl[0]
@@ -2186,7 +2186,7 @@ def getarrlen(dl, args, star='*'):
         d = '%s-(%s)+1' % (dl[1], dl[0])
     try:
         return repr(myeval(d, {}, {})), None, None
-    except:
+    except Exception:
         pass
     d1, d2 = getlincoef(dl[0], args), getlincoef(dl[1], args)
     if None not in [d1[0], d2[0]]:
@@ -2579,7 +2579,7 @@ def analyzevars(block):
                 l = vars[n]['charselector']['len']
                 try:
                     l = str(eval(l, {}, params))
-                except:
+                except Exception:
                     pass
                 vars[n]['charselector']['len'] = l
 
@@ -2588,7 +2588,7 @@ def analyzevars(block):
                 l = vars[n]['kindselector']['kind']
                 try:
                     l = str(eval(l, {}, params))
-                except:
+                except Exception:
                     pass
                 vars[n]['kindselector']['kind'] = l
 
@@ -2819,7 +2819,7 @@ def analyzevars(block):
                                 try:
                                     kindselect['kind'] = eval(
                                         kindselect['kind'], {}, params)
-                                except:
+                                except Exception:
                                     pass
                             vars[n]['kindselector'] = kindselect
                         if charselect:
@@ -3230,7 +3230,7 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 try:
                     v = eval(v)
                     v = '(%s,%s)' % (v.real, v.imag)
-                except:
+                except Exception:
                     pass
             vardef = '%s :: %s=%s' % (vardef, a, v)
         else:

@@ -87,7 +87,7 @@ def test_f2py():
                 assert_equal(stdout.strip(), b'2')
                 success = True
                 break
-            except:
+            except Exception:
                 pass
         msg = "Warning: neither %s nor %s nor %s found in path" % f2py_cmds
         assert_(success, msg)

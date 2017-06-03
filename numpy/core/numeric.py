@@ -1278,7 +1278,7 @@ def tensordot(a, b, axes=2):
     """
     try:
         iter(axes)
-    except:
+    except Exception:
         axes_a = list(range(-axes, 0))
         axes_b = list(range(0, axes))
     else:
@@ -2597,7 +2597,7 @@ def array_equal(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     if a1.shape != a2.shape:
         return False
@@ -2641,11 +2641,11 @@ def array_equiv(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     try:
         multiarray.broadcast(a1, a2)
-    except:
+    except Exception:
         return False
 
     return bool(asarray(a1 == a2).all())

@@ -597,7 +597,7 @@ def issctype(rep):
         if res and res != object_:
             return True
         return False
-    except:
+    except Exception:
         return False
 
 def obj2sctype(rep, default=None):
@@ -652,7 +652,7 @@ def obj2sctype(rep, default=None):
         return rep.dtype.type
     try:
         res = dtype(rep)
-    except:
+    except Exception:
         return default
     return res.type
 

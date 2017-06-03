@@ -778,7 +778,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     # not necessary for scalar True/False masks
     try:
         np.copyto(low.mask, high.mask, where=odd)
-    except:
+    except Exception:
         pass
 
     if np.issubdtype(asorted.dtype, np.inexact):

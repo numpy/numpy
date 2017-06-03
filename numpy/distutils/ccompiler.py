@@ -417,7 +417,7 @@ def CCompiler_show_customization(self):
             log.info("compiler '%s' is set to %s" % (attrname, attr))
     try:
         self.get_version()
-    except:
+    except Exception:
         pass
     if log._global_log.threshold<2:
         print('*'*80)

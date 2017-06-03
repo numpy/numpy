@@ -162,15 +162,15 @@ class TestSystemInfoReading(TestCase):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)
-        except:
+        except Exception:
             pass
         try:
             shutil.rmtree(self._dir2)
-        except:
+        except Exception:
             pass
         try:
             os.remove(self._sitecfg)
-        except:
+        except Exception:
             pass
 
     def test_all(self):

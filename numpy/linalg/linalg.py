@@ -2177,7 +2177,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     elif not isinstance(axis, tuple):
         try:
             axis = int(axis)
-        except:
+        except Exception:
             raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 

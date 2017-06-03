@@ -299,7 +299,7 @@ class AxisConcatenator(object):
                         if len(vec) == 3:
                             trans1d = int(vec[2])
                         continue
-                    except:
+                    except Exception:
                         raise ValueError("unknown special directive")
                 try:
                     axis = int(item)
