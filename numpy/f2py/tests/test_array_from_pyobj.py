@@ -12,6 +12,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, SkipTest
 )
 from numpy.core.multiarray import typeinfo
+from numpy.distutils.cpuinfo import cpu
 import util
 
 wrap = None
@@ -119,12 +120,17 @@ _cast_dict['DOUBLE'] = _cast_dict['INT'] + ['UINT', 'FLOAT', 'DOUBLE']
 
 _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
 
+# These architectures have the IBM Extended precision implemented as long
+# double, which is not compatible with machar detection so long double is
+# compiled to behave as a double.
+longdouble_is_double = cpu.is_power8() or cpu.is_power7()
+
 # 32 bit system malloc typically does not provide the alignment required by
 # 16 byte long double types this means the inout intent cannot be satisfied
 # and several tests fail as the alignment flag can be randomly true or fals
 # when numpy gains an aligned allocator the tests could be enabled again
 if ((intp().dtype.itemsize != 4 or clongdouble().dtype.alignment <= 8) and
-        sys.platform != 'win32'):
+        sys.platform != 'win32' and not longdouble_is_double):
     _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
     _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
         ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']

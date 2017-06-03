@@ -31,6 +31,17 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         # add flags for (almost) sane C++ handling
         ccomp += ['-AA']
         self.compiler_so = ccomp
+
+    from .cpuinfo import cpu
+    if cpu.is_power8() or cpu.is_power7():
+        # Avoid IBM extended double as machar algorithm doesn't converge.
+        # See https://gcc.gnu.org/wiki/Ieee128PowerPC for more info.
+        ldbl_as_dbl = ('-mlong-double-64',)
+        if (len(set(ccomp) & set(ldbl_as_dbl)) == 0):
+            # Only add if not already there
+            ccomp.extend(ldbl_as_dbl)
+            self.compiler_so = ccomp
+
     # ensure OPT environment variable is read
     if 'OPT' in os.environ:
         from distutils.sysconfig import get_config_vars

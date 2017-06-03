@@ -298,6 +298,16 @@ class LinuxCPUInfo(CPUInfoBase):
     def _has_3dnowext(self):
         return re.match(r'.*?\b3dnowext\b', self.info[0]['flags']) is not None
 
+    # POWER series
+    def _is_ppc64le(self):
+        return self.info[0]['uname_m']=='ppc64le'
+
+    def _is_power7(self):
+        return re.match(r'^POWER7', self.info[0]['cpu']) is not None
+
+    def _is_power8(self):
+        return re.match(r'^POWER8', self.info[0]['cpu']) is not None
+
 class IRIXCPUInfo(CPUInfoBase):
     info = None
 
