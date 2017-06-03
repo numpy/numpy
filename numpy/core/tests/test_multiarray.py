@@ -4270,6 +4270,18 @@ class TestResize(TestCase):
         x.resize()
         assert_array_equal(x, np.eye(3))
 
+    def test_0d_shape(self):
+        # to it multiple times to test it does not break alloc cache gh-9216
+        for i in range(10):
+            x = np.empty((1,))
+            x.resize(())
+            assert_equal(x.shape, ())
+            assert_equal(x.size, 1)
+            x = np.empty(())
+            x.resize((1,))
+            assert_equal(x.shape, (1,))
+            assert_equal(x.size, 1)
+
     def test_invalid_arguments(self):
         self.assertRaises(TypeError, np.eye(3).resize, 'hi')
         self.assertRaises(ValueError, np.eye(3).resize, -1)
