@@ -824,6 +824,45 @@ def test_large_file_support():
         r = np.load(f)
     assert_array_equal(r, d)
 
+def test_read_array_header_1_0():
+    
+    # Create junk data:
+    f = BytesIO()
+    d = np.ones(10, dtype=np.float64)
+    format.write_array(f, d, version=(1, 0))
+    
+    # Exercise read_array_header_1_0
+    f.seek(0)    
+    major, minor = np.lib.format.read_magic(f)
+    shape, fortran, dtype = np.lib.format.read_array_header_1_0(f)
+
+    assert major == 1
+    assert minor == 0
+    assert shape == (10,)
+    assert fortran is False
+    assert dtype == np.float64
+    
+def test_read_array_header_2_0():
+    
+    # Create junk data:
+    f = BytesIO()
+    d = np.ones(10, dtype=np.float64)
+    format.write_array(f, d, version=(2, 0))
+    
+    # Exercise read_array_header_2_0
+    f.seek(0)    
+    major, minor = np.lib.format.read_magic(f)
+    print(major, minor)
+    shape, fortran, dtype = np.lib.format.read_array_header_2_0(f)
+
+    assert major == 2
+    assert minor == 0
+    assert shape == (10,)
+    assert fortran is False
+    assert dtype == np.float64
+
+
+    
 
 @dec.slow
 @dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
@@ -847,4 +886,6 @@ def test_large_archive():
 
 
 if __name__ == "__main__":
-    run_module_suite()
+#     run_module_suite()
+    test_read_array_header_1_0()
+    test_read_array_header_2_0()

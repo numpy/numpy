@@ -551,8 +551,15 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
 
     """
     _check_version(version)
-    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
-                                   version)
+    
+    if version == (1,0):
+        used_ver = _write_array_header(fp, header_data_from_array_1_0(array), version)
+    elif version == (2,0):
+        used_ver = _write_array_header(fp, header_data_from_array_2_0(array), version)
+    else:
+        raise NotImplementedError
+    print( 'blah ', used_ver)
+    
     # this warning can be removed when 1.9 has aged enough
     if version != (2, 0) and used_ver == (2, 0):
         warnings.warn("Stored array in format 2.0. It can only be"
