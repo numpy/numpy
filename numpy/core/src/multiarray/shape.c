@@ -38,7 +38,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER order)
+               NPY_ORDER NPY_UNUSED(self))
 {
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
