@@ -57,6 +57,47 @@ class TestSetOps(TestCase):
 
         assert_array_equal([], setxor1d([], []))
 
+    def test_setxor1d_return_index( self ):
+        a = np.array( [5, 7, 1, 2] )
+        b = np.array( [2, 4, 3, 1, 5] )
+
+        ec = np.array( [3, 4, 7] )
+        eia = np.array( [1] )
+        eib = np.array( [2, 1] )
+
+        c, ia, ib = setxor1d( a, b, return_index=True )
+        assert_array_equal( c, ec )
+        assert_array_equal( ia, eia )
+        assert_array_equal( ib, eib )
+
+        a = np.array( [1, 2, 3] )
+        b = np.array( [6, 5, 4] )
+
+        ec = np.array( [1, 2, 3, 4, 5, 6] )
+        eia = np.array( [0, 1, 2] )
+        eib = np.array( [2, 1, 0] )
+
+        c, ia, ib = setxor1d( a, b, return_index=True )
+        assert_array_equal( c, ec )
+        assert_array_equal( ia, eia )
+        assert_array_equal( ib, eib )
+
+        a = np.array( [1, 8, 2, 3] )
+        b = np.array( [6, 5, 4, 8] )
+
+        ec = np.array( [1, 2, 3, 4, 5, 6] )
+        eia = np.array( [0, 2, 3] )
+        eib = np.array( [2, 1, 0] )
+        c, ia, ib = setxor1d( a, b, return_index=True )
+        assert_array_equal( c, ec )
+        assert_array_equal( ia, eia )
+        assert_array_equal( ib, eib )
+
+        c, ia, ib = setxor1d( [], [], return_index=True )
+        assert_array_equal( c, [] )
+        assert_array_equal( ia, [] )
+        assert_array_equal( ib, [] )
+
     def test_ediff1d(self):
         zero_elem = np.array([])
         one_elem = np.array([1])

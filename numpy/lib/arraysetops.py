@@ -337,7 +337,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
     aux.sort()
     return aux[:-1][aux[1:] == aux[:-1]]
 
-def setxor1d(ar1, ar2, assume_unique=False):
+def setxor1d(ar1, ar2, assume_unique=False, return_index=False):
     """
     Find the set exclusive-or of two arrays.
 
@@ -351,12 +351,21 @@ def setxor1d(ar1, ar2, assume_unique=False):
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
+    return_index : bool, optional
+        If True, return the indices of `ar1` and `ar2` that result in the
+        unique array.
 
     Returns
     -------
     setxor1d : ndarray
         Sorted 1D array of unique values that are in only one of the input
         arrays.
+    setxor1d_indices1 : ndarray, optional
+        The indices of the unique values in the (flattened) original ar1 array.
+        Only provided if `return_index` is True.
+    setxor1d_indices2 : ndarray, optional
+        The indices of the unique values in the (flattened) original ar2 array.
+        Only provided if `return_index` is True.
 
     Examples
     --------
@@ -365,21 +374,47 @@ def setxor1d(ar1, ar2, assume_unique=False):
     >>> np.setxor1d(a,b)
     array([1, 4, 5, 7])
 
+    >>> np.setxor1d(a, b, return_index=True)
+    (array([1, 4, 5, 7]), array([0, 4]), array([2, 3]))
+
     """
     if not assume_unique:
-        ar1 = unique(ar1)
-        ar2 = unique(ar2)
+        if return_index:
+            ar1, idx1 = unique(ar1, True)
+            ar2, idx2 = unique(ar2, True)
+        else:
+            ar1 = unique(ar1)
+            ar2 = unique(ar2)
 
     aux = np.concatenate((ar1, ar2))
     if aux.size == 0:
-        return aux
+        if return_index:
+            return aux, np.empty(0, dtype=int), np.empty(0, dtype=int)
+        else:
+            return aux
 
-    aux.sort()
+    if return_index:
+        perm = aux.argsort()
+        aux = aux[perm]
+    else:
+        aux.sort()
+
 #    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
     flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))
 #    flag2 = ediff1d( flag ) == 0
     flag2 = flag[1:] == flag[:-1]
-    return aux[flag2]
+
+    if return_index:
+        idx = perm[flag2]
+        n1 = ar1.size
+        i1 = idx[idx < n1]
+        i2 = idx[idx >= n1] - n1
+        if assume_unique:
+            return aux[flag2], i1, i2
+        else:
+            return aux[flag2], idx1[i1], idx2[i2]
+    else:
+        return aux[flag2]
 
 
 def in1d(ar1, ar2, assume_unique=False, invert=False):
