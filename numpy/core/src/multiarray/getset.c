@@ -926,6 +926,39 @@ array_finalize_get(PyArrayObject *NPY_UNUSED(self))
     Py_RETURN_NONE;
 }
 
+static PyObject*
+array_ix_get(PyArrayObject *self)
+{
+    static PyObject *klass = NULL;
+    PyObject *sargs, *ret;
+
+    if (klass == NULL) {
+        PyObject *module = PyImport_ImportModule("numpy.core._indexer");
+
+        if (module == NULL) {
+            return NULL;
+        }
+
+        klass = PyDict_GetItemString(PyModule_GetDict(module),
+                                     "OrthogonalIndexer");
+        Py_XINCREF(klass);
+        Py_DECREF(module);
+        if (klass == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "NumPy internal error: could not find class "
+                            "numpy.core._indexer.OrthogonalIndexer");
+            return NULL;
+        }
+    }
+    sargs = Py_BuildValue("(O)", self);
+    if (sargs == NULL) {
+        return NULL;
+    }
+    ret = PyObject_Call(klass, sargs, NULL);
+    Py_DECREF(sargs);
+    return ret;
+}
+
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -1001,6 +1034,10 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"__array_finalize__",
         (getter)array_finalize_get,
+        NULL,
+        NULL, NULL},
+    {"ix_",
+        (getter)array_ix_get,
         NULL,
         NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
