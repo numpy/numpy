@@ -974,7 +974,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             on_edge = (around(sample[:, i], decimal) ==
                        around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
-            Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
+            Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
