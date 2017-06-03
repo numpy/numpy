@@ -1167,7 +1167,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
                      PyArray_Descr *dtype, int subok)
 {
-    PyObject *ret = NULL;
+    PyArrayObject *ret = NULL;
     int ndim = PyArray_NDIM(prototype);
 
     /* If no override data type, use the one from the prototype */
@@ -1198,14 +1198,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
 
     /* If it's not KEEPORDER, this is simple */
     if (order != NPY_KEEPORDER) {
-        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
-                                        dtype,
-                                        ndim,
-                                        PyArray_DIMS(prototype),
-                                        NULL,
-                                        NULL,
-                                        order,
-                                        subok ? (PyObject *)prototype : NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
+                                                        dtype,
+                                                        ndim,
+                                                        PyArray_DIMS(prototype),
+                                                        NULL,
+                                                        NULL,
+                                                        order,
+                                                        subok ? (PyObject *)prototype : NULL);
     }
     /* KEEPORDER needs some analysis of the strides */
     else {
@@ -1227,17 +1227,26 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         }
 
         /* Finally, allocate the array */
-        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
-                                        dtype,
-                                        ndim,
-                                        shape,
-                                        strides,
-                                        NULL,
-                                        0,
-                                        subok ? (PyObject *)prototype : NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
+                                                        dtype,
+                                                        ndim,
+                                                        shape,
+                                                        strides,
+                                                        NULL,
+                                                        0,
+                                                        subok ? (PyObject *)prototype : NULL);
     }
 
-    return ret;
+    /* see gh-7854 */   
+    if (PyArray_DESCR(ret)->type_num == NPY_OBJECT) {
+        PyArray_FillObjectArray(ret, Py_None);
+        if (PyErr_Occurred()) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    return (PyObject *)ret;
 }
 
 /*NUMPY_API
