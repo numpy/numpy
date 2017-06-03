@@ -2170,6 +2170,7 @@ class TestCorrelate(TestCase):
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
         self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
+        self.ys = np.arange(-3, 0, 0.5, dtype=dt)[::2][::-1]
         self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
         self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
         self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
@@ -2177,11 +2178,17 @@ class TestCorrelate(TestCase):
         self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
         self.zs = np.array([-3., -14., -30., -48., -66., -84.,
                            -102., -54., -19.], dtype=dt)
+        self.xl = np.arange(19, dtype=dt)
+        self.y9 = np.arange(-9, 0, dtype=dt)
 
     def test_float(self):
         self._setup(np.float)
         z = np.correlate(self.x, self.y, 'full')
         assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.x, self.ys, 'full')
+        assert_array_almost_equal(z, self.z1)
+        z = np.correlate(self.xs, self.ys, 'full')
+        assert_array_almost_equal(z, self.zs)
         z = np.correlate(self.x, self.y[:-1], 'full')
         assert_array_almost_equal(z, self.z1_4)
         z = np.correlate(self.y, self.x, 'full')
@@ -2192,6 +2199,47 @@ class TestCorrelate(TestCase):
         assert_array_almost_equal(z, self.z2r)
         z = np.correlate(self.xs, self.y, 'full')
         assert_array_almost_equal(z, self.zs)
+
+        # check longer correlates
+        z = np.correlate(self.xl[:-1], self.y9[:4], 'full')
+        assert_array_almost_equal(z, [0.,   -6.,  -19.,  -40.,  -70., -100.,
+                                      -130., -160., -190., -220., -250., -280.,
+                                      -310., -340., -370., -400., -430., -460.,
+                                      -382., -280., -153.])
+        z = np.correlate(self.xl, self.y9[:5], 'full')
+        assert_array_almost_equal(z, [   0.,   -5.,  -16.,  -34.,  -60.,  -95.,
+                                      -130., -165., -200., -235., -270., -305.,
+                                      -340., -375., -410., -445., -480., -515.,
+                                      -550., -490., -406., -297., -162.])
+        z = np.correlate(self.xl[:-1], self.y9[:6], 'full')
+        assert_array_almost_equal(z, [0.,   -4.,  -13.,  -28.,  -50.,  -80.,
+                                      -119., -158., -197., -236., -275., -314.,
+                                      -353., -392., -431., -470., -509., -548.,
+                                      -515., -460., -382., -280., -153.])
+        z = np.correlate(self.xl, self.y9[:7], 'full')
+        assert_array_almost_equal(z, [0.,   -3.,  -10.,  -22.,  -40.,  -65.,
+                                      -98., -140., -182., -224., -266., -308.,
+                                      -350., -392., -434., -476., -518., -560.,
+                                      -602., -587., -550., -490., -406., -297.,
+                                      -162.])
+        z = np.correlate(self.xl[:-1], self.y9[:8], 'full')
+        assert_array_almost_equal(z, [0.,   -2.,   -7.,  -16.,  -30.,  -50.,
+                                      -77., -112., -156., -200., -244., -288.,
+                                      -332., -376., -420., -464., -508., -552.,
+                                      -560., -548., -515., -460., -382., -280.,
+                                      -153.])
+        z = np.correlate(self.xl, self.y9, 'full')
+        assert_array_almost_equal(z, [   0.,   -1.,   -4.,  -10.,  -20.,  -35.,
+                                      -56.,  -84., -120., -165., -210., -255.,
+                                      -300., -345., -390., -435., -480., -525.,
+                                      -570., -596., -602., -587., -550., -490.,
+                                      -406., -297., -162.])
+        z = np.correlate(self.xl, self.y9, 'full')
+        assert_array_almost_equal(z, [   0.,   -1.,   -4.,  -10.,  -20.,  -35.,
+                                      -56.,  -84., -120., -165., -210., -255.,
+                                      -300., -345., -390., -435., -480., -525.,
+                                      -570., -596., -602., -587., -550., -490.,
+                                      -406., -297., -162.])
 
     def test_object(self):
         self._setup(Decimal)

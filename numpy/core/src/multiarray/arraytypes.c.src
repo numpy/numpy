@@ -4013,6 +4013,183 @@ static int
  *****************************************************************************
  */
 
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+
+#include <emmintrin.h>
+
+#ifdef __SSE3__
+#include <pmmintrin.h>
+#define hadd _mm_hadd_pd
+#else
+static __m128d hadd(__m128d ab, __m128d cd)
+{
+    __m128d ac = _mm_unpacklo_pd(ab, cd);
+    __m128d bd = _mm_unpackhi_pd(ab, cd);
+    return _mm_add_pd(ac, bd);
+}
+#endif
+
+static int
+vect_cor3(double * d, double *k, double *o, npy_intp ostride, npy_uintp nd)
+{
+    npy_intp i;
+    /* working on two results per iteration so load kernel twice */
+    __m128d vk1 = _mm_loadu_pd(k);
+    __m128d vk2 = _mm_set_pd(k[0], k[2]);
+    __m128d vk3 = _mm_loadu_pd(&k[1]);
+
+    __m128d vd3 = _mm_loadu_pd(&d[0]);
+    for (i = 0; i < nd - (nd % 2); i+=2) {
+        /* load 6 elements with the last 3 overlapping by 2 with first 3 */
+        __m128d vd1, vd2, md1, md2, md3, r;
+        vd1 = vd3; /* _mm_loadu_pd(&d[i]) */
+        vd3 = _mm_loadu_pd(&d[i + 2]);
+        /*
+         * third entry of the first set is the first entry of second set
+         * first entry of the second set is the second entry of first set
+         */
+        vd2 = _mm_shuffle_pd(vd3, vd1, _MM_SHUFFLE2 (1,0));
+
+        /* now the data is 3 vectors aligned with the double kernel vectors */
+        md1 = _mm_mul_pd(vk1, vd1);
+        md2 = _mm_mul_pd(vk2, vd2);
+        md3 = _mm_mul_pd(vk3, vd3);
+        /* sum down to one vector and store */
+        r = _mm_add_pd(md2, hadd(md1, md3));
+        _mm_storeu_pd(&o[i * ostride], r);
+    }
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        o[i * ostride] = d[i] * k[0] + d[i + 1] * k[1] + d[i + 2] * k[2];
+    }
+    return 1;
+}
+
+static int
+vect_cor5(double * d, double *k, double *o, npy_intp ostride, npy_uintp nd)
+{
+    npy_intp i;
+    __m128d vk1 = _mm_loadu_pd(k);
+    __m128d vk2 = _mm_loadu_pd(&k[2]);
+    __m128d vk3 = _mm_set_pd(k[0], k[4]);
+    __m128d vk4 = _mm_loadu_pd(&k[1]);
+    __m128d vk5 = _mm_loadu_pd(&k[3]);
+
+    __m128d vd4 = _mm_loadu_pd(&d[0]);
+    __m128d vd5 = _mm_loadu_pd(&d[2]);
+    for (i = 0; i < nd - (nd % 2); i+=2) {
+        __m128d vd1, vd2, vd3, md1, md2, md3, md4, md5, r;
+        vd1 = vd4; /* _mm_loadu_pd(&d[i]); */
+        vd2 = vd5; /* _mm_loadu_pd(&d[i + 2]); */
+        vd4 = vd2; /* _mm_loadu_pd(&d[i + 2]); */
+        vd5 = _mm_loadu_pd(&d[i + 4]);
+        vd3 = _mm_shuffle_pd(vd5, vd1, _MM_SHUFFLE2 (1,0));
+
+        md1 = _mm_mul_pd(vk1, vd1);
+        md2 = _mm_mul_pd(vk2, vd2);
+        md1 = _mm_add_pd(md1, md2);
+
+        md3 = _mm_mul_pd(vk3, vd3);
+
+        md4 = _mm_mul_pd(vk4, vd4);
+        md5 = _mm_mul_pd(vk5, vd5);
+        md4 = _mm_add_pd(md4, md5);
+
+        r = _mm_add_pd(md3, hadd(md1, md4));
+        _mm_storeu_pd(&o[i * ostride], r);
+    }
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        o[i * ostride] = d[i] * k[0] + d[i + 1] * k[1] + d[i + 2] * k[2] +
+                         d[i + 3] * k[3] + d[i + 4] * k[4];
+    }
+    return 1;
+}
+
+static int
+vect_cor7(double * d, double *k, double *o, npy_intp ostride, npy_uintp nd)
+{
+    npy_intp i;
+    __m128d vk1 = _mm_loadu_pd(k);
+    __m128d vk2 = _mm_loadu_pd(&k[2]);
+    __m128d vk3 = _mm_loadu_pd(&k[4]);
+    __m128d vk4 = _mm_set_pd(k[0], k[6]);
+    __m128d vk5 = _mm_loadu_pd(&k[1]);
+    __m128d vk6 = _mm_loadu_pd(&k[3]);
+    __m128d vk7 = _mm_loadu_pd(&k[5]);
+
+    __m128d vd5 = _mm_loadu_pd(&d[0]);
+    __m128d vd6 = _mm_loadu_pd(&d[2]);
+    __m128d vd7 = _mm_loadu_pd(&d[4]);
+    for (i = 0; i < nd - (nd % 2); i+=2) {
+        __m128d vd1, vd2, vd3, vd4, md1, md2, md3, md4, md5, md6, md7, r;
+        vd1 = vd5; /* _mm_loadu_pd(&d[i + 0]); */
+        vd2 = vd6; /* _mm_loadu_pd(&d[i + 2]); */
+        vd3 = vd7; /* _mm_loadu_pd(&d[i + 4]); */
+        vd5 = vd2; /* _mm_loadu_pd(&d[i + 2]); */
+        vd6 = vd3; /* _mm_loadu_pd(&d[i + 4]); */
+        vd7 = _mm_loadu_pd(&d[i + 6]);
+        vd4 = _mm_shuffle_pd(vd7, vd1, _MM_SHUFFLE2 (1,0));
+
+        md1 = _mm_mul_pd(vk1, vd1);
+        md2 = _mm_mul_pd(vk2, vd2);
+        md1 = _mm_add_pd(md1, md2);
+
+        md3 = _mm_mul_pd(vk3, vd3);
+        md3 = _mm_add_pd(md1, md3);
+
+        md4 = _mm_mul_pd(vk4, vd4);
+
+        md5 = _mm_mul_pd(vk5, vd5);
+        md6 = _mm_mul_pd(vk6, vd6);
+        md5 = _mm_add_pd(md5, md6);
+
+        md7 = _mm_mul_pd(vk7, vd7);
+        md7 = _mm_add_pd(md5, md7);
+
+        r = _mm_add_pd(md4, hadd(md3, md7));
+        _mm_storeu_pd(&o[i * ostride], r);
+    }
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        o[i * ostride] = d[i] * k[0] + d[i + 1] * k[1] + d[i + 2] * k[2] +
+                         d[i + 3] * k[3] + d[i + 4] * k[4] + d[i + 5] * k[5] +
+                         d[i + 6] * k[6];
+    }
+    return 1;
+}
+
+static int
+vect_cor4(double * d, double *k, double *o, npy_intp ostride, npy_uintp nd)
+{
+    npy_intp i;
+    __m128d vk1 = _mm_loadu_pd(k);
+    __m128d vk2 = _mm_loadu_pd(&k[2]);
+    for (i = 0; i < nd - (nd % 2); i+=2) {
+        __m128d r;
+        __m128d vd1 = _mm_loadu_pd(&d[i]);
+        __m128d vd2 = _mm_loadu_pd(&d[i + 2]);
+        __m128d vd3 = _mm_loadu_pd(&d[i + 1]);
+        __m128d vd4 = _mm_loadu_pd(&d[i + 3]);
+        vd1 = _mm_mul_pd(vk1, vd1);
+        vd2 = _mm_mul_pd(vk2, vd2);
+        vd3 = _mm_mul_pd(vk1, vd3);
+        vd4 = _mm_mul_pd(vk2, vd4);
+        vd1 = _mm_add_pd(vd1, vd2);
+        vd3 = _mm_add_pd(vd3, vd4);
+        r = hadd(vd1, vd3);
+        _mm_storeu_pd(&o[i * ostride], r);
+    }
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        o[i * ostride] = d[i] * k[0] + d[i + 1] * k[1] +
+                         d[i + 2] * k[2] +  + d[i + 3] * k[3];
+    }
+    return 1;
+}
+
+#endif
+
 /*
  * Compute correlation of data with with small kernels
  * Calling a BLAS dot product for the inner loop of the correlation is overkill
@@ -4040,6 +4217,28 @@ small_correlate(const char * d_, npy_intp dstride,
     if (nk > 11 || dtype != ktype) {
         return 0;
     }
+
+#ifdef NPY_HAVE_SSE2_INTRINSICS
+    if (dtype == NPY_DOUBLE && dstride == sizeof(double) &&
+        kstride == sizeof(double) && nd >= 2) {
+        if (nk == 3) {
+            return vect_cor3((double*)d_, (double*)k_, (double*)out_,
+                             ostride / 8, (npy_uintp)nd);
+        }
+        else if (nk == 4) {
+            return vect_cor4((double*)d_, (double*)k_, (double*)out_,
+                             ostride / 8, (npy_uintp)nd);
+        }
+        else if (nk == 5) {
+            return vect_cor5((double*)d_, (double*)k_, (double*)out_,
+                             ostride / 8, (npy_uintp)nd);
+        }
+        else if (nk == 7) {
+            return vect_cor7((double*)d_, (double*)k_, (double*)out_,
+                             ostride / 8, (npy_uintp)nd);
+        }
+    }
+#endif
 
     switch (dtype) {
 /**begin repeat
