@@ -934,6 +934,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     def pack_items(items, packing):
         """Pack items into nested lists based on re-packing info."""
+        if len(items) != len(packing):
+            raise ValueError("Cannot load file into a dtype "
+                             "with the wrong number of fields")
         if packing is None:
             return items[0]
         elif packing is tuple:
