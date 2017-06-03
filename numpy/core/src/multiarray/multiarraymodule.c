@@ -3198,6 +3198,12 @@ array_where(PyObject *NPY_UNUSED(ignored), PyObject *args)
     if (!PyArg_ParseTuple(args, "O|OO:where", &obj, &x, &y)) {
         return NULL;
     }
+    if (x == Py_None) {
+        x = NULL;
+    }
+    if (y == Py_None) {
+        y = NULL;
+    }
     return PyArray_Where(obj, x, y);
 }
 
