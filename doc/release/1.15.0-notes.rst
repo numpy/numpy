@@ -10,6 +10,7 @@ Highlights
 New functions
 =============
 
+* ``quantile`` function, an interface to ``percentile`` without factors of 100
 
 Deprecations
 ============
@@ -29,6 +30,11 @@ C API changes
 
 New Features
 ============
+
+``np.quantile``
+---------------
+Like ``np.percentile``, but takes quantiles in [0, 1] rather than percentiles in
+[0, 100].
 
 
 Improvements
