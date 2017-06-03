@@ -1123,10 +1123,7 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims and keepdims is not np._NoValue:
-        if q.ndim == 0:
-            return r.reshape(k)
-        else:
-            return r.reshape([len(q)] + k)
+        return r.reshape(q.shape + k)
     else:
         return r
 
