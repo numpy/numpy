@@ -16,6 +16,10 @@ New functions
 
 * ``parametrize``: decorator added to numpy.testing
 * ``chebinterpolate``: Interpolate function at Chebyshev points.
+* ``parametrize`` decorator added to numpy.testing
+* ``quantile`` function, a better interface to ``percentile``
+* ``quantile`` function, an interface to ``percentile`` without factors of 100
+* ``nanquantile`` function, an interface to ``nanpercentile`` without factors of 100
 
 
 Deprecations
@@ -130,6 +134,10 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+``np.quantile``
+---------------
+Like ``np.percentile``, but takes quantiles in [0, 1] rather than percentiles in
+[0, 100].
 
 
 Improvements

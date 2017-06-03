@@ -46,7 +46,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'quantile'
     ]
 
 
@@ -4262,8 +4263,36 @@ def percentile(a, q, axis=None, out=None,
     >>> assert not np.all(a == b)
 
     """
-    q = array(q, dtype=np.float64, copy=True)
-    r, k = _ureduce(a, func=_percentile, q=q, axis=axis, out=out,
+    return quantile(a, np.true_divide(q, 100), axis, out,
+           overwrite_input, interpolation, keepdims)
+
+
+def quantile(a, q, axis=None, out=None,
+             overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the qth quantile of the data along the specified axis.
+
+    Takes exactly the same arguments as `percentile`, but with q in [0, 1],
+    rather than [0, 100]
+
+    ..versionadded:: 1.14
+
+    See Also
+    --------
+    percentile
+
+    Examples
+    --------
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.quantile(a, 0.5)
+    3.5
+    """
+
+    q = asarray(q, dtype=np.float64)
+    r, k = _ureduce(a, func=_quantile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
@@ -4272,8 +4301,8 @@ def percentile(a, q, axis=None, out=None,
         return r
 
 
-def _percentile(a, q, axis=None, out=None,
-                overwrite_input=False, interpolation='linear', keepdims=False):
+def _quantile(a, q, axis=None, out=None,
+              overwrite_input=False, interpolation='linear', keepdims=False):
     a = asarray(a)
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
@@ -4285,14 +4314,12 @@ def _percentile(a, q, axis=None, out=None,
     # avoid expensive reductions, relevant for arrays with < O(1000) elements
     if q.size < 10:
         for i in range(q.size):
-            if q[i] < 0. or q[i] > 100.:
+            if q[i] < 0. or q[i] > 1.:
                 raise ValueError("Percentiles must be in the range [0,100]")
-            q[i] /= 100.
     else:
         # faster than any()
-        if np.count_nonzero(q < 0.) or np.count_nonzero(q > 100.):
+        if np.count_nonzero(q < 0.) or np.count_nonzero(q > 1.):
             raise ValueError("Percentiles must be in the range [0,100]")
-        q /= 100.
 
     # prepare a for partioning
     if overwrite_input:
