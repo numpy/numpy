@@ -1083,14 +1083,15 @@ array_copy_keeporder(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"refcheck", NULL};
+    static char *kwlist[] = {"refcheck", "mustown", NULL};
     Py_ssize_t size = PyTuple_Size(args);
     int refcheck = 1;
+    int mustown = 1;
     PyArray_Dims newshape;
     PyObject *ret, *obj;
 
 
-    if (!NpyArg_ParseKeywords(kwds, "|i", kwlist,  &refcheck)) {
+    if (!NpyArg_ParseKeywords(kwds, "|ii", kwlist,  &refcheck, &mustown)) {
         return NULL;
     }
 
@@ -1111,7 +1112,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER);
+    ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER, mustown);
     PyDimMem_FREE(newshape.ptr);
     if (ret == NULL) {
         return NULL;

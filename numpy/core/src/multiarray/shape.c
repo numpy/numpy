@@ -38,7 +38,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER order)
+               NPY_ORDER order, int mustown)
 {
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
@@ -79,7 +79,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     }
     oldsize = PyArray_SIZE(self);
 
-    if (oldsize != newsize) {
+    if (oldsize != newsize && mustown) {
         if (!(PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
@@ -126,7 +126,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         ((PyArrayObject_fields *)self)->data = new_data;
     }
 
-    if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
+    if ((newsize > oldsize) && (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) && PyArray_ISWRITEABLE(self)) {
         /* Fill new memory with zeros */
         elsize = PyArray_DESCR(self)->elsize;
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
