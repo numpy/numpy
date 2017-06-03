@@ -85,6 +85,11 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
 }
 
 
+static NPY_INLINE void *
+_PyDataMem_NEW_ZEROED_RAW(size_t size) {
+    return PyDataMem_NEW_ZEROED(size, 1);
+}
+
 /*
  * array data cache, sz is number of bytes to allocate
  */
@@ -94,6 +99,7 @@ npy_alloc_cache(npy_uintp sz)
     return _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
 }
 
+
 /* zero initialized data, sz is number of bytes to allocate */
 NPY_NO_EXPORT void *
 npy_alloc_cache_zero(npy_uintp sz)
@@ -101,11 +107,7 @@ npy_alloc_cache_zero(npy_uintp sz)
     void * p;
     NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
-        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
-        if (p) {
-            memset(p, 0, sz);
-        }
-        return p;
+        return _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &_PyDataMem_NEW_ZEROED_RAW);
     }
     NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(sz, 1);
