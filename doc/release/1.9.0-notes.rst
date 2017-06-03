@@ -390,6 +390,12 @@ MaskedArray support for more complicated base classes
 Built-in assumptions that the baseclass behaved like a plain array are being
 removed. In particalur, ``repr`` and ``str`` should now work more reliably.
 
+Maximum nditer operands increased to 256
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The maximum number of operands that nditer can handle has been increased from
+32 to 256. This allows applications like `numexpr` to work with larger
+expressions.
+
 
 C-API
 ~~~~~

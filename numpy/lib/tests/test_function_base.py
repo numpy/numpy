@@ -414,9 +414,9 @@ class TestSelect(TestCase):
             assert_raises(DeprecationWarning, select, conditions, choices)
 
     def test_many_arguments(self):
-        # This used to be limited by NPY_MAXARGS == 32
-        conditions = [np.array([False])] * 100
-        choices = [np.array([1])] * 100
+        # This used to be limited by NPY_MAXARGS
+        conditions = [np.array([False])] * 500
+        choices = [np.array([1])] * 500
         select(conditions, choices)
 
 
