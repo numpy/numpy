@@ -624,7 +624,7 @@ array_struct_get(PyArrayObject *self)
         inter->strides = NULL;
     }
     inter->data = PyArray_DATA(self);
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
+    if (PyDataType_HASFIELDS(PyArray_DESCR(self)) || tolower(inter->typekind) == 'm') {
         inter->descr = arraydescr_protocol_descr_get(PyArray_DESCR(self));
         if (inter->descr == NULL) {
             PyErr_Clear();
