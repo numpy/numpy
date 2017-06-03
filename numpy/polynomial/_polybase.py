@@ -307,31 +307,25 @@ class ABCPolyBase(object):
         return self
 
     def __add__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._add(self.coef, othercoef)
-        except TypeError as e:
-            raise e
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __sub__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._sub(self.coef, othercoef)
-        except TypeError as e:
-            raise e
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __mul__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._mul(self.coef, othercoef)
-        except TypeError as e:
-            raise e
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
@@ -362,10 +356,10 @@ class ABCPolyBase(object):
         return res[1]
 
     def __divmod__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             quo, rem = self._div(self.coef, othercoef)
-        except (TypeError, ZeroDivisionError) as e:
+        except ZeroDivisionError as e:
             raise e
         except Exception:
             return NotImplemented
