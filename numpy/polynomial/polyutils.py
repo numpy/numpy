@@ -236,7 +236,7 @@ def trimcoef(c, tol=0):
         raise ValueError("tol must be non-negative")
 
     [c] = as_series([c])
-    [ind] = np.where(np.abs(c) > tol)
+    [ind] = np.nonzero(np.abs(c) > tol)
     if len(ind) == 0:
         return c[:1]*0
     else:

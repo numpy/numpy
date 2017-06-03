@@ -838,7 +838,7 @@ def argwhere(a):
     ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
 
     The output of ``argwhere`` is not suitable for indexing arrays.
-    For this purpose use ``where(a)`` instead.
+    For this purpose use ``nonzero(a)`` instead.
 
     Examples
     --------
