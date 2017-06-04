@@ -1106,7 +1106,10 @@ def outer(a, b, out=None):
 
     See also
     --------
-    inner, einsum
+    inner
+    einsum : ``einsum('i,j->ij', a.ravel(), b.ravel())`` is the equivalent.
+    ufunc.outer : A generalization to N dimensions and other operations.
+                  ``np.multiply.outer(a.ravel(), b.ravel())`` is the equivalent.
 
     References
     ----------
