@@ -3458,6 +3458,12 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
         PyUString_ConcatAndDel(&s, PyUString_FromString(", align=True"));
     }
 
+    /* If the dtype has non-empty metadata, add the dtype repr */
+    if (dtype->metadata && PyDict_Size(dtype->metadata)) {
+        PyUString_ConcatAndDel(&s, PyUString_FromString(", metadata="));
+        PyUString_ConcatAndDel(&s, PyObject_Repr(dtype->metadata));
+    }
+
     PyUString_ConcatAndDel(&s, PyUString_FromString(")"));
     return s;
 }
@@ -3622,6 +3628,11 @@ arraydescr_repr(PyArray_Descr *dtype)
         ret = PyUString_FromString("dtype(");
         PyUString_ConcatAndDel(&ret,
                             arraydescr_construction_repr(dtype, 1, 0));
+        /* If the dtype has non-empty metadata, add the dtype repr */
+        if (dtype->metadata && PyDict_Size(dtype->metadata)) {
+            PyUString_ConcatAndDel(&ret, PyUString_FromString(", metadata="));
+            PyUString_ConcatAndDel(&ret, PyObject_Repr(dtype->metadata));
+        }
         PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
         return ret;
     }
