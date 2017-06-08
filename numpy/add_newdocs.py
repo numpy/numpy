@@ -1326,6 +1326,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
     When using a non-integer step, such as 0.1, the results will often not
     be consistent.  It is better to use ``linspace`` for these cases.
 
+    When using a non-integer step, such as 0.1, the results will often not
+    be consistent.  It is better to use ``linspace`` for these cases.
+
     Parameters
     ----------
     start : number, optional
