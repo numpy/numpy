@@ -1046,14 +1046,11 @@ class _MaskedBinaryOperation:
             result = self.f(da, db, *args, **kwargs)
         # Get the mask for the result
         (ma, mb) = (getmask(a), getmask(b))
-        if ma is nomask:
-            if mb is nomask:
-                m = nomask
-            else:
-                m = umath.logical_or(getmaskarray(a), mb)
-        elif mb is nomask:
-            m = umath.logical_or(ma, getmaskarray(b))
+        if ma is nomask and mb is nomask:
+            m = nomask
         else:
+            ma = _viewmaskarray(a)
+            mb = _viewmaskarray(b)
             m = umath.logical_or(ma, mb)
 
         # Case 1. : scalar
@@ -1122,8 +1119,8 @@ class _MaskedBinaryOperation:
         if ma is nomask and mb is nomask:
             m = nomask
         else:
-            ma = getmaskarray(a)
-            mb = getmaskarray(b)
+            ma = _viewmaskarray(a)
+            mb = _viewmaskarray(b)
             m = umath.logical_or.outer(ma, mb)
         if (not m.ndim) and m:
             return masked
@@ -1456,8 +1453,16 @@ def getmask(a):
 
 get_mask = getmask
 
+def _viewmaskarray(arr, allow_readonly=True):
+    mask = getmask(arr)
+    if mask is nomask:
+        mask = make_mask_none(
+            np.shape(arr),
+            dtype=getattr(arr, 'dtype', None),
+            writeable=not allow_readonly)
+    return mask
 
-def getmaskarray(arr):
+def getmaskarray(arr, allow_readonly=False):
     """
     Return the mask of a masked array, or full boolean array of False.
 
@@ -1469,6 +1474,9 @@ def getmaskarray(arr):
     ----------
     arr : array_like
         Input `MaskedArray` for which the mask is required.
+    allow_readonly : bool, optional
+        If True, allow this function to produce a readonly array when doing so
+        would increase performance. The default is False.
 
     See Also
     --------
@@ -1506,10 +1514,7 @@ def getmaskarray(arr):
            [False, False]], dtype=bool)
 
     """
-    mask = getmask(arr)
-    if mask is nomask:
-        mask = make_mask_none(np.shape(arr), getattr(arr, 'dtype', None))
-    return mask
+    return _viewmaskarray(arr, allow_readonly)
 
 
 def is_mask(m):
@@ -1665,7 +1670,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
         return result
 
 
-def make_mask_none(newshape, dtype=None):
+def make_mask_none(newshape, dtype=None, writeable=True):
     """
     Return a boolean mask of the given shape, filled with False.
 
@@ -1680,6 +1685,9 @@ def make_mask_none(newshape, dtype=None):
     dtype : {None, dtype}, optional
         If None, use a MaskType instance. Otherwise, use a new datatype with
         the same fields as `dtype`, converted to boolean types.
+    writeable : bool
+        If True, return a normal array. If false, return a broadcasting array
+        that only stores one element of memory, but as a result is readonly.
 
     Returns
     -------
@@ -1709,10 +1717,29 @@ def make_mask_none(newshape, dtype=None):
 
     """
     if dtype is None:
-        result = np.zeros(newshape, dtype=MaskType)
+        dtype = MaskType
     else:
-        result = np.zeros(newshape, dtype=make_mask_descr(dtype))
-    return result
+        dtype = make_mask_descr(dtype)
+
+    if writeable:
+        return np.zeros(newshape, dtype=dtype)
+
+    else:
+        # build a buffer of the single scalar mask
+        if dtype == MaskType:
+            # optimization - bytes->buffer is faster than np.ma.nomask->buffer
+            buff = b'\0'  # np.ma.nomask
+        else:
+            buff = np.zeros((), dtype=dtype)
+            buff.flags.writeable = False
+
+        # duplicate it using zero strides
+        # like np.lib.stride_tricks.as_strided, but faster
+        offset = 0
+        strides = (0,)*len(newshape)
+
+        # optimization - positional arguments, for speed
+        return np.ndarray(newshape, dtype, buff, offset, strides)
 
 
 def mask_or(m1, m2, copy=False, shrink=True):
@@ -2556,7 +2583,7 @@ def flatten_structured_array(a):
         out = np.array([tuple(flatten_sequence(d.item())) for d in a._data])
         out = out.view(MaskedArray)
         out._mask = np.array([tuple(flatten_sequence(d.item()))
-                              for d in getmaskarray(a)])
+                              for d in _viewmaskarray(a)])
     else:
         out = np.array([tuple(flatten_sequence(d.item())) for d in a])
     if len(inishape) > 1:
@@ -2692,7 +2719,7 @@ class MaskedIterator(object):
     def __setitem__(self, index, value):
         self.dataiter[index] = getdata(value)
         if self.maskiter is not None:
-            self.maskiter[index] = getmaskarray(value)
+            self.maskiter[index] = _viewmaskarray(value)
 
     def __next__(self):
         """
@@ -2847,8 +2874,9 @@ class MaskedArray(ndarray):
             elif isinstance(data, (tuple, list)):
                 try:
                     # If data is a sequence of masked array
-                    mask = np.array([getmaskarray(m) for m in data],
-                                    dtype=mdtype)
+                    mask = np.array([
+                        _viewmaskarray(m) for m in data
+                    ], dtype=mdtype)
                 except ValueError:
                     # If data is nested
                     mask = nomask
@@ -3018,7 +3046,7 @@ class MaskedArray(ndarray):
             except ValueError:
                 self._mask = nomask
             except (TypeError, AttributeError):
-                # When _mask.shape is not writable (because it's a void)
+                # When _mask.shape is not writeable (because it's a void)
                 pass
         # Finalize the fill_value for structured arrays
         if self.dtype.names:
@@ -3042,7 +3070,9 @@ class MaskedArray(ndarray):
         if context is not None:
             result._mask = result._mask.copy()
             (func, args, _) = context
-            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
+            m = reduce(mask_or, [
+                _viewmaskarray(arg) for arg in args
+            ])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
@@ -3079,6 +3109,9 @@ class MaskedArray(ndarray):
             if result is not self and result.shape == () and m:
                 return masked
             else:
+                # might be readonly still
+                if not m.flags.writeable:
+                    m = m.copy()
                 result._mask = m
                 result._sharedmask = False
 
@@ -4659,7 +4692,7 @@ class MaskedArray(ndarray):
         if self._mask is nomask and getmask(values) is nomask:
             return
 
-        m = getmaskarray(self).copy()
+        m = _viewmaskarray(self).copy()
 
         if getmask(values) is nomask:
             m.put(indices, False, mode=mode)
@@ -5995,7 +6028,8 @@ class MaskedArray(ndarray):
         """
         cf = 'CF'[self.flags.fnc]
         data_state = super(MaskedArray, self).__reduce__()[2]
-        return data_state + (getmaskarray(self).tobytes(cf), self._fill_value)
+        return data_state + (
+            _viewmaskarray(self).tobytes(cf), self._fill_value)
 
     def __setstate__(self, state):
         """Restore the internal state of the masked array, for
@@ -6426,8 +6460,8 @@ class _extrema_operation(object):
         if ma is nomask and mb is nomask:
             m = nomask
         else:
-            ma = getmaskarray(a)
-            mb = getmaskarray(b)
+            ma = _viewmaskarray(a)
+            mb = _viewmaskarray(b)
             m = logical_or.outer(ma, mb)
         result = self.ufunc.outer(filled(a), filled(b))
         if not isinstance(result, MaskedArray):
@@ -6708,7 +6742,7 @@ def concatenate(arrays, axis=0):
     else:
         return data
     # OK, so we have to concatenate the masks
-    dm = np.concatenate([getmaskarray(a) for a in arrays], axis)
+    dm = np.concatenate([_viewmaskarray(a) for a in arrays], axis)
     # If we decide to keep a '_shrinkmask' option, we want to check that
     # all of them are True, and then check for dm.any()
     if not dm.dtype.fields and not dm.any():
@@ -6880,7 +6914,7 @@ def putmask(a, mask, values):  # , mode='raise'):
             a.mask |= m
     else:
         if valmask is nomask:
-            valmask = getmaskarray(values)
+            valmask = _viewmaskarray(values)
         np.copyto(a._mask, valmask, where=mask)
     np.copyto(a._data, valdata, where=mask)
     return
@@ -7114,9 +7148,9 @@ def where(condition, x=_NoValue, y=_NoValue):
     yd = getdata(y)
 
     # we need the full arrays here for correct final dimensions
-    cm = getmaskarray(condition)
-    xm = getmaskarray(x)
-    ym = getmaskarray(y)
+    cm = _viewmaskarray(condition)
+    xm = _viewmaskarray(x)
+    ym = _viewmaskarray(y)
 
     # deal with the fact that masked.dtype == float64, but we don't actually
     # want to treat it as that.
@@ -7407,8 +7441,8 @@ def dot(a, b, strict=False, out=None):
     if strict and (a.ndim == 2) and (b.ndim == 2):
         a = mask_rowcols(a, 0)
         b = mask_rowcols(b, 1)
-    am = ~getmaskarray(a)
-    bm = ~getmaskarray(b)
+    am = ~_viewmaskarray(a)
+    bm = ~_viewmaskarray(b)
 
     if out is None:
         d = np.dot(filled(a, 0), filled(b, 0))
@@ -7460,8 +7494,8 @@ def outer(a, b):
     mb = getmask(b)
     if ma is nomask and mb is nomask:
         return masked_array(d)
-    ma = getmaskarray(a)
-    mb = getmaskarray(b)
+    ma = _viewmaskarray(a)
+    mb = _viewmaskarray(b)
     m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=0)
     return masked_array(d, mask=m)
 outer.__doc__ = doc_note(np.outer.__doc__,
@@ -7476,13 +7510,13 @@ def _convolve_or_correlate(f, a, v, mode, propagate_mask):
     if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
-            f(getmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
-          | f(np.ones(np.shape(a), dtype=np.bool), getmaskarray(v), mode=mode)
+            f(_viewmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
+          | f(np.ones(np.shape(a), dtype=np.bool), _viewmaskarray(v), mode=mode)
         )
         data = f(getdata(a), getdata(v), mode=mode)
     else:
         # results which are not contributed to by any pair of valid elements
-        mask = ~f(~getmaskarray(a), ~getmaskarray(v))
+        mask = ~f(~_viewmaskarray(a), ~_viewmaskarray(v))
         data = f(filled(a, 0), filled(v, 0), mode=mode)
 
     return masked_array(data, mask=mask)
