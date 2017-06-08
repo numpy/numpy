@@ -3632,6 +3632,11 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
     PyArray_Descr *new = NULL;
     PyObject *result = Py_NotImplemented;
+    if (other == Py_None) {
+        result = Py_False;
+        Py_INCREF(result);
+        return result;
+    }
     if (!PyArray_DescrCheck(other)) {
         if (PyArray_DescrConverter(other, &new) == NPY_FAIL) {
             return NULL;
