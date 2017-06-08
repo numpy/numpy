@@ -13,7 +13,7 @@
 
 #include "npy_pycompat.h"
 
-#ifdef HAVE_STRTOLD_L
+#if defined(HAVE_STRTOLD_L) || defined(HAVE_STRTOLD)
 #include <stdlib.h>
 #ifdef HAVE_XLOCALE_H
     /*
@@ -577,6 +577,13 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
     else {
         *endptr = (char*)s;
         result = 0;
+    }
+    return result;
+#elif defined(HAVE_STRTOLD)
+    errno = 0;
+    result = strtold(s, endptr);
+    if (errno) {
+        *endptr = (char*)s;
     }
     return result;
 #else
