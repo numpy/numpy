@@ -75,6 +75,8 @@ if sys.version_info >= (3, 4):
                 continue
             if path == base / "random" / "__init__.py":
                 continue
+            if path == base / "random_intel" / "__init__.py":
+                continue
             # use tokenize to auto-detect encoding on systems where no
             # default encoding is defined (e.g. LANG='C')
             with tokenize.open(str(path)) as file:

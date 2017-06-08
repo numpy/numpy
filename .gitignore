@@ -152,3 +152,4 @@ benchmarks/numpy
 cythonize.dat
 numpy/random/mtrand/mtrand.c
 numpy/random/mtrand/randint_helpers.pxi
+numpy/random_intel/mklrand/mklrand.c

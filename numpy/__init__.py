@@ -164,6 +164,7 @@ else:
     from . import fft
     from . import polynomial
     from . import random
+    from . import random_intel
     from . import ctypeslib
     from . import ma
     from . import matrixlib as _mat
@@ -185,7 +186,7 @@ else:
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+    __all__.extend(['linalg', 'fft', 'random', 'random_intel', 'ctypeslib', 'ma'])
 
 
     # Filter annoying Cython warnings that serve no good purpose.
