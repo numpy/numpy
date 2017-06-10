@@ -285,6 +285,8 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
     if (Py_REFCNT(alhs) != 1 || !PyArray_CheckExact(alhs) ||
             PyArray_DESCR(alhs)->type_num >= NPY_OBJECT ||
             !(PyArray_FLAGS(alhs) & NPY_ARRAY_OWNDATA) ||
+            !PyArray_ISWRITEABLE(alhs) ||
+            PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
