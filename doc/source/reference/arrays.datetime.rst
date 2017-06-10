@@ -363,7 +363,8 @@ As a corollary to this change, we no longer prohibit casting between datetimes
 with date units and datetimes with timeunits. With timezone naive datetimes,
 the rule for casting from dates to times is no longer ambiguous.
 
-pandas_: http://pandas.pydata.org
+.. _pandas: http://pandas.pydata.org
+
 
 Differences Between 1.6 and 1.7 Datetimes
 =========================================

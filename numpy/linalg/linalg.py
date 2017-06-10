@@ -2327,7 +2327,7 @@ def multi_dot(arrays):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Let's assume we have three matrices
-    :math:`A_{10x100}, B_{100x5}, C_{5x50}$`.
+    :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
 
     The costs for the two different parenthesizations are as follows::
 

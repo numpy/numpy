@@ -1,5 +1,6 @@
+=========================
 NumPy 1.3.0 Release Notes
-*************************
+=========================
 
 This minor includes numerous bug fixes, official python 2.6 support, and
 several new features such as generalized ufuncs.
@@ -8,7 +9,7 @@ Highlights
 ==========
 
 Python 2.6 support
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Python 2.6 is now supported on all previously supported platforms, including
 windows.
@@ -16,7 +17,7 @@ windows.
 http://www.python.org/dev/peps/pep-0361/
 
 Generalized ufuncs
-~~~~~~~~~~~~~~~~~~
+------------------
 
 There is a general need for looping over not only functions on scalars but also
 over functions on vectors (or arrays), as explained on
@@ -60,7 +61,7 @@ the loop dimensions.  The output is given by the loop dimensions plus the
 output core dimensions.
 
 Experimental Windows 64 bits support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 Numpy can now be built on windows 64 bits (amd64 only, not IA64), with both MS
 compilers and mingw-w64 compilers:
@@ -73,7 +74,7 @@ New features
 ============
 
 Formatting issues
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Float formatting is now handled by numpy instead of the C runtime: this enables
 locale independent formatting, more robust fromstring and related methods.
@@ -82,7 +83,7 @@ IND/NaN, etc...), and more consistent with recent python formatting work (in
 2.6 and later).
 
 Nan handling in max/min
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 The maximum/minimum ufuncs now reliably propagate nans. If one of the
 arguments is a nan, then nan is returned. This affects np.min/np.max, amin/amax
@@ -90,13 +91,13 @@ and the array methods max/min. New ufuncs fmax and fmin have been added to deal
 with non-propagating nans.
 
 Nan handling in sign
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 The ufunc sign now returns nan for the sign of anan.
 
 
 New ufuncs
-~~~~~~~~~~
+----------
 
 #. fmax - same as maximum for integer types and non-nan floats. Returns the
    non-nan argument if one argument is nan and returns nan if both arguments
@@ -115,7 +116,7 @@ New ufuncs
    logarithm of the result.
 
 Masked arrays
-~~~~~~~~~~~~~
+-------------
 
 Several new features and bug fixes, including:
 
@@ -128,7 +129,7 @@ Several new features and bug fixes, including:
 	* doc update
 
 gfortran support on windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Gfortran can now be used as a fortran compiler for numpy on windows, even when
 the C compiler is Visual Studio (VS 2005 and above; VS 2003 will NOT work).
@@ -137,7 +138,7 @@ does). It is unclear whether it will be possible to use gfortran and visual
 studio at all on x64.
 
 Arch option for windows binary
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 Automatic arch detection can now be bypassed from the command line for the superpack installed:
 
@@ -150,7 +151,7 @@ Deprecated features
 ===================
 
 Histogram
-~~~~~~~~~
+---------
 
 The semantics of histogram has been modified to fix long-standing issues
 with outliers handling. The main changes concern
@@ -172,14 +173,14 @@ New C API
 =========
 
 Multiarray API
-~~~~~~~~~~~~~~
+--------------
 
 The following functions have been added to the multiarray C API:
 
 	* PyArray_GetEndianness: to get runtime endianness
 
 Ufunc API
-~~~~~~~~~
+---------
 
 The following functions have been added to the ufunc API:
 
@@ -188,7 +189,7 @@ The following functions have been added to the ufunc API:
 
 
 New defines
-~~~~~~~~~~~
+-----------
 
 New public C defines are available for ARCH specific code through numpy/npy_cpu.h:
 
@@ -212,7 +213,7 @@ Those provide portable alternatives to glibc endian.h macros for platforms
 without it.
 
 Portable NAN, INFINITY, etc...
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 npy_math.h now makes available several portable macro to get NAN, INFINITY:
 
@@ -228,7 +229,7 @@ Internal changes
 ================
 
 numpy.core math configuration revamp
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 This should make the porting to new platforms easier, and more robust. In
 particular, the configuration stage does not need to execute any code on the
@@ -237,19 +238,19 @@ target platform, which is a first step toward cross-compilation.
 http://projects.scipy.org/numpy/browser/trunk/doc/neps/math_config_clean.txt
 
 umath refactor
-~~~~~~~~~~~~~~
+--------------
 
 A lot of code cleanup for umath/ufunc code (charris).
 
 Improvements to build warnings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 Numpy can now build with -W -Wall without warnings
 
 http://projects.scipy.org/numpy/browser/trunk/doc/neps/warnfix.txt
 
 Separate core math library
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 The core math functions (sin, cos, etc... for basic C types) have been put into
 a separate library; it acts as a compatibility layer, to support most C99 maths
@@ -262,7 +263,7 @@ prefix (npy_cos vs cos).
 The core library will be made available to any extension in 1.4.0.
 
 CPU arch detection
-~~~~~~~~~~~~~~~~~~
+------------------
 
 npy_cpu.h defines numpy specific CPU defines, such as NPY_CPU_X86, etc...
 Those are portable across OS and toolchains, and set up when the header is
