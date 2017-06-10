@@ -1088,7 +1088,7 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     >>> a[0][1] = np.nan
     >>> a
     array([[ 10.,  nan,   4.],
-       [  3.,   2.,   1.]])
+          [  3.,   2.,   1.]])
     >>> np.percentile(a, 50)
     nan
     >>> np.nanpercentile(a, 50)

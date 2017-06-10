@@ -1469,7 +1469,7 @@ cdef class RandomState:
         4
         >>> type(np.random.random_integers(5))
         <type 'int'>
-        >>> np.random.random_integers(5, size=(3.,2.))
+        >>> np.random.random_integers(5, size=(3,2))
         array([[5, 4],
                [3, 3],
                [4, 5]])
@@ -1951,7 +1951,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> shape, scale = 2., 2. # mean=4, std=2*sqrt(2)
+        >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
         >>> s = np.random.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with

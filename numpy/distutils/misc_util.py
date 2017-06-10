@@ -1064,24 +1064,25 @@ class Configuration(object):
 
         Notes
         -----
-        Rules for installation paths:
-          foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
-          (gun, foo/bar) -> parent/gun
-          foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
-          (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
-          (gun/*, foo/*) -> parent/gun/a, parent/gun/b
-          /foo/bar -> (bar, /foo/bar) -> parent/bar
-          (gun, /foo/bar) -> parent/gun
-          (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
+        Rules for installation paths::
+
+            foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
+            (gun, foo/bar) -> parent/gun
+            foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
+            (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
+            (gun/*, foo/*) -> parent/gun/a, parent/gun/b
+            /foo/bar -> (bar, /foo/bar) -> parent/bar
+            (gun, /foo/bar) -> parent/gun
+            (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
 
         Examples
         --------
         For example suppose the source directory contains fun/foo.dat and
-        fun/bar/car.dat::
+        fun/bar/car.dat:
 
-            >>> self.add_data_dir('fun')                       #doctest: +SKIP
-            >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
-            >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
+        >>> self.add_data_dir('fun')                       #doctest: +SKIP
+        >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
+        >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
 
         Will install data-files to the locations::
 
@@ -1097,6 +1098,7 @@ class Configuration(object):
               gun/
                 foo.dat
                 car.dat
+
         """
         if is_sequence(data_path):
             d, data_path = data_path

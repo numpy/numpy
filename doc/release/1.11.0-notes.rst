@@ -1,5 +1,6 @@
+==========================
 NumPy 1.11.0 Release Notes
-**************************
+==========================
 
 This release supports Python 2.6 - 2.7 and 3.2 - 3.5 and contains a number
 of enhancements and improvements. Note also the build system changes listed
@@ -78,7 +79,7 @@ Compatibility notes
 ===================
 
 datetime64 changes
-~~~~~~~~~~~~~~~~~~
+------------------
 In prior versions of NumPy the experimental datetime64 type always stored
 times in UTC. By default, creating a datetime64 object from a string or
 printing it would convert from or to local time::
@@ -112,24 +113,24 @@ with date units and datetimes with time units. With timezone naive datetimes,
 the rule for casting from dates to times is no longer ambiguous.
 
 ``linalg.norm`` return type changes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 The return type of the ``linalg.norm`` function is now floating point without
 exception.  Some of the norm types previously returned integers.
 
 polynomial fit changes
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 The various fit functions in the numpy polynomial package no longer accept
 non-integers for degree specification.
 
 *np.dot* now raises ``TypeError`` instead of ``ValueError``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------------
 This behaviour mimics that of other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
 
 FutureWarning to changed behavior
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 * In ``np.lib.split`` an empty array in the result always had dimension
   ``(0,)`` no matter the dimensions of the array being split. This
@@ -139,7 +140,7 @@ FutureWarning to changed behavior
   already preserved.
 
 ``%`` and ``//`` operators
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 These operators are implemented with the ``remainder`` and ``floor_divide``
 functions respectively. Those functions are now based around ``fmod`` and are
 computed together so as to be compatible with each other and with the Python
@@ -152,7 +153,7 @@ is always returned for both functions when the divisor is zero,
 ``divmod(-1.0, inf)`` returns ``(-1.0, inf)``.
 
 C API
-~~~~~
+-----
 
 Removed the ``check_return`` and ``inner_loop_selector`` members of
 the ``PyUFuncObject`` struct (replacing them with ``reserved`` slots
@@ -162,7 +163,7 @@ mention it here for completeness.
 
 
 object dtype detection for old-style classes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 
 In python 2, objects which are instances of old-style user-defined classes no
 longer automatically count as 'object' type in the dtype-detection handler.
@@ -232,17 +233,17 @@ Improvements
 ============
 
 ``np.gradient`` now supports an ``axis`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------
 The ``axis`` parameter was added to ``np.gradient`` for consistency.  It
 allows to specify over which axes the gradient is calculated.
 
 ``np.lexsort`` now supports arrays with object data-type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------
 The function now internally calls the generic ``npy_amergesort`` when the
 type does not implement a merge-sort kind of ``argsort`` method.
 
 ``np.ma.core.MaskedArray`` now supports an ``order`` argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 When constructing a new ``MaskedArray`` instance, it can be configured with
 an ``order`` argument analogous to the one when calling ``np.ndarray``. The
 addition of this argument allows for the proper processing of an ``order``
@@ -250,19 +251,19 @@ argument in several MaskedArray-related utility functions such as
 ``np.ma.core.array`` and ``np.ma.core.asarray``.
 
 Memory and speed improvements for masked arrays
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------
 Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
 ``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and
 avoid a big memory peak. Another optimization was done to avoid a memory
 peak and useless computations when printing a masked array.
 
 ``ndarray.tofile`` now uses fallocate on linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 The function now uses the fallocate system call to reserve sufficient
 disk space on file systems that support it.
 
 Optimizations for operations of the form ``A.T @ A`` and ``A @ A.T``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------------------
 Previously, ``gemm`` BLAS operations were used for all matrix products. Now,
 if the matrix product is between a matrix and its transpose, it will use
 ``syrk`` BLAS operations for a performance boost. This optimization has been
@@ -271,11 +272,11 @@ extended to ``@``, ``numpy.dot``, ``numpy.inner``, and ``numpy.matmul``.
 **Note:** Requires the transposed and non-transposed matrices to share data.
 
 ``np.testing.assert_warns`` can now be used as a context manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------------------
 This matches the behavior of ``assert_raises``.
 
 Speed improvement for np.random.shuffle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------
 ``np.random.shuffle`` is now much faster for 1d ndarrays.
 
 
@@ -283,14 +284,14 @@ Changes
 =======
 
 Pyrex support was removed from ``numpy.distutils``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 The method ``build_src.generate_a_pyrex_source`` will remain available; it
 has been monkeypatched by users to support Cython instead of Pyrex.  It's
 recommended to switch to a better supported method of build Cython
 extensions though.
 
 ``np.broadcast`` can now be called with a single argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------
 The resulting object in that case will simply mimic iteration over
 a single array. This change obsoletes distinctions like
 
@@ -302,20 +303,20 @@ a single array. This change obsoletes distinctions like
 Instead, ``np.broadcast`` can be used in all cases.
 
 ``np.trace`` now respects array subclasses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------
 This behaviour mimics that of other functions such as ``np.diagonal`` and
 ensures, e.g., that for masked arrays ``np.trace(ma)`` and ``ma.trace()`` give
 the same result.
 
 ``np.dot`` now raises ``TypeError`` instead of ``ValueError``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 This behaviour mimics that of other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
 
 ``linalg.norm`` return type changes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 The ``linalg.norm`` function now does all its computations in floating point
 and returns floating results. This change fixes bugs due to integer overflow
 and the failure of abs with signed integers of minimum value, e.g., int8(-128).
@@ -326,7 +327,7 @@ Deprecations
 ============
 
 Views of arrays in Fortran order
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 The F_CONTIGUOUS flag was used to signal that views using a dtype that
 changed the element size would change the first index. This was always
 problematical for arrays that were both F_CONTIGUOUS and C_CONTIGUOUS
@@ -340,7 +341,7 @@ added to the view method to explicitly ask for Fortran order views, but
 that will not be backward compatible.
 
 Invalid arguments for array ordering
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 It is currently possible to pass in arguments for the ``order``
 parameter in methods like ``array.flatten`` or ``array.ravel``
 that were not one of the following: 'C', 'F', 'A', 'K' (note that
@@ -348,14 +349,14 @@ all of these possible values are both unicode and case insensitive).
 Such behavior will not be allowed in future releases.
 
 Random number generator in the ``testing`` namespace
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 The Python standard library random number generator was previously exposed
 in the ``testing`` namespace as ``testing.rand``. Using this generator is
 not recommended and it will be removed in a future release. Use generators
 from ``numpy.random`` namespace instead.
 
 Random integer generation on a closed interval
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 In accordance with the Python C API, which gives preference to the half-open
 interval over the closed one, ``np.random.random_integers`` is being
 deprecated in favor of calling ``np.random.randint``, which has been
@@ -367,7 +368,7 @@ FutureWarnings
 ==============
 
 Assigning to slices/views of ``MaskedArray``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 Currently a slice of a masked array contains a view of the original data and a
 copy-on-write view of the mask. Consequently, any changes to the slice's mask
 will result in a copy of the original mask being made and that new mask being

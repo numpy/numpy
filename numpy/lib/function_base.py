@@ -627,7 +627,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
     >>> hist.sum()
     2.4999999999999996
-    >>> np.sum(hist*np.diff(bin_edges))
+    >>> np.sum(hist * np.diff(bin_edges))
     1.0
 
     .. versionadded:: 1.11.0
