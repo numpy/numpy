@@ -28,6 +28,12 @@ Build System Changes
 Compatibility notes
 ===================
 
+``np.tensordot`` now returns zero array when contracting over 0-length dimension
+--------------------------------------------------------------------------------
+Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
+dimension. Now it returns a zero array, which is consistent with the behaviour
+of ``np.dot`` and ``np.einsum``.
+
 
 C API changes
 =============
