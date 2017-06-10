@@ -1,5 +1,6 @@
+==========================
 NumPy 1.10.4 Release Notes
-**************************
+==========================
 
 This release is a bugfix source release motivated by a segfault regression.
 No windows binaries are provided for this release, as there appear to be

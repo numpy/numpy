@@ -1,5 +1,6 @@
+=========================
 NumPy 1.8.1 Release Notes
-*************************
+=========================
 
 This is a bugfix only release in the 1.8.x series.
 
@@ -59,7 +60,7 @@ Changes
 =======
 
 NDIter
-~~~~~~
+------
 When ``NpyIter_RemoveAxis`` is now called, the iterator range will be reset.
 
 When a multi index is being tracked and an iterator is not buffered, it is
@@ -75,7 +76,7 @@ cases the arrays being iterated are as large as the iterator so that such
 a problem cannot occur.
 
 Optional reduced verbosity for np.distutils
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------
 Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
 calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
 print anything on the output. This is mostly for other packages using
@@ -85,7 +86,7 @@ Deprecations
 ============
 
 C-API
-~~~~~
+-----
 
 The utility function npy_PyFile_Dup and npy_PyFile_DupClose are broken by the
 internal buffering python 3 applies to its file objects.
