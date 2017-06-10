@@ -1,3 +1,6 @@
+=========
+Changelog
+=========
 
 Contributors
 ============
@@ -16,8 +19,8 @@ names contributed a patch for the first time.
 * Shota Kawabuchi
 * Jean Utke +
 
-Fixes Backported
-================
+Pull requests merged
+====================
 
 * `#8483 <https://github.com/numpy/numpy/pull/8483>`__: BUG: Fix wrong future nat warning and equiv type logic error...
 * `#8489 <https://github.com/numpy/numpy/pull/8489>`__: BUG: Fix wrong masked median for some special cases
