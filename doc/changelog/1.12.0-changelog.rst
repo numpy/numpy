@@ -1,3 +1,6 @@
+=========
+Changelog
+=========
 
 Contributors
 ============
@@ -442,7 +445,7 @@ A total of 418 pull requests were merged for this release.
 * `#7965 <https://github.com/numpy/numpy/pull/7965>`__: BUG: cannot modify tuple after use
 * `#7976 <https://github.com/numpy/numpy/pull/7976>`__: DOC: Fixed documented dimension of return value
 * `#7977 <https://github.com/numpy/numpy/pull/7977>`__: DOC: Create 1.11.2 release notes.
-* `#7979 <https://github.com/numpy/numpy/pull/7979>`__: DOC: Corrected allowed keywords in add_(installed_)library
+* `#7979 <https://github.com/numpy/numpy/pull/7979>`__: DOC: Corrected allowed keywords in ``add_installed_library``
 * `#7980 <https://github.com/numpy/numpy/pull/7980>`__: ENH: Add ability to runtime select ufunc loops, add AVX2 integer...
 * `#7985 <https://github.com/numpy/numpy/pull/7985>`__: Rebase 7763, ENH: Add new warning suppression/filtering context
 * `#7987 <https://github.com/numpy/numpy/pull/7987>`__: DOC: See also np.load and np.memmap in np.lib.format.open_memmap
@@ -513,7 +516,7 @@ A total of 418 pull requests were merged for this release.
 * `#8181 <https://github.com/numpy/numpy/pull/8181>`__: ENH: Improve announce to find github squash-merge commits.
 * `#8182 <https://github.com/numpy/numpy/pull/8182>`__: MAINT: Update .mailmap
 * `#8183 <https://github.com/numpy/numpy/pull/8183>`__: MAINT: Ediff1d performance
-* `#8184 <https://github.com/numpy/numpy/pull/8184>`__: MAINT: make `assert_allclose` behavior on `nan`s match pre 1.12
+* `#8184 <https://github.com/numpy/numpy/pull/8184>`__: MAINT: make `assert_allclose` behavior on nans match pre 1.12
 * `#8188 <https://github.com/numpy/numpy/pull/8188>`__: DOC: 'highest' is exclusive for randint()
 * `#8189 <https://github.com/numpy/numpy/pull/8189>`__: BUG: setfield should raise if arr is not writeable
 * `#8190 <https://github.com/numpy/numpy/pull/8190>`__: ENH: Add a float_power function with at least float64 precision.
