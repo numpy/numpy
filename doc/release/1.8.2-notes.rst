@@ -1,5 +1,6 @@
+=========================
 NumPy 1.8.2 Release Notes
-*************************
+=========================
 
 This is a bugfix only release in the 1.8.x series.
 

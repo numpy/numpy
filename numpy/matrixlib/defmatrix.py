@@ -1155,7 +1155,7 @@ def bmat(obj, ldict=None, gdict=None):
     --------
     block :
         A generalization of this function for N-d arrays, that returns normal
-        `ndarray`s.
+        ndarrays.
 
     Examples
     --------

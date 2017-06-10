@@ -210,7 +210,9 @@ within datetime and timedelta arrays. This is analogous to ``np.isnan``.
 ------------------------------------------------------
 The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
 function:
+
 .. code::
+
                        { 0   if x < 0,
     heaviside(x, h0) = { h0  if x == 0,
                        { 1   if x > 0.
