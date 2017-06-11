@@ -1530,7 +1530,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         /*
          * The code to demote complex to float is disabled for now,
-         * as forcing complex by adding 0j is probably desireable.
+         * as forcing complex by adding 0j is probably desirable.
          */
         case NPY_CFLOAT: {
             /*
@@ -1916,7 +1916,7 @@ PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1927,17 +1927,26 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    obj=PyInt_FromLong((long) 0);
+    if (zero_obj == NULL) {
+        zero_obj = PyInt_FromLong((long) 0);
+        if (zero_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(zeroval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that zeroval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
+    ret = PyArray_DESCR(arr)->f->setitem(zero_obj, zeroval, arr);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
         return NULL;
@@ -1953,7 +1962,7 @@ PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1964,18 +1973,27 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    obj = PyInt_FromLong((long) 1);
+    if (one_obj == NULL) {
+        one_obj = PyInt_FromLong((long) 1);
+        if (one_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(oneval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that oneval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(oneval, &one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
+    ret = PyArray_DESCR(arr)->f->setitem(one_obj, oneval, arr);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);
         return NULL;

@@ -11,7 +11,7 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 2.6.x, 2.7.x, 3.2.x or newer
+1) Python 2.7.x, 3.4.x or newer
 
    On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
@@ -114,7 +114,7 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran
+means that g77 has been used. If libgfortran.so is a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 

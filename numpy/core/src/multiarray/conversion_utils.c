@@ -45,8 +45,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return NPY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0,
-                                NPY_ARRAY_CARRAY, NULL);
+        *address = PyArray_FROM_OF(object, NPY_ARRAY_CARRAY);
         if (*address == NULL) {
             return NPY_FAIL;
         }
@@ -259,17 +258,10 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
             int axis = PyArray_PyIntAsInt_ErrMsg(tmp,
                           "integers are required for the axis tuple elements");
-            int axis_orig = axis;
             if (error_converting(axis)) {
                 return NPY_FAIL;
             }
-            if (axis < 0) {
-                axis += ndim;
-            }
-            if (axis < 0 || axis >= ndim) {
-                PyErr_Format(PyExc_ValueError,
-                        "'axis' entry %d is out of bounds [-%d, %d)",
-                        axis_orig, ndim, ndim);
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
                 return NPY_FAIL;
             }
             if (out_axis_flags[axis]) {
@@ -284,19 +276,15 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
     }
     /* Try to interpret axis as an integer */
     else {
-        int axis, axis_orig;
+        int axis;
 
         memset(out_axis_flags, 0, ndim);
 
         axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
                                    "an integer is required for the axis");
-        axis_orig = axis;
 
         if (error_converting(axis)) {
             return NPY_FAIL;
-        }
-        if (axis < 0) {
-            axis += ndim;
         }
         /*
          * Special case letting axis={-1,0} slip through for scalars,
@@ -306,10 +294,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             return NPY_SUCCEED;
         }
 
-        if (axis < 0 || axis >= ndim) {
-            PyErr_Format(PyExc_ValueError,
-                    "'axis' entry %d is out of bounds [-%d, %d)",
-                    axis_orig, ndim, ndim);
+        if (check_and_adjust_axis(&axis, ndim) < 0) {
             return NPY_FAIL;
         }
 

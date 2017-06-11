@@ -10,12 +10,10 @@ from numpy.core.numeric import (
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 from . import function_base
-import numpy.matrixlib as matrix
+import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
 from numpy.lib.stride_tricks import as_strided
-
-makemat = matrix.matrix
 
 
 __all__ = [
@@ -41,6 +39,10 @@ def ix_(*args):
     Parameters
     ----------
     args : 1-D sequences
+        Each sequence should be of integer or boolean type.
+        Boolean sequences will be interpreted as boolean masks for the
+        corresponding dimension (equivalent to passing in
+        ``np.nonzero(boolean_sequence)``).
 
     Returns
     -------
@@ -58,12 +60,21 @@ def ix_(*args):
     >>> a
     array([[0, 1, 2, 3, 4],
            [5, 6, 7, 8, 9]])
-    >>> ixgrid = np.ix_([0,1], [2,4])
+    >>> ixgrid = np.ix_([0, 1], [2, 4])
     >>> ixgrid
     (array([[0],
            [1]]), array([[2, 4]]))
     >>> ixgrid[0].shape, ixgrid[1].shape
     ((2, 1), (1, 2))
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+
+    >>> ixgrid = np.ix_([True, True], [2, 4])
+    >>> a[ixgrid]
+    array([[2, 4],
+           [7, 9]])
+    >>> ixgrid = np.ix_([True, True], [False, False, True, False, True])
     >>> a[ixgrid]
     array([[2, 4],
            [7, 9]])
@@ -209,9 +220,6 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __getslice__(self, i, j):
-        return _nx.arange(i, j)
-
     def __len__(self):
         return 0
 
@@ -225,48 +233,44 @@ class AxisConcatenator(object):
     Translates slice objects to concatenation along an axis.
 
     For detailed documentation on usage, see `r_`.
-
     """
-
-    def _retval(self, res):
-        if self.matrix:
-            oldndim = res.ndim
-            res = makemat(res)
-            if oldndim == 1 and self.col:
-                res = res.T
-        self.axis = self._axis
-        self.matrix = self._matrix
-        self.col = 0
-        return res
+    # allow ma.mr_ to override this
+    concatenate = staticmethod(_nx.concatenate)
+    makemat = staticmethod(matrixlib.matrix)
 
     def __init__(self, axis=0, matrix=False, ndmin=1, trans1d=-1):
-        self._axis = axis
-        self._matrix = matrix
         self.axis = axis
         self.matrix = matrix
-        self.col = 0
         self.trans1d = trans1d
         self.ndmin = ndmin
 
     def __getitem__(self, key):
-        trans1d = self.trans1d
-        ndmin = self.ndmin
+        # handle matrix builder syntax
         if isinstance(key, str):
             frame = sys._getframe().f_back
-            mymat = matrix.bmat(key, frame.f_globals, frame.f_locals)
+            mymat = matrixlib.bmat(key, frame.f_globals, frame.f_locals)
             return mymat
+
         if not isinstance(key, tuple):
             key = (key,)
+
+        # copy attributes, since they can be overridden in the first argument
+        trans1d = self.trans1d
+        ndmin = self.ndmin
+        matrix = self.matrix
+        axis = self.axis
+
         objs = []
         scalars = []
         arraytypes = []
         scalartypes = []
-        for k in range(len(key)):
+
+        for k, item in enumerate(key):
             scalar = False
-            if isinstance(key[k], slice):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
+            if isinstance(item, slice):
+                step = item.step
+                start = item.start
+                stop = item.stop
                 if start is None:
                     start = 0
                 if step is None:
@@ -280,37 +284,35 @@ class AxisConcatenator(object):
                     newobj = array(newobj, copy=False, ndmin=ndmin)
                     if trans1d != -1:
                         newobj = newobj.swapaxes(-1, trans1d)
-            elif isinstance(key[k], str):
+            elif isinstance(item, str):
                 if k != 0:
                     raise ValueError("special directives must be the "
                             "first entry.")
-                key0 = key[0]
-                if key0 in 'rc':
-                    self.matrix = True
-                    self.col = (key0 == 'c')
+                if item in ('r', 'c'):
+                    matrix = True
+                    col = (item == 'c')
                     continue
-                if ',' in key0:
-                    vec = key0.split(',')
+                if ',' in item:
+                    vec = item.split(',')
                     try:
-                        self.axis, ndmin = \
-                                   [int(x) for x in vec[:2]]
+                        axis, ndmin = [int(x) for x in vec[:2]]
                         if len(vec) == 3:
                             trans1d = int(vec[2])
                         continue
-                    except:
+                    except Exception:
                         raise ValueError("unknown special directive")
                 try:
-                    self.axis = int(key[k])
+                    axis = int(item)
                     continue
                 except (ValueError, TypeError):
                     raise ValueError("unknown special directive")
-            elif type(key[k]) in ScalarType:
-                newobj = array(key[k], ndmin=ndmin)
-                scalars.append(k)
+            elif type(item) in ScalarType:
+                newobj = array(item, ndmin=ndmin)
+                scalars.append(len(objs))
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
-                newobj = key[k]
+                newobj = item
                 if ndmin > 1:
                     tempobj = array(newobj, copy=False, subok=True)
                     newobj = array(newobj, copy=False, subok=True,
@@ -329,18 +331,20 @@ class AxisConcatenator(object):
             if not scalar and isinstance(newobj, _nx.ndarray):
                 arraytypes.append(newobj.dtype)
 
-        #  Esure that scalars won't up-cast unless warranted
+        # Ensure that scalars won't up-cast unless warranted
         final_dtype = find_common_type(arraytypes, scalartypes)
         if final_dtype is not None:
             for k in scalars:
                 objs[k] = objs[k].astype(final_dtype)
 
-        res = _nx.concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
+        res = self.concatenate(tuple(objs), axis=axis)
 
-    def __getslice__(self, i, j):
-        res = _nx.arange(i, j)
-        return self._retval(res)
+        if matrix:
+            oldndim = res.ndim
+            res = self.makemat(res)
+            if oldndim == 1 and col:
+                res = res.T
+        return res
 
     def __len__(self):
         return 0
@@ -457,11 +461,18 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-
-    For detailed documentation, see `r_`.
+    
+    See Also
+    --------
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    r_ : For more detailed documentation.
 
     Examples
     --------
+    >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
     array([[1, 2, 3, 0, 0, 4, 5, 6]])
 
@@ -665,8 +676,8 @@ s_ = IndexExpression(maketuple=False)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
-    For an array `a` with ``a.ndim > 2``, the diagonal is the list of
-    locations with indices ``a[i, i, ..., i]`` all identical. This function
+    For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
+    locations with indices ``a[i, ..., i]`` all identical. This function
     modifies the input array in-place, it does not return a value.
 
     Parameters

@@ -41,9 +41,11 @@
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
 #include "reduction.h"
+#include "mem_overlap.h"
 
 #include "ufunc_object.h"
-#include "ufunc_override.h"
+#include "override.h"
+#include "npy_import.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -222,7 +224,7 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
-    /* clearing is done for backward compatiblity */
+    /* clearing is done for backward compatibility */
     int retstatus = npy_clear_floatstatus();
 
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
@@ -756,6 +758,15 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 /********* GENERIC UFUNC USING ITERATOR *********/
 
 /*
+ * Produce a name for the ufunc, if one is not already set
+ * This is used in the PyUFunc_handlefperr machinery, and in error messages
+ */
+static const char*
+_get_ufunc_name(PyUFuncObject *ufunc) {
+    return ufunc->name ? ufunc->name : "<unnamed ufunc>";
+}
+
+/*
  * Parses the positional and keyword arguments for a generic ufunc call.
  *
  * Note that if an error is returned, the caller must free the
@@ -778,13 +789,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
-    const char *ufunc_name;
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
     int has_sig = 0;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     *out_extobj = NULL;
     *out_typetup = NULL;
@@ -1075,7 +1084,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                                     "positional and keyword argument");
                             goto fail;
                         }
-                        if (PyTuple_Check(value)) {
+                        if (PyTuple_CheckExact(value)) {
                             if (PyTuple_GET_SIZE(value) != nout) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "The 'out' tuple must have exactly "
@@ -1175,6 +1184,15 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         dtype = PyArray_DescrFromType(NPY_BOOL);
                         if (dtype == NULL) {
                             goto fail;
+                        }
+                        if (value == Py_True) {
+                            /*
+                             * Optimization: where=True is the same as no
+                             * where argument. This lets us document it as a
+                             * default argument
+                             */
+                            bad_arg = 0;
+                            break;
                         }
                         *out_wheremask = (PyArrayObject *)PyArray_FromAny(
                                                             value, dtype,
@@ -1416,7 +1434,8 @@ iterator_loop(PyUFuncObject *ufunc,
     /* Set up the flags */
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1431,7 +1450,8 @@ iterator_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE;
+                      NPY_ITER_NO_SUBTYPE |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
@@ -1440,7 +1460,22 @@ iterator_loop(PyUFuncObject *ufunc,
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
                  NPY_ITER_GROWINNER |
-                 NPY_ITER_DELAY_BUFALLOC;
+                 NPY_ITER_DELAY_BUFALLOC |
+                 NPY_ITER_COPY_IF_OVERLAP;
+
+    /* Call the __array_prepare__ functions for already existing output arrays.
+     * Do this before creating the iterator, as the iterator may UPDATEIFCOPY
+     * some of them.
+     */
+    for (i = 0; i < nout; ++i) {
+        if (op[nin+i] == NULL) {
+            continue;
+        }
+        if (prepare_ufunc_output(ufunc, &op[nin+i],
+                            arr_prep[i], arr_prep_args, i) < 0) {
+            return -1;
+        }
+    }
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1458,31 +1493,40 @@ iterator_loop(PyUFuncObject *ufunc,
 
     /* Copy any allocated outputs */
     op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
-    /* Call the __array_prepare__ functions where necessary */
     for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
-            NpyIter_Deallocate(iter);
-            return -1;
+        if (op[nin+i] == NULL) {
+            op[nin+i] = op_it[nin+i];
+            Py_INCREF(op[nin+i]);
+
+            /* Call the __array_prepare__ functions for the new array */
+            if (prepare_ufunc_output(ufunc, &op[nin+i],
+                                     arr_prep[i], arr_prep_args, i) < 0) {
+                NpyIter_Deallocate(iter);
+                return -1;
+            }
+
+            /*
+             * In case __array_prepare__ returned a different array, put the
+             * results directly there, ignoring the array allocated by the
+             * iterator.
+             *
+             * Here, we assume the user-provided __array_prepare__ behaves
+             * sensibly and doesn't return an array overlapping in memory
+             * with other operands --- the op[nin+i] array passed to it is newly
+             * allocated and doesn't have any overlap.
+             */
+            baseptrs[nin+i] = PyArray_BYTES(op[nin+i]);
+        }
+        else {
+            baseptrs[nin+i] = PyArray_BYTES(op_it[nin+i]);
         }
     }
 
     /* Only do the loop if the iteration size is non-zero */
     if (NpyIter_GetIterSize(iter) != 0) {
-
-        /* Reset the iterator with the base pointers from the wrapped outputs */
+        /* Reset the iterator with the base pointers from possible __array_prepare__ */
         for (i = 0; i < nin; ++i) {
             baseptrs[i] = PyArray_BYTES(op_it[i]);
-        }
-        for (i = nin; i < nop; ++i) {
-            baseptrs[i] = PyArray_BYTES(op[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
@@ -1581,7 +1625,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             }
             else if (op[1] != NULL &&
                         PyArray_NDIM(op[1]) >= PyArray_NDIM(op[0]) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[1],
@@ -1598,7 +1644,9 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
         else if (nin == 2 && nout == 1) {
             if (op[2] == NULL &&
                         (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
+                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ)) {
                 PyArrayObject *tmp;
                 /*
                  * Have to choose the input with more dimensions to clone, as
@@ -1637,7 +1685,10 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
             else if (op[2] != NULL &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[0]) &&
                     PyArray_NDIM(op[2]) >= PyArray_NDIM(op[1]) &&
-                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2])) {
+                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2],
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                                                      PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
 
                 /* Call the __prepare_array__ if necessary */
                 if (prepare_ufunc_output(ufunc, &op[2],
@@ -1701,7 +1752,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp *strides;
     npy_intp *countptr;
 
-    PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
     if (wheremask != NULL) {
@@ -1719,7 +1769,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = default_op_in_flags |
                       NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -1730,12 +1781,19 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         }
     }
     for (i = nin; i < nop; ++i) {
+        /*
+         * We don't write to all elements, and the iterator may make
+         * UPDATEIFCOPY temporary copies. The output arrays must be considered
+         * READWRITE by the iterator, so that the elements we don't write to are
+         * copied to the possible temporary array.
+         */
         op_flags[i] = default_op_out_flags |
-                      NPY_ITER_WRITEONLY |
+                      NPY_ITER_READWRITE |
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE;
+                      NPY_ITER_NO_SUBTYPE |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
     if (wheremask != NULL) {
         op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
@@ -1748,7 +1806,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_BUFFERED |
-                 NPY_ITER_GROWINNER;
+                 NPY_ITER_GROWINNER |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1768,22 +1827,37 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
-    /* Copy any allocated outputs */
-    op_it = NpyIter_GetOperandArray(iter);
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = op_it[i];
-            Py_INCREF(op[i]);
-        }
-    }
-
     /* Call the __array_prepare__ functions where necessary */
-    for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], arr_prep_args, i) < 0) {
+    for (i = nin; i < nop; ++i) {
+        PyArrayObject *op_tmp;
+
+        /* prepare_ufunc_output may decref & replace pointer */
+        op_tmp = op[i];
+        Py_INCREF(op_tmp);
+
+        if (prepare_ufunc_output(ufunc, &op_tmp,
+                                 arr_prep[i], arr_prep_args, i) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
         }
+
+        /* Validate that the prepare_ufunc_output didn't mess with pointers */
+        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op[i])) {
+            PyErr_SetString(PyExc_ValueError,
+                        "The __array_prepare__ functions modified the data "
+                        "pointer addresses in an invalid fashion");
+            Py_DECREF(op_tmp);
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+        /*
+         * Put the updated operand back and undo the DECREF above. If
+         * COPY_IF_OVERLAP made a temporary copy, the output will be copied in
+         * by UPDATEIFCOPY even if op[i] was changed.
+         */
+        op[i] = op_tmp;
+        Py_DECREF(op_tmp);
     }
 
     /* Only do the loop if the iteration size is non-zero */
@@ -1793,17 +1867,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         npy_intp fixed_strides[2*NPY_MAXARGS];
         PyArray_Descr **iter_dtypes;
         NPY_BEGIN_THREADS_DEF;
-
-        /* Validate that the prepare_ufunc_output didn't mess with pointers */
-        for (i = nin; i < nop; ++i) {
-            if (PyArray_BYTES(op[i]) != PyArray_BYTES(op_it[i])) {
-                PyErr_SetString(PyExc_ValueError,
-                        "The __array_prepare__ functions modified the data "
-                        "pointer addresses in an invalid fashion");
-                NpyIter_Deallocate(iter);
-                return -1;
-            }
-        }
 
         /*
          * Get the inner loop, with the possibility of specialization
@@ -1928,6 +1991,123 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     return ret;
 }
 
+/*
+ * Validate the core dimensions of all the operands, and collect all of
+ * the labelled core dimensions into 'core_dim_sizes'.
+ * 
+ * Returns 0 on success, and -1 on failure
+ *
+ * The behavior has been changed in NumPy 1.10.0, and the following
+ * requirements must be fulfilled or an error will be raised:
+ *  * Arguments, both input and output, must have at least as many
+ *    dimensions as the corresponding number of core dimensions. In
+ *    previous versions, 1's were prepended to the shape as needed.
+ *  * Core dimensions with same labels must have exactly matching sizes.
+ *    In previous versions, core dimensions of size 1 would broadcast
+ *    against other core dimensions with the same label.
+ *  * All core dimensions must have their size specified by a passed in
+ *    input or output argument. In previous versions, core dimensions in
+ *    an output argument that were not specified in an input argument,
+ *    and whose size could not be inferred from a passed in output
+ *    argument, would have their size set to 1.
+ */
+static int
+_get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
+                   npy_intp* core_dim_sizes) {
+    int i;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
+    int nop = nin + nout;
+
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        core_dim_sizes[i] = -1;
+    }
+    for (i = 0; i < nop; ++i) {
+        if (op[i] != NULL) {
+            int idim;
+            int dim_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+
+            /* Check if operands have enough dimensions */
+            if (core_start_dim < 0) {
+                PyErr_Format(PyExc_ValueError,
+                        "%s: %s operand %d does not have enough "
+                        "dimensions (has %d, gufunc core with "
+                        "signature %s requires %d)",
+                        _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                        ufunc->core_signature, num_dims);
+                return -1;
+            }
+
+            /*
+             * Make sure every core dimension exactly matches all other core
+             * dimensions with the same label.
+             */
+            for (idim = 0; idim < num_dims; ++idim) {
+                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
+                npy_intp op_dim_size =
+                            PyArray_DIM(op[i], core_start_dim+idim);
+
+                if (core_dim_sizes[core_dim_index] == -1) {
+                    core_dim_sizes[core_dim_index] = op_dim_size;
+                }
+                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
+                    PyErr_Format(PyExc_ValueError,
+                            "%s: %s operand %d has a mismatch in its "
+                            "core dimension %d, with gufunc "
+                            "signature %s (size %zd is different "
+                            "from %zd)",
+                            _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                            i < nin ? i : i - nin, idim,
+                            ufunc->core_signature, op_dim_size,
+                            core_dim_sizes[core_dim_index]);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /*
+     * Make sure no core dimension is unspecified.
+     */
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        if (core_dim_sizes[i] == -1) {
+            break;
+        }
+    }
+    if (i != ufunc->core_num_dim_ix) {
+        /*
+         * There is at least one core dimension missing, find in which
+         * operand it comes up first (it has to be an output operand).
+         */
+        const int missing_core_dim = i;
+        int out_op;
+        for (out_op = nin; out_op < nop; ++out_op) {
+            int first_idx = ufunc->core_offsets[out_op];
+            int last_idx = first_idx + ufunc->core_num_dims[out_op];
+            for (i = first_idx; i < last_idx; ++i) {
+                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
+                    break;
+                }
+            }
+            if (i < last_idx) {
+                /* Change index offsets for error message */
+                out_op -= nin;
+                i -= first_idx;
+                break;
+            }
+        }
+        PyErr_Format(PyExc_ValueError,
+                     "%s: Output operand %d has core dimension %d "
+                     "unspecified, with gufunc signature %s",
+                     _get_ufunc_name(ufunc), out_op, i, ufunc->core_signature);
+        return -1;
+    }
+    return 0;
+}
+
 
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
@@ -1937,7 +2117,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int nin, nout;
     int i, j, idim, nop;
     const char *ufunc_name;
-    int retval = -1, subok = 1;
+    int retval = 0, subok = 1;
     int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
@@ -1991,7 +2171,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2043,110 +2223,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /*
-     * Validate the core dimensions of all the operands, and collect all of
-     * the labelled core dimensions into 'core_dim_sizes'.
-     *
-     * The behavior has been changed in NumPy 1.10.0, and the following
-     * requirements must be fulfilled or an error will be raised:
-     *  * Arguments, both input and output, must have at least as many
-     *    dimensions as the corresponding number of core dimensions. In
-     *    previous versions, 1's were prepended to the shape as needed.
-     *  * Core dimensions with same labels must have exactly matching sizes.
-     *    In previous versions, core dimensions of size 1 would broadcast
-     *    against other core dimensions with the same label.
-     *  * All core dimensions must have their size specified by a passed in
-     *    input or output argument. In previous versions, core dimensions in
-     *    an output argument that were not specified in an input argument,
-     *    and whose size could not be inferred from a passed in output
-     *    argument, would have their size set to 1.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        core_dim_sizes[i] = -1;
-    }
-    for (i = 0; i < nop; ++i) {
-        if (op[i] != NULL) {
-            int dim_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
-
-            /* Check if operands have enough dimensions */
-            if (core_start_dim < 0) {
-                PyErr_Format(PyExc_ValueError,
-                        "%s: %s operand %d does not have enough "
-                        "dimensions (has %d, gufunc core with "
-                        "signature %s requires %d)",
-                        ufunc_name, i < nin ? "Input" : "Output",
-                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                        ufunc->core_signature, num_dims);
-                retval = -1;
-                goto fail;
-            }
-
-            /*
-             * Make sure every core dimension exactly matches all other core
-             * dimensions with the same label.
-             */
-            for (idim = 0; idim < num_dims; ++idim) {
-                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
-                npy_intp op_dim_size =
-                            PyArray_DIM(op[i], core_start_dim+idim);
-
-                if (core_dim_sizes[core_dim_index] == -1) {
-                    core_dim_sizes[core_dim_index] = op_dim_size;
-                }
-                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
-                    PyErr_Format(PyExc_ValueError,
-                            "%s: %s operand %d has a mismatch in its "
-                            "core dimension %d, with gufunc "
-                            "signature %s (size %zd is different "
-                            "from %zd)",
-                            ufunc_name, i < nin ? "Input" : "Output",
-                            i < nin ? i : i - nin, idim,
-                            ufunc->core_signature, op_dim_size,
-                            core_dim_sizes[core_dim_index]);
-                    retval = -1;
-                    goto fail;
-                }
-            }
-        }
-    }
-
-    /*
-     * Make sure no core dimension is unspecified.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        if (core_dim_sizes[i] == -1) {
-            break;
-        }
-    }
-    if (i != ufunc->core_num_dim_ix) {
-        /*
-         * There is at least one core dimension missing, find in which
-         * operand it comes up first (it has to be an output operand).
-         */
-        const int missing_core_dim = i;
-        int out_op;
-        for (out_op = nin; out_op < nop; ++out_op) {
-            int first_idx = ufunc->core_offsets[out_op];
-            int last_idx = first_idx + ufunc->core_num_dims[out_op];
-            for (i = first_idx; i < last_idx; ++i) {
-                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
-                    break;
-                }
-            }
-            if (i < last_idx) {
-                /* Change index offsets for error message */
-                out_op -= nin;
-                i -= first_idx;
-                break;
-            }
-        }
-        PyErr_Format(PyExc_ValueError,
-                     "%s: Output operand %d has core dimension %d "
-                     "unspecified, with gufunc signature %s",
-                     ufunc_name, out_op, i, ufunc->core_signature);
-        retval = -1;
+    /* Collect the lengths of the labelled core dimensions */
+    retval = _get_coredim_sizes(ufunc, op, core_dim_sizes);
+    if(retval < 0) {
         goto fail;
     }
 
@@ -2157,7 +2236,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Fill in op_axes for all the operands */
     j = broadcast_ndim;
-    core_dim_ixs_size = 0;
     for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
@@ -2199,7 +2277,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
 
         op_axes[i] = op_axes_arrays[i];
-        core_dim_ixs_size += ufunc->core_num_dims[i];
     }
 
     /* Get the buffersize and errormask */
@@ -2265,7 +2342,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
-                      NPY_ITER_ALIGNED;
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -2280,14 +2358,16 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST;
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
     }
 
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_REDUCE_OK |
-                 NPY_ITER_ZEROSIZE_OK;
+                 NPY_ITER_ZEROSIZE_OK |
+                 NPY_ITER_COPY_IF_OVERLAP;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,
@@ -2311,6 +2391,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.
      */
+    core_dim_ixs_size = 0;
+    for (i = 0; i < nop; ++i) {
+        core_dim_ixs_size += ufunc->core_num_dims[i];
+    }
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     if (inner_strides == NULL) {
@@ -2549,7 +2633,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    ufunc_name = _get_ufunc_name(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2789,7 +2873,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
@@ -2978,7 +3062,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *dtype;
     PyArrayObject *result;
     PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
@@ -3086,7 +3170,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3174,11 +3258,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
              !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(out)))) {
         need_outer_iterator = 1;
     }
+    /* If input and output overlap in memory, use iterator to figure it out */
+    else if (out != NULL && solve_may_share_memory(out, arr, NPY_MAY_SHARE_BOUNDS) != 0) {
+        need_outer_iterator = 1;
+    }
 
     if (need_outer_iterator) {
         int ndim_iter = 0;
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
-                           NPY_ITER_REFS_OK;
+                           NPY_ITER_REFS_OK|
+                           NPY_ITER_COPY_IF_OVERLAP;
         PyArray_Descr **op_dtypes_param = NULL;
 
         /*
@@ -3205,14 +3294,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         /* In case COPY or UPDATEIFCOPY occurred */
         op[0] = NpyIter_GetOperandArray(iter)[0];
         op[1] = NpyIter_GetOperandArray(iter)[1];
-
-        if (PyArray_SIZE(op[0]) == 0) {
-            if (out == NULL) {
-                out = op[0];
-                Py_INCREF(out);
-            }
-            goto finish;
-        }
 
         if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
             goto fail;
@@ -3456,7 +3537,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    const char *ufunc_name = _get_ufunc_name(ufunc);
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
@@ -3560,39 +3641,11 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         need_outer_iterator = 1;
     }
 
-    /* Special case when the index array's size is zero */
-    if (ind_size == 0) {
-        if (out == NULL) {
-            npy_intp out_shape[NPY_MAXDIMS];
-            memcpy(out_shape, PyArray_SHAPE(arr),
-                            PyArray_NDIM(arr) * NPY_SIZEOF_INTP);
-            out_shape[axis] = 0;
-            Py_INCREF(op_dtypes[0]);
-            op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
-                                        &PyArray_Type, op_dtypes[0],
-                                        PyArray_NDIM(arr), out_shape, NULL, NULL,
-                                        0, NULL);
-            if (out == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            /* Allow any zero-sized output array in this case */
-            if (PyArray_SIZE(out) != 0) {
-                PyErr_SetString(PyExc_ValueError,
-                        "output operand shape for reduceat is "
-                        "incompatible with index array of shape (0,)");
-                goto fail;
-            }
-        }
-
-        goto finish;
-    }
-
     if (need_outer_iterator) {
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
                            NPY_ITER_REFS_OK|
-                           NPY_ITER_MULTI_INDEX;
+                           NPY_ITER_MULTI_INDEX|
+                           NPY_ITER_COPY_IF_OVERLAP;
 
         /*
          * The way reduceat is set up, we can't do buffering,
@@ -3635,6 +3688,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         /* In case COPY or UPDATEIFCOPY occurred */
         op[0] = NpyIter_GetOperandArray(iter)[0];
         op[1] = NpyIter_GetOperandArray(iter)[1];
+        op[2] = NpyIter_GetOperandArray(iter)[2];
 
         if (out == NULL) {
             out = op[0];
@@ -3840,12 +3894,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
+    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
     static char *reduce_kwlist[] = {
             "array", "axis", "dtype", "out", "keepdims", NULL};
     static char *accumulate_kwlist[] = {
-            "array", "axis", "dtype", "out", "keepdims", NULL};
+            "array", "axis", "dtype", "out", NULL};
     static char *reduceat_kwlist[] = {
             "array", "indices", "axis", "dtype", "out", NULL};
 
@@ -3873,11 +3928,24 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                      _reduce_type[operation]);
         return NULL;
     }
-
+    /* if there is a tuple of 1 for `out` in kwds, unpack it */
+    if (kwds != NULL) {
+        PyObject *out_obj = PyDict_GetItem(kwds, npy_um_str_out);
+        if (out_obj != NULL && PyTuple_CheckExact(out_obj)) {
+            if (PyTuple_GET_SIZE(out_obj) != 1) {
+                PyErr_SetString(PyExc_ValueError,
+                                "The 'out' tuple must have exactly one entry");
+                return NULL;
+            }
+            out_obj = PyTuple_GET_ITEM(out_obj, 0);
+            PyDict_SetItem(kwds, npy_um_str_out, out_obj);
+        }
+    }
+            
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&", reduceat_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
                                         &op,
                                         &obj_ind,
                                         &axes_in,
@@ -3894,29 +3962,19 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        PyObject *bad_keepdimarg = NULL;
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&O", accumulate_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
+                                        accumulate_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out,
-                                        &bad_keepdimarg)) {
+                                        PyArray_OutputConverter, &out)) {
             Py_XDECREF(otype);
             return NULL;
         }
-        /* Until removed outright by https://github.com/numpy/numpy/pull/8187 */
-        if (bad_keepdimarg != NULL) {
-            Py_DECREF(bad_keepdimarg);
-            if (DEPRECATE_FUTUREWARNING(
-                    "keepdims argument has no effect on accumulate, and will be "
-                    "removed in future") < 0) {
-                Py_XDECREF(otype);
-                return NULL;
-            }
-        }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", reduce_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i:reduce",
+                                        reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -3981,12 +4039,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                 Py_DECREF(mp);
                 return NULL;
             }
-            if (axis < 0) {
-                axis += ndim;
-            }
-            if (axis < 0 || axis >= ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "'axis' entry is out of bounds");
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -4003,18 +4056,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             Py_DECREF(mp);
             return NULL;
         }
-        if (axis < 0) {
-            axis += ndim;
-        }
         /* Special case letting axis={0 or -1} slip through for scalars */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
             axis = 0;
         }
-        else if (axis < 0 || axis >= ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "'axis' entry is out of bounds");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
+        else if (check_and_adjust_axis(&axis, ndim) < 0) {
             return NULL;
         }
         axes[0] = (int)axis;
@@ -4325,8 +4371,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override,
-                                   ufunc->nin);
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -4396,6 +4441,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 continue;
             }
             res = PyObject_CallFunction(wrap, "O(OOi)", mps[j], ufunc, args, i);
+            /* Handle __array_wrap__ that does not accept a context argument */
             if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Clear();
                 res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
@@ -4403,9 +4449,6 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             Py_DECREF(wrap);
             if (res == NULL) {
                 goto fail;
-            }
-            else if (res == Py_None) {
-                Py_DECREF(res);
             }
             else {
                 Py_DECREF(mps[j]);
@@ -4508,7 +4551,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *val;
     static char *msg = "Error object must be a list of length 3";
 
-    if (!PyArg_ParseTuple(args, "O", &val)) {
+    if (!PyArg_ParseTuple(args, "O:seterrobj", &val)) {
         return NULL;
     }
     if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
@@ -5025,6 +5068,14 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
+    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
                      "method outer is not allowed in ufunc with non-trivial"\
@@ -5042,15 +5093,6 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (PySequence_Length(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "exactly two arguments expected");
         return NULL;
-    }
-
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override, 0);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        return override;
     }
 
     tmp = PySequence_GetItem(args, 0);
@@ -5122,8 +5164,7 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5139,8 +5180,7 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5156,8 +5196,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5221,8 +5260,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* `nin`, the last arg, is unused. So we put 0. */
-    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override, 0);
+    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
     if (errval) {
         return NULL;
     }
@@ -5242,7 +5280,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO|O:at", &op1, &idx, &op2)) {
         return NULL;
     }
 
@@ -5260,11 +5298,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = (PyArrayObject *)op1;
 
-    iter = (PyArrayMapIterObject *)PyArray_MapIterArray(op1_array, idx);
-    if (iter == NULL) {
-        goto fail;
-    }
-
     /* Create second operand from number array if needed. */
     if (op2 != NULL) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL,
@@ -5272,7 +5305,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if (op2_array == NULL) {
             goto fail;
         }
+    }
 
+    /* Create map iterator */
+    iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
+        op1_array, idx, 1, op2_array);
+    if (iter == NULL) {
+        goto fail;
+    }
+    op1_array = iter->array;  /* May be updateifcopied on overlap */
+
+    if (op2 != NULL) {
         /*
          * May need to swap axes so that second operand is
          * iterated over correctly
@@ -5520,29 +5563,6 @@ static struct PyMethodDef ufunc_methods[] = {
  *****************************************************************************/
 
 
-/* construct the string y1,y2,...,yn */
-static PyObject *
-_makeargs(int num, char *ltr, int null_if_none)
-{
-    PyObject *str;
-    int i;
-
-    switch (num) {
-    case 0:
-        if (null_if_none) {
-            return NULL;
-        }
-        return PyString_FromString("");
-    case 1:
-        return PyString_FromString(ltr);
-    }
-    str = PyString_FromFormat("%s1, %s2", ltr, ltr);
-    for (i = 3; i <= num; ++i) {
-        PyString_ConcatAndDel(&str, PyString_FromFormat(", %s%d", ltr, i));
-    }
-    return str;
-}
-
 static char
 _typecharfromnum(int num) {
     PyArray_Descr *descr;
@@ -5557,47 +5577,30 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc)
 {
+    static PyObject *_sig_formatter;
+    PyObject *doc;
+
+    npy_cache_import(
+        "numpy.core._internal",
+        "_ufunc_doc_signature_formatter",
+        &_sig_formatter);
+
+    if (_sig_formatter == NULL) {
+        return NULL;
+    }
+
     /*
      * Put docstring first or FindMethod finds it... could so some
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
-     * construct name(x1, x2, ...,[ out1, out2, ...]) __doc__
      */
-    PyObject *outargs, *inargs, *doc;
-    outargs = _makeargs(ufunc->nout, "out", 1);
-    inargs = _makeargs(ufunc->nin, "x", 0);
-
-    if (ufunc->doc == NULL) {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs));
-        }
-        else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs),
-                                        PyString_AS_STRING(outargs));
-            Py_DECREF(outargs);
-        }
+    doc = PyObject_CallFunctionObjArgs(
+        _sig_formatter, (PyObject *)ufunc, NULL);
+    if (doc == NULL) {
+        return NULL;
     }
-    else {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       ufunc->doc);
-        }
-        else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       PyString_AS_STRING(outargs),
-                                       ufunc->doc);
-            Py_DECREF(outargs);
-        }
-    }
-    Py_DECREF(inargs);
+    PyUString_ConcatAndDel(&doc,
+        PyUString_FromFormat("\n\n%s", ufunc->doc));
     return doc;
 }
 

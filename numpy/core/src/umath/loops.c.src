@@ -138,6 +138,29 @@
         tout * out = (tout *)op1; \
         op; \
     }
+/*
+ * unfortunately gcc 6/7 regressed and we need to give it additional hints to
+ * vectorize inplace operations (PR80198)
+ * must only be used after op1 == ip1 or ip2 has been checked
+ * TODO: using ivdep might allow other compilers to vectorize too
+ */
+#if __GNUC__ >= 6
+#define IVDEP_LOOP _Pragma("GCC ivdep")
+#else
+#define IVDEP_LOOP
+#endif
+#define BASE_BINARY_LOOP_INP(tin, tout, op) \
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    IVDEP_LOOP \
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) { \
+        const tin in1 = *(tin *)ip1; \
+        const tin in2 = *(tin *)ip2; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
 #define BASE_BINARY_LOOP_S(tin, tout, cin, cinp, vin, vinp, op) \
     const tin cin = *(tin *)cinp; \
     BINARY_LOOP { \
@@ -145,15 +168,23 @@
         tout * out = (tout *)op1; \
         op; \
     }
+/* PR80198 again, scalar works without the pragma */
+#define BASE_BINARY_LOOP_S_INP(tin, tout, cin, cinp, vin, vinp, op) \
+    const tin cin = *(tin *)cinp; \
+    BINARY_LOOP { \
+        const tin vin = *(tin *)vinp; \
+        tout * out = (tout *)vinp; \
+        op; \
+    }
 #define BINARY_LOOP_FAST(tin, tout, op) \
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
         if (args[2] == args[0]) { \
-            BASE_BINARY_LOOP(tin, tout, op) \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else if (args[2] == args[1]) { \
-            BASE_BINARY_LOOP(tin, tout, op) \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else { \
             BASE_BINARY_LOOP(tin, tout, op) \
@@ -161,7 +192,7 @@
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
         if (args[1] == args[2]) { \
-            BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
         } \
         else { \
             BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
@@ -169,7 +200,7 @@
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
         if (args[0] == args[2]) { \
-            BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
         else { \
             BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
@@ -802,6 +833,12 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
+}
+
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
@@ -1077,6 +1114,34 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        /* see FIXME note for divide above */
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ quo = in1 / in2;
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = quo;
+                *((@type@ *)op2) = rem;
+            }
+            else {
+                *((@type@ *)op1) = quo - 1;
+                *((@type@ *)op2) = rem + in2;
+            }
+        }
+    }
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1131,6 +1196,24 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            *((@type@ *)op1)= in1/in2;
+            *((@type@ *)op2) = in1 % in2;
+        }
+    }
+}
+
 /**end repeat**/
 
 /*
@@ -1150,6 +1233,15 @@ TIMEDELTA_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
         else {
             *((npy_timedelta *)op1) = -in1;
         }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = +in1;
     }
 }
 
@@ -1180,6 +1272,15 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
  * #type = npy_datetime, npy_timedelta#
  * #TYPE = DATETIME, TIMEDELTA#
  */
+
+NPY_NO_EXPORT void
+@TYPE@_isnat(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((npy_bool *)op1) = (in1 == NPY_DATETIME_NAT);
+    }
+}
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
@@ -1226,7 +1327,7 @@ NPY_NO_EXPORT void
         const @type@ in2 = *(@type@ *)ip2;
         *((npy_bool *)op1) = in1 != in2;
 
-        if (in1 == NPY_DATETIME_NAT && in1 == NPY_DATETIME_NAT) {
+        if (in1 == NPY_DATETIME_NAT && in2 == NPY_DATETIME_NAT) {
             NPY_ALLOW_C_API_DEF
             NPY_ALLOW_C_API;
             /* 2016-01-18, 1.11 */
@@ -1786,6 +1887,16 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_divmod@c@(in1, in2, (@type@ *)op2);
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     char * margs[] = {args[0], args[0], args[1]};
@@ -1840,6 +1951,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = tmp + 0;
         }
     }
+    npy_clear_floatstatus();
 }
 
 NPY_NO_EXPORT void
@@ -1850,6 +1962,15 @@ NPY_NO_EXPORT void
             const @type@ in1 = *(@type@ *)ip1;
             *((@type@ *)op1) = -in1;
         }
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = +in1;
     }
 }
 
@@ -2104,6 +2225,16 @@ HALF_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 }
 
 NPY_NO_EXPORT void
+HALF_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        *((npy_half *)op1) = npy_half_divmod(in1, in2, (npy_half *)op2);
+    }
+}
+
+NPY_NO_EXPORT void
 HALF_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
@@ -2153,6 +2284,15 @@ HALF_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = in1^0x8000u;
+    }
+}
+
+NPY_NO_EXPORT void
+HALF_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_half in1 = *(npy_half *)ip1;
+        *((npy_half *)op1) = +in1;
     }
 }
 
@@ -2670,61 +2810,19 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         in2 = in2 ? in2 : Py_None;
 
         /*
-         * Do not use RichCompareBool because it includes an identity check
-         * (for == and !=).
-         * This is wrong for elementwise behaviour, since it means
+         * Do not use RichCompareBool because it includes an identity check for
+         * == and !=. This is wrong for elementwise behaviour, since it means
          * that NaN can be equal to NaN and an array is equal to itself.
          */
         ret_obj = PyObject_RichCompare(in1, in2, Py_@OP@);
         if (ret_obj == NULL) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The comparison error will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
         ret = PyObject_IsTrue(ret_obj);
         Py_DECREF(ret_obj);
         if (ret == -1) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The error trying to get the "
-                              "boolean value of the comparison result will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
-#if @identity@ != -1
-        if ((in1 == in2) && ((npy_bool)ret != @identity@)) {
-            /* 2014-01-26, 1.9 */
-            if (DEPRECATE_FUTUREWARNING(
-                        "numpy @kind@ will not check object identity "
-                        "in the future. The comparison did not return the "
-                        "same result as suggested by the identity (`is`)) "
-                        "and will change.") < 0) {
-                return;
-            }
-            *((npy_bool *)op1) = @identity@;
-            continue;
-        }
-#endif
         *((npy_bool *)op1) = (npy_bool)ret;
     }
 }

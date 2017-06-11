@@ -61,17 +61,19 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    is_new = not isinstance(a, np.ndarray)
-    if is_new:
-        a = np.array(a)
-    if not issubclass(a.dtype.type, np.inexact):
-        return a, None
-    if not is_new:
-        # need copy
-        a = np.array(a, subok=True)
+    a = np.array(a, subok=True, copy=True)
 
-    mask = np.isnan(a)
-    np.copyto(a, val, where=mask)
+    if a.dtype == np.object_:
+        # object arrays do not support `isnan` (gh-9009), so make a guess
+        mask = a != a
+    elif issubclass(a.dtype.type, np.inexact):
+        mask = np.isnan(a)
+    else:
+        mask = None
+
+    if mask is not None:
+        np.copyto(a, val, where=mask)
+
     return a, mask
 
 
@@ -232,8 +234,9 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
-        # Fast, but not safe for subclasses of ndarray
+    if type(a) is np.ndarray and a.dtype != np.object_:
+        # Fast, but not safe for subclasses of ndarray, or object arrays,
+        # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
             warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
@@ -339,8 +342,9 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-    if not isinstance(a, np.ndarray) or type(a) is np.ndarray:
-        # Fast, but not safe for subclasses of ndarray
+    if type(a) is np.ndarray and a.dtype != np.object_:
+        # Fast, but not safe for subclasses of ndarray, or object arrays,
+        # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
             warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=2)
@@ -833,7 +837,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     See nanmedian for parameter usage
     """
     c = np.isnan(arr1d)
-    s = np.where(c)[0]
+    s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         return np.nan
@@ -869,7 +873,8 @@ def _nanmedian(a, axis=None, out=None, overwrite_input=False):
     else:
         # for small medians use sort + indexing which is still faster than
         # apply_along_axis
-        if a.shape[axis] < 400:
+        # benchmarked with shuffled (50, 50, x) containing a few NaN
+        if a.shape[axis] < 600:
             return _nanmedian_small(a, axis, out, overwrite_input)
         result = np.apply_along_axis(_nanmedian1d, axis, a, overwrite_input)
         if out is not None:
@@ -1069,8 +1074,8 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     Notes
     -----
     Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the mimumum to the
-    maximum in in a sorted copy of ``V``. The values and distances of
+    ``V`` is the value ``q/100`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
     will determine the percentile if the normalized ranking does not
     match the location of ``q`` exactly. This function is the same as
@@ -1083,7 +1088,7 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     >>> a[0][1] = np.nan
     >>> a
     array([[ 10.,  nan,   4.],
-       [  3.,   2.,   1.]])
+          [  3.,   2.,   1.]])
     >>> np.percentile(a, 50)
     nan
     >>> np.nanpercentile(a, 50)
@@ -1118,10 +1123,7 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims and keepdims is not np._NoValue:
-        if q.ndim == 0:
-            return r.reshape(k)
-        else:
-            return r.reshape([len(q)] + k)
+        return r.reshape(q.shape + k)
     else:
         return r
 
@@ -1134,7 +1136,7 @@ def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     See nanpercentile for parameter usage
 
     """
-    if axis is None:
+    if axis is None or a.ndim == 1:
         part = a.ravel()
         result = _nanpercentile1d(part, q, overwrite_input, interpolation)
     else:
@@ -1159,7 +1161,7 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     See nanpercentile for parameter usage
     """
     c = np.isnan(arr1d)
-    s = np.where(c)[0]
+    s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
         if q.ndim == 0:

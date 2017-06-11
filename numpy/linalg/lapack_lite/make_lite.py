@@ -1,27 +1,38 @@
 #!/usr/bin/env python
+"""
+Usage: make_lite.py <wrapped_routines_file> <lapack_dir> <output_dir>
+
+Typical invocation:
+
+    make_lite.py wrapped_routines /tmp/lapack-3.x.x .
+
+Requires the following to be on the path:
+ * f2c
+ * patch
+
+"""
 from __future__ import division, absolute_import, print_function
 
-import sys, os
+import sys
+import os
+import subprocess
+
 import fortran
 import clapack_scrub
-
-try: set
-except NameError:
-    from sets import Set as set
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
 #                     -C to check array subscripts
-F2C_ARGS = '-A'
+F2C_ARGS = ['-A', '-Nx800']
 
-# The header to add to the top of the *_lite.c file. Note that dlamch_() calls
+# The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
 HEADER = '''\
 /*
 NOTE: This is generated code. Look in Misc/lapack_lite for information on
       remaking this file.
 */
-#include "Numeric/f2c.h"
+#include "f2c.h"
 
 #ifdef HAVE_CONFIG
 #include "config.h"
@@ -35,6 +46,15 @@ extern doublereal dlamch_(char *);
 
 extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
+/*
+f2c knows the exact rules for precedence, and so omits parentheses where not
+strictly necessary. Since this is generated code, we don't really care if
+it's readable, and we know what is written is correct. So don't warn about
+them.
+*/
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif
 '''
 
 class FortranRoutine(object):
@@ -54,6 +74,9 @@ class FortranRoutine(object):
             deps = fortran.getDependencies(self.filename)
             self._dependencies = [d.lower() for d in deps]
         return self._dependencies
+
+    def __repr__(self):
+        return "FortranRoutine({!r}, filename={!r})".format(self.name, self.filename)
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -142,12 +165,20 @@ class FortranLibrary(object):
 class LapackLibrary(FortranLibrary):
     def _newFortranRoutine(self, rname, filename):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
-        if 'BLAS' in filename:
+        if 'blas' in filename.lower():
             routine.type = 'blas'
+        elif 'install' in filename.lower():
+            routine.type = 'config'
         elif rname.startswith('z'):
-            routine.type = 'zlapack'
+            routine.type = 'z_lapack'
+        elif rname.startswith('c'):
+            routine.type = 'c_lapack'
+        elif rname.startswith('s'):
+            routine.type = 's_lapack'
+        elif rname.startswith('d'):
+            routine.type = 'd_lapack'
         else:
-            routine.type = 'dlapack'
+            routine.type = 'lapack'
         return routine
 
     def allRoutinesByType(self, typename):
@@ -166,7 +197,11 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     lapack_src_dir = os.path.join(lapack_dir, 'SRC')
     if not os.path.exists(lapack_src_dir):
         lapack_src_dir = os.path.join(lapack_dir, 'src')
-    library = LapackLibrary([blas_src_dir, lapack_src_dir])
+    install_src_dir = os.path.join(lapack_dir, 'INSTALL')
+    if not os.path.exists(install_src_dir):
+        install_src_dir = os.path.join(lapack_dir, 'install')
+
+    library = LapackLibrary([install_src_dir, blas_src_dir, lapack_src_dir])
 
     for r in ignores:
         library.addIgnorableRoutine(r)
@@ -179,64 +214,61 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     return library
 
 def getWrappedRoutineNames(wrapped_routines_file):
-    fo = open(wrapped_routines_file)
     routines = []
     ignores = []
-    for line in fo:
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        if line.startswith('IGNORE:'):
-            line = line[7:].strip()
-            ig = line.split()
-            ignores.extend(ig)
-        else:
-            routines.append(line)
+    with open(wrapped_routines_file) as fo:
+        for line in fo:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if line.startswith('IGNORE:'):
+                line = line[7:].strip()
+                ig = line.split()
+                ignores.extend(ig)
+            else:
+                routines.append(line)
     return routines, ignores
 
+types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
+
 def dumpRoutineNames(library, output_dir):
-    for typename in ['unknown', 'blas', 'dlapack', 'zlapack']:
+    for typename in {'unknown'} | types:
         routines = library.allRoutinesByType(typename)
         filename = os.path.join(output_dir, typename + '_routines.lst')
-        fo = open(filename, 'w')
-        for r in routines:
-            deps = r.dependencies()
-            fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
-        fo.close()
+        with open(filename, 'w') as fo:
+            for r in routines:
+                deps = r.dependencies()
+                fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
 
 def concatenateRoutines(routines, output_file):
-    output_fo = open(output_file, 'w')
-    for r in routines:
-        fo = open(r.filename, 'r')
-        source = fo.read()
-        fo.close()
-        output_fo.write(source)
-    output_fo.close()
+    with open(output_file, 'w') as output_fo:
+        for r in routines:
+            with open(r.filename, 'r') as fo:
+                source = fo.read()
+            output_fo.write(source)
 
 class F2CError(Exception):
     pass
 
 def runF2C(fortran_filename, output_dir):
-    # we're assuming no funny business that needs to be quoted for the shell
-    cmd = "f2c %s -d %s %s" % (F2C_ARGS, output_dir, fortran_filename)
-    rc = os.system(cmd)
-    if rc != 0:
+    try:
+        subprocess.check_call(
+            ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
+        )
+    except subprocess.CalledProcessError:
         raise F2CError
 
 def scrubF2CSource(c_file):
-    fo = open(c_file, 'r')
-    source = fo.read()
-    fo.close()
+    with open(c_file) as fo:
+        source = fo.read()
     source = clapack_scrub.scrubSource(source, verbose=True)
-    fo = open(c_file, 'w')
-    fo.write(HEADER)
-    fo.write(source)
-    fo.close()
+    with open(c_file, 'w') as fo:
+        fo.write(HEADER)
+        fo.write(source)
 
 def main():
     if len(sys.argv) != 4:
-        print('Usage: %s wrapped_routines_file lapack_dir output_dir' % \
-              (sys.argv[0],))
+        print(__doc__)
         return
     wrapped_routines_file = sys.argv[1]
     lapack_src_dir = sys.argv[2]
@@ -247,18 +279,31 @@ def main():
 
     dumpRoutineNames(library, output_dir)
 
-    for typename in ['blas', 'dlapack', 'zlapack']:
-        print('creating %s_lite.c ...'  % typename)
-        routines = library.allRoutinesByType(typename)
-        fortran_file = os.path.join(output_dir, typename+'_lite.f')
+    for typename in types:
+        fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
         c_file = fortran_file[:-2] + '.c'
+        print('creating %s ...'  % c_file)
+        routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
+
+        # apply the patch
+        patch_file = fortran_file + '.patch'
+        if os.path.exists(patch_file):
+            subprocess.check_call(['patch', '-u', fortran_file, patch_file])
+            print("Patched {}".format(fortran_file))
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
             print('f2c failed on %s' % fortran_file)
             break
         scrubF2CSource(c_file)
+
+        # patch any changes needed to the C file
+        c_patch_file = c_file + '.patch'
+        if os.path.exists(c_patch_file):
+            subprocess.check_call(['patch', '-u', c_file, c_patch_file])
+
+        print()
 
 if __name__ == '__main__':
     main()

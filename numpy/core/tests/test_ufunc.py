@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
-from numpy.compat import asbytes
 from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
@@ -45,8 +44,8 @@ class TestUfunc(TestCase):
 
     def test_pickle_withstring(self):
         import pickle
-        astring = asbytes("cnumpy.core\n_ufunc_reconstruct\np0\n"
-                "(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
+        astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
+                   b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
     def test_reduceat_shifting_sum(self):
@@ -543,6 +542,12 @@ class TestUfunc(TestCase):
         self.compare_matrix_multiply_results(np.long)
         self.compare_matrix_multiply_results(np.double)
 
+    def test_matrix_multiply_umath_empty(self):
+        res = umt.matrix_multiply(np.ones((0, 10)), np.ones((10, 0)))
+        assert_array_equal(res, np.zeros((0, 0)))
+        res = umt.matrix_multiply(np.ones((10, 0)), np.ones((0, 10)))
+        assert_array_equal(res, np.zeros((10, 10)))
+
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
@@ -703,14 +708,14 @@ class TestUfunc(TestCase):
 
     def test_axis_out_of_bounds(self):
         a = np.array([False, False])
-        assert_raises(ValueError, a.all, axis=1)
+        assert_raises(np.AxisError, a.all, axis=1)
         a = np.array([False, False])
-        assert_raises(ValueError, a.all, axis=-2)
+        assert_raises(np.AxisError, a.all, axis=-2)
 
         a = np.array([False, False])
-        assert_raises(ValueError, a.any, axis=1)
+        assert_raises(np.AxisError, a.any, axis=1)
         a = np.array([False, False])
-        assert_raises(ValueError, a.any, axis=-2)
+        assert_raises(np.AxisError, a.any, axis=-2)
 
     def test_scalar_reduction(self):
         # The functions 'sum', 'prod', etc allow specifying axis=0
@@ -1013,7 +1018,7 @@ class TestUfunc(TestCase):
                 MyThing.getitem_count += 1
                 if not isinstance(i, tuple):
                     i = (i,)
-                if len(i) > len(self.shape):
+                if len(i) > self.ndim:
                     raise IndexError("boo")
 
                 return MyThing(self.shape[len(i):])
@@ -1226,7 +1231,7 @@ class TestUfunc(TestCase):
         # https://github.com/numpy/numpy/issues/4855
 
         class MyA(np.ndarray):
-            def __numpy_ufunc__(self, ufunc, method, i, inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return getattr(ufunc, method)(*(input.view(np.ndarray)
                                               for input in inputs), **kwargs)
         a = np.arange(12.).reshape(4,3)

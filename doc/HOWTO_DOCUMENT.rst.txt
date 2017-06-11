@@ -654,5 +654,5 @@ HTML using::
   $ rst2html HOWTO_DOCUMENT.txt HOWTO_DOCUMENT.html
 
 .. _SciPy: http://www.scipy.org
-.. _numpy-discussion list: http://www.scipy.org/Mailing_Lists
+.. _numpy-discussion list: http://scipy.org/scipylib/mailing-lists.html
 .. _Sphinx: http://sphinx.pocoo.org

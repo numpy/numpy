@@ -1,5 +1,5 @@
-"""
-This paver file is intented to help with the release process as much as
+r"""
+This paver file is intended to help with the release process as much as
 possible. It relies on virtualenv to generate 'bootstrap' environments as
 independent from the user system as possible (e.g. to make sure the sphinx doc
 is built against the built numpy, not an installed one).
@@ -99,10 +99,10 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/1.12.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.14.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'maintenance/1.11.x'
+LOG_START = 'maintenance/1.13.x'
 LOG_END = 'master'
 
 
@@ -150,21 +150,15 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
         "3.4": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python34/python.exe"],
-        "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
-        "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
-        "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
     }
     WINDOWS_ENV = os.environ
     WINDOWS_ENV["DYLD_FALLBACK_LIBRARY_PATH"] = "/usr/X11/lib:/usr/lib"
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
-        "3.4": ["C:\Python34\python.exe"],
-        "3.3": ["C:\Python33\python.exe"],
-        "3.2": ["C:\Python32\python.exe"],
-        "2.7": ["C:\Python27\python.exe"],
-        "2.6": ["C:\Python26\python.exe"],
+        "3.4": [r"C:\Python34\python.exe"],
+        "2.7": [r"C:\Python27\python.exe"],
     }
     # XXX: find out which env variable is necessary to avoid the pb with python
     # 2.6 and random module when importing tempfile
@@ -173,10 +167,7 @@ elif sys.platform == "win32":
 else:
     WINDOWS_PYTHON = {
         "3.4": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python34/python.exe"],
-        "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
-        "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
-        "2.6": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python26/python.exe"],
     }
     WINDOWS_ENV = os.environ
     MAKENSIS = ["wine", "makensis"]
@@ -418,7 +409,7 @@ def macosx_version():
         raise ValueError("Not darwin ??")
     st = subprocess.Popen(["sw_vers"], stdout=subprocess.PIPE)
     out = st.stdout.readlines()
-    ver = re.compile("ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
+    ver = re.compile(r"ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
     for i in out:
         m = ver.match(i)
         if m:
@@ -486,7 +477,7 @@ def _create_dmg(pyver, src_dir, volname=None):
 def dmg(options):
     try:
         pyver = options.dmg.python_version
-    except:
+    except Exception:
         pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
 
@@ -591,29 +582,49 @@ def compute_sha256(idirs):
 
     return checksums
 
-def write_release_task(options, filename='NOTES.txt'):
+def write_release_task(options, filename='README'):
     idirs = options.installers.installersdir
     source = paver.path.path(RELEASE_NOTES)
     target = paver.path.path(filename)
     if target.exists():
         target.remove()
-    source.copy(target)
-    ftarget = open(str(target), 'a')
-    ftarget.writelines("""
+
+    tmp_target = paver.path.path(filename + '.md')
+    source.copy(tmp_target)
+
+    with open(str(tmp_target), 'a') as ftarget:
+        ftarget.writelines("""
 Checksums
 =========
 
 MD5
-~~~
+---
 
 """)
-    ftarget.writelines(['%s\n' % c for c in compute_md5(idirs)])
-    ftarget.writelines("""
+        ftarget.writelines(['    %s\n' % c for c in compute_md5(idirs)])
+        ftarget.writelines("""
 SHA256
-~~~~~~
+------
 
 """)
-    ftarget.writelines(['%s\n' % c for c in compute_sha256(idirs)])
+        ftarget.writelines(['    %s\n' % c for c in compute_sha256(idirs)])
+
+    # Sign release
+    cmd = ['gpg', '--clearsign', '--armor']
+    if hasattr(options, 'gpg_key'):
+        cmd += ['--default-key', options.gpg_key]
+    cmd += ['--output', str(target), str(tmp_target)]
+    subprocess.check_call(cmd)
+    print("signed %s" % (target,))
+
+    # Change PR links for github posting, don't sign this
+    # as the signing isn't markdown compatible.
+    with open(str(tmp_target), 'r') as ftarget:
+        mdtext = ftarget.read()
+        mdtext = re.sub(r'^\* `(\#[0-9]*).*?`__', r'* \1', mdtext, flags=re.M)
+    with open(str(tmp_target), 'w') as ftarget:
+        ftarget.write(mdtext)
+
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
@@ -626,16 +637,19 @@ def write_log_task(options, filename='Changelog'):
     a.writelines(out)
     a.close()
 
+
 @task
 def write_release(options):
     write_release_task(options)
+
 
 @task
 def write_log(options):
     write_log_task(options)
 
+
 @task
 def write_release_and_log(options):
     rdir = options.installers.releasedir
-    write_release_task(options, os.path.join(rdir, 'NOTES.txt'))
+    write_release_task(options, os.path.join(rdir, 'README'))
     write_log_task(options, os.path.join(rdir, 'Changelog'))

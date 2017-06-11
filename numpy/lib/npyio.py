@@ -316,6 +316,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     --------
     save, savez, savez_compressed, loadtxt
     memmap : Create a memory-map to an array stored in a file on disk.
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
 
     Notes
     -----
@@ -396,7 +397,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
 
     try:
         # Code to distinguish from NumPy binary files and pickles.
-        _ZIP_PREFIX = asbytes('PK\x03\x04')
+        _ZIP_PREFIX = b'PK\x03\x04'
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
         # If the file size is less than N, we need to make sure not
@@ -423,7 +424,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
                                  "non-pickled data")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except:
+            except Exception:
                 raise IOError(
                     "Failed to interpret file %s as a pickle" % repr(file))
     finally:
@@ -602,17 +603,55 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str
-        File name of ``.npz`` file.
-    args : Arguments
-        Function arguments.
-    kwds : Keyword arguments
-        Keywords.
+    file : str or file
+        Either the file name (string) or an open file (file-like object)
+        where the data will be saved. If file is a string or a Path, the
+        ``.npz`` extension will be appended to the file name if it is not
+        already there.
+    args : Arguments, optional
+        Arrays to save to the file. Since it is not possible for Python to
+        know the names of the arrays outside `savez`, the arrays will be saved
+        with names "arr_0", "arr_1", and so on. These arguments can be any
+        expression.
+    kwds : Keyword arguments, optional
+        Arrays to save to the file. Arrays will be saved in the file with the
+        keyword names.
+
+    Returns
+    -------
+    None
 
     See Also
     --------
+    numpy.save : Save a single array to a binary file in NumPy format.
+    numpy.savetxt : Save an array to a file as plain text.
     numpy.savez : Save several arrays into an uncompressed ``.npz`` file format
     numpy.load : Load the files created by savez_compressed.
+
+    Notes
+    -----
+    The ``.npz`` file format is a zipped archive of files named after the
+    variables they contain.  The archive is compressed with
+    ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
+    in ``.npy`` format. For a description of the ``.npy`` format, see
+    `numpy.lib.format` or the NumPy Enhancement Proposal
+    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+
+    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
+    returned. This is a dictionary-like object which can be queried for
+    its list of arrays (with the ``.files`` attribute), and for the arrays
+    themselves.
+
+    Examples
+    --------
+    >>> test_array = np.random.rand(3, 2)
+    >>> test_vector = np.random.rand(4)
+    >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
+    >>> loaded = np.load('/tmp/123.npz')
+    >>> print(np.array_equal(test_array, loaded['a']))
+    True
+    >>> print(np.array_equal(test_vector, loaded['b']))
+    True
 
     """
     _savez(file, args, kwds, True)
@@ -701,9 +740,9 @@ def _getconv(dtype):
     elif issubclass(typ, np.complex):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
-        return bytes
+        return asbytes
     else:
-        return str
+        return asstr
 
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -817,7 +856,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         # Compile regex for comments beforehand
         comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile(asbytes('|').join(comments))
+        regex_comments = re.compile(b'|'.join(comments))
     user_converters = converters
     if delimiter is not None:
         delimiter = asbytes(delimiter)
@@ -863,7 +902,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         raise ValueError('fname must be a string, file handle, or generator')
     X = []
 
-    def flatten_dtype(dt):
+    # not to be confused with the flatten_dtype we import...
+    def flatten_dtype_internal(dt):
         """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
@@ -883,10 +923,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype(tp)
+                flat_dt, flat_packing = flatten_dtype_internal(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
-                if len(tp.shape) > 0:
+                if tp.ndim > 0:
                     packing.extend(flat_packing)
                 else:
                     packing.append((len(flat_dt), flat_packing))
@@ -918,7 +958,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         line = asbytes(line)
         if comments is not None:
             line = regex_comments.split(asbytes(line), maxsplit=1)[0]
-        line = line.strip(asbytes('\r\n'))
+        line = line.strip(b'\r\n')
         if line:
             return line.split(delimiter)
         else:
@@ -947,7 +987,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype(dtype)
+        dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
@@ -1536,11 +1576,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if names is True:
                 if comments in first_line:
                     first_line = (
-                        asbytes('').join(first_line.split(comments)[1:]))
+                        b''.join(first_line.split(comments)[1:]))
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
-        first_line = asbytes('')
+        first_line = b''
         first_values = []
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
@@ -1565,7 +1605,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if names is True:
         names = validate_names([_bytes_to_name(_.strip())
                                 for _ in first_values])
-        first_line = asbytes('')
+        first_line = b''
     elif _is_string_like(names):
         names = validate_names([_.strip() for _ in names.split(',')])
     elif names:
@@ -1604,7 +1644,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_missing_values = missing_values or ()
 
     # Define the list of missing_values (one column: one list)
-    missing_values = [list([asbytes('')]) for _ in range(nbcols)]
+    missing_values = [list([b'']) for _ in range(nbcols)]
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
@@ -1644,7 +1684,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 entry.append(value)
     # We have a string : apply it to all entries
     elif isinstance(user_missing_values, bytes):
-        user_value = user_missing_values.split(asbytes(","))
+        user_value = user_missing_values.split(b",")
         for entry in missing_values:
             entry.extend(user_value)
     # We have something else: apply it to all entries
@@ -1937,7 +1977,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask and names:
         for (name, conv) in zip(names or (), converters):
             missing_values = [conv(_) for _ in conv.missing_values
-                              if _ != asbytes('')]
+                              if _ != b'']
             for mval in missing_values:
                 outputmask[name] |= (output[name] == mval)
     # Construct the final array

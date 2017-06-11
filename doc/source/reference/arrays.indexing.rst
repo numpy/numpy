@@ -36,8 +36,8 @@ objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
 but not for integer arrays or other embedded sequences.
 
 .. index::
-   triple: ndarray; special methods; getslice
-   triple: ndarray; special methods; setslice
+   triple: ndarray; special methods; getitem
+   triple: ndarray; special methods; setitem
    single: ellipsis
    single: newaxis
 
@@ -85,7 +85,7 @@ concepts to remember include:
 - Assume *n* is the number of elements in the dimension being
   sliced. Then, if *i* is not given it defaults to 0 for *k > 0* and
   *n - 1* for *k < 0* . If *j* is not given it defaults to *n* for *k > 0*
-  and -1 for *k < 0* . If *k* is not given it defaults to 1. Note that
+  and *-n-1* for *k < 0* . If *k* is not given it defaults to 1. Note that
   ``::`` is the same as ``:`` and means select all indices along this
   axis.
 

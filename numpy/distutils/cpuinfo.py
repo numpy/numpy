@@ -75,7 +75,7 @@ class CPUInfoBase(object):
     def _try_call(self, func):
         try:
             return func()
-        except:
+        except Exception:
             pass
 
     def __getattr__(self, name):
@@ -93,7 +93,7 @@ class CPUInfoBase(object):
 
     def __get_nbits(self):
         abits = platform.architecture()[0]
-        nbits = re.compile('(\d+)bit').search(abits).group(1)
+        nbits = re.compile(r'(\d+)bit').search(abits).group(1)
         return nbits
 
     def _is_32bit(self):
@@ -336,7 +336,7 @@ class IRIXCPUInfo(CPUInfoBase):
 
     def get_ip(self):
         try: return self.info.get('MACHINE')
-        except: pass
+        except Exception: pass
     def __machine(self, n):
         return self.info.get('MACHINE').lower() == 'ip%s' % (n)
     def _is_IP19(self): return self.__machine(19)
@@ -495,8 +495,8 @@ class Win32CPUInfo(CPUInfoBase):
             else:
                 import _winreg as winreg
 
-            prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"\
-                              "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
+            prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
+                              r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
             chnd=winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum=0
             while True:
@@ -523,7 +523,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Family"]=int(srch.group("FML"))
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
-        except:
+        except Exception:
             print(sys.exc_info()[1], '(ignoring)')
         self.__class__.info = info
 

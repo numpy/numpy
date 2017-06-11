@@ -1162,6 +1162,16 @@ def squeeze(a, axis=None):
         dimensions of length 1 removed. This is always `a` itself
         or a view into `a`.
 
+    Raises
+    ------
+    ValueError
+        If `axis` is not `None`, and an axis being squeezed is not of length 1
+
+    See Also
+    --------
+    expand_dims : The inverse operation, adding singleton dimensions
+    reshape : Insert, remove, and combine dimensions, and resize existing ones
+
     Examples
     --------
     >>> x = np.array([[[0], [1], [2]]])
@@ -1169,7 +1179,13 @@ def squeeze(a, axis=None):
     (1, 3, 1)
     >>> np.squeeze(x).shape
     (3,)
-    >>> np.squeeze(x, axis=(2,)).shape
+    >>> np.squeeze(x, axis=0).shape
+    (3, 1)
+    >>> np.squeeze(x, axis=1).shape
+    Traceback (most recent call last):
+    ...
+    ValueError: cannot select an axis to squeeze out which has size not equal to one
+    >>> np.squeeze(x, axis=2).shape
     (1, 3)
 
     """
@@ -1509,13 +1525,13 @@ def nonzero(a):
 
     Examples
     --------
-    >>> x = np.eye(3)
+    >>> x = np.array([[1,0,0], [0,2,0], [1,1,0]])
     >>> x
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1, 0, 0],
+           [0, 2, 0],
+           [1, 1, 0]])
     >>> np.nonzero(x)
-    (array([0, 1, 2]), array([0, 1, 2]))
+    (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
 
     >>> x[np.nonzero(x)]
     array([ 1.,  1.,  1.])
@@ -1667,11 +1683,15 @@ def clip(a, a_min, a_max, out=None):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like
-        Minimum value.
-    a_max : scalar or array_like
-        Maximum value.  If `a_min` or `a_max` are array_like, then they will
-        be broadcasted to the shape of `a`.
+    a_min : scalar or array_like or `None`
+        Minimum value. If `None`, clipping is not performed on lower
+        interval edge. Not more than one of `a_min` and `a_max` may be
+        `None`.
+    a_max : scalar or array_like or `None`
+        Maximum value. If `None`, clipping is not performed on upper
+        interval edge. Not more than one of `a_min` and `a_max` may be
+        `None`. If `a_min` or `a_max` are array_like, then the three
+        arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
@@ -1700,7 +1720,7 @@ def clip(a, a_min, a_max, out=None):
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> np.clip(a, [3,4,1,1,1,4,4,4,4,4], 8)
+    >>> np.clip(a, [3, 4, 1, 1, 1, 4, 4, 4, 4, 4], 8)
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
@@ -2846,6 +2866,9 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     cause the results to be inaccurate, especially for `float32` (see
     example below).  Specifying a higher-precision accumulator using the
     `dtype` keyword can alleviate this issue.
+
+    By default, `float16` results are computed using `float32` intermediates
+    for extra precision.
 
     Examples
     --------

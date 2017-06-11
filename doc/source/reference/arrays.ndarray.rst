@@ -119,12 +119,12 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 
 .. math::
 
-   s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j ,
-   \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
+   s_k^{\mathrm{column}} = \mathrm{itemsize} \prod_{j=0}^{k-1} d_j ,
+   \quad  s_k^{\mathrm{row}} = \mathrm{itemsize} \prod_{j=k+1}^{N-1} d_j .
 
 .. index:: single-segment, contiguous, non-contiguous
 
-where :math:`d_j` `= self.itemsize * self.shape[j]`.
+where :math:`d_j` `= self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
@@ -595,8 +595,6 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__len__
    ndarray.__getitem__
    ndarray.__setitem__
-   ndarray.__getslice__
-   ndarray.__setslice__
    ndarray.__contains__
 
 Conversion; the operations :func:`complex()`, :func:`int()`,

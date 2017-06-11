@@ -34,7 +34,7 @@ class container(object):
         self.array = array(data, dtype, copy=copy)
 
     def __repr__(self):
-        if len(self.shape) > 0:
+        if self.ndim > 0:
             return self.__class__.__name__ + repr(self.array)[len("array"):]
         else:
             return self.__class__.__name__ + "(" + repr(self.array) + ")"
@@ -51,14 +51,8 @@ class container(object):
     def __getitem__(self, index):
         return self._rc(self.array[index])
 
-    def __getslice__(self, i, j):
-        return self._rc(self.array[i:j])
-
     def __setitem__(self, index, value):
         self.array[index] = asarray(value, self.dtype)
-
-    def __setslice__(self, i, j, value):
-        self.array[i:j] = asarray(value, self.dtype)
 
     def __abs__(self):
         return self._rc(absolute(self.array))
@@ -189,7 +183,7 @@ class container(object):
         return self._rc(invert(self.array))
 
     def _scalarfunc(self, func):
-        if len(self.shape) == 0:
+        if self.ndim == 0:
             return func(self[0])
         else:
             raise TypeError(

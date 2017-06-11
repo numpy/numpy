@@ -44,7 +44,7 @@ def _is_bytes_like(obj):
     Check whether obj behaves like a bytes object.
     """
     try:
-        obj + asbytes('')
+        obj + b''
     except (TypeError, ValueError):
         return False
     return True
@@ -122,8 +122,9 @@ def flatten_dtype(ndtype, flatten_base=False):
     ----------
     ndtype : dtype
         The datatype to collapse
-    flatten_base : {False, True}, optional
-        Whether to transform a field with a shape into several fields or not.
+    flatten_base : bool, optional
+       If True, transform a field with a shape into several fields. Default is
+       False.
 
     Examples
     --------
@@ -188,7 +189,7 @@ class LineSplitter(object):
         return lambda input: [_.strip() for _ in method(input)]
     #
 
-    def __init__(self, delimiter=None, comments=asbytes('#'), autostrip=True):
+    def __init__(self, delimiter=None, comments=b'#', autostrip=True):
         self.comments = comments
         # Delimiter is a character
         if isinstance(delimiter, unicode):
@@ -217,7 +218,7 @@ class LineSplitter(object):
     def _delimited_splitter(self, line):
         if self.comments is not None:
             line = line.split(self.comments)[0]
-        line = line.strip(asbytes(" \r\n"))
+        line = line.strip(b" \r\n")
         if not line:
             return []
         return line.split(self.delimiter)
@@ -226,7 +227,7 @@ class LineSplitter(object):
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
             line = line.split(self.comments)[0]
-        line = line.strip(asbytes("\r\n"))
+        line = line.strip(b"\r\n")
         if not line:
             return []
         fixed = self.delimiter
@@ -300,7 +301,7 @@ class NameValidator(object):
     """
     #
     defaultexcludelist = ['return', 'file', 'print']
-    defaultdeletechars = set("""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
+    defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
     #
 
     def __init__(self, excludelist=None, deletechars=None,
@@ -433,9 +434,9 @@ def str2bool(value):
 
     """
     value = value.upper()
-    if value == asbytes('TRUE'):
+    if value == b'TRUE':
         return True
-    elif value == asbytes('FALSE'):
+    elif value == b'FALSE':
         return False
     else:
         raise ValueError("Invalid boolean")
@@ -528,7 +529,7 @@ class StringConverter(object):
     _mapper.extend([(nx.floating, float, nx.nan),
                     (complex, _bytes_to_complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
-                    (nx.string_, bytes, asbytes('???'))])
+                    (nx.string_, bytes, b'???')])
 
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
 
@@ -630,7 +631,7 @@ class StringConverter(object):
                 # None
                 if default is None:
                     try:
-                        default = self.func(asbytes('0'))
+                        default = self.func(b'0')
                     except ValueError:
                         default = None
                 dtype = self._getdtype(default)
@@ -675,11 +676,11 @@ class StringConverter(object):
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([asbytes('')])
+            self.missing_values = set([b''])
         else:
             if isinstance(missing_values, bytes):
-                missing_values = missing_values.split(asbytes(","))
-            self.missing_values = set(list(missing_values) + [asbytes('')])
+                missing_values = missing_values.split(b",")
+            self.missing_values = set(list(missing_values) + [b''])
         #
         self._callingfunction = self._strict_call
         self.type = self._dtypeortype(dtype)
@@ -800,7 +801,7 @@ class StringConverter(object):
             self.iterupgrade(value)
 
     def update(self, func, default=None, testing_value=None,
-               missing_values=asbytes(''), locked=False):
+               missing_values=b'', locked=False):
         """
         Set StringConverter attributes directly.
 
@@ -837,7 +838,7 @@ class StringConverter(object):
             self.type = self._dtypeortype(self._getdtype(default))
         else:
             try:
-                tester = func(testing_value or asbytes('1'))
+                tester = func(testing_value or b'1')
             except (TypeError, ValueError):
                 tester = None
             self.type = self._dtypeortype(self._getdtype(tester))

@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import pickle
 import sys
 
 import numpy as np
@@ -376,6 +377,23 @@ class TestSubarray(TestCase):
         assert_(isinstance(dt['a'].shape, tuple))
         assert_(isinstance(dt['a'].shape[0], int))
 
+    def test_shape_matches_ndim(self):
+        dt = np.dtype([('a', 'f4', ())])
+        assert_equal(dt['a'].shape, ())
+        assert_equal(dt['a'].ndim, 0)
+
+        dt = np.dtype([('a', 'f4')])
+        assert_equal(dt['a'].shape, ())
+        assert_equal(dt['a'].ndim, 0)
+
+        dt = np.dtype([('a', 'f4', 4)])
+        assert_equal(dt['a'].shape, (4,))
+        assert_equal(dt['a'].ndim, 1)
+
+        dt = np.dtype([('a', 'f4', (1, 2, 3))])
+        assert_equal(dt['a'].shape, (1, 2, 3))
+        assert_equal(dt['a'].ndim, 3)
+
     def test_shape_invalid(self):
         # Check that the shape is valid.
         max_int = np.iinfo(np.intc).max
@@ -593,9 +611,6 @@ class TestDtypeAttributes(TestCase):
         new_dtype = np.dtype(dtype.descr)
         assert_equal(new_dtype.itemsize, 16)
 
-
-class TestDtypeAttributes(TestCase):
-
     def test_name_builtin(self):
         for t in np.typeDict.values():
             name = t.__name__
@@ -610,6 +625,61 @@ class TestDtypeAttributes(TestCase):
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 
+class TestPickling(TestCase):
+
+    def check_pickling(self, dtype):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            pickled = pickle.loads(pickle.dumps(dtype, proto))
+            assert_equal(pickled, dtype)
+            assert_equal(pickled.descr, dtype.descr)
+            if dtype.metadata:
+                assert_equal(pickled.metadata, dtype.metadata)
+            else:
+                self.assertFalse(pickled.metadata)  # may be None
+            # Check the reconstructed dtype is functional
+            x = np.zeros(3, dtype=dtype)
+            y = np.zeros(3, dtype=pickled)
+            assert_equal(x, y)
+            assert_equal(x[0], y[0])
+
+    def test_builtin(self):
+        for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
+                  np.unicode, np.bool]:
+            self.check_pickling(np.dtype(t))
+
+    def test_structured(self):
+        dt = np.dtype(([('a', '>f4', (2, 1)), ('b', '<f8', (1, 3))], (2, 2)))
+        self.check_pickling(dt)
+        dt = np.dtype('i4, i1', align=True)
+        self.check_pickling(dt)
+        dt = np.dtype('i4, i1', align=False)
+        self.check_pickling(dt)
+        dt = np.dtype({
+            'names': ['A', 'B'],
+            'formats': ['f4', 'f4'],
+            'offsets': [0, 8],
+            'itemsize': 16})
+        self.check_pickling(dt)
+        dt = np.dtype({'names': ['r', 'b'],
+                       'formats': ['u1', 'u1'],
+                       'titles': ['Red pixel', 'Blue pixel']})
+        self.check_pickling(dt)
+
+    def test_datetime(self):
+        for base in ['m8', 'M8']:
+            for unit in ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
+                         'us', 'ns', 'ps', 'fs', 'as']:
+                dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+                self.check_pickling(dt)
+                if unit:
+                    dt = np.dtype('%s[7%s]' % (base, unit))
+                    self.check_pickling(dt)
+
+    def test_metadata(self):
+        dt = np.dtype(int, metadata={'datum': 1})
+        self.check_pickling(dt)
+
+
 def test_rational_dtype():
     # test for bug gh-5719
     a = np.array([1111], dtype=rational).astype
@@ -618,6 +688,13 @@ def test_rational_dtype():
     # test that dtype detection finds user-defined types
     x = rational(1)
     assert_equal(np.array([x,x]).dtype, np.dtype(rational))
+
+
+def test_dtypes_are_true():
+    # test for gh-6294
+    assert bool(np.dtype('f8'))
+    assert bool(np.dtype('i8'))
+    assert bool(np.dtype([('a', 'i8'), ('b', 'f4')]))
 
 
 if __name__ == "__main__":

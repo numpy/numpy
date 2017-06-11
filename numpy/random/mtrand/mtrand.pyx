@@ -964,20 +964,31 @@ cdef class RandomState:
             high = low
             low = 0
 
+        # '_randint_type' is defined in
+        # 'generate_randint_helpers.py'
         key = np.dtype(dtype).name
-        if not key in _randint_type:
+        if key not in _randint_type:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
+
         lowbnd, highbnd, randfunc = _randint_type[key]
 
-        if low < lowbnd:
+        # TODO: Do not cast these inputs to Python int
+        #
+        # This is a workaround until gh-8851 is resolved (bug in NumPy
+        # integer comparison and subtraction involving uint64 and non-
+        # uint64). Afterwards, remove these two lines.
+        ilow = int(low)
+        ihigh = int(high)
+
+        if ilow < lowbnd:
             raise ValueError("low is out of bounds for %s" % (key,))
-        if high > highbnd:
+        if ihigh > highbnd:
             raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
+        if ilow >= ihigh:
             raise ValueError("low >= high")
 
         with self.lock:
-            ret = randfunc(low, high - 1, size, self.state_address)
+            ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
             if size is None:
                 if dtype in (np.bool, np.int, np.long):
@@ -1026,7 +1037,7 @@ cdef class RandomState:
         -----------
         a : 1-D array-like or int
             If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if a was np.arange(n)
+            If an int, the random sample is generated as if a were np.arange(a)
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
@@ -1040,7 +1051,7 @@ cdef class RandomState:
 
         Returns
         --------
-        samples : 1-D ndarray, shape (size,)
+        samples : single item or ndarray
             The generated random samples
 
         Raises
@@ -1295,6 +1306,10 @@ cdef class RandomState:
         Py_INCREF(temp)  # needed to get around Pyrex's automatic reference-counting
                          # rules because EnsureArray steals a reference
         odiff = <ndarray>PyArray_EnsureArray(temp)
+
+        if not np.all(np.isfinite(odiff)):
+            raise OverflowError('Range exceeds valid bounds')
+
         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff,
                            self.lock)
 
@@ -1454,7 +1469,7 @@ cdef class RandomState:
         4
         >>> type(np.random.random_integers(5))
         <type 'int'>
-        >>> np.random.random_integers(5, size=(3.,2.))
+        >>> np.random.random_integers(5, size=(3,2))
         array([[5, 4],
                [3, 3],
                [4, 5]])
@@ -1564,8 +1579,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.norm : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.norm : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -1818,8 +1833,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.gamma : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.gamma : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -1908,8 +1923,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.gamma : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.gamma : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -1936,7 +1951,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> shape, scale = 2., 2. # mean=4, std=2*sqrt(2)
+        >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
         >>> s = np.random.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
@@ -2009,8 +2024,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.f : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.f : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2466,7 +2481,7 @@ cdef class RandomState:
         a good estimate of the true mean.
 
         The derivation of the t-distribution was first published in
-        1908 by William Gisset while working for the Guinness Brewery
+        1908 by William Gosset while working for the Guinness Brewery
         in Dublin. Due to proprietary issues, he had to publish under
         a pseudonym, and so he used the name Student.
 
@@ -2566,8 +2581,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.vonmises : probability density function,
-            distribution, or cumulative density function, etc.
+        scipy.stats.vonmises : probability density function, distribution, or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2672,10 +2687,10 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.lomax.pdf : probability density function,
-            distribution or cumulative density function, etc.
-        scipy.stats.distributions.genpareto.pdf : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.lomax : probability density function, distribution or
+            cumulative density function, etc.
+        scipy.stats.genpareto : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -2774,9 +2789,9 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.weibull_max
-        scipy.stats.distributions.weibull_min
-        scipy.stats.distributions.genextreme
+        scipy.stats.weibull_max
+        scipy.stats.weibull_min
+        scipy.stats.genextreme
         gumbel
 
         Notes
@@ -3220,8 +3235,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.logistic : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.logistic : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -3700,8 +3715,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.binom : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.binom : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4004,8 +4019,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.zipf : probability density function,
-            distribution, or cumulative density function, etc.
+        scipy.stats.zipf : probability density function, distribution, or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4166,8 +4181,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.hypergeom : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.hypergeom : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4280,8 +4295,8 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.logser : probability density function,
-            distribution or cumulative density function, etc.
+        scipy.stats.logser : probability density function, distribution or
+            cumulative density function, etc.
 
         Notes
         -----
@@ -4351,9 +4366,10 @@ cdef class RandomState:
                            self.lock)
 
     # Multivariate distributions:
-    def multivariate_normal(self, mean, cov, size=None):
+    def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
+                            tol=1e-8):
         """
-        multivariate_normal(mean, cov[, size])
+        multivariate_normal(mean, cov[, size, check_valid, tol])
 
         Draw random samples from a multivariate normal distribution.
 
@@ -4376,6 +4392,10 @@ cdef class RandomState:
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
             each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
             If no shape is specified, a single (`N`-D) sample is returned.
+        check_valid : { 'warn', 'raise', 'ignore' }, optional
+            Behavior when the covariance matrix is not positive semidefinite.
+        tol : float, optional
+            Tolerance when checking the singular values in covariance matrix.
 
         Returns
         -------
@@ -4403,8 +4423,8 @@ cdef class RandomState:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (*cov* is a multiple of the identity matrix)
-          - Diagonal covariance (*cov* has non-negative elements, and only on
+          - Spherical covariance (`cov` is a multiple of the identity matrix)
+          - Diagonal covariance (`cov` has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -4460,11 +4480,11 @@ cdef class RandomState:
             shape = size
 
         if len(mean.shape) != 1:
-               raise ValueError("mean must be 1 dimensional")
+            raise ValueError("mean must be 1 dimensional")
         if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
-               raise ValueError("cov must be 2 dimensional and square")
+            raise ValueError("cov must be 2 dimensional and square")
         if mean.shape[0] != cov.shape[0]:
-               raise ValueError("mean and cov must have same length")
+            raise ValueError("mean and cov must have same length")
 
         # Compute shape of output and create a matrix of independent
         # standard normally distributed random numbers. The matrix has rows
@@ -4487,12 +4507,20 @@ cdef class RandomState:
         # not zero. We continue to use the SVD rather than Cholesky in
         # order to preserve current outputs. Note that symmetry has not
         # been checked.
+
         (u, s, v) = svd(cov)
-        neg = (np.sum(u.T * v, axis=1) < 0) & (s > 0)
-        if np.any(neg):
-            s[neg] = 0.
-            warnings.warn("covariance is not positive-semidefinite.",
-                          RuntimeWarning)
+
+        if check_valid != 'ignore':
+            if check_valid != 'warn' and check_valid != 'raise':
+                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
+
+            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+            if not psd:
+                if check_valid == 'warn':
+                    warnings.warn("covariance is not positive-semidefinite.",
+                                  RuntimeWarning)
+                else:
+                    raise ValueError("covariance is not positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
@@ -4811,6 +4839,7 @@ cdef class RandomState:
         cdef npy_intp i, j
         for i in reversed(range(1, n)):
             j = rk_interval(i, self.internal_state)
+            if i == j : continue # i == j is not needed and memcpy is undefined.
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)

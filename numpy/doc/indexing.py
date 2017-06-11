@@ -200,8 +200,8 @@ one index array with y: ::
 
 What results is the construction of a new array where each value of
 the index array selects one row from the array being indexed and the
-resultant array has the resulting shape (size of row, number index
-elements).
+resultant array has the resulting shape (number of index elements,
+size of row).
 
 An example of where this may be useful is for a color lookup table
 where we want to map the values of an image into RGB triples for
@@ -422,7 +422,7 @@ object: ::
         [37, 40, 43],
         [46, 49, 52]])
 
-For this reason it is possible to use the output from the np.where()
+For this reason it is possible to use the output from the np.nonzero()
 function directly as an index since it always returns a tuple of index
 arrays.
 

@@ -1,12 +1,12 @@
 from __future__ import division, absolute_import, print_function
+import warnings
 
 import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
-        assert_warns, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings)
+        assert_warns, assert_no_warnings, assert_array_equal,
+        assert_array_almost_equal, suppress_warnings)
 from numpy import random
-from numpy.compat import asbytes
 import sys
 import warnings
 
@@ -157,22 +157,42 @@ class TestRandint(TestCase):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
+    def test_full_range(self):
+        # Test for ticket #1690
+
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
+            try:
+                self.rfunc(lbnd, ubnd, dtype=dt)
+            except Exception as e:
+                raise AssertionError("No error should have been raised, "
+                                     "but one was with the following "
+                                     "message:\n\n%s" % str(e))
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
         np.random.seed()
+
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
                 vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
@@ -208,6 +228,29 @@ class TestRandint(TestCase):
         val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(np.bool).name] == res)
+
+    def test_int64_uint64_corner_case(self):
+        # When stored in Numpy arrays, `lbnd` is casted
+        # as np.int64, and `ubnd` is casted as np.uint64.
+        # Checking whether `lbnd` >= `ubnd` used to be
+        # done solely via direct comparison, which is incorrect
+        # because when Numpy tries to compare both numbers,
+        # it casts both to np.float64 because there is
+        # no integer superset of np.int64 and np.uint64. However,
+        # `ubnd` is too large to be represented in np.float64,
+        # causing it be round down to np.iinfo(np.int64).max,
+        # leading to a ValueError because `lbnd` now equals
+        # the new `ubnd`.
+
+        dt = np.int64
+        tgt = np.iinfo(np.int64).max
+        lbnd = np.int64(np.iinfo(np.int64).max)
+        ubnd = np.uint64(np.iinfo(np.int64).max + 1)
+
+        # None of these function calls should
+        # generate a ValueError now.
+        actual = np.random.randint(lbnd, ubnd, dtype=dt)
+        assert_equal(actual, tgt)
 
     def test_respect_dtype_singleton(self):
         # See gh-7203
@@ -383,16 +426,16 @@ class TestRandomDist(TestCase):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        desired = b'\x82Ui\x9e\xff\x97+Wf\xa5'
         assert_equal(actual, desired)
 
     def test_shuffle(self):
@@ -579,10 +622,6 @@ class TestRandomDist(TestCase):
                             [-0.21682183359214885, 2.63373365386060332]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-    def test_laplace_0(self):
-        assert_(np.random.laplace(scale=0) in [0, 1])
-        assert_raises(ValueError, np.random.laplace, scale=-0.)
-
     def test_lognormal(self):
         np.random.seed(self.seed)
         actual = np.random.lognormal(mean=.123456789, sigma=2.0, size=(3, 2))
@@ -617,27 +656,36 @@ class TestRandomDist(TestCase):
     def test_multivariate_normal(self):
         np.random.seed(self.seed)
         mean = (.123456789, 10)
-        # Hmm... not even symmetric.
-        cov = [[1, 0], [1, 0]]
+        cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[-1.47027513018564449, 10.],
-                             [-1.65915081534845532, 10.]],
-                            [[-2.29186329304599745, 10.],
-                             [-1.77505606019580053, 10.]],
-                            [[-0.54970369430044119, 10.],
-                             [0.29768848031692957, 10.]]])
+        desired = np.array([[[1.463620246718631, 11.73759122771936 ],
+                             [1.622445133300628, 9.771356667546383]],
+                            [[2.154490787682787, 12.170324946056553],
+                             [1.719909438201865, 9.230548443648306]],
+                            [[0.689515026297799, 9.880729819607714],
+                             [-0.023054015651998, 9.201096623542879]]])
+
         assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
         actual = np.random.multivariate_normal(mean, cov)
-        desired = np.array([-0.79441224511977482, 10.])
+        desired = np.array([0.895289569463708, 9.17180864067987])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-        # Check that non positive-semidefinite covariance raises warning
+        # Check that non positive-semidefinite covariance warns with
+        # RuntimeWarning
         mean = [0, 0]
-        cov = [[1, 1 + 1e-10], [1 + 1e-10, 1]]
+        cov = [[1, 2], [2, 1]]
         assert_warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
+
+        # and that it doesn't warn with RuntimeWarning check_valid='ignore'
+        assert_no_warnings(np.random.multivariate_normal, mean, cov,
+                           check_valid='ignore')
+
+        # and that it raises with RuntimeWarning check_valid='raises'
+        assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
+                      check_valid='raise')
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)
@@ -698,7 +746,7 @@ class TestRandomDist(TestCase):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -809,9 +857,34 @@ class TestRandomDist(TestCase):
         assert_raises(OverflowError, func, -np.inf, 0)
         assert_raises(OverflowError, func,  0,      np.inf)
         assert_raises(OverflowError, func,  fmin,   fmax)
+        assert_raises(OverflowError, func, [-np.inf], [0])
+        assert_raises(OverflowError, func, [0], [np.inf])
 
         # (fmax / 1e17) - fmin is within range, so this should not throw
-        np.random.uniform(low=fmin, high=fmax / 1e17)
+        # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
+        # DBL_MAX by increasing fmin a bit
+        np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
+
+    def test_scalar_exception_propagation(self):
+        # Tests that exceptions are correctly propagated in distributions
+        # when called with objects that throw exceptions when converted to
+        # scalars.
+        #
+        # Regression test for gh: 8865
+
+        class ThrowingFloat(np.ndarray):
+            def __float__(self):
+                raise TypeError
+
+        throwing_float = np.array(1.0).view(ThrowingFloat)
+        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+
+        class ThrowingInteger(np.ndarray):
+            def __int__(self):
+                raise TypeError
+
+        throwing_int = np.array(1).view(ThrowingInteger)
+        assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)
 
     def test_vonmises(self):
         np.random.seed(self.seed)

@@ -1173,7 +1173,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self)) {
+    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
+            PyArray_ISUSERDEF(self)) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
@@ -1186,6 +1187,14 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
     }
     else {
         PyArrayObject *ret;
+        if (!PyArray_ISNUMBER(self)) {
+            /* 2017-05-04, 1.13 */
+            if (DEPRECATE("attempting to conjugate non-numeric dtype; this "
+                          "will error in the future to match the behavior of "
+                          "np.conjugate") < 0) {
+                return NULL;
+            }
+        }
         if (out) {
             if (PyArray_AssignArray(out, self,
                         NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {

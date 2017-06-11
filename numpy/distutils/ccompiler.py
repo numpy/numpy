@@ -4,11 +4,13 @@ import os
 import re
 import sys
 import types
+import shlex
+import time
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
 from distutils.errors import DistutilsExecError, DistutilsModuleError, \
-                             DistutilsPlatformError
+                             DistutilsPlatformError, CompileError
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
@@ -16,8 +18,67 @@ from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args, get_num_build_jobs
+                                      quote_args, get_num_build_jobs, \
+                                      _commandline_dep_string
 
+# globals for parallel build management
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
+_job_semaphore = None
+_global_lock = threading.Lock()
+_processing_files = set()
+
+
+def _needs_build(obj, cc_args, extra_postargs, pp_opts):
+    """
+    Check if an objects needs to be rebuild based on its dependencies
+
+    Parameters
+    ----------
+    obj : str
+        object file
+
+    Returns
+    -------
+    bool
+    """
+    # defined in unixcompiler.py
+    dep_file = obj + '.d'
+    if not os.path.exists(dep_file):
+        return True
+
+    # dep_file is a makefile containing 'object: dependencies'
+    # formated like posix shell (spaces escaped, \ line continuations)
+    # the last line contains the compiler commandline arguments as some
+    # projects may compile an extension multiple times with different
+    # arguments
+    with open(dep_file, "r") as f:
+        lines = f.readlines()
+
+    cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
+    last_cmdline = lines[-1]
+    if last_cmdline != cmdline:
+        return True
+
+    contents = ''.join(lines[:-1])
+    deps = [x for x in shlex.split(contents, posix=True)
+            if x != "\n" and not x.endswith(":")]
+
+    try:
+        t_obj = os.stat(obj).st_mtime
+
+        # check if any of the dependencies is newer than the object
+        # the dependencies includes the source used to create the object
+        for f in deps:
+            if os.stat(f).st_mtime > t_obj:
+                return True
+    except OSError:
+        # no object counts as newer (shouldn't happen if dep_file exists)
+        return True
+
+    return False
 
 def replace_method(klass, method_name, func):
     if sys.version_info[0] < 3:
@@ -160,6 +221,16 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # This method is effective only with Python >=2.3 distutils.
     # Any changes here should be applied also to fcompiler.compile
     # method to support pre Python 2.3 distutils.
+    global _job_semaphore
+
+    jobs = get_num_build_jobs()
+
+    # setup semaphore to not exceed number of compile jobs when parallelized at
+    # extension level (python >= 3.5)
+    with _global_lock:
+        if _job_semaphore is None:
+            _job_semaphore = threading.Semaphore(jobs)
+
     if not sources:
         return []
     # FIXME:RELATIVE_IMPORT
@@ -191,7 +262,30 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     def single_compile(args):
         obj, (src, ext) = args
-        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        if not _needs_build(obj, cc_args, extra_postargs, pp_opts):
+            return
+
+        # check if we are currently already processing the same object
+        # happens when using the same source in multiple extensions
+        while True:
+            # need explicit lock as there is no atomic check and add with GIL
+            with _global_lock:
+                # file not being worked on, start working
+                if obj not in _processing_files:
+                    _processing_files.add(obj)
+                    break
+            # wait for the processing to end
+            time.sleep(0.1)
+
+        try:
+            # retrieve slot from our #job semaphore and build
+            with _job_semaphore:
+                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        finally:
+            # register being done processing
+            with _global_lock:
+                _processing_files.remove(obj)
+
 
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
@@ -217,7 +311,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     else:
         build_items = build.items()
 
-    jobs = get_num_build_jobs()
     if len(build) > 1 and jobs > 1:
         # build parallel
         import multiprocessing.pool
@@ -324,7 +417,7 @@ def CCompiler_show_customization(self):
             log.info("compiler '%s' is set to %s" % (attrname, attr))
     try:
         self.get_version()
-    except:
+    except Exception:
         pass
     if log._global_log.threshold<2:
         print('*'*80)
@@ -389,6 +482,30 @@ def CCompiler_customize(self, dist, need_cxx=0):
                 log.warn("#### %s #######" % (self.compiler,))
             if not hasattr(self, 'compiler_cxx'):
                 log.warn('Missing compiler_cxx fix for ' + self.__class__.__name__)
+
+
+    # check if compiler supports gcc style automatic dependencies
+    # run on every extension so skip for known good compilers
+    if hasattr(self, 'compiler') and ('gcc' in self.compiler[0] or
+                                      'g++' in self.compiler[0] or
+                                      'clang' in self.compiler[0]):
+        self._auto_depends = True
+    elif os.name == 'posix':
+        import tempfile
+        import shutil
+        tmpdir = tempfile.mkdtemp()
+        try:
+            fn = os.path.join(tmpdir, "file.c")
+            with open(fn, "w") as f:
+                f.write("int a;\n")
+            self.compile([fn], output_dir=tmpdir,
+                         extra_preargs=['-MMD', '-MF', fn + '.d'])
+            self._auto_depends = True
+        except CompileError:
+            self._auto_depends = False
+        finally:
+            shutil.rmtree(tmpdir)
+
     return
 
 replace_method(CCompiler, 'customize', CCompiler_customize)

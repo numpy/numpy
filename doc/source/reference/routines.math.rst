@@ -98,6 +98,8 @@ Floating point routines
    copysign
    frexp
    ldexp
+   nextafter
+   spacing
 
 Arithmetic operations
 ---------------------
@@ -113,11 +115,13 @@ Arithmetic operations
    subtract
    true_divide
    floor_divide
+   float_power
 
    fmod
    mod
    modf
    remainder
+   divmod
 
 Handling complex numbers
 ------------------------
@@ -145,6 +149,7 @@ Miscellaneous
    absolute
    fabs
    sign
+   heaviside
    maximum
    minimum
    fmax

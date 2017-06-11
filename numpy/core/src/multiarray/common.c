@@ -14,6 +14,8 @@
 #include "common.h"
 #include "buffer.h"
 
+#include "get_attr_string.h"
+
 /*
  * The casting to use for implicit assignment operations resulting from
  * in-place operations (like +=) and out= arguments. (Notice that this
@@ -28,61 +30,6 @@
  * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
  * warning (that people's code will be broken in a future release.)
  */
-
-/*
- * PyArray_GetAttrString_SuppressException:
- *
- * Stripped down version of PyObject_GetAttrString,
- * avoids lookups for None, tuple, and List objects,
- * and doesn't create a PyErr since this code ignores it.
- *
- * This can be much faster then PyObject_GetAttrString where
- * exceptions are not used by caller.
- *
- * 'obj' is the object to search for attribute.
- *
- * 'name' is the attribute to search for.
- *
- * Returns attribute value on success, 0 on failure.
- */
-PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
-{
-    PyTypeObject *tp = Py_TYPE(obj);
-    PyObject *res = (PyObject *)NULL;
-
-    /* We do not need to check for special attributes on trivial types */
-    if (_is_basic_python_type(obj)) {
-        return NULL;
-    }
-
-    /* Attribute referenced by (char *)name */
-    if (tp->tp_getattr != NULL) {
-        res = (*tp->tp_getattr)(obj, name);
-        if (res == NULL) {
-            PyErr_Clear();
-        }
-    }
-    /* Attribute referenced by (PyObject *)name */
-    else if (tp->tp_getattro != NULL) {
-#if defined(NPY_PY3K)
-        PyObject *w = PyUnicode_InternFromString(name);
-#else
-        PyObject *w = PyString_InternFromString(name);
-#endif
-        if (w == NULL) {
-            return (PyObject *)NULL;
-        }
-        res = (*tp->tp_getattro)(obj, w);
-        Py_DECREF(w);
-        if (res == NULL) {
-            PyErr_Clear();
-        }
-    }
-    return res;
-}
-
-
 
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
@@ -382,7 +329,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
@@ -415,7 +362,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array struct interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
@@ -450,7 +397,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array__");
     if (ip != NULL) {
         Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);

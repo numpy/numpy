@@ -1,10 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'vstack', 'hstack',
-           'stack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
+           'stack', 'vstack']
+
 
 from . import numeric as _nx
-from .numeric import asanyarray, newaxis
+from .numeric import array, asanyarray, newaxis
+from .multiarray import normalize_axis_index
 
 def atleast_1d(*arys):
     """
@@ -21,7 +23,7 @@ def atleast_1d(*arys):
     Returns
     -------
     ret : ndarray
-        An array, or sequence of arrays, each with ``a.ndim >= 1``.
+        An array, or list of arrays, each with ``a.ndim >= 1``.
         Copies are made only if necessary.
 
     See Also
@@ -48,7 +50,7 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1)
         else:
             result = ary
@@ -72,7 +74,7 @@ def atleast_2d(*arys):
     Returns
     -------
     res, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        An array, or list of arrays, each with ``a.ndim >= 2``.
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
@@ -98,9 +100,9 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:]
         else:
             result = ary
@@ -124,7 +126,7 @@ def atleast_3d(*arys):
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or tuple of arrays, each with ``a.ndim >= 3``.  Copies are
+        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
         avoided where possible, and views with three or more dimensions are
         returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
         of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
@@ -162,11 +164,11 @@ def atleast_3d(*arys):
     res = []
     for ary in arys:
         ary = asanyarray(ary)
-        if len(ary.shape) == 0:
+        if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
-        elif len(ary.shape) == 1:
+        elif ary.ndim == 1:
             result = ary[newaxis,:, newaxis]
-        elif len(ary.shape) == 2:
+        elif ary.ndim == 2:
             result = ary[:,:, newaxis]
         else:
             result = ary
@@ -206,6 +208,7 @@ def vstack(tup):
     dstack : Stack arrays in sequence depth wise (along third dimension).
     concatenate : Join a sequence of arrays along an existing axis.
     vsplit : Split array into a list of multiple sub-arrays vertically.
+    block : Assemble arrays from blocks.
 
     Notes
     -----
@@ -261,10 +264,12 @@ def hstack(tup):
     dstack : Stack arrays in sequence depth wise (along third axis).
     concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
+    block : Assemble arrays from blocks.
 
     Notes
     -----
-    Equivalent to ``np.concatenate(tup, axis=1)``
+    Equivalent to ``np.concatenate(tup, axis=1)`` if `tup` contains arrays that
+    are at least 2-dimensional.
 
     Examples
     --------
@@ -282,10 +287,11 @@ def hstack(tup):
     """
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
-    if arrs[0].ndim == 1:
+    if arrs and arrs[0].ndim == 1:
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
+
 
 def stack(arrays, axis=0):
     """
@@ -313,6 +319,7 @@ def stack(arrays, axis=0):
     --------
     concatenate : Join a sequence of arrays along an existing axis.
     split : Split array into a list of multiple sub-arrays of equal size.
+    block : Assemble arrays from blocks.
 
     Examples
     --------
@@ -347,12 +354,310 @@ def stack(arrays, axis=0):
         raise ValueError('all input arrays must have the same shape')
 
     result_ndim = arrays[0].ndim + 1
-    if not -result_ndim <= axis < result_ndim:
-        msg = 'axis {0} out of bounds [-{1}, {1})'.format(axis, result_ndim)
-        raise IndexError(msg)
-    if axis < 0:
-        axis += result_ndim
+    axis = normalize_axis_index(axis, result_ndim)
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
     return _nx.concatenate(expanded_arrays, axis=axis)
+
+
+class _Recurser(object):
+    """
+    Utility class for recursing over nested iterables
+    """
+    def __init__(self, recurse_if):
+        self.recurse_if = recurse_if
+
+    def map_reduce(self, x, f_map=lambda x, **kwargs: x,
+                            f_reduce=lambda x, **kwargs: x,
+                            f_kwargs=lambda **kwargs: kwargs,
+                            **kwargs):
+        """
+        Iterate over the nested list, applying:
+        * ``f_map`` (T -> U) to items
+        * ``f_reduce`` (Iterable[U] -> U) to mapped items
+
+        For instance, ``map_reduce([[1, 2], 3, 4])`` is::
+
+            f_reduce([
+              f_reduce([
+                f_map(1),
+                f_map(2)
+              ]),
+              f_map(3),
+              f_map(4)
+            ]])
+
+
+        State can be passed down through the calls with `f_kwargs`,
+        to iterables of mapped items. When kwargs are passed, as in
+        ``map_reduce([[1, 2], 3, 4], **kw)``, this becomes::
+
+            kw1 = f_kwargs(**kw)
+            kw2 = f_kwargs(**kw1)
+            f_reduce([
+              f_reduce([
+                f_map(1), **kw2)
+                f_map(2,  **kw2)
+              ],      **kw1),
+              f_map(3, **kw1),
+              f_map(4, **kw1)
+            ]],     **kw)
+        """
+        def f(x, **kwargs):
+            if not self.recurse_if(x):
+                return f_map(x, **kwargs)
+            else:
+                next_kwargs = f_kwargs(**kwargs)
+                return f_reduce((
+                    f(xi, **next_kwargs)
+                    for xi in x
+                ), **kwargs)
+        return f(x, **kwargs)
+
+    def walk(self, x, index=()):
+        """
+        Iterate over x, yielding (index, value, entering), where
+
+        * ``index``: a tuple of indices up to this point
+        * ``value``: equal to ``x[index[0]][...][index[-1]]``. On the first iteration, is
+                     ``x`` itself
+        * ``entering``: bool. The result of ``recurse_if(value)``
+        """
+        do_recurse = self.recurse_if(x)
+        yield index, x, do_recurse
+
+        if not do_recurse:
+            return
+        for i, xi in enumerate(x):
+            # yield from ...
+            for v in self.walk(xi, index + (i,)):
+                yield v
+
+
+def block(arrays):
+    """
+    Assemble an nd-array from nested lists of blocks.
+
+    Blocks in the innermost lists are concatenated (see `concatenate`) along
+    the last dimension (-1), then these are concatenated along the
+    second-last dimension (-2), and so on until the outermost list is reached.
+
+    Blocks can be of any dimension, but will not be broadcasted using the normal
+    rules. Instead, leading axes of size 1 are inserted, to make ``block.ndim``
+    the same for all blocks. This is primarily useful for working with scalars,
+    and means that code like ``np.block([v, 1])`` is valid, where
+    ``v.ndim == 1``.
+
+    When the nested list is two levels deep, this allows block matrices to be
+    constructed from their components.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    arrays : nested list of array_like or scalars (but not tuples)
+        If passed a single ndarray or scalar (a nested list of depth 0), this
+        is returned unmodified (and not copied).
+
+        Elements shapes must match along the appropriate axes (without
+        broadcasting), but leading 1s will be prepended to the shape as
+        necessary to make the dimensions match.
+
+    Returns
+    -------
+    block_array : ndarray
+        The array assembled from the given blocks.
+
+        The dimensionality of the output is equal to the greatest of:
+        * the dimensionality of all the inputs
+        * the depth to which the input list is nested
+
+    Raises
+    ------
+    ValueError
+        * If list depths are mismatched - for instance, ``[[a, b], c]`` is
+          illegal, and should be spelt ``[[a, b], [c]]``
+        * If lists are empty - for instance, ``[[a, b], []]``
+
+    See Also
+    --------
+    concatenate : Join a sequence of arrays together.
+    stack : Stack arrays in sequence along a new dimension.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+    vsplit : Split array into a list of multiple sub-arrays vertically.
+
+    Notes
+    -----
+
+    When called with only scalars, ``np.block`` is equivalent to an ndarray
+    call. So ``np.block([[1, 2], [3, 4]])`` is equivalent to
+    ``np.array([[1, 2], [3, 4]])``.
+
+    This function does not enforce that the blocks lie on a fixed grid.
+    ``np.block([[a, b], [c, d]])`` is not restricted to arrays of the form::
+
+        AAAbb
+        AAAbb
+        cccDD
+
+    But is also allowed to produce, for some ``a, b, c, d``::
+
+        AAAbb
+        AAAbb
+        cDDDD
+
+    Since concatenation happens along the last axis first, `block` is _not_
+    capable of producing the following directly::
+
+        AAAbb
+        cccbb
+        cccDD
+
+    Matlab's "square bracket stacking", ``[A, B, ...; p, q, ...]``, is
+    equivalent to ``np.block([[A, B, ...], [p, q, ...]])``.
+
+    Examples
+    --------
+    The most common use of this function is to build a block matrix
+
+    >>> A = np.eye(2) * 2
+    >>> B = np.eye(3) * 3
+    >>> np.block([
+    ...     [A,               np.zeros((2, 3))],
+    ...     [np.ones((3, 2)), B               ]
+    ... ])
+    array([[ 2.,  0.,  0.,  0.,  0.],
+           [ 0.,  2.,  0.,  0.,  0.],
+           [ 1.,  1.,  3.,  0.,  0.],
+           [ 1.,  1.,  0.,  3.,  0.],
+           [ 1.,  1.,  0.,  0.,  3.]])
+
+    With a list of depth 1, `block` can be used as `hstack`
+
+    >>> np.block([1, 2, 3])              # hstack([1, 2, 3])
+    array([1, 2, 3])
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([2, 3, 4])
+    >>> np.block([a, b, 10])             # hstack([a, b, 10])
+    array([1, 2, 3, 2, 3, 4, 10])
+
+    >>> A = np.ones((2, 2), int)
+    >>> B = 2 * A
+    >>> np.block([A, B])                 # hstack([A, B])
+    array([[1, 1, 2, 2],
+           [1, 1, 2, 2]])
+
+    With a list of depth 2, `block` can be used in place of `vstack`:
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([2, 3, 4])
+    >>> np.block([[a], [b]])             # vstack([a, b])
+    array([[1, 2, 3],
+           [2, 3, 4]])
+
+    >>> A = np.ones((2, 2), int)
+    >>> B = 2 * A
+    >>> np.block([[A], [B]])             # vstack([A, B])
+    array([[1, 1],
+           [1, 1],
+           [2, 2],
+           [2, 2]])
+
+    It can also be used in places of `atleast_1d` and `atleast_2d`
+
+    >>> a = np.array(0)
+    >>> b = np.array([1])
+    >>> np.block([a])                    # atleast_1d(a)
+    array([0])
+    >>> np.block([b])                    # atleast_1d(b)
+    array([1])
+
+    >>> np.block([[a]])                  # atleast_2d(a)
+    array([[0]])
+    >>> np.block([[b]])                  # atleast_2d(b)
+    array([[1]])
+
+
+    """
+    def atleast_nd(x, ndim):
+        x = asanyarray(x)
+        diff = max(ndim - x.ndim, 0)
+        return x[(None,)*diff + (Ellipsis,)]
+
+    def format_index(index):
+        return 'arrays' + ''.join('[{}]'.format(i) for i in index)
+
+    rec = _Recurser(recurse_if=lambda x: type(x) is list)
+
+    # ensure that the lists are all matched in depth
+    list_ndim = None
+    any_empty = False
+    for index, value, entering in rec.walk(arrays):
+        if type(value) is tuple:
+            # not strictly necessary, but saves us from:
+            #  - more than one way to do things - no point treating tuples like
+            #    lists
+            #  - horribly confusing behaviour that results when tuples are
+            #    treated like ndarray
+            raise TypeError(
+                '{} is a tuple. '
+                'Only lists can be used to arrange blocks, and np.block does '
+                'not allow implicit conversion from tuple to ndarray.'.format(
+                    format_index(index)
+                )
+            )
+        if not entering:
+            curr_depth = len(index)
+        elif len(value) == 0:
+            curr_depth = len(index) + 1
+            any_empty = True
+        else:
+            continue
+
+        if list_ndim is not None and list_ndim != curr_depth:
+            raise ValueError(
+                "List depths are mismatched. First element was at depth {}, "
+                "but there is an element at depth {} ({})".format(
+                    list_ndim,
+                    curr_depth,
+                    format_index(index)
+                )
+            )
+        list_ndim = curr_depth
+
+    # do this here so we catch depth mismatches first
+    if any_empty:
+        raise ValueError('Lists cannot be empty')
+
+    # convert all the arrays to ndarrays
+    arrays = rec.map_reduce(arrays,
+        f_map=asanyarray,
+        f_reduce=list
+    )
+
+    # determine the maximum dimension of the elements
+    elem_ndim = rec.map_reduce(arrays,
+        f_map=lambda xi: xi.ndim,
+        f_reduce=max
+    )
+    ndim = max(list_ndim, elem_ndim)
+
+    # first axis to concatenate along
+    first_axis = ndim - list_ndim
+
+    # Make all the elements the same dimension
+    arrays = rec.map_reduce(arrays,
+        f_map=lambda xi: atleast_nd(xi, ndim),
+        f_reduce=list
+    )
+
+    # concatenate innermost lists on the right, outermost on the left
+    return rec.map_reduce(arrays,
+        f_reduce=lambda xs, axis: _nx.concatenate(list(xs), axis=axis),
+        f_kwargs=lambda axis: dict(axis=axis+1),
+        axis=first_axis
+    )

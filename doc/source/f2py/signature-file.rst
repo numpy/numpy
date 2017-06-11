@@ -56,7 +56,7 @@ A ``python module`` block has the following structure::
     ]...
   end [python module [<modulename>]]
 
-Here brackets ``[]`` indicate a optional part, dots ``...`` indicate
+Here brackets ``[]`` indicate an optional part, dots ``...`` indicate
 one or more of a previous part. So, ``[]...`` reads zero or more of a
 previous part.
 
@@ -284,7 +284,7 @@ Other statements:
       module`` block then the second multiline block is inserted
       after the definition of external routines.
 
-      When used inside ``<routine singature>``, then given C code will
+      When used inside ``<routine signature>``, then given C code will
       be inserted to the corresponding wrapper function just after
       declaring variables but before any C statements. So, ``usercode``
       follow-up can contain both declarations and C statements.
@@ -326,7 +326,7 @@ The following attributes are used by F2PY:
   default. You need to specify ``required`` only if there is a need to
   disable automatic ``optional`` setting when ``<init_expr>`` is used.
 
-  If Python ``None`` object is used as an required argument, the
+  If Python ``None`` object is used as a required argument, the
   argument is treated as optional. That is, in the case of array
   argument, the memory is allocated. And if ``<init_expr>`` is given,
   the corresponding initialization is carried out.
@@ -370,7 +370,7 @@ The following attributes are used by F2PY:
       slices data pointers may point to unallocated memory area.
 
   + ``out``
-      The argument is considered as an return variable. It is appended
+      The argument is considered as a return variable. It is appended
       to the ``<returned variables>`` list. Using ``intent(out)``
       sets ``intent(hide)`` automatically, unless also
       ``intent(in)`` or ``intent(inout)`` were used.

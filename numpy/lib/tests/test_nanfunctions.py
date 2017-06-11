@@ -152,6 +152,18 @@ class TestNanFunctions_MinMax(TestCase):
                 assert_(res != np.nan)
                 assert_(len(w) == 0)
 
+    def test_object_array(self):
+        arr = np.array([[1.0, 2.0], [np.nan, 4.0], [np.nan, np.nan]], dtype=object)
+        assert_equal(np.nanmin(arr), 1.0)
+        assert_equal(np.nanmin(arr, axis=0), [1.0, 2.0])
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            # assert_equal does not work on object arrays of nan
+            assert_equal(list(np.nanmin(arr, axis=1)), [1.0, 4.0, np.nan])
+            assert_(len(w) == 1, 'no warning raised')
+            assert_(issubclass(w[0].category, RuntimeWarning))
+
 
 class TestNanFunctions_ArgminArgmax(TestCase):
 
@@ -684,27 +696,57 @@ class TestNanFunctions_Median(TestCase):
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.nanmedian, d, axis=-5)
-        assert_raises(IndexError, np.nanmedian, d, axis=(0, -5))
-        assert_raises(IndexError, np.nanmedian, d, axis=4)
-        assert_raises(IndexError, np.nanmedian, d, axis=(0, 4))
+        assert_raises(np.AxisError, np.nanmedian, d, axis=-5)
+        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, -5))
+        assert_raises(np.AxisError, np.nanmedian, d, axis=4)
+        assert_raises(np.AxisError, np.nanmedian, d, axis=(0, 4))
         assert_raises(ValueError, np.nanmedian, d, axis=(1, 1))
 
     def test_float_special(self):
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
-            a = np.array([[np.inf,  np.nan], [np.nan, np.nan]])
-            assert_equal(np.nanmedian(a, axis=0), [np.inf,  np.nan])
-            assert_equal(np.nanmedian(a, axis=1), [np.inf,  np.nan])
-            assert_equal(np.nanmedian(a), np.inf)
+            for inf in [np.inf, -np.inf]:
+                a = np.array([[inf,  np.nan], [np.nan, np.nan]])
+                assert_equal(np.nanmedian(a, axis=0), [inf,  np.nan])
+                assert_equal(np.nanmedian(a, axis=1), [inf,  np.nan])
+                assert_equal(np.nanmedian(a), inf)
 
-            # minimum fill value check
-            a = np.array([[np.nan, np.nan, np.inf], [np.nan, np.nan, np.inf]])
-            assert_equal(np.nanmedian(a, axis=1), np.inf)
+                # minimum fill value check
+                a = np.array([[np.nan, np.nan, inf],
+                             [np.nan, np.nan, inf]])
+                assert_equal(np.nanmedian(a), inf)
+                assert_equal(np.nanmedian(a, axis=0), [np.nan, np.nan, inf])
+                assert_equal(np.nanmedian(a, axis=1), inf)
 
-            # no mask path
-            a = np.array([[np.inf, np.inf], [np.inf, np.inf]])
-            assert_equal(np.nanmedian(a, axis=1), np.inf)
+                # no mask path
+                a = np.array([[inf, inf], [inf, inf]])
+                assert_equal(np.nanmedian(a, axis=1), inf)
+
+                a = np.array([[inf, 7, -inf, -9],
+                              [-10, np.nan, np.nan, 5],
+                              [4, np.nan, np.nan, inf]],
+                              dtype=np.float32)
+                if inf > 0:
+                    assert_equal(np.nanmedian(a, axis=0), [4., 7., -inf, 5.])
+                    assert_equal(np.nanmedian(a), 4.5)
+                else:
+                    assert_equal(np.nanmedian(a, axis=0), [-10., 7., -inf, -9.])
+                    assert_equal(np.nanmedian(a), -2.5)
+                assert_equal(np.nanmedian(a, axis=-1), [-1., -2.5, inf])
+
+                for i in range(0, 10):
+                    for j in range(1, 10):
+                        a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
+                        assert_equal(np.nanmedian(a), inf)
+                        assert_equal(np.nanmedian(a, axis=1), inf)
+                        assert_equal(np.nanmedian(a, axis=0),
+                                     ([np.nan] * i) + [inf] * j)
+
+                        a = np.array([([np.nan] * i) + ([-inf] * j)] * 2)
+                        assert_equal(np.nanmedian(a), -inf)
+                        assert_equal(np.nanmedian(a, axis=1), -inf)
+                        assert_equal(np.nanmedian(a, axis=0),
+                                     ([np.nan] * i) + [-inf] * j)
 
 
 class TestNanFunctions_Percentile(TestCase):
@@ -805,14 +847,18 @@ class TestNanFunctions_Percentile(TestCase):
                 assert_(len(w) == 0)
 
     def test_scalar(self):
-        assert_(np.nanpercentile(0., 100) == 0.)
+        assert_equal(np.nanpercentile(0., 100), 0.)
+        a = np.arange(6)
+        r = np.nanpercentile(a, 50, axis=0)
+        assert_equal(r, 2.5)
+        assert_(np.isscalar(r))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=-5)
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, -5))
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=4)
-        assert_raises(IndexError, np.nanpercentile, d, q=5, axis=(0, 4))
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=-5)
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, -5))
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=4)
+        assert_raises(np.AxisError, np.nanpercentile, d, q=5, axis=(0, 4))
         assert_raises(ValueError, np.nanpercentile, d, q=5, axis=(1, 1))
 
     def test_multiple_percentiles(self):

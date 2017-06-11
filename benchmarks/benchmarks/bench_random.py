@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 from .common import Benchmark
 
 import numpy as np
-from numpy.lib import NumpyVersion
 
 
 class Random(Benchmark):
@@ -54,6 +53,7 @@ class Randint_dtype(Benchmark):
     params = ['bool', 'uint8', 'uint16', 'uint32', 'uint64']
 
     def setup(self, name):
+        from numpy.lib import NumpyVersion
         if NumpyVersion(np.__version__) < '1.11.0.dev0':
             raise NotImplementedError
 

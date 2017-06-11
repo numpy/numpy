@@ -64,8 +64,8 @@ class ABCPolyBase(object):
     # Not hashable
     __hash__ = None
 
-    # Don't let participate in array operations. Value doesn't matter.
-    __array_priority__ = 1000
+    # Opt out of numpy ufuncs and Python ops with ndarray subclasses.
+    __array_ufunc__ = None
 
     # Limit runaway size. T_n^m has degree n*m
     maxpower = 100
@@ -307,32 +307,26 @@ class ABCPolyBase(object):
         return self
 
     def __add__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._add(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __sub__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._sub(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __mul__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._mul(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
@@ -362,12 +356,12 @@ class ABCPolyBase(object):
         return res[1]
 
     def __divmod__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             quo, rem = self._div(self.coef, othercoef)
-        except (TypeError, ZeroDivisionError) as e:
+        except ZeroDivisionError as e:
             raise e
-        except:
+        except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
@@ -381,21 +375,21 @@ class ABCPolyBase(object):
     def __radd__(self, other):
         try:
             coef = self._add(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __rsub__(self, other):
         try:
             coef = self._sub(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __rmul__(self, other):
         try:
             coef = self._mul(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
@@ -425,7 +419,7 @@ class ABCPolyBase(object):
             quo, rem = self._div(other, self.coef)
         except ZeroDivisionError as e:
             raise e
-        except:
+        except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)

@@ -473,7 +473,7 @@ class recarray(ndarray):
         newattr = attr not in self.__dict__
         try:
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
                 exctype, value = sys.exc_info()[:2]
@@ -487,7 +487,7 @@ class recarray(ndarray):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         try:
             res = fielddict[attr][:2]
@@ -513,13 +513,8 @@ class recarray(ndarray):
             return obj
 
     def __repr__(self):
-        # get data/shape string. logic taken from numeric.array_repr
-        if self.size > 0 or self.shape == (0,):
-            lst = sb.array2string(self, separator=', ')
-        else:
-            # show zero-length shape unless it is (0,)
-            lst = "[], shape=%s" % (repr(self.shape),)
 
+        repr_dtype = self.dtype
         if (self.dtype.type is record
                 or (not issubclass(self.dtype.type, nt.void))):
             # If this is a full record array (has numpy.record dtype),
@@ -527,19 +522,26 @@ class recarray(ndarray):
             # represent it using the rec.array function. Since rec.array
             # converts dtype to a numpy.record for us, convert back
             # to non-record before printing
-            plain_dtype = self.dtype
-            if plain_dtype.type is record:
-                plain_dtype = sb.dtype((nt.void, plain_dtype))
-            lf = '\n'+' '*len("rec.array(")
-            return ('rec.array(%s, %sdtype=%s)' %
-                          (lst, lf, plain_dtype))
+            if repr_dtype.type is record:
+                repr_dtype = sb.dtype((nt.void, repr_dtype))
+            prefix = "rec.array("
+            fmt = 'rec.array(%s, %sdtype=%s)'
         else:
             # otherwise represent it using np.array plus a view
             # This should only happen if the user is playing
             # strange games with dtypes.
-            lf = '\n'+' '*len("array(")
-            return ('array(%s, %sdtype=%s).view(numpy.recarray)' %
-                          (lst, lf, str(self.dtype)))
+            prefix = "array("
+            fmt = 'array(%s, %sdtype=%s).view(numpy.recarray)'
+
+        # get data/shape string. logic taken from numeric.array_repr
+        if self.size > 0 or self.shape == (0,):
+            lst = sb.array2string(self, separator=', ', prefix=prefix)
+        else:
+            # show zero-length shape unless it is (0,)
+            lst = "[], shape=%s" % (repr(self.shape),)
+
+        lf = '\n'+' '*len(prefix)
+        return fmt % (lst, lf, repr_dtype)
 
     def field(self, attr, val=None):
         if isinstance(attr, int):
@@ -611,8 +613,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         shape = shape[:-nn]
 
     for k, obj in enumerate(arrayList):
-        nn = len(descr[k].shape)
-        testshape = obj.shape[:len(obj.shape) - nn]
+        nn = descr[k].ndim
+        testshape = obj.shape[:obj.ndim - nn]
         if testshape != shape:
             raise ValueError("array-shape mismatch in array %d" % k)
 
@@ -624,7 +626,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     return _array
 
-# shape must be 1-d if you use list of lists...
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
     """ create a recarray from a list of records in text form
@@ -655,10 +656,9 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     [(456, 'dbe', 1.2) (2, 'de', 1.3)]
     """
 
-    nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
-        arrlist = [sb.array(obj[..., i].tolist()) for i in range(nfields)]
+        arrlist = [sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)
 
@@ -723,7 +723,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
-    to be a file object.
+    to be a file object. The file object must support random access
+    (i.e. it must have tell and seek methods).
 
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')

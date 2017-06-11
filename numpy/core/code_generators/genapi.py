@@ -9,12 +9,7 @@ specified.
 from __future__ import division, absolute_import, print_function
 
 import sys, os, re
-try:
-    import hashlib
-    md5new = hashlib.md5
-except ImportError:
-    import md5
-    md5new = md5.new
+import hashlib
 
 import textwrap
 
@@ -57,6 +52,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'scalarapi.c'),
              join('multiarray', 'sequence.c'),
              join('multiarray', 'shape.c'),
+             join('multiarray', 'strfuncs.c'),
              join('multiarray', 'usertypes.c'),
              join('umath', 'loops.c.src'),
              join('umath', 'ufunc_object.c'),
@@ -135,7 +131,7 @@ class Function(object):
         return '\n'.join(lines)
 
     def api_hash(self):
-        m = md5new()
+        m = hashlib.md5()
         m.update(remove_whitespace(self.return_type))
         m.update('\000')
         m.update(self.name)
@@ -276,7 +272,7 @@ def find_functions(filename, tag='API'):
                     state = SCANNING
                 else:
                     function_args.append(line)
-        except:
+        except Exception:
             print(filename, lineno + 1)
             raise
     fo.close()
@@ -291,6 +287,20 @@ def should_rebuild(targets, source_files):
     if newer_group(sources, targets[0], missing='newer'):
         return True
     return False
+
+def write_file(filename, data):
+    """
+    Write data to filename
+    Only write changed data to avoid updating timestamps unnecessarily
+    """
+    if os.path.exists(filename):
+        with open(filename) as f:
+            if data == f.read():
+                return
+
+    with open(filename, 'w') as fid:
+        fid.write(data)
+
 
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi(object):
@@ -417,28 +427,32 @@ def merge_api_dicts(dicts):
 
 def check_api_dict(d):
     """Check that an api dict is valid (does not use the same index twice)."""
+    # remove the extra value fields that aren't the index
+    index_d = {k: v[0] for k, v in d.items()}
+
     # We have if a same index is used twice: we 'revert' the dict so that index
     # become keys. If the length is different, it means one index has been used
     # at least twice
-    revert_dict = dict([(v, k) for k, v in d.items()])
-    if not len(revert_dict) == len(d):
+    revert_dict = {v: k for k, v in index_d.items()}
+    if not len(revert_dict) == len(index_d):
         # We compute a dict index -> list of associated items
         doubled = {}
-        for name, index in d.items():
+        for name, index in index_d.items():
             try:
                 doubled[index].append(name)
             except KeyError:
                 doubled[index] = [name]
-        msg = """\
-Same index has been used twice in api definition: %s
-""" % ['index %d -> %s' % (index, names) for index, names in doubled.items() \
-                                          if len(names) != 1]
-        raise ValueError(msg)
+        fmt = "Same index has been used twice in api definition: {}"
+        val = ''.join(
+            '\n\tindex {} -> {}'.format(index, names)
+            for index, names in doubled.items() if len(names) != 1
+        )
+        raise ValueError(fmt.format(val))
 
     # No 'hole' in the indexes may be allowed, and it must starts at 0
-    indexes = set(v[0] for v in d.values())
+    indexes = set(index_d.values())
     expected = set(range(len(indexes)))
-    if not indexes == expected:
+    if indexes != expected:
         diff = expected.symmetric_difference(indexes)
         msg = "There are some holes in the API indexing: " \
               "(symmetric diff is %s)" % diff
@@ -465,11 +479,11 @@ def fullapi_hash(api_dicts):
             a.extend(name)
             a.extend(','.join(map(str, data)))
 
-    return md5new(''.join(a).encode('ascii')).hexdigest()
+    return hashlib.md5(''.join(a).encode('ascii')).hexdigest()
 
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
-VERRE = re.compile('(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
+VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
 
 def get_versions_hash():
     d = []
@@ -490,7 +504,7 @@ def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]
     functions = get_api_functions(tagname, order_file)
-    m = md5new(tagname)
+    m = hashlib.md5(tagname)
     for func in functions:
         print(func)
         ah = func.api_hash()

@@ -276,7 +276,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
@@ -294,7 +294,7 @@ class MaskedRecords(MaskedArray, object):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         # Let's try to set the field
         try:
@@ -625,7 +625,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
-        elif len(mask.shape) == 2:
+        elif mask.ndim == 2:
             mrec._mask.flat = [tuple(m) for m in mask]
         else:
             mrec.__setmask__(mask)
@@ -646,9 +646,9 @@ def _guessvartypes(arr):
     """
     vartypes = []
     arr = np.asarray(arr)
-    if len(arr.shape) == 2:
+    if arr.ndim == 2:
         arr = arr[0]
-    elif len(arr.shape) > 2:
+    elif arr.ndim > 2:
         raise ValueError("The array should be 2D at most!")
     # Start the conversion loop.
     for f in arr:

@@ -179,7 +179,7 @@ Times are in seconds, for a 900*904 matrix:
 380   NAG   467   disc copy
 1.03  1.14  .391  .177
 
-Compare two vector algortihms, one I wrote and the second a matrix
+Compare two vector algorithms, one I wrote and the second a matrix
 copy:
 
 My Alg    Matrix copy

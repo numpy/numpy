@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 import itertools
 import operator
 
@@ -9,7 +10,7 @@ from numpy.testing.utils import _gen_alignment_data
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings
+    suppress_warnings, dec,
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -83,7 +84,7 @@ class TestBaseMath(TestCase):
                 assert_almost_equal(np.square(inp2),
                                     np.multiply(inp2, inp2),  err_msg=msg)
                 # skip true divide for ints
-                if dt != np.int32 or sys.version_info.major < 3:
+                if dt != np.int32 or (sys.version_info.major < 3 and not sys.py3kwarning):
                     assert_almost_equal(np.reciprocal(inp2),
                                         np.divide(1, inp2),  err_msg=msg)
 
@@ -124,23 +125,41 @@ class TestPower(TestCase):
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
-    def test_negative_power(self):
-        typelist = [np.int8, np.int16, np.int32, np.int64]
-        for t in typelist:
-            a = t(2)
-            b = t(-4)
-            result = a**b
-            msg = ("error with %r:"
-                   "got %r, expected %r") % (t, result, 0.0625)
-            assert_(result == 0.0625, msg)
+    def test_integers_to_negative_integer_power(self):
+        # Note that the combination of uint64 with a signed integer
+        # has common type np.float. The other combinations should all
+        # raise a ValueError for integer ** negative integer.
+        exp = [np.array(-1, dt)[()] for dt in 'bhilq']
 
-            c = t(4)
-            d = t(-15)
-            result = c**d
-            expected = 4.0**-15.0
-            msg = ("error with %r:"
-                   "got %r, expected %r") % (t, result, expected)
-            assert_almost_equal(result, expected, err_msg=msg)
+        # 1 ** -1 possible special case
+        base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, 1.)
+
+        # -1 ** -1 possible special case
+        base = [np.array(-1, dt)[()] for dt in 'bhilq']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, -1.)
+
+        # 2 ** -1 perhaps generic
+        base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
+        for i1, i2 in itertools.product(base, exp):
+            if i1.dtype.name != 'uint64':
+                assert_raises(ValueError, operator.pow, i1, i2)
+            else:
+                res = operator.pow(i1, i2)
+                assert_(res.dtype.type is np.float64)
+                assert_almost_equal(res, .5)
 
     def test_mixed_types(self):
         typelist = [np.int8, np.int16, np.float16,
@@ -158,31 +177,46 @@ class TestPower(TestCase):
                 else:
                     assert_almost_equal(result, 9, err_msg=msg)
 
+    def test_modular_power(self):
+        # modular power is not implemented, so ensure it errors
+        a = 5
+        b = 4
+        c = 10
+        expected = pow(a, b, c)
+        for t in (np.int32, np.float32, np.complex64):
+            # note that 3-operand power only dispatches on the first argument
+            assert_raises(TypeError, operator.pow, t(a), b, c)
+            assert_raises(TypeError, operator.pow, np.array(t(a)), b, c)
+
+
+def floordiv_and_mod(x, y):
+    return (x // y, x % y)
+
+
+def _signs(dt):
+    if dt in np.typecodes['UnsignedInteger']:
+        return (+1,)
+    else:
+        return (+1, -1)
+
 
 class TestModulus(TestCase):
 
-    floordiv = operator.floordiv
-    mod = operator.mod
-
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                if sg1 == -1 and dt1 in np.typecodes['UnsignedInteger']:
-                    continue
-                if sg2 == -1 and dt2 in np.typecodes['UnsignedInteger']:
-                    continue
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*71, dtype=dt1)[()]
-                b = np.array(sg2*19, dtype=dt2)[()]
-                div = self.floordiv(a, b)
-                rem = self.mod(a, b)
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*71, dtype=dt1)[()]
+                    b = np.array(sg2*19, dtype=dt2)[()]
+                    div, rem = op(a, b)
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_modulus_exact(self):
         # test that float results are exact for small integers. This also
@@ -201,42 +235,42 @@ class TestModulus(TestCase):
         tgtdiv = np.where((tgtdiv == 0.0) & ((b < 0) ^ (a < 0)), -0.0, tgtdiv)
         tgtrem = np.where((tgtrem == 0.0) & (b < 0), -0.0, tgtrem)
 
-        for dt in np.typecodes['Float']:
-            msg = 'dtype: %s' % (dt,)
-            fa = a.astype(dt)
-            fb = b.astype(dt)
-            # use list comprehension so a_ and b_ are scalars
-            div = [self.floordiv(a_, b_) for  a_, b_ in zip(fa, fb)]
-            rem = [self.mod(a_, b_) for a_, b_ in zip(fa, fb)]
-            assert_equal(div, tgtdiv, err_msg=msg)
-            assert_equal(rem, tgtrem, err_msg=msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt in np.typecodes['Float']:
+                msg = 'op: %s, dtype: %s' % (op.__name__, dt)
+                fa = a.astype(dt)
+                fb = b.astype(dt)
+                # use list comprehension so a_ and b_ are scalars
+                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                assert_equal(div, tgtdiv, err_msg=msg)
+                assert_equal(rem, tgtrem, err_msg=msg)
 
     def test_float_modulus_roundoff(self):
         # gh-6127
         dt = np.typecodes['Float']
-        for dt1, dt2 in itertools.product(dt, dt):
-            for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                fmt = 'dt1: %s, dt2: %s, sg1: %s, sg2: %s'
-                msg = fmt % (dt1, dt2, sg1, sg2)
-                a = np.array(sg1*78*6e-8, dtype=dt1)[()]
-                b = np.array(sg2*6e-8, dtype=dt2)[()]
-                div = self.floordiv(a, b)
-                rem = self.mod(a, b)
-                # Equal assertion should hold when fmod is used
-                assert_equal(div*b + rem, a, err_msg=msg)
-                if sg2 == -1:
-                    assert_(b < rem <= 0, msg)
-                else:
-                    assert_(b > rem >= 0, msg)
+        for op in [floordiv_and_mod, divmod]:
+            for dt1, dt2 in itertools.product(dt, dt):
+                for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
+                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
+                    msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
+                    a = np.array(sg1*78*6e-8, dtype=dt1)[()]
+                    b = np.array(sg2*6e-8, dtype=dt2)[()]
+                    div, rem = op(a, b)
+                    # Equal assertion should hold when fmod is used
+                    assert_equal(div*b + rem, a, err_msg=msg)
+                    if sg2 == -1:
+                        assert_(b < rem <= 0, msg)
+                    else:
+                        assert_(b > rem >= 0, msg)
 
     def test_float_modulus_corner_cases(self):
         # Check remainder magnitude.
         for dt in np.typecodes['Float']:
             b = np.array(1.0, dtype=dt)
             a = np.nextafter(np.array(0.0, dtype=dt), -b)
-            rem = self.mod(a, b)
+            rem = operator.mod(a, b)
             assert_(rem <= b, 'dt: %s' % dt)
-            rem = self.mod(-a, -b)
+            rem = operator.mod(-a, -b)
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
@@ -247,14 +281,14 @@ class TestModulus(TestCase):
                 fzer = np.array(0.0, dtype=dt)
                 finf = np.array(np.inf, dtype=dt)
                 fnan = np.array(np.nan, dtype=dt)
-                rem = self.mod(fone, fzer)
+                rem = operator.mod(fone, fzer)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 # MSVC 2008 returns NaN here, so disable the check.
-                #rem = self.mod(fone, finf)
+                #rem = operator.mod(fone, finf)
                 #assert_(rem == fone, 'dt: %s' % dt)
-                rem = self.mod(fone, fnan)
+                rem = operator.mod(fone, fnan)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
-                rem = self.mod(finf, fone)
+                rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
 
 
@@ -367,9 +401,22 @@ class TestConversion(TestCase):
     def test_longdouble_int(self):
         # gh-627
         x = np.longdouble(np.inf)
+        assert_raises(OverflowError, int, x)
+        with suppress_warnings() as sup:
+            sup.record(np.ComplexWarning)
+            x = np.clongdouble(np.inf)
+            assert_raises(OverflowError, int, x)
+            self.assertEqual(len(sup.log), 1)
+
+    @dec.knownfailureif(not IS_PYPY)
+    def test_clongdouble___int__(self):
+        x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
-        x = np.clongdouble(np.inf)
-        assert_raises(OverflowError, x.__int__)
+        with suppress_warnings() as sup:
+            sup.record(np.ComplexWarning)
+            x = np.clongdouble(np.inf)
+            assert_raises(OverflowError, x.__int__)
+            self.assertEqual(len(sup.log), 1)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
@@ -411,6 +458,27 @@ class TestConversion(TestCase):
                         "type %s and %s failed" % (dt1, dt2))
                 assert_(np.array(-1, dtype=dt1)[()] == np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
+
+    def test_scalar_comparison_to_none(self):
+        # Scalars should just return False and not give a warnings.
+        # The comparisons are flagged by pep8, ignore that.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_(not np.float32(1) == None)
+            assert_(not np.str_('test') == None)
+            # This is dubious (see below):
+            assert_(not np.datetime64('NaT') == None)
+
+            assert_(np.float32(1) != None)
+            assert_(np.str_('test') != None)
+            # This is dubious (see below):
+            assert_(np.datetime64('NaT') != None)
+        assert_(len(w) == 0)
+
+        # For documentation purposes, this is why the datetime is dubious.
+        # At the time of deprecation this was no behaviour change, but
+        # it has to be considered when the deprecations are done.
+        assert_(np.equal(np.datetime64('NaT'), None))
 
 
 #class TestRepr(TestCase):
@@ -505,6 +573,34 @@ class TestMultiply(TestCase):
             assert_array_equal(np.float32(3.) * arr_like, np.full(3, 3.))
             assert_array_equal(arr_like * np.int_(3), np.full(3, 3))
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
+
+
+class TestNegative(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.neg, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.neg(a) + a, 0)
+
+
+class TestSubtract(TestCase):
+    def test_exceptions(self):
+        a = np.ones((), dtype=np.bool_)[()]
+        assert_raises(TypeError, operator.sub, a, a)
+
+    def test_result(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for dt in types:
+                a = np.ones((), dtype=dt)[()]
+                assert_equal(operator.sub(a, a), 0)
 
 
 class TestAbs(TestCase):

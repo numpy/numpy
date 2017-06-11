@@ -19,7 +19,6 @@
 #include "convert_datatype.h"
 #include "shape.h"
 #include "buffer.h"
-#include "numpymemoryview.h"
 #include "lowlevel_strided_loops.h"
 #include "methods.h"
 #include "_datetime.h"
@@ -29,6 +28,8 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "alloc.h"
 #include <assert.h>
+
+#include "get_attr_string.h"
 
 /*
  * Reading from a file or a string.
@@ -279,7 +280,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
         npy_intp *mystrides;
 
         mystrides = newstrides + oldnd;
-        /* Make new strides -- alwasy C-contiguous */
+        /* Make new strides -- always C-contiguous */
         tempsize = (*des)->elsize;
         for (i = numnew - 1; i >= 0; i--) {
             mystrides[i] = tempsize;
@@ -752,7 +753,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_struct__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (e != NULL) {
         int nd = -1;
         if (NpyCapsule_Check(e)) {
@@ -777,7 +778,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_interface__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (e != NULL) {
         int nd = -1;
         if (PyDict_Check(e)) {
@@ -938,7 +939,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
-        } else if (PyDataType_ISSTRING(descr) && !allow_emptystring) {
+        }
+        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
+                 data == NULL) {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;
@@ -1526,12 +1529,6 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     if (!writeable) {
         tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp != Py_NotImplemented) {
-            if (writeable
-                && PyArray_FailUnlessWriteable((PyArrayObject *)tmp,
-                                               "array interface object") < 0) {
-                Py_DECREF(tmp);
-                return -1;
-            }
             *out_arr = (PyArrayObject *)tmp;
             return (*out_arr) == NULL ? -1 : 0;
         }
@@ -2059,7 +2056,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_GetAttrString_SuppressException(input, "__array_struct__");
+    attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
     if (attr == NULL) {
         return Py_NotImplemented;
     }
@@ -2173,7 +2170,7 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_GetAttrString_SuppressException(origin,
+    iface = PyArray_LookupSpecial_OnInstance(origin,
                                                     "__array_interface__");
     if (iface == NULL) {
         return Py_NotImplemented;
@@ -2406,7 +2403,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_GetAttrString_SuppressException(op, "__array__");
+    array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         return Py_NotImplemented;
     }
@@ -2536,7 +2533,8 @@ PyArray_FromDims(int nd, int *d, int type)
 /* end old calls */
 
 /*NUMPY_API
- * This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY)
+ * This is a quick wrapper around
+ * PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)
  * that special cases Arrays and PyArray_Scalars up front
  * It *steals a reference* to the object
  * It also guarantees that the result is PyArray_Type
@@ -2559,7 +2557,7 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
+        new = PyArray_FROM_OF(op, NPY_ARRAY_ENSUREARRAY);
     }
     Py_XDECREF(op);
     return new;
@@ -2794,7 +2792,6 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
-    int axis_orig = *axis;
 
     if (*axis == NPY_MAXDIMS || n == 0) {
         if (n != 1) {
@@ -2832,12 +2829,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
         temp2 = (PyObject *)temp1;
     }
     n = PyArray_NDIM((PyArrayObject *)temp2);
-    if (*axis < 0) {
-        *axis += n;
-    }
-    if ((*axis < 0) || (*axis >= n)) {
-        PyErr_Format(PyExc_ValueError,
-                     "axis(=%d) out of bounds", axis_orig);
+    if (check_and_adjust_axis(axis, n) < 0) {
         Py_DECREF(temp2);
         return NULL;
     }
@@ -3835,10 +3827,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING
@@ -3863,10 +3857,12 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             else {
                 not_cf_contig = 0;
             }
+#if NPY_RELAXED_STRIDES_DEBUG
+            /* For testing purpose only */
             if (dims[i] == 1) {
-                /* For testing purpose only */
                 strides[i] = NPY_MAX_INTP;
             }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
 #endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
 #if NPY_RELAXED_STRIDES_CHECKING

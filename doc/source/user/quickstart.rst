@@ -109,6 +109,8 @@ For example, you can create an array from a regular Python list or tuple
 using the ``array`` function. The type of the resulting array is deduced
 from the type of the elements in the sequences.
 
+::
+
     >>> import numpy as np
     >>> a = np.array([2,3,4])
     >>> a
@@ -131,6 +133,8 @@ argument.
 ``array`` transforms sequences of sequences into two-dimensional arrays,
 sequences of sequences of sequences into three-dimensional arrays, and
 so on.
+
+::
 
     >>> b = np.array([(1.5,2,3), (4,5,6)])
     >>> b
@@ -157,6 +161,8 @@ creates an array whose initial content is random and depends on the
 state of the memory. By default, the dtype of the created array is
 ``float64``.
 
+::
+
     >>> np.zeros( (3,4) )
     array([[ 0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.],
@@ -173,7 +179,9 @@ state of the memory. By default, the dtype of the created array is
            [  5.30498948e-313,   3.14673309e-307,   1.00000000e+000]])
 
 To create sequences of numbers, NumPy provides a function analogous to
-``range`` that returns arrays instead of lists
+``range`` that returns arrays instead of lists.
+
+::
 
     >>> np.arange( 10, 30, 5 )
     array([10, 15, 20, 25])
@@ -184,7 +192,7 @@ When ``arange`` is used with floating point arguments, it is generally
 not possible to predict the number of elements obtained, due to the
 finite floating point precision. For this reason, it is usually better
 to use the function ``linspace`` that receives as an argument the number
-of elements that we want, instead of the step:
+of elements that we want, instead of the step::
 
     >>> from numpy import pi
     >>> np.linspace( 0, 2, 9 )                 # 9 numbers from 0 to 2
@@ -221,6 +229,8 @@ lists, but with the following layout:
 One-dimensional arrays are then printed as rows, bidimensionals as
 matrices and tridimensionals as lists of matrices.
 
+::
+
     >>> a = np.arange(6)                         # 1d array
     >>> print(a)
     [0 1 2 3 4 5]
@@ -245,7 +255,7 @@ See :ref:`below <quickstart.shape-manipulation>` to get
 more details on ``reshape``.
 
 If an array is too large to be printed, NumPy automatically skips the
-central part of the array and only prints the corners:
+central part of the array and only prints the corners::
 
     >>> print(np.arange(10000))
     [   0    1    2 ..., 9997 9998 9999]
@@ -264,7 +274,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold='nan')
+    >>> np.set_printoptions(threshold=np.nan)
 
 
 Basic Operations
@@ -272,6 +282,8 @@ Basic Operations
 
 Arithmetic operators on arrays apply *elementwise*. A new array is
 created and filled with the result.
+
+::
 
     >>> a = np.array( [20,30,40,50] )
     >>> b = np.arange( 4 )
@@ -289,7 +301,7 @@ created and filled with the result.
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
-the ``dot`` function or method:
+the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
     ...             [0,1]] )
@@ -307,6 +319,8 @@ the ``dot`` function or method:
 
 Some operations, such as ``+=`` and ``*=``, act in place to modify an
 existing array rather than create a new one.
+
+::
 
     >>> a = np.ones((2,3), dtype=int)
     >>> b = np.random.random((2,3))
@@ -327,6 +341,8 @@ When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
 as upcasting).
 
+::
+
     >>> a = np.ones(3, dtype=np.int32)
     >>> b = np.linspace(0,pi,3)
     >>> b.dtype.name
@@ -346,6 +362,8 @@ as upcasting).
 Many unary operations, such as computing the sum of all the elements in
 the array, are implemented as methods of the ``ndarray`` class.
 
+::
+
     >>> a = np.random.random((2,3))
     >>> a
     array([[ 0.18626021,  0.34556073,  0.39676747],
@@ -360,7 +378,7 @@ the array, are implemented as methods of the ``ndarray`` class.
 By default, these operations apply to the array as though it were a list
 of numbers, regardless of its shape. However, by specifying the ``axis``
 parameter you can apply an operation along the specified axis of an
-array:
+array::
 
     >>> b = np.arange(12).reshape(3,4)
     >>> b
@@ -387,6 +405,8 @@ NumPy provides familiar mathematical functions such as sin, cos, and
 exp. In NumPy, these are called "universal
 functions"(\ ``ufunc``). Within NumPy, these functions
 operate elementwise on an array, producing an array as output.
+
+::
 
     >>> B = np.arange(3)
     >>> B
@@ -452,6 +472,8 @@ much like
 `lists <https://docs.python.org/tutorial/introduction.html#lists>`__
 and other Python sequences.
 
+::
+
     >>> a = np.arange(10)**3
     >>> a
     array([  0,   1,   8,  27,  64, 125, 216, 343, 512, 729])
@@ -479,7 +501,7 @@ and other Python sequences.
     9.0
 
 **Multidimensional** arrays can have one index per axis. These indices
-are given in a tuple separated by commas:
+are given in a tuple separated by commas::
 
     >>> def f(x,y):
     ...     return 10*x+y
@@ -504,6 +526,8 @@ are given in a tuple separated by commas:
 When fewer indices are provided than the number of axes, the missing
 indices are considered complete slices\ ``:``
 
+::
+
     >>> b[-1]                                  # the last row. Equivalent to b[-1,:]
     array([40, 41, 42, 43])
 
@@ -520,6 +544,8 @@ it has 5 axes), then
 -  ``x[...,3]`` to ``x[:,:,:,:,3]`` and
 -  ``x[4,...,5,:]`` to ``x[4,:,:,5,:]``.
 
+::
+
     >>> c = np.array( [[[  0,  1,  2],               # a 3D array (two stacked 2D arrays)
     ...                 [ 10, 12, 13]],
     ...                [[100,101,102],
@@ -534,7 +560,7 @@ it has 5 axes), then
            [102, 113]])
 
 **Iterating** over multidimensional arrays is done with respect to the
-first axis:
+first axis::
 
     >>> for row in b:
     ...     print(row)
@@ -548,7 +574,7 @@ first axis:
 However, if one wants to perform an operation on each element in the
 array, one can use the ``flat`` attribute which is an
 `iterator <https://docs.python.org/2/tutorial/classes.html#iterators>`__
-over all the elements of the array:
+over all the elements of the array::
 
     >>> for element in b.flat:
     ...     print(element)
@@ -590,7 +616,7 @@ Shape Manipulation
 Changing the shape of an array
 ------------------------------
 
-An array has a shape given by the number of elements along each axis:
+An array has a shape given by the number of elements along each axis::
 
     >>> a = np.floor(10*np.random.random((3,4)))
     >>> a
@@ -600,14 +626,28 @@ An array has a shape given by the number of elements along each axis:
     >>> a.shape
     (3, 4)
 
-The shape of an array can be changed with various commands:
+The shape of an array can be changed with various commands. Note that the
+following three commands all return a modified array, but do not change
+the original array::
 
-    >>> a.ravel() # flatten the array
+    >>> a.ravel()  # returns the array, flattened
     array([ 2.,  8.,  0.,  6.,  4.,  5.,  1.,  1.,  8.,  9.,  3.,  6.])
-    >>> a.shape = (6, 2)
-    >>> a.T
-    array([[ 2.,  0.,  4.,  1.,  8.,  3.],
-           [ 8.,  6.,  5.,  1.,  9.,  6.]])
+    >>> a.reshape(6,2)  # returns the array with a modified shape
+    array([[ 2.,  8.],
+           [ 0.,  6.],
+           [ 4.,  5.],
+           [ 1.,  1.],
+           [ 8.,  9.],
+           [ 3.,  6.]])
+    >>> a.T  # returns the array, transposed
+    array([[ 2.,  4.,  8.],
+           [ 8.,  5.,  9.],
+           [ 0.,  1.,  3.],
+           [ 6.,  1.,  6.]])
+    >>> a.T.shape
+    (4, 3)
+    >>> a.shape
+    (3, 4)
 
 The order of the elements in the array resulting from ravel() is
 normally "C-style", that is, the rightmost index "changes the fastest",
@@ -623,22 +663,19 @@ index changes the fastest.
 The `reshape` function returns its
 argument with a modified shape, whereas the
 `ndarray.resize` method modifies the array
-itself:
+itself::
 
     >>> a
-    array([[ 2.,  8.],
-           [ 0.,  6.],
-           [ 4.,  5.],
-           [ 1.,  1.],
-           [ 8.,  9.],
-           [ 3.,  6.]])
+    array([[ 2.,  8.,  0.,  6.],
+           [ 4.,  5.,  1.,  1.],
+           [ 8.,  9.,  3.,  6.]])
     >>> a.resize((2,6))
     >>> a
     array([[ 2.,  8.,  0.,  6.,  4.,  5.],
            [ 1.,  1.,  8.,  9.,  3.,  6.]])
 
 If a dimension is given as -1 in a reshaping operation, the other
-dimensions are automatically calculated:
+dimensions are automatically calculated::
 
     >>> a.reshape(3,-1)
     array([[ 2.,  8.,  0.,  6.],
@@ -655,7 +692,7 @@ dimensions are automatically calculated:
 Stacking together different arrays
 ----------------------------------
 
-Several arrays can be stacked together along different axes:
+Several arrays can be stacked together along different axes::
 
     >>> a = np.floor(10*np.random.random((2,2)))
     >>> a
@@ -676,27 +713,32 @@ Several arrays can be stacked together along different axes:
 
 The function `column_stack`
 stacks 1D arrays as columns into a 2D array. It is equivalent to
-`vstack` only for 1D arrays:
+`hstack` only for 2D arrays::
 
     >>> from numpy import newaxis
-    >>> np.column_stack((a,b))   # With 2D arrays
+    >>> np.column_stack((a,b))     # with 2D arrays
     array([[ 8.,  8.,  1.,  8.],
            [ 0.,  0.,  0.,  4.]])
     >>> a = np.array([4.,2.])
-    >>> b = np.array([2.,8.])
-    >>> a[:,newaxis]  # This allows to have a 2D columns vector
+    >>> b = np.array([3.,8.])
+    >>> np.column_stack((a,b))     # returns a 2D array
+    array([[ 4., 3.],
+           [ 2., 8.]])
+    >>> np.hstack((a,b))           # the result is different
+    array([ 4., 2., 3., 8.])
+    >>> a[:,newaxis]               # this allows to have a 2D columns vector
     array([[ 4.],
            [ 2.]])
     >>> np.column_stack((a[:,newaxis],b[:,newaxis]))
-    array([[ 4.,  2.],
+    array([[ 4.,  3.],
            [ 2.,  8.]])
-    >>> np.vstack((a[:,newaxis],b[:,newaxis])) # The behavior of vstack is different
-    array([[ 4.],
-           [ 2.],
-           [ 2.],
-           [ 8.]])
+    >>> np.hstack((a[:,newaxis],b[:,newaxis]))   # the result is the same
+    array([[ 4.,  3.],
+           [ 2.,  8.]])
 
-For arrays of with more than two dimensions,
+On the other hand, the function `row_stack` is equivalent to `vstack`
+for any input arrays.
+In general, for arrays of with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
 first axes, and `concatenate`
@@ -708,7 +750,7 @@ which the concatenation should happen.
 In complex cases, `r_` and
 `c_` are useful for creating arrays
 by stacking numbers along one axis. They allow the use of range literals
-(":") :
+(":") ::
 
        >>> np.r_[1:4,0,4]
        array([1, 2, 3, 0, 4])
@@ -736,7 +778,7 @@ Splitting one array into several smaller ones
 Using `hsplit`, you can split an
 array along its horizontal axis, either by specifying the number of
 equally shaped arrays to return, or by specifying the columns after
-which the division should occur:
+which the division should occur::
 
     >>> a = np.floor(10*np.random.random((2,12)))
     >>> a
@@ -762,12 +804,14 @@ Copies and Views
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
-for beginners. There are three cases:
+for beginners. There are three cases::
 
 No Copy at All
 --------------
 
 Simple assignments make no copy of array objects or of their data.
+
+::
 
     >>> a = np.arange(12)
     >>> b = a            # no new object is created
@@ -779,6 +823,8 @@ Simple assignments make no copy of array objects or of their data.
 
 Python passes mutable objects as references, so function calls make no
 copy.
+
+::
 
     >>> def f(x):
     ...     print(id(x))
@@ -793,6 +839,8 @@ View or Shallow Copy
 
 Different array objects can share the same data. The ``view`` method
 creates a new array object that looks at the same data.
+
+::
 
     >>> c = a.view()
     >>> c is a
@@ -811,7 +859,7 @@ creates a new array object that looks at the same data.
            [1234,    5,    6,    7],
            [   8,    9,   10,   11]])
 
-Slicing an array returns a view of it:
+Slicing an array returns a view of it::
 
     >>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:,1:3]"
     >>> s[:] = 10           # s[:] is a view of s. Note the difference between s=10 and s[:]=10
@@ -826,6 +874,7 @@ Deep Copy
 
 The ``copy`` method makes a complete copy of the array and its data.
 
+::
 
     >>> d = a.copy()                          # a new array object with new data is created
     >>> d is a
@@ -963,6 +1012,8 @@ can be indexed by arrays of integers and arrays of booleans.
 Indexing with Arrays of Indices
 -------------------------------
 
+::
+
     >>> a = np.arange(12)**2                       # the first 12 square numbers
     >>> i = np.array( [ 1,1,3,8,5 ] )              # an array of indices
     >>> a[i]                                       # the elements of a at the positions i
@@ -977,6 +1028,8 @@ When the indexed array ``a`` is multidimensional, a single array of
 indices refers to the first dimension of ``a``. The following example
 shows this behavior by converting an image of labels into a color image
 using a palette.
+
+::
 
     >>> palette = np.array( [ [0,0,0],                # black
     ...                       [255,0,0],              # red
@@ -997,6 +1050,8 @@ using a palette.
 
 We can also give indexes for more than one dimension. The arrays of
 indices for each dimension must have the same shape.
+
+::
 
     >>> a = np.arange(12).reshape(3,4)
     >>> a
@@ -1027,6 +1082,8 @@ indices for each dimension must have the same shape.
 Naturally, we can put ``i`` and ``j`` in a sequence (say a list) and
 then do the indexing with the list.
 
+::
+
     >>> l = [i,j]
     >>> a[l]                                       # equivalent to a[i,j]
     array([[ 2,  5],
@@ -1035,6 +1092,8 @@ then do the indexing with the list.
 However, we can not do this by putting ``i`` and ``j`` into an array,
 because this array will be interpreted as indexing the first dimension
 of a.
+
+::
 
     >>> s = np.array( [i,j] )
     >>> a[s]                                       # not what we want
@@ -1047,7 +1106,7 @@ of a.
            [ 7, 11]])
 
 Another common use of indexing with arrays is the search of the maximum
-value of time-dependent series :
+value of time-dependent series::
 
     >>> time = np.linspace(20, 145, 5)                 # time scale
     >>> data = np.sin(np.arange(20)).reshape(5,4)      # 4 time-dependent series
@@ -1076,7 +1135,7 @@ value of time-dependent series :
     >>> np.all(data_max == data.max(axis=0))
     True
 
-You can also use indexing with arrays as a target to assign to:
+You can also use indexing with arrays as a target to assign to::
 
     >>> a = np.arange(5)
     >>> a
@@ -1086,7 +1145,7 @@ You can also use indexing with arrays as a target to assign to:
     array([0, 0, 2, 0, 0])
 
 However, when the list of indices contains repetitions, the assignment
-is done several times, leaving behind the last value:
+is done several times, leaving behind the last value::
 
     >>> a = np.arange(5)
     >>> a[[0,0,2]]=[1,2,3]
@@ -1094,7 +1153,7 @@ is done several times, leaving behind the last value:
     array([2, 1, 3, 3, 4])
 
 This is reasonable enough, but watch out if you want to use Python's
-``+=`` construct, as it may not do what you expect:
+``+=`` construct, as it may not do what you expect::
 
     >>> a = np.arange(5)
     >>> a[[0,0,2]]+=1
@@ -1103,7 +1162,7 @@ This is reasonable enough, but watch out if you want to use Python's
 
 Even though 0 occurs twice in the list of indices, the 0th element is
 only incremented once. This is because Python requires "a+=1" to be
-equivalent to "a=a+1".
+equivalent to "a = a + 1".
 
 Indexing with Boolean Arrays
 ----------------------------
@@ -1114,7 +1173,7 @@ different; we explicitly choose which items in the array we want and
 which ones we don't.
 
 The most natural way one can think of for boolean indexing is to use
-boolean arrays that have *the same shape* as the original array:
+boolean arrays that have *the same shape* as the original array::
 
     >>> a = np.arange(12).reshape(3,4)
     >>> b = a > 4
@@ -1125,7 +1184,7 @@ boolean arrays that have *the same shape* as the original array:
     >>> a[b]                                       # 1d array with the selected elements
     array([ 5,  6,  7,  8,  9, 10, 11])
 
-This property can be very useful in assignments:
+This property can be very useful in assignments::
 
     >>> a[b] = 0                                   # All elements of 'a' higher than 4 become 0
     >>> a
@@ -1162,7 +1221,7 @@ set <http://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
 The second way of indexing with booleans is more similar to integer
 indexing; for each dimension of the array we give a 1D boolean array
-selecting the slices we want.
+selecting the slices we want::
 
     >>> a = np.arange(12).reshape(3,4)
     >>> b1 = np.array([False,True,True])             # first dim selection
@@ -1196,7 +1255,7 @@ The ix_() function
 The `ix_` function can be used to combine different vectors so as to
 obtain the result for each n-uplet. For example, if you want to compute
 all the a+b\*c for all the triplets taken from each of the vectors a, b
-and c:
+and c::
 
     >>> a = np.array([2,3,4,5])
     >>> b = np.array([8,5,4])
@@ -1234,7 +1293,7 @@ and c:
     >>> a[3]+b[2]*c[4]
     17
 
-You could also implement the reduce as follows:
+You could also implement the reduce as follows::
 
     >>> def ufunc_reduce(ufct, *vectors):
     ...    vs = np.ix_(*vectors)
@@ -1243,7 +1302,7 @@ You could also implement the reduce as follows:
     ...        r = ufct(r,v)
     ...    return r
 
-and then use it as:
+and then use it as::
 
     >>> ufunc_reduce(np.add,a,b,c)
     array([[[15, 14, 16, 18, 13],
@@ -1268,7 +1327,7 @@ times the number of vectors.
 Indexing with strings
 ---------------------
 
-See `RecordArrays <basics.rec.html#record-arrays>`__.
+See :ref:`structured_arrays`.
 
 Linear Algebra
 ==============
@@ -1279,6 +1338,8 @@ Simple Array Operations
 -----------------------
 
 See linalg.py in numpy folder for more.
+
+::
 
     >>> import numpy as np
     >>> a = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -1335,7 +1396,7 @@ Here we give a list of short and useful tips.
 ---------------------
 
 To change the dimensions of an array, you can omit one of the sizes
-which will then be deduced automatically:
+which will then be deduced automatically::
 
     >>> a = np.arange(30)
     >>> a.shape = 2,-1,3  # -1 means "whatever is needed"
@@ -1361,9 +1422,7 @@ In MATLAB this is quite easy: if ``x`` and ``y`` are two vectors of the
 same length you only need do ``m=[x;y]``. In NumPy this works via the
 functions ``column_stack``, ``dstack``, ``hstack`` and ``vstack``,
 depending on the dimension in which the stacking is to be done. For
-example:
-
-::
+example::
 
     x = np.arange(0,10,2)                     # x=([0,2,4,6,8])
     y = np.arange(5)                          # y=([0,1,2,3,4])

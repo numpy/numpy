@@ -12,7 +12,7 @@ from numpy.core import linspace, atleast_1d, atleast_2d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute
+    integer, isscalar, absolute, AxisError
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -25,7 +25,7 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount,
+    _insert, add_docstring, digitize, bincount, normalize_axis_index,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
@@ -128,7 +128,8 @@ def rot90(m, k=1, axes=(0,1)):
         return flip(flip(m, axes[0]), axes[1])
 
     axes_list = arange(0, m.ndim)
-    axes_list[axes[0]], axes_list[axes[1]] = axes_list[axes[1]], axes_list[axes[0]]
+    (axes_list[axes[0]], axes_list[axes[1]]) = (axes_list[axes[1]],
+                                                axes_list[axes[0]])
 
     if k == 1:
         return transpose(flip(m,axes[1]), axes_list)
@@ -332,7 +333,7 @@ def _hist_bin_doane(x):
 
     Improved version of Sturges' formula which works better for
     non-normal data. See
-    http://stats.stackexchange.com/questions/55134/doanes-formula-for-histogram-binning
+    stats.stackexchange.com/questions/55134/doanes-formula-for-histogram-binning
 
     Parameters
     ----------
@@ -626,7 +627,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
     >>> hist.sum()
     2.4999999999999996
-    >>> np.sum(hist*np.diff(bin_edges))
+    >>> np.sum(hist * np.diff(bin_edges))
     1.0
 
     .. versionadded:: 1.11.0
@@ -638,7 +639,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     >>> rng = np.random.RandomState(10)  # deterministic random data
     >>> a = np.hstack((rng.normal(size=1000),
     ...                rng.normal(loc=5, scale=2, size=1000)))
-    >>> plt.hist(a, bins='auto')  # plt.hist passes it's arguments to np.histogram
+    >>> plt.hist(a, bins='auto')  # arguments are passed to np.histogram
     >>> plt.title("Histogram with 'auto' bins")
     >>> plt.show()
 
@@ -764,15 +765,19 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             decrement = tmp_a_data < bin_edges[indices]
             indices[decrement] -= 1
             # The last bin includes the right edge. The other bins do not.
-            increment = (tmp_a_data >= bin_edges[indices + 1]) & (indices != bins - 1)
+            increment = ((tmp_a_data >= bin_edges[indices + 1])
+                         & (indices != bins - 1))
             indices[increment] += 1
 
             # We now compute the histogram using bincount
             if ntype.kind == 'c':
-                n.real += np.bincount(indices, weights=tmp_w.real, minlength=bins)
-                n.imag += np.bincount(indices, weights=tmp_w.imag, minlength=bins)
+                n.real += np.bincount(indices, weights=tmp_w.real,
+                                      minlength=bins)
+                n.imag += np.bincount(indices, weights=tmp_w.imag,
+                                      minlength=bins)
             else:
-                n += np.bincount(indices, weights=tmp_w, minlength=bins).astype(ntype)
+                n += np.bincount(indices, weights=tmp_w,
+                                 minlength=bins).astype(ntype)
 
         # Rename the bin edges for return.
         bins = bin_edges
@@ -969,7 +974,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             on_edge = (around(sample[:, i], decimal) ==
                        around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
-            Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
+            Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
@@ -1027,9 +1032,16 @@ def average(a, axis=None, weights=None, returned=False):
     a : array_like
         Array containing data to be averaged. If `a` is not an array, a
         conversion is attempted.
-    axis : int, optional
-        Axis along which to average `a`. If `None`, averaging is done over
-        the flattened array.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `a`.  The default,
+        axis=None, will average over all of the elements of the input array.
+        If axis is negative it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If axis is a tuple of ints, averaging is performed on all of the axes
+        specified in the tuple instead of a single axis or all the axes as
+        before.
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
@@ -1092,19 +1104,7 @@ def average(a, axis=None, weights=None, returned=False):
     TypeError: Axis must be specified when shapes of a and weights differ.
 
     """
-    # 3/19/2016 1.12.0:
-    # replace the next few lines with "a = np.asanyarray(a)"
-    if (type(a) not in (np.ndarray, np.matrix) and
-            issubclass(type(a), np.ndarray)):
-        warnings.warn("np.average currently does not preserve subclasses, but "
-                      "will do so in the future to match the behavior of most "
-                      "other numpy functions such as np.mean. In particular, "
-                      "this means calls which returned a scalar may return a "
-                      "0-d subclass object instead.",
-                      FutureWarning, stacklevel=2)
-
-    if not isinstance(a, np.matrix):
-        a = np.asarray(a)
+    a = np.asanyarray(a)
 
     if weights is None:
         avg = a.mean(axis)
@@ -1135,7 +1135,7 @@ def average(a, axis=None, weights=None, returned=False):
             wgt = wgt.swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
-        if (scl == 0.0).any():
+        if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
@@ -1225,9 +1225,9 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Parameters
     ----------
-    x : ndarray
+    x : ndarray or scalar
         The input domain.
-    condlist : list of bool arrays
+    condlist : list of bool arrays or bool scalars
         Each boolean array corresponds to a function in `funclist`.  Wherever
         `condlist[i]` is True, `funclist[i](x)` is used as the output value.
 
@@ -1296,12 +1296,21 @@ def piecewise(x, condlist, funclist, *args, **kw):
     >>> np.piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
     array([ 2.5,  1.5,  0.5,  0.5,  1.5,  2.5])
 
+    Apply the same function to a scalar value.
+
+    >>> y = -2
+    >>> np.piecewise(y, [y < 0, y >= 0], [lambda x: -x, lambda x: x])
+    array(2)
+
     """
     x = asanyarray(x)
     n2 = len(funclist)
     if (isscalar(condlist) or not (isinstance(condlist[0], list) or
                                    isinstance(condlist[0], ndarray))):
-        condlist = [condlist]
+        if not isscalar(condlist) and x.size == 1 and x.ndim == 0:
+            condlist = [[c] for c in condlist]
+        else:
+            condlist = [condlist]
     condlist = array(condlist, dtype=bool)
     n = len(condlist)
     # This is a hack to work around problems with NumPy's
@@ -1311,19 +1320,9 @@ def piecewise(x, condlist, funclist, *args, **kw):
     if x.ndim == 0:
         x = x[None]
         zerod = True
-        if condlist.shape[-1] != 1:
-            condlist = condlist.T
     if n == n2 - 1:  # compute the "otherwise" condition.
-        totlist = np.logical_or.reduce(condlist, axis=0)
-        # Only able to stack vertically if the array is 1d or less
-        if x.ndim <= 1:
-            condlist = np.vstack([condlist, ~totlist])
-        else:
-            condlist = [asarray(c, dtype=bool) for c in condlist]
-            totlist = condlist[0]
-            for k in range(1, n):
-                totlist |= condlist[k]
-            condlist.append(~totlist)
+        condelse = ~np.any(condlist, axis=0, keepdims=True)
+        condlist = np.concatenate([condlist, condelse], axis=0)
         n += 1
 
     y = zeros(x.shape, x.dtype)
@@ -1455,7 +1454,7 @@ def copy(a, order='K'):
         Controls the memory layout of the copy. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible. (Note that this function and :meth:ndarray.copy are very
+        as possible. (Note that this function and :meth:`ndarray.copy` are very
         similar, but have different default values for their order=
         arguments.)
 
@@ -1466,9 +1465,9 @@ def copy(a, order='K'):
 
     Notes
     -----
-    This is equivalent to
+    This is equivalent to:
 
-    >>> np.array(a, copy=True)                              #doctest: +SKIP
+    >>> np.array(a, copy=True)  #doctest: +SKIP
 
     Examples
     --------
@@ -1497,19 +1496,29 @@ def gradient(f, *varargs, **kwargs):
     Return the gradient of an N-dimensional array.
 
     The gradient is computed using second order accurate central differences
-    in the interior and either first differences or second order accurate
-    one-sides (forward or backwards) differences at the boundaries. The
-    returned gradient hence has the same shape as the input array.
+    in the interior points and either first or second order accurate one-sides
+    (forward or backwards) differences at the boundaries.
+    The returned gradient hence has the same shape as the input array.
 
     Parameters
     ----------
     f : array_like
         An N-dimensional array containing samples of a scalar function.
-    varargs : scalar or list of scalar, optional
-        N scalars specifying the sample distances for each dimension,
-        i.e. `dx`, `dy`, `dz`, ... Default distance: 1.
-        single scalar specifies sample distance for all dimensions.
-        if `axis` is given, the number of varargs must equal the number of axes.
+    varargs : list of scalar or array, optional
+        Spacing between f values. Default unitary spacing for all dimensions.
+        Spacing can be specified using:
+
+        1. single scalar to specify a sample distance for all dimensions.
+        2. N scalars to specify a constant sample distance for each dimension.
+           i.e. `dx`, `dy`, `dz`, ...
+        3. N arrays to specify the coordinates of the values along each
+           dimension of F. The length of the array must match the size of
+           the corresponding dimension
+        4. Any combination of N scalars/arrays with the meaning of 2. and 3.
+
+        If `axis` is given, the number of varargs must equal the number of axes.
+        Default: 1.
+
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
@@ -1518,8 +1527,9 @@ def gradient(f, *varargs, **kwargs):
 
     axis : None or int or tuple of ints, optional
         Gradient is calculated only along the given axis or axes
-        The default (axis = None) is to calculate the gradient for all the axes of the input array.
-        axis may be negative, in which case it counts from the last to the first axis.
+        The default (axis = None) is to calculate the gradient for all the axes
+        of the input array. axis may be negative, in which case it counts from
+        the last to the first axis.
 
         .. versionadded:: 1.11.0
 
@@ -1527,16 +1537,30 @@ def gradient(f, *varargs, **kwargs):
     -------
     gradient : ndarray or list of ndarray
         A set of ndarrays (or a single ndarray if there is only one dimension)
-        correposnding to the derivatives of f with respect to each dimension.
+        corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
 
     Examples
     --------
-    >>> x = np.array([1, 2, 4, 7, 11, 16], dtype=np.float)
-    >>> np.gradient(x)
+    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=np.float)
+    >>> np.gradient(f)
     array([ 1. ,  1.5,  2.5,  3.5,  4.5,  5. ])
-    >>> np.gradient(x, 2)
+    >>> np.gradient(f, 2)
     array([ 0.5 ,  0.75,  1.25,  1.75,  2.25,  2.5 ])
+
+    Spacing can be also specified with an array that represents the coordinates
+    of the values F along the dimensions.
+    For instance a uniform spacing:
+
+    >>> x = np.arange(f.size)
+    >>> np.gradient(f, x)
+    array([ 1. ,  1.5,  2.5,  3.5,  4.5,  5. ])
+
+    Or a non uniform one:
+
+    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=np.float)
+    >>> np.gradient(f, x)
+    array([ 1. ,  3. ,  3.5,  6.7,  6.9,  2.5])
 
     For two dimensional arrays, the return will be two arrays ordered by
     axis. In this example the first array stands for the gradient in
@@ -1547,48 +1571,131 @@ def gradient(f, *varargs, **kwargs):
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
             [ 1. ,  1. ,  1. ]])]
 
+    In this example the spacing is also specified:
+    uniform for axis=0 and non uniform for axis=1
+
+    >>> dx = 2.
+    >>> y = [1., 1.5, 3.5]
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), dx, y)
+    [array([[ 1. ,  1. , -0.5],
+            [ 1. ,  1. , -0.5]]), array([[ 2. ,  2. ,  2. ],
+            [ 2. ,  1.7,  0.5]])]
+
+    It is possible to specify how boundaries are treated using `edge_order`
+
     >>> x = np.array([0, 1, 2, 3, 4])
-    >>> y = x**2
-    >>> np.gradient(y, edge_order=2)
+    >>> f = x**2
+    >>> np.gradient(f, edge_order=1)
+    array([ 1.,  2.,  4.,  6.,  7.])
+    >>> np.gradient(f, edge_order=2)
     array([-0.,  2.,  4.,  6.,  8.])
 
-    The axis keyword can be used to specify a subset of axes of which the gradient is calculated
+    The `axis` keyword can be used to specify a subset of axes of which the
+    gradient is calculated
+
     >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), axis=0)
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
+
+    Notes
+    -----
+    Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
+    derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
+    spacing the finite difference coefficients are computed by minimising
+    the consistency error :math:`\\eta_{i}`:
+
+    .. math::
+
+        \\eta_{i} = f_{i}^{\\left(1\\right)} -
+                    \\left[ \\alpha f\\left(x_{i}\\right) +
+                            \\beta f\\left(x_{i} + h_{d}\\right) +
+                            \\gamma f\\left(x_{i}-h_{s}\\right)
+                    \\right]
+
+    By substituting :math:`f(x_{i} + h_{d})` and :math:`f(x_{i} - h_{s})`
+    with their Taylor series expansion, this translates into solving
+    the following the linear system:
+
+    .. math::
+
+        \\left\\{
+            \\begin{array}{r}
+                \\alpha+\\beta+\\gamma=0 \\\\
+                -\\beta h_{d}+\\gamma h_{s}=1 \\\\
+                \\beta h_{d}^{2}+\\gamma h_{s}^{2}=0
+            \\end{array}
+        \\right.
+
+    The resulting approximation of :math:`f_{i}^{(1)}` is the following:
+
+    .. math::
+
+        \\hat f_{i}^{(1)} =
+            \\frac{
+                h_{s}^{2}f\\left(x_{i} + h_{d}\\right)
+                + \\left(h_{d}^{2} - h_{s}^{2}\\right)f\\left(x_{i}\\right)
+                - h_{d}^{2}f\\left(x_{i}-h_{s}\\right)}
+                { h_{s}h_{d}\\left(h_{d} + h_{s}\\right)}
+            + \\mathcal{O}\\left(\\frac{h_{d}h_{s}^{2}
+                                + h_{s}h_{d}^{2}}{h_{d}
+                                + h_{s}}\\right)
+
+    It is worth noting that if :math:`h_{s}=h_{d}`
+    (i.e., data are evenly spaced)
+    we find the standard second order approximation:
+
+    .. math::
+
+        \\hat f_{i}^{(1)}=
+            \\frac{f\\left(x_{i+1}\\right) - f\\left(x_{i-1}\\right)}{2h}
+            + \\mathcal{O}\\left(h^{2}\\right)
+
+    With a similar procedure the forward/backward approximations used for
+    boundaries can be derived.
+
+    References
+    ----------
+    .. [1]  Quarteroni A., Sacco R., Saleri F. (2007) Numerical Mathematics
+            (Texts in Applied Mathematics). New York: Springer.
+    .. [2]  Durran D. R. (1999) Numerical Methods for Wave Equations
+            in Geophysical Fluid Dynamics. New York: Springer.
+    .. [3]  Fornberg B. (1988) Generation of Finite Difference Formulas on
+            Arbitrarily Spaced Grids,
+            Mathematics of Computation 51, no. 184 : 699-706.
+            `PDF <http://www.ams.org/journals/mcom/1988-51-184/
+            S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
-    N = len(f.shape)  # number of dimensions
+    N = f.ndim  # number of dimensions
 
     axes = kwargs.pop('axis', None)
     if axes is None:
         axes = tuple(range(N))
-    # check axes to have correct type and no duplicate entries
-    if isinstance(axes, int):
-        axes = (axes,)
-    if not isinstance(axes, tuple):
-        raise TypeError("A tuple of integers or a single integer is required")
+    else:
+        axes = _nx.normalize_axis_tuple(axes, N)
 
-    # normalize axis values:
-    axes = tuple(x + N if x < 0 else x for x in axes)
-    if max(axes) >= N or min(axes) < 0:
-        raise ValueError("'axis' entry is out of bounds")
-
-    if len(set(axes)) != len(axes):
-        raise ValueError("duplicate value in 'axis'")
-
+    len_axes = len(axes)
     n = len(varargs)
     if n == 0:
-        dx = [1.0]*N
-    elif n == 1:
-        dx = [varargs[0]]*N
-    elif n == len(axes):
+        dx = [1.0] * len_axes
+    elif n == len_axes or (n == 1 and np.isscalar(varargs[0])):
         dx = list(varargs)
+        for i, distances in enumerate(dx):
+            if np.isscalar(distances):
+                continue
+            if len(distances) != f.shape[axes[i]]:
+                raise ValueError("distances must be either scalars or match "
+                                 "the length of the corresponding dimension")
+            diffx = np.diff(dx[i])
+            # if distances are constant reduce to the scalar case
+            # since it brings a consistent speedup
+            if (diffx == diffx[0]).all():
+                diffx = diffx[0]
+            dx[i] = diffx
+        if len(dx) == 1:
+            dx *= len_axes
     else:
-        raise SyntaxError(
-            "invalid number of arguments")
-    if any([not np.isscalar(dxi) for dxi in dx]):
-        raise ValueError("distances must be scalars")
+        raise TypeError("invalid number of arguments")
 
     edge_order = kwargs.pop('edge_order', 1)
     if kwargs:
@@ -1629,62 +1736,88 @@ def gradient(f, *varargs, **kwargs):
         y = f
 
     for i, axis in enumerate(axes):
-
-        if y.shape[axis] < 2:
+        if y.shape[axis] < edge_order + 1:
             raise ValueError(
                 "Shape of array too small to calculate a numerical gradient, "
-                "at least two elements are required.")
+                "at least (edge_order + 1) elements are required.")
+        # result allocation
+        out = np.empty_like(y, dtype=otype)
 
-        # Numerical differentiation: 1st order edges, 2nd order interior
-        if y.shape[axis] == 2 or edge_order == 1:
-            # Use first order differences for time data
-            out = np.empty_like(y, dtype=otype)
+        uniform_spacing = np.isscalar(dx[i])
 
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
+        # Numerical differentiation: 2nd order interior
+        slice1[axis] = slice(1, -1)
+        slice2[axis] = slice(None, -2)
+        slice3[axis] = slice(1, -1)
+        slice4[axis] = slice(2, None)
 
+        if uniform_spacing:
+            out[slice1] = (f[slice4] - f[slice2]) / (2. * dx[i])
+        else:
+            dx1 = dx[i][0:-1]
+            dx2 = dx[i][1:]
+            a = -(dx2)/(dx1 * (dx1 + dx2))
+            b = (dx2 - dx1) / (dx1 * dx2)
+            c = dx1 / (dx2 * (dx1 + dx2))
+            # fix the shape for broadcasting
+            shape = np.ones(N, dtype=int)
+            shape[axis] = -1
+            a.shape = b.shape = c.shape = shape
+            # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
+            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+
+        # Numerical differentiation: 1st order edges
+        if edge_order == 1:
             slice1[axis] = 0
             slice2[axis] = 1
             slice3[axis] = 0
-            # 1D equivalent -- out[0] = (y[1] - y[0])
-            out[slice1] = (y[slice2] - y[slice3])
+            dx_0 = dx[i] if uniform_spacing else dx[i][0]
+            # 1D equivalent -- out[0] = (y[1] - y[0]) / (x[1] - x[0])
+            out[slice1] = (y[slice2] - y[slice3]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
-            # 1D equivalent -- out[-1] = (y[-1] - y[-2])
-            out[slice1] = (y[slice2] - y[slice3])
+            dx_n = dx[i] if uniform_spacing else dx[i][-1]
+            # 1D equivalent -- out[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
+            out[slice1] = (y[slice2] - y[slice3]) / dx_n
 
-        # Numerical differentiation: 2st order edges, 2nd order interior
+        # Numerical differentiation: 2nd order edges
         else:
-            # Use second order differences where possible
-            out = np.empty_like(y, dtype=otype)
-
-            slice1[axis] = slice(1, -1)
-            slice2[axis] = slice(2, None)
-            slice3[axis] = slice(None, -2)
-            # 1D equivalent -- out[1:-1] = (y[2:] - y[:-2])/2.0
-            out[slice1] = (y[slice2] - y[slice3])/2.0
-
             slice1[axis] = 0
             slice2[axis] = 0
             slice3[axis] = 1
             slice4[axis] = 2
-            # 1D equivalent -- out[0] = -(3*y[0] - 4*y[1] + y[2]) / 2.0
-            out[slice1] = -(3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            if uniform_spacing:
+                a = -1.5 / dx[i]
+                b = 2. / dx[i]
+                c = -0.5 / dx[i]
+            else:
+                dx1 = dx[i][0]
+                dx2 = dx[i][1]
+                a = -(2. * dx1 + dx2)/(dx1 * (dx1 + dx2))
+                b = (dx1 + dx2) / (dx1 * dx2)
+                c = - dx1 / (dx2 * (dx1 + dx2))
+            # 1D equivalent -- out[0] = a * y[0] + b * y[1] + c * y[2]
+            out[slice1] = a * y[slice2] + b * y[slice3] + c * y[slice4]
 
             slice1[axis] = -1
-            slice2[axis] = -1
+            slice2[axis] = -3
             slice3[axis] = -2
-            slice4[axis] = -3
-            # 1D equivalent -- out[-1] = (3*y[-1] - 4*y[-2] + y[-3])
-            out[slice1] = (3.0*y[slice2] - 4.0*y[slice3] + y[slice4])/2.0
+            slice4[axis] = -1
+            if uniform_spacing:
+                a = 0.5 / dx[i]
+                b = -2. / dx[i]
+                c = 1.5 / dx[i]
+            else:
+                dx1 = dx[i][-2]
+                dx2 = dx[i][-1]
+                a = (dx2) / (dx1 * (dx1 + dx2))
+                b = - (dx2 + dx1) / (dx1 * dx2)
+                c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
+            # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
+            out[slice1] = a * y[slice2] + b * y[slice3] + c * y[slice4]
 
-        # divide by step size
-        out /= dx[i]
         outvals.append(out)
 
         # reset the slice object in this dimension to ":"
@@ -1693,7 +1826,7 @@ def gradient(f, *varargs, **kwargs):
         slice3[axis] = slice(None)
         slice4[axis] = slice(None)
 
-    if len(axes) == 1:
+    if len_axes == 1:
         return outvals[0]
     else:
         return outvals
@@ -1720,11 +1853,35 @@ def diff(a, n=1, axis=-1):
     -------
     diff : ndarray
         The n-th differences. The shape of the output is the same as `a`
-        except along `axis` where the dimension is smaller by `n`.
+        except along `axis` where the dimension is smaller by `n`. The
+        type of the output is the same as that of the input.
 
     See Also
     --------
     gradient, ediff1d, cumsum
+
+    Notes
+    -----
+    For boolean arrays, the preservation of type means that the result
+    will contain `False` when consecutive elements are the same and
+    `True` when they differ.
+
+    For unsigned integer arrays, the results will also be unsigned. This should
+    not be surprising, as the result is consistent with calculating the
+    difference directly:
+
+    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
+    >>> np.diff(u8_arr)
+    array([255], dtype=uint8)
+    >>> u8_arr[1,...] - u8_arr[0,...]
+    array(255, np.uint8)
+
+    If this is not desirable, then the array should be cast to a larger integer
+    type first:
+
+    >>> i16_arr = u8_arr.astype(np.int16)
+    >>> np.diff(i16_arr)
+    array([-1], dtype=int16)
 
     Examples
     --------
@@ -1748,7 +1905,7 @@ def diff(a, n=1, axis=-1):
         raise ValueError(
             "order must be non-negative but got " + repr(n))
     a = asanyarray(a)
-    nd = len(a.shape)
+    nd = a.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1, None)
@@ -1992,7 +2149,7 @@ def unwrap(p, discont=pi, axis=-1):
 
     """
     p = asarray(p)
-    nd = len(p.shape)
+    nd = p.ndim
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
@@ -2744,9 +2901,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         contain observations.
     bias : bool, optional
         Default normalization (False) is by ``(N - 1)``, where ``N`` is the
-        number of observations given (unbiased estimate). If `bias` is True, then
-        normalization is by ``N``. These values can be overridden by using the
-        keyword ``ddof`` in numpy versions >= 1.5.
+        number of observations given (unbiased estimate). If `bias` is True,
+        then normalization is by ``N``. These values can be overridden by using
+        the keyword ``ddof`` in numpy versions >= 1.5.
     ddof : int, optional
         If not ``None`` the default value implied by `bias` is overridden.
         Note that ``ddof=1`` will return the unbiased estimate, even if both
@@ -2819,7 +2976,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
-    >>> X = np.vstack((x,y))
+    >>> X = np.stack((x, y), axis=0)
     >>> print(np.cov(X))
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
@@ -2849,15 +3006,15 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
-    if rowvar == 0 and X.shape[0] != 1:
+    if not rowvar and X.shape[0] != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
     if y is not None:
         y = array(y, copy=False, ndmin=2, dtype=dtype)
-        if rowvar == 0 and y.shape[0] != 1:
+        if not rowvar and y.shape[0] != 1:
             y = y.T
-        X = np.vstack((X, y))
+        X = np.concatenate((X, y), axis=0)
 
     if ddof is None:
         if bias == 0:
@@ -2912,7 +3069,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         fact = w_sum - ddof*sum(w*aweights)/w_sum
 
     if fact <= 0:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
+        warnings.warn("Degrees of freedom <= 0 for slice",
+                      RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2989,7 +3147,7 @@ def cov2corr(covmat):
 
     return c
 
-def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -3010,8 +3168,8 @@ def corrcoef(x, y=None, rowvar=1, bias=np._NoValue, ddof=np._NoValue):
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
         shape as `x`.
-    rowvar : int, optional
-        If `rowvar` is non-zero (default), then each row represents a
+    rowvar : bool, optional
+        If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
@@ -3880,21 +4038,15 @@ def _ureduce(a, func, **kwargs):
     if axis is not None:
         keepdim = list(a.shape)
         nd = a.ndim
-        try:
-            axis = operator.index(axis)
-            if axis >= nd or axis < -nd:
-                raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
-            keepdim[axis] = 1
-        except TypeError:
-            sax = set()
-            for x in axis:
-                if x >= nd or x < -nd:
-                    raise IndexError("axis %d out of bounds (%d)" % (x, nd))
-                if x in sax:
-                    raise ValueError("duplicate value in axis")
-                sax.add(x % nd)
-                keepdim[x] = 1
-            keep = sax.symmetric_difference(frozenset(range(nd)))
+        axis = _nx.normalize_axis_tuple(axis, nd)
+
+        for ax in axis:
+            keepdim[ax] = 1
+
+        if len(axis) == 1:
+            kwargs['axis'] = axis[0]
+        else:
+            keep = set(range(nd)) - set(axis)
             nkeep = len(keep)
             # swap axis that should not be reduced to front
             for i, s in enumerate(sorted(keep)):
@@ -3902,8 +4054,9 @@ def _ureduce(a, func, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
+        keepdim = tuple(keepdim)
     else:
-        keepdim = [1] * a.ndim
+        keepdim = (1,) * a.ndim
 
     r = func(a, **kwargs)
     return r, keepdim
@@ -4044,23 +4197,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
         # warn and return nans like mean would
         rout = mean(part[indexer], axis=axis, out=out)
-        part = np.rollaxis(part, axis, part.ndim)
-        n = np.isnan(part[..., -1])
-        if rout.ndim == 0:
-            if n == True:
-                warnings.warn("Invalid value encountered in median",
-                              RuntimeWarning, stacklevel=3)
-                if out is not None:
-                    out[...] = a.dtype.type(np.nan)
-                    rout = out
-                else:
-                    rout = a.dtype.type(np.nan)
-        elif np.count_nonzero(n.ravel()) > 0:
-            warnings.warn("Invalid value encountered in median for" +
-                          " %d results" % np.count_nonzero(n.ravel()),
-                          RuntimeWarning, stacklevel=3)
-            rout[n] = np.nan
-        return rout
+        return np.lib.utils._median_nancheck(part, rout, axis, out)
     else:
         # if there are no nans
         # Use mean in odd and even case to coerce data type
@@ -4139,8 +4276,8 @@ def percentile(a, q, axis=None, out=None,
     Notes
     -----
     Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the mimumum to the
-    maximum in in a sorted copy of ``V``. The values and distances of
+    ``V`` is the value ``q/100`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
     will determine the percentile if the normalized ranking does not
     match the location of ``q`` exactly. This function is the same as
@@ -4181,10 +4318,7 @@ def percentile(a, q, axis=None, out=None,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
-        if q.ndim == 0:
-            return r.reshape(k)
-        else:
-            return r.reshape([len(q)] + k)
+        return r.reshape(q.shape + k)
     else:
         return r
 
@@ -4408,7 +4542,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
             d = d.reshape(shape)
         else:
             d = diff(x, axis=axis)
-    nd = len(y.shape)
+    nd = y.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1, None)
@@ -4454,7 +4588,7 @@ def add_newdoc(place, obj, doc):
         elif isinstance(doc, list):
             for val in doc:
                 add_docstring(getattr(new, val[0]), val[1].strip())
-    except:
+    except Exception:
         pass
 
 
@@ -4514,12 +4648,12 @@ def meshgrid(*xi, **kwargs):
     'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
     illustrated by the following code snippet::
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[i,j], yv[i,j]
 
-        xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
+        xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
@@ -4538,14 +4672,14 @@ def meshgrid(*xi, **kwargs):
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
-    >>> xv, yv = meshgrid(x, y)
+    >>> xv, yv = np.meshgrid(x, y)
     >>> xv
     array([[ 0. ,  0.5,  1. ],
            [ 0. ,  0.5,  1. ]])
     >>> yv
     array([[ 0.,  0.,  0.],
            [ 1.,  1.,  1.]])
-    >>> xv, yv = meshgrid(x, y, sparse=True)  # make sparse output arrays
+    >>> xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
     >>> xv
     array([[ 0. ,  0.5,  1. ]])
     >>> yv
@@ -4556,7 +4690,7 @@ def meshgrid(*xi, **kwargs):
 
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = meshgrid(x, y, sparse=True)
+    >>> xx, yy = np.meshgrid(x, y, sparse=True)
     >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
     >>> h = plt.contourf(x,y,z)
 
@@ -4576,29 +4710,22 @@ def meshgrid(*xi, **kwargs):
             "Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
-    output = [np.asanyarray(x).reshape(s0[:i] + (-1,) + s0[i + 1::])
+    output = [np.asanyarray(x).reshape(s0[:i] + (-1,) + s0[i + 1:])
               for i, x in enumerate(xi)]
-
-    shape = [x.size for x in output]
 
     if indexing == 'xy' and ndim > 1:
         # switch first and second axis
-        output[0].shape = (1, -1) + (1,)*(ndim - 2)
-        output[1].shape = (-1, 1) + (1,)*(ndim - 2)
-        shape[0], shape[1] = shape[1], shape[0]
+        output[0].shape = (1, -1) + s0[2:]
+        output[1].shape = (-1, 1) + s0[2:]
 
-    if sparse:
-        if copy_:
-            return [x.copy() for x in output]
-        else:
-            return output
-    else:
+    if not sparse:
         # Return the full N-D matrix (not only the 1-D vector)
-        if copy_:
-            mult_fact = np.ones(shape, dtype=int)
-            return [x * mult_fact for x in output]
-        else:
-            return np.broadcast_arrays(*output)
+        output = np.broadcast_arrays(*output, subok=True)
+
+    if copy_:
+        output = [x.copy() for x in output]
+
+    return output
 
 
 def delete(arr, obj, axis=None):
@@ -4673,7 +4800,8 @@ def delete(arr, obj, axis=None):
         if ndim != 1:
             arr = arr.ravel()
         ndim = arr.ndim
-        axis = ndim - 1
+        axis = -1
+
     if ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
@@ -4683,6 +4811,8 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy(order=arrorder)
+
+    axis = normalize_axis_index(axis, ndim)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
@@ -4743,9 +4873,9 @@ def delete(arr, obj, axis=None):
     # After removing the special handling of booleans and out of
     # bounds values, the conversion to the array can be removed.
     if obj.dtype == bool:
-        warnings.warn(
-            "in the future insert will treat boolean arrays and array-likes "
-            "as boolean index instead of casting it to integer", FutureWarning, stacklevel=2)
+        warnings.warn("in the future insert will treat boolean arrays and "
+                      "array-likes as boolean index instead of casting it "
+                      "to integer", FutureWarning, stacklevel=2)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
@@ -4906,14 +5036,7 @@ def insert(arr, obj, values, axis=None):
             arr = arr.ravel()
         ndim = arr.ndim
         axis = ndim - 1
-    else:
-        if ndim > 0 and (axis < -ndim or axis >= ndim):
-            raise IndexError(
-                "axis %i is out of bounds for an array of "
-                "dimension %i" % (axis, ndim))
-        if (axis < 0):
-            axis += ndim
-    if (ndim == 0):
+    elif ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
@@ -4924,6 +5047,8 @@ def insert(arr, obj, values, axis=None):
             return wrap(arr)
         else:
             return arr
+    else:
+        axis = normalize_axis_index(axis, ndim)
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)

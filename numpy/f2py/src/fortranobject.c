@@ -370,7 +370,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
                 Py_DECREF(arr);
             }
         } else return (fp->defs[i].func==NULL?-1:0);
-        return 0; /* succesful */
+        return 0; /* successful */
     }
     if (fp->dict == NULL) {
         fp->dict = PyDict_New();
@@ -691,7 +691,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
         }
         arr = (PyArrayObject *)
             PyArray_New(&PyArray_Type, rank, dims, type_num,
-                        NULL,NULL,0,
+                        NULL,NULL,1,
                         !(intent&F2PY_INTENT_C),
                         NULL);
         if (arr==NULL) return NULL;
@@ -701,6 +701,15 @@ PyArrayObject* array_from_pyobj(const int type_num,
     }
 
     descr = PyArray_DescrFromType(type_num);
+    /* compatibility with NPY_CHAR */
+    if (type_num == NPY_STRING) {
+        PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
+        descr->elsize = 1;
+        descr->type = NPY_CHARLTR;
+    }
     elsize = descr->elsize;
     typechar = descr->type;
     Py_DECREF(descr);
@@ -781,9 +790,10 @@ PyArrayObject* array_from_pyobj(const int type_num,
         /* here we have always intent(in) or intent(inplace) */
 
         {
-            PyArrayObject *retarr = (PyArrayObject *) \
+            PyArrayObject * retarr;
+            retarr = (PyArrayObject *) \
                 PyArray_New(&PyArray_Type, PyArray_NDIM(arr), PyArray_DIMS(arr), type_num,
-                            NULL,NULL,0,
+                            NULL,NULL,1,
                             !(intent&F2PY_INTENT_C),
                             NULL);
             if (retarr==NULL)
@@ -816,9 +826,19 @@ PyArrayObject* array_from_pyobj(const int type_num,
     }
 
     {
+        PyArray_Descr * descr = PyArray_DescrFromType(type_num);
+        /* compatibility with NPY_CHAR */
+        if (type_num == NPY_STRING) {
+            PyArray_DESCR_REPLACE(descr);
+            if (descr == NULL) {
+                return NULL;
+            }
+            descr->elsize = 1;
+            descr->type = NPY_CHARLTR;
+        }
         F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
         arr = (PyArrayObject *) \
-            PyArray_FromAny(obj,PyArray_DescrFromType(type_num), 0,0,
+            PyArray_FromAny(obj, descr, 0,0,
                             ((intent & F2PY_INTENT_C)?NPY_ARRAY_CARRAY:NPY_ARRAY_FARRAY) \
                             | NPY_ARRAY_FORCECAST, NULL);
         if (arr==NULL)

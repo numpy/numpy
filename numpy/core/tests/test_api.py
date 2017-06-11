@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import sixu
 from numpy.testing import (
      run_module_suite, assert_, assert_equal, assert_array_equal,
      assert_raises, HAS_REFCOUNT
@@ -106,7 +105,7 @@ def test_array_array():
              dict(__array_struct__=a.__array_struct__))
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
     ## instead we get a array([...], dtype=">V18")
-    assert_equal(str(np.array(o).data), str(a.data))
+    assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array
     o = type("o", (object,),
@@ -248,7 +247,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array([sixu('a')*100], dtype='O')
+    a = np.array([u'a'*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
@@ -258,7 +257,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array([sixu('a')*10], dtype='O')
+    a = np.array([u'a'*10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -266,19 +265,19 @@ def test_array_astype():
     a = np.array(123456789012345678901234567890, dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
     a = np.array([123456789012345678901234567890], dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array([123456789012345678901234567890], dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
     a = np.array(123456789012345678901234567890, dtype='S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
-    a = np.array(sixu('a\u0140'), dtype='U')
+    a = np.array(u'a\u0140', dtype='U')
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
     assert_(b.size == 2)
 

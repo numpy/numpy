@@ -429,7 +429,7 @@ array_nbytes_get(PyArrayObject *self)
  * Also needing change: strides, itemsize
  *
  * Either itemsize is exactly the same or the array is single-segment
- * (contiguous or fortran) with compatibile dimensions The shape and strides
+ * (contiguous or fortran) with compatible dimensions The shape and strides
  * will be adjusted in that case as well.
  */
 static int
@@ -755,7 +755,7 @@ array_real_set(PyArrayObject *self, PyObject *val)
         Py_INCREF(self);
         ret = self;
     }
-    new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+    new = (PyArrayObject *)PyArray_FROM_O(val);
     if (new == NULL) {
         Py_DECREF(ret);
         return -1;
@@ -816,7 +816,7 @@ array_imag_set(PyArrayObject *self, PyObject *val)
         if (ret == NULL) {
             return -1;
         }
-        new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+        new = (PyArrayObject *)PyArray_FROM_O(val);
         if (new == NULL) {
             Py_DECREF(ret);
             return -1;

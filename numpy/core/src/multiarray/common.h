@@ -40,9 +40,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_status);
 
-NPY_NO_EXPORT PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *v, char *name);
-
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
  * new dtype reference otherwise.
@@ -134,6 +131,57 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
     return 0;
 }
 
+/*
+ * Returns -1 and sets an exception if *axis is an invalid axis for
+ * an array of dimension ndim, otherwise adjusts it in place to be
+ * 0 <= *axis < ndim, and returns 0.
+ *
+ * msg_prefix: borrowed reference, a string to prepend to the message
+ */
+static NPY_INLINE int
+check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
+{
+    /* Check that index is valid, taking into account negative indices */
+    if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
+        /*
+         * Load the exception type, if we don't already have it. Unfortunately
+         * we don't have access to npy_cache_import here
+         */
+        static PyObject *AxisError_cls = NULL;
+        PyObject *exc;
+
+        if (AxisError_cls == NULL) {
+            PyObject *mod = PyImport_ImportModule("numpy.core._internal");
+
+            if (mod != NULL) {
+                AxisError_cls = PyObject_GetAttrString(mod, "AxisError");
+                Py_DECREF(mod);
+            }
+        }
+
+        /* Invoke the AxisError constructor */
+        exc = PyObject_CallFunction(AxisError_cls, "iiO",
+                                    *axis, ndim, msg_prefix);
+        if (exc == NULL) {
+            return -1;
+        }
+        PyErr_SetObject(AxisError_cls, exc);
+        Py_DECREF(exc);
+
+        return -1;
+    }
+    /* adjust negative indices */
+    if (*axis < 0) {
+        *axis += ndim;
+    }
+    return 0;
+}
+static NPY_INLINE int
+check_and_adjust_axis(int *axis, int ndim)
+{
+    return check_and_adjust_axis_msg(axis, ndim, Py_None);
+}
+
 
 /*
  * return true if pointer is aligned to 'alignment'
@@ -202,34 +250,6 @@ npy_memchr(char * haystack, char needle,
     *psubloopsize = subloopsize;
 
     return p;
-}
-
-static NPY_INLINE int
-_is_basic_python_type(PyObject * obj)
-{
-    if (obj == Py_None ||
-            PyBool_Check(obj) ||
-            /* Basic number types */
-#if !defined(NPY_PY3K)
-            PyInt_CheckExact(obj) ||
-            PyString_CheckExact(obj) ||
-#endif
-            PyLong_CheckExact(obj) ||
-            PyFloat_CheckExact(obj) ||
-            PyComplex_CheckExact(obj) ||
-            /* Basic sequence types */
-            PyList_CheckExact(obj) ||
-            PyTuple_CheckExact(obj) ||
-            PyDict_CheckExact(obj) ||
-            PyAnySet_CheckExact(obj) ||
-            PyUnicode_CheckExact(obj) ||
-            PyBytes_CheckExact(obj) ||
-            PySlice_Check(obj)) {
-
-        return 1;
-    }
-
-    return 0;
 }
 
 /*

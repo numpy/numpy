@@ -3,10 +3,10 @@ C-API for NumPy
 ===============
 
 :Author:          Travis Oliphant
-:Discussions to:  `numpy-discussion@scipy.org`__
+:Discussions to:  `numpy-discussion@python.org`__
 :Created:         October 2005
 
-__ http://www.scipy.org/Mailing_Lists
+__ http://scipy.org/scipylib/mailing-lists.html
 
 The C API of NumPy is (mostly) backward compatible with Numeric.
 
@@ -62,7 +62,7 @@ This is a very flexible function.
 ``subtype`` : ``PyTypeObject *``
     The subtype that should be created (either pass in
     ``&PyArray_Type``,  or ``obj->ob_type``,
-    where ``obj`` is a an instance of a subtype (or subclass) of
+    where ``obj`` is an instance of a subtype (or subclass) of
     ``PyArray_Type``).
 
 ``descr`` : ``PyArray_Descr *``
@@ -178,13 +178,12 @@ function calls still remain but they are loose wrappers around the
 
       - ``ENSURECOPY``: always copy the array. Returned arrays always
         have ``CONTIGUOUS``, ``ALIGNED``, and ``WRITEABLE`` set.
-      - ``ENSUREARRAY``: ensure the returned array is an ndarray (or a
-        bigndarray if ``op`` is one).
+      - ``ENSUREARRAY``: ensure the returned array is an ndarray.
       - ``FORCECAST``: cause a cast to occur regardless of whether or
         not it is safe.
 
 ``context`` : ``PyObject *``
-    If the Python object ``op`` is not an numpy array, but has an
+    If the Python object ``op`` is not a numpy array, but has an
     ``__array__`` method, context is passed as the second argument to
     that method (the first is the typecode). Almost always this
     parameter is ``NULL``.
@@ -194,7 +193,7 @@ function calls still remain but they are loose wrappers around the
 equivalent to ``PyArray_ContiguousFromObject(...)`` (which is still
 available), except it will return the subclass if op is already a
 subclass of the ndarray. The ``ContiguousFromObject`` version will
-always return an ndarray (or a bigndarray).
+always return an ndarray.
 
 Passing Data Type information to C-code
 =======================================

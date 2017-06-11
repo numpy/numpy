@@ -100,10 +100,9 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
         interface['strides'] = tuple(strides)
 
     array = np.asarray(DummyArray(interface, base=x))
-
-    if array.dtype.fields is None and x.dtype.fields is not None:
-        # This should only happen if x.dtype is [('', 'Vx')]
-        array.dtype = x.dtype
+    # The route via `__interface__` does not preserve structured
+    # dtypes. Since dtype should remain unchanged, we set it explicitly.
+    array.dtype = x.dtype
 
     view = _maybe_view_as_subclass(x, array)
 
@@ -179,7 +178,7 @@ def _broadcast_shape(*args):
     supplied arrays against each other.
     """
     if not args:
-        raise ValueError('must provide at least one argument')
+        return ()
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])

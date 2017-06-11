@@ -23,6 +23,8 @@
 #include "numpy/halffloat.h"
 #include "templ_common.h"
 
+#include "binop_override.h"
+
 /* Basic operations:
  *
  *  BINARY:
@@ -220,27 +222,27 @@ static void
  */
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
-    @type@ temp, ix, mult;
-    /* code from Python's intobject.c, with overflow checking removed. */
-    temp = a;
-    ix = 1;
-    while (b > 0) {
-        if (b & 1) {
-            @name@_ctype_multiply(ix, temp, &mult);
-            ix = mult;
-            if (temp == 0) {
-                break;
-            }
-        }
-        b >>= 1;        /* Shift exponent down by 1 bit */
-        if (b==0) {
-            break;
-        }
-        /* Square the value of temp */
-        @name@_ctype_multiply(temp, temp, &mult);
-        temp = mult;
+    @type@ tmp;
+
+    if (b == 0) {
+        *out = 1;
+        return;
     }
-    *out = ix;
+    if (a == 1) {
+        *out = 1;
+        return;
+    }
+
+    tmp = b & 1 ? a : 1;
+    b >>= 1;
+    while (b > 0) {
+        a *= a;
+        if (b & 1) {
+            tmp *= a;
+        }
+        b >>= 1;
+    }
+    *out = tmp;
 }
 /**end repeat**/
 
@@ -827,6 +829,8 @@ static PyObject *
     int first;
 #endif
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -956,7 +960,7 @@ static PyObject *
 
 #if @cmplx@
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -964,25 +968,34 @@ static PyObject *
     int first;
     @type@ out = {@zero@, @zero@};
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1029,34 +1042,39 @@ static PyObject *
 #elif @isint@
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-    @type@ out = @zero@;
-    @otype@ out1 = @zero@;
+    @type@ arg1, arg2, out;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1065,48 +1083,18 @@ static PyObject *
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
-    if (@iszero@(arg2)) {
-        out1 = out = @one@;
-    }
-    else if (arg2 < 0) {
-        @oname@_ctype_power(arg1, arg2, &out1);
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
-    if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
-            return NULL;
-        }
-        first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
-    }
-
     if (arg2 < 0) {
-        ret = PyArrayScalar_New(@OName@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @OName@, out1);
+        PyErr_SetString(PyExc_ValueError,
+                "Integers to negative integer powers are not allowed.");
+        return NULL;
     }
-    else {
-        ret = PyArrayScalar_New(@Name@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @Name@, out);
+    @name@_ctype_power(arg1, arg2, &out);
+
+    ret = PyArrayScalar_New(@Name@);
+    if (ret == NULL) {
+        return NULL;
     }
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 
     return ret;
 }
@@ -1114,7 +1102,7 @@ static PyObject *
 #else
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -1122,25 +1110,35 @@ static PyObject *
     int first;
 
     @type@ out = @zero@;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1518,6 +1516,8 @@ static PyObject*
 {
     npy_@name@ arg1, arg2;
     int out=0;
+
+    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
     switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
     case 0:

@@ -14,7 +14,8 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_warns, suppress_warnings
+    TestCase, run_module_suite, assert_warns, suppress_warnings,
+    assert_raises
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -28,7 +29,7 @@ from numpy.ma.extras import (
     median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like,
+    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
     diagflat
     )
 import numpy.ma.extras as mae
@@ -303,6 +304,18 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:5,:], b_1)
         assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
+
+    def test_matrix_builder(self):
+        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
+
+    def test_matrix(self):
+        actual = mr_['r', 1, 2, 3]
+        expected = np.ma.array(np.r_['r', 1, 2, 3])
+        assert_array_equal(actual, expected)
+
+        # outer type is masked array, inner type is matrix
+        assert_equal(type(actual), type(expected))
+        assert_equal(type(actual.data), type(expected.data))
 
 
 class TestNotMasked(TestCase):
@@ -659,16 +672,44 @@ class TestMedian(TestCase):
         r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
         assert_equal(r, np.inf)
 
+    def test_inf(self):
+        # test that even which computes handles inf / x = masked
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]]), axis=-1)
+        assert_equal(r, np.inf)
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]]), axis=None)
+        assert_equal(r, np.inf)
+        # all masked
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=-1)
+        assert_equal(r.mask, True)
+        r = np.ma.median(np.ma.masked_array([[np.inf, np.inf],
+                                             [np.inf, np.inf]], mask=True),
+                         axis=None)
+        assert_equal(r.mask, True)
+
     def test_non_masked(self):
         x = np.arange(9)
         assert_equal(np.ma.median(x), 4.)
         assert_(type(np.ma.median(x)) is not MaskedArray)
-        x = range(9)
-        assert_equal(np.ma.median(x), 4.)
+        x = range(8)
+        assert_equal(np.ma.median(x), 3.5)
         assert_(type(np.ma.median(x)) is not MaskedArray)
         x = 5
         assert_equal(np.ma.median(x), 5.)
         assert_(type(np.ma.median(x)) is not MaskedArray)
+        # integer
+        x = np.arange(9 * 8).reshape(9, 8)
+        assert_equal(np.ma.median(x, axis=0), np.median(x, axis=0))
+        assert_equal(np.ma.median(x, axis=1), np.median(x, axis=1))
+        assert_(np.ma.median(x, axis=1) is not MaskedArray)
+        # float
+        x = np.arange(9 * 8.).reshape(9, 8)
+        assert_equal(np.ma.median(x, axis=0), np.median(x, axis=0))
+        assert_equal(np.ma.median(x, axis=1), np.median(x, axis=1))
+        assert_(np.ma.median(x, axis=1) is not MaskedArray)
 
     def test_docstring_examples(self):
         "test the examples given in the docstring of ma.median"
@@ -696,7 +737,7 @@ class TestMedian(TestCase):
                 for axis, over in args:
                     try:
                         np.ma.median(x, axis=axis, overwrite_input=over)
-                    except:
+                    except Exception:
                         raise AssertionError(msg % (mask, ndmin, axis, over))
 
                 # Invalid axis values should raise exception
@@ -704,7 +745,7 @@ class TestMedian(TestCase):
                 for axis, over in args:
                     try:
                         np.ma.median(x, axis=axis, overwrite_input=over)
-                    except IndexError:
+                    except np.AxisError:
                         pass
                     else:
                         raise AssertionError(msg % (mask, ndmin, axis, over))
@@ -731,6 +772,26 @@ class TestMedian(TestCase):
         assert_(type(np.ma.median(x)) is not MaskedArray)
         x = array(np.arange(5), mask=[0,1,1,1,1])
         assert_equal(np.ma.median(x), 0.)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        # integer
+        x = array(np.arange(5), mask=[0,1,1,0,0])
+        assert_equal(np.ma.median(x), 3.)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        # float
+        x = array(np.arange(5.), mask=[0,1,1,0,0])
+        assert_equal(np.ma.median(x), 3.)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        # integer
+        x = array(np.arange(6), mask=[0,1,1,1,1,0])
+        assert_equal(np.ma.median(x), 2.5)
+        assert_equal(np.ma.median(x).shape, (), "shape mismatch")
+        assert_(type(np.ma.median(x)) is not MaskedArray)
+        # float
+        x = array(np.arange(6.), mask=[0,1,1,1,1,0])
+        assert_equal(np.ma.median(x), 2.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
 
@@ -782,13 +843,36 @@ class TestMedian(TestCase):
         x[:3] = x[-3:] = masked
         assert_equal(median(x, axis=-1), median(x, axis=1))
 
+    def test_out_1d(self):
+        # integer float even odd
+        for v in (30, 30., 31, 31.):
+            x = masked_array(np.arange(v))
+            x[:3] = x[-3:] = masked
+            out = masked_array(np.ones(()))
+            r = median(x, out=out)
+            if v == 30:
+                assert_equal(out, 14.5)
+            else:
+                assert_equal(out, 15.)
+            assert_(r is out)
+            assert_(type(r) is MaskedArray)
+
     def test_out(self):
-        x = masked_array(np.arange(30).reshape(10, 3))
-        x[:3] = x[-3:] = masked
-        out = masked_array(np.ones(10))
-        r = median(x, axis=1, out=out)
-        assert_equal(r, out)
-        assert_(type(r) == MaskedArray)
+        # integer float even odd
+        for v in (40, 40., 30, 30.):
+            x = masked_array(np.arange(v).reshape(10, -1))
+            x[:3] = x[-3:] = masked
+            out = masked_array(np.ones(10))
+            r = median(x, axis=1, out=out)
+            if v == 30:
+                e = masked_array([0.]*3 + [10, 13, 16, 19] + [0.]*3,
+                                 mask=[True] * 3 + [False] * 4 + [True] * 3)
+            else:
+                e = masked_array([0.]*3 + [13.5, 17.5, 21.5, 25.5] + [0.]*3,
+                                 mask=[True]*3 + [False]*4 + [True]*3)
+            assert_equal(r, e)
+            assert_(r is out)
+            assert_(type(r) is MaskedArray)
 
     def test_single_non_masked_value_on_axis(self):
         data = [[1., 0.],
@@ -798,6 +882,191 @@ class TestMedian(TestCase):
         expected = [1., 3.]
         assert_array_equal(np.ma.median(masked_arr, axis=0),
                            expected)
+
+    def test_nan(self):
+        with suppress_warnings() as w:
+            w.record(RuntimeWarning)
+            for mask in (False, np.zeros(6, dtype=np.bool)):
+                dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
+                dm.mask = mask
+
+                # scalar result
+                r = np.ma.median(dm, axis=None)
+                assert_(np.isscalar(r))
+                assert_array_equal(r, np.nan)
+                r = np.ma.median(dm.ravel(), axis=0)
+                assert_(np.isscalar(r))
+                assert_array_equal(r, np.nan)
+
+                r = np.ma.median(dm, axis=0)
+                assert_equal(type(r), MaskedArray)
+                assert_array_equal(r, [1, np.nan, 3])
+                r = np.ma.median(dm, axis=1)
+                assert_equal(type(r), MaskedArray)
+                assert_array_equal(r, [np.nan, 2])
+                r = np.ma.median(dm, axis=-1)
+                assert_equal(type(r), MaskedArray)
+                assert_array_equal(r, [np.nan, 2])
+
+            dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
+            dm[:, 2] = np.ma.masked
+            assert_array_equal(np.ma.median(dm, axis=None), np.nan)
+            assert_array_equal(np.ma.median(dm, axis=0), [1, np.nan, 3])
+            assert_array_equal(np.ma.median(dm, axis=1), [np.nan, 1.5])
+            assert_equal([x.category is RuntimeWarning for x in w.log],
+                         [True]*13)
+
+    def test_out_nan(self):
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            o = np.ma.masked_array(np.zeros((4,)))
+            d = np.ma.masked_array(np.ones((3, 4)))
+            d[2, 1] = np.nan
+            d[2, 2] = np.ma.masked
+            assert_equal(np.ma.median(d, 0, out=o), o)
+            o = np.ma.masked_array(np.zeros((3,)))
+            assert_equal(np.ma.median(d, 1, out=o), o)
+            o = np.ma.masked_array(np.zeros(()))
+            assert_equal(np.ma.median(d, out=o), o)
+
+    def test_nan_behavior(self):
+        a = np.ma.masked_array(np.arange(24, dtype=float))
+        a[::3] = np.ma.masked
+        a[2] = np.nan
+        with suppress_warnings() as w:
+            w.record(RuntimeWarning)
+            assert_array_equal(np.ma.median(a), np.nan)
+            assert_array_equal(np.ma.median(a, axis=0), np.nan)
+            assert_(w.log[0].category is RuntimeWarning)
+            assert_(w.log[1].category is RuntimeWarning)
+
+        a = np.ma.masked_array(np.arange(24, dtype=float).reshape(2, 3, 4))
+        a.mask = np.arange(a.size) % 2 == 1
+        aorig = a.copy()
+        a[1, 2, 3] = np.nan
+        a[1, 1, 2] = np.nan
+
+        # no axis
+        with suppress_warnings() as w:
+            w.record(RuntimeWarning)
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(np.ma.median(a), np.nan)
+            assert_(np.isscalar(np.ma.median(a)))
+            assert_(w.log[0].category is RuntimeWarning)
+
+        # axis0
+        b = np.ma.median(aorig, axis=0)
+        b[2, 3] = np.nan
+        b[1, 2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.ma.median(a, 0), b)
+            assert_equal(len(w), 1)
+
+        # axis1
+        b = np.ma.median(aorig, axis=1)
+        b[1, 3] = np.nan
+        b[1, 2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.ma.median(a, 1), b)
+            assert_equal(len(w), 1)
+
+        # axis02
+        b = np.ma.median(aorig, axis=(0, 2))
+        b[1] = np.nan
+        b[2] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.ma.median(a, (0, 2)), b)
+            assert_equal(len(w), 1)
+
+    def test_ambigous_fill(self):
+        # 255 is max value, used as filler for sort
+        a = np.array([[3, 3, 255], [3, 3, 255]], dtype=np.uint8)
+        a = np.ma.masked_array(a, mask=a == 3)
+        assert_array_equal(np.ma.median(a, axis=1), 255)
+        assert_array_equal(np.ma.median(a, axis=1).mask, False)
+        assert_array_equal(np.ma.median(a, axis=0), a[0])
+        assert_array_equal(np.ma.median(a), 255)
+
+    def test_special(self):
+        for inf in [np.inf, -np.inf]:
+            a = np.array([[inf,  np.nan], [np.nan, np.nan]])
+            a = np.ma.masked_array(a, mask=np.isnan(a))
+            assert_equal(np.ma.median(a, axis=0), [inf,  np.nan])
+            assert_equal(np.ma.median(a, axis=1), [inf,  np.nan])
+            assert_equal(np.ma.median(a), inf)
+
+            a = np.array([[np.nan, np.nan, inf], [np.nan, np.nan, inf]])
+            a = np.ma.masked_array(a, mask=np.isnan(a))
+            assert_array_equal(np.ma.median(a, axis=1), inf)
+            assert_array_equal(np.ma.median(a, axis=1).mask, False)
+            assert_array_equal(np.ma.median(a, axis=0), a[0])
+            assert_array_equal(np.ma.median(a), inf)
+
+            # no mask
+            a = np.array([[inf, inf], [inf, inf]])
+            assert_equal(np.ma.median(a), inf)
+            assert_equal(np.ma.median(a, axis=0), inf)
+            assert_equal(np.ma.median(a, axis=1), inf)
+
+            a = np.array([[inf, 7, -inf, -9],
+                          [-10, np.nan, np.nan, 5],
+                          [4, np.nan, np.nan, inf]],
+                          dtype=np.float32)
+            a = np.ma.masked_array(a, mask=np.isnan(a))
+            if inf > 0:
+                assert_equal(np.ma.median(a, axis=0), [4., 7., -inf, 5.])
+                assert_equal(np.ma.median(a), 4.5)
+            else:
+                assert_equal(np.ma.median(a, axis=0), [-10., 7., -inf, -9.])
+                assert_equal(np.ma.median(a), -2.5)
+            assert_equal(np.ma.median(a, axis=1), [-1., -2.5, inf])
+
+            for i in range(0, 10):
+                for j in range(1, 10):
+                    a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
+                    a = np.ma.masked_array(a, mask=np.isnan(a))
+                    assert_equal(np.ma.median(a), inf)
+                    assert_equal(np.ma.median(a, axis=1), inf)
+                    assert_equal(np.ma.median(a, axis=0),
+                                 ([np.nan] * i) + [inf] * j)
+
+    def test_empty(self):
+        # empty arrays
+        a = np.ma.masked_array(np.array([], dtype=float))
+        with suppress_warnings() as w:
+            w.record(RuntimeWarning)
+            assert_array_equal(np.ma.median(a), np.nan)
+            assert_(w.log[0].category is RuntimeWarning)
+
+        # multiple dimensions
+        a = np.ma.masked_array(np.array([], dtype=float, ndmin=3))
+        # no axis
+        with suppress_warnings() as w:
+            w.record(RuntimeWarning)
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(np.ma.median(a), np.nan)
+            assert_(w.log[0].category is RuntimeWarning)
+
+        # axis 0 and 1
+        b = np.ma.masked_array(np.array([], dtype=float, ndmin=2))
+        assert_equal(np.ma.median(a, axis=0), b)
+        assert_equal(np.ma.median(a, axis=1), b)
+
+        # axis 2
+        b = np.ma.masked_array(np.array(np.nan, dtype=float, ndmin=2))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.ma.median(a, axis=2), b)
+            assert_(w[0].category is RuntimeWarning)
+
+    def test_object(self):
+        o = np.ma.masked_array(np.arange(7.))
+        assert_(type(np.ma.median(o.astype(object))), float)
+        o[2] = np.nan
+        assert_(type(np.ma.median(o.astype(object))), float)
 
 
 class TestCov(TestCase):
@@ -1178,6 +1447,27 @@ class TestArraySetOps(TestCase):
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
         assert_array_equal([], setxor1d([], []))
+
+    def test_isin(self):
+        # the tests for in1d cover most of isin's behavior
+        # if in1d is removed, would need to change those tests to test
+        # isin instead.
+        a = np.arange(24).reshape([2, 3, 4])
+        mask = np.zeros([2, 3, 4])
+        mask[1, 2, 0] = 1
+        a = array(a, mask=mask)
+        b = array(data=[0, 10, 20, 30,  1,  3, 11, 22, 33],
+                  mask=[0,  1,  0,  1,  0,  1,  0,  1,  0])
+        ec = zeros((2, 3, 4), dtype=bool)
+        ec[0, 0, 0] = True
+        ec[0, 0, 1] = True
+        ec[0, 2, 3] = True
+        c = isin(a, b)
+        assert_(isinstance(c, MaskedArray))
+        assert_array_equal(c, ec)
+        #compare results of np.isin to ma.isin
+        d = np.isin(a, b[~b.mask]) & ~a.mask
+        assert_array_equal(c, d)
 
     def test_in1d(self):
         # Test in1d

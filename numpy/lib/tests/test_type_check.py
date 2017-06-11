@@ -98,9 +98,29 @@ class TestReal(TestCase):
         y = np.random.rand(10,)
         assert_array_equal(y, np.real(y))
 
+        y = np.array(1)
+        out = np.real(y)
+        assert_array_equal(y, out)
+        assert_(isinstance(out, np.ndarray))
+
+        y = 1
+        out = np.real(y)
+        assert_equal(y, out)
+        assert_(not isinstance(out, np.ndarray))
+
     def test_cmplx(self):
         y = np.random.rand(10,)+1j*np.random.rand(10,)
         assert_array_equal(y.real, np.real(y))
+
+        y = np.array(1 + 1j)
+        out = np.real(y)
+        assert_array_equal(y.real, out)
+        assert_(isinstance(out, np.ndarray))
+
+        y = 1 + 1j
+        out = np.real(y)
+        assert_equal(1.0, out)
+        assert_(not isinstance(out, np.ndarray))
 
 
 class TestImag(TestCase):
@@ -109,9 +129,29 @@ class TestImag(TestCase):
         y = np.random.rand(10,)
         assert_array_equal(0, np.imag(y))
 
+        y = np.array(1)
+        out = np.imag(y)
+        assert_array_equal(0, out)
+        assert_(isinstance(out, np.ndarray))
+
+        y = 1
+        out = np.imag(y)
+        assert_equal(0, out)
+        assert_(not isinstance(out, np.ndarray))
+
     def test_cmplx(self):
         y = np.random.rand(10,)+1j*np.random.rand(10,)
         assert_array_equal(y.imag, np.imag(y))
+
+        y = np.array(1 + 1j)
+        out = np.imag(y)
+        assert_array_equal(y.imag, out)
+        assert_(isinstance(out, np.ndarray))
+
+        y = 1 + 1j
+        out = np.imag(y)
+        assert_equal(1.0, out)
+        assert_(not isinstance(out, np.ndarray))
 
 
 class TestIscomplex(TestCase):
@@ -182,6 +222,15 @@ class TestIscomplexobj(TestCase):
                 return PdDtype
         dummy = DummyPd()
         assert_(iscomplexobj(dummy))
+
+    def test_custom_dtype_duck(self):
+        class MyArray(list):
+            @property
+            def dtype(self):
+                return complex
+
+        a = MyArray([1+0j, 2+0j, 3+0j])
+        assert_(iscomplexobj(a))
 
 
 class TestIsrealobj(TestCase):
@@ -307,6 +356,16 @@ class TestNanToNum(TestCase):
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(np.array((-1., 0, 1))/0.)
+        assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
+        assert_(vals[1] == 0)
+        assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
+
+        # perform the same test but in-place
+        with np.errstate(divide='ignore', invalid='ignore'):
+            vals = np.array((-1., 0, 1))/0.
+        result = nan_to_num(vals, copy=False)
+
+        assert_(result is vals)
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))

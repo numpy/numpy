@@ -3,49 +3,15 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
+import ast
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar, binary_repr, identity, asanyarray
 from numpy.core.numerictypes import issubdtype
 
-# make translation table
-_numchars = '0123456789.-+jeEL'
-
-if sys.version_info[0] >= 3:
-    class _NumCharTable:
-        def __getitem__(self, i):
-            if chr(i) in _numchars:
-                return chr(i)
-            else:
-                return None
-    _table = _NumCharTable()
-    def _eval(astr):
-        str_ = astr.translate(_table)
-        if not str_:
-            raise TypeError("Invalid data string supplied: " + astr)
-        else:
-            return eval(str_)
-
-else:
-    _table = [None]*256
-    for k in range(256):
-        _table[k] = chr(k)
-    _table = ''.join(_table)
-
-    _todelete = []
-    for k in _table:
-        if k not in _numchars:
-            _todelete.append(k)
-    _todelete = ''.join(_todelete)
-    del k
-
-    def _eval(astr):
-        str_ = astr.translate(_table, _todelete)
-        if not str_:
-            raise TypeError("Invalid data string supplied: " + astr)
-        else:
-            return eval(str_)
-
 def _convert_from_string(data):
+    for char in '[]':
+        data = data.replace(char, '')
+
     rows = data.split(';')
     newdata = []
     count = 0
@@ -54,7 +20,7 @@ def _convert_from_string(data):
         newrow = []
         for col in trow:
             temp = col.split()
-            newrow.extend(map(_eval, temp))
+            newrow.extend(map(ast.literal_eval, temp))
         if count == 0:
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
@@ -169,7 +135,7 @@ def matrix_power(M, n):
 
     """
     M = asanyarray(M)
-    if len(M.shape) != 2 or M.shape[0] != M.shape[1]:
+    if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
     if not issubdtype(type(n), int):
         raise TypeError("exponent must be an integer")
@@ -329,7 +295,7 @@ class matrix(N.ndarray):
             # Determine when we should have a column array
             try:
                 n = len(index)
-            except:
+            except Exception:
                 n = 0
             if n > 1 and isscalar(index[1]):
                 out.shape = (sh, 1)
@@ -1171,8 +1137,8 @@ def bmat(obj, ldict=None, gdict=None):
     Parameters
     ----------
     obj : str or array_like
-        Input data.  Names of variables in the current scope may be
-        referenced, even if `obj` is a string.
+        Input data. If a string, variables in the current scope may be
+        referenced by name.
     ldict : dict, optional
         A dictionary that replaces local operands in current frame.
         Ignored if `obj` is not a string or `gdict` is `None`.
@@ -1187,7 +1153,9 @@ def bmat(obj, ldict=None, gdict=None):
 
     See Also
     --------
-    matrix
+    block :
+        A generalization of this function for N-d arrays, that returns normal
+        ndarrays.
 
     Examples
     --------

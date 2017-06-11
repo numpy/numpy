@@ -169,6 +169,10 @@ add_newdoc('numpy.core', 'nditer',
             with one per iteration dimension, to be tracked.
           * "common_dtype" causes all the operands to be converted to
             a common data type, with copying or buffering as necessary.
+          * "copy_if_overlap" causes the iterator to determine if read
+            operands have overlap with write operands, and make temporary
+            copies as necessary to avoid overlap. False positives (needless
+            copying) are possible in some cases.
           * "delay_bufalloc" delays allocation of the buffers until
             a reset() call is made. Allows "allocate" operands to
             be initialized before their values are copied into the buffers.
@@ -208,6 +212,9 @@ add_newdoc('numpy.core', 'nditer',
             copies those elements indicated by this mask.
           * 'writemasked' indicates that only elements where the chosen
             'arraymask' operand is True will be written to.
+          * "overlap_assume_elementwise" can be used to mark operands that are
+            accessed only in the iterator order, to allow less conservative
+            copying when "copy_if_overlap" is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -1126,7 +1133,7 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
-        Start reading the buffer from this offset; default: 0.
+        Start reading the buffer from this offset (in bytes); default: 0.
 
     Notes
     -----
@@ -1445,8 +1452,8 @@ add_newdoc('numpy.core.multiarray', 'where',
     condition : array_like, bool
         When True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
-        Values from which to choose. `x` and `y` need to have the same
-        shape as `condition`.
+        Values from which to choose. `x`, `y` and `condition` need to be
+        broadcastable to some shape.
 
     Returns
     -------
@@ -1493,7 +1500,7 @@ add_newdoc('numpy.core.multiarray', 'where',
     Find the indices of elements of `x` that are in `goodvalues`.
 
     >>> goodvalues = [3, 4, 7]
-    >>> ix = np.in1d(x.ravel(), goodvalues).reshape(x.shape)
+    >>> ix = np.isin(x, goodvalues)
     >>> ix
     array([[False, False, False],
            [ True,  True, False],
@@ -3285,7 +3292,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     """
-    a.byteswap(inplace)
+    a.byteswap(inplace=False)
 
     Swap the bytes of the array elements
 
@@ -3308,7 +3315,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> A = np.array([1, 256, 8755], dtype=np.int16)
     >>> map(hex, A)
     ['0x1', '0x100', '0x2233']
-    >>> A.byteswap(True)
+    >>> A.byteswap(inplace=True)
     array([  256,     1, 13090], dtype=int16)
     >>> map(hex, A)
     ['0x100', '0x1', '0x3322']
@@ -3722,7 +3729,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
     Parameters
     ----------
-    \*args : Arguments
+    \\*args : Arguments
         If one argument: a scalar, only used in case `a` is of size 1.
         If two arguments: the last argument is the value to be set
         and must be a scalar, the first argument specifies a single array
@@ -5029,7 +5036,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     `bins` is monotonically decreasing. If values in `x` are beyond the
     bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
     is True, then the right bin is closed so that the index ``i`` is such
-    that ``bins[i-1] < x <= bins[i]`` or bins[i-1] >= x > bins[i]`` if `bins`
+    that ``bins[i-1] < x <= bins[i]`` or ``bins[i-1] >= x > bins[i]`` if `bins`
     is monotonically increasing or decreasing, respectively.
 
     Parameters
@@ -5060,7 +5067,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     See Also
     --------
-    bincount, histogram, unique
+    bincount, histogram, unique, searchsorted
 
     Notes
     -----
@@ -5100,7 +5107,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
-    bincount(x, weights=None, minlength=None)
+    bincount(x, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -5134,7 +5141,7 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is non-positive.
+        values, or if `minlength` is negative.
     TypeError
         If the type of the input is float or complex.
 
@@ -5319,7 +5326,8 @@ add_newdoc('numpy.core.multiarray', 'packbits',
     Parameters
     ----------
     myarray : array_like
-        An integer type array whose elements should be packed to bits.
+        An array of integers or booleans whose elements should be packed to
+        bits.
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
@@ -5413,40 +5421,19 @@ add_newdoc('numpy.core', 'ufunc',
     """
     Functions that operate element by element on whole arrays.
 
-    To see the documentation for a specific ufunc, use np.info().  For
-    example, np.info(np.sin).  Because ufuncs are written in C
+    To see the documentation for a specific ufunc, use `info`.  For
+    example, ``np.info(np.sin)``.  Because ufuncs are written in C
     (for speed) and linked into Python with NumPy's ufunc facility,
     Python's help() function finds this page whenever help() is called
     on a ufunc.
 
-    A detailed explanation of ufuncs can be found in the "ufuncs.rst"
-    file in the NumPy reference guide.
+    A detailed explanation of ufuncs can be found in the docs for :ref:`ufuncs`.
 
-    Unary ufuncs:
-    =============
+    Calling ufuncs:
+    ===============
 
-    op(X, out=None)
-    Apply op to X elementwise
-
-    Parameters
-    ----------
-    X : array_like
-        Input array.
-    out : array_like
-        An array to store the output. Must be the same shape as `X`.
-
-    Returns
-    -------
-    r : array_like
-        `r` will have the same shape as `X`; if out is provided, `r`
-        will be equal to out.
-
-    Binary ufuncs:
-    ==============
-
-    op(X, Y, out=None)
-    Apply `op` to `X` and `Y` elementwise. May "broadcast" to make
-    the shapes of `X` and `Y` congruent.
+    op(*x[, out], where=True, **kwargs)
+    Apply `op` to the arguments `*x` elementwise, broadcasting the arguments.
 
     The broadcasting rules are:
 
@@ -5455,18 +5442,25 @@ add_newdoc('numpy.core', 'ufunc',
 
     Parameters
     ----------
-    X : array_like
-        First input array.
-    Y : array_like
-        Second input array.
-    out : array_like
-        An array to store the output. Must be the same shape as the
-        output would have.
+    *x : array_like
+        Input arrays.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        Alternate array object(s) in which to put the result; if provided, it
+        must have a shape that the inputs broadcast to. A tuple of arrays
+        (possible only as a keyword argument) must have length equal to the
+        number of outputs; use `None` for outputs to be allocated by the ufunc.
+    where : array_like, optional
+        Values of True indicate to calculate the ufunc at that position, values
+        of False indicate to leave the value in the output alone.
+    **kwargs
+        For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
     Returns
     -------
-    r : array_like
-        The return value; if out is provided, `r` will be equal to out.
+    r : ndarray or tuple of ndarray
+        `r` will have the shape that the arrays in `x` broadcast to; if `out` is
+        provided, `r` will be equal to `out`. If the function has more than one
+        output, then the result will be a tuple of arrays.
 
     """)
 
@@ -5675,9 +5669,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         The type used to represent the intermediate results. Defaults
         to the data-type of the output array if this is provided, or
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided, a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5720,7 +5719,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=0, dtype=None, out=None, keepdims=None)
+    accumulate(array, axis=0, dtype=None, out=None)
 
     Accumulate the result of applying the operator to all elements.
 
@@ -5749,11 +5748,14 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
         The data-type used to represent the intermediate results. Defaults
         to the data-type of the output array if such is provided, or the
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
-    keepdims : bool
-        Has no effect. Deprecated, and will be removed in future.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
 
     Returns
     -------
@@ -5828,9 +5830,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
         The type used to represent the intermediate results. Defaults
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
 
     Returns
     -------
@@ -6347,6 +6354,15 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('ndim',
+    """
+    Number of dimensions of the sub-array if this data type describes a
+    sub-array, and ``0`` otherwise.
+
+    .. versionadded:: 1.13.0
+
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('str',
     """The array-protocol typestring of this data-type object."""))
 
@@ -6718,6 +6734,57 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     >>> # Number of Saturdays in 2011
     ... np.busday_count('2011', '2012', weekmask='Sat')
     53
+    """)
+
+add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
+    """
+    normalize_axis_index(axis, ndim, msg_prefix=None)
+
+    Normalizes an axis index, `axis`, such that is a valid positive index into
+    the shape of array with `ndim` dimensions. Raises an AxisError with an
+    appropriate message if this is not possible.
+
+    Used internally by all axis-checking logic.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    axis : int
+        The un-normalized index of the axis. Can be negative
+    ndim : int
+        The number of dimensions of the array that `axis` should be normalized
+        against
+    msg_prefix : str
+        A prefix to put before the message, typically the name of the argument
+
+    Returns
+    -------
+    normalized_axis : int
+        The normalized axis index, such that `0 <= normalized_axis < ndim`
+
+    Raises
+    ------
+    AxisError
+        If the axis index is invalid, when `-ndim <= axis < ndim` is false.
+
+    Examples
+    --------
+    >>> normalize_axis_index(0, ndim=3)
+    0
+    >>> normalize_axis_index(1, ndim=3)
+    1
+    >>> normalize_axis_index(-1, ndim=3)
+    2
+
+    >>> normalize_axis_index(3, ndim=3)
+    Traceback (most recent call last):
+    ...
+    AxisError: axis 3 is out of bounds for array of dimension 3
+    >>> normalize_axis_index(-4, ndim=3, msg_prefix='axes_arg')
+    Traceback (most recent call last):
+    ...
+    AxisError: axes_arg: axis -4 is out of bounds for array of dimension 3
     """)
 
 ##############################################################################

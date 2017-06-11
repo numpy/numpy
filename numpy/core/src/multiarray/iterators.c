@@ -911,7 +911,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     type = PyArray_DESCR(self->ao);
 
     /*
-     * Check for Boolean -- this is first becasue
+     * Check for Boolean -- this is first because
      * Bool is a subclass of Int
      */
     if (PyBool_Check(ind)) {
@@ -1553,7 +1553,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
             }
         }
         else {
-            arr = PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            arr = PyArray_FROM_O(obj);
             if (arr == NULL) {
                 goto fail;
             }

@@ -4,7 +4,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
-from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.testing import TestCase, run_module_suite, assert_, assert_raises
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
@@ -632,6 +632,19 @@ class TestJoinBy(TestCase):
                                  (0, 0, 0, 1), (0, 0, 0, 1)],
                            dtype=[('a', int), ('b', int), ('c', int), ('d', int)])
         assert_equal(test, control)
+
+    def test_different_field_order(self):
+        # gh-8940
+        a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'f4'), ('c', 'u1')])
+        b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
+        # this should not give a FutureWarning:
+        j = join_by(['c', 'b'], a, b, jointype='inner', usemask=False)
+        assert_equal(j.dtype.names, ['b', 'c', 'a1', 'a2'])
+
+    def test_duplicate_keys(self):
+        a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'f4'), ('c', 'u1')])
+        b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
+        assert_raises(ValueError, join_by, ['a', 'b', 'b'], a, b)
 
 
 class TestJoinBy2(TestCase):

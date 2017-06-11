@@ -368,10 +368,10 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+                             NPY_CASTING casting,
+                             PyArrayObject **operands,
+                             PyObject *type_tup,
+                             PyArray_Descr **out_dtypes)
 {
     int ret;
     ret = PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting, operands,
@@ -382,12 +382,10 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
 
     /* The type resolver would have upcast already */
     if (out_dtypes[0]->type_num == NPY_BOOL) {
-        /* 2013-12-05, 1.9 */
-        if (DEPRECATE("numpy boolean negative, the `-` operator, is "
-                      "deprecated, use the `~` operator or the logical_not "
-                      "function instead.") < 0) {
-            return -1;
-        }
+        PyErr_Format(PyExc_TypeError,
+            "The numpy boolean negative, the `-` operator, is not supported, "
+            "use the `~` operator or the logical_not function instead.");
+        return -1;
     }
 
     return ret;
@@ -536,6 +534,32 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
         return PyUFunc_SimpleUnaryOperationTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
     }
+}
+
+/*
+ * This function applies special type resolution rules for the isnat
+ * ufunc. This ufunc converts datetime/timedelta -> bool, and is not covered
+ * by the simple unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        PyErr_SetString(PyExc_ValueError,
+                "ufunc 'isnat' is only defined for datetime and timedelta.");
+        return -1;
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
 }
 
 /*
@@ -798,12 +822,11 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
         /* The type resolver would have upcast already */
         if (out_dtypes[0]->type_num == NPY_BOOL) {
-            /* 2013-12-05, 1.9 */
-            if (DEPRECATE("numpy boolean subtract, the `-` operator, is "
-                          "deprecated, use the bitwise_xor, the `^` operator, "
-                          "or the logical_xor function instead.") < 0) {
-                return -1;
-            }
+            PyErr_Format(PyExc_TypeError,
+                "numpy boolean subtract, the `-` operator, is deprecated, "
+                "use the bitwise_xor, the `^` operator, or the logical_xor "
+                "function instead.");
+            return -1;
         }
         return ret;
     }
@@ -1090,6 +1113,7 @@ type_reso_error: {
     }
 }
 
+
 /*
  * This function applies the type resolution rules for division.
  * In particular, there are a number of special cases with datetime:
@@ -1209,6 +1233,41 @@ type_reso_error: {
         return -1;
     }
 }
+
+/*
+ * Function to check and report floor division warning when python2.x is 
+ * invoked with -3 switch 
+ * See PEP238 and #7949 for numpy
+ * This function will not be hit for py3 or when __future__ imports division. 
+ * See generate_umath.py for reason
+*/
+NPY_NO_EXPORT int
+PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+ /* Depreciation checks needed only on python 2 */
+#if !defined(NPY_PY3K)
+    int type_num1, type_num2;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* If both types are integer, warn the user, same as python does */ 
+    if (Py_DivisionWarningFlag &&
+        (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+        (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)))
+    {
+        PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
+    } 
+#endif  
+
+   return PyUFunc_DivisionTypeResolver(ufunc, casting, operands, 
+                                       type_tup, out_dtypes);
+}
+
 
 static int
 find_userloop(PyUFuncObject *ufunc,

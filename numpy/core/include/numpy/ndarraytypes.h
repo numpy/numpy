@@ -15,7 +15,17 @@
         #define NPY_ALLOW_THREADS 0
 #endif
 
+#ifndef __has_extension
+#define __has_extension(x) 0
+#endif
 
+#if !defined(_NPY_NO_DEPRECATIONS) && \
+    ((defined(__GNUC__)&& __GNUC__ >= 6) || \
+     __has_extension(attribute_deprecated_with_message))
+#define NPY_ATTR_DEPRECATE(text) __attribute__ ((deprecated (text)))
+#else
+#define NPY_ATTR_DEPRECATE(text)
+#endif
 
 /*
  * There are several places in the code where an array of dimensions
@@ -71,12 +81,15 @@ enum NPY_TYPES {    NPY_BOOL=0,
 
                     NPY_NTYPES,
                     NPY_NOTYPE,
-                    NPY_CHAR,      /* special flag */
+                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
                     NPY_USERDEF=256,  /* leave room for characters */
 
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
+#ifdef _MSC_VER
+#pragma deprecated(NPY_CHAR)
+#endif
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
@@ -1008,6 +1021,12 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_DELAY_BUFALLOC             0x00000800
 /* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
 #define NPY_ITER_DONT_NEGATE_STRIDES        0x00001000
+/*
+ * If output operands overlap with other operands (based on heuristics that
+ * has false positives but no false negatives), make temporary copies to
+ * eliminate overlap.
+ */
+#define NPY_ITER_COPY_IF_OVERLAP            0x00002000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
@@ -1039,6 +1058,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
+/* Assume iterator order data access for COPY_IF_OVERLAP */
+#define NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE 0x40000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

@@ -97,6 +97,10 @@ class memmap(ndarray):
         changes to disk before removing the object.
 
 
+    See also
+    --------
+    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
+
     Notes
     -----
     The memmap object can be used anywhere an ndarray is accepted.
@@ -244,7 +248,7 @@ class memmap(ndarray):
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes - 1, 0)
-            fid.write(np.compat.asbytes('\0'))
+            fid.write(b'\0')
             fid.flush()
 
         if mode == 'c':
@@ -256,11 +260,11 @@ class memmap(ndarray):
 
         start = offset - offset % mmap.ALLOCATIONGRANULARITY
         bytes -= start
-        offset -= start
+        array_offset = offset - start
         mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-            offset=offset, order=order)
+                               offset=array_offset, order=order)
         self._mmap = mm
         self.offset = offset
         self.mode = mode

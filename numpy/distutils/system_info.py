@@ -1488,7 +1488,8 @@ class lapack_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas')
 
-        if sys.platform == 'darwin' and not atlas_info:
+        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+                                             lapack_mkl_info):
             # Use the system lapack from Accelerate or vecLib under OSX
             args = []
             link_args = []
@@ -1593,7 +1594,8 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin' and not atlas_info:
+        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+                                             blas_mkl_info or blis_info):
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
@@ -1665,6 +1667,8 @@ class blas_info(system_info):
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
+        else:
+            info['include_dirs'] = self.get_include_dirs()
         if platform.system() == 'Windows':
             # The check for windows is needed because has_cblas uses the
             # same compiler that was used to compile Python and msvc is
@@ -1778,7 +1782,7 @@ class openblas_lapack_info(openblas_info):
         # Add the additional "extra" arguments
         try:
             extra_args = info['extra_link_args']
-        except:
+        except Exception:
             extra_args = []
         try:
             with open(src, 'wt') as f:

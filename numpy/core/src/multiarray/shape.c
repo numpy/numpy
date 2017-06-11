@@ -145,26 +145,33 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
     }
 
-    if (PyArray_NDIM(self) != new_nd) {
-        /* Different number of dimensions. */
-        ((PyArrayObject_fields *)self)->nd = new_nd;
-        /* Need new dimensions and strides arrays */
-        dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
-        if (dimptr == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                    "cannot allocate memory for array");
-            return NULL;
+    if (new_nd > 0) {
+        if (PyArray_NDIM(self) != new_nd) {
+            /* Different number of dimensions. */
+            ((PyArrayObject_fields *)self)->nd = new_nd;
+            /* Need new dimensions and strides arrays */
+            dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
+            if (dimptr == NULL) {
+                PyErr_SetString(PyExc_MemoryError,
+                                "cannot allocate memory for array");
+                return NULL;
+            }
+            ((PyArrayObject_fields *)self)->dimensions = dimptr;
+            ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
         }
-        ((PyArrayObject_fields *)self)->dimensions = dimptr;
-        ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
+        /* make new_strides variable */
+        _array_fill_strides(new_strides, new_dimensions, new_nd,
+                            PyArray_DESCR(self)->elsize, PyArray_FLAGS(self),
+                            &(((PyArrayObject_fields *)self)->flags));
+        memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
+        memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     }
-
-    /* make new_strides variable */
-    _array_fill_strides(
-        new_strides, new_dimensions, new_nd, PyArray_DESCR(self)->elsize,
-        PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
-    memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
-    memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
+    else {
+        PyDimMem_FREE(((PyArrayObject_fields *)self)->dimensions);
+        ((PyArrayObject_fields *)self)->nd = 0;
+        ((PyArrayObject_fields *)self)->dimensions = NULL;
+        ((PyArrayObject_fields *)self)->strides = NULL;
+    }
     Py_RETURN_NONE;
 }
 
@@ -294,7 +301,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
 
 
-/* For back-ward compatability -- Not recommended */
+/* For backward compatibility -- Not recommended */
 
 /*NUMPY_API
  * Reshape
@@ -680,9 +687,9 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
-    npy_intp *axes, axis;
-    npy_intp i, n;
-    npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
+    npy_intp *axes;
+    int i, n;
+    int permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
     int flags;
 
@@ -704,13 +711,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
             reverse_permutation[i] = -1;
         }
         for (i = 0; i < n; i++) {
-            axis = axes[i];
-            if (axis < 0) {
-                axis = PyArray_NDIM(ap) + axis;
-            }
-            if (axis < 0 || axis >= PyArray_NDIM(ap)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid axis for this array");
+            int axis = axes[i];
+            if (check_and_adjust_axis(&axis, PyArray_NDIM(ap)) < 0) {
                 return NULL;
             }
             if (reverse_permutation[axis] != -1) {

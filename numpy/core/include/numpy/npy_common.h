@@ -11,6 +11,16 @@
 #include <Python.h>
 
 /*
+ * using static inline modifiers when defining npy_math functions
+ * allows the compiler to make optimizations when possible
+ */
+#if NPY_INTERNAL_BUILD
+#ifndef NPY_INLINE_MATH
+#define NPY_INLINE_MATH 1
+#endif
+#endif
+
+/*
  * gcc does not unroll even with -O3
  * use with care, unrolling on modern cpus rarely speeds things up
  */
@@ -237,10 +247,6 @@ typedef Py_uintptr_t npy_uintp;
  *      PyString_Format. These functions use different formatting
  *      codes which are portably specified according to the Python
  *      documentation. See ticket #1795.
- *
- *      On Windows x64, the LONGLONG formatter should be used, but
- *      in Python 2.6 the %lld formatter is not supported. In this
- *      case we work around the problem by using the %zd formatter.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
@@ -268,11 +274,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
-    #if (PY_VERSION_HEX >= 0x02070000)
         #define NPY_INTP_FMT "lld"
-    #else
-        #define NPY_INTP_FMT "zd"
-    #endif
 #endif
 
 /*

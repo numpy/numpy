@@ -5,7 +5,6 @@ import pickle
 import numpy
 import numpy as np
 import datetime
-from numpy.compat import asbytes
 from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_warns, dec, suppress_warnings
@@ -586,18 +585,18 @@ class TestDateTime(TestCase):
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
 
         # Check that loading pickles from 1.6 works
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n" + \
-              "I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[7D]'))
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n" + \
-              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[W]'))
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n" + \
-              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('>M8[us]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n" + \
+              b"I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('<M8[7D]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n" + \
+              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('<M8[W]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n" + \
+              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
 
     def test_setstate(self):
         "Verify that datetime dtype __setstate__ can handle bad arguments"
@@ -794,6 +793,12 @@ class TestDateTime(TestCase):
             assert_equal((-tdb).dtype, tda.dtype)
             assert_equal(np.negative(tdb), tda)
             assert_equal(np.negative(tdb).dtype, tda.dtype)
+
+            # positive ufunc
+            assert_equal(np.positive(tda), tda)
+            assert_equal(np.positive(tda).dtype, tda.dtype)
+            assert_equal(np.positive(tdb), tdb)
+            assert_equal(np.positive(tdb).dtype, tdb.dtype)
 
             # absolute ufunc
             assert_equal(np.absolute(tdb), tda)
@@ -1118,11 +1123,15 @@ class TestDateTime(TestCase):
                     assert_warns(FutureWarning, op, td_other, td_nat)
 
             assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
+            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
+
+        with suppress_warnings() as sup:
+            sup.record(FutureWarning)
             assert_(np.not_equal(dt_nat, dt_other))
             assert_(np.not_equal(dt_other, dt_nat))
-            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
             assert_(np.not_equal(td_nat, td_other))
             assert_(np.not_equal(td_other, td_nat))
+            self.assertEqual(len(sup.log), 0)
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
@@ -1908,6 +1917,35 @@ class TestDateTime(TestCase):
         # Test parsing a date after Y2038
         a = np.datetime64('2038-01-20T13:21:14')
         assert_equal(str(a), '2038-01-20T13:21:14')
+
+    def test_isnat(self):
+        assert_(np.isnat(np.datetime64('NaT', 'ms')))
+        assert_(np.isnat(np.datetime64('NaT', 'ns')))
+        assert_(not np.isnat(np.datetime64('2038-01-19T03:14:07')))
+
+        assert_(np.isnat(np.timedelta64('NaT', "ms")))
+        assert_(not np.isnat(np.timedelta64(34, "ms")))
+
+        res = np.array([False, False, True])
+        for unit in ['Y', 'M', 'W', 'D',
+                     'h', 'm', 's', 'ms', 'us',
+                     'ns', 'ps', 'fs', 'as']:
+            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+
+    def test_isnat_error(self):
+        # Test that only datetime dtype arrays are accepted
+        for t in np.typecodes["All"]:
+            if t in np.typecodes["Datetime"]:
+                continue
+            assert_raises(ValueError, np.isnat, np.zeros(10, t))
+
 
 class TestDateTimeData(TestCase):
 

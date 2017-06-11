@@ -9,7 +9,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_raises
+from numpy.testing import TestCase, run_module_suite, assert_raises, dec
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
     array, arange, masked, MaskedArray, masked_array, log, add, hypot,
@@ -176,7 +176,7 @@ class TestSubclassing(TestCase):
     # Test suite for masked subclasses of ndarray.
 
     def setUp(self):
-        x = np.arange(5)
+        x = np.arange(5, dtype='float')
         mx = mmatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
 
@@ -291,14 +291,19 @@ class TestSubclassing(TestCase):
         # getter should  return a ComplicatedSubArray, even for single item
         # first check we wrote ComplicatedSubArray correctly
         self.assertTrue(isinstance(xcsub[1], ComplicatedSubArray))
+        self.assertTrue(isinstance(xcsub[1,...], ComplicatedSubArray))
         self.assertTrue(isinstance(xcsub[1:4], ComplicatedSubArray))
+
         # now that it propagates inside the MaskedArray
         self.assertTrue(isinstance(mxcsub[1], ComplicatedSubArray))
+        self.assertTrue(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
         self.assertTrue(mxcsub[0] is masked)
+        self.assertTrue(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
         self.assertTrue(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
+
         # also for flattened version (which goes via MaskedIterator)
         self.assertTrue(isinstance(mxcsub.flat[1].data, ComplicatedSubArray))
-        self.assertTrue(mxcsub[0] is masked)
+        self.assertTrue(mxcsub.flat[0] is masked)
         self.assertTrue(isinstance(mxcsub.flat[1:4].base, ComplicatedSubArray))
 
         # setter should only work with ComplicatedSubArray input
@@ -314,6 +319,17 @@ class TestSubclassing(TestCase):
         assert_raises(ValueError, mxcsub.flat.__setitem__, slice(1, 4), x[1:4])
         mxcsub.flat[1] = xcsub[4]
         mxcsub.flat[1:4] = xcsub[1:4]
+
+    def test_subclass_nomask_items(self):
+        x = np.arange(5)
+        xcsub = ComplicatedSubArray(x)
+        mxcsub_nomask = masked_array(xcsub)
+
+        self.assertTrue(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
+        self.assertTrue(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
+
+        self.assertTrue(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
+        self.assertTrue(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
 
     def test_subclass_repr(self):
         """test that repr uses the name of the subclass

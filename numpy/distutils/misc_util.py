@@ -12,6 +12,7 @@ import shutil
 
 import distutils
 from distutils.errors import DistutilsError
+from distutils.msvccompiler import get_build_architecture
 try:
     from threading import local as tlocal
 except ImportError:
@@ -390,21 +391,36 @@ def mingw32():
             return True
     return False
 
-def msvc_runtime_library():
-    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+def msvc_runtime_version():
+    "Return version of MSVC runtime library, as defined by __MSC_VER__ macro"
     msc_pos = sys.version.find('MSC v.')
     if msc_pos != -1:
-        msc_ver = sys.version[msc_pos+6:msc_pos+10]
-        lib = {'1300': 'msvcr70',    # MSVC 7.0
-               '1310': 'msvcr71',    # MSVC 7.1
-               '1400': 'msvcr80',    # MSVC 8
-               '1500': 'msvcr90',    # MSVC 9 (VS 2008)
-               '1600': 'msvcr100',   # MSVC 10 (aka 2010)
-              }.get(msc_ver, None)
+        msc_ver = int(sys.version[msc_pos+6:msc_pos+10])
     else:
-        lib = None
-    return lib
+        msc_ver = None
+    return msc_ver
 
+def msvc_runtime_library():
+    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+    ver = msvc_runtime_major ()
+    if ver:
+        if ver < 140:
+            return "msvcr%i" % ver
+        else:
+            return "vcruntime%i" % ver
+    else:
+        return None
+
+def msvc_runtime_major():
+    "Return major version of MSVC runtime coded like get_build_msvc_version"
+    major = {1300:  70,  # MSVC 7.0
+             1310:  71,  # MSVC 7.1
+             1400:  80,  # MSVC 8
+             1500:  90,  # MSVC 9  (aka 2008)
+             1600: 100,  # MSVC 10 (aka 2010)
+             1900: 140,  # MSVC 14 (aka 2015)
+    }.get(msvc_runtime_version(), None)
+    return major
 
 #########################
 
@@ -445,7 +461,7 @@ def is_sequence(seq):
         return False
     try:
         len(seq)
-    except:
+    except Exception:
         return False
     return True
 
@@ -524,6 +540,18 @@ def _get_directories(list_of_sources):
         if d[0] != '' and not d[0] in direcs:
             direcs.append(d[0])
     return direcs
+
+def _commandline_dep_string(cc_args, extra_postargs, pp_opts):
+    """
+    Return commandline representation used to determine if a file needs
+    to be recompiled
+    """
+    cmdline = 'commandline: '
+    cmdline += ' '.join(cc_args)
+    cmdline += ' '.join(extra_postargs)
+    cmdline += ' '.join(pp_opts) + '\n'
+    return cmdline
+
 
 def get_dependencies(sources):
     #XXX scan sources for include statements
@@ -1036,24 +1064,25 @@ class Configuration(object):
 
         Notes
         -----
-        Rules for installation paths:
-          foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
-          (gun, foo/bar) -> parent/gun
-          foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
-          (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
-          (gun/*, foo/*) -> parent/gun/a, parent/gun/b
-          /foo/bar -> (bar, /foo/bar) -> parent/bar
-          (gun, /foo/bar) -> parent/gun
-          (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
+        Rules for installation paths::
+
+            foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
+            (gun, foo/bar) -> parent/gun
+            foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
+            (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
+            (gun/*, foo/*) -> parent/gun/a, parent/gun/b
+            /foo/bar -> (bar, /foo/bar) -> parent/bar
+            (gun, /foo/bar) -> parent/gun
+            (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
 
         Examples
         --------
         For example suppose the source directory contains fun/foo.dat and
-        fun/bar/car.dat::
+        fun/bar/car.dat:
 
-            >>> self.add_data_dir('fun')                       #doctest: +SKIP
-            >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
-            >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
+        >>> self.add_data_dir('fun')                       #doctest: +SKIP
+        >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
+        >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
 
         Will install data-files to the locations::
 
@@ -1069,6 +1098,7 @@ class Configuration(object):
               gun/
                 foo.dat
                 car.dat
+
         """
         if is_sequence(data_path):
             d, data_path = data_path
@@ -1808,7 +1838,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:
@@ -1845,7 +1875,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:
@@ -1885,7 +1915,7 @@ class Configuration(object):
         -----
         This method scans files named
         __version__.py, <packagename>_version.py, version.py, and
-        __svn_version__.py for string variables version, __version\__, and
+        __svn_version__.py for string variables version, __version__, and
         <packagename>_version, until a version number is found.
         """
         version = getattr(self, 'version', None)
@@ -2287,21 +2317,3 @@ def msvc_version(compiler):
         raise ValueError("Compiler instance is not msvc (%s)"\
                          % compiler.compiler_type)
     return compiler._MSVCCompiler__version
-
-if sys.version[:3] >= '2.5':
-    def get_build_architecture():
-        from distutils.msvccompiler import get_build_architecture
-        return get_build_architecture()
-else:
-    #copied from python 2.5.1 distutils/msvccompiler.py
-    def get_build_architecture():
-        """Return the processor architecture.
-
-        Possible results are "Intel", "Itanium", or "AMD64".
-        """
-        prefix = " bit ("
-        i = sys.version.find(prefix)
-        if i == -1:
-            return "Intel"
-        j = sys.version.find(")", i)
-        return sys.version[i+len(prefix):j]

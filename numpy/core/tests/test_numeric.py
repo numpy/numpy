@@ -1010,7 +1010,7 @@ class TestNonzero(TestCase):
 
         assert_raises(ValueError, np.count_nonzero, m, axis=(1, 1))
         assert_raises(TypeError, np.count_nonzero, m, axis='foo')
-        assert_raises(ValueError, np.count_nonzero, m, axis=3)
+        assert_raises(np.AxisError, np.count_nonzero, m, axis=3)
         assert_raises(TypeError, np.count_nonzero,
                       m, axis=np.array([[1], [2]]))
 
@@ -1149,6 +1149,18 @@ class TestBinaryRepr(TestCase):
         assert_equal(np.binary_repr(10, width=7), '0001010')
         assert_equal(np.binary_repr(-5, width=7), '1111011')
 
+    def test_neg_width_boundaries(self):
+        # see gh-8670
+
+        # Ensure that the example in the issue does not
+        # break before proceeding to a more thorough test.
+        assert_equal(np.binary_repr(-128, width=8), '10000000')
+
+        for width in range(1, 11):
+            num = -2**(width - 1)
+            exp = '1' + (width - 1) * '0'
+            assert_equal(np.binary_repr(num, width=width), exp)
+
 
 class TestBaseRepr(TestCase):
     def test_base3(self):
@@ -1193,6 +1205,16 @@ class TestArrayComparisons(TestCase):
                              np.array([('a', 1)], dtype='S1,u4'))
         assert_(res)
         assert_(type(res) is bool)
+
+    def test_none_compares_elementwise(self):
+        a = np.array([None, 1, None], dtype=object)
+        assert_equal(a == None, [True, False, True])
+        assert_equal(a != None, [False, True, False])
+
+        a = np.ones(3)
+        assert_equal(a == None, [False, False, False])
+        assert_equal(a != None, [True, True, True])
+
 
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
@@ -2313,10 +2335,10 @@ class TestRollaxis(TestCase):
 
     def test_exceptions(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4)
-        assert_raises(ValueError, np.rollaxis, a, -5, 0)
-        assert_raises(ValueError, np.rollaxis, a, 0, -5)
-        assert_raises(ValueError, np.rollaxis, a, 4, 0)
-        assert_raises(ValueError, np.rollaxis, a, 0, 5)
+        assert_raises(np.AxisError, np.rollaxis, a, -5, 0)
+        assert_raises(np.AxisError, np.rollaxis, a, 0, -5)
+        assert_raises(np.AxisError, np.rollaxis, a, 4, 0)
+        assert_raises(np.AxisError, np.rollaxis, a, 0, 5)
 
     def test_results(self):
         a = np.arange(1*2*3*4).reshape(1, 2, 3, 4).copy()
@@ -2403,11 +2425,11 @@ class TestMoveaxis(TestCase):
 
     def test_errors(self):
         x = np.random.randn(1, 2, 3)
-        assert_raises_regex(ValueError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'source.*out of bounds',
                             np.moveaxis, x, 3, 0)
-        assert_raises_regex(ValueError, 'invalid axis .* `source`',
+        assert_raises_regex(np.AxisError, 'source.*out of bounds',
                             np.moveaxis, x, -4, 0)
-        assert_raises_regex(ValueError, 'invalid axis .* `destination`',
+        assert_raises_regex(np.AxisError, 'destination.*out of bounds',
                             np.moveaxis, x, 0, 5)
         assert_raises_regex(ValueError, 'repeated axis in `source`',
                             np.moveaxis, x, [0, 0], [0, 1])
@@ -2495,13 +2517,13 @@ class TestCross(TestCase):
         u = np.ones((10, 3, 5))
         v = np.ones((2, 5))
         assert_equal(np.cross(u, v, axisa=1, axisb=0).shape, (10, 5, 3))
-        assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=2)
-        assert_raises(ValueError, np.cross, u, v, axisa=3, axisb=0)
+        assert_raises(np.AxisError, np.cross, u, v, axisa=1, axisb=2)
+        assert_raises(np.AxisError, np.cross, u, v, axisa=3, axisb=0)
         u = np.ones((10, 3, 5, 7))
         v = np.ones((5, 7, 2))
         assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
-        assert_raises(ValueError, np.cross, u, v, axisa=-5, axisb=2)
-        assert_raises(ValueError, np.cross, u, v, axisa=1, axisb=-4)
+        assert_raises(np.AxisError, np.cross, u, v, axisa=-5, axisb=2)
+        assert_raises(np.AxisError, np.cross, u, v, axisa=1, axisb=-4)
         # gh-5885
         u = np.ones((3, 4, 2))
         for axisc in range(-2, 2):

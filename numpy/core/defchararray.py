@@ -1289,7 +1289,7 @@ def split(a, sep=None, maxsplit=None):
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
 
-    Calls `str.rsplit` element-wise.
+    Calls `str.split` element-wise.
 
     Parameters
     ----------
@@ -1383,7 +1383,7 @@ def strip(a, chars=None):
     For each element in `a`, return a copy with the leading and
     trailing characters removed.
 
-    Calls `str.rstrip` element-wise.
+    Calls `str.strip` element-wise.
 
     Parameters
     ----------
@@ -2559,17 +2559,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 # numerical array that matches the input buffer, and
                 # then use NumPy to convert it to UCS4.  All of this
                 # should happen in native endianness.
-                if sys.hexversion >= 0x2060000:
-                    obj = obj.encode('utf_32')
-                else:
-                    if isinstance(obj, str):
-                        ascii = numpy.frombuffer(obj, 'u1')
-                        ucs4 = numpy.array(ascii, 'u4')
-                        obj = ucs4.data
-                    else:
-                        ucs2 = numpy.frombuffer(obj, 'u2')
-                        ucs4 = numpy.array(ucs2, 'u4')
-                        obj = ucs4.data
+                obj = obj.encode('utf_32')
             else:
                 obj = _unicode(obj)
         else:

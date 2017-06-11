@@ -206,6 +206,9 @@ static NPY_GCC_OPT_3 void
 #else
     npy_uint64 temp0, temp1;
 #endif
+    if (N == 0) {
+        return;
+    }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
     assert(npy_is_aligned(dst, _ALIGN(@type@)));
@@ -1632,7 +1635,8 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         char *subspace_baseptrs[2];
         char **subspace_ptrs = mit->subspace_ptrs;
         npy_intp *subspace_strides = mit->subspace_strides;
-        int skip = 0;
+        int is_subiter_trivial = 0; /* has three states */
+        npy_intp reset_offsets[2] = {0, 0};
 
         /* Use strided transfer functions for the inner loop */
         PyArray_StridedUnaryOp *stransfer = NULL;
@@ -1667,9 +1671,12 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
         counter = NpyIter_GetInnerLoopSizePtr(mit->subspace_iter);
         if (*counter == PyArray_SIZE(mit->subspace)) {
-            skip = 1;
+           /*
+            * subspace is trivially iterable.
+            * manipulate pointers to avoid expensive resetting
+            */
+            is_subiter_trivial = 1;
         }
-
 /**begin repeat1
  * #one_iter = 1, 0#
  * #numiter = 1, numiter#
@@ -1707,10 +1714,15 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 }
 
                 /*
-                 * Resetting is slow, so skip if the subspace iteration has
-                 * only a single inner loop.
+                 * Resetting is slow, so try to avoid resetting
+                 * if subspace iteration is trivial.
+                 * Watch out: reset_offsets are kept outside of the loop,
+                 * assuming the subspaces of different external iterations
+                 * share the same structure.
                  */
-                if (!skip) {
+                if (is_subiter_trivial <= 1) {
+                    /* slower resetting: first iteration or non-trivial subspace */
+
                     char * errmsg = NULL;
                     subspace_baseptrs[0] = self_ptr;
                     subspace_baseptrs[1] = mit->extra_op_ptrs[0];
@@ -1724,10 +1736,24 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                         NPY_AUXDATA_FREE(transferdata);
                         return -1;
                     }
+                    if (is_subiter_trivial != 0) {
+                        /* reset_offsets are nonzero for negative strides.*/
+                        reset_offsets[0] = subspace_ptrs[0] - self_ptr;
+                        reset_offsets[1] = subspace_ptrs[1] - mit->extra_op_ptrs[0];
+
+                        /* use the faster adjustment further on */
+                        is_subiter_trivial ++;
+                    }
                 }
                 else {
-                    subspace_ptrs[0] = self_ptr;
-                    subspace_ptrs[1] = mit->extra_op_ptrs[0];
+                    /*
+                     * faster resetting if the subspace iteration is trival.
+                     * reset_offsets are zero for positive strides,
+                     * for negative strides this shifts the pointer to the last
+                     * item.
+                     */
+                    subspace_ptrs[0] = self_ptr + reset_offsets[0];
+                    subspace_ptrs[1] = mit->extra_op_ptrs[0] + reset_offsets[1];
                 }
 
 #if !@isget@

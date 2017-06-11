@@ -90,6 +90,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -936,10 +937,7 @@ def chebder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1064,10 +1062,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("Too many integration constants")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1230,7 +1225,7 @@ def chebval2d(x, y, c):
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = chebval(x, c)
@@ -1244,7 +1239,7 @@ def chebgrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1343,7 +1338,7 @@ def chebval3d(x, y, z, c):
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = chebval(x, c)
@@ -1472,7 +1467,7 @@ def chebvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
+    .. math:: V[..., (deg[1] + 1)*i + j] = T_i(x) * T_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1598,7 +1593,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Chebyshev series to data.
 
-    Return the coefficients of a Legendre series of degree `deg` that is the
+    Return the coefficients of a Chebyshev series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
     1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting
@@ -1898,7 +1893,7 @@ def chebgauss(deg):
     Computes the sample points and weights for Gauss-Chebyshev quadrature.
     These sample points and weights will correctly integrate polynomials of
     degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
-    the weight function :math:`f(x) = 1/\sqrt{1 - x^2}`.
+    the weight function :math:`f(x) = 1/\\sqrt{1 - x^2}`.
 
     Parameters
     ----------
@@ -1921,9 +1916,9 @@ def chebgauss(deg):
     be problematic. For Gauss-Chebyshev there are closed form solutions for
     the sample points and weights. If n = `deg`, then
 
-    .. math:: x_i = \cos(\pi (2 i - 1) / (2 n))
+    .. math:: x_i = \\cos(\\pi (2 i - 1) / (2 n))
 
-    .. math:: w_i = \pi / n
+    .. math:: w_i = \\pi / n
 
     """
     ideg = int(deg)
@@ -1940,7 +1935,7 @@ def chebweight(x):
     """
     The weight function of the Chebyshev polynomials.
 
-    The weight function is :math:`1/\sqrt{1 - x^2}` and the interval of
+    The weight function is :math:`1/\\sqrt{1 - x^2}` and the interval of
     integration is :math:`[-1, 1]`. The Chebyshev polynomials are
     orthogonal, but not normalized, with respect to this weight function.
 

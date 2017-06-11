@@ -32,4 +32,9 @@
 
 # Version 10 (NumPy 1.10) Added PyArray_CheckAnyScalarExact
 # Version 10 (NumPy 1.11) No change.
+# Version 10 (NumPy 1.12) No change.
 0x0000000a = 9b8bce614655d3eb02acddcb508203cb
+
+# Version 11 (NumPy 1.13) Added PyArray_MapIterArrayCopyIfOverlap
+# Version 11 (NumPy 1.14) No Change
+0x0000000b = edb1ba83730c650fd9bc5772a919cda7

@@ -8,6 +8,7 @@ import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import ndarray, ufunc, asarray
+import numpy as np
 
 # getargspec and formatargspec were removed in Python 3.6
 from numpy.compat import getargspec, formatargspec
@@ -338,7 +339,7 @@ def who(vardict=None):
 #-----------------------------------------------------------------------------
 
 
-# NOTE:  pydoc defines a help function which works simliarly to this
+# NOTE:  pydoc defines a help function which works similarly to this
 #  except it uses a pager to take over the screen.
 
 # combine name and arguments and split to multiple lines of width
@@ -556,7 +557,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 if len(arglist) > 1:
                     arglist[1] = "("+arglist[1]
                     arguments = ", ".join(arglist[1:])
-        except:
+        except Exception:
             pass
 
         if len(name+arguments) > maxwidth:
@@ -688,7 +689,7 @@ def source(object, output=sys.stdout):
     try:
         print("In file: %s\n" % inspect.getsourcefile(object), file=output)
         print(inspect.getsource(object), file=output)
-    except:
+    except Exception:
         print("Not available for this object.", file=output)
 
 
@@ -917,13 +918,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             continue
 
                         try:
-                            # Catch SystemExit, too
-                            base_exc = BaseException
-                        except NameError:
-                            # Python 2.4 doesn't have BaseException
-                            base_exc = Exception
-
-                        try:
                             old_stdout = sys.stdout
                             old_stderr = sys.stderr
                             try:
@@ -933,7 +927,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             finally:
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
-                        except base_exc:
+                        # Catch SystemExit, too
+                        except BaseException:
                             continue
 
             for n, v in _getmembers(item):
@@ -1119,4 +1114,49 @@ def safe_eval(source):
     import ast
 
     return ast.literal_eval(source)
+
+
+def _median_nancheck(data, result, axis, out):
+    """
+    Utility function to check median result from data for NaN values at the end
+    and return NaN in that case. Input result can also be a MaskedArray.
+
+    Parameters
+    ----------
+    data : array
+        Input data to median function
+    result : Array or MaskedArray
+        Result of median function
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the median was computed.
+    out : ndarray, optional
+        Output array in which to place the result.
+    Returns
+    -------
+    median : scalar or ndarray
+        Median or NaN in axes which contained NaN in the input.
+    """
+    if data.size == 0:
+        return result
+    data = np.rollaxis(data, axis, data.ndim)
+    n = np.isnan(data[..., -1])
+    # masked NaN values are ok
+    if np.ma.isMaskedArray(n):
+        n = n.filled(False)
+    if result.ndim == 0:
+        if n == True:
+            warnings.warn("Invalid value encountered in median",
+                          RuntimeWarning, stacklevel=3)
+            if out is not None:
+                out[...] = data.dtype.type(np.nan)
+                result = out
+            else:
+                result = data.dtype.type(np.nan)
+    elif np.count_nonzero(n.ravel()) > 0:
+        warnings.warn("Invalid value encountered in median for" +
+                      " %d results" % np.count_nonzero(n.ravel()),
+                      RuntimeWarning, stacklevel=3)
+        result[n] = np.nan
+    return result
+
 #-----------------------------------------------------------------------------

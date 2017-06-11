@@ -1,0 +1,39 @@
+=========
+Changelog
+=========
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Greg Young
+* Joerg Behrmann +
+* John Kirkham
+* Julian Taylor
+* Marten van Kerkwijk
+* Matthew Brett
+* Shota Kawabuchi
+* Jean Utke +
+
+Pull requests merged
+====================
+
+* `#8483 <https://github.com/numpy/numpy/pull/8483>`__: BUG: Fix wrong future nat warning and equiv type logic error...
+* `#8489 <https://github.com/numpy/numpy/pull/8489>`__: BUG: Fix wrong masked median for some special cases
+* `#8490 <https://github.com/numpy/numpy/pull/8490>`__: DOC: Place np.average in inline code
+* `#8491 <https://github.com/numpy/numpy/pull/8491>`__: TST: Work around isfinite inconsistency on i386
+* `#8494 <https://github.com/numpy/numpy/pull/8494>`__: BUG: Guard against replacing constants without '_' spec in f2py.
+* `#8524 <https://github.com/numpy/numpy/pull/8524>`__: BUG: Fix mean for float 16 non-array inputs for 1.12
+* `#8571 <https://github.com/numpy/numpy/pull/8571>`__: BUG: Fix calling python api with error set and minor leaks for...
+* `#8602 <https://github.com/numpy/numpy/pull/8602>`__: BUG: Make iscomplexobj compatible with custom dtypes again
+* `#8618 <https://github.com/numpy/numpy/pull/8618>`__: BUG: Fix undefined behaviour induced by bad __array_wrap__
+* `#8648 <https://github.com/numpy/numpy/pull/8648>`__: BUG: Fix MaskedArray.__setitem__
+* `#8659 <https://github.com/numpy/numpy/pull/8659>`__: BUG: PPC64el machines are POWER for Fortran in f2py
+* `#8665 <https://github.com/numpy/numpy/pull/8665>`__: BUG: Look up methods on MaskedArray in `_frommethod`
+* `#8674 <https://github.com/numpy/numpy/pull/8674>`__: BUG: Remove extra digit in binary_repr at limit
+* `#8704 <https://github.com/numpy/numpy/pull/8704>`__: BUG: Fix deepcopy regression for empty arrays.
+* `#8707 <https://github.com/numpy/numpy/pull/8707>`__: BUG: Fix ma.median for empty ndarrays

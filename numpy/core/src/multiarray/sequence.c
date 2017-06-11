@@ -27,90 +27,6 @@ array_any_nonzero(PyArrayObject *mp);
    we fill it in here so that PySequence_XXXX calls work as expected
 */
 
-
-static PyObject *
-array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
-{
-    PyArrayObject *ret;
-    PyArray_Descr *dtype;
-    Py_ssize_t dim0;
-    char *data;
-    npy_intp shape[NPY_MAXDIMS];
-
-    if (PyArray_NDIM(self) == 0) {
-        PyErr_SetString(PyExc_ValueError, "cannot slice a 0-d array");
-        return NULL;
-    }
-
-    dim0 = PyArray_DIM(self, 0);
-    if (ilow < 0) {
-        ilow = 0;
-    }
-    else if (ilow > dim0) {
-        ilow = dim0;
-    }
-    if (ihigh < ilow) {
-        ihigh = ilow;
-    }
-    else if (ihigh > dim0) {
-        ihigh = dim0;
-    }
-
-    data = PyArray_DATA(self);
-    if (ilow < ihigh) {
-        data += ilow * PyArray_STRIDE(self, 0);
-    }
-
-    /* Same shape except dimension 0 */
-    shape[0] = ihigh - ilow;
-    memcpy(shape+1, PyArray_DIMS(self) + 1,
-                        (PyArray_NDIM(self)-1)*sizeof(npy_intp));
-
-    dtype = PyArray_DESCR(self);
-    Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype,
-                             PyArray_NDIM(self), shape,
-                             PyArray_STRIDES(self), data,
-                             PyArray_FLAGS(self),
-                             (PyObject *)self);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
-    return (PyObject *)ret;
-}
-
-
-static int
-array_assign_slice(PyArrayObject *self, Py_ssize_t ilow,
-                Py_ssize_t ihigh, PyObject *v) {
-    int ret;
-    PyArrayObject *tmp;
-
-    if (v == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "cannot delete array elements");
-        return -1;
-    }
-    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
-        return -1;
-    }
-    tmp = (PyArrayObject *)array_slice(self, ilow, ihigh);
-    if (tmp == NULL) {
-        return -1;
-    }
-    ret = PyArray_CopyObject(tmp, v);
-    Py_DECREF(tmp);
-
-    return ret;
-}
-
 static int
 array_contains(PyArrayObject *self, PyObject *el)
 {
@@ -134,9 +50,9 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (ssizeargfunc)NULL,
     (ssizeargfunc)array_item,
-    (ssizessizeargfunc)array_slice,
-    (ssizeobjargproc)array_assign_item,        /*sq_ass_item*/
-    (ssizessizeobjargproc)array_assign_slice,  /*sq_ass_slice*/
+    (ssizessizeargfunc)NULL,
+    (ssizeobjargproc)array_assign_item,     /*sq_ass_item*/
+    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
     (objobjproc) array_contains,            /*sq_contains */
     (binaryfunc) NULL,                      /*sg_inplace_concat */
     (ssizeargfunc)NULL,

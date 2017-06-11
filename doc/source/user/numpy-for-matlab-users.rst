@@ -162,7 +162,7 @@ There are pros and cons to using both:
    -  ``:)`` ``A*B`` is matrix multiplication, so more convenient for
       linear algebra.
    -  ``<:(`` Element-wise multiplication requires calling a function,
-      ``multipy(A,B)``.
+      ``multiply(A,B)``.
    -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
       does not work elementwise but ``/`` does.
 
@@ -728,7 +728,7 @@ this is just an example, not a statement of "best practices"):
     # Define a Hermitian function
     def hermitian(A, **kwargs):
         return num.transpose(A,**kwargs).conj()
-    # Make some shorcuts for transpose,hermitian:
+    # Make some shortcuts for transpose,hermitian:
     #    num.transpose(A) --> T(A)
     #    hermitian(A) --> H(A)
     T = num.transpose

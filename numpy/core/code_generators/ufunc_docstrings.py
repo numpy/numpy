@@ -10,13 +10,32 @@ at compile time.
 
 """
 from __future__ import division, absolute_import, print_function
+import textwrap
 
 docdict = {}
 
 def get(name):
     return docdict.get(name)
 
+# common parameter text to all ufuncs
+_params_text = textwrap.dedent("""
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the inputs broadcast to. If not provided or `None`,
+        a freshly-allocated array is returned. A tuple (possible only as a
+        keyword argument) must have length equal to the number of outputs.
+    where : array_like, optional
+        Values of True indicate to calculate the ufunc at that position, values
+        of False indicate to leave the value in the output alone.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+""").strip()
+
 def add_newdoc(place, name, doc):
+    doc = textwrap.dedent(doc).strip()
+    doc = doc.replace('$PARAMS', _params_text)
+
     docdict['.'.join((place, name))] = doc
 
 
@@ -28,6 +47,7 @@ add_newdoc('numpy.core.umath', 'absolute',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -55,7 +75,7 @@ add_newdoc('numpy.core.umath', 'absolute',
     Plot the function over the complex plane:
 
     >>> xx = x + 1j * x[:, np.newaxis]
-    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10])
+    >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
     """)
@@ -70,6 +90,7 @@ add_newdoc('numpy.core.umath', 'add',
         The arrays to be added.  If ``x1.shape != x2.shape``, they must be
         broadcastable to a common shape (which may be the shape of one or
         the other).
+    $PARAMS
 
     Returns
     -------
@@ -105,10 +126,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     x : array_like
         `x`-coordinate on the unit circle.
         For real arguments, the domain is [-1, 1].
-
-    out : ndarray, optional
-        Array of the same shape as `a`, to store results in. See
-        `doc.ufuncs` (Section "Output arguments") for more details.
+    $PARAMS
 
     Returns
     -------
@@ -168,10 +186,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     ----------
     x : array_like
         Input array.
-    out : ndarray, optional
-        Array of the same shape as `x`, to store results in.
-        See `doc.ufuncs` (Section "Output arguments") for details.
-
+    $PARAMS
 
     Returns
     -------
@@ -221,10 +236,7 @@ add_newdoc('numpy.core.umath', 'arcsin',
     ----------
     x : array_like
         `y`-coordinate on the unit circle.
-
-    out : ndarray, optional
-        Array of the same shape as `x`, in which to store the results.
-        See `doc.ufuncs` (Section "Output arguments") for more details.
+    $PARAMS
 
     Returns
     -------
@@ -278,9 +290,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     ----------
     x : array_like
         Input array.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See `doc.ufuncs`.
+    $PARAMS
 
     Returns
     -------
@@ -326,7 +336,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     Parameters
     ----------
     x : array_like
-        Input values.  `arctan` is applied to each element of `x`.
+    $PARAMS
 
     Returns
     -------
@@ -406,6 +416,7 @@ add_newdoc('numpy.core.umath', 'arctan2',
     x2 : array_like, real-valued
         `x`-coordinates. `x2` must be broadcastable to match the shape of
         `x1` or vice versa.
+    $PARAMS
 
     Returns
     -------
@@ -473,6 +484,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -525,6 +537,7 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
+    $PARAMS
 
     Returns
     -------
@@ -576,9 +589,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -635,6 +646,7 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
+    $PARAMS
 
     Returns
     -------
@@ -683,6 +695,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     ----------
     x : array_like
         Input data.
+    $PARAMS
 
     Returns
     -------
@@ -713,6 +726,7 @@ add_newdoc('numpy.core.umath', 'trunc',
     ----------
     x : array_like
         Input data.
+    $PARAMS
 
     Returns
     -------
@@ -746,6 +760,7 @@ add_newdoc('numpy.core.umath', 'conjugate',
     ----------
     x : array_like
         Input value.
+    $PARAMS
 
     Returns
     -------
@@ -772,18 +787,12 @@ add_newdoc('numpy.core.umath', 'cos',
     ----------
     x : array_like
         Input array in radians.
-    out : ndarray, optional
-        Output array of same shape as `x`.
+    $PARAMS
 
     Returns
     -------
     y : ndarray
         The corresponding cosine values.
-
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
 
     Notes
     -----
@@ -823,6 +832,7 @@ add_newdoc('numpy.core.umath', 'cosh',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -851,8 +861,7 @@ add_newdoc('numpy.core.umath', 'degrees',
     ----------
     x : array_like
         Input array in radians.
-    out : ndarray, optional
-        Output array of same shape as x.
+    $PARAMS
 
     Returns
     -------
@@ -888,9 +897,7 @@ add_newdoc('numpy.core.umath', 'rad2deg',
     ----------
     x : array_like
         Angle in radians.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -915,6 +922,49 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
     """)
 
+add_newdoc('numpy.core.umath', 'heaviside',
+    """
+    Compute the Heaviside step function.
+
+    The Heaviside step function is defined as::
+
+                             0   if x < 0
+        heaviside(x, h0) =  h0   if x == 0
+                             1   if x > 0
+
+    where `h0` is often taken to be 0.5, but 0 and 1 are also sometimes used.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+    $PARAMS
+    h0 : array_like
+        The value of the function at x = 0.
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray
+        The output array, element-wise Heaviside step function of `x`.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    References
+    ----------
+    .. Wikipedia, "Heaviside step function",
+       https://en.wikipedia.org/wiki/Heaviside_step_function
+
+    Examples
+    --------
+    >>> np.heaviside([-1.5, 0, 2.0], 0.5)
+    array([ 0. ,  0.5,  1. ])
+    >>> np.heaviside([-1.5, 0, 2.0], 1)
+    array([ 0.,  1.,  1.])
+    """)
+
 add_newdoc('numpy.core.umath', 'divide',
     """
     Divide arguments element-wise.
@@ -925,9 +975,7 @@ add_newdoc('numpy.core.umath', 'divide',
         Dividend array.
     x2 : array_like
         Divisor array.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -996,6 +1044,7 @@ add_newdoc('numpy.core.umath', 'equal',
     ----------
     x1, x2 : array_like
         Input arrays of the same shape.
+    $PARAMS
 
     Returns
     -------
@@ -1027,6 +1076,7 @@ add_newdoc('numpy.core.umath', 'exp',
     ----------
     x : array_like
         Input values.
+    $PARAMS
 
     Returns
     -------
@@ -1071,12 +1121,12 @@ add_newdoc('numpy.core.umath', 'exp',
 
     >>> plt.subplot(121)
     >>> plt.imshow(np.abs(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='gray')
     >>> plt.title('Magnitude of exp(x)')
 
     >>> plt.subplot(122)
     >>> plt.imshow(np.angle(out),
-    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
+    ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi], cmap='hsv')
     >>> plt.title('Phase (angle) of exp(x)')
     >>> plt.show()
 
@@ -1090,9 +1140,7 @@ add_newdoc('numpy.core.umath', 'exp2',
     ----------
     x : array_like
         Input values.
-
-    out : ndarray, optional
-        Array to insert results into.
+    $PARAMS
 
     Returns
     -------
@@ -1124,6 +1172,7 @@ add_newdoc('numpy.core.umath', 'expm1',
     ----------
     x : array_like
        Input values.
+    $PARAMS
 
     Returns
     -------
@@ -1166,9 +1215,7 @@ add_newdoc('numpy.core.umath', 'fabs',
     x : array_like
         The array of numbers for which the absolute values are required. If
         `x` is a scalar, the result `y` will also be a scalar.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -1199,6 +1246,7 @@ add_newdoc('numpy.core.umath', 'floor',
     ----------
     x : array_like
         Input data.
+    $PARAMS
 
     Returns
     -------
@@ -1236,6 +1284,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
         Numerator.
     x2 : array_like
         Denominator.
+    $PARAMS
 
     Returns
     -------
@@ -1246,6 +1295,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     See Also
     --------
     remainder : Remainder complementary to floor_divide.
+    divmod : Simultaneous floor division and remainder.
     divide : Standard division.
     floor : Round a number to the nearest integer toward minus infinity.
     ceil : Round a number to the nearest integer toward infinity.
@@ -1274,6 +1324,7 @@ add_newdoc('numpy.core.umath', 'fmod',
       Dividend.
     x2 : array_like
       Divisor.
+    $PARAMS
 
     Returns
     -------
@@ -1324,6 +1375,7 @@ add_newdoc('numpy.core.umath', 'greater',
         Input arrays.  If ``x1.shape != x2.shape``, they must be
         broadcastable to a common shape (which may be the shape of one or
         the other).
+    $PARAMS
 
     Returns
     -------
@@ -1359,6 +1411,7 @@ add_newdoc('numpy.core.umath', 'greater_equal',
         Input arrays.  If ``x1.shape != x2.shape``, they must be
         broadcastable to a common shape (which may be the shape of one or
         the other).
+    $PARAMS
 
     Returns
     -------
@@ -1389,9 +1442,7 @@ add_newdoc('numpy.core.umath', 'hypot',
     ----------
     x1, x2 : array_like
         Leg of the triangle(s).
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -1431,8 +1482,9 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Parameters
     ----------
-    x1 : array_like
+    x : array_like
         Only integer and boolean types are handled.
+    $PARAMS
 
     Returns
     -------
@@ -1504,9 +1556,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     ----------
     x : array_like
         Input values.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See `doc.ufuncs`.
+    $PARAMS
 
     Returns
     -------
@@ -1572,8 +1622,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     ----------
     x : array_like
         Input values
-    out : array_like, optional
-        An array with the same shape as `x` to store the result.
+    $PARAMS
 
     Returns
     -------
@@ -1632,6 +1681,7 @@ add_newdoc('numpy.core.umath', 'isnan',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -1646,7 +1696,7 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     See Also
     --------
-    isinf, isneginf, isposinf, isfinite
+    isinf, isneginf, isposinf, isfinite, isnat
 
     Notes
     -----
@@ -1664,6 +1714,41 @@ add_newdoc('numpy.core.umath', 'isnan',
 
     """)
 
+add_newdoc('numpy.core.umath', 'isnat',
+    """
+    Test element-wise for NaT (not a time) and return result as a boolean array.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array with datetime or timedelta data type.
+
+    Returns
+    -------
+    y : ndarray or bool
+        For scalar input, the result is a new boolean with value True if
+        the input is NaT; otherwise the value is False.
+
+        For array input, the result is a boolean array of the same
+        dimensions as the input and the values are True if the
+        corresponding element of the input is NaT; otherwise the values are
+        False.
+
+    See Also
+    --------
+    isnan, isinf, isneginf, isposinf, isfinite
+
+    Examples
+    --------
+    >>> np.isnat(np.datetime64("NaT"))
+    True
+    >>> np.isnat(np.datetime64("2016-01-01"))
+    False
+    >>> np.isnat(np.array(["NaT", "2016-01-01"], dtype="datetime64[ns]"))
+    array([ True, False], dtype=bool)
+
+    """)
+
 add_newdoc('numpy.core.umath', 'left_shift',
     """
     Shift the bits of an integer to the left.
@@ -1678,6 +1763,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
         Input values.
     x2 : array_like of integer type
         Number of zeros to append to `x1`. Has to be non-negative.
+    $PARAMS
 
     Returns
     -------
@@ -1714,6 +1800,7 @@ add_newdoc('numpy.core.umath', 'less',
         Input arrays.  If ``x1.shape != x2.shape``, they must be
         broadcastable to a common shape (which may be the shape of one or
         the other).
+    $PARAMS
 
     Returns
     -------
@@ -1741,6 +1828,7 @@ add_newdoc('numpy.core.umath', 'less_equal',
         Input arrays.  If ``x1.shape != x2.shape``, they must be
         broadcastable to a common shape (which may be the shape of one or
         the other).
+    $PARAMS
 
     Returns
     -------
@@ -1770,6 +1858,7 @@ add_newdoc('numpy.core.umath', 'log',
     ----------
     x : array_like
         Input value.
+    $PARAMS
 
     Returns
     -------
@@ -1816,6 +1905,7 @@ add_newdoc('numpy.core.umath', 'log10',
     ----------
     x : array_like
         Input values.
+    $PARAMS
 
     Returns
     -------
@@ -1863,6 +1953,7 @@ add_newdoc('numpy.core.umath', 'log2',
     ----------
     x : array_like
         Input values.
+    $PARAMS
 
     Returns
     -------
@@ -1916,6 +2007,7 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     ----------
     x1, x2 : array_like
         Input values.
+    $PARAMS
 
     Returns
     -------
@@ -1956,8 +2048,7 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     ----------
     x1, x2 : array_like
         Input values.
-    out : ndarray, optional
-        Array to store results in.
+    $PARAMS
 
     Returns
     -------
@@ -1994,6 +2085,7 @@ add_newdoc('numpy.core.umath', 'log1p',
     ----------
     x : array_like
         Input values.
+    $PARAMS
 
     Returns
     -------
@@ -2045,7 +2137,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     ----------
     x1, x2 : array_like
         Input arrays. `x1` and `x2` must be of the same shape.
-
+    $PARAMS
 
     Returns
     -------
@@ -2079,6 +2171,7 @@ add_newdoc('numpy.core.umath', 'logical_not',
     ----------
     x : array_like
         Logical NOT is applied to the elements of `x`.
+    $PARAMS
 
     Returns
     -------
@@ -2112,6 +2205,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
     x1, x2 : array_like
         Logical OR is applied to the elements of `x1` and `x2`.
         They have to be of the same shape.
+    $PARAMS
 
     Returns
     -------
@@ -2146,6 +2240,7 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     x1, x2 : array_like
         Logical XOR is applied to the elements of `x1` and `x2`.  They must
         be broadcastable to the same shape.
+    $PARAMS
 
     Returns
     -------
@@ -2193,6 +2288,7 @@ add_newdoc('numpy.core.umath', 'maximum',
     x1, x2 : array_like
         The arrays holding the elements to be compared. They must have
         the same shape, or shapes that can be broadcast to a single shape.
+    $PARAMS
 
     Returns
     -------
@@ -2251,6 +2347,7 @@ add_newdoc('numpy.core.umath', 'minimum',
     x1, x2 : array_like
         The arrays holding the elements to be compared. They must have
         the same shape, or shapes that can be broadcast to a single shape.
+    $PARAMS
 
     Returns
     -------
@@ -2309,6 +2406,7 @@ add_newdoc('numpy.core.umath', 'fmax',
     x1, x2 : array_like
         The arrays holding the elements to be compared. They must have
         the same shape.
+    $PARAMS
 
     Returns
     -------
@@ -2366,6 +2464,7 @@ add_newdoc('numpy.core.umath', 'fmin',
     x1, x2 : array_like
         The arrays holding the elements to be compared. They must have
         the same shape.
+    $PARAMS
 
     Returns
     -------
@@ -2418,6 +2517,7 @@ add_newdoc('numpy.core.umath', 'modf',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -2429,6 +2529,11 @@ add_newdoc('numpy.core.umath', 'modf',
     Notes
     -----
     For integer input the return values are floats.
+
+    See Also
+    --------
+    divmod : ``divmod(x, 1)`` is equivalent to ``modf`` with the return values
+             switched, except it always has a positive remainder.
 
     Examples
     --------
@@ -2447,6 +2552,7 @@ add_newdoc('numpy.core.umath', 'multiply',
     ----------
     x1, x2 : array_like
         Input arrays to be multiplied.
+    $PARAMS
 
     Returns
     -------
@@ -2480,6 +2586,7 @@ add_newdoc('numpy.core.umath', 'negative',
     ----------
     x : array_like or scalar
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -2493,6 +2600,29 @@ add_newdoc('numpy.core.umath', 'negative',
 
     """)
 
+add_newdoc('numpy.core.umath', 'positive',
+    """
+    Numerical positive, element-wise.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    x : array_like or scalar
+        Input array.
+
+    Returns
+    -------
+    y : ndarray or scalar
+        Returned array or scalar: `y = +x`.
+
+    Notes
+    -----
+    Equivalent to `x.copy()`, but only defined for types that support
+    arithmetic.
+
+    """)
+
 add_newdoc('numpy.core.umath', 'not_equal',
     """
     Return (x1 != x2) element-wise.
@@ -2501,9 +2631,7 @@ add_newdoc('numpy.core.umath', 'not_equal',
     ----------
     x1, x2 : array_like
       Input arrays.
-    out : ndarray, optional
-      A placeholder the same shape as `x1` to store the result.
-      See `doc.ufuncs` (Section "Output arguments") for more details.
+    $PARAMS
 
     Returns
     -------
@@ -2543,7 +2671,8 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
+    integer type raised to a negative integer power will raise a ValueError.
 
     Parameters
     ----------
@@ -2551,11 +2680,16 @@ add_newdoc('numpy.core.umath', 'power',
         The bases.
     x2 : array_like
         The exponents.
+    $PARAMS
 
     Returns
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    float_power : power function that promotes integers to float
 
     Examples
     --------
@@ -2585,6 +2719,64 @@ add_newdoc('numpy.core.umath', 'power',
 
     """)
 
+add_newdoc('numpy.core.umath', 'float_power',
+    """
+    First array elements raised to powers from second array, element-wise.
+
+    Raise each base in `x1` to the positionally-corresponding power in `x2`.
+    `x1` and `x2` must be broadcastable to the same shape. This differs from
+    the power function in that integers, float16, and float32  are promoted to
+    floats with a minimum precision of float64 so that the result is always
+    inexact.  The intent is that the function will return a usable result for
+    negative powers and seldom overflow for positive powers.
+
+    .. versionadded:: 1.12.0
+
+    Parameters
+    ----------
+    x1 : array_like
+        The bases.
+    x2 : array_like
+        The exponents.
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        The bases in `x1` raised to the exponents in `x2`.
+
+    See Also
+    --------
+    power : power function that preserves type
+
+    Examples
+    --------
+    Cube each element in a list.
+
+    >>> x1 = range(6)
+    >>> x1
+    [0, 1, 2, 3, 4, 5]
+    >>> np.float_power(x1, 3)
+    array([   0.,    1.,    8.,   27.,   64.,  125.])
+
+    Raise the bases to different exponents.
+
+    >>> x2 = [1.0, 2.0, 3.0, 3.0, 2.0, 1.0]
+    >>> np.float_power(x1, x2)
+    array([  0.,   1.,   8.,  27.,  16.,   5.])
+
+    The effect of broadcasting.
+
+    >>> x2 = np.array([[1, 2, 3, 3, 2, 1], [1, 2, 3, 3, 2, 1]])
+    >>> x2
+    array([[1, 2, 3, 3, 2, 1],
+           [1, 2, 3, 3, 2, 1]])
+    >>> np.float_power(x1, x2)
+    array([[  0.,   1.,   8.,  27.,  16.,   5.],
+           [  0.,   1.,   8.,  27.,  16.,   5.]])
+
+    """)
+
 add_newdoc('numpy.core.umath', 'radians',
     """
     Convert angles from degrees to radians.
@@ -2593,8 +2785,7 @@ add_newdoc('numpy.core.umath', 'radians',
     ----------
     x : array_like
         Input array in degrees.
-    out : ndarray, optional
-        Output array of same shape as `x`.
+    $PARAMS
 
     Returns
     -------
@@ -2630,6 +2821,7 @@ add_newdoc('numpy.core.umath', 'deg2rad',
     ----------
     x : array_like
         Angles in degrees.
+    $PARAMS
 
     Returns
     -------
@@ -2664,6 +2856,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -2703,9 +2896,7 @@ add_newdoc('numpy.core.umath', 'remainder',
         Dividend array.
     x2 : array_like
         Divisor array.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -2716,6 +2907,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     See Also
     --------
     floor_divide : Equivalent of Python ``//`` operator.
+    divmod : Simultaneous floor division and remainder.
     fmod : Equivalent of the Matlab(TM) ``rem`` function.
     divide, floor
 
@@ -2733,6 +2925,45 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     """)
 
+add_newdoc('numpy.core.umath', 'divmod',
+    """
+    Return element-wise quotient and remainder simultaneously.
+
+    .. versionadded:: 1.13.0
+
+    ``np.divmod(x, y)`` is equivalent to ``(x // y, x % y)``, but faster
+    because it avoids redundant work. It is used to implement the Python
+    built-in function ``divmod`` on NumPy arrays.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Dividend array.
+    x2 : array_like
+        Divisor array.
+    $PARAMS
+
+    Returns
+    -------
+    out1 : ndarray
+        Element-wise quotient resulting from floor division.
+    out2 : ndarray
+        Element-wise remainder from floor division.
+
+    See Also
+    --------
+    floor_divide : Equivalent to Python's ``//`` operator.
+    remainder : Equivalent to Python's ``%`` operator.
+    modf : Equivalent to ``divmod(x, 1)`` for positive ``x`` with the return
+           values switched.
+
+    Examples
+    --------
+    >>> np.divmod(np.arange(5), 3)
+    (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
+
+    """)
+
 add_newdoc('numpy.core.umath', 'right_shift',
     """
     Shift the bits of an integer to the right.
@@ -2747,6 +2978,7 @@ add_newdoc('numpy.core.umath', 'right_shift',
         Input values.
     x2 : array_like, int
         Number of bits to remove at the right of `x1`.
+    $PARAMS
 
     Returns
     -------
@@ -2781,6 +3013,7 @@ add_newdoc('numpy.core.umath', 'rint',
     ----------
     x : array_like
         Input array.
+    $PARAMS
 
     Returns
     -------
@@ -2815,6 +3048,7 @@ add_newdoc('numpy.core.umath', 'sign',
     ----------
     x : array_like
       Input values.
+    $PARAMS
 
     Returns
     -------
@@ -2846,9 +3080,7 @@ add_newdoc('numpy.core.umath', 'signbit',
     ----------
     x : array_like
         The input value(s).
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output.  See `doc.ufuncs`.
+    $PARAMS
 
     Returns
     -------
@@ -2878,9 +3110,7 @@ add_newdoc('numpy.core.umath', 'copysign',
         Values to change the sign of.
     x2 : array_like
         The sign of `x2` is copied to `x1`.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See doc.ufuncs.
+    $PARAMS
 
     Returns
     -------
@@ -2913,9 +3143,7 @@ add_newdoc('numpy.core.umath', 'nextafter',
         Values to find the next representable value of.
     x2 : array_like
         The direction where to look for the next representable value of `x1`.
-    out : ndarray, optional
-        Array into which the output is placed. Its type is preserved and it
-        must be of the right shape to hold the output. See `doc.ufuncs`.
+    $PARAMS
 
     Returns
     -------
@@ -2938,8 +3166,9 @@ add_newdoc('numpy.core.umath', 'spacing',
 
     Parameters
     ----------
-    x1 : array_like
+    x : array_like
         Values to find the spacing of.
+    $PARAMS
 
     Returns
     -------
@@ -2970,6 +3199,7 @@ add_newdoc('numpy.core.umath', 'sin',
     ----------
     x : array_like
         Angle, in radians (:math:`2 \\pi` rad equals 360 degrees).
+    $PARAMS
 
     Returns
     -------
@@ -3029,18 +3259,12 @@ add_newdoc('numpy.core.umath', 'sinh',
     ----------
     x : array_like
         Input array.
-    out : ndarray, optional
-        Output array of same shape as `x`.
+    $PARAMS
 
     Returns
     -------
     y : ndarray
         The corresponding hyperbolic sine values.
-
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
 
     Notes
     -----
@@ -3083,9 +3307,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
     ----------
     x : array_like
         The values whose square-roots are required.
-    out : ndarray, optional
-        Alternate array object in which to put the result; if provided, it
-        must have the same shape as `x`
+    $PARAMS
 
     Returns
     -------
@@ -3132,9 +3354,7 @@ add_newdoc('numpy.core.umath', 'cbrt',
     ----------
     x : array_like
         The values whose cube-roots are required.
-    out : ndarray, optional
-        Alternate array object in which to put the result; if provided, it
-        must have the same shape as `x`
+    $PARAMS
 
     Returns
     -------
@@ -3159,6 +3379,7 @@ add_newdoc('numpy.core.umath', 'square',
     ----------
     x : array_like
         Input data.
+    $PARAMS
 
     Returns
     -------
@@ -3187,6 +3408,7 @@ add_newdoc('numpy.core.umath', 'subtract',
     ----------
     x1, x2 : array_like
         The arrays to be subtracted from each other.
+    $PARAMS
 
     Returns
     -------
@@ -3222,18 +3444,12 @@ add_newdoc('numpy.core.umath', 'tan',
     ----------
     x : array_like
       Input array.
-    out : ndarray, optional
-        Output array of same shape as `x`.
+    $PARAMS
 
     Returns
     -------
     y : ndarray
       The corresponding tangent values.
-
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
 
     Notes
     -----
@@ -3275,18 +3491,12 @@ add_newdoc('numpy.core.umath', 'tanh',
     ----------
     x : array_like
         Input array.
-    out : ndarray, optional
-        Output array of same shape as `x`.
+    $PARAMS
 
     Returns
     -------
     y : ndarray
         The corresponding hyperbolic tangent values.
-
-    Raises
-    ------
-    ValueError: invalid return array shape
-        if `out` is provided and `out.shape` != `x.shape` (See Examples)
 
     Notes
     -----
@@ -3335,6 +3545,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
         Dividend array.
     x2 : array_like
         Divisor array.
+    $PARAMS
 
     Returns
     -------
@@ -3387,6 +3598,7 @@ add_newdoc('numpy.core.umath', 'frexp',
         Output array for the mantissa. Must have the same shape as `x`.
     out2 : ndarray, optional
         Output array for the exponent. Must have the same shape as `x`.
+    $PARAMS
 
     Returns
     -------
@@ -3429,8 +3641,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
         Array of multipliers.
     x2 : array_like, int
         Array of twos exponents.
-    out : ndarray, optional
-        Output array for the result.
+    $PARAMS
 
     Returns
     -------

@@ -46,7 +46,7 @@ def _find_contraction(positions, input_sets, output_set):
     """
     Finds the contraction for a given set of input and output sets.
 
-    Paramaters
+    Parameters
     ----------
     positions : iterable
         Integer positions of terms used in the contraction.
@@ -108,7 +108,7 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     on ``memory_limit`` and returns the lowest cost path. This algorithm
     scales factorial with respect to the elements in the list ``input_sets``.
 
-    Paramaters
+    Parameters
     ----------
     input_sets : list
         List of sets that represent the lhs side of the einsum subscript
@@ -187,7 +187,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     ``memory_limit``. This algorithm scales cubically with respect to the
     number of elements in the list ``input_sets``.
 
-    Paramaters
+    Parameters
     ----------
     input_sets : list
         List of sets that represent the lhs side of the einsum subscript
@@ -360,7 +360,7 @@ def _parse_einsum_input(operands):
                 if operands[num].shape == ():
                     ellipse_count = 0
                 else:
-                    ellipse_count = max(len(operands[num].shape), 1)
+                    ellipse_count = max(operands[num].ndim, 1)
                     ellipse_count -= (len(sub) - 3)
 
                 if ellipse_count > longest:

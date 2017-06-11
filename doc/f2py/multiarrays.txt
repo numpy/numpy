@@ -81,7 +81,7 @@ so that the checks can be performed in the proper order.
 effect but they are not so safe and I will not discuss about them here).
 
 Hint: If the array a should be a work array (as used frequently in
-Fortran) and you a too lazy (its good lazyness;) to provide it (in Python)
+Fortran) and you a too lazy (its good laziness;) to provide it (in Python)
 then you can define it as optional by ediding the signature:
 subroutine foo(l,m,n,a)
   integer :: l

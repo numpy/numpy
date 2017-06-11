@@ -5,7 +5,7 @@ import operator
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError)
+                      TooHardError,asanyarray)
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -104,8 +104,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     div = (num - 1) if endpoint else num
 
     # Convert float/complex array scalars to float, gh-3504
-    start = start * 1.0
-    stop = stop * 1.0
+    # and make sure one can use variables that have an __array_interface__, gh-6634
+    start = asanyarray(start) * 1.0
+    stop  = asanyarray(stop)  * 1.0
 
     dt = result_type(start, stop, float(num))
     if dtype is None:
@@ -291,13 +292,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
 
     Negative, decreasing, and complex inputs are allowed:
 
-    >>> geomspace(1000, 1, num=4)
+    >>> np.geomspace(1000, 1, num=4)
     array([ 1000.,   100.,    10.,     1.])
-    >>> geomspace(-1000, -1, num=4)
+    >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
-    >>> geomspace(1j, 1000j, num=4)  # Straight line
+    >>> np.geomspace(1j, 1000j, num=4)  # Straight line
     array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
-    >>> geomspace(-1+0j, 1+0j, num=5)  # Circle
+    >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
     array([-1.00000000+0.j        , -0.70710678+0.70710678j,
             0.00000000+1.j        ,  0.70710678+0.70710678j,
             1.00000000+0.j        ])

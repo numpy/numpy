@@ -4,6 +4,7 @@ import sys
 import os
 import shutil
 from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
+import mmap
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -40,6 +41,7 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
+        self.assertEqual(newfp.flags.writeable, False)
 
     def test_open_with_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
@@ -79,11 +81,11 @@ class TestMemmap(TestCase):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
-        abspath = os.path.abspath(tmpname)
+        abspath = os.path.realpath(os.path.abspath(tmpname))
         fp[:] = self.data[:]
-        self.assertEqual(abspath, str(fp.filename))
+        self.assertEqual(abspath, str(fp.filename.resolve()))
         b = fp[:1]
-        self.assertEqual(abspath, str(b.filename))
+        self.assertEqual(abspath, str(b.filename.resolve()))
         del b
         del fp
 
@@ -188,6 +190,11 @@ class TestMemmap(TestCase):
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
         assert(fp[[0, 1]].__class__ is MemmapSubClass)
 
+    def test_mmap_offset_greater_than_allocation_granularity(self):
+        size = 5 * mmap.ALLOCATIONGRANULARITY
+        offset = mmap.ALLOCATIONGRANULARITY + 1
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        assert_(fp.offset == offset)
 
 if __name__ == "__main__":
     run_module_suite()

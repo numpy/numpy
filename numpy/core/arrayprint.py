@@ -15,14 +15,34 @@ __docformat__ = 'restructuredtext'
 # and by Perry Greenfield 2000-4-1 for numarray
 # and by Travis Oliphant  2005-8-22 for numpy
 
+
+# Note: Both scalartypes.c.src and arrayprint.py implement strs for numpy
+# scalars but for different purposes. scalartypes.c.src has str/reprs for when
+# the scalar is printed on its own, while arrayprint.py has strs for when
+# scalars are printed inside an ndarray. Only the latter strs are currently
+# user-customizable.
+
 import sys
-from functools import reduce
+import functools
+if sys.version_info[0] >= 3:
+    try:
+        from _thread import get_ident
+    except ImportError:
+        from _dummy_thread import get_ident
+else:
+    try:
+        from thread import get_ident
+    except ImportError:
+        from dummy_thread import get_ident
+
+import numpy as np
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import (array, format_longfloat, datetime_as_string,
                          datetime_data, dtype)
 from .fromnumeric import ravel
 from .numeric import asarray
+import warnings
 
 if sys.version_info[0] >= 3:
     _MAXINT = sys.maxsize
@@ -90,7 +110,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
+            - 'object' : `np.object_` arrays
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -230,9 +251,59 @@ def _boolFormatter(x):
     else:
         return 'False'
 
+def _object_format(o):
+    """ Object arrays containing lists should be printed unambiguously """
+    if type(o) is list:
+        fmt = 'list({!r})'
+    else:
+        fmt = '{!r}'
+    return fmt.format(o)
 
 def repr_format(x):
     return repr(x)
+
+def _get_formatdict(data, precision, suppress_small, formatter):
+    # wrapped in lambdas to avoid taking a code path with the wrong type of data
+    formatdict = {'bool': lambda: _boolFormatter,
+                  'int': lambda: IntegerFormat(data),
+                  'float': lambda: FloatFormat(data, precision, suppress_small),
+                  'longfloat': lambda: LongFloatFormat(precision),
+                  'complexfloat': lambda: ComplexFormat(data, precision,
+                                                 suppress_small),
+                  'longcomplexfloat': lambda: LongComplexFormat(precision),
+                  'datetime': lambda: DatetimeFormat(data),
+                  'timedelta': lambda: TimedeltaFormat(data),
+                  'object': lambda: _object_format,
+                  'numpystr': lambda: repr_format,
+                  'str': lambda: str}
+
+    # we need to wrap values in `formatter` in a lambda, so that the interface
+    # is the same as the above values.
+    def indirect(x):
+        return lambda: x
+
+    if formatter is not None:
+        fkeys = [k for k in formatter.keys() if formatter[k] is not None]
+        if 'all' in fkeys:
+            for key in formatdict.keys():
+                formatdict[key] = indirect(formatter['all'])
+        if 'int_kind' in fkeys:
+            for key in ['int']:
+                formatdict[key] = indirect(formatter['int_kind'])
+        if 'float_kind' in fkeys:
+            for key in ['float', 'longfloat']:
+                formatdict[key] = indirect(formatter['float_kind'])
+        if 'complex_kind' in fkeys:
+            for key in ['complexfloat', 'longcomplexfloat']:
+                formatdict[key] = indirect(formatter['complex_kind'])
+        if 'str_kind' in fkeys:
+            for key in ['numpystr', 'str']:
+                formatdict[key] = indirect(formatter['str_kind'])
+        for key in formatdict.keys():
+            if key in fkeys:
+                formatdict[key] = indirect(formatter[key])
+
+    return formatdict
 
 def _get_format_function(data, precision, suppress_small, formatter):
     """
@@ -241,89 +312,45 @@ def _get_format_function(data, precision, suppress_small, formatter):
     dtype_ = data.dtype
     if dtype_.fields is not None:
         format_functions = []
-        for descr in dtype_.descr:
-            field_name = descr[0]
+        for field_name in dtype_.names:
             field_values = data[field_name]
-            if len(field_values.shape) <= 1:
-                format_function = _get_format_function(
-                    field_values, precision, suppress_small, formatter)
-            else:
-                format_function = repr_format
+            format_function = _get_format_function(
+                    ravel(field_values), precision, suppress_small, formatter)
+            if dtype_[field_name].shape != ():
+                format_function = SubArrayFormat(format_function)
             format_functions.append(format_function)
         return StructureFormat(format_functions)
 
-    formatdict = {'bool': _boolFormatter,
-                  'int': IntegerFormat(data),
-                  'float': FloatFormat(data, precision, suppress_small),
-                  'longfloat': LongFloatFormat(precision),
-                  'complexfloat': ComplexFormat(data, precision,
-                                                 suppress_small),
-                  'longcomplexfloat': LongComplexFormat(precision),
-                  'datetime': DatetimeFormat(data),
-                  'timedelta': TimedeltaFormat(data),
-                  'numpystr': repr_format,
-                  'str': str}
-
-    if formatter is not None:
-        fkeys = [k for k in formatter.keys() if formatter[k] is not None]
-        if 'all' in fkeys:
-            for key in formatdict.keys():
-                formatdict[key] = formatter['all']
-        if 'int_kind' in fkeys:
-            for key in ['int']:
-                formatdict[key] = formatter['int_kind']
-        if 'float_kind' in fkeys:
-            for key in ['float', 'longfloat']:
-                formatdict[key] = formatter['float_kind']
-        if 'complex_kind' in fkeys:
-            for key in ['complexfloat', 'longcomplexfloat']:
-                formatdict[key] = formatter['complex_kind']
-        if 'str_kind' in fkeys:
-            for key in ['numpystr', 'str']:
-                formatdict[key] = formatter['str_kind']
-        for key in formatdict.keys():
-            if key in fkeys:
-                formatdict[key] = formatter[key]
-
     dtypeobj = dtype_.type
+    formatdict = _get_formatdict(data, precision, suppress_small, formatter)
     if issubclass(dtypeobj, _nt.bool_):
-        return formatdict['bool']
+        return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
-            return formatdict['timedelta']
+            return formatdict['timedelta']()
         else:
-            return formatdict['int']
+            return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longfloat):
-            return formatdict['longfloat']
+            return formatdict['longfloat']()
         else:
-            return formatdict['float']
+            return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
         if issubclass(dtypeobj, _nt.clongfloat):
-            return formatdict['longcomplexfloat']
+            return formatdict['longcomplexfloat']()
         else:
-            return formatdict['complexfloat']
+            return formatdict['complexfloat']()
     elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
-        return formatdict['numpystr']
+        return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
-        return formatdict['datetime']
+        return formatdict['datetime']()
+    elif issubclass(dtypeobj, _nt.object_):
+        return formatdict['object']()
     else:
-        return formatdict['numpystr']
+        return formatdict['numpystr']()
 
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
-
-    if max_line_width is None:
-        max_line_width = _line_width
-
-    if precision is None:
-        precision = _float_output_precision
-
-    if suppress_small is None:
-        suppress_small = _float_output_suppress_small
-
-    if formatter is None:
-        formatter = _formatter
 
     if a.size > _summaryThreshold:
         summary_insert = "..., "
@@ -341,26 +368,47 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     # skip over array(
     next_line_prefix += " "*len(prefix)
 
-    lst = _formatArray(a, format_function, len(a.shape), max_line_width,
+    lst = _formatArray(a, format_function, a.ndim, max_line_width,
                        next_line_prefix, separator,
                        _summaryEdgeItems, summary_insert)[:-1]
     return lst
 
-def _convert_arrays(obj):
-    from . import numeric as _nc
-    newtup = []
-    for k in obj:
-        if isinstance(k, _nc.ndarray):
-            k = k.tolist()
-        elif isinstance(k, tuple):
-            k = _convert_arrays(k)
-        newtup.append(k)
-    return tuple(newtup)
+
+def _recursive_guard(fillvalue='...'):
+    """
+    Like the python 3.2 reprlib.recursive_repr, but forwards *args and **kwargs
+
+    Decorates a function such that if it calls itself with the same first
+    argument, it returns `fillvalue` instead of recursing.
+
+    Largely copied from reprlib.recursive_repr
+    """
+
+    def decorating_function(f):
+        repr_running = set()
+
+        @functools.wraps(f)
+        def wrapper(self, *args, **kwargs):
+            key = id(self), get_ident()
+            if key in repr_running:
+                return fillvalue
+            repr_running.add(key)
+            try:
+                return f(self, *args, **kwargs)
+            finally:
+                repr_running.discard(key)
+
+        return wrapper
+
+    return decorating_function
 
 
+# gracefully handle recursive calls - this comes up when object arrays contain
+# themselves
+@_recursive_guard()
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 style=repr, formatter=None):
+                 style=np._NoValue, formatter=None):
     """
     Return a string representation of an array.
 
@@ -386,9 +434,10 @@ def array2string(a, max_line_width=None, precision=None,
 
         The length of the prefix string is used to align the
         output correctly.
-    style : function, optional
-        A function that accepts an ndarray and returns a string.  Used only
-        when the shape of `a` is equal to ``()``, i.e. for 0-D arrays.
+    style : _NoValue, optional
+        Has no effect, do not use.
+
+        .. deprecated:: 1.14.0
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -404,7 +453,7 @@ def array2string(a, max_line_width=None, precision=None,
             - 'longfloat' : 128-bit floats
             - 'complexfloat'
             - 'longcomplexfloat' : composed of two 128-bit floats
-            - 'numpy_str' : types `numpy.string_` and `numpy.unicode_`
+            - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
             - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are::
@@ -455,18 +504,31 @@ def array2string(a, max_line_width=None, precision=None,
 
     """
 
-    if a.shape == ():
-        x = a.item()
-        if isinstance(x, tuple):
-            x = _convert_arrays(x)
-        lst = style(x)
-    elif reduce(product, a.shape) == 0:
+    # Deprecation 05-16-2017  v1.14
+    if style is not np._NoValue:
+        warnings.warn("'style' argument is deprecated and no longer functional",
+                      DeprecationWarning, stacklevel=3)
+
+    if max_line_width is None:
+        max_line_width = _line_width
+
+    if precision is None:
+        precision = _float_output_precision
+
+    if suppress_small is None:
+        suppress_small = _float_output_suppress_small
+
+    if formatter is None:
+        formatter = _formatter
+
+    if a.size == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
     else:
         lst = _array2string(a, max_line_width, precision, suppress_small,
                             separator, prefix, formatter=formatter)
     return lst
+
 
 def _extendLine(s, line, word, max_line_len, next_line_prefix):
     if len(line.rstrip()) + len(word.rstrip()) >= max_line_len:
@@ -486,10 +548,7 @@ def _formatArray(a, format_function, rank, max_line_len,
 
     """
     if rank == 0:
-        obj = a.item()
-        if isinstance(obj, tuple):
-            obj = _convert_arrays(obj)
-        return str(obj)
+        return format_function(a[()]) + '\n'
 
     if summary_insert and 2*edge_items < len(a):
         leading_items = edge_items
@@ -756,22 +815,21 @@ class DatetimeFormat(object):
 
 class TimedeltaFormat(object):
     def __init__(self, data):
-        if data.dtype.kind == 'm':
-            nat_value = array(['NaT'], dtype=data.dtype)[0]
-            int_dtype = dtype(data.dtype.byteorder + 'i8')
-            int_view = data.view(int_dtype)
-            v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
-            if len(v) > 0:
-                # Max str length of non-NaT elements
-                max_str_len = max(len(str(maximum.reduce(v))),
-                                  len(str(minimum.reduce(v))))
-            else:
-                max_str_len = 0
-            if len(v) < len(data):
-                # data contains a NaT
-                max_str_len = max(max_str_len, 5)
-            self.format = '%' + str(max_str_len) + 'd'
-            self._nat = "'NaT'".rjust(max_str_len)
+        nat_value = array(['NaT'], dtype=data.dtype)[0]
+        int_dtype = dtype(data.dtype.byteorder + 'i8')
+        int_view = data.view(int_dtype)
+        v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
+        if len(v) > 0:
+            # Max str length of non-NaT elements
+            max_str_len = max(len(str(maximum.reduce(v))),
+                              len(str(minimum.reduce(v))))
+        else:
+            max_str_len = 0
+        if len(v) < len(data):
+            # data contains a NaT
+            max_str_len = max(max_str_len, 5)
+        self.format = '%' + str(max_str_len) + 'd'
+        self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
         # TODO: After NAT == NAT deprecation should be simplified:
@@ -779,6 +837,16 @@ class TimedeltaFormat(object):
             return self._nat
         else:
             return self.format % x.astype('i8')
+
+
+class SubArrayFormat(object):
+    def __init__(self, format_function):
+        self.format_function = format_function
+
+    def __call__(self, arr):
+        if arr.ndim <= 1:
+            return "[" + ", ".join(self.format_function(a) for a in arr) + "]"
+        return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
 
 
 class StructureFormat(object):

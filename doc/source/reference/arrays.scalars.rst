@@ -71,7 +71,7 @@ Array scalar type     Related Python type
 :class:`int_`         :class:`IntType` (Python 2 only)
 :class:`float_`       :class:`FloatType`
 :class:`complex_`     :class:`ComplexType`
-:class:`str_`         :class:`StringType`
+:class:`bytes_`       :class:`BytesType`
 :class:`unicode_`     :class:`UnicodeType`
 ====================  ================================
 
@@ -193,14 +193,16 @@ size: the data they describe can be of different length in different
 arrays. (In the character codes ``#`` is an integer denoting how many
 elements the data type consists of.)
 
-===================  =============================  ========
-:class:`str_`        compatible: Python str         ``'S#'``
-:class:`unicode_`    compatible: Python unicode     ``'U#'``
-:class:`void`                                       ``'V#'``
-===================  =============================  ========
+===================  ==============================  ========
+:class:`bytes_`      compatible: Python bytes        ``'S#'``
+:class:`unicode_`    compatible: Python unicode/str  ``'U#'``
+:class:`void`                                        ``'V#'``
+===================  ==============================  ========
 
 
 .. warning::
+
+   See :ref:`Note on string types<string-dtype-note>`.
 
    Numeric Compatibility: If you used old typecode characters in your
    Numeric code (which was never recommended), you will need to change
@@ -248,7 +250,8 @@ Indexing
 Array scalars can be indexed like 0-dimensional arrays: if *x* is an
 array scalar,
 
-- ``x[()]`` returns a 0-dimensional :class:`ndarray`
+- ``x[()]`` returns a copy of array scalar
+- ``x[...]`` returns a 0-dimensional :class:`ndarray`
 - ``x['field-name']`` returns the array scalar in the field *field-name*.
   (*x* can have fields, for example, when it corresponds to a structured data type.)
 
@@ -282,10 +285,10 @@ Defining new types
 ==================
 
 There are two ways to effectively define a new array scalar type
-(apart from composing structured types :ref:`dtypes <arrays.dtypes>` from 
-the built-in scalar types): One way is to simply subclass the 
-:class:`ndarray` and overwrite the methods of interest. This will work to 
-a degree, but internally certain behaviors are fixed by the data type of 
-the array.  To fully customize the data type of an array you need to 
-define a new data-type, and register it with NumPy. Such new types can only 
+(apart from composing structured types :ref:`dtypes <arrays.dtypes>` from
+the built-in scalar types): One way is to simply subclass the
+:class:`ndarray` and overwrite the methods of interest. This will work to
+a degree, but internally certain behaviors are fixed by the data type of
+the array.  To fully customize the data type of an array you need to
+define a new data-type, and register it with NumPy. Such new types can only
 be defined in C, using the :ref:`NumPy C-API <c-api>`.
