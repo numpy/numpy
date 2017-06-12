@@ -1596,7 +1596,7 @@ static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
     PyObject *op;
-    PyArrayObject *oparr = NULL, *ret = NULL;
+    PyArrayObject *ret = NULL;
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
@@ -1618,10 +1618,12 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     if (PyTuple_GET_SIZE(args) == 0) {
         goto full_path;
     }
+
     op = PyTuple_GET_ITEM(args, 0);
     if (PyArray_CheckExact(op)) {
-        PyObject * dtype_obj = Py_None;
-        oparr = (PyArrayObject *)op;
+        PyObject *dtype_obj = Py_None;
+        PyArrayObject *oparr = (PyArrayObject *)op;
+
         /* get dtype which can be positional */
         if (PyTuple_GET_SIZE(args) == 2) {
             dtype_obj = PyTuple_GET_ITEM(args, 1);
@@ -1643,16 +1645,23 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         }
         else {
             /* fast path for copy=False rest default (np.asarray) */
-            PyObject * copy_obj, * order_obj, *ndmin_obj;
+            PyObject *copy_obj, *order_obj, *ndmin_obj;
+
+            /* Always copy arrays with NPY_ARRAY_UPDATEIFCOPY set */
+            if (PyArray_CHKFLAGS(oparr, NPY_ARRAY_UPDATEIFCOPY)) {
+                goto full_path;
+            }
+
             copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
             if (copy_obj != Py_False) {
                 goto full_path;
             }
+
             copy = NPY_FALSE;
 
             /* order does not matter for contiguous 1d arrays */
-            if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
-                !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
+            if (PyArray_NDIM(oparr) > 1 ||
+                    !PyArray_IS_C_CONTIGUOUS(oparr)) {
                 order_obj = PyDict_GetItem(kws, npy_ma_str_order);
                 if (order_obj != Py_None && order_obj != NULL) {
                     goto full_path;
@@ -1696,10 +1705,18 @@ full_path:
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
         goto clean_type;
     }
+
+
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op)) ||
-        (!subok && PyArray_CheckExact(op))) {
-        oparr = (PyArrayObject *)op;
+            (!subok && PyArray_CheckExact(op))) {
+        PyArrayObject *oparr = (PyArrayObject *)op;
+
+        /* Always copy arrays with NPY_ARRAY_UPDATEIFCOPY set */
+        if (PyArray_CHKFLAGS(oparr, NPY_ARRAY_UPDATEIFCOPY)) {
+            copy = NPY_TRUE;
+        }
+
         if (type == NULL) {
             if (!copy && STRIDING_OK(oparr, order)) {
                 ret = oparr;
@@ -1715,8 +1732,8 @@ full_path:
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
             if (!copy && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
                 ret = oparr;
+                Py_INCREF(ret);
                 goto finish;
             }
             else {
