@@ -2333,6 +2333,7 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
     npy_intp coord, shape[2], strides[2][2];
     char *ptrs[2][2], *ptr;
     sum_of_products_fn sop;
+    NPY_BEGIN_THREADS_DEF;
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
@@ -2363,6 +2364,7 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
      * Since the iterator wasn't tracking coordinates, the
      * loop provided by the iterator is in Fortran-order.
      */
+    NPY_BEGIN_THREADS;
     for (coord = shape[1]; coord > 0; --coord) {
         sop(1, ptrs[0], strides[0], shape[0]);
 
@@ -2371,6 +2373,7 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
         ptr = ptrs[1][1] + strides[1][1];
         ptrs[0][1] = ptrs[1][1] = ptr;
     }
+    NPY_END_THREADS;
 
     return 0;
 }
@@ -2381,6 +2384,7 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
     npy_intp coords[2], shape[3], strides[3][2];
     char *ptrs[3][2], *ptr;
     sum_of_products_fn sop;
+    NPY_BEGIN_THREADS_DEF;
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
@@ -2414,6 +2418,7 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
      * Since the iterator wasn't tracking coordinates, the
      * loop provided by the iterator is in Fortran-order.
      */
+    NPY_BEGIN_THREADS;
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(1, ptrs[0], strides[0], shape[0]);
@@ -2428,6 +2433,7 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
         ptr = ptrs[2][1] + strides[2][1];
         ptrs[0][1] = ptrs[1][1] = ptrs[2][1] = ptr;
     }
+    NPY_END_THREADS;
 
     return 0;
 }
@@ -2438,6 +2444,7 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
     npy_intp coord, shape[2], strides[2][3];
     char *ptrs[2][3], *ptr;
     sum_of_products_fn sop;
+    NPY_BEGIN_THREADS_DEF;
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
@@ -2468,6 +2475,7 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
      * Since the iterator wasn't tracking coordinates, the
      * loop provided by the iterator is in Fortran-order.
      */
+    NPY_BEGIN_THREADS;
     for (coord = shape[1]; coord > 0; --coord) {
         sop(2, ptrs[0], strides[0], shape[0]);
 
@@ -2478,6 +2486,7 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
         ptr = ptrs[1][2] + strides[1][2];
         ptrs[0][2] = ptrs[1][2] = ptr;
     }
+    NPY_END_THREADS;
 
     return 0;
 }
@@ -2488,6 +2497,7 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
     npy_intp coords[2], shape[3], strides[3][3];
     char *ptrs[3][3], *ptr;
     sum_of_products_fn sop;
+    NPY_BEGIN_THREADS_DEF;
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
@@ -2521,6 +2531,7 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
      * Since the iterator wasn't tracking coordinates, the
      * loop provided by the iterator is in Fortran-order.
      */
+    NPY_BEGIN_THREADS;
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(2, ptrs[0], strides[0], shape[0]);
@@ -2539,6 +2550,7 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
         ptr = ptrs[2][2] + strides[2][2];
         ptrs[0][2] = ptrs[1][2] = ptrs[2][2] = ptr;
     }
+    NPY_END_THREADS;
 
     return 0;
 }
