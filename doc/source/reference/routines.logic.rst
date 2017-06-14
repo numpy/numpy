@@ -19,6 +19,7 @@ Array contents
    isfinite
    isinf
    isnan
+   isnat
    isneginf
    isposinf
 
