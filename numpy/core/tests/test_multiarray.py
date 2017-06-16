@@ -342,6 +342,23 @@ class TestArrayConstruction(TestCase):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
+    def test_from_updateifcopy_array(self):
+        # a is not contiguous, so a.flat.__array__() will have the
+        # NPY_ARRAY_UPDATEIFCOPY flag set. We want to make sure that
+        # normal array construction always makes a copy of that rather
+        # than returning it.
+        a = np.arange(10)[::2]
+        testcases = [np.array(a.flat, copy=True),
+                     np.array(a.flat, copy=False),
+                     np.array(a.flat.__array__(), copy=True),
+                     np.array(a.flat.__array__(), copy=False)]
+        for b in testcases:
+            self.assertTrue(b.flags.owndata)
+            self.assertTrue(b.flags.writeable)
+            self.assertFalse(b.flags.updateifcopy)
+            # check that writeback occurred, hence a is writeable
+            self.assertTrue(a.flags.writeable)
+
 
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):

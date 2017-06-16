@@ -1849,10 +1849,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
-                     int max_depth, int requires, PyObject *context)
+                     int max_depth, int flags, PyObject *context)
 {
     PyObject *obj;
-    if (requires & NPY_ARRAY_NOTSWAPPED) {
+
+    if (flags & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
             !PyArray_ISNBO(PyArray_DESCR((PyArrayObject *)op)->byteorder)) {
             descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
@@ -1865,11 +1866,11 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         }
     }
 
-    obj = PyArray_FromAny(op, descr, min_depth, max_depth, requires, context);
+    obj = PyArray_FromAny(op, descr, min_depth, max_depth, flags, context);
     if (obj == NULL) {
         return NULL;
     }
-    if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
+    if ((flags & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
         PyObject *ret;
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
@@ -1963,8 +1964,8 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
-           /* If a guaranteed copy was requested */
-    copy = (flags & NPY_ARRAY_ENSURECOPY) ||
+    copy = /* If a guaranteed copy was requested */
+           (flags & NPY_ARRAY_ENSURECOPY) ||
            /* If C contiguous was requested, and arr is not */
            ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
                    (!(arrflags & NPY_ARRAY_C_CONTIGUOUS))) ||
@@ -1977,7 +1978,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
                    (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
-           !PyArray_EquivTypes(oldtype, newtype);
+           /* If the type needs casting */
+           !PyArray_EquivTypes(oldtype, newtype) ||
+           /* If the array has updateifcopy flag */
+           (arrflags & NPY_ARRAY_UPDATEIFCOPY);
 
     if (copy) {
         NPY_ORDER order = NPY_KEEPORDER;
