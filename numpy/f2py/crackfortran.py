@@ -2013,7 +2013,7 @@ def analyzecommon(block):
                 if m.group('dims'):
                     dims = [x.strip()
                             for x in markoutercomma(m.group('dims')).split('@,@')]
-                n = m.group('name').strip()
+                n = rmbadname1(m.group('name').strip())
                 if n in block['vars']:
                     if 'attrspec' in block['vars'][n]:
                         block['vars'][n]['attrspec'].append(
