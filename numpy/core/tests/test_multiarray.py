@@ -3172,6 +3172,17 @@ class TestTemporaryElide(TestCase):
         a = np.bool_()
         assert_(type(~(a & a)) is np.bool_)
 
+    def test_elide_readonly(self):
+        # don't try to elide readonly temporaries
+        r = np.asarray(np.broadcast_to(np.zeros(1), 100000).flat) * 0.0
+        assert_equal(r, 0)
+
+    def test_elide_updateifcopy(self):
+        a = np.ones(2**20)[::2]
+        b = a.flat.__array__() + 1
+        del b
+        assert_equal(a, 1)
+
 
 class TestCAPI(TestCase):
     def test_IsPythonScalar(self):
