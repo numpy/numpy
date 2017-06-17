@@ -1913,7 +1913,7 @@ def diff(a, n=1, axis=-1):
     slice2 = tuple(slice2)
 
     if a.dtype == np.bool_:
-        da = a[slice1] ^ a[slice2]
+        da = a[slice1] != a[slice2]
     else:
         da = a[slice1] - a[slice2]
 
