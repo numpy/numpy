@@ -638,6 +638,16 @@ class TestDiff(TestCase):
         assert_array_equal(diff(x, n=2), out2)
         assert_array_equal(diff(x, n=3), out3)
 
+        x = [1.1, 2.2, 3.0, -0.2, -0.1]
+        out = np.array([1.1, 0.8, -3.2, 0.1])
+        assert_almost_equal(diff(x), out)
+
+        x = [True, True, False, False]
+        out = np.array([False, True, False])
+        out2 = np.array([True, True])
+        assert_array_equal(diff(x), out)
+        assert_array_equal(diff(x, n=2), out2)
+
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
         out1 = x[:, :, 1:] - x[:, :, :-1]
@@ -927,7 +937,7 @@ class TestGradient(TestCase):
         assert_raises(ValueError, gradient, np.arange(0), edge_order=2)
         assert_raises(ValueError, gradient, np.arange(1), edge_order=1)
         assert_raises(ValueError, gradient, np.arange(1), edge_order=2)
-        assert_raises(ValueError, gradient, np.arange(2), edge_order=2)  
+        assert_raises(ValueError, gradient, np.arange(2), edge_order=2)
 
 
 class TestAngle(TestCase):
