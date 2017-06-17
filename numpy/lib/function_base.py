@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import collections
-import operator
 import re
 import sys
 import warnings
@@ -1912,10 +1911,16 @@ def diff(a, n=1, axis=-1):
     slice2[axis] = slice(None, -1)
     slice1 = tuple(slice1)
     slice2 = tuple(slice2)
-    if n > 1:
-        return diff(a[slice1]-a[slice2], n-1, axis=axis)
+
+    if a.dtype == np.bool_:
+        da = a[slice1] ^ a[slice2]
     else:
-        return a[slice1]-a[slice2]
+        da = a[slice1] - a[slice2]
+
+    if n > 1:
+        return diff(da, n-1, axis=axis)
+    else:
+        return da
 
 
 def interp(x, xp, fp, left=None, right=None, period=None):
@@ -2061,6 +2066,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         else:
             return interp_func(x, xp, fp, left, right).item()
 
+
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
@@ -2082,8 +2088,6 @@ def angle(z, deg=0):
     --------
     arctan2
     absolute
-
-
 
     Examples
     --------
