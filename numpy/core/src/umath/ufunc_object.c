@@ -3894,7 +3894,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
-    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
     static char *reduce_kwlist[] = {
