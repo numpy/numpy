@@ -371,6 +371,50 @@ PyArray_TypeNumFromName(char *str)
     return NPY_NOTYPE;
 }
 
+/*NUMPY_API
+ *
+ * If UPDATEIFCOPY and self has data, reset the base WRITEABLE flag,
+ * copy the local data to base, release the local data, and set flags
+ * appropriately.
+ */
+NPY_NO_EXPORT int
+PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
+{
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+    int retval = 0;
+    if (fa->base) {
+        /*
+         * UPDATEIFCOPY means that fa->base's data
+         * should be updated with the contents
+         * of self.
+         * fa->base->flags is not WRITEABLE to protect the relationship
+         * unlock it.
+         */
+        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
+#ifdef DEBUG_UPDATEIFCOPY
+            fprintf(stderr, "PyArray_ResolveUpdateIfCopy resolving self data to base\n");
+#endif
+            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
+                                                    NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+            retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
+        
+            if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
+                /* Free internal references if an Object array */
+                if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
+                    Py_INCREF(self); /*hold on to self */
+                    PyArray_XDECREF(self);
+                    Py_DECREF(self); 
+                }
+                npy_free_cache(fa->data, PyArray_NBYTES(self));
+                fa->data = NULL;
+                PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+            }
+        }
+    }
+    return retval;
+ }
+
 /*********************** end C-API functions **********************/
 
 /* array object functions */
@@ -386,26 +430,11 @@ array_dealloc(PyArrayObject *self)
         PyObject_ClearWeakRefs((PyObject *)self);
     }
     if (fa->base) {
-        /*
-         * UPDATEIFCOPY means that base points to an
-         * array that should be updated with the contents
-         * of this array upon destruction.
-         * fa->base->flags must have been WRITEABLE
-         * (checked previously) and it was locked here
-         * thus, unlock it.
-         */
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
-                                                    NPY_ARRAY_WRITEABLE);
-            Py_INCREF(self); /* hold on to self in next call */
-            if (PyArray_CopyAnyInto((PyArrayObject *)fa->base, self) < 0) {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-            /*
-             * Don't need to DECREF -- because we are deleting
-             *self already...
-             */
+        Py_INCREF(self); /* hold on to self in next call */
+        if (PyArray_ResolveUpdateIfCopy(self) < 0)
+        {
+            PyErr_Print();
+            PyErr_Clear();
         }
         /*
          * In any case base is pointing to something that we need
@@ -426,7 +455,6 @@ array_dealloc(PyArrayObject *self)
         }
         npy_free_cache(fa->data, PyArray_NBYTES(self));
     }
-
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);

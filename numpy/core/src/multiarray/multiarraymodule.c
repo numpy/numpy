@@ -1062,6 +1062,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(ap2);
 
     /* Trigger possible copy-back into `result` */
+    PyArray_ResolveUpdateIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return (PyObject *)result;

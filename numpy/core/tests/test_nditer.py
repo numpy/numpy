@@ -786,7 +786,7 @@ def test_iter_nbo_align_contig():
     assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0], a)
     i.operands[0][:] = 2
-    i = None
+    i = None # triggers UPDATEIFCOPY on i.operands
     assert_equal(au, [2]*6)
 
     # Byte order change by requesting NBO
@@ -798,7 +798,7 @@ def test_iter_nbo_align_contig():
     assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
     assert_equal(i.operands[0], a)
     i.operands[0][:] = 2
-    i = None
+    i = None # triggers UPDATEIFCOPY on i.operands
     assert_equal(au, [2]*6)
 
     # Unaligned input
@@ -815,7 +815,7 @@ def test_iter_nbo_align_contig():
     assert_(i.operands[0].flags.aligned)
     assert_equal(i.operands[0], a)
     i.operands[0][:] = 3
-    i = None
+    i = None # triggers UPDATEIFCOPY on i.operands
     assert_equal(a, [3]*6)
 
     # Discontiguous input
@@ -878,7 +878,7 @@ def test_iter_array_cast():
     # Check that UPDATEIFCOPY is activated
     i.operands[0][2, 1, 1] = -12.5
     assert_(a[2, 1, 1] != -12.5)
-    i = None
+    i = None # triggers UPDATEIFCOPY on i.operands
     assert_equal(a[2, 1, 1], -12.5)
 
     a = np.arange(6, dtype='i4')[::-2]
@@ -891,7 +891,7 @@ def test_iter_array_cast():
     # becomes positive in the temporary
     assert_equal(i.operands[0].strides, (4,))
     i.operands[0][:] = [1, 2, 3]
-    i = None
+    i = None # triggers UPDATEIFCOPY on i.operands
     assert_equal(a, [1, 2, 3])
 
 def test_iter_array_cast_errors():

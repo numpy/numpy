@@ -6841,6 +6841,71 @@ class TestCTypes(TestCase):
         finally:
             _internal.ctypes = ctypes
 
+class TestUpdateIfCopy(TestCase):
+    # all these tests use the UPDATEIFCOPY mechanism
+    def test_argmax_with_out(self):
+        mat = np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmax(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_argmin_with_out(self):
+        mat = -np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmin(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_clip_with_out(self):
+        mat = np.eye(5)
+        out = np.eye(5, dtype='i2')
+        res = np.clip(mat, a_min=-10, a_max=0, out=out)
+        assert_equal(np.sum(out), 0)
+
+    def test_insert_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_insert
+        np.place(a, a>2, [44, 55])
+        assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
+
+    def test_put_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        np.put(a, [0, 2], [44, 55])
+        assert_equal(a, np.array([[44, 3], [55, 4], [2, 5]]))
+
+    def test_putmask_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_putmask
+        np.putmask(a, a>2, a**2)
+        assert_equal(a, np.array([[0, 9], [1, 16], [2, 25]]))
+
+    def test_take_mode_raise(self):
+        a = np.arange(6, dtype='int')
+        out = np.empty(2, dtype='int')
+        np.take(a, [0, 2], out=out, mode='raise')
+        assert_equal(out, np.array([0, 2]))
+
+    def test_choose_mod_raise(self):
+        a = np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]])
+        out = np.empty((3,3), dtype='int')
+        choices = [-10, 10]
+        np.choose(a, choices, out=out, mode='raise')
+        assert_equal(out, np.array([[ 10, -10,  10],
+                                    [-10,  10, -10],
+                                    [ 10, -10,  10]]))
+
+    def test_flatiter__array__(self):
+        a = np.arange(9).reshape(3,3)
+        b = a.T.flat
+        c = b.__array__()
+        # triggers the UPDATEIFCOPY resolution, assuming refcount semantics
+        del c
+
+    def test_dot_out(self):
+        # if HAVE_CBLAS, will use UPDATEIFCOPY
+        a = np.arange(9, dtype=float).reshape(3,3)
+        b = np.dot(a, a, out=a)
+        assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
+
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475

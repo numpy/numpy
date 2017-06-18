@@ -401,6 +401,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
+    PyArray_ResolveUpdateIfCopy(array);
     Py_DECREF(array);
     Py_RETURN_NONE;
 

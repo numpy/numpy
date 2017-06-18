@@ -770,6 +770,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     Py_DECREF(ap2);
 
     /* Trigger possible copyback into `result` */
+    PyArray_ResolveUpdateIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return PyArray_Return(result);
