@@ -779,26 +779,27 @@ def test_iter_nbo_align_contig():
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
-    i = nditer(au, [], [['readwrite', 'updateifcopy']],
+    with nditer(au, [], [['readwrite', 'updateifcopy']],
                         casting='equiv',
-                        op_dtypes=[np.dtype('f4')])
-    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 2
-    i = None # triggers UPDATEIFCOPY on i.operands
+                        op_dtypes=[np.dtype('f4')]) as i:
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 2
     assert_equal(au, [2]*6)
 
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
-    i = nditer(au, [], [['readwrite', 'updateifcopy', 'nbo']], casting='equiv')
-    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 2
-    i = None # triggers UPDATEIFCOPY on i.operands
+    with nditer(au, [], [['readwrite', 'updateifcopy', 'nbo']],
+                        casting='equiv') as i:
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 2
     assert_equal(au, [2]*6)
 
     # Unaligned input
@@ -811,11 +812,11 @@ def test_iter_nbo_align_contig():
     assert_(not i.operands[0].flags.aligned)
     assert_equal(i.operands[0], a)
     # With 'aligned', should make a copy
-    i = nditer(a, [], [['readwrite', 'updateifcopy', 'aligned']])
-    assert_(i.operands[0].flags.aligned)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 3
-    i = None # triggers UPDATEIFCOPY on i.operands
+    with nditer(a, [], [['readwrite', 'updateifcopy', 'aligned']]) as i:
+        assert_(i.operands[0].flags.aligned)
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 3
     assert_equal(a, [3]*6)
 
     # Discontiguous input
@@ -868,30 +869,29 @@ def test_iter_array_cast():
 
     # Same-kind cast 'f8' -> 'f4' -> 'f8'
     a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
-    i = nditer(a, [],
+    with nditer(a, [],
             [['readwrite', 'updateifcopy']],
             casting='same_kind',
-            op_dtypes=[np.dtype('f4')])
-    assert_equal(i.operands[0], a)
-    assert_equal(i.operands[0].dtype, np.dtype('f4'))
-    assert_equal(i.operands[0].strides, (4, 16, 48))
-    # Check that UPDATEIFCOPY is activated
-    i.operands[0][2, 1, 1] = -12.5
-    assert_(a[2, 1, 1] != -12.5)
-    i = None # triggers UPDATEIFCOPY on i.operands
+            op_dtypes=[np.dtype('f4')]) as i:
+        assert_equal(i.operands[0], a)
+        assert_equal(i.operands[0].dtype, np.dtype('f4'))
+        assert_equal(i.operands[0].strides, (4, 16, 48))
+        # Check that UPDATEIFCOPY is activated at exit
+        i.operands[0][2, 1, 1] = -12.5
+        assert_(a[2, 1, 1] != -12.5)
     assert_equal(a[2, 1, 1], -12.5)
 
     a = np.arange(6, dtype='i4')[::-2]
-    i = nditer(a, [],
+    with nditer(a, [],
             [['writeonly', 'updateifcopy']],
             casting='unsafe',
-            op_dtypes=[np.dtype('f4')])
-    assert_equal(i.operands[0].dtype, np.dtype('f4'))
-    # Even though the stride was negative in 'a', it
-    # becomes positive in the temporary
-    assert_equal(i.operands[0].strides, (4,))
-    i.operands[0][:] = [1, 2, 3]
-    i = None # triggers UPDATEIFCOPY on i.operands
+            op_dtypes=[np.dtype('f4')]) as i:
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.operands[0].dtype, np.dtype('f4'))
+        # Even though the stride was negative in 'a', it
+        # becomes positive in the temporary
+        assert_equal(i.operands[0].strides, (4,))
+        i.operands[0][:] = [1, 2, 3]
     assert_equal(a, [1, 2, 3])
 
 def test_iter_array_cast_errors():
@@ -1323,17 +1323,15 @@ def test_iter_copy():
     assert_equal([x[()] for x in i], [x[()] for x in j])
 
     # Casting iterator
-    i = nditer(a, ['buffered'], order='F', casting='unsafe',
-                op_dtypes='f8', buffersize=5)
-    j = i.copy()
-    i = None
+    with nditer(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='f8', buffersize=5) as i:
+        j = i.copy()
     assert_equal([x[()] for x in j], a.ravel(order='F'))
 
     a = arange(24, dtype='<i4').reshape(2, 3, 4)
-    i = nditer(a, ['buffered'], order='F', casting='unsafe',
-                op_dtypes='>f8', buffersize=5)
-    j = i.copy()
-    i = None
+    with nditer(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='>f8', buffersize=5) as i:
+        j = i.copy()
     assert_equal([x[()] for x in j], a.ravel(order='F'))
 
 def test_iter_allocate_output_simple():

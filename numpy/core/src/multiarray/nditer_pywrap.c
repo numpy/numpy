@@ -2329,6 +2329,39 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     return -1;
 }
 
+static PyObject *
+npyiter_self(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "operation on  non-initialized iterator");
+        return NULL;
+    }
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *
+npyiter_exit(PyObject *f, PyObject *args)
+{
+    int iop, nop;
+    PyArrayObject **object;
+    NpyIter *iter = ((NewNpyArrayIterObject*)f)->iter;
+    if (iter == NULL)
+        Py_RETURN_NONE;
+    nop = NpyIter_GetNOp(iter);
+    object = NpyIter_GetOperandArray(iter);
+    for(iop = 0; iop < nop; ++iop, ++object) {
+        if (PyArray_ResolveUpdateIfCopy(*object) < 0)
+        return NULL;
+    }
+    /* We cannot return the result since a true
+     * value will be interpreted as "yes, swallow the
+     * exception if one was raised inside the with block". */
+    Py_RETURN_NONE;
+}
+
+
 static PyMethodDef npyiter_methods[] = {
     {"reset",
         (PyCFunction)npyiter_reset,
@@ -2354,6 +2387,10 @@ static PyMethodDef npyiter_methods[] = {
     {"debug_print",
         (PyCFunction)npyiter_debug_print,
         METH_NOARGS, NULL},
+    {"__enter__", (PyCFunction)npyiter_self,
+         METH_NOARGS,  NULL},
+    {"__exit__",  (PyCFunction)npyiter_exit,
+         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 
