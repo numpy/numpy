@@ -2348,7 +2348,9 @@ def test_iter_nested_iters_dtype_copy():
         for y in j:
             y[...] += 1
     assert_equal(a, [[0, 1, 2], [3, 4, 5]])
-    i, j, x, y = (None,)*4  # force the updateifcopy
+    # force resolution of UPDATEIFCOPY
+    i.__exit__()
+    j.__exit__()
     assert_equal(a, [[1, 2, 3], [4, 5, 6]])
 
 def test_iter_nested_iters_dtype_buffered():
