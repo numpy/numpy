@@ -274,11 +274,22 @@ class NoseTester(object):
         if coverage:
             argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
                    '--cover-tests', '--cover-erase']
+
         # construct list of plugins
         import nose.plugins.builtin
+        from nose.plugins import EntryPointPluginManager
         from .noseclasses import KnownFailurePlugin, Unplugger
         plugins = [KnownFailurePlugin()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
+        try:
+            # External plugins (like nose-timer)
+            entrypoint_manager = EntryPointPluginManager()
+            entrypoint_manager.loadPlugins()
+            plugins += [p for p in entrypoint_manager.plugins]
+        except ImportError:
+            # Relies on pkg_resources, not a hard dependency
+            pass
+
         # add doctesting if required
         doctest_argv = '--with-doctest' in argv
         if doctests == False and doctest_argv:
