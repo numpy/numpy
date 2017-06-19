@@ -53,7 +53,7 @@ class TestTake(TestCase):
         for mode in ('raise', 'clip', 'wrap'):
             a = np.array(objects)
             b = np.array([2, 2, 4, 5, 3, 5])
-            a.take(b, out=a[:6])
+            a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
                 assert_(all(sys.getrefcount(o) == 3 for o in objects))
