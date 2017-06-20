@@ -36,6 +36,13 @@ C API changes
 New Features
 ============
 
+`numpy.testing.Tester` is now aware of ``nose`` plugins that are outside the
+built-in ones in ``nose``.  This allows using for example ``nose-timer`` like
+so:  ``np.test(extra_argv=['--with-timer', '--timer-top-n', '20'])`` to
+obtain the runtime of the 20 slowest tests.  An extra keyword ``timer`` was
+also added to ``Tester.test``, so ``np.test(timer=20)`` will also report the 20
+slowest tests.
+
 
 Improvements
 ============
