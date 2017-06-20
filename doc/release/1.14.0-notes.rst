@@ -40,6 +40,13 @@ New Features
 Improvements
 ============
 
+GIL released for all ``np.einsum`` variations
+---------------------------------------------
+
+Some specific loop structures which have an accelerated loop version
+did not release the GIL prior to NumPy 1.14.0.  This oversight has been
+fixed.
+
 
 Changes
 =======
