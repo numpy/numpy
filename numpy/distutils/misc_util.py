@@ -2295,6 +2295,41 @@ def get_info(name):
     return g.get(name, g.get(name + "_info", {}))
 
 def show():
+    """Print information about various resources (libraries, library directories,
+    include directories, etc.) in the system on which NumPy was built.
+
+    Information is grouped according to classes (``blas_opt_info`` in the example)
+    that specify relevant resources, and it is formatted to be compatible with
+    ``distutils.setup`` keyword arguments.
+
+    See Also
+    --------
+    get_include : Returns the include directory containing NumPy \\*.h header files.
+
+    Notes
+    -----
+    Classes specifying the information to be printed are defined
+    in the ``numpy.distuitls.system_info`` module.
+
+    Information may include:
+    * language: language used to write the libraries (mostly C or f77)
+    * libraries: names of libraries found in the system
+    * library_dirs: directories containing the libraries
+    * include_dirs: directories containing library header files
+    * src_dirs: directories containing library source files
+    * define_macros: preprocessor macros used by ``distutils.setup``
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.__config__.show()
+    blas_opt_info:
+        language = c
+        define_macros = [('HAVE_CBLAS', None)]
+        libraries = ['openblas', 'openblas']
+        library_dirs = ['/usr/local/lib']
+    """
+
     for name,info_dict in globals().items():
         if name[0] == "_" or type(info_dict) is not type({}): continue
         print(name + ":")
