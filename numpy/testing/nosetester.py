@@ -254,7 +254,7 @@ class NoseTester(object):
         return NumpyDoctest()
 
     def prepare_test_args(self, label='fast', verbose=1, extra_argv=None,
-                          doctests=False, coverage=False):
+                          doctests=False, coverage=False, timer=False):
         """
         Run tests for module using nose.
 
@@ -274,11 +274,28 @@ class NoseTester(object):
         if coverage:
             argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
                    '--cover-tests', '--cover-erase']
+
+        if timer:
+            if timer is True:
+                argv += ['--with-timer']
+            elif isinstance(timer, int):
+                argv += ['--with-timer', '--timer-top-n', str(timer)]
+
         # construct list of plugins
         import nose.plugins.builtin
+        from nose.plugins import EntryPointPluginManager
         from .noseclasses import KnownFailurePlugin, Unplugger
         plugins = [KnownFailurePlugin()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
+        try:
+            # External plugins (like nose-timer)
+            entrypoint_manager = EntryPointPluginManager()
+            entrypoint_manager.loadPlugins()
+            plugins += [p for p in entrypoint_manager.plugins]
+        except ImportError:
+            # Relies on pkg_resources, not a hard dependency
+            pass
+
         # add doctesting if required
         doctest_argv = '--with-doctest' in argv
         if doctests == False and doctest_argv:
@@ -297,7 +314,8 @@ class NoseTester(object):
         return argv, plugins
 
     def test(self, label='fast', verbose=1, extra_argv=None,
-             doctests=False, coverage=False, raise_warnings=None):
+             doctests=False, coverage=False, raise_warnings=None,
+             timer=False):
         """
         Run tests for module using nose.
 
@@ -331,6 +349,11 @@ class NoseTester(object):
               - "release" : equals ``()``, don't raise on any warnings.
 
             The default is to use the class initialization value.
+        timer : bool or int, optional
+            Timing of individual tests with ``nose-timer`` (which needs to be
+            installed).  If True, time tests and report on all of them.
+            If an integer (say ``N``), report timing results for ``N`` slowest
+            tests.
 
         Returns
         -------
@@ -437,7 +460,7 @@ class NoseTester(object):
             from .noseclasses import NumpyTestProgram
 
             argv, plugins = self.prepare_test_args(
-                    label, verbose, extra_argv, doctests, coverage)
+                    label, verbose, extra_argv, doctests, coverage, timer)
 
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
 
