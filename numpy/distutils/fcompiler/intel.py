@@ -57,7 +57,7 @@ class IntelFCompiler(BaseIntelFCompiler):
 
     def get_flags_opt(self):  # Scipy test failures with -O2
         v = self.get_version()
-        mpopt = 'openmp' if v and int(v.split('.')[0]) < 15 else 'qopenmp'
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
         return ['-xhost -fp-model strict -O1 -{}'.format(mpopt)]
 
     def get_flags_arch(self):
@@ -123,7 +123,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
 
     def get_flags_opt(self):  # Scipy test failures with -O2
         v = self.get_version()
-        mpopt = 'openmp' if v and int(v.split('.')[0]) < 15 else 'qopenmp'
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
         return ['-fp-model strict -O1 -{}'.format(mpopt)]
 
     def get_flags_arch(self):

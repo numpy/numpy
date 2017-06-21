@@ -19,7 +19,7 @@ class IntelCCompiler(UnixCCompiler):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
 
         v = self.get_version()
-        mpopt = 'openmp' if v and int(v.split('.')[0]) < 15 else 'qopenmp'
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
         self.cc_exe = ('icc -fPIC -fp-model strict -O3 '
                        '-fomit-frame-pointer -{}').format(mpopt)
         compiler = self.cc_exe
@@ -59,7 +59,7 @@ class IntelEM64TCCompiler(UnixCCompiler):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
 
         v = self.get_version()
-        mpopt = 'openmp' if v and int(v.split('.')[0]) < 15 else 'qopenmp'
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
         self.cc_exe = ('icc -m64 -fPIC -fp-model strict -O3 '
                        '-fomit-frame-pointer -{}').format(mpopt)
         compiler = self.cc_exe
