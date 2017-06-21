@@ -31,7 +31,7 @@ Some Key Differences
        these arrays are designed to act more or less like matrix operations
        in linear algebra.
      - In NumPy the basic type is a multidimensional ``array``.  Operations
-       on these arrays in all dimensionalities including 2D are elementwise
+       on these arrays in all dimensionalities including 2D are element-wise
        operations.  However, there is a special ``matrix`` type for doing
        linear algebra, which is just a subclass of the ``array`` class.
        Operations on matrix-class arrays are linear algebra operations.
@@ -77,9 +77,10 @@ Short answer
    linear algebra operations.
 -  You can have standard vectors or row/column vectors if you like.
 
-The only disadvantage of using the array type is that you will have to
-use ``dot`` instead of ``*`` to multiply (reduce) two tensors (scalar
-product, matrix vector multiplication etc.).
+Until Python 3.5 the only disadvantage of using the array type was that you
+had to use ``dot`` instead of ``*`` to multiply (reduce) two tensors
+(scalar product, matrix vector multiplication etc.). Since Python 3.5 you
+can use the matrix multiplication ``@`` operator.
 
 Long answer
 -----------
@@ -136,7 +137,9 @@ There are pros and cons to using both:
       ``dot(v,A)`` treats ``v`` as a row vector. This can save you having to
       type a lot of transposes.
    -  ``<:(`` Having to use the ``dot()`` function for matrix-multiply is
-      messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``.
+      messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``. This isn't an issue with
+      Python >= 3.5 because the ``@`` operator allows it to be written as
+      ``A @ B @ C``.
    -  ``:)`` Element-wise multiplication is easy: ``A*B``.
    -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
       testing, and is the type most likely to be returned by 3rd party
@@ -145,7 +148,7 @@ There are pros and cons to using both:
    -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
       with that.
    -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
-      elementwise
+      element-wise.
 
 -  ``matrix``
 
@@ -160,11 +163,12 @@ There are pros and cons to using both:
       it's a bug), but 3rd party code based on NumPy may not honor type
       preservation like NumPy does.
    -  ``:)`` ``A*B`` is matrix multiplication, so more convenient for
-      linear algebra.
+      linear algebra (For Python >= 3.5 plain arrays have the same convenience
+      with the ``@`` operator).
    -  ``<:(`` Element-wise multiplication requires calling a function,
       ``multiply(A,B)``.
    -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
-      does not work elementwise but ``/`` does.
+      does not work element-wise but ``/`` does.
 
 The ``array`` is thus much more advisable to use.
 
