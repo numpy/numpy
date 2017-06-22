@@ -325,7 +325,7 @@ class Template(object):
             if PY3:
                 raise(e)
             else:
-                raise (exc_info[1], e, exc_info[2])
+                raise exc_info[0], e, exc_info[2]
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
@@ -341,7 +341,7 @@ class Template(object):
             if PY3:
                 raise(e)
             else:
-                raise (exc_info[1], e, exc_info[2])
+                raise exc_info[0], e, exc_info[2]
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -364,7 +364,7 @@ class Template(object):
             if PY3:
                 raise(e)
             else:
-                raise (exc_info[1], e, exc_info[2])
+                raise exc_info[0], e, exc_info[2]
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
