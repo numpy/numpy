@@ -2664,5 +2664,16 @@ class TestKeepdims(TestCase):
         assert_raises(TypeError, np.sum, x, keepdims=True)
 
 
+class TestTensordot(TestCase):
+
+    def test_zero_dimension(self):
+        # Test resolution to issue #5663
+        a = np.ndarray((3,0))
+        b = np.ndarray((0,4))
+        td = np.tensordot(a, b, (1, 0))
+        assert_array_equal(td, np.dot(a, b))
+        assert_array_equal(td, np.einsum('ij,jk', a, b))
+
+
 if __name__ == "__main__":
     run_module_suite()
