@@ -153,9 +153,8 @@ class Template(object):
 
     def from_filename(cls, filename, namespace=None, encoding=None,
                       default_inherit=None, get_template=get_file_template):
-        f = open(filename, 'rb')
-        c = f.read()
-        f.close()
+        with open(filename, 'rb') as f:
+            c = f.read()
         if encoding:
             c = c.decode(encoding)
         elif PY3:
@@ -1295,9 +1294,8 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        f = open(template_name, 'rb', encoding="latin-1")
-        template_content = f.read()
-        f.close()
+        with open(template_name, 'rb', encoding="latin-1") as f: 
+            template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
     else:
@@ -1305,9 +1303,8 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        f = open(options.output, 'wb')
-        f.write(result)
-        f.close()
+        with open(options.output, 'wb') as f: 
+            f.write(result)
     else:
         sys.stdout.write(result)
 
