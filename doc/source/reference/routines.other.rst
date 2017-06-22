@@ -43,3 +43,11 @@ NumPy version comparison
    :toctree: generated/
 
    lib.NumpyVersion
+
+System resource information
+---------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   lib.get_include

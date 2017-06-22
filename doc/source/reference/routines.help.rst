@@ -13,7 +13,6 @@ Finding help
 
    lookfor
 
-
 Reading help
 ------------
 
