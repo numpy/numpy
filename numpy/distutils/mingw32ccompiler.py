@@ -251,11 +251,14 @@ def find_python_dll():
     # We can't do much here:
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
+    # - sys.real_prefix is main dir for virtualenvs in Python 2.7
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
     stems = [sys.prefix]
     if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
+    elif hasattr(sys, 'real_prefix') and sys.real_prefix != sys.prefix:
+        stems.append(sys.real_prefix)
 
     sub_dirs = ['', 'lib', 'bin']
     # generate possible combinations of directory trees and sub-directories
@@ -428,6 +431,8 @@ def _check_for_import_lib():
     stems = [sys.prefix]
     if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
+    elif hasattr(sys, 'real_prefix') and sys.real_prefix != sys.prefix:
+        stems.append(sys.real_prefix)
 
     # possible subdirectories within those trees where it is placed
     sub_dirs = ['libs', 'lib']
@@ -481,9 +486,12 @@ def _build_import_library_x86():
     lib_file = os.path.join(sys.prefix, 'libs', lib_name)
     if not os.path.isfile(lib_file):
         # didn't find library file in virtualenv, try base distribution, too,
-        # and use that instead if found there
+        # and use that instead if found there. for Python 2.7 venvs, the base
+        # directory is in attribute real_prefix instead of base_prefix.
         if hasattr(sys, 'base_prefix'):
             base_lib = os.path.join(sys.base_prefix, 'libs', lib_name)
+        elif hasattr(sys, 'real_prefix'):
+            base_lib = os.path.join(sys.real_prefix, 'libs', lib_name)
         else:
             base_lib = ''  # os.path.isfile('') == False
 
