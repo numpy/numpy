@@ -124,16 +124,6 @@ Other modules
    log.set_verbosity
    exec_command
 
-Utility functions for :mod:`numpy.distutils`
-============================================
-
-.. currentmodule:: numpy.lib
-
-.. autosummary::
-   :toctree: generated/
-
-   get_include
-
 Building Installable C libraries
 ================================
 
