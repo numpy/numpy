@@ -140,53 +140,30 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
 }
 
 
-/**
- * Prepare an npy_index_object from the python slicing object.
+/*
+ * Converts a multidimensional index which is not yet a tuple
+ * to an exact tuple, if appropriate. First checks whether 
+ * idx_seq is indeed a sequence, but not an exact tuple
+ * or an ndarray. 
+ * 
+ * If converted, the pointer pointed to by
+ * idx_seq will contain a new reference, which the caller
+ * is responsible for managing.
  *
- * This function handles all index preparations with the exception
- * of field access. It fills the array of index_info structs correctly.
- * It already handles the boolean array special case for fancy indexing,
- * i.e. if the index type is boolean, it is exactly one matching boolean
- * array. If the index type is fancy, the boolean array is already
- * converted to integer arrays. There is (as before) no checking of the
- * boolean dimension.
- *
- * Checks everything but the bounds.
- *
- * @param the array being indexed
  * @param the index object
- * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param number of indices found
- * @param dimension of the indexing result
- * @param dimension of the fancy/advanced indices part
- * @param whether to allow the boolean special case
  *
- * @returns the index_type or -1 on failure and fills the number of indices.
+ * @returns an indicator variable: 1 if an exact tuple was newly
+ *          created, 0 if not, and -1 if the tuple
+ *          could not be created due to failure.
  */
 NPY_NO_EXPORT int
-prepare_index(PyArrayObject *self, PyObject *index,
-              npy_index_info *indices,
-              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+idx_seq_to_tuple(PyObject **idx_seq)
 {
-    int new_ndim, fancy_ndim, used_ndim, index_ndim;
-    int curr_idx, get_idx;
-
     int i;
+    PyObject * index = *idx_seq;
     npy_intp n;
-
     npy_bool make_tuple = 0;
-    PyObject *obj = NULL;
-    PyArrayObject *arr;
-
-    int index_type = 0;
-    int ellipsis_pos = -1;
-
-    /*
-     * The index might be a multi-dimensional index, but not yet a tuple
-     * this makes it a tuple in that case.
-     *
-     * TODO: Refactor into its own function.
-     */
+    
     if (!PyTuple_CheckExact(index)
             /* Next three are just to avoid slow checks */
 #if !defined(NPY_PY3K)
@@ -236,12 +213,64 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         if (make_tuple) {
             /* We want to interpret it as a tuple, so make it one */
-            index = PySequence_Tuple(index);
-            if (index == NULL) {
+            *idx_seq = PySequence_Tuple(index);
+            if (*idx_seq == NULL) {
                 return -1;
             }
         }
     }
+    return make_tuple;
+}
+
+
+/**
+ * Prepare an npy_index_object from the python slicing object.
+ *
+ * This function handles all index preparations with the exception
+ * of field access. It fills the array of index_info structs correctly.
+ * It already handles the boolean array special case for fancy indexing,
+ * i.e. if the index type is boolean, it is exactly one matching boolean
+ * array. If the index type is fancy, the boolean array is already
+ * converted to integer arrays. There is (as before) no checking of the
+ * boolean dimension.
+ *
+ * Checks everything but the bounds.
+ *
+ * @param the array being indexed
+ * @param the index object
+ * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param number of indices found
+ * @param dimension of the indexing result
+ * @param dimension of the fancy/advanced indices part
+ * @param whether to allow the boolean special case
+ *
+ * @returns the index_type or -1 on failure and fills the number of indices.
+ */
+NPY_NO_EXPORT int
+prepare_index(PyArrayObject *self, PyObject *index,
+              npy_index_info *indices,
+              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+{
+    int new_ndim, fancy_ndim, used_ndim, index_ndim;
+    int curr_idx, get_idx;
+
+    int i;
+    npy_intp n;
+
+    npy_bool make_tuple;
+    PyObject *obj = NULL;
+    PyArrayObject *arr;
+
+    int index_type = 0;
+    int ellipsis_pos = -1;
+
+    /*
+     * The index might be a multi-dimensional index, but not yet a tuple.
+     * This makes it a tuple in that case.
+     */
+    make_tuple = idx_seq_to_tuple(&index);
+    if (make_tuple < 0)
+        return -1;
 
     /* If the index is not a tuple, handle it the same as (index,) */
     if (!PyTuple_CheckExact(index)) {
