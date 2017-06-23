@@ -832,7 +832,7 @@ def appenddecl(decl, decl2, force=1):
         decl = {}
     if not decl2:
         return decl
-    if decl is decl2:
+    if decl == decl2:
         return decl
     for k in list(decl2.keys()):
         if k == 'typespec':
