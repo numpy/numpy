@@ -1014,7 +1014,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(vals) == 0:
                 continue
             if usecols:
-                vals = [vals[i] for i in usecols]
+                vals = [vals[j] for j in usecols]
             if len(vals) != N:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
