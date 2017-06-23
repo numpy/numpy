@@ -314,33 +314,31 @@ class Template(object):
                     'invalid syntax in expression: %s' % code)
             return value
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if getattr(e, 'args', None):
-                arg0 = e.args[0]
+            e_type, e_value, e_traceback = sys.exc_info()
+            if getattr(e_value, 'args', None):
+                arg0 = e_value.args[0]
             else:
-                arg0 = coerce_text(e)
-            e.args = (self._add_line_info(arg0, pos),)
+                arg0 = coerce_text(e_value)
+            e_value.args = (self._add_line_info(arg0, pos),)
             if PY3:
-                raise(e)
+                raise(e_value)
             else:
-                raise exc_info[0], e, exc_info[2]
+                raise e_type, e_value, e_traceback
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
         try:
             exec(code, self.default_namespace, ns)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if e.args:
-                e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            if e_value.args:
+                e_value.args = (self._add_line_info(e_value.args[0], pos),)
             else:
-                e.args = (self._add_line_info(None, pos),)
+                e_value.args = (self._add_line_info(None, pos),)
             if PY3:
-                raise(e)
+                raise(e_value)
             else:
-                raise exc_info[0], e, exc_info[2]
+                raise e_type, e_value, e_traceback
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -357,13 +355,12 @@ class Template(object):
                 if (is_unicode(value) and self.default_encoding):
                     value = value.encode(self.default_encoding)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            e_value.args = (self._add_line_info(e_value.args[0], pos),)
             if PY3:
-                raise(e)
+                raise(e_value)
             else:
-                raise exc_info[0], e, exc_info[2]
+                raise e_type, e_value, e_traceback
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
