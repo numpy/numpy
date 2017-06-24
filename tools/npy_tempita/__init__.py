@@ -33,6 +33,7 @@ with a few changes to remove the six dependency.
 
 """
 from __future__ import absolute_import, division, print_function
+from future.utils import raise_
 
 import re
 import sys
@@ -319,11 +320,8 @@ class Template(object):
                 arg0 = e_value.args[0]
             else:
                 arg0 = coerce_text(e_value)
-            e_value.args = (self._add_line_info(arg0, pos),)
-            if PY3:
-                raise(e_value)
-            else:
-                raise e_type, e_value, e_traceback
+            e_value.args = (self._add_line_info(arg0, pos),)            
+            raise_(e_type, e_value, e_traceback)
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
@@ -335,10 +333,7 @@ class Template(object):
                 e_value.args = (self._add_line_info(e_value.args[0], pos),)
             else:
                 e_value.args = (self._add_line_info(None, pos),)
-            if PY3:
-                raise(e_value)
-            else:
-                raise e_type, e_value, e_traceback
+            raise_(e_type, e_value, e_traceback)
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -357,10 +352,7 @@ class Template(object):
         except:
             e_type, e_value, e_traceback = sys.exc_info()
             e_value.args = (self._add_line_info(e_value.args[0], pos),)
-            if PY3:
-                raise(e_value)
-            else:
-                raise e_type, e_value, e_traceback
+            raise_(e_type, e_value, e_traceback)
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
