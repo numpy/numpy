@@ -1836,6 +1836,14 @@ class TestHistogram(object):
         hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
         assert_equal(hist[-1], 1)
 
+    def test_unsigned_monotonicity_check(self):
+        # Ensures ValueError is raised if bins not increasing monotonically
+        # when bins contain unsigned values (see #9222)
+        arr = np.array([2])
+        bins = np.array([1, 3, 1], dtype='uint64')
+        with assert_raises(ValueError):
+            hist, edges = np.histogram(arr, bins=bins)
+
 
 class TestHistogramOptimBinNums(object):
     """
