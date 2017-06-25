@@ -782,7 +782,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         bins = bin_edges
     else:
         bins = asarray(bins)
-        if (np.diff(bins) < 0).any():
+        if not np.all(bins[1:] > bins[:-1]):
             raise ValueError(
                 'bins must increase monotonically.')
 
