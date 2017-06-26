@@ -80,6 +80,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
 
     return False
 
+
 def replace_method(klass, method_name, func):
     if sys.version_info[0] < 3:
         m = types.MethodType(func, None, klass)
@@ -87,6 +88,25 @@ def replace_method(klass, method_name, func):
         # Py3k does not have unbound method anymore, MethodType does not work
         m = lambda self, *args, **kw: func(self, *args, **kw)
     setattr(klass, method_name, m)
+
+
+######################################################################
+## Method that subclasses may redefine. But don't call this method,
+## it i private to CCompiler class and may return unexpected
+## results if used elsewhere. So, you have been warned..
+
+def CCompiler_find_executables(self):
+    """
+    Does nothing here, but is called by the get_version method and can be
+    overridden by subclasses. In particular it is redefined in the `FCompiler`
+    class where more documentation can be found.
+
+    """
+    pass
+
+
+replace_method(CCompiler, 'find_executables', CCompiler_find_executables)
+
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
