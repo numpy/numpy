@@ -308,22 +308,21 @@ def is_free_format(file):
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open(file, 'r')
-    line = f.readline()
-    n = 15  # the number of non-comment lines to scan for hints
-    if _has_f_header(line):
-        n = 0
-    elif _has_f90_header(line):
-        n = 0
-        result = 1
-    while n > 0 and line:
-        if line[0] != '!' and line.strip():
-            n -= 1
-            if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
-                result = 1
-                break
+    with open(file, 'r') as f:
         line = f.readline()
-    f.close()
+        n = 15  # the number of non-comment lines to scan for hints
+        if _has_f_header(line):
+            n = 0
+        elif _has_f90_header(line):
+            n = 0
+            result = 1
+        while n > 0 and line:
+            if line[0] != '!' and line.strip():
+                n -= 1
+                if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
+                    result = 1
+                    break
+            line = f.readline()
     return result
 
 
@@ -3335,8 +3334,7 @@ if __name__ == "__main__":
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)
-        f = open(pyffilename, 'w')
-        f.write(pyf)
-        f.close()
+        with open(pyffilename, 'w') as f: 
+            f.write(pyf)
     if showblocklist:
         show(postlist)
