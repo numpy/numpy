@@ -72,16 +72,23 @@ array_any_nonzero(PyArrayObject *arr)
     npy_intp counter;
     PyArrayIterObject *it;
     npy_bool anyTRUE = NPY_FALSE;
+    int needs_api = 0;
 
     it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (it == NULL) {
         return anyTRUE;
     }
+    needs_api = NpyIter_IterationNeedsAPI(it);
+
     counter = it->size;
     while (counter--) {
         if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
             anyTRUE = NPY_TRUE;
             break;
+        }
+        if (needs_api && PyErr_Occurred()) {
+            Py_DECREF(it);
+            return -1;
         }
         PyArray_ITER_NEXT(it);
     }
