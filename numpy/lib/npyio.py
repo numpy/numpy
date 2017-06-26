@@ -611,6 +611,11 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
+    When saving dictionaries, avoid using keys that begin with "/", as the
+    first slash will be removed by the python archive function. If they 
+    must be used, prepend another character ahead of the slash to ensure
+    that the "/" will not be removed.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
