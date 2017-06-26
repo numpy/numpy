@@ -1879,6 +1879,15 @@ class TestFillingValues(TestCase):
         assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
         assert_equal(test[1], maximum_fill_value(a['B']))
 
+    def test_extremum_fill_value_subdtype(self):
+        a = array(([2, 3, 4],), dtype=[('value', np.int8, 3)])
+
+        test = minimum_fill_value(a)
+        assert_equal(test[0], np.full(3, minimum_fill_value(a['value'])))
+
+        test = maximum_fill_value(a)
+        assert_equal(test[0], np.full(3, maximum_fill_value(a['value'])))
+
     def test_fillvalue_individual_fields(self):
         # Test setting fill_value on individual fields
         ndtype = [('a', int), ('b', int)]
