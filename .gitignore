@@ -144,9 +144,8 @@ numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
-doc/source/reference/generated
 # numpy.show_config.rst needs to be in the `generated` folder
-!doc/source/reference/generated/numpy.show_config.rst
+# doc/source/reference/generated
 benchmarks/results
 benchmarks/env
 benchmarks/numpy
