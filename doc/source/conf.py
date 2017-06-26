@@ -76,6 +76,9 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# Files generated at build time. Their functions and methods should not 
+# provide a source link in their documentation.
+generated_files = ['__config__.py']
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -311,6 +314,10 @@ def linkcode_resolve(domain, info):
 
     try:
         fn = inspect.getsourcefile(obj)
+        for filename in generated_files:
+            if filename in fn:
+                raise Exception(
+                    "{} is generated at build time.".format(filename))
     except Exception:
         fn = None
     if not fn:
