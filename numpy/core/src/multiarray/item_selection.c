@@ -2099,7 +2099,7 @@ PyArray_CountNonzero(PyArrayObject *self)
             data += stride;
         }
 
-        return nonzero_count;
+        return PyErr_Occurred() ? -1 : nonzero_count;
     }
 
     /*
