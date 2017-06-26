@@ -277,7 +277,12 @@ def _recursive_extremum_fill_value(ndtype, extremum):
             fval = _recursive_extremum_fill_value(ndtype[name], extremum)
             deflist.append(fval)
         return tuple(deflist)
-    return extremum[ndtype]
+    elif ndtype.subdtype:
+        subtype, shape = ndtype.subdtype
+        subval = _recursive_extremum_fill_value(subtype, extremum)
+        return np.full(shape, subval)
+    else:
+        return extremum[ndtype]
 
 
 def _extremum_fill_value(obj, extremum, extremum_name):
