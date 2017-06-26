@@ -321,7 +321,7 @@ class Template(object):
                 arg0 = coerce_text(e_value)
             e_value.args = (self._add_line_info(arg0, pos),)            
             if PY3:
-                raise(e_value)
+                raise e_value
             else:
                 exec('raise e_type, e_value, e_traceback')
 
@@ -336,7 +336,7 @@ class Template(object):
             else:
                 e_value.args = (self._add_line_info(None, pos),)
             if PY3:
-                raise(e_value)
+                raise e_value
             else:
                 exec('raise e_type, e_value, e_traceback')
 
@@ -358,7 +358,7 @@ class Template(object):
             e_type, e_value, e_traceback = sys.exc_info()
             e_value.args = (self._add_line_info(e_value.args[0], pos),)
             if PY3:
-                raise(e_value)
+                raise e_value
             else:
                 exec('raise e_type, e_value, e_traceback')
         else:
