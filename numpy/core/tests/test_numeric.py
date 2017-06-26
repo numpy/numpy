@@ -1107,6 +1107,19 @@ class TestNonzero(TestCase):
 
         assert_equal(m.nonzero(), tgt)
 
+    def test_nonzero_invalid_object(self):
+        # gh-9295
+        a = np.array([np.array([1, 2]), 3])
+        assert_raises(ValueError, np.nonzero, a)
+
+        class BoolErrors:
+            def __bool__(self):
+                raise ValueError("Not allowed")
+            def __nonzero__(self):
+                raise ValueError("Not allowed")
+
+        assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
+
 
 class TestIndex(TestCase):
     def test_boolean(self):
