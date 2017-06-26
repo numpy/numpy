@@ -280,6 +280,22 @@ def _recursive_extremum_fill_value(ndtype, extremum):
     return extremum[ndtype]
 
 
+def _extremum_fill_value(obj, extremum, extremum_name):
+    if hasattr(obj, 'dtype'):
+        return _recursive_extremum_fill_value(obj.dtype, extremum)
+    elif isinstance(obj, float):
+        return extremum[ntypes.typeDict['float_']]
+    elif isinstance(obj, int):
+        return extremum[ntypes.typeDict['int_']]
+    elif isinstance(obj, long):
+        return extremum[ntypes.typeDict['uint']]
+    elif isinstance(obj, np.dtype):
+        return extremum[obj]
+    else:
+        raise TypeError(
+            "Unsuitable type for calculating {}.".format(extremum_name))
+
+
 def minimum_fill_value(obj):
     """
     Return the maximum value that can be represented by the dtype of an object.
@@ -328,19 +344,7 @@ def minimum_fill_value(obj):
     inf
 
     """
-    errmsg = "Unsuitable type for calculating minimum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, min_filler)
-    elif isinstance(obj, float):
-        return min_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return min_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return min_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return min_filler[obj]
-    else:
-        raise TypeError(errmsg)
+    return _extremum_fill_value(obj, min_filler, "minimum")
 
 
 def maximum_fill_value(obj):
@@ -391,19 +395,7 @@ def maximum_fill_value(obj):
     -inf
 
     """
-    errmsg = "Unsuitable type for calculating maximum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, max_filler)
-    elif isinstance(obj, float):
-        return max_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return max_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return max_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return max_filler[obj]
-    else:
-        raise TypeError(errmsg)
+    return _extremum_fill_value(obj, max_filler, "maximum")
 
 
 def _recursive_set_default_fill_value(dt):
