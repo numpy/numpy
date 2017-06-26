@@ -115,7 +115,8 @@ def main(argv):
                               "Note that you need to commit your changes first!"))
     parser.add_argument("--raise-warnings", default=None, type=str,
                         choices=('develop', 'release'),
-                        help="if 'develop', warnings are treated as errors")
+                        help="if 'develop', warnings are treated as errors; "
+                             "defaults to 'devlop' in development versions.")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -282,7 +283,13 @@ def main(argv):
             extra_argv = kw.pop('extra_argv', ())
             extra_argv = extra_argv + tests[1:]
             kw['extra_argv'] = extra_argv
+            import numpy as np
             from numpy.testing import Tester
+            if kw["raise_warnings"] is None:
+                if hasattr(np, "__version__") and ".dev0" in np.__version__:
+                    kw["raise_warnings"] = "develop"
+                else:
+                    kw["raise_warnings"] = "release"
             return Tester(tests[0]).test(*a, **kw)
     else:
         __import__(PROJECT_MODULE)
