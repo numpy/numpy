@@ -3128,7 +3128,8 @@ class MaskedArray(ndarray):
         return output
     view.__doc__ = ndarray.view.__doc__
 
-    def astype(self, newtype):
+    def astype(self, newtype,
+               order='K', casting='unsafe', subok=True, copy=True):
         """
         Returns a copy of the MaskedArray cast to given newtype.
 
@@ -3137,6 +3138,10 @@ class MaskedArray(ndarray):
         output : MaskedArray
             A copy of self cast to input newtype.
             The returned record shape matches self.shape.
+
+        See Also
+        --------
+        ndarray.astype
 
         Examples
         --------
@@ -3151,16 +3156,28 @@ class MaskedArray(ndarray):
          [7 -- 9]]
 
         """
-        newtype = np.dtype(newtype)
-        newmasktype = make_mask_descr(newtype)
+        output = super(MaskedArray, self).astype(newtype,
+            order=order, casting=casting, subok=subok, copy=copy)
 
-        output = self._data.astype(newtype).view(type(self))
+        # if no copy was made, there's nothing to do
+        if output is self:
+            return self
+
+        # asked to return a base array, so nothing to decorate
+        if not subok:
+            return output
+
         output._update_from(self)
 
         if self._mask is nomask:
             output._mask = nomask
         else:
-            output._mask = self._mask.astype(newmasktype)
+            # we know we copied the data here allowing subclasses, so copy the
+            # mask too
+            output._mask = self._mask.astype(
+                make_mask_descr(output.dtype),
+                order=order, casting=casting, subok=True, copy=True
+            )
 
         # Don't check _fill_value if it's None, that'll speed things up
         if self._fill_value is not None:
