@@ -144,7 +144,7 @@ numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
-doc/source/reference/generated/
+doc/source/reference/generated
 benchmarks/results
 benchmarks/env
 benchmarks/numpy
