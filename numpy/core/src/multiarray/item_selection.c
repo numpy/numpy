@@ -2330,7 +2330,7 @@ finish:
         return NULL;
     }
 
-    for (i = 0; i < ndim; ++i) {
+    for (i = 0; i < PyArray_NDIM(ret); ++i) {
         if (PyArray_DIMS(ret)[i] == 0) {
             is_empty = 1;
             break;
