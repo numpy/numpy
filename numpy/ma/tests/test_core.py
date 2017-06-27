@@ -3128,6 +3128,20 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(test, mask_first)
         assert_equal(test.mask, mask_first.mask)
 
+        # Test sort on dtype with subarray (gh-8069)
+        dt = np.dtype([('v', int, 2)])
+        a = a.view(dt)
+        mask_last = mask_last.view(dt)
+        mask_first = mask_first.view(dt)
+
+        test = sort(a)
+        assert_equal(test, mask_last)
+        assert_equal(test.mask, mask_last.mask)
+
+        test = sort(a, endwith=False)
+        assert_equal(test, mask_first)
+        assert_equal(test.mask, mask_first.mask)
+
     def test_argsort(self):
         # Test argsort
         a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
