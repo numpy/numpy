@@ -246,27 +246,29 @@ def default_fill_value(obj):
 
     """
     if hasattr(obj, 'dtype'):
-        defval = _check_fill_value(None, obj.dtype)
+        return default_fill_value(obj.dtype)
     elif isinstance(obj, np.dtype):
-        if obj.subdtype:
-            defval = default_filler.get(obj.subdtype[0].kind, '?')
+        if obj.names:
+            return np.array(_recursive_set_default_fill_value(obj),
+                            dtype=obj)
+        elif obj.subdtype:
+            return default_filler.get(obj.subdtype[0].kind, '?')
         elif obj.kind in 'Mm':
-            defval = default_filler.get(obj.str[1:], '?')
+            return default_filler.get(obj.str[1:], '?')
         else:
-            defval = default_filler.get(obj.kind, '?')
+            return default_filler.get(obj.kind, '?')
     elif isinstance(obj, float):
-        defval = default_filler['f']
+        return default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
-        defval = default_filler['i']
+        return default_filler['i']
     elif isinstance(obj, bytes):
-        defval = default_filler['S']
+        return default_filler['S']
     elif isinstance(obj, unicode):
-        defval = default_filler['U']
+        return default_filler['U']
     elif isinstance(obj, complex):
-        defval = default_filler['c']
+        return default_filler['c']
     else:
-        defval = default_filler['O']
-    return defval
+        return default_filler['O']
 
 
 def _recursive_extremum_fill_value(ndtype, extremum):
@@ -468,22 +470,16 @@ def _check_fill_value(fill_value, ndtype):
     """
     Private function validating the given `fill_value` for the given dtype.
 
-    If fill_value is None, it is set to the default corresponding to the dtype
-    if this latter is standard (no fields). If the datatype is flexible (named
-    fields), fill_value is set to a tuple whose elements are the default fill
-    values corresponding to each field.
+    If fill_value is None, it is set to the default corresponding to the dtype.
 
     If fill_value is not None, its value is forced to the given dtype.
 
+    The result is always a 0d array.
     """
     ndtype = np.dtype(ndtype)
     fields = ndtype.fields
     if fill_value is None:
-        if fields:
-            fill_value = np.array(_recursive_set_default_fill_value(ndtype),
-                                  dtype=ndtype)
-        else:
-            fill_value = default_fill_value(ndtype)
+        fill_value = default_fill_value(ndtype)
     elif fields:
         fdtype = [(_[0], _[1]) for _ in ndtype.descr]
         if isinstance(fill_value, (ndarray, np.void)):
