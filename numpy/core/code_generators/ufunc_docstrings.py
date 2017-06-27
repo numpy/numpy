@@ -1722,6 +1722,7 @@ add_newdoc('numpy.core.umath', 'isnat',
     ----------
     x : array_like
         Input array with datetime or timedelta data type.
+    $PARAMS
 
     Returns
     -------
