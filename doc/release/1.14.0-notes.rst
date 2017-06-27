@@ -34,6 +34,18 @@ Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
 dimension. Now it returns a zero array, which is consistent with the behaviour
 of ``np.dot`` and ``np.einsum``.
 
+``np.ma`` functions producing ``fill_value``s have changed
+----------------------------------------------------------
+Previously, ``np.ma.default_fill_value`` would return a 0d array, but
+``np.ma.minimum_fill_value`` and ``np.ma.maximum_fill_value`` would return a
+tuple of the fields. Instead, all three methods return a structured ``np.void``
+object, which is what you would already find in the ``.fill_value`` attribute.
+
+Additionally, the dtype guessing now matches that of ``np.array`` - so when
+passing a python scalar ``x``, ``maximum_fill_value(x)`` is always the same as
+``maximum_fill_value(np.array(x))``. Previously ``x = long(1)`` on Python 2
+violated this assumption.
+
 
 C API changes
 =============
