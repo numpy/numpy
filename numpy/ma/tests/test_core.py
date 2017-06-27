@@ -4788,6 +4788,11 @@ def test_ufunc_with_output():
     y = np.add(x, 1., out=x)
     assert_(y is x)
 
+def test_astype():
+    descr = [('v', int, 3), ('x', [('y', float)])]
+    x = array(([1, 2, 3], (1.0,)), dtype=descr)
+    assert_equal(x, x.astype(descr))
+
 
 ###############################################################################
 if __name__ == "__main__":
