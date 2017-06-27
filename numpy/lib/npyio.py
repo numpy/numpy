@@ -611,10 +611,19 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, avoid using keys that begin with "/", as the
-    first slash will be removed by the python archive function. If they 
-    must be used, prepend another character ahead of the slash to ensure
-    that the "/" will not be removed.
+    When saving dictionaries, the dictionary keys themselves are stored
+    as zip files under the zip directory. Therefore to avoid unintended
+    changes to the keys, one should avoid using key strings that are not
+    valid file names.
+
+    Examples include strings that begin with "/", or contain ".." or 
+    "./", such as '/test/tmp.txt', './test/tmp.txt', or 
+    'test/../tmp.txt'
+
+    Should keys that include such patterns be required, they must be 
+    properly encapsulated and or escaped using either double quotes or
+    backslashes where necessary. Note that backslashes will be 
+    doubled in the returned keys.
 
     Examples
     --------
