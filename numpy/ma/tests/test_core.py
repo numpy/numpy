@@ -3106,27 +3106,27 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(am, an)
 
     def test_sort_flexible(self):
-        # Test sort on flexible dtype.
+        # Test sort on structured dtype.
         a = array(
             data=[(3, 3), (3, 2), (2, 2), (2, 1), (1, 0), (1, 1), (1, 2)],
             mask=[(0, 0), (0, 1), (0, 0), (0, 0), (1, 0), (0, 0), (0, 0)],
             dtype=[('A', int), ('B', int)])
-
-        test = sort(a)
-        b = array(
+        mask_last = array(
             data=[(1, 1), (1, 2), (2, 1), (2, 2), (3, 3), (3, 2), (1, 0)],
             mask=[(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (1, 0)],
             dtype=[('A', int), ('B', int)])
-        assert_equal(test, b)
-        assert_equal(test.mask, b.mask)
+        mask_first = array(
+            data=[(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3)],
+            mask=[(1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (0, 0)],
+            dtype=[('A', int), ('B', int)])
+
+        test = sort(a)
+        assert_equal(test, mask_last)
+        assert_equal(test.mask, mask_last.mask)
 
         test = sort(a, endwith=False)
-        b = array(
-            data=[(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3), ],
-            mask=[(1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (0, 0), ],
-            dtype=[('A', int), ('B', int)])
-        assert_equal(test, b)
-        assert_equal(test.mask, b.mask)
+        assert_equal(test, mask_first)
+        assert_equal(test.mask, mask_first.mask)
 
     def test_argsort(self):
         # Test argsort
