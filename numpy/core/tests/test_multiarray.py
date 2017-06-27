@@ -6656,6 +6656,17 @@ class TestWhere(TestCase):
         assert_array_equal(ibad,
                            np.atleast_2d(np.array([[],[]], dtype=np.intp)))
 
+    def test_largedim(self):
+        # invalid read regression gh-9304
+        shape = [10, 2, 3, 4, 5, 6]
+        np.random.seed(2)
+        array = np.random.rand(*shape)
+
+        for i in range(10):
+            benchmark = array.nonzero()
+            result = array.nonzero()
+            assert_array_equal(benchmark, result)
+
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
