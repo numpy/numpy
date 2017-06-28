@@ -87,10 +87,12 @@ broadcast_strides(int ndim, npy_intp *shape,
 
 /*
  * Checks whether a data pointer + set of strides refers to a raw
- * array which is fully aligned data.
+ * array whose elements are all aligned to a given alignment.
+ * alignment should be a power of two.
  */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment);
+raw_array_is_aligned(int ndim, npy_intp *shape,
+                     char *data, npy_intp *strides, int alignment);
 
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
 NPY_NO_EXPORT int

@@ -84,14 +84,43 @@ broadcast_error: {
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment)
+raw_array_is_aligned(int ndim, npy_intp *shape,
+                     char *data, npy_intp *strides, int alignment)
 {
-    if (alignment > 1) {
-        npy_intp align_check = (npy_intp)data;
-        int idim;
 
-        for (idim = 0; idim < ndim; ++idim) {
-            align_check |= strides[idim];
+    /*
+     * The code below expects the following:
+     *  * that alignment is a power of two, as required by the C standard.
+     *  * that casting from pointer to uintp gives a sensible representation
+     *    we can use bitwise operations on (perhaps *not* req. by C std,
+     *    but assumed by glibc so it should be fine)
+     *  * that casting stride from intp to uintp (to avoid dependence on the
+     *    signed int representation) preserves remainder wrt alignment, so
+     *    stride%a is the same as ((unsigned intp)stride)%a. Req. by C std.
+     *
+     *  The code checks whether the lowest log2(alignment) bits of `data`
+     *  and all `strides` are 0, as this implies that
+     *  (data + n*stride)%alignment == 0 for all integers n.
+     */
+
+    if (alignment > 1) {
+        npy_uintp align_check = (npy_uintp)data;
+        int i;
+
+        for (i = 0; i < ndim; i++) {
+#if NPY_RELAXED_STRIDES_CHECKING
+            /* skip dim == 1 as it is not required to have stride 0 */
+            if (shape[i] > 1) {
+                /* if shape[i] == 1, the stride is never used */
+                align_check |= (npy_uintp)strides[i];
+            }
+            else if (shape[i] == 0) {
+                /* an array with zero elements is always aligned */
+                return 1;
+            }
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
+            align_check |= (npy_uintp)strides[i];
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
         }
 
         return npy_is_aligned((void *)align_check, alignment);
