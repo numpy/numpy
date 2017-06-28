@@ -46,7 +46,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
-    aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
+    aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                     dst_dtype->alignment);
     if (!npy_is_aligned(src_data, src_dtype->alignment)) {
         aligned = 0;
@@ -119,7 +119,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
-    aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
+    aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                     dst_dtype->alignment);
     if (!npy_is_aligned(src_data, src_dtype->alignment)) {
         aligned = 0;

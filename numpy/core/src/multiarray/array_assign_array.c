@@ -49,9 +49,9 @@ raw_array_assign_array(int ndim, npy_intp *shape,
     NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
+    aligned = raw_array_is_aligned(ndim, shape,
                         dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
+              raw_array_is_aligned(ndim, shape,
                         src_data, src_strides, src_dtype->alignment);
 
     /* Use raw iteration with no heap allocation */
@@ -134,9 +134,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
     NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
+    aligned = raw_array_is_aligned(ndim, shape,
                         dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
+              raw_array_is_aligned(ndim, shape,
                         src_data, src_strides, src_dtype->alignment);
 
     /* Use raw iteration with no heap allocation */
