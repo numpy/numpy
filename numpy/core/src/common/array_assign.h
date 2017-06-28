@@ -94,6 +94,20 @@ NPY_NO_EXPORT int
 raw_array_is_aligned(int ndim, npy_intp *shape,
                      char *data, npy_intp *strides, int alignment);
 
+/*
+ * Checks if an array is aligned to its "true alignment"
+ * given by dtype->alignment.
+ */
+NPY_NO_EXPORT int
+IsAligned(PyArrayObject *ap);
+
+/*
+ * Checks if an array is aligned to its "uint alignment"
+ * given by npy_uint_alignment(dtype->elsize).
+ */
+NPY_NO_EXPORT int
+IsUintAligned(PyArrayObject *ap);
+
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
 NPY_NO_EXPORT int
 arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
