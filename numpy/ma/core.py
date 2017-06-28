@@ -3152,16 +3152,16 @@ class MaskedArray(ndarray):
 
         """
         newtype = np.dtype(newtype)
+        newmasktype = make_mask_descr(newtype)
+
         output = self._data.astype(newtype).view(type(self))
         output._update_from(self)
-        names = output.dtype.names
-        if names is None:
-            output._mask = self._mask.astype(bool)
+
+        if self._mask is nomask:
+            output._mask = nomask
         else:
-            if self._mask is nomask:
-                output._mask = nomask
-            else:
-                output._mask = self._mask.astype([(n, bool) for n in names])
+            output._mask = self._mask.astype(newmasktype)
+
         # Don't check _fill_value if it's None, that'll speed things up
         if self._fill_value is not None:
             output._fill_value = _check_fill_value(self._fill_value, newtype)
