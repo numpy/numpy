@@ -389,6 +389,9 @@ class NoseTester(object):
         from . import utils
         utils.verbose = verbose
 
+        argv, plugins = self.prepare_test_args(
+                label, verbose, extra_argv, doctests, coverage, timer)
+
         if doctests:
             print("Running unit tests and doctests for %s" % self.package_name)
         else:
@@ -458,9 +461,6 @@ class NoseTester(object):
                                     module=r"nose\.")
 
             from .noseclasses import NumpyTestProgram
-
-            argv, plugins = self.prepare_test_args(
-                    label, verbose, extra_argv, doctests, coverage, timer)
 
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
 
