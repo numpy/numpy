@@ -115,8 +115,8 @@ def main(argv):
                               "Note that you need to commit your changes first!"))
     parser.add_argument("--raise-warnings", default=None, type=str,
                         choices=('develop', 'release'),
-                        help="if 'develop', warnings are treated as errors; "
-                             "defaults to 'devlop' in development versions.")
+                        help=("if 'develop', warnings are treated as errors; "
+                              "defaults to 'develop' in development versions."))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
