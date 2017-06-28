@@ -588,6 +588,16 @@ class TestJoinBy(TestCase):
                   dtype=[('a', int), ('b', int),
                          ('c', int), ('d', int)])
 
+    def test_join_subdtype(self):
+        # tests the bug in https://stackoverflow.com/q/44769632/102441
+        from numpy.lib import recfunctions as rfn
+        foo = np.array([(1,)],
+                       dtype=[('key', int)])
+        bar = np.array([(1, np.array([1,2,3]))],
+                       dtype=[('key', int), ('value', 'uint16', 3)])
+        res = join_by('key', foo, bar)
+        assert_equal(res, bar.view(ma.MaskedArray))
+
     def test_outer_join(self):
         a, b = self.a, self.b
 

@@ -205,6 +205,31 @@ if 'float128' in ntypes.typeDict:
     min_filler.update([(np.float128, +np.inf)])
 
 
+def _recursive_fill_value(dtype, f):
+    """
+    Recursively produce a fill value for `dtype`, calling f on scalar dtypes
+    """
+    if dtype.names:
+        vals = tuple(_recursive_fill_value(dtype[name], f) for name in dtype.names)
+        return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
+    elif dtype.subdtype:
+        subtype, shape = dtype.subdtype
+        subval = _recursive_fill_value(subtype, f)
+        return np.full(shape, subval)
+    else:
+        return f(dtype)
+
+
+def _get_dtype_of(obj):
+    """ Convert the argument for *_fill_value into a dtype """
+    if isinstance(obj, np.dtype):
+        return obj
+    elif hasattr(obj, 'dtype'):
+        return obj.dtype
+    else:
+        return np.asanyarray(obj).dtype
+
+
 def default_fill_value(obj):
     """
     Return the default fill value for the argument object.
@@ -223,6 +248,11 @@ def default_fill_value(obj):
        string    'N/A'
        ========  ========
 
+    For structured types, a structured scalar is returned, with each field the
+    default fill value for its type.
+
+    For subarray types, the fill value is an array of the same size containing
+    the default scalar fill value.
 
     Parameters
     ----------
@@ -245,39 +275,29 @@ def default_fill_value(obj):
     (1e+20+0j)
 
     """
-    if hasattr(obj, 'dtype'):
-        defval = _check_fill_value(None, obj.dtype)
-    elif isinstance(obj, np.dtype):
-        if obj.subdtype:
-            defval = default_filler.get(obj.subdtype[0].kind, '?')
-        elif obj.kind in 'Mm':
-            defval = default_filler.get(obj.str[1:], '?')
+    def _scalar_fill_value(dtype):
+        if dtype.kind in 'Mm':
+            return default_filler.get(dtype.str[1:], '?')
         else:
-            defval = default_filler.get(obj.kind, '?')
-    elif isinstance(obj, float):
-        defval = default_filler['f']
-    elif isinstance(obj, int) or isinstance(obj, long):
-        defval = default_filler['i']
-    elif isinstance(obj, bytes):
-        defval = default_filler['S']
-    elif isinstance(obj, unicode):
-        defval = default_filler['U']
-    elif isinstance(obj, complex):
-        defval = default_filler['c']
-    else:
-        defval = default_filler['O']
-    return defval
+            return default_filler.get(dtype.kind, '?')
+
+    dtype = _get_dtype_of(obj)
+    return _recursive_fill_value(dtype, _scalar_fill_value)
 
 
-def _recursive_extremum_fill_value(ndtype, extremum):
-    names = ndtype.names
-    if names:
-        deflist = []
-        for name in names:
-            fval = _recursive_extremum_fill_value(ndtype[name], extremum)
-            deflist.append(fval)
-        return tuple(deflist)
-    return extremum[ndtype]
+def _extremum_fill_value(obj, extremum, extremum_name):
+
+    def _scalar_fill_value(dtype):
+        try:
+            return extremum[dtype]
+        except KeyError:
+            raise TypeError(
+                "Unsuitable type {} for calculating {}."
+                .format(dtype, extremum_name)
+            )
+
+    dtype = _get_dtype_of(obj)
+    return _recursive_fill_value(dtype, _scalar_fill_value)
 
 
 def minimum_fill_value(obj):
@@ -289,7 +309,7 @@ def minimum_fill_value(obj):
 
     Parameters
     ----------
-    obj : ndarray or dtype
+    obj : ndarray, dtype or scalar
         An object that can be queried for it's numeric type.
 
     Returns
@@ -328,19 +348,7 @@ def minimum_fill_value(obj):
     inf
 
     """
-    errmsg = "Unsuitable type for calculating minimum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, min_filler)
-    elif isinstance(obj, float):
-        return min_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return min_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return min_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return min_filler[obj]
-    else:
-        raise TypeError(errmsg)
+    return _extremum_fill_value(obj, min_filler, "minimum")
 
 
 def maximum_fill_value(obj):
@@ -352,7 +360,7 @@ def maximum_fill_value(obj):
 
     Parameters
     ----------
-    obj : {ndarray, dtype}
+    obj : ndarray, dtype or scalar
         An object that can be queried for it's numeric type.
 
     Returns
@@ -391,48 +399,7 @@ def maximum_fill_value(obj):
     -inf
 
     """
-    errmsg = "Unsuitable type for calculating maximum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, max_filler)
-    elif isinstance(obj, float):
-        return max_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return max_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return max_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return max_filler[obj]
-    else:
-        raise TypeError(errmsg)
-
-
-def _recursive_set_default_fill_value(dt):
-    """
-    Create the default fill value for a structured dtype.
-
-    Parameters
-    ----------
-    dt: dtype
-        The structured dtype for which to create the fill value.
-
-    Returns
-    -------
-    val: tuple
-        A tuple of values corresponding to the default structured fill value.
-
-    """
-    deflist = []
-    for name in dt.names:
-        currenttype = dt[name]
-        if currenttype.subdtype:
-            currenttype = currenttype.subdtype[0]
-
-        if currenttype.names:
-            deflist.append(
-                tuple(_recursive_set_default_fill_value(currenttype)))
-        else:
-            deflist.append(default_fill_value(currenttype))
-    return tuple(deflist)
+    return _extremum_fill_value(obj, max_filler, "maximum")
 
 
 def _recursive_set_fill_value(fillvalue, dt):
@@ -471,22 +438,16 @@ def _check_fill_value(fill_value, ndtype):
     """
     Private function validating the given `fill_value` for the given dtype.
 
-    If fill_value is None, it is set to the default corresponding to the dtype
-    if this latter is standard (no fields). If the datatype is flexible (named
-    fields), fill_value is set to a tuple whose elements are the default fill
-    values corresponding to each field.
+    If fill_value is None, it is set to the default corresponding to the dtype.
 
     If fill_value is not None, its value is forced to the given dtype.
 
+    The result is always a 0d array.
     """
     ndtype = np.dtype(ndtype)
     fields = ndtype.fields
     if fill_value is None:
-        if fields:
-            fill_value = np.array(_recursive_set_default_fill_value(ndtype),
-                                  dtype=ndtype)
-        else:
-            fill_value = default_fill_value(ndtype)
+        fill_value = default_fill_value(ndtype)
     elif fields:
         fdtype = [(_[0], _[1]) for _ in ndtype.descr]
         if isinstance(fill_value, (ndarray, np.void)):
