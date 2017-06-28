@@ -1,5 +1,6 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
+#include "structmember.h"
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
@@ -55,9 +56,6 @@ index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
-
-NPY_NO_EXPORT int
-_IsAligned(PyArrayObject *ap);
 
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
@@ -182,6 +180,15 @@ check_and_adjust_axis(int *axis, int ndim)
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
 }
 
+/* used for some alignment checks */
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
 
 /*
  * return true if pointer is aligned to 'alignment'
@@ -199,6 +206,37 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
     else {
         return ((npy_uintp)(p) % alignment) == 0;
     }
+}
+
+/* Get equivalent "uint" alignment given an itemsize, for use in copy code */
+static NPY_INLINE int
+npy_uint_alignment(int itemsize)
+{
+    npy_uintp alignment = 0; /* return value of 0 means unaligned */
+
+    switch(itemsize){
+        case 1:
+            return 1;
+        case 2:
+            alignment = _ALIGN(npy_uint16);
+            break;
+        case 4:
+            alignment = _ALIGN(npy_uint32);
+            break;
+        case 8:
+            alignment = _ALIGN(npy_uint64);
+            break;
+        case 16:
+            /*
+             * 16 byte types are copied using 2 uint64 assignments.
+             * See the strided copy function in lowlevel_strided_loops.c.
+             */
+            alignment = _ALIGN(npy_uint64);
+            break;
+        default:
+    }
+    
+    return alignment;
 }
 
 /*

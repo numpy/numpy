@@ -587,50 +587,6 @@ _zerofill(PyArrayObject *ret)
     return 0;
 }
 
-NPY_NO_EXPORT int
-_IsAligned(PyArrayObject *ap)
-{
-    int i;
-    npy_uintp aligned;
-    npy_uintp alignment = PyArray_DESCR(ap)->alignment;
-
-    /* alignment 1 types should have a efficient alignment for copy loops */
-    if (PyArray_ISFLEXIBLE(ap) || PyArray_ISSTRING(ap)) {
-        npy_intp itemsize = PyArray_ITEMSIZE(ap);
-        /* power of two sizes may be loaded in larger moves */
-        if (((itemsize & (itemsize - 1)) == 0)) {
-            alignment = itemsize > NPY_MAX_COPY_ALIGNMENT ?
-                NPY_MAX_COPY_ALIGNMENT : itemsize;
-        }
-        else {
-            /* if not power of two it will be accessed bytewise */
-            alignment = 1;
-        }
-    }
-
-    if (alignment == 1) {
-        return 1;
-    }
-    aligned = (npy_uintp)PyArray_DATA(ap);
-
-    for (i = 0; i < PyArray_NDIM(ap); i++) {
-#if NPY_RELAXED_STRIDES_CHECKING
-        /* skip dim == 1 as it is not required to have stride 0 */
-        if (PyArray_DIM(ap, i) > 1) {
-            /* if shape[i] == 1, the stride is never used */
-            aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
-        }
-        else if (PyArray_DIM(ap, i) == 0) {
-            /* an array with zero elements is always aligned */
-            return 1;
-        }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-        aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
-    }
-    return npy_is_aligned((void *)aligned, alignment);
-}
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {

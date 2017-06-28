@@ -130,6 +130,23 @@ raw_array_is_aligned(int ndim, npy_intp *shape,
     }
 }
 
+NPY_NO_EXPORT int
+IsAligned(PyArrayObject *ap)
+{
+    return raw_array_is_aligned(PyArray_NDIM(ap), PyArray_DIMS(ap),
+                                PyArray_DATA(ap), PyArray_STRIDES(ap),
+                                PyArray_DESCR(ap)->alignment);
+}
+
+NPY_NO_EXPORT int
+IsUintAligned(PyArrayObject *ap)
+{
+    return raw_array_is_aligned(PyArray_NDIM(ap), PyArray_DIMS(ap),
+                                PyArray_DATA(ap), PyArray_STRIDES(ap),
+                                npy_uint_alignment(PyArray_DESCR(ap)->elsize));
+}
+
+
 
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
 NPY_NO_EXPORT int
