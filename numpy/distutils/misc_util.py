@@ -2296,26 +2296,41 @@ def get_info(name):
 
 ''')
 
-    # Write `show_config` to `__config__.py`
+    # Write `show_config` documentation to `__config__.py`
     filename = '_show_config.rst'
     from functools import reduce
     path = reduce(os.path.join, ['doc', 'source', 'reference', filename])
 
     with open(path, 'r') as rst_file:
         rst = rst_file.read()
-        # Locate the start of the function description
-        docstart = rst.find("Print")
-        rst = rst[docstart:]
 
-        # Split, indent and rejoin the lines to indent the docstring
-        # 4 spaces below function signature.
-        tab = 4
-        lines = rst.split("\n")
-        doc = " "*tab + "\n ".join(lines)
-        # remove the sphinx role from the docstring
-        doc = doc.replace(':func:`numpy.lib.get_include`', 'get_include')
-        quotes = ' '*tab + '"""'
-        f.write("def show():\n" + quotes + '\n' + doc + '\n' + quotes)
+    # Locate the start of the function description
+    docstart = rst.find("Print")
+    rst = rst[docstart:]
+
+    # Split, indent and rejoin the lines to indent the docstring
+    # 4 spaces below function signature.
+    tab = 4
+    lines = rst.split("\n")
+    doc = " "*tab + "\n ".join(lines)
+    # remove the sphinx role from the docstring
+    doc = doc.replace(':func:`numpy.lib.get_include`', 'get_include')
+    quotes = ' '*tab + '"""'
+    f.write("def show():\n" + quotes + '\n' + doc + '\n' + quotes + '\n')
+
+    # `show_config` body
+    f.write(r'''
+    for name,info_dict in globals().items():
+        if name[0] == "_" or type(info_dict) is not type({}): continue
+        print(name + ":")
+        if not info_dict:
+            print("  NOT AVAILABLE")
+        for k,v in info_dict.items():
+            v = str(v)
+            if k == "sources" and len(v) > 200:
+                v = v[:60] + " ...\n... " + v[-60:]
+            print("    %s = %s" % (k,v))
+''')
     f.close()
     return target
 
