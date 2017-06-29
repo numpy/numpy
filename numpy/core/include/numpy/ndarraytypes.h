@@ -1027,6 +1027,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
  * eliminate overlap.
  */
 #define NPY_ITER_COPY_IF_OVERLAP            0x00002000
+/* At least one operand uses UPDATEIFCOPY semantics, use context manager */
+#define NPY_ITER_USE_CONTEXT_MANAGER        0x00004000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 

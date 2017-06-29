@@ -24,6 +24,13 @@ struct NewNpyArrayIterObject_tag {
     NpyIter *iter;
     /* Flag indicating iteration started/stopped */
     char started, finished;
+    /* inside context manager
+       0 == NO, not needed 
+       1 == YES
+       2 == needed, (UPDATEIFCOPY flag is true). If this value is
+            reached and nditer API function called, fail on PyPy
+       3 == YES, and needed, all is good*/
+    char managed;
     /* Child to update for nested iteration */
     NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
@@ -710,6 +717,12 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                 *nop_out = 0;
                 return 0;
             }
+            {
+                PyArrayObject_fields * fa = (PyArrayObject_fields*)ao;
+                if (fa->base && (fa->flags & NPY_ARRAY_UPDATEIFCOPY)) {
+                    op_flags[iop] |= NPY_ITER_USE_CONTEXT_MANAGER;
+                }
+            }
             Py_DECREF(op[iop]);
             op[iop] = ao;
         }
@@ -769,6 +782,13 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     if (npyiter_convert_ops(op_in, op_flags_in, op, op_flags, &nop)
                                                         != 1) {
         goto fail;
+    }
+
+    self->managed = 0;
+    for (iop = 0; iop < nop; ++iop) {
+        if (op_flags[iop] & NPY_ITER_USE_CONTEXT_MANAGER)
+            self->managed |= 2; /* context manager recommended/required */
+        op_flags[iop] &= ~NPY_ITER_USE_CONTEXT_MANAGER;
     }
 
     /* op_request_dtypes */
@@ -1063,6 +1083,14 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
             Py_DECREF(ret);
             goto fail;
         }
+#ifdef PYPY_VERSION
+        if (iter->managed == 2)
+        {
+            PyErr_SetString(PyExc_ValueError,
+                    "'updateifcopy/copy' not supported on PyPy");
+            goto fail;
+        }
+#endif
 
         if (inest < nnest-1) {
             iter->iter = NpyIter_AdvancedNew(nop, op, flags, order,
@@ -1404,7 +1432,13 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
                 "Iterator is past the end");
         return NULL;
     }
-
+#ifdef PYPY_VERSION
+    if (self->managed == 2) {
+        PyErr_SetString(PyExc_ValueError,
+        "'updateifcopy', 'readwrite' flags must be used in a context manager");
+        return NULL;
+    }
+#endif
     nop = NpyIter_GetNOp(self->iter);
 
     /* Return an array  or tuple of arrays with the values */
@@ -1441,7 +1475,14 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
+#ifdef PYPY_VERSION
+    if (self->managed == 2) {
+        PyErr_SetString(PyExc_ValueError,
+        "'updateifcopy', 'readwrite' flags must be used in a context manager");
+        return NULL;
+    }
+#endif
+ 
     nop = NpyIter_GetNOp(self->iter);
     operands = self->operands;
 
@@ -2337,6 +2378,7 @@ npyiter_self(NewNpyArrayIterObject *self)
         PyErr_SetString(PyExc_ValueError, "operation on  non-initialized iterator");
         return NULL;
     }
+    self->managed &= 1;
     Py_INCREF(self);
     return (PyObject *)self;
 }

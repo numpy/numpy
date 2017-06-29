@@ -2927,6 +2927,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                     Py_DECREF(temp);
                     return 0;
                 }
+                op_flags[iop] |= NPY_ITER_USE_CONTEXT_MANAGER;
             }
 
             Py_DECREF(op[iop]);
