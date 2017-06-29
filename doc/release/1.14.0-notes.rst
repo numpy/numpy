@@ -374,10 +374,21 @@ fewer.
 Changes
 =======
 
-0d arrays now print their elements like other arrays
-----------------------------------------------------
-0d arrays now use the array2string formatters to print their elements, like
-other arrays. The ``style`` argument of ``array2string`` is now non-functional.
+0d array printing changed to be more consistent with scalars/ndarrays
+---------------------------------------------------------------------
+Previously the ``str`` and ``repr`` of 0d arrays had idiosyncratic
+implementations which returned ``str(a.item())`` and ``'array(' +
+repr(a.item()) + ')'`` respectively for 0d array ``a``, unlike both numpy
+scalars and higher dimension ndarrays.
+
+Now, the ``str`` of a 0d array acts like a numpy scalar using ``str(a[()])``
+and the ``repr`` acts like higher dimension arrays using ``formatter(a[()])``,
+where  ``formatter``  can be specified using ``np.set_printoptions``.
+
+The ``style`` argument of ``np.array2string`` now accepts the value ``None``,
+(the new default), which causes 0d arrays to be printed using the appropriate
+``formatter``. Otherwise ``style`` should be a function which accepts a numpy
+scalar and returns a string, and ``style(a[()])`` is returned.
 
 User-defined types now need to implement ``__str__`` and ``__repr__``
 ---------------------------------------------------------------------
