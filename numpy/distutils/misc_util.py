@@ -2298,7 +2298,8 @@ def get_info(name):
 
     # Write `show_config` to `__config__.py`
     filename = 'show_config.rst'
-    path = '../../doc/source/reference/' + filename
+    from functools import reduce
+    path = reduce(os.path.join, ['doc', 'source', 'reference', filename])
 
     with open(path, 'r') as rst_file:
         rst = rst_file.read()
