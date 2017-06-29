@@ -2307,10 +2307,13 @@ def get_info(name):
         docstart = rst.find("Print")
         rst = rst[docstart:]
 
-        # Split, indent and rejoin the lines to align below function signature
-        tab = 4 # python indentation width (in spaces)
+        # Split, indent and rejoin the lines to indent the docstring
+        # 4 spaces below function signature.
+        tab = 4
         lines = rst.split("\n")
         doc = " "*tab + "\n ".join(lines)
+        # remove the sphinx role from the docstring
+        doc = doc.replace(':func:`numpy.lib.get_include`', 'get_include')
         quotes = ' '*tab + '"""'
         f.write("def show():\n" + quotes + '\n' + doc + '\n' + quotes)
     f.close()

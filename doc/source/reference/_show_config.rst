@@ -7,12 +7,12 @@
 
    See Also
    --------
-   get_include : Returns the include directory containing NumPy \\*.h header files.
+   :func:`numpy.lib.get_include` : Returns the include directory containing NumPy \\*.h header files.
 
    Notes
    -----
    Classes specifying the information to be printed are defined
-   in the `numpy.distutils.system_info` module.
+   in the ``numpy.distutils.system_info`` module.
 
    Information may include:
 
