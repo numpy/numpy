@@ -127,7 +127,7 @@ Other modules
 System resource information
 ===========================
 
-.. include:: show_config.rst
+.. include:: _show_config.rst
 
 .. currentmodule:: numpy.lib
 

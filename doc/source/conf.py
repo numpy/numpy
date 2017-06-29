@@ -62,6 +62,9 @@ default_role = "autolink"
 # for source files.
 exclude_dirs = []
 
+# A list of glob-style patterns that should be excluded when looking for source files.
+exclude_patterns = ['reference/_*.rst']
+
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
