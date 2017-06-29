@@ -890,6 +890,13 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([[0, 1],
            [0, 1]])
 
+    >>> np.unravel_index(np.argsort(x, axis=None), x.shape)
+    (array([0, 1, 1, 0]), array([0, 0, 1, 1]))
+    >>> x[np.unravel_index(np.argsort(x, axis=None), x.shape)]
+    array([0, 2, 2, 3])
+    >>> list(zip(*np.unravel_index(np.argsort(x, axis=None), x.shape)))
+    [(0, 0), (1, 0), (1, 1), (0, 1)]
+
     Sorting with keys:
 
     >>> x = np.array([(1, 0), (0, 1)], dtype=[('x', '<i4'), ('y', '<i4')])
@@ -951,6 +958,8 @@ def argmax(a, axis=None, out=None):
     array([1, 1, 1])
     >>> np.argmax(a, axis=1)
     array([2, 2])
+    >>> np.unravel_index(np.argmax(a, axis=None), a.shape)
+    (1, 2)
 
     >>> b = np.arange(6)
     >>> b[1] = 5
@@ -1007,6 +1016,8 @@ def argmin(a, axis=None, out=None):
     array([0, 0, 0])
     >>> np.argmin(a, axis=1)
     array([0, 0])
+    >>> np.unravel_index(np.argmin(a, axis=None), a.shape)
+    (0, 0)
 
     >>> b = np.arange(6)
     >>> b[4] = 0
