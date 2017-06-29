@@ -69,6 +69,21 @@ old behavior, use ``np.isnat`` to explicitly check for NaT or convert
 datetime64/timedelta64 arrays with ``.astype(np.int64)`` before making
 comparisons.
 
+complex64/128 alignment has changed
+-----------------------------------
+The memory alignment of complex types is now the same as a C-struct composed of
+two floating point values, while before it was equal to the size of the type.
+For many users (for instance on x64/unix/gcc) this means that complex64 is now
+4-byte aligned instead of 8-byte aligned. An important consequence is that
+aligned structured dtypes may now have a different size. For instance,
+``np.dtype('c8,u1', align=True)`` used to have an itemsize of 16 (on x64/gcc)
+but now it is 12.
+
+More in detail, the complex64 type now has the same alignment as a C-struct
+``struct {float r, i;}``, according to the compiler used to compile numpy, and
+similarly for the complex128 and complex256 types.
+
+
 C API changes
 =============
 
