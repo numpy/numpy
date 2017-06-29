@@ -2297,7 +2297,7 @@ def get_info(name):
 ''')
 
     # Write `show_config` to `__config__.py`
-    filename = 'show_config.rst'
+    filename = '_show_config.rst'
     from functools import reduce
     path = reduce(os.path.join, ['doc', 'source', 'reference', filename])
 
