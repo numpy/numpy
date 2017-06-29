@@ -18,6 +18,7 @@
 #include <numpy/halffloat.h>
 
 #include "lowlevel_strided_loops.h"
+#include "array_assign.h"
 
 
 /*
@@ -1374,7 +1375,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
     npy_intp itersize;
 
-    int is_aligned = PyArray_ISALIGNED(self) && PyArray_ISALIGNED(result);
+    int is_aligned = IsUintAligned(self) && IsUintAligned(result);
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
 
     PyArray_CopySwapFunc *copyswap = PyArray_DESCR(self)->f->copyswap;
@@ -1507,7 +1508,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
      * could also check extra_op is buffered, but it should rarely matter.
      */
 
-    is_aligned = PyArray_ISALIGNED(array) && PyArray_ISALIGNED(mit->extra_op);
+    is_aligned = IsUintAligned(array) && IsUintAligned(mit->extra_op);
 
     if (mit->size == 0) {
        return 0;

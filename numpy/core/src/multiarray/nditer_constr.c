@@ -17,8 +17,7 @@
 
 #include "arrayobject.h"
 #include "templ_common.h"
-#include "mem_overlap.h"
-
+#include "array_assign.h"
 
 /* Internal helper functions private to this file */
 static int
@@ -1133,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!PyArray_ISALIGNED(*op)) {
+            if (!IsUintAligned(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
@@ -2975,7 +2974,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * If the operand is aligned, any buffering can use aligned
              * optimizations.
              */
-            if (PyArray_ISALIGNED(op[iop])) {
+            if (IsUintAligned(op[iop])) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
             }
         }
