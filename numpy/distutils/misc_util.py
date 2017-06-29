@@ -2294,51 +2294,24 @@ def get_info(name):
     g = globals()
     return g.get(name, g.get(name + "_info", {}))
 
-def show():
-    """
-    Print information about various resources (libraries, library directories,
-    include directories, etc.) in the system on which NumPy was built.
+''')
 
-    See Also
-    --------
-    get_include : Returns the include directory containing NumPy \\*.h header files.
+    # Write `show_config` to `__config__.py`
+    filename = 'show_config.rst'
+    path = '../../doc/source/reference/' + filename
 
-    Notes
-    -----
-    Classes specifying the information to be printed are defined
-    in the `numpy.distutils.system_info` module.
+    with open(path, 'r') as rst_file:
+        rst = rst_file.read()
+        # Locate the start of the function description
+        docstart = rst.find("Print")
+        rst = rst[docstart:]
 
-    Information may include:
-
-    * ``language``: language used to write the libraries (mostly C or f77)
-    * ``libraries``: names of libraries found in the system
-    * ``library_dirs``: directories containing the libraries
-    * ``include_dirs``: directories containing library header files
-    * ``src_dirs``: directories containing library source files
-    * ``define_macros``: preprocessor macros used by ``distutils.setup``
-
-    Examples
-    --------
-    >>> np.show_config()
-    blas_opt_info:
-        language = c
-        define_macros = [('HAVE_CBLAS', None)]
-        libraries = ['openblas', 'openblas']
-        library_dirs = ['/usr/local/lib']
-    """
-
-    for name,info_dict in globals().items():
-        if name[0] == "_" or type(info_dict) is not type({}): continue
-        print(name + ":")
-        if not info_dict:
-            print("  NOT AVAILABLE")
-        for k,v in info_dict.items():
-            v = str(v)
-            if k == "sources" and len(v) > 200:
-                v = v[:60] + " ...\n... " + v[-60:]
-            print("    %s = %s" % (k,v))
-    ''')
-
+        # Split, indent and rejoin the lines to align below function signature
+        tab = 4 # python indentation width (in spaces)
+        lines = rst.split("\n")
+        doc = " "*tab + "\n ".join(lines)
+        quotes = ' '*tab + '"""'
+        f.write("def show():\n" + quotes + '\n' + doc + '\n' + quotes)
     f.close()
     return target
 
