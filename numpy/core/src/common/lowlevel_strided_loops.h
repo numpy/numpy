@@ -7,7 +7,9 @@
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
- *       needs changing, for example.
+ *       needs changing, for example. 
+ *
+ *       Note: Updated in 2018 to distinguish "true" from "uint" alignment.
  */
 
 /*
@@ -69,8 +71,9 @@ typedef void (PyArray_StridedBinaryOp)(char *dst, npy_intp dst_stride,
  * strided memory.  Returns NULL if there is a problem with the inputs.
  *
  * aligned:
- *      Should be 1 if the src and dst pointers are always aligned,
- *      0 otherwise.
+ *      Should be 1 if the src and dst pointers always point to
+ *      locations at which a uint of equal size to dtype->elsize
+ *      would be aligned, 0 otherwise.
  * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
@@ -165,8 +168,9 @@ PyArray_GetDTypeCopySwapFn(int aligned,
  * function when the transfer function is no longer required.
  *
  * aligned:
- *      Should be 1 if the src and dst pointers are always aligned,
- *      0 otherwise.
+ *      Should be 1 if the src and dst pointers always point to
+ *      locations at which a uint of equal size to dtype->elsize
+ *      would be aligned, 0 otherwise.
  * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
