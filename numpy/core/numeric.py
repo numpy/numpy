@@ -12,6 +12,7 @@ import operator
 import sys
 import warnings
 import numbers
+import contextlib
 
 import numpy as np
 from . import multiarray
@@ -2990,7 +2991,7 @@ _Unspecified = _unspecified()
 
 
 @set_module('numpy')
-class errstate(object):
+class errstate(contextlib.ContextDecorator):
     """
     errstate(**kwargs)
 
@@ -3000,7 +3001,12 @@ class errstate(object):
     that context to execute with a known error handling behavior. Upon entering
     the context the error handling is set with `seterr` and `seterrcall`, and
     upon exiting it is reset to what it was before.
-
+    
+    ..  versionchanged:: 1.17.0
+        `errstate` is also usable as a function decorator, saving
+        a level of indentation if an entire function is wrapped.
+        See :py:class:`contextlib.ContextDecorator` for more information. 
+    
     Parameters
     ----------
     kwargs : {divide, over, under, invalid}

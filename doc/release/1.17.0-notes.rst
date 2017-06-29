@@ -81,6 +81,27 @@ new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
 array types, including structures, booleans, and integers of non-native
 endianness.
 
+`numpy.errstate` is now also function decorator
+-----------------------------------------------
+
+Currently, if you have a function like::
+
+    def foo():
+        pass
+
+and you want to wrap the whole thing in `errstate`, you have to rewrite it like so::
+
+    def foo():
+        with np.errstate(...):
+            pass
+
+but with this change, you can do::
+
+    @np.errstate(...)
+    def foo():
+        pass
+
+thereby saving a level of indentation
 
 Changes
 =======
