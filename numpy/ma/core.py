@@ -6193,7 +6193,13 @@ class MaskedConstant(MaskedArray):
             # Note that it can be tricky sometimes w/ type comparison
             data = np.array(0.)
             mask = np.array(True)
-            self.__singleton = MaskedArray(data, mask=mask).view(self)
+
+            # prevent any modifications
+            data.flags.writeable = False
+            mask.flags.writeable = False
+
+            masked = MaskedArray(data, mask=mask)
+            self.__singleton = masked.view(self)
 
         return self.__singleton
 
@@ -6211,6 +6217,11 @@ class MaskedConstant(MaskedArray):
             self.__class__ = MaskedArray
             self.__array_finalize__(obj)
 
+    def __array_prepare__(self, obj, context=None):
+        return self.view(MaskedArray).__array_prepare__(obj, context)
+
+    def __array_wrap__(self, obj, context=None):
+        return self.view(MaskedArray).__array_wrap__(obj, context)
 
     def __str__(self):
         return str(masked_print_option._display)
@@ -6226,6 +6237,12 @@ class MaskedConstant(MaskedArray):
         """Override of MaskedArray's __reduce__.
         """
         return (self.__class__, ())
+
+    # inplace operations have no effect. We have to override them to avoid
+    # trying to modify the readonly data and mask arrays
+    def __inop(self, other):
+        return self
+    __iadd__ = __isub__ = __imul__ = __ifloordiv__ = __itruediv__ = __ipow__ = __inop
 
 
 masked = masked_singleton = MaskedConstant()

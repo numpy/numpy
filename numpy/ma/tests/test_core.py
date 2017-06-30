@@ -4766,6 +4766,15 @@ class TestMaskedConstant(TestCase):
         assert_(not isinstance(np.ma.masked[...], MC))
         assert_(not isinstance(np.ma.masked.copy(), MC))
 
+    def test_immutable(self):
+        assert_raises(ValueError, operator.setitem, np.ma.masked.data, (), 1)
+        assert_raises(ValueError, operator.setitem, np.ma.masked.mask, (), False)
+
+        view = np.ma.masked.view(np.ma.MaskedArray)
+        assert_raises(ValueError, operator.setitem, view, (), 1)
+        assert_raises(ValueError, operator.setitem, view.data, (), 1)
+        assert_raises(ValueError, operator.setitem, view.mask, (), False)
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
