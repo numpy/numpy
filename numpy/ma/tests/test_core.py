@@ -4738,6 +4738,16 @@ class TestMaskedConstant(TestCase):
         assert_equal(repr(np.ma.masked), 'masked')
         assert_not_equal(repr(np.ma.masked.copy()), 'masked')
 
+    def test_pickle(self):
+        from io import BytesIO
+        import pickle
+
+        with BytesIO() as f:
+            pickle.dump(np.ma.masked, f)
+            f.seek(0)
+            res = pickle.load(f)
+        assert_(res is np.ma.masked)
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])

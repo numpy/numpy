@@ -6190,8 +6190,12 @@ class MaskedConstant(MaskedArray):
     _mask = mask = np.array(True)
     _baseclass = ndarray
 
+    __singleton = None
+
     def __new__(self):
-        return self._data.view(self)
+        if self.__singleton is None:
+            self.__singleton = self._data.view(self)
+        return self.__singleton
 
     def __array_finalize__(self, obj):
         return
