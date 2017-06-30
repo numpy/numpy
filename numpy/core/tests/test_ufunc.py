@@ -784,6 +784,17 @@ class TestUfunc(TestCase):
         np.add(a, b, out=c, where=[1, 0, 0, 1, 0, 0, 1, 1, 1, 0])
         assert_equal(c, [2, 1.5, 1.5, 2, 1.5, 1.5, 2, 2, 2, 1.5])
 
+    def test_where_param_alloc(self):
+        # With casting and allocated output
+        a = np.array([1], dtype=np.int64)
+        m = np.array([True], dtype=bool)
+        assert_equal(np.sqrt(a, where=m), [1])
+
+        # No casting and allocated output
+        a = np.array([1], dtype=np.float64)
+        m = np.array([True], dtype=bool)
+        assert_equal(np.sqrt(a, where=m), [1])
+
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is a identityless reduction
 
