@@ -6206,7 +6206,11 @@ class MaskedConstant(MaskedArray):
         return str(masked_print_option._display)
 
     def __repr__(self):
-        return 'masked'
+        if self is masked:
+            return 'masked'
+        else:
+            # something is wrong, make it obvious
+            return object.__repr__(self)
 
     def flatten(self):
         return masked_array([self._data], dtype=float, mask=[True])

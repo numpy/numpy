@@ -4732,6 +4732,12 @@ class TestMaskedConstant(TestCase):
         assert_(not isinstance(m, np.ma.core.MaskedConstant))
         assert_(m is not np.ma.masked)
 
+    def test_repr(self):
+        # copies should not exist, but if they do, it should be obvious that
+        # something is wrong
+        assert_equal(repr(np.ma.masked), 'masked')
+        assert_not_equal(repr(np.ma.masked.copy()), 'masked')
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
