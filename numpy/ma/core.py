@@ -6184,27 +6184,33 @@ isMA = isMaskedArray  # backward compatibility
 
 
 class MaskedConstant(MaskedArray):
-    # We define the masked singleton as a float for higher precedence.
-    # Note that it can be tricky sometimes w/ type comparison
-    _data = data = np.array(0.)
-    _mask = mask = np.array(True)
-    _baseclass = ndarray
 
     __singleton = None
 
     def __new__(self):
         if self.__singleton is None:
-            self.__singleton = self._data.view(self)
+            # We define the masked singleton as a float for higher precedence.
+            # Note that it can be tricky sometimes w/ type comparison
+            data = np.array(0.)
+            mask = np.array(True)
+            self.__singleton = MaskedArray(data, mask=mask).view(self)
+
         return self.__singleton
 
     def __array_finalize__(self, obj):
-        return
+        if self.__singleton is None:
+            # this handles the `.view` in __new__, which we want to copy across
+            # properties normally
+            return super(MaskedConstant, self).__array_finalize__(obj)
+        elif self is self.__singleton:
+            # not clear how this can happen, play it safe
+            pass
+        else:
+            # everywhere else, we want to downcast to MaskedArray, to prevent a
+            # duplicate maskedconstant.
+            self.__class__ = MaskedArray
+            self.__array_finalize__(obj)
 
-    def __array_prepare__(self, obj, context=None):
-        return self.view(MaskedArray).__array_prepare__(obj, context)
-
-    def __array_wrap__(self, obj, context=None):
-        return self.view(MaskedArray).__array_wrap__(obj, context)
 
     def __str__(self):
         return str(masked_print_option._display)
@@ -6215,9 +6221,6 @@ class MaskedConstant(MaskedArray):
         else:
             # something is wrong, make it obvious
             return object.__repr__(self)
-
-    def flatten(self):
-        return masked_array([self._data], dtype=float, mask=[True])
 
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.

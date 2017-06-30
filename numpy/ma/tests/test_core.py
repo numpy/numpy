@@ -4748,6 +4748,24 @@ class TestMaskedConstant(TestCase):
             res = pickle.load(f)
         assert_(res is np.ma.masked)
 
+    def test_write_to_copy(self):
+        # gh-9328
+        x = np.ma.masked.copy()
+        x[()] = 2
+
+        # write succeeds
+        assert_equal(x.data, 2)
+        assert_equal(x.mask, False)
+
+        # original should be unchanged
+        assert_equal(np.ma.masked.data, 0)
+        assert_equal(np.ma.masked.mask, True)
+
+    def test_no_copies(self):
+        MC = np.ma.core.MaskedConstant
+        assert_(not isinstance(np.ma.masked[...], MC))
+        assert_(not isinstance(np.ma.masked.copy(), MC))
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
