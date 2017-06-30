@@ -5596,8 +5596,10 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     if (doc == NULL) {
         return NULL;
     }
-    PyUString_ConcatAndDel(&doc,
-        PyUString_FromFormat("\n\n%s", ufunc->doc));
+    if (ufunc->doc != NULL) {
+        PyUString_ConcatAndDel(&doc,
+            PyUString_FromFormat("\n\n%s", ufunc->doc));
+    }
     return doc;
 }
 
