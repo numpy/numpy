@@ -280,6 +280,19 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array(False)),
                      'array(False, dtype=bool)')
 
+    def test_sign_spacing(self):
+        a = np.arange(4.)
+        assert_equal(repr(a), 'array([0., 1., 2., 3.])')
+        assert_equal(repr(np.array(1.)), 'array(1.)')
+
+        np.set_printoptions(sign=' ')
+        assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
+        assert_equal(repr(np.array(1.)), 'array(1.)')
+
+        np.set_printoptions(sign='+')
+        assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
+        assert_equal(repr(np.array(1.)), 'array(+1.)')
+
 
 def test_unicode_object_array():
     import sys
