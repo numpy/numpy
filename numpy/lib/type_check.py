@@ -577,9 +577,6 @@ def common_type(*arrays):
     an integer array, the minimum precision type that is returned is a
     64-bit floating point dtype.
 
-    All input arrays can be safely cast to the returned dtype without loss
-    of information.
-
     Parameters
     ----------
     array1, array2, ... : ndarrays
