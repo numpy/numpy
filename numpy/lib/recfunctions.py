@@ -416,12 +416,12 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     # Do we have a single ndarray as input ?
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
+        # Make sure we have named fields
+        if not seqdtype.names:
+            seqdtype = np.dtype([('', seqdtype)])
         if not flatten or zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
             seqarrays = seqarrays.ravel()
-            # Make sure we have named fields
-            if not seqdtype.names:
-                seqdtype = [('', seqdtype)]
             # Find what type of array we must return
             if usemask:
                 if asrecarray:
