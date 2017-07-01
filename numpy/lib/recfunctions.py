@@ -782,10 +782,10 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     fldnames = [d.names for d in ndtype]
     #
     dtype_l = ndtype[0]
-    newdescr = dtype_l.descr
+    newdescr = get_fieldspec(dtype_l)
     names = [_[0] for _ in newdescr]
     for dtype_n in ndtype[1:]:
-        for descr in dtype_n.descr:
+        for descr in get_fieldspec(dtype_n):
             name = descr[0] or ''
             if name not in names:
                 newdescr.append(descr)
@@ -794,11 +794,11 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                 nameidx = names.index(name)
                 current_descr = newdescr[nameidx]
                 if autoconvert:
-                    if np.dtype(descr[1]) > np.dtype(current_descr[-1]):
+                    if descr[1] > current_descr[1]:
                         current_descr = list(current_descr)
-                        current_descr[-1] = descr[1]
+                        current_descr[1] = descr[1]
                         newdescr[nameidx] = tuple(current_descr)
-                elif descr[1] != current_descr[-1]:
+                elif descr[1] != current_descr[1]:
                     raise TypeError("Incompatible type '%s' <> '%s'" %
                                     (dict(newdescr)[name], descr[1]))
     # Only one field: use concatenate
