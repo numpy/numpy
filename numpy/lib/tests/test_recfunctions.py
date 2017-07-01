@@ -727,6 +727,22 @@ class TestJoinBy(TestCase):
         assert_equal(res.dtype, expected_dtype)
         assert_equal(res, expected)
 
+    def test_padded_dtype(self):
+        dt = np.dtype('i1,f4', align=True)
+        dt.names = ('k', 'v')
+        assert_(len(dt.descr), 3)  # padding field is inserted
+
+        a = np.array([(1, 3), (3, 2)], dt)
+        b = np.array([(1, 1), (2, 2)], dt)
+        res = join_by('k', a, b)
+
+        # no padding fields remain
+        expected_dtype = np.dtype([
+            ('k', 'i1'), ('v1', 'f4'), ('v2', 'f4')
+        ])
+
+        assert_equal(res.dtype, expected_dtype)
+
 
 class TestJoinBy2(TestCase):
     @classmethod
