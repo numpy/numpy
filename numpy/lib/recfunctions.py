@@ -920,10 +920,10 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision
-    if (set.intersection(set(r1names), set(r2names)).difference(key) and
-            not (r1postfix or r2postfix)):
+    collisions = (set(r1names) & set(r2names)) - set(key)
+    if collisions and not (r1postfix or r2postfix):
         msg = "r1 and r2 contain common names, r1postfix and r2postfix "
-        msg += "can't be empty"
+        msg += "can't both be empty"
         raise ValueError(msg)
 
     # Make temporary arrays of just the keys
