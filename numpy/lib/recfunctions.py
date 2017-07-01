@@ -194,6 +194,22 @@ def flatten_descr(ndtype):
         return tuple(descr)
 
 
+def zip_dtype(seqarrays, flatten=False):
+    newdtype = []
+    if flatten:
+        for a in seqarrays:
+            newdtype.extend(flatten_descr(a.dtype))
+    else:
+        for a in seqarrays:
+            current = a.dtype
+            if current.names and len(current.names) <= 1:
+                # special case - dtypes of 0 or 1 field are flattened
+                newdtype.extend(get_fieldspec(current))
+            else:
+                newdtype.append(('', current))
+    return np.dtype(newdtype)
+
+
 def zip_descr(seqarrays, flatten=False):
     """
     Combine the dtype description of a series of arrays.
@@ -205,19 +221,7 @@ def zip_descr(seqarrays, flatten=False):
     flatten : {boolean}, optional
         Whether to collapse nested descriptions.
     """
-    newdtype = []
-    if flatten:
-        for a in seqarrays:
-            newdtype.extend(flatten_descr(a.dtype))
-    else:
-        for a in seqarrays:
-            current = a.dtype
-            names = current.names or ()
-            if len(names) > 1:
-                newdtype.append(('', current.descr))
-            else:
-                newdtype.extend(current.descr)
-    return np.dtype(newdtype).descr
+    return zip_dtype(seqarrays, flatten=flatten).descr
 
 
 def get_fieldstructure(adtype, lastname=None, parents=None,):
@@ -412,8 +416,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     # Do we have a single ndarray as input ?
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
-        if (not flatten) or \
-           (zip_descr((seqarrays,), flatten=True) == seqdtype.descr):
+        if not flatten or zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
             seqarrays = seqarrays.ravel()
             # Make sure we have named fields
@@ -439,7 +442,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     sizes = tuple(a.size for a in seqarrays)
     maxlength = max(sizes)
     # Get the dtype of the output (flattening if needed)
-    newdtype = zip_descr(seqarrays, flatten=flatten)
+    newdtype = zip_dtype(seqarrays, flatten=flatten)
     # Initialize the sequences for data and mask
     seqdata = []
     seqmask = []
@@ -691,8 +694,9 @@ def append_fields(base, names, data, dtypes=None,
     else:
         data = data.pop()
     #
-    output = ma.masked_all(max(len(base), len(data)),
-                           dtype=base.dtype.descr + data.dtype.descr)
+    output = ma.masked_all(
+        max(len(base), len(data)),
+        dtype=get_fieldspec(base.dtype) + get_fieldspec(data.dtype))
     output = recursive_fill_fields(base, output)
     output = recursive_fill_fields(data, output)
     #
