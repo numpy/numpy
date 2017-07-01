@@ -2623,7 +2623,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
         x = np.arange(5)
@@ -2631,7 +2631,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "minlength must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")

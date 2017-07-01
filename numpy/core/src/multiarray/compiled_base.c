@@ -135,7 +135,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     if (minlength < 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "minlength must be non-negative");
+                        "'minlength' must not be negative");
         goto fail;
     }
 
@@ -153,7 +153,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     minmax(numbers, len, &mn, &mx);
     if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
-                "The first argument of bincount must be non-negative");
+                "'list' argument must have no negative elements");
         goto fail;
     }
     ans_size = mx + 1;
