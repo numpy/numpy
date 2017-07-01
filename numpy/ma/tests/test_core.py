@@ -1808,6 +1808,11 @@ class TestFillingValues(TestCase):
         assert_equal(f1, expected)
         assert_equal(f2, expected)
 
+    def test_default_fill_value_void(self):
+        dt = np.dtype([('v', 'V7')])
+        f = default_fill_value(dt)
+        assert_equal(f['v'], np.array(default_fill_value(dt['v']), dt['v']))
+
     def test_fillvalue(self):
         # Yet more fun with the fill_value
         data = masked_array([1, 2, 3], fill_value=-999)
