@@ -1294,6 +1294,10 @@ class TestUfunc(TestCase):
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
 
+    def test_no_doc_string(self):
+        # gh-9337
+        assert_('\n' not in umt.inner1d_no_doc.__doc__)
+
 
 if __name__ == "__main__":
     run_module_suite()

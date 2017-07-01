@@ -305,6 +305,12 @@ addUfuncs(PyObject *dictionary) {
                     0, euclidean_pdist_signature);
     PyDict_SetItemString(dictionary, "euclidean_pdist", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data,
+                    inner1d_signatures, 2, 2, 1, PyUFunc_None, "inner1d_no_doc",
+                    NULL,
+                    0, inner1d_signature);
+    PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
+    Py_DECREF(f);
 }
 
 
