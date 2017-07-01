@@ -4,7 +4,9 @@ import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
-from numpy.testing import TestCase, run_module_suite, assert_, assert_raises
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_raises, dec
+)
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
@@ -684,6 +686,19 @@ class TestJoinBy(TestCase):
         a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'f4'), ('c', 'u1')])
         b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
         assert_raises(ValueError, join_by, ['a', 'b', 'b'], a, b)
+
+    @dec.knownfailureif(True)
+    def test_same_name_different_dtypes_key(self):
+        a_dtype = np.dtype([('key', 'S5'), ('value', '<f4')])
+        b_dtype = np.dtype([('key', 'S10'), ('value', '<f4')])
+        expected_dtype = np.dtype([
+            ('key', 'S10'), ('value1', '<f4'), ('value2', '<f4')])
+
+        a = np.array([('Sarah',  8.0), ('John', 6.0)], dtype=a_dtype)
+        b = np.array([('Sarah', 10.0), ('John', 7.0)], dtype=b_dtype)
+        res = join_by('key', a, b)
+
+        assert_equal(res.dtype, expected_dtype)
 
     def test_same_name_different_dtypes(self):
         # gh-9338
