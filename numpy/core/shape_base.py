@@ -293,7 +293,7 @@ def hstack(tup):
         return _nx.concatenate(arrs, 1)
 
 
-def stack(arrays, axis=0):
+def stack(arrays, axis=0, out=None):
     """
     Join a sequence of arrays along a new axis.
 
@@ -309,6 +309,10 @@ def stack(arrays, axis=0):
         Each array must have the same shape.
     axis : int, optional
         The axis in the result array along which the input arrays are stacked.
+    out : ndarray, optional
+        If provided, the destination to place the result. The shape must be
+        correct, matching that of what stack would have returned if no
+        out argument were specified.
 
     Returns
     -------
@@ -358,7 +362,7 @@ def stack(arrays, axis=0):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis)
+    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
 class _Recurser(object):
