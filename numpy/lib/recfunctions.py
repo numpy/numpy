@@ -787,24 +787,20 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     #
     dtype_l = ndtype[0]
     newdescr = get_fieldspec(dtype_l)
-    names = [_[0] for _ in newdescr]
+    names = [n for n, d in newdescr]
     for dtype_n in ndtype[1:]:
-        for descr in get_fieldspec(dtype_n):
-            name = descr[0] or ''
-            if name not in names:
-                newdescr.append(descr)
-                names.append(name)
+        for fname, fdtype in get_fieldspec(dtype_n):
+            if fname not in names:
+                newdescr.append((fname, fdtype))
+                names.append(fname)
             else:
-                nameidx = names.index(name)
-                current_descr = newdescr[nameidx]
+                nameidx = names.index(fname)
+                _, cdtype = newdescr[nameidx]
                 if autoconvert:
-                    if descr[1] > current_descr[1]:
-                        current_descr = list(current_descr)
-                        current_descr[1] = descr[1]
-                        newdescr[nameidx] = tuple(current_descr)
-                elif descr[1] != current_descr[1]:
+                    newdescr[nameidx] = (fname, max(fdtype, cdtype))
+                elif fdtype != cdtype:
                     raise TypeError("Incompatible type '%s' <> '%s'" %
-                                    (dict(newdescr)[name], descr[1]))
+                                    (cdtype, fdtype))
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)
@@ -1000,33 +996,38 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     #
     # Build the new description of the output array .......
     # Start with the key fields
-    ndtype = [list(f) for f in get_fieldspec(r1k.dtype)]
-    # Add the other fields
-    ndtype.extend(list(f) for f in get_fieldspec(r1.dtype) if f[0] not in key)
+    ndtype = get_fieldspec(r1k.dtype)
 
-    for field in get_fieldspec(r2.dtype):
-        field = list(field)
+    # Add the fields from r1
+    for fname, fdtype in get_fieldspec(r1.dtype):
+        if fname not in key:
+            ndtype.append((fname, fdtype))
+
+    # Add the fields from r2
+    for fname, fdtype in get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
-        name = field[0]
-        names = list(_[0] for _ in ndtype)
+        # we need to rebuild this list every time
+        names = list(name for name, dtype in ndtype)
         try:
-            nameidx = names.index(name)
+            nameidx = names.index(fname)
         except ValueError:
             #... we haven't: just add the description to the current list
-            ndtype.append(field)
+            ndtype.append((fname, fdtype))
         else:
-            current = ndtype[nameidx]
-            if name in key:
+            # collision
+            _, cdtype = ndtype[nameidx]
+            if fname in key:
                 # The current field is part of the key: take the largest dtype
-                current[1] = max(field[1], current[1])
+                ndtype[nameidx] = (fname, max(fdtype, cdtype))
             else:
                 # The current field is not part of the key: add the suffixes,
                 # and place the new field adjacent to the old one
-                current[0] += r1postfix
-                field[0] += r2postfix
-                ndtype.insert(nameidx + 1, field)
+                ndtype[nameidx:nameidx + 1] = [
+                    (fname + r1postfix, cdtype),
+                    (fname + r2postfix, fdtype)
+                ]
     # Rebuild a dtype from the new fields
-    ndtype = np.dtype([tuple(_) for _ in ndtype])
+    ndtype = np.dtype(ndtype)
     # Find the largest nb of common fields :
     # r1cmn and r2cmn should be equal, but...
     cmn = max(r1cmn, r2cmn)
