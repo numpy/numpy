@@ -211,10 +211,10 @@ selected via the ``--fcompiler`` and ``--compiler`` options to
 supported; by default a gfortran-compatible static archive
 ``openblas.a`` is looked for.
 
-``concatenate`` gained an ``out`` argument
-------------------------------------------
-A preallocated buffer of the desired dtype can now be used with ``concatenate``.
-
+``concatenate`` and ``stack`` gained an ``out`` argument
+--------------------------------------------------------
+A preallocated buffer of the desired dtype can now be used for the output of
+these functions.
 
 Changes
 =======
