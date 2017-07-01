@@ -93,17 +93,12 @@ def get_fieldspec(dtype):
         # .descr returns a nameless field, so we should too
         return [('', dtype)]
     else:
-        # extract the titles of the fields
-        name_titles = {}
-        for d in dtype.descr:
-            name_title = d[0]
-            if isinstance(name_title, tuple):
-                name = name_title[1]
-            else:
-                name = name_title
-            name_titles[name] = name_title
-
-        return [(name_titles[name], dtype[name]) for name in dtype.names]
+        fields = ((name, dtype.fields[name]) for name in dtype.names)
+        # keep any titles, if present
+        return [
+            (name if len(f) == 2 else (f[2], name), f[0]) 
+            for name, f in fields
+        ]
 
 
 def get_names(adtype):
