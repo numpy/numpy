@@ -240,6 +240,10 @@ programs which open them with ``mmap``, especially on Linux where an
 ------------------------------------------
 A preallocated buffer of the desired dtype can now be used with ``concatenate``.
 
+``concatenate`` and ``stack`` gained an ``out`` argument
+--------------------------------------------------------
+A preallocated buffer of the desired dtype can now be used for the output of
+these functions.
 
 Changes
 =======
