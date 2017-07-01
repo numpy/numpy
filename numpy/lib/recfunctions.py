@@ -182,7 +182,7 @@ def flatten_descr(ndtype):
     """
     names = ndtype.names
     if names is None:
-        return ndtype.descr
+        return (('', ndtype),)
     else:
         descr = []
         for field in names:
