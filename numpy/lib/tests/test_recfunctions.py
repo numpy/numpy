@@ -546,6 +546,35 @@ class TestStackArrays(TestCase):
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
+    def test_subdtype(self):
+        z = np.array([
+            ('A', 1), ('B', 2)
+        ], dtype=[('A', '|S3'), ('B', float, (1,))])
+        zz = np.array([
+            ('a', [10.], 100.), ('b', [20.], 200.), ('c', [30.], 300.)
+        ], dtype=[('A', '|S3'), ('B', float, (1,)), ('C', float)])
+
+        res = stack_arrays((z, zz))
+        expected = ma.array(
+            data=[
+                (b'A', [1.0], 0),
+                (b'B', [2.0], 0),
+                (b'a', [10.0], 100.0),
+                (b'b', [20.0], 200.0),
+                (b'c', [30.0], 300.0)],
+            mask=[
+                (False, [False],  True),
+                (False, [False],  True),
+                (False, [False], False),
+                (False, [False], False),
+                (False, [False], False)
+            ],
+            dtype=zz.dtype
+        )
+        assert_equal(res.dtype, expected.dtype)
+        assert_equal(res, expected)
+        assert_equal(res.mask, expected.mask)
+
 
 class TestJoinBy(TestCase):
     def setUp(self):
