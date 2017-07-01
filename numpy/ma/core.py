@@ -3128,15 +3128,15 @@ class MaskedArray(ndarray):
         return output
     view.__doc__ = ndarray.view.__doc__
 
-    def astype(self, newtype,
+    def astype(self, dtype,
                order='K', casting='unsafe', subok=True, copy=True):
         """
-        Returns a copy of the MaskedArray cast to given newtype.
+        Returns a copy of the MaskedArray cast to given dtype.
 
         Returns
         -------
         output : MaskedArray
-            A copy of self cast to input newtype.
+            A copy of self cast to input dtype.
             The returned record shape matches self.shape.
 
         See Also
@@ -3156,7 +3156,7 @@ class MaskedArray(ndarray):
          [7 -- 9]]
 
         """
-        output = super(MaskedArray, self).astype(newtype,
+        output = super(MaskedArray, self).astype(dtype,
             order=order, casting=casting, subok=subok, copy=copy)
 
         # if no copy was made, there's nothing to do
@@ -3181,7 +3181,7 @@ class MaskedArray(ndarray):
 
         # Don't check _fill_value if it's None, that'll speed things up
         if self._fill_value is not None:
-            output._fill_value = _check_fill_value(self._fill_value, newtype)
+            output._fill_value = _check_fill_value(self._fill_value, dtype)
         return output
 
     def __getitem__(self, indx):
