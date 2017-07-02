@@ -761,8 +761,8 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
  * Produce a name for the ufunc, if one is not already set
  * This is used in the PyUFunc_handlefperr machinery, and in error messages
  */
-static const char*
-_get_ufunc_name(PyUFuncObject *ufunc) {
+NPY_NO_EXPORT const char*
+ufunc_get_name_cstr(PyUFuncObject *ufunc) {
     return ufunc->name ? ufunc->name : "<unnamed ufunc>";
 }
 
@@ -789,7 +789,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
-    const char *ufunc_name = _get_ufunc_name(ufunc);
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
@@ -2050,7 +2050,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                         "%s: %s operand %d does not have enough "
                         "dimensions (has %d, gufunc core with "
                         "signature %s requires %d)",
-                        _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                        ufunc_get_name_cstr(ufunc), i < nin ? "Input" : "Output",
                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
                         ufunc->core_signature, num_dims);
                 return -1;
@@ -2074,7 +2074,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                             "core dimension %d, with gufunc "
                             "signature %s (size %zd is different "
                             "from %zd)",
-                            _get_ufunc_name(ufunc), i < nin ? "Input" : "Output",
+                            ufunc_get_name_cstr(ufunc), i < nin ? "Input" : "Output",
                             i < nin ? i : i - nin, idim,
                             ufunc->core_signature, op_dim_size,
                             core_dim_sizes[core_dim_index]);
@@ -2117,7 +2117,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         PyErr_Format(PyExc_ValueError,
                      "%s: Output operand %d has core dimension %d "
                      "unspecified, with gufunc signature %s",
-                     _get_ufunc_name(ufunc), out_op, i, ufunc->core_signature);
+                     ufunc_get_name_cstr(ufunc), out_op, i, ufunc->core_signature);
         return -1;
     }
     return 0;
@@ -2186,7 +2186,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = _get_ufunc_name(ufunc);
+    ufunc_name = ufunc_get_name_cstr(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2648,7 +2648,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = _get_ufunc_name(ufunc);
+    ufunc_name = ufunc_get_name_cstr(ufunc);
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
@@ -2888,7 +2888,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    const char *ufunc_name = _get_ufunc_name(ufunc);
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
@@ -3077,7 +3077,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *dtype;
     PyArrayObject *result;
     PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
-    const char *ufunc_name = _get_ufunc_name(ufunc);
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
@@ -3185,7 +3185,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = _get_ufunc_name(ufunc);
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3552,7 +3552,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    const char *ufunc_name = _get_ufunc_name(ufunc);
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
