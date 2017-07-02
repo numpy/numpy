@@ -1,0 +1,18 @@
+``np.vectorize`` follows the descriptor protocol
+------------------------------------------------
+
+Before numpy 1.25, a function wrapped in ``np.vectorize`` would *not* follow
+the descriptor protocol; in particular, attaching such an object to a class
+would implicitly create a static method::
+
+   >>> def func(x):
+   ...     return x ** 2
+   >>> class C(object):
+   ...     static = np.vectorize(func)
+   >>> C().static(1)
+   1
+
+Since numpy 1.25, the vectorized function now binds ``self`` as the first
+argument, and the earlier example will fail.  To recover the earlier behavior,
+explicitly wrap ``func`` using ``staticmethod`` before passing it to
+``np.vectorize``.

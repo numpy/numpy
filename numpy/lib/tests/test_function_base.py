@@ -1767,6 +1767,26 @@ class TestVectorize:
         with assert_raises_regex(ValueError, 'new output dimensions'):
             f(x)
 
+    def test_method(self):
+        class C(object):
+            v = vectorize(lambda self, x: (self, x))
+            vc = vectorize(classmethod(lambda cls, x: (cls, x)))
+            cv = classmethod(vectorize(lambda cls, x: (cls, x)))
+            vs = vectorize(staticmethod(lambda x: x))
+            sv = staticmethod(vectorize(lambda x: x))
+
+        c = C()
+        assert_array_equal(c.v([1, 2]), ([c, c], [1, 2]))
+        assert_array_equal(C.v(c, [1, 2]), ([c, c], [1, 2]))
+        assert_array_equal(c.vc([1, 2]), ([C, C], [1, 2]))
+        assert_array_equal(C.vc([1, 2]), ([C, C], [1, 2]))
+        assert_array_equal(c.cv([1, 2]), ([C, C], [1, 2]))
+        assert_array_equal(C.cv([1, 2]), ([C, C], [1, 2]))
+        assert_array_equal(c.vs([1, 2]), [1, 2])
+        assert_array_equal(C.vs([1, 2]), [1, 2])
+        assert_array_equal(c.sv([1, 2]), [1, 2])
+        assert_array_equal(C.sv([1, 2]), [1, 2])
+
     def test_subclasses(self):
         class subclass(np.ndarray):
             pass

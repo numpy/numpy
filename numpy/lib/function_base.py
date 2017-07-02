@@ -2189,6 +2189,24 @@ class vectorize:
     The new keyword argument interface and `excluded` argument support
     further degrades performance.
 
+    .. versionchanged:: 1.25.0
+
+    Before numpy 1.25, a vectorized function would *not* follow the descriptor
+    protocol; in particular, attaching such an object to a class would
+    implicitly create a static method:
+
+    >>> def func(x):
+    ...     return x ** 2
+    >>> class C(object):
+    ...     static = np.vectorize(func)
+    >>> C().static(1)
+    1
+
+    Since numpy 1.25, the vectorized function now binds `self` as the first
+    argument, and the earlier example will fail.  To recover the earlier
+    behavior, explicitly wrap `func` using `staticmethod` before passing it to
+    `vectorize`.
+
     References
     ----------
     .. [1] :doc:`/reference/c-api/generalized-ufuncs`
@@ -2297,6 +2315,14 @@ class vectorize:
             self._in_and_out_core_dims = _parse_gufunc_signature(signature)
         else:
             self._in_and_out_core_dims = None
+
+    def __get__(self, instance, owner):
+        return type(self)(self.pyfunc.__get__(instance, owner),
+                          otypes=self.otypes,
+                          doc=self.__doc__,
+                          excluded=self.excluded,
+                          cache=self.cache,
+                          signature=self.signature)
 
     def __call__(self, *args, **kwargs):
         """
