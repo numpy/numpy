@@ -287,11 +287,15 @@ class TestPrintOptions(object):
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
-        assert_equal(repr(np.array(1.)), 'array(1.)')
+        assert_equal(repr(np.array(1.)), 'array( 1.)')
 
         np.set_printoptions(sign='+')
         assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
         assert_equal(repr(np.array(1.)), 'array(+1.)')
+
+        np.set_printoptions(sign='legacy')
+        assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
+        assert_equal(repr(np.array(1.)), 'array(1.)')
 
 
 def test_unicode_object_array():

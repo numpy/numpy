@@ -55,43 +55,31 @@ else:
     _MAXINT = sys.maxint
     _MININT = -sys.maxint - 1
 
-_format_options = {}
-# repr N leading and trailing items of each dimension
-_format_options['edgeitems'] = 3
-# total items > triggers array summarization
-_format_options['threshold'] = 1000
-_format_options['precision'] = 8
-_format_options['suppress'] = False
-_format_options['linewidth'] = 75
-_format_options['nanstr'] = 'nan'
-_format_options['infstr'] = 'inf'
-_format_options['sign'] = '-'
-_format_options['formatter'] = None
+_format_options = {
+    'edgeitems': 3,  # repr N leading and trailing items of each dimension
+    'threshold': 1000,  # total items > triggers array summarization
+    'precision': 8,  # precision of floating point representations
+    'suppress': False,  # suppress printing small floating values in exp format
+    'linewidth': 75,
+    'nanstr': 'nan',
+    'infstr': 'inf',
+    'sign': '-',
+    'formatter': None }
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
                        sign=None, formatter=None):
-    options = {}
-    if linewidth is not None:
-        options['linewidth'] = linewidth
-    if threshold is not None:
-        options['threshold'] = threshold
-    if edgeitems is not None:
-        options['edgeitems'] = edgeitems
-    if precision is not None:
-        options['precision'] = precision
+    """ make a dictionary out of the non-None arguments, plus sanity checks """
+
+    options = {k: v for k, v in locals().items() if v is not None}
+
     if suppress is not None:
-        options['suppress'] = not not suppress
-    if nanstr is not None:
-        options['nanstr'] = nanstr
-    if infstr is not None:
-        options['infstr'] = infstr
-    if sign is not None:
-        if sign not in " +-":
-            raise ValueError("sign option must be one of ' ', '+', or '-'")
-        options['sign'] = sign
-    if formatter is not None:
-        options['formatter'] = formatter
+        options['suppress'] = bool(suppress)
+
+    if sign not in [None, '-', '+', ' ', 'legacy']:
+        raise ValueError("sign option must be one of "
+                         "' ', '+', '-', or 'legacy'")
+
     return options
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
@@ -126,12 +114,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
         String representation of floating point infinity (default inf).
-    sign : string, either '-', '+' or ' ', optional
-        Controls printing of the sign of floating-point types. If '-' only
-        print the sign of negative values. If '+' print the sign of both
-        negative an positive values. If ' ' print a space (whitespace
-        character) in the sign position of positive values, except in 0d
-        arrays. (default '-')
+    sign : string, either '-', '+', ' ' or 'legacy', optional
+        Controls printing of the sign of floating-point types. If '+', always
+        print the sign of positive values. If ' ', always prints a space
+        (whitespace character) in the sign position of positive values.  If
+        '-', omit the sign character of positive values. If 'legacy', print a
+        space for positive values except in 0d arrays, and also add a space for
+        'True' values in size-1 bool arrays. (default '-')
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -209,6 +198,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter)
+    # formatter is always reset
     opt['formatter'] = formatter
     _format_options.update(opt)
 
@@ -269,17 +259,16 @@ def _object_format(o):
 def repr_format(x):
     return repr(x)
 
-def _get_formatdict(data, opt):
+def _get_formatdict(data, **opt):
+    prec, supp, sign = opt['precision'], opt['suppress'], opt['sign']
+
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
-    formatdict = {'bool': lambda: BoolFormat(data),
+    formatdict = {'bool': lambda: BoolFormat(data, legacy=(sign == 'legacy')),
                   'int': lambda: IntegerFormat(data),
-                  'float': lambda: FloatFormat(data, opt['precision'],
-                                                  opt['suppress'], opt['sign']),
-                  'longfloat': lambda: LongFloatFormat(opt['precision']),
-                  'complexfloat': lambda: ComplexFormat(data, opt['precision'],
-                                                  opt['suppress'], opt['sign']),
-                  'longcomplexfloat': lambda: LongComplexFormat(
-                                                              opt['precision']),
+                  'float': lambda: FloatFormat(data, prec, supp, sign),
+                  'longfloat': lambda: LongFloatFormat(prec),
+                  'complexfloat': lambda: ComplexFormat(data, prec, supp, sign),
+                  'longcomplexfloat': lambda: LongComplexFormat(prec),
                   'datetime': lambda: DatetimeFormat(data),
                   'timedelta': lambda: TimedeltaFormat(data),
                   'object': lambda: _object_format,
@@ -315,7 +304,7 @@ def _get_formatdict(data, opt):
 
     return formatdict
 
-def _get_format_function(data, options):
+def _get_format_function(data, **options):
     """
     find the right formatting function for the dtype_
     """
@@ -323,15 +312,15 @@ def _get_format_function(data, options):
     if dtype_.fields is not None:
         format_functions = []
         for field_name in dtype_.names:
-            field_values = data[field_name]
-            format_function = _get_format_function(ravel(field_values), options)
+            field_values = ravel(data[field_name])
+            format_function = _get_format_function(field_values, **options)
             if dtype_[field_name].shape != ():
                 format_function = SubArrayFormat(format_function)
             format_functions.append(format_function)
         return StructureFormat(format_functions)
 
     dtypeobj = dtype_.type
-    formatdict = _get_formatdict(data, options)
+    formatdict = _get_formatdict(data, **options)
     if issubclass(dtypeobj, _nt.bool_):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
@@ -397,10 +386,13 @@ def _array2string(a, options, separator=' ', prefix=""):
         data = _leading_trailing(a)
     else:
         summary_insert = ""
-        data = ravel(asarray(a)) if a.shape != () else asarray(a)
+        if a.shape == () and options.get('sign', '') == 'legacy':
+            data = asarray(a)
+        else:
+            data = ravel(asarray(a))
 
     # find the right formatting function for the array
-    format_function = _get_format_function(data, options)
+    format_function = _get_format_function(data, **options)
 
     # skip over "["
     next_line_prefix = " "
@@ -478,12 +470,13 @@ def array2string(a, max_line_width=None, precision=None,
     edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension.
-    sign : string, either '-', '+' or ' ', optional
-        Controls printing of the sign of floating-point types. If '-' only
-        print the sign of negative values. If '+' print the sign of both
-        negative an positive values. If ' ' print a space (whitespace
-        character) in the sign position of positive values, except in 0d
-        arrays. (default '-')
+    sign : string, either '-', '+', ' ' or 'legacy', optional
+        Controls printing of the sign of floating-point types. If '+', always
+        print the sign of positive values. If ' ', always prints a space
+        (whitespace character) in the sign position of positive values.  If
+        '-', omit the sign character of positive values. If 'legacy', print a
+        space for positive values except in 0d arrays, and also add a space for
+        'True' values in size-1 bool arrays.
 
     Returns
     -------
@@ -621,14 +614,11 @@ def _formatArray(a, format_function, rank, max_line_len,
 class FloatFormat(object):
     def __init__(self, data, precision, suppress_small, sign=False):
         # for backcompatibility, accept bools
-        if sign is False:
-            sign = '-'
-        if sign is True:
-            sign = '+'
+        if isinstance(sign, bool):
+            sign = '+' if sign else '-'
 
-        # for backcompatibility, 0d arrays are not padded
-        if sign == ' ' and data.shape == ():
-            sign = '-'
+        if sign == 'legacy':
+            sign = '-' if data.shape == () else ' '
 
         self.precision = precision
         self.suppress_small = suppress_small
@@ -637,7 +627,7 @@ class FloatFormat(object):
         self.large_exponent = False
         try:
             self.fillFormat(ravel(data))
-        except (TypeError, NotImplementedError):
+        except (NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
             # instantiated in formatdict.
             pass
@@ -671,8 +661,8 @@ class FloatFormat(object):
             signpos = signpos if self.sign != ' ' else 2
             max_str_len = signpos + 6 + self.precision + self.large_exponent
 
-            signchar = '' if self.sign == '-' else self.sign
-            format = '%' + signchar + '%d.%de' % (max_str_len, self.precision)
+            conversion = '' if self.sign == '-' else self.sign
+            format = '%' + conversion + '%d.%de' % (max_str_len, self.precision)
         else:
             if len(non_zero) and self.precision > 0:
                 precision = self.precision
@@ -692,8 +682,8 @@ class FloatFormat(object):
                 inflen = len(_format_options['infstr']) + neginf
                 max_str_len = max(max_str_len, nanlen, inflen)
 
-            signchar = '' if self.sign == '-' else self.sign
-            format = '%#' + signchar + '%d.%df' % (max_str_len, precision)
+            conversion = '' if self.sign == '-' else self.sign
+            format = '%#' + conversion + '%d.%df' % (max_str_len, precision)
 
         self.special_fmt = '%%%ds' % (max_str_len,)
         self.format = format
@@ -752,10 +742,15 @@ class IntegerFormat(object):
             return "%s" % x
 
 class BoolFormat(object):
-    def __init__(self, data):
+    def __init__(self, data, **kwargs):
+        # in legacy printing style, include a space before True except in 0d
+        if kwargs.get('legacy', False):
+            self.truestr = ' True' if data.shape != () else 'True'
+            return
+
         # add an extra space so " True" and "False" have the same length and
         # array elements align nicely when printed, but only for arrays with
-        # more than one element.
+        # more than one element (0d and nd)
         self.truestr = ' True' if data.size > 1 else 'True'
 
     def __call__(self, x):
@@ -766,6 +761,10 @@ class LongFloatFormat(object):
     # XXX Have to add something to determine the width to use a la FloatFormat
     # Right now, things won't line up properly
     def __init__(self, precision, sign=False):
+        # for backcompatibility, accept bools
+        if isinstance(sign, bool):
+            sign = '+' if sign else '-'
+
         self.precision = precision
         self.sign = sign
 
@@ -808,10 +807,8 @@ class LongComplexFormat(object):
 class ComplexFormat(object):
     def __init__(self, x, precision, suppress_small, sign=False):
         # for backcompatibility, accept bools
-        if sign is False:
-            sign = '-'
-        if sign is True:
-            sign = '+'
+        if isinstance(sign, bool):
+            sign = '+' if sign else '-'
 
         self.real_format = FloatFormat(x.real, precision, suppress_small,
                                        sign=sign)
