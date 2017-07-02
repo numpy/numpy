@@ -1306,8 +1306,9 @@ find_userloop(PyUFuncObject *ufunc,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
 
                 for (j = 0; j < nargs; ++j) {
@@ -1321,8 +1322,6 @@ find_userloop(PyUFuncObject *ufunc,
                     *out_innerloopdata = funcdata->data;
                     return 1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
@@ -1793,8 +1792,10 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 int matched = 1;
 
@@ -1839,8 +1840,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                     case -1:
                         return -1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
