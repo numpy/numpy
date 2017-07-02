@@ -12,6 +12,14 @@ Highlights
 New functions
 =============
 
+``np.cov2corr``
+---------------
+This function converts a previously calculate covariance matrix
+into its Pearson product-moment correlation coefficients. Since
+calculating the covariance matrix can be a slow operation for large
+datasets, the user now has to spend half the time to get both
+the covariance matrix and the correlation matrix.
+
 
 Deprecations
 ============
@@ -86,3 +94,10 @@ integer scalars are now unaffected by ``np.set_string_function``
 Previously the str/repr of integer scalars could be controlled by
 ``np.set_string_function``, unlike most other numpy scalars. This is no longer
 the case.
+
+``np.corrcoeff`` calls ``np.cov2corr``
+------------------------------------
+A new function ``np.cov2corr`` that converts a covariance matrix into a
+correlation function has been added. ``np.corrcoef`` now calculates
+the covariance matrix and returns the correlation coefficient by
+calling ``np.cov2corr``.
