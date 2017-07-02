@@ -1120,18 +1120,16 @@ def resize(a, new_shape):
         new_shape = (new_shape,)
     a = ravel(a)
     Na = len(a)
-    if not Na:
-        return mu.zeros(new_shape, a.dtype)
     total_size = um.multiply.reduce(new_shape)
+    if Na == 0 or total_size == 0:
+        return mu.zeros(new_shape, a.dtype)
+
     n_copies = int(total_size / Na)
     extra = total_size % Na
 
-    if total_size == 0:
-        return a[:0]
-
     if extra != 0:
-        n_copies = n_copies+1
-        extra = Na-extra
+        n_copies = n_copies + 1
+        extra = Na - extra
 
     a = concatenate((a,)*n_copies)
     if extra > 0:

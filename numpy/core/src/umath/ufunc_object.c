@@ -1752,6 +1752,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp *strides;
     npy_intp *countptr;
 
+    PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
     if (wheremask != NULL) {
@@ -1783,12 +1784,13 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     for (i = nin; i < nop; ++i) {
         /*
          * We don't write to all elements, and the iterator may make
-         * UPDATEIFCOPY temporary copies. The output arrays must be considered
-         * READWRITE by the iterator, so that the elements we don't write to are
-         * copied to the possible temporary array.
+         * UPDATEIFCOPY temporary copies. The output arrays (unless they are
+         * allocated by the iterator itself) must be considered READWRITE by the
+         * iterator, so that the elements we don't write to are copied to the
+         * possible temporary array.
          */
         op_flags[i] = default_op_out_flags |
-                      NPY_ITER_READWRITE |
+                      (op[i] != NULL ? NPY_ITER_READWRITE : NPY_ITER_WRITEONLY) |
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
@@ -1828,11 +1830,24 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Call the __array_prepare__ functions where necessary */
+    op_it = NpyIter_GetOperandArray(iter);
     for (i = nin; i < nop; ++i) {
-        PyArrayObject *op_tmp;
+        PyArrayObject *op_tmp, *orig_op_tmp;
 
-        /* prepare_ufunc_output may decref & replace pointer */
-        op_tmp = op[i];
+        /*
+         * The array can be allocated by the iterator -- it is placed in op[i]
+         * and returned to the caller, and this needs an extra incref.
+         */
+        if (op[i] == NULL) {
+            op_tmp = op_it[i];
+            Py_INCREF(op_tmp);
+        }
+        else {
+            op_tmp = op[i];
+        }
+
+        /* prepare_ufunc_output may decref & replace the pointer */
+        orig_op_tmp = op_tmp;
         Py_INCREF(op_tmp);
 
         if (prepare_ufunc_output(ufunc, &op_tmp,
@@ -1842,7 +1857,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         }
 
         /* Validate that the prepare_ufunc_output didn't mess with pointers */
-        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(op[i])) {
+        if (PyArray_BYTES(op_tmp) != PyArray_BYTES(orig_op_tmp)) {
             PyErr_SetString(PyExc_ValueError,
                         "The __array_prepare__ functions modified the data "
                         "pointer addresses in an invalid fashion");
@@ -1853,8 +1868,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
         /*
          * Put the updated operand back and undo the DECREF above. If
-         * COPY_IF_OVERLAP made a temporary copy, the output will be copied in
-         * by UPDATEIFCOPY even if op[i] was changed.
+         * COPY_IF_OVERLAP made a temporary copy, the output will be copied
+         * by UPDATEIFCOPY even if op[i] was changed by prepare_ufunc_output.
          */
         op[i] = op_tmp;
         Py_DECREF(op_tmp);
@@ -3894,7 +3909,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
-    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
     static char *reduce_kwlist[] = {
@@ -5599,8 +5613,10 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     if (doc == NULL) {
         return NULL;
     }
-    PyUString_ConcatAndDel(&doc,
-        PyUString_FromFormat("\n\n%s", ufunc->doc));
+    if (ufunc->doc != NULL) {
+        PyUString_ConcatAndDel(&doc,
+            PyUString_FromFormat("\n\n%s", ufunc->doc));
+    }
     return doc;
 }
 

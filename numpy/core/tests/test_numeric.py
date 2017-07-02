@@ -34,6 +34,12 @@ class TestResize(TestCase):
         assert_array_equal(Ar, np.array([]))
         assert_equal(A.dtype, Ar.dtype)
 
+        Ar = np.resize(A, (0, 2))
+        assert_equal(Ar.shape, (0, 2))
+
+        Ar = np.resize(A, (2, 0))
+        assert_equal(Ar.shape, (2, 0))
+
     def test_reshape_from_zero(self):
         # See also gh-6740
         A = np.zeros(0, dtype=[('a', np.float32, 1)])
@@ -2662,6 +2668,17 @@ class TestKeepdims(TestCase):
         sub_class = self.sub_array
         x = np.arange(30).view(sub_class)
         assert_raises(TypeError, np.sum, x, keepdims=True)
+
+
+class TestTensordot(TestCase):
+
+    def test_zero_dimension(self):
+        # Test resolution to issue #5663
+        a = np.ndarray((3,0))
+        b = np.ndarray((0,4))
+        td = np.tensordot(a, b, (1, 0))
+        assert_array_equal(td, np.dot(a, b))
+        assert_array_equal(td, np.einsum('ij,jk', a, b))
 
 
 if __name__ == "__main__":

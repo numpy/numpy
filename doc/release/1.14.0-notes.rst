@@ -28,6 +28,24 @@ Build System Changes
 Compatibility notes
 ===================
 
+``np.tensordot`` now returns zero array when contracting over 0-length dimension
+--------------------------------------------------------------------------------
+Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
+dimension. Now it returns a zero array, which is consistent with the behaviour
+of ``np.dot`` and ``np.einsum``.
+
+``np.ma`` functions producing ``fill_value``s have changed
+----------------------------------------------------------
+Previously, ``np.ma.default_fill_value`` would return a 0d array, but
+``np.ma.minimum_fill_value`` and ``np.ma.maximum_fill_value`` would return a
+tuple of the fields. Instead, all three methods return a structured ``np.void``
+object, which is what you would already find in the ``.fill_value`` attribute.
+
+Additionally, the dtype guessing now matches that of ``np.array`` - so when
+passing a python scalar ``x``, ``maximum_fill_value(x)`` is always the same as
+``maximum_fill_value(np.array(x))``. Previously ``x = long(1)`` on Python 2
+violated this assumption.
+
 
 C API changes
 =============
@@ -36,9 +54,23 @@ C API changes
 New Features
 ============
 
+`numpy.testing.Tester` is now aware of ``nose`` plugins that are outside the
+built-in ones in ``nose``.  This allows using for example ``nose-timer`` like
+so:  ``np.test(extra_argv=['--with-timer', '--timer-top-n', '20'])`` to
+obtain the runtime of the 20 slowest tests.  An extra keyword ``timer`` was
+also added to ``Tester.test``, so ``np.test(timer=20)`` will also report the 20
+slowest tests.
+
 
 Improvements
 ============
+
+GIL released for all ``np.einsum`` variations
+---------------------------------------------
+
+Some specific loop structures which have an accelerated loop version
+did not release the GIL prior to NumPy 1.14.0.  This oversight has been
+fixed.
 
 
 Changes

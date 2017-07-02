@@ -70,6 +70,37 @@ def recursive_fill_fields(input, output):
     return output
 
 
+def get_fieldspec(dtype):
+    """
+    Produce a list of name/dtype pairs corresponding to the dtype fields
+
+    Similar to dtype.descr, but the second item of each tuple is a dtype, not a
+    string. As a result, this handles subarray dtypes
+
+    Can be passed to the dtype constructor to reconstruct the dtype, noting that
+    this (deliberately) discards field offsets.
+
+    Examples
+    --------
+    >>> dt = np.dtype([(('a', 'A'), int), ('b', float, 3)])
+    >>> dt.descr
+    [(('a', 'A'), '<i4'), ('b', '<f8', (3,))]
+    >>> get_fieldspec(dt)
+    [(('a', 'A'), dtype('int32')), ('b', dtype(('<f8', (3,))))]
+
+    """
+    if dtype.names is None:
+        # .descr returns a nameless field, so we should too
+        return [('', dtype)]
+    else:
+        fields = ((name, dtype.fields[name]) for name in dtype.names)
+        # keep any titles, if present
+        return [
+            (name if len(f) == 2 else (f[2], name), f[0]) 
+            for name, f in fields
+        ]
+
+
 def get_names(adtype):
     """
     Returns the field names of the input datatype as a tuple.
@@ -146,7 +177,7 @@ def flatten_descr(ndtype):
     """
     names = ndtype.names
     if names is None:
-        return ndtype.descr
+        return (('', ndtype),)
     else:
         descr = []
         for field in names:
@@ -156,6 +187,22 @@ def flatten_descr(ndtype):
             else:
                 descr.append((field, typ))
         return tuple(descr)
+
+
+def zip_dtype(seqarrays, flatten=False):
+    newdtype = []
+    if flatten:
+        for a in seqarrays:
+            newdtype.extend(flatten_descr(a.dtype))
+    else:
+        for a in seqarrays:
+            current = a.dtype
+            if current.names and len(current.names) <= 1:
+                # special case - dtypes of 0 or 1 field are flattened
+                newdtype.extend(get_fieldspec(current))
+            else:
+                newdtype.append(('', current))
+    return np.dtype(newdtype)
 
 
 def zip_descr(seqarrays, flatten=False):
@@ -169,19 +216,7 @@ def zip_descr(seqarrays, flatten=False):
     flatten : {boolean}, optional
         Whether to collapse nested descriptions.
     """
-    newdtype = []
-    if flatten:
-        for a in seqarrays:
-            newdtype.extend(flatten_descr(a.dtype))
-    else:
-        for a in seqarrays:
-            current = a.dtype
-            names = current.names or ()
-            if len(names) > 1:
-                newdtype.append(('', current.descr))
-            else:
-                newdtype.extend(current.descr)
-    return np.dtype(newdtype).descr
+    return zip_dtype(seqarrays, flatten=flatten).descr
 
 
 def get_fieldstructure(adtype, lastname=None, parents=None,):
@@ -376,13 +411,12 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     # Do we have a single ndarray as input ?
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
-        if (not flatten) or \
-           (zip_descr((seqarrays,), flatten=True) == seqdtype.descr):
+        # Make sure we have named fields
+        if not seqdtype.names:
+            seqdtype = np.dtype([('', seqdtype)])
+        if not flatten or zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
             seqarrays = seqarrays.ravel()
-            # Make sure we have named fields
-            if not seqdtype.names:
-                seqdtype = [('', seqdtype)]
             # Find what type of array we must return
             if usemask:
                 if asrecarray:
@@ -403,7 +437,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     sizes = tuple(a.size for a in seqarrays)
     maxlength = max(sizes)
     # Get the dtype of the output (flattening if needed)
-    newdtype = zip_descr(seqarrays, flatten=flatten)
+    newdtype = zip_dtype(seqarrays, flatten=flatten)
     # Initialize the sequences for data and mask
     seqdata = []
     seqmask = []
@@ -655,8 +689,9 @@ def append_fields(base, names, data, dtypes=None,
     else:
         data = data.pop()
     #
-    output = ma.masked_all(max(len(base), len(data)),
-                           dtype=base.dtype.descr + data.dtype.descr)
+    output = ma.masked_all(
+        max(len(base), len(data)),
+        dtype=get_fieldspec(base.dtype) + get_fieldspec(data.dtype))
     output = recursive_fill_fields(base, output)
     output = recursive_fill_fields(data, output)
     #
@@ -746,25 +781,21 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     fldnames = [d.names for d in ndtype]
     #
     dtype_l = ndtype[0]
-    newdescr = dtype_l.descr
-    names = [_[0] for _ in newdescr]
+    newdescr = get_fieldspec(dtype_l)
+    names = [n for n, d in newdescr]
     for dtype_n in ndtype[1:]:
-        for descr in dtype_n.descr:
-            name = descr[0] or ''
-            if name not in names:
-                newdescr.append(descr)
-                names.append(name)
+        for fname, fdtype in get_fieldspec(dtype_n):
+            if fname not in names:
+                newdescr.append((fname, fdtype))
+                names.append(fname)
             else:
-                nameidx = names.index(name)
-                current_descr = newdescr[nameidx]
+                nameidx = names.index(fname)
+                _, cdtype = newdescr[nameidx]
                 if autoconvert:
-                    if np.dtype(descr[1]) > np.dtype(current_descr[-1]):
-                        current_descr = list(current_descr)
-                        current_descr[-1] = descr[1]
-                        newdescr[nameidx] = tuple(current_descr)
-                elif descr[1] != current_descr[-1]:
+                    newdescr[nameidx] = (fname, max(fdtype, cdtype))
+                elif fdtype != cdtype:
                     raise TypeError("Incompatible type '%s' <> '%s'" %
-                                    (dict(newdescr)[name], descr[1]))
+                                    (cdtype, fdtype))
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)
@@ -920,10 +951,10 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision
-    if (set.intersection(set(r1names), set(r2names)).difference(key) and
-            not (r1postfix or r2postfix)):
+    collisions = (set(r1names) & set(r2names)) - set(key)
+    if collisions and not (r1postfix or r2postfix):
         msg = "r1 and r2 contain common names, r1postfix and r2postfix "
-        msg += "can't be empty"
+        msg += "can't both be empty"
         raise ValueError(msg)
 
     # Make temporary arrays of just the keys
@@ -960,32 +991,38 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     #
     # Build the new description of the output array .......
     # Start with the key fields
-    ndtype = [list(_) for _ in r1k.dtype.descr]
-    # Add the other fields
-    ndtype.extend(list(_) for _ in r1.dtype.descr if _[0] not in key)
-    # Find the new list of names (it may be different from r1names)
-    names = list(_[0] for _ in ndtype)
-    for desc in r2.dtype.descr:
-        desc = list(desc)
-        name = desc[0]
+    ndtype = get_fieldspec(r1k.dtype)
+
+    # Add the fields from r1
+    for fname, fdtype in get_fieldspec(r1.dtype):
+        if fname not in key:
+            ndtype.append((fname, fdtype))
+
+    # Add the fields from r2
+    for fname, fdtype in get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
-        if name in names:
-            nameidx = ndtype.index(desc)
-            current = ndtype[nameidx]
-            # The current field is part of the key: take the largest dtype
-            if name in key:
-                current[-1] = max(desc[1], current[-1])
-            # The current field is not part of the key: add the suffixes
-            else:
-                current[0] += r1postfix
-                desc[0] += r2postfix
-                ndtype.insert(nameidx + 1, desc)
-        #... we haven't: just add the description to the current list
+        # we need to rebuild this list every time
+        names = list(name for name, dtype in ndtype)
+        try:
+            nameidx = names.index(fname)
+        except ValueError:
+            #... we haven't: just add the description to the current list
+            ndtype.append((fname, fdtype))
         else:
-            names.extend(desc[0])
-            ndtype.append(desc)
-    # Revert the elements to tuples
-    ndtype = [tuple(_) for _ in ndtype]
+            # collision
+            _, cdtype = ndtype[nameidx]
+            if fname in key:
+                # The current field is part of the key: take the largest dtype
+                ndtype[nameidx] = (fname, max(fdtype, cdtype))
+            else:
+                # The current field is not part of the key: add the suffixes,
+                # and place the new field adjacent to the old one
+                ndtype[nameidx:nameidx + 1] = [
+                    (fname + r1postfix, cdtype),
+                    (fname + r2postfix, fdtype)
+                ]
+    # Rebuild a dtype from the new fields
+    ndtype = np.dtype(ndtype)
     # Find the largest nb of common fields :
     # r1cmn and r2cmn should be equal, but...
     cmn = max(r1cmn, r2cmn)

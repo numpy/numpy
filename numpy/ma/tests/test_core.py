@@ -1788,6 +1788,31 @@ class TestFillingValues(TestCase):
         assert_equal(b['a']._data, a._data)
         assert_equal(b['a'].fill_value, a.fill_value)
 
+    def test_default_fill_value(self):
+        # check all calling conventions
+        f1 = default_fill_value(1.)
+        f2 = default_fill_value(np.array(1.))
+        f3 = default_fill_value(np.array(1.).dtype)
+        assert_equal(f1, f2)
+        assert_equal(f1, f3)
+
+    def test_default_fill_value_structured(self):
+        fields = array([(1, 1, 1)],
+                      dtype=[('i', int), ('s', '|S8'), ('f', float)])
+
+        f1 = default_fill_value(fields)
+        f2 = default_fill_value(fields.dtype)
+        expected = np.array((default_fill_value(0),
+                             default_fill_value('0'),
+                             default_fill_value(0.)), dtype=fields.dtype)
+        assert_equal(f1, expected)
+        assert_equal(f2, expected)
+
+    def test_default_fill_value_void(self):
+        dt = np.dtype([('v', 'V7')])
+        f = default_fill_value(dt)
+        assert_equal(f['v'], np.array(default_fill_value(dt['v']), dt['v']))
+
     def test_fillvalue(self):
         # Yet more fun with the fill_value
         data = masked_array([1, 2, 3], fill_value=-999)
@@ -1863,21 +1888,35 @@ class TestFillingValues(TestCase):
         a = array([(1, (2, 3)), (4, (5, 6))],
                   dtype=[('A', int), ('B', [('BA', int), ('BB', int)])])
         test = a.fill_value
+        assert_equal(test.dtype, a.dtype)
         assert_equal(test['A'], default_fill_value(a['A']))
         assert_equal(test['B']['BA'], default_fill_value(a['B']['BA']))
         assert_equal(test['B']['BB'], default_fill_value(a['B']['BB']))
 
         test = minimum_fill_value(a)
+        assert_equal(test.dtype, a.dtype)
         assert_equal(test[0], minimum_fill_value(a['A']))
         assert_equal(test[1][0], minimum_fill_value(a['B']['BA']))
         assert_equal(test[1][1], minimum_fill_value(a['B']['BB']))
         assert_equal(test[1], minimum_fill_value(a['B']))
 
         test = maximum_fill_value(a)
+        assert_equal(test.dtype, a.dtype)
         assert_equal(test[0], maximum_fill_value(a['A']))
         assert_equal(test[1][0], maximum_fill_value(a['B']['BA']))
         assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
         assert_equal(test[1], maximum_fill_value(a['B']))
+
+    def test_extremum_fill_value_subdtype(self):
+        a = array(([2, 3, 4],), dtype=[('value', np.int8, 3)])
+
+        test = minimum_fill_value(a)
+        assert_equal(test.dtype, a.dtype)
+        assert_equal(test[0], np.full(3, minimum_fill_value(a['value'])))
+
+        test = maximum_fill_value(a)
+        assert_equal(test.dtype, a.dtype)
+        assert_equal(test[0], np.full(3, maximum_fill_value(a['value'])))
 
     def test_fillvalue_individual_fields(self):
         # Test setting fill_value on individual fields
@@ -3097,27 +3136,41 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(am, an)
 
     def test_sort_flexible(self):
-        # Test sort on flexible dtype.
+        # Test sort on structured dtype.
         a = array(
             data=[(3, 3), (3, 2), (2, 2), (2, 1), (1, 0), (1, 1), (1, 2)],
             mask=[(0, 0), (0, 1), (0, 0), (0, 0), (1, 0), (0, 0), (0, 0)],
             dtype=[('A', int), ('B', int)])
-
-        test = sort(a)
-        b = array(
+        mask_last = array(
             data=[(1, 1), (1, 2), (2, 1), (2, 2), (3, 3), (3, 2), (1, 0)],
             mask=[(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (1, 0)],
             dtype=[('A', int), ('B', int)])
-        assert_equal(test, b)
-        assert_equal(test.mask, b.mask)
+        mask_first = array(
+            data=[(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3)],
+            mask=[(1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (0, 0)],
+            dtype=[('A', int), ('B', int)])
+
+        test = sort(a)
+        assert_equal(test, mask_last)
+        assert_equal(test.mask, mask_last.mask)
 
         test = sort(a, endwith=False)
-        b = array(
-            data=[(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3), ],
-            mask=[(1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (0, 0), ],
-            dtype=[('A', int), ('B', int)])
-        assert_equal(test, b)
-        assert_equal(test.mask, b.mask)
+        assert_equal(test, mask_first)
+        assert_equal(test.mask, mask_first.mask)
+
+        # Test sort on dtype with subarray (gh-8069)
+        dt = np.dtype([('v', int, 2)])
+        a = a.view(dt)
+        mask_last = mask_last.view(dt)
+        mask_first = mask_first.view(dt)
+
+        test = sort(a)
+        assert_equal(test, mask_last)
+        assert_equal(test.mask, mask_last.mask)
+
+        test = sort(a, endwith=False)
+        assert_equal(test, mask_first)
+        assert_equal(test.mask, mask_first.mask)
 
     def test_argsort(self):
         # Test argsort
@@ -4739,6 +4792,11 @@ def test_ufunc_with_output():
     x = array([1., 2., 3.], mask=[0, 0, 1])
     y = np.add(x, 1., out=x)
     assert_(y is x)
+
+def test_astype():
+    descr = [('v', int, 3), ('x', [('y', float)])]
+    x = array(([1, 2, 3], (1.0,)), dtype=descr)
+    assert_equal(x, x.astype(descr))
 
 
 ###############################################################################

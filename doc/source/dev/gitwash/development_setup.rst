@@ -117,7 +117,7 @@ so it pulls from ``upstream`` by default.  This can be done with::
 You may also want to have easy access to all pull requests sent to the
 NumPy repository::
 
-   git config --add remote.upstream.fetch '+refs/pull//head:refs/remotes/upstream/pr/'
+   git config --add remote.upstream.fetch '+refs/pull/*/head:refs/remotes/upstream/pr/*'
 
 Your config file should now look something like (from
 ``$ cat .git/config``)::

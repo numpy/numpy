@@ -13,6 +13,7 @@ Examples::
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
+    $ python runtests.py --timer 20
 
 Run a debugger:
 
@@ -77,6 +78,8 @@ def main(argv):
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
+    parser.add_argument("--timer", action="store", default=0, type=int,
+                        help=("Time N slowest test"))
     parser.add_argument("--gcov", action="store_true", default=False,
                         help=("enable C code coverage via gcov (requires GCC). "
                               "gcov output goes to build/**/*.gc*"))
@@ -112,10 +115,21 @@ def main(argv):
                               "Note that you need to commit your changes first!"))
     parser.add_argument("--raise-warnings", default=None, type=str,
                         choices=('develop', 'release'),
-                        help="if 'develop', warnings are treated as errors")
+                        help=("if 'develop', warnings are treated as errors; "
+                              "defaults to 'develop' in development versions."))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
+
+    if args.timer == 0:
+        timer = False
+    elif args.timer == -1:
+        timer = True
+    elif args.timer > 0:
+        timer = int(args.timer)
+    else:
+        raise ValueError("--timer value should be an integer, -1 or >0")
+    args.timer = timer
 
     if args.bench_compare:
         args.bench = True
@@ -269,7 +283,13 @@ def main(argv):
             extra_argv = kw.pop('extra_argv', ())
             extra_argv = extra_argv + tests[1:]
             kw['extra_argv'] = extra_argv
+            import numpy as np
             from numpy.testing import Tester
+            if kw["raise_warnings"] is None:
+                if hasattr(np, "__version__") and ".dev0" in np.__version__:
+                    kw["raise_warnings"] = "develop"
+                else:
+                    kw["raise_warnings"] = "release"
             return Tester(tests[0]).test(*a, **kw)
     else:
         __import__(PROJECT_MODULE)
@@ -293,7 +313,8 @@ def main(argv):
                       extra_argv=extra_argv,
                       doctests=args.doctests,
                       raise_warnings=args.raise_warnings,
-                      coverage=args.coverage)
+                      coverage=args.coverage,
+                      timer=args.timer)
     finally:
         os.chdir(cwd)
 

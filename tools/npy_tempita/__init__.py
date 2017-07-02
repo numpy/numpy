@@ -153,9 +153,8 @@ class Template(object):
 
     def from_filename(cls, filename, namespace=None, encoding=None,
                       default_inherit=None, get_template=get_file_template):
-        f = open(filename, 'rb')
-        c = f.read()
-        f.close()
+        with open(filename, 'rb') as f:
+            c = f.read()
         if encoding:
             c = c.decode(encoding)
         elif PY3:
@@ -315,33 +314,31 @@ class Template(object):
                     'invalid syntax in expression: %s' % code)
             return value
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if getattr(e, 'args', None):
-                arg0 = e.args[0]
+            e_type, e_value, e_traceback = sys.exc_info()
+            if getattr(e_value, 'args', None):
+                arg0 = e_value.args[0]
             else:
-                arg0 = coerce_text(e)
-            e.args = (self._add_line_info(arg0, pos),)
+                arg0 = coerce_text(e_value)
+            e_value.args = (self._add_line_info(arg0, pos),)            
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
         try:
             exec(code, self.default_namespace, ns)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if e.args:
-                e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            if e_value.args:
+                e_value.args = (self._add_line_info(e_value.args[0], pos),)
             else:
-                e.args = (self._add_line_info(None, pos),)
+                e_value.args = (self._add_line_info(None, pos),)
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -358,13 +355,12 @@ class Template(object):
                 if (is_unicode(value) and self.default_encoding):
                     value = value.encode(self.default_encoding)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            e_value.args = (self._add_line_info(e_value.args[0], pos),)
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
@@ -1295,9 +1291,8 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        f = open(template_name, 'rb', encoding="latin-1")
-        template_content = f.read()
-        f.close()
+        with open(template_name, 'rb', encoding="latin-1") as f: 
+            template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
     else:
@@ -1305,9 +1300,8 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        f = open(options.output, 'wb')
-        f.write(result)
-        f.close()
+        with open(options.output, 'wb') as f: 
+            f.write(result)
     else:
         sys.stdout.write(result)
 

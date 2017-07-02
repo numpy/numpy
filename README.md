@@ -2,6 +2,8 @@
   <img src="http://www.numpy.org/_static/numpy_logo.png"><br>
 </div>
 
+[![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](http://numfocus.org)
+
 -----------------
 |  **`Travis CI Status`**   |
 |-------------------|
