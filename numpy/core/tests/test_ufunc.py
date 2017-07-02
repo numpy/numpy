@@ -1000,6 +1000,11 @@ class TestUfunc(TestCase):
             dtype=rational)
         assert_equal(result, expected)
 
+    def test_custom_ufunc_forced_sig(self):
+        # gh-9351 - looking for a non-first userloop would previously hang
+        assert_raises(TypeError,
+            np.multiply, rational(1), 1, signature=(rational, int, None))
+
     def test_custom_array_like(self):
 
         class MyThing(object):
