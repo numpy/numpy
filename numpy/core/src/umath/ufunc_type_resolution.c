@@ -1727,8 +1727,9 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 switch (ufunc_loop_matches(self, op,
                             input_casting, output_casting,
@@ -1744,8 +1745,6 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         set_ufunc_loop_data_types(self, op, out_dtype, types, funcdata->arg_dtypes);
                         return 1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
