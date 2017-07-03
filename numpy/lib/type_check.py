@@ -331,11 +331,16 @@ def _getmaxmin(t):
 
 def nan_to_num(x, copy=True):
     """
-    Replace nan with zero and inf with finite numbers.
+    Replace nan with zero and inf with large finite numbers.
 
-    Returns an array or scalar replacing Not a Number (NaN) with zero,
-    (positive) infinity with a very large number and negative infinity
-    with a very small (or negative) number.
+    If `x` is inexact, NaN is replaced by zero, and infinity and -infinity
+    replaced by the respectively largest and most negative finite floating
+    point values representable by ``x.dtype``.
+
+    For complex dtypes, the above is applied to each of the real and
+    imaginary components of `x` separately.
+
+    If `x` is not inexact, then no replacements are made.
 
     Parameters
     ----------
@@ -352,12 +357,8 @@ def nan_to_num(x, copy=True):
     Returns
     -------
     out : ndarray
-        New Array with the same shape as `x` and dtype of the element in
-        `x`  with the greatest precision. If `x` is inexact, then NaN is
-        replaced by zero, and infinity (-infinity) is replaced by the
-        largest (smallest or most negative) floating point value that fits
-        in the output dtype. If `x` is not inexact, then a copy of `x` is
-        returned.
+        `x`, with the non-finite values replaced. If `copy` is False, this may
+        be `x` itself.
 
     See Also
     --------
@@ -372,15 +373,17 @@ def nan_to_num(x, copy=True):
     NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
-
     Examples
     --------
-    >>> np.set_printoptions(precision=8)
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
             -1.28000000e+002,   1.28000000e+002])
-
+    >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
+    >>> np.nan_to_num(y)
+    array([  1.79769313e+308 +0.00000000e+000j,
+             0.00000000e+000 +0.00000000e+000j,
+             0.00000000e+000 +1.79769313e+308j])
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
