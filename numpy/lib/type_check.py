@@ -329,7 +329,10 @@ def _getmaxmin(t):
     f = getlimits.finfo(t)
     return f.max, f.min
 
-def nan_to_num(x, copy=True):
+def nan_to_num(x, copy=True, 
+               nan_fill_value=None, 
+               posinf_fill_value=None, 
+               neginf_fill_value=None):
     """
     Replace nan with zero and inf with finite numbers.
 
@@ -346,6 +349,17 @@ def nan_to_num(x, copy=True):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
+    nan_fill_value : int, float, optional
+        Value to be used to fill NaN values. If no value is passed 
+        then NaN values will be replaced with 0.0.
+    posinf_fill_value : int, float, optional
+        Value to be used to fill positive infinity values. If no value is 
+        passed then positive infinity values will be replaced with a very
+        large number.
+    neginf_fill_value : int, float, optional
+        Value to be used to fill negative infinity values. If no value is 
+        passed then negative infinity values will be replaced with a very
+        small (or negative) number.
 
         .. versionadded:: 1.13
 
@@ -354,10 +368,11 @@ def nan_to_num(x, copy=True):
     out : ndarray
         New Array with the same shape as `x` and dtype of the element in
         `x`  with the greatest precision. If `x` is inexact, then NaN is
-        replaced by zero, and infinity (-infinity) is replaced by the
-        largest (smallest or most negative) floating point value that fits
-        in the output dtype. If `x` is not inexact, then a copy of `x` is
-        returned.
+        replaced by zero or by `nan_fill_value`, and infinity (-infinity) is 
+        replaced by the largest (smallest or most negative) floating point 
+        value that fits in the output dtype or the `posinf_fill_value` and 
+        `neginf_fill_value` respectively. If `x` is not inexact, then a copy 
+        of `x` is returned.
 
     See Also
     --------
@@ -392,9 +407,14 @@ def nan_to_num(x, copy=True):
 
     x = x[None] if isscalar else x
     dest = (x.real, x.imag) if iscomplex else (x,)
+    nanv = nan_fill_value if nan_fill_value else 0.0
     maxf, minf = _getmaxmin(x.real.dtype)
+    if posinf_fill_value:
+        maxf = posinf_fill_value
+    if neginf_fill_value:
+        minf = neginf_fill_value
     for d in dest:
-        _nx.copyto(d, 0.0, where=isnan(d))
+        _nx.copyto(d, nanv, where=isnan(d))
         _nx.copyto(d, maxf, where=isposinf(d))
         _nx.copyto(d, minf, where=isneginf(d))
     return x[0] if isscalar else x
