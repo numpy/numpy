@@ -6,7 +6,6 @@ import warnings
 import fnmatch
 import itertools
 
-from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
 from numpy.core import umath_tests as ncu_tests
 import numpy as np
@@ -14,7 +13,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
-    suppress_warnings
+    suppress_warnings, _gen_alignment_data,
 )
 
 

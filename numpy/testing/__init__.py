@@ -10,6 +10,6 @@ from __future__ import division, absolute_import, print_function
 from unittest import TestCase
 
 from . import decorators as dec
-from .nosetester import run_module_suite, NoseTester as Tester
+from .nosetester import run_module_suite, NoseTester as Tester, _numpy_tester
 from .utils import *
-test = nosetester._numpy_tester().test
+test = _numpy_tester().test

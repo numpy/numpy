@@ -20,7 +20,8 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    TestCase, run_module_suite, assert_raises, assert_warns, suppress_warnings)
+    TestCase, run_module_suite, assert_raises, assert_warns, suppress_warnings
+    )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
 from numpy.ma.testutils import (
@@ -1872,11 +1873,11 @@ class TestFillingValues(TestCase):
                          "h", "D", "W", "M", "Y"):
             control = numpy.datetime64("NaT", timecode)
             test = default_fill_value(numpy.dtype("<M8[" + timecode + "]"))
-            np.testing.utils.assert_equal(test, control)
+            np.testing.assert_equal(test, control)
 
             control = numpy.timedelta64("NaT", timecode)
             test = default_fill_value(numpy.dtype("<m8[" + timecode + "]"))
-            np.testing.utils.assert_equal(test, control)
+            np.testing.assert_equal(test, control)
 
     def test_extremum_fill_value(self):
         # Tests extremum fill values for flexible type.

@@ -51,6 +51,6 @@ __all__ = ['core', 'extras']
 __all__ += core.__all__
 __all__ += extras.__all__
 
-from numpy.testing.nosetester import _numpy_tester
+from numpy.testing import _numpy_tester
 test = _numpy_tester().test
 bench = _numpy_tester().bench
