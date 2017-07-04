@@ -71,7 +71,7 @@ __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
 
 
-from numpy.testing.nosetester import _numpy_tester
+from numpy.testing import _numpy_tester
 test = _numpy_tester().test
 bench = _numpy_tester().bench
 

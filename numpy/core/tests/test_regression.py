@@ -15,9 +15,9 @@ import numpy as np
 from numpy.testing import (
         run_module_suite, TestCase, assert_, assert_equal, IS_PYPY,
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec, suppress_warnings
+        assert_raises, assert_warns, dec, suppress_warnings,
+        _assert_valid_refcount, HAS_REFCOUNT,
         )
-from numpy.testing.utils import _assert_valid_refcount, HAS_REFCOUNT
 from numpy.compat import asbytes, asunicode, long
 
 rlevel = 1

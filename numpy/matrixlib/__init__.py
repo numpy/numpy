@@ -7,6 +7,6 @@ from .defmatrix import *
 
 __all__ = defmatrix.__all__
 
-from numpy.testing.nosetester import _numpy_tester
+from numpy.testing import _numpy_tester
 test = _numpy_tester().test
 bench = _numpy_tester().bench

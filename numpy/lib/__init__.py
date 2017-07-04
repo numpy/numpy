@@ -44,6 +44,6 @@ __all__ += npyio.__all__
 __all__ += financial.__all__
 __all__ += nanfunctions.__all__
 
-from numpy.testing.nosetester import _numpy_tester
+from numpy.testing import _numpy_tester
 test = _numpy_tester().test
 bench = _numpy_tester().bench

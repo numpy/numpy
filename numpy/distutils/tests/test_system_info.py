@@ -7,8 +7,9 @@ from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
-from numpy.testing.decorators import skipif
+from numpy.testing import (
+    TestCase, run_module_suite, assert_, assert_equal, dec
+    )
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
@@ -199,7 +200,7 @@ class TestSystemInfoReading(TestCase):
         extra = tsi.calc_extra_info()
         assert_equal(extra['extra_link_args'], ['-Wl,-rpath=' + self._lib2])
 
-    @skipif(not HAVE_COMPILER)
+    @dec.skipif(not HAVE_COMPILER)
     def test_compile1(self):
         # Compile source and link the first source
         c = ccompiler.new_compiler()
@@ -215,8 +216,8 @@ class TestSystemInfoReading(TestCase):
         finally:
             os.chdir(previousDir)
 
-    @skipif(not HAVE_COMPILER)
-    @skipif('msvc' in repr(ccompiler.new_compiler()))
+    @dec.skipif(not HAVE_COMPILER)
+    @dec.skipif('msvc' in repr(ccompiler.new_compiler()))
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
