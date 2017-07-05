@@ -263,3 +263,20 @@ def deprecated(conditional=True):
         else:
             return f
     return deprecate_decorator
+
+
+def parametrize(vars, input):
+    """
+    Pytest compatibility class. This implements the simplest level of
+    pytest.mark.parametrize for use in nose as an aid in making the transition
+    to pytest. It achieves that by adding a dummy var parameter and ignoring
+    the doc_func parameter of the base class. It does not support variable
+    substitution by name, nor does it support nesting or classes. See the
+    pytest documentation for usage.
+
+    .. versionadded:: 1.14.0
+
+    """
+    from .parameterized import parameterized
+
+    return parameterized(input)
