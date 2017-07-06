@@ -32,6 +32,7 @@ The following pull reguests were merged.
 * #9371 DOC: Add isnat/positive ufunc to documentation
 * #9372 BUG: Fix error in fromstring function from numpy.core.records...
 * #9373 BUG: ')' is printed at the end pointer of the buffer in numpy.f2py.
+* #9374 DOC: Create NumPy 1.13.1 release notes.
 
 A total of 9 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
