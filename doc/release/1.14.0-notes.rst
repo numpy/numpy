@@ -12,6 +12,8 @@ Highlights
 New functions
 =============
 
+* ``parametrize`` decorator added to numpy.testing
+
 
 Deprecations
 ============
@@ -46,6 +48,12 @@ passing a python scalar ``x``, ``maximum_fill_value(x)`` is always the same as
 ``maximum_fill_value(np.array(x))``. Previously ``x = long(1)`` on Python 2
 violated this assumption.
 
+``numpy.testing`` reorganized
+-----------------------------
+This is not expected to cause problems, but possibly something has been left
+out. If you experience an unexpected import problem using ``numpy.testing``
+let us know.
+
 
 C API changes
 =============
@@ -54,12 +62,27 @@ C API changes
 New Features
 ============
 
-`numpy.testing.Tester` is now aware of ``nose`` plugins that are outside the
-built-in ones in ``nose``.  This allows using for example ``nose-timer`` like
+External ``nose`` plugins are usable by ``numpy.testing.Tester``
+----------------------------------------------------------------
+``numpy.testing.Tester`` is now aware of ``nose`` plugins that are outside the
+``nose`` built-in ones.  This allows using, for example, ``nose-timer`` like
 so:  ``np.test(extra_argv=['--with-timer', '--timer-top-n', '20'])`` to
 obtain the runtime of the 20 slowest tests.  An extra keyword ``timer`` was
 also added to ``Tester.test``, so ``np.test(timer=20)`` will also report the 20
 slowest tests.
+
+``parametrize`` decorator added to ``numpy.testing``
+----------------------------------------------------
+A basic ``parametrize`` decorator is now available in ``numpy.testing``. It is
+intended to allow rewriting yield based tests that have been deprecated in
+pytest so as to facilitate the transition to pytest in the future. The nose
+testing framework has not been supported for several years and looks like
+abandonware.
+
+The new ``parametrize`` decorator does not have the full functionality of the
+one in pytest. It doesn't work for classes, doesn't support nesting, and does
+not substitute variable names. Even so, it should be adequate to rewrite the
+NumPy tests.
 
 
 Improvements
@@ -67,7 +90,6 @@ Improvements
 
 GIL released for all ``np.einsum`` variations
 ---------------------------------------------
-
 Some specific loop structures which have an accelerated loop version
 did not release the GIL prior to NumPy 1.14.0.  This oversight has been
 fixed.

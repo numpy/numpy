@@ -4,7 +4,7 @@ from os.path import join
 
 from numpy.compat import isfileobj
 from numpy.testing import assert_, run_module_suite
-from numpy.testing.utils import tempdir
+from numpy.testing import tempdir
 
 
 def test_isfileobj():
