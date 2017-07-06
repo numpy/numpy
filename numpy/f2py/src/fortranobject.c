@@ -130,8 +130,7 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
         return -1;
     }
 
-    p[size] = ')';
-    p++;
+    *p++ = ')';
     size--;
 
     if (def.data == NULL) {
