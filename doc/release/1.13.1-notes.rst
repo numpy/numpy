@@ -16,7 +16,9 @@ workaround is to upgrade to 3.6.1 or use an earlier Python version.
 .. _#29943: https://bugs.python.org/issue29943
 
 
-The following pull reguests were merged.
+Pull requests merged
+====================
+A total of 19 pull requests were merged for this release.
 
 * #9240 DOC: BLD: fix lots of Sphinx warnings/errors.
 * #9255 Revert "DEP: Raise TypeError for subtract(bool_, bool_)."
@@ -33,16 +35,26 @@ The following pull reguests were merged.
 * #9372 BUG: Fix error in fromstring function from numpy.core.records...
 * #9373 BUG: ')' is printed at the end pointer of the buffer in numpy.f2py.
 * #9374 DOC: Create NumPy 1.13.1 release notes.
+* #9376 BUG: Prevent hang traversing ufunc userloop linked list
+* #9377 DOC: Use x1 and x2 in the heaviside docstring.
+* #9378 DOC: Add $PARAMS to the isnat docstring
+* #9379 DOC: Update the 1.13.1 release notes
 
-A total of 9 people contributed to this release.  People with a "+" by their
+
+Contributors
+============
+A total of 12 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
+* Andras Deak +
 * Bob Eldering +
 * Charles Harris
 * Daniel Hrisca +
+* Eric Wieser
 * Joshua Leahy +
 * Julian Taylor
 * Michael Seifert
 * Pauli Virtanen
 * Ralf Gommers
 * Roland Kaufmann
+* Warren Weckesser
