@@ -19,6 +19,9 @@ import collections
 
 from .utils import SkipTest, assert_warns
 
+__all__ = ['slow', 'setastest', 'skipif', 'knownfailureif', 'deprecated',
+           'parametrize',]
+
 
 def slow(t):
     """
