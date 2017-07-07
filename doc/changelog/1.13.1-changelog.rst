@@ -1,0 +1,44 @@
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andras Deak +
+* Bob Eldering +
+* Charles Harris
+* Daniel Hrisca +
+* Eric Wieser
+* Joshua Leahy +
+* Julian Taylor
+* Michael Seifert
+* Pauli Virtanen
+* Ralf Gommers
+* Roland Kaufmann
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 19 pull requests were merged for this release.
+
+* `#9240 <https://github.com/numpy/numpy/pull/9240>`__: DOC: BLD: fix lots of Sphinx warnings/errors.
+* `#9255 <https://github.com/numpy/numpy/pull/9255>`__: Revert "DEP: Raise TypeError for subtract(bool_, bool_)."
+* `#9261 <https://github.com/numpy/numpy/pull/9261>`__: BUG: don't elide into readonly and updateifcopy temporaries for...
+* `#9262 <https://github.com/numpy/numpy/pull/9262>`__: BUG: fix missing keyword rename for common block in numpy.f2py
+* `#9263 <https://github.com/numpy/numpy/pull/9263>`__: BUG: handle resize of 0d array
+* `#9267 <https://github.com/numpy/numpy/pull/9267>`__: DOC: update f2py front page and some doc build metadata.
+* `#9299 <https://github.com/numpy/numpy/pull/9299>`__: BUG: Fix Intel compilation on Unix.
+* `#9317 <https://github.com/numpy/numpy/pull/9317>`__: BUG: fix wrong ndim used in empty where check
+* `#9319 <https://github.com/numpy/numpy/pull/9319>`__: BUG: Make extensions compilable with MinGW on Py2.7
+* `#9339 <https://github.com/numpy/numpy/pull/9339>`__: BUG: Prevent crash if ufunc doc string is null
+* `#9340 <https://github.com/numpy/numpy/pull/9340>`__: BUG: umath: un-break ufunc where= when no out= is given
+* `#9371 <https://github.com/numpy/numpy/pull/9371>`__: DOC: Add isnat/positive ufunc to documentation
+* `#9372 <https://github.com/numpy/numpy/pull/9372>`__: BUG: Fix error in fromstring function from numpy.core.records...
+* `#9373 <https://github.com/numpy/numpy/pull/9373>`__: BUG: ')' is printed at the end pointer of the buffer in numpy.f2py.
+* `#9374 <https://github.com/numpy/numpy/pull/9374>`__: DOC: Create NumPy 1.13.1 release notes.
+* `#9376 <https://github.com/numpy/numpy/pull/9376>`__: BUG: Prevent hang traversing ufunc userloop linked list
+* `#9377 <https://github.com/numpy/numpy/pull/9377>`__: DOC: Use x1 and x2 in the heaviside docstring.
+* `#9378 <https://github.com/numpy/numpy/pull/9378>`__: DOC: Add $PARAMS to the isnat docstring
+* `#9379 <https://github.com/numpy/numpy/pull/9379>`__: DOC: Update the 1.13.1 release notes
