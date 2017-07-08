@@ -222,19 +222,19 @@ class TestDocs(TestCase):
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)
 
-    def test_poly_coeffs_immutable(self):
-        """ Coefficients should not be modifiable """
+    def test_poly_coeffs_mutable(self):
+        """ Coefficients should be modifiable """
         p = np.poly1d([1, 2, 3])
 
-        try:
-            # despite throwing an exception, this used to change state
-            p.coeffs += 1
-        except Exception:
-            pass
-        assert_equal(p.coeffs, [1, 2, 3])
+        p.coeffs += 1
+        assert_equal(p.coeffs, [2, 3, 4])
 
         p.coeffs[2] += 10
-        assert_equal(p.coeffs, [1, 2, 3])
+        assert_equal(p.coeffs, [2, 3, 14])
+
+        # this never used to be allowed - let's not add features to deprecated
+        # APIs
+        assert_raises(AttributeError, setattr, p, 'coeffs', np.array(1))
 
 
 if __name__ == "__main__":
