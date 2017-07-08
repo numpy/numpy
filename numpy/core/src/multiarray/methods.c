@@ -1803,7 +1803,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
-        int swap=!PyArray_ISNOTSWAPPED(self);
+        int swap = PyArray_ISBYTESWAPPED(self);
         fa->data = datastr;
 #ifndef NPY_PY3K
         /* Check that the string is not interned */
