@@ -3,6 +3,13 @@ Back compatibility utils module. It will import the appropriate
 set of tools
 
 """
+import os
+
+if int(os.getenv('NPY_PYTEST', '0')):
+    from .pytest_tools.utils import *
+else:
+    from .nose_tools.utils import *
+
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
@@ -16,5 +23,3 @@ __all__ = [
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data',
         ]
-
-from .nose_tools.utils import *
