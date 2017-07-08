@@ -257,7 +257,7 @@ From scratch
         PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, \
         npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
-    This is similar to :c:func:`PyArray_DescrNew` (...) except you
+    This is similar to :c:func:`PyArray_NewFromDescr` (...) except you
     specify the data-type descriptor with *type_num* and *itemsize*,
     where *type_num* corresponds to a builtin (or user-defined)
     type. If the type always has the same number of bytes, then
