@@ -455,8 +455,7 @@ From other objects
         is deleted (presumably after your calculations are complete),
         its contents will be copied back into *op* and the *op* array
         will be made writeable again. If *op* is not writeable to begin
-        with, then an error is raised. If *op* is not already an array,
-        then this flag has no effect.
+        with, or if it is not already an array, then an error is raised.
 
     .. c:var:: NPY_ARRAY_BEHAVED
 
