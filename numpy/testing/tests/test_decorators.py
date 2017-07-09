@@ -48,7 +48,7 @@ def test_skip_functions_hardcoded():
         f1('a')
     except DidntSkipException:
         raise Exception('Failed to skip')
-    except SkipTest:
+    except SkipTest().__class__:
         pass
 
     @dec.skipif(False)
@@ -59,7 +59,7 @@ def test_skip_functions_hardcoded():
         f2('a')
     except DidntSkipException:
         pass
-    except SkipTest:
+    except SkipTest().__class__:
         raise Exception('Skipped when not expected to')
 
 
@@ -76,7 +76,7 @@ def test_skip_functions_callable():
         f1('a')
     except DidntSkipException:
         raise Exception('Failed to skip')
-    except SkipTest:
+    except SkipTest().__class__:
         pass
 
     @dec.skipif(skip_tester)
@@ -88,7 +88,7 @@ def test_skip_functions_callable():
         f2('a')
     except DidntSkipException:
         pass
-    except SkipTest:
+    except SkipTest().__class__:
         raise Exception('Skipped when not expected to')
 
 
@@ -101,7 +101,7 @@ def test_skip_generators_hardcoded():
     try:
         for j in g1(10):
             pass
-    except KnownFailureException:
+    except KnownFailureException().__class__:
         pass
     else:
         raise Exception('Failed to mark as known failure')
@@ -115,7 +115,7 @@ def test_skip_generators_hardcoded():
     try:
         for j in g2(10):
             pass
-    except KnownFailureException:
+    except KnownFailureException().__class__:
         raise Exception('Marked incorrectly as known failure')
     except DidntSkipException:
         pass
@@ -134,7 +134,7 @@ def test_skip_generators_callable():
         skip_flag = 'skip me!'
         for j in g1(10):
             pass
-    except KnownFailureException:
+    except KnownFailureException().__class__:
         pass
     else:
         raise Exception('Failed to mark as known failure')
@@ -149,7 +149,7 @@ def test_skip_generators_callable():
         skip_flag = 'do not skip'
         for j in g2(10):
             pass
-    except KnownFailureException:
+    except KnownFailureException().__class__:
         raise Exception('Marked incorrectly as known failure')
     except DidntSkipException:
         pass
