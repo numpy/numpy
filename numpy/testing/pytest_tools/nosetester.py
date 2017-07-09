@@ -104,7 +104,7 @@ def run_module_suite(file_to_run=None, argv=None):
             raise AssertionError
 
     if argv is None:
-        argv = sys.argv + [file_to_run]
+        argv = sys.argv[1:] + [file_to_run]
     else:
         argv = argv + [file_to_run]
 
@@ -193,14 +193,14 @@ if False:
             self.raise_warnings = raise_warnings
 
         def _test_argv(self, label, verbose, extra_argv):
-            ''' Generate argv for nosetest command
+            ''' Generate argv for nosetests command
 
             Parameters
             ----------
             label : {'fast', 'full', '', attribute identifier}, optional
                 see ``test`` docstring
             verbose : int, optional
-                Verbosity value for test outputs, in the range 1-10. Default is 1.
+                Integer in range 1..3, bigger means more verbose.
             extra_argv : list, optional
                 List with any extra arguments to pass to nosetests.
 
@@ -216,23 +216,24 @@ if False:
                 if label == 'fast':
                     label = 'not slow'
                 argv += ['-A', label]
-            argv += ['--verbosity', str(verbose)]
 
+            argv += [['-q'], [''], ['-v']][min(verbose - 1, 2)]
+
+            # FIXME is this true of pytest
             # When installing with setuptools, and also in some other cases, the
             # test_*.py files end up marked +x executable. Nose, by default, does
             # not run files marked with +x as they might be scripts. However, in
             # our case nose only looks for test_*.py files under the package
             # directory, which should be safe.
-            argv += ['--exe']
-
+            # argv += ['--exe']
             if extra_argv:
                 argv += extra_argv
             return argv
 
         def _show_system_info(self):
-            nose = import_nose()
-
+            import pytest
             import numpy
+
             print("NumPy version %s" % numpy.__version__)
             relaxed_strides = numpy.ones((10, 1), order="C").flags.f_contiguous
             print("NumPy relaxed strides checking option:", relaxed_strides)
@@ -247,7 +248,7 @@ if False:
 
             pyversion = sys.version.replace('\n', '')
             print("Python version %s" % pyversion)
-            print("nose version %d.%d.%d" % nose.__versioninfo__)
+            print("pytest version %d.%d.%d" % pytest.__versioninfo__)
 
         def _get_custom_doctester(self):
             """ Return instantiated plugin for doctests
@@ -279,7 +280,7 @@ if False:
             # our way of doing coverage
             if coverage:
                 argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
-                       '--cover-tests', '--cover-erase']
+                         '--cover-tests', '--cover-erase']
 
             if timer:
                 if timer is True:
@@ -338,7 +339,7 @@ if False:
                 * None or '' - run all tests.
                 attribute_identifier - string passed directly to nosetests as '-A'.
             verbose : int, optional
-                Verbosity value for test outputs, in the range 1-10. Default is 1.
+                Verbosity value for test outputs, in the range 1..3. Default is 1.
             extra_argv : list, optional
                 List with any extra arguments to pass to nosetests.
             doctests : bool, optional
@@ -489,7 +490,7 @@ if False:
                 * None or '' - run all tests.
                 attribute_identifier - string passed directly to nosetests as '-A'.
             verbose : int, optional
-                Verbosity value for benchmark outputs, in the range 1-10. Default is 1.
+                Integer in range 1..3, bigger means more verbose.
             extra_argv : list, optional
                 List with any extra arguments to pass to nosetests.
 
