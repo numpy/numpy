@@ -2457,7 +2457,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         PyArray_DESCR(arr)->f->copyswap(&dt,
                                 PyArray_DATA(arr),
-                                !PyArray_ISNOTSWAPPED(arr),
+                                PyArray_ISBYTESWAPPED(arr),
                                 obj);
 
         /* Copy the value directly if units weren't specified */
@@ -2655,7 +2655,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         PyArray_DESCR(arr)->f->copyswap(&dt,
                                 PyArray_DATA(arr),
-                                !PyArray_ISNOTSWAPPED(arr),
+                                PyArray_ISBYTESWAPPED(arr),
                                 obj);
 
         /* Copy the value directly if units weren't specified */
