@@ -61,60 +61,58 @@ def get_package_name(filepath):
     return '.'.join(pkg_name)
 
 
+def run_module_suite(file_to_run=None, argv=None):
+    """
+    Run a test module.
+
+    Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from
+    the command line. This version is for pytest rather than nose.
+
+    Parameters
+    ----------
+    file_to_run : str, optional
+        Path to test module, or None.
+        By default, run the module from which this function is called.
+    argv : list of strings
+        Arguments to be passed to the pytest runner. ``argv[0]`` is
+        ignored. All command line arguments accepted by ``pytest``
+        will work. If it is the default value None, sys.argv is used.
+
+        .. versionadded:: 1.14.0
+
+    Examples
+    --------
+    Adding the following::
+
+        if __name__ == "__main__" :
+            run_module_suite(argv=sys.argv)
+
+    at the end of a test module will run the tests when that module is
+    called in the python interpreter.
+
+    Alternatively, calling::
+
+    >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")
+
+    from an interpreter will run all the test routine in 'test_matlib.py'.
+    """
+    import pytest
+    if file_to_run is None:
+        f = sys._getframe(1)
+        file_to_run = f.f_locals.get('__file__', None)
+        if file_to_run is None:
+            raise AssertionError
+
+    if argv is None:
+        argv = sys.argv + [file_to_run]
+    else:
+        argv = argv + [file_to_run]
+
+    pytest.main(argv)
+
 if False:
     # disable run_module_suite and NoseTester
     # until later
-    def run_module_suite(file_to_run=None, argv=None):
-        """
-        Run a test module.
-
-        Equivalent to calling ``$ nosetests <argv> <file_to_run>`` from
-        the command line
-
-        Parameters
-        ----------
-        file_to_run : str, optional
-            Path to test module, or None.
-            By default, run the module from which this function is called.
-        argv : list of strings
-            Arguments to be passed to the nose test runner. ``argv[0]`` is
-            ignored. All command line arguments accepted by ``nosetests``
-            will work. If it is the default value None, sys.argv is used.
-
-            .. versionadded:: 1.9.0
-
-        Examples
-        --------
-        Adding the following::
-
-            if __name__ == "__main__" :
-                run_module_suite(argv=sys.argv)
-
-        at the end of a test module will run the tests when that module is
-        called in the python interpreter.
-
-        Alternatively, calling::
-
-        >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")
-
-        from an interpreter will run all the test routine in 'test_matlib.py'.
-        """
-        if file_to_run is None:
-            f = sys._getframe(1)
-            file_to_run = f.f_locals.get('__file__', None)
-            if file_to_run is None:
-                raise AssertionError
-
-        if argv is None:
-            argv = sys.argv + [file_to_run]
-        else:
-            argv = argv + [file_to_run]
-
-        nose = import_nose()
-        from .noseclasses import KnownFailurePlugin
-        nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
-
-
     class NoseTester(object):
         """
         Nose test runner.
@@ -546,10 +544,6 @@ if False:
             return nose.run(argv=argv, addplugins=add_plugins)
 else:
 
-    def run_module_suite(file_to_run=None, argv=None):
-        pass
-
-
     class NoseTester(object):
         def __init__(self, package=None, raise_warnings="release", depth=0):
             pass
@@ -561,7 +555,7 @@ else:
 
         def bench(self, label='fast', verbose=1, extra_argv=None):
             pass
-        
+
 
 def _numpy_tester():
     if hasattr(np, "__version__") and ".dev0" in np.__version__:
