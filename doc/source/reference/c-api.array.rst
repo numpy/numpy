@@ -2887,10 +2887,10 @@ to.
     to a C-array of :c:type:`npy_intp`. The Python object could also be a
     single number. The *seq* variable is a pointer to a structure with
     members ptr and len. On successful return, *seq* ->ptr contains a
-    pointer to memory that must be freed to avoid a memory leak. The
-    restriction on memory size allows this converter to be
-    conveniently used for sequences intended to be interpreted as
-    array shapes.
+    pointer to memory that must be freed, by calling :c:func:`PyDimMem_FREE`,
+    to avoid a memory leak. The restriction on memory size allows this
+    converter to be conveniently used for sequences intended to be
+    interpreted as array shapes.
 
 .. c:function:: int PyArray_BufferConverter(PyObject* obj, PyArray_Chunk* buf)
 
