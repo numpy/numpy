@@ -1212,7 +1212,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * -- use priority to determine which subtype.
      * ret is the array that will be returned as the answer
      */
-    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum);
+    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL);
     if (ret == NULL) {
         return NULL;
     }
