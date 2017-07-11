@@ -1182,7 +1182,10 @@ class TestFromTxt(LoadTxtBase):
     def test_header(self):
         # Test retrieving a header
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
-        test = np.ndfromtxt(data, dtype=None, names=True)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.ndfromtxt(data, dtype=None, names=True)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         control = {'gender': np.array([b'M', b'F']),
                    'age': np.array([64.0, 25.0]),
                    'weight': np.array([75.0, 60.0])}
@@ -1193,7 +1196,10 @@ class TestFromTxt(LoadTxtBase):
     def test_auto_dtype(self):
         # Test the automatic definition of the output dtype
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
-        test = np.ndfromtxt(data, dtype=None)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.ndfromtxt(data, dtype=None)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         control = [np.array([b'A', b'BCD']),
                    np.array([64, 25]),
                    np.array([75.0, 60.0]),
@@ -1239,7 +1245,10 @@ F   35  58.330000
 M   33  21.99
         """)
         # The # is part of the first name and should be deleted automatically.
-        test = np.genfromtxt(data, names=True, dtype=None)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(data, names=True, dtype=None)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
                         dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
         assert_equal(test, ctrl)
@@ -1250,14 +1259,20 @@ M   21  72.100000
 F   35  58.330000
 M   33  21.99
         """)
-        test = np.genfromtxt(data, names=True, dtype=None)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(data, names=True, dtype=None)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test, ctrl)
 
     def test_autonames_and_usecols(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
-        test = np.ndfromtxt(data, usecols=('A', 'C', 'D'),
-                            names=True, dtype=None)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.ndfromtxt(data, usecols=('A', 'C', 'D'),
+                                names=True, dtype=None)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         control = np.array(('aaaa', 45, 9.1),
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -1274,8 +1289,12 @@ M   33  21.99
     def test_converters_with_usecols_and_names(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
-        test = np.ndfromtxt(data, usecols=('A', 'C', 'D'), names=True,
-                            dtype=None, converters={'C': lambda s: 2 * int(s)})
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.ndfromtxt(data, usecols=('A', 'C', 'D'), names=True,
+                                dtype=None,
+                                converters={'C': lambda s: 2 * int(s)})
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         control = np.array(('aaaa', 90, 9.1),
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -1733,11 +1752,17 @@ M   33  21.99
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
         kwargs = dict(delimiter=",", dtype=None)
-        mtest = np.ndfromtxt(TextIO(data), **kwargs)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            mtest = np.ndfromtxt(TextIO(data), **kwargs)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003  ', 1.3, '   abcde')],
                         dtype=[('f0', '|S12'), ('f1', float), ('f2', '|S8')])
         assert_equal(mtest, ctrl)
-        mtest = np.ndfromtxt(TextIO(data), autostrip=True, **kwargs)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            mtest = np.ndfromtxt(TextIO(data), autostrip=True, **kwargs)
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003', 1.3, 'abcde')],
                         dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
         assert_equal(mtest, ctrl)
@@ -1857,11 +1882,17 @@ M   33  21.99
 
     def test_comments_is_none(self):
         # Github issue 329 (None was previously being converted to 'None').
-        test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
-                             dtype=None, comments=None, delimiter=',')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
+                                 dtype=None, comments=None, delimiter=',')
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test[1], b'testNonetherestofthedata')
-        test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
-                             dtype=None, comments=None, delimiter=',')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
+                                 dtype=None, comments=None, delimiter=',')
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test[1], b' testNonetherestofthedata')
 
     def test_latin1(self):
@@ -1869,8 +1900,11 @@ M   33  21.99
         norm = b"norm1,norm2,norm3\n"
         enc = b"test1,testNonethe" + latin1 + b",test3\n"
         s = norm + enc + norm
-        test = np.genfromtxt(TextIO(s),
-                             dtype=None, comments=None, delimiter=',')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(TextIO(s),
+                                 dtype=None, comments=None, delimiter=',')
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test[1, 0], b"test1")
         assert_equal(test[1, 1], b"testNonethe" + latin1)
         assert_equal(test[1, 2], b"test3")
@@ -1881,8 +1915,11 @@ M   33  21.99
         assert_equal(test[1, 1], u"testNonethe" + latin1.decode('latin1'))
         assert_equal(test[1, 2], u"test3")
 
-        test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
-                             dtype=None, comments=None, delimiter=',')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
+                                 dtype=None, comments=None, delimiter=',')
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test['f0'], 0)
         assert_equal(test['f1'], b"testNonethe" + latin1)
 
@@ -1897,8 +1934,11 @@ M   33  21.99
         norm = b"norm1,norm2,norm3\n"
         enc = b"test1,testNonethe" + utf8 + b",test3\n"
         s = norm + enc + norm
-        test = np.genfromtxt(TextIO(s),
-                             dtype=None, comments=None, delimiter=',')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            test = np.genfromtxt(TextIO(s),
+                                 dtype=None, comments=None, delimiter=',')
+            assert_(w[0].category is np.VisibleDeprecationWarning)
         ctl = np.array([
                  [b'norm1', b'norm2', b'norm3'],
                  [b'test1', b'testNonethe' + utf8, b'test3'],
@@ -1939,8 +1979,12 @@ M   33  21.99
                 f.write(u"norm1," + latin1.decode("latin1") + u",norm3\n")
                 f.write(u"test1,testNonethe" + utf8.decode("UTF-8") +
                         u",test3\n")
-            test = np.genfromtxt(path, dtype=None, comments=None,
-                                 delimiter=',')
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings('always', '',
+                                        np.VisibleDeprecationWarning)
+                test = np.genfromtxt(path, dtype=None, comments=None,
+                                     delimiter=',')
+                assert_(w[0].category is np.VisibleDeprecationWarning)
             ctl = np.array([
                      ["norm1", "norm2", "norm3"],
                      ["norm1", latin1.decode("latin1"), "norm3"],

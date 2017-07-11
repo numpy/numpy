@@ -2032,6 +2032,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         typestr = 'U'
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
+            warnings.warn(
+                "Reading strings without specifying the encoding argument is "
+                "deprecated. Set encoding, use None for the system default.",
+                np.VisibleDeprecationWarning, stacklevel=2)
             try:
                 for j in range(len(data)):
                     row = list(data[j])
