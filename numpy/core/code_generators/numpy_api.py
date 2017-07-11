@@ -346,6 +346,8 @@ multiarray_funcs_api = {
     # End 1.10 API
     'PyArray_MapIterArrayCopyIfOverlap':    (301,),
     # End 1.13 API
+    'PyArray_CorrelateLags':    (302,),
+    # End 1.14 API
 }
 
 ufunc_types_api = {
