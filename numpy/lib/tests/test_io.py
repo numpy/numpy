@@ -9,7 +9,7 @@ import time
 import warnings
 import gc
 import io
-from io import BytesIO
+from io import BytesIO, StringIO
 from datetime import datetime
 import locale
 import re
@@ -520,6 +520,14 @@ class TestSaveTxt(object):
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
         assert_equal(s.read().decode('UTF-8'), utf8 + '\n')
+
+    def test_unicode_stringstream(self):
+        utf8 = b'\xcf\x96'.decode('UTF-8')
+        a = np.array([utf8], dtype=np.unicode)
+        s = StringIO()
+        np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
+        s.seek(0)
+        assert_equal(s.read(), utf8 + '\n')
 
 
 class LoadTxtBase:
