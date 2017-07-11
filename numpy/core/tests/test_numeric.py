@@ -2177,27 +2177,126 @@ class TestCorrelate(TestCase):
         self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
         self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
+        self.z1s = np.array([-8., -14., -20., -26., -14.], dtype=dt)
+        self.z1v = np.array([-14., -20., -26.], dtype=dt)
         self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
         self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
         self.z2 = np.array([-5., -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z2s = np.array([-14, -26., -20., -14., -8.], dtype=dt)
+        self.z2v = np.array([-26., -20., -14.], dtype=dt)
         self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
         self.zs = np.array([-3., -14., -30., -48., -66., -84.,
                            -102., -54., -19.], dtype=dt)
 
     def test_float(self):
         self._setup(np.float)
-        z = np.correlate(self.x, self.y, 'full')
+        z, lagvec = np.correlate(self.x, self.y, 'full', returns_lags=True)
         assert_array_almost_equal(z, self.z1)
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(-self.y.size + 1, self.x.size))
+        z, lagvec = np.correlate(self.x, self.y, 'same', returns_lags=True)
+        assert_array_almost_equal(z, self.z1s)
+        assert_array_almost_equal(z, self.z1[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        if self.x.size > self.y.size:
+            assert_array_equal(lagvec, np.arange(-int(self.y.size/2), self.x.size - int(self.y.size/2)))
+        else:
+            assert_array_equal(lagvec, np.arange(-self.y.size + int(self.x.size/2) + 1, int(self.x.size/2) + 1))
+        z, lagvec = np.correlate(self.x, self.y, 'valid', returns_lags=True)
+        assert_array_almost_equal(z, self.z1v)
+        assert_array_almost_equal(z, self.z1[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        if self.x.size > self.y.size:
+            assert_array_equal(lagvec, np.arange(0, self.x.size - self.y.size + 1))
+        else:
+            assert_array_equal(lagvec, np.arange(self.x.size - self.y.size, 1))
+
         z = np.correlate(self.x, self.y[:-1], 'full')
         assert_array_almost_equal(z, self.z1_4)
-        z = np.correlate(self.y, self.x, 'full')
+        z, lagvec = np.correlate(self.y, self.x, 'full', returns_lags=True)
         assert_array_almost_equal(z, self.z2)
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(-self.x.size + 1, self.y.size))
+        z, lagvec = np.correlate(self.y, self.x, 'same', returns_lags=True)
+        assert_array_almost_equal(z, self.z2s)
+        assert_array_almost_equal(z, self.z2[lagvec+self.x.size-1])
+        assert_equal(lagvec.size, z.size)
+        if self.y.size > self.x.size:
+            assert_array_equal(lagvec, np.arange(-int(self.x.size/2), self.y.size - int(self.x.size/2)))
+        else:
+            assert_array_equal(lagvec, np.arange(-self.x.size + int(self.y.size/2) + 1, int(self.y.size/2) + 1))
+        z, lagvec = np.correlate(self.y, self.x, 'valid', returns_lags=True)
+        assert_array_almost_equal(z, self.z2v)
+        assert_array_almost_equal(z, self.z2[lagvec+self.x.size-1])
+        assert_equal(lagvec.size, z.size)
+        if self.y.size > self.x.size:
+            assert_array_equal(lagvec, np.arange(0, self.y.size - self.x.size + 1))
+        else:
+            assert_array_equal(lagvec, np.arange(self.y.size - self.x.size, 1))
         z = np.correlate(self.x[::-1], self.y, 'full')
         assert_array_almost_equal(z, self.z1r)
         z = np.correlate(self.y, self.x[::-1], 'full')
         assert_array_almost_equal(z, self.z2r)
         z = np.correlate(self.xs, self.y, 'full')
         assert_array_almost_equal(z, self.zs)
+
+    def test_lags(self):
+        self._setup(np.float)
+        longlen = max(self.x.size, self.y.size)
+        maxlag = 3 + longlen
+        minlag = -2
+        lagstep = 2
+        tmp = np.correlate(self.x, self.y, 'full')
+        z_full = np.zeros(tmp.size + 100)
+        z_full[:tmp.size] = tmp
+        z, lagvec = np.correlate(self.x, self.y, maxlag, returns_lags=True)
+        assert_array_equal(z[0:3], np.zeros(3))
+        assert_array_equal(z[-3:], np.zeros(3))
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(-maxlag+1, maxlag))
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(minlag, maxlag))
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag, lagstep), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(minlag, maxlag, lagstep))
+        lagstep = 3
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag, lagstep), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        minlag = 10
+        maxlag = -2
+        lagstep = -2
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag, lagstep), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(int(minlag), int(maxlag), lagstep))
+        maxlag = 10.2
+        minlag = -2.2
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(int(minlag), int(maxlag)))
+        z, lagvec = np.correlate(self.x, self.y, (maxlag, minlag), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(int(maxlag), int(minlag)))
+        maxlag = -1
+        minlag = -2
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(int(minlag), int(maxlag)))
+        maxlag = 2
+        minlag = 4
+        z, lagvec = np.correlate(self.x, self.y, (minlag, maxlag), returns_lags=True)
+        assert_array_almost_equal(z, z_full[lagvec+self.y.size-1])
+        assert_equal(lagvec.size, z.size)
+        assert_array_equal(lagvec, np.arange(int(minlag), int(maxlag)))
+        # check non-integer lagsteps?
+        # i want to be able to switch x and y and test
 
     def test_object(self):
         self._setup(Decimal)
