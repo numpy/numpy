@@ -1045,16 +1045,22 @@ cfuncs['create_cb_arglist'] = """\
 static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofargs,const int nofoptargs,int *nofargs,PyTupleObject **args,const char *errmess) {
     PyObject *tmp = NULL;
     PyObject *tmp_fun = NULL;
-    int tot,opt,ext,siz,i,di=0;
+    int tot,opt,ext,siz,i,has_self=0;
     CFUNCSMESS(\"create_cb_arglist\\n\");
     tot=opt=ext=siz=0;
     /* Get the total number of arguments */
     if (PyFunction_Check(fun))
         tmp_fun = fun;
     else {
-        di = 1;
+        has_self = ! PyCFunction_Check(fun);
         if (PyObject_HasAttrString(fun,\"im_func\")) {
             tmp_fun = PyObject_GetAttrString(fun,\"im_func\");
+        }
+        else if (PyFortran_Check(fun) || PyFortran_Check1(fun)) {
+            tot = maxnofargs;
+            if (xa != NULL)
+                tot += PyTuple_Size((PyObject *)xa);
+            tmp_fun = fun;
         }
         else if (PyObject_HasAttrString(fun,\"__call__\")) {
             tmp = PyObject_GetAttrString(fun,\"__call__\");
@@ -1067,12 +1073,6 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                     tot += PyTuple_Size((PyObject *)xa);
             }
             Py_XDECREF(tmp);
-        }
-        else if (PyFortran_Check(fun) || PyFortran_Check1(fun)) {
-            tot = maxnofargs;
-            if (xa != NULL)
-                tot += PyTuple_Size((PyObject *)xa);
-            tmp_fun = fun;
         }
         else if (F2PyCapsule_Check(fun)) {
             tot = maxnofargs;
@@ -1096,7 +1096,7 @@ goto capi_fail;
     if (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
         if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\"))
 #endif
-            tot = PyInt_AsLong(PyObject_GetAttrString(tmp,\"co_argcount\")) - di;
+            tot = PyInt_AsLong(PyObject_GetAttrString(tmp,\"co_argcount\")) - has_self;
         Py_XDECREF(tmp);
     }
     /* Get the number of optional arguments */
