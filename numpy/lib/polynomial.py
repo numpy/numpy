@@ -1040,8 +1040,14 @@ class poly1d(object):
 
     @property
     def coeffs(self):
-        """ A copy of the polynomial coefficients """
-        return self._coeffs.copy()
+        """ The polynomial coefficients """
+        return self._coeffs
+
+    @coeffs.setter
+    def coeffs(self, value):
+        # allowing this makes p.coeffs *= 2 legal
+        if value is not self._coeffs:
+            raise AttributeError("Cannot set attribute")
 
     @property
     def variable(self):
