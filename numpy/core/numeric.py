@@ -1204,9 +1204,6 @@ def convolve(a, v, mode='full', lags=(), returns_lagvector=False):
         raise ValueError('a cannot be empty')
     if vlen == 0:
         raise ValueError('v cannot be empty')
-    if vlen > alen:
-        a, v = v, a
-        alen, vlen = vlen, alen
 
     if mode == 'default':
         if lags:
