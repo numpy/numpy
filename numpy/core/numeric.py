@@ -901,7 +901,7 @@ _mode_from_name_dict = {'v': 0,
                         'f': 2,
                         'l': 3,
                         }
-keys = _mode_from_name_dict.keys()
+keys = [key for key in _mode_from_name_dict]
 for key in keys:
     _mode_from_name_dict[key.upper()] = _mode_from_name_dict[key]
 _mode_from_name_dict_values = _mode_from_name_dict.values()
