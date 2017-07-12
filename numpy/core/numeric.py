@@ -898,44 +898,63 @@ def flatnonzero(a):
 
 _mode_from_name_dict = {'v': 0,
                         's': 1,
-                        'f': 2}
+                        'f': 2,
+                        'l': 3,
+                        }
+for key, value in _mode_from_name_dict.items():
+    _mode_from_name_dict[key.upper()] = value
 
 
 def _mode_from_name(mode):
-    if isinstance(mode, basestring):
-        return _mode_from_name_dict[mode.lower()[0]]
+    # guarantees that output is a value in _mode_from_name_dict
+    if mode in _mode_from_name_dict.values():
+        return mode
+    try:
+        mode = _mode_from_name_dict[mode[0]]
+    except KeyError:
+        raise ValueError("correlate/convolve mode argument must be unused or" +
+                         " one of {'valid', 'same', 'full', 'lags'}")
     return mode
 
 
+def _lags_from_lags(l):
+    if type(l) is int:          # maxlag
+        lags = (-l+1, l, 1)
+    elif type(l) is tuple:      # minlag and maxlag
+        if len(l) > 2:
+            lags = (int(l[0]), int(l[1]), int(l[2]))
+        else:
+            lags = (int(l[0]), int(l[1]), 1)
+    else:
+        raise ValueError("correlate/convolve lags argument must be " +
+                         "int or int tuple.")
+    return lags
+
 def _lags_from_mode(alen, vlen, mode):
-    if type(mode) is int:       # maxlag
-        lags = (-mode+1, mode, 1)
-        mode = 3
-    elif type(mode) is tuple:     # minlag and maxlag
-        if len(mode) > 2:
-            lags = (int(mode[0]), int(mode[1]), int(mode[2]))
-        else:
-            lags = (int(mode[0]), int(mode[1]), 1)
-        mode = 3
-    elif isinstance(mode, basestring):
-        mode = _mode_from_name_dict[mode.lower()[0]]
-        if alen < vlen:
-            alen, vlen = vlen, alen
-            inverted = 1
-        else:
-            inverted = 0
-        if mode is 0:
-            lags = (0, alen-vlen+1, 1)
-        elif mode is 1:
-            lags = (-int(vlen/2), alen - int(vlen/2), 1)
-        elif mode is 2:
-            lags = (-vlen+1, alen, 1)
-        if inverted:
-            lags = (-int(ceil((lags[1]-lags[0])/float(lags[2])))*lags[2]-lags[0]+lags[2], -lags[0]+lags[2], lags[2])
-    return mode, lags
+    inverted = 0
+    if alen < vlen:
+        alen, vlen = vlen, alen
+        inverted = 1
+
+    if mode is 0:
+        mode_lags = (0, alen-vlen+1, 1)
+    elif mode is 1:
+        mode_lags = (-int(vlen/2), alen - int(vlen/2), 1)
+    elif mode is 2:
+        mode_lags = (-vlen+1, alen, 1)
+    else:
+        raise ValueError("correlate/convolve mode argument must be unused or" +
+                         " one of {'valid', 'same', 'full', 'lags'}")
+
+    if inverted:
+        mode_lags = (-int(ceil((mode_lags[1]-mode_lags[0])/float(mode_lags[2])))
+                     *mode_lags[2]-mode_lags[0]+mode_lags[2],
+                     -mode_lags[0]+mode_lags[2], mode_lags[2])
+
+    return mode_lags
 
 
-def correlate(a, v, mode='valid', returns_lags=False):
+def correlate(a, v, mode='default', lags=(), returns_lagvector=False):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -951,10 +970,13 @@ def correlate(a, v, mode='valid', returns_lags=False):
     ----------
     a, v : array_like
         Input sequences.
-    mode : int, int tuple, or {'valid', 'same', 'full'}, optional
+    mode : {'valid', 'same', 'full', 'lags'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
-    returns_lags : bool, optional
+    lags : int or int tuple, optional
+        Refer to the `convolve` docstring.
+        mode should be unset or set to 'lags' to use the lags argument
+    returns_lagvector : bool, optional
         If True, the function returns a lagvector array in addition to the
         cross-correlation result.  The lagvector contains the indices of
         the lags for which the cross-correlation was calculated.  It is
@@ -992,11 +1014,11 @@ def correlate(a, v, mode='valid', returns_lags=False):
     array([ 3.5])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
     array([ 2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="full", returns_lags=True)
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="full", returns_lagvector=True)
     (array([ 0.5,  2. ,  3.5,  3. ,  0. ]), array([-2, -1,  0,  1,  2]))
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode=2)
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="lags", lags=2)
     array([ 2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode=(-1,2,2), returns_lags=True)
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="lags", lags=(-1,2,2), returns_lagvector=True)
     (array([ 2.,  3.]), array([-1,  1]))
 
     Using complex sequences:
@@ -1012,15 +1034,31 @@ def correlate(a, v, mode='valid', returns_lags=False):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    mode, lags = _lags_from_mode(len(a), len(v), mode)
-    if returns_lags:
-        return multiarray.correlate2(a, v, 3, lags[0], lags[1], lags[2]), \
-                                    arange(lags[0], lags[1], lags[2])
+    if mode == 'default':
+        if lags:
+            mode = 'lags'
+        else:
+            mode = 'valid'
+    mode = _mode_from_name(mode)  # guaranteed a value in _mode_from_name_dict
+    if mode in (0, 1, 2):
+        if lags:
+            raise ValueError("correlate mode keyword argument must be 'lags'" +
+                            " or unused if the lags keyword argument is used.")
+        result = multiarray.correlate2(a, v, mode)
+        if returns_lagvector:
+            alen, vlen = len(a), len(v)
+            lags = _lags_from_mode(alen, vlen, mode)
+    elif mode == 3:
+        lags = _lags_from_lags(lags)
+        result = multiarray.correlate2(a, v, 3, lags[0], lags[1], lags[2])
+
+    if returns_lagvector:
+        return result, arange(lags[0], lags[1], lags[2])
     else:
-        return multiarray.correlate2(a, v, 3, lags[0], lags[1], lags[2])
+        return result
 
 
-def convolve(a, v, mode='full', returns_lags=False):
+def convolve(a, v, mode='full', lags=(), returns_lagvector=False):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -1039,19 +1077,6 @@ def convolve(a, v, mode='full', returns_lags=False):
     v : (M,) array_like
         Second one-dimensional input array.
     mode : int, int tuple, or {'full', 'valid', 'same'}, optional
-        int (maxlag):
-          This calculates the convolution for all lags starting at
-          (-maxlag + 1) and ending at (maxlag - 1), with steps of size 1.
-          See the optional lagvec argument to get an array containing
-          lags corresponding to the convolution values in the return array.
-
-        tuple (minlag, maxlag) or (minlag, maxlag, lagstep):
-          This calculates the convolution for all lags starting at
-          minlag and ending at (maxlag - 1), with steps of size lagstep.
-          The lags for which the convolution will be calculated correspond
-          with the values in the vector formed by numpy.arange() with the
-          same tuple argument.
-
         'full':
           By default, mode is 'full'.  This returns the convolution
           at each point of overlap, with an output shape of (N+M-1,). At
@@ -1071,7 +1096,26 @@ def convolve(a, v, mode='full', returns_lags=False):
           for points where the signals overlap completely.  Values outside
           the signal boundary have no effect. This corresponds with a lag tuple
           of (0, N-M+1, 1) for N>M or (-M+N, 1, 1) for M>N.
-    returns_lags : bool, optional
+
+        'lags':
+          Mode 'lags' uses the lags argument to define the lags for which
+          to perform the convolution.
+    lags : int or int tuple, optional
+        mode should be unset or set to 'lags' to use the lags argument
+
+        int (maxlag):
+          This calculates the convolution for all lags starting at
+          (-maxlag + 1) and ending at (maxlag - 1), with steps of size 1.
+          See the optional returns_lagvec argument to get an array containing
+          lags corresponding to the convolution values in the return array.
+
+        tuple (minlag, maxlag) or (minlag, maxlag, lagstep):
+          This calculates the convolution for all lags starting at
+          minlag and ending at (maxlag - 1), with steps of size lagstep.
+          The lags for which the convolution will be calculated correspond
+          with the values in the vector formed by numpy.arange() with the
+          same tuple argument.
+    returns_lagvector : bool, optional
         If True, the function returns a lagvector array in addition to the
         convolution result.  The lagvector contains the indices of
         the lags for which the convolution was calculated.  It is
@@ -1133,7 +1177,7 @@ def convolve(a, v, mode='full', returns_lags=False):
     to the convolution in addition to the convolution
     itself:
 
-    >>> np.convolve([1,2,3],[0,1,0.5], mode='valid', returns_lags=True)
+    >>> np.convolve([1,2,3],[0,1,0.5], mode='valid', returns_lagvector=True)
     (array([ 2.5]), array([0]))
 
     Find the convolution for lags ranging from -1 to 1
@@ -1142,30 +1186,48 @@ def convolve(a, v, mode='full', returns_lags=False):
     the first, and +1 has the second vector to the right
     of the first):
 
-    >>> np.convolve([1,2,3],[0,1,0.5], mode=2, returns_lags=True)
+    >>> np.convolve([1,2,3],[0,1,0.5], mode='lags', lags=2, returns_lagvector=True)
     (array([ 1. ,  2.5,  4. ]), array([-1,  0,  1]))
 
     Find the convolution for lags ranging from -2 to 4
     with steps of length 2 (the maxlag member of the
     lag range tuple is non-inclusive, similar to np.arange()):
 
-    >>> np.convolve([1,2,3,4,5],[0,1,0.5], mode=(-2,6,2), returns_lags=True)
+    >>> np.convolve([1,2,3,4,5],[0,1,0.5], mode='lags', lags=(-2,6,2), returns_lagvector=True)
     (array([ 0. ,  2.5,  5.5,  2.5]), array([-2,  0,  2,  4]))
 
     """
     a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
-    if (len(v) > len(a)):
-        a, v = v, a
-    if len(a) == 0:
+    alen, vlen = len(a), len(v)
+    if alen == 0:
         raise ValueError('a cannot be empty')
-    if len(v) == 0:
+    if vlen == 0:
         raise ValueError('v cannot be empty')
-    mode, lags = _lags_from_mode(len(a), len(v), mode)
-    if returns_lags:
-        return multiarray.correlate2(a, v[::-1], 3, lags[0], lags[1], lags[2]), \
-                                    arange(lags[0], lags[1], lags[2])
+    if vlen > alen:
+        a, v = v, a
+        alen, vlen = vlen, alen
+
+    if mode == 'default':
+        if lags:
+            mode = 'lags'
+        else:
+            mode = 'full'
+    mode = _mode_from_name(mode)  # guaranteed a value in _mode_from_name_dict
+    if mode in (0, 1, 2):
+        if lags:
+            raise ValueError("convolve mode keyword argument must be 'lags'" +
+                             " or unused if the lags keyword argument is used.")
+        result = multiarray.correlate2(a, v[::-1], mode)
+        if returns_lagvector:
+            lags = _lags_from_mode(alen, vlen, mode)
+    elif mode == 3:
+        lags = _lags_from_lags(lags)
+        result = multiarray.correlate2(a, v[::-1], 3, lags[0], lags[1], lags[2])
+
+    if returns_lagvector:
+        return result, arange(lags[0], lags[1], lags[2])
     else:
-        return multiarray.correlate2(a, v[::-1], 3, lags[0], lags[1], lags[2])
+        return result
 
 
 def outer(a, b, out=None):
