@@ -901,13 +901,14 @@ _mode_from_name_dict = {'v': 0,
                         'f': 2,
                         'l': 3,
                         }
-for key, value in _mode_from_name_dict.items():
-    _mode_from_name_dict[key.upper()] = value
-
+keys = _mode_from_name_dict.keys()
+for key in keys:
+    _mode_from_name_dict[key.upper()] = _mode_from_name_dict[key]
+_mode_from_name_dict_values = _mode_from_name_dict.values()
 
 def _mode_from_name(mode):
     # guarantees that output is a value in _mode_from_name_dict
-    if mode in _mode_from_name_dict.values():
+    if mode in _mode_from_name_dict_values:
         return mode
     try:
         mode = _mode_from_name_dict[mode[0]]
