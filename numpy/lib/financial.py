@@ -13,7 +13,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',
-           'irr', 'npv', 'mirr']
+           'irr', 'npv', 'mirr', 'to_effective', 'to_nominal']
 
 _when_to_num = {'end':0, 'begin':1,
                 'e':0, 'b':1,
@@ -31,6 +31,131 @@ def _convert_when(when):
         return _when_to_num[when]
     except (KeyError, TypeError):
         return [_when_to_num[x] for x in when]
+
+
+def to_effective(nominal, n_compound, n_payments):
+    """
+    Convert an nominal interest rate to the effective rate.
+
+    Parameters
+    ----------
+    nominal : scalar
+        The nominal interest rate
+    n_compound : int
+        The number of compounding periods
+    n_payments : int
+        The number of installments
+
+    Returns
+    -------
+    scalar
+        The effective interest rate.
+
+    Notes
+    -----
+    The nominal interest rate is converted to an effective interest rate when
+    the number of installments per year is different from the number of
+    compound interest calculation periods. This conversion is required for
+    installment savings accounts, loan repayments, etc.
+
+    The conversion to effective interest rates uses the following equation::
+
+        (1 + nominal / n_compound)**(n_compound/n_payments) - 1
+
+    References
+    ----------
+    .. [Casio] Casio.
+       Casio FX Plus Manual, Chapter 19: Financial Calculations. [PDF Document].
+       Available:
+       http://support.casio.com/storage/en/manual/pdf/EN/004/
+       fx_plus_chapter19_EN.pdf
+
+    Examples
+    --------
+    Calculate the amount required for each installment to accumulate a total of
+    $10,000 in 5 years at an annual interest rate of 6%, compounded
+    semiannually.
+
+    >>> np.pmt(np.to_effective(0.06, 2, 12), 5 * 12, 0, 10000)
+    -143.59950057090532
+
+    Calculate the number of monthly $84 installments required to accumulate a
+    total of $6,000 at an annual interest rate of 6%, compounded annually.
+
+    >>> np.nper(np.to_effective(0.06, 1, 12), -84, 0, 6000)
+    61.450174754602948
+
+    Calculate the size of the monthly installment for a 25-year $300,000 home
+    loan made at 6.2%, compounded semiannually.
+
+    >>> np.pmt(np.to_effective(0.062, 2, 12), 25 * 12, 300000)
+    -1955.2282769681626
+
+    Calculate the to_effective interest rate for an account paying an interest rate
+    of 12%, compounding quarterly.
+
+    >>> np.to_effective(0.12, 4, 1)
+    0.12550881000000014
+
+    """
+    return (1 + nominal / n_compound)**(n_compound/n_payments) - 1
+
+
+def to_nominal(effective, n_compound, n_payments):
+    """
+    Convert an effective interest rate to the nominal rate.
+
+    Parameters
+    ----------
+    effective : scalar
+        The effective interest rate
+    n_compound : int
+        The number of compounding periods
+    n_payments : int
+        The number of installments
+
+    Returns
+    -------
+    scalar
+        The nominal interest rate.
+
+    Notes
+    -----
+    The nominal interest rate is converted to an effective interest rate when
+    the number of installments per year is different from the number of
+    compound interest calculation periods. This conversion is required for
+    installment savings accounts, loan repayments, etc.
+
+    The conversion to nominal interest rates uses the following equation::
+
+        ((1 + effective) ** (n_payments / n_compound) - 1) * n_compound
+
+    References
+    ----------
+    .. [Casio] Casio.
+       Casio FX Plus Manual, Chapter 19: Financial Calculations. [PDF Document].
+       Available:
+       http://support.casio.com/storage/en/manual/pdf/EN/004/
+       fx_plus_chapter19_EN.pdf
+
+    Examples
+    --------
+    Calculate the interest rate required to have a $2,500 balance in an
+    installment savings account in two years when $100 is deposited each month
+    and interest is compounded semiannually
+
+    >>> effective = np.rate(2 * 12, -100, 0, 2500)
+    >>> np.to_nominal(effective, 2, 12)
+    0.042736643960266996
+
+    Calculate the annual percentage rate for an account paying an effective
+    interest rate of 12.55%, compounded quarterly.
+
+    >>> np.to_nominal(0.1255, 4, 1)
+    0.11999193757831517
+
+    """
+    return ((1 + effective) ** (n_payments / n_compound) - 1) * n_compound
 
 
 def fv(rate, nper, pmt, pv, when='end'):
