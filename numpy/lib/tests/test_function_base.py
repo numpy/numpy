@@ -742,8 +742,11 @@ class TestGradient(TestCase):
 
         # distances must be scalars or have size equal to gradient[axis]
         gradient(np.arange(5), 3.)
+        gradient(np.arange(5), np.array(3.))
         gradient(np.arange(5), dx)
-        gradient(f_2d, 1.5)  # dy is set equal to dx because scalar
+        # dy is set equal to dx because scalar
+        gradient(f_2d, 1.5)
+        gradient(f_2d, np.array(1.5))
 
         gradient(f_2d, dx_uneven, dx_uneven)
         # mix between even and uneven spaces and
