@@ -926,6 +926,12 @@ class TestGradient(TestCase):
         assert_array_equal(gradient(x), dx)
         assert_(dx.dtype == np.dtype('timedelta64[D]'))
 
+    def test_inexact_dtypes(self):
+        for dt in [np.float16, np.float32, np.float64]:
+            # dtypes should not be promoted in a different way to what diff does
+            x = np.array([1, 2, 3], dtype=dt)
+            assert_equal(gradient(x).dtype, np.diff(x).dtype)
+
     def test_values(self):
         # needs at least 2 points for edge_order ==1
         gradient(np.arange(2), edge_order=1)
