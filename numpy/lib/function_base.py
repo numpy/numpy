@@ -1665,6 +1665,7 @@ def gradient(f, *varargs, **kwargs):
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
+    varargs = [asanyarray(d) for d in varargs]
     N = f.ndim  # number of dimensions
 
     axes = kwargs.pop('axis', None)
@@ -1676,11 +1677,16 @@ def gradient(f, *varargs, **kwargs):
     len_axes = len(axes)
     n = len(varargs)
     if n == 0:
-        dx = [1.0] * len_axes
-    elif n == len_axes or (n == 1 and np.isscalar(varargs[0])):
-        dx = list(varargs)
+        # no spacing argument - use 1 in all axes
+        dx = [np.array(1.0)] * len_axes
+    elif n == 1 and varargs[0].ndim == 0:
+        # single scalar for all axes
+        dx = varargs * len_axes
+    elif n == len_axes:
+        # scalar or 1d array for each axis
+        dx = varargs[:]
         for i, distances in enumerate(dx):
-            if np.isscalar(distances):
+            if distances.ndim == 0:
                 continue
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError("distances must be either scalars or match "
@@ -1691,8 +1697,6 @@ def gradient(f, *varargs, **kwargs):
             if (diffx == diffx[0]).all():
                 diffx = diffx[0]
             dx[i] = diffx
-        if len(dx) == 1:
-            dx *= len_axes
     else:
         raise TypeError("invalid number of arguments")
 
@@ -1736,7 +1740,7 @@ def gradient(f, *varargs, **kwargs):
         # result allocation
         out = np.empty_like(f, dtype=otype)
 
-        uniform_spacing = np.isscalar(dx[i])
+        uniform_spacing = dx[i].ndim == 0
 
         # Numerical differentiation: 2nd order interior
         slice1[axis] = slice(1, -1)
