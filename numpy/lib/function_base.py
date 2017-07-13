@@ -1701,7 +1701,7 @@ def gradient(f, *varargs, **kwargs):
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
-            diffx = np.diff(dx[i])
+            diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():
