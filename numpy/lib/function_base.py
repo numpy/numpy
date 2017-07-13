@@ -1733,7 +1733,7 @@ def gradient(f, *varargs, **kwargs):
         # all other types convert to floating point
         otype = np.double
 
-    for i, axis in enumerate(axes):
+    for axis, ax_dx in zip(axes, dx):
         if f.shape[axis] < edge_order + 1:
             raise ValueError(
                 "Shape of array too small to calculate a numerical gradient, "
@@ -1741,7 +1741,8 @@ def gradient(f, *varargs, **kwargs):
         # result allocation
         out = np.empty_like(f, dtype=otype)
 
-        uniform_spacing = np.ndim(dx[i]) == 0
+        # spacing for the current axis
+        uniform_spacing = np.ndim(ax_dx) == 0
 
         # Numerical differentiation: 2nd order interior
         slice1[axis] = slice(1, -1)
@@ -1750,10 +1751,10 @@ def gradient(f, *varargs, **kwargs):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[slice1] = (f[slice4] - f[slice2]) / (2. * dx[i])
+            out[slice1] = (f[slice4] - f[slice2]) / (2. * ax_dx)
         else:
-            dx1 = dx[i][0:-1]
-            dx2 = dx[i][1:]
+            dx1 = ax_dx[0:-1]
+            dx2 = ax_dx[1:]
             a = -(dx2)/(dx1 * (dx1 + dx2))
             b = (dx2 - dx1) / (dx1 * dx2)
             c = dx1 / (dx2 * (dx1 + dx2))
@@ -1769,14 +1770,14 @@ def gradient(f, *varargs, **kwargs):
             slice1[axis] = 0
             slice2[axis] = 1
             slice3[axis] = 0
-            dx_0 = dx[i] if uniform_spacing else dx[i][0]
+            dx_0 = ax_dx if uniform_spacing else ax_dx[0]
             # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
             out[slice1] = (f[slice2] - f[slice3]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
-            dx_n = dx[i] if uniform_spacing else dx[i][-1]
+            dx_n = ax_dx if uniform_spacing else ax_dx[-1]
             # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
             out[slice1] = (f[slice2] - f[slice3]) / dx_n
 
@@ -1787,12 +1788,12 @@ def gradient(f, *varargs, **kwargs):
             slice3[axis] = 1
             slice4[axis] = 2
             if uniform_spacing:
-                a = -1.5 / dx[i]
-                b = 2. / dx[i]
-                c = -0.5 / dx[i]
+                a = -1.5 / ax_dx
+                b = 2. / ax_dx
+                c = -0.5 / ax_dx
             else:
-                dx1 = dx[i][0]
-                dx2 = dx[i][1]
+                dx1 = ax_dx[0]
+                dx2 = ax_dx[1]
                 a = -(2. * dx1 + dx2)/(dx1 * (dx1 + dx2))
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
@@ -1804,12 +1805,12 @@ def gradient(f, *varargs, **kwargs):
             slice3[axis] = -2
             slice4[axis] = -1
             if uniform_spacing:
-                a = 0.5 / dx[i]
-                b = -2. / dx[i]
-                c = 1.5 / dx[i]
+                a = 0.5 / ax_dx
+                b = -2. / ax_dx
+                c = 1.5 / ax_dx
             else:
-                dx1 = dx[i][-2]
-                dx2 = dx[i][-1]
+                dx1 = ax_dx[-2]
+                dx2 = ax_dx[-1]
                 a = (dx2) / (dx1 * (dx1 + dx2))
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
