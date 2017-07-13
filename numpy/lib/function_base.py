@@ -1697,8 +1697,10 @@ def gradient(f, *varargs, **kwargs):
         for i, distances in enumerate(dx):
             if distances.ndim == 0:
                 continue
+            elif distances.ndim != 1:
+                raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
-                raise ValueError("distances must be either scalars or match "
+                raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
             diffx = np.diff(dx[i])
             # if distances are constant reduce to the scalar case

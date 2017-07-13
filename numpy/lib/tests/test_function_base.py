@@ -756,6 +756,10 @@ class TestGradient(TestCase):
         # 2D but axis specified
         gradient(f_2d, dx, axis=1)
 
+        # 2d coordinate arguments are not yet allowed
+        assert_raises_regex(ValueError, '.*scalars or 1d',
+            gradient, f_2d, np.stack([dx]*2, axis=-1), 1)
+
     def test_badargs(self):
         f_2d = np.arange(25).reshape(5, 5)
         x = np.cumsum(np.ones(5))
