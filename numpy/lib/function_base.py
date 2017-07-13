@@ -1715,7 +1715,7 @@ def gradient(f, *varargs, **kwargs):
     slice4 = [slice(None)]*N
 
     otype = f.dtype.char
-    if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
+    if otype not in ['f', 'd', 'F', 'D', 'm', 'M', 'e']:
         otype = 'd'
 
     # Difference of datetime64 elements results in timedelta64
