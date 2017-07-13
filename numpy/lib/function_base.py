@@ -1674,7 +1674,6 @@ def gradient(f, *varargs, **kwargs):
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     f = np.asanyarray(f)
-    varargs = [asanyarray(d) for d in varargs]
     N = f.ndim  # number of dimensions
 
     axes = kwargs.pop('axis', None)
@@ -1687,17 +1686,17 @@ def gradient(f, *varargs, **kwargs):
     n = len(varargs)
     if n == 0:
         # no spacing argument - use 1 in all axes
-        dx = [np.array(1.0)] * len_axes
-    elif n == 1 and varargs[0].ndim == 0:
+        dx = [1.0] * len_axes
+    elif n == 1 and np.ndim(varargs[0]) == 0:
         # single scalar for all axes
         dx = varargs * len_axes
     elif n == len_axes:
         # scalar or 1d array for each axis
-        dx = varargs[:]
+        dx = list(varargs)
         for i, distances in enumerate(dx):
-            if distances.ndim == 0:
+            if np.ndim(distances) == 0:
                 continue
-            elif distances.ndim != 1:
+            elif np.ndim(distances) != 1:
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError("when 1d, distances must match "
@@ -1757,7 +1756,7 @@ def gradient(f, *varargs, **kwargs):
         # result allocation
         out = np.empty_like(y, dtype=otype)
 
-        uniform_spacing = dx[i].ndim == 0
+        uniform_spacing = np.ndim(dx[i]) == 0
 
         # Numerical differentiation: 2nd order interior
         slice1[axis] = slice(1, -1)
