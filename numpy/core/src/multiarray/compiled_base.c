@@ -57,66 +57,101 @@ check_array_monotonic(const double *a, npy_int lena)
     }
 }
 
-/* Find the minimum and maximum of an integer array */
+/* Finds the minimum and maximum of an intp strided array. */
 static void
-minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
+minmax_intp(const char *data, npy_intp len, npy_intp stride,
+            npy_intp *min, npy_intp *max)
 {
-    npy_intp min = *data;
-    npy_intp max = *data;
-
-    while (--data_len) {
-        const npy_intp val = *(++data);
-        if (val < min) {
-            min = val;
+    *min = *(npy_intp *)data;
+    *max = *(npy_intp *)data;
+    data += stride;
+    while (--len) {
+        const npy_intp val = *(npy_intp *)data;
+        if (val < *min) {
+            *min = val;
         }
-        else if (val > max) {
-            max = val;
+        else if (val > *max) {
+            *max = val;
         }
+        data += stride;
     }
+}
 
-    *mn = min;
-    *mx = max;
+/* Converts an array-like object into a behaved array of the right type. */
+static PyArrayObject*
+_array_from_object(PyObject *object, enum NPY_TYPES type, int extra_flags)
+{
+    int flags = NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED;
+    PyArray_Descr *dtype = PyArray_DescrFromType(type);
+    return (PyArrayObject *)PyArray_CheckFromAny(object, dtype, 1, 1,
+                                                 flags | extra_flags, NULL);
 }
 
 /*
  * arr_bincount is registered as bincount.
  *
- * bincount accepts one, two or three arguments. The first is an array of
- * non-negative integers The second, if present, is an array of weights,
- * which must be promotable to double. Call these arguments list and
- * weight. Both must be one-dimensional with len(weight) == len(list). If
- * weight is not present then bincount(list)[i] is the number of occurrences
- * of i in list.  If weight is present then bincount(self,list, weight)[i]
- * is the sum of all weight[j] where list [j] == i.  Self is not used.
+ * bincount accepts one, two, three or four arguments. The first is an
+ * array of non-negative integers.  The second, if present, is an array
+ * of weights, which must be promotable to double.  Call these arguments
+ * list and weights.  Both must be one-dimensional with the same length.
+ * If weights is not present then bincount(list)[i] is the number of
+ * occurrences of i in list.  If weights is present then
+ * bincount(self,list, weight)[i] is the sum of all weight[j] where
+ * list[j] == i.  Self is not used.
  * The third argument, if present, is a minimum length desired for the
  * output array.
+ * The fourth, if present, is an array of the right type and size on
+ * which to add the counts or weights sums.
  */
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
-    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
-    npy_intp i;
-    double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", "minlength", NULL};
+    PyObject *list_obj = NULL;
+    PyObject *weights_obj = Py_None;
+    PyObject *minlength_obj = Py_None;
+    PyObject *out_obj = Py_None;
+    PyArrayObject *list_arr = NULL;
+    PyArrayObject *weights_arr = NULL;
+    npy_intp minlength = 0;
+    PyArrayObject *out_arr = NULL;
+    npy_intp len, list_stride, list_min, list_max;
+    npy_intp weights_stride;
+    npy_intp out_len, out_stride;
+    const char *list_ptr;
+    const char *weights_ptr;
+    char *out_ptr;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
-    }
+    static char *kwlist[] = {"list", "weights", "minlength", "out", NULL};
 
-    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
-    if (lst == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO:bincount", kwlist,
+                         &list_obj, &weights_obj, &minlength_obj, &out_obj)) {
         goto fail;
     }
-    len = PyArray_SIZE(lst);
 
-    if (mlength == Py_None) {
-        minlength = 0;
+    list_arr = _array_from_object(list_obj, NPY_INTP, 0);
+    if (list_arr == NULL) {
+        goto fail;
     }
-    else {
-        minlength = PyArray_PyIntAsIntp(mlength);
+    len = PyArray_DIM(list_arr, 0);
+    list_stride = PyArray_STRIDE(list_arr, 0);
+    list_ptr = PyArray_DATA(list_arr);
+
+    if (weights_obj != Py_None) {
+        weights_arr = _array_from_object(weights_obj, NPY_DOUBLE, 0);
+        if (weights_arr == NULL) {
+            goto fail;
+        }
+        if (PyArray_DIM(weights_arr, 0) != len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "list and weights do not have the same length");
+            goto fail;
+        }
+        weights_stride = PyArray_STRIDE(weights_arr, 0);
+        weights_ptr = PyArray_DATA(weights_arr);
+    }
+
+    if (minlength_obj != Py_None) {
+        minlength = PyArray_PyIntAsIntp(minlength_obj);
         if (minlength < 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_ValueError,
@@ -126,72 +161,78 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         }
     }
 
-    /* handle empty list */
-    if (len == 0) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
-        if (ans == NULL){
+    if (len > 0) {
+        minmax_intp(list_ptr, len, list_stride, &list_min, &list_max);
+        if (list_min < 0) {
+            PyErr_SetString(PyExc_ValueError, "list must be non-negative");
             goto fail;
         }
-        Py_DECREF(lst);
-        return (PyObject *)ans;
     }
 
-    numbers = (npy_intp *)PyArray_DATA(lst);
-    minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "The first argument of bincount must be non-negative");
-        goto fail;
-    }
-    ans_size = mx + 1;
-    if (mlength != Py_None) {
-        if (ans_size < minlength) {
-            ans_size = minlength;
-        }
-    }
-    if (weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
-        if (ans == NULL) {
+    if (out_obj != Py_None) {
+        enum NPY_TYPES type = weights_arr == NULL ? NPY_INTP : NPY_DOUBLE;
+        int extra_flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_UPDATEIFCOPY;
+
+        out_arr = _array_from_object(out_obj, type, extra_flags);
+        if (out_arr == NULL) {
             goto fail;
         }
-        ians = (npy_intp *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++)
-            ians[numbers[i]] += 1;
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
+        out_len = PyArray_DIM(out_arr, 0);
+        if (minlength_obj != Py_None && minlength != out_len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "minlength must equal the size of out");
+            goto fail;
+        }
+        if (list_max >= out_len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "list value out of bounds for out array");
+            goto fail;
+        }
     }
     else {
-        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                weight, NPY_DOUBLE, 1, 1);
-        if (wts == NULL) {
+        enum NPY_TYPES type = weights_arr == NULL ? NPY_INTP : NPY_DOUBLE;
+        out_len = minlength;
+        if (len > 0 && minlength <= list_max) {
+            out_len = list_max + 1;
+        }
+        out_arr = (PyArrayObject *)PyArray_ZEROS(1, &out_len, type, 0);
+        if (out_arr == NULL) {
             goto fail;
         }
-        weights = (double *)PyArray_DATA(wts);
-        if (PyArray_SIZE(wts) != len) {
-            PyErr_SetString(PyExc_ValueError,
-                    "The weights and list don't have the same length.");
-            goto fail;
-        }
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
-        if (ans == NULL) {
-            goto fail;
-        }
-        dans = (double *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++) {
-            dans[numbers[i]] += weights[i];
-        }
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
-        Py_DECREF(wts);
+        out_obj = (PyObject *)out_arr;
     }
-    return (PyObject *)ans;
+    out_stride = PyArray_STRIDE(out_arr, 0);
+    out_ptr = PyArray_DATA(out_arr);
+
+    NPY_BEGIN_ALLOW_THREADS;
+    if (weights_arr == NULL) {
+        while (len--) {
+            const npy_intp index = *(npy_intp *)list_ptr;
+            *(npy_intp *)(out_ptr + index * out_stride) += 1;
+            list_ptr += list_stride;
+        }
+    }
+    else {
+        while (len--) {
+            const npy_intp index = *(npy_intp *)list_ptr;
+            const npy_double weight = *(npy_double *)weights_ptr;
+            *(npy_double *)(out_ptr + index * out_stride) += weight;
+            list_ptr += list_stride;
+            weights_ptr += weights_stride;
+        }
+    }
+    NPY_END_ALLOW_THREADS;
+
+    Py_XDECREF(list_arr);
+    Py_XDECREF(weights_arr);
+    Py_INCREF(out_obj);
+    Py_XDECREF(out_arr);
+    return out_obj;
 
 fail:
-    Py_XDECREF(lst);
-    Py_XDECREF(wts);
-    Py_XDECREF(ans);
+    Py_XDECREF(list_arr);
+    Py_XDECREF(weights_arr);
+    Py_XDECREF(out_arr);
     return NULL;
 }
 
@@ -678,8 +719,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_intp i, lenx, lenxp;
 
     const npy_double *dx, *dz;
-    const npy_cdouble *dy; 
-    npy_cdouble lval, rval; 
+    const npy_cdouble *dy;
+    npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
     static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
@@ -726,7 +767,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     if (af == NULL) {
         goto fail;
     }
-        
+
     dy = (const npy_cdouble *)PyArray_DATA(afp);
     dres = (npy_cdouble *)PyArray_DATA(af);
     /* Get left and right fill values. */
@@ -743,7 +784,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             goto fail;
         }
     }
-        
+
     if ((right == NULL) || (right == Py_None)) {
         rval = dy[lenxp - 1];
     }
@@ -757,12 +798,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             goto fail;
         }
     }
-        
+
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
         const npy_double xp_val = dx[0];
         const npy_cdouble fp_val = dy[0];
-            
+
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
@@ -773,7 +814,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         npy_intp j = 0;
-        
+
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
             slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
@@ -781,9 +822,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 goto fail;
             }
         }
-            
+
         NPY_BEGIN_THREADS;
-        
+
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
@@ -791,16 +832,16 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 slopes[i].imag = (dy[i+1].imag - dy[i].imag) * inv_dx;
             }
         }
-        
+
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
-            
+
             if (npy_isnan(x_val)) {
                 dres[i].real = x_val;
                 dres[i].imag = 0.0;
                 continue;
             }
-            
+
             j = binary_search_with_guess(x_val, dx, lenxp, j);
             if (j == -1) {
                 dres[i] = lval;
@@ -825,11 +866,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 }
             }
         }
-        
+
         NPY_END_THREADS;
-    } 
+    }
     PyArray_free(slopes);
-    
+
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
