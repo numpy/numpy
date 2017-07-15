@@ -644,7 +644,7 @@ def einsum_path(*operands, **kwargs):
                         " %s" % unknown_kwargs)
 
     # Figure out what the path really is
-    path_type = kwargs.pop('optimize', False)
+    path_type = kwargs.pop('optimize', True)
     if path_type is True:
         path_type = 'greedy'
     if path_type is None:
@@ -852,7 +852,7 @@ def einsum(*operands, **kwargs):
         Controls if intermediate optimization should occur. No optimization
         will occur if False and True will default to the 'greedy' algorithm.
         Also accepts an explicit contraction list from the ``np.einsum_path``
-        function. See ``np.einsum_path`` for more details. Default is False.
+        function. See ``np.einsum_path`` for more details. Default is True.
 
     Returns
     -------
