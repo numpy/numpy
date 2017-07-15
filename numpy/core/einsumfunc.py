@@ -256,9 +256,9 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     return path
 
 
-def _can_blas(inputs, result, idx_removed):
+def _can_dot(inputs, result, idx_removed):
     """
-    Checks if we can use BLAS call and its beneficial to do so.
+    Checks if we can use BLAS (np.tensordot) call and its beneficial to do so.
 
     Parameters
     ----------
@@ -286,77 +286,83 @@ def _can_blas(inputs, result, idx_removed):
     --------
 
     # Standard GEMM operation
-    >>> _can_blas(['ij', 'jk'], 'ik', set('j'))
-    'GEMM'
+    >>> _can_dot(['ij', 'jk'], 'ik', set('j'))
+    True
 
     # Can use the standard BLAS, but requires odd data movement
-    >>> _can_blas(['ijj', 'jk'], 'ik', set('j'))
+    >>> _can_dot(['ijj', 'jk'], 'ik', set('j'))
     False
 
     # DDOT where the memory is not aligned
-    >>> _can_blas(['ijk', 'ikj'], '', set('ijk'))
+    >>> _can_dot(['ijk', 'ikj'], '', set('ijk'))
     False
 
     """
 
-    # Gotta remove indices
+    # All `dot` calls remove indices
     if len(idx_removed) == 0:
         return False
 
-    # Can only do two
+    # BLAS can only handle two operands
     if len(inputs) != 2:
         return False
 
-    # Make sure there is overlap
-    if len(set(inputs[0]) & set(inputs[1])) == 0:
-        return False
-
     # Build a few temporaries
-    sets = [set(x) for x in inputs]
-    keep_left = sets[0] - idx_removed
-    keep_right = sets[1] - idx_removed
-    input_left = inputs[0]
-    input_right = inputs[1]
+    input_left, input_right = inputs
+    set_left = set(input_left)
+    set_right = set(input_right)
+    keep_left = set_left - idx_removed
+    keep_right = set_right - idx_removed
     rs = len(idx_removed)
 
-    if any(len(l) != len(s) for l, s in zip(inputs, sets)):
+    # Indices must overlap between the two operands
+    if not len(set_left & set_right):
         return False
 
-    # Cannot handle partial inner
+    # We cannot have duplicate indices ("ijj, jk -> ik")
+    if (len(set_left) != len(input_left)) or (len(set_right) != len(input_right)):
+        return False
+
+    # Cannot handle partial inner ("ij, ji -> i")
     if len(keep_left & keep_right):
         return False
 
-    # DDOT
-    elif inputs[0] == inputs[1]:
+    # At this point we are a DOT, GEMV, or GEMM operation
+
+    # Handle inner products
+
+    # DDOT with aligned data
+    if input_left == input_right:
         return True
 
-    # DDOT doesnt make sense if you have to tranpose
-    elif sets[0] == sets[1]:
+    # DDOT without aligned data (better to use einsum)
+    if set_left == set_right:
         return False
 
+    # Handle the 4 possible (aligned) GEMV or GEMM cases
+
     # GEMM or GEMV no transpose
-    elif input_left[-rs:] == input_right[:rs]:
+    if input_left[-rs:] == input_right[:rs]:
         return True
 
     # GEMM or GEMV transpose both
-    elif input_left[:rs] == input_right[-rs:]:
+    if input_left[:rs] == input_right[-rs:]:
         return True
 
     # GEMM or GEMV transpose right
-    elif input_left[-rs:] == input_right[-rs:]:
+    if input_left[-rs:] == input_right[-rs:]:
         return True
 
     # GEMM or GEMV tranpose left
-    elif input_left[:rs] == input_right[:rs]:
+    if input_left[:rs] == input_right[:rs]:
         return True
 
-    # Einsum is faster than vectordot if we have to copy
-    elif (len(keep_left) == 0) or (len(keep_right) == 0):
+    # Einsum is faster than GEMV if we have to copy data
+    if not keep_left or not keep_right:
         return False
 
-    # Conventional matrix tensordot
-    else:
-        return True
+    # We are a matrix-matrix product, but we need to copy data
+    return True
 
 def _parse_einsum_input(operands):
     """
@@ -755,7 +761,7 @@ def einsum_path(*operands, **kwargs):
         for x in contract_inds:
             tmp_inputs.append(input_list.pop(x))
 
-        do_blas = _can_blas(tmp_inputs, out_inds, idx_removed)
+        do_blas = _can_dot(tmp_inputs, out_inds, idx_removed)
 
         # Last contraction
         if (cnum - len(path)) == -1:
@@ -1092,17 +1098,17 @@ def einsum(*operands, **kwargs):
 
             # Checks have already been handled
             input_str, results_index = einsum_str.split('->')
-            input_indices = input_str.split(',')
+            input_left, input_right = input_str.split(',')
 
-            tensor_result = input_indices[0] + input_indices[1]
+            tensor_result = input_left + input_right
             for s in idx_rm:
                 tensor_result = tensor_result.replace(s, "")
 
             # Find indices to contract over
             left_pos, right_pos = [], []
             for s in idx_rm:
-                left_pos.append(input_indices[0].find(s))
-                right_pos.append(input_indices[1].find(s))
+                left_pos.append(input_left.find(s))
+                right_pos.append(input_right.find(s))
 
             # Contract!
             new_view = tensordot(*tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
