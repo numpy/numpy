@@ -5,7 +5,7 @@ Implementation of optimized einsum.
 from __future__ import division, absolute_import, print_function
 
 from numpy.core.multiarray import c_einsum
-from numpy.core.numeric import asarray, asanyarray, result_type
+from numpy.core.numeric import asarray, asanyarray, result_type, tensordot, dot
 
 __all__ = ['einsum', 'einsum_path']
 
@@ -255,6 +255,108 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
 
     return path
 
+
+def _can_blas(inputs, result, idx_removed):
+    """
+    Checks if we can use BLAS call and its beneficial to do so.
+
+    Parameters
+    ----------
+    inputs : list of str
+        Specifies the subscripts for summation.
+    result : str
+        Resulting summation.
+    idx_removed : set
+        Indices that are removed in the summation
+
+
+    Returns
+    -------
+    type : bool
+        Returns true if BLAS should and can be used, else False
+
+    Notes
+    -----
+    If the operations is BLAS level 1 or 2 and is not already aligned
+    we default back to einsum as the memory movement to copy is more
+    costly than the operation itself.
+
+
+    Examples
+    --------
+
+    # Standard GEMM operation
+    >>> _can_blas(['ij', 'jk'], 'ik', set('j'))
+    'GEMM'
+
+    # Can use the standard BLAS, but requires odd data movement
+    >>> _can_blas(['ijj', 'jk'], 'ik', set('j'))
+    False
+
+    # DDOT where the memory is not aligned
+    >>> _can_blas(['ijk', 'ikj'], '', set('ijk'))
+    False
+
+    """
+
+    # Gotta remove indices
+    if len(idx_removed) == 0:
+        return False
+
+    # Can only do two
+    if len(inputs) != 2:
+        return False
+
+    # Make sure there is overlap
+    if len(set(inputs[0]) & set(inputs[1])) == 0:
+        return False
+
+    # Build a few temporaries
+    sets = [set(x) for x in inputs]
+    keep_left = sets[0] - idx_removed
+    keep_right = sets[1] - idx_removed
+    input_left = inputs[0]
+    input_right = inputs[1]
+    rs = len(idx_removed)
+
+    if any(len(l) != len(s) for l, s in zip(inputs, sets)):
+        return False
+
+    # Cannot handle partial inner
+    if len(keep_left & keep_right):
+        return False
+
+    # DDOT
+    elif inputs[0] == inputs[1]:
+        return True
+
+    # DDOT doesnt make sense if you have to tranpose
+    elif sets[0] == sets[1]:
+        return False
+
+    # GEMM or GEMV no transpose
+    elif input_left[-rs:] == input_right[:rs]:
+        return True
+
+    # GEMM or GEMV transpose both
+    elif input_left[:rs] == input_right[-rs:]:
+        return True
+
+    # GEMM or GEMV transpose right
+    elif input_left[-rs:] == input_right[-rs:]:
+        return True
+
+    # GEMM or GEMV tranpose left
+    elif input_left[:rs] == input_right[:rs]:
+        return True
+
+    # Einsum is faster than vectordot if we have to copy
+    elif (len(keep_left) == 0) or (len(keep_right) == 0):
+        return False
+
+    # Conventional matrix tensordot
+    else:
+        return True
 
 def _parse_einsum_input(operands):
     """
@@ -653,6 +755,8 @@ def einsum_path(*operands, **kwargs):
         for x in contract_inds:
             tmp_inputs.append(input_list.pop(x))
 
+        do_blas = _can_blas(tmp_inputs, out_inds, idx_removed)
+
         # Last contraction
         if (cnum - len(path)) == -1:
             idx_result = output_subscript
@@ -663,7 +767,7 @@ def einsum_path(*operands, **kwargs):
         input_list.append(idx_result)
         einsum_str = ",".join(tmp_inputs) + "->" + idx_result
 
-        contraction = (contract_inds, idx_removed, einsum_str, input_list[:])
+        contraction = (contract_inds, idx_removed, einsum_str, input_list[:], do_blas)
         contraction_list.append(contraction)
 
     opt_cost = sum(cost_list) + 1
@@ -690,7 +794,7 @@ def einsum_path(*operands, **kwargs):
     path_print += "-" * 74
 
     for n, contraction in enumerate(contraction_list):
-        inds, idx_rm, einsum_str, remaining = contraction
+        inds, idx_rm, einsum_str, remaining, blas = contraction
         remaining_str = ",".join(remaining) + "->" + output_subscript
         path_run = (scale_list[n], einsum_str, remaining_str)
         path_print += "\n%4d    %24s %40s" % path_run
@@ -969,19 +1073,54 @@ def einsum(*operands, **kwargs):
     # Build the contraction list and operand
     operands, contraction_list = einsum_path(*operands, optimize=optimize_arg,
                                              einsum_call=True)
+
+    handle_out = False
+
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
-        inds, idx_rm, einsum_str, remaining = contraction
+        inds, idx_rm, einsum_str, remaining, blas = contraction
         tmp_operands = []
         for x in inds:
             tmp_operands.append(operands.pop(x))
 
-        # If out was specified
+        # Do we need to deal with the output?
         if specified_out and ((num + 1) == len(contraction_list)):
-            einsum_kwargs["out"] = out_array
+            handle_out = True
 
-        # Do the contraction
-        new_view = c_einsum(einsum_str, *tmp_operands, **einsum_kwargs)
+        # Call tensordot
+        if blas:
+
+            # Checks have already been handled
+            input_str, results_index = einsum_str.split('->')
+            input_indices = input_str.split(',')
+
+            tensor_result = input_indices[0] + input_indices[1]
+            for s in idx_rm:
+                tensor_result = tensor_result.replace(s, "")
+
+            # Find indices to contract over
+            left_pos, right_pos = [], []
+            for s in idx_rm:
+                left_pos.append(input_indices[0].find(s))
+                right_pos.append(input_indices[1].find(s))
+
+            # Contract!
+            new_view = tensordot(*tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
+
+            # Build a new view if needed
+            if (tensor_result != results_index) or handle_out:
+                if handle_out:
+                    einsum_kwargs["out"] = out_array
+                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **einsum_kwargs)
+
+        # Call einsum
+        else:
+            # If out was specified
+            if handle_out:
+                einsum_kwargs["out"] = out_array
+
+            # Do the contraction
+            new_view = c_einsum(einsum_str, *tmp_operands, **einsum_kwargs)
 
         # Append new items and derefernce what we can
         operands.append(new_view)
