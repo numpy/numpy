@@ -381,6 +381,21 @@ add_newdoc('numpy.core', 'nditer',
         >>> luf(lambda i,j:i*i + j/2, a, b)
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
+    If operand flags such as "updateifcopy" or "readwrite" are used, or in
+    other edge cases, the operands may be views into the original data with the
+    UPDATEIFCOPY flag. In this case it is important to use the nditer as a
+    context manager. The temporary data will be written back to the original
+    data when the context manager's __exit__ function is called::
+
+        >>> a = np.arange(6, dtype='i4')[::-2]
+        >>> with nditer(a, [],
+        ...        [['writeonly', 'updateifcopy']],
+        ...        casting='unsafe',
+        ...        op_dtypes=[np.dtype('f4')]) as i:
+        ...    i.operands[0][:] = [-1, -2, -3]
+        >>> a
+        array([-1, -2, -3])
+
     """)
 
 # nditer methods
