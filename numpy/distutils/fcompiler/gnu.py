@@ -18,14 +18,18 @@ compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 
 # XXX: handle cross compilation
+
+
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
+
 
 if is_win64():
     #_EXTRAFLAGS = ["-fno-leading-underscore"]
     _EXTRAFLAGS = []
 else:
     _EXTRAFLAGS = []
+
 
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
@@ -36,7 +40,7 @@ class GnuFCompiler(FCompiler):
         """Handle the different versions of GNU fortran compilers"""
         # Strip warning(s) that may be emitted by gfortran
         while version_string.startswith('gfortran: warning'):
-            version_string = version_string[version_string.find('\n')+1:]
+            version_string = version_string[version_string.find('\n') + 1:]
 
         # Gfortran versions from after 2010 will output a simple string
         # (usually "x.y", "x.y.z" or "x.y.z-q") for ``-dumpversion``; older
@@ -83,15 +87,15 @@ class GnuFCompiler(FCompiler):
 
     possible_executables = ['g77', 'f77']
     executables = {
-        'version_cmd'  : [None, "-dumpversion"],
-        'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
-        'compiler_f90' : None,  # Use --fcompiler=gnu95 for f90 codes
-        'compiler_fix' : None,
-        'linker_so'    : [None, "-g", "-Wall"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None, "-g", "-Wall"]
-        }
+        'version_cmd': [None, "-dumpversion"],
+        'compiler_f77': [None, "-g", "-Wall", "-fno-second-underscore"],
+        'compiler_f90': None,  # Use --fcompiler=gnu95 for f90 codes
+        'compiler_fix': None,
+        'linker_so': [None, "-g", "-Wall"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': ["ranlib"],
+        'linker_exe': [None, "-g", "-Wall"]
+    }
     module_dir_switch = None
     module_include_switch = None
 
@@ -129,8 +133,8 @@ class GnuFCompiler(FCompiler):
                 try:
                     get_makefile_filename = sc.get_makefile_filename
                 except AttributeError:
-                    pass # i.e. PyPy
-                else: 
+                    pass  # i.e. PyPy
+                else:
                     filename = get_makefile_filename()
                     sc.parse_makefile(filename, g)
                 target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
@@ -170,7 +174,7 @@ class GnuFCompiler(FCompiler):
                     d = os.path.normpath(d)
                     path = os.path.join(d, "lib%s.a" % self.g2c)
                     if not os.path.exists(path):
-                        root = os.path.join(d, *((os.pardir,)*4))
+                        root = os.path.join(d, *((os.pardir,) * 4))
                         d2 = os.path.abspath(os.path.join(root, 'lib'))
                         path = os.path.join(d2, "lib%s.a" % self.g2c)
                         if os.path.exists(path):
@@ -193,7 +197,7 @@ class GnuFCompiler(FCompiler):
             opt.append(g2c)
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
-               c_compiler.compiler_type == 'msvc':
+                c_compiler.compiler_type == 'msvc':
             # the following code is not needed (read: breaks) when using MinGW
             # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
@@ -263,18 +267,18 @@ class Gnu95FCompiler(GnuFCompiler):
 
     possible_executables = ['gfortran', 'f95']
     executables = {
-        'version_cmd'  : ["<F90>", "-dumpversion"],
-        'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'linker_so'    : ["<F90>", "-Wall", "-g"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None, "-Wall"]
-        }
+        'version_cmd': ["<F90>", "-dumpversion"],
+        'compiler_f77': [None, "-Wall", "-g", "-ffixed-form",
+                         "-fno-second-underscore"] + _EXTRAFLAGS,
+        'compiler_f90': [None, "-Wall", "-g",
+                         "-fno-second-underscore"] + _EXTRAFLAGS,
+        'compiler_fix': [None, "-Wall",  "-g", "-ffixed-form",
+                         "-fno-second-underscore"] + _EXTRAFLAGS,
+        'linker_so': ["<F90>", "-Wall", "-g"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': ["ranlib"],
+        'linker_exe': [None, "-Wall"]
+    }
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
@@ -319,7 +323,7 @@ class Gnu95FCompiler(GnuFCompiler):
                 target = self.get_target()
                 if target:
                     d = os.path.normpath(self.get_libgcc_dir())
-                    root = os.path.join(d, *((os.pardir,)*4))
+                    root = os.path.join(d, *((os.pardir,) * 4))
                     path = os.path.join(root, "lib")
                     mingwdir = os.path.normpath(path)
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
@@ -333,17 +337,11 @@ class Gnu95FCompiler(GnuFCompiler):
         if sys.platform == 'win32':
             c_compiler = self.c_compiler
             if c_compiler and c_compiler.compiler_type == "msvc":
-                if "gcc" in opt:
-                    i = opt.index("gcc")
-                    opt.insert(i+1, "mingwex")
-                    opt.insert(i+1, "mingw32")
-            # XXX: fix this mess, does not work for mingw
-            if is_win64():
-                c_compiler = self.c_compiler
-                if c_compiler and c_compiler.compiler_type == "msvc":
-                    return []
-                else:
-                    pass
+                libs = []
+            if sys.version_info[:2] >= (3, 5):
+                # https://msdn.microsoft.com/en-us/library/bb531344.aspx#BK_CRT
+                libs += []
+            return libs
         return opt
 
     def get_target(self):
@@ -361,6 +359,7 @@ class Gnu95FCompiler(GnuFCompiler):
             return ['-O0']
         else:
             return GnuFCompiler.get_flags_opt(self)
+
 
 def _can_target(cmd, arch):
     """Return true if the architecture supports the -arch flag"""
@@ -381,6 +380,7 @@ def _can_target(cmd, arch):
     finally:
         os.remove(filename)
     return False
+
 
 if __name__ == '__main__':
     from distutils import log
