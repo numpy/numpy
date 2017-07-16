@@ -17,7 +17,6 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['FCompiler', 'new_fcompiler', 'show_fcompilers',
            'dummy_fortran_file']
-
 import os
 import sys
 import re
