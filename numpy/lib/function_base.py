@@ -46,7 +46,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'neighborwise'
     ]
 
 
@@ -5139,3 +5140,81 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
+
+
+def neighborwise(x, func, axis=None):
+    """
+    Apply a function to pairs of neigbours along the given axes
+
+    Parameters
+    ----------
+    x : array_like
+        The array to reduce neighbourwise
+    func : function
+        A function taking two arguments, to call on the (vectorized) pairs of
+        neighbours. The first argument is the values at the lower indices
+    axis : int or sequence of int
+        The axes to apply along. If ``None``, the default, then all axes are
+        used
+
+    Examples
+    --------
+
+    >>> a = np.arange(5)
+    >>> np.neighborwise(a, np.add)
+    array([1, 3, 5, 7])
+
+    Applying only along one axis:
+
+    >>> b = np.arange(20).reshape(4, 5)
+    array([[ 0,  1,  2,  3,  4],
+           [ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14],
+           [15, 16, 17, 18, 19]])
+    >>> np.neighborwise(b, np.multiply, axis=-1)
+    array([[  0,   2,   6,  12],
+           [ 30,  42,  56,  72],
+           [110, 132, 156, 182],
+           [240, 272, 306, 342]])
+
+    Can be used to resample a grid at the center of each cell, useful for
+    matploblib's `pcolor`:
+
+    >>> midpoint = lambda a, b: (a + b) / 2
+    >>> x, y = np.indices((3, 4)) * 2
+    >>> x
+    array([[0, 0, 0, 0],
+           [1, 1, 1, 1],
+           [2, 2, 2, 2]])
+    >>> y
+    array([[0, 1, 2, 3],
+           [0, 1, 2, 3],
+           [0, 1, 2, 3]])
+    >>> x = np.neighborwise(x, midpoint)
+    >>> y = np.neighborwise(x, midpoint)
+    >>> x
+    array([[ 0.5,  0.5,  0.5],
+           [ 1.5,  1.5,  1.5]])
+    >>> y
+    array([[ 0.5,  1.5,  2.5],
+           [ 0.5,  1.5,  2.5]])
+
+    """
+    x = asanyarray(x)
+    N = x.ndim
+    if axis is None:
+        axis = tuple(range(N))
+    else:
+        axis = _nx.normalize_axis_tuple(axis, N)
+
+    # avoid reconstructing slice objects
+    slices = np.index_exp[:]*N
+    begin_sl = np.index_exp[:-1]
+    end_sl = np.index_exp[1:]
+
+    for ax in axis:
+        x_begin = x[slices[:ax] + begin_sl + slices[ax+1:]]
+        x_end = x[slices[:ax] + end_sl + slices[ax+1:]]
+        x = func(x_begin, x_end)
+
+    return x
