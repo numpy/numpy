@@ -247,7 +247,9 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
         if (tup == NULL) {
             return -1;
         }
-        return unpack_tuple(tup, result, result_n);
+        n = unpack_tuple(tup, result, result_n);
+        Py_DECREF(tup);
+        return n;
     }
 
     /*
@@ -368,7 +370,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int index_type = 0;
     int ellipsis_pos = -1;
 
-    /* 
+    /*
      * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
      * The longest "reasonable" index that produces a result of <= 32 dimensions
      * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
