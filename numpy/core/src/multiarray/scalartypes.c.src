@@ -328,28 +328,31 @@ gentype_nonzero_number(PyObject *m1)
 static PyObject *
 gentype_str(PyObject *self)
 {
-    PyObject *arr, *ret = NULL;
+    PyObject  *item, *item_str;
 
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr != NULL) {
-        ret = PyObject_Str((PyObject *)arr);
-        Py_DECREF(arr);
+    item = gentype_generic_method(self, NULL, NULL, "item");
+    if (item == NULL) {
+        return NULL;
     }
-    return ret;
+
+    item_str = PyObject_Str(item);
+    Py_DECREF(item);
+    return item_str;
 }
 
 static PyObject *
 gentype_repr(PyObject *self)
 {
-    PyObject *arr, *ret = NULL;
+    PyObject *item, *item_str;
 
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr != NULL) {
-        /* XXX: Why are we using str here? */
-        ret = PyObject_Str((PyObject *)arr);
-        Py_DECREF(arr);
+    item = gentype_generic_method(self, NULL, NULL, "item");
+    if (item == NULL) {
+        return NULL;
     }
-    return ret;
+
+    item_str = PyObject_Repr(item);
+    Py_DECREF(item);
+    return item_str;
 }
 
 static PyObject *
@@ -619,6 +622,22 @@ static PyObject *
     return ret;
 }
 /**end repeat**/
+
+static PyObject *
+voidtype_str(PyObject *self){
+    PyObject *arr, *ret = NULL;
+
+    if (!PyDataType_HASFIELDS(((PyVoidScalarObject*)self)->descr)) {
+        return gentype_str(self);
+    }
+
+    arr = PyArray_FromScalar(self, NULL);
+    if (arr != NULL) {
+        ret = PyObject_Str((PyObject *)arr);
+        Py_DECREF(arr);
+    }
+    return ret;
+}
 
 static PyObject *
 datetimetype_repr(PyObject *self)
@@ -4115,6 +4134,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
+    PyVoidArrType_Type.tp_repr = voidtype_str;
+    PyVoidArrType_Type.tp_str = voidtype_str;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 
