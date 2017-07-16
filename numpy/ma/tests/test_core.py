@@ -4762,9 +4762,16 @@ class TestMaskedConstant(TestCase):
         assert_equal(np.ma.masked.mask, True)
 
     def test_no_copies(self):
+        # when making a view or a copy, downcast to MaskedArray
         MC = np.ma.core.MaskedConstant
-        assert_(not isinstance(np.ma.masked[...], MC))
-        assert_(not isinstance(np.ma.masked.copy(), MC))
+
+        m_sl = np.ma.masked[...]
+        assert_equal(type(m_sl), np.ma.MaskedArray)
+        assert_equal(m_sl.mask, True)
+
+        m_copy = np.ma.masked.copy()
+        assert_equal(type(m_copy), np.ma.MaskedArray)
+        # assert_equal(m_copy.mask, True)  - gh-9430
 
     def test_immutable(self):
         assert_raises(ValueError, operator.setitem, np.ma.masked.data, (), 1)

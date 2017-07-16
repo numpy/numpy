@@ -6184,11 +6184,11 @@ isMA = isMaskedArray  # backward compatibility
 
 
 class MaskedConstant(MaskedArray):
-
+    # the lone np.ma.masked instance
     __singleton = None
 
-    def __new__(self):
-        if self.__singleton is None:
+    def __new__(cls):
+        if cls.__singleton is None:
             # We define the masked singleton as a float for higher precedence.
             # Note that it can be tricky sometimes w/ type comparison
             data = np.array(0.)
@@ -6198,10 +6198,12 @@ class MaskedConstant(MaskedArray):
             data.flags.writeable = False
             mask.flags.writeable = False
 
-            masked = MaskedArray(data, mask=mask)
-            self.__singleton = masked.view(self)
+            # don't fall back on MaskedArray.__new__(MaskedConstant), since
+            # that might confuse it - this way, the construction is entirely
+            # within our control
+            cls.__singleton = MaskedArray(data, mask=mask).view(cls)
 
-        return self.__singleton
+        return cls.__singleton
 
     def __array_finalize__(self, obj):
         if self.__singleton is None:
@@ -6215,7 +6217,7 @@ class MaskedConstant(MaskedArray):
             # everywhere else, we want to downcast to MaskedArray, to prevent a
             # duplicate maskedconstant.
             self.__class__ = MaskedArray
-            self.__array_finalize__(obj)
+            MaskedArray.__array_finalize__(self, obj)
 
     def __array_prepare__(self, obj, context=None):
         return self.view(MaskedArray).__array_prepare__(obj, context)
@@ -6227,10 +6229,10 @@ class MaskedConstant(MaskedArray):
         return str(masked_print_option._display)
 
     def __repr__(self):
-        if self is masked:
+        if self is self.__singleton:
             return 'masked'
         else:
-            # something is wrong, make it obvious
+            # it's a subclass, or something is wrong, make it obvious
             return object.__repr__(self)
 
     def __reduce__(self):
@@ -6240,9 +6242,16 @@ class MaskedConstant(MaskedArray):
 
     # inplace operations have no effect. We have to override them to avoid
     # trying to modify the readonly data and mask arrays
-    def __inop(self, other):
+    def __iop__(self, other):
         return self
-    __iadd__ = __isub__ = __imul__ = __ifloordiv__ = __itruediv__ = __ipow__ = __inop
+    __iadd__ = \
+    __isub__ = \
+    __imul__ = \
+    __ifloordiv__ = \
+    __itruediv__ = \
+    __ipow__ = \
+        __iop__
+    del __iop__  # don't leave this around
 
 
 masked = masked_singleton = MaskedConstant()
