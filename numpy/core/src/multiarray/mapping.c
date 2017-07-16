@@ -243,7 +243,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
      * allocation, but doesn't need to be a fast path anyway
      */
     if (PyTuple_Check(index)) {
-        PyTupleObject *tup = PySequence_Tuple(index);
+        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }
