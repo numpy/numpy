@@ -36,7 +36,7 @@ from numpy.testing import (
     )
 
 # Need to test an object that does not fully implement math interface
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 if sys.version_info[:2] > (3, 2):
@@ -1475,6 +1475,21 @@ class TestMethods(TestCase):
         for i in range(4):
             arr = np.empty(1000, dt)
             arr[::-1].sort()
+
+    def test_sort_raises(self):
+        #gh-9404
+        arr = np.array([0, datetime.now(), 1], dtype=object)
+        for kind in ['q', 'm', 'h']:
+            assert_raises(TypeError, arr.sort, kind=kind)
+        #gh-3879 
+        class Raiser(object):
+            def raises_anything(*args, **kwargs):
+                raise TypeError("SOMETHING ERRORED")
+            __eq__ = __ne__ = __lt__ = __gt__ = __ge__ = __le__ = raises_anything
+        arr = np.array([[Raiser(), n] for n in range(10)]).reshape(-1)
+        np.random.shuffle(arr)
+        for kind in ['q', 'm', 'h']:
+            assert_raises(TypeError, arr.sort, kind=kind)
 
     def test_sort_degraded(self):
         # test degraded dataset would take minutes to run with normal qsort
