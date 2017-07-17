@@ -2,12 +2,12 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_almost_equal,
-    assert_allclose, assert_equal
+    run_module_suite, assert_, assert_almost_equal, assert_allclose,
+    assert_equal
     )
 
 
-class TestFinancial(TestCase):
+class TestFinancial(object):
     def test_rate(self):
         assert_almost_equal(np.rate(10, 0, -3500, 10000),
                             0.1107, 4)
