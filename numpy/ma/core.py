@@ -2555,14 +2555,10 @@ def _arraymethod(funcname, onmask=True):
         result = result.view(type(self))
         result._update_from(self)
         mask = self._mask
-        if result.ndim:
-            if not onmask:
-                result.__setmask__(mask)
-            elif mask is not nomask:
-                result.__setmask__(getattr(mask, funcname)(*args, **params))
-        else:
-            if mask.ndim and (not mask.dtype.names and mask.all()):
-                return masked
+        if not onmask:
+            result.__setmask__(mask)
+        elif mask is not nomask:
+            result.__setmask__(getattr(mask, funcname)(*args, **params))
         return result
     methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
     if methdoc is not None:
