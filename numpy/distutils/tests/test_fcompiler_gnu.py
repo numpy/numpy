@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import TestCase, assert_, run_module_suite
+from numpy.testing import assert_, run_module_suite
 
 import numpy.distutils.fcompiler
 
@@ -29,7 +29,7 @@ gfortran_version_strings = [
      '4.9.1')
 ]
 
-class TestG77Versions(TestCase):
+class TestG77Versions(object):
     def test_g77_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu')
         for vs, version in g77_version_strings:
@@ -42,7 +42,7 @@ class TestG77Versions(TestCase):
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))
 
-class TestGFortranVersions(TestCase):
+class TestGFortranVersions(object):
     def test_gfortran_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, version in gfortran_version_strings:

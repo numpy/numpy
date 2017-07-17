@@ -8,7 +8,7 @@ from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, dec
+    run_module_suite, assert_, assert_equal, dec
     )
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
@@ -21,9 +21,9 @@ def get_class(name, notfound_action=1):
       1 - display warning message
       2 - raise error
     """
-    cl = {'temp1': TestTemp1,
-          'temp2': TestTemp2
-          }.get(name.lower(), test_system_info)
+    cl = {'temp1': Temp1Info,
+          'temp2': Temp2Info
+          }.get(name.lower(), _system_info)
     return cl()
 
 simple_site = """
@@ -84,7 +84,7 @@ def have_compiler():
 HAVE_COMPILER = have_compiler()
 
 
-class test_system_info(system_info):
+class _system_info(system_info):
 
     def __init__(self,
                  default_lib_dirs=default_lib_dirs,
@@ -111,17 +111,19 @@ class test_system_info(system_info):
         return info
 
 
-class TestTemp1(test_system_info):
+class Temp1Info(_system_info):
+    """For testing purposes"""
     section = 'temp1'
 
 
-class TestTemp2(test_system_info):
+class Temp2Info(_system_info):
+    """For testing purposes"""
     section = 'temp2'
 
 
-class TestSystemInfoReading(TestCase):
+class TestSystemInfoReading(object):
 
-    def setUp(self):
+    def setup(self):
         """ Create the libraries """
         # Create 2 sources and 2 libraries
         self._dir1 = mkdtemp()

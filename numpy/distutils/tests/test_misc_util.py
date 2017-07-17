@@ -6,12 +6,12 @@ from numpy.distutils.misc_util import (
     appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
 )
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal
+    run_module_suite, assert_, assert_equal
 )
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
-class TestAppendpath(TestCase):
+class TestAppendpath(object):
 
     def test_1(self):
         assert_equal(appendpath('prefix', 'name'), join('prefix', 'name'))
@@ -35,7 +35,7 @@ class TestAppendpath(TestCase):
         assert_equal(appendpath('/prefix/sub/sub2', '/prefix/sub/sup/name'),
                      ajoin('prefix', 'sub', 'sub2', 'sup', 'name'))
 
-class TestMinrelpath(TestCase):
+class TestMinrelpath(object):
 
     def test_1(self):
         n = lambda path: path.replace('/', sep)
@@ -49,7 +49,7 @@ class TestMinrelpath(TestCase):
         assert_equal(minrelpath(n('.././..')), n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')), n('dd'))
 
-class TestGpaths(TestCase):
+class TestGpaths(object):
 
     def test_gpaths(self):
         local_path = minrelpath(join(dirname(__file__), '..'))
@@ -58,7 +58,7 @@ class TestGpaths(TestCase):
         f = gpaths('system_info.py', local_path)
         assert_(join(local_path, 'system_info.py') == f[0], repr(f))
 
-class TestSharedExtension(TestCase):
+class TestSharedExtension(object):
 
     def test_get_shared_lib_extension(self):
         import sys
