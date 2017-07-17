@@ -6,7 +6,8 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises)
+    run_module_suite, assert_, assert_equal, assert_raises
+    )
 
 
 PY2 = sys.version_info.major < 3
@@ -99,7 +100,7 @@ _ALL_BINARY_OPERATORS = [
 ]
 
 
-class TestNDArrayOperatorsMixin(TestCase):
+class TestNDArrayOperatorsMixin(object):
 
     def test_array_like_add(self):
 

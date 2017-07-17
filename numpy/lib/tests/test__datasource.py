@@ -6,7 +6,7 @@ from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, SkipTest
+    run_module_suite, assert_, assert_equal, assert_raises, SkipTest,
     )
 import numpy.lib._datasource as datasource
 
@@ -55,7 +55,7 @@ malicious_files = ['/etc/shadow', '../../shadow',
 magic_line = b'three is the magic number'
 
 
-# Utility functions used by many TestCases
+# Utility functions used by many tests
 def valid_textfile(filedir):
     # Generate and return a valid temporary file.
     fd, path = mkstemp(suffix='.txt', prefix='dstmp_', dir=filedir, text=True)
@@ -95,12 +95,12 @@ def invalid_httpfile():
     return http_fakefile
 
 
-class TestDataSourceOpen(TestCase):
-    def setUp(self):
+class TestDataSourceOpen(object):
+    def setup(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -111,7 +111,7 @@ class TestDataSourceOpen(TestCase):
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
-        self.assertRaises(IOError, self.ds.open, url)
+        assert_raises(IOError, self.ds.open, url)
         try:
             self.ds.open(url)
         except IOError as e:
@@ -119,7 +119,7 @@ class TestDataSourceOpen(TestCase):
             assert_(e.errno is None)
 
     def test_InvalidHTTPCacheURLError(self):
-        self.assertRaises(URLError, self.ds._cache, invalid_httpurl())
+        assert_raises(URLError, self.ds._cache, invalid_httpurl())
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
@@ -129,7 +129,7 @@ class TestDataSourceOpen(TestCase):
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
-        self.assertRaises(IOError, self.ds.open, invalid_file)
+        assert_raises(IOError, self.ds.open, invalid_file)
 
     def test_ValidGzipFile(self):
         try:
@@ -145,7 +145,7 @@ class TestDataSourceOpen(TestCase):
         fp = self.ds.open(filepath)
         result = fp.readline()
         fp.close()
-        self.assertEqual(magic_line, result)
+        assert_equal(magic_line, result)
 
     def test_ValidBz2File(self):
         try:
@@ -161,15 +161,15 @@ class TestDataSourceOpen(TestCase):
         fp = self.ds.open(filepath)
         result = fp.readline()
         fp.close()
-        self.assertEqual(magic_line, result)
+        assert_equal(magic_line, result)
 
 
-class TestDataSourceExists(TestCase):
-    def setUp(self):
+class TestDataSourceExists(object):
+    def setup(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -177,7 +177,7 @@ class TestDataSourceExists(TestCase):
         assert_(self.ds.exists(valid_httpurl()))
 
     def test_InvalidHTTP(self):
-        self.assertEqual(self.ds.exists(invalid_httpurl()), False)
+        assert_equal(self.ds.exists(invalid_httpurl()), False)
 
     def test_ValidFile(self):
         # Test valid file in destpath
@@ -191,15 +191,15 @@ class TestDataSourceExists(TestCase):
 
     def test_InvalidFile(self):
         tmpfile = invalid_textfile(self.tmpdir)
-        self.assertEqual(self.ds.exists(tmpfile), False)
+        assert_equal(self.ds.exists(tmpfile), False)
 
 
-class TestDataSourceAbspath(TestCase):
-    def setUp(self):
+class TestDataSourceAbspath(object):
+    def setup(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -207,30 +207,30 @@ class TestDataSourceAbspath(TestCase):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
         local_path = os.path.join(self.tmpdir, netloc,
                                   upath.strip(os.sep).strip('/'))
-        self.assertEqual(local_path, self.ds.abspath(valid_httpurl()))
+        assert_equal(local_path, self.ds.abspath(valid_httpurl()))
 
     def test_ValidFile(self):
         tmpfile = valid_textfile(self.tmpdir)
         tmpfilename = os.path.split(tmpfile)[-1]
         # Test with filename only
-        self.assertEqual(tmpfile, self.ds.abspath(tmpfilename))
+        assert_equal(tmpfile, self.ds.abspath(tmpfilename))
         # Test filename with complete path
-        self.assertEqual(tmpfile, self.ds.abspath(tmpfile))
+        assert_equal(tmpfile, self.ds.abspath(tmpfile))
 
     def test_InvalidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(invalid_httpurl())
         invalidhttp = os.path.join(self.tmpdir, netloc,
                                    upath.strip(os.sep).strip('/'))
-        self.assertNotEqual(invalidhttp, self.ds.abspath(valid_httpurl()))
+        assert_(invalidhttp != self.ds.abspath(valid_httpurl()))
 
     def test_InvalidFile(self):
         invalidfile = valid_textfile(self.tmpdir)
         tmpfile = valid_textfile(self.tmpdir)
         tmpfilename = os.path.split(tmpfile)[-1]
         # Test with filename only
-        self.assertNotEqual(invalidfile, self.ds.abspath(tmpfilename))
+        assert_(invalidfile != self.ds.abspath(tmpfilename))
         # Test filename with complete path
-        self.assertNotEqual(invalidfile, self.ds.abspath(tmpfile))
+        assert_(invalidfile != self.ds.abspath(tmpfile))
 
     def test_sandboxing(self):
         tmpfile = valid_textfile(self.tmpdir)
@@ -259,12 +259,12 @@ class TestDataSourceAbspath(TestCase):
             os.sep = orig_os_sep
 
 
-class TestRepositoryAbspath(TestCase):
-    def setUp(self):
+class TestRepositoryAbspath(object):
+    def setup(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -273,7 +273,7 @@ class TestRepositoryAbspath(TestCase):
         local_path = os.path.join(self.repos._destpath, netloc,
                                   upath.strip(os.sep).strip('/'))
         filepath = self.repos.abspath(valid_httpfile())
-        self.assertEqual(local_path, filepath)
+        assert_equal(local_path, filepath)
 
     def test_sandboxing(self):
         tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
@@ -292,12 +292,12 @@ class TestRepositoryAbspath(TestCase):
             os.sep = orig_os_sep
 
 
-class TestRepositoryExists(TestCase):
-    def setUp(self):
+class TestRepositoryExists(object):
+    def setup(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -308,7 +308,7 @@ class TestRepositoryExists(TestCase):
 
     def test_InvalidFile(self):
         tmpfile = invalid_textfile(self.tmpdir)
-        self.assertEqual(self.repos.exists(tmpfile), False)
+        assert_equal(self.repos.exists(tmpfile), False)
 
     def test_RemoveHTTPFile(self):
         assert_(self.repos.exists(valid_httpurl()))
@@ -325,11 +325,11 @@ class TestRepositoryExists(TestCase):
         assert_(self.repos.exists(tmpfile))
 
 
-class TestOpenFunc(TestCase):
-    def setUp(self):
+class TestOpenFunc(object):
+    def setup(self):
         self.tmpdir = mkdtemp()
 
-    def tearDown(self):
+    def teardown(self):
         rmtree(self.tmpdir)
 
     def test_DataSourceOpen(self):

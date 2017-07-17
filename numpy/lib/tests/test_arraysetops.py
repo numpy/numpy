@@ -5,14 +5,14 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_array_equal, assert_equal, assert_raises
+    run_module_suite, assert_array_equal, assert_equal, assert_raises,
     )
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
 
 
-class TestSetOps(TestCase):
+class TestSetOps(object):
 
     def test_intersect1d(self):
         # unique inputs
@@ -89,28 +89,28 @@ class TestSetOps(TestCase):
             x = isin(a, b)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
-            
+
         #multidimensional arrays in both arguments
         a = np.arange(24).reshape([2, 3, 4])
         b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
         assert_isin_equal(a, b)
-        
+
         #array-likes as both arguments
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
-        
+
         #zero-d array:
         f = np.array(3)
         assert_isin_equal(f, b)
         assert_isin_equal(a, f)
         assert_isin_equal(f, f)
-        
+
         #scalar:
         assert_isin_equal(5, b)
         assert_isin_equal(a, 6)
         assert_isin_equal(5, 6)
-        
+
         #empty array-like:
         x = []
         assert_isin_equal(x, b)
@@ -252,7 +252,7 @@ class TestSetOps(TestCase):
         assert_array_equal(c1, c2)
 
 
-class TestUnique(TestCase):
+class TestUnique(object):
 
     def test_unique_1d(self):
 

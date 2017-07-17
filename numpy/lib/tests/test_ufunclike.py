@@ -4,12 +4,11 @@ import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_warns
+    run_module_suite, assert_, assert_equal, assert_array_equal, assert_warns
     )
 
 
-class TestUfunclike(TestCase):
+class TestUfunclike(object):
 
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
