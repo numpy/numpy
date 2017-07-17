@@ -2563,7 +2563,8 @@ def _arraymethod(funcname, onmask=True):
         if not onmask:
             result.__setmask__(mask)
         elif mask is not nomask:
-            result.__setmask__(getattr(mask, funcname)(*args, **params))
+            # __setmask__ makes a copy, which we don't want
+            result._mask = getattr(mask, funcname)(*args, **params)
         return result
     methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
     if methdoc is not None:
