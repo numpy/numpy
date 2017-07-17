@@ -4409,8 +4409,6 @@ class MaskedArray(ndarray):
 
         return (~m).sum(axis=axis, dtype=np.intp, **kwargs)
 
-    flatten = _arraymethod('flatten')
-
     def ravel(self, order='C'):
         """
         Returns a 1D version of self, as a view.
@@ -4455,8 +4453,6 @@ class MaskedArray(ndarray):
         else:
             r._mask = nomask
         return r
-
-    repeat = _arraymethod('repeat')
 
 
     def reshape(self, *s, **kwargs):
@@ -5744,14 +5740,15 @@ class MaskedArray(ndarray):
         return out[()]
 
     # Array methods
-    copy = _arraymethod('copy')
-    diagonal = _arraymethod('diagonal')
-    transpose = _arraymethod('transpose')
-    T = property(fget=lambda self: self.transpose())
-    swapaxes = _arraymethod('swapaxes')
     clip = _arraymethod('clip', onmask=False)
     copy = _arraymethod('copy')
+    diagonal = _arraymethod('diagonal')
+    flatten = _arraymethod('flatten')
+    repeat = _arraymethod('repeat')
     squeeze = _arraymethod('squeeze')
+    swapaxes = _arraymethod('swapaxes')
+    T = property(fget=lambda self: self.transpose())
+    transpose = _arraymethod('transpose')
 
     def tolist(self, fill_value=None):
         """
