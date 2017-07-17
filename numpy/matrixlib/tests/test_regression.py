@@ -1,11 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal, assert_raises
+    )
 
 rlevel = 1
 
-class TestRegression(TestCase):
+class TestRegression(object):
     def test_kron_matrix(self, level=rlevel):
         # Ticket #71
         x = np.matrix('[1 0; 1 0]')
@@ -25,13 +27,13 @@ class TestRegression(TestCase):
         def mul():
             np.mat(np.eye(2))*np.ones(2)
 
-        self.assertRaises(ValueError, mul)
+        assert_raises(ValueError, mul)
 
     def test_matrix_std_argmax(self,level=rlevel):
         # Ticket #83
         x = np.asmatrix(np.random.uniform(0, 1, (3, 3)))
-        self.assertEqual(x.std().shape, ())
-        self.assertEqual(x.argmax().shape, ())
+        assert_equal(x.std().shape, ())
+        assert_equal(x.argmax().shape, ())
 
 if __name__ == "__main__":
     run_module_suite()
