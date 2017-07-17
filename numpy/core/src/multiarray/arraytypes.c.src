@@ -2748,6 +2748,15 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
      * the alignment of pointers, so it doesn't need to be handled
      * here.
      */
+
+    int ret;
+    /*
+     * work around gh-3879, we cannot abort an in-progress quicksort
+     * so at least do not raise again
+     */
+    if (PyErr_Occurred()) {
+        return 0;
+    }
     if ((*ip1 == NULL) || (*ip2 == NULL)) {
         if (ip1 == ip2) {
             return 1;
@@ -2758,7 +2767,12 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
         return 1;
     }
 
-    if (PyObject_RichCompareBool(*ip1, *ip2, Py_LT) == 1) {
+    ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
+    if (ret < 0) {
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        return 0;
+    }
+    if (ret == 1) {
         return -1;
     }
     else if (PyObject_RichCompareBool(*ip1, *ip2, Py_GT) == 1) {
