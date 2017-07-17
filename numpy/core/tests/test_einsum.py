@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_raises, suppress_warnings
     )
 
@@ -14,7 +14,7 @@ for size, char in zip(sizes, chars):
     global_size_dict[char] = size
 
 
-class TestEinSum(TestCase):
+class TestEinSum(object):
     def test_einsum_errors(self):
         for do_opt in [True, False]:
             # Need enough arguments
@@ -777,7 +777,7 @@ class TestEinSum(TestCase):
         self.optimize_compare('aef,fbc,dca->bde')
 
 
-class TestEinSumPath(TestCase):
+class TestEinSumPath(object):
     def build_operands(self, string):
 
         # Builds views based off initial operands

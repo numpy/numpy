@@ -10,7 +10,7 @@ import numpy.core.umath as ncu
 from numpy.core import umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
     suppress_warnings, _gen_alignment_data,
@@ -31,7 +31,7 @@ class _FilterInvalids(object):
         np.seterr(**self.olderr)
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
     def test_pi(self):
         assert_allclose(ncu.pi, 3.141592653589793, 1e-15)
 
@@ -42,7 +42,7 @@ class TestConstants(TestCase):
         assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
 
 
-class TestOut(TestCase):
+class TestOut(object):
     def test_out_subok(self):
         for subok in (True, False):
             a = np.array(0.5)
@@ -175,7 +175,7 @@ class TestOut(TestCase):
                 assert_(w[0].category is DeprecationWarning)
 
 
-class TestComparisons(TestCase):
+class TestComparisons(object):
     def test_ignore_object_identity_in_equal(self):
         # Check error raised when comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
@@ -213,7 +213,7 @@ class TestComparisons(TestCase):
         assert_equal(np.not_equal(a, a), [True])
 
 
-class TestDivision(TestCase):
+class TestDivision(object):
     def test_division_int(self):
         # int division should follow Python
         x = np.array([5, 10, 90, 100, -5, -10, -90, -100, -120])
@@ -274,7 +274,7 @@ def _signs(dt):
         return (+1, -1)
 
 
-class TestRemainder(TestCase):
+class TestRemainder(object):
 
     def test_remainder_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
@@ -365,7 +365,7 @@ class TestRemainder(TestCase):
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
 
 
-class TestCbrt(TestCase):
+class TestCbrt(object):
     def test_cbrt_scalar(self):
         assert_almost_equal((np.cbrt(np.float32(-2.5)**3)), -2.5)
 
@@ -378,7 +378,7 @@ class TestCbrt(TestCase):
         assert_equal(np.cbrt(-np.inf), -np.inf)
 
 
-class TestPower(TestCase):
+class TestPower(object):
     def test_power_float(self):
         x = np.array([1., 2., 3.])
         assert_equal(x**0, [1., 1., 1.])
@@ -517,7 +517,7 @@ class TestPower(TestCase):
             assert_raises(ValueError, np.power, one, minusone)
 
 
-class TestFloat_power(TestCase):
+class TestFloat_power(object):
     def test_type_conversion(self):
         arg_type = '?bhilBHILefdgFDG'
         res_type = 'ddddddddddddgDDG'
@@ -528,7 +528,7 @@ class TestFloat_power(TestCase):
             assert_(res.dtype.name == np.dtype(dtout).name, msg)
 
 
-class TestLog2(TestCase):
+class TestLog2(object):
     def test_log2_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -559,7 +559,7 @@ class TestLog2(TestCase):
             assert_(w[2].category is RuntimeWarning)
 
 
-class TestExp2(TestCase):
+class TestExp2(object):
     def test_exp2_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -611,7 +611,7 @@ class TestLogAddExp2(_FilterInvalids):
         assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
 
 
-class TestLog(TestCase):
+class TestLog(object):
     def test_log_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -622,7 +622,7 @@ class TestLog(TestCase):
             assert_almost_equal(np.log(xf), yf)
 
 
-class TestExp(TestCase):
+class TestExp(object):
     def test_exp_values(self):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -674,7 +674,7 @@ class TestLogAddExp(_FilterInvalids):
         assert_(np.isnan(np.logaddexp(np.nan, np.nan)))
 
 
-class TestLog1p(TestCase):
+class TestLog1p(object):
     def test_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
@@ -688,7 +688,7 @@ class TestLog1p(TestCase):
             assert_equal(ncu.log1p(-np.inf), np.nan)
 
 
-class TestExpm1(TestCase):
+class TestExpm1(object):
     def test_expm1(self):
         assert_almost_equal(ncu.expm1(0.2), ncu.exp(0.2)-1)
         assert_almost_equal(ncu.expm1(1e-6), ncu.exp(1e-6)-1)
@@ -701,7 +701,7 @@ class TestExpm1(TestCase):
         assert_equal(ncu.expm1(-np.inf), -1.)
 
 
-class TestHypot(TestCase, object):
+class TestHypot(object):
     def test_simple(self):
         assert_almost_equal(ncu.hypot(1, 1), ncu.sqrt(2))
         assert_almost_equal(ncu.hypot(0, 0), 0)
@@ -725,7 +725,7 @@ def assert_hypot_isinf(x, y):
                 "hypot(%s, %s) is %s, not inf" % (x, y, ncu.hypot(x, y)))
 
 
-class TestHypotSpecialValues(TestCase):
+class TestHypotSpecialValues(object):
     def test_nan_outputs(self):
         assert_hypot_isnan(np.nan, np.nan)
         assert_hypot_isnan(np.nan, 1)
@@ -762,7 +762,7 @@ def assert_arctan2_isnzero(x, y):
     assert_((ncu.arctan2(x, y) == 0 and np.signbit(ncu.arctan2(x, y))), "arctan(%s, %s) is %s, not -0" % (x, y, ncu.arctan2(x, y)))
 
 
-class TestArctan2SpecialValues(TestCase):
+class TestArctan2SpecialValues(object):
     def test_one_one(self):
         # atan2(1, 1) returns pi/4.
         assert_almost_equal(ncu.arctan2(1, 1), 0.25 * np.pi)
@@ -831,7 +831,7 @@ class TestArctan2SpecialValues(TestCase):
         assert_arctan2_isnan(np.nan, np.nan)
 
 
-class TestLdexp(TestCase):
+class TestLdexp(object):
     def _check_ldexp(self, tp):
         assert_almost_equal(ncu.ldexp(np.array(2., np.float32),
                                       np.array(3, tp)), 16.)
@@ -1059,7 +1059,7 @@ class TestFmin(_FilterInvalids):
             assert_equal(np.fmin(arg1, arg2), out)
 
 
-class TestBool(TestCase):
+class TestBool(object):
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool_)
         assert_raises(TypeError, np.negative, a)
@@ -1122,7 +1122,7 @@ class TestBool(TestCase):
             assert_equal(np.logical_xor.reduce(arr), arr.sum() % 2 == 1)
 
 
-class TestBitwiseUFuncs(TestCase):
+class TestBitwiseUFuncs(object):
 
     bitwise_types = [np.dtype(c) for c in '?' + 'bBhHiIlLqQ' + 'O']
 
@@ -1207,7 +1207,7 @@ class TestBitwiseUFuncs(TestCase):
             assert_(type(f.reduce(btype)) is bool, msg)
 
 
-class TestInt(TestCase):
+class TestInt(object):
     def test_logical_not(self):
         x = np.ones(10, dtype=np.int16)
         o = np.ones(10 * 2, dtype=np.bool)
@@ -1218,24 +1218,24 @@ class TestInt(TestCase):
         assert_array_equal(o, tgt)
 
 
-class TestFloatingPoint(TestCase):
+class TestFloatingPoint(object):
     def test_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
 
 
-class TestDegrees(TestCase):
+class TestDegrees(object):
     def test_degrees(self):
         assert_almost_equal(ncu.degrees(np.pi), 180.0)
         assert_almost_equal(ncu.degrees(-0.5*np.pi), -90.0)
 
 
-class TestRadians(TestCase):
+class TestRadians(object):
     def test_radians(self):
         assert_almost_equal(ncu.radians(180.0), np.pi)
         assert_almost_equal(ncu.radians(-90.0), -0.5*np.pi)
 
 
-class TestHeavside(TestCase):
+class TestHeavside(object):
     def test_heaviside(self):
         x = np.array([[-30.0, -0.1, 0.0, 0.2], [7.5, np.nan, np.inf, -np.inf]])
         expectedhalf = np.array([[0.0, 0.0, 0.5, 1.0], [1.0, np.nan, 1.0, 0.0]])
@@ -1257,7 +1257,7 @@ class TestHeavside(TestCase):
         assert_equal(h, expected1.astype(np.float32))
 
 
-class TestSign(TestCase):
+class TestSign(object):
     def test_sign(self):
         a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])
         out = np.zeros(a.shape)
@@ -1287,7 +1287,7 @@ class TestSign(TestCase):
 
         assert_raises(TypeError, test_nan)
 
-class TestMinMax(TestCase):
+class TestMinMax(object):
     def test_minmax_blocked(self):
         # simd tests on max/min, test all alignments, slow but important
         # for 2 * vz + 2 * (vs - 1) + 1 (unrolled once)
@@ -1314,7 +1314,7 @@ class TestMinMax(TestCase):
         assert_equal(d.min(), d[0])
 
 
-class TestAbsoluteNegative(TestCase):
+class TestAbsoluteNegative(object):
     def test_abs_neg_blocked(self):
         # simd tests on abs, test all alignments for vz + 2 * (vs - 1) + 1
         for dt, sz in [(np.float32, 11), (np.float64, 5)]:
@@ -1323,7 +1323,7 @@ class TestAbsoluteNegative(TestCase):
                 tgt = [ncu.absolute(i) for i in inp]
                 np.absolute(inp, out=out)
                 assert_equal(out, tgt, err_msg=msg)
-                self.assertTrue((out >= 0).all())
+                assert_((out >= 0).all())
 
                 tgt = [-1*(i) for i in inp]
                 np.negative(inp, out=out)
@@ -1356,7 +1356,7 @@ class TestAbsoluteNegative(TestCase):
         np.abs(np.ones_like(d), out=d)
 
 
-class TestPositive(TestCase):
+class TestPositive(object):
     def test_valid(self):
         valid_dtypes = [int, float, complex, object]
         for dtype in valid_dtypes:
@@ -1375,7 +1375,7 @@ class TestPositive(TestCase):
             np.positive(np.array(['bar'], dtype=object))
 
 
-class TestSpecialMethods(TestCase):
+class TestSpecialMethods(object):
     def test_wrap(self):
 
         class with_wrap(object):
@@ -1392,11 +1392,11 @@ class TestSpecialMethods(TestCase):
         x = ncu.minimum(a, a)
         assert_equal(x.arr, np.zeros(1))
         func, args, i = x.context
-        self.assertTrue(func is ncu.minimum)
-        self.assertEqual(len(args), 2)
+        assert_(func is ncu.minimum)
+        assert_equal(len(args), 2)
         assert_equal(args[0], a)
         assert_equal(args[1], a)
-        self.assertEqual(i, 0)
+        assert_equal(i, 0)
 
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
@@ -1412,7 +1412,7 @@ class TestSpecialMethods(TestCase):
 
         a = with_wrap()
         x = ncu.multiply(a, (1, 2, 3))
-        self.assertTrue(isinstance(x, with_wrap))
+        assert_(isinstance(x, with_wrap))
         assert_array_equal(x, np.array((1, 2, 3)))
 
     def test_priority_with_scalar(self):
@@ -1426,7 +1426,7 @@ class TestSpecialMethods(TestCase):
 
         a = A()
         x = np.float64(1)*a
-        self.assertTrue(isinstance(x, A))
+        assert_(isinstance(x, A))
         assert_array_equal(x, np.array(1))
 
     def test_old_wrap(self):
@@ -1467,25 +1467,25 @@ class TestSpecialMethods(TestCase):
         b = B()
         c = C()
         f = ncu.minimum
-        self.assertTrue(type(f(x, x)) is np.ndarray)
-        self.assertTrue(type(f(x, a)) is A)
-        self.assertTrue(type(f(x, b)) is B)
-        self.assertTrue(type(f(x, c)) is C)
-        self.assertTrue(type(f(a, x)) is A)
-        self.assertTrue(type(f(b, x)) is B)
-        self.assertTrue(type(f(c, x)) is C)
+        assert_(type(f(x, x)) is np.ndarray)
+        assert_(type(f(x, a)) is A)
+        assert_(type(f(x, b)) is B)
+        assert_(type(f(x, c)) is C)
+        assert_(type(f(a, x)) is A)
+        assert_(type(f(b, x)) is B)
+        assert_(type(f(c, x)) is C)
 
-        self.assertTrue(type(f(a, a)) is A)
-        self.assertTrue(type(f(a, b)) is B)
-        self.assertTrue(type(f(b, a)) is B)
-        self.assertTrue(type(f(b, b)) is B)
-        self.assertTrue(type(f(b, c)) is C)
-        self.assertTrue(type(f(c, b)) is C)
-        self.assertTrue(type(f(c, c)) is C)
+        assert_(type(f(a, a)) is A)
+        assert_(type(f(a, b)) is B)
+        assert_(type(f(b, a)) is B)
+        assert_(type(f(b, b)) is B)
+        assert_(type(f(b, c)) is C)
+        assert_(type(f(c, b)) is C)
+        assert_(type(f(c, c)) is C)
 
-        self.assertTrue(type(ncu.exp(a) is A))
-        self.assertTrue(type(ncu.exp(b) is B))
-        self.assertTrue(type(ncu.exp(c) is C))
+        assert_(type(ncu.exp(a) is A))
+        assert_(type(ncu.exp(b) is B))
+        assert_(type(ncu.exp(c) is C))
 
     def test_failing_wrap(self):
 
@@ -1497,7 +1497,7 @@ class TestSpecialMethods(TestCase):
                 raise RuntimeError
 
         a = A()
-        self.assertRaises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum, a, a)
 
     def test_none_wrap(self):
         # Tests that issue #8507 is resolved. Previously, this would segfault
@@ -1568,7 +1568,7 @@ class TestSpecialMethods(TestCase):
                 raise RuntimeError
 
         a = A()
-        self.assertRaises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum, a, a)
 
     def test_array_with_context(self):
 
@@ -1590,10 +1590,10 @@ class TestSpecialMethods(TestCase):
 
         a = A()
         ncu.maximum(np.zeros(1), a)
-        self.assertTrue(a.func is ncu.maximum)
+        assert_(a.func is ncu.maximum)
         assert_equal(a.args[0], 0)
-        self.assertTrue(a.args[1] is a)
-        self.assertTrue(a.i == 1)
+        assert_(a.args[1] is a)
+        assert_(a.i == 1)
         assert_equal(ncu.maximum(a, B()), 0)
         assert_equal(ncu.maximum(a, C()), 0)
 
@@ -2182,7 +2182,7 @@ class TestSpecialMethods(TestCase):
         assert_(a.info, {'inputs': [0, 2]})
 
 
-class TestChoose(TestCase):
+class TestChoose(object):
     def test_mixed(self):
         c = np.array([True, True])
         a = np.array([True, True])
@@ -2383,12 +2383,12 @@ class TestComplexFunctions(object):
         self.check_loss_of_precision(np.longcomplex)
 
 
-class TestAttributes(TestCase):
+class TestAttributes(object):
     def test_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')
-        self.assertTrue(add.ntypes >= 18)  # don't fail if types added
-        self.assertTrue('ii->i' in add.types)
+        assert_(add.ntypes >= 18)  # don't fail if types added
+        assert_('ii->i' in add.types)
         assert_equal(add.nin, 2)
         assert_equal(add.nout, 1)
         assert_equal(add.identity, 0)
@@ -2402,7 +2402,7 @@ class TestAttributes(TestCase):
             "frexp(x[, out1, out2], / [, out=(None, None)], *, where=True"))
 
 
-class TestSubclass(TestCase):
+class TestSubclass(object):
 
     def test_subclass_op(self):
 

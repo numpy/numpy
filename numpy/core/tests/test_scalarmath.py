@@ -7,7 +7,7 @@ import operator
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
     suppress_warnings, dec, _gen_alignment_data,
 )
@@ -22,7 +22,7 @@ floating_types = np.floating.__subclasses__()
 
 # This compares scalarmath against ufuncs.
 
-class TestTypes(TestCase):
+class TestTypes(object):
     def test_types(self, level=1):
         for atype in types:
             a = atype(1)
@@ -61,7 +61,7 @@ class TestTypes(TestCase):
             np.add(1, 1)
 
 
-class TestBaseMath(TestCase):
+class TestBaseMath(object):
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -107,7 +107,7 @@ class TestBaseMath(TestCase):
         np.add(d, np.ones_like(d))
 
 
-class TestPower(TestCase):
+class TestPower(object):
     def test_small_types(self):
         for t in [np.int8, np.int16, np.float16]:
             a = t(3)
@@ -199,7 +199,7 @@ def _signs(dt):
         return (+1, -1)
 
 
-class TestModulus(TestCase):
+class TestModulus(object):
 
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
@@ -291,7 +291,7 @@ class TestModulus(TestCase):
                 assert_(np.isnan(rem), 'dt: %s' % dt)
 
 
-class TestComplexDivision(TestCase):
+class TestComplexDivision(object):
     def test_zero_division(self):
         with np.errstate(all="ignore"):
             for t in [np.complex64, np.complex128]:
@@ -363,7 +363,7 @@ class TestComplexDivision(TestCase):
                     assert_equal(result.imag, ex[1])
 
 
-class TestConversion(TestCase):
+class TestConversion(object):
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
@@ -405,7 +405,7 @@ class TestConversion(TestCase):
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
 
     @dec.knownfailureif(not IS_PYPY)
     def test_clongdouble___int__(self):
@@ -480,7 +480,7 @@ class TestConversion(TestCase):
         assert_(np.equal(np.datetime64('NaT'), None))
 
 
-#class TestRepr(TestCase):
+#class TestRepr(object):
 #    def test_repr(self):
 #        for t in types:
 #            val = t(1197346475.0137341)
@@ -524,7 +524,7 @@ class TestRepr(object):
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf(TestCase):
+    class TestSizeOf(object):
 
         def test_equal_nbytes(self):
             for type in types:
@@ -536,7 +536,7 @@ if not IS_PYPY:
             assert_raises(TypeError, d.__sizeof__, "a")
 
 
-class TestMultiply(TestCase):
+class TestMultiply(object):
     def test_seq_repeat(self):
         # Test that basic sequences get repeated when multiplied with
         # numpy integers. And errors are raised when multiplied with others.
@@ -574,7 +574,7 @@ class TestMultiply(TestCase):
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
-class TestNegative(TestCase):
+class TestNegative(object):
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.neg, a)
@@ -588,7 +588,7 @@ class TestNegative(TestCase):
                 assert_equal(operator.neg(a) + a, 0)
 
 
-class TestSubtract(TestCase):
+class TestSubtract(object):
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.sub, a, a)
@@ -602,7 +602,7 @@ class TestSubtract(TestCase):
                 assert_equal(operator.sub(a, a), 0)
 
 
-class TestAbs(TestCase):
+class TestAbs(object):
 
     def _test_abs_func(self, absfunc):
         for tp in floating_types:

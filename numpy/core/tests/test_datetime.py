@@ -6,7 +6,7 @@ import numpy
 import numpy as np
 import datetime
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_warns, dec, suppress_warnings
 )
 
@@ -18,7 +18,7 @@ except ImportError:
     _has_pytz = False
 
 
-class TestDateTime(TestCase):
+class TestDateTime(object):
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
@@ -1131,7 +1131,7 @@ class TestDateTime(TestCase):
             assert_(np.not_equal(dt_other, dt_nat))
             assert_(np.not_equal(td_nat, td_other))
             assert_(np.not_equal(td_other, td_nat))
-            self.assertEqual(len(sup.log), 0)
+            assert_equal(len(sup.log), 0)
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
@@ -1227,10 +1227,10 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_fs(self):
         assert_(np.dtype('M8[fs/100]') == np.dtype('M8[10as]'))
-        self.assertRaises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
+        assert_raises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
 
     def test_divisor_conversion_as(self):
-        self.assertRaises(ValueError, lambda: np.dtype('M8[as/10]'))
+        assert_raises(ValueError, lambda: np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
         # Allow space instead of 'T' between date and time
@@ -1947,7 +1947,7 @@ class TestDateTime(TestCase):
             assert_raises(ValueError, np.isnat, np.zeros(10, t))
 
 
-class TestDateTimeData(TestCase):
+class TestDateTimeData(object):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)

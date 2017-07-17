@@ -9,7 +9,7 @@ import numpy as np
 from numpy.core.multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_warns, HAS_REFCOUNT
 )
 
@@ -28,7 +28,7 @@ except ImportError:
     _HAS_CTYPE = False
 
 
-class TestIndexing(TestCase):
+class TestIndexing(object):
     def test_index_no_floats(self):
         a = np.array([[[5]]])
 
@@ -511,7 +511,7 @@ class TestIndexing(TestCase):
         arr[slices] = 10
         assert_array_equal(arr, 10.)
 
-class TestFieldIndexing(TestCase):
+class TestFieldIndexing(object):
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
         # is 0-d.
@@ -520,7 +520,7 @@ class TestFieldIndexing(TestCase):
         assert_(isinstance(a[['a']], np.ndarray))
 
 
-class TestBroadcastedAssignments(TestCase):
+class TestBroadcastedAssignments(object):
     def assign(self, a, ind, val):
         a[ind] = val
         return a
@@ -571,7 +571,7 @@ class TestBroadcastedAssignments(TestCase):
         assert_((a[::-1] == v).all())
 
 
-class TestSubclasses(TestCase):
+class TestSubclasses(object):
     def test_basic(self):
         class SubClass(np.ndarray):
             pass
@@ -616,7 +616,7 @@ class TestSubclasses(TestCase):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-class TestFancyIndexingCast(TestCase):
+class TestFancyIndexingCast(object):
     def test_boolean_index_cast_assign(self):
         # Setup the boolean index and float arrays.
         shape = (8, 63)
@@ -638,7 +638,7 @@ class TestFancyIndexingCast(TestCase):
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
-class TestFancyIndexingEquivalence(TestCase):
+class TestFancyIndexingEquivalence(object):
     def test_object_assign(self):
         # Check that the field and object special case using copyto is active.
         # The right hand side cannot be converted to an array here.
@@ -686,7 +686,7 @@ class TestFancyIndexingEquivalence(TestCase):
         assert_array_equal(a, b[0])
 
 
-class TestMultiIndexingAutomated(TestCase):
+class TestMultiIndexingAutomated(object):
     """
     These tests use code to mimic the C-Code indexing for selection.
 
@@ -708,7 +708,7 @@ class TestMultiIndexingAutomated(TestCase):
 
     """
 
-    def setUp(self):
+    def setup(self):
         self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
         self.b = np.empty((3, 0, 5, 6))
         self.complex_indices = ['skip', Ellipsis,
@@ -1103,7 +1103,7 @@ class TestMultiIndexingAutomated(TestCase):
             for index in self.complex_indices:
                 self._check_single_index(a, index)
 
-class TestFloatNonIntegerArgument(TestCase):
+class TestFloatNonIntegerArgument(object):
     """
     These test that ``TypeError`` is raised when you try to use
     non-integers as arguments to for indexing and slicing e.g. ``a[0.0:5]``
@@ -1158,7 +1158,7 @@ class TestFloatNonIntegerArgument(TestCase):
         assert_raises(TypeError, np.min, d, (.2, 1.2))
 
 
-class TestBooleanIndexing(TestCase):
+class TestBooleanIndexing(object):
     # Using a boolean as integer argument/indexing is an error.
     def test_bool_as_int_argument_errors(self):
         a = np.array([[[1]]])
@@ -1178,7 +1178,7 @@ class TestBooleanIndexing(TestCase):
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
 
 
-class TestArrayToIndexDeprecation(TestCase):
+class TestArrayToIndexDeprecation(object):
     """Creating an an index from array not 0-D is an error.
 
     """
@@ -1191,7 +1191,7 @@ class TestArrayToIndexDeprecation(TestCase):
         assert_raises(TypeError, np.take, a, [0], a)
 
 
-class TestNonIntegerArrayLike(TestCase):
+class TestNonIntegerArrayLike(object):
     """Tests that array_likes only valid if can safely cast to integer.
 
     For instance, lists give IndexError when they cannot be safely cast to
@@ -1208,7 +1208,7 @@ class TestNonIntegerArrayLike(TestCase):
         a.__getitem__([])
 
 
-class TestMultipleEllipsisError(TestCase):
+class TestMultipleEllipsisError(object):
     """An index can only have a single ellipsis.
 
     """
@@ -1219,7 +1219,7 @@ class TestMultipleEllipsisError(TestCase):
         assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
-class TestCApiAccess(TestCase):
+class TestCApiAccess(object):
     def test_getitem(self):
         subscript = functools.partial(array_indexing, 0)
 

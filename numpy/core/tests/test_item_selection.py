@@ -4,12 +4,12 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_raises,
+    run_module_suite, assert_, assert_raises,
     assert_array_equal, HAS_REFCOUNT
 )
 
 
-class TestTake(TestCase):
+class TestTake(object):
     def test_simple(self):
         a = [[1, 2], [3, 4]]
         a_str = [[b'1', b'2'], [b'3', b'4']]
