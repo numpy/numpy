@@ -94,6 +94,14 @@ This is for pytest compatibility in the case of duplicate test file names in
 the different directories. As a result, ``run_module_suite`` no longer works,
 i.e., ``python <path-to-test-file>`` results in an error.
 
+``MaskedArray.squeeze`` never returns ``np.ma.masked``
+------------------------------------------------------
+``np.squeeze`` is documented as returning a view, but the masked variant would
+sometimes return ``masked``, which is not a view. This has been fixed, so that
+the result is always a view on the original masked array.
+This breaks any code that used ``masked_arr.squeeze() is np.ma.masked``, but
+fixes code that writes to the result of `.squeeze()`.
+
 
 C API changes
 =============

@@ -445,6 +445,12 @@ class TestMaskedArray(object):
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
+    def test_copy_0d(self):
+        # gh-9430
+        x = np.ma.array(43, mask=True)
+        xc = x.copy()
+        assert_equal(xc.mask, True)
+
     def test_copy_on_python_builtins(self):
         # Tests copy works on python builtins (issue#8019)
         assert_(isMaskedArray(np.ma.copy([1,2,3])))
@@ -3185,8 +3191,23 @@ class TestMaskedArrayMethods(object):
         data = masked_array([[1, 2, 3]], mask=[[1, 1, 1]])
         assert_equal(data.squeeze(), [1, 2, 3])
         assert_equal(data.squeeze()._mask, [1, 1, 1])
-        data = masked_array([[1]], mask=True)
-        assert_(data.squeeze() is masked)
+
+        # normal ndarrays return a view
+        arr = np.array([[1]])
+        arr_sq = arr.squeeze()
+        assert_equal(arr_sq, 1)
+        arr_sq[...] = 2
+        assert_equal(arr[0,0], 2)
+
+        # so maskedarrays should too
+        m_arr = masked_array([[1]], mask=True)
+        m_arr_sq = m_arr.squeeze()
+        assert_(m_arr_sq is not np.ma.masked)
+        assert_equal(m_arr_sq.mask, True)
+        m_arr_sq[...] = 2
+        # TODO: mask isn't copied to/from views yet in maskedarray, so we can
+        #       only check the data
+        assert_equal(m_arr.data[0,0], 2)
 
     def test_swapaxes(self):
         # Tests swapaxes on MaskedArrays.
@@ -3368,6 +3389,12 @@ class TestMaskedArrayMethods(object):
         assert_equal(marray.transpose(), control)
 
         assert_equal(MaskedArray.cumsum(marray.T, 0), control.cumsum(0))
+
+    def test_arraymethod_0d(self):
+        # gh-9430
+        x = np.ma.array(42, mask=True)
+        assert_equal(x.T.mask, x.mask)
+        assert_equal(x.T.data, x.data)
 
 
 class TestMaskedArrayMathMethods(object):
