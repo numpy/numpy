@@ -3,10 +3,10 @@ from __future__ import division, absolute_import, print_function
 import platform
 
 import numpy as np
-from numpy.testing import TestCase, assert_, run_module_suite, dec
+from numpy.testing import assert_, run_module_suite, dec
 
 
-class TestErrstate(TestCase):
+class TestErrstate(object):
     @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_invalid(self):
         with np.errstate(all='raise', under='ignore'):

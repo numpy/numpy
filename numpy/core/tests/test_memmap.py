@@ -12,12 +12,12 @@ from numpy.compat import Path
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     dec, suppress_warnings
 )
 
-class TestMemmap(TestCase):
-    def setUp(self):
+class TestMemmap(object):
+    def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.tempdir = mkdtemp()
         self.shape = (3, 4)
@@ -25,7 +25,7 @@ class TestMemmap(TestCase):
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
 
-    def tearDown(self):
+    def teardown(self):
         self.tmpfp.close()
         shutil.rmtree(self.tempdir)
 
@@ -41,7 +41,7 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
-        self.assertEqual(newfp.flags.writeable, False)
+        assert_equal(newfp.flags.writeable, False)
 
     def test_open_with_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
@@ -60,8 +60,8 @@ class TestMemmap(TestCase):
         mode = "w+"
         fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
                     shape=self.shape, offset=offset)
-        self.assertEqual(offset, fp.offset)
-        self.assertEqual(mode, fp.mode)
+        assert_equal(offset, fp.offset)
+        assert_equal(mode, fp.mode)
         del fp
 
     def test_filename(self):
@@ -70,9 +70,9 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)
         fp[:] = self.data[:]
-        self.assertEqual(abspath, fp.filename)
+        assert_equal(abspath, fp.filename)
         b = fp[:1]
-        self.assertEqual(abspath, b.filename)
+        assert_equal(abspath, b.filename)
         del b
         del fp
 
@@ -83,16 +83,16 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         abspath = os.path.realpath(os.path.abspath(tmpname))
         fp[:] = self.data[:]
-        self.assertEqual(abspath, str(fp.filename.resolve()))
+        assert_equal(abspath, str(fp.filename.resolve()))
         b = fp[:1]
-        self.assertEqual(abspath, str(b.filename.resolve()))
+        assert_equal(abspath, str(b.filename.resolve()))
         del b
         del fp
 
     def test_filename_fileobj(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
                     shape=self.shape)
-        self.assertEqual(fp.filename, self.tmpfp.name)
+        assert_equal(fp.filename, self.tmpfp.name)
 
     @dec.knownfailureif(sys.platform == 'gnu0', "This test is known to fail on hurd")
     def test_flush(self):

@@ -28,7 +28,7 @@ class _DeprecationTestCase(object):
     message = ''
     warning_cls = DeprecationWarning
 
-    def setUp(self):
+    def setup(self):
         self.warn_ctx = warnings.catch_warnings(record=True)
         self.log = self.warn_ctx.__enter__()
 
@@ -42,7 +42,7 @@ class _DeprecationTestCase(object):
         warnings.filterwarnings("always", message=self.message,
                                 category=self.warning_cls)
 
-    def tearDown(self):
+    def teardown(self):
         self.warn_ctx.__exit__()
 
     def assert_deprecated(self, function, num=1, ignore_others=False,
@@ -379,7 +379,7 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
-        test_case_instance.setUp()
+        test_case_instance.setup()
         assert_raises(AssertionError,
                       test_case_instance.assert_deprecated,
                       lambda: None)
@@ -388,7 +388,7 @@ class TestTestDeprecated(object):
             warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
-        test_case_instance.tearDown()
+        test_case_instance.teardown()
 
 
 class TestClassicIntDivision(_DeprecationTestCase):

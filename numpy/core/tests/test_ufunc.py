@@ -5,14 +5,14 @@ import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
 from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_no_warnings
 )
 
 import warnings
 
-class TestUfuncKwargs(TestCase):
+class TestUfuncKwargs(object):
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
         assert_raises(TypeError, np.add, 1, 2, dtypex=np.int)
@@ -34,7 +34,7 @@ class TestUfuncKwargs(TestCase):
                       dtype=np.int)
 
 
-class TestUfunc(TestCase):
+class TestUfunc(object):
     def test_pickle(self):
         import pickle
         assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
@@ -1189,7 +1189,7 @@ class TestUfunc(TestCase):
 
         # Test exception thrown
         values = np.array(['a', 1], dtype=np.object)
-        self.assertRaises(TypeError, np.add.at, values, [0, 1], 1)
+        assert_raises(TypeError, np.add.at, values, [0, 1], 1)
         assert_array_equal(values, np.array(['a', 1], dtype=np.object))
 
         # Test multiple output ufuncs raise error, gh-5665

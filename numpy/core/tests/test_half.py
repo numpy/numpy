@@ -4,8 +4,7 @@ import platform
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal, \
-    dec
+from numpy.testing import run_module_suite, assert_, assert_equal, dec
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -18,8 +17,8 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         assert_(False,
                 "Did not raise floating point %s error" % strmatch)
 
-class TestHalf(TestCase):
-    def setUp(self):
+class TestHalf(object):
+    def setup(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16

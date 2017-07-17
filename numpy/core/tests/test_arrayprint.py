@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     TestCase, run_module_suite, assert_, assert_equal
+     run_module_suite, assert_, assert_equal
 )
 
 class TestArrayRepr(object):
@@ -61,7 +61,7 @@ class TestArrayRepr(object):
             'array([list([1, 2]), list([3])], dtype=object)')
 
 
-class TestComplexArray(TestCase):
+class TestComplexArray(object):
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
         cvals = [complex(rp, ip) for rp in rvals for ip in rvals]
@@ -108,7 +108,7 @@ class TestComplexArray(TestCase):
         for res, val in zip(actual, wanted):
             assert_(res == val)
 
-class TestArray2String(TestCase):
+class TestArray2String(object):
     def test_basic(self):
         """Basic test of array2string."""
         a = np.arange(3)
@@ -183,13 +183,13 @@ class TestArray2String(TestCase):
         assert_equal(np.array2string(array_scalar), "( 1.,  2.12345679,  3.)")
 
 
-class TestPrintOptions:
+class TestPrintOptions(object):
     """Test getting and setting global print options."""
 
-    def setUp(self):
+    def setup(self):
         self.oldopts = np.get_printoptions()
 
-    def tearDown(self):
+    def teardown(self):
         np.set_printoptions(**self.oldopts)
 
     def test_basic(self):

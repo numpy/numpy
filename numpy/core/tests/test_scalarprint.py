@@ -5,10 +5,10 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, assert_, run_module_suite
+from numpy.testing import assert_, run_module_suite
 
 
-class TestRealScalars(TestCase):
+class TestRealScalars(object):
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
