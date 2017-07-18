@@ -139,6 +139,196 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
+NPY_NO_EXPORT NPY_INLINE void
+multi_DECREF(PyObject **objects, npy_intp n)
+{
+    npy_intp i;
+    for (i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
+/**
+ * Unpack a tuple into an array of new references. Returns the number of objects
+ * unpacked.
+ *
+ * Useful if a tuple is being iterated over multiple times, or for a code path
+ * that doesn't always want the overhead of allocating a tuple.
+ */
+NPY_NO_EXPORT NPY_INLINE npy_intp
+unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+{
+    npy_intp n, i;
+    n = PyTuple_GET_SIZE(index);
+    if (n > result_n) {
+        PyErr_SetString(PyExc_IndexError,
+                        "too many indices for array");
+        return -1;
+    }
+    for (i = 0; i < n; i++) {
+        result[i] = PyTuple_GET_ITEM(index, i);
+        Py_INCREF(result[i]);
+    }
+    return n;
+}
+
+/* Unpack a single scalar index, taking a new reference to match unpack_tuple */
+NPY_NO_EXPORT NPY_INLINE npy_intp
+unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
+{
+    Py_INCREF(index);
+    result[0] = index;
+    return 1;
+}
+
+/**
+ * Turn an index argument into a c-array of `PyObject *`s, one for each index.
+ *
+ * When a scalar is passed, this is written directly to the buffer. When a
+ * tuple is passed, the tuple elements are unpacked into the buffer.
+ *
+ * When some other sequence is passed, this implements the following section
+ * from the advanced indexing docs to decide whether to unpack or just write
+ * one element:
+ *
+ * > In order to remain backward compatible with a common usage in Numeric,
+ * > basic slicing is also initiated if the selection object is any non-ndarray
+ * > sequence (such as a list) containing slice objects, the Ellipsis object,
+ * > or the newaxis object, but not for integer arrays or other embedded
+ * > sequences.
+ *
+ * It might be worth deprecating this behaviour (gh-4434), in which case the
+ * entire function should become a simple check of PyTuple_Check.
+ *
+ * @param  index     The index object, which may or may not be a tuple. This is
+ *                   a borrowed reference.
+ * @param  result    An empty buffer of PyObject* to write each index component
+ *                   to. The references written are new.
+ * @param  result_n  The length of the result buffer
+ *
+ * @returns          The number of items in `result`, or -1 if an error occured.
+ *                   The entries in `result` at and beyond this index should be
+ *                   assumed to contain garbage, even if they were initialized
+ *                   to NULL, so are not safe to Py_XDECREF. Use multi_DECREF to
+ *                   dispose of them.
+ */
+NPY_NO_EXPORT npy_intp
+unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
+{
+    npy_intp n, i;
+    npy_bool commit_to_unpack;
+
+    /* Fast route for passing a tuple */
+    if (PyTuple_CheckExact(index)) {
+        return unpack_tuple((PyTupleObject *)index, result, result_n);
+    }
+
+    /* Obvious single-entry cases */
+    if (0  /* to aid macros below */
+#if !defined(NPY_PY3K)
+            || PyInt_CheckExact(index)
+#else
+            || PyLong_CheckExact(index)
+#endif
+            || index == Py_None
+            || PySlice_Check(index)
+            || PyArray_Check(index)
+            || !PySequence_Check(index)) {
+
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /*
+     * Passing a tuple subclass - coerce to the base type. This incurs an
+     * allocation, but doesn't need to be a fast path anyway
+     */
+    if (PyTuple_Check(index)) {
+        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
+        if (tup == NULL) {
+            return -1;
+        }
+        n = unpack_tuple(tup, result, result_n);
+        Py_DECREF(tup);
+        return n;
+    }
+
+    /*
+     * At this point, we're left with a non-tuple, non-array, sequence:
+     * typically, a list. We use some somewhat-arbitrary heuristics from here
+     * onwards to decided whether to treat that list as a single index, or a
+     * list of indices.
+     */
+
+    /* if len fails, treat like a scalar */
+    n = PySequence_Size(index);
+    if (n < 0) {
+        PyErr_Clear();
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /*
+     * Backwards compatibility only takes effect for short sequences - otherwise
+     * we treat it like any other scalar.
+     *
+     * Sequences < NPY_MAXDIMS with any slice objects
+     * or newaxis, Ellipsis or other arrays or sequences
+     * embedded, are considered equivalent to an indexing
+     * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
+     */
+    if (n >= NPY_MAXDIMS) {
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /* In case we change result_n elsewhere */
+    assert(n <= result_n);
+
+    /*
+     * Some other type of short sequence - assume we should unpack it like a
+     * tuple, and then decide whether that was actually necessary.
+     */
+    commit_to_unpack = 0;
+    for (i = 0; i < n; i++) {
+        PyObject *tmp_obj = result[i] = PySequence_GetItem(index, i);
+
+        if (commit_to_unpack) {
+            /* propagate errors */
+            if (tmp_obj == NULL) {
+                multi_DECREF(result, i);
+                return -1;
+            }
+        }
+        else {
+            /*
+             * if getitem fails (unusual) before we've committed, then stop
+             * unpacking
+             */
+            if (tmp_obj == NULL) {
+                PyErr_Clear();
+                break;
+            }
+
+            /* decide if we should treat this sequence like a tuple */
+            if (PyArray_Check(tmp_obj)
+                    || PySequence_Check(tmp_obj)
+                    || PySlice_Check(tmp_obj)
+                    || tmp_obj == Py_Ellipsis
+                    || tmp_obj == Py_None) {
+                commit_to_unpack = 1;
+            }
+        }
+    }
+
+    /* unpacking was the right thing to do, and we already did it */
+    if (commit_to_unpack) {
+        return n;
+    }
+    /* got to the end, never found an indication that we should have unpacked */
+    else {
+        /* we partially filled result, so empty it first */
+        multi_DECREF(result, i);
+        return unpack_scalar(index, result, result_n);
+    }
+}
 
 /**
  * Prepare an npy_index_object from the python slicing object.
@@ -174,7 +364,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int i;
     npy_intp n;
 
-    npy_bool make_tuple = 0;
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
@@ -182,81 +371,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int ellipsis_pos = -1;
 
     /*
-     * The index might be a multi-dimensional index, but not yet a tuple
-     * this makes it a tuple in that case.
-     *
-     * TODO: Refactor into its own function.
+     * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
+     * The longest "reasonable" index that produces a result of <= 32 dimensions
+     * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
+     * are uncommon.
      */
-    if (!PyTuple_CheckExact(index)
-            /* Next three are just to avoid slow checks */
-#if !defined(NPY_PY3K)
-            && (!PyInt_CheckExact(index))
-#else
-            && (!PyLong_CheckExact(index))
-#endif
-            && (index != Py_None)
-            && (!PySlice_Check(index))
-            && (!PyArray_Check(index))
-            && (PySequence_Check(index))) {
-        /*
-         * Sequences < NPY_MAXDIMS with any slice objects
-         * or newaxis, Ellipsis or other arrays or sequences
-         * embedded, are considered equivalent to an indexing
-         * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
-         */
+    PyObject *raw_indices[NPY_MAXDIMS*2];
 
-        if (PyTuple_Check(index)) {
-            /* If it is already a tuple, make it an exact tuple anyway */
-            n = 0;
-            make_tuple = 1;
-        }
-        else {
-            n = PySequence_Size(index);
-        }
-        if (n < 0 || n >= NPY_MAXDIMS) {
-            n = 0;
-        }
-        for (i = 0; i < n; i++) {
-            PyObject *tmp_obj = PySequence_GetItem(index, i);
-            /* if getitem fails (unusual) treat this as a single index */
-            if (tmp_obj == NULL) {
-                PyErr_Clear();
-                make_tuple = 0;
-                break;
-            }
-            if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)
-                    || PySlice_Check(tmp_obj) || tmp_obj == Py_Ellipsis
-                    || tmp_obj == Py_None) {
-                make_tuple = 1;
-                Py_DECREF(tmp_obj);
-                break;
-            }
-            Py_DECREF(tmp_obj);
-        }
-
-        if (make_tuple) {
-            /* We want to interpret it as a tuple, so make it one */
-            index = PySequence_Tuple(index);
-            if (index == NULL) {
-                return -1;
-            }
-        }
-    }
-
-    /* If the index is not a tuple, handle it the same as (index,) */
-    if (!PyTuple_CheckExact(index)) {
-        obj = index;
-        index_ndim = 1;
-    }
-    else {
-        n = PyTuple_GET_SIZE(index);
-        if (n > NPY_MAXDIMS * 2) {
-            PyErr_SetString(PyExc_IndexError,
-                            "too many indices for array");
-            goto fail;
-        }
-        index_ndim = (int)n;
-        obj = NULL;
+    index_ndim = unpack_indices(index, raw_indices, NPY_MAXDIMS*2);
+    if (index_ndim == -1) {
+        return -1;
     }
 
     /*
@@ -275,14 +399,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             goto failed_building_indices;
         }
 
-        /* Check for single index. obj is already set then. */
-        if ((curr_idx != 0) || (obj == NULL)) {
-            obj = PyTuple_GET_ITEM(index, get_idx++);
-        }
-        else {
-            /* only one loop */
-            get_idx += 1;
-        }
+        obj = raw_indices[get_idx++];
 
         /**** Try the cascade of possible indices ****/
 
@@ -686,9 +803,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     *ndim = new_ndim + fancy_ndim;
     *out_fancy_ndim = fancy_ndim;
 
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    multi_DECREF(raw_indices, index_ndim);
 
     return index_type;
 
@@ -696,10 +811,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }
-  fail:
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    multi_DECREF(raw_indices, index_ndim);
     return -1;
 }
 
