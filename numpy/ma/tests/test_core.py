@@ -4796,8 +4796,20 @@ def test_ufunc_with_output():
 
 def test_astype():
     descr = [('v', int, 3), ('x', [('y', float)])]
-    x = array(([1, 2, 3], (1.0,)), dtype=descr)
+    x = array([
+        [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
+        [([1, 2, 3], (3.0,)),  ([1, 2, 3], (4.0,))]
+    ], dtype=descr)
+    x[0]['v'][0] = np.ma.masked
+
     assert_equal(x, x.astype(descr))
+
+    assert_(x is x.astype(x.dtype, copy=False))
+    assert_equal(type(x.astype(x.dtype, subok=False)), np.ndarray)
+
+    x_f = x.astype(x.dtype, order='F')
+    assert_(x_f.flags.f_contiguous)
+    assert_(x_f.mask.flags.f_contiguous)
 
 
 ###############################################################################

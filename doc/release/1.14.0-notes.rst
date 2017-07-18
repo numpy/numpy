@@ -94,6 +94,11 @@ Some specific loop structures which have an accelerated loop version
 did not release the GIL prior to NumPy 1.14.0.  This oversight has been
 fixed.
 
+``MaskedArray.astype`` takes all the same arguments as ``ndarray.astype
+-----------------------------------------------------------------------
+
+This makes more code written for ndarray work for masked array too
+
 
 Changes
 =======
