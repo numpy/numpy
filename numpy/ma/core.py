@@ -6253,6 +6253,12 @@ class MaskedConstant(MaskedArray):
         __iop__
     del __iop__  # don't leave this around
 
+    def copy(self, *args, **kwargs):
+        """ Copy is a no-op on the maskedconstant, as it is a scalar """
+        # maskedconstant is a scalar, so copy doesn't need to copy. There's
+        # precedent for this with `np.bool_` scalars.
+        return self
+
 
 masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray

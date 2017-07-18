@@ -4736,7 +4736,10 @@ class TestMaskedConstant(TestCase):
         # copies should not exist, but if they do, it should be obvious that
         # something is wrong
         assert_equal(repr(np.ma.masked), 'masked')
-        assert_not_equal(repr(np.ma.masked.copy()), 'masked')
+
+        # create a new instance in a weird way
+        masked2 = np.ma.MaskedArray.__new__(np.ma.core.MaskedConstant)
+        assert_not_equal(repr(masked2), 'masked')
 
     def test_pickle(self):
         from io import BytesIO
@@ -4748,30 +4751,12 @@ class TestMaskedConstant(TestCase):
             res = pickle.load(f)
         assert_(res is np.ma.masked)
 
-    def test_write_to_copy(self):
+    def test_copy(self):
         # gh-9328
-        x = np.ma.masked.copy()
-        x[()] = 2
-
-        # write succeeds
-        assert_equal(x.data, 2)
-        assert_equal(x.mask, False)
-
-        # original should be unchanged
-        assert_equal(np.ma.masked.data, 0)
-        assert_equal(np.ma.masked.mask, True)
-
-    def test_no_copies(self):
-        # when making a view or a copy, downcast to MaskedArray
-        MC = np.ma.core.MaskedConstant
-
-        m_sl = np.ma.masked[...]
-        assert_equal(type(m_sl), np.ma.MaskedArray)
-        assert_equal(m_sl.mask, True)
-
-        m_copy = np.ma.masked.copy()
-        assert_equal(type(m_copy), np.ma.MaskedArray)
-        # assert_equal(m_copy.mask, True)  - gh-9430
+        # copy is a no-op, like it is with np.True_
+        assert_equal(
+            np.ma.masked.copy() is np.ma.masked,
+            np.True_.copy() is np.True_)
 
     def test_immutable(self):
         assert_raises(ValueError, operator.setitem, np.ma.masked.data, (), 1)
