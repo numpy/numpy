@@ -1326,7 +1326,7 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_a:
         N2 *= as_[axis]
-    newshape_a = (multiply.reduce([as_[ax] for ax in notin]), N2)
+    newshape_a = (int(multiply.reduce([as_[ax] for ax in notin])), N2)
     olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
@@ -1334,7 +1334,7 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_b:
         N2 *= bs[axis]
-    newshape_b = (N2, multiply.reduce([bs[ax] for ax in notin]))
+    newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
