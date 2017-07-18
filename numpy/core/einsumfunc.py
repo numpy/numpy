@@ -353,7 +353,7 @@ def _can_dot(inputs, result, idx_removed):
     if input_left[-rs:] == input_right[-rs:]:
         return True
 
-    # GEMM or GEMV tranpose left
+    # GEMM or GEMV transpose left
     if input_left[:rs] == input_right[:rs]:
         return True
 
