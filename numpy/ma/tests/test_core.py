@@ -4759,8 +4759,10 @@ class TestMaskedConstant(TestCase):
             np.True_.copy() is np.True_)
 
     def test_immutable(self):
-        assert_raises(ValueError, operator.setitem, np.ma.masked.data, (), 1)
-        assert_raises(ValueError, operator.setitem, np.ma.masked.mask, (), False)
+        orig = np.ma.masked
+        assert_raises(np.ma.core.MaskError, operator.setitem, orig, (), 1)
+        assert_raises(ValueError,operator.setitem, orig.data, (), 1)
+        assert_raises(ValueError, operator.setitem, orig.mask, (), False)
 
         view = np.ma.masked.view(np.ma.MaskedArray)
         assert_raises(ValueError, operator.setitem, view, (), 1)
