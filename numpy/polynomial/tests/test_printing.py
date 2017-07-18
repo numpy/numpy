@@ -1,10 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy.polynomial as poly
-from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.testing import run_module_suite, assert_
 
 
-class test_str(TestCase):
+class TestStr(object):
     def test_polynomial_str(self):
         res = str(poly.Polynomial([0, 1]))
         tgt = 'poly([0., 1.])'
@@ -36,7 +36,7 @@ class test_str(TestCase):
         assert_(res, tgt)
 
 
-class test_repr(TestCase):
+class TestRepr(object):
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
         tgt = 'Polynomial([0., 1.])'
