@@ -11,8 +11,7 @@ from subprocess import Popen, PIPE
 import numpy as np
 from numpy.compat.py3k import basestring
 from nose.tools import assert_equal
-from numpy.testing.decorators import skipif
-from numpy.testing import assert_
+from numpy.testing import assert_, dec
 
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
@@ -59,7 +58,7 @@ def run_command(cmd, check_code=True):
     return proc.returncode, stdout, stderr
 
 
-@skipif(is_inplace)
+@dec.skipif(is_inplace)
 def test_f2py():
     # test that we can run f2py script
     if sys.platform == 'win32':

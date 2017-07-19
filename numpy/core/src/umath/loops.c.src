@@ -1862,6 +1862,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -2200,6 +2201,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
+    npy_clear_floatstatus();
 }
 /**end repeat**/
 
@@ -2749,6 +2751,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 

@@ -1854,7 +1854,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
-            !PyArray_ISNBO(PyArray_DESCR((PyArrayObject *)op)->byteorder)) {
+                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
             descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
         }
         else if (descr && !PyArray_ISNBO(descr->byteorder)) {
@@ -2890,7 +2890,7 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 
     /*
      * PyArray_NewFromDescr steals a ref,
-     * but we need to look at type later. 
+     * but we need to look at type later.
      * */
     Py_INCREF(type);
 

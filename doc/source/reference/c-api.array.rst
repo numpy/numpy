@@ -257,7 +257,7 @@ From scratch
         PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, \
         npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
-    This is similar to :c:func:`PyArray_DescrNew` (...) except you
+    This is similar to :c:func:`PyArray_NewFromDescr` (...) except you
     specify the data-type descriptor with *type_num* and *itemsize*,
     where *type_num* corresponds to a builtin (or user-defined)
     type. If the type always has the same number of bytes, then
@@ -455,8 +455,7 @@ From other objects
         is deleted (presumably after your calculations are complete),
         its contents will be copied back into *op* and the *op* array
         will be made writeable again. If *op* is not writeable to begin
-        with, then an error is raised. If *op* is not already an array,
-        then this flag has no effect.
+        with, or if it is not already an array, then an error is raised.
 
     .. c:var:: NPY_ARRAY_BEHAVED
 
@@ -2887,10 +2886,10 @@ to.
     to a C-array of :c:type:`npy_intp`. The Python object could also be a
     single number. The *seq* variable is a pointer to a structure with
     members ptr and len. On successful return, *seq* ->ptr contains a
-    pointer to memory that must be freed to avoid a memory leak. The
-    restriction on memory size allows this converter to be
-    conveniently used for sequences intended to be interpreted as
-    array shapes.
+    pointer to memory that must be freed, by calling :c:func:`PyDimMem_FREE`,
+    to avoid a memory leak. The restriction on memory size allows this
+    converter to be conveniently used for sequences intended to be
+    interpreted as array shapes.
 
 .. c:function:: int PyArray_BufferConverter(PyObject* obj, PyArray_Chunk* buf)
 
@@ -3062,6 +3061,24 @@ the C-API is needed then some additional steps must be taken.
     You can also put the common two last lines into an extension-local
     header file as long as you make sure that NO_IMPORT_ARRAY is
     #defined before #including that file.
+
+    Internally, these #defines work as follows:
+
+        * If neither is defined, the C-API is declared to be
+          :c:type:`static void**`, so it is only visible within the
+          compilation unit that #includes numpy/arrayobject.h.
+        * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
+          :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
+          be :c:type:`void**`, so that it will also be visible to other
+          compilation units.
+        * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
+          whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
+          declared to be :c:type:`extern void**`, so it is expected to
+          be defined in another compilation unit.
+        * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
+          also changes the name of the variable holding the C-API, which
+          defaults to :c:data:`PyArray_API`, to whatever the macro is
+          #defined to.
 
 Checking the API Version
 ^^^^^^^^^^^^^^^^^^^^^^^^

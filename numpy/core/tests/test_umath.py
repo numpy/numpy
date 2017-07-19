@@ -6,7 +6,6 @@ import warnings
 import fnmatch
 import itertools
 
-from numpy.testing.utils import _gen_alignment_data
 import numpy.core.umath as ncu
 from numpy.core import umath_tests as ncu_tests
 import numpy as np
@@ -14,7 +13,7 @@ from numpy.testing import (
     TestCase, run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
-    suppress_warnings
+    suppress_warnings, _gen_alignment_data,
 )
 
 
@@ -1299,8 +1298,11 @@ class TestMinMax(TestCase):
                     inp[:] = np.arange(inp.size, dtype=dt)
                     inp[i] = np.nan
                     emsg = lambda: '%r\n%s' % (inp, msg)
-                    assert_(np.isnan(inp.max()), msg=emsg)
-                    assert_(np.isnan(inp.min()), msg=emsg)
+                    with suppress_warnings() as sup:
+                        sup.filter(RuntimeWarning,
+                                   "invalid value encountered in reduce")
+                        assert_(np.isnan(inp.max()), msg=emsg)
+                        assert_(np.isnan(inp.min()), msg=emsg)
 
                     inp[i] = 1e10
                     assert_equal(inp.max(), 1e10, err_msg=msg)
