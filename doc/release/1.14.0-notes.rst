@@ -117,3 +117,9 @@ Integer scalars are now unaffected by ``np.set_string_function``
 Previously the str/repr of integer scalars could be controlled by
 ``np.set_string_function``, unlike most other numpy scalars. This is no longer
 the case.
+
+Broadcasting for ``randint``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to broadcast both the ``low`` and ``high`` arguments in
+``np.random.randint``. However, if either is array-like, it is expected that
+all elements of the array are integers.
