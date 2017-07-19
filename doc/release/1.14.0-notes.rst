@@ -9,14 +9,13 @@ Highlights
 ==========
 
 * The `np.einsum` function will use BLAS when possible
-* ``parametrize`` decorator added to numpy.testing
 
 New functions
 =============
 
-``np.cov2corr``
----------------
-This function converts a previously calculated covariance matrix
+* ``parametrize`` decorator added to numpy.testing
+
+* ``np.cov2corr`` converts a previously calculated covariance matrix
 into its Pearson product-moment correlation coefficients. Since
 calculating the covariance matrix can be a slow operation for large
 datasets, the user now has to spend half the time to get both
