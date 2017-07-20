@@ -482,7 +482,6 @@ class TestInterp(TestCase):
     
     def test_dimensions(self):
         for i in range(1, 5):
-            coef = [0]*i + [1]
             assert_(chebinterp(self.f, i, [-1, 1]).shape == (i+1,))
     
     def test_approx(self):
