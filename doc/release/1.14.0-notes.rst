@@ -134,10 +134,12 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
-``np.quantile``
----------------
-Like ``np.percentile``, but takes quantiles in [0, 1] rather than percentiles in
-[0, 100].
+
+``np.quantile`` and ``np.nanquantile``
+--------------------------------------
+Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
+rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
+around ``np.quantile`` with the extra step of dividing by 100.
 
 
 Improvements
