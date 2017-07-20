@@ -28,6 +28,7 @@
 
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
+#include "alloc.h"
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
@@ -2342,7 +2343,7 @@ get_subarray_transfer_function(int aligned,
     if (PyDataType_HASSUBARRAY(dst_dtype)) {
        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
                                             &dst_shape))) {
-            PyDimMem_FREE(src_shape.ptr);
+            npy_free_cache_dim_obj(src_shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
             return NPY_FAIL;
@@ -2355,8 +2356,8 @@ get_subarray_transfer_function(int aligned,
      * Just a straight one-element copy.
      */
     if (dst_size == 1 && src_size == 1) {
-        PyDimMem_FREE(src_shape.ptr);
-        PyDimMem_FREE(dst_shape.ptr);
+        npy_free_cache_dim_obj(src_shape);
+        npy_free_cache_dim_obj(dst_shape);
 
         return PyArray_GetDTypeTransferFunction(aligned,
                 src_stride, dst_stride,
@@ -2367,8 +2368,8 @@ get_subarray_transfer_function(int aligned,
     }
     /* Copy the src value to all the dst values */
     else if (src_size == 1) {
-        PyDimMem_FREE(src_shape.ptr);
-        PyDimMem_FREE(dst_shape.ptr);
+        npy_free_cache_dim_obj(src_shape);
+        npy_free_cache_dim_obj(dst_shape);
 
         return get_one_to_n_transfer_function(aligned,
                         src_stride, dst_stride,
@@ -2382,8 +2383,8 @@ get_subarray_transfer_function(int aligned,
     else if (src_shape.len == dst_shape.len &&
                PyArray_CompareLists(src_shape.ptr, dst_shape.ptr,
                                                     src_shape.len)) {
-        PyDimMem_FREE(src_shape.ptr);
-        PyDimMem_FREE(dst_shape.ptr);
+        npy_free_cache_dim_obj(src_shape);
+        npy_free_cache_dim_obj(dst_shape);
 
         return get_n_to_n_transfer_function(aligned,
                         src_stride, dst_stride,
@@ -2407,8 +2408,8 @@ get_subarray_transfer_function(int aligned,
                         out_stransfer, out_transferdata,
                         out_needs_api);
 
-        PyDimMem_FREE(src_shape.ptr);
-        PyDimMem_FREE(dst_shape.ptr);
+        npy_free_cache_dim_obj(src_shape);
+        npy_free_cache_dim_obj(dst_shape);
         return ret;
     }
 }
@@ -3371,7 +3372,7 @@ get_setdstzero_transfer_function(int aligned,
             return NPY_FAIL;
         }
         dst_size = PyArray_MultiplyList(dst_shape.ptr, dst_shape.len);
-        PyDimMem_FREE(dst_shape.ptr);
+        npy_free_cache_dim_obj(dst_shape);
 
         /* Get a function for contiguous dst of the subarray type */
         if (get_setdstzero_transfer_function(aligned,
@@ -3484,7 +3485,7 @@ get_decsrcref_transfer_function(int aligned,
             return NPY_FAIL;
         }
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
-        PyDimMem_FREE(src_shape.ptr);
+        npy_free_cache_dim_obj(src_shape);
 
         /* Get a function for contiguous src of the subarray type */
         if (get_decsrcref_transfer_function(aligned,

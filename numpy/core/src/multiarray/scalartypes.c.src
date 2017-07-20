@@ -24,6 +24,7 @@
 #include "scalartypes.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "alloc.h"
 
 #include <stdlib.h>
 
@@ -1356,10 +1357,9 @@ gentype_imag_get(PyObject *self)
         int elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
-        temp = PyDataMem_NEW(elsize);
-        memset(temp, '\0', elsize);
+        temp = npy_alloc_cache_zero(elsize);
         ret = PyArray_Scalar(temp, typecode, NULL);
-        PyDataMem_FREE(temp);
+        npy_free_cache(temp, elsize);
     }
 
     Py_XDECREF(typecode);
@@ -2488,7 +2488,7 @@ static void
 void_dealloc(PyVoidScalarObject *v)
 {
     if (v->flags & NPY_ARRAY_OWNDATA) {
-        PyDataMem_FREE(v->obval);
+        npy_free_cache(v->obval, Py_SIZE(v));
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
@@ -2904,9 +2904,7 @@ static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *obj, *arr;
-    npy_ulonglong memu = 1;
     PyObject *new = NULL;
-    char *destptr;
 
     if (!PyArg_ParseTuple(args, "O:void", &obj)) {
         return NULL;
@@ -2928,7 +2926,8 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
     }
     if (new && PyLong_Check(new)) {
         PyObject *ret;
-        memu = PyLong_AsUnsignedLongLong(new);
+        char *destptr;
+        npy_ulonglong memu = PyLong_AsUnsignedLongLong(new);
         Py_DECREF(new);
         if (PyErr_Occurred() || (memu > NPY_MAX_INT)) {
             PyErr_Clear();
@@ -2937,13 +2936,13 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
                     (int) NPY_MAX_INT);
             return NULL;
         }
-        destptr = PyDataMem_NEW((int) memu);
+        destptr = npy_alloc_cache_zero(memu);
         if (destptr == NULL) {
             return PyErr_NoMemory();
         }
         ret = type->tp_alloc(type, 0);
         if (ret == NULL) {
-            PyDataMem_FREE(destptr);
+            npy_free_cache(destptr, memu);
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
@@ -2954,7 +2953,6 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
                                              NPY_ARRAY_OWNDATA;
         ((PyVoidScalarObject *)ret)->base = NULL;
-        memset(destptr, '\0', (size_t) memu);
         return ret;
     }
 
