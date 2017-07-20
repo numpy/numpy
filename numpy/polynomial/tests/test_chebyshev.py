@@ -470,6 +470,26 @@ class TestFitting(TestCase):
         assert_almost_equal(coef1, coef2)
 
 
+class TestInterp(TestCase):
+
+    def f(x):
+        return x * (x - 1) * (x - 2)
+
+    def test_raises(self):
+        assert_raises(ValueError, cheb.chebinterp, f, -1)
+        assert_raises(ValueError, cheb.chebinterp, f, 10.1)
+    
+    def test_dimensions(self):
+        for i in range(1, 5):
+            coef = [0]*i + [1]
+            assert_(cheb.chebinterp(f, i).shape == (i+1,))
+    
+    def test_approx(self):
+        assert_almost_equal(cheb.chebinterp(lambda x: 1, 3), np.array([1, 0, 0, 0]))
+        assert_almost_equal(cheb.chebinterp(lambda x: x, 3), np.array([0, 1, 0, 0]))
+        assert_almost_equal(cheb.chebinterp(f, 3), np.array([-3/2, 11/4, -3/2, 1/4]))
+
+
 class TestCompanion(TestCase):
 
     def test_raises(self):
