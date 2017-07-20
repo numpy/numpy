@@ -4155,6 +4155,19 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return mean(part[indexer], axis=axis, out=out)
 
 
+def _valid_quantile(q):
+    # avoid expensive reductions, relevant for arrays with < O(1000) elements
+    if q.ndim == 1 and q.size < 10:
+        for i in range(q.size):
+            if q[i] < 0.0 or q[i] > 1.0:
+                return False
+    else:
+        # faster than any()
+        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+            return False
+    return True
+
+
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
@@ -4191,6 +4204,8 @@ def percentile(a, q, axis=None, out=None,
 
     """
     q = np.true_divide(q, 100)  # handles the asarray for us too
+    if not _valid_quantile(q):
+        raise ValueError("Percentiles must be in the range [0, 100]")
     return quantile(a, q, axis, out, overwrite_input, interpolation, keepdims)
 
 
@@ -4308,6 +4323,8 @@ def quantile(a, q, axis=None, out=None,
 
     """
     q = asarray(q, dtype=np.float64)
+    if not _valid_quantile(q):
+        raise ValueError("Quantiles must be in the range [0.0, 1.0]")
     r, k = _ureduce(a, func=_quantile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
@@ -4326,16 +4343,6 @@ def _quantile(a, q, axis=None, out=None,
         q = q[None]
     else:
         zerod = False
-
-    # avoid expensive reductions, relevant for arrays with < O(1000) elements
-    if q.size < 10:
-        for i in range(q.size):
-            if q[i] < 0. or q[i] > 1.:
-                raise ValueError("Percentiles must be in the range [0,100]")
-    else:
-        # faster than any()
-        if np.count_nonzero(q < 0.) or np.count_nonzero(q > 1.):
-            raise ValueError("Percentiles must be in the range [0,100]")
 
     # prepare a for partioning
     if overwrite_input:
