@@ -2378,17 +2378,17 @@ npyiter_self(NewNpyArrayIterObject *self)
         PyErr_SetString(PyExc_ValueError, "operation on  non-initialized iterator");
         return NULL;
     }
-    self->managed &= 1;
+    self->managed |= 1;
     Py_INCREF(self);
     return (PyObject *)self;
 }
 
 static PyObject *
-npyiter_exit(PyObject *f, PyObject *args)
+npyiter_exit(PyObject *self, PyObject *args)
 {
     int iop, nop;
     PyArrayObject **object;
-    NpyIter *iter = ((NewNpyArrayIterObject*)f)->iter;
+    NpyIter *iter = ((NewNpyArrayIterObject*)self)->iter;
     if (iter == NULL)
         Py_RETURN_NONE;
     nop = NpyIter_GetNOp(iter);
@@ -2397,9 +2397,6 @@ npyiter_exit(PyObject *f, PyObject *args)
         if (PyArray_ResolveUpdateIfCopy(*object) < 0)
         return NULL;
     }
-    /* We cannot return the result since a true
-     * value will be interpreted as "yes, swallow the
-     * exception if one was raised inside the with block". */
     Py_RETURN_NONE;
 }
 
