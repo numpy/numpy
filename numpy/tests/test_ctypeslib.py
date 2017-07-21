@@ -3,9 +3,9 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.ctypeslib import ndpointer, load_library
+from numpy.ctypeslib import ndpointer, load_library, as_array
 from numpy.distutils.misc_util import get_shared_lib_extension
-from numpy.testing import TestCase, run_module_suite, dec
+from numpy.testing import TestCase, assert_array_equal, run_module_suite, dec
 
 try:
     cdll = None
@@ -112,6 +112,28 @@ class TestNdpointer(TestCase):
         a1 = ndpointer(dtype=np.float64)
         a2 = ndpointer(dtype=np.float64)
         self.assertEqual(a1, a2)
+
+class TestAsArray(TestCase):
+    @dec.skipif(not _HAS_CTYPE,
+                "ctypes not available on this python installation")
+    def test_array(self):
+        from ctypes import c_int
+        at = c_int * 2
+        a = as_array(at(1, 2))
+        self.assertEqual(a.shape, (2,))
+        assert_array_equal(a, np.array([1, 2]))
+        a = as_array((at * 3)(at(1, 2), at(3, 4), at(5, 6)))
+        self.assertEqual(a.shape, (3, 2))
+        assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
+
+    @dec.skipif(not _HAS_CTYPE,
+                "ctypes not available on this python installation")
+    def test_pointer(self):
+        from ctypes import c_int, cast, POINTER
+        p = cast((c_int * 10)(*range(10)), POINTER(c_int))
+        a = as_array(p, (10,))
+        self.assertEqual(a.shape, (10,))
+        assert_array_equal(a, np.array(range(10)))
 
 
 if __name__ == "__main__":

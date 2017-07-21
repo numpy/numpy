@@ -1296,6 +1296,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
             PyObject *msg;
             msg = PyBytes_FromFormat("Invalid PEP 3118 format string: '%s'",
                                      view->format);
+            PyErr_Clear();
             PyErr_WarnEx(PyExc_RuntimeWarning, PyBytes_AS_STRING(msg), 0);
             Py_DECREF(msg);
             goto fail;
@@ -1485,14 +1486,16 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     }
 
     /* If op supports the PEP 3118 buffer interface */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-             _array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
-        if (writeable
-            && PyArray_FailUnlessWriteable(*out_arr, "PEP 3118 buffer") < 0) {
-            Py_DECREF(*out_arr);
-            return -1;
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+        if (_array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
+            if (writeable &&
+                PyArray_FailUnlessWriteable(*out_arr, "PEP 3118 buffer") < 0) {
+                Py_XDECREF(*out_arr);
+                return -1;
+            }
+            return (*out_arr) == NULL ? -1 : 0;
         }
-        return (*out_arr) == NULL ? -1 : 0;
+        PyErr_Clear();
     }
 
     /* If op supports the __array_struct__ or __array_interface__ interface */
