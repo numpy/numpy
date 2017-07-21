@@ -21,6 +21,7 @@
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
+#include "ufunc_object.h"
 #include "common.h"
 
 static const char *
@@ -56,9 +57,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     for (i = 0; i < nop; ++i) {
         if (i < nin) {
@@ -184,9 +183,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 2 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -290,9 +287,7 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 1 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -430,9 +425,7 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 2 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -614,9 +607,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -804,9 +795,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -986,9 +975,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -1130,9 +1117,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -1342,7 +1327,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     PyObject *errmsg;
     int i, j;
 
-    ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(ufunc);
 
     /*
      * If there are user-loops search them first.
@@ -1832,7 +1817,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                              "matching the type-tuple, "
                              "but the inputs and/or outputs could not be "
                              "cast according to the casting rule",
-                             self->name ? self->name : "(unknown)");
+                             ufunc_get_name_cstr(self));
                         return -1;
                     /* Error */
                     case -1:
@@ -1936,7 +1921,7 @@ linear_search_type_resolver(PyUFuncObject *self,
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = self->name ? self->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(self);
 
     use_min_scalar = should_use_min_scalar(op, nin);
 
@@ -2045,7 +2030,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = self->name ? self->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(self);
 
     use_min_scalar = should_use_min_scalar(op, nin);
 
@@ -2057,7 +2042,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
             PyErr_Format(PyExc_ValueError,
                          "a type-tuple must be specified "
                          "of length 1 or %d for ufunc '%s'", (int)nop,
-                         self->name ? self->name : "(unknown)");
+                         ufunc_get_name_cstr(self));
             return -1;
         }
 
@@ -2110,7 +2095,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
                                  "requires 1 typecode, or "
                                  "%d typecode(s) before " \
                                  "and %d after the -> sign",
-                                 self->name ? self->name : "(unknown)",
+                                 ufunc_get_name_cstr(self),
                                  self->nin, self->nout);
             Py_XDECREF(str_obj);
             return -1;
