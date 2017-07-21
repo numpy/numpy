@@ -1553,6 +1553,11 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
+    /* Write back any temporary data from PyArray_SetUpdateIfCopyBase */
+    for (i = nin; i < nop; ++i) {
+        if (PyArray_ResolveUpdateIfCopy(op_it[i]) < 0)
+        return -1;
+    }
 
     NpyIter_Deallocate(iter);
     return 0;
@@ -1740,7 +1745,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                     PyObject **arr_prep,
                     PyObject *arr_prep_args)
 {
-    int i, nin = ufunc->nin, nout = ufunc->nout;
+    int retval, i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1911,8 +1916,16 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         NPY_AUXDATA_FREE(innerloopdata);
     }
 
+    retval = 0;
+    nop = NpyIter_GetNOp(iter);
+    for(i=0; i< nop; ++i) {
+        if (PyArray_ResolveUpdateIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0) {
+            retval = -1;
+        }
+    }
+
     NpyIter_Deallocate(iter);
-    return 0;
+    return retval;
 }
 
 static PyObject *
@@ -2547,6 +2560,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         retval = -1;
         goto fail;
     }
+
+    /* Write back any temporary data from PyArray_SetUpdateIfCopyBase */
+    for(i=nin; i< nop; ++i)
+        if (PyArray_ResolveUpdateIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0)
+            goto fail;
 
     PyArray_free(inner_strides);
     NpyIter_Deallocate(iter);
@@ -3480,6 +3498,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 finish:
+    /* Write back any temporary data from PyArray_SetUpdateIfCopyBase */
+    if (PyArray_ResolveUpdateIfCopy(op[0]) < 0)
+        goto fail;
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
@@ -3862,6 +3883,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
+    if (op[0] && PyArray_ResolveUpdateIfCopy(op[0]) < 0)
+        goto fail;
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
 

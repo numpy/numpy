@@ -598,6 +598,7 @@ finish:
         }
     }
     else {
+        PyArray_ResolveUpdateIfCopy(result); /* prevent spurious warnings */
         Py_DECREF(result);
         result = out;
         Py_INCREF(result);
@@ -606,6 +607,7 @@ finish:
     return result;
 
 fail:
+    PyArray_ResolveUpdateIfCopy(result); /* prevent spurious warnings */
     Py_XDECREF(result);
     Py_XDECREF(op_view);
     if (iter != NULL) {
