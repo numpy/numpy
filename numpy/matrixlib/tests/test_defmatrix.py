@@ -191,6 +191,49 @@ class TestProperties(TestCase):
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
 
+    def test_todense(self):
+        A = matrix([[1, 0], [0, 1]])
+        B = A.todense()
+        assert_((B == A).all())
+
+        # Check C-contiguous (default).
+        chk = A.todense()
+        assert_array_equal(chk, A)
+        assert_(chk.flags.c_contiguous)
+        assert_(not chk.flags.f_contiguous)
+
+        # Check C-contiguous (with arg).
+        chk = A.todense(order='C')
+        assert_array_equal(chk, A)
+        assert_(chk.flags.c_contiguous)
+        assert_(not chk.flags.f_contiguous)
+
+        # Check F-contiguous (with arg).
+        chk = A.todense(order='F')
+        assert_array_equal(chk, A)
+        assert_(not chk.flags.c_contiguous)
+        assert_(chk.flags.f_contiguous)
+
+        # Check with out argument (array).
+        out = np.zeros(A.shape, dtype=A.dtype)
+        chk = A.todense(out=out)
+        assert_array_equal(A, out)
+        assert_array_equal(A, chk)
+        assert_(chk.base is out)
+
+        # Check with out array (matrix).
+        out = np.asmatrix(np.zeros(A.shape, dtype=A.dtype))
+        chk = A.todense(out=out)
+        assert_array_equal(A, out)
+        assert_array_equal(A, chk)
+        assert_(chk is out)
+
+        # Check bool data works.
+        data = np.array([True, False, False, True]).reshape(2, 2)
+        B = matrix(data, dtype=bool)
+        assert_array_equal(B.todense(), B)
+
+
 class TestCasting(TestCase):
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
