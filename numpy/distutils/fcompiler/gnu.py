@@ -6,20 +6,26 @@ import sys
 import warnings
 import platform
 import tempfile
+import random
+import string
 from subprocess import Popen, PIPE, STDOUT
-
+from copy import copy
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import msvc_runtime_library
 from numpy.distutils.compat import get_exception
+from numpy.distutils.system_info import system_info
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 
 # XXX: handle cross compilation
+
+
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
+
 
 if is_win64():
     #_EXTRAFLAGS = ["-fno-leading-underscore"]
@@ -27,16 +33,17 @@ if is_win64():
 else:
     _EXTRAFLAGS = []
 
+
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
-    compiler_aliases = ('g77',)
+    compiler_aliases = ('g77', )
     description = 'GNU Fortran 77 compiler'
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
         # Strip warning(s) that may be emitted by gfortran
         while version_string.startswith('gfortran: warning'):
-            version_string = version_string[version_string.find('\n')+1:]
+            version_string = version_string[version_string.find('\n') + 1:]
 
         # Gfortran versions from after 2010 will output a simple string
         # (usually "x.y", "x.y.z" or "x.y.z-q") for ``-dumpversion``; older
@@ -83,15 +90,15 @@ class GnuFCompiler(FCompiler):
 
     possible_executables = ['g77', 'f77']
     executables = {
-        'version_cmd'  : [None, "-dumpversion"],
-        'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
-        'compiler_f90' : None,  # Use --fcompiler=gnu95 for f90 codes
-        'compiler_fix' : None,
-        'linker_so'    : [None, "-g", "-Wall"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None, "-g", "-Wall"]
-        }
+        'version_cmd': [None, "-dumpversion"],
+        'compiler_f77': [None, "-g", "-Wall", "-fno-second-underscore"],
+        'compiler_f90': None,  # Use --fcompiler=gnu95 for f90 codes
+        'compiler_fix': None,
+        'linker_so': [None, "-g", "-Wall"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': ["ranlib"],
+        'linker_exe': [None, "-g", "-Wall"]
+    }
     module_dir_switch = None
     module_include_switch = None
 
@@ -129,8 +136,8 @@ class GnuFCompiler(FCompiler):
                 try:
                     get_makefile_filename = sc.get_makefile_filename
                 except AttributeError:
-                    pass # i.e. PyPy
-                else: 
+                    pass  # i.e. PyPy
+                else:
                     filename = get_makefile_filename()
                     sc.parse_makefile(filename, g)
                 target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
@@ -153,9 +160,8 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libgcc_dir(self):
-        status, output = exec_command(self.compiler_f77 +
-                                      ['-print-libgcc-file-name'],
-                                      use_tee=0)
+        status, output = exec_command(
+            self.compiler_f77 + ['-print-libgcc-file-name'], use_tee=0)
         if not status:
             return os.path.dirname(output)
         return None
@@ -170,7 +176,7 @@ class GnuFCompiler(FCompiler):
                     d = os.path.normpath(d)
                     path = os.path.join(d, "lib%s.a" % self.g2c)
                     if not os.path.exists(path):
-                        root = os.path.join(d, *((os.pardir,)*4))
+                        root = os.path.join(d, *((os.pardir, ) * 4))
                         d2 = os.path.abspath(os.path.join(root, 'lib'))
                         path = os.path.join(d2, "lib%s.a" % self.g2c)
                         if os.path.exists(path):
@@ -193,13 +199,10 @@ class GnuFCompiler(FCompiler):
             opt.append(g2c)
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
-               c_compiler.compiler_type == 'msvc':
+                c_compiler.compiler_type == 'msvc':
             # the following code is not needed (read: breaks) when using MinGW
             # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
-            runtime_lib = msvc_runtime_library()
-            if runtime_lib:
-                opt.append(runtime_lib)
         if sys.platform == 'darwin':
             opt.append('cc_dynamic')
         return opt
@@ -241,7 +244,7 @@ class GnuFCompiler(FCompiler):
 
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
-    compiler_aliases = ('gfortran',)
+    compiler_aliases = ('gfortran', )
     description = 'GNU Fortran 95 compiler'
 
     def version_match(self, version_string):
@@ -256,25 +259,29 @@ class Gnu95FCompiler(GnuFCompiler):
             # use -mno-cygwin flag for gfortran when Python is not
             # Cygwin-Python
             if sys.platform == 'win32':
-                for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
-                            'compiler_fix', 'linker_so', 'linker_exe']:
+                for key in [
+                        'version_cmd', 'compiler_f77', 'compiler_f90',
+                        'compiler_fix', 'linker_so', 'linker_exe'
+                ]:
                     self.executables[key].append('-mno-cygwin')
         return v
 
     possible_executables = ['gfortran', 'f95']
     executables = {
-        'version_cmd'  : ["<F90>", "-dumpversion"],
-        'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
-        'linker_so'    : ["<F90>", "-Wall", "-g"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None, "-Wall"]
-        }
+        'version_cmd': ["<F90>", "-dumpversion"],
+        'compiler_f77':
+        [None, "-Wall", "-g", "-ffixed-form", "-fno-second-underscore"
+         ] + _EXTRAFLAGS,
+        'compiler_f90':
+        [None, "-Wall", "-g", "-fno-second-underscore"] + _EXTRAFLAGS,
+        'compiler_fix':
+        [None, "-Wall", "-g", "-ffixed-form", "-fno-second-underscore"
+         ] + _EXTRAFLAGS,
+        'linker_so': ["<F90>", "-Wall", "-g"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': ["ranlib"],
+        'linker_exe': [None, "-Wall"]
+    }
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
@@ -298,6 +305,8 @@ class Gnu95FCompiler(GnuFCompiler):
         return arch_flags
 
     def get_flags(self):
+        if self.c_compiler.compiler_type == "msvc" and not is_win64():
+            return ['-O0']
         flags = GnuFCompiler.get_flags(self)
         arch_flags = self._universal_flags(self.compiler_f90)
         if arch_flags:
@@ -319,7 +328,7 @@ class Gnu95FCompiler(GnuFCompiler):
                 target = self.get_target()
                 if target:
                     d = os.path.normpath(self.get_libgcc_dir())
-                    root = os.path.join(d, *((os.pardir,)*4))
+                    root = os.path.join(d, *((os.pardir, ) * 4))
                     path = os.path.join(root, "lib")
                     mingwdir = os.path.normpath(path)
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
@@ -335,32 +344,125 @@ class Gnu95FCompiler(GnuFCompiler):
             if c_compiler and c_compiler.compiler_type == "msvc":
                 if "gcc" in opt:
                     i = opt.index("gcc")
-                    opt.insert(i+1, "mingwex")
-                    opt.insert(i+1, "mingw32")
-            # XXX: fix this mess, does not work for mingw
-            if is_win64():
-                c_compiler = self.c_compiler
-                if c_compiler and c_compiler.compiler_type == "msvc":
-                    return []
-                else:
-                    pass
+                    opt.insert(i + 1, "mingwex")
+                    opt.insert(i + 1, "mingw32")
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+                return []
+            else:
+                pass
         return opt
 
     def get_target(self):
-        status, output = exec_command(self.compiler_f77 +
-                                      ['-v'],
-                                      use_tee=0)
+        status, output = exec_command(self.compiler_f77 + ['-v'], use_tee=0)
         if not status:
             m = TARGET_R.search(output)
             if m:
                 return m.group(1)
         return ""
 
-    def get_flags_opt(self):
+    @staticmethod
+    def _generate_id(size=6, chars=string.ascii_uppercase + string.digits):
+        return ''.join(random.choice(chars) for _ in range(size))
+
+    def link_wrapper_lib(self,
+                         objects=[],
+                         libraries=[],
+                         library_dirs=[],
+                         output_dir=None,
+                         debug=False):
+        """Create a wrapper shared library for the given objects
+
+        Return an MSVC-compatible lib
+        """
+
+        c_compiler = self.c_compiler
+        if c_compiler.compiler_type != "msvc":
+            raise ValueError("This method only supports MSVC")
+
         if is_win64():
-            return ['-O0']
+            tag = 'win_amd64'
         else:
-            return GnuFCompiler.get_flags_opt(self)
+            tag = 'win32'
+
+        root_name = self._generate_id() + '.gfortran-' + tag
+        dll_name = root_name + '.dll'
+        dll_path = os.path.join(output_dir, dll_name)
+        def_path = root_name + '.def'
+        lib_path = os.path.join(output_dir, root_name + '.lib')
+
+        self.link_shared_object(
+            objects,
+            dll_name,
+            output_dir=output_dir,
+            extra_postargs=list(system_info.shared_libs) + [
+                '-Wl,--output-def,' + def_path,
+                '-Wl,--export-all-symbols',
+                '-Wl,--enable-auto-import',
+                '-static',
+                '-mlong-double-64',
+            ] + ['-l' + library for library in libraries] +
+            ['-L' + lib_dir for lib_dir in library_dirs],
+            debug=debug)
+
+        system_info.shared_libs.add(dll_path)
+
+        # No PowerPC!
+        if is_win64():
+            specifier = '/MACHINE:X64'
+        else:
+            specifier = '/MACHINE:X86'
+
+        # MSVC specific code
+        lib_args = ['/def:' + def_path, '/OUT:' + lib_path, specifier]
+        if not c_compiler.initialized:
+            c_compiler.initialize()
+        c_compiler.spawn([c_compiler.lib] + lib_args)
+
+        return lib_path
+
+    def compile(self,
+                sources,
+                output_dir,
+                macros=[],
+                include_dirs=[],
+                debug=False,
+                extra_postargs=[],
+                depends=[],
+                **kwargs):
+        c_compiler = self.c_compiler
+        if c_compiler and c_compiler.compiler_type == "msvc":
+            # MSVC cannot link objects compiled by GNU fortran
+            # so we need to contain the damage here. Immediately
+            # compile a DLL and return the lib for the DLL as
+            # the object. Also keep track of previous DLLs that
+            # we have compiled so that we can link against them.
+            objects = GnuFCompiler.compile(
+                self,
+                sources,
+                output_dir=output_dir,
+                macros=macros,
+                include_dirs=include_dirs,
+                debug=debug,
+                extra_postargs=extra_postargs,
+                depends=depends)
+
+            lib_path = self.link_wrapper_lib(objects, output_dir=output_dir)
+
+            # Return the lib that we created as the "object"
+            return [lib_path]
+        else:
+            return GnuFCompiler.compile(
+                self,
+                sources,
+                output_dir,
+                macros=macros,
+                include_dirs=include_dirs,
+                debug=debug,
+                extra_postargs=extra_postargs,
+                depends=depends,
+                **kwargs)
+
 
 def _can_target(cmd, arch):
     """Return true if the architecture supports the -arch flag"""
@@ -381,6 +483,7 @@ def _can_target(cmd, arch):
     finally:
         os.remove(filename)
     return False
+
 
 if __name__ == '__main__':
     from distutils import log
