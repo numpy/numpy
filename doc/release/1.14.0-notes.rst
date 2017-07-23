@@ -60,6 +60,15 @@ let us know.
 C API changes
 =============
 
+Change internal UPDATEIFCOPY semantics
+--------------------------------------
+When ndarrays are created with the ``UPDATEIFCOPY`` flag, a temporary copy of
+the data is created. The writeback to the original data occurrs at ndarray
+deallocation. Refactor the writeback into a new PyArray_ResolveUpdateIfCopy
+function and use it internally wherever such an array is created. The only
+visible change in behavior is that if compiled with ``-DDEPRECATE_UPDATEIFCOPY``
+or if run on PyPy, and writeback resolution has not occurred before calling
+``array_dealloc``, NumPy will now raise a DeprecationWarning.
 
 New Features
 ============
