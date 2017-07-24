@@ -3991,7 +3991,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'copyto',
     """
-    copyto(dst, src, casting='same_kind', where=None)
+    copyto(dst, src, casting='same_kind', where=True)
 
     Copies values from one array to another, broadcasting as necessary.
 
