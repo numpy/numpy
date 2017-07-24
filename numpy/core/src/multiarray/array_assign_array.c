@@ -345,6 +345,21 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         }
     }
 
+    /* optimization: scalar boolean mask */
+    if (wheremask != NULL &&
+            PyArray_NDIM(wheremask) == 0 &&
+            PyArray_DESCR(wheremask)->type_num == NPY_BOOL) {
+        npy_bool value = *(npy_bool *)PyArray_DATA(wheremask);
+        if (value) {
+            /* where=True is the same as no where at all */
+            wheremask = NULL;
+        }
+        else {
+            /* where=False copies nothing */
+            return 0;
+        }
+    }
+
     if (wheremask == NULL) {
         /* A straightforward value assignment */
         /* Do the assignment with raw array iteration */
