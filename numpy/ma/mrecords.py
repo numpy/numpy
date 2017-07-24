@@ -41,9 +41,13 @@ _check_fill_value = ma.core._check_fill_value
 
 
 __all__ = [
-    'MaskedRecords', 'mrecarray', 'fromarrays', 'fromrecords',
-    'fromtextfile', 'addfield',
-    ]
+    'MaskedRecords',
+    'mrecarray',
+    'fromarrays',
+    'fromrecords',
+    'fromtextfile',
+    'addfield',
+]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
 

@@ -24,9 +24,16 @@ from numpy.lib.type_check import isreal
 
 
 __all__ = [
-    'sqrt', 'log', 'log2', 'logn', 'log10', 'power', 'arccos', 'arcsin',
-    'arctanh'
-    ]
+    'sqrt',
+    'log',
+    'log2',
+    'logn',
+    'log10',
+    'power',
+    'arccos',
+    'arcsin',
+    'arctanh',
+]
 
 
 _ln2 = nx.log(2.0)

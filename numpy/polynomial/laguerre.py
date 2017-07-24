@@ -68,12 +68,38 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = [
-    'lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline', 'lagadd',
-    'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow', 'lagval', 'lagder',
-    'lagint', 'lag2poly', 'poly2lag', 'lagfromroots', 'lagvander',
-    'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d', 'lagval3d',
-    'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d', 'lagcompanion',
-    'laggauss', 'lagweight']
+    'lagzero',
+    'lagone',
+    'lagx',
+    'lagdomain',
+    'lagline',
+    'lagadd',
+    'lagsub',
+    'lagmulx',
+    'lagmul',
+    'lagdiv',
+    'lagpow',
+    'lagval',
+    'lagder',
+    'lagint',
+    'lag2poly',
+    'poly2lag',
+    'lagfromroots',
+    'lagvander',
+    'lagfit',
+    'lagtrim',
+    'lagroots',
+    'Laguerre',
+    'lagval2d',
+    'lagval3d',
+    'laggrid2d',
+    'laggrid3d',
+    'lagvander2d',
+    'lagvander3d',
+    'lagcompanion',
+    'laggauss',
+    'lagweight',
+]
 
 lagtrim = pu.trimcoef
 

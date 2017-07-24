@@ -92,12 +92,38 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = [
-    'legzero', 'legone', 'legx', 'legdomain', 'legline', 'legadd',
-    'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval', 'legder',
-    'legint', 'leg2poly', 'poly2leg', 'legfromroots', 'legvander',
-    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d',
-    'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d', 'legcompanion',
-    'leggauss', 'legweight']
+    'legzero',
+    'legone',
+    'legx',
+    'legdomain',
+    'legline',
+    'legadd',
+    'legsub',
+    'legmulx',
+    'legmul',
+    'legdiv',
+    'legpow',
+    'legval',
+    'legder',
+    'legint',
+    'leg2poly',
+    'poly2leg',
+    'legfromroots',
+    'legvander',
+    'legfit',
+    'legtrim',
+    'legroots',
+    'Legendre',
+    'legval2d',
+    'legval3d',
+    'leggrid2d',
+    'leggrid3d',
+    'legvander2d',
+    'legvander3d',
+    'legcompanion',
+    'leggauss',
+    'legweight',
+]
 
 legtrim = pu.trimcoef
 

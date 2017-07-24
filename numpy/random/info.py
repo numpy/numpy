@@ -135,5 +135,5 @@ __all__ = [
     'vonmises',
     'wald',
     'weibull',
-    'zipf'
+    'zipf',
 ]

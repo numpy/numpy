@@ -57,11 +57,34 @@ See Also
 from __future__ import division, absolute_import, print_function
 
 __all__ = [
-    'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
-    'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
-    'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    'polyzero',
+    'polyone',
+    'polyx',
+    'polydomain',
+    'polyline',
+    'polyadd',
+    'polysub',
+    'polymulx',
+    'polymul',
+    'polydiv',
+    'polypow',
+    'polyval',
+    'polyvalfromroots',
+    'polyder',
+    'polyint',
+    'polyfromroots',
+    'polyvander',
+    'polyfit',
+    'polytrim',
+    'polyroots',
+    'Polynomial',
+    'polyval2d',
+    'polyval3d',
+    'polygrid2d',
+    'polygrid3d',
+    'polyvander2d',
+    'polyvander3d',
+]
 
 import warnings
 import numpy as np

@@ -14,10 +14,19 @@ import numpy as np
 from numpy.compat import getargspec, formatargspec
 
 __all__ = [
-    'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
-    'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
-    'lookfor', 'byte_bounds', 'safe_eval'
-    ]
+    'issubclass_',
+    'issubsctype',
+    'issubdtype',
+    'deprecate',
+    'deprecate_with_doc',
+    'get_include',
+    'info',
+    'source',
+    'who',
+    'lookfor',
+    'byte_bounds',
+    'safe_eval',
+]
 
 def get_include():
     """

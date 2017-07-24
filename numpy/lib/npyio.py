@@ -31,10 +31,23 @@ else:
 loads = pickle.loads
 
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
-    ]
+    'savetxt',
+    'loadtxt',
+    'genfromtxt',
+    'ndfromtxt',
+    'mafromtxt',
+    'recfromtxt',
+    'recfromcsv',
+    'load',
+    'loads',
+    'save',
+    'savez',
+    'savez_compressed',
+    'packbits',
+    'unpackbits',
+    'fromregex',
+    'DataSource',
+]
 
 
 class BagObj(object):

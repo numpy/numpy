@@ -12,9 +12,21 @@ from numpy.core import iinfo, transpose
 
 
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
-    'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
-    'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+    'diag',
+    'diagflat',
+    'eye',
+    'fliplr',
+    'flipud',
+    'tri',
+    'triu',
+    'tril',
+    'vander',
+    'histogram2d',
+    'mask_indices',
+    'tril_indices',
+    'tril_indices_from',
+    'triu_indices',
+    'triu_indices_from', ]
 
 
 i1 = iinfo(int8)
