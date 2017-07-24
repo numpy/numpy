@@ -973,20 +973,18 @@ array_getarray(PyArrayObject *self, PyObject *args)
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *new;
-        PyTypeObject *subtype = &PyArray_Type;
-
-        if (!PyType_IsSubtype(Py_TYPE(self), &PyArray_Type)) {
-            subtype = &PyArray_Type;
-        }
 
         Py_INCREF(PyArray_DESCR(self));
-        new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                   PyArray_DESCR(self),
-                                   PyArray_NDIM(self),
-                                   PyArray_DIMS(self),
-                                   PyArray_STRIDES(self),
-                                   PyArray_DATA(self),
-                                   PyArray_FLAGS(self), NULL);
+        new = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type,
+                PyArray_DESCR(self),
+                PyArray_NDIM(self),
+                PyArray_DIMS(self),
+                PyArray_STRIDES(self),
+                PyArray_DATA(self),
+                PyArray_FLAGS(self),
+                NULL
+        );
         if (new == NULL) {
             return NULL;
         }
