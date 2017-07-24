@@ -80,7 +80,7 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
-class format_parser:
+class format_parser(object):
     """
     Class to convert formats, names, titles description to a dtype.
 

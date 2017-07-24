@@ -784,7 +784,7 @@ ufunc_domain = {}
 ufunc_fills = {}
 
 
-class _DomainCheckInterval:
+class _DomainCheckInterval(object):
     """
     Define a valid interval, so that :
 
@@ -809,7 +809,7 @@ class _DomainCheckInterval:
                                     umath.less(x, self.a))
 
 
-class _DomainTan:
+class _DomainTan(object):
     """
     Define a valid interval for the `tan` function, so that:
 
@@ -827,7 +827,7 @@ class _DomainTan:
             return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
 
-class _DomainSafeDivide:
+class _DomainSafeDivide(object):
     """
     Define a domain for safe division.
 
@@ -848,7 +848,7 @@ class _DomainSafeDivide:
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
-class _DomainGreater:
+class _DomainGreater(object):
     """
     DomainGreater(v)(x) is True where x <= v.
 
@@ -864,7 +864,7 @@ class _DomainGreater:
             return umath.less_equal(x, self.critical_value)
 
 
-class _DomainGreaterEqual:
+class _DomainGreaterEqual(object):
     """
     DomainGreaterEqual(v)(x) is True where x < v.
 
@@ -880,7 +880,7 @@ class _DomainGreaterEqual:
             return umath.less(x, self.critical_value)
 
 
-class _MaskedUnaryOperation:
+class _MaskedUnaryOperation(object):
     """
     Defines masked version of unary operations, where invalid values are
     pre-masked.
@@ -959,7 +959,7 @@ class _MaskedUnaryOperation:
         return "Masked version of %s. [Invalid values are masked]" % str(self.f)
 
 
-class _MaskedBinaryOperation:
+class _MaskedBinaryOperation(object):
     """
     Define masked version of binary operations, where invalid
     values are pre-masked.
@@ -1111,7 +1111,7 @@ class _MaskedBinaryOperation:
         return "Masked version of " + str(self.f)
 
 
-class _DomainedBinaryOperation:
+class _DomainedBinaryOperation(object):
     """
     Define binary operations that have a domain, like divide.
 
@@ -2358,7 +2358,7 @@ def masked_invalid(a, copy=True):
 ###############################################################################
 
 
-class _MaskedPrintOption:
+class _MaskedPrintOption(object):
     """
     Handle the string used to represent missing data in a masked array.
 
@@ -6417,7 +6417,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod:
+class _frommethod(object):
     """
     Define functions from existing MaskedArray methods.
 
@@ -7895,7 +7895,7 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma:
+class _convert2ma(object):
 
     """
     Convert functions from numpy to numpy.ma.
