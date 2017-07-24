@@ -880,7 +880,17 @@ class _DomainGreaterEqual(object):
             return umath.less(x, self.critical_value)
 
 
-class _MaskedUnaryOperation(object):
+class _MaskedUFunc(object):
+    def __init__(self, ufunc):
+        self.f = ufunc
+        self.__doc__ = ufunc.__doc__
+        self.__name__ = ufunc.__name__
+
+    def __str__(self):
+        return "Masked version of {}".format(self.f)
+
+
+class _MaskedUnaryOperation(_MaskedUFunc):
     """
     Defines masked version of unary operations, where invalid values are
     pre-masked.
@@ -899,11 +909,9 @@ class _MaskedUnaryOperation(object):
     """
 
     def __init__(self, mufunc, fill=0, domain=None):
-        self.f = mufunc
+        super(_MaskedUnaryOperation, self).__init__(mufunc)
         self.fill = fill
         self.domain = domain
-        self.__doc__ = getattr(mufunc, "__doc__", str(mufunc))
-        self.__name__ = getattr(mufunc, "__name__", str(mufunc))
         ufunc_domain[mufunc] = domain
         ufunc_fills[mufunc] = fill
 
@@ -955,11 +963,8 @@ class _MaskedUnaryOperation(object):
         masked_result._update_from(a)
         return masked_result
 
-    def __str__(self):
-        return "Masked version of %s. [Invalid values are masked]" % str(self.f)
 
-
-class _MaskedBinaryOperation(object):
+class _MaskedBinaryOperation(_MaskedUFunc):
     """
     Define masked version of binary operations, where invalid
     values are pre-masked.
@@ -986,11 +991,9 @@ class _MaskedBinaryOperation(object):
         abfunc(x, filly) = x for all x to enable reduce.
 
         """
-        self.f = mbfunc
+        super(_MaskedBinaryOperation, self).__init__(mbfunc)
         self.fillx = fillx
         self.filly = filly
-        self.__doc__ = getattr(mbfunc, "__doc__", str(mbfunc))
-        self.__name__ = getattr(mbfunc, "__name__", str(mbfunc))
         ufunc_domain[mbfunc] = None
         ufunc_fills[mbfunc] = (fillx, filly)
 
@@ -1107,11 +1110,9 @@ class _MaskedBinaryOperation(object):
         masked_result = result.view(tclass)
         return masked_result
 
-    def __str__(self):
-        return "Masked version of " + str(self.f)
 
 
-class _DomainedBinaryOperation(object):
+class _DomainedBinaryOperation(_MaskedUFunc):
     """
     Define binary operations that have a domain, like divide.
 
@@ -1136,12 +1137,10 @@ class _DomainedBinaryOperation(object):
         """abfunc(fillx, filly) must be defined.
            abfunc(x, filly) = x for all x to enable reduce.
         """
-        self.f = dbfunc
+        super(_DomainedBinaryOperation, self).__init__(dbfunc)
         self.domain = domain
         self.fillx = fillx
         self.filly = filly
-        self.__doc__ = getattr(dbfunc, "__doc__", str(dbfunc))
-        self.__name__ = getattr(dbfunc, "__name__", str(dbfunc))
         ufunc_domain[dbfunc] = domain
         ufunc_fills[dbfunc] = (fillx, filly)
 
@@ -1186,9 +1185,6 @@ class _DomainedBinaryOperation(object):
         elif isinstance(b, MaskedArray):
             masked_result._update_from(b)
         return masked_result
-
-    def __str__(self):
-        return "Masked version of " + str(self.f)
 
 
 # Unary ufuncs
@@ -6296,7 +6292,7 @@ def is_masked(x):
 ##############################################################################
 
 
-class _extrema_operation(object):
+class _extrema_operation(_MaskedUFunc):
     """
     Generic class for maximum/minimum functions.
 
@@ -6306,11 +6302,9 @@ class _extrema_operation(object):
 
     """
     def __init__(self, ufunc, compare, fill_value):
-        self.ufunc = ufunc
+        super(_extrema_operation, self).__init__(ufunc)
         self.compare = compare
         self.fill_value_func = fill_value
-        self.__doc__ = ufunc.__doc__
-        self.__name__ = ufunc.__name__
 
     def __call__(self, a, b=None):
         "Executes the call behavior."
@@ -6345,11 +6339,11 @@ class _extrema_operation(object):
             kwargs = dict()
 
         if m is nomask:
-            t = self.ufunc.reduce(target, **kwargs)
+            t = self.f.reduce(target, **kwargs)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
-            t = self.ufunc.reduce(target, **kwargs)
+            t = self.f.reduce(target, **kwargs)
             m = umath.logical_and.reduce(m, **kwargs)
             if hasattr(t, '_mask'):
                 t._mask = m
@@ -6367,7 +6361,7 @@ class _extrema_operation(object):
             ma = getmaskarray(a)
             mb = getmaskarray(b)
             m = logical_or.outer(ma, mb)
-        result = self.ufunc.outer(filled(a), filled(b))
+        result = self.f.outer(filled(a), filled(b))
         if not isinstance(result, MaskedArray):
             result = result.view(MaskedArray)
         result._mask = m
