@@ -72,7 +72,7 @@ def _repl(str):
     return str.replace('Bool', 'npy_bool')
 
 
-class StealRef:
+class StealRef(object):
     def __init__(self, arg):
         self.arg = arg # counting from 1
 
@@ -83,7 +83,7 @@ class StealRef:
             return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
 
 
-class NonNull:
+class NonNull(object):
     def __init__(self, arg):
         self.arg = arg # counting from 1
 
