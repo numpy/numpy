@@ -17,9 +17,9 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    TestCase, run_module_suite, assert_warns, assert_,
-    assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, dec, IS_PYPY, suppress_warnings
+    run_module_suite, assert_warns, assert_, assert_raises_regex,
+    assert_raises, assert_allclose, assert_array_equal, temppath, dec, IS_PYPY,
+    suppress_warnings
 )
 
 
@@ -165,7 +165,7 @@ class RoundtripTest(object):
             self.check_roundtrips(a)
 
 
-class TestSaveLoad(RoundtripTest, TestCase):
+class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
         assert_equal(self.arr[0], self.arr_reloaded)
@@ -173,7 +173,7 @@ class TestSaveLoad(RoundtripTest, TestCase):
         assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
 
 
-class TestSavezLoad(RoundtripTest, TestCase):
+class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
@@ -304,7 +304,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             assert_(fp.closed)
 
 
-class TestSaveTxt(TestCase):
+class TestSaveTxt(object):
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -461,7 +461,7 @@ class TestSaveTxt(TestCase):
         assert_array_equal(a, b)
 
 
-class TestLoadTxt(TestCase):
+class TestLoadTxt(object):
     def test_record(self):
         c = TextIO()
         c.write('1 2\n3 4')
@@ -864,7 +864,7 @@ class TestLoadTxt(TestCase):
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
 
-class Testfromregex(TestCase):
+class Testfromregex(object):
     # np.fromregex expects files opened in binary mode.
     def test_record(self):
         c = TextIO()
@@ -902,7 +902,7 @@ class Testfromregex(TestCase):
 #####--------------------------------------------------------------------------
 
 
-class TestFromTxt(TestCase):
+class TestFromTxt(object):
     #
     def test_record(self):
         # Test w/ explicit dtype
@@ -1683,7 +1683,7 @@ M   33  21.99
         test = np.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
@@ -1702,7 +1702,7 @@ M   33  21.99
         test = np.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', np.int), ('B', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
@@ -1718,7 +1718,7 @@ M   33  21.99
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', np.int), ('b', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,3')
@@ -1726,7 +1726,7 @@ M   33  21.99
         test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
-        self.assertTrue(isinstance(test, np.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
     def test_max_rows(self):
@@ -1836,7 +1836,7 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
-class TestPathUsage(TestCase):
+class TestPathUsage(object):
     # Test that pathlib.Path can be used
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_loadtxt(self):
@@ -1920,7 +1920,7 @@ class TestPathUsage(TestCase):
             test = np.recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', np.int), ('B', np.int)])
-            self.assertTrue(isinstance(test, np.recarray))
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
@@ -1934,7 +1934,7 @@ class TestPathUsage(TestCase):
             test = np.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', np.int), ('B', np.int)])
-            self.assertTrue(isinstance(test, np.recarray))
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
 

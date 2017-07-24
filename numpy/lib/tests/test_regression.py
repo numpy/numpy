@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_raises, _assert_valid_refcount,
     )
 from numpy.compat import unicode
@@ -13,7 +13,7 @@ from numpy.compat import unicode
 rlevel = 1
 
 
-class TestRegression(TestCase):
+class TestRegression(object):
     def test_poly1d(self, level=rlevel):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
@@ -59,7 +59,7 @@ class TestRegression(TestCase):
     def test_poly1d_nan_roots(self, level=rlevel):
         # Ticket #396
         p = np.poly1d([np.nan, np.nan, 1], r=0)
-        self.assertRaises(np.linalg.LinAlgError, getattr, p, "r")
+        assert_raises(np.linalg.LinAlgError, getattr, p, "r")
 
     def test_mem_polymul(self, level=rlevel):
         # Ticket #448
@@ -155,8 +155,8 @@ class TestRegression(TestCase):
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)]
 
-        self.assertRaises(ValueError, dp)
-        self.assertRaises(ValueError, dp2)
+        assert_raises(ValueError, dp)
+        assert_raises(ValueError, dp2)
 
     def test_void_coercion(self, level=rlevel):
         dt = np.dtype([('a', 'f4'), ('b', 'i4')])

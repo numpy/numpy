@@ -6,8 +6,7 @@ from datetime import date
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_allclose,
-    assert_raises
+    run_module_suite, assert_, assert_equal, assert_allclose, assert_raises,
     )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
@@ -15,7 +14,7 @@ from numpy.lib._iotools import (
     )
 
 
-class TestLineSplitter(TestCase):
+class TestLineSplitter(object):
     "Tests the LineSplitter class."
 
     def test_no_delimiter(self):
@@ -79,7 +78,7 @@ class TestLineSplitter(TestCase):
 # -----------------------------------------------------------------------------
 
 
-class TestNameValidator(TestCase):
+class TestNameValidator(object):
 
     def test_case_sensitivity(self):
         "Test case sensitivity"
@@ -140,7 +139,7 @@ def _bytes_to_date(s):
         return date(*time.strptime(s, "%Y-%m-%d")[:3])
 
 
-class TestStringConverter(TestCase):
+class TestStringConverter(object):
     "Test StringConverter"
 
     def test_creation(self):
@@ -254,7 +253,7 @@ class TestStringConverter(TestCase):
         assert_(converter(val) == 9223372043271415339)
 
 
-class TestMiscFunctions(TestCase):
+class TestMiscFunctions(object):
 
     def test_has_nested_dtype(self):
         "Test has_nested_dtype"

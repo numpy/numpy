@@ -6,7 +6,7 @@ import platform
 import numpy as np
 import numpy.core.umath as ncu
 from numpy.testing import (
-    TestCase, run_module_suite, assert_equal, assert_array_equal,
+    run_module_suite, assert_raises, assert_equal, assert_array_equal,
     assert_almost_equal, dec
 )
 
@@ -129,7 +129,7 @@ class TestCexp(object):
 
         yield check, f, np.nan, 0, np.nan, 0
 
-class TestClog(TestCase):
+class TestClog(object):
     def test_simple(self):
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
@@ -152,7 +152,7 @@ class TestClog(TestCase):
         with np.errstate(divide='raise'):
             x = np.array([np.NZERO], dtype=np.complex)
             y = np.complex(-np.inf, np.pi)
-            self.assertRaises(FloatingPointError, np.log, x)
+            assert_raises(FloatingPointError, np.log, x)
         with np.errstate(divide='ignore'):
             assert_almost_equal(np.log(x), y)
 
@@ -164,7 +164,7 @@ class TestClog(TestCase):
         with np.errstate(divide='raise'):
             x = np.array([0], dtype=np.complex)
             y = np.complex(-np.inf, 0)
-            self.assertRaises(FloatingPointError, np.log, x)
+            assert_raises(FloatingPointError, np.log, x)
         with np.errstate(divide='ignore'):
             assert_almost_equal(np.log(x), y)
 
@@ -188,7 +188,7 @@ class TestClog(TestCase):
         with np.errstate(invalid='raise'):
             x = np.array([complex(1., np.nan)], dtype=np.complex)
             y = np.complex(np.nan, np.nan)
-            #self.assertRaises(FloatingPointError, np.log, x)
+            #assert_raises(FloatingPointError, np.log, x)
         with np.errstate(invalid='ignore'):
             assert_almost_equal(np.log(x), y)
 
@@ -197,7 +197,7 @@ class TestClog(TestCase):
 
         with np.errstate(invalid='raise'):
             x = np.array([np.inf + 1j * np.nan], dtype=np.complex)
-            #self.assertRaises(FloatingPointError, np.log, x)
+            #assert_raises(FloatingPointError, np.log, x)
         with np.errstate(invalid='ignore'):
             assert_almost_equal(np.log(x), y)
 
@@ -350,7 +350,7 @@ class TestCsqrt(object):
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
 
-class TestCpow(TestCase):
+class TestCpow(object):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 

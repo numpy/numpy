@@ -6,7 +6,7 @@ from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
-from numpy.testing import TestCase, run_module_suite, tempdir
+from numpy.testing import run_module_suite, tempdir, assert_
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
@@ -94,94 +94,94 @@ def test_exec_command_stderr():
                     exec_command.exec_command("cd '.'")
 
 
-class TestExecCommand(TestCase):
-    def setUp(self):
+class TestExecCommand(object):
+    def setup(self):
         self.pyexe = get_pythonexe()
 
     def check_nt(self, **kws):
         s, o = exec_command.exec_command('cmd /C echo path=%path%')
-        self.assertEqual(s, 0)
-        self.assertNotEqual(o, '')
+        assert_(s == 0)
+        assert_(o != '')
 
         s, o = exec_command.exec_command(
          '"%s" -c "import sys;sys.stderr.write(sys.platform)"' % self.pyexe)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, 'win32')
+        assert_(s == 0)
+        assert_(o == 'win32')
 
     def check_posix(self, **kws):
         s, o = exec_command.exec_command("echo Hello", **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, 'Hello')
+        assert_(s == 0)
+        assert_(o == 'Hello')
 
         s, o = exec_command.exec_command('echo $AAA', **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, '')
+        assert_(s == 0)
+        assert_(o == '')
 
         s, o = exec_command.exec_command('echo "$AAA"', AAA='Tere', **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, 'Tere')
+        assert_(s == 0)
+        assert_(o == 'Tere')
 
         s, o = exec_command.exec_command('echo "$AAA"', **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, '')
+        assert_(s == 0)
+        assert_(o == '')
 
         if 'BBB' not in os.environ:
             os.environ['BBB'] = 'Hi'
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            self.assertEqual(s, 0)
-            self.assertEqual(o, 'Hi')
+            assert_(s == 0)
+            assert_(o == 'Hi')
 
             s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', **kws)
-            self.assertEqual(s, 0)
-            self.assertEqual(o, 'Hey')
+            assert_(s == 0)
+            assert_(o == 'Hey')
 
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            self.assertEqual(s, 0)
-            self.assertEqual(o, 'Hi')
+            assert_(s == 0)
+            assert_(o == 'Hi')
 
             del os.environ['BBB']
 
             s, o = exec_command.exec_command('echo "$BBB"', **kws)
-            self.assertEqual(s, 0)
-            self.assertEqual(o, '')
+            assert_(s == 0)
+            assert_(o == '')
 
 
         s, o = exec_command.exec_command('this_is_not_a_command', **kws)
-        self.assertNotEqual(s, 0)
-        self.assertNotEqual(o, '')
+        assert_(s != 0)
+        assert_(o != '')
 
         s, o = exec_command.exec_command('echo path=$PATH', **kws)
-        self.assertEqual(s, 0)
-        self.assertNotEqual(o, '')
+        assert_(s == 0)
+        assert_(o != '')
 
         s, o = exec_command.exec_command(
              '"%s" -c "import sys,os;sys.stderr.write(os.name)"' %
              self.pyexe, **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, 'posix')
+        assert_(s == 0)
+        assert_(o == 'posix')
 
     def check_basic(self, *kws):
         s, o = exec_command.exec_command(
                      '"%s" -c "raise \'Ignore me.\'"' % self.pyexe, **kws)
-        self.assertNotEqual(s, 0)
-        self.assertNotEqual(o, '')
+        assert_(s != 0)
+        assert_(o != '')
 
         s, o = exec_command.exec_command(
              '"%s" -c "import sys;sys.stderr.write(\'0\');'
              'sys.stderr.write(\'1\');sys.stderr.write(\'2\')"' %
              self.pyexe, **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, '012')
+        assert_(s == 0)
+        assert_(o == '012')
 
         s, o = exec_command.exec_command(
                  '"%s" -c "import sys;sys.exit(15)"' % self.pyexe, **kws)
-        self.assertEqual(s, 15)
-        self.assertEqual(o, '')
+        assert_(s == 15)
+        assert_(o == '')
 
         s, o = exec_command.exec_command(
                      '"%s" -c "print(\'Heipa\'")' % self.pyexe, **kws)
-        self.assertEqual(s, 0)
-        self.assertEqual(o, 'Heipa')
+        assert_(s == 0)
+        assert_(o == 'Heipa')
 
     def check_execute_in(self, **kws):
         with tempdir() as tmpdir:
@@ -194,13 +194,13 @@ class TestExecCommand(TestCase):
             s, o = exec_command.exec_command(
                  '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %
                  (self.pyexe, fn), **kws)
-            self.assertNotEqual(s, 0)
-            self.assertNotEqual(o, '')
+            assert_(s != 0)
+            assert_(o != '')
             s, o = exec_command.exec_command(
                      '"%s" -c "f = open(\'%s\', \'r\'); print(f.read()); '
                      'f.close()"' % (self.pyexe, fn), execute_in=tmpdir, **kws)
-            self.assertEqual(s, 0)
-            self.assertEqual(o, 'Hello')
+            assert_(s == 0)
+            assert_(o == 'Hello')
 
     def test_basic(self):
         with redirect_stdout(StringIO()):

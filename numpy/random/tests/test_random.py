@@ -3,15 +3,16 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-        TestCase, run_module_suite, assert_, assert_raises, assert_equal,
-        assert_warns, assert_no_warnings, assert_array_equal,
-        assert_array_almost_equal, suppress_warnings)
+        run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
+        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
+        suppress_warnings
+        )
 from numpy import random
 import sys
 import warnings
 
 
-class TestSeed(TestCase):
+class TestSeed(object):
     def test_scalar(self):
         s = np.random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -42,7 +43,7 @@ class TestSeed(TestCase):
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
 
 
-class TestBinomial(TestCase):
+class TestBinomial(object):
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -57,7 +58,7 @@ class TestBinomial(TestCase):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(TestCase):
+class TestMultinomial(object):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -85,8 +86,8 @@ class TestMultinomial(TestCase):
                       np.float(1))
 
 
-class TestSetState(TestCase):
-    def setUp(self):
+class TestSetState(object):
+    def setup(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
         self.state = self.prng.get_state()
@@ -133,7 +134,7 @@ class TestSetState(TestCase):
         self.prng.negative_binomial(0.5, 0.5)
 
 
-class TestRandint(TestCase):
+class TestRandint(object):
 
     rfunc = np.random.randint
 
@@ -259,7 +260,7 @@ class TestRandint(TestCase):
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
-            self.assertEqual(sample.dtype, np.dtype(dt))
+            assert_equal(sample.dtype, np.dtype(dt))
 
         for dt in (np.bool, np.int, np.long):
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
@@ -267,15 +268,15 @@ class TestRandint(TestCase):
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
-            self.assertFalse(hasattr(sample, 'dtype'))
-            self.assertEqual(type(sample), dt)
+            assert_(not hasattr(sample, 'dtype'))
+            assert_equal(type(sample), dt)
 
 
-class TestRandomDist(TestCase):
+class TestRandomDist(object):
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    def setUp(self):
+    def setup(self):
         self.seed = 1234567890
 
     def test_rand(self):
@@ -929,10 +930,10 @@ class TestRandomDist(TestCase):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(TestCase):
+class TestBroadcast(object):
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setUp(self):
+    def setup(self):
         self.seed = 123456789
 
     def setSeed(self):
@@ -1484,9 +1485,9 @@ class TestBroadcast(TestCase):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
-class TestThread(TestCase):
+class TestThread(object):
     # make sure each state produces the same sequence even in threads
-    def setUp(self):
+    def setup(self):
         self.seeds = range(4)
 
     def check_function(self, function, sz):
@@ -1527,8 +1528,8 @@ class TestThread(TestCase):
         self.check_function(gen_random, sz=(10000, 6))
 
 # See Issue #4263
-class TestSingleEltArrayInput(TestCase):
-    def setUp(self):
+class TestSingleEltArrayInput(object):
+    def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
         self.argThree = np.array([4])
@@ -1551,7 +1552,7 @@ class TestSingleEltArrayInput(TestCase):
             else:
                 out = func(self.argOne)
 
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
     def test_two_arg_funcs(self):
         funcs = (np.random.uniform, np.random.normal,
@@ -1572,13 +1573,13 @@ class TestSingleEltArrayInput(TestCase):
                 argTwo = self.argTwo
 
             out = func(self.argOne, argTwo)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne[0], argTwo)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne, argTwo[0])
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
 # TODO: Uncomment once randint can broadcast arguments
 #    def test_randint(self):
@@ -1604,13 +1605,13 @@ class TestSingleEltArrayInput(TestCase):
 
         for func in funcs:
             out = func(self.argOne, self.argTwo, self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne[0], self.argTwo, self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
 if __name__ == "__main__":
     run_module_suite()

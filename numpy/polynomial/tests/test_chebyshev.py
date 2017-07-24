@@ -7,8 +7,9 @@ import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    run_module_suite
+    )
 
 
 def trim(x):
@@ -28,7 +29,7 @@ T9 = [0, 9, 0, -120, 0, 432, 0, -576, 0, 256]
 Tlist = [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 
-class TestPrivate(TestCase):
+class TestPrivate(object):
 
     def test__cseries_to_zseries(self):
         for i in range(5):
@@ -45,7 +46,7 @@ class TestPrivate(TestCase):
             assert_equal(res, tgt)
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_chebdomain(self):
         assert_equal(cheb.chebdomain, [-1, 1])
@@ -60,7 +61,7 @@ class TestConstants(TestCase):
         assert_equal(cheb.chebx, [0, 1])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
 
     def test_chebadd(self):
         for i in range(5):
@@ -112,7 +113,7 @@ class TestArithmetic(TestCase):
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestEvaluation(TestCase):
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([2.5, 2., 1.5])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -206,7 +207,7 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_chebint(self):
         # check exceptions
@@ -305,7 +306,7 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_chebder(self):
         # check exceptions
@@ -345,7 +346,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -393,7 +394,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestFitting(TestCase):
+class TestFitting(object):
 
     def test_chebfit(self):
         def f(x):
@@ -470,7 +471,7 @@ class TestFitting(TestCase):
         assert_almost_equal(coef1, coef2)
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, cheb.chebcompanion, [])
@@ -485,7 +486,7 @@ class TestCompanion(TestCase):
         assert_(cheb.chebcompanion([1, 2])[0, 0] == -.5)
 
 
-class TestGauss(TestCase):
+class TestGauss(object):
 
     def test_100(self):
         x, w = cheb.chebgauss(100)
@@ -504,7 +505,7 @@ class TestGauss(TestCase):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_chebfromroots(self):
         res = cheb.chebfromroots([])

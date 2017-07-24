@@ -6,7 +6,7 @@ import sys
 import numpy as np
 from numpy.core.test_rational import rational
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     dec
 )
 
@@ -20,7 +20,7 @@ def assert_dtype_not_equal(a, b):
     assert_(hash(a) != hash(b),
             "two different types hash to the same value !")
 
-class TestBuiltin(TestCase):
+class TestBuiltin(object):
     def test_run(self):
         """Only test hash runs at all."""
         for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
@@ -36,7 +36,7 @@ class TestBuiltin(TestCase):
             dt2 = dt.newbyteorder("<")
             dt3 = dt.newbyteorder(">")
             if dt == dt2:
-                self.assertTrue(dt.byteorder != dt2.byteorder, "bogus test")
+                assert_(dt.byteorder != dt2.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt2)
             else:
                 self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
@@ -51,8 +51,8 @@ class TestBuiltin(TestCase):
         else:
             left = uintp
             right = np.dtype(np.ulonglong)
-        self.assertTrue(left == right)
-        self.assertTrue(hash(left) == hash(right))
+        assert_(left == right)
+        assert_(hash(left) == hash(right))
 
     def test_invalid_types(self):
         # Make sure invalid type strings raise an error
@@ -104,7 +104,7 @@ class TestBuiltin(TestCase):
                          'formats':['i1', 'f4'],
                          'offsets':[0, 2]}, align=True)
 
-class TestRecord(TestCase):
+class TestRecord(object):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
         a = np.dtype([('yo', np.int)])
@@ -146,10 +146,10 @@ class TestRecord(TestCase):
         """Test if an appropriate exception is raised when passing bad values to
         the dtype constructor.
         """
-        self.assertRaises(TypeError, np.dtype,
-            dict(names=set(['A', 'B']), formats=['f8', 'i4']))
-        self.assertRaises(TypeError, np.dtype,
-            dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+        assert_raises(TypeError, np.dtype,
+                      dict(names=set(['A', 'B']), formats=['f8', 'i4']))
+        assert_raises(TypeError, np.dtype,
+                      dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
 
     def test_aligned_size(self):
         # Check that structured dtypes get padded to an aligned size
@@ -276,9 +276,9 @@ class TestRecord(TestCase):
     def test_nonint_offsets(self):
         # gh-8059
         def make_dtype(off):
-            return np.dtype({'names': ['A'], 'formats': ['i4'], 
+            return np.dtype({'names': ['A'], 'formats': ['i4'],
                              'offsets': [off]})
-        
+
         assert_raises(TypeError, make_dtype, 'ASD')
         assert_raises(OverflowError, make_dtype, 2**70)
         assert_raises(TypeError, make_dtype, 2.3)
@@ -289,7 +289,7 @@ class TestRecord(TestCase):
         np.zeros(1, dtype=dt)[0].item()
 
 
-class TestSubarray(TestCase):
+class TestSubarray(object):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))
         b = np.dtype((np.int, (2,)))
@@ -415,7 +415,7 @@ class TestSubarray(TestCase):
         assert_equal(t1.alignment, t2.alignment)
 
 
-class TestMonsterType(TestCase):
+class TestMonsterType(object):
     """Test deeply nested subtypes."""
 
     def test1(self):
@@ -433,29 +433,29 @@ class TestMonsterType(TestCase):
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-class TestMetadata(TestCase):
+class TestMetadata(object):
     def test_no_metadata(self):
         d = np.dtype(int)
-        self.assertEqual(d.metadata, None)
+        assert_(d.metadata is None)
 
     def test_metadata_takes_dict(self):
         d = np.dtype(int, metadata={'datum': 1})
-        self.assertEqual(d.metadata, {'datum': 1})
+        assert_(d.metadata == {'datum': 1})
 
     def test_metadata_rejects_nondict(self):
-        self.assertRaises(TypeError, np.dtype, int, metadata='datum')
-        self.assertRaises(TypeError, np.dtype, int, metadata=1)
-        self.assertRaises(TypeError, np.dtype, int, metadata=None)
+        assert_raises(TypeError, np.dtype, int, metadata='datum')
+        assert_raises(TypeError, np.dtype, int, metadata=1)
+        assert_raises(TypeError, np.dtype, int, metadata=None)
 
     def test_nested_metadata(self):
         d = np.dtype([('a', np.dtype(int, metadata={'datum': 1}))])
-        self.assertEqual(d['a'].metadata, {'datum': 1})
+        assert_(d['a'].metadata == {'datum': 1})
 
-    def base_metadata_copied(self):
+    def test_base_metadata_copied(self):
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
-        assert_equal(d.metadata, {'datum': 1})
+        assert_(d.metadata == {'datum': 1})
 
-class TestString(TestCase):
+class TestString(object):
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))], (3,)),
@@ -582,7 +582,7 @@ class TestString(TestCase):
         # Pull request #4722
         np.array(["", ""]).astype(object)
 
-class TestDtypeAttributeDeletion(TestCase):
+class TestDtypeAttributeDeletion(object):
 
     def test_dtype_non_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
@@ -600,7 +600,7 @@ class TestDtypeAttributeDeletion(TestCase):
             assert_raises(AttributeError, delattr, dt, s)
 
 
-class TestDtypeAttributes(TestCase):
+class TestDtypeAttributes(object):
     def test_descr_has_trailing_void(self):
         # see gh-6359
         dtype = np.dtype({
@@ -625,17 +625,15 @@ class TestDtypeAttributes(TestCase):
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 
-class TestPickling(TestCase):
+class TestPickling(object):
 
     def check_pickling(self, dtype):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.loads(pickle.dumps(dtype, proto))
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
-            if dtype.metadata:
+            if dtype.metadata is not None:
                 assert_equal(pickled.metadata, dtype.metadata)
-            else:
-                self.assertFalse(pickled.metadata)  # may be None
             # Check the reconstructed dtype is functional
             x = np.zeros(3, dtype=dtype)
             y = np.zeros(3, dtype=pickled)

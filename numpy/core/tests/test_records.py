@@ -8,12 +8,12 @@ from os import path
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_raises, assert_warns
     )
 
 
-class TestFromrecords(TestCase):
+class TestFromrecords(object):
     def test_fromrecords(self):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
@@ -298,8 +298,8 @@ class TestFromrecords(TestCase):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
-class TestRecord(TestCase):
-    def setUp(self):
+class TestRecord(object):
+    def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),
@@ -323,7 +323,7 @@ class TestRecord(TestCase):
         def assign_invalid_column(x):
             x[0].col5 = 1
 
-        self.assertRaises(AttributeError, assign_invalid_column, a)
+        assert_raises(AttributeError, assign_invalid_column, a)
 
     def test_nonwriteable_setfield(self):
         # gh-8171

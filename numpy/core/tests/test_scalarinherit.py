@@ -5,7 +5,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_
+from numpy.testing import run_module_suite, assert_
 
 
 class A(object):
@@ -23,7 +23,7 @@ class B0(np.float64, A):
 class C0(B0):
     pass
 
-class TestInherit(TestCase):
+class TestInherit(object):
     def test_init(self):
         x = B(1.0)
         assert_(str(x) == '1.0')

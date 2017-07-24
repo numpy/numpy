@@ -3,14 +3,15 @@ from __future__ import division, absolute_import, print_function
 import warnings
 
 import numpy as np
-from numpy.testing import (assert_, TestCase, assert_array_equal,
-                           assert_allclose, run_module_suite,
-                           suppress_warnings)
+from numpy.testing import (
+    assert_, assert_array_equal, assert_allclose, run_module_suite,
+    suppress_warnings
+    )
 
 rlevel = 1
 
 
-class TestRegression(TestCase):
+class TestRegression(object):
     def test_masked_array_create(self,level=rlevel):
         # Ticket #17
         x = np.ma.masked_array([0, 1, 2, 3, 0, 4, 5, 6],

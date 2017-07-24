@@ -4,13 +4,13 @@ import warnings
 import numpy as np
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
                         block, vstack, hstack, newaxis, concatenate, stack)
-from numpy.testing import (TestCase, assert_, assert_raises,
+from numpy.testing import (assert_, assert_raises,
                            assert_array_equal, assert_equal, run_module_suite,
                            assert_raises_regex, assert_almost_equal)
 
 from numpy.compat import long
 
-class TestAtleast1d(TestCase):
+class TestAtleast1d(object):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -51,7 +51,7 @@ class TestAtleast1d(TestCase):
         assert_(atleast_1d([[2, 3], [4, 5]]).shape == (2, 2))
 
 
-class TestAtleast2d(TestCase):
+class TestAtleast2d(object):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -90,7 +90,7 @@ class TestAtleast2d(TestCase):
         assert_(atleast_2d([[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
 
 
-class TestAtleast3d(TestCase):
+class TestAtleast3d(object):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -122,7 +122,7 @@ class TestAtleast3d(TestCase):
         assert_array_equal(res, desired)
 
 
-class TestHstack(TestCase):
+class TestHstack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, hstack, 1)
 
@@ -151,7 +151,7 @@ class TestHstack(TestCase):
         assert_array_equal(res, desired)
 
 
-class TestVstack(TestCase):
+class TestVstack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, vstack, 1)
 
@@ -187,7 +187,7 @@ class TestVstack(TestCase):
         assert_array_equal(res, desired)
 
 
-class TestConcatenate(TestCase):
+class TestConcatenate(object):
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
@@ -333,7 +333,7 @@ def test_stack():
                         stack, [m, m])
 
 
-class TestBlock(TestCase):
+class TestBlock(object):
     def test_block_simple_row_wise(self):
         a_2d = np.ones((2, 2))
         b_2d = 2 * a_2d
