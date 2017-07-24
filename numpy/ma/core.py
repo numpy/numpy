@@ -786,22 +786,17 @@ ufunc_fills = {}
 
 class _DomainCheckInterval(object):
     """
-    Define a valid interval, so that :
+    Define a valid interval, so that:
 
-    ``domain_check_interval(a,b)(x) == True`` where
-    ``x < a`` or ``x > b``.
-
+    ``_DomainCheckInterval(a,b)(x)`` is False where ``a <= x <= b``.
     """
-
     def __init__(self, a, b):
-        "domain_check_interval(a,b)(x) = true where x < a or y > b"
         if (a > b):
             (a, b) = (b, a)
         self.a = a
         self.b = b
 
     def __call__(self, x):
-        "Execute the call behavior."
         # nans at masked positions cause RuntimeWarnings, even though
         # they are masked. To avoid this we suppress warnings.
         with np.errstate(invalid='ignore'):
@@ -813,16 +808,12 @@ class _DomainTan(object):
     """
     Define a valid interval for the `tan` function, so that:
 
-    ``domain_tan(eps) = True`` where ``abs(cos(x)) < eps``
-
+    ``_DomainTan(eps)(x)`` is False where ``abs(cos(x)) >= eps``
     """
-
     def __init__(self, eps):
-        "domain_tan(eps) = true where abs(cos(x)) < eps)"
         self.eps = eps
 
     def __call__(self, x):
-        "Executes the call behavior."
         with np.errstate(invalid='ignore'):
             return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
@@ -831,8 +822,8 @@ class _DomainSafeDivide(object):
     """
     Define a domain for safe division.
 
+    ``_DomainSafeDivide(tol)`` is False where ``abs(a/b) < 1/tol``
     """
-
     def __init__(self, tolerance=None):
         self.tolerance = tolerance
 
@@ -850,32 +841,24 @@ class _DomainSafeDivide(object):
 
 class _DomainGreater(object):
     """
-    DomainGreater(v)(x) is True where x <= v.
-
+    ``DomainGreater(v)(x)`` is False where ``x > v``.
     """
-
     def __init__(self, critical_value):
-        "DomainGreater(v)(x) = true where x <= v"
         self.critical_value = critical_value
 
     def __call__(self, x):
-        "Executes the call behavior."
         with np.errstate(invalid='ignore'):
             return umath.less_equal(x, self.critical_value)
 
 
 class _DomainGreaterEqual(object):
     """
-    DomainGreaterEqual(v)(x) is True where x < v.
-
+    DomainGreaterEqual(v)(x) is False where ``x >= v``.
     """
-
     def __init__(self, critical_value):
-        "DomainGreaterEqual(v)(x) = true where x < v"
         self.critical_value = critical_value
 
     def __call__(self, x):
-        "Executes the call behavior."
         with np.errstate(invalid='ignore'):
             return umath.less(x, self.critical_value)
 
@@ -892,10 +875,9 @@ class _MaskedUnaryOperation(object):
         as ``_MaskedUnaryOperation.f``.
     fill : scalar, optional
         Filling value, default is 0.
-    domain : class instance
-        Domain for the function. Should be one of the ``_Domain*``
-        classes. Default is None.
-
+    domain : callable
+        Domain for this operation, a function that returns True where the input
+        is out of range.
     """
 
     def __init__(self, mufunc, fill=0, domain=None):
@@ -969,9 +951,6 @@ class _MaskedBinaryOperation(object):
     mbfunc : function
         The function for which to define a masked version. Made available
         as ``_MaskedBinaryOperation.f``.
-    domain : class instance
-        Default domain for the function. Should be one of the ``_Domain*``
-        classes. Default is None.
     fillx : scalar, optional
         Filling value for the first argument, default is 0.
     filly : scalar, optional
@@ -1122,9 +1101,9 @@ class _DomainedBinaryOperation(object):
     mbfunc : function
         The function for which to define a masked version. Made available
         as ``_DomainedBinaryOperation.f``.
-    domain : class instance
-        Default domain for the function. Should be one of the ``_Domain*``
-        classes.
+    domain : callable
+        Domain for this operation, a function that returns True where the input
+        is out of range.
     fillx : scalar, optional
         Filling value for the first argument, default is 0.
     filly : scalar, optional
@@ -1146,7 +1125,6 @@ class _DomainedBinaryOperation(object):
         ufunc_fills[dbfunc] = (fillx, filly)
 
     def __call__(self, a, b, *args, **kwargs):
-        "Execute the call behavior."
         # Get the data
         (da, db) = (getdata(a), getdata(b))
         # Get the result
@@ -1157,9 +1135,8 @@ class _DomainedBinaryOperation(object):
         m |= getmask(a)
         m |= getmask(b)
         # Apply the domain
-        domain = ufunc_domain.get(self.f, None)
-        if domain is not None:
-            m |= domain(da, db)
+        if self.domain is not None:
+            m |= self.domain(da, db)
         # Take care of the scalar case first
         if (not m.ndim):
             if m:
