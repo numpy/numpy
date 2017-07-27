@@ -15,7 +15,7 @@ from numpy.core.numeric import (
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, log10, not_equal, subtract
+    mod, exp, log10, not_equal, subtract, floor_divide, true_divide
     )
 from numpy.core.fromnumeric import (
     ravel, nonzero, sort, partition, mean, any, sum
@@ -41,10 +41,10 @@ else:
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
-    'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'diff', 'ratio', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+    'flip', 'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite',
+    'average', 'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
+    'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
     ]
@@ -1921,6 +1921,111 @@ def diff(a, n=1, axis=-1):
     op = not_equal if a.dtype == np.bool_ else subtract
     for _ in range(n):
         a = op(a[slice1], a[slice2])
+
+    return a
+
+
+def ratio(a, n=1, axis=-1):
+    """
+    Calculate the n-th geometric difference along the given axis.
+
+    The first ratio is given by ``out[n] = a[n+1] // a[n]`` along
+    the given axis, higher differences are calculated by using `ratio`
+    recursively.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array
+    n : int, optional
+        The number of times values are differenced. If zero, the input
+        is returned as-is.
+    axis : int, optional
+        The axis along which the difference is taken, default is the
+        last axis.
+
+    Returns
+    -------
+    ratio : ndarray
+        The n-th ratios. The shape of the output is the same as `a`
+        except along `axis` where the dimension is smaller by `n`. The
+        type of the output is the same as that of the input.
+
+    See Also
+    --------
+    gradient, ediff1d, cumsum
+
+    Notes
+    -----
+    For boolean arrays, the preservation of type means that the result
+    will contain `False` when consecutive elements are the same and
+    `True` when they differ.
+
+    For unsigned integer arrays, the results will also be unsigned. This
+    should not be surprising, as the result is consistent with
+    calculating the difference directly:
+
+    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
+    >>> np.diff(u8_arr)
+    array([255], dtype=uint8)
+    >>> u8_arr[1,...] - u8_arr[0,...]
+    array(255, np.uint8)
+
+    If this is not desirable, then the array should be cast to a larger
+    integer type first:
+
+    >>> i16_arr = u8_arr.astype(np.int16)
+    >>> np.diff(i16_arr)
+    array([-1], dtype=int16)
+
+    Examples
+    --------
+    >>> x = np.array([1, 2, 4, 7, 0])
+    >>> np.diff(x)
+    array([ 1,  2,  3, -7])
+    >>> np.diff(x, n=2)
+    array([  1,   1, -10])
+
+    >>> x = np.array([[1, 3, 6, 10], [0, 5, 6, 8]])
+    >>> np.diff(x)
+    array([[2, 3, 4],
+           [5, 1, 2]])
+    >>> np.diff(x, axis=0)
+    array([[-1,  2,  0, -2]])
+
+    """
+    if n == 0:
+        return a
+    if n < 0:
+        raise ValueError(
+            "order must be non-negative but got " + repr(n))
+
+    a = asanyarray(a)
+    nd = a.ndim
+
+    if n >= a.shape[axis]:
+        shape = list(a.shape)
+        shape[axis] = 0
+        return empty(shape, dtype=a.dtype)
+
+    keep = slice(None)
+    rng = range(nd)
+    axis = rng[axis]
+    slice1 = tuple(slice(1, None) if i == axis else keep for i in rng)
+    slice2 = tuple(slice(None, -1) if i == axis else keep for i in rng)
+
+    op = true_divide if true else floor_divide
+    for _ in range(n):
+        num, denom = a[slice1], a[slice2]
+        # Zeros can creep in from division by infinity.
+        # This check does in fact need to be done every time.
+        if zero_div is not None and 0 in denom:
+            a = empty_like(num)
+            mask = denom.astype(np.bool_)
+            a[mask] = op(num[mask], denom[mask])
+            a[~mask] = zero_div
+        else:
+            a = op(num, denom)
 
     return a
 
