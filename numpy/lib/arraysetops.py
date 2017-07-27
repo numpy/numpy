@@ -378,8 +378,9 @@ def setxor1d(ar1, ar2, assume_unique=False):
 #    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
     flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))
 #    flag2 = ediff1d( flag ) == 0
-    flag2 = flag[1:] == flag[:-1]
-    return aux[flag2]
+#    flag2 = flag[1:] == flag[:-1]
+#    return aux[flag2]
+    return aux[np.logical_and(flag[1:], flag[:-1])]
 
 
 def in1d(ar1, ar2, assume_unique=False, invert=False):
