@@ -1437,7 +1437,7 @@ def rollaxis(a, axis, start=0):
     Roll the specified axis backwards, until it lies in a given position.
 
     This function continues to be supported for backward compatibility, but you
-    should prefer np.moveaxis. The np.moveaxis function was added in NumPy
+    should prefer `moveaxis`. The `moveaxis` function was added in NumPy
     1.11.
 
     Parameters
