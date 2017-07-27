@@ -29,8 +29,6 @@ from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError, AxisError
 
-from numpy.lib import deprecate
-
 bitwise_not = invert
 ufunc = type(sin)
 newaxis = None
@@ -1434,10 +1432,13 @@ def roll(a, shift, axis=None):
         return result
 
 
-@deprecate(message="Use numpy.moveaxis() instead.")
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
+
+    This function continues to be supported for backward compatibility, but you
+    should prefer np.moveaxis. The np.moveaxis function was added in NumPy
+    1.11.
 
     Parameters
     ----------
