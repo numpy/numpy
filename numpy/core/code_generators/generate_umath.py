@@ -314,9 +314,7 @@ defdict = {
 'true_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.true_divide'),
-          'PyUFunc_DivisionTypeResolver',
-          TD('bBhH', out='d'),
-          TD('iIlLqQ', out='d'),
+          'PyUFunc_TrueDivisionTypeResolver',
           TD(flts+cmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),

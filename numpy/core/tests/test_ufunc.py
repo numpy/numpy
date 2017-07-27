@@ -1,5 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
+import itertools
+
 import numpy as np
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
@@ -7,10 +10,9 @@ from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings
+    assert_no_warnings, assert_allclose,
 )
 
-import warnings
 
 class TestUfuncKwargs(object):
     def test_kwarg_exact(self):
@@ -354,14 +356,78 @@ class TestUfunc(object):
         assert_equal(b, [0, 0, 1])
 
     def test_true_divide(self):
-        # True_divide has a non uniform signature, see #3484.
-        # This also tests type_tuple_type_resolver.
-        a = np.full(5, 12.5)
-        b = np.full(5, 10.0)
-        tgt = np.full(5, 1.25)
-        assert_almost_equal(np.true_divide(a, b, dtype=np.float64), tgt)
-        assert_almost_equal(np.true_divide(a, b, dtype=np.float32), tgt)
-        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
+        a = np.array(10)
+        b = np.array(20)
+        tgt = np.array(0.5)
+
+        for tc in 'bhilqBHILQefdgFDG':
+            dt = np.dtype(tc)
+            aa = a.astype(dt)
+            bb = b.astype(dt)
+
+            # Check result value and dtype.
+            for x, y in itertools.product([aa, -aa], [bb, -bb]):
+
+                # Check with no output type specified
+                if tc in 'FDG':
+                    tgt = complex(x)/complex(y)
+                else:
+                    tgt = float(x)/float(y)
+
+                res = np.true_divide(x, y)
+                rtol = max(np.finfo(res).resolution, 1e-15)
+                assert_allclose(res, tgt, rtol=rtol)
+
+                if tc in 'bhilqBHILQ':
+                    assert_(res.dtype.name == 'float64')
+                else:
+                    assert_(res.dtype.name == dt.name )
+
+                # Check with output type specified.  This also checks for the
+                # incorrect casts in issue gh-3484 because the unary '-' does
+                # not change types, even for unsigned types, Hence casts in the
+                # ufunc from signed to unsigned and vice versa will lead to
+                # errors in the values.
+                for tcout in 'bhilqBHILQ':
+                    dtout = np.dtype(tcout)
+                    assert_raises(TypeError, np.true_divide, x, y, dtype=dtout)
+
+                for tcout in 'efdg':
+                    dtout = np.dtype(tcout)
+                    if tc in 'FDG':
+                        # Casting complex to float is not allowed
+                        assert_raises(TypeError, np.true_divide, x, y, dtype=dtout)
+                    else:
+                        tgt = float(x)/float(y)
+                        rtol = max(np.finfo(dtout).resolution, 1e-15)
+                        atol = max(np.finfo(dtout).tiny, 3e-308)
+                        # Some test values result in invalid for float16.
+                        with np.errstate(invalid='ignore'):
+                            res = np.true_divide(x, y, dtype=dtout)
+                        if not np.isfinite(res) and tcout == 'e':
+                            continue
+                        assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                        assert_(res.dtype.name == dtout.name)
+
+                for tcout in 'FDG':
+                    dtout = np.dtype(tcout)
+                    tgt = complex(x)/complex(y)
+                    rtol = max(np.finfo(dtout).resolution, 1e-15)
+                    atol = max(np.finfo(dtout).tiny, 3e-308)
+                    res = np.true_divide(x, y, dtype=dtout)
+                    if not np.isfinite(res):
+                        continue
+                    assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                    assert_(res.dtype.name == dtout.name)
+
+        # Check booleans
+        a = np.ones((), dtype=np.bool_)
+        res = np.true_divide(a, a)
+        assert_(res == 1.0)
+        assert_(res.dtype.name == 'float64')
+        res = np.true_divide(~a, a)
+        assert_(res == 0.0)
+        assert_(res.dtype.name == 'float64')
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)

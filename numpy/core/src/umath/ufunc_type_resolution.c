@@ -1219,19 +1219,63 @@ type_reso_error: {
     }
 }
 
+
 /*
- * Function to check and report floor division warning when python2.x is 
- * invoked with -3 switch 
+ * True division should return float64 results when both inputs are integer
+ * types. The PyUFunc_DefaultTypeResolver promotes 8 bit integers to float16
+ * and 16 bit integers to float32, so that is overridden here by specifying a
+ * 'dd->d' signature. Returns -1 on failure.
+*/
+NPY_NO_EXPORT int
+PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
+                                 NPY_CASTING casting,
+                                 PyArrayObject **operands,
+                                 PyObject *type_tup,
+                                 PyArray_Descr **out_dtypes)
+{
+    int type_num1, type_num2;
+    static PyObject *default_type_tup = NULL;
+
+    /* Set default type for integer inputs to NPY_DOUBLE */
+    if (default_type_tup == NULL) {
+        PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
+
+        if (tmp == NULL) {
+            return -1;
+        }
+        default_type_tup = PyTuple_Pack(3, tmp, tmp, tmp);
+        if (default_type_tup == NULL) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        Py_DECREF(tmp);
+    }
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    if (type_tup == NULL &&
+            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                                           default_type_tup, out_dtypes);
+    }
+    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
+                                        type_tup, out_dtypes);
+}
+/*
+ * Function to check and report floor division warning when python2.x is
+ * invoked with -3 switch
  * See PEP238 and #7949 for numpy
- * This function will not be hit for py3 or when __future__ imports division. 
+ * This function will not be hit for py3 or when __future__ imports division.
  * See generate_umath.py for reason
 */
 NPY_NO_EXPORT int
 PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+                                  NPY_CASTING casting,
+                                  PyArrayObject **operands,
+                                  PyObject *type_tup,
+                                  PyArray_Descr **out_dtypes)
 {
  /* Depreciation checks needed only on python 2 */
 #if !defined(NPY_PY3K)
@@ -1240,17 +1284,15 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
-    /* If both types are integer, warn the user, same as python does */ 
+    /* If both types are integer, warn the user, same as python does */
     if (Py_DivisionWarningFlag &&
-        (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
-        (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)))
-    {
+            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
-    } 
-#endif  
-
-   return PyUFunc_DivisionTypeResolver(ufunc, casting, operands, 
-                                       type_tup, out_dtypes);
+    }
+#endif
+    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
+                                        type_tup, out_dtypes);
 }
 
 
