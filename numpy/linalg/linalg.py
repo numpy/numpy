@@ -22,7 +22,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
-    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
+    finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
     )
 from numpy.core.multiarray import normalize_axis_index
@@ -2006,7 +2006,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     """
     if row_axis > col_axis:
         row_axis -= 1
-    y = rollaxis(rollaxis(x, col_axis, x.ndim), row_axis, -1)
+    y = moveaxis(moveaxis(x, col_axis, -1), row_axis, -2)
     result = op(svd(y, compute_uv=0), axis=-1)
     return result
 
