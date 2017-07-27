@@ -2004,9 +2004,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
         is `numpy.amin` or `numpy.amax` or `numpy.sum`.
 
     """
-    if row_axis > col_axis:
-        row_axis -= 1
-    y = moveaxis(x, [row_axis, col_axis], [-2, -1])
+    y = moveaxis(x, (row_axis, col_axis), (-2, -1))
     result = op(svd(y, compute_uv=0), axis=-1)
     return result
 
