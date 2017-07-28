@@ -7,7 +7,6 @@ import decimal
 
 import numpy as np
 from numpy import ma
-from numpy.core._internal import AxisError
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
@@ -736,8 +735,8 @@ class TestRatio(object):
         assert_array_equal(ratio(x, axis=0), np.ones((9, 20, 30)))
         assert_array_equal(ratio(x, axis=1), -np.ones((10, 19, 30)))
         assert_array_equal(ratio(x, axis=-2), -np.ones((10, 19, 30)))
-        assert_raises(AxisError, ratio, x, axis=3)
-        assert_raises(AxisError, ratio, x, axis=-4)
+        assert_raises(np.AxisError, ratio, x, axis=3)
+        assert_raises(np.AxisError, ratio, x, axis=-4)
 
     def test_bool(self):
         # All possible ratios
@@ -819,10 +818,6 @@ class TestRatio(object):
 
 
     def test_subclass(self):
-        """
-        Check that subclass is preserved, even across optimization for
-        large `n`.
-        """
         x = ma.array([[1, 2.5], [2, 5], [3, 7.5], [4, 10], [5, 12.5]],
                      mask=[[False, False], [True, False],
                            [False, True], [True, True], [False, False]])

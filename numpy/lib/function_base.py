@@ -1958,7 +1958,10 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     ratio : ndarray
         The n-th ratios. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`. The
-        type of the output is the same as that of the input.
+        type of the output is same as the type of the quotient between
+        any two elements of `a`. This is same as the type of `a` in most
+        cases. A notable exception is `bool_`, which results in a
+        `uint8` output array.
 
     See Also
     --------
@@ -2015,17 +2018,18 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError(
-            "order must be non-negative but got " + repr(n))
+        raise ValueError("order must be non-negative but got " + repr(n))
 
     a = asanyarray(a)
     nd = a.ndim
-    rng = range(nd)
     axis = normalize_axis_index(axis, nd)
-    keep = slice(None)
 
-    slice1 = tuple(slice(1, None) if i == axis else keep for i in rng)
-    slice2 = tuple(slice(None, -1) if i == axis else keep for i in rng)
+    slice1 = [slice(None)] * nd
+    slice2 = [slice(None)] * nd
+    slice1[axis] = slice(1, None)
+    slice2[axis] = slice(None, -1)
+    slice1 = tuple(slice1)
+    slice2 = tuple(slice2)
 
     op = true_divide if true else floor_divide
     for _ in range(n):
