@@ -1856,7 +1856,7 @@ def diff(a, n=1, axis=-1):
 
     See Also
     --------
-    gradient, ediff1d, cumsum
+    gradient, ediff1d, cumsum, ratio
 
     Notes
     -----
@@ -1925,7 +1925,7 @@ def diff(a, n=1, axis=-1):
     return a
 
 
-def ratio(a, n=1, axis=-1):
+def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     """
     Calculate the n-th geometric difference along the given axis.
 
@@ -1943,6 +1943,15 @@ def ratio(a, n=1, axis=-1):
     axis : int, optional
         The axis along which the difference is taken, default is the
         last axis.
+    true : bool, optional
+        Whether or not to use true division or to preserve the type.
+        If True, the ratio will use `/` and the result will be an
+        inexact type. If False, the type will be preserved with the
+        `//` operator. Default is True.
+    zero_div : scalar, optional
+        A scalar to replace divisions by zero with. If omitted, the
+        default value will be used in the result and a warning will be
+        issued as usual.
 
     Returns
     -------
@@ -1953,45 +1962,49 @@ def ratio(a, n=1, axis=-1):
 
     See Also
     --------
-    gradient, ediff1d, cumsum
+    gradient, ediff1d, cumsum, diff
 
     Notes
     -----
-    For boolean arrays, the preservation of type means that the result
-    will contain `False` when consecutive elements are the same and
-    `True` when they differ.
+    NaNs are propagated from both the numerator and the denominator by
+    this function. A single NaN that is not at the edge of the input
+    array will result in two NaNs in the result:
 
-    For unsigned integer arrays, the results will also be unsigned. This
-    should not be surprising, as the result is consistent with
-    calculating the difference directly:
+    >>> arr = np.array([1.0, np.nan, 2.0, 1.0])
+    >>> np.ratio(arr)
+    array([ nan,  nan,  0.5])
 
-    >>> u8_arr = np.array([1, 0], dtype=np.uint8)
-    >>> np.diff(u8_arr)
-    array([255], dtype=uint8)
-    >>> u8_arr[1,...] - u8_arr[0,...]
-    array(255, np.uint8)
+    Setting `true` to `False` for inexact arrays may yield unexpected
+    results since the type will be preserved, but the result will be
+    truncated to the nearest integer:
 
-    If this is not desirable, then the array should be cast to a larger
-    integer type first:
-
-    >>> i16_arr = u8_arr.astype(np.int16)
-    >>> np.diff(i16_arr)
-    array([-1], dtype=int16)
+    >>> arr = np.array([2.0, 1.0], true=False)
+    >>> np.ratio(arr)
+    array([ 0.])
 
     Examples
     --------
     >>> x = np.array([1, 2, 4, 7, 0])
-    >>> np.diff(x)
-    array([ 1,  2,  3, -7])
-    >>> np.diff(x, n=2)
-    array([  1,   1, -10])
+    >>> np.ratio(x)
+    array([ 2.  ,  2.  ,  1.75,  0.  ])
+    >>> np.ratio(x, n=2)
+    array([ 1.   ,  0.875,  0.   ])
+    >>> np.ratio(x, true=False)
+    array([2, 2, 1, 0])
 
-    >>> x = np.array([[1, 3, 6, 10], [0, 5, 6, 8]])
-    >>> np.diff(x)
-    array([[2, 3, 4],
-           [5, 1, 2]])
-    >>> np.diff(x, axis=0)
-    array([[-1,  2,  0, -2]])
+    >>> x = np.array([1, 2, 0, 3, 1])
+    >>> np.ratio(x)
+    ... RuntimeWarning: divide by zero encountered in true_divide
+    array([ 2.        ,  0.        ,         inf,  0.33333333])
+    >>> np.ratio(x, zero_div=-7)
+    array([ 2.        ,  0.        , -7.        ,  0.33333333])
+
+    >>> x = np.array([[1, 3, 5, 10], [8, 5, 6, 8]])
+    >>> np.ratio(x)
+    array([[ 3.        ,  1.66666667,  2.        ],
+           [ 0.625     ,  1.2       ,  1.33333333]])
+    >>> np.ratio(x, axis=0)
+    array([[ 8.        ,  1.66666667,  1.2       ,  0.8       ]])
 
     """
     if n == 0:
