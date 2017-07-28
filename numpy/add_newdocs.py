@@ -961,7 +961,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     """
     fromstring(string, dtype=float, count=-1, sep='')
 
-    A new 1-D array initialized from raw binary or text data in a string.
+    A new 1-D array initialized from text data in a string.
 
     Parameters
     ----------
@@ -975,11 +975,13 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         negative (the default), the count will be determined from the
         length of the data.
     sep : str, optional
-        If not provided or, equivalently, the empty string, the data will
-        be interpreted as binary data; otherwise, as ASCII text with
-        decimal numbers.  Also in this latter case, this argument is
-        interpreted as the string separating numbers in the data; extra
-        whitespace between elements is also ignored.
+        The string separating numbers in the data; extra whitespace between
+        elements is also ignored.
+
+        .. deprecated:: 1.14
+            If this argument is not provided `fromstring` falls back on the
+            behaviour of `frombuffer`, after encoding unicode string inputs as
+            either utf-8 (python 3), or the default encoding (python 2).
 
     Returns
     -------
@@ -998,14 +1000,10 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
     Examples
     --------
-    >>> np.fromstring('\\x01\\x02', dtype=np.uint8)
-    array([1, 2], dtype=uint8)
     >>> np.fromstring('1 2', dtype=int, sep=' ')
     array([1, 2])
     >>> np.fromstring('1, 2', dtype=int, sep=',')
     array([1, 2])
-    >>> np.fromstring('\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
-    array([1, 2, 3], dtype=uint8)
 
     """)
 
@@ -1153,6 +1151,11 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     >>> np.frombuffer(s, dtype='S1', count=5, offset=6)
     array(['w', 'o', 'r', 'l', 'd'],
           dtype='|S1')
+
+    >>> np.frombuffer(b'\\x01\\x02', dtype=np.uint8)
+    array([1, 2], dtype=uint8)
+    >>> np.frombuffer(b'\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
+    array([1, 2, 3], dtype=uint8)
 
     """)
 
