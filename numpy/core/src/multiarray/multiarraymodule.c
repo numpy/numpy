@@ -2098,6 +2098,17 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         Py_XDECREF(descr);
         return NULL;
     }
+
+    // binary mode, condition copied from PyArray_FromString
+    if (sep == NULL || strlen(sep) == 0) {
+        /* Numpy 1.14, 2017-10-19 */
+        if (DEPRECATE(
+                "The binary mode of fromstring is deprecated, as it behaves "
+                "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+    }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
 
