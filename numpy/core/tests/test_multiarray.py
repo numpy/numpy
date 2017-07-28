@@ -4183,11 +4183,11 @@ class TestIO(object):
 
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()
-        y = np.fromstring(s, dtype=self.dtype)
+        y = np.frombuffer(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
         s = self.x.tobytes('F')
-        y = np.fromstring(s, dtype=self.dtype)
+        y = np.frombuffer(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flatten('F'))
 
     def test_roundtrip_str(self):
@@ -4302,7 +4302,10 @@ class TestIO(object):
             assert_equal(pos, 10, err_msg=err_msg)
 
     def _check_from(self, s, value, **kw):
-        y = np.fromstring(s, **kw)
+        if 'sep' not in kw:
+            y = np.frombuffer(s, **kw)
+        else:
+            y = np.fromstring(s, **kw)
         assert_array_equal(y, value)
 
         f = open(self.filename, 'wb')

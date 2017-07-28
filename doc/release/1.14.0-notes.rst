@@ -25,6 +25,12 @@ Deprecations
   empty, use ``array.size > 0``.
 * Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
   ``minlength=0`` should be used.
+``np.fromstring`` should always be passed a ``sep`` argument
+------------------------------------------------------------
+Without this argument, this falls back on a broken version of `np.frombuffer`
+that silently accepts and then encode unicode strings. If reading binary data
+is desired, ``frombuffer`` should be used directly.
+
 
 Future Changes
 ==============
