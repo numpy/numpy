@@ -806,6 +806,20 @@ class TestRatio(object):
         assert_(ratio(x, n=0) is x)
 
 
+    def test_subclass(self):
+        """
+        Check that subclass is preserved, even across optimization for
+        large `n`.
+        """
+        x = ma.array([[1, 2], [2, 4], [4, 8]])
+        out = ratio(x)
+        out2 = ratio(x, n=3)
+        assert_array_equal(out, [[2], [2], [2]])
+        assert_array_equal(out2, [[], [], []])
+        assert_(type(out) is type(x))
+        assert_(type(out2) is type(x))
+
+
 class TestDelete(object):
 
     def setup(self):

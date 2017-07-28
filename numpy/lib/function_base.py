@@ -2015,15 +2015,14 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
 
     a = asanyarray(a)
     nd = a.ndim
-
-    if n >= a.shape[axis]:
-        shape = list(a.shape)
-        shape[axis] = 0
-        return empty(shape, dtype=a.dtype)
-
-    keep = slice(None)
     rng = range(nd)
     axis = rng[axis]
+    keep = slice(None)
+
+    if n >= a.shape[axis]:
+        slice1 = tuple(slice(0, 0) if i == axis else keep for i in rng)
+        return a[slice1]
+
     slice1 = tuple(slice(1, None) if i == axis else keep for i in rng)
     slice2 = tuple(slice(None, -1) if i == axis else keep for i in rng)
 
