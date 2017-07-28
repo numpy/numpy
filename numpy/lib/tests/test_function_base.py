@@ -7,6 +7,7 @@ import decimal
 
 import numpy as np
 from numpy import ma
+from numpy.core._internal import AxisError
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
@@ -19,8 +20,8 @@ from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, ratio, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
-    piecewise, place, rot90, select, setxor1d, sinc, split, trapz,
-    trim_zeros, unwrap, unique, vectorize
+    piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
+    unwrap, unique, vectorize
 )
 
 from numpy.compat import long
@@ -727,6 +728,17 @@ class TestRatio(object):
             assert_array_equal(out, exp)
             assert_equal(out.dtype, np.float_)
 
+    def test_axis(self):
+        x = np.ones((10, 20, 30))
+        x[:, 1::2, :] = -1
+        assert_array_equal(ratio(x), np.ones((10, 20, 29)))
+        assert_array_equal(ratio(x, axis=-1), np.ones((10, 20, 29)))
+        assert_array_equal(ratio(x, axis=0), np.ones((9, 20, 30)))
+        assert_array_equal(ratio(x, axis=1), -np.ones((10, 19, 30)))
+        assert_array_equal(ratio(x, axis=-2), -np.ones((10, 19, 30)))
+        assert_raises(AxisError, ratio, x, axis=3)
+        assert_raises(AxisError, ratio, x, axis=-4)
+
     def test_bool(self):
         # All possible ratios
         x = np.array([True, True, False, False, True])
@@ -811,13 +823,25 @@ class TestRatio(object):
         Check that subclass is preserved, even across optimization for
         large `n`.
         """
-        x = ma.array([[1, 2], [2, 4], [4, 8]])
+        x = ma.array([[1, 2.5], [2, 5], [3, 7.5], [4, 10], [5, 12.5]],
+                     mask=[[False, False], [True, False],
+                           [False, True], [True, True], [False, False]])
         out = ratio(x)
-        out2 = ratio(x, n=3)
-        assert_array_equal(out, [[2], [2], [2]])
-        assert_array_equal(out2, [[], [], []])
+        assert_array_equal(out.data, [[2.5], [2.5], [2.5], [2.5], [2.5]])
+        assert_array_equal(out.mask, [[False], [True],
+                                      [True], [True], [False]])
         assert_(type(out) is type(x))
+
+        out2 = ratio(x, true=False)
+        assert_array_equal(out2.data, [[2], [2], [2], [2], [2]])
+        assert_array_equal(out2.mask, [[False], [True],
+                                      [True], [True], [False]])
         assert_(type(out2) is type(x))
+
+        out3 = ratio(x, n=3)
+        assert_array_equal(out3.data, [[], [], [], [], []])
+        assert_array_equal(out3.mask, [[], [], [], [], []])
+        assert_(type(out3) is type(x))
 
 
 class TestDelete(object):

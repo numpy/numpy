@@ -1982,6 +1982,11 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     >>> np.ratio(arr)
     array([ 0.])
 
+    The ability of this function to perform is limited by the datatype
+    of the inputs. While boolean arrays will yield a result of some
+    sort, a dtype like `np.datetime64` will not work at all, and
+    `np.timedelta64` will work, but only with `true=True`.
+
     Examples
     --------
     >>> x = np.array([1, 2, 4, 7, 0])
@@ -2016,12 +2021,8 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     a = asanyarray(a)
     nd = a.ndim
     rng = range(nd)
-    axis = rng[axis]
+    axis = normalize_axis_index(axis, nd)
     keep = slice(None)
-
-    if n >= a.shape[axis]:
-        slice1 = tuple(slice(0, 0) if i == axis else keep for i in rng)
-        return a[slice1]
 
     slice1 = tuple(slice(1, None) if i == axis else keep for i in rng)
     slice2 = tuple(slice(None, -1) if i == axis else keep for i in rng)
