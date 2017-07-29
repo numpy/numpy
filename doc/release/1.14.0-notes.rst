@@ -14,7 +14,8 @@ Highlights
 New functions
 =============
 
-* ``parametrize`` decorator added to numpy.testing
+* ``parametrize``: decorator added to numpy.testing
+* ``chebinterpolate``: Interpolate function at Chebyshev points.
 
 
 Deprecations
@@ -86,6 +87,12 @@ one in pytest. It doesn't work for classes, doesn't support nesting, and does
 not substitute variable names. Even so, it should be adequate to rewrite the
 NumPy tests.
 
+``chebinterpolate`` function added to ``numpy.polynomial.chebyshev``
+--------------------------------------------------------------------
+The new ``chebinterpolate`` function interpolates a given function at the
+Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
+method adds support for interpolation over arbitrary intervals using the scaled
+and shifted Chebyshev points of the first kind.
 
 Improvements
 ============
