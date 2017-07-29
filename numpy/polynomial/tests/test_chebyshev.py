@@ -471,24 +471,29 @@ class TestFitting(object):
         assert_almost_equal(coef1, coef2)
 
 
-class TestInterp(object):
+class TestInterpolate(object):
 
-    @staticmethod
-    def f(x):
+    def f(self, x):
         return x * (x - 1) * (x - 2)
 
     def test_raises(self):
-        assert_raises(ValueError, cheb.chebinterp, self.f, -1, [-1, 1])
-        assert_raises(ValueError, cheb.chebinterp, self.f, 10.1, [-1, 1])
+        assert_raises(ValueError, cheb.chebinterpolate, self.f, -1)
+        assert_raises(TypeError, cheb.chebinterpolate, self.f, 10.)
 
     def test_dimensions(self):
-        for i in range(1, 5):
-            assert_(cheb.chebinterp(self.f, i, [-1, 1]).shape == (i+1,))
+        for deg in range(1, 5):
+            assert_(cheb.chebinterpolate(self.f, deg).shape == (deg + 1,))
 
-    def test_approx(self):
-        assert_almost_equal(cheb.chebinterp(lambda x: [1, 1, 1, 1], 3, [-1, 1]), np.array([1, 0, 0, 0]))
-        assert_almost_equal(cheb.chebinterp(lambda x: x, 3, [-1, 1]), np.array([0, 1, 0, 0]))
-        assert_almost_equal(cheb.chebinterp(self.f, 3, [-1, 1]), np.array([-3/2, 11/4, -3/2, 1/4]))
+    def test_approximation(self):
+
+        def powx(x, p):
+            return x**p
+
+        x = np.linspace(-1, 1, 10)
+        for deg in range(0, 10):
+            for p in range(0, deg + 1):
+                c = cheb.chebinterpolate(powx, deg, (p,))
+                assert_almost_equal(cheb.chebval(x, c), powx(x, p), decimal=12)
 
 
 class TestCompanion(object):
