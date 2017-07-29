@@ -16,6 +16,7 @@ from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
 
+
 class ABCPolyBase(object):
     """An abstract base class for series classes.
 
@@ -289,7 +290,7 @@ class ABCPolyBase(object):
 
     def __call__(self, arg):
         off, scl = pu.mapparms(self.domain, self.window)
-        arg = off + scl*arg
+        arg = off + scl * arg
         return self._val(arg, self.coef)
 
     def __iter__(self):
@@ -642,8 +643,8 @@ class ABCPolyBase(object):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1. / scl)
         return self.__class__(coef, self.domain, self.window)
 
     def deriv(self, m=1):
@@ -717,7 +718,7 @@ class ABCPolyBase(object):
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None):
+            window=None):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
@@ -840,7 +841,7 @@ class ABCPolyBase(object):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
+        rnew = off + scl * roots
         coef = cls._fromroots(rnew) / scl**deg
         return cls(coef, domain=domain, window=window)
 
@@ -914,7 +915,7 @@ class ABCPolyBase(object):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window)
+        return cls([0] * ideg + [1], domain, window)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

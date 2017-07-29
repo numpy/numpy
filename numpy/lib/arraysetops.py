@@ -33,7 +33,7 @@ import numpy as np
 __all__ = [
     'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
     'in1d', 'isin'
-    ]
+]
 
 
 def ediff1d(ary, to_end=None, to_begin=None):
@@ -247,6 +247,7 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = reshape_uniq(output[0])
         return (uniq,) + output[1:]
 
+
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False):
     """
@@ -294,6 +295,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             ret += (np.diff(idx),)
     return ret
 
+
 def intersect1d(ar1, ar2, assume_unique=False):
     """
     Find the intersection of two arrays.
@@ -336,6 +338,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
     aux = np.concatenate((ar1, ar2))
     aux.sort()
     return aux[:-1][aux[1:] == aux[:-1]]
+
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
@@ -609,6 +612,7 @@ def union1d(ar1, ar2):
     array([1, 2, 3, 4, 6])
     """
     return unique(np.concatenate((ar1, ar2)))
+
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """

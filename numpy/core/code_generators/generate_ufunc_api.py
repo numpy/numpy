@@ -6,7 +6,7 @@ import genapi
 import numpy_api
 
 from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+    TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
 h_template = r"""
 #ifdef _UMATHMODULE
@@ -134,6 +134,7 @@ void *PyUFunc_API[] = {
 };
 """
 
+
 def generate_api(output_dir, force=False):
     basename = 'ufunc_api'
 
@@ -151,17 +152,19 @@ def generate_api(output_dir, force=False):
 
     return targets
 
+
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
     doc_file = targets[2]
 
     ufunc_api_index = genapi.merge_api_dicts((
-            numpy_api.ufunc_funcs_api,
-            numpy_api.ufunc_types_api))
+        numpy_api.ufunc_funcs_api,
+        numpy_api.ufunc_types_api))
     genapi.check_api_dict(ufunc_api_index)
 
-    ufunc_api_list = genapi.get_api_functions('UFUNC_API', numpy_api.ufunc_funcs_api)
+    ufunc_api_list = genapi.get_api_functions(
+        'UFUNC_API', numpy_api.ufunc_funcs_api)
 
     # Create dict name -> *Api instance
     ufunc_api_dict = {}

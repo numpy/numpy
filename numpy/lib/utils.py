@@ -17,7 +17,8 @@ __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
     'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
     'lookfor', 'byte_bounds', 'safe_eval'
-    ]
+]
+
 
 def get_include():
     """
@@ -95,7 +96,7 @@ class _Deprecate(object):
         if message is not None:
             depdoc += "\n" + message
 
-        def newfunc(*args,**kwds):
+        def newfunc(*args, **kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
             warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
@@ -114,6 +115,7 @@ class _Deprecate(object):
         else:
             newfunc.__dict__.update(d)
         return newfunc
+
 
 def deprecate(*args, **kwargs):
     """
@@ -176,7 +178,8 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+
+def deprecate_with_doc(msg): return _Deprecate(message=msg)
 
 
 #--------------------------------------------
@@ -228,9 +231,9 @@ def byte_bounds(a):
     else:
         for shape, stride in zip(ashape, astrides):
             if stride < 0:
-                a_low += (shape-1)*stride
+                a_low += (shape - 1) * stride
             else:
-                a_high += (shape-1)*stride
+                a_high += (shape - 1) * stride
         a_high += bytes_a
     return a_low, a_high
 
@@ -324,14 +327,15 @@ def who(vardict=None):
         sp1 = max(10, maxname)
         sp2 = max(10, maxshape)
         sp3 = max(10, maxbyte)
-        prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
-        print(prval + "\n" + "="*(len(prval)+5) + "\n")
+        prval = "Name %s Shape %s Bytes %s Type" % (
+            sp1 * ' ', sp2 * ' ', sp3 * ' ')
+        print(prval + "\n" + "=" * (len(prval) + 5) + "\n")
 
     for k in range(len(sta)):
         val = sta[k]
-        print("%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
-                                        val[1], ' '*(sp2-len(val[1])+5),
-                                        val[2], ' '*(sp3-len(val[2])+5),
+        print("%s %s %s %s %s %s %s" % (val[0], ' ' * (sp1 - len(val[0]) + 4),
+                                        val[1], ' ' * (sp2 - len(val[1]) + 5),
+                                        val[2], ' ' * (sp3 - len(val[2]) + 5),
                                         val[3]))
     print("\nUpper bound on total bytes  =       %d" % totalbytes)
     return
@@ -359,19 +363,22 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
+
 
 _namedict = None
 _dictlist = None
 
 # Traverse all module directories underneath globals
 # to see if something is defined
+
+
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:
@@ -409,7 +416,8 @@ def _info(obj, output=sys.stdout):
     """
     extra = ""
     tic = ""
-    bp = lambda x: x
+
+    def bp(x): return x
     cls = getattr(obj, '__class__', type(obj))
     nm = getattr(cls, '__name__', cls)
     strides = obj.strides
@@ -425,7 +433,7 @@ def _info(obj, output=sys.stdout):
     print(
         "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra),
         file=output
-        )
+    )
     print("byteorder: ", end=' ', file=output)
     if endian in ['|', '=']:
         print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
@@ -495,7 +503,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     import inspect
 
     if (hasattr(object, '_ppimport_importer') or
-           hasattr(object, '_ppimport_module')):
+            hasattr(object, '_ppimport_module')):
         object = object._ppimport_module
     elif hasattr(object, '_ppimport_attr'):
         object = object._ppimport_attr
@@ -521,7 +529,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                     objlist.append(id(obj))
                     print("     *** Found in %s ***" % namestr, file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
@@ -537,7 +545,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         name = object.__name__
         arguments = formatargspec(*getargspec(object))
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -551,16 +559,16 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         try:
             if hasattr(object, '__init__'):
                 arguments = formatargspec(
-                        *getargspec(object.__init__.__func__)
-                        )
+                    *getargspec(object.__init__.__func__)
+                )
                 arglist = arguments.split(', ')
                 if len(arglist) > 1:
-                    arglist[1] = "("+arglist[1]
+                    arglist[1] = "(" + arglist[1]
                     arguments = ", ".join(arglist[1:])
         except Exception:
             pass
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -582,8 +590,8 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(
-                            inspect.getdoc(thisobj) or "None"
-                            )
+                        inspect.getdoc(thisobj) or "None"
+                    )
                 print("  %s  --  %s" % (meth, methstr), file=output)
 
     elif (sys.version_info[0] < 3
@@ -594,11 +602,11 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print(file=output)
         if hasattr(object, '__call__'):
             arguments = formatargspec(
-                    *getargspec(object.__call__.__func__)
-                    )
+                *getargspec(object.__call__.__func__)
+            )
             arglist = arguments.split(', ')
             if len(arglist) > 1:
-                arglist[1] = "("+arglist[1]
+                arglist[1] = "(" + arglist[1]
                 arguments = ", ".join(arglist[1:])
             else:
                 arguments = "()"
@@ -607,7 +615,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 name = "%s" % object.name
             else:
                 name = "<name>"
-            if len(name+arguments) > maxwidth:
+            if len(name + arguments) > maxwidth:
                 argstr = _split_line(name, arguments, maxwidth)
             else:
                 argstr = name + arguments
@@ -624,16 +632,16 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     elif inspect.ismethod(object):
         name = object.__name__
         arguments = formatargspec(
-                *getargspec(object.__func__)
-                )
+            *getargspec(object.__func__)
+        )
         arglist = arguments.split(', ')
         if len(arglist) > 1:
-            arglist[1] = "("+arglist[1]
+            arglist[1] = "(" + arglist[1]
             arguments = ", ".join(arglist[1:])
         else:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -701,6 +709,7 @@ _lookfor_caches = {}
 # regexp whose match indicates that the string may contain a function
 # signature
 _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
+
 
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
@@ -802,7 +811,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     # Pretty-print
     s = "Search results for '%s'" % (' '.join(whats))
-    help_text = [s, "-"*len(s)]
+    help_text = [s, "-" * len(s)]
     for name in found[::-1]:
         doc, kind, ix = cache[name]
 
@@ -829,6 +838,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         pager("\n".join(help_text))
     else:
         print("\n".join(help_text))
+
 
 def _lookfor_generate_cache(module, import_modules, regenerate):
     """
@@ -970,6 +980,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
 
     return cache
 
+
 def _getmembers(item):
     import inspect
     try:
@@ -994,6 +1005,7 @@ def _getmembers(item):
 #   * support True/False/None
 #   * raise SyntaxError instead of a custom exception.
 
+
 class SafeEval(object):
     """
     Object to evaluate constant string expressions.
@@ -1008,6 +1020,7 @@ class SafeEval(object):
     safe_eval
 
     """
+
     def __init__(self):
         # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
@@ -1034,7 +1047,7 @@ class SafeEval(object):
     def visitBytes(self, node):
         return node.s
 
-    def visitDict(self, node,**kw):
+    def visitDict(self, node, **kw):
         return dict([(self.visit(k), self.visit(v))
                      for k, v in zip(node.keys, node.values)])
 

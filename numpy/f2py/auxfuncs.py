@@ -103,7 +103,7 @@ def isscalar(var):
 
 def iscomplex(var):
     return isscalar(var) and \
-           var.get('typespec') in ['complex', 'double complex']
+        var.get('typespec') in ['complex', 'double complex']
 
 
 def islogical(var):
@@ -192,7 +192,7 @@ def islong_complex(var):
 
 def iscomplexarray(var):
     return isarray(var) and \
-           var.get('typespec') in ['complex', 'double complex']
+        var.get('typespec') in ['complex', 'double complex']
 
 
 def isint1array(var):
@@ -258,6 +258,7 @@ def ismodule(rout):
 
 def isfunction(rout):
     return 'block' in rout and 'function' == rout['block']
+
 
 def isfunction_wrap(rout):
     if isintent_c(rout):
@@ -410,7 +411,7 @@ def isintent_in(var):
 
 def isintent_inout(var):
     return ('intent' in var and ('inout' in var['intent'] or
-            'outin' in var['intent']) and 'in' not in var['intent'] and
+                                 'outin' in var['intent']) and 'in' not in var['intent'] and
             'hide' not in var['intent'] and 'inplace' not in var['intent'])
 
 
@@ -420,8 +421,9 @@ def isintent_out(var):
 
 def isintent_hide(var):
     return ('intent' in var and ('hide' in var['intent'] or
-            ('out' in var['intent'] and 'in' not in var['intent'] and
-                (not l_or(isintent_inout, isintent_inplace)(var)))))
+                                 ('out' in var['intent'] and 'in' not in var['intent'] and
+                                  (not l_or(isintent_inout, isintent_inplace)(var)))))
+
 
 def isintent_nothide(var):
     return not isintent_hide(var)
@@ -465,6 +467,7 @@ def isintent_aligned8(var):
 
 def isintent_aligned16(var):
     return 'aligned16' in var.get('intent', [])
+
 
 isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
                  isintent_out: 'INTENT_OUT', isintent_hide: 'INTENT_HIDE',

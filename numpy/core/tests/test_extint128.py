@@ -25,8 +25,8 @@ INT64_VALUES = (
     [INT64_MIN + j for j in range(20)] +
     [INT64_MAX - j for j in range(20)] +
     [INT64_MID + j for j in range(-20, 20)] +
-    [2*INT64_MID + j for j in range(-20, 20)] +
-    [INT64_MID//2 + j for j in range(-20, 20)] +
+    [2 * INT64_MID + j for j in range(-20, 20)] +
+    [INT64_MID // 2 + j for j in range(-20, 20)] +
     list(range(-70, 70))
 )
 
@@ -34,8 +34,8 @@ INT128_VALUES = (
     [INT128_MIN + j for j in range(20)] +
     [INT128_MAX - j for j in range(20)] +
     [INT128_MID + j for j in range(-20, 20)] +
-    [2*INT128_MID + j for j in range(-20, 20)] +
-    [INT128_MID//2 + j for j in range(-20, 20)] +
+    [2 * INT128_MID + j for j in range(-20, 20)] +
+    [INT128_MID // 2 + j for j in range(-20, 20)] +
     list(range(-70, 70)) +
     [False]  # negative zero
 )
@@ -154,9 +154,9 @@ def test_shl_128():
     with exc_iter(INT128_VALUES) as it:
         for a, in it:
             if a < 0:
-                b = -(((-a) << 1) & (2**128-1))
+                b = -(((-a) << 1) & (2**128 - 1))
             else:
-                b = (a << 1) & (2**128-1)
+                b = (a << 1) & (2**128 - 1)
             c = mt.extint_shl_128(a)
             if b != c:
                 assert_equal(c, b)
@@ -196,10 +196,10 @@ def test_divmod_128_64():
 
             d, dr = mt.extint_divmod_128_64(a, b)
 
-            if c != d or d != dr or b*d + dr != a:
+            if c != d or d != dr or b * d + dr != a:
                 assert_equal(d, c)
                 assert_equal(dr, cr)
-                assert_equal(b*d + dr, a)
+                assert_equal(b * d + dr, a)
 
 
 def test_floordiv_128_64():

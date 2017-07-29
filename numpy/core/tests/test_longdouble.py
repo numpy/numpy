@@ -30,6 +30,8 @@ def test_scalar_extraction():
 # 0.1 not exactly representable in base 2 floating point.
 repr_precision = len(repr(np.longdouble(0.1)))
 # +2 from macro block starting around line 842 in scalartypes.c.src.
+
+
 @dec.skipif(LD_INFO.precision + 2 >= repr_precision,
             "repr precision not enough to show eps")
 def test_repr_roundtrip():
@@ -77,8 +79,8 @@ def test_bogus_string():
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_fromstring():
     o = 1 + LD_INFO.eps
-    s = (" " + repr(o))*5
-    a = np.array([o]*5)
+    s = (" " + repr(o)) * 5
+    a = np.array([o] * 5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
 
@@ -113,7 +115,7 @@ def test_fromstring_missing():
 class TestFileBased(object):
 
     ldbl = 1 + LD_INFO.eps
-    tgt = np.array([ldbl]*5)
+    tgt = np.array([ldbl] * 5)
     out = ''.join([repr(t) + '\n' for t in tgt])
 
     def test_fromfile_bogus(self):

@@ -47,15 +47,16 @@ sys.stdout = UTF8Writer(sys.stdout)
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 
 author_msg =\
-u"""
+    u"""
 A total of %d people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 """
 
 pull_request_msg =\
-u"""
+    u"""
 A total of %d pull requests were merged for this release.
 """
+
 
 def get_authors(revision_range):
     pat = u'^.*\\t(.*)$'
@@ -113,7 +114,7 @@ def main(token, revision_range):
     heading = u"Contributors"
     print()
     print(heading)
-    print(u"="*len(heading))
+    print(u"=" * len(heading))
     print(author_msg % len(authors))
 
     for s in authors:
@@ -126,7 +127,7 @@ def main(token, revision_range):
 
     print()
     print(heading)
-    print(u"="*len(heading))
+    print(u"=" * len(heading))
     print(pull_request_msg % len(pull_requests))
 
     for pull in pull_requests:

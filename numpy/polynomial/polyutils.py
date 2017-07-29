@@ -55,13 +55,16 @@ __all__ = [
 # Warnings and Exceptions
 #
 
+
 class RankWarning(UserWarning):
     """Issued by chebfit when the design matrix is rank deficient."""
     pass
 
+
 class PolyError(Exception):
     """Base class for errors in this module."""
     pass
+
 
 class PolyDomainError(PolyError):
     """Issued by the generic Poly class when two domains don't match.
@@ -75,6 +78,7 @@ class PolyDomainError(PolyError):
 #
 # Base class for all polynomial types
 #
+
 
 class PolyBase(object):
     """
@@ -91,6 +95,8 @@ class PolyBase(object):
 #
 # Helper functions to convert inputs to 1-D arrays
 #
+
+
 def trimseq(seq):
     """Remove small Poly series coefficients.
 
@@ -118,7 +124,7 @@ def trimseq(seq):
         for i in range(len(seq) - 1, -1, -1):
             if seq[i] != 0:
                 break
-        return seq[:i+1]
+        return seq[:i + 1]
 
 
 def as_series(alist, trim=True):
@@ -238,9 +244,10 @@ def trimcoef(c, tol=0):
     [c] = as_series([c])
     [ind] = np.nonzero(np.abs(c) > tol)
     if len(ind) == 0:
-        return c[:1]*0
+        return c[:1] * 0
     else:
         return c[:ind[-1] + 1].copy()
+
 
 def getdomain(x):
     """
@@ -288,6 +295,7 @@ def getdomain(x):
     else:
         return np.array((x.min(), x.max()))
 
+
 def mapparms(old, new):
     """
     Linear map parameters between domains.
@@ -331,9 +339,10 @@ def mapparms(old, new):
     """
     oldlen = old[1] - old[0]
     newlen = new[1] - new[0]
-    off = (old[1]*new[0] - old[0]*new[1])/oldlen
-    scl = newlen/oldlen
+    off = (old[1] * new[0] - old[0] * new[1]) / oldlen
+    scl = newlen / oldlen
     return off, scl
+
 
 def mapdomain(x, old, new):
     """
@@ -400,4 +409,4 @@ def mapdomain(x, old, new):
     """
     x = np.asanyarray(x)
     off, scl = mapparms(old, new)
-    return off + scl*x
+    return off + scl * x

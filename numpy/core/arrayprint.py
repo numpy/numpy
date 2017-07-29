@@ -51,8 +51,10 @@ else:
     _MAXINT = sys.maxint
     _MININT = -sys.maxint - 1
 
+
 def product(x, y):
-    return x*y
+    return x * y
+
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
 _summaryThreshold = 1000  # total items > triggers array summarization
@@ -191,6 +193,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         _inf_str = infstr
     _formatter = formatter
 
+
 def get_printoptions():
     """
     Return the current print options.
@@ -226,16 +229,17 @@ def get_printoptions():
              formatter=_formatter)
     return d
 
+
 def _leading_trailing(a):
     from . import numeric as _nc
     if a.ndim == 1:
-        if len(a) > 2*_summaryEdgeItems:
+        if len(a) > 2 * _summaryEdgeItems:
             b = _nc.concatenate((a[:_summaryEdgeItems],
-                                     a[-_summaryEdgeItems:]))
+                                 a[-_summaryEdgeItems:]))
         else:
             b = a
     else:
-        if len(a) > 2*_summaryEdgeItems:
+        if len(a) > 2 * _summaryEdgeItems:
             l = [_leading_trailing(a[i]) for i in range(
                 min(len(a), _summaryEdgeItems))]
             l.extend([_leading_trailing(a[-i]) for i in range(
@@ -245,11 +249,13 @@ def _leading_trailing(a):
         b = _nc.concatenate(tuple(l))
     return b
 
+
 def _boolFormatter(x):
     if x:
         return ' True'
     else:
         return 'False'
+
 
 def _object_format(o):
     """ Object arrays containing lists should be printed unambiguously """
@@ -259,8 +265,10 @@ def _object_format(o):
         fmt = '{!r}'
     return fmt.format(o)
 
+
 def repr_format(x):
     return repr(x)
+
 
 def _get_formatdict(data, precision, suppress_small, formatter):
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -269,7 +277,7 @@ def _get_formatdict(data, precision, suppress_small, formatter):
                   'float': lambda: FloatFormat(data, precision, suppress_small),
                   'longfloat': lambda: LongFloatFormat(precision),
                   'complexfloat': lambda: ComplexFormat(data, precision,
-                                                 suppress_small),
+                                                        suppress_small),
                   'longcomplexfloat': lambda: LongComplexFormat(precision),
                   'datetime': lambda: DatetimeFormat(data),
                   'timedelta': lambda: TimedeltaFormat(data),
@@ -305,6 +313,7 @@ def _get_formatdict(data, precision, suppress_small, formatter):
 
     return formatdict
 
+
 def _get_format_function(data, precision, suppress_small, formatter):
     """
     find the right formatting function for the dtype_
@@ -315,7 +324,7 @@ def _get_format_function(data, precision, suppress_small, formatter):
         for field_name in dtype_.names:
             field_values = data[field_name]
             format_function = _get_format_function(
-                    ravel(field_values), precision, suppress_small, formatter)
+                ravel(field_values), precision, suppress_small, formatter)
             if dtype_[field_name].shape != ():
                 format_function = SubArrayFormat(format_function)
             format_functions.append(format_function)
@@ -349,6 +358,7 @@ def _get_format_function(data, precision, suppress_small, formatter):
     else:
         return formatdict['numpystr']()
 
+
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
 
@@ -366,7 +376,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     # skip over "["
     next_line_prefix = " "
     # skip over array(
-    next_line_prefix += " "*len(prefix)
+    next_line_prefix += " " * len(prefix)
 
     lst = _formatArray(a, format_function, a.ndim, max_line_width,
                        next_line_prefix, separator,
@@ -550,7 +560,7 @@ def _formatArray(a, format_function, rank, max_line_len,
     if rank == 0:
         return format_function(a[()]) + '\n'
 
-    if summary_insert and 2*edge_items < len(a):
+    if summary_insert and 2 * edge_items < len(a):
         leading_items = edge_items
         trailing_items = edge_items
         summary_insert1 = summary_insert
@@ -564,14 +574,17 @@ def _formatArray(a, format_function, rank, max_line_len,
         line = next_line_prefix
         for i in range(leading_items):
             word = format_function(a[i]) + separator
-            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
+            s, line = _extendLine(
+                s, line, word, max_line_len, next_line_prefix)
 
         if summary_insert1:
-            s, line = _extendLine(s, line, summary_insert1, max_line_len, next_line_prefix)
+            s, line = _extendLine(s, line, summary_insert1,
+                                  max_line_len, next_line_prefix)
 
         for i in range(trailing_items, 1, -1):
             word = format_function(a[-i]) + separator
-            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
+            s, line = _extendLine(
+                s, line, word, max_line_len, next_line_prefix)
 
         word = format_function(a[-1])
         s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
@@ -583,10 +596,10 @@ def _formatArray(a, format_function, rank, max_line_len,
         for i in range(leading_items):
             if i > 0:
                 s += next_line_prefix
-            s += _formatArray(a[i], format_function, rank-1, max_line_len,
+            s += _formatArray(a[i], format_function, rank - 1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
+            s = s.rstrip() + sep.rstrip() + '\n' * max(rank - 1, 1)
 
         if summary_insert1:
             s += next_line_prefix + summary_insert1 + "\n"
@@ -594,16 +607,17 @@ def _formatArray(a, format_function, rank, max_line_len,
         for i in range(trailing_items, 1, -1):
             if leading_items or i != trailing_items:
                 s += next_line_prefix
-            s += _formatArray(a[-i], format_function, rank-1, max_line_len,
+            s += _formatArray(a[-i], format_function, rank - 1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
+            s = s.rstrip() + sep.rstrip() + '\n' * max(rank - 1, 1)
         if leading_items or trailing_items > 1:
             s += next_line_prefix
-        s += _formatArray(a[-1], format_function, rank-1, max_line_len,
+        s += _formatArray(a[-1], format_function, rank - 1, max_line_len,
                           " " + next_line_prefix, separator, edge_items,
-                          summary_insert).rstrip()+']\n'
+                          summary_insert).rstrip() + ']\n'
     return s
+
 
 class FloatFormat(object):
     def __init__(self, data, precision, suppress_small, sign=False):
@@ -636,7 +650,7 @@ class FloatFormat(object):
                 if max_val >= 1.e8:
                     self.exp_format = True
                 if not self.suppress_small and (min_val < 0.0001
-                                           or max_val/min_val > 1000.):
+                                                or max_val / min_val > 1000.):
                     self.exp_format = True
 
         if self.exp_format:
@@ -661,7 +675,7 @@ class FloatFormat(object):
             if _nc.any(special):
                 self.max_str_len = max(self.max_str_len,
                                        len(_nan_str),
-                                       len(_inf_str)+1)
+                                       len(_inf_str) + 1)
             if self.sign:
                 format = '%#+'
             else:
@@ -701,7 +715,7 @@ class FloatFormat(object):
                 s = ' ' + s[:-3] + s[-2:]
         elif strip_zeros:
             z = s.rstrip('0')
-            s = z + ' '*(len(s)-len(z))
+            s = z + ' ' * (len(s) - len(z))
         return s
 
 
@@ -733,6 +747,7 @@ class IntegerFormat(object):
             return self.format % x
         else:
             return "%s" % x
+
 
 class LongFloatFormat(object):
     # XXX Have to add something to determine the width to use a la FloatFormat
@@ -786,7 +801,7 @@ class ComplexFormat(object):
         i = self.imag_format(x.imag, strip_zeros=False)
         if not self.imag_format.exp_format:
             z = i.rstrip('0')
-            i = z + 'j' + ' '*(len(i)-len(z))
+            i = z + 'j' + ' ' * (len(i) - len(z))
         else:
             i = i + 'j'
         return r + i
@@ -809,9 +824,10 @@ class DatetimeFormat(object):
 
     def __call__(self, x):
         return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+                                           unit=self.unit,
+                                           timezone=self.timezone,
+                                           casting=self.casting)
+
 
 class TimedeltaFormat(object):
     def __init__(self, data):

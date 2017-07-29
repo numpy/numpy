@@ -88,10 +88,10 @@ import numbers
 
 from numpy.compat import bytes, long
 from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
-        )
+    typeinfo, ndarray, array, empty, dtype, datetime_data,
+    datetime_as_string, busday_offset, busday_count, is_busday,
+    busdaycalendar
+)
 
 
 # we add more at the bottom
@@ -118,10 +118,10 @@ else:
 # Construct the translation tables directly
 #   "A" = chr(65), "a" = chr(97)
 _all_chars = [chr(_m) for _m in range(256)]
-_ascii_upper = _all_chars[65:65+26]
-_ascii_lower = _all_chars[97:97+26]
-LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
-UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
+_ascii_upper = _all_chars[65:65 + 26]
+_ascii_lower = _all_chars[97:97 + 26]
+LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65 + 26:])
+UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97 + 26:])
 
 
 def english_lower(s):
@@ -151,6 +151,7 @@ def english_lower(s):
     lowered = s.translate(LOWER_TABLE)
     return lowered
 
+
 def english_upper(s):
     """ Apply English case rules to convert ASCII strings to all upper case.
 
@@ -177,6 +178,7 @@ def english_upper(s):
     """
     uppered = s.translate(UPPER_TABLE)
     return uppered
+
 
 def english_capitalize(s):
     """ Apply English case rules to convert the first character of an ASCII
@@ -213,6 +215,7 @@ sctypeDict = {}      # Contains all leaf-node scalar types with aliases
 sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}      # Collect the types we will add to the module here
 
+
 def _evalname(name):
     k = 0
     for ch in name:
@@ -225,6 +228,7 @@ def _evalname(name):
         bits = 0
     base = name[:k]
     return base, bits
+
 
 def bitname(obj):
     """Return a bit-width name for a given type object"""
@@ -296,7 +300,10 @@ def _add_types():
 
         else:  # generic class
             allTypes[name] = typeinfo[a]
+
+
 _add_types()
+
 
 def _add_aliases():
     for a in typeinfo.keys():
@@ -311,11 +318,11 @@ def _add_aliases():
         if base != '':
             myname = "%s%d" % (base, bit)
             if ((name != 'longdouble' and name != 'clongdouble') or
-                   myname not in allTypes.keys()):
+                    myname not in allTypes.keys()):
                 allTypes[myname] = typeobj
                 sctypeDict[myname] = typeobj
                 if base == 'complex':
-                    na_name = '%s%d' % (english_capitalize(base), bit//2)
+                    na_name = '%s%d' % (english_capitalize(base), bit // 2)
                 elif base == 'bool':
                     na_name = english_capitalize(base)
                     sctypeDict[na_name] = typeobj
@@ -329,23 +336,27 @@ def _add_aliases():
         if char != '':
             sctypeDict[char] = typeobj
             sctypeNA[char] = na_name
+
+
 _add_aliases()
 
 # Integers are handled so that the int32 and int64 types should agree
 # exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
 # as is done in arrayobject.h where the order of getting a bit-width match
 # is long, longlong, int, short, char.
+
+
 def _add_integer_aliases():
     _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
     for ctype in _ctypes:
         val = typeinfo[ctype]
         bits = val[2]
-        charname = 'i%d' % (bits//8,)
-        ucharname = 'u%d' % (bits//8,)
+        charname = 'i%d' % (bits // 8,)
+        ucharname = 'u%d' % (bits // 8,)
         intname = 'int%d' % bits
         UIntname = 'UInt%d' % bits
         Intname = 'Int%d' % bits
-        uval = typeinfo['U'+ctype]
+        uval = typeinfo['U' + ctype]
         typeobj = val[-1]
         utypeobj = uval[-1]
         if intname not in allTypes.keys():
@@ -366,6 +377,8 @@ def _add_integer_aliases():
         sctypeNA[utypeobj] = UIntname
         sctypeNA[val[0]] = Intname
         sctypeNA[uval[0]] = UIntname
+
+
 _add_integer_aliases()
 
 # We use these later
@@ -376,6 +389,8 @@ generic = allTypes['generic']
 # Rework the Python names (so that float and complex and int are consistent
 #                            with Python usage)
 #
+
+
 def _set_up_aliases():
     type_pairs = [('complex_', 'cdouble'),
                   ('int0', 'intp'),
@@ -421,24 +436,31 @@ def _set_up_aliases():
             del sctypeDict[t]
         except KeyError:
             pass
+
+
 _set_up_aliases()
 
 # Now, construct dictionary to lookup character codes from types
 _sctype2char_dict = {}
+
+
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
         if isinstance(tup, tuple):
             if tup[0] not in ['p', 'P']:
                 _sctype2char_dict[tup[-1]] = tup[0]
+
+
 _construct_char_code_lookup()
 
 
 sctypes = {'int': [],
-           'uint':[],
-           'float':[],
-           'complex':[],
-           'others':[bool, object, bytes, unicode, void]}
+           'uint': [],
+           'float': [],
+           'complex': [],
+           'others': [bool, object, bytes, unicode, void]}
+
 
 def _add_array_type(typename, bits):
     try:
@@ -448,17 +470,18 @@ def _add_array_type(typename, bits):
     else:
         sctypes[typename].append(t)
 
+
 def _set_array_types():
     ibytes = [1, 2, 4, 8, 16, 32, 64]
     fbytes = [2, 4, 8, 10, 12, 16, 32, 64]
     for bytes in ibytes:
-        bits = 8*bytes
+        bits = 8 * bytes
         _add_array_type('int', bits)
         _add_array_type('uint', bits)
     for bytes in fbytes:
-        bits = 8*bytes
+        bits = 8 * bytes
         _add_array_type('float', bits)
-        _add_array_type('complex', 2*bits)
+        _add_array_type('complex', 2 * bits)
     _gi = dtype('p')
     if _gi.type not in sctypes['int']:
         indx = 0
@@ -468,6 +491,8 @@ def _set_array_types():
             indx += 1
         sctypes['int'].insert(indx, _gi.type)
         sctypes['uint'].insert(indx, dtype('P').type)
+
+
 _set_array_types()
 
 
@@ -478,6 +503,7 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'float256',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
+
 
 def maximum_sctype(t):
     """
@@ -528,6 +554,7 @@ def maximum_sctype(t):
     else:
         return sctypes[base][-1]
 
+
 try:
     buffer_type = _types.BufferType
 except AttributeError:
@@ -555,6 +582,7 @@ else:
         if not isinstance(t, _types.TypeType):
             t = type(t)
         return allTypes[_python_types.get(t, 'object_')]
+
 
 def issctype(rep):
     """
@@ -599,6 +627,7 @@ def issctype(rep):
         return False
     except Exception:
         return False
+
 
 def obj2sctype(rep, default=None):
     """
@@ -695,6 +724,7 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
+
 def issubsctype(arg1, arg2):
     """
     Determine if the first argument is a subclass of the second argument.
@@ -724,6 +754,7 @@ def issubsctype(arg1, arg2):
 
     """
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
+
 
 def issubdtype(arg1, arg2):
     """
@@ -774,10 +805,13 @@ class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))
 
+
 nbytes = _typedict()
 _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
+
+
 def _construct_lookups():
     for name, val in typeinfo.items():
         if not isinstance(val, tuple):
@@ -792,7 +826,9 @@ def _construct_lookups():
             _maxvals[obj] = None
             _minvals[obj] = None
 
+
 _construct_lookups()
+
 
 def sctype2char(sctype):
     """
@@ -849,7 +885,7 @@ cast = _typedict()
 try:
     ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
                   _types.LongType, _types.BooleanType,
-                   _types.StringType, _types.UnicodeType, _types.BufferType]
+                  _types.StringType, _types.UnicodeType, _types.BufferType]
 except AttributeError:
     # Py3K
     ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
@@ -897,15 +933,15 @@ for key in allTypes:
 
 del key
 
-typecodes = {'Character':'c',
-             'Integer':'bhilqp',
-             'UnsignedInteger':'BHILQP',
-             'Float':'efdg',
-             'Complex':'FDG',
-             'AllInteger':'bBhHiIlLqQpP',
-             'AllFloat':'efdgFDG',
+typecodes = {'Character': 'c',
+             'Integer': 'bhilqp',
+             'UnsignedInteger': 'BHILQP',
+             'Float': 'efdg',
+             'Complex': 'FDG',
+             'AllInteger': 'bBhHiIlLqQpP',
+             'AllFloat': 'efdgFDG',
              'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
+             'All': '?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
@@ -924,11 +960,13 @@ typeNA = sctypeNA
 # O -> Python object
 _kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
 
-__test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
+__test_types = '?' + typecodes['AllInteger'][:-2] + typecodes['AllFloat'] + 'O'
 __len_test_types = len(__test_types)
 
 # Keep incrementing until a common type both can be coerced to
 #  is found.  Otherwise, return None
+
+
 def _find_common_coerce(a, b):
     if a > b:
         return a
@@ -939,6 +977,8 @@ def _find_common_coerce(a, b):
     return _can_coerce_all([a, b], start=thisind)
 
 # Find a data-type that all data-types in a list can be coerced to
+
+
 def _can_coerce_all(dtypelist, start=0):
     N = len(dtypelist)
     if N == 0:
@@ -954,12 +994,15 @@ def _can_coerce_all(dtypelist, start=0):
         thisind += 1
     return None
 
+
 def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
 
+
 _register_types()
+
 
 def find_common_type(array_types, scalar_types):
     """

@@ -4,6 +4,8 @@
 from __future__ import division, absolute_import, print_function
 
 # try the #random directive on the output line
+
+
 def check_random_directive():
     '''
     >>> 2+2
@@ -11,6 +13,8 @@ def check_random_directive():
     '''
 
 # check the implicit "import numpy as np"
+
+
 def check_implicit_np():
     '''
     >>> np.array([1,2,3])
@@ -18,6 +22,8 @@ def check_implicit_np():
     '''
 
 # there's some extraneous whitespace around the correct responses
+
+
 def check_whitespace_enabled():
     '''
     # whitespace after the 3
@@ -29,6 +35,7 @@ def check_whitespace_enabled():
      7
     '''
 
+
 def check_empty_output():
     """ Check that no output does not cause an error.
 
@@ -38,6 +45,7 @@ def check_empty_output():
 
     >>> a = 10
     """
+
 
 def check_skip():
     """ Check skip directive

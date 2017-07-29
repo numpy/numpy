@@ -10,22 +10,23 @@ from glob import glob
 from distutils.dep_util import newer_group
 from distutils.command.build_ext import build_ext as old_build_ext
 from distutils.errors import DistutilsFileError, DistutilsSetupError,\
-     DistutilsError
+    DistutilsError
 from distutils.file_util import copy_file
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
-     has_cxx_sources, get_ext_source_files, \
-     get_numpy_include_dirs, is_sequence, get_build_architecture, \
-     msvc_version
+    has_cxx_sources, get_ext_source_files, \
+    get_numpy_include_dirs, is_sequence, get_build_architecture, \
+    msvc_version
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
 try:
     set
 except NameError:
     from sets import Set as set
+
 
 class build_ext (old_build_ext):
 
@@ -36,12 +37,12 @@ class build_ext (old_build_ext):
          "specify the Fortran compiler type"),
         ('parallel=', 'j',
          "number of parallel jobs"),
-        ]
+    ]
 
     help_options = old_build_ext.help_options + [
         ('help-fcompiler', None, "list available Fortran compilers",
          show_fortran_compilers),
-        ]
+    ]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
@@ -84,11 +85,13 @@ class build_ext (old_build_ext):
         if self.distribution.has_c_libraries():
             if self.inplace:
                 if self.distribution.have_run.get('build_clib'):
-                    log.warn('build_clib already run, it is too late to ' \
-                            'ensure in-place build of build_clib')
-                    build_clib = self.distribution.get_command_obj('build_clib')
+                    log.warn('build_clib already run, it is too late to '
+                             'ensure in-place build of build_clib')
+                    build_clib = self.distribution.get_command_obj(
+                        'build_clib')
                 else:
-                    build_clib = self.distribution.get_command_obj('build_clib')
+                    build_clib = self.distribution.get_command_obj(
+                        'build_clib')
                     build_clib.inplace = 1
                     build_clib.ensure_finalized()
                     build_clib.run()
@@ -124,8 +127,8 @@ class build_ext (old_build_ext):
         if build_clib is not None:
             for libname, build_info in build_clib.libraries or []:
                 if libname in clibs and clibs[libname] != build_info:
-                    log.warn('library %r defined more than once,'\
-                             ' overwriting build_info\n%s... \nwith\n%s...' \
+                    log.warn('library %r defined more than once,'
+                             ' overwriting build_info\n%s... \nwith\n%s...'
                              % (libname, repr(clibs[libname])[:300], repr(build_info)[:300]))
                 clibs[libname] = build_info
         # .. and distribution libraries:
@@ -181,7 +184,7 @@ class build_ext (old_build_ext):
             elif 'f77' in ext_languages:
                 ext_language = 'f77'
             else:
-                ext_language = 'c' # default
+                ext_language = 'c'  # default
             if l and l != ext_language and ext.language:
                 log.warn('resetting extension %r language from %r to %r.' %
                          (ext.name, l, ext_language))
@@ -196,9 +199,9 @@ class build_ext (old_build_ext):
         # Initialize C++ compiler:
         if need_cxx_compiler:
             self._cxx_compiler = new_compiler(compiler=compiler_type,
-                                             verbose=self.verbose,
-                                             dry_run=self.dry_run,
-                                             force=self.force)
+                                              verbose=self.verbose,
+                                              dry_run=self.dry_run,
+                                              force=self.force)
             compiler = self._cxx_compiler
             compiler.customize(self.distribution, need_cxx=need_cxx_compiler)
             compiler.customize_cmd(self)
@@ -238,7 +241,7 @@ class build_ext (old_build_ext):
                                                dry_run=self.dry_run,
                                                force=self.force,
                                                requiref90=True,
-                                               c_compiler = self.compiler)
+                                               c_compiler=self.compiler)
             fcompiler = self._f90_compiler
             if fcompiler:
                 ctype = fcompiler.compiler_type
@@ -255,7 +258,6 @@ class build_ext (old_build_ext):
 
         # Build extensions
         self.build_extensions()
-
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -299,11 +301,9 @@ class build_ext (old_build_ext):
             macros.append((undef,))
 
         c_sources, cxx_sources, f_sources, fmodule_sources = \
-                   filter_sources(ext.sources)
+            filter_sources(ext.sources)
 
-
-
-        if self.compiler.compiler_type=='msvc':
+        if self.compiler.compiler_type == 'msvc':
             if cxx_sources:
                 # Needed to compile kiva.agg._agg extension.
                 extra_args.append('/Zm1000')
@@ -313,32 +313,34 @@ class build_ext (old_build_ext):
             cxx_sources = []
 
         # Set Fortran/C++ compilers for compilation and linking.
-        if ext.language=='f90':
+        if ext.language == 'f90':
             fcompiler = self._f90_compiler
-        elif ext.language=='f77':
+        elif ext.language == 'f77':
             fcompiler = self._f77_compiler
-        else: # in case ext.language is c++, for instance
+        else:  # in case ext.language is c++, for instance
             fcompiler = self._f90_compiler or self._f77_compiler
         if fcompiler is not None:
-            fcompiler.extra_f77_compile_args = (ext.extra_f77_compile_args or []) if hasattr(ext, 'extra_f77_compile_args') else []
-            fcompiler.extra_f90_compile_args = (ext.extra_f90_compile_args or []) if hasattr(ext, 'extra_f90_compile_args') else []
+            fcompiler.extra_f77_compile_args = (ext.extra_f77_compile_args or []) if hasattr(
+                ext, 'extra_f77_compile_args') else []
+            fcompiler.extra_f90_compile_args = (ext.extra_f90_compile_args or []) if hasattr(
+                ext, 'extra_f90_compile_args') else []
         cxx_compiler = self._cxx_compiler
 
         # check for the availability of required compilers
         if cxx_sources and cxx_compiler is None:
-            raise DistutilsError("extension %r has C++ sources" \
-                  "but no C++ compiler found" % (ext.name))
+            raise DistutilsError("extension %r has C++ sources"
+                                 "but no C++ compiler found" % (ext.name))
         if (f_sources or fmodule_sources) and fcompiler is None:
-            raise DistutilsError("extension %r has Fortran sources " \
-                  "but no Fortran compiler found" % (ext.name))
+            raise DistutilsError("extension %r has Fortran sources "
+                                 "but no Fortran compiler found" % (ext.name))
         if ext.language in ['f77', 'f90'] and fcompiler is None:
-            self.warn("extension %r has Fortran libraries " \
-                  "but no Fortran linker found, using default linker" % (ext.name))
-        if ext.language=='c++' and cxx_compiler is None:
-            self.warn("extension %r has C++ libraries " \
-                  "but no C++ linker found, using default linker" % (ext.name))
+            self.warn("extension %r has Fortran libraries "
+                      "but no Fortran linker found, using default linker" % (ext.name))
+        if ext.language == 'c++' and cxx_compiler is None:
+            self.warn("extension %r has C++ libraries "
+                      "but no C++ linker found, using default linker" % (ext.name))
 
-        kws = {'depends':ext.depends}
+        kws = {'depends': ext.depends}
         output_dir = self.build_temp
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()
@@ -391,7 +393,7 @@ class build_ext (old_build_ext):
                     if f in existing_modules:
                         continue
                     t = os.path.join(module_build_dir, f)
-                    if os.path.abspath(f)==os.path.abspath(t):
+                    if os.path.abspath(f) == os.path.abspath(t):
                         continue
                     if os.path.isfile(t):
                         os.remove(t)
@@ -423,11 +425,12 @@ class build_ext (old_build_ext):
         if self.compiler.compiler_type in ('msvc', 'intelw', 'intelemw'):
             # expand libraries with fcompiler libraries as we are
             # not using fcompiler linker
-            self._libs_with_msvc_and_fortran(fcompiler, libraries, library_dirs)
+            self._libs_with_msvc_and_fortran(
+                fcompiler, libraries, library_dirs)
 
         elif ext.language in ['f77', 'f90'] and fcompiler is not None:
             linker = fcompiler.link_shared_object
-        if ext.language=='c++' and cxx_compiler is not None:
+        if ext.language == 'c++' and cxx_compiler is not None:
             linker = cxx_compiler.link_shared_object
 
         linker(objects, ext_filename,
@@ -444,23 +447,27 @@ class build_ext (old_build_ext):
         build_src = self.get_finalized_command("build_src").build_src
         build_clib = self.get_finalized_command("build_clib").build_clib
         objects = self.compiler.compile([os.path.join(build_src,
-                "gfortran_vs2003_hack.c")],
-                output_dir=self.build_temp)
-        self.compiler.create_static_lib(objects, "_gfortran_workaround", output_dir=build_clib, debug=self.debug)
+                                                      "gfortran_vs2003_hack.c")],
+                                        output_dir=self.build_temp)
+        self.compiler.create_static_lib(
+            objects, "_gfortran_workaround", output_dir=build_clib, debug=self.debug)
 
     def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries,
                                     c_library_dirs):
-        if fcompiler is None: return
+        if fcompiler is None:
+            return
 
         for libname in c_libraries:
-            if libname.startswith('msvc'): continue
+            if libname.startswith('msvc'):
+                continue
             fileexists = False
             for libdir in c_library_dirs or []:
                 libfile = os.path.join(libdir, '%s.lib' % (libname))
                 if os.path.isfile(libfile):
                     fileexists = True
                     break
-            if fileexists: continue
+            if fileexists:
+                continue
             # make g77-compiled static libs available to MSVC
             fileexists = False
             for libdir in c_library_dirs:
@@ -474,7 +481,8 @@ class build_ext (old_build_ext):
                         c_library_dirs.append(self.build_temp)
                     fileexists = True
                     break
-            if fileexists: continue
+            if fileexists:
+                continue
             log.warn('could not find library %r in directories %s'
                      % (libname, c_library_dirs))
 
@@ -502,14 +510,14 @@ class build_ext (old_build_ext):
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
 
-    def get_source_files (self):
+    def get_source_files(self):
         self.check_extensions_list(self.extensions)
         filenames = []
         for ext in self.extensions:
             filenames.extend(get_ext_source_files(ext))
         return filenames
 
-    def get_outputs (self):
+    def get_outputs(self):
         self.check_extensions_list(self.extensions)
 
         outputs = []

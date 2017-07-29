@@ -12,6 +12,7 @@ import re
 import optparse
 import io
 
+
 def main():
     p = optparse.OptionParser(__doc__)
     options, args = p.parse_args()
@@ -38,8 +39,10 @@ def main():
         f.write("".join(lines))
         f.close()
 
+
 def process_html(fn, lines):
     return lines
+
 
 def process_tex(lines):
     """
@@ -49,15 +52,16 @@ def process_tex(lines):
     new_lines = []
     for line in lines:
         if (line.startswith(r'\section{numpy.')
-            or line.startswith(r'\subsection{numpy.')
-            or line.startswith(r'\subsubsection{numpy.')
-            or line.startswith(r'\paragraph{numpy.')
-            or line.startswith(r'\subparagraph{numpy.')
-            ):
-            pass # skip!
+                or line.startswith(r'\subsection{numpy.')
+                or line.startswith(r'\subsubsection{numpy.')
+                or line.startswith(r'\paragraph{numpy.')
+                or line.startswith(r'\subparagraph{numpy.')
+                ):
+            pass  # skip!
         else:
             new_lines.append(line)
     return new_lines
+
 
 if __name__ == "__main__":
     main()

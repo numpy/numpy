@@ -61,7 +61,7 @@ class NumpyVersion():
 
         self.version = ver_main.group()
         self.major, self.minor, self.bugfix = [int(x) for x in
-            self.version.split('.')]
+                                               self.version.split('.')]
         if len(vstring) == ver_main.end():
             self.pre_release = 'final'
         else:

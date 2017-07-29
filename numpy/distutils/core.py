@@ -24,9 +24,9 @@ import distutils.dist
 from numpy.distutils.extension import Extension
 from numpy.distutils.numpy_distribution import NumpyDistribution
 from numpy.distutils.command import config, config_compiler, \
-     build, build_py, build_ext, build_clib, build_src, build_scripts, \
-     sdist, install_data, install_headers, install, bdist_rpm, \
-     install_clib
+    build, build_py, build_ext, build_clib, build_src, build_scripts, \
+    sdist, install_data, install_headers, install, bdist_rpm, \
+    install_clib
 from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
@@ -54,6 +54,7 @@ if have_setuptools:
     numpy_cmdclass['easy_install'] = easy_install.easy_install
     numpy_cmdclass['egg_info'] = egg_info.egg_info
 
+
 def _dict_append(d, **kws):
     for k, v in kws.items():
         if k not in d:
@@ -71,6 +72,7 @@ def _dict_append(d, **kws):
         else:
             raise TypeError(repr(type(dv)))
 
+
 def _command_line_ok(_cache=[]):
     """ Return True if command line does not contain any
     help or display requests.
@@ -78,16 +80,17 @@ def _command_line_ok(_cache=[]):
     if _cache:
         return _cache[0]
     ok = True
-    display_opts = ['--'+n for n in Distribution.display_option_names]
+    display_opts = ['--' + n for n in Distribution.display_option_names]
     for o in Distribution.display_options:
         if o[1]:
-            display_opts.append('-'+o[1])
+            display_opts.append('-' + o[1])
     for arg in sys.argv:
-        if arg.startswith('--help') or arg=='-h' or arg in display_opts:
+        if arg.startswith('--help') or arg == '-h' or arg in display_opts:
             ok = False
             break
     _cache.append(ok)
     return ok
+
 
 def get_distribution(always=False):
     dist = distutils.core._setup_distribution
@@ -103,6 +106,7 @@ def get_distribution(always=False):
     if always and dist is None:
         dist = NumpyDistribution()
     return dist
+
 
 def setup(**attr):
 
@@ -168,11 +172,12 @@ def setup(**attr):
 
     return old_setup(**new_attr)
 
+
 def _check_append_library(libraries, item):
     for libitem in libraries:
         if is_sequence(libitem):
             if is_sequence(item):
-                if item[0]==libitem[0]:
+                if item[0] == libitem[0]:
                     if item[1] is libitem[1]:
                         return
                     warnings.warn("[0] libraries list contains %r with"
@@ -180,34 +185,35 @@ def _check_append_library(libraries, item):
                                   stacklevel=2)
                     break
             else:
-                if item==libitem[0]:
+                if item == libitem[0]:
                     warnings.warn("[1] libraries list contains %r with"
                                   " no build_info" % (item[0],),
                                   stacklevel=2)
                     break
         else:
             if is_sequence(item):
-                if item[0]==libitem:
+                if item[0] == libitem:
                     warnings.warn("[2] libraries list contains %r with"
                                   " no build_info" % (item[0],),
                                   stacklevel=2)
                     break
             else:
-                if item==libitem:
+                if item == libitem:
                     return
     libraries.append(item)
+
 
 def _check_append_ext_library(libraries, lib_name, build_info):
     for item in libraries:
         if is_sequence(item):
-            if item[0]==lib_name:
+            if item[0] == lib_name:
                 if item[1] is build_info:
                     return
                 warnings.warn("[3] libraries list contains %r with"
                               " different build_info" % (lib_name,),
                               stacklevel=2)
                 break
-        elif item==lib_name:
+        elif item == lib_name:
             warnings.warn("[4] libraries list contains %r with"
                           " no build_info" % (lib_name,),
                           stacklevel=2)

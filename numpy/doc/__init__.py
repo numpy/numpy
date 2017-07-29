@@ -5,7 +5,7 @@ import os
 ref_dir = os.path.join(os.path.dirname(__file__))
 
 __all__ = sorted(f[:-3] for f in os.listdir(ref_dir) if f.endswith('.py') and
-           not f.startswith('__'))
+                 not f.startswith('__'))
 
 for f in __all__:
     __import__(__name__ + '.' + f)

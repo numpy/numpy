@@ -22,20 +22,20 @@ import numpy as np
 import numpy.core.numerictypes as ntypes
 from numpy.compat import basestring
 from numpy import (
-        bool_, dtype, ndarray, recarray, array as narray
-        )
+    bool_, dtype, ndarray, recarray, array as narray
+)
 from numpy.core.records import (
-        fromarrays as recfromarrays, fromrecords as recfromrecords
-        )
+    fromarrays as recfromarrays, fromrecords as recfromrecords
+)
 
 _byteorderconv = np.core.records._byteorderconv
 _typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import (
-        MAError, MaskedArray, masked, nomask, masked_array, getdata,
-        getmaskarray, filled
-        )
+    MAError, MaskedArray, masked, nomask, masked_array, getdata,
+    getmaskarray, filled
+)
 
 _check_fill_value = ma.core._check_fill_value
 
@@ -43,7 +43,7 @@ _check_fill_value = ma.core._check_fill_value
 __all__ = [
     'MaskedRecords', 'mrecarray', 'fromarrays', 'fromrecords',
     'fromtextfile', 'addfield',
-    ]
+]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
 
@@ -381,7 +381,7 @@ class MaskedRecords(MaskedArray, object):
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
-                         '              )'])
+                        '              )'])
         return str("\n".join(reprstr))
 
     def view(self, dtype=None, type=None):
@@ -509,6 +509,7 @@ class MaskedRecords(MaskedArray, object):
                 (self.__class__, self._baseclass, (0,), 'b',),
                 self.__getstate__())
 
+
 def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     """
     Build a new MaskedArray from the information stored in a pickle.
@@ -517,6 +518,7 @@ def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     _data = ndarray.__new__(baseclass, baseshape, basetype).view(subtype)
     _mask = ndarray.__new__(ndarray, baseshape, 'b1')
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
+
 
 mrecarray = MaskedRecords
 
@@ -778,7 +780,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newdata = recarray(_data.shape, newdtype)
     # Add the existing field
     [newdata.setfield(_data.getfield(*f), *f)
-         for f in _data.dtype.fields.values()]
+     for f in _data.dtype.fields.values()]
     # Add the new field
     newdata.setfield(newfield._data, *newdata.dtype.fields[newfieldname])
     newdata = newdata.view(MaskedRecords)
@@ -788,7 +790,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)
-         for f in _mask.dtype.fields.values()]
+     for f in _mask.dtype.fields.values()]
     # Add the mask of the new field
     newmask.setfield(getmaskarray(newfield),
                      *newmask.dtype.fields[newfieldname])

@@ -49,9 +49,10 @@ class TestF77Mismatch(object):
         deps = f.grep_dependencies(lapack_lite.__file__,
                                    [b'libg2c', b'libgfortran'])
         assert_(len(deps) <= 1,
-                         """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
+                """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
 cause random crashes and wrong results. See numpy INSTALL.txt for more
 information.""")
+
 
 if __name__ == "__main__":
     run_module_suite()

@@ -6,7 +6,7 @@ import math
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, ScalarType, array, alltrue, cumprod, arange
-    )
+)
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 from . import function_base
@@ -20,7 +20,7 @@ __all__ = [
     'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
     's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
     'diag_indices', 'diag_indices_from'
-    ]
+]
 
 
 def ix_(*args):
@@ -91,9 +91,10 @@ def ix_(*args):
             new = new.astype(_nx.intp)
         if issubdtype(new.dtype, _nx.bool_):
             new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
+        new = new.reshape((1,) * k + (new.size,) + (1,) * (nd - k - 1))
         out.append(new)
     return tuple(out)
+
 
 class nd_grid(object):
     """
@@ -175,14 +176,14 @@ class nd_grid(object):
                     typ = float
                 else:
                     size.append(
-                        int(math.ceil((key[k].stop - start)/(step*1.0))))
+                        int(math.ceil((key[k].stop - start) / (step * 1.0))))
                 if (isinstance(step, float) or
                         isinstance(start, float) or
                         isinstance(key[k].stop, float)):
                     typ = float
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
-                        for _x, _t in zip(size, (typ,)*len(size))]
+                      for _x, _t in zip(size, (typ,) * len(size))]
             else:
                 nn = _nx.indices(size, typ)
             for k in range(len(size)):
@@ -195,10 +196,10 @@ class nd_grid(object):
                 if isinstance(step, complex):
                     step = int(abs(step))
                     if step != 1:
-                        step = (key[k].stop - start)/float(step-1)
-                nn[k] = (nn[k]*step+start)
+                        step = (key[k].stop - start) / float(step - 1)
+                nn[k] = (nn[k] * step + start)
             if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
+                slobj = [_nx.newaxis] * len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][slobj]
@@ -214,19 +215,21 @@ class nd_grid(object):
                 step = abs(step)
                 length = int(step)
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
+                    step = (key.stop - start) / float(step - 1)
                 stop = key.stop + step
-                return _nx.arange(0, length, 1, float)*step + start
+                return _nx.arange(0, length, 1, float) * step + start
             else:
                 return _nx.arange(start, stop, step)
 
     def __len__(self):
         return 0
 
+
 mgrid = nd_grid(sparse=False)
 ogrid = nd_grid(sparse=True)
 mgrid.__doc__ = None  # set in numpy.add_newdocs
 ogrid.__doc__ = None  # set in numpy.add_newdocs
+
 
 class AxisConcatenator(object):
     """
@@ -287,7 +290,7 @@ class AxisConcatenator(object):
             elif isinstance(item, str):
                 if k != 0:
                     raise ValueError("special directives must be the "
-                            "first entry.")
+                                     "first entry.")
                 if item in ('r', 'c'):
                     matrix = True
                     col = (item == 'c')
@@ -318,13 +321,13 @@ class AxisConcatenator(object):
                     newobj = array(newobj, copy=False, subok=True,
                                    ndmin=ndmin)
                     if trans1d != -1 and tempobj.ndim < ndmin:
-                        k2 = ndmin-tempobj.ndim
+                        k2 = ndmin - tempobj.ndim
                         if (trans1d < 0):
                             trans1d += k2 + 1
                         defaxes = list(range(ndmin))
                         k1 = trans1d
                         axes = defaxes[:k1] + defaxes[k2:] + \
-                               defaxes[k1:k2]
+                            defaxes[k1:k2]
                         newobj = newobj.transpose(axes)
                     del tempobj
             objs.append(newobj)
@@ -352,6 +355,7 @@ class AxisConcatenator(object):
 # separate classes are used here instead of just making r_ = concatentor(0),
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
+
 
 class RClass(AxisConcatenator):
     """
@@ -451,7 +455,9 @@ class RClass(AxisConcatenator):
     def __init__(self):
         AxisConcatenator.__init__(self, 0)
 
+
 r_ = RClass()
+
 
 class CClass(AxisConcatenator):
     """
@@ -461,7 +467,7 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-    
+
     See Also
     --------
     column_stack : Stack 1-D arrays as columns into a 2-D array.
@@ -481,7 +487,9 @@ class CClass(AxisConcatenator):
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
+
 c_ = CClass()
+
 
 class ndenumerate(object):
     """
@@ -664,6 +672,7 @@ class IndexExpression(object):
         else:
             return item
 
+
 index_exp = IndexExpression(maketuple=True)
 s_ = IndexExpression(maketuple=False)
 
@@ -773,7 +782,7 @@ def fill_diagonal(a, val, wrap=False):
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
         step = a.shape[1] + 1
-        #This is needed to don't have tall matrix have the diagonal wrap.
+        # This is needed to don't have tall matrix have the diagonal wrap.
         if not wrap:
             end = a.shape[1] * a.shape[1]
     else:

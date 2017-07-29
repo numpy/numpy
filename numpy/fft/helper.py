@@ -9,8 +9,8 @@ import threading
 
 from numpy.compat import integer_types
 from numpy.core import (
-        asarray, concatenate, arange, take, integer, empty
-        )
+    asarray, concatenate, arange, take, integer, empty
+)
 
 # Created by Pearu Peterson, September 2002
 
@@ -72,7 +72,7 @@ def fftshift(x, axes=None):
     y = tmp
     for k in axes:
         n = tmp.shape[k]
-        p2 = (n+1)//2
+        p2 = (n + 1) // 2
         mylist = concatenate((arange(p2, n), arange(p2)))
         y = take(y, mylist, k)
     return y
@@ -121,7 +121,7 @@ def ifftshift(x, axes=None):
     y = tmp
     for k in axes:
         n = tmp.shape[k]
-        p2 = n-(n+1)//2
+        p2 = n - (n + 1) // 2
         mylist = concatenate((arange(p2, n), arange(p2)))
         y = take(y, mylist, k)
     return y
@@ -167,13 +167,13 @@ def fftfreq(n, d=1.0):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     results = empty(n, int)
-    N = (n-1)//2 + 1
+    N = (n - 1) // 2 + 1
     p1 = arange(0, N, dtype=int)
     results[:N] = p1
-    p2 = arange(-(n//2), 0, dtype=int)
+    p2 = arange(-(n // 2), 0, dtype=int)
     results[N:] = p2
     return results * val
-    #return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
+    # return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
 
 
 def rfftfreq(n, d=1.0):
@@ -221,8 +221,8 @@ def rfftfreq(n, d=1.0):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
-    val = 1.0/(n*d)
-    N = n//2 + 1
+    val = 1.0 / (n * d)
+    N = n // 2 + 1
     results = arange(0, N, dtype=int)
     return results * val
 
@@ -248,6 +248,7 @@ class _FFTCache(object):
     large item can cause the cache to retain several smaller items even if the
     given maximum cache size has been exceeded.
     """
+
     def __init__(self, max_size_in_mb, max_item_count):
         self._max_size_in_bytes = max_size_in_mb * 1024 ** 2
         self._max_item_count = max_item_count

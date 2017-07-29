@@ -42,8 +42,10 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000b - 1.14.x
 C_API_VERSION = 0x0000000b
 
+
 class MismatchCAPIWarning(Warning):
     pass
+
 
 def is_released(config):
     """Return True if a released version of numpy is detected."""
@@ -56,6 +58,7 @@ def is_released(config):
     if len(pv) > 3:
         return False
     return True
+
 
 def get_api_versions(apiversion, codegen_dir):
     """
@@ -78,6 +81,7 @@ def get_api_versions(apiversion, codegen_dir):
 
     return curapi_hash, apis_hash[apiversion]
 
+
 def check_api_version(apiversion, codegen_dir):
     """Emits a MismacthCAPIWarning if the C API version needs updating."""
     curapi_hash, api_hash = get_api_versions(apiversion, codegen_dir)
@@ -98,27 +102,29 @@ def check_api_version(apiversion, codegen_dir):
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
                       MismatchCAPIWarning, stacklevel=2)
+
+
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+                   "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+                   "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
 # Standard functions which may not be available and for which we have a
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace"]
+                     "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
+                     "copysign", "nextafter", "ftello", "fseeko",
+                     "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
+                     "backtrace"]
 
 
 OPTIONAL_HEADERS = [
-# sse headers only enabled automatically on amd64/x32 builds
-                "xmmintrin.h",  # SSE
-                "emmintrin.h",  # SSE2
-                "features.h",  # for glibc version linux
-                "xlocale.h",  # see GH#8367
-                "dlfcn.h", # dladdr
+    # sse headers only enabled automatically on amd64/x32 builds
+    "xmmintrin.h",  # SSE
+    "emmintrin.h",  # SSE2
+    "features.h",  # for glibc version linux
+    "xlocale.h",  # see GH#8367
+    "dlfcn.h",  # dladdr
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
@@ -152,7 +158,7 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
 # tested via "int %s %s(void *);" % (attribute, name)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
 OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
-                                'attribute_optimize_unroll_loops'),
+                                 'attribute_optimize_unroll_loops'),
                                 ('__attribute__((optimize("O3")))',
                                  'attribute_optimize_opt_3'),
                                 ('__attribute__((nonnull (1)))',
@@ -170,7 +176,7 @@ OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 OPTIONAL_STDFUNCS_MAYBE = [
     "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
     "ftello", "fseeko"
-    ]
+]
 
 # C99 functions: float and long double versions
 C99_FUNCS = [
@@ -179,30 +185,35 @@ C99_FUNCS = [
     "asin", "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2",
     "pow", "fmod", "modf", 'frexp', 'ldexp', "exp2", "log2", "copysign",
     "nextafter", "cbrt"
-    ]
+]
 C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
 C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
 C99_COMPLEX_TYPES = [
     'complex double', 'complex float', 'complex long double'
-    ]
+]
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
     "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
     "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
-    ]
+]
+
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()
 
+
 def sym2def(symbol):
     define = symbol.replace(' ', '')
     return define.upper()
+
 
 def type2def(symbol):
     define = symbol.replace(' ', '_')
     return define.upper()
 
 # Code to detect long double representation taken from MPFR m4 macro
+
+
 def check_long_double_representation(cmd):
     cmd._check_compiler()
     body = LONG_DOUBLE_REPRESENTATION_SRC % {'type': 'long double'}
@@ -234,6 +245,7 @@ def check_long_double_representation(cmd):
     finally:
         cmd._clean()
 
+
 LONG_DOUBLE_REPRESENTATION_SRC = r"""
 /* "before" is 16 bytes to ensure there's no padding between it and "x".
  *    We're not expecting any "long double" bigger than 16 bytes or with
@@ -251,6 +263,7 @@ struct {
         { '\376', '\334', '\272', '\230', '\166', '\124', '\062', '\020' }
 };
 """
+
 
 def pyod(filename):
     """Python implementation of the od UNIX utility (od -b, more exactly).
@@ -278,7 +291,7 @@ def pyod(filename):
             yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
             for i in range(0, len(yo), 16):
                 line = ['%07d' % int(oct(i))]
-                line.extend(['%03d' % c for c in yo[i:i+16]])
+                line.extend(['%03d' % c for c in yo[i:i + 16]])
                 out.append(" ".join(line))
             return out
         finally:
@@ -292,7 +305,7 @@ def pyod(filename):
             yo2 = [oct(o)[2:] for o in fid.read()]
             for i in range(0, len(yo2), 16):
                 line = ['%07d' % int(oct(i)[2:])]
-                line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+                line.extend(['%03d' % int(c) for c in yo2[i:i + 16]])
                 out.append(" ".join(line))
             return out
         finally:
@@ -303,8 +316,9 @@ def pyod(filename):
     else:
         return _pyod3()
 
+
 _BEFORE_SEQ = ['000', '000', '000', '000', '000', '000', '000', '000',
-              '001', '043', '105', '147', '211', '253', '315', '357']
+               '001', '043', '105', '147', '211', '253', '315', '357']
 _AFTER_SEQ = ['376', '334', '272', '230', '166', '124', '062', '020']
 
 _IEEE_DOUBLE_BE = ['301', '235', '157', '064', '124', '000', '000', '000']
@@ -322,6 +336,7 @@ _DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
                      ['000'] * 8)
 _DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
                      ['000'] * 8)
+
 
 def long_double_representation(lines):
     """Given a binary dump as given by GNU od -b, look for long double

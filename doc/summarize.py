@@ -7,7 +7,12 @@ Show a summary about which NumPy functions are documented and which are not.
 """
 from __future__ import division, absolute_import, print_function
 
-import os, glob, re, sys, inspect, optparse
+import os
+import glob
+import re
+import sys
+import inspect
+import optparse
 import collections
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sphinxext'))
 from sphinxext.phantom_import import import_phantom_module
@@ -55,6 +60,7 @@ ctypeslib ctypeslib.test
 
 """.split()
 
+
 def main():
     p = optparse.OptionParser(__doc__)
     p.add_option("-c", "--columns", action="store", type="int", dest="cols",
@@ -76,7 +82,8 @@ def main():
     in_sections = {}
     for name, locations in documented.items():
         for (filename, section, keyword, toctree) in locations:
-            in_sections.setdefault((filename, section, keyword), []).append(name)
+            in_sections.setdefault(
+                (filename, section, keyword), []).append(name)
 
     print("Documented")
     print("==========\n")
@@ -95,11 +102,15 @@ def main():
     print("============\n")
     print(format_in_columns(sorted(undocumented.keys()), options.cols))
 
+
 def check_numpy():
     documented = get_documented(glob.glob(SOURCE_DIR + '/*.rst'))
     undocumented = {}
 
-    import numpy, numpy.fft, numpy.linalg, numpy.random
+    import numpy
+    import numpy.fft
+    import numpy.linalg
+    import numpy.random
     for mod in [numpy, numpy.fft, numpy.linalg, numpy.random,
                 numpy.ctypeslib, numpy.emath, numpy.ma]:
         undocumented.update(get_undocumented(documented, mod, skip=SKIP_LIST))
@@ -111,6 +122,7 @@ def check_numpy():
                 del d[k]
 
     return documented, undocumented
+
 
 def get_undocumented(documented, module, module_name=None, skip=[]):
     """
@@ -130,12 +142,15 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
 
     for name in dir(module):
         obj = getattr(module, name)
-        if name.startswith('_'): continue
+        if name.startswith('_'):
+            continue
 
         full_name = '.'.join([module_name, name])
 
-        if full_name in skip: continue
-        if full_name.startswith('numpy.') and full_name[6:] in skip: continue
+        if full_name in skip:
+            continue
+        if full_name.startswith('numpy.') and full_name[6:] in skip:
+            continue
         if not (inspect.ismodule(obj) or isinstance(obj, collections.Callable) or inspect.isclass(obj)):
             continue
 
@@ -144,6 +159,7 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
 
     return undocumented
 
+
 def format_in_columns(lst, max_columns):
     """
     Format a list containing strings to a string containing the items
@@ -151,22 +167,24 @@ def format_in_columns(lst, max_columns):
     """
     lst = [str(_m) for _m in lst]
     col_len = max([len(_m) for _m in lst]) + 2
-    ncols = 80//col_len
+    ncols = 80 // col_len
     if ncols > max_columns:
         ncols = max_columns
     if ncols <= 0:
         ncols = 1
 
     if len(lst) % ncols == 0:
-        nrows = len(lst)//ncols
+        nrows = len(lst) // ncols
     else:
-        nrows = 1 + len(lst)//ncols
+        nrows = 1 + len(lst) // ncols
 
-    fmt = ' %%-%ds ' % (col_len-2)
+    fmt = ' %%-%ds ' % (col_len - 2)
 
     lines = []
     for n in range(nrows):
         lines.append("".join([fmt % x for x in lst[n::nrows]]))
     return "\n".join(lines)
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()

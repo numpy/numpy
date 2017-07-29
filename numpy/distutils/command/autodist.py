@@ -28,6 +28,7 @@ static %(inline)s int static_func (void)
 
     return ''
 
+
 def check_restrict(cmd):
     """Return the restrict identifier (may be empty)."""
     cmd._check_compiler()
@@ -44,6 +45,7 @@ static int static_func (char * %(restrict)s a)
             return kw
 
     return ''
+
 
 def check_compiler_gcc4(cmd):
     """Return True if the C compiler is GCC 4.x."""
@@ -77,6 +79,7 @@ main()
 }
 """ % (attribute, name)
     return cmd.try_compile(body, None, None) != 0
+
 
 def check_gcc_variable_attribute(cmd, attribute):
     """Return True if the given variable attribute is supported."""

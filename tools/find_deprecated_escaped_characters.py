@@ -11,6 +11,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
+
 def main(root):
     """Find deprecated escape sequences.
 

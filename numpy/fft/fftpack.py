@@ -67,11 +67,11 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     if a.shape[axis] != n:
         s = list(a.shape)
         if s[axis] > n:
-            index = [slice(None)]*len(s)
+            index = [slice(None)] * len(s)
             index[axis] = slice(0, n)
             a = a[index]
         else:
-            index = [slice(None)]*len(s)
+            index = [slice(None)] * len(s)
             index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
@@ -1097,7 +1097,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     a = array(a, copy=True, dtype=float)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = fft(a, s[ii], axes[ii], norm)
     return a
 
@@ -1227,7 +1227,7 @@ def irfftn(a, s=None, axes=None, norm=None):
     # The copy may be required for multithreading.
     a = array(a, copy=True, dtype=complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = ifft(a, s[ii], axes[ii], norm)
     a = irfft(a, s[-1], axes[-1], norm)
     return a

@@ -11,6 +11,7 @@ from numpy.testing import (
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.matrixlib import mat
 
+
 class TestCtor(object):
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
@@ -50,11 +51,11 @@ class TestCtor(object):
                               [5, 6, 1, 2],
                               [7, 8, 3, 4]])
         assert_(np.all(bmat("A,A;A,A") == Aresult))
-        assert_(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
-        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A':B})
+        assert_(np.all(bmat("A,A;A,A", ldict={'A': B}) == Aresult))
+        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A': B})
         assert_(
-            np.all(bmat("A,A;A,A", ldict={'A':A}, gdict={'A':B}) == Aresult))
-        b2 = bmat("A,B;C,D", ldict={'A':A,'B':B}, gdict={'C':B,'D':A})
+            np.all(bmat("A,A;A,A", ldict={'A': A}, gdict={'A': B}) == Aresult))
+        b2 = bmat("A,B;C,D", ldict={'A': A, 'B': B}, gdict={'C': B, 'D': A})
         assert_(np.all(b2 == mixresult))
 
 
@@ -64,9 +65,9 @@ class TestProperties(object):
         Fails in NumPy <= 0.9.6.2127.
         """
         M = matrix([[1, 2, 0, 0],
-                   [3, 4, 0, 0],
-                   [1, 2, 1, 2],
-                   [3, 4, 3, 4]])
+                    [3, 4, 0, 0],
+                    [1, 2, 1, 2],
+                    [3, 4, 3, 4]])
         sum0 = matrix([8, 12, 4, 6])
         sum1 = matrix([3, 7, 6, 14]).T
         sumall = 30
@@ -134,7 +135,7 @@ class TestProperties(object):
         assert_(np.all(np.array(np.transpose(A) == mA.H)))
         assert_(np.all(A == mA.A))
 
-        B = A + 2j*A
+        B = A + 2j * A
         mB = matrix(B)
         assert_(np.allclose(linalg.inv(B), mB.I))
         assert_(np.all(np.array(np.transpose(B) == mB.T)))
@@ -144,16 +145,16 @@ class TestProperties(object):
         x = matrix(np.arange(6).reshape(2, 3))
         xpinv = matrix([[-0.77777778,  0.27777778],
                         [-0.11111111,  0.11111111],
-                        [ 0.55555556, -0.05555556]])
+                        [0.55555556, -0.05555556]])
         assert_almost_equal(x.I, xpinv)
 
     def test_comparisons(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
-        assert_(np.all(mB == A+0.1))
-        assert_(np.all(mB == matrix(A+0.1)))
-        assert_(not np.any(mB == matrix(A-0.1)))
+        assert_(np.all(mB == A + 0.1))
+        assert_(np.all(mB == matrix(A + 0.1)))
+        assert_(not np.any(mB == matrix(A - 0.1)))
         assert_(np.all(mA < mB))
         assert_(np.all(mA <= mB))
         assert_(np.all(mA <= mA))
@@ -191,6 +192,7 @@ class TestProperties(object):
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
 
+
 class TestCasting(object):
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
@@ -201,7 +203,7 @@ class TestCasting(object):
         mB = mB + O
         assert_(mB.dtype.type == np.float64)
         assert_(np.all(mA != mB))
-        assert_(np.all(mB == mA+0.1))
+        assert_(np.all(mB == mA + 0.1))
 
         mC = mA.copy()
         O = np.ones((10, 10), np.complex128)
@@ -230,11 +232,11 @@ class TestAlgebra(object):
 
         assert_(np.allclose((mA * mA).A, np.dot(A, A)))
         assert_(np.allclose((mA + mA).A, (A + A)))
-        assert_(np.allclose((3*mA).A, (3*A)))
+        assert_(np.allclose((3 * mA).A, (3 * A)))
 
         mA2 = matrix(A)
         mA2 *= 3
-        assert_(np.allclose(mA2.A, 3*A))
+        assert_(np.allclose(mA2.A, 3 * A))
 
     def test_pow(self):
         """Test raising a matrix to an integer power works as expected."""
@@ -264,12 +266,13 @@ class TestAlgebra(object):
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
         try:
-            A*object()
+            A * object()
         except TypeError:
             pass
         else:
             self.fail("matrix.__mul__ with non-numeric object doesn't raise"
                       "a TypeError")
+
 
 class TestMatrixReturn(object):
     def test_instance_methods(self):
@@ -282,7 +285,7 @@ class TestMatrixReturn(object):
             'reshape': (1,),
             'swapaxes': (0, 0),
             'dot': np.array([1.0]),
-            }
+        }
         excluded_methods = [
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
@@ -291,7 +294,7 @@ class TestMatrixReturn(object):
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
             'prod', 'std', 'ctypes', 'itemset',
-            ]
+        ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
@@ -369,8 +372,8 @@ class TestNewScalarIndexing(object):
 
     def test_row_column_indexing(self):
         x = asmatrix(np.eye(2))
-        assert_array_equal(x[0,:], [[1, 0]])
-        assert_array_equal(x[1,:], [[0, 1]])
+        assert_array_equal(x[0, :], [[1, 0]])
+        assert_array_equal(x[1, :], [[0, 1]])
         assert_array_equal(x[:, 0], [[1], [0]])
         assert_array_equal(x[:, 1], [[0], [1]])
 
@@ -379,14 +382,14 @@ class TestNewScalarIndexing(object):
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
-        assert_array_equal(x[np.array([True, False, False]),:], x[0,:])
+        assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
         A = np.arange(6)
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
-        assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
+        assert_array_equal(x[[2, 1, 0], :], x[::-1, :])
 
 
 class TestPower(object):

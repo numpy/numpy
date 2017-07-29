@@ -7,7 +7,7 @@ import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
     run_module_suite, assert_, assert_raises, assert_equal,
-    )
+)
 from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
@@ -21,7 +21,7 @@ from numpy.ma import (
     multiply, nomask, nonzero, not_equal, ones, outer, product, put, ravel,
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
-    )
+)
 
 pi = np.pi
 
@@ -36,7 +36,8 @@ def eq(v, w, msg=''):
 class TestMa(object):
 
     def setup(self):
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0,
+                      4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -58,8 +59,8 @@ class TestMa(object):
         assert_equal(shape(xm), s)
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assert_(eq(xm, xf))
         assert_(eq(filled(xm, 1.e20), xf))
         assert_(eq(x, xm))
@@ -78,9 +79,9 @@ class TestMa(object):
             assert_(isMaskedArray(xm))
             assert_equal(shape(xm), s)
             assert_equal(xm.shape, s)
-            assert_equal(xm.size, reduce(lambda x, y:x * y, s))
+            assert_equal(xm.size, reduce(lambda x, y: x * y, s))
             assert_equal(count(xm),
-                             len(m1) - reduce(lambda x, y:x + y, m1))
+                         len(m1) - reduce(lambda x, y: x + y, m1))
             assert_(eq(xm, xf))
             assert_(eq(filled(xm, 1.e20), xf))
             assert_(eq(x, xm))
@@ -199,10 +200,10 @@ class TestMa(object):
         assert_(eq(np.product(x, axis=0), product(x, axis=0)))
         assert_(eq(np.product(x, 0), product(x, 0)))
         assert_(eq(np.product(filled(xm, 1), axis=0),
-                           product(xm, axis=0)))
+                   product(xm, axis=0)))
         if len(s) > 1:
             assert_(eq(np.concatenate((x, y), 1),
-                               concatenate((xm, ym), 1)))
+                       concatenate((xm, ym), 1)))
             assert_(eq(np.add.reduce(x, 1), add.reduce(x, 1)))
             assert_(eq(np.sum(x, 1), sum(x, 1)))
             assert_(eq(np.product(x, 1), product(x, 1)))
@@ -589,15 +590,15 @@ class TestMa(object):
         assert_(allclose(average(x, axis=0, weights=w1), 2.5))
         y = array([arange(6), 2.0 * arange(6)])
         assert_(allclose(average(y, None),
-                                 np.add.reduce(np.arange(6)) * 3. / 12.))
+                         np.add.reduce(np.arange(6)) * 3. / 12.))
         assert_(allclose(average(y, axis=0), np.arange(6) * 3. / 2.))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                         [average(x, axis=0), average(x, axis=0) * 2.0]))
         assert_(allclose(average(y, None, weights=w2), 20. / 6.))
         assert_(allclose(average(y, axis=0, weights=w2),
-                                 [0., 1., 2., 3., 4., 10.]))
+                         [0., 1., 2., 3., 4., 10.]))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                         [average(x, axis=0), average(x, axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0, 0, 1, 1, 0, 0]
         m3 = [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0]]
@@ -611,10 +612,10 @@ class TestMa(object):
         z = masked_array(y, m3)
         assert_(allclose(average(z, None), 20. / 6.))
         assert_(allclose(average(z, axis=0),
-                                 [0., 1., 99., 99., 4.0, 7.5]))
+                         [0., 1., 99., 99., 4.0, 7.5]))
         assert_(allclose(average(z, axis=1), [2.5, 5.0]))
         assert_(allclose(average(z, axis=0, weights=w2),
-                                 [0., 1., 99., 99., 4.0, 10.0]))
+                         [0., 1., 99., 99., 4.0, 10.0]))
 
         a = arange(6)
         b = arange(6) * 3
@@ -649,7 +650,7 @@ class TestMa(object):
 
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
-        #TODO FIXME: Find out what the following raises a warning in r8247
+        # TODO FIXME: Find out what the following raises a warning in r8247
         with np.errstate(divide='ignore'):
             assert_((1 / array(0)).mask)
         assert_((1 + xm).mask)
@@ -669,7 +670,7 @@ class TestMa(object):
         assert_(eq(a.argmax(), a._data.argmax()))
         assert_(eq(a.argmin(), a._data.argmin()))
         assert_(eq(a.choose(0, 1, 2, 3, 4),
-                           a._data.choose(0, 1, 2, 3, 4)))
+                   a._data.choose(0, 1, 2, 3, 4)))
         assert_(eq(a.compress([1, 0, 1]), a._data.compress([1, 0, 1])))
         assert_(eq(a.conj(), a._data.conj()))
         assert_(eq(a.conjugate(), a._data.conjugate()))
@@ -790,8 +791,8 @@ class TestArrayMethods(object):
         mXdiag = mX.diagonal()
         assert_equal(mX.trace(), mX.diagonal().compressed().sum())
         assert_(eq(mX.trace(),
-                           X.trace() - sum(mXdiag.mask * X.diagonal(),
-                                           axis=0)))
+                   X.trace() - sum(mXdiag.mask * X.diagonal(),
+                                   axis=0)))
 
     def test_clip(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
@@ -845,7 +846,7 @@ class TestArrayMethods(object):
             assert_(eq(mXvar1[k], mX[k].compressed().var()))
             assert_(eq(mXvar0[k], mX[:, k].compressed().var()))
             assert_(eq(np.sqrt(mXvar0[k]),
-                               mX[:, k].compressed().std()))
+                       mX[:, k].compressed().std()))
 
 
 def eqmask(m1, m2):
@@ -854,6 +855,7 @@ def eqmask(m1, m2):
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
+
 
 if __name__ == "__main__":
     run_module_suite()

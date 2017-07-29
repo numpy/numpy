@@ -12,7 +12,8 @@ from __future__ import division, absolute_import, print_function
 # But, python2.4's -m switch only works with top-level modules, not modules
 # that are inside packages. So, once we drop 2.4 support, maybe...
 
-import sys, os
+import sys
+import os
 # In case we are run from the source directory, we don't want to import numpy
 # from there, we want to import the installed version:
 sys.path.pop(0)

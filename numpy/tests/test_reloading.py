@@ -9,6 +9,7 @@ if sys.version_info[:2] >= (3, 4):
 else:
     from imp import reload
 
+
 def test_numpy_reloading():
     # gh-7844. Also check that relevant globals retain their identity.
     import numpy as np

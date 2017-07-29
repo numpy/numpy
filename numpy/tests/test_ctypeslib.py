@@ -20,6 +20,7 @@ try:
 except ImportError:
     _HAS_CTYPE = False
 
+
 class TestLoadLibrary(object):
     @dec.skipif(not _HAS_CTYPE,
                 "ctypes not available on this python installation")
@@ -53,6 +54,7 @@ class TestLoadLibrary(object):
                    " (import error was: %s)" % str(e))
             print(msg)
 
+
 class TestNdpointer(object):
     def test_dtype(self):
         dt = np.intc
@@ -65,7 +67,7 @@ class TestNdpointer(object):
         p = ndpointer(dtype=dt)
         p.from_param(np.array([1], dt))
         assert_raises(TypeError, p.from_param,
-                          np.array([1], dt.newbyteorder('swap')))
+                      np.array([1], dt.newbyteorder('swap')))
         dtnames = ['x', 'y']
         dtformats = [np.intc, np.float64]
         dtdescr = {'names': dtnames, 'formats': dtformats}

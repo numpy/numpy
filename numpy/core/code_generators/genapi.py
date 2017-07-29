@@ -8,7 +8,9 @@ specified.
 """
 from __future__ import division, absolute_import, print_function
 
-import sys, os, re
+import sys
+import os
+import re
 import hashlib
 
 import textwrap
@@ -58,15 +60,18 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'ufunc_type_resolution.c'),
              join('umath', 'reduction.c'),
-            ]
+             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]
+
 
 def file_in_this_dir(filename):
     return os.path.join(THIS_DIR, filename)
 
+
 def remove_whitespace(s):
     return ''.join(s.split())
+
 
 def _repl(str):
     return str.replace('Bool', 'npy_bool')
@@ -74,7 +79,7 @@ def _repl(str):
 
 class StealRef(object):
     def __init__(self, arg):
-        self.arg = arg # counting from 1
+        self.arg = arg  # counting from 1
 
     def __str__(self):
         try:
@@ -85,7 +90,7 @@ class StealRef(object):
 
 class NonNull(object):
     def __init__(self, arg):
-        self.arg = arg # counting from 1
+        self.arg = arg  # counting from 1
 
     def __str__(self):
         try:
@@ -121,7 +126,7 @@ class Function(object):
         name = '  %s' % (self.name,)
         s = textwrap.wrap('(%s)' % (argstr,), width=72,
                           initial_indent=name,
-                          subsequent_indent=' ' * (len(name)+1),
+                          subsequent_indent=' ' * (len(name) + 1),
                           break_long_words=False)
         for l in s:
             lines.append(l.replace('\000', ' ').rstrip())
@@ -141,6 +146,7 @@ class Function(object):
             m.update('\000')
         return m.hexdigest()[:8]
 
+
 class ParseError(Exception):
     def __init__(self, filename, lineno, msg):
         self.filename = filename
@@ -149,6 +155,7 @@ class ParseError(Exception):
 
     def __str__(self):
         return '%s:%s:%s' % (self.filename, self.lineno, self.msg)
+
 
 def skip_brackets(s, lbrac, rbrac):
     count = 0
@@ -161,12 +168,14 @@ def skip_brackets(s, lbrac, rbrac):
             return i
     raise ValueError("no match '%s' for '%s' (%r)" % (lbrac, rbrac, s))
 
+
 def split_arguments(argstr):
     arguments = []
     bracket_counts = {'(': 0, '[': 0}
     current_argument = []
     state = 0
     i = 0
+
     def finish_arg():
         if current_argument:
             argstr = ''.join(current_argument).strip()
@@ -185,8 +194,8 @@ def split_arguments(argstr):
             finish_arg()
         elif c == '(':
             p = skip_brackets(argstr[i:], '(', ')')
-            current_argument += argstr[i:i+p]
-            i += p-1
+            current_argument += argstr[i:i + p]
+            i += p - 1
         else:
             current_argument += c
         i += 1
@@ -253,7 +262,7 @@ def find_functions(filename, tag='API'):
                 if m:
                     function_name = m.group(1)
                 else:
-                    raise ParseError(filename, lineno+1,
+                    raise ParseError(filename, lineno + 1,
                                      'could not find function name')
                 function_args.append(line[m.end():])
                 state = STATE_ARGS
@@ -278,6 +287,7 @@ def find_functions(filename, tag='API'):
     fo.close()
     return functions
 
+
 def should_rebuild(targets, source_files):
     from distutils.dep_util import newer_group
     for t in targets:
@@ -287,6 +297,7 @@ def should_rebuild(targets, source_files):
     if newer_group(sources, targets[0], missing='newer'):
         return True
     return False
+
 
 def write_file(filename, data):
     """
@@ -325,6 +336,7 @@ extern NPY_NO_EXPORT PyTypeObject %(type)s;
 """ % {'type': self.name}
         return astr
 
+
 class GlobalVarApi(object):
     def __init__(self, name, index, type, api_name):
         self.name = name
@@ -334,9 +346,9 @@ class GlobalVarApi(object):
 
     def define_from_array_api_string(self):
         return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                                        self.type,
-                                                        self.api_name,
-                                                        self.index)
+                                               self.type,
+                                               self.api_name,
+                                               self.index)
 
     def array_api_define(self):
         return "        (%s *) &%s" % (self.type, self.name)
@@ -349,6 +361,8 @@ extern NPY_NO_EXPORT %(type)s %(name)s;
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
+
+
 class BoolValuesApi(object):
     def __init__(self, name, index, api_name):
         self.name = name
@@ -371,6 +385,7 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 """
         return astr
 
+
 class FunctionApi(object):
     def __init__(self, name, index, annotations, return_type, args, api_name):
         self.name = name
@@ -390,10 +405,10 @@ class FunctionApi(object):
         define = """\
 #define %s \\\n        (*(%s (*)(%s)) \\
          %s[%d])""" % (self.name,
-                                self.return_type,
-                                self._argtypes_string(),
-                                self.api_name,
-                                self.index)
+                       self.return_type,
+                       self._argtypes_string(),
+                       self.api_name,
+                       self.index)
         return define
 
     def array_api_define(self):
@@ -410,12 +425,15 @@ NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
                                               self._argtypes_string())
         return astr
 
+
 def order_dict(d):
     """Order dict by its values."""
     o = list(d.items())
+
     def _key(x):
         return x[1] + (x[0],)
     return sorted(o, key=_key)
+
 
 def merge_api_dicts(dicts):
     ret = {}
@@ -424,6 +442,7 @@ def merge_api_dicts(dicts):
             ret[k] = v
 
     return ret
+
 
 def check_api_dict(d):
     """Check that an api dict is valid (does not use the same index twice)."""
@@ -458,6 +477,7 @@ def check_api_dict(d):
               "(symmetric diff is %s)" % diff
         raise ValueError(msg)
 
+
 def get_api_functions(tagname, api_dict):
     """Parse source files to get functions tagged by the given tag."""
     functions = []
@@ -466,9 +486,10 @@ def get_api_functions(tagname, api_dict):
     dfunctions = []
     for func in functions:
         o = api_dict[func.name][0]
-        dfunctions.append( (o, func) )
+        dfunctions.append((o, func))
     dfunctions.sort()
     return [a[1] for a in dfunctions]
+
 
 def fullapi_hash(api_dicts):
     """Given a list of api dicts defining the numpy C API, compute a checksum
@@ -481,9 +502,11 @@ def fullapi_hash(api_dicts):
 
     return hashlib.md5(''.join(a).encode('ascii')).hexdigest()
 
+
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
 VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
+
 
 def get_versions_hash():
     d = []
@@ -500,6 +523,7 @@ def get_versions_hash():
 
     return dict(d)
 
+
 def main():
     tagname = sys.argv[1]
     order_file = sys.argv[2]
@@ -511,6 +535,7 @@ def main():
         m.update(ah)
         print(hex(int(ah, 16)))
     print(hex(int(m.hexdigest()[:8], 16)))
+
 
 if __name__ == '__main__':
     main()

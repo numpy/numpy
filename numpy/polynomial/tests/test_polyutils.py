@@ -8,7 +8,7 @@ import numpy.polynomial.polyutils as pu
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     run_module_suite
-    )
+)
 
 
 class TestMisc(object):
@@ -16,7 +16,7 @@ class TestMisc(object):
     def test_trimseq(self):
         for i in range(5):
             tgt = [1]
-            res = pu.trimseq([1] + [0]*5)
+            res = pu.trimseq([1] + [0] * 5)
             assert_equal(res, tgt)
 
     def test_as_series(self):

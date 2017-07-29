@@ -12,6 +12,8 @@ import types
 __all__ = ['getargspec', 'formatargspec']
 
 # ----------------------------------------------------------- type-checking
+
+
 def ismethod(object):
     """Return true if the object is an instance method.
 
@@ -24,6 +26,7 @@ def ismethod(object):
 
     """
     return isinstance(object, types.MethodType)
+
 
 def isfunction(object):
     """Return true if the object is a user-defined function.
@@ -39,6 +42,7 @@ def isfunction(object):
 
     """
     return isinstance(object, types.FunctionType)
+
 
 def iscode(object):
     """Return true if the object is a code object.
@@ -56,13 +60,15 @@ def iscode(object):
         co_nlocals      number of local variables
         co_stacksize    virtual machine stack space required
         co_varnames     tuple of names of arguments and local variables
-        
+
     """
     return isinstance(object, types.CodeType)
+
 
 # ------------------------------------------------ argument list extraction
 # These constants are from Python's compile.h.
 CO_OPTIMIZED, CO_NEWLOCALS, CO_VARARGS, CO_VARKEYWORDS = 1, 2, 4, 8
+
 
 def getargs(co):
     """Get information about the arguments accepted by a code object.
@@ -95,6 +101,7 @@ def getargs(co):
         varkw = co.co_varnames[nargs]
     return args, varargs, varkw
 
+
 def getargspec(func):
     """Get the names and default values of a function's arguments.
 
@@ -112,6 +119,7 @@ def getargspec(func):
     args, varargs, varkw = getargs(func.__code__)
     return args, varargs, varkw, func.__defaults__
 
+
 def getargvalues(frame):
     """Get information about arguments passed into a particular frame.
 
@@ -119,16 +127,18 @@ def getargvalues(frame):
     'args' is a list of the argument names (it may contain nested lists).
     'varargs' and 'varkw' are the names of the * and ** arguments or None.
     'locals' is the locals dictionary of the given frame.
-    
+
     """
     args, varargs, varkw = getargs(frame.f_code)
     return args, varargs, varkw, frame.f_locals
+
 
 def joinseq(seq):
     if len(seq) == 1:
         return '(' + seq[0] + ',)'
     else:
         return '(' + ', '.join(seq) + ')'
+
 
 def strseq(object, convert, join=joinseq):
     """Recursively walk a sequence, stringifying each element.
@@ -138,6 +148,7 @@ def strseq(object, convert, join=joinseq):
         return join([strseq(_o, convert, join) for _o in object])
     else:
         return convert(object)
+
 
 def formatargspec(args, varargs=None, varkw=None, defaults=None,
                   formatarg=str,
@@ -166,6 +177,7 @@ def formatargspec(args, varargs=None, varkw=None, defaults=None,
     if varkw is not None:
         specs.append(formatvarkw(varkw))
     return '(' + ', '.join(specs) + ')'
+
 
 def formatargvalues(args, varargs, varkw, locals,
                     formatarg=str,

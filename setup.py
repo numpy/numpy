@@ -61,11 +61,11 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
-MAJOR               = 1
-MINOR               = 14
-MICRO               = 0
-ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+MAJOR = 1
+MINOR = 14
+MICRO = 0
+ISRELEASED = False
+VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 
 # Return the git revision as a string
@@ -81,7 +81,8 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
         return out
 
     try:
@@ -91,6 +92,7 @@ def git_version():
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
+
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
 # properly updated when the contents of directories change (true for distutils,
@@ -116,8 +118,8 @@ def get_version_info():
         try:
             from numpy.version import git_revision as GIT_REVISION
         except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing " \
-                              "numpy/version.py and the build directory " \
+            raise ImportError("Unable to import git_revision. Try removing "
+                              "numpy/version.py and the build directory "
                               "before building.")
     else:
         GIT_REVISION = "Unknown"
@@ -147,14 +149,14 @@ if not release:
     a = open(filename, 'w')
     try:
         a.write(cnt % {'version': VERSION,
-                       'full_version' : FULLVERSION,
-                       'git_revision' : GIT_REVISION,
+                       'full_version': FULLVERSION,
+                       'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
     finally:
         a.close()
 
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration(None, parent_package, top_path)
@@ -165,7 +167,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
 
-    config.get_version('numpy/version.py') # sets config.version
+    config.get_version('numpy/version.py')  # sets config.version
 
     return config
 
@@ -183,7 +185,6 @@ def check_submodules():
                 if not os.path.exists(p):
                     raise ValueError('Submodule %s missing' % p)
 
-
     proc = subprocess.Popen(['git', 'submodule', 'status'],
                             stdout=subprocess.PIPE)
     status, _ = proc.communicate()
@@ -194,8 +195,11 @@ def check_submodules():
 
 
 from distutils.command.sdist import sdist
+
+
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
+
     def run(self):
         check_submodules()
         sdist.run(self)
@@ -205,9 +209,9 @@ def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
     p = subprocess.call([sys.executable,
-                          os.path.join(cwd, 'tools', 'cythonize.py'),
-                          'numpy/random'],
-                         cwd=cwd)
+                         os.path.join(cwd, 'tools', 'cythonize.py'),
+                         'numpy/random'],
+                        cwd=cwd)
     if p != 0:
         raise RuntimeError("Running cythonize failed!")
 
@@ -313,11 +317,11 @@ def parse_setuppy_commands():
             `setup.py build_sphinx` is not supported, use the
             Makefile under doc/""",
         flake8="`setup.py flake8` is not supported, use flake8 standalone",
-        )
+    )
     bad_commands['nosetests'] = bad_commands['test']
     for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
-                     'register', 'check', 'install_data', 'install_headers',
-                     'install_lib', 'install_scripts', ):
+                    'register', 'check', 'install_data', 'install_headers',
+                    'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
 
     for command in bad_commands.keys():
@@ -344,17 +348,17 @@ def setup_package():
     write_version_py()
 
     metadata = dict(
-        name = 'numpy',
-        maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@python.org",
-        description = DOCLINES[0],
-        long_description = "\n".join(DOCLINES[2:]),
-        url = "http://www.numpy.org",
-        author = "Travis E. Oliphant et al.",
-        download_url = "http://sourceforge.net/projects/numpy/files/NumPy/",
-        license = 'BSD',
+        name='numpy',
+        maintainer="NumPy Developers",
+        maintainer_email="numpy-discussion@python.org",
+        description=DOCLINES[0],
+        long_description="\n".join(DOCLINES[2:]),
+        url="http://www.numpy.org",
+        author="Travis E. Oliphant et al.",
+        download_url="http://sourceforge.net/projects/numpy/files/NumPy/",
+        license='BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
-        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
         python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',

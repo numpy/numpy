@@ -57,10 +57,12 @@ them.
 #endif
 '''
 
+
 class FortranRoutine(object):
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
+
     def __init__(self, name=None, filename=None):
         self.filename = filename
         if name is None:
@@ -78,20 +80,24 @@ class FortranRoutine(object):
     def __repr__(self):
         return "FortranRoutine({!r}, filename={!r})".format(self.name, self.filename)
 
+
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
     is not known.
     """
     type = 'unknown'
+
     def __init__(self, name):
         FortranRoutine.__init__(self, name=name, filename='<unknown>')
 
     def dependencies(self):
         return []
 
+
 class FortranLibrary(object):
     """Container for a bunch of Fortran routines.
     """
+
     def __init__(self, src_dirs):
         self._src_dirs = src_dirs
         self.names_to_routines = {}
@@ -162,6 +168,7 @@ class FortranLibrary(object):
             last_todo = todo
         return todo
 
+
 class LapackLibrary(FortranLibrary):
     def _newFortranRoutine(self, rname, filename):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
@@ -182,13 +189,16 @@ class LapackLibrary(FortranLibrary):
         return routine
 
     def allRoutinesByType(self, typename):
-        routines = sorted((r.name, r) for r in self.allRoutines() if r.type == typename)
+        routines = sorted((r.name, r)
+                          for r in self.allRoutines() if r.type == typename)
         return [a[1] for a in routines]
+
 
 def printRoutineNames(desc, routines):
     print(desc)
     for r in routines:
         print('\t%s' % r.name)
+
 
 def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     blas_src_dir = os.path.join(lapack_dir, 'BLAS', 'SRC')
@@ -213,6 +223,7 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
 
     return library
 
+
 def getWrappedRoutineNames(wrapped_routines_file):
     routines = []
     ignores = []
@@ -229,7 +240,10 @@ def getWrappedRoutineNames(wrapped_routines_file):
                 routines.append(line)
     return routines, ignores
 
-types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
+
+types = {'blas', 'lapack', 'd_lapack',
+         's_lapack', 'z_lapack', 'c_lapack', 'config'}
+
 
 def dumpRoutineNames(library, output_dir):
     for typename in {'unknown'} | types:
@@ -240,6 +254,7 @@ def dumpRoutineNames(library, output_dir):
                 deps = r.dependencies()
                 fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
 
+
 def concatenateRoutines(routines, output_file):
     with open(output_file, 'w') as output_fo:
         for r in routines:
@@ -247,8 +262,10 @@ def concatenateRoutines(routines, output_file):
                 source = fo.read()
             output_fo.write(source)
 
+
 class F2CError(Exception):
     pass
+
 
 def runF2C(fortran_filename, output_dir):
     try:
@@ -258,6 +275,7 @@ def runF2C(fortran_filename, output_dir):
     except subprocess.CalledProcessError:
         raise F2CError
 
+
 def scrubF2CSource(c_file):
     with open(c_file) as fo:
         source = fo.read()
@@ -265,6 +283,7 @@ def scrubF2CSource(c_file):
     with open(c_file, 'w') as fo:
         fo.write(HEADER)
         fo.write(source)
+
 
 def main():
     if len(sys.argv) != 4:
@@ -282,7 +301,7 @@ def main():
     for typename in types:
         fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
         c_file = fortran_file[:-2] + '.c'
-        print('creating %s ...'  % c_file)
+        print('creating %s ...' % c_file)
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
 
@@ -304,6 +323,7 @@ def main():
             subprocess.check_call(['patch', '-u', c_file, c_patch_file])
 
         print()
+
 
 if __name__ == '__main__':
     main()

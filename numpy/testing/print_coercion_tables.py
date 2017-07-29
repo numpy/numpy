@@ -7,6 +7,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 
 # Generic object that can be added, but doesn't do anything else
+
+
 class GenericObject(object):
     def __init__(self, v):
         self.v = v
@@ -19,6 +21,7 @@ class GenericObject(object):
 
     dtype = np.dtype('O')
 
+
 def print_cancast_table(ntypes):
     print('X', end=' ')
     for char in ntypes:
@@ -29,6 +32,7 @@ def print_cancast_table(ntypes):
         for col in ntypes:
             print(int(np.can_cast(row, col)), end=' ')
         print()
+
 
 def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False):
     print('+', end=' ')
@@ -49,12 +53,14 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
                 coltype = np.obj2sctype(col)
             try:
                 if firstarray:
-                    rowvalue = np.array([rowtype(inputfirstvalue)], dtype=rowtype)
+                    rowvalue = np.array(
+                        [rowtype(inputfirstvalue)], dtype=rowtype)
                 else:
                     rowvalue = rowtype(inputfirstvalue)
                 colvalue = coltype(inputsecondvalue)
                 if use_promote_types:
-                    char = np.promote_types(rowvalue.dtype, colvalue.dtype).char
+                    char = np.promote_types(
+                        rowvalue.dtype, colvalue.dtype).char
                 else:
                     value = np.add(rowvalue, colvalue)
                     if isinstance(value, np.ndarray):
@@ -69,6 +75,7 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
                 char = '#'
             print(char, end=' ')
         print()
+
 
 print("can cast")
 print_cancast_table(np.typecodes['All'])

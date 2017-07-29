@@ -16,7 +16,7 @@ import numpy.testing
 from numpy.testing import (
     TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
     assert_raises, build_err_msg, run_module_suite
-    )
+)
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
 __all__masked = [
@@ -25,7 +25,7 @@ __all__masked = [
     'assert_array_equal', 'assert_array_less', 'assert_close',
     'assert_equal', 'assert_equal_records', 'assert_mask_equal',
     'assert_not_equal', 'fail_if_array_equal',
-    ]
+]
 
 # Include some normal test functions to avoid breaking other projects who
 # have mistakenly included them from this file. SciPy is one. That is
@@ -34,7 +34,7 @@ __all__masked = [
 __some__from_testing = [
     'TestCase', 'assert_', 'assert_allclose',
     'assert_array_almost_equal_nulp', 'assert_raises', 'run_module_suite',
-    ]
+]
 
 __all__ = __all__masked + __some__from_testing
 

@@ -364,6 +364,7 @@ def _can_dot(inputs, result, idx_removed):
     # We are a matrix-matrix product, but we need to copy data
     return True
 
+
 def _parse_einsum_input(operands):
     """
     A reproduction of einsum c side einsum parsing in python.
@@ -679,7 +680,8 @@ def einsum_path(*operands, **kwargs):
     einsum_call_arg = kwargs.pop("einsum_call", False)
 
     # Python side parsing
-    input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
+    input_subscripts, output_subscript, operands = _parse_einsum_input(
+        operands)
     subscripts = input_subscripts + '->' + output_subscript
 
     # Build a few useful list and sets
@@ -734,7 +736,8 @@ def einsum_path(*operands, **kwargs):
         memory_arg = min(memory_arg, max_size)
         path = _greedy_path(input_sets, output_set, dimension_dict, memory_arg)
     elif path_type == "optimal":
-        path = _optimal_path(input_sets, output_set, dimension_dict, memory_arg)
+        path = _optimal_path(input_sets, output_set,
+                             dimension_dict, memory_arg)
     elif path_type[0] == 'einsum_path':
         path = path_type[1:]
     else:
@@ -773,7 +776,8 @@ def einsum_path(*operands, **kwargs):
         input_list.append(idx_result)
         einsum_str = ",".join(tmp_inputs) + "->" + idx_result
 
-        contraction = (contract_inds, idx_removed, einsum_str, input_list[:], do_blas)
+        contraction = (contract_inds, idx_removed,
+                       einsum_str, input_list[:], do_blas)
         contraction_list.append(contraction)
 
     opt_cost = sum(cost_list) + 1
@@ -788,7 +792,7 @@ def einsum_path(*operands, **kwargs):
     speedup = naive_cost / opt_cost
     max_i = max(size_list)
 
-    path_print  = "  Complete contraction:  %s\n" % overall_contraction
+    path_print = "  Complete contraction:  %s\n" % overall_contraction
     path_print += "         Naive scaling:  %d\n" % len(indices)
     path_print += "     Optimized scaling:  %d\n" % max(scale_list)
     path_print += "      Naive FLOP count:  %.3e\n" % naive_cost
@@ -1111,13 +1115,15 @@ def einsum(*operands, **kwargs):
                 right_pos.append(input_right.find(s))
 
             # Contract!
-            new_view = tensordot(*tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
+            new_view = tensordot(
+                *tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
 
             # Build a new view if needed
             if (tensor_result != results_index) or handle_out:
                 if handle_out:
                     einsum_kwargs["out"] = out_array
-                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **einsum_kwargs)
+                new_view = c_einsum(tensor_result + '->' +
+                                    results_index, new_view, **einsum_kwargs)
 
         # Call einsum
         else:

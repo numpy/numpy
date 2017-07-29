@@ -7,6 +7,7 @@ if 'setuptools' in sys.modules:
 else:
     from distutils.command.bdist_rpm import bdist_rpm as old_bdist_rpm
 
+
 class bdist_rpm(old_bdist_rpm):
 
     def _make_spec_file(self):

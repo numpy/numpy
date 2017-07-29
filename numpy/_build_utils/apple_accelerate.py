@@ -6,6 +6,7 @@ import re
 
 __all__ = ['uses_accelerate_framework', 'get_sgemv_fix']
 
+
 def uses_accelerate_framework(info):
     """ Returns True if Accelerate framework is used for BLAS/LAPACK """
     if sys.platform != "darwin":
@@ -16,6 +17,7 @@ def uses_accelerate_framework(info):
         if r_accelerate.search(arg):
             return True
     return False
+
 
 def get_sgemv_fix():
     """ Returns source file needed to correct SGEMV """

@@ -205,7 +205,7 @@ class LineSplitter(object):
         # Delimiter is a single integer
         elif int(delimiter):
             (_handyman, delimiter) = (
-                    self._fixedwidth_splitter, int(delimiter))
+                self._fixedwidth_splitter, int(delimiter))
         else:
             (_handyman, delimiter) = (self._delimited_splitter, None)
         self.delimiter = delimiter
@@ -789,7 +789,7 @@ class StringConverter(object):
             if _status == _statusmax:
                 raise ConverterError(
                     "Could not find a valid conversion function"
-                    )
+                )
             elif _status < _statusmax - 1:
                 _status += 1
             (self.type, self.func, default) = self._mapper[_status]

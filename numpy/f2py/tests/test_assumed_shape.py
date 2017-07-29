@@ -31,5 +31,6 @@ class TestAssumedShapeSumExample(util.F2PyTest):
         r = self.module.mod.fsum([1, 2])
         assert_(r == 3, repr(r))
 
+
 if __name__ == "__main__":
     run_module_suite()

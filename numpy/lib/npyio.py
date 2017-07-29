@@ -16,11 +16,11 @@ from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
     has_nested_fields, flatten_dtype, easy_dtype, _bytes_to_name
-    )
+)
 
 from numpy.compat import (
     asbytes, asstr, asbytes_nested, bytes, basestring, unicode, is_pathlib_path
-    )
+)
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -34,7 +34,7 @@ __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
-    ]
+]
 
 
 class BagObj(object):
@@ -690,8 +690,10 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     # Since target file might be big enough to exceed capacity of a global
     # temporary directory, create temp file side-by-side with the target file.
-    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
+    file_dir, file_prefix = os.path.split(
+        file) if _is_string_like(file) else (None, 'tmp')
+    fd, tmpfile = tempfile.mkstemp(
+        prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
     os.close(fd)
     try:
         for key, val in namedict.items():
@@ -875,7 +877,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     "usecols must be an int or a sequence of ints but "
                     "it contains at least one element of type %s" %
                     type(col_idx),
-                    )
+                )
                 raise
         # Fall back to existing code
         usecols = usecols_as_list
@@ -916,7 +918,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 packing = [(shape[-1], list)]
                 if len(shape) > 1:
                     for dim in dt.shape[-2::-1]:
-                        packing = [(dim*packing[0][0], packing*dim)]
+                        packing = [(dim * packing[0][0], packing * dim)]
                 return ([dt.base] * int(np.prod(dt.shape)), packing)
         else:
             types = []
@@ -944,7 +946,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             start = 0
             ret = []
             for length, subpacking in packing:
-                ret.append(pack_items(items[start:start+length], subpacking))
+                ret.append(pack_items(items[start:start + length], subpacking))
                 start += length
             return tuple(ret)
 
@@ -984,7 +986,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
+            warnings.warn('loadtxt: Empty input file: "%s"' %
+                          fname, stacklevel=2)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype_internal(dtype)
@@ -1347,9 +1350,9 @@ def fromregex(file, regexp, dtype):
             file.close()
 
 
-#####--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 #---- --- ASCII functions ---
-#####--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -1516,8 +1519,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if max_rows is not None:
         if skip_footer:
             raise ValueError(
-                    "The keywords 'skip_footer' and 'max_rows' can not be "
-                    "specified at the same time.")
+                "The keywords 'skip_footer' and 'max_rows' can not be "
+                "specified at the same time.")
         if max_rows < 1:
             raise ValueError("'max_rows' must be at least 1.")
 
@@ -1582,7 +1585,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # return an empty array if the datafile is empty
         first_line = b''
         first_values = []
-        warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
+        warnings.warn('genfromtxt: Empty input file: "%s"' %
+                      fname, stacklevel=2)
 
     # Should we take the first values as names ?
     if names is True:

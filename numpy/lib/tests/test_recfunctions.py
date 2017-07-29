@@ -6,11 +6,11 @@ from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     run_module_suite, assert_, assert_raises, dec
-    )
+)
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
-    )
+)
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
 zip_descr = np.lib.recfunctions.zip_descr
@@ -296,8 +296,8 @@ class TestMergeArrays(object):
 
         test = merge_arrays((x, w), flatten=False)
         controldtype = [('f0', int),
-                                ('f1', [('a', int),
-                                        ('b', [('ba', float), ('bb', int)])])]
+                        ('f1', [('a', int),
+                                ('b', [('ba', float), ('bb', int)])])]
         control = np.array([(1., (1, (2, 3.0))), (2, (4, (5, 6.0)))],
                            dtype=controldtype)
         assert_equal(test, control)
@@ -330,7 +330,7 @@ class TestMergeArrays(object):
 
         # Fixme, this test looks incomplete and broken
         #test = merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
-        #control = np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
+        # control = np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
         #                   dtype=[('A', '|S3'), ('B', float), ('C', int)])
         #assert_equal(test, control)
 
@@ -604,7 +604,7 @@ class TestJoinBy(object):
 
         # Fixme, this test is broken
         #test = join_by(('a', 'b'), a, b)
-        #control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
+        # control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
         #                    (7, 57, 107, 102), (8, 58, 108, 103),
         #                    (9, 59, 109, 104)],
         #                   dtype=[('a', int), ('b', int),
@@ -616,15 +616,15 @@ class TestJoinBy(object):
         np.array([(5, 55, 105, 100), (6, 56, 106, 101),
                   (7, 57, 107, 102), (8, 58, 108, 103),
                   (9, 59, 109, 104)],
-                  dtype=[('a', int), ('b', int),
-                         ('c', int), ('d', int)])
+                 dtype=[('a', int), ('b', int),
+                        ('c', int), ('d', int)])
 
     def test_join_subdtype(self):
         # tests the bug in https://stackoverflow.com/q/44769632/102441
         from numpy.lib import recfunctions as rfn
         foo = np.array([(1,)],
                        dtype=[('key', int)])
-        bar = np.array([(1, np.array([1,2,3]))],
+        bar = np.array([(1, np.array([1, 2, 3]))],
                        dtype=[('key', int), ('value', 'uint16', 3)])
         res = join_by('key', foo, bar)
         assert_equal(res, bar.view(ma.MaskedArray))
@@ -720,7 +720,8 @@ class TestJoinBy(object):
         b_dtype = np.dtype([('pos', int, 3), ('g', '<f4')])
         b = np.array([([1, 1, 1], 3), ([3, 2, 1], 0.0)], dtype=b_dtype)
 
-        expected_dtype = np.dtype([('pos', int, 3), ('f', '<f4'), ('g', '<f4')])
+        expected_dtype = np.dtype(
+            [('pos', int, 3), ('f', '<f4'), ('g', '<f4')])
         expected = np.array([([1, 1, 1], np.pi, 3)], dtype=expected_dtype)
 
         res = join_by('pos', a, b)
@@ -809,6 +810,7 @@ class TestJoinBy2(object):
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
+
 class TestAppendFieldsObj(object):
     """
     Test append_fields with arrays containing objects
@@ -823,12 +825,13 @@ class TestAppendFieldsObj(object):
         "Test append_fields when the base array contains objects"
         obj = self.data['obj']
         x = np.array([(obj, 1.), (obj, 2.)],
-                      dtype=[('A', object), ('B', float)])
+                     dtype=[('A', object), ('B', float)])
         y = np.array([10, 20], dtype=int)
         test = append_fields(x, 'C', data=y, usemask=False)
         control = np.array([(obj, 1.0, 10), (obj, 2.0, 20)],
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
+
 
 if __name__ == '__main__':
     run_module_suite()

@@ -21,6 +21,7 @@ else:
 
 CACHE_FILE = 'build/rst-cache.pck'
 
+
 def main():
     p = optparse.OptionParser(usage=__doc__.strip())
     options, args = p.parse_args()
@@ -41,6 +42,7 @@ def main():
         f.close()
         save_cache(cache)
 
+
 def filter_comment(text):
     if text.startswith('NUMPY_API'):
         text = text[9:].strip()
@@ -49,6 +51,7 @@ def filter_comment(text):
 
     html = render_html(text)
     return html
+
 
 def process_match(m, cache=None):
     pre, rawtext = m.groups()
@@ -70,6 +73,7 @@ def process_match(m, cache=None):
     else:
         return pre + "/** " + text + " */"
 
+
 def load_cache():
     if os.path.exists(CACHE_FILE):
         f = open(CACHE_FILE, 'rb')
@@ -83,6 +87,7 @@ def load_cache():
         cache = {}
     return cache
 
+
 def save_cache(cache):
     f = open(CACHE_FILE + '.new', 'wb')
     try:
@@ -90,6 +95,7 @@ def save_cache(cache):
     finally:
         f.close()
     os.rename(CACHE_FILE + '.new', CACHE_FILE)
+
 
 def render_html(text):
     import docutils.parsers.rst
@@ -101,16 +107,18 @@ def render_html(text):
     parts = docutils.core.publish_parts(
         text,
         writer=writer,
-        settings_overrides = dict(halt_level=5,
-                                  traceback=True,
-                                  default_reference_context='title-reference',
-                                  stylesheet_path='',
-                                  # security settings:
-                                  raw_enabled=0,
-                                  file_insertion_enabled=0,
-                                  _disable_config=1,
-                                  )
+        settings_overrides=dict(halt_level=5,
+                                traceback=True,
+                                default_reference_context='title-reference',
+                                stylesheet_path='',
+                                # security settings:
+                                raw_enabled=0,
+                                file_insertion_enabled=0,
+                                _disable_config=1,
+                                )
     )
     return parts['html_body'].encode('utf-8')
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()

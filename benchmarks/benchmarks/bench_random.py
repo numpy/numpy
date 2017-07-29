@@ -47,7 +47,7 @@ class Randint_dtype(Benchmark):
         'uint16': 2**15,
         'uint32': 2**31,
         'uint64': 2**63
-        }
+    }
 
     param_names = ['dtype']
     params = ['bool', 'uint8', 'uint16', 'uint32', 'uint64']
@@ -64,4 +64,3 @@ class Randint_dtype(Benchmark):
     def time_randint_slow(self, name):
         high = self.high[name]
         np.random.randint(0, high + 1, size=10**5, dtype=name)
-

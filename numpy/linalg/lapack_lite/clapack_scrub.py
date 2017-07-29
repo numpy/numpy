@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from __future__ import division, absolute_import, print_function
 
-import sys, os
+import sys
+import os
 from io import BytesIO
 import re
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
+
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
@@ -14,11 +16,13 @@ class MyScanner(Scanner):
     def begin(self, state_name):
         Scanner.begin(self, state_name)
 
+
 def sep_seq(sequence, sep):
     pat = Str(sequence[0])
     for s in sequence[1:]:
         pat += sep + Str(s)
     return pat
+
 
 def runScanner(data, scanner_class, lexicon=None):
     info = BytesIO(data)
@@ -37,11 +41,13 @@ def runScanner(data, scanner_class, lexicon=None):
             outfo.write(value)
     return outfo.getvalue(), scanner
 
+
 class LenSubsScanner(MyScanner):
     """Following clapack, we remove ftnlen arguments, which f2c puts after
     a char * argument to hold the length of the passed string. This is just
     a nuisance in C.
     """
+
     def __init__(self, info, name='<ftnlen>'):
         MyScanner.__init__(self, info, name)
         self.paren_count = 0
@@ -60,7 +66,7 @@ class LenSubsScanner(MyScanner):
 
     digits = Re('[0-9]+')
     iofun = Re(r'\([^;]*;')
-    decl = Re(r'\([^)]*\)[,;'+'\n]')
+    decl = Re(r'\([^)]*\)[,;' + '\n]')
     any = Re('[.]*')
     S = Re('[ \t\n]*')
     cS = Str(',') + S
@@ -80,16 +86,18 @@ class LenSubsScanner(MyScanner):
             (Str('('),   beginArgs),
             (AnyChar,    TEXT),
         ]),
-        (cS+Re(r'[1-9][0-9]*L'),                IGNORE),
-        (cS+Str('ftnlen')+Opt(S+len_),          IGNORE),
-        (cS+sep_seq(['(', 'ftnlen', ')'], S)+S+digits,      IGNORE),
-        (Bol+Str('ftnlen ')+len_+Str(';\n'),    IGNORE),
-        (cS+len_,                               TEXT),
+        (cS + Re(r'[1-9][0-9]*L'),                IGNORE),
+        (cS + Str('ftnlen') + Opt(S + len_),          IGNORE),
+        (cS + sep_seq(['(', 'ftnlen', ')'], S) + S + digits,      IGNORE),
+        (Bol + Str('ftnlen ') + len_ + Str(';\n'),    IGNORE),
+        (cS + len_,                               TEXT),
         (AnyChar,                               TEXT),
     ])
 
+
 def scrubFtnlen(source):
     return runScanner(source, LenSubsScanner)[0]
+
 
 def cleanSource(source):
     # remove whitespace at end of lines
@@ -99,6 +107,7 @@ def cleanSource(source):
     # collapse blanks of more than two in-a-row to two
     source = re.sub(r'\n\n\n\n+', r'\n\n\n', source)
     return source
+
 
 class LineQueue(object):
     def __init__(self):
@@ -123,6 +132,7 @@ class LineQueue(object):
         self.clear()
         return s
 
+
 class CommentQueue(LineQueue):
     def __init__(self):
         LineQueue.__init__(self)
@@ -146,13 +156,17 @@ class CommentQueue(LineQueue):
         self.clear()
 
 # This really seems to be about 4x longer than it needs to be
+
+
 def cleanComments(source):
     lines = LineQueue()
     comments = CommentQueue()
+
     def isCommentLine(line):
         return line.startswith('/*') and line.endswith('*/\n')
 
     blanks = LineQueue()
+
     def isBlank(line):
         return line.strip() == ''
 
@@ -163,6 +177,7 @@ def cleanComments(source):
         else:
             lines.add(line)
             return SourceLines
+
     def HaveCommentLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -174,6 +189,7 @@ def cleanComments(source):
             comments.flushTo(lines)
             lines.add(line)
             return SourceLines
+
     def HaveBlankLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -194,6 +210,7 @@ def cleanComments(source):
     comments.flushTo(lines)
     return lines.getValue()
 
+
 def removeHeader(source):
     lines = LineQueue()
 
@@ -204,11 +221,13 @@ def removeHeader(source):
         else:
             lines.add(line)
             return LookingForHeader
+
     def InHeader(line):
         if line.startswith('*/'):
             return OutOfHeader
         else:
             return InHeader
+
     def OutOfHeader(line):
         if line.startswith('#include "f2c.h"'):
             pass
@@ -220,6 +239,7 @@ def removeHeader(source):
     for line in BytesIO(source):
         state = state(line)
     return lines.getValue()
+
 
 def replaceDlamch(source):
     """Replace dlamch_ calls with appropriate macros"""
@@ -233,14 +253,15 @@ def replaceDlamch(source):
 
 # do it
 
+
 def scrubSource(source, nsteps=None, verbose=False):
     steps = [
-             ('scrubbing ftnlen', scrubFtnlen),
-             ('remove header', removeHeader),
-             ('clean source', cleanSource),
-             ('clean comments', cleanComments),
-             ('replace dlamch_() calls', replaceDlamch),
-            ]
+        ('scrubbing ftnlen', scrubFtnlen),
+        ('remove header', removeHeader),
+        ('clean source', cleanSource),
+        ('clean comments', cleanComments),
+        ('replace dlamch_() calls', replaceDlamch),
+    ]
 
     if nsteps is not None:
         steps = steps[:nsteps]
@@ -251,6 +272,7 @@ def scrubSource(source, nsteps=None, verbose=False):
         source = step(source)
 
     return source
+
 
 if __name__ == '__main__':
     filename = sys.argv[1]

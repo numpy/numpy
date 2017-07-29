@@ -57,6 +57,7 @@ if PY3:
     text_type = str
     string_types = str,
     bytes_type = bytes
+
     def make_method(func, instance, type):
         if instance is None:
             return func
@@ -67,10 +68,12 @@ else:
     text_type = unicode
     bytes_type = str
     string_types = basestring,
+
     def make_method(func, instance, type):
         return MethodType(func, instance, type)
 
 _param = namedtuple("param", "args kwargs")
+
 
 class param(_param):
     """ Represents a single parameter to a test case.
@@ -94,7 +97,7 @@ class param(_param):
                 pass
         """
 
-    def __new__(cls, *args , **kwargs):
+    def __new__(cls, *args, **kwargs):
         return _param.__new__(cls, args, kwargs)
 
     @classmethod
@@ -132,11 +135,11 @@ class param(_param):
                 raise
             raise TypeError(
                 "Parameters must be tuples, but %r is not (hint: use '(%r, )')"
-                %(args, args),
+                % (args, args),
             )
 
     def __repr__(self):
-        return "param(*%r, **%r)" %self
+        return "param(*%r, **%r)" % self
 
 
 class QuietOrderedDict(MaybeOrderedDict):
@@ -190,7 +193,7 @@ def parameterized_argument_value_pairs(func, p):
         in zip(named_args, argspec.defaults or [])
     ])
 
-    seen_arg_names = set([ n for (n, _) in result ])
+    seen_arg_names = set([n for (n, _) in result])
     keywords = QuietOrderedDict(sorted([
         (name, p.kwargs[name])
         for name in p.kwargs
@@ -198,12 +201,13 @@ def parameterized_argument_value_pairs(func, p):
     ]))
 
     if varargs:
-        result.append(("*%s" %(argspec.varargs, ), tuple(varargs)))
+        result.append(("*%s" % (argspec.varargs, ), tuple(varargs)))
 
     if keywords:
-        result.append(("**%s" %(argspec.keywords, ), keywords))
+        result.append(("**%s" % (argspec.keywords, ), keywords))
 
     return result
+
 
 def short_repr(x, n=64):
     """ A shortened repr of ``x`` which is guaranteed to be ``unicode``::
@@ -221,8 +225,9 @@ def short_repr(x, n=64):
         except UnicodeDecodeError:
             x_repr = text_type(x_repr, "latin1")
     if len(x_repr) > n:
-        x_repr = x_repr[:n//2] + "..." + x_repr[len(x_repr) - n//2:]
+        x_repr = x_repr[:n // 2] + "..." + x_repr[len(x_repr) - n // 2:]
     return x_repr
+
 
 def default_doc_func(func, num, p):
     if func.__doc__ is None:
@@ -231,7 +236,7 @@ def default_doc_func(func, num, p):
     all_args_with_values = parameterized_argument_value_pairs(func, p)
 
     # Assumes that the function passed is a bound method.
-    descs = ["%s=%s" %(n, short_repr(v)) for n, v in all_args_with_values]
+    descs = ["%s=%s" % (n, short_repr(v)) for n, v in all_args_with_values]
 
     # The documentation might be a multiline string, so split it
     # and just work with the first string, ignoring the period
@@ -241,12 +246,13 @@ def default_doc_func(func, num, p):
     if first.endswith("."):
         suffix = "."
         first = first[:-1]
-    args = "%s[with %s]" %(len(first) and " " or "", ", ".join(descs))
+    args = "%s[with %s]" % (len(first) and " " or "", ", ".join(descs))
     return "".join([first.rstrip(), args, suffix, nl, rest])
+
 
 def default_name_func(func, num, p):
     base_name = func.__name__
-    name_suffix = "_%s" %(num, )
+    name_suffix = "_%s" % (num, )
     if len(p.args) > 0 and isinstance(p.args[0], string_types):
         name_suffix += "_" + parameterized.to_safe_name(p.args[0])
     return base_name + name_suffix
@@ -259,14 +265,16 @@ _test_runner_aliases = {
     "_pytest": "pytest",
 }
 
+
 def set_test_runner(name):
     global _test_runner_override
     if name not in _test_runners:
         raise TypeError(
             "Invalid test runner: %r (must be one of: %s)"
-            %(name, ", ".join(_test_runners)),
+            % (name, ", ".join(_test_runners)),
         )
     _test_runner_override = name
+
 
 def detect_runner():
     """ Guess which test runner we're using by traversing the stack and looking
@@ -292,6 +300,7 @@ def detect_runner():
         else:
             _test_runner_guess = None
     return _test_runner_guess
+
 
 class parameterized(object):
     """ Parameterize a test case::
@@ -332,12 +341,13 @@ class parameterized(object):
                         "class, or '@parameterized.expand' "
                         "(see http://stackoverflow.com/q/54867/71522 for more "
                         "information on old-style classes)."
-                    ) %(test_self, ))
+                    ) % (test_self, ))
 
             original_doc = wrapper.__doc__
             for num, args in enumerate(wrapper.parameterized_input):
                 p = param.from_decorator(args)
-                unbound_func, nose_tuple = self.param_as_nose_tuple(test_self, test_func, num, p)
+                unbound_func, nose_tuple = self.param_as_nose_tuple(
+                    test_self, test_func, num, p)
                 try:
                     wrapper.__doc__ = nose_tuple[0].__doc__
                     # Nose uses `getattr(instance, test_func.__name__)` to get
@@ -354,7 +364,8 @@ class parameterized(object):
                     wrapper.__doc__ = original_doc
         wrapper.parameterized_input = self.get_input()
         wrapper.parameterized_func = test_func
-        test_func.__name__ = "_parameterized_original_%s" %(test_func.__name__, )
+        test_func.__name__ = "_parameterized_original_%s" % (
+            test_func.__name__, )
         return wrapper
 
     def param_as_nose_tuple(self, test_self, func, num, p):
@@ -416,7 +427,7 @@ class parameterized(object):
         #    https://github.com/wolever/nose-parameterized/pull/31)
         if not isinstance(input_values, list):
             input_values = list(input_values)
-        return [ param.from_decorator(p) for p in input_values ]
+        return [param.from_decorator(p) for p in input_values]
 
     @classmethod
     def expand(cls, input, name_func=None, doc_func=None, **legacy):

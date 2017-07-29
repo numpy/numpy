@@ -12,15 +12,19 @@ NumPy includes several constants:
 #
 from __future__ import division, absolute_import, print_function
 
-import textwrap, re
+import textwrap
+import re
 
 # Maintain same format as in numpy.add_newdocs
 constants = []
+
+
 def add_newdoc(module, name, doc):
     constants.append((name, doc))
 
+
 add_newdoc('numpy', 'Inf',
-    """
+           """
     IEEE 754 floating point representation of (positive) infinity.
 
     Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
@@ -33,7 +37,7 @@ add_newdoc('numpy', 'Inf',
     """)
 
 add_newdoc('numpy', 'Infinity',
-    """
+           """
     IEEE 754 floating point representation of (positive) infinity.
 
     Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
@@ -46,7 +50,7 @@ add_newdoc('numpy', 'Infinity',
     """)
 
 add_newdoc('numpy', 'NAN',
-    """
+           """
     IEEE 754 floating point representation of Not a Number (NaN).
 
     `NaN` and `NAN` are equivalent definitions of `nan`. Please use
@@ -59,7 +63,7 @@ add_newdoc('numpy', 'NAN',
     """)
 
 add_newdoc('numpy', 'NINF',
-    """
+           """
     IEEE 754 floating point representation of negative infinity.
 
     Returns
@@ -97,7 +101,7 @@ add_newdoc('numpy', 'NINF',
     """)
 
 add_newdoc('numpy', 'NZERO',
-    """
+           """
     IEEE 754 floating point representation of negative zero.
 
     Returns
@@ -142,7 +146,7 @@ add_newdoc('numpy', 'NZERO',
     """)
 
 add_newdoc('numpy', 'NaN',
-    """
+           """
     IEEE 754 floating point representation of Not a Number (NaN).
 
     `NaN` and `NAN` are equivalent definitions of `nan`. Please use
@@ -155,7 +159,7 @@ add_newdoc('numpy', 'NaN',
     """)
 
 add_newdoc('numpy', 'PINF',
-    """
+           """
     IEEE 754 floating point representation of (positive) infinity.
 
     Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
@@ -168,7 +172,7 @@ add_newdoc('numpy', 'PINF',
     """)
 
 add_newdoc('numpy', 'PZERO',
-    """
+           """
     IEEE 754 floating point representation of positive zero.
 
     Returns
@@ -213,7 +217,7 @@ add_newdoc('numpy', 'PZERO',
     """)
 
 add_newdoc('numpy', 'e',
-    """
+           """
     Euler's constant, base of natural logarithms, Napier's constant.
 
     ``e = 2.71828182845904523536028747135266249775724709369995...``
@@ -230,7 +234,7 @@ add_newdoc('numpy', 'e',
     """)
 
 add_newdoc('numpy', 'inf',
-    """
+           """
     IEEE 754 floating point representation of (positive) infinity.
 
     Returns
@@ -270,7 +274,7 @@ add_newdoc('numpy', 'inf',
     """)
 
 add_newdoc('numpy', 'infty',
-    """
+           """
     IEEE 754 floating point representation of (positive) infinity.
 
     Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
@@ -283,7 +287,7 @@ add_newdoc('numpy', 'infty',
     """)
 
 add_newdoc('numpy', 'nan',
-    """
+           """
     IEEE 754 floating point representation of Not a Number (NaN).
 
     Returns
@@ -315,7 +319,7 @@ add_newdoc('numpy', 'nan',
     """)
 
 add_newdoc('numpy', 'newaxis',
-    """
+           """
     A convenient alias for None, useful for indexing arrays.
 
     See Also

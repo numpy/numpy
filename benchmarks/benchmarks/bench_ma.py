@@ -25,17 +25,18 @@ class Indexing(Benchmark):
     params = [[True, False],
               [1, 2],
               [10, 100, 1000]]
+
     def setup(self, masked, ndim, size):
         x = np.arange(size**ndim).reshape(ndim * (size,))
 
         if masked:
-            self.m = np.ma.array(x, mask=x%2 == 0)
+            self.m = np.ma.array(x, mask=x % 2 == 0)
         else:
             self.m = np.ma.array(x)
 
-        self.idx_scalar = (size//2,) * ndim
-        self.idx_0d = (size//2,) * ndim + (Ellipsis,)
-        self.idx_1d = (size//2,) * (ndim - 1)
+        self.idx_scalar = (size // 2,) * ndim
+        self.idx_0d = (size // 2,) * ndim + (Ellipsis,)
+        self.idx_1d = (size // 2,) * (ndim - 1)
 
     def time_scalar(self, masked, ndim, size):
         self.m[self.idx_scalar]
@@ -59,8 +60,10 @@ class UFunc(Benchmark):
         self.a_scalar = np.ma.masked if a_masked else 5
         self.b_scalar = np.ma.masked if b_masked else 3
 
-        self.a_1d = np.ma.array(x, mask=x%2 == 0 if a_masked else np.ma.nomask)
-        self.b_1d = np.ma.array(x, mask=x%3 == 0 if b_masked else np.ma.nomask)
+        self.a_1d = np.ma.array(x, mask=x %
+                                2 == 0 if a_masked else np.ma.nomask)
+        self.b_1d = np.ma.array(x, mask=x %
+                                3 == 0 if b_masked else np.ma.nomask)
 
         self.a_2d = self.a_1d.reshape(1, -1)
         self.b_2d = self.a_1d.reshape(-1, 1)

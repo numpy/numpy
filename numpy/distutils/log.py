@@ -8,13 +8,13 @@ from distutils.log import _global_log
 
 if sys.version_info[0] < 3:
     from .misc_util import (red_text, default_text, cyan_text, green_text,
-            is_sequence, is_string)
+                            is_sequence, is_string)
 else:
     from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
-            green_text, is_sequence, is_string)
+                                           green_text, is_sequence, is_string)
 
 
-def _fix_args(args,flag=1):
+def _fix_args(args, flag=1):
     if is_string(args):
         return args.replace('%', '%%')
     if flag and is_sequence(args):
@@ -53,6 +53,7 @@ _global_log.__class__ = Log
 
 good = _global_log.good
 
+
 def set_threshold(level, force=False):
     prev_level = _global_log.threshold
     if prev_level > DEBUG or force:
@@ -61,10 +62,10 @@ def set_threshold(level, force=False):
         _global_log.threshold = level
         if level <= DEBUG:
             info('set_threshold: setting threshold to DEBUG level,'
-                    ' it can be changed only with force argument')
+                 ' it can be changed only with force argument')
     else:
         info('set_threshold: not changing threshold from DEBUG level'
-                ' %s to %s' % (prev_level, level))
+             ' %s to %s' % (prev_level, level))
     return prev_level
 
 
@@ -78,15 +79,15 @@ def set_verbosity(v, force=False):
         set_threshold(INFO, force)
     elif v >= 2:
         set_threshold(DEBUG, force)
-    return {FATAL:-2,ERROR:-1,WARN:0,INFO:1,DEBUG:2}.get(prev_level, 1)
+    return {FATAL: -2, ERROR: -1, WARN: 0, INFO: 1, DEBUG: 2}.get(prev_level, 1)
 
 
 _global_color_map = {
-    DEBUG:cyan_text,
-    INFO:default_text,
-    WARN:red_text,
-    ERROR:red_text,
-    FATAL:red_text
+    DEBUG: cyan_text,
+    INFO: default_text,
+    WARN: red_text,
+    ERROR: red_text,
+    FATAL: red_text
 }
 
 # don't use INFO,.. flags in set_verbosity, these flags are for set_threshold.

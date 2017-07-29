@@ -4,7 +4,7 @@ import os
 import genapi
 
 from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+    TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
 import numpy_api
 
@@ -155,6 +155,7 @@ NumPy C-API
 ===========
 """
 
+
 def generate_api(output_dir, force=False):
     basename = 'multiarray_api'
 
@@ -171,6 +172,7 @@ def generate_api(output_dir, force=False):
         do_generate_api(targets, sources)
 
     return targets
+
 
 def do_generate_api(targets, sources):
     header_file = targets[0]
@@ -193,7 +195,7 @@ def do_generate_api(targets, sources):
     genapi.check_api_dict(multiarray_api_index)
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
-                                              multiarray_funcs)
+                                             multiarray_funcs)
     ordered_funcs_api = genapi.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance
@@ -217,7 +219,8 @@ def do_generate_api(targets, sources):
 
     for name, val in types_api.items():
         index = val[0]
-        multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
+        multiarray_api_dict[name] = TypeApi(
+            name, index, 'PyTypeObject', api_name)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())

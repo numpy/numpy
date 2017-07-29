@@ -181,12 +181,11 @@ else:
     from .core import round, abs, max, min
 
     __all__.extend(['__version__', 'pkgload', 'PackageLoader',
-               'show_config'])
+                    'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
-
 
     # Filter annoying Cython warnings that serve no good purpose.
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")

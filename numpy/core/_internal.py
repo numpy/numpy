@@ -22,6 +22,7 @@ if (sys.byteorder == 'little'):
 else:
     _nbo = b'>'
 
+
 def _makenames_list(adict, align):
     allfields = []
     fnames = list(adict.keys())
@@ -53,6 +54,8 @@ def _makenames_list(adict, align):
 # Called in PyArray_DescrConverter function when
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
+
+
 def _usefields(adict, align):
     try:
         names = adict[-1]
@@ -133,6 +136,8 @@ def _array_descr(descriptor):
 # pickles of ndarrays made with NumPy before release 1.0
 # so don't remove the name here, or you'll
 # break backward compatibility.
+
+
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
@@ -150,6 +155,7 @@ space_re = re.compile(br'\s+$')
 
 _convorder = {b'=': _nbo}
 
+
 def _commastring(astr):
     startindex = 0
     result = []
@@ -159,7 +165,7 @@ def _commastring(astr):
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
             raise ValueError('format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+                             (len(result) + 1, astr))
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -170,7 +176,7 @@ def _commastring(astr):
                 if not mo:
                     raise ValueError(
                         'format number %d of "%s" is not recognized' %
-                        (len(result)+1, astr))
+                        (len(result) + 1, astr))
                 startindex = mo.end()
 
         if order2 == b'':
@@ -197,15 +203,20 @@ def _commastring(astr):
 
     return result
 
+
 class dummy_ctype(object):
     def __init__(self, cls):
         self._cls = cls
+
     def __mul__(self, other):
         return self
+
     def __call__(self, *other):
         return self._cls(other)
+
     def __eq__(self, other):
         return self._cls == other._cls
+
 
 def _getintp_ctype():
     val = _getintp_ctype.cache
@@ -226,9 +237,12 @@ def _getintp_ctype():
             val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
+
+
 _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
+
 
 class _missing_ctypes(object):
     def cast(self, num, obj):
@@ -236,6 +250,7 @@ class _missing_ctypes(object):
 
     def c_void_p(self, num):
         return num
+
 
 class _ctypes(object):
     def __init__(self, array, ptr=None):
@@ -256,12 +271,12 @@ class _ctypes(object):
     def shape_as(self, obj):
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.shape)
+        return (obj * self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.strides)
+        return (obj * self._arr.ndim)(*self._arr.strides)
 
     def get_data(self):
         return self._data
@@ -304,6 +319,7 @@ def _newnames(datatype, order):
         return tuple(list(order) + nameslist)
     raise ValueError("unsupported order value: %s" % (order,))
 
+
 def _copy_fields(ary):
     """Return copy of structured array with padding between fields removed.
 
@@ -321,6 +337,7 @@ def _copy_fields(ary):
     copy_dtype = {'names': dt.names,
                   'formats': [dt.fields[name][0] for name in dt.names]}
     return array(ary, dtype=copy_dtype, copy=True)
+
 
 def _getfield_is_safe(oldtype, newtype, offset):
     """ Checks safety of getfield for object arrays.
@@ -354,6 +371,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
         raise TypeError("Cannot get/set field of an object array")
     return
 
+
 def _view_is_safe(oldtype, newtype):
     """ Checks safety of a view involving object arrays, for example when
     doing::
@@ -385,6 +403,7 @@ def _view_is_safe(oldtype, newtype):
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a NumPy dtype
+
 
 _pep3118_native_map = {
     '?': '?',
@@ -438,6 +457,7 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
+
 def _dtype_from_pep3118(spec):
 
     class Stream(object):
@@ -480,6 +500,7 @@ def _dtype_from_pep3118(spec):
 
     dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
     return dtype
+
 
 def __dtype_from_pep3118(stream, is_subdtype):
     field_spec = dict(
@@ -550,7 +571,8 @@ def __dtype_from_pep3118(stream, is_subdtype):
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
         else:
-            raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
+            raise ValueError(
+                "Unknown PEP 3118 data type specifier %r" % stream.s)
 
         #
         # Native alignment may require padding
@@ -621,6 +643,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
     # Finished
     return ret, common_alignment
 
+
 def _fix_names(field_spec):
     """ Replace names which are None with the next unused f%d name """
     names = field_spec['names']
@@ -635,6 +658,7 @@ def _fix_names(field_spec):
                 break
             j = j + 1
         names[i] = name
+
 
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""
@@ -658,11 +682,13 @@ def _add_trailing_padding(value, padding):
     field_spec['itemsize'] += padding
     return dtype(field_spec)
 
+
 def _prod(a):
     p = 1
     for x in a:
         p *= x
     return p
+
 
 def _gcd(a, b):
     """Calculate the greatest common divisor of a and b"""
@@ -670,15 +696,20 @@ def _gcd(a, b):
         a, b = b, a % b
     return a
 
+
 def _lcm(a, b):
     return a // _gcd(a, b) * b
 
 # Exception used in shares_memory()
+
+
 class TooHardError(RuntimeError):
     pass
 
+
 class AxisError(ValueError, IndexError):
     """ Axis supplied was invalid. """
+
     def __init__(self, axis, ndim=None, msg_prefix=None):
         # single-argument form just delegates to base class
         if ndim is None and msg_prefix is None:
@@ -717,7 +748,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join('x{}'.format(i+1) for i in range(ufunc.nin))
+        in_args = ', '.join('x{}'.format(i + 1) for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -727,8 +758,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
-            default=repr((None,)*ufunc.nout)
+                'out{}'.format(i + 1) for i in range(ufunc.nout)),
+            default=repr((None,) * ufunc.nout)
         )
 
     # keyword only args depend on whether this is a gufunc

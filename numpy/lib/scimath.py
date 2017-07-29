@@ -26,7 +26,7 @@ from numpy.lib.type_check import isreal
 __all__ = [
     'sqrt', 'log', 'log2', 'logn', 'log10', 'power', 'arccos', 'arcsin',
     'arctanh'
-    ]
+]
 
 
 _ln2 = nx.log(2.0)
@@ -94,6 +94,7 @@ def _tocomplex(arr):
     else:
         return arr.astype(nt.cdouble)
 
+
 def _fix_real_lt_zero(x):
     """Convert `x` to complex if it has real, negative components.
 
@@ -121,6 +122,7 @@ def _fix_real_lt_zero(x):
         x = _tocomplex(x)
     return x
 
+
 def _fix_int_lt_zero(x):
     """Convert `x` to double if it has real, negative components.
 
@@ -147,6 +149,7 @@ def _fix_int_lt_zero(x):
         x = x * 1.0
     return x
 
+
 def _fix_real_abs_gt_1(x):
     """Convert `x` to complex if it has real components x_i with abs(x_i)>1.
 
@@ -172,6 +175,7 @@ def _fix_real_abs_gt_1(x):
     if any(isreal(x) & (abs(x) > 1)):
         x = _tocomplex(x)
     return x
+
 
 def sqrt(x):
     """
@@ -214,6 +218,7 @@ def sqrt(x):
     """
     x = _fix_real_lt_zero(x)
     return nx.sqrt(x)
+
 
 def log(x):
     """
@@ -260,6 +265,7 @@ def log(x):
     """
     x = _fix_real_lt_zero(x)
     return nx.log(x)
+
 
 def log10(x):
     """
@@ -309,6 +315,7 @@ def log10(x):
     x = _fix_real_lt_zero(x)
     return nx.log10(x)
 
+
 def logn(n, x):
     """
     Take log base n of x.
@@ -341,7 +348,8 @@ def logn(n, x):
     """
     x = _fix_real_lt_zero(x)
     n = _fix_real_lt_zero(n)
-    return nx.log(x)/nx.log(n)
+    return nx.log(x) / nx.log(n)
+
 
 def log2(x):
     """
@@ -389,6 +397,7 @@ def log2(x):
     x = _fix_real_lt_zero(x)
     return nx.log2(x)
 
+
 def power(x, p):
     """
     Return x to the power p, (x**p).
@@ -431,6 +440,7 @@ def power(x, p):
     x = _fix_real_lt_zero(x)
     p = _fix_int_lt_zero(p)
     return nx.power(x, p)
+
 
 def arccos(x):
     """
@@ -475,6 +485,7 @@ def arccos(x):
     x = _fix_real_abs_gt_1(x)
     return nx.arccos(x)
 
+
 def arcsin(x):
     """
     Compute the inverse sine of x.
@@ -518,6 +529,7 @@ def arcsin(x):
     """
     x = _fix_real_abs_gt_1(x)
     return nx.arcsin(x)
+
 
 def arctanh(x):
     """

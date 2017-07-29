@@ -3,16 +3,19 @@ from __future__ import division, absolute_import, print_function
 from distutils.core import Command
 from numpy.distutils import log
 
-#XXX: Linker flags
+# XXX: Linker flags
+
 
 def show_fortran_compilers(_cache=[]):
     # Using cache to prevent infinite recursion
-    if _cache: return
+    if _cache:
+        return
     _cache.append(1)
     from numpy.distutils.fcompiler import show_fcompilers
     import distutils.core
     dist = distutils.core._setup_distribution
     show_fcompilers(dist)
+
 
 class config_fc(Command):
     """ Distutils command to hold user specified options
@@ -34,12 +37,12 @@ class config_fc(Command):
         ('debug', 'g', "compile with debugging information"),
         ('noopt', None, "compile without optimization"),
         ('noarch', None, "compile without arch-dependent optimization"),
-        ]
+    ]
 
     help_options = [
         ('help-fcompiler', None, "list available Fortran compilers",
          show_fortran_compilers),
-        ]
+    ]
 
     boolean_options = ['debug', 'noopt', 'noarch']
 
@@ -56,7 +59,8 @@ class config_fc(Command):
         self.noarch = None
 
     def finalize_options(self):
-        log.info('unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
+        log.info(
+            'unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')
@@ -67,20 +71,26 @@ class config_fc(Command):
             for c in cmd_list:
                 v = getattr(c, a)
                 if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
-            else: v1 = l[0]
-            if len(l)>1:
-                log.warn('  commands have different --%s options: %s'\
+                    if not isinstance(v, str):
+                        v = v.compiler_type
+                    if v not in l:
+                        l.append(v)
+            if not l:
+                v1 = None
+            else:
+                v1 = l[0]
+            if len(l) > 1:
+                log.warn('  commands have different --%s options: %s'
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None:
+                        setattr(c, a, v1)
 
     def run(self):
         # Do nothing.
         return
+
 
 class config_cc(Command):
     """ Distutils command to hold user specified options
@@ -91,13 +101,14 @@ class config_cc(Command):
 
     user_options = [
         ('compiler=', None, "specify C/C++ compiler type"),
-        ]
+    ]
 
     def initialize_options(self):
         self.compiler = None
 
     def finalize_options(self):
-        log.info('unifing config_cc, config, build_clib, build_ext, build commands --compiler options')
+        log.info(
+            'unifing config_cc, config, build_clib, build_ext, build commands --compiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')
@@ -108,16 +119,21 @@ class config_cc(Command):
             for c in cmd_list:
                 v = getattr(c, a)
                 if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
-            else: v1 = l[0]
-            if len(l)>1:
-                log.warn('  commands have different --%s options: %s'\
+                    if not isinstance(v, str):
+                        v = v.compiler_type
+                    if v not in l:
+                        l.append(v)
+            if not l:
+                v1 = None
+            else:
+                v1 = l[0]
+            if len(l) > 1:
+                log.warn('  commands have different --%s options: %s'
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None:
+                        setattr(c, a, v1)
         return
 
     def run(self):

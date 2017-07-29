@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, run_module_suite,
     assert_string_equal, assert_, tempdir, temppath,
-    )
+)
 import unittest
 
 
@@ -306,7 +306,7 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         self._assert_func(x, y, decimal=3)
         self._assert_func(x, y, decimal=4)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(x, y, decimal=5))
+                          lambda: self._assert_func(x, y, decimal=5))
 
     def test_nan(self):
         anan = np.array([np.nan])
@@ -314,21 +314,21 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
         ainf = np.array([np.inf])
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, aone))
+                          lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, ainf))
+                          lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(ainf, anan))
+                          lambda: self._assert_func(ainf, anan))
 
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
         a[0, 0] = np.inf
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(a, b))
+                          lambda: self._assert_func(a, b))
         b[0, 0] = -np.inf
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(a, b))
+                          lambda: self._assert_func(a, b))
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -393,19 +393,19 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
     def test_nan_item(self):
         self._assert_func(np.nan, np.nan)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(np.nan, 1))
+                          lambda: self._assert_func(np.nan, 1))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(np.nan, np.inf))
+                          lambda: self._assert_func(np.nan, np.inf))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(np.inf, np.nan))
+                          lambda: self._assert_func(np.inf, np.nan))
 
     def test_inf_item(self):
         self._assert_func(np.inf, np.inf)
         self._assert_func(-np.inf, -np.inf)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(np.inf, 1))
+                          lambda: self._assert_func(np.inf, 1))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(-np.inf, np.inf))
+                          lambda: self._assert_func(-np.inf, np.inf))
 
     def test_simple_item(self):
         self._test_not_equal(1, 2)
@@ -493,7 +493,7 @@ class TestApproxEqual(unittest.TestCase):
         self._assert_func(x, y, significant=5)
         self._assert_func(x, y, significant=6)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(x, y, significant=7))
+                          lambda: self._assert_func(x, y, significant=7))
 
     def test_simple_items(self):
         x = 1234.22
@@ -503,7 +503,7 @@ class TestApproxEqual(unittest.TestCase):
         self._assert_func(x, y, significant=5)
         self._assert_func(x, y, significant=6)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(x, y, significant=7))
+                          lambda: self._assert_func(x, y, significant=7))
 
     def test_nan_array(self):
         anan = np.array(np.nan)
@@ -511,11 +511,11 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, aone))
+                          lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, ainf))
+                          lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(ainf, anan))
+                          lambda: self._assert_func(ainf, anan))
 
     def test_nan_items(self):
         anan = np.array(np.nan)
@@ -523,11 +523,11 @@ class TestApproxEqual(unittest.TestCase):
         ainf = np.array(np.inf)
         self._assert_func(anan, anan)
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, aone))
+                          lambda: self._assert_func(anan, aone))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(anan, ainf))
+                          lambda: self._assert_func(anan, ainf))
         self.assertRaises(AssertionError,
-                lambda: self._assert_func(ainf, anan))
+                          lambda: self._assert_func(ainf, anan))
 
 
 class TestArrayAssertLess(unittest.TestCase):
@@ -567,7 +567,7 @@ class TestArrayAssertLess(unittest.TestCase):
 
     def test_rank3(self):
         x = np.ones(shape=(2, 2, 2))
-        y = np.ones(shape=(2, 2, 2))+1
+        y = np.ones(shape=(2, 2, 2)) + 1
 
         self._assert_func(x, y)
         self.assertRaises(AssertionError,
@@ -829,12 +829,12 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
 
         # Addition
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
+        y = x + x * eps * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
         # Subtraction
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
+        y = x - x * epsneg * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
     def test_float64_fail(self):
@@ -844,12 +844,12 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
 
@@ -860,11 +860,11 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
+        y = x + x * eps * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
+        y = x - x * epsneg * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
     def test_float32_fail(self):
@@ -874,12 +874,12 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
 
@@ -888,100 +888,100 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         x = np.linspace(-20, 20, 50, dtype=np.float64)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
+        y = x + x * eps * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
         # The test condition needs to be at least a factor of sqrt(2) smaller
         # because the real and imaginary parts both change
-        y = x + x*eps*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x + x * eps * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x - x * epsneg * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
     def test_complex128_fail(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float64)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, x + y*1j, nulp)
+                          xi, x + y * 1j, nulp)
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + x*1j, nulp)
+                          xi, y + x * 1j, nulp)
         # The test condition needs to be at least a factor of sqrt(2) smaller
         # because the real and imaginary parts both change
-        y = x + x*eps*nulp
+        y = x + x * eps * nulp
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + y*1j, nulp)
+                          xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, x + y*1j, nulp)
+                          xi, x + y * 1j, nulp)
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp
+                          xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + y*1j, nulp)
+                          xi, y + y * 1j, nulp)
 
     def test_complex64_pass(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float32)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x + x*eps*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x + x * eps * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x + x * eps * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x - x * epsneg * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
     def test_complex64_fail(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float32)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, x + y*1j, nulp)
+                          xi, x + y * 1j, nulp)
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + x*1j, nulp)
-        y = x + x*eps*nulp
+                          xi, y + x * 1j, nulp)
+        y = x + x * eps * nulp
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + y*1j, nulp)
+                          xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, x + y*1j, nulp)
+                          xi, x + y * 1j, nulp)
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp
+                          xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
-                          xi, y + y*1j, nulp)
+                          xi, y + y * 1j, nulp)
 
 
 class TestULP(unittest.TestCase):
@@ -995,14 +995,14 @@ class TestULP(unittest.TestCase):
         x = np.ones(10).astype(np.float32)
         x += 0.01 * np.random.randn(10).astype(np.float32)
         eps = np.finfo(np.float32).eps
-        assert_array_max_ulp(x, x+eps, maxulp=20)
+        assert_array_max_ulp(x, x + eps, maxulp=20)
 
     def test_double(self):
         # Generate 1 + small deviation, check that adding eps gives a few UNL
         x = np.ones(10).astype(np.float64)
         x += 0.01 * np.random.randn(10).astype(np.float64)
         eps = np.finfo(np.float64).eps
-        assert_array_max_ulp(x, x+eps, maxulp=200)
+        assert_array_max_ulp(x, x + eps, maxulp=200)
 
     def test_inf(self):
         for dt in [np.float32, np.float64]:
@@ -1024,20 +1024,20 @@ class TestULP(unittest.TestCase):
             zero = np.array([np.PZERO]).astype(dt)
             nzero = np.array([np.NZERO]).astype(dt)
             self.assertRaises(AssertionError,
-                                  lambda: assert_array_max_ulp(nan, inf,
-                                                               maxulp=maxulp))
+                              lambda: assert_array_max_ulp(nan, inf,
+                                                           maxulp=maxulp))
             self.assertRaises(AssertionError,
-                                  lambda: assert_array_max_ulp(nan, big,
-                                                               maxulp=maxulp))
+                              lambda: assert_array_max_ulp(nan, big,
+                                                           maxulp=maxulp))
             self.assertRaises(AssertionError,
-                                  lambda: assert_array_max_ulp(nan, tiny,
-                                                               maxulp=maxulp))
+                              lambda: assert_array_max_ulp(nan, tiny,
+                                                           maxulp=maxulp))
             self.assertRaises(AssertionError,
-                                  lambda: assert_array_max_ulp(nan, zero,
-                                                               maxulp=maxulp))
+                              lambda: assert_array_max_ulp(nan, zero,
+                                                           maxulp=maxulp))
             self.assertRaises(AssertionError,
-                                  lambda: assert_array_max_ulp(nan, nzero,
-                                                               maxulp=maxulp))
+                              lambda: assert_array_max_ulp(nan, nzero,
+                                                           maxulp=maxulp))
 
 
 class TestStringEqual(unittest.TestCase):

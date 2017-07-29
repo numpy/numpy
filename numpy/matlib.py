@@ -7,8 +7,9 @@ from numpy import *
 
 __version__ = np.__version__
 
-__all__ = np.__all__[:] # copy numpy namespace
+__all__ = np.__all__[:]  # copy numpy namespace
 __all__ += ['rand', 'randn', 'repmat']
+
 
 def empty(shape, dtype=None, order='C'):
     """Return a new matrix of given shape and type, without initializing entries.
@@ -47,6 +48,7 @@ def empty(shape, dtype=None, order='C'):
 
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
+
 
 def ones(shape, dtype=None, order='C'):
     """
@@ -93,6 +95,7 @@ def ones(shape, dtype=None, order='C'):
     a.fill(1)
     return a
 
+
 def zeros(shape, dtype=None, order='C'):
     """
     Return a matrix of given shape and type, filled with zeros.
@@ -137,7 +140,8 @@ def zeros(shape, dtype=None, order='C'):
     a.fill(0)
     return a
 
-def identity(n,dtype=None):
+
+def identity(n, dtype=None):
     """
     Returns the square identity matrix of given size.
 
@@ -168,12 +172,13 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0], dtype=dtype)
+    a = array([1] + n * [0], dtype=dtype)
     b = empty((n, n), dtype=dtype)
     b.flat = a
     return b
 
-def eye(n,M=None, k=0, dtype=float):
+
+def eye(n, M=None, k=0, dtype=float):
     """
     Return a matrix with ones on the diagonal and zeros elsewhere.
 
@@ -211,6 +216,7 @@ def eye(n,M=None, k=0, dtype=float):
 
     """
     return asmatrix(np.eye(n, M, k, dtype))
+
 
 def rand(*args):
     """
@@ -256,6 +262,7 @@ def rand(*args):
     if isinstance(args[0], tuple):
         args = args[0]
     return asmatrix(np.random.rand(*args))
+
 
 def randn(*args):
     """
@@ -306,6 +313,7 @@ def randn(*args):
     if isinstance(args[0], tuple):
         args = args[0]
     return asmatrix(np.random.randn(*args))
+
 
 def repmat(a, m, n):
     """

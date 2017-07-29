@@ -61,9 +61,10 @@ def get_rtol(dtype):
 
 # used to categorize tests
 all_tags = {
-  'square', 'nonsquare', 'hermitian',  # mutually exclusive
-  'generalized', 'size-0', 'strided' # optional additions
+    'square', 'nonsquare', 'hermitian',  # mutually exclusive
+    'generalized', 'size-0', 'strided'  # optional additions
 }
+
 
 class LinalgCase(object):
     def __init__(self, name, a, b, tags=set()):
@@ -85,6 +86,7 @@ class LinalgCase(object):
 
     def __repr__(self):
         return "<LinalgCase: %s>" % (self.name,)
+
 
 def apply_tag(tag, cases):
     """
@@ -270,11 +272,13 @@ def _make_generalized_cases():
 
     return new_cases
 
+
 CASES += _make_generalized_cases()
 
 #
 # Generate stride combination variations of the above
 #
+
 
 def _stride_comb_iter(x):
     """
@@ -323,6 +327,7 @@ def _stride_comb_iter(x):
             xi = np.lib.stride_tricks.as_strided(x, strides=s)
             yield xi, "stride_xxx_0_0"
 
+
 def _make_strided_cases():
     new_cases = []
     for case in CASES:
@@ -332,6 +337,7 @@ def _make_strided_cases():
                                       tags=case.tags | {'strided'})
                 new_cases.append(new_case)
     return new_cases
+
 
 CASES += _make_strided_cases()
 
@@ -363,34 +369,42 @@ def _check_cases(func, require=set(), exclude=set()):
 class LinalgSquareTestCase(object):
 
     def test_sq_cases(self):
-        _check_cases(self.do, require={'square'}, exclude={'generalized', 'size-0'})
+        _check_cases(self.do, require={'square'},
+                     exclude={'generalized', 'size-0'})
 
     def test_empty_sq_cases(self):
-        _check_cases(self.do, require={'square', 'size-0'}, exclude={'generalized'})
+        _check_cases(self.do, require={
+                     'square', 'size-0'}, exclude={'generalized'})
 
 
 class LinalgNonsquareTestCase(object):
 
     def test_nonsq_cases(self):
-        _check_cases(self.do, require={'nonsquare'}, exclude={'generalized', 'size-0'})
+        _check_cases(self.do, require={'nonsquare'}, exclude={
+                     'generalized', 'size-0'})
 
     def test_empty_nonsq_cases(self):
-        _check_cases(self.do, require={'nonsquare', 'size-0'}, exclude={'generalized'})
+        _check_cases(self.do, require={
+                     'nonsquare', 'size-0'}, exclude={'generalized'})
+
 
 class HermitianTestCase(object):
 
     def test_herm_cases(self):
-        _check_cases(self.do, require={'hermitian'}, exclude={'generalized', 'size-0'})
+        _check_cases(self.do, require={'hermitian'}, exclude={
+                     'generalized', 'size-0'})
 
     def test_empty_herm_cases(self):
-        _check_cases(self.do, require={'hermitian', 'size-0'}, exclude={'generalized'})
+        _check_cases(self.do, require={
+                     'hermitian', 'size-0'}, exclude={'generalized'})
 
 
 class LinalgGeneralizedSquareTestCase(object):
 
     @dec.slow
     def test_generalized_sq_cases(self):
-        _check_cases(self.do, require={'generalized', 'square'}, exclude={'size-0'})
+        _check_cases(self.do, require={
+                     'generalized', 'square'}, exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_sq_cases(self):
@@ -401,7 +415,8 @@ class LinalgGeneralizedNonsquareTestCase(object):
 
     @dec.slow
     def test_generalized_nonsq_cases(self):
-        _check_cases(self.do, require={'generalized', 'nonsquare'}, exclude={'size-0'})
+        _check_cases(self.do, require={
+                     'generalized', 'nonsquare'}, exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_nonsq_cases(self):
@@ -413,14 +428,14 @@ class HermitianGeneralizedTestCase(object):
     @dec.slow
     def test_generalized_herm_cases(self):
         _check_cases(self.do,
-            require={'generalized', 'hermitian'},
-            exclude={'size-0'})
+                     require={'generalized', 'hermitian'},
+                     exclude={'size-0'})
 
     @dec.slow
     def test_generalized_empty_herm_cases(self):
         _check_cases(self.do,
-            require={'generalized', 'hermitian', 'size-0'},
-            exclude={'none'})
+                     require={'generalized', 'hermitian', 'size-0'},
+                     exclude={'none'})
 
 
 def dot_generalized(a, b):
@@ -591,7 +606,8 @@ class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     def do(self, a, b, tags):
         evalues, evectors = linalg.eig(a)
         assert_allclose(dot_generalized(a, evectors),
-                        np.asarray(evectors) * np.asarray(evalues)[..., None, :],
+                        np.asarray(evectors) *
+                        np.asarray(evalues)[..., None, :],
                         rtol=get_rtol(evalues.dtype))
         assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
@@ -717,7 +733,8 @@ class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
-        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
+        assert_almost_equal(dot(a, a_ginv).dot(
+            a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
@@ -823,7 +840,7 @@ class TestMatrixPower(object):
 
     large = identity(10)
     t = large[1, :].copy()
-    large[1, :] = large[0,:]
+    large[1, :] = large[0, :]
     large[0, :] = t
 
     def test_large_power(self):
@@ -1068,11 +1085,13 @@ class _TestNorm(object):
 
             an = norm(at, 2)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
+            assert_almost_equal(an, an.dtype.type(2.0) **
+                                an.dtype.type(1.0 / 2.0))
 
             an = norm(at, 4)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
+            assert_almost_equal(an, an.dtype.type(2.0) **
+                                an.dtype.type(1.0 / 4.0))
 
             an = norm(at, np.inf)
             assert_(issubclass(an.dtype.type, np.floating))
@@ -1109,7 +1128,7 @@ class _TestNorm(object):
 
             an = norm(at, 2)
             assert_(issubclass(an.dtype.type, np.floating))
-            assert_almost_equal(an, 3.0**(1.0/2.0))
+            assert_almost_equal(an, 3.0**(1.0 / 2.0))
 
             an = norm(at, -2)
             assert_(issubclass(an.dtype.type, np.floating))
@@ -1357,7 +1376,7 @@ class TestMatrixRank(object):
         # accepts array-like
         yield assert_equal, matrix_rank([1]), 1
         # greater than 2 dimensions treated as stacked matrices
-        ms = np.array([I, np.eye(4), np.zeros((4,4))])
+        ms = np.array([I, np.eye(4), np.zeros((4, 4))])
         yield assert_equal, matrix_rank(ms), np.array([3, 4, 0])
         # works on scalar
         yield assert_equal, matrix_rank(1), 1

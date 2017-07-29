@@ -240,6 +240,7 @@ def outmess(line, flag=1):
             sys.stdout.write(filepositiontext)
         sys.stdout.write(line)
 
+
 re._MAXCACHE = 50
 defaultimplicitrules = {}
 for c in "abcdefghopqrstuvwxyz$_":
@@ -295,6 +296,7 @@ def getextension(name):
     if '/' in name[i:]:
         return ''
     return name[i + 1:]
+
 
 is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-', re.I).search
@@ -543,6 +545,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77,\
             beginpattern, quiet, verbose, dolowercase = saveglobals
 
+
 # Crack line
 beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
     r'\s*(?P<this>(\b(%s)\b))' + \
@@ -626,6 +629,7 @@ def _simplifyargs(argsline):
             n = n.replace(r, '_')
         a.append(n)
     return ','.join(a)
+
 
 crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+[\w]*\b)\s*[=].*', re.I)
 
@@ -856,6 +860,7 @@ def appenddecl(decl, decl2, force=1):
             raise Exception('appenddecl: Unknown variable definition key:' +
                             str(k))
     return decl
+
 
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|[*][\d*]+|[*]\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
@@ -1471,6 +1476,8 @@ def cracktypespec0(typespec, ll):
         attr = ll[:i].strip()
         ll = ll[i + 2:]
     return typespec, selector, attr, ll
+
+
 #####
 namepattern = re.compile(r'\s*(?P<name>\b[\w]+\b)\s*(?P<after>.*)\s*\Z', re.I)
 kindselector = re.compile(
@@ -2100,6 +2107,7 @@ def myeval(e, g=None, l=None):
         return r
     raise ValueError('r=%r' % (r))
 
+
 getlincoef_re_1 = re.compile(r'\A\b\w+\b\Z', re.I)
 
 
@@ -2153,6 +2161,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                 pass
             break
     return None, None, None
+
 
 _varname_match = re.compile(r'\A[a-z]\w*\Z').match
 
@@ -2306,6 +2315,7 @@ def getarrlen(dl, args, star='*'):
                 d = '%s%s+%s' % (c2, c1, b)
     return d, None, None
 
+
 word_pattern = re.compile(r'\b[a-z][\w$]*\b', re.I)
 
 
@@ -2446,13 +2456,14 @@ def get_parameters(vars, global_params={}):
                     # Again, this will be true if even a single specifier
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
-                    
+
             if not is_replaced:
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    if len(v_) > 1: 
-                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+                    if len(v_) > 1:
+                        v = ''.join(
+                            v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
             # There is missing code for extracting a complex number,
@@ -2496,6 +2507,7 @@ def _eval_length(length, params):
     if length in ['(:)', '(*)', '*']:
         return '(*)'
     return _eval_scalar(length, params)
+
 
 _is_kind_number = re.compile(r'\d+_').match
 
@@ -2650,7 +2662,8 @@ def analyzevars(block):
                     if d in params:
                         d = str(params[d])
                     for p in list(params.keys()):
-                        re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
+                        re_1 = re.compile(
+                            r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
                         while m:
                             d = m.group('before') + \
@@ -2862,6 +2875,7 @@ def analyzevars(block):
                 del vars[n]
     return vars
 
+
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
 
 
@@ -2927,6 +2941,7 @@ def analyzeargs(block):
     if 'result' in block and block['result'] not in block['vars']:
         block['vars'][block['result']] = {}
     return block
+
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z', re.I)
 determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>[\w]+)|)\Z', re.I)
@@ -3265,6 +3280,7 @@ def crack2fortran(block):
 """ % (f2py_version)
     return header + pyf + footer
 
+
 if __name__ == "__main__":
     files = []
     funcs = []
@@ -3334,7 +3350,7 @@ if __name__ == "__main__":
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)
-        with open(pyffilename, 'w') as f: 
+        with open(pyffilename, 'w') as f:
             f.write(pyf)
     if showblocklist:
         show(postlist)

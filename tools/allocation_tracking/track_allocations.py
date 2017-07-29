@@ -5,6 +5,7 @@ import gc
 import inspect
 from alloc_hook import NumpyAllocHook
 
+
 class AllocationTracker(object):
     def __init__(self, threshold=0):
         '''track numpy allocations of size threshold bytes or more.'''
@@ -112,7 +113,8 @@ class AllocationTracker(object):
         f.write('<HTML><HEAD><script src="sorttable.js"></script></HEAD><BODY>\n')
         f.write('<TABLE class="sortable" width=100%>\n')
         f.write("<TR>\n")
-        cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(',')
+        cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(
+            ',')
         for header in cols:
             f.write("  <TH>{0}</TH>".format(header))
         f.write("\n</TR>\n")
@@ -124,7 +126,8 @@ class AllocationTracker(object):
                     # special handling
                     try:
                         filename, line, module, code, index = val
-                        val = "{0}({1}): {2}".format(filename, line, code[index])
+                        val = "{0}({1}): {2}".format(
+                            filename, line, code[index])
                     except Exception:
                         # sometimes this info is not available (from eval()?)
                         val = str(val)

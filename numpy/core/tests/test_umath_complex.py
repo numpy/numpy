@@ -21,13 +21,15 @@ with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
 # TODO: replace with a check on whether platform-provided C99 funcs are used
-skip_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
+skip_complex_tests = (not sys.platform.startswith(
+    'linux') or functions_seem_flaky)
+
 
 def platform_skip(func):
     return dec.skipif(skip_complex_tests,
-        "Numpy is using complex functions (e.g. sqrt) provided by your"
-        "platform's C library. However, they do not seem to behave according"
-        "to C99 -- so C99 tests are skipped.")(func)
+                      "Numpy is using complex functions (e.g. sqrt) provided by your"
+                      "platform's C library. However, they do not seem to behave according"
+                      "to C99 -- so C99 tests are skipped.")(func)
 
 
 class TestCexp(object):
@@ -129,9 +131,10 @@ class TestCexp(object):
 
         yield check, f, np.nan, 0, np.nan, 0
 
+
 class TestClog(object):
     def test_simple(self):
-        x = np.array([1+0j, 1+2j])
+        x = np.array([1 + 0j, 1 + 2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
         for i in range(len(x)):
@@ -273,6 +276,7 @@ class TestClog(object):
             for i in range(len(xa)):
                 assert_almost_equal(np.log(xa[i].conj()), ya[i].conj())
 
+
 class TestCsqrt(object):
 
     def test_simple(self):
@@ -280,7 +284,7 @@ class TestCsqrt(object):
         yield check_complex_value, np.sqrt, 1, 0, 1, 0
 
         # sqrt(1i)
-        yield check_complex_value, np.sqrt, 0, 1, 0.5*np.sqrt(2), 0.5*np.sqrt(2), False
+        yield check_complex_value, np.sqrt, 0, 1, 0.5 * np.sqrt(2), 0.5 * np.sqrt(2), False
 
         # sqrt(-1)
         yield check_complex_value, np.sqrt, -1, 0, 0, 1
@@ -292,7 +296,7 @@ class TestCsqrt(object):
             return np.sqrt(np.conj(z))
         yield check_complex_value, f, 1, 1, ref.real, ref.imag, False
 
-    #def test_branch_cut(self):
+    # def test_branch_cut(self):
     #    _check_branch_cut(f, -1, 0, 1, -1)
 
     @platform_skip
@@ -331,7 +335,7 @@ class TestCsqrt(object):
         def _check_ninf_nan(dummy):
             msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(np.complex(-np.inf, np.nan)))
-            #Fixme: ugly workaround for isinf bug.
+            # Fixme: ugly workaround for isinf bug.
             with np.errstate(invalid='ignore'):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))
@@ -350,6 +354,7 @@ class TestCsqrt(object):
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
 
+
 class TestCpow(object):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
@@ -358,15 +363,15 @@ class TestCpow(object):
         np.seterr(**self.olderr)
 
     def test_simple(self):
-        x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
+        x = np.array([1 + 1j, 0 + 2j, 1 + 2j, np.inf, np.nan])
         y_r = x ** 2
         y = np.power(x, 2)
         for i in range(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
     def test_scalar(self):
-        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
-        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5 + 1.5j, -0.5 + 1.5j,      2,      3])
         lx = list(range(len(x)))
         # Compute the values for complex type in python
         p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
@@ -378,8 +383,8 @@ class TestCpow(object):
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
     def test_array(self):
-        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
-        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5 + 1.5j, -0.5 + 1.5j,      2,      3])
         lx = list(range(len(x)))
         # Compute the values for complex type in python
         p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
@@ -390,6 +395,7 @@ class TestCpow(object):
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
+
 class TestCabs(object):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
@@ -398,7 +404,7 @@ class TestCabs(object):
         np.seterr(**self.olderr)
 
     def test_simple(self):
-        x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
+        x = np.array([1 + 1j, 0 + 2j, 1 + 2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
         for i in range(len(x)):
@@ -406,7 +412,7 @@ class TestCabs(object):
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
-        x = np.array([1+0j], dtype=np.complex)
+        x = np.array([1 + 0j], dtype=np.complex)
         assert_array_equal(np.abs(x), np.real(x))
 
         x = np.array([complex(1, np.NZERO)], dtype=np.complex)
@@ -452,16 +458,17 @@ class TestCabs(object):
             ref = g(x[i], y[i])
             yield check_real_value, f, x[i], y[i], ref
 
+
 class TestCarg(object):
     def test_simple(self):
         check_real_value(ncu._arg, 1, 0, 0, False)
-        check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)
+        check_real_value(ncu._arg, 0, 1, 0.5 * np.pi, False)
 
-        check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
+        check_real_value(ncu._arg, 1, 1, 0.25 * np.pi, False)
         check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
 
     @dec.knownfailureif(True,
-        "Complex arithmetic with signed zero is buggy on most implementation")
+                        "Complex arithmetic with signed zero is buggy on most implementation")
     def test_zero(self):
         # carg(-0 +- 0i) returns +- pi
         yield check_real_value, ncu._arg, np.NZERO, np.PZERO,  np.pi, False
@@ -487,7 +494,7 @@ class TestCarg(object):
         yield check_real_value, ncu._arg, np.PZERO, -1, 0.5 * np.pi, False
         yield check_real_value, ncu._arg, np.NZERO, -1, -0.5 * np.pi, False
 
-    #def test_branch_cuts(self):
+    # def test_branch_cuts(self):
     #    _check_branch_cut(ncu._arg, -1, 1j, -1, 1)
 
     def test_special_values(self):
@@ -518,12 +525,14 @@ class TestCarg(object):
         yield check_real_value, ncu._arg, np.nan, np.inf, np.nan, False
         yield check_real_value, ncu._arg, np.inf, np.nan, np.nan, False
 
+
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
     if exact:
         assert_equal(f(z1), x)
     else:
         assert_almost_equal(f(z1), x)
+
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
     z1 = np.array([complex(x1, y1)])
@@ -533,6 +542,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
             assert_equal(f(z1), z2)
         else:
             assert_almost_equal(f(z1), z2)
+
 
 if __name__ == "__main__":
     run_module_suite()

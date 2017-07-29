@@ -102,6 +102,7 @@ with warnings.catch_warnings():
 ranf = random = sample = random_sample
 __all__.extend(['ranf', 'random', 'sample'])
 
+
 def __RandomState_ctor():
     """Return a RandomState instance.
 
@@ -116,6 +117,7 @@ def __RandomState_ctor():
 
     """
     return RandomState(seed=0)
+
 
 from numpy.testing import _numpy_tester
 test = _numpy_tester().test

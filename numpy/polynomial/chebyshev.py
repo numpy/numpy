@@ -111,6 +111,7 @@ chebtrim = pu.trimcoef
 # functions and do minimal error checking.
 #
 
+
 def _cseries_to_zseries(c):
     """Covert Chebyshev series to z-series.
 
@@ -131,8 +132,8 @@ def _cseries_to_zseries(c):
 
     """
     n = c.size
-    zs = np.zeros(2*n-1, dtype=c.dtype)
-    zs[n-1:] = c/2
+    zs = np.zeros(2 * n - 1, dtype=c.dtype)
+    zs[n - 1:] = c / 2
     return zs + zs[::-1]
 
 
@@ -155,8 +156,8 @@ def _zseries_to_cseries(zs):
         Chebyshev coefficients, ordered from  low to high.
 
     """
-    n = (zs.size + 1)//2
-    c = zs[n-1:].copy()
+    n = (zs.size + 1) // 2
+    c = zs[n - 1:].copy()
     c[1:n] *= 2
     return c
 
@@ -227,9 +228,9 @@ def _zseries_div(z1, z2):
     len2 = len(z2)
     if len2 == 1:
         z1 /= z2
-        return z1, z1[:1]*0
+        return z1, z1[:1] * 0
     elif len1 < len2:
-        return z1[:1]*0, z1
+        return z1[:1] * 0, z1
     else:
         dlen = len1 - len2
         scl = z2[0]
@@ -241,17 +242,17 @@ def _zseries_div(z1, z2):
             r = z1[i]
             quo[i] = z1[i]
             quo[dlen - i] = r
-            tmp = r*z2
-            z1[i:i+len2] -= tmp
-            z1[j:j+len2] -= tmp
+            tmp = r * z2
+            z1[i:i + len2] -= tmp
+            z1[j:j + len2] -= tmp
             i += 1
             j -= 1
         r = z1[i]
         quo[i] = r
-        tmp = r*z2
-        z1[i:i+len2] -= tmp
+        tmp = r * z2
+        z1[i:i + len2] -= tmp
         quo /= scl
-        rem = z1[i+1:i-1+len2].copy()
+        rem = z1[i + 1:i - 1 + len2].copy()
         return quo, rem
 
 
@@ -280,9 +281,9 @@ def _zseries_der(zs):
     division.
 
     """
-    n = len(zs)//2
+    n = len(zs) // 2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
-    zs *= np.arange(-n, n+1)*2
+    zs *= np.arange(-n, n + 1) * 2
     d, r = _zseries_div(zs, ns)
     return d
 
@@ -311,12 +312,12 @@ def _zseries_int(zs):
     dividing the resulting zs by two.
 
     """
-    n = 1 + len(zs)//2
+    n = 1 + len(zs) // 2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
     zs = _zseries_mul(zs, ns)
-    div = np.arange(-n, n+1)*2
+    div = np.arange(-n, n + 1) * 2
     zs[:n] /= div[:n]
-    zs[n+1:] /= div[n+1:]
+    zs[n + 1:] /= div[n + 1:]
     zs[n] = 0
     return zs
 
@@ -432,7 +433,7 @@ def cheb2poly(c):
         for i in range(n - 1, 1, -1):
             tmp = c0
             c0 = polysub(c[i - 2], c1)
-            c1 = polyadd(tmp, polymulx(c1)*2)
+            c1 = polyadd(tmp, polymulx(c1) * 2)
         return polyadd(c0, polymulx(c1))
 
 
@@ -548,7 +549,7 @@ def chebfromroots(roots):
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [chebmul(p[i], p[i + m]) for i in range(m)]
             if r:
                 tmp[0] = chebmul(tmp[0], p[-1])
             p = tmp
@@ -690,10 +691,10 @@ def chebmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1] = c[0]
     if len(c) > 1:
-        tmp = c[1:]/2
+        tmp = c[1:] / 2
         prd[2:] = tmp
         prd[0:-2] += tmp
     return prd
@@ -802,9 +803,9 @@ def chebdiv(c1, c2):
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         z1 = _cseries_to_zseries(c1)
         z2 = _cseries_to_zseries(c2)
@@ -945,17 +946,17 @@ def chebder(c, m=1, scl=1, axis=0):
     c = np.rollaxis(c, iaxis)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 2, -1):
-                der[j - 1] = (2*j)*c[j]
-                c[j - 2] += (j*c[j])/(j - 2)
+                der[j - 1] = (2 * j) * c[j]
+                c[j - 2] += (j * c[j]) / (j - 2)
             if n > 1:
-                der[1] = 4*c[2]
+                der[1] = 4 * c[2]
             der[0] = c[1]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
@@ -1068,7 +1069,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         return c
 
     c = np.rollaxis(c, iaxis)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -1076,14 +1077,14 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             if n > 1:
-                tmp[2] = c[1]/4
+                tmp[2] = c[1] / 4
             for j in range(2, n):
-                t = c[j]/(2*j + 1)
-                tmp[j + 1] = c[j]/(2*(j + 1))
-                tmp[j - 1] -= c[j]/(2*(j - 1))
+                t = c[j] / (2 * j + 1)
+                tmp[j + 1] = c[j] / (2 * (j + 1))
+                tmp[j - 1] -= c[j] / (2 * (j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
             c = tmp
     c = np.rollaxis(c, 0, iaxis + 1)
@@ -1158,7 +1159,7 @@ def chebval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -1167,14 +1168,14 @@ def chebval(x, c, tensor=True):
         c0 = c[0]
         c1 = c[1]
     else:
-        x2 = 2*x
+        x2 = 2 * x
         c0 = c[-2]
         c1 = c[-1]
         for i in range(3, len(c) + 1):
             tmp = c0
             c0 = c[-i] - c1
-            c1 = tmp + c1*x2
-    return c0 + c1*x
+            c1 = tmp + c1 * x2
+    return c0 + c1 * x
 
 
 def chebval2d(x, y, c):
@@ -1452,12 +1453,12 @@ def chebvander(x, deg):
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
     # Use forward recursion to generate the entries.
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
-        x2 = 2*x
+        x2 = 2 * x
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = v[i-1]*x2 - v[i-2]
+            v[i] = v[i - 1] * x2 - v[i - 2]
     return np.rollaxis(v, 0, v.ndim)
 
 
@@ -1520,7 +1521,7 @@ def chebvander2d(x, y, deg):
 
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
+    v = vx[..., None] * vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1585,7 +1586,7 @@ def chebvander3d(x, y, z, deg):
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
     vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    v = vx[..., None, None] * vy[..., None, :, None] * vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1752,7 +1753,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     # set rcond
     if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
+        rcond = len(x) * np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
     if issubclass(lhs.dtype.type, np.complexfloating):
@@ -1762,8 +1763,8 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     scl[scl == 0] = 1
 
     # Solve the least squares problem.
-    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
+    c, resids, rank, s = la.lstsq(lhs.T / scl, rhs.T, rcond)
+    c = (c.T / scl).T
 
     # Expand c to include non-fitted coefficients which are set to zero
     if deg.ndim > 0:
@@ -1816,17 +1817,17 @@ def chebcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.array([1.] + [np.sqrt(.5)]*(n-1))
-    top = mat.reshape(-1)[1::n+1]
-    bot = mat.reshape(-1)[n::n+1]
+    scl = np.array([1.] + [np.sqrt(.5)] * (n - 1))
+    top = mat.reshape(-1)[1::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
     top[0] = np.sqrt(.5)
-    top[1:] = 1/2
+    top[1:] = 1 / 2
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= (c[:-1] / c[-1]) * (scl / scl[-1]) * .5
     return mat
 
 
@@ -1878,7 +1879,7 @@ def chebroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
     m = chebcompanion(c)
     r = la.eigvals(m)
@@ -1925,8 +1926,8 @@ def chebgauss(deg):
     if ideg != deg or ideg < 1:
         raise ValueError("deg must be a non-negative integer")
 
-    x = np.cos(np.pi * np.arange(1, 2*ideg, 2) / (2.0*ideg))
-    w = np.ones(ideg)*(np.pi/ideg)
+    x = np.cos(np.pi * np.arange(1, 2 * ideg, 2) / (2.0 * ideg))
+    w = np.ones(ideg) * (np.pi / ideg)
 
     return x, w
 
@@ -1955,7 +1956,7 @@ def chebweight(x):
     .. versionadded:: 1.7.0
 
     """
-    w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
+    w = 1. / (np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
 
 
@@ -1992,7 +1993,7 @@ def chebpts1(npts):
     if _npts < 1:
         raise ValueError("npts must be >= 1")
 
-    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
+    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi / (2 * _npts)
     return np.cos(x)
 
 

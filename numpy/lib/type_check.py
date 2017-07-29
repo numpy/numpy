@@ -14,7 +14,8 @@ from .ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
-def mintypecode(typechars,typeset='GDFgdf',default='d'):
+
+def mintypecode(typechars, typeset='GDFgdf', default='d'):
     """
     Return the character for the minimum-size type to which given types can
     be safely cast.
@@ -70,6 +71,7 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
         l.append((i, t))
     l.sort()
     return l[0][1]
+
 
 def asfarray(a, dtype=_nx.float_):
     """
@@ -218,6 +220,7 @@ def iscomplex(x):
     res = zeros(ax.shape, bool)
     return +res  # convet to array-scalar if needed
 
+
 def isreal(x):
     """
     Returns a bool array, where True if input element is real.
@@ -247,6 +250,7 @@ def isreal(x):
 
     """
     return imag(x) == 0
+
 
 def iscomplexobj(x):
     """
@@ -324,10 +328,12 @@ def isrealobj(x):
 
 #-----------------------------------------------------------------------------
 
+
 def _getmaxmin(t):
     from numpy.core import getlimits
     f = getlimits.finfo(t)
     return f.max, f.min
+
 
 def nan_to_num(x, copy=True):
     """
@@ -404,7 +410,8 @@ def nan_to_num(x, copy=True):
 
 #-----------------------------------------------------------------------------
 
-def real_if_close(a,tol=100):
+
+def real_if_close(a, tol=100):
     """
     If complex input returns a real array if complex parts are close to zero.
 
@@ -484,6 +491,7 @@ def asscalar(a):
 
 #-----------------------------------------------------------------------------
 
+
 _namefromtype = {'S1': 'character',
                  '?': 'bool',
                  'b': 'signed char',
@@ -507,6 +515,7 @@ _namefromtype = {'S1': 'character',
                  'V': 'void',
                  'O': 'object'
                  }
+
 
 def typename(char):
     """
@@ -561,7 +570,8 @@ def typename(char):
 
 #-----------------------------------------------------------------------------
 
-#determine the "minimum common type" for a group of arrays.
+
+# determine the "minimum common type" for a group of arrays.
 array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
               [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
 array_precision = {_nx.half: 0,
@@ -571,6 +581,8 @@ array_precision = {_nx.half: 0,
                    _nx.csingle: 1,
                    _nx.cdouble: 2,
                    _nx.clongdouble: 3}
+
+
 def common_type(*arrays):
     """
     Return a scalar type which is common to the input arrays.

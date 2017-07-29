@@ -32,5 +32,6 @@ class TestKind(util.F2PyTest):
                     'selectedrealkind(%s): expected %r but got %r' %
                     (i, selected_real_kind(i), selectedrealkind(i)))
 
+
 if __name__ == "__main__":
     run_module_suite()

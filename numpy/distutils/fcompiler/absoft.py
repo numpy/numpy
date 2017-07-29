@@ -15,13 +15,14 @@ from numpy.distutils.misc_util import cyg2win32
 
 compilers = ['AbsoftFCompiler']
 
+
 class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
     description = 'Absoft Corp Fortran Compiler'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version|Copyright Absoft Corporation.*?Version))'+\
-                       r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
+    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version|Copyright Absoft Corporation.*?Version))' +\
+        r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
 
     # on windows: f90 -V -c dummy.f
     # f90: Copyright Absoft Corporation 1994-1998 mV2; Cray Research, Inc. 1994-1996 CF90 (2.x.x.x  f36t87) Version 2.3 Wed Apr 19, 2006  13:05:16
@@ -31,17 +32,17 @@ class AbsoftFCompiler(FCompiler):
     # Note that fink installs g77 as f77, so need to use f90 for detection.
 
     executables = {
-        'version_cmd'  : None,          # set by update_executables
-        'compiler_f77' : ["f77"],
-        'compiler_fix' : ["f90"],
-        'compiler_f90' : ["f90"],
-        'linker_so'    : ["<F90>"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : ["ranlib"]
-        }
+        'version_cmd': None,          # set by update_executables
+        'compiler_f77': ["f77"],
+        'compiler_fix': ["f90"],
+        'compiler_f90': ["f90"],
+        'linker_so': ["<F90>"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': ["ranlib"]
+    }
 
-    if os.name=='nt':
-        library_switch = '/out:'      #No space after /out:!
+    if os.name == 'nt':
+        library_switch = '/out:'  # No space after /out:!
 
     module_dir_switch = None
     module_include_switch = '-p'
@@ -49,10 +50,10 @@ class AbsoftFCompiler(FCompiler):
     def update_executables(self):
         f = cyg2win32(dummy_fortran_file())
         self.executables['version_cmd'] = ['<F90>', '-V', '-c',
-                                           f+'.f', '-o', f+'.o']
+                                           f + '.f', '-o', f + '.o']
 
     def get_flags_linker_so(self):
-        if os.name=='nt':
+        if os.name == 'nt':
             opt = ['/dll']
         # The "-K shared" switches are being left in for pre-9.0 versions
         # of Absoft though I don't think versions earlier than 9 can
@@ -65,12 +66,12 @@ class AbsoftFCompiler(FCompiler):
         return opt
 
     def library_dir_option(self, dir):
-        if os.name=='nt':
+        if os.name == 'nt':
             return ['-link', '/PATH:"%s"' % (dir)]
         return "-L" + dir
 
     def library_option(self, lib):
-        if os.name=='nt':
+        if os.name == 'nt':
             return '%s.lib' % (lib)
         return "-l" + lib
 
@@ -100,7 +101,7 @@ class AbsoftFCompiler(FCompiler):
             opt.extend(['f90math', 'fio', 'f77math', 'U77'])
         else:
             opt.extend(['fio', 'f90math', 'fmath', 'U77'])
-        if os.name =='nt':
+        if os.name == 'nt':
             opt.append('COMDLG32')
         return opt
 
@@ -109,7 +110,7 @@ class AbsoftFCompiler(FCompiler):
         if os.name != 'nt':
             opt.extend(['-s'])
             if self.get_version():
-                if self.get_version()>='8.2':
+                if self.get_version() >= '8.2':
                     opt.append('-fpic')
         return opt
 
@@ -118,12 +119,12 @@ class AbsoftFCompiler(FCompiler):
         opt.extend(['-N22', '-N90', '-N110'])
         v = self.get_version()
         if os.name == 'nt':
-            if v and v>='8.0':
+            if v and v >= '8.0':
                 opt.extend(['-f', '-N15'])
         else:
             opt.append('-f')
             if v:
-                if v<='4.6':
+                if v <= '4.6':
                     opt.append('-B108')
                 else:
                     # Though -N15 is undocumented, it works with
@@ -136,7 +137,7 @@ class AbsoftFCompiler(FCompiler):
         opt.extend(["-YCFRL=1", "-YCOM_NAMES=LCS", "-YCOM_PFX", "-YEXT_PFX",
                     "-YCOM_SFX=_", "-YEXT_SFX=_", "-YEXT_NAMES=LCS"])
         if self.get_version():
-            if self.get_version()>'4.6':
+            if self.get_version() > '4.6':
                 opt.extend(["-YDEALLOC=ALL"])
         return opt
 
@@ -150,6 +151,7 @@ class AbsoftFCompiler(FCompiler):
     def get_flags_opt(self):
         opt = ['-O']
         return opt
+
 
 if __name__ == '__main__':
     from distutils import log

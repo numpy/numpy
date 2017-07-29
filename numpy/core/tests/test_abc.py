@@ -5,6 +5,7 @@ from numpy.testing import assert_, run_module_suite
 import numbers
 from numpy.core.numerictypes import sctypes
 
+
 class TestABC(object):
     def test_floats(self):
         for t in sctypes['float']:

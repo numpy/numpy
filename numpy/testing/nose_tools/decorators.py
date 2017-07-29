@@ -55,6 +55,7 @@ def slow(t):
     t.slow = True
     return t
 
+
 def setastest(tf=True):
     """
     Signals to nose that this function is or is not a test.
@@ -87,6 +88,7 @@ def setastest(tf=True):
         t.__test__ = tf
         return t
     return set_test
+
 
 def skipif(skip_condition, msg=None):
     """
@@ -124,11 +126,11 @@ def skipif(skip_condition, msg=None):
 
         # Allow for both boolean or callable skip conditions.
         if isinstance(skip_condition, collections.Callable):
-            skip_val = lambda: skip_condition()
+            def skip_val(): return skip_condition()
         else:
-            skip_val = lambda: skip_condition
+            def skip_val(): return skip_condition
 
-        def get_msg(func,msg=None):
+        def get_msg(func, msg=None):
             """Skip message with information about function being skipped."""
             if msg is None:
                 out = 'Test skipped due to test condition'
@@ -200,9 +202,9 @@ def knownfailureif(fail_condition, msg=None):
 
     # Allow for both boolean or callable known failure conditions.
     if isinstance(fail_condition, collections.Callable):
-        fail_val = lambda: fail_condition()
+        def fail_val(): return fail_condition()
     else:
-        fail_val = lambda: fail_condition
+        def fail_val(): return fail_condition
 
     def knownfail_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
@@ -218,6 +220,7 @@ def knownfailureif(fail_condition, msg=None):
         return nose.tools.make_decorator(f)(knownfailer)
 
     return knownfail_decorator
+
 
 def deprecated(conditional=True):
     """

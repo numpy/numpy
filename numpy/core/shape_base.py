@@ -8,6 +8,7 @@ from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
 
+
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
@@ -60,6 +61,7 @@ def atleast_1d(*arys):
     else:
         return res
 
+
 def atleast_2d(*arys):
     """
     View inputs as arrays with at least two dimensions.
@@ -103,7 +105,7 @@ def atleast_2d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1)
         elif ary.ndim == 1:
-            result = ary[newaxis,:]
+            result = ary[newaxis, :]
         else:
             result = ary
         res.append(result)
@@ -111,6 +113,7 @@ def atleast_2d(*arys):
         return res[0]
     else:
         return res
+
 
 def atleast_3d(*arys):
     """
@@ -167,9 +170,9 @@ def atleast_3d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
         elif ary.ndim == 1:
-            result = ary[newaxis,:, newaxis]
+            result = ary[newaxis, :, newaxis]
         elif ary.ndim == 2:
-            result = ary[:,:, newaxis]
+            result = ary[:, :, newaxis]
         else:
             result = ary
         res.append(result)
@@ -235,6 +238,7 @@ def vstack(tup):
 
     """
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
+
 
 def hstack(tup):
     """
@@ -365,13 +369,14 @@ class _Recurser(object):
     """
     Utility class for recursing over nested iterables
     """
+
     def __init__(self, recurse_if):
         self.recurse_if = recurse_if
 
     def map_reduce(self, x, f_map=lambda x, **kwargs: x,
-                            f_reduce=lambda x, **kwargs: x,
-                            f_kwargs=lambda **kwargs: kwargs,
-                            **kwargs):
+                   f_reduce=lambda x, **kwargs: x,
+                   f_kwargs=lambda **kwargs: kwargs,
+                   **kwargs):
         """
         Iterate over the nested list, applying:
         * ``f_map`` (T -> U) to items
@@ -586,7 +591,7 @@ def block(arrays):
     def atleast_nd(x, ndim):
         x = asanyarray(x)
         diff = max(ndim - x.ndim, 0)
-        return x[(None,)*diff + (Ellipsis,)]
+        return x[(None,) * diff + (Ellipsis,)]
 
     def format_index(index):
         return 'arrays' + ''.join('[{}]'.format(i) for i in index)
@@ -635,15 +640,15 @@ def block(arrays):
 
     # convert all the arrays to ndarrays
     arrays = rec.map_reduce(arrays,
-        f_map=asanyarray,
-        f_reduce=list
-    )
+                            f_map=asanyarray,
+                            f_reduce=list
+                            )
 
     # determine the maximum dimension of the elements
     elem_ndim = rec.map_reduce(arrays,
-        f_map=lambda xi: xi.ndim,
-        f_reduce=max
-    )
+                               f_map=lambda xi: xi.ndim,
+                               f_reduce=max
+                               )
     ndim = max(list_ndim, elem_ndim)
 
     # first axis to concatenate along
@@ -651,13 +656,14 @@ def block(arrays):
 
     # Make all the elements the same dimension
     arrays = rec.map_reduce(arrays,
-        f_map=lambda xi: atleast_nd(xi, ndim),
-        f_reduce=list
-    )
+                            f_map=lambda xi: atleast_nd(xi, ndim),
+                            f_reduce=list
+                            )
 
     # concatenate innermost lists on the right, outermost on the left
     return rec.map_reduce(arrays,
-        f_reduce=lambda xs, axis: _nx.concatenate(list(xs), axis=axis),
-        f_kwargs=lambda axis: dict(axis=axis+1),
-        axis=first_axis
-    )
+                          f_reduce=lambda xs, axis: _nx.concatenate(
+                              list(xs), axis=axis),
+                          f_kwargs=lambda axis: dict(axis=axis + 1),
+                          axis=first_axis
+                          )

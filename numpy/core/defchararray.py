@@ -35,7 +35,7 @@ __all__ = [
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
     'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
     'array', 'asarray'
-    ]
+]
 
 
 _globalvar = 0
@@ -46,6 +46,7 @@ else:
     _unicode = unicode
     _bytes = str
 _len = len
+
 
 def _use_unicode(*args):
     """
@@ -61,12 +62,14 @@ def _use_unicode(*args):
             return unicode_
     return string_
 
+
 def _to_string_or_unicode_array(result):
     """
     Helper function to cast a result back into a string or unicode array
     if an object array must be used as an intermediary.
     """
     return numpy.asarray(result.tolist())
+
 
 def _clean_args(*args):
     """
@@ -83,6 +86,7 @@ def _clean_args(*args):
             break
         newargs.append(chk)
     return newargs
+
 
 def _get_num_chars(a):
     """
@@ -119,6 +123,7 @@ def equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '==', True)
 
+
 def not_equal(x1, x2):
     """
     Return (x1 != x2) element-wise.
@@ -142,6 +147,7 @@ def not_equal(x1, x2):
     equal, greater_equal, less_equal, greater, less
     """
     return compare_chararrays(x1, x2, '!=', True)
+
 
 def greater_equal(x1, x2):
     """
@@ -168,6 +174,7 @@ def greater_equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '>=', True)
 
+
 def less_equal(x1, x2):
     """
     Return (x1 <= x2) element-wise.
@@ -191,6 +198,7 @@ def less_equal(x1, x2):
     equal, not_equal, greater_equal, greater, less
     """
     return compare_chararrays(x1, x2, '<=', True)
+
 
 def greater(x1, x2):
     """
@@ -216,6 +224,7 @@ def greater(x1, x2):
     """
     return compare_chararrays(x1, x2, '>', True)
 
+
 def less(x1, x2):
     """
     Return (x1 < x2) element-wise.
@@ -240,6 +249,7 @@ def less(x1, x2):
     """
     return compare_chararrays(x1, x2, '<', True)
 
+
 def str_len(a):
     """
     Return len(a) element-wise.
@@ -258,6 +268,7 @@ def str_len(a):
     __builtin__.len
     """
     return _vec_string(a, integer, '__len__')
+
 
 def add(x1, x2):
     """
@@ -284,6 +295,7 @@ def add(x1, x2):
     out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
     dtype = _use_unicode(arr1, arr2)
     return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
+
 
 def multiply(a, i):
     """
@@ -313,6 +325,7 @@ def multiply(a, i):
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
+
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
@@ -338,6 +351,7 @@ def mod(a, values):
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, '__mod__', (values,)))
+
 
 def capitalize(a):
     """
@@ -681,6 +695,7 @@ def index(a, sub, start=0, end=None):
     return _vec_string(
         a, integer, 'index', [sub, start] + _clean_args(end))
 
+
 def isalnum(a):
     """
     Returns true for each element if all characters in the string are
@@ -704,6 +719,7 @@ def isalnum(a):
     str.isalnum
     """
     return _vec_string(a, bool_, 'isalnum')
+
 
 def isalpha(a):
     """
@@ -729,6 +745,7 @@ def isalpha(a):
     """
     return _vec_string(a, bool_, 'isalpha')
 
+
 def isdigit(a):
     """
     Returns true for each element if all characters in the string are
@@ -752,6 +769,7 @@ def isdigit(a):
     str.isdigit
     """
     return _vec_string(a, bool_, 'isdigit')
+
 
 def islower(a):
     """
@@ -778,6 +796,7 @@ def islower(a):
     """
     return _vec_string(a, bool_, 'islower')
 
+
 def isspace(a):
     """
     Returns true for each element if there are only whitespace
@@ -803,6 +822,7 @@ def isspace(a):
     """
     return _vec_string(a, bool_, 'isspace')
 
+
 def istitle(a):
     """
     Returns true for each element if the element is a titlecased
@@ -826,6 +846,7 @@ def istitle(a):
     str.istitle
     """
     return _vec_string(a, bool_, 'istitle')
+
 
 def isupper(a):
     """
@@ -851,6 +872,7 @@ def isupper(a):
     str.isupper
     """
     return _vec_string(a, bool_, 'isupper')
+
 
 def join(sep, seq):
     """
@@ -1631,7 +1653,8 @@ def isnumeric(a):
 
     """
     if _use_unicode(a) != unicode_:
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+        raise TypeError(
+            "isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
 
 
@@ -1662,7 +1685,8 @@ def isdecimal(a):
 
     """
     if _use_unicode(a) != unicode_:
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+        raise TypeError(
+            "isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 

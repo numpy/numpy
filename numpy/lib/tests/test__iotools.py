@@ -7,11 +7,11 @@ from datetime import date
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_allclose, assert_raises,
-    )
+)
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
     has_nested_fields, easy_dtype, flatten_dtype
-    )
+)
 
 
 class TestLineSplitter(object):
@@ -161,7 +161,8 @@ class TestStringConverter(object):
         # On systems where integer defaults to 32-bit, the statuses will be
         # offset by one, so we check for this here.
         import numpy.core.numeric as nx
-        status_offset = int(nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize)
+        status_offset = int(nx.dtype(nx.integer).itemsize <
+                            nx.dtype(nx.int64).itemsize)
 
         # test int > 2**32
         assert_equal(converter.upgrade(b'17179869184'), 17179869184)
@@ -341,6 +342,7 @@ class TestMiscFunctions(object):
         dt = np.dtype([(("a", "A"), "f8"), (("b", "B"), "f8")])
         dt_flat = flatten_dtype(dt)
         assert_equal(dt_flat, [float, float])
+
 
 if __name__ == "__main__":
     run_module_suite()

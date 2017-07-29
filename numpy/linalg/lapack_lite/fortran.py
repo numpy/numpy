@@ -3,16 +3,26 @@ from __future__ import division, absolute_import, print_function
 import re
 import itertools
 
+
 def isBlank(line):
     return not line
+
+
 def isLabel(line):
     return line[0].isdigit()
+
+
 def isComment(line):
     return line[0] != ' '
+
+
 def isContinuation(line):
     return line[5] != ' '
 
+
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
+
+
 def lineType(line):
     """Return the type of a line of Fortan code."""
     if isBlank(line):
@@ -26,12 +36,14 @@ def lineType(line):
     else:
         return STATEMENT
 
+
 class LineIterator(object):
     """LineIterator(iterable)
 
     Return rstrip()'d lines from iterable, while keeping a count of the
     line number in the .lineno attribute.
     """
+
     def __init__(self, iterable):
         object.__init__(self)
         self.iterable = iter(iterable)
@@ -56,6 +68,7 @@ class PushbackIterator(object):
     Call the .pushback(item) method to have item returned as the next
     value of .next().
     """
+
     def __init__(self, iterable):
         object.__init__(self)
         self.iterable = iter(iterable)
@@ -105,6 +118,7 @@ def fortranSourceLines(fo):
         else:
             raise ValueError("jammed: continuation line not expected: %s:%d" %
                              (fo.name, numberingiter.lineno))
+
 
 def getDependencies(filename):
     """For a Fortran source file, return a list of routines declared as EXTERNAL

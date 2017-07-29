@@ -28,7 +28,7 @@ __all__ = [
     'get_fieldstructure', 'join_by', 'merge_arrays',
     'rec_append_fields', 'rec_drop_fields', 'rec_join',
     'recursive_fill_fields', 'rename_fields', 'stack_arrays',
-    ]
+]
 
 
 def recursive_fill_fields(input, output):
@@ -96,7 +96,7 @@ def get_fieldspec(dtype):
         fields = ((name, dtype.fields[name]) for name in dtype.names)
         # keep any titles, if present
         return [
-            (name if len(f) == 2 else (f[2], name), f[0]) 
+            (name if len(f) == 2 else (f[2], name), f[0])
             for name, f in fields
         ]
 
@@ -620,7 +620,7 @@ def rename_fields(base, namemapper):
             if current.names:
                 newdtype.append(
                     (newname, _recursive_rename_fields(current, namemapper))
-                    )
+                )
             else:
                 newdtype.append((newname, current))
         return newdtype
@@ -873,7 +873,7 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
 
 
 def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
-                defaults=None, usemask=True, asrecarray=False):
+            defaults=None, usemask=True, asrecarray=False):
     """
     Join arrays `r1` and `r2` on key `key`.
 
@@ -925,16 +925,16 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Check jointype
     if jointype not in ('inner', 'outer', 'leftouter'):
         raise ValueError(
-                "The 'jointype' argument should be in 'inner', "
-                "'outer' or 'leftouter' (got '%s' instead)" % jointype
-                )
+            "The 'jointype' argument should be in 'inner', "
+            "'outer' or 'leftouter' (got '%s' instead)" % jointype
+        )
     # If we have a single key, put it in a tuple
     if isinstance(key, basestring):
         key = (key,)
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
         raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:
@@ -959,7 +959,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Make temporary arrays of just the keys
     #  (use order of keys in `r1` for back-compatibility)
-    key1 = [ n for n in r1names if n in key ]
+    key1 = [n for n in r1names if n in key]
     r1k = _keep_fields(r1, key1)
     r2k = _keep_fields(r2, key1)
 

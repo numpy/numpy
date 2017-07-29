@@ -12,21 +12,21 @@ from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute, AxisError
-    )
+)
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, log10
-    )
+)
 from numpy.core.fromnumeric import (
     ravel, nonzero, sort, partition, mean, any, sum
-    )
+)
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
     _insert, add_docstring, digitize, bincount, normalize_axis_index,
     interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
+)
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 from numpy.compat.py3k import basestring
@@ -47,10 +47,10 @@ __all__ = [
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
-    ]
+]
 
 
-def rot90(m, k=1, axes=(0,1)):
+def rot90(m, k=1, axes=(0, 1)):
     """
     Rotate an array by 90 degrees in the plane specified by axes.
 
@@ -115,9 +115,9 @@ def rot90(m, k=1, axes=(0,1)):
         raise ValueError("Axes must be different.")
 
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
-        or axes[1] >= m.ndim or axes[1] < -m.ndim):
+            or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError("Axes={} out of range for array of ndim={}."
-            .format(axes, m.ndim))
+                         .format(axes, m.ndim))
 
     k %= 4
 
@@ -131,7 +131,7 @@ def rot90(m, k=1, axes=(0,1)):
                                                 axes_list[axes[0]])
 
     if k == 1:
-        return transpose(flip(m,axes[1]), axes_list)
+        return transpose(flip(m, axes[1]), axes_list)
     else:
         # k == 3
         return flip(transpose(m, axes_list), axes[1])
@@ -356,7 +356,7 @@ def _hist_bin_doane(x):
             np.power(temp, 3, temp)
             g1 = np.mean(temp)
             return x.ptp() / (1.0 + np.log2(x.size) +
-                                    np.log2(1.0 + np.absolute(g1) / sg1))
+                              np.log2(1.0 + np.absolute(g1) / sg1))
     return 0.0
 
 
@@ -737,7 +737,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # is 2x as fast) and it results in a memory footprint 3x lower in the
         # limit of large arrays.
         for i in arange(0, len(a), BLOCK):
-            tmp_a = a[i:i+BLOCK]
+            tmp_a = a[i:i + BLOCK]
             if weights is None:
                 tmp_w = None
             else:
@@ -791,14 +791,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         if weights is None:
             for i in arange(0, len(a), BLOCK):
-                sa = sort(a[i:i+BLOCK])
+                sa = sort(a[i:i + BLOCK])
                 n += np.r_[sa.searchsorted(bins[:-1], 'left'),
                            sa.searchsorted(bins[-1], 'right')]
         else:
             zero = array(0, dtype=ntype)
             for i in arange(0, len(a), BLOCK):
-                tmp_a = a[i:i+BLOCK]
-                tmp_w = weights[i:i+BLOCK]
+                tmp_a = a[i:i + BLOCK]
+                tmp_w = weights[i:i + BLOCK]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
@@ -807,20 +807,19 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                                   sa.searchsorted(bins[-1], 'right')]
                 n += cw[bin_index]
 
-
         n = np.diff(n)
 
     if density is not None:
         if density:
             db = array(np.diff(bins), float)
-            return n/db/n.sum(), bins
+            return n / db / n.sum(), bins
         else:
             return n, bins
     else:
         # deprecated, buggy behavior. Remove for NumPy 2.0.0
         if normed:
             db = array(np.diff(bins), float)
-            return n/(n*db).sum(), bins
+            return n / (n * db).sum(), bins
         else:
             return n, bins
 
@@ -886,8 +885,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         N, D = sample.shape
 
     nbin = empty(D, int)
-    edges = D*[None]
-    dedges = D*[None]
+    edges = D * [None]
+    dedges = D * [None]
     if weights is not None:
         weights = asarray(weights)
 
@@ -899,7 +898,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                 ' sample x.')
     except TypeError:
         # bins is an integer
-        bins = D*[bins]
+        bins = D * [bins]
 
     # Select range for each dimension
     # Used only if number of bins is given.
@@ -939,7 +938,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                     "Element at index %s in `bins` should be a positive "
                     "integer." % i)
             nbin[i] = bins[i] + 2  # +2 for outlier bins
-            edges[i] = linspace(smin[i], smax[i], nbin[i]-1, dtype=edge_dt)
+            edges[i] = linspace(smin[i], smax[i], nbin[i] - 1, dtype=edge_dt)
         else:
             edges[i] = asarray(bins[i], edge_dt)
             nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
@@ -953,7 +952,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Handle empty input.
     if N == 0:
-        return np.zeros(nbin-2), edges
+        return np.zeros(nbin - 2), edges
 
     # Compute the bin number each sample falls into.
     Ncount = {}
@@ -983,14 +982,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
     xy = zeros(N, int)
-    for i in arange(0, D-1):
-        xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
+    for i in arange(0, D - 1):
+        xy += Ncount[ni[i]] * nbin[ni[i + 1:]].prod()
     xy += Ncount[ni[-1]]
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
     if len(xy) == 0:
-        return zeros(nbin-2, int), edges
+        return zeros(nbin - 2, int), edges
 
     flatcount = bincount(xy, weights)
     a = arange(len(flatcount))
@@ -1004,7 +1003,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         ni[i], ni[j] = ni[j], ni[i]
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*[slice(1, -1)]
+    core = D * [slice(1, -1)]
     hist = hist[core]
 
     # Normalize if normed is True
@@ -1107,7 +1106,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     if weights is None:
         avg = a.mean(axis)
-        scl = avg.dtype.type(a.size/avg.size)
+        scl = avg.dtype.type(a.size / avg.size)
     else:
         wgt = np.asanyarray(weights)
 
@@ -1130,7 +1129,7 @@ def average(a, axis=None, weights=None, returned=False):
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = np.broadcast_to(wgt, (a.ndim - 1) * (1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
@@ -1138,7 +1137,7 @@ def average(a, axis=None, weights=None, returned=False):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
-        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis) / scl
 
     if returned:
         if scl.shape != avg.shape:
@@ -1699,7 +1698,7 @@ def gradient(f, *varargs, **kwargs):
     edge_order = kwargs.pop('edge_order', 1)
     if kwargs:
         raise TypeError('"{}" are not valid keyword arguments.'.format(
-                                                  '", "'.join(kwargs.keys())))
+            '", "'.join(kwargs.keys())))
     if edge_order > 2:
         raise ValueError("'edge_order' greater than 2 not supported")
 
@@ -1709,10 +1708,10 @@ def gradient(f, *varargs, **kwargs):
     outvals = []
 
     # create slice objects --- initially all are [:, :, ..., :]
-    slice1 = [slice(None)]*N
-    slice2 = [slice(None)]*N
-    slice3 = [slice(None)]*N
-    slice4 = [slice(None)]*N
+    slice1 = [slice(None)] * N
+    slice2 = [slice(None)] * N
+    slice3 = [slice(None)] * N
+    slice4 = [slice(None)] * N
 
     otype = f.dtype
     if otype.type is np.datetime64:
@@ -1749,7 +1748,7 @@ def gradient(f, *varargs, **kwargs):
         else:
             dx1 = dx[i][0:-1]
             dx2 = dx[i][1:]
-            a = -(dx2)/(dx1 * (dx1 + dx2))
+            a = -(dx2) / (dx1 * (dx1 + dx2))
             b = (dx2 - dx1) / (dx1 * dx2)
             c = dx1 / (dx2 * (dx1 + dx2))
             # fix the shape for broadcasting
@@ -1788,7 +1787,7 @@ def gradient(f, *varargs, **kwargs):
             else:
                 dx1 = dx[i][0]
                 dx2 = dx[i][1]
-                a = -(2. * dx1 + dx2)/(dx1 * (dx1 + dx2))
+                a = -(2. * dx1 + dx2) / (dx1 * (dx1 + dx2))
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
@@ -1899,8 +1898,8 @@ def diff(a, n=1, axis=-1):
             "order must be non-negative but got " + repr(n))
     a = asanyarray(a)
     nd = a.ndim
-    slice1 = [slice(None)]*nd
-    slice2 = [slice(None)]*nd
+    slice1 = [slice(None)] * nd
+    slice2 = [slice(None)] * nd
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     slice1 = tuple(slice1)
@@ -1912,7 +1911,7 @@ def diff(a, n=1, axis=-1):
         da = a[slice1] - a[slice2]
 
     if n > 1:
-        return diff(da, n-1, axis=axis)
+        return diff(da, n - 1, axis=axis)
     else:
         return da
 
@@ -2052,7 +2051,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         asort_xp = np.argsort(xp)
         xp = xp[asort_xp]
         fp = fp[asort_xp]
-        xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
+        xp = np.concatenate((xp[-1:] - period, xp, xp[0:1] + period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
 
         if return_array:
@@ -2092,7 +2091,7 @@ def angle(z, deg=0):
 
     """
     if deg:
-        fact = 180/pi
+        fact = 180 / pi
     else:
         fact = 1.0
     z = asarray(z)
@@ -2149,9 +2148,9 @@ def unwrap(p, discont=pi, axis=-1):
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
-    slice1 = [slice(None, None)]*nd     # full slices
+    slice1 = [slice(None, None)] * nd     # full slices
     slice1[axis] = slice(1, None)
-    ddmod = mod(dd + pi, 2*pi) - pi
+    ddmod = mod(dd + pi, 2 * pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
@@ -3062,7 +3061,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     elif aweights is None:
         fact = w_sum - ddof
     else:
-        fact = w_sum - ddof*sum(w*aweights)/w_sum
+        fact = w_sum - ddof * sum(w * aweights) / w_sum
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice",
@@ -3073,7 +3072,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if w is None:
         X_T = X.T
     else:
-        X_T = (X*w).T
+        X_T = (X * w).T
     c = dot(X, X_T.conj())
     c *= 1. / np.float64(fact)
     return c.squeeze()
@@ -3257,7 +3256,7 @@ def blackman(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+    return 0.42 - 0.5 * cos(2.0 * pi * n / (M - 1)) + 0.08 * cos(4.0 * pi * n / (M - 1))
 
 
 def bartlett(M):
@@ -3363,7 +3362,7 @@ def bartlett(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
+    return where(less_equal(n, (M - 1) / 2.0), 2.0 * n / (M - 1), 2.0 - 2.0 * n / (M - 1))
 
 
 def hanning(M):
@@ -3463,7 +3462,7 @@ def hanning(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
+    return 0.5 - 0.5 * cos(2.0 * pi * n / (M - 1))
 
 
 def hamming(M):
@@ -3561,9 +3560,10 @@ def hamming(M):
     if M == 1:
         return ones(1, float)
     n = arange(0, M)
-    return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
+    return 0.54 - 0.46 * cos(2.0 * pi * n / (M - 1))
 
-## Code from cephes for i0
+# Code from cephes for i0
+
 
 _i0A = [
     -4.41534164647933937950E-18,
@@ -3596,7 +3596,7 @@ _i0A = [
     1.71620901522208775349E-1,
     -3.04682672343198398683E-1,
     6.76795274409476084995E-1
-    ]
+]
 
 _i0B = [
     -7.23318048787475395456E-18,
@@ -3624,7 +3624,7 @@ _i0B = [
     6.88975834691682398426E-5,
     3.36911647825569408990E-3,
     8.04490411014108831608E-1
-    ]
+]
 
 
 def _chbevl(x, vals):
@@ -3634,17 +3634,17 @@ def _chbevl(x, vals):
     for i in range(1, len(vals)):
         b2 = b1
         b1 = b0
-        b0 = x*b1 - b2 + vals[i]
+        b0 = x * b1 - b2 + vals[i]
 
-    return 0.5*(b0 - b2)
+    return 0.5 * (b0 - b2)
 
 
 def _i0_1(x):
-    return exp(x) * _chbevl(x/2.0-2, _i0A)
+    return exp(x) * _chbevl(x / 2.0 - 2, _i0A)
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0/x - 2.0, _i0B) / sqrt(x)
+    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
 
 
 def i0(x):
@@ -3711,7 +3711,7 @@ def i0(x):
     y[ind2] = _i0_2(x[ind2])
     return y.squeeze()
 
-## End of cephes code for i0
+# End of cephes code for i0
 
 
 def kaiser(M, beta):
@@ -3837,8 +3837,8 @@ def kaiser(M, beta):
     if M == 1:
         return np.array([1.])
     n = arange(0, M)
-    alpha = (M-1)/2.0
-    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
+    alpha = (M - 1) / 2.0
+    return i0(beta * sqrt(1 - ((n - alpha) / alpha)**2.0)) / i0(float(beta))
 
 
 def sinc(x):
@@ -3917,7 +3917,7 @@ def sinc(x):
     """
     x = np.asanyarray(x)
     y = pi * where(x == 0, 1.0e-20, x)
-    return sin(y)/y
+    return sin(y) / y
 
 
 def msort(a):
@@ -4091,6 +4091,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     else:
         return r
 
+
 def _median(a, axis=None, out=None, overwrite_input=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
@@ -4130,9 +4131,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     index = part.shape[axis] // 2
     if part.shape[axis] % 2 == 1:
         # index with slice to allow mean (below) to work
-        indexer[axis] = slice(index, index+1)
+        indexer[axis] = slice(index, index + 1)
     else:
-        indexer[axis] = slice(index-1, index+1)
+        indexer[axis] = slice(index - 1, index + 1)
 
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
@@ -4320,7 +4321,7 @@ def _percentile(a, q, axis=None, out=None,
             "interpolation can only be 'linear', 'lower' 'higher', "
             "'midpoint', or 'nearest'")
 
-    n = np.array(False, dtype=bool) # check for nan's flag
+    n = np.array(False, dtype=bool)  # check for nan's flag
     if indices.dtype == intp:  # take the points along axis
         # Check if the array contains any nan's
         if np.issubdtype(a.dtype, np.inexact):
@@ -4339,7 +4340,6 @@ def _percentile(a, q, axis=None, out=None,
         if zerod:
             indices = indices[0]
         r = take(ap, indices, axis=axis, out=out)
-
 
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
@@ -4478,14 +4478,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         if x.ndim == 1:
             d = diff(x)
             # reshape to correct shape
-            shape = [1]*y.ndim
+            shape = [1] * y.ndim
             shape[axis] = d.shape[0]
             d = d.reshape(shape)
         else:
             d = diff(x, axis=axis)
     nd = y.ndim
-    slice1 = [slice(None)]*nd
-    slice2 = [slice(None)]*nd
+    slice1 = [slice(None)] * nd
+    slice2 = [slice(None)] * nd
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
@@ -4494,11 +4494,11 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
-        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+        ret = add.reduce(d * (y[slice1] + y[slice2]) / 2.0, axis)
     return ret
 
 
-#always succeed
+# always succeed
 def add_newdoc(place, obj, doc):
     """
     Adds documentation to obj which is in module place.
@@ -4755,7 +4755,7 @@ def delete(arr, obj, axis=None):
 
     axis = normalize_axis_index(axis, ndim)
 
-    slobj = [slice(None)]*ndim
+    slobj = [slice(None)] * ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)
 
@@ -4788,18 +4788,18 @@ def delete(arr, obj, axis=None):
         if stop == N:
             pass
         else:
-            slobj[axis] = slice(stop-numtodel, None)
-            slobj2 = [slice(None)]*ndim
+            slobj[axis] = slice(stop - numtodel, None)
+            slobj2 = [slice(None)] * ndim
             slobj2[axis] = slice(stop, None)
             new[slobj] = arr[slobj2]
         # copy middle pieces
         if step == 1:
             pass
         else:  # use array indexing.
-            keep = ones(stop-start, dtype=bool)
-            keep[:stop-start:step] = False
-            slobj[axis] = slice(start, stop-numtodel)
-            slobj2 = [slice(None)]*ndim
+            keep = ones(stop - start, dtype=bool)
+            keep[:stop - start:step] = False
+            slobj[axis] = slice(start, stop - numtodel)
+            slobj2 = [slice(None)] * ndim
             slobj2[axis] = slice(start, stop)
             arr = arr[slobj2]
             slobj2[axis] = keep
@@ -4832,8 +4832,8 @@ def delete(arr, obj, axis=None):
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = slice(obj, None)
-        slobj2 = [slice(None)]*ndim
-        slobj2[axis] = slice(obj+1, None)
+        slobj2 = [slice(None)] * ndim
+        slobj2[axis] = slice(obj + 1, None)
         new[slobj] = arr[slobj2]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
@@ -4990,7 +4990,7 @@ def insert(arr, obj, values, axis=None):
             return arr
     else:
         axis = normalize_axis_index(axis, ndim)
-    slobj = [slice(None)]*ndim
+    slobj = [slice(None)] * ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)
 
@@ -5008,7 +5008,7 @@ def insert(arr, obj, values, axis=None):
                 "integer", FutureWarning, stacklevel=2)
             indices = indices.astype(intp)
             # Code after warning period:
-            #if obj.ndim != 1:
+            # if obj.ndim != 1:
             #    raise ValueError('boolean array argument obj to insert '
             #                     'must be one dimensional')
             #indices = np.flatnonzero(obj)
@@ -5038,9 +5038,9 @@ def insert(arr, obj, values, axis=None):
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, index)
         new[slobj] = arr[slobj]
-        slobj[axis] = slice(index, index+numnew)
+        slobj[axis] = slice(index, index + numnew)
         new[slobj] = values
-        slobj[axis] = slice(index+numnew, None)
+        slobj[axis] = slice(index + numnew, None)
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
         new[slobj] = arr[slobj2]
@@ -5069,7 +5069,7 @@ def insert(arr, obj, values, axis=None):
     old_mask[indices] = False
 
     new = empty(newshape, arr.dtype, arrorder)
-    slobj2 = [slice(None)]*ndim
+    slobj2 = [slice(None)] * ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
     new[slobj] = values
@@ -5131,5 +5131,5 @@ def append(arr, values, axis=None):
         if arr.ndim != 1:
             arr = arr.ravel()
         values = ravel(values)
-        axis = arr.ndim-1
+        axis = arr.ndim - 1
     return concatenate((arr, values), axis=axis)

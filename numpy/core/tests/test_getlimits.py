@@ -14,11 +14,13 @@ from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
 
 ##################################################
 
+
 class TestPythonFloat(object):
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
         assert_equal(id(ftype), id(ftype2))
+
 
 class TestHalf(object):
     def test_singleton(self):
@@ -26,11 +28,13 @@ class TestHalf(object):
         ftype2 = finfo(half)
         assert_equal(id(ftype), id(ftype2))
 
+
 class TestSingle(object):
     def test_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
         assert_equal(id(ftype), id(ftype2))
+
 
 class TestDouble(object):
     def test_singleton(self):
@@ -38,11 +42,13 @@ class TestDouble(object):
         ftype2 = finfo(double)
         assert_equal(id(ftype), id(ftype2))
 
+
 class TestLongdouble(object):
-    def test_singleton(self,level=2):
+    def test_singleton(self, level=2):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
+
 
 class TestFinfo(object):
     def test_basic(self):
@@ -57,12 +63,13 @@ class TestFinfo(object):
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
 
+
 class TestIinfo(object):
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
-                   'u1', 'u2', 'u4', 'u8'],
-                  [np.int8, np.int16, np.int32, np.int64,
-                   np.uint8, np.uint16, np.uint32, np.uint64]))
+                        'u1', 'u2', 'u4', 'u8'],
+                       [np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
             for attr in ('bits', 'min', 'max'):
                 assert_equal(getattr(iinfo(dt1), attr),
@@ -73,6 +80,7 @@ class TestIinfo(object):
         types = np.sctypes['uint']
         for T in types:
             assert_equal(iinfo(T).max, T(-1))
+
 
 class TestRepr(object):
     def test_iinfo_repr(self):

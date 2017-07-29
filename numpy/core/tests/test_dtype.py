@@ -10,21 +10,24 @@ from numpy.testing import (
     dec
 )
 
+
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
     assert_equal(hash(a), hash(b),
                  "two equivalent types do not hash to the same value !")
+
 
 def assert_dtype_not_equal(a, b):
     assert_(a != b)
     assert_(hash(a) != hash(b),
             "two different types hash to the same value !")
 
+
 class TestBuiltin(object):
     def test_run(self):
         """Only test hash runs at all."""
         for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
-                np.unicode]:
+                  np.unicode]:
             dt = np.dtype(t)
             hash(dt)
 
@@ -88,21 +91,22 @@ class TestBuiltin(object):
     def test_bad_param(self):
         # Can't give a size that's too small
         assert_raises(ValueError, np.dtype,
-                        {'names':['f0', 'f1'],
-                         'formats':['i4', 'i1'],
-                         'offsets':[0, 4],
-                         'itemsize':4})
+                      {'names': ['f0', 'f1'],
+                       'formats': ['i4', 'i1'],
+                       'offsets': [0, 4],
+                       'itemsize': 4})
         # If alignment is enabled, the alignment (4) must divide the itemsize
         assert_raises(ValueError, np.dtype,
-                        {'names':['f0', 'f1'],
-                         'formats':['i4', 'i1'],
-                         'offsets':[0, 4],
-                         'itemsize':9}, align=True)
+                      {'names': ['f0', 'f1'],
+                       'formats': ['i4', 'i1'],
+                       'offsets': [0, 4],
+                       'itemsize': 9}, align=True)
         # If alignment is enabled, the individual fields must be aligned
         assert_raises(ValueError, np.dtype,
-                        {'names':['f0', 'f1'],
-                         'formats':['i1', 'f4'],
-                         'offsets':[0, 2]}, align=True)
+                      {'names': ['f0', 'f1'],
+                       'formats': ['i1', 'f4'],
+                       'offsets': [0, 2]}, align=True)
+
 
 class TestRecord(object):
     def test_equivalent_record(self):
@@ -157,63 +161,63 @@ class TestRecord(object):
         assert_equal(dt.itemsize, 8)
         dt = np.dtype([('f0', 'i4'), ('f1', 'i1')], align=True)
         assert_equal(dt.itemsize, 8)
-        dt = np.dtype({'names':['f0', 'f1'],
-                       'formats':['i4', 'u1'],
-                       'offsets':[0, 4]}, align=True)
+        dt = np.dtype({'names': ['f0', 'f1'],
+                       'formats': ['i4', 'u1'],
+                       'offsets': [0, 4]}, align=True)
         assert_equal(dt.itemsize, 8)
-        dt = np.dtype({'f0': ('i4', 0), 'f1':('u1', 4)}, align=True)
+        dt = np.dtype({'f0': ('i4', 0), 'f1': ('u1', 4)}, align=True)
         assert_equal(dt.itemsize, 8)
         # Nesting should preserve that alignment
         dt1 = np.dtype([('f0', 'i4'),
-                       ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
-                       ('f2', 'i1')], align=True)
+                        ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
+                        ('f2', 'i1')], align=True)
         assert_equal(dt1.itemsize, 20)
-        dt2 = np.dtype({'names':['f0', 'f1', 'f2'],
-                       'formats':['i4',
-                                  [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
-                                  'i1'],
-                       'offsets':[0, 4, 16]}, align=True)
+        dt2 = np.dtype({'names': ['f0', 'f1', 'f2'],
+                        'formats': ['i4',
+                                    [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
+                                    'i1'],
+                        'offsets': [0, 4, 16]}, align=True)
         assert_equal(dt2.itemsize, 20)
         dt3 = np.dtype({'f0': ('i4', 0),
-                       'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
-                       'f2': ('i1', 16)}, align=True)
+                        'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
+                        'f2': ('i1', 16)}, align=True)
         assert_equal(dt3.itemsize, 20)
         assert_equal(dt1, dt2)
         assert_equal(dt2, dt3)
         # Nesting should preserve packing
         dt1 = np.dtype([('f0', 'i4'),
-                       ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
-                       ('f2', 'i1')], align=False)
+                        ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
+                        ('f2', 'i1')], align=False)
         assert_equal(dt1.itemsize, 11)
-        dt2 = np.dtype({'names':['f0', 'f1', 'f2'],
-                       'formats':['i4',
-                                  [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
-                                  'i1'],
-                       'offsets':[0, 4, 10]}, align=False)
+        dt2 = np.dtype({'names': ['f0', 'f1', 'f2'],
+                        'formats': ['i4',
+                                    [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
+                                    'i1'],
+                        'offsets': [0, 4, 10]}, align=False)
         assert_equal(dt2.itemsize, 11)
         dt3 = np.dtype({'f0': ('i4', 0),
-                       'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
-                       'f2': ('i1', 10)}, align=False)
+                        'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
+                        'f2': ('i1', 10)}, align=False)
         assert_equal(dt3.itemsize, 11)
         assert_equal(dt1, dt2)
         assert_equal(dt2, dt3)
 
     def test_union_struct(self):
         # Should be able to create union dtypes
-        dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
-                        'offsets':[0, 0, 2]}, align=True)
+        dt = np.dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['<u4', '<u2', '<u2'],
+                       'offsets': [0, 0, 2]}, align=True)
         assert_equal(dt.itemsize, 4)
         a = np.array([3], dtype='<u4').view(dt)
         a['f1'] = 10
         a['f2'] = 36
-        assert_equal(a['f0'], 10 + 36*256*256)
+        assert_equal(a['f0'], 10 + 36 * 256 * 256)
         # Should be able to specify fields out of order
-        dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
-                        'offsets':[4, 0, 2]}, align=True)
+        dt = np.dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['<u4', '<u2', '<u2'],
+                       'offsets': [4, 0, 2]}, align=True)
         assert_equal(dt.itemsize, 8)
-        dt2 = np.dtype({'names':['f2', 'f0', 'f1'],
-                        'formats':['<u2', '<u4', '<u2'],
-                        'offsets':[2, 4, 0]}, align=True)
+        dt2 = np.dtype({'names': ['f2', 'f0', 'f1'],
+                        'formats': ['<u2', '<u4', '<u2'],
+                        'offsets': [2, 4, 0]}, align=True)
         vals = [(0, 1, 2), (3, -1, 4)]
         vals2 = [(2, 0, 1), (4, 3, -1)]
         a = np.array(vals, dt)
@@ -224,25 +228,25 @@ class TestRecord(object):
         assert_equal(b.view(dt), a)
         # Should not be able to overlap objects with other types
         assert_raises(TypeError, np.dtype,
-                {'names':['f0', 'f1'],
-                 'formats':['O', 'i1'],
-                 'offsets':[0, 2]})
+                      {'names': ['f0', 'f1'],
+                       'formats': ['O', 'i1'],
+                       'offsets': [0, 2]})
         assert_raises(TypeError, np.dtype,
-                {'names':['f0', 'f1'],
-                 'formats':['i4', 'O'],
-                 'offsets':[0, 3]})
+                      {'names': ['f0', 'f1'],
+                       'formats': ['i4', 'O'],
+                       'offsets': [0, 3]})
         assert_raises(TypeError, np.dtype,
-                {'names':['f0', 'f1'],
-                 'formats':[[('a', 'O')], 'i1'],
-                 'offsets':[0, 2]})
+                      {'names': ['f0', 'f1'],
+                       'formats': [[('a', 'O')], 'i1'],
+                       'offsets': [0, 2]})
         assert_raises(TypeError, np.dtype,
-                {'names':['f0', 'f1'],
-                 'formats':['i4', [('a', 'O')]],
-                 'offsets':[0, 3]})
+                      {'names': ['f0', 'f1'],
+                       'formats': ['i4', [('a', 'O')]],
+                       'offsets': [0, 3]})
         # Out of order should still be ok, however
-        dt = np.dtype({'names':['f0', 'f1'],
-                       'formats':['i1', 'O'],
-                       'offsets':[np.dtype('intp').itemsize, 0]})
+        dt = np.dtype({'names': ['f0', 'f1'],
+                       'formats': ['i1', 'O'],
+                       'offsets': [np.dtype('intp').itemsize, 0]})
 
     def test_comma_datetime(self):
         dt = np.dtype('M8[D],datetime64[Y],i8')
@@ -323,15 +327,18 @@ class TestSubarray(object):
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
         assert_dtype_equal(np.dtype((np.int, 2)), np.dtype((np.int, (2,))))
-        assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
+        assert_dtype_equal(np.dtype(('<f4', (3, 2))),
+                           np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
         assert_dtype_equal(np.dtype(d), np.dtype(d))
 
     def test_shape_simple(self):
         """Test some simple cases that shouldn't be equal"""
         assert_dtype_not_equal(np.dtype('f8'), np.dtype(('f8', (1,))))
-        assert_dtype_not_equal(np.dtype(('f8', (1,))), np.dtype(('f8', (1, 1))))
-        assert_dtype_not_equal(np.dtype(('f4', (3, 2))), np.dtype(('f4', (2, 3))))
+        assert_dtype_not_equal(np.dtype(('f8', (1,))),
+                               np.dtype(('f8', (1, 1))))
+        assert_dtype_not_equal(np.dtype(('f4', (3, 2))),
+                               np.dtype(('f4', (2, 3))))
 
     def test_shape_monster(self):
         """Test some more complicated cases that shouldn't be equal"""
@@ -345,7 +352,8 @@ class TestSubarray(object):
             np.dtype(([('a', 'f4', (2, 1)), ('b', 'f8', (1, 3))], (2, 2))),
             np.dtype(([('e', 'f8', (1, 3)), ('d', 'f4', (2, 1))], (2, 2))))
         assert_dtype_not_equal(
-            np.dtype(([('a', [('a', 'i4', 6)], (2, 1)), ('b', 'f8', (1, 3))], (2, 2))),
+            np.dtype(
+                ([('a', [('a', 'i4', 6)], (2, 1)), ('b', 'f8', (1, 3))], (2, 2))),
             np.dtype(([('a', [('a', 'u4', 6)], (2, 1)), ('b', 'f8', (1, 3))], (2, 2))))
 
     def test_shape_sequence(self):
@@ -409,7 +417,7 @@ class TestSubarray(object):
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
     def test_alignment(self):
-        #Check that subarrays are aligned
+        # Check that subarrays are aligned
         t1 = np.dtype('1i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
@@ -420,18 +428,19 @@ class TestMonsterType(object):
 
     def test1(self):
         simple1 = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
-            'titles': ['Red pixel', 'Blue pixel']})
+                            'titles': ['Red pixel', 'Blue pixel']})
         a = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
+                      ('yi', np.dtype((np.int, (3, 2))))])
         b = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
+                      ('yi', np.dtype((np.int, (3, 2))))])
         assert_dtype_equal(a, b)
 
         c = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((a, (3, 2))))])
+                      ('yi', np.dtype((a, (3, 2))))])
         d = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((a, (3, 2))))])
+                      ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
+
 
 class TestMetadata(object):
     def test_no_metadata(self):
@@ -455,6 +464,7 @@ class TestMetadata(object):
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
         assert_(d.metadata == {'datum': 1})
 
+
 class TestString(object):
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
@@ -471,28 +481,28 @@ class TestString(object):
         # str() function use a dict representation with an 'aligned' flag
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))],
-                                (3,)),
+                        (3,)),
                        ('bottom', [('bleft', ('>f4', (8, 64)), (1,)),
                                    ('bright', '>f4', (8, 36))])],
-                       align=True)
+                      align=True)
         assert_equal(str(dt),
-                    "{'names':['top','bottom'], "
+                     "{'names':['top','bottom'], "
                      "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
-                                  "('rtile', '>f4', (64, 36))], (3,)),"
-                                 "[('bleft', ('>f4', (8, 64)), (1,)), "
-                                  "('bright', '>f4', (8, 36))]], "
+                     "('rtile', '>f4', (64, 36))], (3,)),"
+                     "[('bleft', ('>f4', (8, 64)), (1,)), "
+                     "('bright', '>f4', (8, 36))]], "
                      "'offsets':[0,76800], "
                      "'itemsize':80000, "
                      "'aligned':True}")
         assert_equal(np.dtype(eval(str(dt))), dt)
 
         dt = np.dtype({'names': ['r', 'g', 'b'], 'formats': ['u1', 'u1', 'u1'],
-                        'offsets': [0, 1, 2],
-                        'titles': ['Red pixel', 'Green pixel', 'Blue pixel']})
+                       'offsets': [0, 1, 2],
+                       'titles': ['Red pixel', 'Green pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "[(('Red pixel', 'r'), 'u1'), "
-                    "(('Green pixel', 'g'), 'u1'), "
-                    "(('Blue pixel', 'b'), 'u1')]")
+                     "[(('Red pixel', 'r'), 'u1'), "
+                     "(('Green pixel', 'g'), 'u1'), "
+                     "(('Blue pixel', 'b'), 'u1')]")
 
         dt = np.dtype({'names': ['rgba', 'r', 'g', 'b'],
                        'formats': ['<u4', 'u1', 'u1', 'u1'],
@@ -500,26 +510,26 @@ class TestString(object):
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}")
+                     "{'names':['rgba','r','g','b'],"
+                     " 'formats':['<u4','u1','u1','u1'],"
+                     " 'offsets':[0,0,1,2],"
+                     " 'titles':['Color','Red pixel',"
+                     "'Green pixel','Blue pixel'],"
+                     " 'itemsize':4}")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
-                        'offsets': [0, 2],
-                        'titles': ['Red pixel', 'Blue pixel']})
+                       'offsets': [0, 2],
+                       'titles': ['Red pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['r','b'],"
-                    " 'formats':['u1','u1'],"
-                    " 'offsets':[0,2],"
-                    " 'titles':['Red pixel','Blue pixel'],"
-                    " 'itemsize':3}")
+                     "{'names':['r','b'],"
+                     " 'formats':['u1','u1'],"
+                     " 'offsets':[0,2],"
+                     " 'titles':['Red pixel','Blue pixel'],"
+                     " 'itemsize':3}")
 
         dt = np.dtype([('a', '<m8[D]'), ('b', '<M8[us]')])
         assert_equal(str(dt),
-                    "[('a', '<m8[D]'), ('b', '<M8[us]')]")
+                     "[('a', '<m8[D]'), ('b', '<M8[us]')]")
 
     def test_complex_dtype_repr(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
@@ -533,13 +543,13 @@ class TestString(object):
                      "('bright', '>f4', (8, 36))])])")
 
         dt = np.dtype({'names': ['r', 'g', 'b'], 'formats': ['u1', 'u1', 'u1'],
-                        'offsets': [0, 1, 2],
-                        'titles': ['Red pixel', 'Green pixel', 'Blue pixel']},
-                        align=True)
+                       'offsets': [0, 1, 2],
+                       'titles': ['Red pixel', 'Green pixel', 'Blue pixel']},
+                      align=True)
         assert_equal(repr(dt),
-                    "dtype([(('Red pixel', 'r'), 'u1'), "
-                    "(('Green pixel', 'g'), 'u1'), "
-                    "(('Blue pixel', 'b'), 'u1')], align=True)")
+                     "dtype([(('Red pixel', 'r'), 'u1'), "
+                     "(('Green pixel', 'g'), 'u1'), "
+                     "(('Blue pixel', 'b'), 'u1')], align=True)")
 
         dt = np.dtype({'names': ['rgba', 'r', 'g', 'b'],
                        'formats': ['<u4', 'u1', 'u1', 'u1'],
@@ -547,27 +557,27 @@ class TestString(object):
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']}, align=True)
         assert_equal(repr(dt),
-                    "dtype({'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}, align=True)")
+                     "dtype({'names':['rgba','r','g','b'],"
+                     " 'formats':['<u4','u1','u1','u1'],"
+                     " 'offsets':[0,0,1,2],"
+                     " 'titles':['Color','Red pixel',"
+                     "'Green pixel','Blue pixel'],"
+                     " 'itemsize':4}, align=True)")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
-                        'offsets': [0, 2],
-                        'titles': ['Red pixel', 'Blue pixel'],
-                        'itemsize': 4})
+                       'offsets': [0, 2],
+                       'titles': ['Red pixel', 'Blue pixel'],
+                       'itemsize': 4})
         assert_equal(repr(dt),
-                    "dtype({'names':['r','b'], "
-                    "'formats':['u1','u1'], "
-                    "'offsets':[0,2], "
-                    "'titles':['Red pixel','Blue pixel'], "
-                    "'itemsize':4})")
+                     "dtype({'names':['r','b'], "
+                     "'formats':['u1','u1'], "
+                     "'offsets':[0,2], "
+                     "'titles':['Red pixel','Blue pixel'], "
+                     "'itemsize':4})")
 
         dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
         assert_equal(repr(dt),
-                    "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
+                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
 
     @dec.skipif(sys.version_info[0] >= 3)
     def test_dtype_str_with_long_in_shape(self):
@@ -581,6 +591,7 @@ class TestString(object):
     def test_empty_string_to_object(self):
         # Pull request #4722
         np.array(["", ""]).astype(object)
+
 
 class TestDtypeAttributeDeletion(object):
 
@@ -685,7 +696,7 @@ def test_rational_dtype():
 
     # test that dtype detection finds user-defined types
     x = rational(1)
-    assert_equal(np.array([x,x]).dtype, np.dtype(rational))
+    assert_equal(np.array([x, x]).dtype, np.dtype(rational))
 
 
 def test_dtypes_are_true():

@@ -22,7 +22,7 @@ def compile(source,
             verbose=True,
             source_fn=None,
             extension='.f'
-           ):
+            ):
     """
     Build extension module from processing source with f2py.
 
@@ -68,6 +68,7 @@ def compile(source,
     finally:
         f.close()
     return status
+
 
 from numpy.testing import _numpy_tester
 test = _numpy_tester().test

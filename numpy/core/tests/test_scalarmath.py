@@ -45,8 +45,8 @@ class TestTypes(object):
                 # skipped ahead based on the first argument, but that
                 # does not produce properly symmetric results...
                 assert_equal(c_scalar.dtype, c_array.dtype,
-                           "error with types (%d/'%c' + %d/'%c')" %
-                            (k, np.dtype(atype).char, l, np.dtype(btype).char))
+                             "error with types (%d/'%c' + %d/'%c')" %
+                             (k, np.dtype(atype).char, l, np.dtype(btype).char))
 
     def test_type_create(self, level=1):
         for k, atype in enumerate(types):
@@ -208,10 +208,10 @@ class TestModulus(object):
                 for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
                     fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
-                    a = np.array(sg1*71, dtype=dt1)[()]
-                    b = np.array(sg2*19, dtype=dt2)[()]
+                    a = np.array(sg1 * 71, dtype=dt1)[()]
+                    b = np.array(sg2 * 19, dtype=dt2)[()]
                     div, rem = op(a, b)
-                    assert_equal(div*b + rem, a, err_msg=msg)
+                    assert_equal(div * b + rem, a, err_msg=msg)
                     if sg2 == -1:
                         assert_(b < rem <= 0, msg)
                     else:
@@ -240,7 +240,7 @@ class TestModulus(object):
                 fa = a.astype(dt)
                 fb = b.astype(dt)
                 # use list comprehension so a_ and b_ are scalars
-                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                div, rem = zip(*[op(a_, b_) for a_, b_ in zip(fa, fb)])
                 assert_equal(div, tgtdiv, err_msg=msg)
                 assert_equal(rem, tgtrem, err_msg=msg)
 
@@ -252,11 +252,11 @@ class TestModulus(object):
                 for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
                     fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
-                    a = np.array(sg1*78*6e-8, dtype=dt1)[()]
-                    b = np.array(sg2*6e-8, dtype=dt2)[()]
+                    a = np.array(sg1 * 78 * 6e-8, dtype=dt1)[()]
+                    b = np.array(sg2 * 6e-8, dtype=dt2)[()]
                     div, rem = op(a, b)
                     # Equal assertion should hold when fmod is used
-                    assert_equal(div*b + rem, a, err_msg=msg)
+                    assert_equal(div * b + rem, a, err_msg=msg)
                     if sg2 == -1:
                         assert_(b < rem <= 0, msg)
                     else:
@@ -274,7 +274,8 @@ class TestModulus(object):
 
         # Check nans, inf
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning,
+                       "invalid value encountered in remainder")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -297,17 +298,17 @@ class TestComplexDivision(object):
             for t in [np.complex64, np.complex128]:
                 a = t(0.0)
                 b = t(1.0)
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.inf, np.inf))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.inf, np.nan))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.nan, np.inf))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.nan, np.nan))
-                assert_(np.isnan(b/a))
+                assert_(np.isnan(b / a))
                 b = t(0.)
-                assert_(np.isnan(b/a))
+                assert_(np.isnan(b / a))
 
     def test_signed_zeros(self):
         with np.errstate(all="ignore"):
@@ -315,14 +316,14 @@ class TestComplexDivision(object):
                 # tupled (numerator, denominator, expected)
                 # for testing as expected == numerator/denominator
                 data = (
-                    (( 0.0,-1.0), ( 0.0, 1.0), (-1.0,-0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    (( 0.0,-1.0), (-0.0,-1.0), ( 1.0, 0.0)),
-                    (( 0.0,-1.0), (-0.0, 1.0), (-1.0, 0.0)),
-                    (( 0.0, 1.0), ( 0.0,-1.0), (-1.0, 0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
+                    ((0.0, -1.0), (0.0, 1.0), (-1.0, -0.0)),
+                    ((0.0, -1.0), (0.0, -1.0), (1.0, -0.0)),
+                    ((0.0, -1.0), (-0.0, -1.0), (1.0, 0.0)),
+                    ((0.0, -1.0), (-0.0, 1.0), (-1.0, 0.0)),
+                    ((0.0, 1.0), (0.0, -1.0), (-1.0, 0.0)),
+                    ((0.0, -1.0), (0.0, -1.0), (1.0, -0.0)),
+                    ((-0.0, -1.0), (0.0, -1.0), (1.0, -0.0)),
+                    ((-0.0, 1.0), (0.0, -1.0), (-1.0, -0.0))
                 )
                 for cases in data:
                     n = cases[0]
@@ -343,14 +344,14 @@ class TestComplexDivision(object):
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by else condition as neither are == 0
-                data.append((( 2.0, 1.0), ( 2.0, 1.0), (1.0, 0.0)))
+                data.append(((2.0, 1.0), (2.0, 1.0), (1.0, 0.0)))
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by if condition as both are == 0
                 # is performed in test_zero_division(), so this is skipped
 
                 # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
-                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+                data.append(((1.0, 2.0), (1.0, 2.0), (1.0, 0.0)))
 
                 for cases in data:
                     n = cases[0]
@@ -421,7 +422,8 @@ class TestConversion(object):
         # All integer
         for dt1 in np.typecodes['AllInteger']:
             assert_(1 > np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not 1 < np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not 1 < np.array(0, dtype=dt1)[
+                    ()], "type %s failed" % (dt1,))
 
             for dt2 in np.typecodes['AllInteger']:
                 assert_(np.array(1, dtype=dt1)[()] > np.array(0, dtype=dt2)[()],
@@ -429,13 +431,15 @@ class TestConversion(object):
                 assert_(not np.array(1, dtype=dt1)[()] < np.array(0, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
-        #Unsigned integers
+        # Unsigned integers
         for dt1 in 'BHILQP':
             assert_(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not -1 > np.array(1, dtype=dt1)
+                    [()], "type %s failed" % (dt1,))
+            assert_(-1 != np.array(1, dtype=dt1)
+                    [()], "type %s failed" % (dt1,))
 
-            #unsigned vs signed
+            # unsigned vs signed
             for dt2 in 'bhilqp':
                 assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
@@ -444,11 +448,13 @@ class TestConversion(object):
                 assert_(np.array(1, dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
                         "type %s and %s failed" % (dt1, dt2))
 
-        #Signed integers and floats
+        # Signed integers and floats
         for dt1 in 'bhlqp' + np.typecodes['Float']:
             assert_(1 > np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not 1 < np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(-1 == np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(not 1 < np.array(-1, dtype=dt1)
+                    [()], "type %s failed" % (dt1,))
+            assert_(-1 == np.array(-1, dtype=dt1)
+                    [()], "type %s failed" % (dt1,))
 
             for dt2 in 'bhlqp' + np.typecodes['Float']:
                 assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
@@ -480,7 +486,7 @@ class TestConversion(object):
         assert_(np.equal(np.datetime64('NaT'), None))
 
 
-#class TestRepr(object):
+# class TestRepr(object):
 #    def test_repr(self):
 #        for t in types:
 #            val = t(1197346475.0137341)
@@ -494,18 +500,18 @@ class TestRepr(object):
         finfo = np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant
         last_exponent_bit_idx = finfo.nexp
-        storage_bytes = np.dtype(t).itemsize*8
+        storage_bytes = np.dtype(t).itemsize * 8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
             # Values from http://en.wikipedia.org/wiki/IEEE_754
-            constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
+            constr = np.array([0x00] * storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
-                bytebit = 7-(last_fraction_bit_idx % 8)
+                bytebit = 7 - (last_fraction_bit_idx % 8)
                 constr[byte] = 1 << bytebit
             elif which == 'small norm':
                 byte = last_exponent_bit_idx // 8
-                bytebit = 7-(last_exponent_bit_idx % 8)
+                bytebit = 7 - (last_exponent_bit_idx % 8)
                 constr[byte] = 1 << bytebit
             else:
                 raise ValueError('hmm')
@@ -563,6 +569,7 @@ class TestMultiply(object):
         class ArrayLike(object):
             def __init__(self, arr):
                 self.arr = arr
+
             def __array__(self):
                 return self.arr
 

@@ -35,28 +35,28 @@ _convert_to_float = {
     ntypes.csingle: ntypes.single,
     ntypes.complex_: ntypes.float_,
     ntypes.clongfloat: ntypes.longfloat
-    }
+}
 
 
 # Parameters for creating MachAr / MachAr-like objects
 _title_fmt = 'numpy {} precision floating point number'
 _MACHAR_PARAMS = {
     ntypes.double: dict(
-        itype = ntypes.int64,
-        fmt = '%24.16e',
-        title = _title_fmt.format('double')),
+        itype=ntypes.int64,
+        fmt='%24.16e',
+        title=_title_fmt.format('double')),
     ntypes.single: dict(
-        itype = ntypes.int32,
-        fmt = '%15.7e',
-        title = _title_fmt.format('single')),
+        itype=ntypes.int32,
+        fmt='%15.7e',
+        title=_title_fmt.format('single')),
     ntypes.longdouble: dict(
-        itype = ntypes.longlong,
-        fmt = '%s',
-        title = _title_fmt.format('long double')),
+        itype=ntypes.longlong,
+        fmt='%s',
+        title=_title_fmt.format('long double')),
     ntypes.half: dict(
-        itype = ntypes.int16,
-        fmt = '%12.5e',
-        title = _title_fmt.format('half'))}
+        itype=ntypes.int16,
+        fmt='%12.5e',
+        title=_title_fmt.format('half'))}
 
 
 class MachArLike(object):
@@ -66,8 +66,10 @@ class MachArLike(object):
                  ftype,
                  **kwargs):
         params = _MACHAR_PARAMS[ftype]
-        float_conv = lambda v: array([v], ftype)
-        float_to_float = lambda v : _fr1(float_conv(v))
+
+        def float_conv(v): return array([v], ftype)
+
+        def float_to_float(v): return _fr1(float_conv(v))
         self._float_to_str = lambda v: (params['fmt'] %
                                         array(_fr0(v)[0], ftype))
         self.title = params['title']
@@ -168,19 +170,19 @@ _tiny_f128 = exp2(_ld(-16382))
 with numeric.errstate(all='ignore'):
     _huge_f128 = (_ld(1) - _epsneg_f128) / _tiny_f128 * _ld(4)
 _float128_ma = MachArLike(_ld,
-                         machep=-112,
-                         negep=-113,
-                         minexp=-16382,
-                         maxexp=16384,
-                         it=112,
-                         iexp=15,
-                         ibeta=2,
-                         irnd=5,
-                         ngrd=0,
-                         eps=exp2(_ld(-112)),
-                         epsneg=_epsneg_f128,
-                         huge=_huge_f128,
-                         tiny=_tiny_f128)
+                          machep=-112,
+                          negep=-113,
+                          minexp=-16382,
+                          maxexp=16384,
+                          it=112,
+                          iexp=15,
+                          ibeta=2,
+                          irnd=5,
+                          ngrd=0,
+                          eps=exp2(_ld(-112)),
+                          epsneg=_epsneg_f128,
+                          huge=_huge_f128,
+                          tiny=_tiny_f128)
 
 # Known parameters for float80 (Intel 80-bit extended precision)
 _epsneg_f80 = exp2(_ld(-64))
@@ -221,7 +223,7 @@ _float_dd_ma = MachArLike(_ld,
                           irnd=5,
                           ngrd=0,
                           eps=exp2(_ld(-105)),
-                          epsneg= exp2(_ld(-106)),
+                          epsneg=exp2(_ld(-106)),
                           huge=_huge_dd,
                           tiny=exp2(_ld(-1022)))
 
@@ -231,19 +233,19 @@ _float_dd_ma = MachArLike(_ld,
 # See:
 # https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
 _KNOWN_TYPES = {
-    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf' : _float64_ma,
-    b'\xcd\xcc\xcc\xbd' : _float32_ma,
-    b'f\xae' : _float16_ma,
+    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf': _float64_ma,
+    b'\xcd\xcc\xcc\xbd': _float32_ma,
+    b'f\xae': _float16_ma,
     # float80, first 10 bytes containing actual storage
-    b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf' : _float80_ma,
+    b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf': _float80_ma,
     # double double; low, high order (e.g. PPC 64)
-    b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf' :
+    b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf':
     _float_dd_ma,
     # double double; high, low order (e.g. PPC 64 le)
-    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<' :
+    b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<':
     _float_dd_ma,
     # IEEE 754 128-bit binary float
-    b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf' :
+    b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf':
     _float128_ma,
 }
 
@@ -296,8 +298,8 @@ def _discovered_machar(ftype):
     """
     params = _MACHAR_PARAMS[ftype]
     return MachAr(lambda v: array([v], ftype),
-                  lambda v:_fr0(v.astype(params['itype']))[0],
-                  lambda v:array(_fr0(v)[0], ftype),
+                  lambda v: _fr0(v.astype(params['itype']))[0],
+                  lambda v: array(_fr0(v)[0], ftype),
                   lambda v: params['fmt'] % array(_fr0(v)[0], ftype),
                   params['title'])
 
@@ -441,7 +443,7 @@ class finfo(object):
             'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
             'nexp =   %(nexp)6s   min =        -max\n'
             '---------------------------------------------------------------\n'
-            )
+        )
         return fmt % self.__dict__
 
     def __repr__(self):
@@ -523,7 +525,7 @@ class iinfo(object):
             try:
                 val = iinfo._min_vals[self.key]
             except KeyError:
-                val = int(-(1 << (self.bits-1)))
+                val = int(-(1 << (self.bits - 1)))
                 iinfo._min_vals[self.key] = val
             return val
 
@@ -537,7 +539,7 @@ class iinfo(object):
             if self.kind == 'u':
                 val = int((1 << self.bits) - 1)
             else:
-                val = int((1 << (self.bits-1)) - 1)
+                val = int((1 << (self.bits - 1)) - 1)
             iinfo._max_vals[self.key] = val
         return val
 
@@ -551,10 +553,9 @@ class iinfo(object):
             'min = %(min)s\n'
             'max = %(max)s\n'
             '---------------------------------------------------------------\n'
-            )
+        )
         return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
-                                    self.min, self.max, self.dtype)
-
+                                                 self.min, self.max, self.dtype)

@@ -5,7 +5,7 @@ import operator
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError,asanyarray)
+                      TooHardError, asanyarray)
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -106,7 +106,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     # Convert float/complex array scalars to float, gh-3504
     # and make sure one can use variables that have an __array_interface__, gh-6634
     start = asanyarray(start) * 1.0
-    stop  = asanyarray(stop)  * 1.0
+    stop = asanyarray(stop) * 1.0
 
     dt = result_type(start, stop, float(num))
     if dtype is None:

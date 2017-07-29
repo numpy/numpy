@@ -38,6 +38,7 @@ EXPORTS
 FUNC_RE = re.compile(r"^(.*) in python%s\.dll" % py_ver, re.MULTILINE)
 DATA_RE = re.compile(r"^_imp__(.*) in python%s\.dll" % py_ver, re.MULTILINE)
 
+
 def parse_cmd():
     """Parses the command-line arguments.
 
@@ -62,14 +63,17 @@ libfile, deffile = parse_cmd()"""
         deffile = None
     return libfile, deffile
 
-def getnm(nm_cmd = ['nm', '-Cs', 'python%s.lib' % py_ver]):
+
+def getnm(nm_cmd=['nm', '-Cs', 'python%s.lib' % py_ver]):
     """Returns the output of nm_cmd via a pipe.
 
 nm_output = getnam(nm_cmd = 'nm -Cs py_lib')"""
-    f = subprocess.Popen(nm_cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+    f = subprocess.Popen(nm_cmd, shell=True,
+                         stdout=subprocess.PIPE, universal_newlines=True)
     nm_output = f.stdout.read()
     f.stdout.close()
     return nm_output
+
 
 def parse_nm(nm_output):
     """Returns a tuple of lists: dlist for the list of data
@@ -93,16 +97,18 @@ dlist, flist = parse_nm(nm_output)"""
     flist.sort()
     return dlist, flist
 
-def output_def(dlist, flist, header, file = sys.stdout):
+
+def output_def(dlist, flist, header, file=sys.stdout):
     """Outputs the final DEF file to a file defaulting to stdout.
 
 output_def(dlist, flist, header, file = sys.stdout)"""
     for data_sym in dlist:
         header = header + '\t%s DATA\n' % data_sym
-    header = header + '\n' # blank line
+    header = header + '\n'  # blank line
     for func_sym in flist:
         header = header + '\t%s\n' % func_sym
     file.write(header)
+
 
 if __name__ == '__main__':
     libfile, deffile = parse_cmd()

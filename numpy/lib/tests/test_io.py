@@ -32,6 +32,7 @@ class TextIO(BytesIO):
     setting up the test data.
 
     """
+
     def __init__(self, s=""):
         BytesIO.__init__(self, asbytes(s))
 
@@ -223,7 +224,7 @@ class TestSavezLoad(RoundtripTest):
         np.savez(c, file_a=a, file_b=b)
         c.seek(0)
         l = np.load(c)
-        assert_equal(sorted(dir(l.f)), ['file_a','file_b'])
+        assert_equal(sorted(dir(l.f)), ['file_a', 'file_b'])
         assert_equal(a, l.f.file_a)
         assert_equal(b, l.f.file_b)
 
@@ -649,13 +650,13 @@ class TestLoadTxt(object):
             TypeError,
             '^usecols must be.*%s' % type(bogus_idx),
             np.loadtxt, c, usecols=bogus_idx
-            )
+        )
 
         assert_raises_regex(
             TypeError,
             '^usecols must be.*%s' % type(bogus_idx),
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
-            )
+        )
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -722,7 +723,8 @@ class TestLoadTxt(object):
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
         ndtype = [('idx', int), ('code', np.object)]
-        func = lambda s: strptime(s.strip(), "%Y-%m-%d")
+
+        def func(s): return strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.loadtxt(TextIO(data), delimiter=";", dtype=ndtype,
                           converters=converters)
@@ -899,7 +901,7 @@ class Testfromregex(object):
         assert_array_equal(x, a)
 
 
-#####--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 
 class TestFromTxt(object):
@@ -1139,10 +1141,11 @@ M   33  21.99
         assert_equal(test, [33, 66])
 
     def test_invalid_converter(self):
-        strip_rand = lambda x: float((b'r' in x.lower() and x.split()[-1]) or
-                                     (b'r' not in x.lower() and x.strip() or 0.0))
-        strip_per = lambda x: float((b'%' in x.lower() and x.split()[0]) or
-                                    (b'%' not in x.lower() and x.strip() or 0.0))
+        def strip_rand(x): return float((b'r' in x.lower() and x.split()[-1]) or
+                                        (b'r' not in x.lower() and x.strip() or 0.0))
+
+        def strip_per(x): return float((b'%' in x.lower() and x.split()[0]) or
+                                       (b'%' not in x.lower() and x.strip() or 0.0))
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
@@ -1154,7 +1157,8 @@ M   33  21.99
     def test_tricky_converter_bug1666(self):
         # Test some corner cases
         s = TextIO('q1,2\nq3,4')
-        cnv = lambda s: float(s[1:])
+
+        def cnv(s): return float(s[1:])
         test = np.genfromtxt(s, delimiter=',', converters={0: cnv})
         control = np.array([[1., 2.], [3., 4.]])
         assert_equal(test, control)
@@ -1173,17 +1177,18 @@ M   33  21.99
 
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
-        dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
-        dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
+        dmap = {'1:1': 0, '1:n': 1, 'm:1': 2, 'm:n': 3}
+        dtyp = [('e1', 'i4'), ('e2', 'i4'), ('e3', 'i2'), ('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              names=None, converters=conv)
-        control = np.rec.array([[1,5,-1,0], [2,8,-1,1], [3,3,-2,3]], dtype=dtyp)
+        control = np.rec.array(
+            [[1, 5, -1, 0], [2, 8, -1, 1], [3, 3, -2, 3]], dtype=dtyp)
         assert_equal(test, control)
-        dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
+        dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             usecols=(0,1,3), names=None, converters=conv)
-        control = np.rec.array([[1,5,0], [2,8,1], [3,3,3]], dtype=dtyp)
+                             usecols=(0, 1, 3), names=None, converters=conv)
+        control = np.rec.array([[1, 5, 0], [2, 8, 1], [3, 3, 3]], dtype=dtyp)
         assert_equal(test, control)
 
     def test_dtype_with_object(self):
@@ -1191,7 +1196,8 @@ M   33  21.99
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
         ndtype = [('idx', int), ('code', np.object)]
-        func = lambda s: strptime(s.strip(), "%Y-%m-%d")
+
+        def func(s): return strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.genfromtxt(TextIO(data), delimiter=";", dtype=ndtype,
                              converters=converters)
@@ -1774,13 +1780,13 @@ M   33  21.99
         txt = TextIO(data)
         test = np.genfromtxt(txt, skip_header=1, max_rows=3, names=True)
         control = np.array([(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)],
-                      dtype=[('c', '<f8'), ('d', '<f8')])
+                           dtype=[('c', '<f8'), ('d', '<f8')])
         assert_equal(test, control)
         # To continue reading the same "file", don't use skip_header or
         # names, and use the previously determined dtype.
         test = np.genfromtxt(txt, max_rows=None, dtype=test.dtype)
         control = np.array([(4.0, 4.0), (5.0, 5.0)],
-                      dtype=[('c', '<f8'), ('d', '<f8')])
+                           dtype=[('c', '<f8'), ('d', '<f8')])
         assert_equal(test, control)
 
     def test_gft_using_filename(self):
@@ -1930,7 +1936,8 @@ class TestPathUsage(object):
             with path.open('w') as f:
                 f.write(u'A,B\n0,1\n2,3')
 
-            kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
+            kwargs = dict(missing_values="N/A",
+                          names=True, case_sensitive=True)
             test = np.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', np.int), ('B', np.int)])
@@ -2030,6 +2037,7 @@ def test_load_refcount():
     finally:
         gc.enable()
     assert_equal(n_objects_in_cycles, 0)
+
 
 if __name__ == "__main__":
     run_module_suite()
