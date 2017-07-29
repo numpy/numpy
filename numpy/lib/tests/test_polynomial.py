@@ -82,7 +82,7 @@ import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
-    )
+)
 
 
 class TestDocs(object):
@@ -99,10 +99,11 @@ class TestDocs(object):
 
         # Should produce real output for perfect conjugates
         assert_(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
-        assert_(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
-                                      1-2j, 1.+3.5j, 1-3.5j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
+        assert_(np.isrealobj(np.poly([0 + 1j, -0 + -1j, 1 + 2j,
+                                      1 - 2j, 1. + 3.5j, 1 - 3.5j])))
+        assert_(np.isrealobj(
+            np.poly([1j, -1j, 1 + 2j, 1 - 2j, 1 + 3j, 1 - 3.j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1 + 2j, 1 - 2j])))
         assert_(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
         assert_(np.isrealobj(np.poly([1j, -1j])))
         assert_(np.isrealobj(np.poly([1, -1])))
@@ -110,7 +111,7 @@ class TestDocs(object):
         assert_(np.iscomplexobj(np.poly([1j, -1.0000001j])))
 
         np.random.seed(42)
-        a = np.random.randn(100) + 1j*np.random.randn(100)
+        a = np.random.randn(100) + 1j * np.random.randn(100)
         assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
@@ -133,7 +134,7 @@ class TestDocs(object):
         x = np.linspace(0, 2, 7)
         y = np.polyval(c, x)
         err = [1, -1, 1, -1, 1, -1, 1]
-        weights = np.arange(8, 1, -1)**2/7.0
+        weights = np.arange(8, 1, -1)**2 / 7.0
 
         # Check exception when too few points for variance estimate. Note that
         # the Bayesian estimate requires the number of data points to exceed
@@ -142,7 +143,7 @@ class TestDocs(object):
                       [0, 1, 3], [0, 1, 3], deg=0, cov=True)
 
         # check 1D case
-        m, cov = np.polyfit(x, y+err, 2, cov=True)
+        m, cov = np.polyfit(x, y + err, 2, cov=True)
         est = [3.8571, 0.2857, 1.619]
         assert_almost_equal(est, m, decimal=4)
         val0 = [[2.9388, -5.8776, 1.6327],
@@ -150,7 +151,7 @@ class TestDocs(object):
                 [1.6327, -4.2449, 2.3220]]
         assert_almost_equal(val0, cov, decimal=4)
 
-        m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
+        m2, cov2 = np.polyfit(x, y + err, 2, w=weights, cov=True)
         assert_almost_equal([4.8927, -1.0177, 1.7768], m2, decimal=4)
         val = [[8.7929, -10.0103, 0.9756],
                [-10.0103, 13.6134, -1.8178],
@@ -198,7 +199,7 @@ class TestDocs(object):
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
         assert_(
-            (p2.coeffs == [1/4./5., 1/3./4., 1/2./3., 9/1./2., 7, 6]).all())
+            (p2.coeffs == [1 / 4. / 5., 1 / 3. / 4., 1 / 2. / 3., 9 / 1. / 2., 7, 6]).all())
 
     def test_zero_dims(self):
         try:

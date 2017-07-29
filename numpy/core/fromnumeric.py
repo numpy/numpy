@@ -26,7 +26,7 @@ __all__ = [
     'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
-    ]
+]
 
 
 try:
@@ -1131,7 +1131,7 @@ def resize(a, new_shape):
         n_copies = n_copies + 1
         extra = Na - extra
 
-    a = concatenate((a,)*n_copies)
+    a = concatenate((a,) * n_copies)
     if extra > 0:
         a = a[:-extra]
 

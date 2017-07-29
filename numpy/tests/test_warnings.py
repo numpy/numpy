@@ -26,7 +26,6 @@ if sys.version_info >= (3, 4):
         def visit_Name(self, node):
             self.ls.append(node.id)
 
-
     class FindFuncs(ast.NodeVisitor):
         def __init__(self, filename):
             super().__init__()
@@ -60,7 +59,6 @@ if sys.version_info >= (3, 4):
                     "warnings should have an appropriate stacklevel; found in "
                     "{} on line {}".format(self.__filename, node.lineno))
 
-
     @dec.slow
     def test_warning_calls():
         # combined "ignore" and stacklevel error
@@ -78,7 +76,6 @@ if sys.version_info >= (3, 4):
             with tokenize.open(str(path)) as file:
                 tree = ast.parse(file.read())
                 FindFuncs(path).visit(tree)
-
 
     if __name__ == "__main__":
         run_module_suite()

@@ -1305,14 +1305,14 @@ def pad(array, pad_width, mode, **kwargs):
         'reflect': ['reflect_type'],
         'symmetric': ['reflect_type'],
         'wrap': [],
-        }
+    }
 
     kwdefaults = {
         'stat_length': None,
         'constant_values': 0,
         'end_values': 0,
         'reflect_type': 'even',
-        }
+    }
 
     if isinstance(mode, np.compat.basestring):
         # Make sure have allowed kwargs appropriate for mode

@@ -329,7 +329,7 @@ def get_info(name, notfound_action=0):
           # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
-          'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'openblas_lapack': openblas_lapack_info,  # use blas_opt instead
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
@@ -465,17 +465,17 @@ class system_info(object):
     section = 'ALL'
     dir_env_var = None
     search_static_first = 0  # XXX: disabled by default, may disappear in
-                            # future unless it is proved to be useful.
+    # future unless it is proved to be useful.
     verbosity = 1
     saved_results = {}
 
     notfounderror = NotFoundError
 
     def __init__(self,
-                  default_lib_dirs=default_lib_dirs,
-                  default_include_dirs=default_include_dirs,
-                  verbosity=1,
-                  ):
+                 default_lib_dirs=default_lib_dirs,
+                 default_include_dirs=default_include_dirs,
+                 verbosity=1,
+                 ):
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {'library_dirs': os.pathsep.join(default_lib_dirs),
@@ -556,7 +556,7 @@ class system_info(object):
             # Get values
             opt = self.cp.get(self.section, key)
             if opt:
-                tmp = {key : [opt]}
+                tmp = {key: [opt]}
                 dict_append(info, **tmp)
         return info
 
@@ -623,8 +623,8 @@ class system_info(object):
                     b = os.path.basename(d)
                     b = os.path.splitext(b)[0]
                     if b[:3] == 'lib':
-                        log.info('Replacing _lib_names[0]==%r with %r' \
-                              % (self._lib_names[0], b[3:]))
+                        log.info('Replacing _lib_names[0]==%r with %r'
+                                 % (self._lib_names[0], b[3:]))
                         self._lib_names[0] = b[3:]
             else:
                 ds = d.split(os.pathsep)
@@ -642,7 +642,8 @@ class system_info(object):
         ret = []
         for d in dirs:
             if len(d) > 0 and not os.path.isdir(d):
-                warnings.warn('Specified path %s is invalid.' % d, stacklevel=2)
+                warnings.warn('Specified path %s is invalid.' %
+                              d, stacklevel=2)
                 continue
 
             if d not in ret:
@@ -776,7 +777,8 @@ class system_info(object):
         found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts)
         if len(found_libs) > 0 and len(found_libs) == len(libs):
             # Now, check for optional libraries
-            opt_found_dirs, opt_found_libs = self._find_libs(lib_dirs, opt_libs, exts)
+            opt_found_dirs, opt_found_libs = self._find_libs(
+                lib_dirs, opt_libs, exts)
             found_libs.extend(opt_found_libs)
             for lib_dir in opt_found_dirs:
                 if lib_dir not in found_dirs:
@@ -808,16 +810,16 @@ class fft_opt_info(system_info):
 
 
 class fftw_info(system_info):
-    #variables to override
+    # variables to override
     section = 'fftw'
     dir_env_var = 'FFTW'
     notfounderror = FFTWNotFoundError
-    ver_info = [{'name':'fftw3',
-                    'libs':['fftw3'],
-                    'includes':['fftw3.h'],
-                    'macros':[('SCIPY_FFTW3_H', None)]},
-                  {'name':'fftw2',
-                    'libs':['rfftw', 'fftw'],
+    ver_info = [{'name': 'fftw3',
+                 'libs': ['fftw3'],
+                 'includes':['fftw3.h'],
+                 'macros':[('SCIPY_FFTW3_H', None)]},
+                {'name': 'fftw2',
+                 'libs': ['rfftw', 'fftw'],
                     'includes':['fftw.h', 'rfftw.h'],
                     'macros':[('SCIPY_FFTW_H', None)]}]
 
@@ -854,72 +856,72 @@ class fftw_info(system_info):
 
 
 class fftw2_info(fftw_info):
-    #variables to override
+    # variables to override
     section = 'fftw'
     dir_env_var = 'FFTW'
     notfounderror = FFTWNotFoundError
-    ver_info = [{'name':'fftw2',
-                    'libs':['rfftw', 'fftw'],
-                    'includes':['fftw.h', 'rfftw.h'],
-                    'macros':[('SCIPY_FFTW_H', None)]}
-                  ]
+    ver_info = [{'name': 'fftw2',
+                 'libs': ['rfftw', 'fftw'],
+                 'includes':['fftw.h', 'rfftw.h'],
+                 'macros':[('SCIPY_FFTW_H', None)]}
+                ]
 
 
 class fftw3_info(fftw_info):
-    #variables to override
+    # variables to override
     section = 'fftw3'
     dir_env_var = 'FFTW3'
     notfounderror = FFTWNotFoundError
-    ver_info = [{'name':'fftw3',
-                    'libs':['fftw3'],
-                    'includes':['fftw3.h'],
-                    'macros':[('SCIPY_FFTW3_H', None)]},
-                  ]
+    ver_info = [{'name': 'fftw3',
+                 'libs': ['fftw3'],
+                 'includes':['fftw3.h'],
+                 'macros':[('SCIPY_FFTW3_H', None)]},
+                ]
 
 
 class dfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    ver_info = [{'name':'dfftw',
-                    'libs':['drfftw', 'dfftw'],
-                    'includes':['dfftw.h', 'drfftw.h'],
-                    'macros':[('SCIPY_DFFTW_H', None)]}]
+    ver_info = [{'name': 'dfftw',
+                 'libs': ['drfftw', 'dfftw'],
+                 'includes':['dfftw.h', 'drfftw.h'],
+                 'macros':[('SCIPY_DFFTW_H', None)]}]
 
 
 class sfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    ver_info = [{'name':'sfftw',
-                    'libs':['srfftw', 'sfftw'],
-                    'includes':['sfftw.h', 'srfftw.h'],
-                    'macros':[('SCIPY_SFFTW_H', None)]}]
+    ver_info = [{'name': 'sfftw',
+                 'libs': ['srfftw', 'sfftw'],
+                 'includes':['sfftw.h', 'srfftw.h'],
+                 'macros':[('SCIPY_SFFTW_H', None)]}]
 
 
 class fftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    ver_info = [{'name':'fftw threads',
-                    'libs':['rfftw_threads', 'fftw_threads'],
-                    'includes':['fftw_threads.h', 'rfftw_threads.h'],
-                    'macros':[('SCIPY_FFTW_THREADS_H', None)]}]
+    ver_info = [{'name': 'fftw threads',
+                 'libs': ['rfftw_threads', 'fftw_threads'],
+                 'includes':['fftw_threads.h', 'rfftw_threads.h'],
+                 'macros':[('SCIPY_FFTW_THREADS_H', None)]}]
 
 
 class dfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    ver_info = [{'name':'dfftw threads',
-                    'libs':['drfftw_threads', 'dfftw_threads'],
-                    'includes':['dfftw_threads.h', 'drfftw_threads.h'],
-                    'macros':[('SCIPY_DFFTW_THREADS_H', None)]}]
+    ver_info = [{'name': 'dfftw threads',
+                 'libs': ['drfftw_threads', 'dfftw_threads'],
+                 'includes':['dfftw_threads.h', 'drfftw_threads.h'],
+                 'macros':[('SCIPY_DFFTW_THREADS_H', None)]}]
 
 
 class sfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    ver_info = [{'name':'sfftw threads',
-                    'libs':['srfftw_threads', 'sfftw_threads'],
-                    'includes':['sfftw_threads.h', 'srfftw_threads.h'],
-                    'macros':[('SCIPY_SFFTW_THREADS_H', None)]}]
+    ver_info = [{'name': 'sfftw threads',
+                 'libs': ['srfftw_threads', 'sfftw_threads'],
+                 'includes':['sfftw_threads.h', 'srfftw_threads.h'],
+                 'macros':[('SCIPY_SFFTW_THREADS_H', None)]}]
 
 
 class djbfft_info(system_info):
@@ -1052,7 +1054,7 @@ class atlas_info(system_info):
         dirs = []
         for d in pre_dirs:
             dirs.extend(self.combine_paths(d, ['atlas*', 'ATLAS*',
-                                         'sse', '3dnow', 'sse2']) + [d])
+                                               'sse', '3dnow', 'sse2']) + [d])
         return [d for d in dirs if os.path.isdir(d)]
 
     def calc_info(self):
@@ -1283,7 +1285,7 @@ class lapack_src_info(system_info):
                 src_dir = d
                 break
         if not src_dir:
-            #XXX: Get sources from netlib. May be ask first.
+            # XXX: Get sources from netlib. May be ask first.
             return
         # The following is extracted from LAPACK-3.0/SRC/Makefile.
         # Added missing names from lapack-lite-3.1.1/SRC/Makefile
@@ -1360,10 +1362,10 @@ class lapack_src_info(system_info):
         oclasrc = ' icmax1 scsum1 '                # *.f
         ozlasrc = ' izmax1 dzsum1 '                # *.f
         sources = ['s%s.f' % f for f in (sclaux + slasrc).split()] \
-                  + ['d%s.f' % f for f in (dzlaux + dlasrc).split()] \
-                  + ['c%s.f' % f for f in (clasrc).split()] \
-                  + ['z%s.f' % f for f in (zlasrc).split()] \
-                  + ['%s.f' % f for f in (allaux + oclasrc + ozlasrc).split()]
+            + ['d%s.f' % f for f in (dzlaux + dlasrc).split()] \
+            + ['c%s.f' % f for f in (clasrc).split()] \
+            + ['z%s.f' % f for f in (zlasrc).split()] \
+            + ['%s.f' % f for f in (allaux + oclasrc + ozlasrc).split()]
         sources = [os.path.join(src_dir, f) for f in sources]
         # Lapack 3.1:
         src_dir2 = os.path.join(src_dir, '..', 'INSTALL')
@@ -1378,6 +1380,7 @@ class lapack_src_info(system_info):
         sources = [f for f in sources if os.path.isfile(f)]
         info = {'sources': sources, 'language': 'f77'}
         self.set_info(**info)
+
 
 atlas_version_c_text = r'''
 /* This file is generated from numpy/distutils/system_info.py */
@@ -1526,7 +1529,7 @@ class lapack_opt_info(system_info):
         if atlas_info:
             l = atlas_info.get('define_macros', [])
             if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
-                   or ('ATLAS_WITHOUT_LAPACK', None) in l:
+                    or ('ATLAS_WITHOUT_LAPACK', None) in l:
                 need_lapack = 1
             info = atlas_info
 
@@ -1538,7 +1541,7 @@ class lapack_opt_info(system_info):
 
         if need_lapack:
             lapack_info = get_info('lapack')
-            #lapack_info = {} ## uncomment for testing
+            # lapack_info = {} ## uncomment for testing
             if lapack_info:
                 dict_append(info, **lapack_info)
             else:
@@ -1742,7 +1745,7 @@ class openblas_info(blas_info):
         lib_dirs = self.get_lib_dirs()
 
         openblas_libs = self.get_libs('libraries', self._lib_names)
-        if openblas_libs == self._lib_names: # backward compat with 1.8.0
+        if openblas_libs == self._lib_names:  # backward compat with 1.8.0
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
         info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
@@ -1845,7 +1848,7 @@ class blas_src_info(system_info):
                 src_dir = d
                 break
         if not src_dir:
-            #XXX: Get sources from netlib. May be ask first.
+            # XXX: Get sources from netlib. May be ask first.
             return
         blas1 = '''
         caxpy csscal dnrm2 dzasum saxpy srotg zdotc ccopy cswap drot
@@ -1869,9 +1872,9 @@ class blas_src_info(system_info):
         dgemm dtrmm ssymm strsm zher2k zsyrk cher2k csyrk dsymm dtrsm
         ssyr2k zherk ztrmm cherk ctrmm dsyr2k ssyrk zgemm zsymm ztrsm
         '''
-        sources = [os.path.join(src_dir, f + '.f') \
+        sources = [os.path.join(src_dir, f + '.f')
                    for f in (blas1 + blas2 + blas3).split()]
-        #XXX: should we check here actual existence of source files?
+        # XXX: should we check here actual existence of source files?
         sources = [f for f in sources if os.path.isfile(f)]
         info = {'sources': sources, 'language': 'f77'}
         self.set_info(**info)
@@ -1887,7 +1890,7 @@ class x11_info(system_info):
                              default_include_dirs=default_x11_include_dirs)
 
     def calc_info(self):
-        if sys.platform  in ['win32']:
+        if sys.platform in ['win32']:
             return
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
@@ -1928,7 +1931,7 @@ class _numpy_info(system_info):
                 pass
 
             include_dirs.append(distutils.sysconfig.get_python_inc(
-                                        prefix=os.sep.join(prefix)))
+                prefix=os.sep.join(prefix)))
         except ImportError:
             pass
         py_incl_dir = distutils.sysconfig.get_python_inc()
@@ -1956,7 +1959,7 @@ class _numpy_info(system_info):
             if vrs is None:
                 continue
             macros = [(self.modulename.upper() + '_VERSION',
-                      '"\\"%s\\""' % (vrs)),
+                       '"\\"%s\\""' % (vrs)),
                       (self.modulename.upper(), None)]
             break
         dict_append(info, define_macros=macros)
@@ -2070,7 +2073,7 @@ class boost_python_info(system_info):
         info = {'libraries': [('boost_python_src',
                                {'include_dirs': [src_dir] + py_incl_dirs,
                                 'sources':bpl_srcs}
-                              )],
+                               )],
                 'include_dirs': [src_dir],
                 }
         if info:
@@ -2111,8 +2114,8 @@ class agg2_info(system_info):
                 [('agg2_src',
                   {'sources': agg2_srcs,
                    'include_dirs': [os.path.join(src_dir, 'include')],
-                  }
-                 )],
+                   }
+                  )],
                 'include_dirs': [os.path.join(src_dir, 'include')],
                 }
         if info:
@@ -2144,8 +2147,8 @@ class _pkg_config_info(system_info):
     def calc_info(self):
         config_exe = find_executable(self.get_config_exe())
         if not config_exe:
-            log.warn('File not found: %s. Cannot determine %s info.' \
-                  % (config_exe, self.section))
+            log.warn('File not found: %s. Cannot determine %s info.'
+                     % (config_exe, self.section))
             return
         info = {}
         macros = []
@@ -2360,6 +2363,7 @@ def combine_paths(*args, **kws):
     log.debug('(paths: %s)', ','.join(result))
     return result
 
+
 language_map = {'c': 0, 'c++': 1, 'f77': 2, 'f90': 3}
 inv_language_map = {0: 'c', 1: 'c++', 2: 'f77', 3: 'f90'}
 
@@ -2426,6 +2430,7 @@ def show_all(argv=None):
         r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
+
 
 if __name__ == "__main__":
     show_all()

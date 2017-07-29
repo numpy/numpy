@@ -287,7 +287,7 @@ import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec, SkipTest
-    )
+)
 from numpy.lib import format
 
 
@@ -362,7 +362,7 @@ PbufferT = [
     # x     y                  z
     ([3, 2], [[6., 4.], [6., 4.]], 8),
     ([4, 3], [[7., 5.], [7., 5.]], 9),
-    ]
+]
 
 
 # This is the structure of the table used for nested objects (DON'T PANIC!):
@@ -404,7 +404,7 @@ NbufferT = [
      'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
      'dd', ('OO', 7j), [[7., 5.], [7., 5.]], 9),
-    ]
+]
 
 record_arrays = [
     np.array(PbufferT, dtype=np.dtype(Pdescr).newbyteorder('<')),
@@ -414,7 +414,7 @@ record_arrays = [
 ]
 
 
-#BytesIO that reads a random number of bytes at a time
+# BytesIO that reads a random number of bytes at a time
 class BytesIOSRandomSize(BytesIO):
     def read(self, size=None):
         import random
@@ -441,7 +441,7 @@ def roundtrip_randsize(arr):
 def roundtrip_truncated(arr):
     f = BytesIO()
     format.write_array(f, arr)
-    #BytesIO is one byte short
+    # BytesIO is one byte short
     f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
@@ -632,7 +632,7 @@ def test_version_2_0_memmap():
 
     # 1.0 requested but data cannot be saved this way
     assert_raises(ValueError, format.open_memmap, tf, mode='w+', dtype=d.dtype,
-                            shape=d.shape, version=(1, 0))
+                  shape=d.shape, version=(1, 0))
 
     ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
                             shape=d.shape, version=(2, 0))
@@ -678,7 +678,8 @@ def test_write_version():
         except ValueError:
             pass
         else:
-            raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
+            raise AssertionError(
+                "we should have raised a ValueError for the bad version %r" % (version,))
 
 
 bad_version_magic = [
@@ -698,6 +699,7 @@ malformed_magic = [
     b'\x93NUMPY',
     b'',
 ]
+
 
 def test_read_magic():
     s1 = BytesIO()
@@ -719,6 +721,7 @@ def test_read_magic():
 
     assert_(s1.tell() == format.MAGIC_LEN)
     assert_(s2.tell() == format.MAGIC_LEN)
+
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
@@ -745,7 +748,7 @@ def test_large_header():
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
+    d = {'a': 1, 'b': 2, 'c': 'x' * 256 * 256}
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 

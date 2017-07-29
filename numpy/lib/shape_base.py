@@ -5,19 +5,20 @@ import warnings
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, isscalar, array, asanyarray
-    )
+)
 from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import vstack, atleast_3d
 from numpy.lib.index_tricks import ndindex
-from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
+# this raises all the right alarm bells
+from numpy.matrixlib.defmatrix import matrix
 
 
 __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'get_array_wrap'
-    ]
+]
 
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
@@ -101,7 +102,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     # arr, with the iteration axis at the end
     in_dims = list(range(nd))
-    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis+1:] + [axis])
+    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis + 1:] + [axis])
 
     # compute indices for the iteration axes, and append a trailing ellipsis to
     # prevent 0d arrays decaying to scalars, which fixes gh-8642
@@ -112,7 +113,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     try:
         ind0 = next(inds)
     except StopIteration:
-        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+        raise ValueError(
+            'Cannot apply_along_axis when any iteration dimensions are 0')
     res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
 
     # build a buffer for storing evaluations of func1d.
@@ -124,9 +126,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # permutation of axes such that out = buff.transpose(buff_permute)
     buff_dims = list(range(buff.ndim))
     buff_permute = (
-        buff_dims[0 : axis] +
-        buff_dims[buff.ndim-res.ndim : buff.ndim] +
-        buff_dims[axis : buff.ndim-res.ndim]
+        buff_dims[0: axis] +
+        buff_dims[buff.ndim - res.ndim: buff.ndim] +
+        buff_dims[axis: buff.ndim - res.ndim]
     )
 
     # matrices have a nasty __array_prepare__ and __array_wrap__
@@ -233,8 +235,9 @@ def apply_over_axes(func, a, axes):
                 val = res
             else:
                 raise ValueError("function is not returning "
-                        "an array of the correct shape")
+                                 "an array of the correct shape")
     return val
+
 
 def expand_dims(a, axis):
     """
@@ -309,7 +312,9 @@ def expand_dims(a, axis):
     # axis = normalize_axis_index(axis, a.ndim + 1)
     return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
+
 row_stack = vstack
+
 
 def column_stack(tup):
     """
@@ -351,6 +356,7 @@ def column_stack(tup):
             arr = array(arr, copy=False, subok=True, ndmin=2).T
         arrays.append(arr)
     return _nx.concatenate(arrays, 1)
+
 
 def dstack(tup):
     """
@@ -408,6 +414,7 @@ def dstack(tup):
     """
     return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
 
+
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
         if _nx.ndim(sub_arys[i]) == 0:
@@ -415,6 +422,7 @@ def _replace_zero_by_x_arrays(sub_arys):
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
     return sub_arys
+
 
 def array_split(ary, indices_or_sections, axis=0):
     """
@@ -451,8 +459,8 @@ def array_split(ary, indices_or_sections, axis=0):
             raise ValueError('number sections must be larger than 0.')
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
-                         extras * [Neach_section+1] +
-                         (Nsections-extras) * [Neach_section])
+                         extras * [Neach_section + 1] +
+                         (Nsections - extras) * [Neach_section])
         div_points = _nx.array(section_sizes).cumsum()
 
     sub_arys = []
@@ -465,7 +473,7 @@ def array_split(ary, indices_or_sections, axis=0):
     return sub_arys
 
 
-def split(ary,indices_or_sections,axis=0):
+def split(ary, indices_or_sections, axis=0):
     """
     Split an array into multiple sub-arrays.
 
@@ -542,6 +550,7 @@ def split(ary,indices_or_sections,axis=0):
     res = array_split(ary, indices_or_sections, axis)
     return res
 
+
 def hsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays horizontally (column-wise).
@@ -604,6 +613,7 @@ def hsplit(ary, indices_or_sections):
     else:
         return split(ary, indices_or_sections, 0)
 
+
 def vsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays vertically (row-wise).
@@ -655,6 +665,7 @@ def vsplit(ary, indices_or_sections):
         raise ValueError('vsplit only works on arrays of 2 or more dimensions')
     return split(ary, indices_or_sections, 0)
 
+
 def dsplit(ary, indices_or_sections):
     """
     Split array into multiple sub-arrays along the 3rd axis (depth).
@@ -700,17 +711,19 @@ def dsplit(ary, indices_or_sections):
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
 
+
 def get_array_prepare(*args):
     """Find the wrapper for the array with the highest priority.
 
     In case of ties, leftmost wins. If no wrapper is found, return None
     """
     wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
-                 x.__array_prepare__) for i, x in enumerate(args)
-                                   if hasattr(x, '__array_prepare__'))
+                       x.__array_prepare__) for i, x in enumerate(args)
+                      if hasattr(x, '__array_prepare__'))
     if wrappers:
         return wrappers[-1][-1]
     return None
+
 
 def get_array_wrap(*args):
     """Find the wrapper for the array with the highest priority.
@@ -718,11 +731,12 @@ def get_array_wrap(*args):
     In case of ties, leftmost wins. If no wrapper is found, return None
     """
     wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
-                 x.__array_wrap__) for i, x in enumerate(args)
-                                   if hasattr(x, '__array_wrap__'))
+                       x.__array_wrap__) for i, x in enumerate(args)
+                      if hasattr(x, '__array_wrap__'))
     if wrappers:
         return wrappers[-1][-1]
     return None
+
 
 def kron(a, b):
     """
@@ -806,12 +820,12 @@ def kron(a, b):
     nd = ndb
     if (ndb != nda):
         if (ndb > nda):
-            as_ = (1,)*(ndb-nda) + as_
+            as_ = (1,) * (ndb - nda) + as_
         else:
-            bs = (1,)*(nda-ndb) + bs
+            bs = (1,) * (nda - ndb) + bs
             nd = nda
-    result = outer(a, b).reshape(as_+bs)
-    axis = nd-1
+    result = outer(a, b).reshape(as_ + bs)
+    axis = nd - 1
     for _ in range(nd):
         result = concatenate(result, axis=axis)
     wrapper = get_array_prepare(a, b)
@@ -903,8 +917,8 @@ def tile(A, reps):
         # have no data there is no risk of an inadvertent overwrite.
         c = _nx.array(A, copy=False, subok=True, ndmin=d)
     if (d < c.ndim):
-        tup = (1,)*(c.ndim-d) + tup
-    shape_out = tuple(s*t for s, t in zip(c.shape, tup))
+        tup = (1,) * (c.ndim - d) + tup
+    shape_out = tuple(s * t for s, t in zip(c.shape, tup))
     n = c.size
     if n > 0:
         for dim_in, nrep in zip(c.shape, tup):

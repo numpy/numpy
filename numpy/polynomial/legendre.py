@@ -206,14 +206,15 @@ def leg2poly(c):
         # i is the current degree of c1
         for i in range(n - 1, 1, -1):
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
+            c0 = polysub(c[i - 2], (c1 * (i - 1)) / i)
+            c1 = polyadd(tmp, (polymulx(c1) * (2 * i - 1)) / i)
         return polyadd(c0, polymulx(c1))
 
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
+
 
 # Legendre
 legdomain = np.array([-1, 1])
@@ -322,7 +323,7 @@ def legfromroots(roots):
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [legmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [legmul(p[i], p[i + m]) for i in range(m)]
             if r:
                 tmp[0] = legmul(tmp[0], p[-1])
             p = tmp
@@ -468,14 +469,14 @@ def legmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1] = c[0]
     for i in range(1, len(c)):
         j = i + 1
         k = i - 1
         s = i + j
-        prd[j] = (c[i]*j)/s
-        prd[k] += (c[i]*i)/s
+        prd[j] = (c[i] * j) / s
+        prd[k] += (c[i] * i) / s
     return prd
 
 
@@ -530,20 +531,20 @@ def legmul(c1, c2):
         xs = c2
 
     if len(c) == 1:
-        c0 = c[0]*xs
+        c0 = c[0] * xs
         c1 = 0
     elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
+        c0 = c[0] * xs
+        c1 = c[1] * xs
     else:
         nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
+        c0 = c[-2] * xs
+        c1 = c[-1] * xs
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = legsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = legadd(tmp, (legmulx(c1)*(2*nd - 1))/nd)
+            c0 = legsub(c[-i] * xs, (c1 * (nd - 1)) / nd)
+            c1 = legadd(tmp, (legmulx(c1) * (2 * nd - 1)) / nd)
     return legadd(c0, legmulx(c1))
 
 
@@ -601,16 +602,16 @@ def legdiv(c1, c2):
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
-            p = legmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
+            p = legmul([0] * i + [1], c2)
+            q = rem[-1] / p[-1]
+            rem = rem[:-1] - q * p[:-1]
             quo[i] = q
         return quo, pu.trimseq(rem)
 
@@ -745,17 +746,17 @@ def legder(c, m=1, scl=1, axis=0):
     c = np.rollaxis(c, iaxis)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 2, -1):
-                der[j - 1] = (2*j - 1)*c[j]
+                der[j - 1] = (2 * j - 1) * c[j]
                 c[j - 2] += c[j]
             if n > 1:
-                der[1] = 3*c[2]
+                der[1] = 3 * c[2]
             der[0] = c[1]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
@@ -868,7 +869,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         return c
 
     c = np.rollaxis(c, iaxis)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -876,12 +877,12 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             if n > 1:
-                tmp[2] = c[1]/3
+                tmp[2] = c[1] / 3
             for j in range(2, n):
-                t = c[j]/(2*j + 1)
+                t = c[j] / (2 * j + 1)
                 tmp[j + 1] = t
                 tmp[j - 1] -= t
             tmp[0] += k[i] - legval(lbnd, tmp)
@@ -958,7 +959,7 @@ def legval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -973,9 +974,9 @@ def legval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*x*(2*nd - 1))/nd
-    return c0 + c1*x
+            c0 = c[-i] - (c1 * (nd - 1)) / nd
+            c1 = tmp + (c1 * x * (2 * nd - 1)) / nd
+    return c0 + c1 * x
 
 
 def legval2d(x, y, c):
@@ -1254,11 +1255,11 @@ def legvander(x, deg):
     v = np.empty(dims, dtype=dtyp)
     # Use forward recursion to generate the entries. This is not as accurate
     # as reverse recursion in this application but it is more efficient.
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
+            v[i] = (v[i - 1] * x * (2 * i - 1) - v[i - 2] * (i - 1)) / i
     return np.rollaxis(v, 0, v.ndim)
 
 
@@ -1321,7 +1322,7 @@ def legvander2d(x, y, deg):
 
     vx = legvander(x, degx)
     vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
+    v = vx[..., None] * vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1386,7 +1387,7 @@ def legvander3d(x, y, z, deg):
     vx = legvander(x, degx)
     vy = legvander(y, degy)
     vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    v = vx[..., None, None] * vy[..., None, :, None] * vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
@@ -1555,7 +1556,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     # set rcond
     if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
+        rcond = len(x) * np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
     if issubclass(lhs.dtype.type, np.complexfloating):
@@ -1565,15 +1566,15 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     scl[scl == 0] = 1
 
     # Solve the least squares problem.
-    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
+    c, resids, rank, s = la.lstsq(lhs.T / scl, rhs.T, rcond)
+    c = (c.T / scl).T
 
     # Expand c to include non-fitted coefficients which are set to zero
     if deg.ndim > 0:
         if c.ndim == 2:
-            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
+            cc = np.zeros((lmax + 1, c.shape[1]), dtype=c.dtype)
         else:
-            cc = np.zeros(lmax+1, dtype=c.dtype)
+            cc = np.zeros(lmax + 1, dtype=c.dtype)
         cc[deg] = c
         c = cc
 
@@ -1619,16 +1620,16 @@ def legcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = 1./np.sqrt(2*np.arange(n) + 1)
-    top = mat.reshape(-1)[1::n+1]
-    bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
+    scl = 1. / np.sqrt(2 * np.arange(n) + 1)
+    top = mat.reshape(-1)[1::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
+    top[...] = np.arange(1, n) * scl[:n - 1] * scl[1:n]
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    mat[:, -1] -= (c[:-1] / c[-1]) * (scl / scl[-1]) * (n / (2 * n - 1))
     return mat
 
 
@@ -1680,7 +1681,7 @@ def legroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
     m = legcompanion(c)
     r = la.eigvals(m)
@@ -1730,25 +1731,25 @@ def leggauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
+    c = np.array([0] * deg + [1])
     m = legcompanion(c)
     x = la.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = legval(x, c)
     df = legval(x, legder(c))
-    x -= dy/df
+    x -= dy / df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
     fm = legval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1 / (fm * df)
 
     # for Legendre we can also symmetrize
-    w = (w + w[::-1])/2
-    x = (x - x[::-1])/2
+    w = (w + w[::-1]) / 2
+    x = (x - x[::-1]) / 2
 
     # scale w to get the right value
     w *= 2. / w.sum()
@@ -1780,12 +1781,13 @@ def legweight(x):
     .. versionadded::1.7.0
 
     """
-    w = x*0.0 + 1.0
+    w = x * 0.0 + 1.0
     return w
 
 #
 # Legendre series class
 #
+
 
 class Legendre(ABCPolyBase):
     """A Legendre series class.

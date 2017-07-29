@@ -9,7 +9,7 @@ from distutils.errors import DistutilsError
 from numpy.distutils import ccompiler
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec
-    )
+)
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
@@ -25,6 +25,7 @@ def get_class(name, notfound_action=1):
           'temp2': Temp2Info
           }.get(name.lower(), _system_info)
     return cl()
+
 
 simple_site = """
 [ALL]
@@ -56,6 +57,7 @@ void bar(void) {
    printf("Hello bar");
 }
 """
+
 
 def have_compiler():
     """ Return True if there appears to be an executable compiler

@@ -113,7 +113,9 @@ class _FileOpeners(object):
         self._load()
         return self._file_openers[key]
 
+
 _file_openers = _FileOpeners()
+
 
 def open(path, mode='r', destpath=os.curdir):
     """
@@ -251,7 +253,7 @@ class DataSource (object):
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):
@@ -661,6 +663,6 @@ class Repository (DataSource):
         """
         if self._isurl(self._baseurl):
             raise NotImplementedError(
-                  "Directory listing of URLs, not supported yet.")
+                "Directory listing of URLs, not supported yet.")
         else:
             return os.listdir(self._baseurl)

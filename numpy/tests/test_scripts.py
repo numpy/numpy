@@ -64,7 +64,7 @@ def test_f2py():
     if sys.platform == 'win32':
         exe_dir = dirname(sys.executable)
 
-        if exe_dir.endswith('Scripts'): # virtualenv
+        if exe_dir.endswith('Scripts'):  # virtualenv
             f2py_cmd = r"%s\f2py.py" % exe_dir
         else:
             f2py_cmd = r"%s\Scripts\f2py.py" % exe_dir

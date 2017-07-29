@@ -29,6 +29,7 @@ if 'complex256' in numpy.typeDict:
 
 def memoize(func):
     result = []
+
     def wrapper():
         if not result:
             result.append(func())
@@ -43,7 +44,7 @@ def memoize(func):
 @memoize
 def get_values():
     rnd = numpy.random.RandomState(1)
-    values = numpy.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
+    values = numpy.tile(rnd.uniform(0, 100, size=nx * ny // 10), 10)
     return values
 
 
@@ -58,7 +59,7 @@ def get_squares():
     # original data transposed for that
     for t, v in squares.items():
         if t.startswith('complex'):
-            v += v.T*1j
+            v += v.T * 1j
     return squares
 
 

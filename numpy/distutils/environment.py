@@ -5,6 +5,7 @@ from distutils.dist import Distribution
 
 __metaclass__ = type
 
+
 class EnvironmentConfig(object):
     def __init__(self, distutils_section='ALL', **kw):
         self._distutils_section = distutils_section
@@ -16,7 +17,7 @@ class EnvironmentConfig(object):
         conf_desc = self._conf_keys[name]
         hook, envvar, confvar, convert = conf_desc
         if not convert:
-            convert = lambda x : x
+            def convert(x): return x
         print('%s.%s:' % (self._distutils_section, name))
         v = self._hook_handler(name, hook)
         print('  hook   : %s' % (convert(v),))

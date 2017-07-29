@@ -18,6 +18,8 @@ else:
     from numpy.distutils import log
 
 # Note that UnixCCompiler._compile appeared in Python 2.3
+
+
 def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
     """Compile a single source files with a Unix-style compiler."""
     # HP ad-hoc fix, see ticket 1383
@@ -55,7 +57,7 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
 
     try:
         self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
-                   extra_postargs, display = display)
+                   extra_postargs, display=display)
     except DistutilsExecError:
         msg = str(get_exception())
         raise CompileError(msg)
@@ -63,6 +65,7 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     # add commandline flags to dependency file
     with open(obj + '.d', 'a') as f:
         f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
+
 
 replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
 
@@ -95,7 +98,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
     objects, output_dir = self._fix_object_args(objects, output_dir)
 
     output_filename = \
-                    self.library_filename(output_libname, output_dir=output_dir)
+        self.library_filename(output_libname, output_dir=output_dir)
 
     if self._need_link(objects, output_filename):
         try:
@@ -111,10 +114,10 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             objects = tmp_objects[:50]
             tmp_objects = tmp_objects[50:]
             display = '%s: adding %d object files to %s' % (
-                           os.path.basename(self.archiver[0]),
-                           len(objects), output_filename)
+                os.path.basename(self.archiver[0]),
+                len(objects), output_filename)
             self.spawn(self.archiver + [output_filename] + objects,
-                       display = display)
+                       display=display)
 
         # Not many Unices required ranlib anymore -- SunOS 4.x is, I
         # think the only major Unix that does.  Maybe we need some
@@ -126,13 +129,14 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
                                    output_filename)
             try:
                 self.spawn(self.ranlib + [output_filename],
-                           display = display)
+                           display=display)
             except DistutilsExecError:
                 msg = str(get_exception())
                 raise LibError(msg)
     else:
         log.debug("skipping %s (up-to-date)", output_filename)
     return
+
 
 replace_method(UnixCCompiler, 'create_static_lib',
                UnixCCompiler_create_static_lib)

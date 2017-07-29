@@ -60,10 +60,12 @@ import subprocess
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
 
+
 def temp_file_name():
     fo, name = make_temp_file()
     fo.close()
     return name
+
 
 def get_pythonexe():
     pythonexe = sys.executable
@@ -73,6 +75,7 @@ def get_pythonexe():
         pythonexe = os.path.join(fdir, fn)
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
+
 
 def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
@@ -89,10 +92,10 @@ def find_executable(exe, path=None, _cache={}):
 
     if path is None:
         path = os.environ.get('PATH', os.defpath)
-    if os.name=='posix':
+    if os.name == 'posix':
         realpath = os.path.realpath
     else:
-        realpath = lambda a:a
+        def realpath(a): return a
 
     if exe.startswith('"'):
         exe = exe[1:-1]
@@ -107,12 +110,12 @@ def find_executable(exe, path=None, _cache={}):
     if os.path.isabs(exe):
         paths = ['']
     else:
-        paths = [ os.path.abspath(p) for p in path.split(os.pathsep) ]
+        paths = [os.path.abspath(p) for p in path.split(os.pathsep)]
 
     for path in paths:
         fn = os.path.join(path, exe)
         for s in suffixes:
-            f_ext = fn+s
+            f_ext = fn + s
             if not os.path.islink(f_ext):
                 f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
@@ -125,17 +128,20 @@ def find_executable(exe, path=None, _cache={}):
 
 ############################################################
 
-def _preserve_environment( names ):
+
+def _preserve_environment(names):
     log.debug('_preserve_environment(%r)' % (names))
     env = {}
     for name in names:
         env[name] = os.environ.get(name)
     return env
 
-def _update_environment( **env ):
+
+def _update_environment(**env):
     log.debug('_update_environment(...)')
     for name, value in env.items():
         os.environ[name] = value or ''
+
 
 def _supports_fileno(stream):
     """
@@ -150,8 +156,9 @@ def _supports_fileno(stream):
     else:
         return False
 
+
 def exec_command(command, execute_in='', use_shell=None, use_tee=None,
-                 _with_python = 1, **env ):
+                 _with_python=1, **env):
     """
     Return (status,output) of executed command.
 
@@ -178,13 +185,13 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     Wild cards will not work for non-posix systems or when use_shell=0.
 
     """
-    log.debug('exec_command(%r,%s)' % (command,\
-         ','.join(['%s=%r'%kv for kv in env.items()])))
+    log.debug('exec_command(%r,%s)' % (command,
+                                       ','.join(['%s=%r' % kv for kv in env.items()])))
 
     if use_tee is None:
-        use_tee = os.name=='posix'
+        use_tee = os.name == 'posix'
     if use_shell is None:
-        use_shell = os.name=='posix'
+        use_shell = os.name == 'posix'
     execute_in = os.path.abspath(execute_in)
     oldcwd = os.path.abspath(os.getcwd())
 
@@ -197,14 +204,14 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
         if os.path.isfile(exec_dir):
             exec_dir = os.path.dirname(exec_dir)
 
-    if oldcwd!=execute_in:
+    if oldcwd != execute_in:
         os.chdir(execute_in)
         log.debug('New cwd: %s' % execute_in)
     else:
         log.debug('Retaining cwd: %s' % oldcwd)
 
-    oldenv = _preserve_environment( list(env.keys()) )
-    _update_environment( **env )
+    oldenv = _preserve_environment(list(env.keys()))
+    _update_environment(**env)
 
     try:
         st = _exec_command(command,
@@ -212,7 +219,7 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
                            use_tee=use_tee,
                            **env)
     finally:
-        if oldcwd!=execute_in:
+        if oldcwd != execute_in:
             os.chdir(oldcwd)
             log.debug('Restored cwd to %s' % oldcwd)
         _update_environment(**oldenv)
@@ -220,14 +227,14 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     return st
 
 
-def _exec_command(command, use_shell=None, use_tee = None, **env):
+def _exec_command(command, use_shell=None, use_tee=None, **env):
     """
     Internal workhorse for exec_command().
     """
     if use_shell is None:
-        use_shell = os.name=='posix'
+        use_shell = os.name == 'posix'
     if use_tee is None:
-        use_tee = os.name=='posix'
+        use_tee = os.name == 'posix'
 
     if os.name == 'posix' and use_shell:
         # On POSIX, subprocess always uses /bin/sh, override

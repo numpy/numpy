@@ -154,6 +154,7 @@ class NoseTester(object):
         want to initialize `NoseTester` objects on behalf of other code.
 
     """
+
     def __init__(self, package=None, raise_warnings="release", depth=0):
         # Back-compat: 'None' used to mean either "release" or "develop"
         # depending on whether this was a release or develop version of
@@ -278,7 +279,7 @@ class NoseTester(object):
         # our way of doing coverage
         if coverage:
             argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
-                   '--cover-tests', '--cover-erase']
+                     '--cover-tests', '--cover-erase']
 
         if timer:
             if timer is True:
@@ -395,7 +396,7 @@ class NoseTester(object):
         utils.verbose = verbose
 
         argv, plugins = self.prepare_test_args(
-                label, verbose, extra_argv, doctests, coverage, timer)
+            label, verbose, extra_argv, doctests, coverage, timer)
 
         if doctests:
             print("Running unit tests and doctests for %s" % self.package_name)
@@ -451,11 +452,16 @@ class NoseTester(object):
                 sup.filter(DeprecationWarning,
                            r"sys\.exc_clear\(\) not supported in 3\.x",
                            module=threading)
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
-                sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
+                sup.filter(DeprecationWarning,
+                           message=r"in 3\.x, __setslice__")
+                sup.filter(DeprecationWarning,
+                           message=r"in 3\.x, __getslice__")
+                sup.filter(DeprecationWarning,
+                           message=r"buffer\(\) not supported in 3\.x")
+                sup.filter(DeprecationWarning,
+                           message=r"CObject type is not supported in 3\.x")
+                sup.filter(
+                    DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
             # Filter out some deprecation warnings inside nose 1.3.7 when run
             # on python 3.5b2. See
             #     https://github.com/nose-devs/nose/issues/929

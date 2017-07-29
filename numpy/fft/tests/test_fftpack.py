@@ -3,9 +3,9 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.random import random
 from numpy.testing import (
-        run_module_suite, assert_array_almost_equal, assert_array_equal,
-        assert_raises,
-        )
+    run_module_suite, assert_array_almost_equal, assert_array_equal,
+    assert_raises,
+)
 import threading
 import sys
 if sys.version_info[0] >= 3:
@@ -16,9 +16,9 @@ else:
 
 def fft1(x):
     L = len(x)
-    phase = -2j*np.pi*(np.arange(L)/float(L))
+    phase = -2j * np.pi * (np.arange(L) / float(L))
     phase = np.arange(L).reshape(-1, 1) * phase
-    return np.sum(x*np.exp(phase), axis=1)
+    return np.sum(x * np.exp(phase), axis=1)
 
 
 class TestFFTShift(object):
@@ -30,33 +30,33 @@ class TestFFTShift(object):
 class TestFFT1D(object):
 
     def test_fft(self):
-        x = random(30) + 1j*random(30)
+        x = random(30) + 1j * random(30)
         assert_array_almost_equal(fft1(x), np.fft.fft(x))
         assert_array_almost_equal(fft1(x) / np.sqrt(30),
                                   np.fft.fft(x, norm="ortho"))
 
     def test_ifft(self):
-        x = random(30) + 1j*random(30)
+        x = random(30) + 1j * random(30)
         assert_array_almost_equal(x, np.fft.ifft(np.fft.fft(x)))
         assert_array_almost_equal(
             x, np.fft.ifft(np.fft.fft(x, norm="ortho"), norm="ortho"))
 
     def test_fft2(self):
-        x = random((30, 20)) + 1j*random((30, 20))
+        x = random((30, 20)) + 1j * random((30, 20))
         assert_array_almost_equal(np.fft.fft(np.fft.fft(x, axis=1), axis=0),
                                   np.fft.fft2(x))
         assert_array_almost_equal(np.fft.fft2(x) / np.sqrt(30 * 20),
                                   np.fft.fft2(x, norm="ortho"))
 
     def test_ifft2(self):
-        x = random((30, 20)) + 1j*random((30, 20))
+        x = random((30, 20)) + 1j * random((30, 20))
         assert_array_almost_equal(np.fft.ifft(np.fft.ifft(x, axis=1), axis=0),
                                   np.fft.ifft2(x))
         assert_array_almost_equal(np.fft.ifft2(x) * np.sqrt(30 * 20),
                                   np.fft.ifft2(x, norm="ortho"))
 
     def test_fftn(self):
-        x = random((30, 20, 10)) + 1j*random((30, 20, 10))
+        x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_array_almost_equal(
             np.fft.fft(np.fft.fft(np.fft.fft(x, axis=2), axis=1), axis=0),
             np.fft.fftn(x))
@@ -64,7 +64,7 @@ class TestFFT1D(object):
                                   np.fft.fftn(x, norm="ortho"))
 
     def test_ifftn(self):
-        x = random((30, 20, 10)) + 1j*random((30, 20, 10))
+        x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_array_almost_equal(
             np.fft.ifft(np.fft.ifft(np.fft.ifft(x, axis=2), axis=1), axis=0),
             np.fft.ifftn(x))
@@ -73,10 +73,10 @@ class TestFFT1D(object):
 
     def test_rfft(self):
         x = random(30)
-        for n in [x.size, 2*x.size]:
+        for n in [x.size, 2 * x.size]:
             for norm in [None, 'ortho']:
                 assert_array_almost_equal(
-                    np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
+                    np.fft.fft(x, n=n, norm=norm)[:(n // 2 + 1)],
                     np.fft.rfft(x, n=n, norm=norm))
             assert_array_almost_equal(np.fft.rfft(x, n=n) / np.sqrt(n),
                                       np.fft.rfft(x, n=n, norm="ortho"))
@@ -112,7 +112,7 @@ class TestFFT1D(object):
             x, np.fft.irfftn(np.fft.rfftn(x, norm="ortho"), norm="ortho"))
 
     def test_hfft(self):
-        x = random(14) + 1j*random(14)
+        x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
         assert_array_almost_equal(np.fft.fft(x), np.fft.hfft(x_herm))
@@ -120,7 +120,7 @@ class TestFFT1D(object):
                                   np.fft.hfft(x_herm, norm="ortho"))
 
     def test_ihttf(self):
-        x = random(14) + 1j*random(14)
+        x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
         assert_array_almost_equal(x_herm, np.fft.ihfft(np.fft.hfft(x_herm)))
@@ -140,12 +140,13 @@ class TestFFT1D(object):
                       (np.fft.ihfft, np.fft.hfft),
                       ]
         for forw, back in func_pairs:
-            for n in [x.size, 2*x.size]:
+            for n in [x.size, 2 * x.size]:
                 for norm in [None, 'ortho']:
                     tmp = forw(x, n=n, norm=norm)
                     tmp = back(tmp, n=n, norm=norm)
                     assert_array_almost_equal(x_norm,
                                               np.linalg.norm(tmp))
+
 
 class TestFFTThreadSafe(object):
     threads = 16
@@ -167,14 +168,14 @@ class TestFFTThreadSafe(object):
         # Make sure all threads returned the correct value
         for i in range(self.threads):
             assert_array_equal(q.get(timeout=5), expected,
-                'Function returned wrong value in multithreaded context')
+                               'Function returned wrong value in multithreaded context')
 
     def test_fft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.fft, a)
 
     def test_ifft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.ifft, a)
 
     def test_rfft(self):
@@ -182,7 +183,7 @@ class TestFFTThreadSafe(object):
         self._test_mtsame(np.fft.rfft, a)
 
     def test_irfft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.irfft, a)
 
 

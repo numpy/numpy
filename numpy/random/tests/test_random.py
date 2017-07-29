@@ -3,10 +3,10 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
-        )
+    run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
+    assert_no_warnings, assert_array_equal, assert_array_almost_equal,
+    suppress_warnings
+)
 from numpy import random
 import sys
 import warnings
@@ -165,7 +165,7 @@ class TestRandint(object):
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
@@ -291,8 +291,8 @@ class TestRandomDist(object):
         np.random.seed(self.seed)
         actual = np.random.randn(3, 2)
         desired = np.array([[1.34016345771863121, 1.73759122771936081],
-                           [1.498988344300628, -0.2286433324536169],
-                           [2.031033998682787, 2.17032494605655257]])
+                            [1.498988344300628, -0.2286433324536169],
+                            [2.031033998682787, 2.17032494605655257]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_randint(self):
@@ -480,9 +480,9 @@ class TestRandomDist(object):
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))
         desired = np.array(
-                [[1.45341850513746058e-02, 5.31297615662868145e-04],
-                 [1.85366619058432324e-06, 4.19214516800110563e-03],
-                 [1.58405155108498093e-04, 1.26252891949397652e-04]])
+            [[1.45341850513746058e-02, 5.31297615662868145e-04],
+             [1.85366619058432324e-06, 4.19214516800110563e-03],
+             [1.58405155108498093e-04, 1.26252891949397652e-04]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_binomial(self):
@@ -645,7 +645,7 @@ class TestRandomDist(object):
 
     def test_multinomial(self):
         np.random.seed(self.seed)
-        actual = np.random.multinomial(20, [1/6.]*6, size=(3, 2))
+        actual = np.random.multinomial(20, [1 / 6.] * 6, size=(3, 2))
         desired = np.array([[[4, 3, 5, 4, 2, 2],
                              [5, 2, 8, 2, 2, 1]],
                             [[3, 4, 3, 6, 0, 4],
@@ -660,7 +660,7 @@ class TestRandomDist(object):
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[1.463620246718631, 11.73759122771936 ],
+        desired = np.array([[[1.463620246718631, 11.73759122771936],
                              [1.622445133300628, 9.771356667546383]],
                             [[2.154490787682787, 12.170324946056553],
                              [1.719909438201865, 9.230548443648306]],
@@ -742,9 +742,9 @@ class TestRandomDist(object):
         np.random.seed(self.seed)
         actual = np.random.pareto(a=.123456789, size=(3, 2))
         desired = np.array(
-                [[2.46852460439034849e+03, 1.41286880810518346e+03],
-                 [5.28287797029485181e+07, 6.57720981047328785e+07],
-                 [1.40840323350391515e+02, 1.98390255135251704e+05]])
+            [[2.46852460439034849e+03, 1.41286880810518346e+03],
+             [5.28287797029485181e+07, 6.57720981047328785e+07],
+             [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
         #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
@@ -765,9 +765,9 @@ class TestRandomDist(object):
         lambig = np.iinfo('l').max
         lamneg = -1
         assert_raises(ValueError, np.random.poisson, lamneg)
-        assert_raises(ValueError, np.random.poisson, [lamneg]*10)
+        assert_raises(ValueError, np.random.poisson, [lamneg] * 10)
         assert_raises(ValueError, np.random.poisson, lambig)
-        assert_raises(ValueError, np.random.poisson, [lambig]*10)
+        assert_raises(ValueError, np.random.poisson, [lambig] * 10)
 
     def test_power(self):
         np.random.seed(self.seed)
@@ -878,7 +878,8 @@ class TestRandomDist(object):
                 raise TypeError
 
         throwing_float = np.array(1.0).view(ThrowingFloat)
-        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+        assert_raises(TypeError, np.random.uniform,
+                      throwing_float, throwing_float)
 
         class ThrowingInteger(np.ndarray):
             def __int__(self):
@@ -1336,21 +1337,24 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one * 3, mode, right)
         assert_raises(ValueError, triangular, left * 3, bad_mode_one, right)
-        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two, right)
+        assert_raises(ValueError, triangular,
+                      bad_left_two * 3, bad_mode_two, right)
 
         self.setSeed()
         actual = triangular(left, mode * 3, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode * 3, right)
         assert_raises(ValueError, triangular, left, bad_mode_one * 3, right)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3, right)
+        assert_raises(ValueError, triangular, bad_left_two,
+                      bad_mode_two * 3, right)
 
         self.setSeed()
         actual = triangular(left, mode, right * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode, right * 3)
         assert_raises(ValueError, triangular, left, bad_mode_one, right * 3)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two, right * 3)
+        assert_raises(ValueError, triangular, bad_left_two,
+                      bad_mode_two, right * 3)
 
     def test_binomial(self):
         n = [1]
@@ -1485,6 +1489,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
+
 class TestThread(object):
     # make sure each state produces the same sequence even in threads
     def setup(self):
@@ -1524,10 +1529,12 @@ class TestThread(object):
 
     def test_multinomial(self):
         def gen_random(state, out):
-            out[...] = state.multinomial(10, [1/6.]*6, size=10000)
+            out[...] = state.multinomial(10, [1 / 6.] * 6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
 
 # See Issue #4263
+
+
 class TestSingleEltArrayInput(object):
     def setup(self):
         self.argOne = np.array([2])
@@ -1612,6 +1619,7 @@ class TestSingleEltArrayInput(object):
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
+
 
 if __name__ == "__main__":
     run_module_suite()

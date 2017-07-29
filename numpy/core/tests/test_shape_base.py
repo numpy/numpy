@@ -10,6 +10,7 @@ from numpy.testing import (assert_, assert_raises,
 
 from numpy.compat import long
 
+
 class TestAtleast1d(object):
     def test_0D_array(self):
         a = array(1)
@@ -87,7 +88,8 @@ class TestAtleast2d(object):
         """
         assert_(atleast_2d(3).shape == (1, 1))
         assert_(atleast_2d([3j, 1]).shape == (1, 2))
-        assert_(atleast_2d([[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
+        assert_(atleast_2d(
+            [[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
 
 
 class TestAtleast3d(object):
@@ -109,7 +111,7 @@ class TestAtleast3d(object):
         a = array([[1, 2], [1, 2]])
         b = array([[2, 3], [2, 3]])
         res = [atleast_3d(a), atleast_3d(b)]
-        desired = [a[:,:, newaxis], b[:,:, newaxis]]
+        desired = [a[:, :, newaxis], b[:, :, newaxis]]
         assert_array_equal(res, desired)
 
     def test_3D_array(self):
@@ -191,10 +193,11 @@ class TestConcatenate(object):
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
-            a = np.ones((1,)*ndim)
+            a = np.ones((1,) * ndim)
             np.concatenate((a, a), axis=0)  # OK
             assert_raises(np.AxisError, np.concatenate, (a, a), axis=ndim)
-            assert_raises(np.AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
+            assert_raises(np.AxisError, np.concatenate,
+                          (a, a), axis=-(ndim + 1))
 
         # Scalars cannot be concatenated
         assert_raises(ValueError, concatenate, (0,))
@@ -309,7 +312,7 @@ def test_stack():
     arrays = [np.random.randn(3, 4) for _ in range(10)]
     axes = [0, 1, 2, -1, -2, -3]
     expected_shapes = [(10, 3, 4), (3, 10, 4), (3, 4, 10),
-                        (3, 4, 10), (3, 10, 4), (10, 3, 4)]
+                       (3, 4, 10), (3, 10, 4), (10, 3, 4)]
     for axis, expected_shape in zip(axes, expected_shapes):
         assert_equal(np.stack(arrays, axis).shape, expected_shape)
     # empty arrays
@@ -422,9 +425,9 @@ class TestBlock(object):
         result = np.block([
             [
                 np.block([
-                   [one],
-                   [three],
-                   [four]
+                    [one],
+                    [three],
+                    [four]
                 ]),
                 two
             ],

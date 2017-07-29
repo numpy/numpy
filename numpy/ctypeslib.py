@@ -54,7 +54,8 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
-import sys, os
+import sys
+import os
 from numpy import integer, ndarray, dtype as _dtype, deprecate, array
 from numpy.core.multiarray import _flagdict, flagsobj
 
@@ -118,7 +119,7 @@ else:
         """
         if ctypes.__version__ < '1.0.1':
             import warnings
-            warnings.warn("All features of ctypes interface may not work " \
+            warnings.warn("All features of ctypes interface may not work "
                           "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
@@ -149,13 +150,14 @@ else:
                 try:
                     return ctypes.cdll[libpath]
                 except OSError:
-                    ## defective lib file
+                    # defective lib file
                     raise
-        ## if no successful return in the libname_ext loop:
+        # if no successful return in the libname_ext loop:
         raise OSError("no file with expected extension")
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
                                     'load_library')
+
 
 def _num_fromflags(flaglist):
     num = 0
@@ -163,8 +165,11 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
+
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
               'OWNDATA', 'UPDATEIFCOPY']
+
+
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -198,24 +203,26 @@ class _ndptr(_ndptr_base):
         if not isinstance(obj, ndarray):
             raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
-               and obj.dtype != cls._dtype_:
+                and obj.dtype != cls._dtype_:
             raise TypeError("array must have data type %s" % cls._dtype_)
         if cls._ndim_ is not None \
-               and obj.ndim != cls._ndim_:
+                and obj.ndim != cls._ndim_:
             raise TypeError("array must have %d dimension(s)" % cls._ndim_)
         if cls._shape_ is not None \
-               and obj.shape != cls._shape_:
+                and obj.shape != cls._shape_:
             raise TypeError("array must have shape %s" % str(cls._shape_))
         if cls._flags_ is not None \
-               and ((obj.flags.num & cls._flags_) != cls._flags_):
+                and ((obj.flags.num & cls._flags_) != cls._flags_):
             raise TypeError("array must have flags %s" %
-                    _flags_fromnum(cls._flags_))
+                            _flags_fromnum(cls._flags_))
         return obj.ctypes
 
 
 # Factory for an array-checking class with from_param defined for
 #  use with ctypes argtypes mechanism
 _pointer_type_cache = {}
+
+
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -305,18 +312,19 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             strshape = [str(shape)]
             shape = (shape,)
         shape = tuple(shape)
-        name += "_"+"x".join(strshape)
+        name += "_" + "x".join(strshape)
     if flags is not None:
-        name += "_"+"_".join(flags)
+        name += "_" + "_".join(flags)
     else:
         flags = []
-    klass = type("ndpointer_%s"%name, (_ndptr,),
+    klass = type("ndpointer_%s" % name, (_ndptr,),
                  {"_dtype_": dtype,
-                  "_shape_" : shape,
-                  "_ndim_" : ndim,
-                  "_flags_" : num})
+                  "_shape_": shape,
+                  "_ndim_": ndim,
+                  "_flags_": num})
     _pointer_type_cache[(dtype, shape, ndim, num)] = klass
     return klass
+
 
 if ctypes is not None:
     ct = ctypes
@@ -331,9 +339,12 @@ if ctypes is not None:
         """Given a ctypes simple type, construct and attach an
         __array_interface__ property to it if it does not yet have one.
         """
-        try: simple_type.__array_interface__
-        except AttributeError: pass
-        else: return
+        try:
+            simple_type.__array_interface__
+        except AttributeError:
+            pass
+        else:
+            return
 
         typestr = _dtype(dtype).str
         _typecodes[typestr] = simple_type
@@ -370,9 +381,12 @@ if ctypes is not None:
         """Given a ctypes array type, construct and attach an
         __array_interface__ property to it if it does not yet have one.
         """
-        try: array_type.__array_interface__
-        except AttributeError: pass
-        else: return
+        try:
+            array_type.__array_interface__
+        except AttributeError:
+            pass
+        else:
+            return
 
         shape = []
         ob = array_type
@@ -401,9 +415,12 @@ if ctypes is not None:
         attach an __array_interface__ property to it if it does not
         yet have one.
         """
-        try: pointer_obj.__array_interface__
-        except AttributeError: pass
-        else: return
+        try:
+            pointer_obj.__array_interface__
+        except AttributeError:
+            pass
+        else:
+            return
 
         contents = pointer_obj.contents
         dtype = _dtype(type(contents))
@@ -426,7 +443,8 @@ if ctypes is not None:
         The size parameter is ignored if converting from a ctypes array
         """
         tp = type(obj)
-        try: tp.__array_interface__
+        try:
+            tp.__array_interface__
         except AttributeError:
             if hasattr(obj, 'contents'):
                 prep_pointer(obj, shape)

@@ -19,6 +19,7 @@ from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
+
 class RankWarning(UserWarning):
     """
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
@@ -28,6 +29,7 @@ class RankWarning(UserWarning):
 
     """
     pass
+
 
 def poly(seq_of_zeros):
     """
@@ -150,6 +152,7 @@ def poly(seq_of_zeros):
 
     return a
 
+
 def roots(p):
     """
     Return the roots of a polynomial with coefficients given in p.
@@ -215,7 +218,7 @@ def roots(p):
     trailing_zeros = len(p) - non_zero[-1] - 1
 
     # strip leading and trailing zeros
-    p = p[int(non_zero[0]):int(non_zero[-1])+1]
+    p = p[int(non_zero[0]):int(non_zero[-1]) + 1]
 
     # casting: if incoming array isn't floating point, make it floating point.
     if not issubclass(p.dtype.type, (NX.floating, NX.complexfloating)):
@@ -224,8 +227,8 @@ def roots(p):
     N = len(p)
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
-        A = diag(NX.ones((N-2,), p.dtype), -1)
-        A[0,:] = -p[1:] / p[0]
+        A = diag(NX.ones((N - 2,), p.dtype), -1)
+        A[0, :] = -p[1:] / p[0]
         roots = eigvals(A)
     else:
         roots = NX.array([])
@@ -233,6 +236,7 @@ def roots(p):
     # tack any zeros onto the back of the array
     roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtype)))
     return roots
+
 
 def polyint(p, m=1, k=None):
     """
@@ -308,10 +312,10 @@ def polyint(p, m=1, k=None):
         k = NX.zeros(m, float)
     k = atleast_1d(k)
     if len(k) == 1 and m > 1:
-        k = k[0]*NX.ones(m, float)
+        k = k[0] * NX.ones(m, float)
     if len(k) < m:
         raise ValueError(
-              "k must be a scalar or a rank-1 array of length 1 or >m.")
+            "k must be a scalar or a rank-1 array of length 1 or >m.")
 
     truepoly = isinstance(p, poly1d)
     p = NX.asarray(p)
@@ -326,6 +330,7 @@ def polyint(p, m=1, k=None):
         if truepoly:
             return poly1d(val)
         return val
+
 
 def polyder(p, m=1):
     """
@@ -394,6 +399,7 @@ def polyder(p, m=1):
     if truepoly:
         val = poly1d(val)
     return val
+
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
@@ -560,7 +566,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     # set rcond
     if rcond is None:
-        rcond = len(x)*finfo(x.dtype).eps
+        rcond = len(x) * finfo(x.dtype).eps
 
     # set up least squares equation for powers of x
     lhs = vander(x, order)
@@ -580,10 +586,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             rhs *= w
 
     # scale lhs to improve condition number and solve
-    scale = NX.sqrt((lhs*lhs).sum(axis=0))
+    scale = NX.sqrt((lhs * lhs).sum(axis=0))
     lhs /= scale
     c, resids, rank, s = lstsq(lhs, rhs, rcond)
-    c = (c.T/scale).T  # broadcast scale coefficients
+    c = (c.T / scale).T  # broadcast scale coefficients
 
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
@@ -606,7 +612,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         if y.ndim == 1:
             return c, Vbase * fac
         else:
-            return c, Vbase[:,:, NX.newaxis] * fac
+            return c, Vbase[:, :, NX.newaxis] * fac
     else:
         return c
 
@@ -680,6 +686,7 @@ def polyval(p, x):
         y = y * x + p[i]
     return y
 
+
 def polyadd(a1, a2):
     """
     Find the sum of two polynomials.
@@ -739,6 +746,7 @@ def polyadd(a1, a2):
     if truepoly:
         val = poly1d(val)
     return val
+
 
 def polysub(a1, a2):
     """
@@ -843,6 +851,7 @@ def polymul(a1, a2):
         val = poly1d(val)
     return val
 
+
 def polydiv(u, v):
     """
     Returns the quotient and remainder of polynomial division.
@@ -898,17 +907,20 @@ def polydiv(u, v):
     scale = 1. / v[0]
     q = NX.zeros((max(m - n + 1, 1),), w.dtype)
     r = u.copy()
-    for k in range(0, m-n+1):
+    for k in range(0, m - n + 1):
         d = scale * r[k]
         q[k] = d
-        r[k:k+n+1] -= d*v
+        r[k:k + n + 1] -= d * v
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
     if truepoly:
         return poly1d(q), poly1d(r)
     return q, r
 
+
 _poly_mat = re.compile(r"[*][*]([0-9]*)")
+
+
 def _raise_power(astr, wrap=70):
     n = 0
     line1 = ''
@@ -922,16 +934,16 @@ def _raise_power(astr, wrap=70):
         power = mat.groups()[0]
         partstr = astr[n:span[0]]
         n = span[1]
-        toadd2 = partstr + ' '*(len(power)-1)
-        toadd1 = ' '*(len(partstr)-1) + power
+        toadd2 = partstr + ' ' * (len(power) - 1)
+        toadd1 = ' ' * (len(partstr) - 1) + power
         if ((len(line2) + len(toadd2) > wrap) or
                 (len(line1) + len(toadd1) > wrap)):
             output += line1 + "\n" + line2 + "\n "
             line1 = toadd1
             line2 = toadd2
         else:
-            line2 += partstr + ' '*(len(power)-1)
-            line1 += ' '*(len(partstr)-1) + power
+            line2 += partstr + ' ' * (len(power) - 1)
+            line1 += ' ' * (len(partstr) - 1) + power
     output += line1 + "\n" + line2
     return output + astr[n:]
 
@@ -1064,6 +1076,7 @@ class poly1d(object):
     @property
     def _coeffs(self):
         return self.__dict__['coeffs']
+
     @_coeffs.setter
     def _coeffs(self, coeffs):
         self.__dict__['coeffs'] = coeffs
@@ -1120,7 +1133,7 @@ class poly1d(object):
 
         # Remove leading zeros
         coeffs = self.coeffs[NX.logical_or.accumulate(self.coeffs != 0)]
-        N = len(coeffs)-1
+        N = len(coeffs) - 1
 
         def fmt_float(q):
             s = '%.4g' % q
@@ -1137,7 +1150,7 @@ class poly1d(object):
                 coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
                                           fmt_float(imag(coeffs[k])))
 
-            power = (N-k)
+            power = (N - k)
             if power == 0:
                 if coefstr != '0':
                     newstr = '%s' % (coefstr,)
@@ -1220,7 +1233,7 @@ class poly1d(object):
 
     def __div__(self, other):
         if isscalar(other):
-            return poly1d(self.coeffs/other)
+            return poly1d(self.coeffs / other)
         else:
             other = poly1d(other)
             return polydiv(self, other)
@@ -1229,7 +1242,7 @@ class poly1d(object):
 
     def __rdiv__(self, other):
         if isscalar(other):
-            return poly1d(other/self.coeffs)
+            return poly1d(other / self.coeffs)
         else:
             other = poly1d(other)
             return polydiv(other, self)
@@ -1248,7 +1261,6 @@ class poly1d(object):
             return NotImplemented
         return not self.__eq__(other)
 
-
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
@@ -1262,7 +1274,7 @@ class poly1d(object):
         if key < 0:
             raise ValueError("Does not support negative powers.")
         if key > self.order:
-            zr = NX.zeros(key-self.order, self.coeffs.dtype)
+            zr = NX.zeros(key - self.order, self.coeffs.dtype)
             self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
         self._coeffs[ind] = val
@@ -1298,5 +1310,6 @@ class poly1d(object):
         return poly1d(polyder(self.coeffs, m=m))
 
 # Stuff to do on module import
+
 
 warnings.simplefilter('always', RankWarning)

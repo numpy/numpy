@@ -6,6 +6,7 @@ import sys
 from distutils.dep_util import newer
 from distutils.msvccompiler import get_build_version as get_msvc_build_version
 
+
 def needs_mingw_ftime_workaround():
     # We need the mingw workaround for _ftime if the msvc runtime version is
     # 7.1 or above and we build with mingw ...
@@ -17,7 +18,8 @@ def needs_mingw_ftime_workaround():
 
     return False
 
-def configuration(parent_package='',top_path=None):
+
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random', parent_package, top_path)
 
@@ -45,11 +47,11 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('mtrand',
                          sources=[join('mtrand', x) for x in
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
-                                   'distributions.c']]+[generate_libraries],
+                                   'distributions.c']] + [generate_libraries],
                          libraries=libs,
                          depends=[join('mtrand', '*.h'),
                                   join('mtrand', '*.pyx'),
-                                  join('mtrand', '*.pxi'),],
+                                  join('mtrand', '*.pxi'), ],
                          define_macros=defs,
                          )
 

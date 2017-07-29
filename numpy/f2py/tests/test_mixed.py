@@ -36,5 +36,6 @@ class TestMixed(util.F2PyTest):
         assert_equal(self.module.bar11.__doc__,
                      textwrap.dedent(expected).lstrip())
 
+
 if __name__ == "__main__":
     run_module_suite()

@@ -9,7 +9,8 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal
 )
 
-ajoin = lambda *paths: join(*((sep,)+paths))
+ajoin = lambda *paths: join(*((sep,) + paths))
+
 
 class TestAppendpath(object):
 
@@ -35,10 +36,11 @@ class TestAppendpath(object):
         assert_equal(appendpath('/prefix/sub/sub2', '/prefix/sub/sup/name'),
                      ajoin('prefix', 'sub', 'sub2', 'sup', 'name'))
 
+
 class TestMinrelpath(object):
 
     def test_1(self):
-        n = lambda path: path.replace('/', sep)
+        def n(path): return path.replace('/', sep)
         assert_equal(minrelpath(n('aa/bb')), n('aa/bb'))
         assert_equal(minrelpath('..'), '..')
         assert_equal(minrelpath(n('aa/..')), '')
@@ -49,6 +51,7 @@ class TestMinrelpath(object):
         assert_equal(minrelpath(n('.././..')), n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')), n('dd'))
 
+
 class TestGpaths(object):
 
     def test_gpaths(self):
@@ -57,6 +60,7 @@ class TestGpaths(object):
         assert_(join(local_path, 'command', 'build_src.py') in ls, repr(ls))
         f = gpaths('system_info.py', local_path)
         assert_(join(local_path, 'system_info.py') == f[0], repr(f))
+
 
 class TestSharedExtension(object):
 

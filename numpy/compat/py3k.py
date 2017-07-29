@@ -79,11 +79,13 @@ else:
 def getexception():
     return sys.exc_info()[1]
 
+
 def asbytes_nested(x):
     if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
         return [asbytes_nested(y) for y in x]
     else:
         return asbytes(x)
+
 
 def asunicode_nested(x):
     if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
@@ -91,11 +93,13 @@ def asunicode_nested(x):
     else:
         return asunicode(x)
 
+
 def is_pathlib_path(obj):
     """
     Check whether obj is a pathlib.Path object.
     """
     return Path is not None and isinstance(obj, Path)
+
 
 if sys.version_info[0] >= 3 and sys.version_info[1] >= 4:
     def npy_load_module(name, fn, info=None):

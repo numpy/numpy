@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import run_module_suite, assert_raises
 
+
 class TestIndexErrors(object):
     '''Tests to exercise indexerrors not covered by other tests.'''
 
@@ -121,6 +122,7 @@ class TestIndexErrors(object):
         a = np.zeros((0, 3))
         assert_raises(IndexError, lambda: a.item(100))
         assert_raises(IndexError, lambda: a.itemset(100, 1))
+
 
 if __name__ == "__main__":
     run_module_suite()

@@ -5,10 +5,11 @@ from numpy.core.test_rational import rational
 from numpy.testing import (
     run_module_suite, assert_equal, assert_array_equal,
     assert_raises, assert_
-    )
+)
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
 )
+
 
 def assert_shapes_correct(input_shapes, expected_shape):
     # Broadcast a list of arrays with the given input shapes and check the
@@ -302,7 +303,7 @@ def test_as_strided():
     a['num'] = np.arange(1, 5)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     expected_num = [[1, 2, 3, 4]] * 3
-    expected_obj = [[None]*4]*3
+    expected_obj = [[None] * 4] * 3
     assert_equal(a_view.dtype, dt)
     assert_array_equal(expected_num, a_view['num'])
     assert_array_equal(expected_obj, a_view['obj'])
@@ -324,6 +325,7 @@ def test_as_strided():
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
     assert_array_equal([r] * 3, a_view)
+
 
 def as_strided_writeable():
     arr = np.ones(10)

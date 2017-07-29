@@ -75,9 +75,9 @@ multiarray_types_api = {
     # End 1.6 API
 }
 
-#define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
-#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
+# define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
+# define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
+# define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -403,15 +403,15 @@ ufunc_funcs_api = {
 # List of all the dicts which define the C API
 # XXX: DO NOT CHANGE THE ORDER OF TUPLES BELOW !
 multiarray_api = (
-        multiarray_global_vars,
-        multiarray_scalar_bool_values,
-        multiarray_types_api,
-        multiarray_funcs_api,
+    multiarray_global_vars,
+    multiarray_scalar_bool_values,
+    multiarray_types_api,
+    multiarray_funcs_api,
 )
 
 ufunc_api = (
-        ufunc_funcs_api,
-        ufunc_types_api
+    ufunc_funcs_api,
+    ufunc_types_api
 )
 
 full_api = multiarray_api + ufunc_api

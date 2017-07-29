@@ -319,7 +319,7 @@ class Template(object):
                 arg0 = e_value.args[0]
             else:
                 arg0 = coerce_text(e_value)
-            e_value.args = (self._add_line_info(arg0, pos),)            
+            e_value.args = (self._add_line_info(arg0, pos),)
             if PY3:
                 raise e_value
             else:
@@ -644,6 +644,7 @@ class _Empty(object):
     if sys.version < "3":
         __nonzero__ = __bool__
 
+
 Empty = _Empty()
 del _Empty
 
@@ -692,6 +693,7 @@ def lex(s, name=None, trim_whitespace=True, line_offset=0, delimeters=None):
     if trim_whitespace:
         chunks = trim_lex(chunks)
     return chunks
+
 
 lex.__doc__ = """
 Lex a string into chunks:
@@ -789,6 +791,7 @@ def trim_lex(tokens):
                     tokens[i + 1] = next_chunk
     return tokens
 
+
 trim_lex.__doc__ = r"""
     Takes a lexed set of tokens, and removes whitespace when there is
     a directive on a line by itself:
@@ -833,6 +836,7 @@ def parse(s, name=None, line_offset=0, delimeters=None):
         next_chunk, tokens = parse_expr(tokens, name)
         result.append(next_chunk)
     return result
+
 
 parse.__doc__ = r"""
     Parses a string into a kind of AST
@@ -1235,6 +1239,7 @@ def isolate_expression(string, start_pos, end_pos):
         parts.append(lines[erow][:ecol])
     return ''.join(parts)
 
+
 _fill_command_usage = """\
 %prog [OPTIONS] TEMPLATE arg=value
 
@@ -1291,7 +1296,7 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        with open(template_name, 'rb', encoding="latin-1") as f: 
+        with open(template_name, 'rb', encoding="latin-1") as f:
             template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
@@ -1300,10 +1305,11 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        with open(options.output, 'wb') as f: 
+        with open(options.output, 'wb') as f:
             f.write(result)
     else:
         sys.stdout.write(result)
+
 
 if __name__ == '__main__':
     fill_command()

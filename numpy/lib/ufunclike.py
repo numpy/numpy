@@ -11,6 +11,7 @@ import numpy.core.numeric as nx
 import warnings
 import functools
 
+
 def _deprecate_out_named_y(f):
     """
     Allow the out argument to be passed as the name `y` (deprecated)
@@ -80,6 +81,7 @@ def fix(x, out=None):
     if out is None and type(res) is nx.ndarray:
         res = res[()]
     return res
+
 
 @_deprecate_out_named_y
 def isposinf(x, out=None):

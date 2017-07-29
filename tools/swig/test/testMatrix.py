@@ -2,26 +2,29 @@
 from __future__ import division, absolute_import, print_function
 
 # System imports
-from   distutils.util import get_platform
+from distutils.util import get_platform
 import os
 import sys
 import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Matrix
 
 ######################################################################
 
+
 class MatrixTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTests"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -130,7 +133,8 @@ class MatrixTestCase(unittest.TestCase):
         scale = Matrix.__dict__[self.typeStr + "Scale"]
         matrix = np.array([[1, 2, 3], [2, 1, 2], [3, 2, 1]], self.typeCode)
         scale(matrix, 4)
-        self.assertEquals((matrix == [[4, 8, 12], [8, 4, 8], [12, 8, 4]]).all(), True)
+        self.assertEquals(
+            (matrix == [[4, 8, 12], [8, 4, 8], [12, 8, 4]]).all(), True)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
     def testScaleWrongDim(self):
@@ -236,123 +240,138 @@ class MatrixTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         luSplit = Matrix.__dict__[self.typeStr + "LUSplit"]
         lower, upper = luSplit([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        self.assertEquals((lower == [[1, 0, 0], [4, 5, 0], [7, 8, 9]]).all(), True)
-        self.assertEquals((upper == [[0, 2, 3], [0, 0, 6], [0, 0, 0]]).all(), True)
+        self.assertEquals(
+            (lower == [[1, 0, 0], [4, 5, 0], [7, 8, 9]]).all(), True)
+        self.assertEquals(
+            (upper == [[0, 2, 3], [0, 0, 6], [0, 0, 0]]).all(), True)
 
 ######################################################################
+
 
 class scharTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
 
+
 class ucharTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
 
+
 class shortTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
 
+
 class ushortTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
 
+
 class intTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
 
+
 class uintTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
 
+
 class longTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
 
+
 class ulongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
 
+
 class longLongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
 
+
 class ulongLongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
 
+
 class floatTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
 
+
 class doubleTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(    scharTestCase))
-    suite.addTest(unittest.makeSuite(    ucharTestCase))
-    suite.addTest(unittest.makeSuite(    shortTestCase))
-    suite.addTest(unittest.makeSuite(   ushortTestCase))
-    suite.addTest(unittest.makeSuite(      intTestCase))
-    suite.addTest(unittest.makeSuite(     uintTestCase))
-    suite.addTest(unittest.makeSuite(     longTestCase))
-    suite.addTest(unittest.makeSuite(    ulongTestCase))
-    suite.addTest(unittest.makeSuite( longLongTestCase))
+    suite.addTest(unittest.makeSuite(scharTestCase))
+    suite.addTest(unittest.makeSuite(ucharTestCase))
+    suite.addTest(unittest.makeSuite(shortTestCase))
+    suite.addTest(unittest.makeSuite(ushortTestCase))
+    suite.addTest(unittest.makeSuite(intTestCase))
+    suite.addTest(unittest.makeSuite(uintTestCase))
+    suite.addTest(unittest.makeSuite(longTestCase))
+    suite.addTest(unittest.makeSuite(ulongTestCase))
+    suite.addTest(unittest.makeSuite(longLongTestCase))
     suite.addTest(unittest.makeSuite(ulongLongTestCase))
-    suite.addTest(unittest.makeSuite(    floatTestCase))
-    suite.addTest(unittest.makeSuite(   doubleTestCase))
+    suite.addTest(unittest.makeSuite(floatTestCase))
+    suite.addTest(unittest.makeSuite(doubleTestCase))
 
     # Execute the test suite
     print("Testing 2D Functions of Module Matrix")

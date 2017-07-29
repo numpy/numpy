@@ -22,6 +22,7 @@ struct {
 };
 """
 
+
 def pyod(filename):
     """Python implementation of the od UNIX utility (od -b, more exactly).
 
@@ -48,7 +49,7 @@ def pyod(filename):
             yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
             for i in range(0, len(yo), 16):
                 line = ['%07d' % int(oct(i))]
-                line.extend(['%03d' % c for c in yo[i:i+16]])
+                line.extend(['%03d' % c for c in yo[i:i + 16]])
                 out.append(" ".join(line))
             return out
         finally:
@@ -62,7 +63,7 @@ def pyod(filename):
             yo2 = [oct(o)[2:] for o in fid.read()]
             for i in range(0, len(yo2), 16):
                 line = ['%07d' % int(oct(i)[2:])]
-                line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+                line.extend(['%03d' % int(c) for c in yo2[i:i + 16]])
                 out.append(" ".join(line))
             return out
         finally:
@@ -73,8 +74,9 @@ def pyod(filename):
     else:
         return _pyod3()
 
+
 _BEFORE_SEQ = ['000', '000', '000', '000', '000', '000', '000', '000',
-              '001', '043', '105', '147', '211', '253', '315', '357']
+               '001', '043', '105', '147', '211', '253', '315', '357']
 _AFTER_SEQ = ['376', '334', '272', '230', '166', '124', '062', '020']
 
 _IEEE_DOUBLE_BE = ['301', '235', '157', '064', '124', '000', '000', '000']
@@ -88,6 +90,7 @@ _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
 _DOUBLE_DOUBLE_BE = ['301', '235', '157', '064', '124', '000', '000', '000'] + \
                     ['000'] * 8
+
 
 def long_double_representation(lines):
     """Given a binary dump as given by GNU od -b, look for long double

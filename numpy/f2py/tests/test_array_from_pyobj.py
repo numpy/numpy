@@ -92,6 +92,7 @@ class Intent(object):
     def is_intent_exact(self, *names):
         return len(self.intent_list) == len(names) and self.is_intent(*names)
 
+
 intent = Intent()
 
 _type_names = ['BOOL', 'BYTE', 'UBYTE', 'SHORT', 'USHORT', 'INT', 'UINT',

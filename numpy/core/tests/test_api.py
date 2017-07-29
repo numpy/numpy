@@ -4,8 +4,8 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_array_equal,
-     assert_raises, HAS_REFCOUNT
+    run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_raises, HAS_REFCOUNT
 )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
@@ -103,8 +103,8 @@ def test_array_array():
                  dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
              dict(__array_struct__=a.__array_struct__))
-    ## wasn't what I expected... is np.array(o) supposed to equal a ?
-    ## instead we get a array([...], dtype=">V18")
+    # wasn't what I expected... is np.array(o) supposed to equal a ?
+    # instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array
@@ -181,6 +181,7 @@ def test_fastCopyAndTranspose():
     assert_equal(b, a.T)
     assert_(b.flags.owndata)
 
+
 def test_array_astype():
     a = np.arange(6, dtype='f4').reshape(2, 3)
     # Default behavior: allows unsafe casts, keeps memory layout,
@@ -243,21 +244,21 @@ def test_array_astype():
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
-    a = np.array([b'a'*100], dtype='O')
+    a = np.array([b'a' * 100], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array([u'a'*100], dtype='O')
+    a = np.array([u'a' * 100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
 
     # Same test as above but for strings shorter than 64 characters
-    a = np.array([b'a'*10], dtype='O')
+    a = np.array([b'a' * 10], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array([u'a'*10], dtype='O')
+    a = np.array([u'a' * 10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -287,6 +288,7 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
 
@@ -303,6 +305,7 @@ def test_copyto_fromscalar():
     mask = np.array([[0, 1], [1, 1], [1, 0]], dtype='?')
     np.copyto(a.T, 4.5, where=mask)
     assert_equal(a, [[2.5, 4.5, 4.5], [4.5, 4.5, 3.5]])
+
 
 def test_copyto():
     a = np.arange(6, dtype='i4').reshape(2, 3)
@@ -340,12 +343,13 @@ def test_copyto():
     # 'dst' must be an array
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
+
 def test_copyto_permut():
     # test explicit overflow case
     pad = 500
     l = [True] * pad + [True, True, True, True]
-    r = np.zeros(len(l)-pad)
-    d = np.ones(len(l)-pad)
+    r = np.zeros(len(l) - pad)
+    d = np.ones(len(l) - pad)
     mask = np.array(l)[pad:]
     np.copyto(r, d, where=mask[::-1])
 
@@ -392,6 +396,7 @@ def test_copyto_permut():
     d = np.zeros(power)
     np.copyto(r, d, where=False)
     assert_equal(r.sum(), r.size)
+
 
 def test_copy_order():
     a = np.arange(24).reshape(2, 1, 3, 4)
@@ -461,8 +466,9 @@ def test_copy_order():
     res = np.copy(c, order='K')
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
+
 def test_contiguous_flags():
-    a = np.ones((4, 4, 1))[::2,:,:]
+    a = np.ones((4, 4, 1))[::2, :, :]
     if NPY_RELAXED_STRIDES_CHECKING:
         a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
@@ -493,7 +499,7 @@ def test_contiguous_flags():
         check_contig(a[0], True, True)
         check_contig(a[None, ::4, ..., None], True, True)
         check_contig(b[0, 0, ...], False, True)
-        check_contig(b[:,:, 0:0,:,:], True, True)
+        check_contig(b[:, :, 0:0, :, :], True, True)
     else:
         # Check slicing update of flags:
         check_contig(a[0], True, False)
@@ -505,13 +511,17 @@ def test_contiguous_flags():
     check_contig(a.ravel(), True, True)
     check_contig(np.ones((1, 3, 1)).squeeze(), True, True)
 
+
 def test_broadcast_arrays():
     # Test user defined dtypes
     a = np.array([(1, 2, 3)], dtype='u4,u4,u4')
     b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4')
     result = np.broadcast_arrays(a, b)
-    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
-    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+    assert_equal(result[0], np.array(
+        [(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
+    assert_equal(result[1], np.array(
+        [(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+
 
 if __name__ == "__main__":
     run_module_suite()

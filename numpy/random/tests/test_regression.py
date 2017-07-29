@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises,
-    )
+)
 from numpy import random
 from numpy.compat import long
 import numpy as np
@@ -29,7 +29,8 @@ class TestRegression(object):
         ]
         is_64bits = sys.maxsize > 2**32
         if is_64bits and sys.platform != 'win32':
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2)) # Check for 64-bit systems
+            # Check for 64-bit systems
+            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
         for arg in args:
             assert_(np.random.hypergeometric(*arg) > 0)
 
@@ -75,7 +76,7 @@ class TestRegression(object):
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -103,7 +104,7 @@ class TestRegression(object):
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = np.random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, np.random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -133,6 +134,7 @@ class TestRegression(object):
         # Force Garbage Collection - should not segfault.
         import gc
         gc.collect()
+
 
 if __name__ == "__main__":
     run_module_suite()

@@ -96,8 +96,8 @@ class _DeprecationTestCase(object):
                 num_found += 1
             elif not ignore_others:
                 raise AssertionError(
-                        "expected %s but got: %s" %
-                        (self.warning_cls.__name__, warning.category))
+                    "expected %s but got: %s" %
+                    (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
             lst = [str(w.category) for w in self.log]
@@ -110,11 +110,11 @@ class _DeprecationTestCase(object):
                 function(*args, **kwargs)
                 if exceptions != tuple():
                     raise AssertionError(
-                            "No error raised during function call")
+                        "No error raised during function call")
             except exceptions:
                 if exceptions == tuple():
                     raise AssertionError(
-                            "Error raised during function call")
+                        "Error raised during function call")
 
     def assert_not_deprecated(self, function, args=(), kwargs={}):
         """Test that warnings are not raised.
@@ -125,7 +125,7 @@ class _DeprecationTestCase(object):
                         exceptions=tuple(), args=args, kwargs=kwargs)
         """
         self.assert_deprecated(function, num=0, ignore_others=True,
-                        exceptions=tuple(), args=args, kwargs=kwargs)
+                               exceptions=tuple(), args=args, kwargs=kwargs)
 
 
 class _VisibleDeprecationTestCase(_DeprecationTestCase):
@@ -162,8 +162,8 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             self.assert_deprecated(op, args=(a, a[:-1]), num=None)
 
             # Element comparison error (numpy array can't be compared).
-            a = np.array([1, np.array([1,2,3])], dtype=object)
-            b = np.array([1, np.array([1,2,3])], dtype=object)
+            a = np.array([1, np.array([1, 2, 3])], dtype=object)
+            b = np.array([1, np.array([1, 2, 3])], dtype=object)
             self.assert_deprecated(op, args=(a, b), num=None)
 
     def test_string(self):
@@ -238,6 +238,7 @@ class TestDatetime64Timezone(_DeprecationTestCase):
     from local time to UTC, even if otherwise it handles time in a timezone
     naive fashion.
     """
+
     def test_string(self):
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
@@ -259,8 +260,8 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
     """
 
     def test_fortran_contiguous(self):
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.complex,))
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
+        self.assert_deprecated(np.ones((2, 2)).T.view, args=(np.complex,))
+        self.assert_deprecated(np.ones((2, 2)).T.view, args=(np.int8,))
 
 
 class TestInvalidOrderParameterInputForFlattenArrayDeprecation(_DeprecationTestCase):
@@ -322,6 +323,7 @@ class TestLinspaceInvalidNumParameter(_DeprecationTestCase):
     DeprecationWarning will be issued for the time being to give
     developers time to refactor relevant code.
     """
+
     def test_float_arg(self):
         # 2016-02-25, PR#7328
         self.assert_deprecated(np.linspace, args=(0, 10, 2.5))
@@ -362,12 +364,13 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
     deprecated keys should not be added as capitalized aliases in
     _add_aliases in numerictypes.py.
     """
+
     def test_all_dtypes(self):
         deprecated_types = [
             'Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
             'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
             'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
-            ]
+        ]
         if sys.version_info[0] < 3:
             deprecated_types.extend(['Unicode0', 'String0'])
 
@@ -397,19 +400,20 @@ class TestClassicIntDivision(_DeprecationTestCase):
     if used for division
     List of data types: http://docs.scipy.org/doc/numpy/user/basics.types.html
     """
+
     def test_int_dtypes(self):
-        #scramble types and do some mix and match testing
+        # scramble types and do some mix and match testing
         deprecated_types = [
-           'bool_', 'int_', 'intc', 'uint8', 'int8', 'uint64', 'int32', 'uint16',
-           'intp', 'int64', 'uint32', 'int16'
-            ]
+            'bool_', 'int_', 'intc', 'uint8', 'int8', 'uint64', 'int32', 'uint16',
+            'intp', 'int64', 'uint32', 'int16'
+        ]
         if sys.version_info[0] < 3 and sys.py3kwarning:
             import operator as op
             dt2 = 'bool_'
             for dt1 in deprecated_types:
-                a = np.array([1,2,3], dtype=dt1)
-                b = np.array([1,2,3], dtype=dt2)
-                self.assert_deprecated(op.div, args=(a,b))
+                a = np.array([1, 2, 3], dtype=dt1)
+                b = np.array([1, 2, 3], dtype=dt2)
+                self.assert_deprecated(op.div, args=(a, b))
                 dt2 = dt1
 
 
@@ -418,11 +422,12 @@ class TestNonNumericConjugate(_DeprecationTestCase):
     Deprecate no-op behavior of ndarray.conjugate on non-numeric dtypes,
     which conflicts with the error behavior of np.conjugate.
     """
+
     def test_conjugate(self):
         for a in np.array(5), np.array(5j):
             self.assert_not_deprecated(a.conjugate)
         for a in (np.array('s'), np.array('2016', 'M'),
-                np.array((1, 2), [('a', int), ('b', int)])):
+                  np.array((1, 2), [('a', int), ('b', int)])):
             self.assert_deprecated(a.conjugate)
 
 

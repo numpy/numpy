@@ -16,7 +16,7 @@ from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+    float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -25,18 +25,18 @@ else:
     from StringIO import StringIO
 
 __all__ = [
-        'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
-        'assert_array_equal', 'assert_array_less', 'assert_string_equal',
-        'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
-        'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-        'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
-        'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
-        'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-        'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
-        'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data',
-        ]
+    'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
+    'assert_array_equal', 'assert_array_less', 'assert_string_equal',
+    'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
+    'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
+    'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
+    'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
+    'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
+    'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
+    'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
+    'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
+    '_assert_valid_refcount', '_gen_alignment_data',
+]
 
 
 class KnownFailureException(Exception):
@@ -180,7 +180,8 @@ if os.name == 'nt':
         import win32pdh
         if format is None:
             format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine, object, instance, None, inum, counter))
+        path = win32pdh.MakeCounterPath(
+            (machine, object, instance, None, inum, counter))
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)
@@ -241,7 +242,7 @@ if sys.platform[:5] == 'linux':
             f.close()
             return int(l[13])
         except Exception:
-            return int(100*(time.time()-_load_time[0]))
+            return int(100 * (time.time() - _load_time[0]))
 else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
@@ -257,14 +258,14 @@ else:
         import time
         if not _load_time:
             _load_time.append(time.time())
-        return int(100*(time.time()-_load_time[0]))
+        return int(100 * (time.time() - _load_time[0]))
 
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
     if err_msg:
-        if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
+        if err_msg.find('\n') == -1 and len(err_msg) < 79 - len(header):
             msg = [msg[0] + ' ' + err_msg]
         else:
             msg.append(err_msg)
@@ -331,12 +332,14 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(repr(k))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'key=%r\n%s' %
+                         (k, err_msg), verbose)
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         assert_equal(len(actual), len(desired), err_msg, verbose)
         for k in range(len(desired)):
-            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'item=%r\n%s' %
+                         (k, err_msg), verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
     from numpy.lib import iscomplexobj, real, imag
@@ -458,7 +461,7 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
-def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
+def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     Raises an AssertionError if two items are not equal up to desired
     precision.
@@ -580,7 +583,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         raise AssertionError(_build_err_msg())
 
 
-def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
+def assert_approx_equal(actual, desired, significant=7, err_msg='', verbose=True):
     """
     Raises an AssertionError if two items are not equal up to significant
     digits.
@@ -646,20 +649,20 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
     with np.errstate(invalid='ignore'):
-        scale = 0.5*(np.abs(desired) + np.abs(actual))
+        scale = 0.5 * (np.abs(desired) + np.abs(actual))
         scale = np.power(10, np.floor(np.log10(scale)))
     try:
-        sc_desired = desired/scale
+        sc_desired = desired / scale
     except ZeroDivisionError:
         sc_desired = 0.0
     try:
-        sc_actual = actual/scale
+        sc_actual = actual / scale
     except ZeroDivisionError:
         sc_actual = 0.0
     msg = build_err_msg([actual, desired], err_msg,
-                header='Items are not equal to %d significant digits:' %
-                                 significant,
-                verbose=verbose)
+                        header='Items are not equal to %d significant digits:' %
+                        significant,
+                        verbose=verbose)
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
@@ -674,7 +677,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
             return
     except (TypeError, NotImplementedError):
         pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)):
+    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant - 1)):
         raise AssertionError(msg)
 
 
@@ -769,7 +772,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             cond = reduced.all()
             reduced = reduced.tolist()
         if not cond:
-            match = 100-100.0*reduced.count(1)/len(reduced)
+            match = 100 - 100.0 * reduced.count(1) / len(reduced)
             msg = build_err_msg([x, y],
                                 err_msg
                                 + '\n(mismatch %s%%)' % (match,),
@@ -934,7 +937,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     def compare(x, y):
         try:
-            if npany(gisinf(x)) or npany( gisinf(y)):
+            if npany(gisinf(x)) or npany(gisinf(y)):
                 xinfid = gisinf(x)
                 yinfid = gisinf(y)
                 if not (xinfid == yinfid).all():
@@ -959,8 +962,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         return z < 1.5 * 10.0**(-decimal)
 
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal),
-             precision=decimal)
+                         header=(
+                             'Arrays are not almost equal to %d decimals' % decimal),
+                         precision=decimal)
 
 
 def assert_array_less(x, y, err_msg='', verbose=True):
@@ -1074,10 +1078,11 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+    if re.match(r'\A' + desired + r'\Z', actual, re.M):
         return
 
-    diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
+    diff = list(difflib.Differ().compare(
+        actual.splitlines(1), desired.splitlines(1)))
     diff_list = []
     while diff:
         d1 = diff.pop(0)
@@ -1098,7 +1103,7 @@ def assert_string_equal(actual, desired):
                     l.append(d3)
                 else:
                     diff.insert(0, d3)
-            if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
+            if re.match(r'\A' + d2[2:] + r'\Z', d1[2:]):
                 continue
             diff_list.extend(l)
             continue
@@ -1145,7 +1150,7 @@ def rundocs(filename=None, raise_on_error=True):
 
     msg = []
     if raise_on_error:
-        out = lambda s: msg.append(s)
+        def out(s): return msg.append(s)
     else:
         out = None
 
@@ -1156,9 +1161,9 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def raises(*args,**kwargs):
+def raises(*args, **kwargs):
     nose = import_nose()
-    return nose.tools.raises(*args,**kwargs)
+    return nose.tools.raises(*args, **kwargs)
 
 
 def assert_raises(*args, **kwargs):
@@ -1188,7 +1193,7 @@ def assert_raises(*args, **kwargs):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     nose = import_nose()
-    return nose.tools.assert_raises(*args,**kwargs)
+    return nose.tools.assert_raises(*args, **kwargs)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
@@ -1270,7 +1275,7 @@ def decorate_methods(cls, decorator, testmatch=None):
     return
 
 
-def measure(code_str,times=1,label=None):
+def measure(code_str, times=1, label=None):
     """
     Return elapsed time for executing code in the namespace of the caller.
 
@@ -1315,7 +1320,7 @@ def measure(code_str,times=1,label=None):
         i += 1
         exec(code, globs, locs)
     elapsed = jiffies() - elapsed
-    return 0.01*elapsed
+    return 0.01 * elapsed
 
 
 def _assert_valid_refcount(op):
@@ -1327,7 +1332,7 @@ def _assert_valid_refcount(op):
         return True
     import numpy as np
 
-    b = np.arange(100*100).reshape(100, 100)
+    b = np.arange(100 * 100).reshape(100, 100)
     c = b
     i = 1
 
@@ -1450,12 +1455,13 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     ax = np.abs(x)
     ay = np.abs(y)
     ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x-y) <= ref):
+    if not np.all(np.abs(x - y) <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = "X and Y are not equal to %d ULP" % nulp
         else:
             max_nulp = np.max(nulp_diff(x, y))
-            msg = "X and Y are not equal to %d ULP (max is %g)" % (nulp, max_nulp)
+            msg = "X and Y are not equal to %d ULP (max is %g)" % (
+                nulp, max_nulp)
         raise AssertionError(msg)
 
 
@@ -1550,7 +1556,7 @@ def nulp_diff(x, y, dtype=None):
                          (x.shape, y.shape))
 
     def _diff(rx, ry, vdt):
-        diff = np.array(rx-ry, dtype=vdt)
+        diff = np.array(rx - ry, dtype=vdt)
         return np.abs(diff)
 
     rx = integer_repr(x)
@@ -1605,7 +1611,7 @@ class WarningMessage(object):
                         "line")
 
     def __init__(self, message, category, filename, lineno, file=None,
-                    line=None):
+                 line=None):
         local_values = locals()
         for attr in self._WARNING_DETAILS:
             setattr(self, attr, local_values[attr])
@@ -1616,8 +1622,8 @@ class WarningMessage(object):
 
     def __str__(self):
         return ("{message : %r, category : %r, filename : %r, lineno : %s, "
-                    "line : %r}" % (self.message, self._category_name,
-                                    self.filename, self.lineno, self.line))
+                "line : %r}" % (self.message, self._category_name,
+                                self.filename, self.lineno, self.line))
 
 
 class WarningManager(object):
@@ -1808,7 +1814,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
     for o in range(3):
         for s in range(o + 2, max(o + 3, max_size)):
             if type == 'unary':
-                inp = lambda: arange(s, dtype=dtype)[o:]
+                def inp(): return arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp(), ufmt % (o, o, s, dtype, 'out of place')
                 d = inp()
@@ -1822,8 +1828,9 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 yield inp()[1:], inp()[:-1], ufmt % \
                     (o + 1, o, s - 1, dtype, 'aliased')
             if type == 'binary':
-                inp1 = lambda: arange(s, dtype=dtype)[o:]
-                inp2 = lambda: arange(s, dtype=dtype)[o:]
+                def inp1(): return arange(s, dtype=dtype)[o:]
+
+                def inp2(): return arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
                 yield out, inp1(), inp2(),  bfmt % \
                     (o, o, o, s, dtype, 'out of place')
@@ -2024,6 +2031,7 @@ class suppress_warnings(object):
     ...     # do something which causes a warning in np.ma.core
     ...     pass
     """
+
     def __init__(self, forwarding_rule="always"):
         self._entered = False
 

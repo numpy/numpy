@@ -14,13 +14,13 @@ class TestRealScalars(object):
         styps = [np.float16, np.float32, np.float64, np.longdouble]
         actual = [str(f(c)) for c in svals for f in styps]
         wanted = [
-             '0.0',  '0.0',  '0.0',  '0.0',
-             '-0.0', '-0.0', '-0.0', '-0.0',
-             '1.0',  '1.0',  '1.0',  '1.0',
-             '-1.0', '-1.0', '-1.0', '-1.0',
-             'inf',  'inf',  'inf',  'inf',
-             '-inf', '-inf', '-inf', '-inf',
-             'nan',  'nan',  'nan',  'nan']
+            '0.0',  '0.0',  '0.0',  '0.0',
+            '-0.0', '-0.0', '-0.0', '-0.0',
+            '1.0',  '1.0',  '1.0',  '1.0',
+            '-1.0', '-1.0', '-1.0', '-1.0',
+            'inf',  'inf',  'inf',  'inf',
+            '-inf', '-inf', '-inf', '-inf',
+            'nan',  'nan',  'nan',  'nan']
 
         for res, val in zip(actual, wanted):
             assert_(res == val)

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import sys, os, re
+import sys
+import os
+import re
 
 # Check Sphinx version
 import sphinx
@@ -141,10 +143,10 @@ pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 # (source start file, target name, title, author, document class [howto/manual]).
 _stdauthor = 'Written by the NumPy community'
 latex_documents = [
-  ('reference/index', 'numpy-ref.tex', 'NumPy Reference',
-   _stdauthor, 'manual'),
-  ('user/index', 'numpy-user.tex', 'NumPy User Guide',
-   _stdauthor, 'manual'),
+    ('reference/index', 'numpy-ref.tex', 'NumPy Reference',
+     _stdauthor, 'manual'),
+    ('user/index', 'numpy-user.tex', 'NumPy User Guide',
+        _stdauthor, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -190,10 +192,10 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
-   "NumPy: array processing for numbers, strings, records, and objects.",
-   'Programming',
-   1),
+    ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
+     "NumPy: array processing for numbers, strings, records, and objects.",
+     'Programming',
+     1),
 ]
 
 
@@ -252,7 +254,7 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
-phi = (math.sqrt(5) + 1)/2
+phi = (math.sqrt(5) + 1) / 2
 
 plot_rcparams = {
     'font.size': 8,
@@ -261,7 +263,7 @@ plot_rcparams = {
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     'legend.fontsize': 8,
-    'figure.figsize': (3*phi, 3),
+    'figure.figsize': (3 * phi, 3),
     'figure.subplot.bottom': 0.2,
     'figure.subplot.left': 0.2,
     'figure.subplot.right': 0.9,
@@ -287,6 +289,7 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
         pass
 else:
     print("NOTE: linkcode extension not found -- no links to source generated")
+
 
 def linkcode_resolve(domain, info):
     """
@@ -330,7 +333,7 @@ def linkcode_resolve(domain, info):
 
     if 'dev' in numpy.__version__:
         return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
-           fn, linespec)
+            fn, linespec)
     else:
         return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
-           numpy.__version__, fn, linespec)
+            numpy.__version__, fn, linespec)

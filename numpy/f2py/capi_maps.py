@@ -99,7 +99,7 @@ if using_newcore:
                   'complex_float': 'NPY_CFLOAT',
                   'complex_double': 'NPY_CDOUBLE',
                   'complex_long_double': 'NPY_CDOUBLE',
-                  'string':'NPY_STRING'
+                  'string': 'NPY_STRING'
 
                   }
 c2pycode_map = {'double': 'd',

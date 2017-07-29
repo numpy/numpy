@@ -77,6 +77,7 @@ def configuration(parent_package='', top_path=None):
 
     return config
 
+
 if __name__ == "__main__":
 
     config = configuration(top_path='')

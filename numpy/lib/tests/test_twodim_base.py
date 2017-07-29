@@ -6,13 +6,13 @@ from __future__ import division, absolute_import, print_function
 from numpy.testing import (
     run_module_suite, assert_equal, assert_array_equal, assert_array_max_ulp,
     assert_array_almost_equal, assert_raises,
-    )
+)
 
 from numpy import (
     arange, add, fliplr, flipud, zeros, ones, eye, array, diag,
     histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
     tril_indices, tril_indices_from, vander,
-    )
+)
 
 import numpy as np
 
@@ -207,7 +207,7 @@ class TestHistogram2d(object):
              [1, 0, 0, 0, 0],
              [0, 1, 1, 1, 0],
              [0, 0, 0, 0, 1]])
-        assert_array_almost_equal(H, answer/8., 3)
+        assert_array_almost_equal(H, answer / 8., 3)
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
 
@@ -218,7 +218,7 @@ class TestHistogram2d(object):
             x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
         answer = array([[1, 1, .5],
                         [1, 1, .5],
-                        [.5, .5, .25]])/9.
+                        [.5, .5, .25]]) / 9.
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
@@ -243,24 +243,24 @@ class TestHistogram2d(object):
         edges = (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
         H, xe, ye = histogram2d(x, y, (edges, 4))
         answer = array(
-            [[ 2.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 1.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  1.]])
+            [[2.,  0.,  0.,  0.],
+             [0.,  1.,  0.,  0.],
+             [0.,  0.,  0.,  0.],
+             [0.,  0.,  0.,  0.],
+             [0.,  1.,  0.,  0.],
+             [1.,  0.,  0.,  0.],
+             [0.,  1.,  0.,  0.],
+             [0.,  0.,  0.,  0.],
+             [0.,  0.,  0.,  0.],
+             [0.,  0.,  0.,  1.]])
         assert_array_equal(H, answer)
         assert_array_equal(ye, array([0., 0.25, 0.5, 0.75, 1]))
         H, xe, ye = histogram2d(x, y, (4, edges))
         answer = array(
-            [[ 1.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.]])
+            [[1.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.],
+             [0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
+             [0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
+             [0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.]])
         assert_array_equal(H, answer)
         assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))
 
@@ -292,23 +292,24 @@ def test_tril_triu_ndim3():
             [[1, 1], [1, 1]],
             [[1, 1], [1, 0]],
             [[1, 1], [0, 0]],
-            ], dtype=dtype)
+        ], dtype=dtype)
         a_tril_desired = np.array([
             [[1, 0], [1, 1]],
             [[1, 0], [1, 0]],
             [[1, 0], [0, 0]],
-            ], dtype=dtype)
+        ], dtype=dtype)
         a_triu_desired = np.array([
             [[1, 1], [0, 1]],
             [[1, 1], [0, 0]],
             [[1, 1], [0, 0]],
-            ], dtype=dtype)
+        ], dtype=dtype)
         a_triu_observed = np.triu(a)
         a_tril_observed = np.tril(a)
         yield assert_array_equal, a_triu_observed, a_triu_desired
         yield assert_array_equal, a_tril_observed, a_tril_desired
         yield assert_equal, a_triu_observed.dtype, a.dtype
         yield assert_equal, a_tril_observed.dtype, a.dtype
+
 
 def test_tril_triu_with_inf():
     # Issue 4859
@@ -340,7 +341,7 @@ def test_tril_triu_dtype():
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 
-    arr = np.zeros((3,3), dtype='f4,f4')
+    arr = np.zeros((3, 3), dtype='f4,f4')
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 
@@ -480,7 +481,7 @@ class TestVander(object):
         m = powers.shape[1]
         for n in range(6):
             v = vander(c, N=n)
-            yield (assert_array_equal, v, powers[:, m-n:m])
+            yield (assert_array_equal, v, powers[:, m - n:m])
 
     def test_dtypes(self):
         c = array([11, -12, 13], dtype=np.int8)
@@ -490,10 +491,10 @@ class TestVander(object):
                              [169, 13, 1]])
         yield (assert_array_equal, v, expected)
 
-        c = array([1.0+1j, 1.0-1j])
+        c = array([1.0 + 1j, 1.0 - 1j])
         v = vander(c, N=3)
-        expected = np.array([[2j, 1+1j, 1],
-                             [-2j, 1-1j, 1]])
+        expected = np.array([[2j, 1 + 1j, 1],
+                             [-2j, 1 - 1j, 1]])
         # The data is floating point, but the values are small integers,
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).

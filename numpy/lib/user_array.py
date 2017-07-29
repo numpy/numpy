@@ -30,6 +30,7 @@ class container(object):
     astype
 
     """
+
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
@@ -264,6 +265,7 @@ class container(object):
         if (attr == 'array'):
             return object.__getattribute__(self, attr)
         return self.array.__getattribute__(attr)
+
 
 #############################################################
 # Test of class container

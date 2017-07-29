@@ -34,10 +34,10 @@ def get_mat(n):
 class TestRot90(object):
     def test_basic(self):
         assert_raises(ValueError, rot90, np.ones(4))
-        assert_raises(ValueError, rot90, np.ones((2,2,2)), axes=(0,1,2))
-        assert_raises(ValueError, rot90, np.ones((2,2)), axes=(0,2))
-        assert_raises(ValueError, rot90, np.ones((2,2)), axes=(1,1))
-        assert_raises(ValueError, rot90, np.ones((2,2,2)), axes=(-2,1))
+        assert_raises(ValueError, rot90, np.ones((2, 2, 2)), axes=(0, 1, 2))
+        assert_raises(ValueError, rot90, np.ones((2, 2)), axes=(0, 2))
+        assert_raises(ValueError, rot90, np.ones((2, 2)), axes=(1, 1))
+        assert_raises(ValueError, rot90, np.ones((2, 2, 2)), axes=(-2, 1))
 
         a = [[0, 1, 2],
              [3, 4, 5]]
@@ -61,17 +61,17 @@ class TestRot90(object):
         for k in range(0, 13, 4):
             assert_equal(rot90(a, k=k), b4)
 
-        assert_equal(rot90(rot90(a, axes=(0,1)), axes=(1,0)), a)
-        assert_equal(rot90(a, k=1, axes=(1,0)), rot90(a, k=-1, axes=(0,1)))
+        assert_equal(rot90(rot90(a, axes=(0, 1)), axes=(1, 0)), a)
+        assert_equal(rot90(a, k=1, axes=(1, 0)), rot90(a, k=-1, axes=(0, 1)))
 
     def test_axes(self):
         a = np.ones((50, 40, 3))
         assert_equal(rot90(a).shape, (40, 50, 3))
-        assert_equal(rot90(a, axes=(0,2)), rot90(a, axes=(0,-1)))
-        assert_equal(rot90(a, axes=(1,2)), rot90(a, axes=(-2,-1)))
+        assert_equal(rot90(a, axes=(0, 2)), rot90(a, axes=(0, -1)))
+        assert_equal(rot90(a, axes=(1, 2)), rot90(a, axes=(-2, -1)))
 
     def test_rotation_axes(self):
-        a = np.arange(8).reshape((2,2,2))
+        a = np.arange(8).reshape((2, 2, 2))
 
         a_rot90_01 = [[[2, 3],
                        [6, 7]],
@@ -94,9 +94,9 @@ class TestRot90(object):
         assert_equal(rot90(a, axes=(1, 0)), a_rot90_10)
         assert_equal(rot90(a, axes=(1, 2)), a_rot90_12)
 
-        for k in range(1,5):
+        for k in range(1, 5):
             assert_equal(rot90(a, k=k, axes=(2, 0)),
-                         rot90(a_rot90_20, k=k-1, axes=(2, 0)))
+                         rot90(a_rot90_20, k=k - 1, axes=(2, 0)))
 
 
 class TestFlip(object):
@@ -319,26 +319,26 @@ class TestAverage(object):
     def test_subclasses(self):
         class subclass(np.ndarray):
             pass
-        a = np.array([[1,2],[3,4]]).view(subclass)
-        w = np.array([[1,2],[3,4]]).view(subclass)
+        a = np.array([[1, 2], [3, 4]]).view(subclass)
+        w = np.array([[1, 2], [3, 4]]).view(subclass)
 
         assert_equal(type(np.average(a)), subclass)
         assert_equal(type(np.average(a, weights=w)), subclass)
 
         # also test matrices
-        a = np.matrix([[1,2],[3,4]])
-        w = np.matrix([[1,2],[3,4]])
+        a = np.matrix([[1, 2], [3, 4]])
+        w = np.matrix([[1, 2], [3, 4]])
 
         r = np.average(a, axis=0, weights=w)
         assert_equal(type(r), np.matrix)
-        assert_equal(r, [[2.5, 10.0/3]])
+        assert_equal(r, [[2.5, 10.0 / 3]])
 
     def test_upcasting(self):
         types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
                  ('f4', 'f4', 'f4'), ('f4', 'f8', 'f8')]
         for at, wt, rt in types:
-            a = np.array([[1,2],[3,4]], dtype=at)
-            w = np.array([[1,2],[3,4]], dtype=wt)
+            a = np.array([[1, 2], [3, 4]], dtype=at)
+            w = np.array([[1, 2], [3, 4]], dtype=wt)
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))
 
     def test_object_dtype(self):
@@ -346,6 +346,7 @@ class TestAverage(object):
         w = np.array([decimal.Decimal(1) for _ in range(10)])
         w /= w.sum()
         assert_almost_equal(a.mean(0), average(a, weights=w))
+
 
 class TestSelect(object):
     choices = [np.array([1, 2, 3]),
@@ -463,14 +464,14 @@ class TestInsert(object):
 
         a = np.arange(4).reshape(2, 2)
         assert_equal(insert(a[:, :1], 1, a[:, 1], axis=1), a)
-        assert_equal(insert(a[:1,:], 1, a[1,:], axis=0), a)
+        assert_equal(insert(a[:1, :], 1, a[1, :], axis=0), a)
 
         # negative axis value
         a = np.arange(24).reshape((2, 3, 4))
-        assert_equal(insert(a, 1, a[:,:, 3], axis=-1),
-                     insert(a, 1, a[:,:, 3], axis=2))
-        assert_equal(insert(a, 1, a[:, 2,:], axis=-2),
-                     insert(a, 1, a[:, 2,:], axis=1))
+        assert_equal(insert(a, 1, a[:, :, 3], axis=-1),
+                     insert(a, 1, a[:, :, 3], axis=2))
+        assert_equal(insert(a, 1, a[:, 2, :], axis=-2),
+                     insert(a, 1, a[:, 2, :], axis=1))
 
         # invalid axis value
         assert_raises(np.AxisError, insert, a, 1, a[:, 2, :], axis=3)
@@ -675,8 +676,8 @@ class TestDelete(object):
             indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
-        xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
-        assert_array_equal(xor, self.nd_a[0,:, 0], err_msg=msg)
+        xor = setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
+        assert_array_equal(xor, self.nd_a[0, :, 0], err_msg=msg)
 
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
@@ -772,7 +773,7 @@ class TestGradient(object):
         assert_raises(ValueError, gradient, f_2d, np.ones(2), np.ones(2))
         # wrong number of arguments
         assert_raises(TypeError, gradient, f_2d, x)
-        assert_raises(TypeError, gradient, f_2d, x, axis=(0,1))
+        assert_raises(TypeError, gradient, f_2d, x, axis=(0, 1))
         assert_raises(TypeError, gradient, f_2d, x, x, x)
         assert_raises(TypeError, gradient, f_2d, 1, 1, 1)
         assert_raises(TypeError, gradient, f_2d, x, x, axis=1)
@@ -827,20 +828,20 @@ class TestGradient(object):
 
     def test_spacing(self):
         f = np.array([0, 2., 3., 4., 5., 5.])
-        f = np.tile(f, (6,1)) + f.reshape(-1, 1)
+        f = np.tile(f, (6, 1)) + f.reshape(-1, 1)
         x_uneven = np.array([0., 0.5, 1., 3., 5., 7.])
         x_even = np.arange(6.)
 
-        fdx_even_ord1 = np.tile([2., 1.5, 1., 1., 0.5, 0.], (6,1))
-        fdx_even_ord2 = np.tile([2.5, 1.5, 1., 1., 0.5, -0.5], (6,1))
-        fdx_uneven_ord1 = np.tile([4., 3., 1.7, 0.5, 0.25, 0.], (6,1))
-        fdx_uneven_ord2 = np.tile([5., 3., 1.7, 0.5, 0.25, -0.25], (6,1))
+        fdx_even_ord1 = np.tile([2., 1.5, 1., 1., 0.5, 0.], (6, 1))
+        fdx_even_ord2 = np.tile([2.5, 1.5, 1., 1., 0.5, -0.5], (6, 1))
+        fdx_uneven_ord1 = np.tile([4., 3., 1.7, 0.5, 0.25, 0.], (6, 1))
+        fdx_uneven_ord2 = np.tile([5., 3., 1.7, 0.5, 0.25, -0.25], (6, 1))
 
         # evenly spaced
         for edge_order, exp_res in [(1, fdx_even_ord1), (2, fdx_even_ord2)]:
-            res1 = gradient(f, 1., axis=(0,1), edge_order=edge_order)
+            res1 = gradient(f, 1., axis=(0, 1), edge_order=edge_order)
             res2 = gradient(f, x_even, x_even,
-                            axis=(0,1), edge_order=edge_order)
+                            axis=(0, 1), edge_order=edge_order)
             res3 = gradient(f, x_even, x_even,
                             axis=None, edge_order=edge_order)
             assert_array_equal(res1, res2)
@@ -861,7 +862,7 @@ class TestGradient(object):
         # unevenly spaced
         for edge_order, exp_res in [(1, fdx_uneven_ord1), (2, fdx_uneven_ord2)]:
             res1 = gradient(f, x_uneven, x_uneven,
-                            axis=(0,1), edge_order=edge_order)
+                            axis=(0, 1), edge_order=edge_order)
             res2 = gradient(f, x_uneven, x_uneven,
                             axis=None, edge_order=edge_order)
             assert_array_equal(res1, res2)
@@ -875,15 +876,15 @@ class TestGradient(object):
             assert_almost_equal(res1, exp_res)
 
         # mixed
-        res1 = gradient(f, x_even, x_uneven, axis=(0,1), edge_order=1)
-        res2 = gradient(f, x_uneven, x_even, axis=(1,0), edge_order=1)
+        res1 = gradient(f, x_even, x_uneven, axis=(0, 1), edge_order=1)
+        res2 = gradient(f, x_uneven, x_even, axis=(1, 0), edge_order=1)
         assert_array_equal(res1[0], res2[1])
         assert_array_equal(res1[1], res2[0])
         assert_almost_equal(res1[0], fdx_even_ord1.T)
         assert_almost_equal(res1[1], fdx_uneven_ord1)
 
-        res1 = gradient(f, x_even, x_uneven, axis=(0,1), edge_order=2)
-        res2 = gradient(f, x_uneven, x_even, axis=(1,0), edge_order=2)
+        res1 = gradient(f, x_even, x_uneven, axis=(0, 1), edge_order=2)
+        res2 = gradient(f, x_uneven, x_even, axis=(1, 0), edge_order=2)
         assert_array_equal(res1[0], res2[1])
         assert_array_equal(res1[1], res2[0])
         assert_almost_equal(res1[0], fdx_even_ord2.T)
@@ -907,7 +908,7 @@ class TestGradient(object):
 
         # test vararg order
         assert_array_equal(gradient(x, 2, 3, axis=(1, 0)),
-                           [dx[1]/2.0, dx[0]/3.0])
+                           [dx[1] / 2.0, dx[0] / 3.0])
         # test maximal number of varargs
         assert_raises(TypeError, gradient, x, 1, 2, axis=1)
 
@@ -1491,7 +1492,7 @@ class TestTrapz(object):
         wz[0] /= 2
         wz[-1] /= 2
 
-        q = x[:, None, None] + y[None,:, None] + z[None, None,:]
+        q = x[:, None, None] + y[None, :, None] + z[None, None, :]
 
         qx = (q * wx[:, None, None]).sum(axis=0)
         qy = (q * wy[None, :, None]).sum(axis=1)
@@ -1500,9 +1501,9 @@ class TestTrapz(object):
         # n-d `x`
         r = trapz(q, x=x[:, None, None], axis=0)
         assert_almost_equal(r, qx)
-        r = trapz(q, x=y[None,:, None], axis=1)
+        r = trapz(q, x=y[None, :, None], axis=1)
         assert_almost_equal(r, qy)
-        r = trapz(q, x=z[None, None,:], axis=2)
+        r = trapz(q, x=z[None, None, :], axis=2)
         assert_almost_equal(r, qz)
 
         # 1-d `x`
@@ -1747,7 +1748,7 @@ class TestHistogram(object):
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
 
-    def test_error_binnum_type (self):
+    def test_error_binnum_type(self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
@@ -1756,9 +1757,9 @@ class TestHistogram(object):
     def test_finite_range(self):
         # Normal ranges should be fine
         vals = np.linspace(0.0, 1.0, num=100)
-        histogram(vals, range=[0.25,0.75])
-        assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
-        assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
+        histogram(vals, range=[0.25, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[np.nan, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[0.25, np.inf])
 
     def test_bin_edge_cases(self):
         # Ensure that floating-point computations correctly place edge cases.
@@ -1890,13 +1891,13 @@ class TestHistogramOptimBinNums(object):
         # some basic sanity checking, with some fixed data.
         # Checking for the correct number of bins
         basic_test = {
-                      50:   {'fd': 8,  'scott': 8,  'rice': 15,
+            50:   {'fd': 8,  'scott': 8,  'rice': 15,
                              'sturges': 14, 'auto': 14},
-                      500:  {'fd': 15, 'scott': 16, 'rice': 32,
+            500:  {'fd': 15, 'scott': 16, 'rice': 32,
                              'sturges': 20, 'auto': 20},
-                      5000: {'fd': 33, 'scott': 33, 'rice': 69,
+            5000: {'fd': 33, 'scott': 33, 'rice': 69,
                              'sturges': 27, 'auto': 33}
-                     }
+        }
 
         for testlen, expectedResults in basic_test.items():
             # create some sort of non uniform data to test with
@@ -1906,7 +1907,7 @@ class TestHistogramOptimBinNums(object):
             x3 = np.linspace(-100, -50, testlen)
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():
-                a, b = np.histogram(x, estimator, range = (-20, 20))
+                a, b = np.histogram(x, estimator, range=(-20, 20))
                 msg = "For the {0} estimator".format(estimator)
                 msg += " with datasize of {0}".format(testlen)
                 assert_equal(len(a), numbins, err_msg=msg)
@@ -2392,19 +2393,19 @@ class TestMeshgrid(object):
         x = np.arange(0, 10, dtype=np.float32)
         y = np.arange(10, 20, dtype=np.float64)
 
-        X, Y = np.meshgrid(x,y)
+        X, Y = np.meshgrid(x, y)
 
         assert_(X.dtype == x.dtype)
         assert_(Y.dtype == y.dtype)
 
         # copy
-        X, Y = np.meshgrid(x,y, copy=True)
+        X, Y = np.meshgrid(x, y, copy=True)
 
         assert_(X.dtype == x.dtype)
         assert_(Y.dtype == y.dtype)
 
         # sparse
-        X, Y = np.meshgrid(x,y, sparse=True)
+        X, Y = np.meshgrid(x, y, sparse=True)
 
         assert_(X.dtype == x.dtype)
         assert_(Y.dtype == y.dtype)
@@ -2653,9 +2654,9 @@ class TestInterp(object):
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
-        y = np.linspace(0, 1, 5) + (1 + np.linspace(0, 1, 5))*1.0j
+        y = np.linspace(0, 1, 5) + (1 + np.linspace(0, 1, 5)) * 1.0j
         x0 = 0.3
-        y0 = x0 + (1+x0)*1.0j
+        y0 = x0 + (1 + x0) * 1.0j
         assert_almost_equal(np.interp(x0, x, y), y0)
         # test complex left and right
         x0 = -1
@@ -2667,9 +2668,9 @@ class TestInterp(object):
         # test complex periodic
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
-        fp = [5+1.0j, 10+2j, 3+3j, 4+4j]
-        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j,
-             3.5+3.5j, 3.75+3.75j]
+        fp = [5 + 1.0j, 10 + 2j, 3 + 3j, 4 + 4j]
+        y = [7.5 + 1.5j, 5. + 1.0j, 8.75 + 1.75j, 6.25 + 1.25j, 3. + 3j, 3.25 + 3.25j,
+             3.5 + 3.5j, 3.75 + 3.75j]
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
     def test_zero_dimensional_interpolation_point(self):
@@ -2972,19 +2973,19 @@ class TestPercentile(object):
         d = np.arange(3 * 5 * 7 * 11).reshape((3, 5, 7, 11))
         np.random.shuffle(d.ravel())
         assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
-                     np.percentile(d[:,:,:, 0].flatten(), 25))
+                     np.percentile(d[:, :, :, 0].flatten(), 25))
         assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
-                     np.percentile(d[:,:, 1,:].flatten(), [10, 90]))
+                     np.percentile(d[:, :, 1, :].flatten(), [10, 90]))
         assert_equal(np.percentile(d, 25, axis=(3, 1, -4))[2],
-                     np.percentile(d[:,:, 2,:].flatten(), 25))
+                     np.percentile(d[:, :, 2, :].flatten(), 25))
         assert_equal(np.percentile(d, 25, axis=(3, 1, 2))[2],
-                     np.percentile(d[2,:,:,:].flatten(), 25))
+                     np.percentile(d[2, :, :, :].flatten(), 25))
         assert_equal(np.percentile(d, 25, axis=(3, 2))[2, 1],
-                     np.percentile(d[2, 1,:,:].flatten(), 25))
+                     np.percentile(d[2, 1, :, :].flatten(), 25))
         assert_equal(np.percentile(d, 25, axis=(1, -2))[2, 1],
-                     np.percentile(d[2,:,:, 1].flatten(), 25))
+                     np.percentile(d[2, :, :, 1].flatten(), 25))
         assert_equal(np.percentile(d, 25, axis=(1, 3))[2, 2],
-                     np.percentile(d[2,:, 2,:].flatten(), 25))
+                     np.percentile(d[2, :, 2, :].flatten(), 25))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
@@ -3351,19 +3352,19 @@ class TestMedian(object):
         d = np.arange(3 * 5 * 7 * 11).reshape((3, 5, 7, 11))
         np.random.shuffle(d.ravel())
         assert_equal(np.median(d, axis=(0, 1, 2))[0],
-                     np.median(d[:,:,:, 0].flatten()))
+                     np.median(d[:, :, :, 0].flatten()))
         assert_equal(np.median(d, axis=(0, 1, 3))[1],
-                     np.median(d[:,:, 1,:].flatten()))
+                     np.median(d[:, :, 1, :].flatten()))
         assert_equal(np.median(d, axis=(3, 1, -4))[2],
-                     np.median(d[:,:, 2,:].flatten()))
+                     np.median(d[:, :, 2, :].flatten()))
         assert_equal(np.median(d, axis=(3, 1, 2))[2],
-                     np.median(d[2,:,:,:].flatten()))
+                     np.median(d[2, :, :, :].flatten()))
         assert_equal(np.median(d, axis=(3, 2))[2, 1],
-                     np.median(d[2, 1,:,:].flatten()))
+                     np.median(d[2, 1, :, :].flatten()))
         assert_equal(np.median(d, axis=(1, -2))[2, 1],
-                     np.median(d[2,:,:, 1].flatten()))
+                     np.median(d[2, :, :, 1].flatten()))
         assert_equal(np.median(d, axis=(1, 3))[2, 2],
-                     np.median(d[2,:, 2,:].flatten()))
+                     np.median(d[2, :, 2, :].flatten()))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))

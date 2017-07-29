@@ -7,7 +7,7 @@ from shutil import rmtree
 
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises, SkipTest,
-    )
+)
 import numpy.lib._datasource as datasource
 
 if sys.version_info[0] >= 3:
@@ -28,6 +28,7 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
+
 # setup and teardown
 old_urlopen = None
 
@@ -41,6 +42,7 @@ def setup():
 
 def teardown():
     urllib_request.urlopen = old_urlopen
+
 
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
@@ -72,11 +74,11 @@ def invalid_textfile(filedir):
 
 
 def valid_httpurl():
-    return http_path+http_file
+    return http_path + http_file
 
 
 def invalid_httpurl():
-    return http_fakepath+http_fakefile
+    return http_fakepath + http_fakefile
 
 
 def valid_baseurl():
@@ -236,14 +238,14 @@ class TestDataSourceAbspath(object):
         tmpfile = valid_textfile(self.tmpdir)
         tmpfilename = os.path.split(tmpfile)[-1]
 
-        tmp_path = lambda x: os.path.abspath(self.ds.abspath(x))
+        def tmp_path(x): return os.path.abspath(self.ds.abspath(x))
 
         assert_(tmp_path(valid_httpurl()).startswith(self.tmpdir))
         assert_(tmp_path(invalid_httpurl()).startswith(self.tmpdir))
         assert_(tmp_path(tmpfile).startswith(self.tmpdir))
         assert_(tmp_path(tmpfilename).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
@@ -276,10 +278,10 @@ class TestRepositoryAbspath(object):
         assert_equal(local_path, filepath)
 
     def test_sandboxing(self):
-        tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
+        def tmp_path(x): return os.path.abspath(self.repos.abspath(x))
         assert_(tmp_path(valid_httpfile()).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):

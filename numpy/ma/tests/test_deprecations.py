@@ -8,8 +8,10 @@ from numpy.testing import run_module_suite, assert_warns
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import MaskedArrayFutureWarning
 
+
 class TestArgsort(object):
     """ gh-8701 """
+
     def _test_base(self, argsort, cls):
         arr_0d = np.array(1).view(cls)
         argsort(arr_0d)

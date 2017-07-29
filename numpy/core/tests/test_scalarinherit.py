@@ -10,18 +10,27 @@ from numpy.testing import run_module_suite, assert_
 
 class A(object):
     pass
+
+
 class B(A, np.float64):
     pass
 
+
 class C(B):
     pass
+
+
 class D(C, B):
     pass
 
+
 class B0(np.float64, A):
     pass
+
+
 class C0(B0):
     pass
+
 
 class TestInherit(object):
     def test_init(self):
@@ -37,6 +46,7 @@ class TestInherit(object):
         assert_(str(x) == '1.0')
         y = C0(2.0)
         assert_(str(y) == '2.0')
+
 
 if __name__ == "__main__":
     run_module_suite()

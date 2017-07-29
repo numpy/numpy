@@ -15,16 +15,17 @@ import numpy as np
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',
            'irr', 'npv', 'mirr']
 
-_when_to_num = {'end':0, 'begin':1,
-                'e':0, 'b':1,
-                0:0, 1:1,
-                'beginning':1,
-                'start':1,
-                'finish':0}
+_when_to_num = {'end': 0, 'begin': 1,
+                'e': 0, 'b': 1,
+                0: 0, 1: 1,
+                'beginning': 1,
+                'start': 1,
+                'finish': 0}
+
 
 def _convert_when(when):
-    #Test to see if when has already been converted to ndarray
-    #This will happen if one function calls another, for example ppmt
+    # Test to see if when has already been converted to ndarray
+    # This will happen if one function calls another, for example ppmt
     if isinstance(when, np.ndarray):
         return when
     try:
@@ -116,12 +117,13 @@ def fv(rate, nper, pmt, pv, when='end'):
     """
     when = _convert_when(when)
     (rate, nper, pmt, pv, when) = map(np.asarray, [rate, nper, pmt, pv, when])
-    temp = (1+rate)**nper
+    temp = (1 + rate)**nper
     miter = np.broadcast(rate, nper, pmt, pv, when)
     zer = np.zeros(miter.shape)
     fact = np.where(rate == zer, nper + zer,
-                    (1 + rate*when)*(temp - 1)/rate + zer)
-    return -(pv*temp + pmt*fact)
+                    (1 + rate * when) * (temp - 1) / rate + zer)
+    return -(pv * temp + pmt * fact)
+
 
 def pmt(rate, nper, pv, fv=0, when='end'):
     """
@@ -213,8 +215,9 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     masked_rate = np.where(mask, 1.0, rate)
     z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
     fact = np.where(mask != z, nper + z,
-                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
-    return -(fv + pv*temp) / fact
+                    (1 + masked_rate * when) * (temp - 1) / masked_rate + z)
+    return -(fv + pv * temp) / fact
+
 
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
@@ -271,18 +274,19 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     use_zero_rate = False
     with np.errstate(divide="raise"):
         try:
-            z = pmt*(1.0+rate*when)/rate
+            z = pmt * (1.0 + rate * when) / rate
         except FloatingPointError:
             use_zero_rate = True
 
     if use_zero_rate:
         return (-fv + pv) / (pmt + 0.0)
     else:
-        A = -(fv + pv)/(pmt+0.0)
-        B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
+        A = -(fv + pv) / (pmt + 0.0)
+        B = np.log((-fv + z) / (pv + z)) / np.log(1.0 + rate)
         miter = np.broadcast(rate, pmt, pv, fv, when)
         zer = np.zeros(miter.shape)
         return np.where(rate == zer, A + zer, B + zer) + 0.0
+
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -371,13 +375,14 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     rate, per, nper, pv, fv, when = np.broadcast_arrays(rate, per, nper,
                                                         pv, fv, when)
     total_pmt = pmt(rate, nper, pv, fv, when)
-    ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
+    ipmt = _rbl(rate, per, total_pmt, pv, when) * rate
     try:
-        ipmt = np.where(when == 1, ipmt/(1 + rate), ipmt)
+        ipmt = np.where(when == 1, ipmt / (1 + rate), ipmt)
         ipmt = np.where(np.logical_and(when == 1, per == 1), 0.0, ipmt)
     except IndexError:
         pass
     return ipmt
+
 
 def _rbl(rate, per, pmt, pv, when):
     """
@@ -387,6 +392,7 @@ def _rbl(rate, per, pmt, pv, when):
     it's own function, but is easily calculated with the 'fv' function.
     """
     return fv(rate, (per - 1), pmt, pv, when)
+
 
 def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -415,6 +421,7 @@ def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
     total = pmt(rate, nper, pv, fv, when)
     return total - ipmt(rate, per, nper, pv, fv, when)
+
 
 def pv(rate, nper, pmt, fv=0.0, when='end'):
     """
@@ -504,23 +511,25 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     """
     when = _convert_when(when)
     (rate, nper, pmt, fv, when) = map(np.asarray, [rate, nper, pmt, fv, when])
-    temp = (1+rate)**nper
+    temp = (1 + rate)**nper
     miter = np.broadcast(rate, nper, pmt, fv, when)
     zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
-    return -(fv + pmt*fact)/temp
+    fact = np.where(rate == zer, nper + zer, (1 + rate * when)
+                    * (temp - 1) / rate + zer)
+    return -(fv + pmt * fact) / temp
 
 # Computed with Sage
 #  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x -
 #  p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r +
 #  p*((r + 1)^n - 1)*w/r)
 
+
 def _g_div_gp(r, n, p, x, y, w):
-    t1 = (r+1)**n
-    t2 = (r+1)**(n-1)
-    return ((y + t1*x + p*(t1 - 1)*(r*w + 1)/r) /
-                (n*t2*x - p*(t1 - 1)*(r*w + 1)/(r**2) + n*p*t2*(r*w + 1)/r +
-                 p*(t1 - 1)*w/r))
+    t1 = (r + 1)**n
+    t2 = (r + 1)**(n - 1)
+    return ((y + t1 * x + p * (t1 - 1) * (r * w + 1) / r) /
+            (n * t2 * x - p * (t1 - 1) * (r * w + 1) / (r**2) + n * p * t2 * (r * w + 1) / r +
+             p * (t1 - 1) * w / r))
 
 # Use Newton's iteration until the change is less than 1e-6
 #  for all values or a maximum of 100 iterations is reached.
@@ -529,6 +538,8 @@ def _g_div_gp(r, n, p, x, y, w):
 #     where
 #  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
+
+
 def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     """
     Compute the rate of interest per period.
@@ -579,7 +590,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     close = False
     while (iter < maxiter) and not close:
         rnp1 = rn - _g_div_gp(rn, nper, pmt, pv, fv, when)
-        diff = abs(rnp1-rn)
+        diff = abs(rnp1 - rn)
         close = np.all(diff < tol)
         iter += 1
         rn = rnp1
@@ -588,6 +599,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         return np.nan + rn
     else:
         return rn
+
 
 def irr(values):
     """
@@ -657,9 +669,10 @@ def irr(values):
     res = res[mask].real
     # NPV(rate) = 0 can have more than one solution so we return
     # only the solution closest to zero.
-    rate = 1.0/res - 1
+    rate = 1.0 / res - 1
     rate = rate.item(np.argmin(np.abs(rate)))
     return rate
+
 
 def npv(rate, values):
     """
@@ -704,7 +717,8 @@ def npv(rate, values):
 
     """
     values = np.asarray(values)
-    return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
+    return (values / (1 + rate)**np.arange(0, len(values))).sum(axis=0)
+
 
 def mirr(values, finance_rate, reinvest_rate):
     """
@@ -733,6 +747,6 @@ def mirr(values, finance_rate, reinvest_rate):
     neg = values < 0
     if not (pos.any() and neg.any()):
         return np.nan
-    numer = np.abs(npv(reinvest_rate, values*pos))
-    denom = np.abs(npv(finance_rate, values*neg))
-    return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
+    numer = np.abs(npv(reinvest_rate, values * pos))
+    denom = np.abs(npv(finance_rate, values * neg))
+    return (numer / denom)**(1.0 / (n - 1)) * (1 + reinvest_rate) - 1

@@ -168,10 +168,12 @@ BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 
+
 def _check_version(version):
     if version not in [(1, 0), (2, 0), None]:
         msg = "we only support format version (1,0) and (2, 0), not %s"
         raise ValueError(msg % (version,))
+
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -198,6 +200,7 @@ def magic(major, minor):
     else:
         return MAGIC_PREFIX + bytes([major, minor])
 
+
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
 
@@ -219,6 +222,7 @@ def read_magic(fp):
     else:
         major, minor = magic_str[-2:]
     return major, minor
+
 
 def dtype_to_descr(dtype):
     """
@@ -252,6 +256,7 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -278,6 +283,7 @@ def header_data_from_array_1_0(array):
 
     d['descr'] = dtype_to_descr(array.dtype)
     return d
+
 
 def _write_array_header(fp, d, version=None):
     """ Write the header for an array and returns the version used
@@ -310,11 +316,11 @@ def _write_array_header(fp, d, version=None):
     # can take advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
-    header = header + ' '*topad + '\n'
+    header = header + ' ' * topad + '\n'
     header = asbytes(_filter_header(header))
 
     hlen = len(header)
-    if hlen < 256*256 and version in (None, (1, 0)):
+    if hlen < 256 * 256 and version in (None, (1, 0)):
         version = (1, 0)
         header_prefix = magic(1, 0) + struct.pack('<H', hlen)
     elif hlen < 2**32 and version in (None, (2, 0)):
@@ -328,6 +334,7 @@ def _write_array_header(fp, d, version=None):
     fp.write(header_prefix)
     fp.write(header)
     return version
+
 
 def write_array_header_1_0(fp, d):
     """ Write the header for an array using the 1.0 format.
@@ -356,6 +363,7 @@ def write_array_header_2_0(fp, d):
         representation to the header of the file.
     """
     _write_array_header(fp, d, (2, 0))
+
 
 def read_array_header_1_0(fp):
     """
@@ -387,6 +395,7 @@ def read_array_header_1_0(fp):
 
     """
     return _read_array_header(fp, version=(1, 0))
+
 
 def read_array_header_2_0(fp):
     """
@@ -513,6 +522,7 @@ def _read_array_header(fp, version):
         raise ValueError(msg % (d['descr'],))
 
     return d['shape'], d['fortran_order'], dtype
+
 
 def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     """
@@ -665,14 +675,15 @@ def read_array(fp, allow_pickle=True, pickle_kwargs=None):
 
             if dtype.itemsize > 0:
                 # If dtype.itemsize == 0 then there's nothing more to read
-                max_read_count = BUFFER_SIZE // min(BUFFER_SIZE, dtype.itemsize)
+                max_read_count = BUFFER_SIZE // min(
+                    BUFFER_SIZE, dtype.itemsize)
 
                 for i in range(0, count, max_read_count):
                     read_count = min(max_read_count, count - i)
                     read_size = int(read_count * dtype.itemsize)
                     data = _read_bytes(fp, read_size, "array data")
-                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
-                                                             count=read_count)
+                    array[i:i + read_count] = numpy.frombuffer(data, dtype=dtype,
+                                                               count=read_count)
 
         if fortran_order:
             array.shape = shape[::-1]
@@ -753,7 +764,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
+        fp = open(filename, mode + 'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -789,7 +800,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         mode = 'r+'
 
     marray = numpy.memmap(filename, dtype=dtype, shape=shape, order=order,
-        mode=mode, offset=offset)
+                          mode=mode, offset=offset)
 
     return marray
 

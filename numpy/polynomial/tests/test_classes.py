@@ -81,12 +81,12 @@ def check_conversion(Poly1, Poly2):
     x = np.linspace(0, 1, 10)
     coef = random((3,))
 
-    d1 = Poly1.domain + random((2,))*.25
-    w1 = Poly1.window + random((2,))*.25
+    d1 = Poly1.domain + random((2,)) * .25
+    w1 = Poly1.window + random((2,)) * .25
     p1 = Poly1(coef, domain=d1, window=w1)
 
-    d2 = Poly2.domain + random((2,))*.25
-    w2 = Poly2.window + random((2,))*.25
+    d2 = Poly2.domain + random((2,)) * .25
+    w2 = Poly2.window + random((2,)) * .25
     p2 = p1.convert(kind=Poly2, domain=d2, window=w2)
 
     assert_almost_equal(p2.domain, d2)
@@ -98,12 +98,12 @@ def check_cast(Poly1, Poly2):
     x = np.linspace(0, 1, 10)
     coef = random((3,))
 
-    d1 = Poly1.domain + random((2,))*.25
-    w1 = Poly1.window + random((2,))*.25
+    d1 = Poly1.domain + random((2,)) * .25
+    w1 = Poly1.window + random((2,)) * .25
     p1 = Poly1(coef, domain=d1, window=w1)
 
-    d2 = Poly2.domain + random((2,))*.25
-    w2 = Poly2.window + random((2,))*.25
+    d2 = Poly2.domain + random((2,)) * .25
+    w2 = Poly2.window + random((2,)) * .25
     p2 = Poly2.cast(p1, domain=d2, window=w2)
 
     assert_almost_equal(p2.domain, d2)
@@ -117,8 +117,8 @@ def check_cast(Poly1, Poly2):
 
 
 def check_identity(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     x = np.linspace(d[0], d[1], 11)
     p = Poly.identity(domain=d, window=w)
     assert_equal(p.domain, d)
@@ -127,19 +127,19 @@ def check_identity(Poly):
 
 
 def check_basis(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     p = Poly.basis(5, domain=d, window=w)
     assert_equal(p.domain, d)
     assert_equal(p.window, w)
-    assert_equal(p.coef, [0]*5 + [1])
+    assert_equal(p.coef, [0] * 5 + [1])
 
 
 def check_fromroots(Poly):
     # check that requested roots are zeros of a polynomial
     # of correct degree, domain, and window.
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     r = random((5,))
     p1 = Poly.fromroots(r, domain=d, window=w)
     assert_equal(p1.degree(), len(r))
@@ -157,7 +157,7 @@ def check_fromroots(Poly):
 def check_fit(Poly):
 
     def f(x):
-        return x*(x - 1)*(x - 2)
+        return x * (x - 1) * (x - 2)
     x = np.linspace(0, 3)
     y = f(x)
 
@@ -168,8 +168,8 @@ def check_fit(Poly):
     assert_equal(p.degree(), 3)
 
     # check with given domains and window
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     p = Poly.fit(x, y, 3, domain=d, window=w)
     assert_almost_equal(p(x), y)
     assert_almost_equal(p.domain, d)
@@ -189,7 +189,7 @@ def check_fit(Poly):
 
     # check that fit accepts weights.
     w = np.zeros_like(x)
-    z = y + random(y.shape)*.25
+    z = y + random(y.shape) * .25
     w[::2] = 1
     p1 = Poly.fit(x[::2], z[::2], 3)
     p2 = Poly.fit(x, z, 3, w=w)
@@ -304,7 +304,7 @@ def check_floordiv(Poly):
     assert_poly_almost_equal(p4 // np.array(c2), p1)
     assert_poly_almost_equal(np.array(c4) // p2, p1)
     assert_poly_almost_equal(2 // p2, Poly([0]))
-    assert_poly_almost_equal(p2 // 2, 0.5*p2)
+    assert_poly_almost_equal(p2 // 2, 0.5 * p2)
     assert_raises(
         TypeError, op.floordiv, p1, Poly([0], domain=Poly.domain + 1))
     assert_raises(
@@ -318,7 +318,7 @@ def check_floordiv(Poly):
 def check_truediv(Poly):
     # true division is valid only if the denominator is a Number and
     # not a python bool.
-    p1 = Poly([1,2,3])
+    p1 = Poly([1, 2, 3])
     p2 = p1 * 5
 
     for stype in np.ScalarType:
@@ -401,7 +401,7 @@ def check_divmod(Poly):
     assert_poly_almost_equal(quo, p1)
     assert_poly_almost_equal(rem, p3)
     quo, rem = divmod(p2, 2)
-    assert_poly_almost_equal(quo, 0.5*p2)
+    assert_poly_almost_equal(quo, 0.5 * p2)
     assert_poly_almost_equal(rem, Poly([0]))
     quo, rem = divmod(2, p2)
     assert_poly_almost_equal(quo, Poly([0]))
@@ -415,8 +415,8 @@ def check_divmod(Poly):
 
 
 def check_roots(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     tgt = np.sort(random((5,)))
     res = np.sort(Poly.fromroots(tgt, domain=d, window=w).roots())
     assert_almost_equal(res, tgt)
@@ -443,26 +443,26 @@ def check_copy(Poly):
 def check_integ(Poly):
     P = Polynomial
     # Check defaults
-    p0 = Poly.cast(P([1*2, 2*3, 3*4]))
+    p0 = Poly.cast(P([1 * 2, 2 * 3, 3 * 4]))
     p1 = P.cast(p0.integ())
     p2 = P.cast(p0.integ(2))
     assert_poly_almost_equal(p1, P([0, 2, 3, 4]))
     assert_poly_almost_equal(p2, P([0, 0, 1, 1, 1]))
     # Check with k
-    p0 = Poly.cast(P([1*2, 2*3, 3*4]))
+    p0 = Poly.cast(P([1 * 2, 2 * 3, 3 * 4]))
     p1 = P.cast(p0.integ(k=1))
     p2 = P.cast(p0.integ(2, k=[1, 1]))
     assert_poly_almost_equal(p1, P([1, 2, 3, 4]))
     assert_poly_almost_equal(p2, P([1, 1, 1, 1, 1]))
     # Check with lbnd
-    p0 = Poly.cast(P([1*2, 2*3, 3*4]))
+    p0 = Poly.cast(P([1 * 2, 2 * 3, 3 * 4]))
     p1 = P.cast(p0.integ(lbnd=1))
     p2 = P.cast(p0.integ(2, lbnd=1))
     assert_poly_almost_equal(p1, P([-9, 2, 3, 4]))
     assert_poly_almost_equal(p2, P([6, -9, 1, 1, 1]))
     # Check scaling
-    d = 2*Poly.domain
-    p0 = Poly.cast(P([1*2, 2*3, 3*4]), domain=d)
+    d = 2 * Poly.domain
+    p0 = Poly.cast(P([1 * 2, 2 * 3, 3 * 4]), domain=d)
     p1 = P.cast(p0.integ())
     p2 = P.cast(p0.integ(2))
     assert_poly_almost_equal(p1, P([0, 2, 3, 4]))
@@ -472,8 +472,8 @@ def check_integ(Poly):
 def check_deriv(Poly):
     # Check that the derivative is the inverse of integration. It is
     # assumes that the integration has been checked elsewhere.
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     p1 = Poly([1, 2, 3], domain=d, window=w)
     p2 = p1.integ(2, k=[1, 2])
     p3 = p1.integ(1, k=[1])
@@ -488,8 +488,8 @@ def check_deriv(Poly):
 
 
 def check_linspace(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     p = Poly([1, 2, 3], domain=d, window=w)
     # check default domain
     xtgt = np.linspace(d[0], d[1], 20)
@@ -506,8 +506,8 @@ def check_linspace(Poly):
 
 
 def check_pow(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
+    d = Poly.domain + random((2,)) * .25
+    w = Poly.window + random((2,)) * .25
     tgt = Poly([1], domain=d, window=w)
     tst = Poly([1, 2, 3], domain=d, window=w)
     for i in range(5):
@@ -531,7 +531,7 @@ def check_call(Poly):
 
     # Check defaults
     p = Poly.cast(P([1, 2, 3]))
-    tgt = 1 + x*(2 + 3*x)
+    tgt = 1 + x * (2 + 3 * x)
     res = p(x)
     assert_almost_equal(res, tgt)
 
@@ -571,7 +571,7 @@ def check_mapparms(Poly):
     p = Poly([1], domain=d, window=w)
     assert_almost_equal([0, 1], p.mapparms())
     #
-    w = 2*d + 1
+    w = 2 * d + 1
     p = Poly([1], domain=d, window=w)
     assert_almost_equal([1, 2], p.mapparms())
 

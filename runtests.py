@@ -65,6 +65,7 @@ from argparse import ArgumentParser, REMAINDER
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
+
 def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
@@ -133,7 +134,7 @@ def main(argv):
 
     if args.bench_compare:
         args.bench = True
-        args.no_build = True # ASV does the building
+        args.no_build = True  # ASV does the building
 
     if args.lcov_html:
         # generate C code coverage output
@@ -188,7 +189,8 @@ def main(argv):
     if args.ipython:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings and pre-importing numpy as np")
-        import warnings; warnings.filterwarnings("always")
+        import warnings
+        warnings.filterwarnings("always")
         import IPython
         import numpy as np
         IPython.embed(user_ns={"np": np})
@@ -206,7 +208,7 @@ def main(argv):
         if os.path.isdir(dst_dir) and os.path.isfile(fn):
             shutil.rmtree(dst_dir)
         extra_argv += ['--cover-html',
-                       '--cover-html-dir='+dst_dir]
+                       '--cover-html-dir=' + dst_dir]
 
     if args.bench:
         # Run ASV
@@ -222,7 +224,8 @@ def main(argv):
 
         if not args.bench_compare:
             cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
-            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            ret = subprocess.call(
+                cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
         else:
             commits = [x.strip() for x in args.bench_compare.split(',')]
@@ -240,10 +243,10 @@ def main(argv):
                                       '--cached', 'HEAD'])
                 r2 = subprocess.call(['git', 'diff-files', '--quiet'])
                 if r1 != 0 or r2 != 0:
-                    print("*"*80)
+                    print("*" * 80)
                     print("WARNING: you have uncommitted changes --- "
                           "these will NOT be benchmarked!")
-                    print("*"*80)
+                    print("*" * 80)
 
             # Fix commit ids (HEAD is local to current repo)
             out = subprocess.check_output(['git', 'rev-parse', commit_b])
@@ -254,7 +257,8 @@ def main(argv):
 
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
                    commit_a, commit_b] + bench_args
-            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            ret = subprocess.call(
+                cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
 
     test_dir = os.path.join(ROOT_DIR, 'build', 'test')
@@ -348,7 +352,8 @@ def build_project(args):
     cmd = [sys.executable, 'setup.py']
 
     # Always use ccache, if installed
-    env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
+    env['PATH'] = os.pathsep.join(
+        EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
 
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
@@ -364,7 +369,8 @@ def build_project(args):
             env['F77'] = 'gfortran --coverage '
             env['F90'] = 'gfortran --coverage '
             env['LDSHARED'] = cvars['LDSHARED'] + ' --coverage'
-            env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
+            env['LDFLAGS'] = " ".join(
+                cvars['LDSHARED'].split()[1:]) + ' --coverage'
 
     cmd += ["build"]
     if args.parallel > 1:
@@ -441,14 +447,20 @@ def gcov_reset_counters():
 # LCOV support
 #
 
+
 LCOV_OUTPUT_FILE = os.path.join(ROOT_DIR, 'build', 'lcov.out')
 LCOV_HTML_DIR = os.path.join(ROOT_DIR, 'build', 'lcov')
 
+
 def lcov_generate():
-    try: os.unlink(LCOV_OUTPUT_FILE)
-    except OSError: pass
-    try: shutil.rmtree(LCOV_HTML_DIR)
-    except OSError: pass
+    try:
+        os.unlink(LCOV_OUTPUT_FILE)
+    except OSError:
+        pass
+    try:
+        shutil.rmtree(LCOV_HTML_DIR)
+    except OSError:
+        pass
 
     print("Capturing lcov info...")
     subprocess.call(['lcov', '-q', '-c',

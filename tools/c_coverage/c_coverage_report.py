@@ -27,13 +27,14 @@ except ImportError:
 
 class FunctionHtmlFormatter(HtmlFormatter):
     """Custom HTML formatter to insert extra information with the lines."""
+
     def __init__(self, lines, **kwargs):
         HtmlFormatter.__init__(self, **kwargs)
         self.lines = lines
 
     def wrap(self, source, outfile):
         for i, (c, t) in enumerate(HtmlFormatter.wrap(self, source, outfile)):
-            as_functions = self.lines.get(i-1, None)
+            as_functions = self.lines.get(i - 1, None)
             if as_functions is not None:
                 yield 0, ('<div title=%s style="background: #ccffcc">[%2d]' %
                           (quoteattr('as ' + ', '.join(as_functions)),
@@ -123,7 +124,7 @@ def collect_stats(files, fd, pattern):
     line_regexs = [
         re.compile(r"(?P<lineno>[0-9]+)(\s[0-9]+)+"),
         re.compile(r"((jump)|(jcnd))=([0-9]+)\s(?P<lineno>[0-9]+)")
-        ]
+    ]
 
     current_file = None
     current_function = None

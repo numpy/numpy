@@ -6,6 +6,7 @@ import warnings
 
 __all__ = ['PackageLoader']
 
+
 class PackageLoader(object):
     def __init__(self, verbose=False, infunc=False):
         """ Manages loading packages.
@@ -23,7 +24,8 @@ class PackageLoader(object):
         self.parent_path = parent_path
         if '__all__' not in frame.f_locals:
             exec('__all__ = []', frame.f_globals, frame.f_locals)
-        self.parent_export_names = eval('__all__', frame.f_globals, frame.f_locals)
+        self.parent_export_names = eval(
+            '__all__', frame.f_globals, frame.f_locals)
 
         self.info_modules = {}
         self.imported_packages = []
@@ -39,8 +41,8 @@ class PackageLoader(object):
                 files.append(info_file)
         info_files = []
         for info_file in files:
-            package_name = os.path.dirname(info_file[len(parent_path)+1:])\
-                           .replace(os.sep, '.')
+            package_name = os.path.dirname(info_file[len(parent_path) + 1:])\
+                .replace(os.sep, '.')
             if parent_package:
                 package_name = parent_package + '.' + package_name
             info_files.append((package_name, info_file))
@@ -72,15 +74,15 @@ class PackageLoader(object):
                         exec('import %s.info as info' % (package_name))
                         info_modules[package_name] = info
                     except ImportError as msg:
-                        self.warn('No scipy-style subpackage %r found in %s. '\
-                                  'Ignoring: %s'\
+                        self.warn('No scipy-style subpackage %r found in %s. '
+                                  'Ignoring: %s'
                                   % (package_name, ':'.join(self.parent_path), msg))
 
         for package_name, info_file in info_files:
             if package_name in info_modules:
                 continue
-            fullname = self.parent_name +'.'+ package_name
-            if info_file[-1]=='c':
+            fullname = self.parent_name + '.' + package_name
+            if info_file[-1] == 'c':
                 filedescriptor = ('.pyc', 'rb', 2)
             else:
                 filedescriptor = ('.py', 'U', 1)
@@ -127,7 +129,7 @@ class PackageLoader(object):
 
         return package_names
 
-    def __call__(self,*packages, **options):
+    def __call__(self, *packages, **options):
         """Load one or more packages into parent package top-level namespace.
 
        This function is intended to shorten the need to import many
@@ -165,8 +167,8 @@ class PackageLoader(object):
         """
         # 2014-10-29, 1.10
         warnings.warn('pkgload and PackageLoader are obsolete '
-                'and will be removed in a future version of numpy',
-                DeprecationWarning, stacklevel=2)
+                      'and will be removed in a future version of numpy',
+                      DeprecationWarning, stacklevel=2)
         frame = self.parent_frame
         self.info_modules = {}
         if options.get('force', False):
@@ -175,7 +177,7 @@ class PackageLoader(object):
         postpone = options.get('postpone', None)
         self._init_info_modules(packages or None)
 
-        self.log('Imports to %r namespace\n----------------------------'\
+        self.log('Imports to %r namespace\n----------------------------'
                  % self.parent_name)
 
         for package_name in self._get_sorted_names():
@@ -185,20 +187,20 @@ class PackageLoader(object):
             global_symbols = getattr(info_module, 'global_symbols', [])
             postpone_import = getattr(info_module, 'postpone_import', False)
             if (postpone and not global_symbols) \
-                   or (postpone_import and postpone is not None):
+                    or (postpone_import and postpone is not None):
                 continue
 
             old_object = frame.f_locals.get(package_name, None)
 
-            cmdstr = 'import '+package_name
+            cmdstr = 'import ' + package_name
             if self._execcmd(cmdstr):
                 continue
             self.imported_packages.append(package_name)
 
-            if verbose!=-1:
+            if verbose != -1:
                 new_object = frame.f_locals.get(package_name)
                 if old_object is not None and old_object is not new_object:
-                    self.warn('Overwriting %s=%s (was %s)' \
+                    self.warn('Overwriting %s=%s (was %s)'
                               % (package_name, self._obj2repr(new_object),
                                  self._obj2repr(old_object)))
 
@@ -206,8 +208,8 @@ class PackageLoader(object):
                 self.parent_export_names.append(package_name)
 
             for symbol in global_symbols:
-                if symbol=='*':
-                    symbols = eval('getattr(%s,"__all__",None)'\
+                if symbol == '*':
+                    symbols = eval('getattr(%s,"__all__",None)'
                                    % (package_name),
                                    frame.f_globals, frame.f_locals)
                     if symbols is None:
@@ -217,25 +219,25 @@ class PackageLoader(object):
                 else:
                     symbols = [symbol]
 
-                if verbose!=-1:
+                if verbose != -1:
                     old_objects = {}
                     for s in symbols:
                         if s in frame.f_locals:
                             old_objects[s] = frame.f_locals[s]
 
-                cmdstr = 'from '+package_name+' import '+symbol
+                cmdstr = 'from ' + package_name + ' import ' + symbol
                 if self._execcmd(cmdstr):
                     continue
 
-                if verbose!=-1:
+                if verbose != -1:
                     for s, old_object in old_objects.items():
                         new_object = frame.f_locals[s]
                         if new_object is not old_object:
-                            self.warn('Overwriting %s=%s (was %s)' \
+                            self.warn('Overwriting %s=%s (was %s)'
                                       % (s, self._obj2repr(new_object),
                                          self._obj2repr(old_object)))
 
-                if symbol=='*':
+                if symbol == '*':
                     self.parent_export_names.extend(symbols)
                 else:
                     self.parent_export_names.append(symbol)
@@ -246,7 +248,7 @@ class PackageLoader(object):
         """ Execute command in parent_frame."""
         frame = self.parent_frame
         try:
-            exec (cmdstr, frame.f_globals, frame.f_locals)
+            exec(cmdstr, frame.f_globals, frame.f_locals)
         except Exception as msg:
             self.error('%s -> failed: %s' % (cmdstr, msg))
             return True
@@ -265,13 +267,15 @@ class PackageLoader(object):
         return repr(obj)
 
     def log(self, mess):
-        if self.verbose>1:
+        if self.verbose > 1:
             print(str(mess), file=sys.stderr)
+
     def warn(self, mess):
-        if self.verbose>=0:
+        if self.verbose >= 0:
             print(str(mess), file=sys.stderr)
+
     def error(self, mess):
-        if self.verbose!=-1:
+        if self.verbose != -1:
             print(str(mess), file=sys.stderr)
 
     def _get_doc_title(self, info_module):
@@ -286,20 +290,21 @@ class PackageLoader(object):
             return title
         return '* Not Available *'
 
-    def _format_titles(self,titles,colsep='---'):
-        display_window_width = 70 # How to determine the correct value in runtime??
-        lengths = [len(name)-name.find('.')-1 for (name, title) in titles]+[0]
+    def _format_titles(self, titles, colsep='---'):
+        display_window_width = 70  # How to determine the correct value in runtime??
+        lengths = [len(name) - name.find('.') -
+                   1 for (name, title) in titles] + [0]
         max_length = max(lengths)
         lines = []
         for (name, title) in titles:
-            name = name[name.find('.')+1:]
+            name = name[name.find('.') + 1:]
             w = max_length - len(name)
             words = title.split()
-            line = '%s%s %s' % (name, w*' ', colsep)
+            line = '%s%s %s' % (name, w * ' ', colsep)
             tab = len(line) * ' '
             while words:
                 word = words.pop(0)
-                if len(line)+len(word)>display_window_width:
+                if len(line) + len(word) > display_window_width:
                     lines.append(line)
                     line = tab
                 line += ' ' + word
@@ -317,7 +322,7 @@ class PackageLoader(object):
         symbols = []
         for package_name, info_module in self.info_modules.items():
             global_symbols = getattr(info_module, 'global_symbols', [])
-            fullname = self.parent_name +'.'+ package_name
+            fullname = self.parent_name + '.' + package_name
             note = ''
             if fullname not in sys.modules:
                 note = ' [*]'
@@ -326,8 +331,7 @@ class PackageLoader(object):
                 symbols.append((package_name, ', '.join(global_symbols)))
 
         retstr = self._format_titles(titles) +\
-               '\n  [*] - using a package requires explicit import (see pkgload)'
-
+            '\n  [*] - using a package requires explicit import (see pkgload)'
 
         if symbols:
             retstr += """\n\nGlobal symbols from subpackages"""\
@@ -336,16 +340,18 @@ class PackageLoader(object):
 
         return retstr
 
+
 class PackageLoaderDebug(PackageLoader):
     def _execcmd(self, cmdstr):
         """ Execute command in parent_frame."""
         frame = self.parent_frame
         print('Executing', repr(cmdstr), '...', end=' ')
         sys.stdout.flush()
-        exec (cmdstr, frame.f_globals, frame.f_locals)
+        exec(cmdstr, frame.f_globals, frame.f_locals)
         print('ok')
         sys.stdout.flush()
         return
+
 
 if int(os.environ.get('NUMPY_IMPORT_DEBUG', '0')):
     PackageLoader = PackageLoaderDebug

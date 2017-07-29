@@ -5,7 +5,7 @@ import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal, assert_warns
-    )
+)
 
 
 class TestUfunclike(object):
@@ -63,7 +63,7 @@ class TestUfunclike(object):
         assert_equal(f.metadata, 'foo')
 
         # check 0d arrays don't decay to scalars
-        m0d = m[0,...]
+        m0d = m[0, ...]
         m0d.metadata = 'bar'
         f0d = ufl.fix(m0d)
         assert_(isinstance(f0d, MyArray))
@@ -91,6 +91,7 @@ class TestUfunclike(object):
         out = np.array(0.0)
         actual = np.fix(x, out=out)
         assert_(actual is out)
+
 
 if __name__ == "__main__":
     run_module_suite()

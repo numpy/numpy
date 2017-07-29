@@ -8,6 +8,7 @@ import os
 
 names = re.compile(r'r\d+\s[|]\s(.*)\s[|]\s200')
 
+
 def get_count(filename, repo):
     mystr = open(filename).read()
     result = names.findall(mystr)
@@ -32,7 +33,6 @@ os.chdir('../scikits')
 os.system(command)
 count.extend(get_count('output.txt', 'SciKits'))
 count.sort()
-
 
 
 print("** SciPy and NumPy **")

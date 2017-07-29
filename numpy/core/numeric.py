@@ -66,7 +66,7 @@ __all__ = [
     'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
     'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
     'TooHardError', 'AxisError'
-    ]
+]
 
 
 if sys.version_info[0] < 3:
@@ -717,12 +717,12 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
-    possible_flags = {'C':'C', 'C_CONTIGUOUS':'C', 'CONTIGUOUS':'C',
-                      'F':'F', 'F_CONTIGUOUS':'F', 'FORTRAN':'F',
-                      'A':'A', 'ALIGNED':'A',
-                      'W':'W', 'WRITEABLE':'W',
-                      'O':'O', 'OWNDATA':'O',
-                      'E':'E', 'ENSUREARRAY':'E'}
+    possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
+                      'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
+                      'A': 'A', 'ALIGNED': 'A',
+                      'W': 'W', 'WRITEABLE': 'W',
+                      'O': 'O', 'OWNDATA': 'O',
+                      'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
     else:
@@ -1154,7 +1154,7 @@ def outer(a, b, out=None):
     """
     a = asarray(a)
     b = asarray(b)
-    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
 def tensordot(a, b, axes=2):
@@ -1901,7 +1901,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
                 typename = "%s" % str(arr.dtype)
             else:
                 typename = "'%s'" % str(arr.dtype)
-            lf = '\n'+' '*len(class_name + "(")
+            lf = '\n' + ' ' * len(class_name + "(")
         return "%s(%s,%sdtype=%s)" % (class_name, lst, lf, typename)
 
 
@@ -2070,11 +2070,11 @@ def indices(dimensions, dtype=int):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    shape = (1,)*N
-    res = empty((N,)+dimensions, dtype=dtype)
+    shape = (1,) * N
+    res = empty((N,) + dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
         res[i] = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
+            shape[:i] + (dim,) + shape[i + 1:]
         )
     return res
 
@@ -2524,7 +2524,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     def within_tol(x, y, atol, rtol):
         with errstate(invalid='ignore'):
-            result = less_equal(abs(x-y), atol + rtol * abs(y))
+            result = less_equal(abs(x - y), atol + rtol * abs(y))
         if isscalar(a) and isscalar(b):
             result = bool(result)
         return result
@@ -2654,12 +2654,12 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-_errdict = {"ignore":ERR_IGNORE,
-            "warn":ERR_WARN,
-            "raise":ERR_RAISE,
-            "call":ERR_CALL,
-            "print":ERR_PRINT,
-            "log":ERR_LOG}
+_errdict = {"ignore": ERR_IGNORE,
+            "warn": ERR_WARN,
+            "raise": ERR_RAISE,
+            "call": ERR_CALL,
+            "print": ERR_PRINT,
+            "log": ERR_LOG}
 
 _errdict_rev = {}
 for key in _errdict.keys():
@@ -2994,6 +2994,8 @@ def geterrcall():
 
 class _unspecified(object):
     pass
+
+
 _Unspecified = _unspecified()
 
 

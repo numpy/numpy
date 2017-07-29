@@ -305,11 +305,11 @@ cb_arg_rules = [
                        '\tif (capi_j>capi_i)\n\t\tGETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname_i#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'},
                       {l_and(debugcapi, l_and(l_not(iscomplex), isintent_c)):
                           '\tfprintf(stderr,"#showvalueformat#.\\n",#varname_i#);'},
-                      {l_and(debugcapi, l_and(l_not(iscomplex), l_not( isintent_c))):
+                      {l_and(debugcapi, l_and(l_not(iscomplex), l_not(isintent_c))):
                           '\tfprintf(stderr,"#showvalueformat#.\\n",*#varname_i#_cb_capi);'},
                       {l_and(debugcapi, l_and(iscomplex, isintent_c)):
                           '\tfprintf(stderr,"#showvalueformat#.\\n",(#varname_i#).r,(#varname_i#).i);'},
-                      {l_and(debugcapi, l_and(iscomplex, l_not( isintent_c))):
+                      {l_and(debugcapi, l_and(iscomplex, l_not(isintent_c))):
                           '\tfprintf(stderr,"#showvalueformat#.\\n",(*#varname_i#_cb_capi).r,(*#varname_i#_cb_capi).i);'},
                       ],
         'need': [{isintent_out: ['#ctype#_from_pyobj', 'GETSCALARFROMPYTUPLE']},

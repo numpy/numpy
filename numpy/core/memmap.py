@@ -11,11 +11,12 @@ valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
-    "readonly":"r",
-    "copyonwrite":"c",
-    "readwrite":"r+",
-    "write":"w+"
-    }
+    "readonly": "r",
+    "copyonwrite": "c",
+    "readwrite": "r+",
+    "write": "w+"
+}
+
 
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
@@ -106,7 +107,7 @@ class memmap(ndarray):
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-    
+
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
@@ -215,10 +216,10 @@ class memmap(ndarray):
             fid = filename
             own_file = False
         elif is_pathlib_path(filename):
-            fid = filename.open((mode == 'c' and 'r' or mode)+'b')
+            fid = filename.open((mode == 'c' and 'r' or mode) + 'b')
             own_file = True
         else:
-            fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
+            fid = open(filename, (mode == 'c' and 'r' or mode) + 'b')
             own_file = True
 
         if (mode == 'w+') and shape is None:
@@ -234,7 +235,7 @@ class memmap(ndarray):
             if (bytes % _dbytes):
                 fid.close()
                 raise ValueError("Size of available data is not a "
-                        "multiple of the data-type size.")
+                                 "multiple of the data-type size.")
             size = bytes // _dbytes
             shape = (size,)
         else:
@@ -244,7 +245,7 @@ class memmap(ndarray):
             for k in shape:
                 size *= k
 
-        bytes = long(offset + size*_dbytes)
+        bytes = long(offset + size * _dbytes)
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes - 1, 0)

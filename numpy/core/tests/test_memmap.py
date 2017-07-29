@@ -16,6 +16,7 @@ from numpy.testing import (
     dec, suppress_warnings
 )
 
+
 class TestMemmap(object):
     def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
@@ -46,7 +47,7 @@ class TestMemmap(object):
     def test_open_with_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
-                       shape=self.shape)
+                    shape=self.shape)
         fp[:] = self.data[:]
         del fp
 
@@ -67,7 +68,7 @@ class TestMemmap(object):
     def test_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
-                       shape=self.shape)
+                    shape=self.shape)
         abspath = os.path.abspath(tmpname)
         fp[:] = self.data[:]
         assert_equal(abspath, fp.filename)
@@ -80,7 +81,7 @@ class TestMemmap(object):
     def test_path(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
-                       shape=self.shape)
+                    shape=self.shape)
         abspath = os.path.realpath(os.path.abspath(tmpname))
         fp[:] = self.data[:]
         assert_equal(abspath, str(fp.filename.resolve()))
@@ -105,7 +106,7 @@ class TestMemmap(object):
     def test_del(self):
         # Make sure a view does not delete the underlying mmap
         fp_base = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
-                    shape=self.shape)
+                         shape=self.shape)
         fp_base[0] = 5
         fp_view = fp_base[0:1]
         assert_equal(fp_view[0], 5)
@@ -195,6 +196,7 @@ class TestMemmap(object):
         offset = mmap.ALLOCATIONGRANULARITY + 1
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
+
 
 if __name__ == "__main__":
     run_module_suite()

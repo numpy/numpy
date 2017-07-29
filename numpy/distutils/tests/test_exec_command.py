@@ -15,8 +15,10 @@ if sys.version_info[0] >= 3:
 else:
     from StringIO import StringIO
 
+
 class redirect_stdout(object):
     """Context manager to redirect stdout for exec_command test."""
+
     def __init__(self, stdout=None):
         self._stdout = stdout or sys.stdout
 
@@ -30,8 +32,10 @@ class redirect_stdout(object):
         # note: closing sys.stdout won't close it.
         self._stdout.close()
 
+
 class redirect_stderr(object):
     """Context manager to redirect stderr for exec_command test."""
+
     def __init__(self, stderr=None):
         self._stderr = stderr or sys.stderr
 
@@ -45,8 +49,10 @@ class redirect_stderr(object):
         # note: closing sys.stderr won't close it.
         self._stderr.close()
 
+
 class emulate_nonposix(object):
     """Context manager to emulate os.name != 'posix' """
+
     def __init__(self, osname='non-posix'):
         self._new_name = osname
 
@@ -80,6 +86,7 @@ def test_exec_command_stdout():
                 with redirect_stderr(TemporaryFile()):
                     exec_command.exec_command("cd '.'")
 
+
 def test_exec_command_stderr():
     # Test posix version:
     with redirect_stdout(TemporaryFile(mode='w+')):
@@ -104,7 +111,7 @@ class TestExecCommand(object):
         assert_(o != '')
 
         s, o = exec_command.exec_command(
-         '"%s" -c "import sys;sys.stderr.write(sys.platform)"' % self.pyexe)
+            '"%s" -c "import sys;sys.stderr.write(sys.platform)"' % self.pyexe)
         assert_(s == 0)
         assert_(o == 'win32')
 
@@ -145,7 +152,6 @@ class TestExecCommand(object):
             assert_(s == 0)
             assert_(o == '')
 
-
         s, o = exec_command.exec_command('this_is_not_a_command', **kws)
         assert_(s != 0)
         assert_(o != '')
@@ -155,31 +161,31 @@ class TestExecCommand(object):
         assert_(o != '')
 
         s, o = exec_command.exec_command(
-             '"%s" -c "import sys,os;sys.stderr.write(os.name)"' %
-             self.pyexe, **kws)
+            '"%s" -c "import sys,os;sys.stderr.write(os.name)"' %
+            self.pyexe, **kws)
         assert_(s == 0)
         assert_(o == 'posix')
 
     def check_basic(self, *kws):
         s, o = exec_command.exec_command(
-                     '"%s" -c "raise \'Ignore me.\'"' % self.pyexe, **kws)
+            '"%s" -c "raise \'Ignore me.\'"' % self.pyexe, **kws)
         assert_(s != 0)
         assert_(o != '')
 
         s, o = exec_command.exec_command(
-             '"%s" -c "import sys;sys.stderr.write(\'0\');'
-             'sys.stderr.write(\'1\');sys.stderr.write(\'2\')"' %
-             self.pyexe, **kws)
+            '"%s" -c "import sys;sys.stderr.write(\'0\');'
+            'sys.stderr.write(\'1\');sys.stderr.write(\'2\')"' %
+            self.pyexe, **kws)
         assert_(s == 0)
         assert_(o == '012')
 
         s, o = exec_command.exec_command(
-                 '"%s" -c "import sys;sys.exit(15)"' % self.pyexe, **kws)
+            '"%s" -c "import sys;sys.exit(15)"' % self.pyexe, **kws)
         assert_(s == 15)
         assert_(o == '')
 
         s, o = exec_command.exec_command(
-                     '"%s" -c "print(\'Heipa\'")' % self.pyexe, **kws)
+            '"%s" -c "print(\'Heipa\'")' % self.pyexe, **kws)
         assert_(s == 0)
         assert_(o == 'Heipa')
 
@@ -192,13 +198,13 @@ class TestExecCommand(object):
             f.close()
 
             s, o = exec_command.exec_command(
-                 '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %
-                 (self.pyexe, fn), **kws)
+                '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %
+                (self.pyexe, fn), **kws)
             assert_(s != 0)
             assert_(o != '')
             s, o = exec_command.exec_command(
-                     '"%s" -c "f = open(\'%s\', \'r\'); print(f.read()); '
-                     'f.close()"' % (self.pyexe, fn), execute_in=tmpdir, **kws)
+                '"%s" -c "f = open(\'%s\', \'r\'); print(f.read()); '
+                'f.close()"' % (self.pyexe, fn), execute_in=tmpdir, **kws)
             assert_(s == 0)
             assert_(o == 'Hello')
 

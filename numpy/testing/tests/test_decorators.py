@@ -39,6 +39,7 @@ def test_setastest():
 class DidntSkipException(Exception):
     pass
 
+
 def test_skip_functions_hardcoded():
     @dec.skipif(True)
     def f1(x):
@@ -189,9 +190,9 @@ def test_deprecated():
 
 
 @dec.parametrize('base, power, expected',
-        [(1, 1, 1),
-         (2, 1, 2),
-         (2, 2, 4)])
+                 [(1, 1, 1),
+                  (2, 1, 2),
+                     (2, 2, 4)])
 def test_parametrize(base, power, expected):
     assert_(base**power == expected)
 

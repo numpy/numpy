@@ -6,10 +6,10 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_array_equal, assert_equal, assert_raises,
-    )
+)
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
-    )
+)
 
 
 class TestSetOps(object):
@@ -68,12 +68,13 @@ class TestSetOps(object):
         assert_array_equal([-1, 0], ediff1d(zero_elem, to_begin=-1, to_end=0))
         assert_array_equal([], ediff1d(one_elem))
         assert_array_equal([1], ediff1d(two_elem))
-        assert_array_equal([7,1,9], ediff1d(two_elem, to_begin=7, to_end=9))
-        assert_array_equal([5,6,1,7,8], ediff1d(two_elem, to_begin=[5,6], to_end=[7,8]))
-        assert_array_equal([1,9], ediff1d(two_elem, to_end=9))
-        assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
-        assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
-        assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
+        assert_array_equal([7, 1, 9], ediff1d(two_elem, to_begin=7, to_end=9))
+        assert_array_equal([5, 6, 1, 7, 8], ediff1d(
+            two_elem, to_begin=[5, 6], to_end=[7, 8]))
+        assert_array_equal([1, 9], ediff1d(two_elem, to_end=9))
+        assert_array_equal([1, 7, 8], ediff1d(two_elem, to_end=[7, 8]))
+        assert_array_equal([7, 1], ediff1d(two_elem, to_begin=7))
+        assert_array_equal([5, 6, 1], ediff1d(two_elem, to_begin=[5, 6]))
         assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
         assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
 
@@ -85,33 +86,34 @@ class TestSetOps(object):
             b = np.asarray(b).flatten().tolist()
             return a in b
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
+
         def assert_isin_equal(a, b):
             x = isin(a, b)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
 
-        #multidimensional arrays in both arguments
+        # multidimensional arrays in both arguments
         a = np.arange(24).reshape([2, 3, 4])
         b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
         assert_isin_equal(a, b)
 
-        #array-likes as both arguments
+        # array-likes as both arguments
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
 
-        #zero-d array:
+        # zero-d array:
         f = np.array(3)
         assert_isin_equal(f, b)
         assert_isin_equal(a, f)
         assert_isin_equal(f, f)
 
-        #scalar:
+        # scalar:
         assert_isin_equal(5, b)
         assert_isin_equal(a, 6)
         assert_isin_equal(5, 6)
 
-        #empty array-like:
+        # empty array-like:
         x = []
         assert_isin_equal(x, b)
         assert_isin_equal(a, x)
@@ -304,10 +306,10 @@ class TestUnique(object):
             assert_array_equal(j2, i2, msg)
             assert_array_equal(j3, c, msg)
 
-        a = [5, 7, 1, 2, 1, 5, 7]*10
+        a = [5, 7, 1, 2, 1, 5, 7] * 10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
-        i2 = [2, 3, 0, 1, 0, 2, 3]*10
+        i2 = [2, 3, 0, 1, 0, 2, 3] * 10
         c = np.multiply([2, 1, 2, 2], 10)
 
         # test for numeric arrays
@@ -359,7 +361,8 @@ class TestUnique(object):
         a = []
         a1_idx = np.unique(a, return_index=True)[1]
         a2_inv = np.unique(a, return_inverse=True)[1]
-        a3_idx, a3_inv = np.unique(a, return_index=True, return_inverse=True)[1:]
+        a3_idx, a3_inv = np.unique(
+            a, return_index=True, return_inverse=True)[1:]
         assert_equal(a1_idx.dtype, np.intp)
         assert_equal(a2_inv.dtype, np.intp)
         assert_equal(a3_idx.dtype, np.intp)
@@ -404,7 +407,8 @@ class TestUnique(object):
 
     def test_unique_masked(self):
         # issue 8664
-        x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0, 1, 2, 0, 63, 0], dtype='uint8')
+        x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0,
+                      1, 2, 0, 63, 0], dtype='uint8')
         y = np.ma.masked_equal(x, 0)
 
         v = np.unique(y)

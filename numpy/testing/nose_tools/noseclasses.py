@@ -72,14 +72,14 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # Local shorthands
         from inspect import (
             isroutine, isclass, ismodule, isfunction, ismethod
-            )
+        )
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
                 valname1 = '%s.%s' % (name, valname)
-                if ( (isroutine(val) or isclass(val))
-                     and self._from_module(module, val)):
+                if ((isroutine(val) or isclass(val))
+                        and self._from_module(module, val)):
 
                     self._find(tests, val, valname1, module, source_lines,
                                globs, seen)
@@ -96,7 +96,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                 # Recurse to methods, properties, and nested classes.
                 if ((isfunction(val) or isclass(val) or
                      ismethod(val) or isinstance(val, property)) and
-                      self._from_module(module, val)):
+                        self._from_module(module, val)):
                     valname = '%s.%s' % (name, valname)
                     self._find(tests, val, valname, module, source_lines,
                                globs, seen)
@@ -126,7 +126,7 @@ class NumpyOutputChecker(doctest.OutputChecker):
                 want = want.replace("'<i%d'" % sz, "int")
 
             ret = doctest.OutputChecker.check_output(self, want,
-                    got, optionflags)
+                                                     got, optionflags)
 
         return ret
 
@@ -146,6 +146,7 @@ class NumpyDocTestCase(npd.DocTestCase):
 
 
 print_state = numpy.get_printoptions()
+
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
@@ -215,10 +216,10 @@ class NumpyDoctest(npd.Doctest):
         #
         # Note: __file__ allows the doctest in NoseTester to run
         # without producing an error
-        test.globs = {'__builtins__':__builtins__,
-                      '__file__':'__main__',
-                      '__name__':'__main__',
-                      'np':numpy}
+        test.globs = {'__builtins__': __builtins__,
+                      '__file__': '__main__',
+                      '__name__': '__main__',
+                      'np': numpy}
         # add appropriate scipy import for SciPy tests
         if 'scipy' in pkg_name:
             p = pkg_name.split('.')
@@ -313,6 +314,7 @@ class KnownFailurePlugin(ErrorClassPlugin):
         disable = getattr(options, 'noKnownFail', False)
         if disable:
             self.enabled = False
+
 
 KnownFailure = KnownFailurePlugin   # backwards compat
 

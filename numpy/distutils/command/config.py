@@ -4,7 +4,8 @@
 # Pearu Peterson
 from __future__ import division, absolute_import, print_function
 
-import os, signal
+import os
+import signal
 import warnings
 import sys
 
@@ -26,16 +27,17 @@ from numpy.distutils.compat import get_exception
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
 
+
 class config(old_config):
     old_config.user_options += [
         ('fcompiler=', None, "specify the Fortran compiler type"),
-        ]
+    ]
 
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
 
-    def _check_compiler (self):
+    def _check_compiler(self):
         old_config._check_compiler(self)
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 
@@ -61,7 +63,7 @@ VS 2010 for >= 3.3).
 Original exception was: %s, and the Compiler class was %s
 ============================================================================""" \
                         % (e, self.compiler.__class__.__name__)
-                    print ("""\
+                    print("""\
 ============================================================================""")
                     raise distutils.errors.DistutilsPlatformError(msg)
 
@@ -92,7 +94,7 @@ Original exception was: %s, and the Compiler class was %s
         if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
         try:
-            ret = mth(*((self,)+args))
+            ret = mth(*((self,) + args))
         except (DistutilsExecError, CompileError):
             msg = str(get_exception())
             self.compiler = save_compiler
@@ -100,39 +102,42 @@ Original exception was: %s, and the Compiler class was %s
         self.compiler = save_compiler
         return ret
 
-    def _compile (self, body, headers, include_dirs, lang):
+    def _compile(self, body, headers, include_dirs, lang):
         return self._wrap_method(old_config._compile, lang,
                                  (body, headers, include_dirs, lang))
 
-    def _link (self, body,
-               headers, include_dirs,
-               libraries, library_dirs, lang):
-        if self.compiler.compiler_type=='msvc':
+    def _link(self, body,
+              headers, include_dirs,
+              libraries, library_dirs, lang):
+        if self.compiler.compiler_type == 'msvc':
             libraries = (libraries or [])[:]
             library_dirs = (library_dirs or [])[:]
             if lang in ['f77', 'f90']:
-                lang = 'c' # always use system linker when using MSVC compiler
+                lang = 'c'  # always use system linker when using MSVC compiler
                 if self.fcompiler:
                     for d in self.fcompiler.library_dirs or []:
                         # correct path when compiling in Cygwin but with
                         # normal Win Python
                         if d.startswith('/usr/lib'):
                             s, o = exec_command(['cygpath', '-w', d],
-                                               use_tee=False)
-                            if not s: d = o
+                                                use_tee=False)
+                            if not s:
+                                d = o
                         library_dirs.append(d)
                     for libname in self.fcompiler.libraries or []:
                         if libname not in libraries:
                             libraries.append(libname)
             for libname in libraries:
-                if libname.startswith('msvc'): continue
+                if libname.startswith('msvc'):
+                    continue
                 fileexists = False
                 for libdir in library_dirs or []:
                     libfile = os.path.join(libdir, '%s.lib' % (libname))
                     if os.path.isfile(libfile):
                         fileexists = True
                         break
-                if fileexists: continue
+                if fileexists:
+                    continue
                 # make g77-compiled static libs available to MSVC
                 fileexists = False
                 for libdir in library_dirs:
@@ -145,8 +150,9 @@ Original exception was: %s, and the Compiler class was %s
                         self.temp_files.append(libfile2)
                         fileexists = True
                         break
-                if fileexists: continue
-                log.warn('could not find library %r in directories %s' \
+                if fileexists:
+                    continue
+                log.warn('could not find library %r in directories %s'
                          % (libname, library_dirs))
         elif self.compiler.compiler_type == 'mingw32':
             generate_manifest(self)
@@ -157,8 +163,8 @@ Original exception was: %s, and the Compiler class was %s
     def check_header(self, header, include_dirs=None, library_dirs=None, lang='c'):
         self._check_compiler()
         return self.try_compile(
-                "/* we need a dummy line to make distutils happy */",
-                [header], include_dirs)
+            "/* we need a dummy line to make distutils happy */",
+            [header], include_dirs)
 
     def check_decl(self, symbol,
                    headers=None, include_dirs=None):
@@ -192,7 +198,7 @@ int main(void)
         return self.try_compile(body, headers, include_dirs)
 
     def check_type(self, type_name, headers=None, include_dirs=None,
-            library_dirs=None):
+                   library_dirs=None):
         """Check type availability. Return True if the type can be compiled,
         False otherwise"""
         self._check_compiler()
@@ -211,7 +217,7 @@ int main(void) {
         try:
             try:
                 self._compile(body % {'type': type_name},
-                        headers, include_dirs, 'c')
+                              headers, include_dirs, 'c')
                 st = True
             except distutils.errors.CompileError:
                 st = False
@@ -237,7 +243,7 @@ int main (void)
 }
 """
         self._compile(body % {'type': type_name},
-                headers, include_dirs, 'c')
+                      headers, include_dirs, 'c')
         self._clean()
 
         if expected:
@@ -255,7 +261,7 @@ int main (void)
             for size in expected:
                 try:
                     self._compile(body % {'type': type_name, 'size': size},
-                            headers, include_dirs, 'c')
+                                  headers, include_dirs, 'c')
                     self._clean()
                     return size
                 except CompileError:
@@ -282,7 +288,7 @@ int main (void)
         while True:
             try:
                 self._compile(body % {'type': type_name, 'size': mid},
-                        headers, include_dirs, 'c')
+                              headers, include_dirs, 'c')
                 self._clean()
                 break
             except CompileError:
@@ -296,7 +302,7 @@ int main (void)
             mid = (high - low) // 2 + low
             try:
                 self._compile(body % {'type': type_name, 'size': mid},
-                        headers, include_dirs, 'c')
+                              headers, include_dirs, 'c')
                 self._clean()
                 high = mid
             except CompileError:
@@ -338,9 +344,9 @@ int main (void)
                              libraries, library_dirs)
 
     def check_funcs_once(self, funcs,
-                   headers=None, include_dirs=None,
-                   libraries=None, library_dirs=None,
-                   decl=False, call=False, call_args=None):
+                         headers=None, include_dirs=None,
+                         libraries=None, library_dirs=None,
+                         decl=False, call=False, call_args=None):
         """Check a list of functions at once.
 
         This is useful to speed up things, since all the functions in the funcs
@@ -426,10 +432,10 @@ int main (void)
         of the program and its output.
         """
         # 2008-11-16, RemoveMe
-        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
-                      "Usage of get_output is deprecated: please do not \n" \
-                      "use it anymore, and avoid configuration checks \n" \
-                      "involving running executable on the target machine.\n" \
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n"
+                      "Usage of get_output is deprecated: please do not \n"
+                      "use it anymore, and avoid configuration checks \n"
+                      "involving running executable on the target machine.\n"
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
                       DeprecationWarning, stacklevel=2)
         from distutils.ccompiler import CompileError, LinkError
@@ -464,6 +470,7 @@ int main (void)
         self._clean()
         return exitcode, output
 
+
 class GrabStdout(object):
 
     def __init__(self):
@@ -471,11 +478,11 @@ class GrabStdout(object):
         self.data = ''
         sys.stdout = self
 
-    def write (self, data):
+    def write(self, data):
         self.sys_stdout.write(data)
         self.data += data
 
-    def flush (self):
+    def flush(self):
         self.sys_stdout.flush()
 
     def restore(self):

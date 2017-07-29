@@ -6,23 +6,23 @@ import warnings
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims,
-    )
+)
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
     assert_warns
-    )
+)
 
 
 class TestApplyAlongAxis(object):
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_simple101(self, level=11):
         a = np.ones((10, 101), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_3d(self):
         a = np.arange(27).reshape((3, 3, 3))
@@ -82,14 +82,14 @@ class TestApplyAlongAxis(object):
         def f1to2(x):
             """produces an assymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            return (x[::-1] * x[1:,None]).view(cls)
+            return (x[::-1] * x[1:, None]).view(cls)
 
-        a2d = np.arange(6*3).reshape((6, 3))
+        a2d = np.arange(6 * 3).reshape((6, 3))
 
         # 2d insertion along first axis
         actual = apply_along_axis(f1to2, 0, a2d)
         expected = np.stack([
-            f1to2(a2d[:,i]) for i in range(a2d.shape[1])
+            f1to2(a2d[:, i]) for i in range(a2d.shape[1])
         ], axis=-1).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
@@ -97,18 +97,18 @@ class TestApplyAlongAxis(object):
         # 2d insertion along last axis
         actual = apply_along_axis(f1to2, 1, a2d)
         expected = np.stack([
-            f1to2(a2d[i,:]) for i in range(a2d.shape[0])
+            f1to2(a2d[i, :]) for i in range(a2d.shape[0])
         ], axis=0).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
 
         # 3d insertion along middle axis
-        a3d = np.arange(6*5*3).reshape((6, 5, 3))
+        a3d = np.arange(6 * 5 * 3).reshape((6, 5, 3))
 
         actual = apply_along_axis(f1to2, 1, a3d)
         expected = np.stack([
             np.stack([
-                f1to2(a3d[i,:,j]) for i in range(a3d.shape[0])
+                f1to2(a3d[i, :, j]) for i in range(a3d.shape[0])
             ], axis=0)
             for j in range(a3d.shape[2])
         ], axis=-1).view(cls)
@@ -126,15 +126,15 @@ class TestApplyAlongAxis(object):
         def f1to2(x):
             """produces an assymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            res = x[::-1] * x[1:,None]
-            return np.ma.masked_where(res%5==0, res)
-        a = np.arange(6*3).reshape((6, 3))
+            res = x[::-1] * x[1:, None]
+            return np.ma.masked_where(res % 5 == 0, res)
+        a = np.arange(6 * 3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
         assert_(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
-        assert_array_equal(res[:,:,0].mask, f1to2(a[:,0]).mask)
-        assert_array_equal(res[:,:,1].mask, f1to2(a[:,1]).mask)
-        assert_array_equal(res[:,:,2].mask, f1to2(a[:,2]).mask)
+        assert_array_equal(res[:, :, 0].mask, f1to2(a[:, 0]).mask)
+        assert_array_equal(res[:, :, 1].mask, f1to2(a[:, 1]).mask)
+        assert_array_equal(res[:, :, 2].mask, f1to2(a[:, 2]).mask)
 
     def test_tuple_func1d(self):
         def sample_1d(x):
@@ -145,7 +145,7 @@ class TestApplyAlongAxis(object):
     def test_empty(self):
         # can't apply_along_axis when there's no chance to call the function
         def never_call(x):
-            assert_(False) # should never be reached
+            assert_(False)  # should never be reached
 
         a = np.empty((0, 0))
         assert_raises(ValueError, np.apply_along_axis, never_call, 0, a)
@@ -273,7 +273,7 @@ class TestArraySplit(object):
         a = np.array([np.arange(10), np.arange(10)])
         res = array_split(a, 3, axis=0)
         tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.zeros((0, 10))]
+               np.zeros((0, 10))]
         compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
@@ -298,7 +298,7 @@ class TestArraySplit(object):
         a = np.array([np.arange(10), np.arange(10)])
         res = array_split(a, 3)
         tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.zeros((0, 10))]
+               np.zeros((0, 10))]
         compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
@@ -342,6 +342,7 @@ class TestSplit(object):
     def test_unequal_split(self):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
+
 
 class TestColumnStack(object):
     def test_non_iterable(self):
@@ -387,6 +388,7 @@ class TestHsplit(object):
     """Only testing for integer splits.
 
     """
+
     def test_non_iterable(self):
         assert_raises(ValueError, hsplit, 1, 1)
 
@@ -406,7 +408,7 @@ class TestHsplit(object):
 
     def test_2D_array(self):
         a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+                      [1, 2, 3, 4]])
         res = hsplit(a, 2)
         desired = [np.array([[1, 2], [1, 2]]), np.array([[3, 4], [3, 4]])]
         compare_results(res, desired)
@@ -416,6 +418,7 @@ class TestVsplit(object):
     """Only testing for integer splits.
 
     """
+
     def test_non_iterable(self):
         assert_raises(ValueError, vsplit, 1, 1)
 
@@ -433,7 +436,7 @@ class TestVsplit(object):
 
     def test_2D_array(self):
         a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+                      [1, 2, 3, 4]])
         res = vsplit(a, 2)
         desired = [np.array([[1, 2, 3, 4]]), np.array([[1, 2, 3, 4]])]
         compare_results(res, desired)
@@ -454,7 +457,7 @@ class TestDsplit(object):
 
     def test_2D_array(self):
         a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+                      [1, 2, 3, 4]])
         try:
             dsplit(a, 2)
             assert_(0)
@@ -463,9 +466,9 @@ class TestDsplit(object):
 
     def test_3D_array(self):
         a = np.array([[[1, 2, 3, 4],
-                   [1, 2, 3, 4]],
-                  [[1, 2, 3, 4],
-                   [1, 2, 3, 4]]])
+                       [1, 2, 3, 4]],
+                      [[1, 2, 3, 4],
+                       [1, 2, 3, 4]]])
         res = dsplit(a, 2)
         desired = [np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
                    np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]])]

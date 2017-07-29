@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import os
 import sys
 
+
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
@@ -54,6 +55,7 @@ def configuration(parent_package='', top_path=None):
         libraries=['npymath'],
     )
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup

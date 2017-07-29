@@ -31,6 +31,7 @@ def check_float_type(tp):
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
+
 def test_float_types():
     """ Check formatting.
 
@@ -42,10 +43,12 @@ def test_float_types():
     for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type, t
 
+
 def check_nan_inf_float(tp):
     for x in [np.inf, -np.inf, np.nan]:
         assert_equal(str(tp(x)), _REF[x],
                      err_msg='Failed str formatting for type %s' % tp)
+
 
 def test_nan_inf_float():
     """ Check formatting of nan & inf.
@@ -58,13 +61,14 @@ def test_nan_inf_float():
     for t in [np.float32, np.double, np.longdouble]:
         yield check_nan_inf_float, t
 
+
 def check_complex_type(tp):
     for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
-        assert_equal(str(tp(x*1j)), str(complex(x*1j)),
+        assert_equal(str(tp(x * 1j)), str(complex(x * 1j)),
                      err_msg='Failed str formatting for type %s' % tp)
-        assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
+        assert_equal(str(tp(x + x * 1j)), str(complex(x + x * 1j)),
                      err_msg='Failed str formatting for type %s' % tp)
 
     if tp(1e10).itemsize > 8:
@@ -74,6 +78,7 @@ def check_complex_type(tp):
         ref = '(1e+10+0j)'
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
+
 
 def test_complex_types():
     """Check formatting of complex types.
@@ -85,6 +90,7 @@ def test_complex_types():
     """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type, t
+
 
 def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
@@ -110,10 +116,13 @@ def test_complex_inf_nan():
         for c, s in TESTS.items():
             yield _check_complex_inf_nan, c, s, tp
 
+
 def _check_complex_inf_nan(c, s, dtype):
     assert_equal(str(dtype(c)), s)
 
 # print tests
+
+
 def _test_redirected_print(x, tp, ref=None):
     file = StringIO()
     file_tp = StringIO()
@@ -132,6 +141,7 @@ def _test_redirected_print(x, tp, ref=None):
     assert_equal(file.getvalue(), file_tp.getvalue(),
                  err_msg='print failed for type%s' % tp)
 
+
 def check_float_type_print(tp):
     for x in [0, 1, -1, 1e20]:
         _test_redirected_print(float(x), tp)
@@ -144,6 +154,7 @@ def check_float_type_print(tp):
     else:
         ref = '1e+10'
         _test_redirected_print(float(1e10), tp, ref)
+
 
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
@@ -161,44 +172,47 @@ def check_complex_type_print(tp):
     _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
     _test_redirected_print(complex(-np.nan, 1), tp, '(nan+1j)')
 
+
 def test_float_type_print():
     """Check formatting when using print """
     for t in [np.float32, np.double, np.longdouble]:
         yield check_float_type_print, t
+
 
 def test_complex_type_print():
     """Check formatting when using print """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
         yield check_complex_type_print, t
 
+
 def test_scalar_format():
     """Test the str.format method with NumPy scalar types"""
     tests = [('{0}', True, np.bool_),
-            ('{0}', False, np.bool_),
-            ('{0:d}', 130, np.uint8),
-            ('{0:d}', 50000, np.uint16),
-            ('{0:d}', 3000000000, np.uint32),
-            ('{0:d}', 15000000000000000000, np.uint64),
-            ('{0:d}', -120, np.int8),
-            ('{0:d}', -30000, np.int16),
-            ('{0:d}', -2000000000, np.int32),
-            ('{0:d}', -7000000000000000000, np.int64),
-            ('{0:g}', 1.5, np.float16),
-            ('{0:g}', 1.5, np.float32),
-            ('{0:g}', 1.5, np.float64),
-            ('{0:g}', 1.5, np.longdouble),
-            ('{0:g}', 1.5+0.5j, np.complex64),
-            ('{0:g}', 1.5+0.5j, np.complex128),
-            ('{0:g}', 1.5+0.5j, np.clongdouble)]
+             ('{0}', False, np.bool_),
+             ('{0:d}', 130, np.uint8),
+             ('{0:d}', 50000, np.uint16),
+             ('{0:d}', 3000000000, np.uint32),
+             ('{0:d}', 15000000000000000000, np.uint64),
+             ('{0:d}', -120, np.int8),
+             ('{0:d}', -30000, np.int16),
+             ('{0:d}', -2000000000, np.int32),
+             ('{0:d}', -7000000000000000000, np.int64),
+             ('{0:g}', 1.5, np.float16),
+             ('{0:g}', 1.5, np.float32),
+             ('{0:g}', 1.5, np.float64),
+             ('{0:g}', 1.5, np.longdouble),
+             ('{0:g}', 1.5 + 0.5j, np.complex64),
+             ('{0:g}', 1.5 + 0.5j, np.complex128),
+             ('{0:g}', 1.5 + 0.5j, np.clongdouble)]
 
     for (fmat, val, valtype) in tests:
         try:
             assert_equal(fmat.format(val), fmat.format(valtype(val)),
-                    "failed with val %s, type %s" % (val, valtype))
+                         "failed with val %s, type %s" % (val, valtype))
         except ValueError as e:
             assert_(False,
-               "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
-                            (fmat, repr(val), repr(valtype), str(e)))
+                    "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
+                    (fmat, repr(val), repr(valtype), str(e)))
 
 
 # Locale tests: scalar types formatting should be independent of the locale
@@ -224,23 +238,27 @@ def in_foreign_locale(func):
                     pass
             else:
                 raise SkipTest("Skipping locale test, because "
-                                "French locale not found")
+                               "French locale not found")
             return func(*args, **kwargs)
         finally:
             locale.setlocale(locale.LC_NUMERIC, locale=curloc)
     return nose.tools.make_decorator(func)(wrapper)
 
+
 @in_foreign_locale
 def test_locale_single():
     assert_equal(str(np.float32(1.2)), str(float(1.2)))
+
 
 @in_foreign_locale
 def test_locale_double():
     assert_equal(str(np.double(1.2)), str(float(1.2)))
 
+
 @in_foreign_locale
 def test_locale_longdouble():
     assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
+
 
 if __name__ == "__main__":
     run_module_suite()

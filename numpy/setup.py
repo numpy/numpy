@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('numpy', parent_package, top_path)
 
@@ -21,8 +21,9 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('testing')
     config.add_data_dir('doc')
     config.add_data_dir('tests')
-    config.make_config_py() # installs __config__.py
+    config.make_config_py()  # installs __config__.py
     return config
+
 
 if __name__ == '__main__':
     print('This is the wrong setup.py file to run')

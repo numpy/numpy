@@ -7,7 +7,7 @@ import sys
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises
-    )
+)
 
 
 PY2 = sys.version_info.major < 3

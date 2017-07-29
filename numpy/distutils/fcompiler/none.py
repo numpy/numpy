@@ -4,6 +4,7 @@ from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['NoneFCompiler']
 
+
 class NoneFCompiler(FCompiler):
 
     compiler_type = 'none'

@@ -6,10 +6,11 @@ from distutils.command.build import build as old_build
 from distutils.util import get_platform
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
+
 class build(old_build):
 
-    sub_commands = [('config_cc',     lambda *args: True),
-                    ('config_fc',     lambda *args: True),
+    sub_commands = [('config_cc', lambda *args: True),
+                    ('config_fc', lambda *args: True),
                     ('build_src',     old_build.has_ext_modules),
                     ] + old_build.sub_commands
 
@@ -18,12 +19,12 @@ class build(old_build):
          "specify the Fortran compiler type"),
         ('parallel=', 'j',
          "number of parallel jobs"),
-        ]
+    ]
 
     help_options = old_build.help_options + [
         ('help-fcompiler', None, "list available Fortran compilers",
          show_fortran_compilers),
-        ]
+    ]
 
     def initialize_options(self):
         old_build.initialize_options(self)

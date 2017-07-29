@@ -11,6 +11,7 @@ from distutils.file_util import write_file
 
 old_install = old_install_mod.install
 
+
 class install(old_install):
 
     # Always run install_clib - the command is cheap, so no need to bypass it;
@@ -19,7 +20,7 @@ class install(old_install):
         ('install_clib', lambda x: True)
     ]
 
-    def finalize_options (self):
+    def finalize_options(self):
         old_install.finalize_options(self)
         self.install_lib = self.install_libbase
 
@@ -47,7 +48,7 @@ class install(old_install):
         caller_module = caller.f_globals.get('__name__', '')
         caller_name = caller.f_code.co_name
 
-        if caller_module != 'distutils.dist' or caller_name!='run_commands':
+        if caller_module != 'distutils.dist' or caller_name != 'run_commands':
             # We weren't called from the command line or setup(), so we
             # should run in backward-compatibility mode to support bdist_*
             # commands.

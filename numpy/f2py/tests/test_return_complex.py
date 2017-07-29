@@ -166,5 +166,6 @@ end module f90_return_complex
         for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
             self.check_function(getattr(self.module.f90_return_complex, name))
 
+
 if __name__ == "__main__":
     run_module_suite()

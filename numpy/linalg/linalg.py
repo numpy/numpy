@@ -24,7 +24,7 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
-    )
+)
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -40,6 +40,8 @@ _L = b'L'
 fortran_int = intc
 
 # Error object
+
+
 class LinAlgError(Exception):
     """
     Generic Python-exception-derived object raised by linalg functions.
@@ -71,7 +73,9 @@ class LinAlgError(Exception):
 
 # Dealing with errors in _umath_linalg
 
+
 _linalg_error_extobj = None
+
 
 def _determine_error_states():
     global _linalg_error_extobj
@@ -84,57 +88,71 @@ def _determine_error_states():
 
     _linalg_error_extobj = [bufsize, invalid_call_errmask, None]
 
+
 _determine_error_states()
+
 
 def _raise_linalgerror_singular(err, flag):
     raise LinAlgError("Singular matrix")
 
+
 def _raise_linalgerror_nonposdef(err, flag):
     raise LinAlgError("Matrix is not positive definite")
+
 
 def _raise_linalgerror_eigenvalues_nonconvergence(err, flag):
     raise LinAlgError("Eigenvalues did not converge")
 
+
 def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
+
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)
     extobj[2] = callback
     return extobj
 
+
 def _makearray(a):
     new = asarray(a)
     wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
+
 def isComplexType(t):
     return issubclass(t, complexfloating)
 
-_real_types_map = {single : single,
-                   double : double,
-                   csingle : single,
-                   cdouble : double}
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
+_real_types_map = {single: single,
+                   double: double,
+                   csingle: single,
+                   cdouble: double}
+
+_complex_types_map = {single: csingle,
+                      double: cdouble,
+                      csingle: csingle,
+                      cdouble: cdouble}
+
 
 def _realType(t, default=double):
     return _real_types_map.get(t, default)
 
+
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
+
 
 def _linalgRealType(t):
     """Cast the type t to either double or cdouble."""
     return double
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
+
+_complex_types_map = {single: csingle,
+                      double: cdouble,
+                      csingle: csingle,
+                      cdouble: cdouble}
+
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
@@ -148,7 +166,7 @@ def _commonType(*arrays):
             if rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                                (a.dtype.name,))
         else:
             rt = double
         if rt is double:
@@ -165,6 +183,7 @@ def _commonType(*arrays):
 
 _fastCT = fastCopyAndTranspose
 
+
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
@@ -176,6 +195,7 @@ def _to_native_byte_order(*arrays):
         return ret[0]
     else:
         return ret
+
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -189,36 +209,43 @@ def _fastCopyAndTranspose(type, *arrays):
     else:
         return cast_arrays
 
+
 def _assertRank2(*arrays):
     for a in arrays:
         if a.ndim != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % a.ndim)
+                              'two-dimensional' % a.ndim)
+
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
         if a.ndim < 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+                              'at least two-dimensional' % a.ndim)
+
 
 def _assertSquareness(*arrays):
     for a in arrays:
         if max(a.shape) != min(a.shape):
             raise LinAlgError('Array must be square')
 
+
 def _assertNdSquareness(*arrays):
     for a in arrays:
         if max(a.shape[-2:]) != min(a.shape[-2:]):
             raise LinAlgError('Last 2 dimensions of the array must be square')
+
 
 def _assertFinite(*arrays):
     for a in arrays:
         if not (isfinite(a).all()):
             raise LinAlgError("Array must not contain infs or NaNs")
 
+
 def _isEmpty2d(arr):
     # check size first for efficiency
     return arr.size == 0 and product(arr.shape[-2:]) == 0
+
 
 def _assertNoEmpty2d(*arrays):
     for a in arrays:
@@ -286,7 +313,7 @@ def tensorsolve(a, b, axes=None):
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
 
-    oldshape = a.shape[-(an-b.ndim):]
+    oldshape = a.shape[-(an - b.ndim):]
     prod = 1
     for k in oldshape:
         prod *= k
@@ -296,6 +323,7 @@ def tensorsolve(a, b, axes=None):
     res = wrap(solve(a, b))
     res.shape = oldshape
     return res
+
 
 def solve(a, b):
     """
@@ -601,6 +629,7 @@ def cholesky(a):
 
 # QR decompostion
 
+
 def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
@@ -722,8 +751,8 @@ def qr(a, mode='reduced'):
         if mode in ('f', 'full'):
             # 2013-04-01, 1.8
             msg = "".join((
-                    "The 'full' option is deprecated in favor of 'reduced'.\n",
-                    "For backward compatibility let mode default."))
+                "The 'full' option is deprecated in favor of 'reduced'.\n",
+                "For backward compatibility let mode default."))
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
@@ -773,7 +802,7 @@ def qr(a, mode='reduced'):
         return a, tau
 
     if mode == 'economic':
-        if t != result_t :
+        if t != result_t:
             a = a.astype(result_t, copy=False)
         return wrap(a.T)
 
@@ -903,6 +932,7 @@ def eigvals(a):
 
     return w.astype(result_t, copy=False)
 
+
 def eigvalsh(a, UPLO='L'):
     """
     Compute the eigenvalues of a Hermitian or real symmetric matrix.
@@ -993,6 +1023,7 @@ def eigvalsh(a, UPLO='L'):
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
+
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1402,6 +1433,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         s = s.astype(_realType(result_t), copy=False)
         return s
 
+
 def cond(x, p=None):
     """
     Compute the condition number of a matrix.
@@ -1484,7 +1516,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if p is None:
         s = svd(x, compute_uv=False)
-        return s[..., 0]/s[..., -1]
+        return s[..., 0] / s[..., -1]
     else:
         return norm(x, p, axis=(-2, -1)) * norm(inv(x), p, axis=(-2, -1))
 
@@ -1567,16 +1599,17 @@ def matrix_rank(M, tol=None):
     """
     M = asarray(M)
     if M.ndim < 2:
-        return int(not all(M==0))
+        return int(not all(M == 0))
     S = svd(M, compute_uv=False)
     if tol is None:
-        tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+        tol = S.max(axis=-1, keepdims=True) * \
+            max(M.shape[-2:]) * finfo(S.dtype).eps
     return (S > tol).sum(axis=-1)
 
 
 # Generalized inverse
 
-def pinv(a, rcond=1e-15 ):
+def pinv(a, rcond=1e-15):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -1647,16 +1680,17 @@ def pinv(a, rcond=1e-15 ):
     u, s, vt = svd(a, 0)
     m = u.shape[0]
     n = vt.shape[1]
-    cutoff = rcond*maximum.reduce(s)
+    cutoff = rcond * maximum.reduce(s)
     for i in range(min(n, m)):
         if s[i] > cutoff:
-            s[i] = 1./s[i]
+            s[i] = 1. / s[i]
         else:
             s[i] = 0.
     res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
+
 
 def slogdet(a):
     """
@@ -1749,6 +1783,7 @@ def slogdet(a):
         logdet = logdet.astype(real_t, copy=False)
     return sign, logdet
 
+
 def det(a):
     """
     Compute the determinant of an array.
@@ -1809,6 +1844,7 @@ def det(a):
     return r
 
 # Linear Least Squares
+
 
 def lstsq(a, b, rcond=-1):
     """
@@ -1902,8 +1938,8 @@ def lstsq(a, b, rcond=-1):
         b = b[:, newaxis]
     _assertRank2(a, b)
     _assertNoEmpty2d(a, b)  # TODO: relax this constraint
-    m  = a.shape[0]
-    n  = a.shape[1]
+    m = a.shape[0]
+    n = a.shape[1]
     n_rhs = b.shape[1]
     ldb = max(n, m)
     if m != b.shape[0]:
@@ -1924,8 +1960,8 @@ def lstsq(a, b, rcond=-1):
     #    not have this bug:
     #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
     #    Lapack_lite does have that bug...
-    nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
-    iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
+    nlvl = max(0, int(math.log(float(min(m, n)) / 2.)) + 1)
+    iwork = zeros((3 * min(m, n) * nlvl + 11 * min(m, n),), fortran_int)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgelsd
         lwork = 1
@@ -1968,13 +2004,13 @@ def lstsq(a, b, rcond=-1):
                 resids = array([sum((ravel(bstar)[n:])**2)],
                                dtype=result_real_t)
     else:
-        x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
+        x = array(transpose(bstar)[:n, :], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
             if isComplexType(t):
-                resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum(abs(transpose(bstar)[n:, :])**2, axis=0).astype(
                     result_real_t, copy=False)
             else:
-                resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum((transpose(bstar)[n:, :])**2, axis=0).astype(
                     result_real_t, copy=False)
 
     st = s[:min(n, m)].astype(result_real_t, copy=True)
@@ -2158,7 +2194,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         ndim = x.ndim
         if ((ord is None) or
             (ord in ('f', 'fro') and ndim == 2) or
-            (ord == 2 and ndim == 1)):
+                (ord == 2 and ndim == 1)):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
@@ -2167,7 +2203,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 sqnorm = dot(x, x)
             ret = sqrt(sqnorm)
             if keepdims:
-                ret = ret.reshape(ndim*[1])
+                ret = ret.reshape(ndim * [1])
             return ret
 
     # Normalize the `axis` argument to a tuple.
@@ -2178,7 +2214,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
         try:
             axis = int(axis)
         except Exception:
-            raise TypeError("'axis' must be None, an integer or a tuple of integers")
+            raise TypeError(
+                "'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
     if len(axis) == 1:
@@ -2222,7 +2259,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
-            ret =  _multi_svd_norm(x, row_axis, col_axis, amax)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amax)
         elif ord == -2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
@@ -2424,7 +2461,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = Inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
+                q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index

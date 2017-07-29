@@ -22,23 +22,31 @@ umr_all = um.logical_and.reduce
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
+
+
 def _amax(a, axis=None, out=None, keepdims=False):
     return umr_maximum(a, axis, None, out, keepdims)
+
 
 def _amin(a, axis=None, out=None, keepdims=False):
     return umr_minimum(a, axis, None, out, keepdims)
 
+
 def _sum(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_sum(a, axis, dtype, out, keepdims)
+
 
 def _prod(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_prod(a, axis, dtype, out, keepdims)
 
+
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_any(a, axis, dtype, out, keepdims)
 
+
 def _all(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_all(a, axis, dtype, out, keepdims)
+
 
 def _count_reduce_items(arr, axis):
     if axis is None:
@@ -49,6 +57,7 @@ def _count_reduce_items(arr, axis):
     for ax in axis:
         items *= arr.shape[ax]
     return items
+
 
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
@@ -70,7 +79,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     ret = umr_sum(arr, axis, dtype, out, keepdims)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
+            ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
             ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
@@ -82,6 +91,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
         ret = ret / rcount
 
     return ret
+
 
 def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     arr = asanyarray(a)
@@ -102,7 +112,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     arrmean = umr_sum(arr, axis, dtype, keepdims=True)
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(
-                arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
+            arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
     else:
         arrmean = arrmean.dtype.type(arrmean / rcount)
 
@@ -122,13 +132,14 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
+            ret, rcount, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
 
     return ret
+
 
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,

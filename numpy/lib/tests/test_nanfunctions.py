@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_almost_equal,
     assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
-    )
+)
 
 
 # Test data
@@ -84,7 +84,7 @@ class TestNanFunctions_MinMax(object):
             assert_almost_equal(res, tgt)
 
     def test_allnans(self):
-        mat = np.array([np.nan]*9).reshape(3, 3)
+        mat = np.array([np.nan] * 9).reshape(3, 3)
         for f in self.nanfuncs:
             for axis in [None, 0, 1]:
                 with warnings.catch_warnings(record=True) as w:
@@ -153,7 +153,8 @@ class TestNanFunctions_MinMax(object):
                 assert_(len(w) == 0)
 
     def test_object_array(self):
-        arr = np.array([[1.0, 2.0], [np.nan, 4.0], [np.nan, np.nan]], dtype=object)
+        arr = np.array([[1.0, 2.0], [np.nan, 4.0], [
+                       np.nan, np.nan]], dtype=object)
         assert_equal(np.nanmin(arr), 1.0)
         assert_equal(np.nanmin(arr, axis=0), [1.0, 2.0])
 
@@ -190,7 +191,7 @@ class TestNanFunctions_ArgminArgmax(object):
                     assert_(not np.equal(val, row[:ind]).any())
 
     def test_allnans(self):
-        mat = np.array([np.nan]*9).reshape(3, 3)
+        mat = np.array([np.nan] * 9).reshape(3, 3)
         for f in self.nanfuncs:
             for axis in [None, 0, 1]:
                 assert_raises(ValueError, f, mat, axis=axis)
@@ -405,7 +406,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
         # Check for FutureWarning
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            res = np.nansum([np.nan]*3, axis=None)
+            res = np.nansum([np.nan] * 3, axis=None)
             assert_(res == 0, 'result is not 0')
             assert_(len(w) == 0, 'warning raised')
             # Check scalar
@@ -413,13 +414,13 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
             assert_(res == 0, 'result is not 0')
             assert_(len(w) == 0, 'warning raised')
             # Check there is no warning for not all-nan
-            np.nansum([0]*3, axis=None)
+            np.nansum([0] * 3, axis=None)
             assert_(len(w) == 0, 'unwanted warning raised')
 
     def test_empty(self):
         for f, tgt_value in zip([np.nansum, np.nanprod], [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = [tgt_value]*3
+            tgt = [tgt_value] * 3
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = []
@@ -439,20 +440,22 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
         for f, tgt_value in zip(self.nanfuncs, [0, 1]):
             # Unlike other nan-functions, sum/prod/cumsum/cumprod don't warn on all nan input
             with assert_no_warnings():
-                res = f([np.nan]*3, axis=None)
-                tgt = tgt_value*np.ones((3))
-                assert_(np.array_equal(res, tgt), 'result is not %s * np.ones((3))' % (tgt_value))
+                res = f([np.nan] * 3, axis=None)
+                tgt = tgt_value * np.ones((3))
+                assert_(np.array_equal(res, tgt),
+                        'result is not %s * np.ones((3))' % (tgt_value))
                 # Check scalar
                 res = f(np.nan)
-                tgt = tgt_value*np.ones((1))
-                assert_(np.array_equal(res, tgt), 'result is not %s * np.ones((1))' % (tgt_value))
+                tgt = tgt_value * np.ones((1))
+                assert_(np.array_equal(res, tgt),
+                        'result is not %s * np.ones((1))' % (tgt_value))
                 # Check there is no warning for not all-nan
-                f([0]*3, axis=None)
+                f([0] * 3, axis=None)
 
     def test_empty(self):
         for f, tgt_value in zip(self.nanfuncs, [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = tgt_value*np.ones((0, 3))
+            tgt = tgt_value * np.ones((0, 3))
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = mat
@@ -491,14 +494,14 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
                 assert_(isinstance(res, np.matrix))
                 assert_(res.shape == (3, 3))
             res = f(mat)
-            assert_(res.shape == (1, 3*3))
+            assert_(res.shape == (1, 3 * 3))
 
     def test_result_values(self):
         for axis in (-2, -1, 0, 1, None):
             tgt = np.cumprod(_ndat_ones, axis=axis)
             res = np.nancumprod(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
-            tgt = np.cumsum(_ndat_zeros,axis=axis)
+            tgt = np.cumsum(_ndat_zeros, axis=axis)
             res = np.nancumsum(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
 
@@ -556,7 +559,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                         assert_(len(sup.log) == 0)
 
     def test_allnans(self):
-        mat = np.array([np.nan]*9).reshape(3, 3)
+        mat = np.array([np.nan] * 9).reshape(3, 3)
         for f in self.nanfuncs:
             for axis in [None, 0, 1]:
                 with warnings.catch_warnings(record=True) as w:
@@ -645,7 +648,7 @@ class TestNanFunctions_Median(object):
             # Randomly set some elements to NaN:
             w = np.random.randint(0, d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
-            d[:,0] = 1.  # ensure at least one good value
+            d[:, 0] = 1.  # ensure at least one good value
             # use normal median without nans to compare
             tgt = []
             for x in d:
@@ -655,12 +658,12 @@ class TestNanFunctions_Median(object):
             assert_array_equal(np.nanmedian(d, axis=-1), tgt)
 
     def test_result_values(self):
-            tgt = [np.median(d) for d in _rdat]
-            res = np.nanmedian(_ndat, axis=1)
-            assert_almost_equal(res, tgt)
+        tgt = [np.median(d) for d in _rdat]
+        res = np.nanmedian(_ndat, axis=1)
+        assert_almost_equal(res, tgt)
 
     def test_allnans(self):
-        mat = np.array([np.nan]*9).reshape(3, 3)
+        mat = np.array([np.nan] * 9).reshape(3, 3)
         for axis in [None, 0, 1]:
             with suppress_warnings() as sup:
                 sup.record(RuntimeWarning)
@@ -713,7 +716,7 @@ class TestNanFunctions_Median(object):
 
                 # minimum fill value check
                 a = np.array([[np.nan, np.nan, inf],
-                             [np.nan, np.nan, inf]])
+                              [np.nan, np.nan, inf]])
                 assert_equal(np.nanmedian(a), inf)
                 assert_equal(np.nanmedian(a, axis=0), [np.nan, np.nan, inf])
                 assert_equal(np.nanmedian(a, axis=1), inf)
@@ -725,12 +728,13 @@ class TestNanFunctions_Median(object):
                 a = np.array([[inf, 7, -inf, -9],
                               [-10, np.nan, np.nan, 5],
                               [4, np.nan, np.nan, inf]],
-                              dtype=np.float32)
+                             dtype=np.float32)
                 if inf > 0:
                     assert_equal(np.nanmedian(a, axis=0), [4., 7., -inf, 5.])
                     assert_equal(np.nanmedian(a), 4.5)
                 else:
-                    assert_equal(np.nanmedian(a, axis=0), [-10., 7., -inf, -9.])
+                    assert_equal(np.nanmedian(a, axis=0),
+                                 [-10., 7., -inf, -9.])
                     assert_equal(np.nanmedian(a), -2.5)
                 assert_equal(np.nanmedian(a, axis=-1), [-1., -2.5, inf])
 
@@ -814,7 +818,7 @@ class TestNanFunctions_Percentile(object):
         assert_almost_equal(res, tgt)
 
     def test_allnans(self):
-        mat = np.array([np.nan]*9).reshape(3, 3)
+        mat = np.array([np.nan] * 9).reshape(3, 3)
         for axis in [None, 0, 1]:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
@@ -843,7 +847,8 @@ class TestNanFunctions_Percentile(object):
         for axis in [1]:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
-                assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
+                assert_equal(np.nanpercentile(
+                    mat, 40, axis=axis), np.zeros([]))
                 assert_(len(w) == 0)
 
     def test_scalar(self):
@@ -885,7 +890,8 @@ class TestNanFunctions_Percentile(object):
                     assert_equal(nan_val, val)
 
         megamat = np.ones((3, 4, 5, 6))
-        assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
+        assert_equal(np.nanpercentile(
+            megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
 
 if __name__ == "__main__":

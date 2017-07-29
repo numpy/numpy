@@ -4,7 +4,7 @@ import sys
 from numpy.core import arange
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises_regex, dec
-    )
+)
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
 
@@ -35,6 +35,8 @@ def old_func2(self, x):
 
 def old_func3(self, x):
     return x
+
+
 new_func3 = deprecate(old_func3, old_name="old_func3", new_name="new_func3")
 
 

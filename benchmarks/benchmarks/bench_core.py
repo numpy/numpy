@@ -104,7 +104,7 @@ class CorrConv(Benchmark):
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -140,6 +140,7 @@ class CountNonzero(Benchmark):
 class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[np.bool, np.uintp]]
+
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)

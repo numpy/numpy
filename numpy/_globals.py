@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 __ALL__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
-    ]
+]
 
 
 # Disallow reloading this module so as to preserve the identities of the
