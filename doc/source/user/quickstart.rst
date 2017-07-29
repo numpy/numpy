@@ -1119,13 +1119,13 @@ value of time-dependent series::
            [-0.53657292,  0.42016704,  0.99060736,  0.65028784],
            [-0.28790332, -0.96139749, -0.75098725,  0.14987721]])
     >>>
-    >>> ind = data.argmax(axis=0)                   # index of the maxima for each series
+    >>> ind = data.argmax(axis=0)                  # index of the maxima for each series
     >>> ind
     array([2, 0, 3, 1])
     >>>
-    >>> time_max = time[ ind]                       # times corresponding to the maxima
+    >>> time_max = time[ind]                       # times corresponding to the maxima
     >>>
-    >>> data_max = data[ind, xrange(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
+    >>> data_max = data[ind, range(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
     >>>
     >>> time_max
     array([  82.5 ,   20.  ,  113.75,   51.25])
