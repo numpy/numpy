@@ -52,7 +52,7 @@ Misc Functions
 - `chebline` -- Chebyshev series representing given straight line.
 - `cheb2poly` -- convert a Chebyshev series to a polynomial.
 - `poly2cheb` -- convert a polynomial to a Chebyshev series.
-- `chebinterp` -- approximate a function with Chebyshev polynomials.
+- `chebinterpolate` -- interpolate a function at the Chebyshev points.
 
 Classes
 -------
@@ -104,7 +104,7 @@ __all__ = [
     'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
     'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight', 'chebinterp']
+    'chebgauss', 'chebweight', 'chebinterpolate']
 
 chebtrim = pu.trimcoef
 
@@ -1615,7 +1615,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
     deg : int or 1-D array_like
-        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        Degree(s) of the fitting polynomials. If `deg` is a single integer,
         all terms up to and including the `deg`'th term are included in the
         fit. For NumPy versions >= 1.11.0 a list of integers specifying the
         degrees of the terms to include may be used instead.
@@ -1888,51 +1888,69 @@ def chebroots(c):
     return r
 
 
-def chebinterp(func, deg, args=()):
-    """Return the Chebyshev series instance that interpolates a given function
-    at the Chebyshev points of the first kind over the interval [-1, 1].
+def chebinterpolate(func, deg, args=()):
+    """Interpolate a function at the Chebyshev points of the first kind.
+
+    Returns the Chebyshev series that interpolates `func` at the Chebyshev
+    points of the first kind in the interval [-1, 1]. The interpolating
+    series tends to a minmax approximation to `func` with increasing `deg`
+    if the function is continuous in the interval.
+
+    .. versionadded:: 1.14.0
 
     Parameters
     ----------
     func : function
         The function to be approximated. It must be a function of a single
-        variable of the form f(x,a,b,c...), where a,b,c... are extra arguments
-        that can be passed in the `args` parameter.
+        variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
+        extra arguments passed in the `args` parameter.
     deg : int
-        Degree of the resulting polynomial expressed in a Chebyshev basis.
+        Degree of the interpolating polynomial
     args : tuple, optional
-        Extra arguments to be used in the function call.
+        Extra arguments to be used in the function call. Default is no extra
+        arguments.
 
     Returns
     -------
-    new_series : series
-        A series that represents the polynomial interpolation
-        to the function.
+    coef : ndarray, shape (deg + 1,)
+        Chebyshev coefficients of the interpolating series ordered from low to
+        high.
 
     Examples
     --------
-    >>> from numpy import tanh, pi
     >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebinterp(lambda x: tanh(x)+0.5, 8, domain=[0, 2*np.pi])
-    array([ 1.30198814,  0.3540514 , -0.25209078,  0.14032589, -0.05706644,
-            0.01226391,  0.00367748, -0.00455335])
+    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
+    array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
+            -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
+             2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
 
-    .. versionadded:: 1.14.0
+    Notes
+    -----
+
+    The Chebyshev polynomials used in the interpolation are orthogonal when
+    sampled at the Chebyshev points of the first kind. If it is desired to
+    constrain some of the coefficients they can simply be set to the desired
+    value after the interpolation, no new interpolation or fit is needed. This
+    is especially useful if it is known apriori that some of coefficients are
+    zero. For instance, if the function is even then the coefficients of the
+    terms of odd degree in the result can be set to zero.
 
     """
-    ideg = int(deg)
-    if ideg != deg:
-        raise ValueError("deg must be integer")
-    if ideg < 0:
-        raise ValueError("deg must be non-negative")
+    deg = np.asarray(deg)
 
-    degp1 = deg+1
-    xcheb = chebpts1(degp1)
+    # check arguments.
+    if deg.ndim > 0 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int")
+    if deg < 0:
+        raise ValueError("expected deg >= 0")
+
+    order = deg + 1
+    xcheb = chebpts1(order)
     yfunc = func(xcheb, *args)
     m = chebvander(xcheb, deg)
     c = np.dot(m.T, yfunc)
-    c[0] /= degp1
-    c[1:] /= 0.5*degp1
+    c[0] /= order
+    c[1:] /= 0.5*order
 
     return c
 
@@ -2121,11 +2139,46 @@ class Chebyshev(ABCPolyBase):
     _fromroots = staticmethod(chebfromroots)
 
     @classmethod
-    def fromfunction(cls, func, deg, domain=None, args=()):
-        """Wrapper method for chebinterp()"""
-        xfunc = lambda x: func(pu.mapdomain(x, [-1, 1], domain))
-        coef = chebinterp(xfunc, deg, args)
-        return cls(coef, domain=domain, window=chebdomain)
+    def interpolate(cls, func, deg, domain=None, args=()):
+        """Interpolate a function at the Chebyshev points of the first kind.
+
+        Returns the series that interpolates `func` at the Chebyshev points of
+        the first kind scaled and shifted to the `domain`. The resulting series
+        tends to a minmax approximation of `func` when the function is
+        continuous in the domain.
+
+        .. versionadded:: 1.14.0
+
+        Parameters
+        ----------
+        func : function
+            The function to be interpolated. It must be a function of a single
+            variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
+            extra arguments passed in the `args` parameter.
+        deg : int
+            Degree of the interpolating polynomial.
+        domain : {None, [beg, end]}, optional
+            Domain over which `func` is interpolated. The default is None, in
+            which case the domain is [-1, 1].
+        args : tuple, optional
+            Extra arguments to be used in the function call. Default is no
+            extra arguments.
+
+        Returns
+        -------
+        polynomial : Chebyshev instance
+            Interpolating Chebyshev instance.
+
+        Notes
+        -----
+        See `numpy.polynomial.chebfromfunction` for more details.
+
+        """
+        if domain is None:
+            domain = cls.domain
+        xfunc = lambda x: func(pu.mapdomain(x, cls.window, domain), *args)
+        coef = chebinterpolate(xfunc, deg)
+        return cls(coef, domain=domain)
 
     # Virtual properties
     nickname = 'cheb'
