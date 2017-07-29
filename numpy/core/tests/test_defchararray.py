@@ -6,6 +6,7 @@ import numpy as np
 from numpy.core.multiarray import _vec_string
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
+    suppress_warnings,
 )
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
@@ -346,8 +347,11 @@ class TestMethods(object):
             A = np.char.array([b'\\u03a3'])
             assert_(A.decode('unicode-escape')[0] == '\u03a3')
         else:
-            A = np.char.array(['736563726574206d657373616765'])
-            assert_(A.decode('hex_codec')[0] == 'secret message')
+            with suppress_warnings() as sup:
+                if sys.py3kwarning:
+                    sup.filter(DeprecationWarning, "'hex_codec'")
+                A = np.char.array(['736563726574206d657373616765'])
+                assert_(A.decode('hex_codec')[0] == 'secret message')
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
