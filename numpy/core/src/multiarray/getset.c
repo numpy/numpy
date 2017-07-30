@@ -518,12 +518,14 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
             }
             axis = 0;
         }
-        else if (PyArray_IS_C_CONTIGUOUS(self)) {
-            axis = PyArray_NDIM(self) - 1;
-        }
         else {
-            PyErr_SetString(PyExc_ValueError, "Array must be contiguous");
-            goto fail;
+            axis = PyArray_NDIM(self) - 1;
+            if (PyArray_STRIDES(self)[axis] != PyArray_DESCR(self)->elsize) {
+                PyErr_SetString(PyExc_ValueError,
+                        "To change the size of the dtype, the array must be "
+                        "contiguous in the last dimension");
+                goto fail;
+            }
         }
 
         if (newtype->elsize < PyArray_DESCR(self)->elsize) {
