@@ -438,8 +438,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
     npy_intp newdim;
-    int i;
-    char *msg = "new type not compatible with array.";
+    int axis;
     PyObject *safe;
     static PyObject *checkfunc = NULL;
 
@@ -461,14 +460,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
         npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
         if (checkfunc == NULL) {
-            return -1;
+            goto fail;
         }
 
         safe = PyObject_CallFunction(checkfunc, "OO",
                                      PyArray_DESCR(self), newtype);
         if (safe == NULL) {
-            Py_DECREF(newtype);
-            return -1;
+            goto fail;
         }
         Py_DECREF(safe);
     }
@@ -492,58 +490,69 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     }
 
 
-    if ((newtype->elsize != PyArray_DESCR(self)->elsize) &&
-            (PyArray_NDIM(self) == 0 ||
-             !PyArray_ISONESEGMENT(self) ||
-             PyDataType_HASSUBARRAY(newtype))) {
-        goto fail;
-    }
-
-    /* Deprecate not C contiguous and a dimension changes */
-    if (newtype->elsize != PyArray_DESCR(self)->elsize &&
-            !PyArray_IS_C_CONTIGUOUS(self)) {
-        /* 11/27/2015 1.11.0 */
-        if (DEPRECATE("Changing the shape of non-C contiguous array by\n"
-                      "descriptor assignment is deprecated. To maintain\n"
-                      "the Fortran contiguity of a multidimensional Fortran\n"
-                      "array, use 'a.T.view(...).T' instead") < 0) {
-            return -1;
-        }
-    }
-
-    if (PyArray_IS_C_CONTIGUOUS(self)) {
-        i = PyArray_NDIM(self) - 1;
-    }
-    else {
-        i = 0;
-    }
-    if (newtype->elsize < PyArray_DESCR(self)->elsize) {
-        /*
-         * if it is compatible increase the size of the
-         * dimension at end (or at the front for NPY_ARRAY_F_CONTIGUOUS)
-         */
-        if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+    /* Changing the size of the dtype results in a shape change */
+    if (newtype->elsize != PyArray_DESCR(self)->elsize) {
+        /* forbidden cases */
+        if (PyArray_NDIM(self) == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype of a 0d array is only supported "
+                    "if the itemsize is unchanged");
             goto fail;
         }
-        newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
-        PyArray_DIMS(self)[i] *= newdim;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
-    }
-    else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
-        /*
-         * Determine if last (or first if NPY_ARRAY_F_CONTIGUOUS) dimension
-         * is compatible
-         */
-        newdim = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
-        if ((newdim % newtype->elsize) != 0) {
+        else if (PyDataType_HASSUBARRAY(newtype)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype to a subarray type is only supported "
+                    "if the total itemsize is unchanged");
             goto fail;
         }
-        PyArray_DIMS(self)[i] = newdim / newtype->elsize;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
+
+        /* determine which axis to resize */
+        if (PyArray_IS_F_CONTIGUOUS(self) &&
+                !PyArray_IS_C_CONTIGUOUS(self)) {
+            /* 2015-11-27 1.11.0 */
+            if (DEPRECATE("Changing the shape of an F-contiguous array by "
+                          "descriptor assignment is deprecated. To maintain "
+                          "the Fortran contiguity of a multidimensional Fortran "
+                          "array, use 'a.T.view(...).T' instead") < 0) {
+                goto fail;
+            }
+            axis = 0;
+        }
+        else if (PyArray_IS_C_CONTIGUOUS(self)) {
+            axis = PyArray_NDIM(self) - 1;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, "Array must be contiguous");
+            goto fail;
+        }
+
+        if (newtype->elsize < PyArray_DESCR(self)->elsize) {
+            /* if it is compatible, increase the size of the relevant axis */
+            if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a smaller dtype, its size must be a "
+                        "divisor of the size of original dtype");
+                goto fail;
+            }
+            newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
+            PyArray_DIMS(self)[axis] *= newdim;
+            PyArray_STRIDES(self)[axis] = newtype->elsize;
+        }
+        else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
+            /* if it is compatible, decrease the size of the relevant axis */
+            newdim = PyArray_DIMS(self)[axis] * PyArray_DESCR(self)->elsize;
+            if ((newdim % newtype->elsize) != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a larger dtype, its size must be a "
+                        "multiple of the size of original dtype");
+                goto fail;
+            }
+            PyArray_DIMS(self)[axis] = newdim / newtype->elsize;
+            PyArray_STRIDES(self)[axis] = newtype->elsize;
+        }
     }
 
-    /* fall through -- adjust type*/
-    Py_DECREF(PyArray_DESCR(self));
+    /* Viewing as a subarray increases the number of dimensions */
     if (PyDataType_HASSUBARRAY(newtype)) {
         /*
          * create new array object from data and update
@@ -573,12 +582,12 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         Py_DECREF(temp);
     }
 
+    Py_DECREF(PyArray_DESCR(self));
     ((PyArrayObject_fields *)self)->descr = newtype;
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
     return 0;
 
  fail:
-    PyErr_SetString(PyExc_ValueError, msg);
     Py_DECREF(newtype);
     return -1;
 }
