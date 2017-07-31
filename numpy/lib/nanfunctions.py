@@ -27,10 +27,20 @@ from numpy.lib.function_base import _ureduce as _ureduce
 
 
 __all__ = [
-    'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
-    'nancumsum', 'nancumprod'
-    ]
+    'nansum',
+    'nanmax',
+    'nanmin',
+    'nanargmax',
+    'nanargmin',
+    'nanmean',
+    'nanmedian',
+    'nanpercentile',
+    'nanvar',
+    'nanstd',
+    'nanprod',
+    'nancumsum',
+    'nancumprod',
+]
 
 
 def _replace_nan(a, val):

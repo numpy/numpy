@@ -31,9 +31,15 @@ import numpy as np
 
 
 __all__ = [
-    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
-    'in1d', 'isin'
-    ]
+    'ediff1d',
+    'intersect1d',
+    'setxor1d',
+    'union1d',
+    'setdiff1d',
+    'unique',
+    'in1d',
+    'isin',
+]
 
 
 def ediff1d(ary, to_end=None, to_begin=None):

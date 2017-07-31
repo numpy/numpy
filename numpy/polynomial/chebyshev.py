@@ -96,13 +96,40 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = [
-    'chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline', 'chebadd',
-    'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow', 'chebval',
-    'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-    'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
-    'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
-    'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
-    'chebgauss', 'chebweight']
+    'chebzero',
+    'chebone',
+    'chebx',
+    'chebdomain',
+    'chebline',
+    'chebadd',
+    'chebsub',
+    'chebmulx',
+    'chebmul',
+    'chebdiv',
+    'chebpow',
+    'chebval',
+    'chebder',
+    'chebint',
+    'cheb2poly',
+    'poly2cheb',
+    'chebfromroots',
+    'chebvander',
+    'chebfit',
+    'chebtrim',
+    'chebroots',
+    'chebpts1',
+    'chebpts2',
+    'Chebyshev',
+    'chebval2d',
+    'chebval3d',
+    'chebgrid2d',
+    'chebgrid3d',
+    'chebvander2d',
+    'chebvander3d',
+    'chebcompanion',
+    'chebgauss',
+    'chebweight',
+]
 
 chebtrim = pu.trimcoef
 

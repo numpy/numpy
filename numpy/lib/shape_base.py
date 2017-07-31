@@ -14,10 +14,21 @@ from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm 
 
 
 __all__ = [
-    'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
-    'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
-    'apply_along_axis', 'kron', 'tile', 'get_array_wrap'
-    ]
+    'column_stack',
+    'row_stack',
+    'dstack',
+    'array_split',
+    'split',
+    'hsplit',
+    'vsplit',
+    'dsplit',
+    'apply_over_axes',
+    'expand_dims',
+    'apply_along_axis',
+    'kron',
+    'tile',
+    'get_array_wrap',
+]
 
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):

@@ -17,10 +17,21 @@ from numpy.lib.stride_tricks import as_strided
 
 
 __all__ = [
-    'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
-    's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
-    'diag_indices', 'diag_indices_from'
-    ]
+    'ravel_multi_index',
+    'unravel_index',
+    'mgrid',
+    'ogrid',
+    'r_',
+    'c_',
+    's_',
+    'index_exp',
+    'ix_',
+    'ndenumerate',
+    'ndindex',
+    'fill_diagonal',
+    'diag_indices',
+    'diag_indices_from',
+]
 
 
 def ix_(*args):

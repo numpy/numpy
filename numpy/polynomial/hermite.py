@@ -68,12 +68,38 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = [
-    'hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline', 'hermadd',
-    'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow', 'hermval',
-    'hermder', 'hermint', 'herm2poly', 'poly2herm', 'hermfromroots',
-    'hermvander', 'hermfit', 'hermtrim', 'hermroots', 'Hermite',
-    'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d', 'hermvander2d',
-    'hermvander3d', 'hermcompanion', 'hermgauss', 'hermweight']
+    'hermzero',
+    'hermone',
+    'hermx',
+    'hermdomain',
+    'hermline',
+    'hermadd',
+    'hermsub',
+    'hermmulx',
+    'hermmul',
+    'hermdiv',
+    'hermpow',
+    'hermval',
+    'hermder',
+    'hermint',
+    'herm2poly',
+    'poly2herm',
+    'hermfromroots',
+    'hermvander',
+    'hermfit',
+    'hermtrim',
+    'hermroots',
+    'Hermite',
+    'hermval2d',
+    'hermval3d',
+    'hermgrid2d',
+    'hermgrid3d',
+    'hermvander2d',
+    'hermvander3d',
+    'hermcompanion',
+    'hermgauss',
+    'hermweight',
+]
 
 hermtrim = pu.trimcoef
 

@@ -31,9 +31,18 @@ from . import cb_rules
 from .auxfuncs import *
 
 __all__ = [
-    'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',
-    'getarrdocsign', 'getinit', 'sign2map', 'routsign2map', 'modsign2map',
-    'cb_sign2map', 'cb_routsign2map', 'common_sign2map'
+    'getctype',
+    'getstrlength',
+    'getarrdims',
+    'getpydocsign',
+    'getarrdocsign',
+    'getinit',
+    'sign2map',
+    'routsign2map',
+    'modsign2map',
+    'cb_sign2map',
+    'cb_routsign2map',
+    'common_sign2map',
 ]
 
 

@@ -24,11 +24,19 @@ _check_fill_value = np.ma.core._check_fill_value
 
 
 __all__ = [
-    'append_fields', 'drop_fields', 'find_duplicates',
-    'get_fieldstructure', 'join_by', 'merge_arrays',
-    'rec_append_fields', 'rec_drop_fields', 'rec_join',
-    'recursive_fill_fields', 'rename_fields', 'stack_arrays',
-    ]
+    'append_fields',
+    'drop_fields',
+    'find_duplicates',
+    'get_fieldstructure',
+    'join_by',
+    'merge_arrays',
+    'rec_append_fields',
+    'rec_drop_fields',
+    'rec_join',
+    'recursive_fill_fields',
+    'rename_fields',
+    'stack_arrays',
+]
 
 
 def recursive_fill_fields(input, output):

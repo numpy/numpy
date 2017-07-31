@@ -48,8 +48,17 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 
 __all__ = [
-    'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms', 'PolyBase']
+    'RankWarning',
+    'PolyError',
+    'PolyDomainError',
+    'as_series',
+    'trimseq',
+    'trimcoef',
+    'getdomain',
+    'mapdomain',
+    'mapparms',
+    'PolyBase',
+]
 
 #
 # Warnings and Exceptions
