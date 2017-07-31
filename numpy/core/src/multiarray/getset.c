@@ -437,11 +437,6 @@ static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-    npy_intp newdim;
-    int axis;
-    PyObject *safe;
-    static PyObject *checkfunc = NULL;
-
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -458,6 +453,9 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
+        static PyObject *checkfunc = NULL;
+        PyObject *safe;
+
         npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
         if (checkfunc == NULL) {
             goto fail;
@@ -492,6 +490,9 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     /* Changing the size of the dtype results in a shape change */
     if (newtype->elsize != PyArray_DESCR(self)->elsize) {
+        int axis;
+        npy_intp newdim;
+
         /* forbidden cases */
         if (PyArray_NDIM(self) == 0) {
             PyErr_SetString(PyExc_ValueError,
