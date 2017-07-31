@@ -1551,7 +1551,7 @@ def moveaxis(a, source, destination):
 
     Other axes remain in their original order.
 
-    .. versionadded::1.11.0
+    .. versionadded:: 1.11.0
 
     Parameters
     ----------
