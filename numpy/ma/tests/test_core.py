@@ -4434,6 +4434,24 @@ class TestMaskedFields(object):
         assert_equal(test, data)
         assert_(isinstance(test, np.matrix))
 
+    def test_view_last_contiguous(self):
+        # gh-9496
+        arr = np.arange(24, dtype=np.float64).reshape(3, 4, 2)
+        arr2 = arr[:,::2,:]
+        arr_c = arr2.view(np.complex128)
+        assert_equal(arr_c,
+            np.array([[
+                [  0 +1j],
+                [  4 +5j]],
+
+               [[  8 +9j],
+                [ 12+13j]],
+
+               [[ 16+17j],
+                [ 20+21j]]
+            ])
+        )
+
     def test_getitem(self):
         ndtype = [('a', float), ('b', float)]
         a = array(list(zip(np.random.rand(10), np.arange(10))), dtype=ndtype)

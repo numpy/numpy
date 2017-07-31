@@ -104,6 +104,12 @@ By default, ``np.einsum`` will also attempt optimization as the overhead is
 small relative to the potential improvement in speed.
 
 
+``.view`` now works on arrays where only the last axis is contiguous
+--------------------------------------------------------------------
+Previously it only worked on C-contiguous arrays when the new dtype was a
+different size.
+
+
 Changes
 =======
 
