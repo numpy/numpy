@@ -15,6 +15,7 @@ New functions
 =============
 
 * ``parametrize`` decorator added to numpy.testing
+* ``ratio`` function for geometric equivalent to ``diff``
 
 
 Deprecations
@@ -85,6 +86,13 @@ The new ``parametrize`` decorator does not have the full functionality of the
 one in pytest. It doesn't work for classes, doesn't support nesting, and does
 not substitute variable names. Even so, it should be adequate to rewrite the
 NumPy tests.
+
+``ratio`` function added
+------------------------
+The ``ratio`` function computes ratios much in the same way that ``diff``
+computes differences. It has built-in recursive application, customizable
+zero-denominator handling and the ability to select between ``/`` and ``//``
+operators.
 
 
 Improvements

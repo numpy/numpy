@@ -17,7 +17,7 @@ import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
+    delete, diff, ratio, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
     unwrap, unique, vectorize
@@ -707,6 +707,133 @@ class TestDiff(object):
         assert_(type(out) is type(x))
 
         out3 = diff(x, n=3)
+        assert_array_equal(out3.data, [[], [], [], [], []])
+        assert_array_equal(out3.mask, [[], [], [], [], []])
+        assert_(type(out3) is type(x))
+
+
+class TestRatio(object):
+
+    def test_basic(self):
+        x = [1., 2., 10., -5., 2.5]
+        expected = [
+            [2., 5., -0.5, -0.5],
+            [2.5, -0.1, 1.],
+            [-0.04, -10],
+            [250.], [], []]
+        for n, exp in enumerate(expected, start=1):
+            out = ratio(x, n=n)
+            assert_(type(out) is np.ndarray)
+            assert_array_equal(out, exp)
+            assert_equal(out.dtype, np.float_)
+
+    def test_axis(self):
+        x = np.ones((10, 20, 30))
+        x[:, 1::2, :] = -1
+        assert_array_equal(ratio(x), np.ones((10, 20, 29)))
+        assert_array_equal(ratio(x, axis=-1), np.ones((10, 20, 29)))
+        assert_array_equal(ratio(x, axis=0), np.ones((9, 20, 30)))
+        assert_array_equal(ratio(x, axis=1), -np.ones((10, 19, 30)))
+        assert_array_equal(ratio(x, axis=-2), -np.ones((10, 19, 30)))
+        assert_raises(np.AxisError, ratio, x, axis=3)
+        assert_raises(np.AxisError, ratio, x, axis=-4)
+
+    def test_bool(self):
+        # All possible ratios
+        x = np.array([True, True, False, False, True])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(ratio(x, true=True), [1, 0, np.nan, np.inf])
+            assert_equal(len(w), 2)
+            assert_(w[0].category is RuntimeWarning)
+            assert_(w[1].category is RuntimeWarning)
+            assert_('divide by zero' in str(w[0].message))
+            assert_('invalid value' in str(w[1].message))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            out = ratio(x, true=False)
+            assert_array_equal(out, [1, 0, 0, 0])
+            assert_equal(len(w), 1)
+            assert_(w[0].category is RuntimeWarning)
+            assert_('divide by zero' in str(w[0].message))
+
+    def test_float_floor(self):
+        x = [1., 2.5, 11., -5., 2.5]
+        expected = [2, 4, -1, -1]
+        out = ratio(x, true=False)
+        assert_array_equal(out, expected)
+        assert_equal(out.dtype, np.float_)
+
+    def test_zero_div(self):
+        x = [1, 0, 1]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(ratio(x), [0, np.inf])
+            assert_equal(len(w), 1)
+            assert_(w[0].category is RuntimeWarning)
+            assert_('divide by zero' in str(w[0].message))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(ratio(x, zero_div=-7), [0, -7])
+            assert_equal(len(w), 0)
+
+    def test_nd(self):
+        x = 20 * rand(10, 20, 30)
+        out1 = x[:, :, 1:] / x[:, :, :-1]
+        out2 = out1[:, :, 1:] / out1[:, :, :-1]
+        out3 = x[1:, :, :] / x[:-1, :, :]
+        out4 = out3[1:, :, :] / out3[:-1, :, :]
+        assert_array_equal(ratio(x), out1)
+        assert_array_equal(ratio(x, n=2), out2)
+        assert_array_equal(ratio(x, axis=0), out3)
+        assert_array_equal(ratio(x, n=2, axis=0), out4)
+
+    def test_zero_div_nd(self):
+        fill = 9
+        # Striated zeros and ones
+        x = np.zeros((10, 20, 30))
+        x[:, ::2, :] = 1.0
+        # Striated infs and zeros
+        out1 = np.zeros((10, 19, 30))
+        out1[:, 1::2, :] = np.inf
+        # Striated fill value and zeros
+        out2 = np.zeros((10, 19, 30))
+        out2[:, 1::2, :] = fill
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(ratio(x, axis=1), out1)
+            assert_equal(len(w), 1)
+            assert_(w[0].category is RuntimeWarning)
+            assert_('divide by zero' in str(w[0].message))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_array_equal(ratio(x, axis=-2, zero_div=fill), out2)
+            assert_equal(len(w), 0)
+
+    def test_n(self):
+        x = [1., 2., 10., -5., 2.5]
+        assert_raises(ValueError, ratio, x, n=-1)
+        assert_(ratio(x, n=0) is x)
+
+
+    def test_subclass(self):
+        x = ma.array([[1, 2.5], [2, 5], [3, 7.5], [4, 10], [5, 12.5]],
+                     mask=[[False, False], [True, False],
+                           [False, True], [True, True], [False, False]])
+        out = ratio(x)
+        assert_array_equal(out.data, [[2.5], [2.5], [2.5], [2.5], [2.5]])
+        assert_array_equal(out.mask, [[False], [True],
+                                      [True], [True], [False]])
+        assert_(type(out) is type(x))
+
+        out2 = ratio(x, true=False)
+        assert_array_equal(out2.data, [[2], [2], [2], [2], [2]])
+        assert_array_equal(out2.mask, [[False], [True],
+                                      [True], [True], [False]])
+        assert_(type(out2) is type(x))
+
+        out3 = ratio(x, n=3)
         assert_array_equal(out3.data, [[], [], [], [], []])
         assert_array_equal(out3.mask, [[], [], [], [], []])
         assert_(type(out3) is type(x))
