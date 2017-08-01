@@ -451,11 +451,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # This code is significantly faster when the condition is satisfied.
     if len(ar2) < 10 * len(ar1) ** 0.145:
         if invert:
-            mask = np.ones(len(ar1), dtype=np.bool)
+            mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
                 mask &= (ar1 != a)
         else:
-            mask = np.zeros(len(ar1), dtype=np.bool)
+            mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
                 mask |= (ar1 == a)
         return mask

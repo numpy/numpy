@@ -374,7 +374,7 @@ class TestNanToNum(object):
         vals = nan_to_num(1)
         assert_all(vals == 1)
         vals = nan_to_num([1])
-        assert_array_equal(vals, np.array([1], np.int))
+        assert_array_equal(vals, np.array([1], int))
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
@@ -420,7 +420,7 @@ class TestArrayConversion(object):
     def test_asfarray(self):
         a = asfarray(np.array([1, 2, 3]))
         assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, np.float))
+        assert_(np.issubdtype(a.dtype, float))
 
 if __name__ == "__main__":
     run_module_suite()

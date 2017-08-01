@@ -1645,7 +1645,7 @@ class TestMultiDot(object):
                                [0,  0,  0,  3,  3,  3],
                                [0,  0,  0,  0,  4,  5],
                                [0,  0,  0,  0,  0,  5],
-                               [0,  0,  0,  0,  0,  0]], dtype=np.int)
+                               [0,  0,  0,  0,  0,  0]], dtype=int)
         s_expected -= 1  # Cormen uses 1-based index, python does not.
 
         s, m = _multi_dot_matrix_chain_order(arrays, return_costs=True)

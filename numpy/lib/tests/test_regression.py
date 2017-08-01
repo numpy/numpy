@@ -108,13 +108,13 @@ class TestRegression(object):
     def test_polydiv_type(self):
         # Make polydiv work for complex types
         msg = "Wrong type, should be complex"
-        x = np.ones(3, dtype=np.complex)
+        x = np.ones(3, dtype=complex)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == np.complex, msg)
+        assert_(q.dtype == complex, msg)
         msg = "Wrong type, should be float"
-        x = np.ones(3, dtype=np.int)
+        x = np.ones(3, dtype=int)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == np.float, msg)
+        assert_(q.dtype == float, msg)
 
     def test_histogramdd_too_many_bins(self):
         # Ticket 928.
@@ -123,11 +123,11 @@ class TestRegression(object):
     def test_polyint_type(self):
         # Ticket #944
         msg = "Wrong type, should be complex"
-        x = np.ones(3, dtype=np.complex)
-        assert_(np.polyint(x).dtype == np.complex, msg)
+        x = np.ones(3, dtype=complex)
+        assert_(np.polyint(x).dtype == complex, msg)
         msg = "Wrong type, should be float"
-        x = np.ones(3, dtype=np.int)
-        assert_(np.polyint(x).dtype == np.float, msg)
+        x = np.ones(3, dtype=int)
+        assert_(np.polyint(x).dtype == float, msg)
 
     def test_ndenumerate_crash(self):
         # Ticket 1140
@@ -234,7 +234,7 @@ class TestRegression(object):
 
     def test_nansum_with_boolean(self):
         # gh-2978
-        a = np.zeros(2, dtype=np.bool)
+        a = np.zeros(2, dtype=bool)
         try:
             np.nansum(a)
         except Exception:

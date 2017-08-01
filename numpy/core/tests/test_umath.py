@@ -897,22 +897,22 @@ class TestMaximum(_FilterInvalids):
         # fail if cmp is used instead of rich compare.
         # Failure cannot be guaranteed.
         for i in range(1):
-            x = np.array(float('nan'), np.object)
+            x = np.array(float('nan'), object)
             y = 1.0
-            z = np.array(float('nan'), np.object)
+            z = np.array(float('nan'), object)
             assert_(np.maximum(x, y) == 1.0)
             assert_(np.maximum(z, y) == 1.0)
 
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out = np.array([nan, nan, nan], dtype=np.complex)
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            out = np.array([nan, nan, nan], dtype=complex)
             assert_equal(np.maximum(arg1, arg2), out)
 
     def test_object_array(self):
-        arg1 = np.arange(5, dtype=np.object)
+        arg1 = np.arange(5, dtype=object)
         arg2 = arg1 + 1
         assert_equal(np.maximum(arg1, arg2), arg2)
 
@@ -955,22 +955,22 @@ class TestMinimum(_FilterInvalids):
         # fail if cmp is used instead of rich compare.
         # Failure cannot be guaranteed.
         for i in range(1):
-            x = np.array(float('nan'), np.object)
+            x = np.array(float('nan'), object)
             y = 1.0
-            z = np.array(float('nan'), np.object)
+            z = np.array(float('nan'), object)
             assert_(np.minimum(x, y) == 1.0)
             assert_(np.minimum(z, y) == 1.0)
 
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out = np.array([nan, nan, nan], dtype=np.complex)
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            out = np.array([nan, nan, nan], dtype=complex)
             assert_equal(np.minimum(arg1, arg2), out)
 
     def test_object_array(self):
-        arg1 = np.arange(5, dtype=np.object)
+        arg1 = np.arange(5, dtype=object)
         arg2 = arg1 + 1
         assert_equal(np.minimum(arg1, arg2), arg1)
 
@@ -1011,9 +1011,9 @@ class TestFmax(_FilterInvalids):
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out = np.array([0,    0, nan], dtype=np.complex)
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            out = np.array([0,    0, nan], dtype=complex)
             assert_equal(np.fmax(arg1, arg2), out)
 
 
@@ -1053,9 +1053,9 @@ class TestFmin(_FilterInvalids):
     def test_complex_nans(self):
         nan = np.nan
         for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
-            out = np.array([0,    0, nan], dtype=np.complex)
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            out = np.array([0,    0, nan], dtype=complex)
             assert_equal(np.fmin(arg1, arg2), out)
 
 
@@ -1210,7 +1210,7 @@ class TestBitwiseUFuncs(object):
 class TestInt(object):
     def test_logical_not(self):
         x = np.ones(10, dtype=np.int16)
-        o = np.ones(10 * 2, dtype=np.bool)
+        o = np.ones(10 * 2, dtype=bool)
         tgt = o.copy()
         tgt[::2] = False
         os = o[::2]
@@ -1274,7 +1274,7 @@ class TestSign(object):
         # In reference to github issue #6229
 
         foo = np.array([-.1, 0, .1])
-        a = np.sign(foo.astype(np.object))
+        a = np.sign(foo.astype(object))
         b = np.sign(foo)
 
         assert_array_equal(a, b)
@@ -1283,7 +1283,7 @@ class TestSign(object):
         # In reference to github issue #6229
         def test_nan():
             foo = np.array([np.nan])
-            a = np.sign(foo.astype(np.object))
+            a = np.sign(foo.astype(object))
 
         assert_raises(TypeError, test_nan)
 
@@ -2210,7 +2210,7 @@ class TestComplexFunctions(object):
             else:
                 x = .5
             fr = f(x)
-            fz = f(np.complex(x))
+            fz = f(complex(x))
             assert_almost_equal(fz.real, fr, err_msg='real part %s' % f)
             assert_almost_equal(fz.imag, 0., err_msg='imag part %s' % f)
 
@@ -2279,7 +2279,7 @@ class TestComplexFunctions(object):
         points = [-1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
                     'arcsinh': 'asinh', 'arccosh': 'acosh', 'arctanh': 'atanh'}
-        atol = 4*np.finfo(np.complex).eps
+        atol = 4*np.finfo(complex).eps
         for func in self.funcs:
             fname = func.__name__.split('.')[-1]
             cname = name_map.get(fname, fname)
@@ -2419,7 +2419,7 @@ class TestSubclass(object):
         assert_equal(a+a, a)
 
 def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
-                      dtype=np.complex):
+                      dtype=complex):
     """
     Check for a branch cut in a function.
 
