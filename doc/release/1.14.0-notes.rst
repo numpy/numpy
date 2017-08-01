@@ -25,6 +25,17 @@ Deprecations
 Future Changes
 ==============
 
+``np.issubdtype`` will stop downcasting dtype-like arguments
+------------------------------------------------------------
+It would be expected that ``issubdtype(np.float32, 'float64')`` and
+``issubdtype(np.float32, np.float64)`` mean the same thing - however, there
+was an undocumented special case that translated the former into
+``issubdtype(np.float32, np.floating)``, giving the surprising result of True.
+
+This translation now gives a warning explaining what translation is occuring.
+In future, the translation will be disabled, and the first example will be made
+equivalent to the second.
+
 
 Build System Changes
 ====================
