@@ -745,7 +745,7 @@ def issubdtype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubdtype('S1', str)
+    >>> np.issubdtype('S1', np.string_)
     True
     >>> np.issubdtype(np.float64, np.float32)
     False
