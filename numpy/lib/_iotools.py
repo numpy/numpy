@@ -527,7 +527,7 @@ class StringConverter(object):
         _mapper.append((nx.int64, int, -1))
 
     _mapper.extend([(nx.floating, float, nx.nan),
-                    (complex, _bytes_to_complex, nx.nan + 0j),
+                    (nx.complexfloating, _bytes_to_complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
                     (nx.string_, bytes, b'???')])
 
