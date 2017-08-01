@@ -751,14 +751,16 @@ def issubdtype(arg1, arg2):
     False
 
     """
+    if not issubclass_(arg1, generic):
+        arg1 = dtype(arg1).type
     if issubclass_(arg2, generic):
-        return issubclass(dtype(arg1).type, arg2)
+        return issubclass(arg1, arg2)
     mro = dtype(arg2).type.mro()
     if len(mro) > 1:
         val = mro[1]
     else:
         val = mro[0]
-    return issubclass(dtype(arg1).type, val)
+    return issubclass(arg1, val)
 
 
 # This dictionary allows look up based on any alias for an array data-type

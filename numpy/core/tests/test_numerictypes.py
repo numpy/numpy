@@ -377,5 +377,12 @@ class TestMultipleFields(object):
         res = self.ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])
 
+
+class TestIsSubDType(object):
+    def test_both_abstract(self):
+        assert_(np.issubdtype(np.floating, np.inexact))
+        assert_(not np.issubdtype(np.inexact, np.floating))
+
+
 if __name__ == "__main__":
     run_module_suite()
