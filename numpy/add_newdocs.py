@@ -931,7 +931,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=np.int)
+    >>> np.zeros((5,), dtype=int)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
@@ -1038,7 +1038,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     Examples
     --------
     >>> iterable = (x*x for x in range(5))
-    >>> np.fromiter(iterable, np.float)
+    >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
 
     """)
@@ -1635,9 +1635,9 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     >>> np.can_cast(np.int32, np.int64)
     True
-    >>> np.can_cast(np.float64, np.complex)
+    >>> np.can_cast(np.float64, complex)
     True
-    >>> np.can_cast(np.complex, np.float)
+    >>> np.can_cast(complex, float)
     False
 
     >>> np.can_cast('i8', 'f8')
@@ -5163,7 +5163,7 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     The input array needs to be of integer dtype, otherwise a
     TypeError is raised:
 
-    >>> np.bincount(np.arange(5, dtype=np.float))
+    >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: array cannot be safely cast to required type
@@ -6099,7 +6099,7 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
     is a flexible type, here of size 10:
 
-    >>> np.dtype([('hello',(np.int,3)),('world',np.void,10)])
+    >>> np.dtype([('hello',(int,3)),('world',np.void,10)])
     dtype([('hello', '<i4', 3), ('world', '|V10')])
 
     Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are

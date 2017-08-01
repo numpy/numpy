@@ -15,7 +15,7 @@ import warnings
 class TestUfuncKwargs(object):
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
-        assert_raises(TypeError, np.add, 1, 2, dtypex=np.int)
+        assert_raises(TypeError, np.add, 1, 2, dtypex=int)
         assert_raises(TypeError, np.add, 1, 2, extobjx=[4096])
         assert_raises(TypeError, np.add, 1, 2, outx=None)
         assert_raises(TypeError, np.add, 1, 2, sigx='ii->i')
@@ -29,9 +29,9 @@ class TestUfuncKwargs(object):
 
     def test_sig_dtype(self):
         assert_raises(RuntimeError, np.add, 1, 2, sig='ii->i',
-                      dtype=np.int)
+                      dtype=int)
         assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
-                      dtype=np.int)
+                      dtype=int)
 
 
 class TestUfunc(object):
@@ -172,22 +172,22 @@ class TestUfunc(object):
 
         # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
-        x = np.ones(10, dtype=np.object)[0::2]
+        x = np.ones(10, dtype=object)[0::2]
         assert_(np.all(np.abs(x) == 1), msg)
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
-        x = np.zeros(10, dtype=np.object)[0::2]
+        x = np.zeros(10, dtype=object)[0::2]
         for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.conjugate(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
-        x = np.ones(10, dtype=np.object)[0::2]
+        x = np.ones(10, dtype=object)[0::2]
         assert_(np.all(np.add(x, x) == 2), msg)
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
-        x = np.zeros(10, dtype=np.object)[0::2]
+        x = np.zeros(10, dtype=object)[0::2]
         for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.logical_xor(x, x)), msg)
@@ -361,7 +361,7 @@ class TestUfunc(object):
         tgt = np.full(5, 1.25)
         assert_almost_equal(np.true_divide(a, b, dtype=np.float64), tgt)
         assert_almost_equal(np.true_divide(a, b, dtype=np.float32), tgt)
-        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
+        assert_raises(TypeError, np.true_divide, a, b, dtype=int)
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
@@ -371,7 +371,7 @@ class TestUfunc(object):
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
     def test_sum(self):
-        for dt in (np.int, np.float16, np.float32, np.float64, np.longdouble):
+        for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
                 tgt = dt(v * (v + 1) / 2)
@@ -613,7 +613,7 @@ class TestUfunc(object):
         assert_equal(ref, True, err_msg="reference check")
 
     def test_euclidean_pdist(self):
-        a = np.arange(12, dtype=np.float).reshape(4, 3)
+        a = np.arange(12, dtype=float).reshape(4, 3)
         out = np.empty((a.shape[0] * (a.shape[0] - 1) // 2,), dtype=a.dtype)
         umt.euclidean_pdist(a, out)
         b = np.sqrt(np.sum((a[:, None] - a)**2, axis=-1))
@@ -1188,9 +1188,9 @@ class TestUfunc(object):
         assert_array_equal(values, [1, 8, 6, 4])
 
         # Test exception thrown
-        values = np.array(['a', 1], dtype=np.object)
+        values = np.array(['a', 1], dtype=object)
         assert_raises(TypeError, np.add.at, values, [0, 1], 1)
-        assert_array_equal(values, np.array(['a', 1], dtype=np.object))
+        assert_array_equal(values, np.array(['a', 1], dtype=object))
 
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])

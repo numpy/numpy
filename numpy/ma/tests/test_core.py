@@ -718,14 +718,14 @@ class TestMaskedArray(object):
         ndtype = [('a', int), ('b', float)]
         a = np.array([(1, 1), (2, 2)], dtype=ndtype)
         test = flatten_structured_array(a)
-        control = np.array([[1., 1.], [2., 2.]], dtype=np.float)
+        control = np.array([[1., 1.], [2., 2.]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         # On masked_array
         a = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = flatten_structured_array(a)
         control = array([[1., 1.], [2., 2.]],
-                        mask=[[0, 1], [1, 0]], dtype=np.float)
+                        mask=[[0, 1], [1, 0]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         assert_equal(test.mask, control.mask)
@@ -735,7 +735,7 @@ class TestMaskedArray(object):
                   mask=[(0, (1, 0)), (1, (0, 1))], dtype=ndtype)
         test = flatten_structured_array(a)
         control = array([[1., 1., 1.1], [2., 2., 2.2]],
-                        mask=[[0, 1, 0], [1, 0, 1]], dtype=np.float)
+                        mask=[[0, 1, 0], [1, 0, 1]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         assert_equal(test.mask, control.mask)
@@ -743,7 +743,7 @@ class TestMaskedArray(object):
         ndtype = [('a', int), ('b', float)]
         a = np.array([[(1, 1), ], [(2, 2), ]], dtype=ndtype)
         test = flatten_structured_array(a)
-        control = np.array([[[1., 1.], ], [[2., 2.], ]], dtype=np.float)
+        control = np.array([[[1., 1.], ], [[2., 2.], ]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
 
@@ -3443,8 +3443,8 @@ class TestMaskedArrayMathMethods(object):
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
         (n, m) = X.shape
         assert_equal(mx.ptp(), mx.compressed().ptp())
-        rows = np.zeros(n, np.float)
-        cols = np.zeros(m, np.float)
+        rows = np.zeros(n, float)
+        cols = np.zeros(m, float)
         for k in range(m):
             cols[k] = mX[:, k].compressed().ptp()
         for k in range(n):
@@ -3460,21 +3460,21 @@ class TestMaskedArrayMathMethods(object):
 
     def test_sum_object(self):
         # Test sum on object dtype
-        a = masked_array([1, 2, 3], mask=[1, 0, 0], dtype=np.object)
+        a = masked_array([1, 2, 3], mask=[1, 0, 0], dtype=object)
         assert_equal(a.sum(), 5)
         a = masked_array([[1, 2, 3], [4, 5, 6]], dtype=object)
         assert_equal(a.sum(axis=0), [5, 7, 9])
 
     def test_prod_object(self):
         # Test prod on object dtype
-        a = masked_array([1, 2, 3], mask=[1, 0, 0], dtype=np.object)
+        a = masked_array([1, 2, 3], mask=[1, 0, 0], dtype=object)
         assert_equal(a.prod(), 2 * 3)
         a = masked_array([[1, 2, 3], [4, 5, 6]], dtype=object)
         assert_equal(a.prod(axis=0), [4, 10, 18])
 
     def test_meananom_object(self):
         # Test mean/anom on object dtype
-        a = masked_array([1, 2, 3], dtype=np.object)
+        a = masked_array([1, 2, 3], dtype=object)
         assert_equal(a.mean(), 2)
         assert_equal(a.anom(), [-1, 0, 1])
 
@@ -4112,34 +4112,34 @@ class TestMaskedArrayFunctions(object):
 
     def test_make_mask_descr(self):
         # Flexible
-        ntype = [('a', np.float), ('b', np.float)]
+        ntype = [('a', float), ('b', float)]
         test = make_mask_descr(ntype)
-        assert_equal(test, [('a', np.bool), ('b', np.bool)])
+        assert_equal(test, [('a', bool), ('b', bool)])
         assert_(test is make_mask_descr(test))
 
         # Standard w/ shape
-        ntype = (np.float, 2)
+        ntype = (float, 2)
         test = make_mask_descr(ntype)
-        assert_equal(test, (np.bool, 2))
+        assert_equal(test, (bool, 2))
         assert_(test is make_mask_descr(test))
 
         # Standard standard
-        ntype = np.float
+        ntype = float
         test = make_mask_descr(ntype)
-        assert_equal(test, np.dtype(np.bool))
+        assert_equal(test, np.dtype(bool))
         assert_(test is make_mask_descr(test))
 
         # Nested
-        ntype = [('a', np.float), ('b', [('ba', np.float), ('bb', np.float)])]
+        ntype = [('a', float), ('b', [('ba', float), ('bb', float)])]
         test = make_mask_descr(ntype)
         control = np.dtype([('a', 'b1'), ('b', [('ba', 'b1'), ('bb', 'b1')])])
         assert_equal(test, control)
         assert_(test is make_mask_descr(test))
 
         # Named+ shape
-        ntype = [('a', (np.float, 2))]
+        ntype = [('a', (float, 2))]
         test = make_mask_descr(ntype)
-        assert_equal(test, np.dtype([('a', (np.bool, 2))]))
+        assert_equal(test, np.dtype([('a', (bool, 2))]))
         assert_(test is make_mask_descr(test))
 
         # 2 names
@@ -4164,25 +4164,25 @@ class TestMaskedArrayFunctions(object):
         assert_equal(test.dtype, MaskType)
         assert_equal(test, [0, 1])
         # w/ a ndarray as an input
-        mask = np.array([0, 1], dtype=np.bool)
+        mask = np.array([0, 1], dtype=bool)
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)
         assert_equal(test, [0, 1])
         # w/ a flexible-type ndarray as an input - use default
-        mdtype = [('a', np.bool), ('b', np.bool)]
+        mdtype = [('a', bool), ('b', bool)]
         mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)
         assert_equal(test, [1, 1])
         # w/ a flexible-type ndarray as an input - use input dtype
-        mdtype = [('a', np.bool), ('b', np.bool)]
+        mdtype = [('a', bool), ('b', bool)]
         mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
         test = make_mask(mask, dtype=mask.dtype)
         assert_equal(test.dtype, mdtype)
         assert_equal(test, mask)
         # w/ a flexible-type ndarray as an input - use input dtype
-        mdtype = [('a', np.float), ('b', np.float)]
-        bdtype = [('a', np.bool), ('b', np.bool)]
+        mdtype = [('a', float), ('b', float)]
+        bdtype = [('a', bool), ('b', bool)]
         mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
         test = make_mask(mask, dtype=mask.dtype)
         assert_equal(test.dtype, bdtype)
@@ -4198,7 +4198,7 @@ class TestMaskedArrayFunctions(object):
         assert_equal(test2, test)
         # test that nomask is returned when m is nomask.
         bools = [True, False]
-        dtypes = [MaskType, np.float]
+        dtypes = [MaskType, float]
         msgformat = 'copy=%s, shrink=%s, dtype=%s'
         for cpy, shr, dt in itertools.product(bools, bools, dtypes):
             res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
@@ -4206,7 +4206,7 @@ class TestMaskedArrayFunctions(object):
 
     def test_mask_or(self):
         # Initialize
-        mtype = [('a', np.bool), ('b', np.bool)]
+        mtype = [('a', bool), ('b', bool)]
         mask = np.array([(0, 0), (0, 1), (1, 0), (0, 0)], dtype=mtype)
         # Test using nomask as input
         test = mask_or(mask, nomask)
@@ -4222,14 +4222,14 @@ class TestMaskedArrayFunctions(object):
         control = np.array([(0, 1), (0, 1), (1, 1), (0, 1)], dtype=mtype)
         assert_equal(test, control)
         # Using another array w / a different dtype
-        othertype = [('A', np.bool), ('B', np.bool)]
+        othertype = [('A', bool), ('B', bool)]
         other = np.array([(0, 1), (0, 1), (0, 1), (0, 1)], dtype=othertype)
         try:
             test = mask_or(mask, other)
         except ValueError:
             pass
         # Using nested arrays
-        dtype = [('a', np.bool), ('b', [('ba', np.bool), ('bb', np.bool)])]
+        dtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
         amask = np.array([(0, (1, 0)), (0, (1, 0))], dtype=dtype)
         bmask = np.array([(1, (0, 1)), (0, (0, 0))], dtype=dtype)
         cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=dtype)
@@ -4238,7 +4238,7 @@ class TestMaskedArrayFunctions(object):
     def test_flatten_mask(self):
         # Tests flatten mask
         # Standard dtype
-        mask = np.array([0, 0, 1], dtype=np.bool)
+        mask = np.array([0, 0, 1], dtype=bool)
         assert_equal(flatten_mask(mask), mask)
         # Flexible dtype
         mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])

@@ -717,7 +717,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # At this point, if the weights are not integer, floating point, or
         # complex, we have to use the slow algorithm.
         if weights is not None and not (np.can_cast(weights.dtype, np.double) or
-                                        np.can_cast(weights.dtype, np.complex)):
+                                        np.can_cast(weights.dtype, complex)):
             bins = linspace(mn, mx, bins + 1, endpoint=True)
 
     if not iterable(bins):
@@ -1541,7 +1541,7 @@ def gradient(f, *varargs, **kwargs):
 
     Examples
     --------
-    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=np.float)
+    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=float)
     >>> np.gradient(f)
     array([ 1. ,  1.5,  2.5,  3.5,  4.5,  5. ])
     >>> np.gradient(f, 2)
@@ -1557,7 +1557,7 @@ def gradient(f, *varargs, **kwargs):
 
     Or a non uniform one:
 
-    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=np.float)
+    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=float)
     >>> np.gradient(f, x)
     array([ 1. ,  3. ,  3.5,  6.7,  6.9,  2.5])
 
@@ -1565,7 +1565,7 @@ def gradient(f, *varargs, **kwargs):
     axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
             [ 1. ,  1. ,  1. ]])]
@@ -1575,7 +1575,7 @@ def gradient(f, *varargs, **kwargs):
 
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), dx, y)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), dx, y)
     [array([[ 1. ,  1. , -0.5],
             [ 1. ,  1. , -0.5]]), array([[ 2. ,  2. ,  2. ],
             [ 2. ,  1.7,  0.5]])]
@@ -1592,7 +1592,7 @@ def gradient(f, *varargs, **kwargs):
     The `axis` keyword can be used to specify a subset of axes of which the
     gradient is calculated
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), axis=0)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), axis=0)
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
@@ -2592,7 +2592,7 @@ class vectorize(object):
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.int32'>
-    >>> vfunc = np.vectorize(myfunc, otypes=[np.float])
+    >>> vfunc = np.vectorize(myfunc, otypes=[float])
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.float64'>
@@ -3021,7 +3021,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     # Get the product of frequencies and weights
     w = None
     if fweights is not None:
-        fweights = np.asarray(fweights, dtype=np.float)
+        fweights = np.asarray(fweights, dtype=float)
         if not np.all(fweights == np.around(fweights)):
             raise TypeError(
                 "fweights must be integer")
@@ -3036,7 +3036,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
                 "fweights cannot be negative")
         w = fweights
     if aweights is not None:
-        aweights = np.asarray(aweights, dtype=np.float)
+        aweights = np.asarray(aweights, dtype=float)
         if aweights.ndim > 1:
             raise RuntimeError(
                 "cannot handle multidimensional aweights")
