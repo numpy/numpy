@@ -2034,15 +2034,19 @@ def ratio(a, n=1, axis=-1, true=True, zero_div=None):
     op = true_divide if true else floor_divide
     for _ in range(n):
         num, denom = a[slice1], a[slice2]
-        # Zeros can creep in from division by infinity.
-        # This check does in fact need to be done every time.
-        if zero_div is not None and 0 in denom:
-            a = empty_like(num)
-            mask = denom.astype(np.bool_)
-            a[mask] = op(num[mask], denom[mask])
-            a[~mask] = zero_div
-        else:
+        if zero_div is None:
             a = op(num, denom)
+        else:
+            # Zeros can creep in from division by infinity.
+            # This check does in fact need to be done every time.
+            mask = (denom == 0)
+            if any(mask):
+                a = empty_like(num)
+                imask = ~mask
+                a[imask] = op(num[imask], denom[imask])
+                a[mask] = zero_div
+            else:
+                a = op(num, denom)
 
     return a
 
