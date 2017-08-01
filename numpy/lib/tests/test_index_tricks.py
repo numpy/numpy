@@ -243,7 +243,7 @@ class TestIx_(object):
             for k, (a, sz) in enumerate(zip(arrays, sizes)):
                 assert_equal(a.shape[k], sz)
                 assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
-                assert_(np.issubdtype(a.dtype, int))
+                assert_(np.issubdtype(a.dtype, np.integer))
 
     def test_bool(self):
         bool_a = [True, False, True, True]

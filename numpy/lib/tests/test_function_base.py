@@ -1711,16 +1711,16 @@ class TestHistogram(object):
         # Check the type of the returned histogram
         a = np.arange(10) + .5
         h, b = histogram(a)
-        assert_(np.issubdtype(h.dtype, int))
+        assert_(np.issubdtype(h.dtype, np.integer))
 
         h, b = histogram(a, normed=True)
-        assert_(np.issubdtype(h.dtype, float))
+        assert_(np.issubdtype(h.dtype, np.floating))
 
         h, b = histogram(a, weights=np.ones(10, int))
-        assert_(np.issubdtype(h.dtype, int))
+        assert_(np.issubdtype(h.dtype, np.integer))
 
         h, b = histogram(a, weights=np.ones(10, float))
-        assert_(np.issubdtype(h.dtype, float))
+        assert_(np.issubdtype(h.dtype, np.floating))
 
     def test_f32_rounding(self):
         # gh-4799, check that the rounding of the edges works with float32

@@ -114,10 +114,10 @@ properties of the type, such as whether it is an integer::
     >>> d
     dtype('int32')
 
-    >>> np.issubdtype(d, int)
+    >>> np.issubdtype(d, np.integer)
     True
 
-    >>> np.issubdtype(d, float)
+    >>> np.issubdtype(d, np.floating)
     False
 
 
