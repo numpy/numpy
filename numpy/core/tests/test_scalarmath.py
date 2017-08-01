@@ -126,7 +126,7 @@ class TestPower(object):
 
     def test_integers_to_negative_integer_power(self):
         # Note that the combination of uint64 with a signed integer
-        # has common type np.float. The other combinations should all
+        # has common type np.float64. The other combinations should all
         # raise a ValueError for integer ** negative integer.
         exp = [np.array(-1, dt)[()] for dt in 'bhilq']
 

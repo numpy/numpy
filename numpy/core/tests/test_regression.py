@@ -446,7 +446,7 @@ class TestRegression(object):
 
     def test_pickle_dtype(self, level=rlevel):
         # Ticket #251
-        pickle.dumps(np.float)
+        pickle.dumps(float)
 
     def test_swap_real(self, level=rlevel):
         # Ticket #265
@@ -1360,7 +1360,7 @@ class TestRegression(object):
         a = np.ones(100, dtype=np.int8)
         b = np.ones(100, dtype=np.int32)
         i = np.lexsort((a[::-1], b))
-        assert_equal(i, np.arange(100, dtype=np.int))
+        assert_equal(i, np.arange(100, dtype=int))
 
     def test_object_array_to_fixed_string(self):
         # Ticket #1235.
@@ -1471,7 +1471,7 @@ class TestRegression(object):
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int, np.long):
                 test_type(t)
 
     def test_buffer_hashlib(self):
@@ -1563,9 +1563,9 @@ class TestRegression(object):
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_take_refcount(self):
         # ticket #939
-        a = np.arange(16, dtype=np.float)
+        a = np.arange(16, dtype=float)
         a.shape = (4, 4)
-        lut = np.ones((5 + 3, 4), np.float)
+        lut = np.ones((5 + 3, 4), float)
         rgba = np.empty(shape=a.shape + (4,), dtype=lut.dtype)
         c1 = sys.getrefcount(rgba)
         try:
@@ -2173,7 +2173,7 @@ class TestRegression(object):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),
                                ('b', np.int32),
-                               ('d', (np.str, 5))])
+                               ('d', (str, 5))])
 
         # Simple case
         a = np.zeros(2, dtype=recordtype)

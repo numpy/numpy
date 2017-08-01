@@ -24,7 +24,7 @@ class TestTake(object):
         # Currently all types but object, use the same function generation.
         # So it should not be necessary to test all. However test also a non
         # refcounted struct on top of object.
-        types = np.int, np.object, np.dtype([('', 'i', 2)])
+        types = int, object, np.dtype([('', 'i', 2)])
         for t in types:
             # ta works, even if the array may be odd if buffer interface is used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)

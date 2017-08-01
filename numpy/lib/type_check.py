@@ -433,12 +433,12 @@ def real_if_close(a,tol=100):
     -----
     Machine epsilon varies from machine to machine and between data types
     but Python floats on most platforms have a machine epsilon equal to
-    2.2204460492503131e-16.  You can use 'np.finfo(np.float).eps' to print
+    2.2204460492503131e-16.  You can use 'np.finfo(float).eps' to print
     out the machine epsilon for floats.
 
     Examples
     --------
-    >>> np.finfo(np.float).eps
+    >>> np.finfo(float).eps
     2.2204460492503131e-16
 
     >>> np.real_if_close([2.1 + 4e-14j], tol=1000)

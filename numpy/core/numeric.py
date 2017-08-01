@@ -133,7 +133,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([[0, 0, 0],
            [0, 0, 0]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.zeros_like(y)
@@ -176,7 +176,7 @@ def ones(shape, dtype=None, order='C'):
     >>> np.ones(5)
     array([ 1.,  1.,  1.,  1.,  1.])
 
-    >>> np.ones((5,), dtype=np.int)
+    >>> np.ones((5,), dtype=int)
     array([1, 1, 1, 1, 1])
 
     >>> np.ones((2, 1))
@@ -243,7 +243,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     array([[1, 1, 1],
            [1, 1, 1]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.ones_like(y)
@@ -344,7 +344,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
 
     Examples
     --------
-    >>> x = np.arange(6, dtype=np.int)
+    >>> x = np.arange(6, dtype=int)
     >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
     >>> np.full_like(x, 0.1)

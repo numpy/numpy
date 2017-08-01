@@ -244,9 +244,9 @@ class TestBoolScalar(object):
 class TestBoolArray(object):
     def setup(self):
         # offset for simd tests
-        self.t = np.array([True] * 41, dtype=np.bool)[1::]
-        self.f = np.array([False] * 41, dtype=np.bool)[1::]
-        self.o = np.array([False] * 42, dtype=np.bool)[2::]
+        self.t = np.array([True] * 41, dtype=bool)[1::]
+        self.f = np.array([False] * 41, dtype=bool)[1::]
+        self.o = np.array([False] * 42, dtype=bool)[2::]
         self.nm = self.f.copy()
         self.im = self.t.copy()
         self.nm[3] = True
@@ -265,19 +265,19 @@ class TestBoolArray(object):
         assert_(not self.im.all())
         # check bad element in all positions
         for i in range(256 - 7):
-            d = np.array([False] * 256, dtype=np.bool)[7::]
+            d = np.array([False] * 256, dtype=bool)[7::]
             d[i] = True
             assert_(np.any(d))
-            e = np.array([True] * 256, dtype=np.bool)[7::]
+            e = np.array([True] * 256, dtype=bool)[7::]
             e[i] = False
             assert_(not np.all(e))
             assert_array_equal(e, ~d)
         # big array test for blocked libc loops
         for i in list(range(9, 6000, 507)) + [7764, 90021, -10]:
-            d = np.array([False] * 100043, dtype=np.bool)
+            d = np.array([False] * 100043, dtype=bool)
             d[i] = True
             assert_(np.any(d), msg="%r" % i)
-            e = np.array([True] * 100043, dtype=np.bool)
+            e = np.array([True] * 100043, dtype=bool)
             e[i] = False
             assert_(not np.all(e), msg="%r" % i)
 
@@ -331,9 +331,9 @@ class TestBoolArray(object):
 class TestBoolCmp(object):
     def setup(self):
         self.f = np.ones(256, dtype=np.float32)
-        self.ef = np.ones(self.f.size, dtype=np.bool)
+        self.ef = np.ones(self.f.size, dtype=bool)
         self.d = np.ones(128, dtype=np.float64)
-        self.ed = np.ones(self.d.size, dtype=np.bool)
+        self.ed = np.ones(self.d.size, dtype=bool)
         # generate values for all permutation of 256bit simd vectors
         s = 0
         for i in range(32):
@@ -800,8 +800,8 @@ class TestTypes(object):
 
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
-        assert_(np.can_cast(np.float64, np.complex))
-        assert_(not np.can_cast(np.complex, np.float))
+        assert_(np.can_cast(np.float64, complex))
+        assert_(not np.can_cast(complex, float))
 
         assert_(np.can_cast('i8', 'f8'))
         assert_(not np.can_cast('i8', 'f4'))
@@ -981,11 +981,11 @@ class TestNonzero(object):
     def test_sparse(self):
         # test special sparse condition boolean code path
         for i in range(20):
-            c = np.zeros(200, dtype=np.bool)
+            c = np.zeros(200, dtype=bool)
             c[i::20] = True
             assert_equal(np.nonzero(c)[0], np.arange(i, 200 + i, 20))
 
-            c = np.zeros(400, dtype=np.bool)
+            c = np.zeros(400, dtype=bool)
             c[10 + i:20 + i] = True
             c[20 + i*2] = True
             assert_equal(np.nonzero(c)[0],
@@ -1095,7 +1095,7 @@ class TestNonzero(object):
 
         rng = np.random.RandomState(1234)
         m = rng.randint(-100, 100, size=size)
-        n = m.astype(np.object)
+        n = m.astype(object)
 
         for length in range(len(axis)):
             for combo in combinations(axis, length):
@@ -1386,7 +1386,7 @@ class TestClip(object):
         # Address Issue gh-5354 for clipping complex arrays
         # Test native complex input without explicit min/max
         # ie, either min=None or max=None
-        a = np.ones(10, dtype=np.complex)
+        a = np.ones(10, dtype=complex)
         m = a.min()
         M = a.max()
         am = self.fastclip(a, m, None)
@@ -2185,7 +2185,7 @@ class TestCorrelate(object):
                            -102., -54., -19.], dtype=dt)
 
     def test_float(self):
-        self._setup(np.float)
+        self._setup(float)
         z = np.correlate(self.x, self.y, 'full')
         assert_array_almost_equal(z, self.z1)
         z = np.correlate(self.x, self.y[:-1], 'full')
@@ -2214,9 +2214,9 @@ class TestCorrelate(object):
         assert_array_equal(k, np.ones(3))
 
     def test_complex(self):
-        x = np.array([1, 2, 3, 4+1j], dtype=np.complex)
-        y = np.array([-1, -2j, 3+1j], dtype=np.complex)
-        r_z = np.array([3-1j, 6, 8+1j, 11+5j, -5+8j, -4-1j], dtype=np.complex)
+        x = np.array([1, 2, 3, 4+1j], dtype=complex)
+        y = np.array([-1, -2j, 3+1j], dtype=complex)
+        r_z = np.array([3-1j, 6, 8+1j, 11+5j, -5+8j, -4-1j], dtype=complex)
         r_z = r_z[::-1].conjugate()
         z = np.correlate(y, x, mode='full')
         assert_array_almost_equal(z, r_z)

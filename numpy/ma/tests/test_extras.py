@@ -660,7 +660,7 @@ class TestApplyOverAxes(object):
         test = apply_over_axes(np.sum, a, [0, 2])
         ctrl = np.array([[[60], [92], [124]]])
         assert_equal(test, ctrl)
-        a[(a % 2).astype(np.bool)] = masked
+        a[(a % 2).astype(bool)] = masked
         test = apply_over_axes(np.sum, a, [0, 2])
         ctrl = np.array([[[28], [44], [60]]])
         assert_equal(test, ctrl)
@@ -885,7 +885,7 @@ class TestMedian(object):
     def test_nan(self):
         with suppress_warnings() as w:
             w.record(RuntimeWarning)
-            for mask in (False, np.zeros(6, dtype=np.bool)):
+            for mask in (False, np.zeros(6, dtype=bool)):
                 dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
                 dm.mask = mask
 

@@ -29,8 +29,8 @@ class AddReduceSeparate(Benchmark):
 
 class AnyAll(Benchmark):
     def setup(self):
-        self.zeros = np.zeros(100000, np.bool)
-        self.ones = np.ones(100000, np.bool)
+        self.zeros = np.zeros(100000, bool)
+        self.ones = np.ones(100000, bool)
 
     def time_all_fast(self):
         self.zeros.all()

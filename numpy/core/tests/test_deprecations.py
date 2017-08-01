@@ -259,7 +259,7 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
     """
 
     def test_fortran_contiguous(self):
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.complex,))
+        self.assert_deprecated(np.ones((2,2)).T.view, args=(complex,))
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 

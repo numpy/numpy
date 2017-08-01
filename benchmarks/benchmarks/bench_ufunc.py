@@ -62,7 +62,7 @@ class UFunc(Benchmark):
 
 class Custom(Benchmark):
     def setup(self):
-        self.b = np.ones(20000, dtype=np.bool)
+        self.b = np.ones(20000, dtype=bool)
 
     def time_nonzero(self):
         np.nonzero(self.b)

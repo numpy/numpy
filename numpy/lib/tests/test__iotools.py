@@ -257,7 +257,7 @@ class TestMiscFunctions(object):
 
     def test_has_nested_dtype(self):
         "Test has_nested_dtype"
-        ndtype = np.dtype(np.float)
+        ndtype = np.dtype(float)
         assert_equal(has_nested_fields(ndtype), False)
         ndtype = np.dtype([('A', '|S3'), ('B', float)])
         assert_equal(has_nested_fields(ndtype), False)

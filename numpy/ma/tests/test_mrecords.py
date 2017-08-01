@@ -353,7 +353,7 @@ class TestView(object):
 
     def setup(self):
         (a, b) = (np.arange(10), np.random.rand(10))
-        ndtype = [('a', np.float), ('b', np.float)]
+        ndtype = [('a', float), ('b', float)]
         arr = np.array(list(zip(a, b)), dtype=ndtype)
 
         mrec = fromarrays([a, b], dtype=ndtype, fill_value=(-9., -99.))
@@ -369,15 +369,15 @@ class TestView(object):
 
     def test_view_simple_dtype(self):
         (mrec, a, b, arr) = self.data
-        ntype = (np.float, 2)
+        ntype = (float, 2)
         test = mrec.view(ntype)
         assert_(isinstance(test, ma.MaskedArray))
-        assert_equal(test, np.array(list(zip(a, b)), dtype=np.float))
+        assert_equal(test, np.array(list(zip(a, b)), dtype=float))
         assert_(test[3, 1] is ma.masked)
 
     def test_view_flexible_type(self):
         (mrec, a, b, arr) = self.data
-        alttype = [('A', np.float), ('B', np.float)]
+        alttype = [('A', float), ('B', float)]
         test = mrec.view(alttype)
         assert_(isinstance(test, MaskedRecords))
         assert_equal_records(test, arr.view(alttype))
@@ -491,7 +491,7 @@ def test_record_array_with_object_field():
     y = ma.masked_array(
         [(1, '2'), (3, '4')],
         mask=[(0, 0), (0, 1)],
-        dtype=[('a', int), ('b', np.object)])
+        dtype=[('a', int), ('b', object)])
     # getting an item used to fail
     y[1]
 

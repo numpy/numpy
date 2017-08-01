@@ -1286,7 +1286,7 @@ def _replace_dtype_fields_recursive(dtype, primitive_dtype):
             descr.append((name, _recurse(field[0], primitive_dtype)))
         new_dtype = np.dtype(descr)
 
-    # Is this some kind of composite a la (np.float,2)
+    # Is this some kind of composite a la (float,2)
     elif dtype.subdtype:
         descr = list(dtype.subdtype)
         descr[0] = _recurse(dtype.subdtype[0], primitive_dtype)
@@ -1338,7 +1338,7 @@ def make_mask_descr(ndtype):
     --------
     >>> import numpy.ma as ma
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, np.int]})
+                          'formats':[np.float32, int]})
     >>> dtype
     dtype([('foo', '<f4'), ('bar', '<i4')])
     >>> ma.make_mask_descr(dtype)
@@ -1519,7 +1519,7 @@ def is_mask(m):
     Arrays with complex dtypes don't return True.
 
     >>> dtype = np.dtype({'names':['monty', 'pithon'],
-                          'formats':[np.bool, np.bool]})
+                          'formats':[bool, bool]})
     >>> dtype
     dtype([('monty', '|b1'), ('pithon', '|b1')])
     >>> m = np.array([(True, False), (False, True), (True, False)],
@@ -1598,7 +1598,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> arr
     [(1, 0), (0, 1), (1, 0), (1, 0)]
     >>> dtype = np.dtype({'names':['man', 'mouse'],
-                          'formats':[np.int, np.int]})
+                          'formats':[int, int]})
     >>> arr = np.array(arr, dtype=dtype)
     >>> arr
     array([(1, 0), (0, 1), (1, 0), (1, 0)],
@@ -1657,7 +1657,7 @@ def make_mask_none(newshape, dtype=None):
     Defining a more complex dtype.
 
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, np.int]})
+                          'formats':[np.float32, int]})
     >>> dtype
     dtype([('foo', '<f4'), ('bar', '<i4')])
     >>> ma.make_mask_none((3,), dtype=dtype)
@@ -1755,7 +1755,7 @@ def flatten_mask(mask):
 
     Examples
     --------
-    >>> mask = np.array([0, 0, 1], dtype=np.bool)
+    >>> mask = np.array([0, 0, 1], dtype=bool)
     >>> flatten_mask(mask)
     array([False, False,  True], dtype=bool)
 
@@ -2323,7 +2323,7 @@ def masked_invalid(a, copy=True):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=np.float)
+    >>> a = np.arange(5, dtype=float)
     >>> a[2] = np.NaN
     >>> a[3] = np.PINF
     >>> a
@@ -7227,7 +7227,7 @@ def mask_rowcols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -7408,8 +7408,8 @@ def _convolve_or_correlate(f, a, v, mode, propagate_mask):
     if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
-            f(getmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
-          | f(np.ones(np.shape(a), dtype=np.bool), getmaskarray(v), mode=mode)
+            f(getmaskarray(a), np.ones(np.shape(v), dtype=bool), mode=mode)
+          | f(np.ones(np.shape(a), dtype=bool), getmaskarray(v), mode=mode)
         )
         data = f(getdata(a), getdata(v), mode=mode)
     else:

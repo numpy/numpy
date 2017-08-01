@@ -2145,7 +2145,7 @@ def test_iter_buffered_reduce_reuse():
     op_flags = [('readonly',), ('readwrite', 'allocate')]
     op_axes_list = [[(0, 1, 2), (0, 1, -1)], [(0, 1, 2), (0, -1, -1)]]
     # wrong dtype to force buffering
-    op_dtypes = [np.float, a.dtype]
+    op_dtypes = [float, a.dtype]
 
     def get_params():
         for xs in range(-3**2, 3**2 + 1):

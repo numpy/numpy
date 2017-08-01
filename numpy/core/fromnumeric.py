@@ -2246,7 +2246,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.amax(a, axis=1)   # Maxima along the second axis
     array([1, 3])
 
-    >>> b = np.arange(5, dtype=np.float)
+    >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amax(b)
     nan
@@ -2347,7 +2347,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.amin(a, axis=1)   # Minima along the second axis
     array([0, 2])
 
-    >>> b = np.arange(5, dtype=np.float)
+    >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amin(b)
     nan
@@ -2497,7 +2497,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     is the default platform integer:
 
     >>> x = np.array([1, 2, 3], dtype=np.int8)
-    >>> np.prod(x).dtype == np.int
+    >>> np.prod(x).dtype == int
     True
 
     """

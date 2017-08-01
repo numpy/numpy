@@ -737,7 +737,7 @@ def _getconv(dtype):
         return np.longdouble
     elif issubclass(typ, np.floating):
         return floatconv
-    elif issubclass(typ, np.complex):
+    elif issubclass(typ, complex):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
         return asbytes
@@ -1902,16 +1902,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # If the dtype is uniform, don't define names, else use ''
             base = set([c.type for c in converters if c._checked])
             if len(base) == 1:
-                (ddtype, mdtype) = (list(base)[0], np.bool)
+                (ddtype, mdtype) = (list(base)[0], bool)
             else:
                 ddtype = [(defaultfmt % i, dt)
                           for (i, dt) in enumerate(column_types)]
                 if usemask:
-                    mdtype = [(defaultfmt % i, np.bool)
+                    mdtype = [(defaultfmt % i, bool)
                               for (i, dt) in enumerate(column_types)]
         else:
             ddtype = list(zip(names, column_types))
-            mdtype = list(zip(names, [np.bool] * len(column_types)))
+            mdtype = list(zip(names, [bool] * len(column_types)))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
@@ -1937,7 +1937,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # Now, process the rowmasks the same way
             if usemask:
                 rowmasks = np.array(
-                    masks, dtype=np.dtype([('', np.bool) for t in dtype_flat]))
+                    masks, dtype=np.dtype([('', bool) for t in dtype_flat]))
                 # Construct the new dtype
                 mdtype = make_mask_descr(dtype)
                 outputmask = rowmasks.view(mdtype)
@@ -1968,9 +1968,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             output = np.array(data, dtype)
             if usemask:
                 if dtype.names:
-                    mdtype = [(_, np.bool) for _ in dtype.names]
+                    mdtype = [(_, bool) for _ in dtype.names]
                 else:
-                    mdtype = np.bool
+                    mdtype = bool
                 outputmask = np.array(masks, dtype=mdtype)
     # Try to take care of the missing data we missed
     names = output.dtype.names

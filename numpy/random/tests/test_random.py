@@ -83,7 +83,7 @@ class TestMultinomial(object):
                      (2, 2, 2))
 
         assert_raises(TypeError, np.random.multinomial, 1, p,
-                      np.float(1))
+                      float(1))
 
 
 class TestSetState(object):
@@ -143,7 +143,7 @@ class TestRandint(object):
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
-        assert_raises(TypeError, self.rfunc, 1, dtype=np.float)
+        assert_raises(TypeError, self.rfunc, 1, dtype=float)
 
     def test_bounds_checking(self):
         for dt in self.itype:
@@ -200,7 +200,7 @@ class TestRandint(object):
     def test_repeatability(self):
         import hashlib
         # We use a md5 hash of generated sequences of 1000 samples
-        # in the range [0, 6) for all but np.bool, where the range
+        # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
         tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
                'int16': '1b7741b80964bb190c50d541dca1cac1',
@@ -226,9 +226,9 @@ class TestRandint(object):
 
         # bools do not depend on endianess
         np.random.seed(1234)
-        val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
+        val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
-        assert_(tgt[np.dtype(np.bool).name] == res)
+        assert_(tgt[np.dtype(bool).name] == res)
 
     def test_int64_uint64_corner_case(self):
         # When stored in Numpy arrays, `lbnd` is casted
@@ -262,9 +262,9 @@ class TestRandint(object):
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (np.bool, np.int, np.long):
-            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+        for dt in (bool, int, np.long):
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
@@ -523,7 +523,7 @@ class TestRandomDist(object):
         assert_equal(np.random.dirichlet(p, (2, 2)).shape, (2, 2, 2))
         assert_equal(np.random.dirichlet(p, np.array((2, 2))).shape, (2, 2, 2))
 
-        assert_raises(TypeError, np.random.dirichlet, p, np.float(1))
+        assert_raises(TypeError, np.random.dirichlet, p, float(1))
 
     def test_exponential(self):
         np.random.seed(self.seed)
@@ -1583,7 +1583,7 @@ class TestSingleEltArrayInput(object):
 
 # TODO: Uncomment once randint can broadcast arguments
 #    def test_randint(self):
-#        itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
+#        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
 #                 np.int32, np.uint32, np.int64, np.uint64]
 #        func = np.random.randint
 #        high = np.array([1])

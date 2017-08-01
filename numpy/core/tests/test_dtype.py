@@ -23,7 +23,7 @@ def assert_dtype_not_equal(a, b):
 class TestBuiltin(object):
     def test_run(self):
         """Only test hash runs at all."""
-        for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
+        for t in [int, float, complex, np.int32, str, object,
                 np.unicode]:
             dt = np.dtype(t)
             hash(dt)
@@ -31,7 +31,7 @@ class TestBuiltin(object):
     def test_dtype(self):
         # Make sure equivalent byte order char hash the same (e.g. < and = on
         # little endian)
-        for t in [np.int, np.float]:
+        for t in [int, float]:
             dt = np.dtype(t)
             dt2 = dt.newbyteorder("<")
             dt3 = dt.newbyteorder(">")
@@ -107,14 +107,14 @@ class TestBuiltin(object):
 class TestRecord(object):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('yo', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('yo', int)])
         assert_dtype_equal(a, b)
 
     def test_different_names(self):
         # In theory, they may hash the same (collision) ?
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('ye', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('ye', int)])
         assert_dtype_not_equal(a, b)
 
     def test_different_titles(self):
@@ -129,9 +129,9 @@ class TestRecord(object):
 
     def test_mutate(self):
         # Mutating a dtype should reset the cached hash value
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('yo', np.int)])
-        c = np.dtype([('ye', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('yo', int)])
+        c = np.dtype([('ye', int)])
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
         a.names = ['ye']
@@ -291,8 +291,8 @@ class TestRecord(object):
 
 class TestSubarray(object):
     def test_single_subarray(self):
-        a = np.dtype((np.int, (2)))
-        b = np.dtype((np.int, (2,)))
+        a = np.dtype((int, (2)))
+        b = np.dtype((int, (2,)))
         assert_dtype_equal(a, b)
 
         assert_equal(type(a.subdtype[1]), tuple)
@@ -300,29 +300,29 @@ class TestSubarray(object):
 
     def test_equivalent_record(self):
         """Test whether equivalent subarray dtypes hash the same."""
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (2, 3)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (2, 3)))
         assert_dtype_equal(a, b)
 
     def test_nonequivalent_record(self):
         """Test whether different subarray dtypes hash differently."""
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (3, 2)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (3, 2)))
         assert_dtype_not_equal(a, b)
 
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (2, 2)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (2, 2)))
         assert_dtype_not_equal(a, b)
 
-        a = np.dtype((np.int, (1, 2, 3)))
-        b = np.dtype((np.int, (1, 2)))
+        a = np.dtype((int, (1, 2, 3)))
+        b = np.dtype((int, (1, 2)))
         assert_dtype_not_equal(a, b)
 
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
-        assert_dtype_equal(np.dtype((np.int, 2)), np.dtype((np.int, (2,))))
+        assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
         assert_dtype_equal(np.dtype(d), np.dtype(d))
@@ -421,15 +421,15 @@ class TestMonsterType(object):
     def test1(self):
         simple1 = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
             'titles': ['Red pixel', 'Blue pixel']})
-        a = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
-        b = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
+        a = np.dtype([('yo', int), ('ye', simple1),
+            ('yi', np.dtype((int, (3, 2))))])
+        b = np.dtype([('yo', int), ('ye', simple1),
+            ('yi', np.dtype((int, (3, 2))))])
         assert_dtype_equal(a, b)
 
-        c = np.dtype([('yo', np.int), ('ye', simple1),
+        c = np.dtype([('yo', int), ('ye', simple1),
             ('yi', np.dtype((a, (3, 2))))])
-        d = np.dtype([('yo', np.int), ('ye', simple1),
+        d = np.dtype([('yo', int), ('ye', simple1),
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
@@ -641,8 +641,8 @@ class TestPickling(object):
             assert_equal(x[0], y[0])
 
     def test_builtin(self):
-        for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
-                  np.unicode, np.bool]:
+        for t in [int, float, complex, np.int32, str, object,
+                  np.unicode, bool]:
             self.check_pickling(np.dtype(t))
 
     def test_structured(self):

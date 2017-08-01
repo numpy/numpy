@@ -243,7 +243,7 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((np.bool, (len(_mask.dtype) or 1))).any()
+            hasmasked = _mask.view((bool, (len(_mask.dtype) or 1))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray

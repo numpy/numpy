@@ -842,7 +842,7 @@ def diag_indices(n, ndim=2):
 
     And use it to set the diagonal of an array of zeros to 1:
 
-    >>> a = np.zeros((2, 2, 2), dtype=np.int)
+    >>> a = np.zeros((2, 2, 2), dtype=int)
     >>> a[d3] = 1
     >>> a
     array([[[1, 0],

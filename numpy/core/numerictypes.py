@@ -501,11 +501,11 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(np.int)
+    >>> np.maximum_sctype(int)
     <type 'numpy.int64'>
     >>> np.maximum_sctype(np.uint8)
     <type 'numpy.uint64'>
-    >>> np.maximum_sctype(np.complex)
+    >>> np.maximum_sctype(complex)
     <type 'numpy.complex192'>
 
     >>> np.maximum_sctype(str)
@@ -684,9 +684,9 @@ def issubclass_(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubclass_(np.int32, np.int)
+    >>> np.issubclass_(np.int32, int)
     True
-    >>> np.issubclass_(np.int32, np.float)
+    >>> np.issubclass_(np.int32, float)
     False
 
     """
@@ -717,9 +717,9 @@ def issubsctype(arg1, arg2):
     --------
     >>> np.issubsctype('S8', str)
     True
-    >>> np.issubsctype(np.array([1]), np.int)
+    >>> np.issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), np.float)
+    >>> np.issubsctype(np.array([1]), float)
     False
 
     """
@@ -821,7 +821,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.float, np.complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, float, complex, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l
     d
@@ -986,7 +986,7 @@ def find_common_type(array_types, scalar_types):
 
     Examples
     --------
-    >>> np.find_common_type([], [np.int64, np.float32, np.complex])
+    >>> np.find_common_type([], [np.int64, np.float32, complex])
     dtype('complex128')
     >>> np.find_common_type([np.int64, np.float32], [])
     dtype('float64')
@@ -1002,7 +1002,7 @@ def find_common_type(array_types, scalar_types):
     Complex is of a different type, so it up-casts the float in the
     `array_types` argument:
 
-    >>> np.find_common_type([np.float32], [np.complex])
+    >>> np.find_common_type([np.float32], [complex])
     dtype('complex128')
 
     Type specifier strings are convertible to dtypes and can therefore
