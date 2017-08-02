@@ -717,19 +717,14 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         try:
             for key, val in namedict.items():
                 fname = key + '.npy'
-                fid = open(tmpfile, 'wb')
-                try:
-                    format.write_array(fid, np.asanyarray(val),
-                                       allow_pickle=allow_pickle,
-                                       pickle_kwargs=pickle_kwargs)
-                    fid.close()
-                    fid = None
-                    zipf.write(tmpfile, arcname=fname)
-                except IOError as exc:
-                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-                finally:
-                    if fid:
-                        fid.close()
+                with open(tmpfile, 'wb') as fid:
+                    try:
+                        format.write_array(fid, np.asanyarray(val),
+                                        allow_pickle=allow_pickle,
+                                        pickle_kwargs=pickle_kwargs)
+                    except IOError as exc:
+                        raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
+                zipf.write(tmpfile, arcname=fname)
         finally:
             os.remove(tmpfile)
 
