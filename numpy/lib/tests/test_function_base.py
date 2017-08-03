@@ -19,8 +19,8 @@ from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
-    piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize
+    neighborwise, piecewise, place, rot90, select, setxor1d, sinc, split,
+    trapz, trim_zeros, unwrap, unique, vectorize
 )
 
 from numpy.compat import long
@@ -710,6 +710,291 @@ class TestDiff(object):
         assert_array_equal(out3.data, [[], [], [], [], []])
         assert_array_equal(out3.mask, [[], [], [], [], []])
         assert_(type(out3) is type(x))
+
+
+class TestNeighborwise(object):
+
+    def test_basic(self):
+        x = [[1, 2, 4, 7, 0], [7, 4, 5, 8, 1], [2, 2, 3, 6, 4]]
+        expected = [[1, 1, -10], [4, 2, -10], [1, 2,  -5]]
+        assert_array_equal(np.neighborwise(x, np.subtract, n=2), expected)
+
+        midpoint = lambda a, b: (a + b) / 2
+        x, y = np.indices((3, 4))
+        exp_x = [[0.5] * 3, [1.5] * 3]
+        exp_y = [[ 0.5,  1.5,  2.5]] * 2
+        assert_array_equal(np.neighborwise(x, midpoint, axis=None), exp_x)
+        assert_array_equal(np.neighborwise(y, midpoint, axis=None), exp_y)
+
+        x = np.array([[1, 3, 5, 10], [8, 5, 6, 8]])
+        expected = [[8, 5/3, 6/5, 4/5]]
+        assert_array_equal(np.neighborwise(x, np.true_divide, axis=0),
+                           expected)
+
+    def test_axis(self):
+        # diff along axis=0->0, axis=1->2, axis=2->1
+        x = np.array([[[1, 2, 3],
+                       [3, 4, 5],
+                       [5, 6, 7]]] * 3)
+        expected = [
+            # axis=()
+            x,
+            # axis=(0,)          axis=(1,)               axis=(2,)
+            np.zeros((2, 3, 3)), 2 * np.ones((3, 2, 3)), np.ones((3, 3, 2)),
+            # axis=(0, 1)           axis=(0, 2)         axis=(1, 2)
+            2 * np.ones((2, 2, 3)), np.ones((2, 3, 2)), 3 * np.ones((3, 2, 2)),
+            # axis=(0, 1, 2)
+            3 * np.ones((2, 2, 2)),
+        ]
+
+        def all_combos(seq):
+            """
+            Reduce double nested loop to a single loop since that is being
+            used twice.
+            """
+            for n in range(len(seq) + 1):
+                for combo in itertools.combinations(seq, n):
+                    yield combo
+
+        for exp, axes in zip(expected, all_combos(range(x.ndim))):
+            # Check all possible combination of negative indices too
+            for flips in all_combos(range(len(axes))):
+                axis = tuple(a if i not in flips else a - x.ndim
+                             for i, a in enumerate(axes))
+                if len(axis) == 1:
+                    # Also check the non-tuple case
+                    assert_array_equal(neighborwise(x, np.subtract,
+                                                    axis=axis[0]), exp)
+                assert_array_equal(neighborwise(x, np.subtract, axis=axis),
+                                   exp)
+
+        assert_array_equal(neighborwise(x, np.subtract, axis=None),
+                           expected[-1])
+
+        assert_raises(np.AxisError, neighborwise, x, None, axis=3)
+        assert_raises(np.AxisError, neighborwise, x, None, axis=-4)
+        assert_raises(np.AxisError, neighborwise, x, None, n=0, axis=3)
+        assert_raises(np.AxisError, neighborwise, x, None, axis=(0, -4))
+        assert_raises(ValueError, neighborwise, x, None, axis=(0, 0))
+
+    def test_n(self):
+        x = np.array([1., 2., 10., -5., 2.5])
+        func = np.true_divide
+        assert_raises(ValueError, neighborwise, x, func, n=-1)
+        assert_raises(ValueError, neighborwise, x, func, axis=(), n=-1)
+        output = [neighborwise(x, func, n=n) for n in range(7)]
+        expected = [
+            x, [2, 5, -0.5, -0.5], [2.5, -0.1, 1], [-0.04, -10], [250], [], []
+        ]
+        for n, (expected, out) in enumerate(zip(expected, output)):
+            assert_(type(out) is np.ndarray)
+            assert_array_equal(out, expected)
+            assert_equal(out.dtype, x.dtype)
+            assert_equal(len(out), max(0, len(x) - n))
+
+    def test_static_mask(self):
+        # Warning gets raised with no mask
+        x = [[1, 0, 2], [1, 2, 1]]
+        func = np.true_divide
+        expected = [[0, np.inf], [2, 0.5]]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=RuntimeWarning)
+            assert_array_equal(neighborwise(x, func), expected)
+            assert_equal(len(w), 1)
+            assert_(w[0].category is RuntimeWarning)
+
+        # Same warning for n=2
+        expected2 = [[np.inf], [0.25]]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=RuntimeWarning)
+            assert_array_equal(neighborwise(x, func, n=2), expected2)
+            assert_equal(len(w), 1)
+            assert_(w[0].category is RuntimeWarning)
+
+        # n=1 raises no warning with mask
+        expected[0][1] = 0
+        mask = [[True, False], [True, True]]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=RuntimeWarning)
+            assert_array_equal(neighborwise(x, func, mask=mask), expected)
+            assert_equal(len(w), 0)
+
+        # n=2 fails with fixed mask
+        assert_raises(IndexError, neighborwise, x, func, n=2, mask=mask)
+
+        # Mask size must be same as reduced size, not input size
+        assert_raises(IndexError, neighborwise, x, func, mask=np.zeros((2, 3)))
+
+    def test_incomplete_mask(self):
+        x = [[[0, 1, 2], [0, 1, 2], [1, 2, 1]],
+             [[0, 1, 1], [2, 1, 1], [1, 1, 2]],
+             [[1, 2, 4], [4, 2, 1], [2, 1, 4]]]
+        func = np.true_divide
+
+        # 1D mask, 3D output, last two axes
+        mask = [False, False, True]
+        axis = (-2, -1)
+        expected1 = [[[0, 0]] * 2] * 2 + \
+                    [[[2, 0.5], [0.25, 2]]]
+        expected2 = [[[0]]] * 2 + \
+                    [[[1]]]
+        assert_array_equal(neighborwise(x, func, axis=axis, n=1, mask=mask),
+                           expected1)
+        assert_array_equal(neighborwise(x, func, axis=axis, n=2, mask=mask),
+                           expected2)
+        assert_raises(IndexError, neighborwise, x, func, axis=(0, 1),
+                      mask=mask)
+
+        # 2D mask, 3D output, last axis
+        mask = [[False, False, True], [False, True, True], [True, True, True]]
+        axis = -1
+        expected1 = [[[0, 0], [0, 0], [2, 0.5]],
+                     [[0, 0], [0.5, 1], [1, 2]],
+                     [[2, 2], [0.5, 0.5], [0.5, 4]]]
+        expected2 = [[[0], [0], [0.25]], [[0], [2], [2]], [[1], [1], [8]]]
+        assert_array_equal(neighborwise(x, func, axis=axis, n=1, mask=mask),
+                           expected1)
+        assert_array_equal(neighborwise(x, func, axis=axis, n=2, mask=mask),
+                           expected2)
+        assert_raises(IndexError, neighborwise, x, func, axis=0, mask=mask)
+
+    def test_dynamic_mask(self):
+        fill = 17.125
+        x = [[[1, 0, 2], [1, 2, 0], [1, 2, 1]],
+             [[1, 0, 1], [2, 1, 1], [1, 1, 2]],
+             [[1, 2, 4], [4, 2, 0], [0, 1, fill]]]
+        func = np.true_divide
+        mask = lambda *args: args[1]
+
+        expected1 = [[[0, fill], [2, 0], [2, 0.5]],
+                     [[0, fill], [0.5, 1], [1, 2]],
+                     [[2, 2], [0.5, 0], [fill, fill]]]
+        expected2 = [[[fill], [0], [0.25]],
+                     [[fill], [2], [2]],
+                     [[1], [0], [1]]]
+        expected = [expected1, expected2] + [np.ones((3, 3, 0))] * 2
+
+        for n, exp in enumerate(expected, start=1):
+            assert_array_equal(neighborwise(x, func, n=n,
+                                            mask=mask, fill=fill), exp)
+
+        # Demo of badly written mask function
+        mask = lambda *args: args[0]
+        expected1 = [[[fill, np.inf], [2, fill], [2, 0.5]],
+                     [[fill, np.inf], [0.5, 1], [1, 2]],
+                     [[2, 2], [0.5, fill], [np.inf, fill]]]
+        expected2 = [[[np.inf], [fill / 2], [0.25]],
+                     [[np.inf], [2], [2]],
+                     [[1], [fill * 2], [0]]]
+        expected = [expected1, expected2] + [np.ones((3, 3, 0))] * 2
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', category=RuntimeWarning)
+            for n, exp in enumerate(expected, start=1):
+                assert_array_equal(neighborwise(x, func, n=n,
+                                                mask=mask, fill=fill), exp)
+                # Only the first application gives a warning, so there is
+                # one warning per run.
+                assert_equal(len(w), n)
+            for item in w:
+                assert_(item.category is RuntimeWarning)
+
+    def test_scalar_mask(self):
+        x = np.arange(6).reshape(2, 3)
+        func = np.add
+        expected1 = [[1, 3], [7, 9]]
+        expected2 = [[4], [16]]
+        expected3 = [[], []]
+        for n, exp in enumerate((expected1, expected2, expected3), start=1):
+            exp_shape = (2, max(0, 3 - n))
+            # Static True
+            assert_array_equal(neighborwise(x, func, n=n, mask=True), exp)
+            # Function True
+            assert_array_equal(neighborwise(x, func, n=n,
+                               mask=lambda *args: True), exp)
+            # Static Truthy
+            assert_array_equal(neighborwise(x, func, n=n, mask=17), exp)
+            # Function Truthy (np module)
+            assert_array_equal(neighborwise(x, func, n=n,
+                               mask=lambda *args: np), exp)
+            # Static False
+            assert_array_equal(neighborwise(x, func, n=n, mask=False),
+                               np.zeros(exp_shape))
+            # Function False
+            assert_array_equal(neighborwise(x, func, n=n,
+                                            mask=lambda *args: False),
+                               np.zeros(exp_shape))
+            # Static Falsy
+            assert_array_equal(neighborwise(x, func, n=n, mask=0),
+                               np.zeros(exp_shape))
+            # Function Falsy
+            assert_array_equal(neighborwise(x, func, n=n,
+                                            mask=lambda *args: None),
+                               np.zeros(exp_shape))
+
+        # all-False mask needs to be the right size, but all-True does not
+        # This is not documented, and should probably be fixed.
+        #assert_array_equal(neighborwise(x, func, mask=np.ones((10, 10, 10))),
+        #                   expected)
+        assert_raises(IndexError, neighborwise, x, func, mask=[False])
+
+    def test_fill(self):
+        x = np.arange('1066-10-13', '1066-10-17', dtype=np.datetime64)
+        mask = [True, False, True]
+        func = np.subtract
+        fill = np.float_(17.5)
+        # The comparison in `assert_array_equal` will not
+        # work if the arrays are not of the same type here
+        expected = np.array([1, 17, 1], dtype='timedelta64[D]')
+        out = neighborwise(x, func, mask=mask, fill=fill)
+        assert_array_equal(out, expected)
+        assert_equal(out.dtype, np.dtype('timedelta64[D]'))
+
+    def test_destructive_func(self):
+        # Nominally just returns the first portion of the array
+        def func(a, b):
+            # This is a[:, :] += b, not the same as a += b (non-destructive)
+            a += b
+            return b
+        original = np.arange(20).reshape(4, 5)
+        axis = None
+        expected = original[:-1, :-1]
+
+        x = np.copy(original)
+        out = neighborwise(x, func, axis=axis, destructive=False)
+        # Check based on https://stackoverflow.com/a/38507093/2988730
+        assert_raises(AssertionError, assert_array_equal, x, original)
+        assert_raises(AssertionError, assert_array_equal, out, expected)
+
+        x = np.copy(original)
+        out = neighborwise(x, func, axis=axis, destructive=True)
+        assert_array_equal(x, original)
+        assert_array_equal(out, expected)
+
+    def test_destructive_mask(self):
+        def mask(a, b):
+            a += b
+            return b
+        def func(a, b):
+            return a
+
+        original = np.arange(20).reshape(4, 5)
+        axis = None
+        expected = original[1:, 1:]
+
+        x = np.copy(original)
+        out = np.neighborwise(x, func, axis=axis, mask=mask, destructive=False)
+        assert_raises(AssertionError, assert_array_equal, x, original)
+        assert_raises(AssertionError, assert_array_equal, out, expected)
+        # First element of mask is 0, so output should get that masked out
+        assert_equal(out[0, 0], 0)
+
+        x = np.copy(original)
+        out2 = np.neighborwise(x, func, axis=axis, mask=mask, destructive=True)
+        assert_array_equal(x, original)
+        assert_raises(AssertionError, assert_array_equal, out2, expected)
+
+        # Masks mutilate the result regardless
+        assert_array_equal(out, out2)
 
 
 class TestDelete(object):

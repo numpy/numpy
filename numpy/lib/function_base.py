@@ -18,7 +18,7 @@ from numpy.core.umath import (
     mod, exp, log10, not_equal, subtract
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, sort, partition, mean, any, sum
+    ravel, nonzero, sort, partition, mean, any, sum, repeat
     )
 from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
@@ -40,13 +40,13 @@ else:
 
 
 __all__ = [
-    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp', 'flip',
-    'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-    'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'add_docstring', 'add_newdoc', 'add_newdoc_ufunc', 'angle', 'append',
+    'asarray_chkfinite', 'average', 'bartlett', 'bincount', 'blackman', 'copy',
+    'corrcoef', 'cov', 'delete', 'diff', 'digitize', 'disp', 'extract', 'flip',
+    'gradient', 'hamming', 'hanning', 'histogram', 'histogramdd', 'i0',
+    'insert', 'interp', 'iterable', 'kaiser', 'median', 'meshgrid', 'msort',
+    'neighborwise', 'percentile', 'piecewise', 'place', 'rot90', 'select',
+    'sinc', 'sort_complex', 'trapz', 'trim_zeros', 'unwrap', 'vectorize',
     ]
 
 
@@ -1856,7 +1856,7 @@ def diff(a, n=1, axis=-1):
 
     See Also
     --------
-    gradient, ediff1d, cumsum
+    gradient, ediff1d, cumsum, neighborwise
 
     Notes
     -----
@@ -1921,6 +1921,181 @@ def diff(a, n=1, axis=-1):
     op = not_equal if a.dtype == np.bool_ else subtract
     for _ in range(n):
         a = op(a[slice1], a[slice2])
+
+    return a
+
+
+def neighborwise(a, func, axis=-1, n=1, mask=None, fill=0, destructive=False):
+    """
+    Apply a function to pairs of neighboring elements along the given axes.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array-like
+    func : callable
+        A (vectorized) function of two arguments to call on the
+        neighboring elements. The first argument will be the higher
+        index neighbors in each pair, and the second will be the lower
+        index. If the function modifies the underlying data in any way,
+        set `destructive` to `True`.
+    axis : int or iterable of int, optional
+        The axis or axes along which the difference is taken, default is
+        the last axis. If set to `None`, all the available axes will be
+        used. The order of the axes in an iterable does not matter. If
+        an empty iterable is provided, the array is returned as-is.
+    n : int, optional
+        The number of times the function is applied. If zero, the input
+        is returned as-is. The default is 1.
+    mask : callable or array_like of bool, optional
+        A mask indicating whether or not to perform the calculation at a
+        given location within the array. If the mask is an array, it
+        must match the leading dimensions of `a`, except those present
+        in `axis`. A callable mask must accept two parameters, exactly
+        like `func`. The result must be a boolean array of the same size
+        as the inputs, to be used as the actual mask. All masks are
+        converted to boolean arrays if they are not provided as such.
+        A scalar `False` will mask out the entire array. Scalar `True`
+        acts as if no mask was applied. Any changes made to the
+        arguments to `mask` will be visible when applying `func`,
+        regardless of the value of `destructive`. The default mask is
+        `None`, meaning no mask.
+    fill : scalar, optional
+        Locations in the result where `func` is not applied because
+        `mask` is `False` are set to this value. The default is zero.
+        The type must be convertible to the output type of `func`.
+    destructive : bool, optional
+        Set this flag to `True` if either `func` or `mask` make
+        modifications to the data they operates on, but expect the two
+        arguments to be independent of each other. If set to `True`,
+        none of the changes will be visible in `a`. The default is
+        `False`.
+
+    Returns
+    -------
+    neighborwise : ndarray
+        The neighborwise application of func across the dimensions of
+        `a`. The shape of the output is the same as `a` except along
+        each dimension in `axis`, where the size is smaller by `n`.
+
+    See Also
+    --------
+    diff
+
+    Notes
+    -----
+    Multiple axes are applied simultaneously, allowing application of
+    `func` along a diagonal of the array. It also means that the order
+    of the axes is irrelevant.
+
+    >>> arr = np.array([[1, 2], [3, 4]])
+    >>> np.neighborwise(arr, np.subtract, axis=None)  # 4 - 1
+    array([[3]])
+
+    Since a fixed mask only needs to match the leading dimensions of
+    `a`, it is sometimes possible to use a fixed mask even with `n > 1`.
+
+    >>> arr = np.arange(27).reshape(3, 3, 3)
+    >>> mask = np.array([[True, False, True],
+                         [True, True, False],
+                         [False, False, True]])
+    >>> np.neighborwise(arr, np.subtract, n=2, mask=mask, fill=7)
+    array([[[0],
+            [7],
+            [0]],
+
+           [[0],
+            [0],
+            [7]],
+
+           [[7],
+            [7],
+            [0]]])
+
+    Examples
+    --------
+    Take n-th order differences:
+
+    >>> x = np.array([[1, 2, 4, 7, 0], [7, 4, 5, 8, 1], [2, 2, 3, 6, 4]])
+    >>> np.neighborwise(x, np.subtract, n=2)
+    array([[  1,   1, -10],
+           [  4,   2, -10],
+           [  1,   2,  -5]])
+
+    Resample grids to the midpoint values:
+
+    >>> midpoint = lambda a, b: (a + b) / 2
+    >>> x, y = np.indices((3, 4))
+    >>> x
+    array([[0, 0, 0, 0],
+           [1, 1, 1, 1],
+           [2, 2, 2, 2]])
+    >>> y
+    array([[0, 1, 2, 3],
+           [0, 1, 2, 3],
+           [0, 1, 2, 3]])
+    >>> x = np.neighborwise(x, midpoint, axis=None)
+    >>> y = np.neighborwise(x, midpoint, axis=None)
+    >>> x
+    array([[ 0.5,  0.5,  0.5],
+           [ 1.5,  1.5,  1.5]])
+    >>> y
+    array([[ 0.5,  1.5,  2.5],
+           [ 0.5,  1.5,  2.5]])
+
+    Compute ratios along an array, setting invalid computations to zero:
+
+    >>> x = np.array([[1, 3, 0, 10], [8, 5, 6, 8]])
+    >>> np.neighborwise(x, np.true_divide, axis=0,
+                        mask=lambda num, denom: denom.astype(np.bool))
+    array([[ 8.        ,  1.66666667,  0.        ,  0.8       ]])
+
+    """
+    a = asanyarray(a)
+    nd = a.ndim
+    # Converting to list makes this useable as a set of linear indices 
+    axis = list(range(nd) if axis is None
+                else _nx.normalize_axis_tuple(axis, nd))
+
+    if n < 0:
+        raise ValueError("order must be non-negative but got " + repr(n))
+    if n == 0 or not axis:
+        return a
+
+    if mask is not None and not callable(mask):
+        # Binding to func-local parameter to avoid renaming the variable
+        mask = lambda a, b, m=mask: m
+
+    slice1 = repeat(slice(None), nd)
+    slice2 = repeat(slice(None), nd)
+    slice1[axis] = slice(1, None)
+    slice2[axis] = slice(None, -1)
+    slice1 = tuple(slice1)
+    slice2 = tuple(slice2)
+
+    for _ in range(n):
+        upper, lower = a[slice1], a[slice2]
+        if destructive:
+            # copy(x) keeps order by default, x.copy() does not
+            lower = copy(lower)
+            upper = copy(upper)
+        if mask is None:
+            a = func(upper, lower)
+        else:
+            # Always ensure that the mask is a boolean array
+            # ndmin specified because of issue#
+            accept = np.asanyarray(mask(upper, lower), dtype=np.bool_)
+            if accept.all():
+                a = func(upper, lower)
+            else:
+                # https://stackoverflow.com/q/45493270/2988730 descirbes the
+                # behavior of scalar masks that makes this very efficient
+                # when the entire mask is False. The result becomes a 0D array
+                # and a is created and filled properly.
+                result = func(upper[accept], lower[accept])
+                a = empty_like(upper, dtype=result.dtype)
+                a[accept] = result
+                a[~accept] = fill
 
     return a
 
