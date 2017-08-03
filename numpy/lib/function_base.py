@@ -1901,28 +1901,9 @@ def diff(a, n=1, axis=-1):
     array([1, 1], dtype='timedelta64[D]')
 
     """
-    if n == 0:
-        return a
-    if n < 0:
-        raise ValueError(
-            "order must be non-negative but got " + repr(n))
-
-    a = asanyarray(a)
-    nd = a.ndim
-    axis = normalize_axis_index(axis, nd)
-
-    slice1 = [slice(None)] * nd
-    slice2 = [slice(None)] * nd
-    slice1[axis] = slice(1, None)
-    slice2[axis] = slice(None, -1)
-    slice1 = tuple(slice1)
-    slice2 = tuple(slice2)
-
-    op = not_equal if a.dtype == np.bool_ else subtract
-    for _ in range(n):
-        a = op(a[slice1], a[slice2])
-
-    return a
+    def diff_func(a, b):
+        return not_equal(a, b) if a.dtype == np.bool_ else subtract(a, b)
+    return neighborwise(a, diff_func, axis=axis, n=n)
 
 
 def neighborwise(a, func, axis=-1, n=1, mask=None, fill=0, destructive=False):

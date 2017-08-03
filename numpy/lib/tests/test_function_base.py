@@ -4,6 +4,7 @@ import operator
 import warnings
 import sys
 import decimal
+import itertools
 
 import numpy as np
 from numpy import ma
@@ -660,6 +661,31 @@ class TestDiff(object):
         assert_array_equal(diff(x, axis=-2), exp)
         assert_raises(np.AxisError, diff, x, axis=3)
         assert_raises(np.AxisError, diff, x, axis=-4)
+        assert_raises(np.AxisError, diff, x, n=0, axis=3)
+
+    def test_axes(self):
+        # diff along axis=0->0, axis=1->2, axis=2->1
+        x = np.array([[[1, 2, 3],
+                       [3, 4, 5],
+                       [5, 6, 7]]] * 3)
+        expected = [
+            # axis=(0,)           axis=(1,)               axis=(2,)
+            [np.zeros((2, 3, 3)), 2 * np.ones((3, 2, 3)), np.ones((3, 3, 2))],
+            # axis=(0, 1)            axis=(0, 2)
+            [2 * np.ones((2, 2, 3)), np.ones((2, 3, 2)),
+            # axis=(1, 2)
+             3 * np.ones((3, 2, 2))],
+            # axis=(0, 1, 2)
+            [3 * np.ones((2, 2, 2))]
+        ]
+        for n, lists in enumerate(expected, start=1):
+            combinations = itertools.combinations(range(x.ndim), n)
+            for combo, exp in zip(combinations, lists):
+                assert_array_equal(diff(x, axis=combo), exp)
+
+        assert_array_equal(diff(x, axis=None), expected[-1][0])
+        assert_raises(np.AxisError, diff, x, axis=(0, -4))
+        assert_raises(ValueError, diff, x, axis=(0, 0))
 
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
