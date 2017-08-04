@@ -890,7 +890,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([[0, 1],
            [0, 1]])
 
-    Coordinates of the sorted elements of a N-dimensional array:
+    Indices of the sorted elements of a N-dimensional array:
     >>> np.unravel_index(np.argsort(x, axis=None), x.shape)
     (array([0, 1, 1, 0]), array([0, 0, 1, 1]))
     >>> list(zip(*np.unravel_index(np.argsort(x, axis=None), x.shape)))
@@ -958,7 +958,7 @@ def argmax(a, axis=None, out=None):
     >>> np.argmax(a, axis=1)
     array([2, 2])
 
-    Coordinates of the maximal elements of a N-dimensional array:
+    Indices of the maximal elements of a N-dimensional array:
     >>> np.unravel_index(np.argmax(a, axis=None), a.shape)
     (1, 2)
 
@@ -1018,7 +1018,7 @@ def argmin(a, axis=None, out=None):
     >>> np.argmin(a, axis=1)
     array([0, 0])
 
-    Coordinates of the minimum elements of a N-dimensional array:
+    Indices of the minimum elements of a N-dimensional array:
     >>> np.unravel_index(np.argmin(a, axis=None), a.shape)
     (0, 0)
 
