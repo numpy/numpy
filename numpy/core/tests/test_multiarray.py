@@ -297,7 +297,7 @@ class TestArrayConstruction(object):
         assert_equal(r[0], [d, d + 1])
         assert_equal(r[1], d + 2)
 
-        tgt = np.ones((2, 3), dtype=np.bool)
+        tgt = np.ones((2, 3), dtype=bool)
         tgt[0, 2] = False
         tgt[1, 0:2] = False
         r = np.array([[True, True, False], [False, False, True]])
@@ -759,20 +759,20 @@ class TestCreation(object):
             str(d)
 
     def test_sequence_non_homogenous(self):
-        assert_equal(np.array([4, 2**80]).dtype, np.object)
-        assert_equal(np.array([4, 2**80, 4]).dtype, np.object)
-        assert_equal(np.array([2**80, 4]).dtype, np.object)
-        assert_equal(np.array([2**80] * 3).dtype, np.object)
-        assert_equal(np.array([[1, 1],[1j, 1j]]).dtype, np.complex)
-        assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, np.complex)
-        assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, np.complex)
+        assert_equal(np.array([4, 2**80]).dtype, object)
+        assert_equal(np.array([4, 2**80, 4]).dtype, object)
+        assert_equal(np.array([2**80, 4]).dtype, object)
+        assert_equal(np.array([2**80] * 3).dtype, object)
+        assert_equal(np.array([[1, 1],[1j, 1j]]).dtype, complex)
+        assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, complex)
+        assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, complex)
 
     @dec.skipif(sys.version_info[0] >= 3)
     def test_sequence_long(self):
         assert_equal(np.array([long(4), long(4)]).dtype, np.long)
-        assert_equal(np.array([long(4), 2**80]).dtype, np.object)
-        assert_equal(np.array([long(4), 2**80, long(4)]).dtype, np.object)
-        assert_equal(np.array([2**80, long(4)]).dtype, np.object)
+        assert_equal(np.array([long(4), 2**80]).dtype, object)
+        assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
+        assert_equal(np.array([2**80, long(4)]).dtype, object)
 
     def test_non_sequence_sequence(self):
         """Should not segfault.
@@ -876,7 +876,7 @@ class TestStructured(object):
         # multi-dimensional field types work properly
         a = np.rec.fromrecords(
             [([1, 2, 3], 'a', [[1, 2], [3, 4]]), ([3, 3, 3], 'b', [[0, 0], [0, 0]])],
-            dtype=[('a', ('f4', 3)), ('b', np.object), ('c', ('i4', (2, 2)))])
+            dtype=[('a', ('f4', 3)), ('b', object), ('c', ('i4', (2, 2)))])
         b = a.copy()
         assert_equal(a == b, [True, True])
         assert_equal(a != b, [False, False])
@@ -1109,7 +1109,7 @@ class TestBool(object):
         assert_(np.array(True)[()] is a1)
 
     def test_sum(self):
-        d = np.ones(101, dtype=np.bool)
+        d = np.ones(101, dtype=bool)
         assert_equal(d.sum(), d.size)
         assert_equal(d[::2].sum(), d[::2].size)
         assert_equal(d[::-2].sum(), d[::-2].size)
@@ -1123,7 +1123,7 @@ class TestBool(object):
         powers = [2 ** i for i in range(length)]
         for i in range(2**power):
             l = [(i & x) != 0 for x in powers]
-            a = np.array(l, dtype=np.bool)
+            a = np.array(l, dtype=bool)
             c = builtins.sum(l)
             assert_equal(np.count_nonzero(a), c)
             av = a.view(np.uint8)
@@ -1148,10 +1148,10 @@ class TestBool(object):
     def test_count_nonzero_unaligned(self):
         # prevent mistakes as e.g. gh-4060
         for o in range(7):
-            a = np.zeros((18,), dtype=np.bool)[o+1:]
+            a = np.zeros((18,), dtype=bool)[o+1:]
             a[:o] = True
             assert_equal(np.count_nonzero(a), builtins.sum(a.tolist()))
-            a = np.ones((18,), dtype=np.bool)[o+1:]
+            a = np.ones((18,), dtype=bool)[o+1:]
             a[:o] = False
             assert_equal(np.count_nonzero(a), builtins.sum(a.tolist()))
 
@@ -1381,7 +1381,7 @@ class TestMethods(object):
             assert_equal(c, a, msg)
 
         # test object array sorts.
-        a = np.empty((101,), dtype=np.object)
+        a = np.empty((101,), dtype=object)
         a[:] = list(range(101))
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
@@ -1627,7 +1627,7 @@ class TestMethods(object):
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
         # test object array argsorts.
-        a = np.empty((101,), dtype=np.object)
+        a = np.empty((101,), dtype=object)
         a[:] = list(range(101))
         b = a[::-1]
         r = np.arange(101)
@@ -1694,7 +1694,7 @@ class TestMethods(object):
         a = np.zeros(100)
         assert_equal(a.argsort(kind='m'), r)
         # complex
-        a = np.zeros(100, dtype=np.complex)
+        a = np.zeros(100, dtype=complex)
         assert_equal(a.argsort(kind='m'), r)
         # string
         a = np.array(['aaaaaaaaa' for i in range(100)])
@@ -3180,7 +3180,7 @@ class TestTemporaryElide(object):
         # only triggers elision code path in debug mode as triggering it in
         # normal mode needs 256kb large matching dimension, so a lot of memory
         d = np.ones((2000, 1), dtype=int)
-        b = np.ones((2000), dtype=np.bool)
+        b = np.ones((2000), dtype=bool)
         r = (1 - d) + b
         assert_equal(r, 1)
         assert_equal(r.shape, (2000, 2000))
@@ -3937,7 +3937,7 @@ class TestIO(object):
     def setup(self):
         shape = (2, 4, 3)
         rand = np.random.random
-        self.x = rand(shape) + rand(shape).astype(np.complex)*1j
+        self.x = rand(shape) + rand(shape).astype(complex)*1j
         self.x[0,:, 1] = [np.nan, np.inf, -np.inf, np.nan]
         self.dtype = self.x.dtype
         self.tempdir = tempfile.mkdtemp()
@@ -4253,7 +4253,7 @@ class TestFromBuffer(object):
 
     def test_ip_basic(self):
         for byteorder in ['<', '>']:
-            for dtype in [float, int, np.complex]:
+            for dtype in [float, int, complex]:
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4, 7))*5).astype(dt)
                 buf = x.tobytes()
@@ -4835,7 +4835,7 @@ class TestVdot(object):
             assert_equal(np.vdot(b, b), 3)
 
         # test boolean
-        b = np.eye(3, dtype=np.bool)
+        b = np.eye(3, dtype=bool)
         res = np.vdot(b, b)
         assert_(np.isscalar(res))
         assert_equal(np.vdot(b, b), True)
@@ -5350,19 +5350,19 @@ class TestMatmul(MatmulCommon):
     matmul = np.matmul
 
     def test_out_arg(self):
-        a = np.ones((2, 2), dtype=np.float)
-        b = np.ones((2, 2), dtype=np.float)
-        tgt = np.full((2,2), 2, dtype=np.float)
+        a = np.ones((2, 2), dtype=float)
+        b = np.ones((2, 2), dtype=float)
+        tgt = np.full((2,2), 2, dtype=float)
 
         # test as positional argument
         msg = "out positional argument"
-        out = np.zeros((2, 2), dtype=np.float)
+        out = np.zeros((2, 2), dtype=float)
         self.matmul(a, b, out)
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test as keyword argument
         msg = "out keyword argument"
-        out = np.zeros((2, 2), dtype=np.float)
+        out = np.zeros((2, 2), dtype=float)
         self.matmul(a, b, out=out)
         assert_array_equal(out, tgt, err_msg=msg)
 
@@ -5385,7 +5385,7 @@ class TestMatmul(MatmulCommon):
 
         # test out non-contiguous
         # msg = "out argument with non-contiguous layout"
-        # c = np.zeros((2, 2, 2), dtype=np.float)
+        # c = np.zeros((2, 2, 2), dtype=float)
         # self.matmul(a, b, out=c[..., 0])
         # assert_array_equal(c, tgt, err_msg=msg)
 
@@ -5649,7 +5649,7 @@ class TestNeighborhoodIter(object):
         assert_array_equal(l, r)
 
     def test_simple2d(self):
-        self._test_simple2d(np.float)
+        self._test_simple2d(float)
 
     def test_simple2d_object(self):
         self._test_simple2d(Decimal)
@@ -5665,7 +5665,7 @@ class TestNeighborhoodIter(object):
         assert_array_equal(l, r)
 
     def test_mirror2d(self):
-        self._test_mirror2d(np.float)
+        self._test_mirror2d(float)
 
     def test_mirror2d_object(self):
         self._test_mirror2d(Decimal)
@@ -5687,7 +5687,7 @@ class TestNeighborhoodIter(object):
         assert_array_equal(l, r)
 
     def test_simple_float(self):
-        self._test_simple(np.float)
+        self._test_simple(float)
 
     def test_simple_object(self):
         self._test_simple(Decimal)
@@ -5702,7 +5702,7 @@ class TestNeighborhoodIter(object):
         assert_array_equal(l, r)
 
     def test_mirror(self):
-        self._test_mirror(np.float)
+        self._test_mirror(float)
 
     def test_mirror_object(self):
         self._test_mirror(Decimal)
@@ -5716,7 +5716,7 @@ class TestNeighborhoodIter(object):
         assert_array_equal(l, r)
 
     def test_circular(self):
-        self._test_circular(np.float)
+        self._test_circular(float)
 
     def test_circular_object(self):
         self._test_circular(Decimal)
@@ -6530,10 +6530,10 @@ class TestConversion(object):
 
 class TestWhere(object):
     def test_basic(self):
-        dts = [np.bool, np.int16, np.int32, np.int64, np.double, np.complex128,
+        dts = [bool, np.int16, np.int32, np.int64, np.double, np.complex128,
                np.longdouble, np.clongdouble]
         for dt in dts:
-            c = np.ones(53, dtype=np.bool)
+            c = np.ones(53, dtype=bool)
             assert_equal(np.where( c, dt(0), dt(1)), dt(0))
             assert_equal(np.where(~c, dt(0), dt(1)), dt(1))
             assert_equal(np.where(True, dt(0), dt(1)), dt(0))
@@ -6625,7 +6625,7 @@ class TestWhere(object):
         assert_equal(np.where(c, a, b), r)
 
         # non bool mask
-        c = c.astype(np.int)
+        c = c.astype(int)
         c[c != 0] = 34242324
         assert_equal(np.where(c, a, b), r)
         # invert
@@ -6841,20 +6841,20 @@ class TestArrayPriority(object):
 class TestBytestringArrayNonzero(object):
 
     def test_empty_bstring_array_is_falsey(self):
-        assert_(not np.array([''], dtype=np.str))
+        assert_(not np.array([''], dtype=str))
 
     def test_whitespace_bstring_array_is_falsey(self):
-        a = np.array(['spam'], dtype=np.str)
+        a = np.array(['spam'], dtype=str)
         a[0] = '  \0\0'
         assert_(not a)
 
     def test_all_null_bstring_array_is_falsey(self):
-        a = np.array(['spam'], dtype=np.str)
+        a = np.array(['spam'], dtype=str)
         a[0] = '\0\0\0\0'
         assert_(not a)
 
     def test_null_inside_bstring_array_is_truthy(self):
-        a = np.array(['spam'], dtype=np.str)
+        a = np.array(['spam'], dtype=str)
         a[0] = ' \0 \0'
         assert_(a)
 

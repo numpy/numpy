@@ -2663,28 +2663,28 @@ class TestInterp(object):
 
             incres = interp(incpts, xp, yp)
             decres = interp(decpts, xp, yp)
-            inctgt = np.array([1, 1, 1, 1], dtype=np.float)
+            inctgt = np.array([1, 1, 1, 1], dtype=float)
             dectgt = inctgt[::-1]
             assert_equal(incres, inctgt)
             assert_equal(decres, dectgt)
 
             incres = interp(incpts, xp, yp, left=0)
             decres = interp(decpts, xp, yp, left=0)
-            inctgt = np.array([0, 1, 1, 1], dtype=np.float)
+            inctgt = np.array([0, 1, 1, 1], dtype=float)
             dectgt = inctgt[::-1]
             assert_equal(incres, inctgt)
             assert_equal(decres, dectgt)
 
             incres = interp(incpts, xp, yp, right=2)
             decres = interp(decpts, xp, yp, right=2)
-            inctgt = np.array([1, 1, 1, 2], dtype=np.float)
+            inctgt = np.array([1, 1, 1, 2], dtype=float)
             dectgt = inctgt[::-1]
             assert_equal(incres, inctgt)
             assert_equal(decres, dectgt)
 
             incres = interp(incpts, xp, yp, left=0, right=2)
             decres = interp(decpts, xp, yp, left=0, right=2)
-            inctgt = np.array([0, 1, 1, 2], dtype=np.float)
+            inctgt = np.array([0, 1, 1, 2], dtype=float)
             dectgt = inctgt[::-1]
             assert_equal(incres, inctgt)
             assert_equal(decres, dectgt)

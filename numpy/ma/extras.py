@@ -939,7 +939,7 @@ def mask_rows(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -984,7 +984,7 @@ def mask_cols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
