@@ -373,7 +373,7 @@ class TestSaveTxt(object):
         # Test the functionality of the header and footer keyword argument.
 
         c = BytesIO()
-        a = np.array([(1, 2), (3, 4)], dtype=np.int)
+        a = np.array([(1, 2), (3, 4)], dtype=int)
         test_header_footer = 'Test header / footer'
         # Test the header keyword argument
         np.savetxt(c, a, fmt='%1d', header=test_header_footer)
@@ -485,7 +485,7 @@ class TestLoadTxt(object):
         c.write('1 2\n3 4')
 
         c.seek(0)
-        x = np.loadtxt(c, dtype=np.int)
+        x = np.loadtxt(c, dtype=int)
         a = np.array([[1, 2], [3, 4]], int)
         assert_array_equal(x, a)
 
@@ -721,7 +721,7 @@ class TestLoadTxt(object):
         # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
-        ndtype = [('idx', int), ('code', np.object)]
+        ndtype = [('idx', int), ('code', object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.loadtxt(TextIO(data), delimiter=";", dtype=ndtype,
@@ -751,11 +751,11 @@ class TestLoadTxt(object):
         # IEEE doubles and floats only, otherwise the float32
         # conversion may fail.
         tgt = np.logspace(-10, 10, 5).astype(np.float32)
-        tgt = np.hstack((tgt, -tgt)).astype(np.float)
+        tgt = np.hstack((tgt, -tgt)).astype(float)
         inp = '\n'.join(map(float.hex, tgt))
         c = TextIO()
         c.write(inp)
-        for dt in [np.float, np.float32]:
+        for dt in [float, np.float32]:
             c.seek(0)
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
@@ -765,7 +765,7 @@ class TestLoadTxt(object):
         c = TextIO()
         c.write("%s %s" % tgt)
         c.seek(0)
-        res = np.loadtxt(c, dtype=np.complex)
+        res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
 
     def test_universal_newline(self):
@@ -1190,7 +1190,7 @@ M   33  21.99
         # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
-        ndtype = [('idx', int), ('code', np.object)]
+        ndtype = [('idx', int), ('code', object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.genfromtxt(TextIO(data), delimiter=";", dtype=ndtype,
@@ -1200,7 +1200,7 @@ M   33  21.99
             dtype=ndtype)
         assert_equal(test, control)
 
-        ndtype = [('nest', [('idx', int), ('code', np.object)])]
+        ndtype = [('nest', [('idx', int), ('code', object)])]
         try:
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
@@ -1337,7 +1337,7 @@ M   33  21.99
         test = np.mafromtxt(data, dtype=None, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         #
@@ -1345,7 +1345,7 @@ M   33  21.99
         test = np.mafromtxt(data, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.float), ('B', np.float)])
+                           dtype=[('A', float), ('B', float)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
@@ -1414,7 +1414,7 @@ M   33  21.99
                             missing_values='-999.0', names=True,)
         control = ma.array([(0, 1.5), (2, -1.)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.float)])
+                           dtype=[('A', int), ('B', float)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
@@ -1682,7 +1682,7 @@ M   33  21.99
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
         test = np.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
@@ -1690,7 +1690,7 @@ M   33  21.99
         test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
@@ -1701,7 +1701,7 @@ M   33  21.99
         kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
         test = np.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
@@ -1709,7 +1709,7 @@ M   33  21.99
         test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
@@ -1717,12 +1717,12 @@ M   33  21.99
         data = TextIO('A,B\n0,1\n2,3')
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('a', np.int), ('b', np.int)])
+                           dtype=[('a', int), ('b', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,3')
-        dtype = [('a', np.int), ('b', np.float)]
+        dtype = [('a', int), ('b', float)]
         test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
@@ -1827,7 +1827,7 @@ M   33  21.99
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
-        assert_(test.dtype['f0'] == np.float)
+        assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
         assert_(test.dtype['f2'] == np.integer)
 
@@ -1919,7 +1919,7 @@ class TestPathUsage(object):
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
             test = np.recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', np.int), ('B', np.int)])
+                               dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
@@ -1933,7 +1933,7 @@ class TestPathUsage(object):
             kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
             test = np.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', np.int), ('B', np.int)])
+                               dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 

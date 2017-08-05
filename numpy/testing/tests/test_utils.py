@@ -61,7 +61,7 @@ class _GenericTest(object):
 
     def test_objarray(self):
         """Test object arrays."""
-        a = np.array([1, 1], dtype=np.object)
+        a = np.array([1, 1], dtype=object)
         self._test_equal(a, 1)
 
     def test_array_likes(self):
@@ -134,14 +134,14 @@ class TestArrayEqual(_GenericTest, unittest.TestCase):
 
     def test_recarrays(self):
         """Test record arrays."""
-        a = np.empty(2, [('floupi', np.float), ('floupa', np.float)])
+        a = np.empty(2, [('floupi', float), ('floupa', float)])
         a['floupi'] = [1, 2]
         a['floupa'] = [1, 2]
         b = a.copy()
 
         self._test_equal(a, b)
 
-        c = np.empty(2, [('floupipi', np.float), ('floupa', np.float)])
+        c = np.empty(2, [('floupipi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 

@@ -29,7 +29,7 @@ class TestFromrecords(object):
 
     def test_fromrecords_0len(self):
         """ Verify fromrecords works with a 0-length input """
-        dtype = [('a', np.float), ('b', np.float)]
+        dtype = [('a', float), ('b', float)]
         r = np.rec.fromrecords([], dtype=dtype)
         assert_equal(r.shape, (0,))
 
@@ -235,13 +235,13 @@ class TestFromrecords(object):
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
-                                dtype=[('a', int), ('b', np.object)])
+                                dtype=[('a', int), ('b', object)])
         assert_equal(a.a, [1, 2])
         assert_equal(a[0].a, 1)
         assert_equal(a.b, ['a', 'bbb'])
         assert_equal(a[-1].b, 'bbb')
         #
-        ndtype = np.dtype([('a', int), ('b', np.object)])
+        ndtype = np.dtype([('a', int), ('b', object)])
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')], dtype=ndtype)
         assert_equal(a.a, [1, 2])
         assert_equal(a[0].a, 1)
