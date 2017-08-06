@@ -12,8 +12,8 @@ from distutils.errors import DistutilsSetupError, DistutilsError, \
 from numpy.distutils import log
 from distutils.dep_util import newer_group
 from numpy.distutils.misc_util import filter_sources, has_f_sources,\
-    has_cxx_sources, all_strings, get_lib_source_files, is_sequence, \
-    get_numpy_include_dirs, get_library_names
+     has_cxx_sources, all_strings, get_lib_source_files, is_sequence, \
+     get_numpy_include_dirs
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options
@@ -131,11 +131,6 @@ class build_clib(old_build_clib):
         return filenames
 
     def build_libraries(self, libraries):
-        library_names = get_library_names()
-        library_order = {v: k for k, v in enumerate(library_names)}
-        libraries = sorted(
-            libraries, key=lambda library: library_order[library[0]])
-
         for (lib_name, build_info) in libraries:
             self.build_a_library(build_info, lib_name, libraries)
 
@@ -292,13 +287,32 @@ class build_clib(old_build_clib):
         else:
             f_objects = []
 
-        objects.extend(f_objects)
+        if f_objects and not fcompiler.can_ccompiler_link(compiler):
+            # Default linker cannot link Fortran object files, and results
+            # need to be wrapped later. Instead of creating a real static
+            # library, just keep track of the object files.
+            listfn = os.path.join(self.build_clib,
+                                  lib_name + '.fobjects')
+            with open(listfn, 'w') as f:
+                f.write("\n".join(os.path.abspath(obj) for obj in f_objects))
 
-        # assume that default linker is suitable for
-        # linking Fortran object files
-        compiler.create_static_lib(objects, lib_name,
-                                   output_dir=self.build_clib,
-                                   debug=self.debug)
+            listfn = os.path.join(self.build_clib,
+                                  lib_name + '.cobjects')
+            with open(listfn, 'w') as f:
+                f.write("\n".join(os.path.abspath(obj) for obj in objects))
+
+            # create empty "library" file for dependency tracking
+            lib_fname = os.path.join(self.build_clib,
+                                     lib_name + compiler.static_lib_extension)
+            with open(lib_fname, 'wb') as f:
+                pass
+        else:
+            # assume that default linker is suitable for
+            # linking Fortran object files
+            objects.extend(f_objects)
+            compiler.create_static_lib(objects, lib_name,
+                                       output_dir=self.build_clib,
+                                       debug=self.debug)
 
         # fix library dependencies
         clib_libraries = build_info.get('libraries', [])

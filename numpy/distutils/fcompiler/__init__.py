@@ -698,6 +698,38 @@ class FCompiler(CCompiler):
         else:
             return hook_name()
 
+    def can_ccompiler_link(self, ccompiler):
+        """
+        Check if the given C compiler can link objects produced by
+        this compiler.
+        """
+        return True
+
+    def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
+        """
+        Convert a set of object files that are not compatible with the default
+        linker, to a file that is compatible.
+
+        Parameters
+        ----------
+        objects : list
+            List of object files to include.
+        output_dir : str
+            Output directory to place generated object files.
+        extra_dll_dir : str
+            Output directory to place extra DLL files that need to be
+            included on Windows.
+
+        Returns
+        -------
+        converted_objects : list of str
+             List of converted object files.
+             Note that the number of output files is not necessarily
+             the same as inputs.
+
+        """
+        raise NotImplementedError()
+
     ## class FCompiler
 
 _default_compilers = (
