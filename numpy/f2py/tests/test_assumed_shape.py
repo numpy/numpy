@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import os
 
 from numpy.testing import run_module_suite, assert_, dec
-import util
+from . import util
 
 
 def _path(*a):

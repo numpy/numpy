@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 from numpy import array
 from numpy.compat import long
 from numpy.testing import run_module_suite, assert_, assert_raises, dec
-import util
+from . import util
 
 
 class TestReturnLogical(util.F2PyTest):

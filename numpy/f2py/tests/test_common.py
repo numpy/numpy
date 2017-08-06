@@ -4,7 +4,7 @@ import os
 
 from numpy.testing import run_module_suite, assert_array_equal, dec
 import numpy as np
-import util
+from . import util
 
 
 def _path(*a):

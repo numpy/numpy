@@ -4,7 +4,7 @@ import os
 import textwrap
 
 from numpy.testing import run_module_suite, assert_, assert_equal, dec
-import util
+from . import util
 
 
 def _path(*a):

@@ -7,7 +7,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
     assert_array_equal, temppath,
 )
-from test_print import in_foreign_locale
+from .test_print import in_foreign_locale
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)

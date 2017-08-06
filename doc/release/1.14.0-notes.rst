@@ -88,6 +88,12 @@ passed, despite not doing so under the simple cases::
 
 This change affects only ``float32`` and ``float16`` arrays.
 
+``__init__.py`` files added to test directories
+-----------------------------------------------
+This is for pytest compatibility in the case of duplicate test file names in
+the different directories. As a result, ``run_module_suite`` no longer works,
+i.e., ``python <path-to-test-file>`` results in an error.
+
 
 C API changes
 =============
@@ -124,6 +130,7 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+
 
 Improvements
 ============

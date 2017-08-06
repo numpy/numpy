@@ -6,7 +6,7 @@ import math
 import numpy as np
 from numpy.testing import run_module_suite, dec, assert_raises, assert_equal
 
-import util
+from . import util
 
 
 def _path(*a):

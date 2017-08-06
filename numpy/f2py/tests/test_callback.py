@@ -5,7 +5,7 @@ import textwrap
 
 from numpy import array
 from numpy.testing import run_module_suite, assert_, assert_equal, dec
-import util
+from . import util
 
 
 class TestF77Callback(util.F2PyTest):
