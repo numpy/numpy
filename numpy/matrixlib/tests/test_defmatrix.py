@@ -449,5 +449,65 @@ class TestShape(object):
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
 
 
+class TestViewAsMatrix(object):
+    def test_type(self):
+        x = np.array([1, 2, 3])
+        assert_(isinstance(x.view(np.matrix), np.matrix))
+
+    def test_keywords(self):
+        x = np.array([(1, 2)], dtype=[('a', np.int8), ('b', np.int8)])
+        # We must be specific about the endianness here:
+        y = x.view(dtype='<i2', type=np.matrix)
+        assert_array_equal(y, [[513]])
+
+        assert_(isinstance(y, np.matrix))
+        assert_equal(y.dtype, np.dtype('<i2'))
+
+
+class TestNumeric(object):
+    def test_matscalar(self):
+        b1 = np.matrix(np.ones((3, 3), dtype=complex))
+        assert_equal(b1*1.0, b1)
+
+
+    def test_diagonal(self):
+        b1 = np.matrix([[1,2],[3,4]])
+        diag_b1 = np.matrix([[1, 4]])
+        array_b1 = np.array([1, 4])
+
+        assert_equal(b1.diagonal(), diag_b1)
+        assert_equal(np.diagonal(b1), array_b1)
+        assert_equal(np.diag(b1), array_b1)
+
+
+class TestRegression(object):
+    def test_kron_matrix(self):
+        # Ticket #71
+        x = np.matrix('[1 0; 1 0]')
+        assert_equal(type(np.kron(x, x)), type(x))
+
+    def test_matrix_properties(self):
+        # Ticket #125
+        a = np.matrix([1.0], dtype=float)
+        assert_(type(a.real) is np.matrix)
+        assert_(type(a.imag) is np.matrix)
+        c, d = np.matrix([0.0]).nonzero()
+        assert_(type(c) is np.ndarray)
+        assert_(type(d) is np.ndarray)
+
+    def test_matrix_multiply_by_1d_vector(self):
+        # Ticket #473
+        def mul():
+            np.mat(np.eye(2))*np.ones(2)
+
+        assert_raises(ValueError, mul)
+
+    def test_matrix_std_argmax(self):
+        # Ticket #83
+        x = np.asmatrix(np.random.uniform(0, 1, (3, 3)))
+        assert_equal(x.std().shape, ())
+        assert_equal(x.argmax().shape, ())
+
+
 if __name__ == "__main__":
     run_module_suite()
