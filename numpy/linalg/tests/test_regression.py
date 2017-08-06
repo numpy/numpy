@@ -12,12 +12,9 @@ from numpy.testing import (
 )
 
 
-rlevel = 1
-
-
 class TestRegression(object):
 
-    def test_eig_build(self, level=rlevel):
+    def test_eig_build(self):
         # Ticket #652
         rva = array([1.03221168e+02 + 0.j,
                      -1.91843603e+01 + 0.j,
@@ -40,7 +37,7 @@ class TestRegression(object):
         rva.sort()
         assert_array_almost_equal(va, rva)
 
-    def test_eigh_build(self, level=rlevel):
+    def test_eigh_build(self):
         # Ticket 662.
         rvals = [68.60568999, 89.57756725, 106.67185574]
 
@@ -51,7 +48,7 @@ class TestRegression(object):
         vals, vecs = linalg.eigh(cov)
         assert_array_almost_equal(vals, rvals)
 
-    def test_svd_build(self, level=rlevel):
+    def test_svd_build(self):
         # Ticket 627.
         a = array([[0., 1.], [1., 1.], [2., 1.], [3., 1.]])
         m, n = a.shape

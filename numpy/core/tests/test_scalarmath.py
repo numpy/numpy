@@ -23,12 +23,12 @@ floating_types = np.floating.__subclasses__()
 # This compares scalarmath against ufuncs.
 
 class TestTypes(object):
-    def test_types(self, level=1):
+    def test_types(self):
         for atype in types:
             a = atype(1)
             assert_(a == 1, "error with %r: got %r" % (atype, a))
 
-    def test_type_add(self, level=1):
+    def test_type_add(self):
         # list of types
         for k, atype in enumerate(types):
             a_scalar = atype(3)
@@ -48,7 +48,7 @@ class TestTypes(object):
                            "error with types (%d/'%c' + %d/'%c')" %
                             (k, np.dtype(atype).char, l, np.dtype(btype).char))
 
-    def test_type_create(self, level=1):
+    def test_type_create(self):
         for k, atype in enumerate(types):
             a = np.array([1, 2, 3], atype)
             b = atype([1, 2, 3])

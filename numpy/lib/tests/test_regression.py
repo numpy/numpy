@@ -10,16 +10,14 @@ from numpy.testing import (
     )
 from numpy.compat import unicode
 
-rlevel = 1
-
 
 class TestRegression(object):
-    def test_poly1d(self, level=rlevel):
+    def test_poly1d(self):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
                      np.poly1d([-1, 1]))
 
-    def test_cov_parameters(self, level=rlevel):
+    def test_cov_parameters(self):
         # Ticket #91
         x = np.random.random((3, 3))
         y = x.copy()
@@ -27,57 +25,57 @@ class TestRegression(object):
         np.cov(y, rowvar=0)
         assert_array_equal(x, y)
 
-    def test_mem_digitize(self, level=rlevel):
+    def test_mem_digitize(self):
         # Ticket #95
         for i in range(100):
             np.digitize([1, 2, 3, 4], [1, 3])
             np.digitize([0, 1, 2, 3, 4], [1, 3])
 
-    def test_unique_zero_sized(self, level=rlevel):
+    def test_unique_zero_sized(self):
         # Ticket #205
         assert_array_equal([], np.unique(np.array([])))
 
-    def test_mem_vectorise(self, level=rlevel):
+    def test_mem_vectorise(self):
         # Ticket #325
         vt = np.vectorize(lambda *args: args)
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)))
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1,
            1, 2)), np.zeros((2, 2)))
 
-    def test_mgrid_single_element(self, level=rlevel):
+    def test_mgrid_single_element(self):
         # Ticket #339
         assert_array_equal(np.mgrid[0:0:1j], [0])
         assert_array_equal(np.mgrid[0:0], [])
 
-    def test_refcount_vectorize(self, level=rlevel):
+    def test_refcount_vectorize(self):
         # Ticket #378
         def p(x, y):
             return 123
         v = np.vectorize(p)
         _assert_valid_refcount(v)
 
-    def test_poly1d_nan_roots(self, level=rlevel):
+    def test_poly1d_nan_roots(self):
         # Ticket #396
         p = np.poly1d([np.nan, np.nan, 1], r=0)
         assert_raises(np.linalg.LinAlgError, getattr, p, "r")
 
-    def test_mem_polymul(self, level=rlevel):
+    def test_mem_polymul(self):
         # Ticket #448
         np.polymul([], [1.])
 
-    def test_mem_string_concat(self, level=rlevel):
+    def test_mem_string_concat(self):
         # Ticket #469
         x = np.array([])
         np.append(x, 'asdasd\tasdasd')
 
-    def test_poly_div(self, level=rlevel):
+    def test_poly_div(self):
         # Ticket #553
         u = np.poly1d([1, 2, 3])
         v = np.poly1d([1, 2, 3, 4, 5])
         q, r = np.polydiv(u, v)
         assert_equal(q*v + r, u)
 
-    def test_poly_eq(self, level=rlevel):
+    def test_poly_eq(self):
         # Ticket #554
         x = np.poly1d([1, 2, 3])
         y = np.poly1d([3, 4])
@@ -134,11 +132,11 @@ class TestRegression(object):
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
-    def test_asfarray_none(self, level=rlevel):
+    def test_asfarray_none(self):
         # Test for changeset r5065
         assert_array_equal(np.array([np.nan]), np.asfarray([None]))
 
-    def test_large_fancy_indexing(self, level=rlevel):
+    def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
         thesize = int((2**nbits)**(1.0/5.0)+1)
@@ -158,12 +156,12 @@ class TestRegression(object):
         assert_raises(ValueError, dp)
         assert_raises(ValueError, dp2)
 
-    def test_void_coercion(self, level=rlevel):
+    def test_void_coercion(self):
         dt = np.dtype([('a', 'f4'), ('b', 'i4')])
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
-    def test_who_with_0dim_array(self, level=rlevel):
+    def test_who_with_0dim_array(self):
         # ticket #1243
         import os
         import sys
