@@ -33,14 +33,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-# stores the order in which the libraries were added
-_ldata = []
-def get_library_names():
-    """Get the library names in order"""
-    global _ldata
-
-    return _ldata
-
 from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
 from numpy.compat import npy_load_module
@@ -1565,10 +1557,6 @@ class Configuration(object):
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
-        global _ldata
-        # Track the library order
-        _ldata += [name]
-
         # Sometimes, depends is not set up to an empty list by default, and if
         # depends is not given to add_library, distutils barfs (#1134)
         if not 'depends' in build_info:
@@ -2077,7 +2065,6 @@ class Configuration(object):
         """
         self.py_modules.append((self.name, name, generate_config_py))
 
-
     def get_info(self,*names):
         """Get resources information.
 
@@ -2295,13 +2282,12 @@ def generate_config_py(target):
     f.write('# It contains system_info results at the time of building this package.\n')
     f.write('__all__ = ["get_info","show"]\n\n')
 
-    if system_info.shared_libs:
-        f.write("""
-
+    # For gfortran+msvc combination, extra shared libraries may exist
+    f.write("""
 import os
-
-os.environ["PATH"] += os.pathsep + os.path.join(os.path.dirname(__file__), '_lib')
-
+extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
+if os.path.isdir(extra_dll_dir):
+    os.environ["PATH"] += os.pathsep + extra_dll_dir
 """)
 
     for k, i in system_info.saved_results.items():
