@@ -12,7 +12,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, SkipTest
 )
 from numpy.core.multiarray import typeinfo
-import util
+from . import util
 
 wrap = None
 

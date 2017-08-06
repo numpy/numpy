@@ -22,7 +22,7 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.compat import strchar, unicode
-from test_print import in_foreign_locale
+from .test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
     test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
