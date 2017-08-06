@@ -6,8 +6,8 @@ import sys
 import warnings
 import platform
 import tempfile
-import random
-import string
+import hashlib
+import base64
 from subprocess import Popen, PIPE, STDOUT
 from copy import copy
 from numpy.distutils.fcompiler import FCompiler
@@ -305,8 +305,6 @@ class Gnu95FCompiler(GnuFCompiler):
         return arch_flags
 
     def get_flags(self):
-        if self.c_compiler.compiler_type == "msvc" and not is_win64():
-            return ['-O0']
         flags = GnuFCompiler.get_flags(self)
         arch_flags = self._universal_flags(self.compiler_f90)
         if arch_flags:
@@ -361,16 +359,22 @@ class Gnu95FCompiler(GnuFCompiler):
                 return m.group(1)
         return ""
 
-    @staticmethod
-    def _generate_id(size=6, chars=string.ascii_uppercase + string.digits):
-        return ''.join(random.choice(chars) for _ in range(size))
+    def _hash_files(self, filenames):
+        h = hashlib.sha1()
+        for fn in filenames:
+            with open(fn, 'rb') as f:
+                while True:
+                    block = f.read(131072)
+                    if not block:
+                        break
+                    h.update(block)
+        text = base64.b32encode(h.digest())
+        if sys.version_info[0] >= 3:
+            text = text.decode('ascii')
+        return text.rstrip('=')
 
-    def link_wrapper_lib(self,
-                         objects=[],
-                         libraries=[],
-                         library_dirs=[],
-                         output_dir=None,
-                         debug=False):
+    def _link_wrapper_lib(self, objects, output_dir, extra_dll_dir,
+                          chained_dlls, is_archive):
         """Create a wrapper shared library for the given objects
 
         Return an MSVC-compatible lib
@@ -380,32 +384,42 @@ class Gnu95FCompiler(GnuFCompiler):
         if c_compiler.compiler_type != "msvc":
             raise ValueError("This method only supports MSVC")
 
+        object_hash = self._hash_files(objects)
+
         if is_win64():
             tag = 'win_amd64'
         else:
             tag = 'win32'
 
-        root_name = self._generate_id() + '.gfortran-' + tag
+        basename = 'lib' + os.path.splitext(
+            os.path.basename(objects[0]))[0][:8]
+        root_name = basename + '.' + object_hash + '.gfortran-' + tag
         dll_name = root_name + '.dll'
-        dll_path = os.path.join(output_dir, dll_name)
-        def_path = root_name + '.def'
-        lib_path = os.path.join(output_dir, root_name + '.lib')
+        def_name = root_name + '.def'
+        lib_name = root_name + '.lib'
+        dll_path = os.path.join(extra_dll_dir, dll_name)
+        def_path = os.path.join(output_dir, def_name)
+        lib_path = os.path.join(output_dir, lib_name)
 
+        if os.path.isfile(lib_path):
+            # Nothing to do
+            return lib_path, dll_path
+
+        if is_archive:
+            objects = (["-Wl,--whole-archive"] + list(objects) +
+                       ["-Wl,--no-whole-archive"])
         self.link_shared_object(
             objects,
             dll_name,
-            output_dir=output_dir,
-            extra_postargs=list(system_info.shared_libs) + [
+            output_dir=extra_dll_dir,
+            extra_postargs=list(chained_dlls) + [
+                '-Wl,--allow-multiple-definition',
                 '-Wl,--output-def,' + def_path,
                 '-Wl,--export-all-symbols',
                 '-Wl,--enable-auto-import',
                 '-static',
                 '-mlong-double-64',
-            ] + ['-l' + library for library in libraries] +
-            ['-L' + lib_dir for lib_dir in library_dirs],
-            debug=debug)
-
-        system_info.shared_libs.add(dll_path)
+            ])
 
         # No PowerPC!
         if is_win64():
@@ -419,49 +433,56 @@ class Gnu95FCompiler(GnuFCompiler):
             c_compiler.initialize()
         c_compiler.spawn([c_compiler.lib] + lib_args)
 
-        return lib_path
+        return lib_path, dll_path
 
-    def compile(self,
-                sources,
-                output_dir,
-                macros=[],
-                include_dirs=[],
-                debug=False,
-                extra_postargs=[],
-                depends=[],
-                **kwargs):
-        c_compiler = self.c_compiler
-        if c_compiler and c_compiler.compiler_type == "msvc":
-            # MSVC cannot link objects compiled by GNU fortran
-            # so we need to contain the damage here. Immediately
-            # compile a DLL and return the lib for the DLL as
+    def can_ccompiler_link(self, compiler):
+        # MSVC cannot link objects compiled by GNU fortran
+        return compiler.compiler_type not in ("msvc", )
+
+    def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
+        """
+        Convert a set of object files that are not compatible with the default
+        linker, to a file that is compatible.
+        """
+        if self.c_compiler.compiler_type == "msvc":
+            # Compile a DLL and return the lib for the DLL as
             # the object. Also keep track of previous DLLs that
             # we have compiled so that we can link against them.
-            objects = GnuFCompiler.compile(
-                self,
-                sources,
-                output_dir=output_dir,
-                macros=macros,
-                include_dirs=include_dirs,
-                debug=debug,
-                extra_postargs=extra_postargs,
-                depends=depends)
 
-            lib_path = self.link_wrapper_lib(objects, output_dir=output_dir)
+            # If there are .a archives, assume they are self-contained
+            # static libraries, and build separate DLLs for each
+            archives = []
+            plain_objects = []
+            for obj in objects:
+                if obj.lower().endswith('.a'):
+                    archives.append(obj)
+                else:
+                    plain_objects.append(obj)
 
-            # Return the lib that we created as the "object"
-            return [lib_path]
-        else:
-            return GnuFCompiler.compile(
-                self,
-                sources,
+            chained_libs = []
+            chained_dlls = []
+            for archive in archives[::-1]:
+                lib, dll = self._link_wrapper_lib(
+                    [archive],
+                    output_dir,
+                    extra_dll_dir,
+                    chained_dlls=chained_dlls,
+                    is_archive=True)
+                chained_libs.insert(0, lib)
+                chained_dlls.insert(0, dll)
+
+            if not plain_objects:
+                return chained_libs
+
+            lib, dll = self._link_wrapper_lib(
+                plain_objects,
                 output_dir,
-                macros=macros,
-                include_dirs=include_dirs,
-                debug=debug,
-                extra_postargs=extra_postargs,
-                depends=depends,
-                **kwargs)
+                extra_dll_dir,
+                chained_dlls=chained_dlls,
+                is_archive=False)
+            return [lib] + chained_libs
+        else:
+            raise ValueError("Unsupported C compiler")
 
 
 def _can_target(cmd, arch):

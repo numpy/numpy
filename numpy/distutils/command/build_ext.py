@@ -119,6 +119,11 @@ class build_ext (old_build_ext):
         self.compiler.customize_cmd(self)
         self.compiler.show_customization()
 
+        # Setup directory for storing generated extra DLL files on Windows
+        self.extra_dll_dir = os.path.join(self.build_temp, 'extra-dll')
+        if not os.path.isdir(self.extra_dll_dir):
+            os.makedirs(self.extra_dll_dir)
+
         # Create mapping of libraries built by build_clib:
         clibs = {}
         if build_clib is not None:
@@ -256,18 +261,16 @@ class build_ext (old_build_ext):
         # Build extensions
         self.build_extensions()
 
-        shared_libs = system_info.shared_libs
-        if shared_libs:
-            runtime_lib_dir = os.path.join(
-                self.build_lib, self.distribution.get_name(), '_lib')
-            try:
+        # Copy over any extra DLL files
+        runtime_lib_dir = os.path.join(
+            self.build_lib, self.distribution.get_name(), 'extra-dll')
+        for fn in os.listdir(self.extra_dll_dir):
+            if not fn.lower().endswith('.dll'):
+                continue
+            if not os.path.isdir(runtime_lib_dir):
                 os.makedirs(runtime_lib_dir)
-            except OSError:
-                pass
-
-            for runtime_lib in shared_libs:
-                if runtime_lib:
-                    copy_file(runtime_lib, runtime_lib_dir)
+            runtime_lib = os.path.join(self.extra_dll_dir, fn)
+            copy_file(runtime_lib, runtime_lib_dir)
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -422,7 +425,12 @@ class build_ext (old_build_ext):
                                            extra_postargs=extra_postargs,
                                            depends=ext.depends)
 
-        objects = c_objects + f_objects
+        if f_objects and not fcompiler.can_ccompiler_link(self.compiler):
+            unlinkable_fobjects = f_objects
+            objects = c_objects
+        else:
+            unlinkable_fobjects = []
+            objects = c_objects + f_objects
 
         if ext.extra_objects:
             objects.extend(ext.extra_objects)
@@ -443,6 +451,12 @@ class build_ext (old_build_ext):
         if ext.language == 'c++' and cxx_compiler is not None:
             linker = cxx_compiler.link_shared_object
 
+        if fcompiler is not None:
+            objects, libraries = self._process_unlinkable_fobjects(
+                    objects, libraries,
+                    fcompiler, library_dirs,
+                    unlinkable_fobjects)
+
         linker(objects, ext_filename,
                libraries=libraries,
                library_dirs=library_dirs,
@@ -461,6 +475,38 @@ class build_ext (old_build_ext):
                                         output_dir=self.build_temp)
         self.compiler.create_static_lib(
             objects, "_gfortran_workaround", output_dir=build_clib, debug=self.debug)
+
+    def _process_unlinkable_fobjects(self, objects, libraries,
+                                     fcompiler, library_dirs,
+                                     unlinkable_fobjects):
+        libraries = list(libraries)
+        objects = list(objects)
+        unlinkable_fobjects = list(unlinkable_fobjects)
+
+        # Expand possible fake static libraries to objects
+        for lib in list(libraries):
+            for libdir in library_dirs:
+                fake_lib = os.path.join(libdir, lib + '.fobjects')
+                if os.path.isfile(fake_lib):
+                    # Replace fake static library
+                    libraries.remove(lib)
+                    with open(fake_lib, 'r') as f:
+                        unlinkable_fobjects.extend(f.read().splitlines())
+
+                    # Expand C objects
+                    c_lib = os.path.join(libdir, lib + '.cobjects')
+                    with open(c_lib, 'r') as f:
+                        objects.extend(f.read().splitlines())
+
+        # Wrap unlinkable objects to a linkable one
+        if unlinkable_fobjects:
+            fobjects = [os.path.relpath(obj) for obj in unlinkable_fobjects]
+            wrapped = fcompiler.wrap_unlinkable_objects(
+                    fobjects, output_dir=self.build_temp,
+                    extra_dll_dir=self.extra_dll_dir)
+            objects.extend(wrapped)
+
+        return objects, libraries
 
     def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries,
                                     c_library_dirs):
