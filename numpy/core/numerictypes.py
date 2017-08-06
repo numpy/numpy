@@ -528,27 +528,6 @@ def maximum_sctype(t):
     else:
         return sctypes[base][-1]
 
-try:
-    buffer_type = _types.BufferType
-except AttributeError:
-    # Py3K
-    buffer_type = memoryview
-
-_python_types = {int: 'int_',
-                 float: 'float_',
-                 complex: 'complex_',
-                 bool: 'bool_',
-                 bytes: 'bytes_',
-                 unicode: 'unicode_',
-                 buffer_type: 'void',
-                 }
-
-def _python_type(t):
-    """ Get a numpy scalar type corresponding to a Python type or value """
-    if not isinstance(t, type):
-        t = type(t)
-    return allTypes[_python_types.get(t, 'object_')]
-
 
 def issctype(rep):
     """
@@ -633,22 +612,19 @@ def obj2sctype(rep, default=None):
     <type 'list'>
 
     """
-    try:
-        if issubclass(rep, generic):
-            return rep
-    except TypeError:
-        pass
-    if isinstance(rep, dtype):
-        return rep.type
-    if isinstance(rep, type):
-        return _python_type(rep)
+    # prevent abtract classes being upcast
+    if isinstance(rep, type) and issubclass(rep, generic):
+        return rep
+    # extract dtype from arrays
     if isinstance(rep, ndarray):
         return rep.dtype.type
+    # fall back on dtype to convert
     try:
         res = dtype(rep)
     except Exception:
         return default
-    return res.type
+    else:
+        return res.type
 
 
 def issubclass_(arg1, arg2):
