@@ -39,7 +39,7 @@ class TestDouble(object):
         assert_equal(id(ftype), id(ftype2))
 
 class TestLongdouble(object):
-    def test_singleton(self,level=2):
+    def test_singleton(self):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
