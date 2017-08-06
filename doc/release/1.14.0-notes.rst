@@ -63,6 +63,20 @@ This previously would accept ``dtype=some_array``, with the implied semantics
 of ``dtype=some_array.dtype``. This was undocumented, unique across the numpy
 functions, and if used would likely correspond to a typo.
 
+1D ``np.linalg.norm`` preserves float input types, even for arbitrary orders
+----------------------------------------------------------------------------
+Previously, this would promote to ``float64`` when arbitrary orders were
+passed, despite not doing so under the simple cases::
+
+    >>> f32 = np.float32([1, 2])
+    >>> np.linalg.norm(f32, 2.0).dtype
+    dtype('float32')
+    >>> np.linalg.norm(f32, 2.0001).dtype
+    dtype('float64')  # numpy 1.13
+    dtype('float32')  # numpy 1.14
+
+This change affects only ``float32`` and ``float16`` arrays.
+
 
 C API changes
 =============

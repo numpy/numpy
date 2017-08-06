@@ -2201,18 +2201,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            if x.dtype.type is longdouble:
-                # Convert to a float type, so integer arrays give
-                # float results.  Don't apply asfarray to longdouble arrays,
-                # because it will downcast to float64.
-                absx = abs(x)
-            else:
-                absx = x if isComplexType(x.dtype.type) else asfarray(x)
-                if absx.dtype is x.dtype:
-                    absx = abs(absx)
-                else:
-                    # if the type changed, we can safely overwrite absx
-                    abs(absx, out=absx)
+            absx = abs(x)
             absx **= ord
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
