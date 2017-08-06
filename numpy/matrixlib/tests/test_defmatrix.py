@@ -249,6 +249,12 @@ class TestAlgebra(object):
         assert_array_almost_equal(m4, np.dot(m2, m2))
         assert_array_almost_equal(np.dot(mi, m), np.eye(2))
 
+    def test_scalar_type_pow(self):
+        m = matrix([[1, 2], [3, 4]])
+        for scalar_t in [np.int8, np.uint8]:
+            two = scalar_t(2)
+            assert_array_almost_equal(m ** 2, m ** two)
+
     def test_notimplemented(self):
         '''Check that 'not implemented' operations produce a failure.'''
         A = matrix([[1., 2.],

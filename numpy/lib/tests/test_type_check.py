@@ -420,7 +420,7 @@ class TestArrayConversion(object):
     def test_asfarray(self):
         a = asfarray(np.array([1, 2, 3]))
         assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, float))
+        assert_(np.issubdtype(a.dtype, np.floating))
 
 if __name__ == "__main__":
     run_module_suite()

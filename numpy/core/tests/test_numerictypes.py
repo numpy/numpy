@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import itertools
 
 import numpy as np
 from numpy.testing import (
@@ -376,6 +377,37 @@ class TestMultipleFields(object):
     def test_return(self):
         res = self.ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])
+
+
+class TestIsSubDType(object):
+    # scalar types can be promoted into dtypes
+    wrappers = [np.dtype, lambda x: x]
+
+    def test_both_abstract(self):
+        assert_(np.issubdtype(np.floating, np.inexact))
+        assert_(not np.issubdtype(np.inexact, np.floating))
+
+    def test_same(self):
+        for cls in (np.float32, np.int32):
+            for w1, w2 in itertools.product(self.wrappers, repeat=2):
+                assert_(np.issubdtype(w1(cls), w2(cls)))
+
+    def test_subclass(self):
+        # note we cannot promote floating to a dtype, as it would turn into a
+        # concrete type
+        for w in self.wrappers:
+            assert_(np.issubdtype(w(np.float32), np.floating))
+            assert_(np.issubdtype(w(np.float64), np.floating))
+
+    def test_subclass_backwards(self):
+        for w in self.wrappers:
+            assert_(not np.issubdtype(np.floating, w(np.float32)))
+            assert_(not np.issubdtype(np.floating, w(np.float64)))
+
+    def test_sibling_class(self):
+        for w1, w2 in itertools.product(self.wrappers, repeat=2):
+            assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
+            assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
 if __name__ == "__main__":
     run_module_suite()

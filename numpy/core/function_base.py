@@ -339,7 +339,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     # complex and another is negative and log would produce NaN otherwise
     start = start + (stop - stop)
     stop = stop + (start - start)
-    if _nx.issubdtype(dtype, complex):
+    if _nx.issubdtype(dtype, _nx.complexfloating):
         start = start + 0j
         stop = stop + 0j
 

@@ -436,8 +436,7 @@ def count_nonzero(a, axis=None):
     if issubdtype(a.dtype, np.number):
         return (a != 0).sum(axis=axis, dtype=np.intp)
 
-    if (issubdtype(a.dtype, np.string_) or
-            issubdtype(a.dtype, np.unicode_)):
+    if issubdtype(a.dtype, np.character):
         nullstr = a.dtype.type('')
         return (a != nullstr).sum(axis=axis, dtype=np.intp)
 
