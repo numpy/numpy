@@ -98,8 +98,7 @@ def asfarray(a, dtype=_nx.float_):
     array([ 2.,  3.])
 
     """
-    dtype = _nx.obj2sctype(dtype)
-    if not issubclass(dtype, _nx.inexact):
+    if not _nx.issubdtype(dtype, _nx.inexact):
         dtype = _nx.float_
     return asarray(a, dtype=dtype)
 

@@ -57,6 +57,12 @@ This is not expected to cause problems, but possibly something has been left
 out. If you experience an unexpected import problem using ``numpy.testing``
 let us know.
 
+``np.asfarray`` no longer accepts non-dtypes through the ``dtype`` argument
+---------------------------------------------------------------------------
+This previously would accept ``dtype=some_array``, with the implied semantics
+of ``dtype=some_array.dtype``. This was undocumented, unique across the numpy
+functions, and if used would likely correspond to a typo.
+
 
 C API changes
 =============
