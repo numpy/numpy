@@ -543,18 +543,12 @@ _python_types = {int: 'int_',
                  buffer_type: 'void',
                  }
 
-if sys.version_info[0] >= 3:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, type):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
-else:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, _types.TypeType):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
+def _python_type(t):
+    """ Get a numpy scalar type corresponding to a Python type or value """
+    if not isinstance(t, type):
+        t = type(t)
+    return allTypes[_python_types.get(t, 'object_')]
+
 
 def issctype(rep):
     """
