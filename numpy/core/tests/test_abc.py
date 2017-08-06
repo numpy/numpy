@@ -3,9 +3,22 @@ from __future__ import division, absolute_import, print_function
 from numpy.testing import assert_, run_module_suite
 
 import numbers
+
+import numpy as np
 from numpy.core.numerictypes import sctypes
 
 class TestABC(object):
+    def test_abstract(self):
+        assert_(issubclass(np.number, numbers.Number))
+
+        assert_(issubclass(np.inexact, numbers.Complex))
+        assert_(issubclass(np.complexfloating, numbers.Complex))
+        assert_(issubclass(np.floating, numbers.Real))
+
+        assert_(issubclass(np.integer, numbers.Integral))
+        assert_(issubclass(np.signedinteger, numbers.Integral))
+        assert_(issubclass(np.unsignedinteger, numbers.Integral))
+
     def test_floats(self):
         for t in sctypes['float']:
             assert_(isinstance(t(), numbers.Real),
