@@ -15,7 +15,8 @@ New functions
 =============
 
 * ``parametrize``: decorator added to numpy.testing
-* ``chebinterpolate``: Interpolate function at Chebyshev points.
+* ``chebinterpolate``: interpolate function at Chebyshev points.
+* ``neighborwise``: apply function pairwise to neighboring elements.
 
 
 Deprecations
@@ -125,6 +126,13 @@ Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
 
+``neighborwise`` function added
+-------------------------------
+``neighborwise`` applies a vectorized function of two arguments to neighboring
+pairs of elements in a numpy array. Iteration, multiple axes and masking are
+supported.
+
+
 Improvements
 ============
 
@@ -140,6 +148,11 @@ The ``np.einsum`` function will now call ``np.tensordot`` when appropriate.
 Because ``np.tensordot`` uses BLAS when possible, that will speed up execution.
 By default, ``np.einsum`` will also attempt optimization as the overhead is
 small relative to the potential improvement in speed.
+
+`np.diff` now accepts multiple axes
+-----------------------------------
+`np.diff` now supports an iterable in the `axis` argument. All axes are applied
+simultaneously, allowing diffs to be computed along a diagonal.
 
 
 Changes
