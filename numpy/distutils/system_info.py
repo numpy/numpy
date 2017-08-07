@@ -1759,12 +1759,12 @@ class openblas_info(blas_info):
         if c.compiler_type == "msvc" and info is None:
             from numpy.distutils.fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
-            if f.compiler_type == 'gnu95':
+            if f and f.compiler_type == 'gnu95':
                 # Try gfortran-compatible library files
                 info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
                 # Skip lapack check, we'd need build_ext to do it
                 assume_lapack = True
-        else:
+        elif info:
             assume_lapack = False
             info['language'] = 'c'
 
