@@ -384,7 +384,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if c_compiler.compiler_type != "msvc":
             raise ValueError("This method only supports MSVC")
 
-        object_hash = self._hash_files(objects)
+        object_hash = self._hash_files(list(objects) + list(chained_dlls))
 
         if is_win64():
             tag = 'win_amd64'
