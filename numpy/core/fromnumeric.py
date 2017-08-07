@@ -893,6 +893,8 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     Indices of the sorted elements of a N-dimensional array:
     >>> np.unravel_index(np.argsort(x, axis=None), x.shape)
     (array([0, 1, 1, 0]), array([0, 0, 1, 1]))
+    >>> from np.testing import assert_equal
+    >>> assert_equal(x[(array([0, 1, 1, 0]), array([0, 0, 1, 1]))], np.sort(x, axis=None))
     >>> list(zip(*np.unravel_index(np.argsort(x, axis=None), x.shape)))
     [(0, 0), (1, 0), (1, 1), (0, 1)]
 
@@ -961,6 +963,7 @@ def argmax(a, axis=None, out=None):
     Indices of the maximal elements of a N-dimensional array:
     >>> np.unravel_index(np.argmax(a, axis=None), a.shape)
     (1, 2)
+    >>> np.testing.assert_equal(a[(1, 2)], np.max(a))
 
     >>> b = np.arange(6)
     >>> b[1] = 5
@@ -1021,6 +1024,7 @@ def argmin(a, axis=None, out=None):
     Indices of the minimum elements of a N-dimensional array:
     >>> np.unravel_index(np.argmin(a, axis=None), a.shape)
     (0, 0)
+    >>> np.testing.assert_equal(a[(0, 0)], np.min(a))
 
     >>> b = np.arange(6)
     >>> b[4] = 0
