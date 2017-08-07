@@ -1133,6 +1133,18 @@ class TestDateTime(object):
             assert_(np.not_equal(td_other, td_nat))
             assert_equal(len(sup.log), 0)
 
+    def test_datetime_futurewarning_once_nat(self):
+        # Test that the futurewarning is only given once per inner loop
+        arr1 = np.array(['NaT', 'NaT', '2000-01-01'] * 2, dtype='M8[s]')
+        arr2 = np.array(['NaT', '2000-01-01', 'NaT'] * 2, dtype='M8[s]')
+        # All except less, because for less it can't be wrong (NaT is min)
+        for op in [np.equal, np.less, np.less_equal,
+                   np.greater, np.greater_equal]:
+            with suppress_warnings() as sup:
+                rec = sup.record(FutureWarning, ".*NAT")
+                op(arr1, arr2)
+                assert_(len(rec) == 1, "failed for {}".format(op))
+
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
         # of the operand metadata
