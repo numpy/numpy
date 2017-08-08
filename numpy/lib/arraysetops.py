@@ -111,7 +111,8 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
 
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None):
+           return_counts=False, axis=None, return_flags=False,
+           return_data=True):
     """
     Find the unique elements of an array.
 
@@ -193,6 +194,17 @@ def unique(ar, return_index=False, return_inverse=False,
     array(['a', 'b', 'c'],
            dtype='|S1')
 
+    Return a mask of the original array that give the unique values:
+
+    >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
+    >>> indices = np.unique(a, return_flags=True, return_data=False)
+    >>> indices
+    array([True, True, False, True, False],
+           dtype=bool)
+    >>> a[indices]
+    array(['a', 'b', 'c'],
+           dtype='|S1')
+
     Reconstruct the input array from the unique values:
 
     >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
@@ -240,34 +252,45 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
-    if not (return_index or return_inverse or return_counts):
+                       return_inverse, return_counts,
+                       return_flags, return_data)
+    if not (return_index or return_inverse or return_counts
+            or return_flags or not return_data):
         return reshape_uniq(output)
-    else:
+    elif return_data:
         uniq = reshape_uniq(output[0])
         return (uniq,) + output[1:]
+    else:
+        return output
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False):
+              return_counts=False, return_flags=False,
+              return_data=True):
     """
     Find the unique elements of an array, ignoring shape.
     """
     ar = np.asanyarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
-    optional_returns = optional_indices or return_counts
+    optional_returns = (optional_indices or return_counts
+                        or return_flags or not return_data)
 
     if ar.size == 0:
         if not optional_returns:
             ret = ar
         else:
-            ret = (ar,)
+            if return_data:
+                ret = (ar,)
+            else:
+                ret = ()
             if return_index:
                 ret += (np.empty(0, np.intp),)
             if return_inverse:
                 ret += (np.empty(0, np.intp),)
             if return_counts:
                 ret += (np.empty(0, np.intp),)
+            if return_flags:
+                ret += (np.empty(0, np.bool8),)
         return ret
 
     shape = ar.shape
@@ -282,7 +305,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     if not optional_returns:
         ret = ar[flag]
     else:
-        ret = (ar[flag],)
+        if return_data:
+            ret = (ar[flag],)
+        else:
+            ret = ()
         del ar
         if return_index:
             ret += (perm[flag],)
@@ -295,6 +321,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         if return_counts:
             idx = np.concatenate(np.nonzero(flag) + ([size],))
             ret += (np.diff(idx),)
+        if return_flags:
+            ret += (flag,)
     return ret
 
 def intersect1d(ar1, ar2, assume_unique=False):
