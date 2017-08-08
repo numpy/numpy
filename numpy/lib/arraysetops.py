@@ -144,6 +144,13 @@ def unique(ar, return_index=False, return_inverse=False,
         Object arrays or structured arrays that contain objects are not
         supported if the `axis` kwarg is used.
         .. versionadded:: 1.13.0
+    return_flags : bool, optional
+        If True, also return a mask of `ar` (along the specified axis,
+        if provided, or in the flattened array) that result in the unique array.
+    return_data : bool, optional
+        If False, do not return the unique contents of the array. Useful only
+        in conjunction with one of the other optional returns to avoid computing
+        the actual unique data if not required by the caller.
 
 
 
@@ -161,6 +168,9 @@ def unique(ar, return_index=False, return_inverse=False,
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
         .. versionadded:: 1.9.0
+    unique_flags : ndarray, optional
+        The flags of the first occurrences of the unique values in the
+        original array. Only provided if `return_flags` is True.
 
     See Also
     --------
