@@ -12,7 +12,6 @@ from subprocess import Popen, PIPE, STDOUT
 from copy import copy
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import msvc_runtime_library
 from numpy.distutils.compat import get_exception
 from numpy.distutils.system_info import system_info
 
@@ -200,8 +199,6 @@ class GnuFCompiler(FCompiler):
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
                 c_compiler.compiler_type == 'msvc':
-            # the following code is not needed (read: breaks) when using MinGW
-            # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
         if sys.platform == 'darwin':
             opt.append('cc_dynamic')
