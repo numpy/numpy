@@ -1531,7 +1531,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  *
  * #name = tolist, item, __deepcopy__,
  *         swapaxes, conj, conjugate, nonzero,
- *         ravel, fill, transpose, newbyteorder#
+ *         fill, transpose, newbyteorder#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args)
@@ -1610,7 +1610,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
  *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
- *         flatten#
+ *         flatten, ravel#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2042,7 +2042,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"ravel",
         (PyCFunction)gentype_ravel,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
