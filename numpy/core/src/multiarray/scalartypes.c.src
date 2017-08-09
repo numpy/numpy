@@ -1529,7 +1529,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  */
 /**begin repeat
  *
- * #name = tolist, item, tostring, tobytes, copy, __deepcopy__,
+ * #name = tolist, item, tobytes, copy, __deepcopy__,
  *         searchsorted, view, swapaxes, conj, conjugate, nonzero, flatten,
  *         ravel, fill, transpose, newbyteorder#
  */
@@ -1609,7 +1609,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
- *         reshape, choose#
+ *         reshape, choose, tostring#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
@@ -1879,7 +1879,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"tostring",
         (PyCFunction)gentype_tostring,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
