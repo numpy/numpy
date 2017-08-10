@@ -2148,6 +2148,7 @@ PyArray_CountNonzero(PyArrayObject *self)
                 ++nonzero_count;
             }
             if (needs_api && PyErr_Occurred()) {
+                nonzero_count = -1;
                 goto finish;
             }
             data += stride;
@@ -2160,7 +2161,7 @@ finish:
 
     NpyIter_Deallocate(iter);
 
-    return PyErr_Occurred() ? -1 : nonzero_count;
+    return nonzero_count;
 }
 
 /*NUMPY_API
