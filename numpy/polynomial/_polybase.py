@@ -260,7 +260,7 @@ class ABCPolyBase(object):
             self.window = window
 
     def __repr__(self):
-        format = "%s(%s, %s, %s)"
+        format = "%s(%s, domain=%s, window=%s)"
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]

@@ -361,10 +361,10 @@ def poly2cheb(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(range(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
-    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
     >>> P.poly2cheb(range(4))
     array([ 1.  ,  3.25,  1.  ,  0.75])
 
