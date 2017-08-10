@@ -141,6 +141,14 @@ Because ``np.tensordot`` uses BLAS when possible, that will speed up execution.
 By default, ``np.einsum`` will also attempt optimization as the overhead is
 small relative to the potential improvement in speed.
 
+The ``repr`` of ``np.polynomial`` classes is more explicit
+----------------------------------------------------------
+It now shows the domain and window parameters as keyword arguments to make
+them more clear::
+
+    >>> np.polynomial.Polynomial(range(4))
+    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
+
 
 Changes
 =======
