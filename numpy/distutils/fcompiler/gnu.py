@@ -89,14 +89,14 @@ class GnuFCompiler(FCompiler):
 
     possible_executables = ['g77', 'f77']
     executables = {
-        'version_cmd': [None, "-dumpversion"],
-        'compiler_f77': [None, "-g", "-Wall", "-fno-second-underscore"],
-        'compiler_f90': None,  # Use --fcompiler=gnu95 for f90 codes
-        'compiler_fix': None,
-        'linker_so': [None, "-g", "-Wall"],
-        'archiver': ["ar", "-cr"],
-        'ranlib': ["ranlib"],
-        'linker_exe': [None, "-g", "-Wall"]
+        'version_cmd'  : [None, "-dumpversion"],
+        'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
+        'compiler_f90' : None,  # Use --fcompiler=gnu95 for f90 codes
+        'compiler_fix' : None,
+        'linker_so'    : [None, "-g", "-Wall"],
+        'archiver'     : ["ar", "-cr"],
+        'ranlib'       : ["ranlib"],
+        'linker_exe'   : [None, "-g", "-Wall"]
     }
     module_dir_switch = None
     module_include_switch = None
