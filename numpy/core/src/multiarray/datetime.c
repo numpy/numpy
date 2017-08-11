@@ -1858,7 +1858,32 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         return -1;
     }
 
-    if (tuple_size == 4) {
+    /*
+     * The event metadata was removed way back in numpy 1.7 (cb4545), but was
+     * not deprecated at the time.
+     */
+
+    /* (unit, num, event) */
+    if (tuple_size == 3) {
+        /* Numpy 1.14, 2017-08-11 */
+        if (DEPRECATE(
+                "When passing a 3-tuple as (unit, num, event), the event "
+                "is ignored (since 1.7) - use (unit, num) instead") < 0) {
+            return -1;
+        }
+    }
+    /* (unit, num, den, event) */
+    else if (tuple_size == 4) {
+        PyObject *event = PyTuple_GET_ITEM(tuple, 3);
+        if (event != Py_None) {
+            /* Numpy 1.14, 2017-08-11 */
+            if (DEPRECATE(
+                    "When passing a 4-tuple as (unit, num, den, event), the "
+                    "event argument is ignored (since 1.7), so should be None"
+                    ) < 0) {
+                return -1;
+            }
+        }
         den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
         if (den == -1 && PyErr_Occurred()) {
             return -1;
