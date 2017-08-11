@@ -691,6 +691,27 @@ class TestMaskedArray(object):
         y._optinfo['info'] = '!!!'
         assert_equal(x._optinfo['info'], '???')
 
+
+    def test_optinfo_forward_propagation(self):
+        a = array([1,2,2,4])
+        a._optinfo["key"] = "value"
+        assert_equal(a._optinfo["key"], (a == 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a != 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a > 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a >= 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a <= 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a + 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a - 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a * 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a / 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], a[:2]._optinfo["key"])
+        assert_equal(a._optinfo["key"], a[[0,0,2]]._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.exp(a)._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.abs(a)._optinfo["key"])
+        assert_equal(a._optinfo["key"], array(a, copy=True)._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.zeros_like(a)._optinfo["key"])
+
+
     def test_fancy_printoptions(self):
         # Test printing a masked array w/ fancy dtype.
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
