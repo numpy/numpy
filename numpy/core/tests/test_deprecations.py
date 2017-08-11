@@ -434,5 +434,21 @@ class TestNPY_CHAR(_DeprecationTestCase):
         assert_(npy_char_deprecation() == 'S1')
 
 
+class TestDatetimeEvent(_DeprecationTestCase):
+    # 2017-08-11, 1.14.0
+    def test_3_tuple(self):
+        for cls in (np.datetime64, np.timedelta64):
+            # two valid uses - (unit, num) and (unit, num, den, None)
+            self.assert_not_deprecated(cls, args=(1, ('ms', 2)))
+            self.assert_not_deprecated(cls, args=(1, ('ms', 2, 1, None)))
+
+            # trying to use the event argument, removed in 1.7.0, is deprecated
+            # it used to be a uint8
+            self.assert_deprecated(cls, args=(1, ('ms', 2, 'event')))
+            self.assert_deprecated(cls, args=(1, ('ms', 2, 63)))
+            self.assert_deprecated(cls, args=(1, ('ms', 2, 1, 'event')))
+            self.assert_deprecated(cls, args=(1, ('ms', 2, 1, 63)))
+
+
 if __name__ == "__main__":
     run_module_suite()
