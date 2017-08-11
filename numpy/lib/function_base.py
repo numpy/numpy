@@ -4336,7 +4336,7 @@ def _percentile(a, q, axis=None, out=None,
 
         ap.partition(indices, axis=axis)
         # ensure axis with qth is first
-        ap = np.rollaxis(ap, axis, 0)
+        ap = np.moveaxis(ap, axis, 0)
         axis = 0
 
         # Check if the array contains any nan's
@@ -4369,9 +4369,9 @@ def _percentile(a, q, axis=None, out=None,
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
         # ensure axis with qth is first
-        ap = np.rollaxis(ap, axis, 0)
-        weights_below = np.rollaxis(weights_below, axis, 0)
-        weights_above = np.rollaxis(weights_above, axis, 0)
+        ap = np.moveaxis(ap, axis, 0)
+        weights_below = np.moveaxis(weights_below, axis, 0)
+        weights_above = np.moveaxis(weights_above, axis, 0)
         axis = 0
 
         # Check if the array contains any nan's
@@ -4383,8 +4383,8 @@ def _percentile(a, q, axis=None, out=None,
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
         # ensure axis with qth is first
-        x1 = np.rollaxis(x1, axis, 0)
-        x2 = np.rollaxis(x2, axis, 0)
+        x1 = np.moveaxis(x1, axis, 0)
+        x2 = np.moveaxis(x2, axis, 0)
 
         if zerod:
             x1 = x1.squeeze(0)
@@ -5040,7 +5040,7 @@ def insert(arr, obj, values, axis=None):
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that
             # it works likes the second case. (here a[:,0:1,:])
-            values = np.rollaxis(values, 0, (axis % values.ndim) + 1)
+            values = np.moveaxis(values, 0, axis)
         numnew = values.shape[axis]
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arrorder)

@@ -1435,6 +1435,10 @@ def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
 
+    This function continues to be supported for backward compatibility, but you
+    should prefer `moveaxis`. The `moveaxis` function was added in NumPy
+    1.11.
+
     Parameters
     ----------
     a : ndarray
@@ -1617,7 +1621,7 @@ def moveaxis(a, source, destination):
 
 # fix hack in scipy which imports this function
 def _move_axis_to_0(a, axis):
-    return rollaxis(a, axis, 0)
+    return moveaxis(a, axis, 0)
 
 
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
@@ -1742,8 +1746,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
 
     # Move working axis to the end of the shape
-    a = rollaxis(a, axisa, a.ndim)
-    b = rollaxis(b, axisb, b.ndim)
+    a = moveaxis(a, axisa, -1)
+    b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
@@ -1814,8 +1818,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             multiply(a0, b1, out=cp2)
             cp2 -= a1 * b0
 
-    # This works because we are moving the last axis
-    return rollaxis(cp, -1, axisc)
+    return moveaxis(cp, -1, axisc)
 
 
 # Use numarray's printing function
