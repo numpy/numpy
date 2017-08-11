@@ -612,7 +612,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = npy_alloc_cache((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
                 goto fail;
             }
@@ -654,7 +654,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         NPY_END_THREADS;
     }
 
-    PyArray_free(slopes);
+    npy_free_cache(slopes, (lenxp - 1) * sizeof(npy_double));
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -777,7 +777,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = npy_alloc_cache((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
                 goto fail;
             }
@@ -829,7 +829,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         
         NPY_END_THREADS;
     } 
-    PyArray_free(slopes);
+    npy_free_cache(slopes, (lenxp - 1) * sizeof(npy_cdouble));
     
     Py_DECREF(afp);
     Py_DECREF(axp);
