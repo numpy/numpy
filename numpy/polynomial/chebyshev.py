@@ -944,7 +944,7 @@ def chebder(c, m=1, scl=1, axis=0):
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -960,7 +960,7 @@ def chebder(c, m=1, scl=1, axis=0):
                 der[1] = 4*c[2]
             der[0] = c[1]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -1069,7 +1069,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -1088,7 +1088,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j - 1] -= c[j]/(2*(j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -1460,7 +1460,7 @@ def chebvander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = v[i-1]*x2 - v[i-2]
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def chebvander2d(x, y, deg):

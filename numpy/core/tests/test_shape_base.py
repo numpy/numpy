@@ -208,8 +208,8 @@ class TestConcatenate(object):
             np.concatenate((a, b), axis=axis[0])  # OK
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
-            a = np.rollaxis(a, -1)
-            b = np.rollaxis(b, -1)
+            a = np.moveaxis(a, -1, 0)
+            b = np.moveaxis(b, -1, 0)
             axis.append(axis.pop(0))
 
         # No arrays to concatenate raises ValueError
