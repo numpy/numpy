@@ -20,6 +20,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "numpy/arrayscalars.h"
 #include "methods.h"
 #include "_datetime.h"
@@ -1854,13 +1855,13 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
 
     /* Convert the values to longs */
     out_meta->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
-    if (out_meta->num == -1 && PyErr_Occurred()) {
+    if (error_converting(out_meta->num)) {
         return -1;
     }
 
     if (tuple_size == 4) {
         den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
-        if (den == -1 && PyErr_Occurred()) {
+        if (error_converting(den)) {
             return -1;
         }
     }
@@ -2127,7 +2128,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->year = PyInt_AsLong(tmp);
-    if (out->year == -1 && PyErr_Occurred()) {
+    if (error_converting(out->year)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2139,7 +2140,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->month = PyInt_AsLong(tmp);
-    if (out->month == -1 && PyErr_Occurred()) {
+    if (error_converting(out->month)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2151,7 +2152,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->day = PyInt_AsLong(tmp);
-    if (out->day == -1 && PyErr_Occurred()) {
+    if (error_converting(out->day)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2185,7 +2186,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->hour = PyInt_AsLong(tmp);
-    if (out->hour == -1 && PyErr_Occurred()) {
+    if (error_converting(out->hour)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2197,7 +2198,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->min = PyInt_AsLong(tmp);
-    if (out->min == -1 && PyErr_Occurred()) {
+    if (error_converting(out->min)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2209,7 +2210,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->sec = PyInt_AsLong(tmp);
-    if (out->sec == -1 && PyErr_Occurred()) {
+    if (error_converting(out->sec)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2221,7 +2222,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->us = PyInt_AsLong(tmp);
-    if (out->us == -1 && PyErr_Occurred()) {
+    if (error_converting(out->us)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2272,7 +2273,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
                 return -1;
             }
             seconds_offset = PyInt_AsLong(tmp);
-            if (seconds_offset == -1 && PyErr_Occurred()) {
+            if (error_converting(seconds_offset)) {
                 Py_DECREF(tmp);
                 return -1;
             }
@@ -2695,7 +2696,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         days = PyLong_AsLongLong(tmp);
-        if (days == -1 && PyErr_Occurred()) {
+        if (error_converting(days)) {
             Py_DECREF(tmp);
             return -1;
         }
@@ -2707,7 +2708,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         seconds = PyInt_AsLong(tmp);
-        if (seconds == -1 && PyErr_Occurred()) {
+        if (error_converting(seconds)) {
             Py_DECREF(tmp);
             return -1;
         }
@@ -2719,7 +2720,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         useconds = PyInt_AsLong(tmp);
-        if (useconds == -1 && PyErr_Occurred()) {
+        if (error_converting(useconds)) {
             Py_DECREF(tmp);
             return -1;
         }

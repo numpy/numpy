@@ -14,6 +14,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
+#include "common.h"
 
 #if USE_USE_DEFAULTS==1
 static int PyUFunc_NUM_NODEFAULTS = 0;
@@ -209,7 +210,7 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
 
     if (bufsize != NULL) {
         *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
-        if ((*bufsize == -1) && PyErr_Occurred()) {
+        if (error_converting(*bufsize)) {
             return -1;
         }
         if ((*bufsize < NPY_MIN_BUFSIZE) ||

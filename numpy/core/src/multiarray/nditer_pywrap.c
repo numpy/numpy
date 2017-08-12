@@ -16,6 +16,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "alloc.h"
+#include "common.h"
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -1619,7 +1620,7 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyInt_AsLong(v);
-            if (multi_index[idim]==-1 && PyErr_Occurred()) {
+            if (error_converting(multi_index[idim])) {
                 Py_XDECREF(v);
                 return -1;
             }
@@ -1679,7 +1680,7 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
     if (NpyIter_HasIndex(self->iter)) {
         npy_intp ind;
         ind = PyInt_AsLong(value);
-        if (ind==-1 && PyErr_Occurred()) {
+        if (error_converting(ind)) {
             return -1;
         }
         if (NpyIter_GotoIndex(self->iter, ind) != NPY_SUCCEED) {
@@ -1729,7 +1730,7 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 
     iterindex = PyInt_AsLong(value);
-    if (iterindex==-1 && PyErr_Occurred()) {
+    if (error_converting(iterindex)) {
         return -1;
     }
     if (NpyIter_GotoIterIndex(self->iter, iterindex) != NPY_SUCCEED) {
@@ -2257,7 +2258,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return NULL;
         }
         return npyiter_seq_item(self, i);
@@ -2306,7 +2307,7 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return -1;
         }
         return npyiter_seq_ass_item(self, i, value);

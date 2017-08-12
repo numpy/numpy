@@ -244,7 +244,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
              (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m2 to an int and try sequence repeat */
         repeat = PyArray_PyIntAsIntp(m2);
-        if (repeat == -1 && PyErr_Occurred()) {
+        if (error_converting(repeat)) {
             return NULL;
         }
         /* Note that npy_intp is compatible to Py_Ssize_t */
@@ -257,7 +257,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
              (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m1 to an int and try sequence repeat */
         repeat = PyArray_PyIntAsIntp(m1);
-        if (repeat == -1 && PyErr_Occurred()) {
+        if (error_converting(repeat)) {
             return NULL;
         }
         return PySequence_Repeat(m2, repeat);

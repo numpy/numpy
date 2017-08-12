@@ -5,6 +5,7 @@
 #include "numpy/arrayobject.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+#include "common.h"
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -1000,11 +1001,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
     for (j = 0; j < nterms; ++j) {
         terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
-        if (terms[j].a == -1 && PyErr_Occurred()) {
+        if (error_converting(terms[j].a)) {
             goto fail;
         }
         terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
-        if (terms[j].ub == -1 && PyErr_Occurred()) {
+        if (error_converting(terms[j].ub)) {
             goto fail;
         }
     }

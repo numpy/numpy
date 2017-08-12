@@ -18,6 +18,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
@@ -168,7 +169,7 @@ invalid_weekmask_string:
                 }
 
                 val = PyInt_AsLong(f);
-                if (val == -1 && PyErr_Occurred()) {
+                if (error_converting(val)) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;

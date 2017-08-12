@@ -13,6 +13,7 @@
 
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "mapping.h"
@@ -411,7 +412,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else if (PyLong_Check(obj) || PyInt_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
-        if (ll_v == -1 && PyErr_Occurred()) {
+        if (error_converting(ll_v)) {
             /* Long long failed, try unsigned long long */
             npy_ulonglong ull_v;
             PyErr_Clear();
@@ -441,7 +442,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     /* Python float */
     else if (PyFloat_Check(obj)) {
         npy_double v = PyFloat_AsDouble(obj);
-        if (v == -1 && PyErr_Occurred()) {
+        if (error_converting(v)) {
             return -1;
         }
         value = (char *)value_buffer;
@@ -457,11 +458,11 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         npy_double re, im;
 
         re = PyComplex_RealAsDouble(obj);
-        if (re == -1 && PyErr_Occurred()) {
+        if (error_converting(re)) {
             return -1;
         }
         im = PyComplex_ImagAsDouble(obj);
-        if (im == -1 && PyErr_Occurred()) {
+        if (error_converting(im)) {
             return -1;
         }
         value = (char *)value_buffer;

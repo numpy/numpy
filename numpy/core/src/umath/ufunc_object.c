@@ -47,6 +47,7 @@
 #include "override.h"
 #include "npy_import.h"
 #include "extobj.h"
+#include "common.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -3770,7 +3771,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
             int axis = PyArray_PyIntAsInt(tmp);
-            if (axis == -1 && PyErr_Occurred()) {
+            if (error_converting(axis)) {
                 Py_XDECREF(otype);
                 Py_DECREF(mp);
                 return NULL;
@@ -3787,7 +3788,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     else {
         int axis = PyArray_PyIntAsInt(axes_in);
         /* TODO: PyNumber_Index would be good to use here */
-        if (axis == -1 && PyErr_Occurred()) {
+        if (error_converting(axis)) {
             Py_XDECREF(otype);
             Py_DECREF(mp);
             return NULL;
