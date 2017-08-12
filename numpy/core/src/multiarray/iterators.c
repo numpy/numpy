@@ -926,7 +926,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto skip;
     }
     start = PyArray_PyIntAsIntp(ind);
-    if (start==-1 && PyErr_Occurred()) {
+    if (error_converting(start)) {
         PyErr_Clear();
     }
     else {

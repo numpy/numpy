@@ -1131,7 +1131,7 @@ _convert_from_dict(PyObject *obj, int align)
                 goto fail;
             }
             offset = PyArray_PyIntAsInt(off);
-            if (offset == -1 && PyErr_Occurred()) {
+            if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);
                 Py_DECREF(ind);
@@ -1270,7 +1270,7 @@ _convert_from_dict(PyObject *obj, int align)
         PyErr_Clear();
     } else {
         itemsize = (int)PyArray_PyIntAsInt(tmp);
-        if (itemsize == -1 && PyErr_Occurred()) {
+        if (error_converting(itemsize)) {
             Py_DECREF(new);
             return NULL;
         }

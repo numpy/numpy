@@ -9,6 +9,9 @@
 #include <numpy/npy_3kcompat.h>
 #include <math.h>
 
+#include "common.h"  /* for error_converting */
+
+
 /* Relevant arithmetic exceptions */
 
 /* Uncomment the following line to work around a bug in numpy */
@@ -425,7 +428,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         PyObject* y;
         int eq;
         n[i] = PyInt_AsLong(x[i]);
-        if (n[i]==-1 && PyErr_Occurred()) {
+        if (error_converting(n[i])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Format(PyExc_TypeError,
                         "expected integer %s, got %s",
@@ -473,7 +476,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             PyObject* y_; \
             int eq_; \
             long n_ = PyInt_AsLong(object); \
-            if (n_==-1 && PyErr_Occurred()) { \
+            if (error_converting(n_)) { \
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) { \
                     PyErr_Clear(); \
                     Py_INCREF(Py_NotImplemented); \
@@ -750,7 +753,7 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         long n = PyInt_AsLong(item);
         PyObject* y;
         int eq;
-        if (n==-1 && PyErr_Occurred()) {
+        if (error_converting(n)) {
             return -1;
         }
         y = PyInt_FromLong(n);
