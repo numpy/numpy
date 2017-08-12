@@ -445,7 +445,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
             return NPY_NOSCALAR;
         }
         val = PyInt_AsSsize_t(value);
-        if (val == -1 && PyErr_Occurred()) {
+        if (error_converting(val)) {
             PyErr_Clear();
             return NPY_NOSCALAR;
         }

@@ -1662,7 +1662,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
             if (ndmin_obj) {
                 ndmin = PyLong_AsLong(ndmin_obj);
-                if (ndmin == -1 && PyErr_Occurred()) {
+                if (error_converting(ndmin)) {
                     goto clean_type;
                 }
                 else if (ndmin > NPY_MAXDIMS) {
