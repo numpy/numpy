@@ -155,11 +155,11 @@ with 80-bit precision, and while most C compilers provide this as their
 ``long double`` identical to ``double`` (64 bits). NumPy makes the
 compiler's ``long double`` available as ``np.longdouble`` (and
 ``np.clongdouble`` for the complex numbers). You can find out what your
-numpy provides with``np.finfo(np.longdouble)``.
+numpy provides with ``np.finfo(np.longdouble)``.
 
 NumPy does not provide a dtype with more precision than C
 ``long double``s; in particular, the 128-bit IEEE quad precision
-data type (FORTRAN's ``REAL*16``) is not available.
+data type (FORTRAN's ``REAL*16``\) is not available.
 
 For efficient memory alignment, ``np.longdouble`` is usually stored
 padded with zero bits, either to 96 or 128 bits. Which is more efficient
