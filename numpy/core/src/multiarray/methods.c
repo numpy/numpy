@@ -639,7 +639,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         npy_intp value, size = PyArray_SIZE(self);
 
         value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (value == -1 && PyErr_Occurred()) {
+        if (error_converting(value)) {
             return NULL;
         }
 
@@ -659,7 +659,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
 
         for (idim = 0; idim < ndim; ++idim) {
             value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
-            if (value == -1 && PyErr_Occurred()) {
+            if (error_converting(value)) {
                 return NULL;
             }
             multi_index[idim] = value;
@@ -716,7 +716,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         npy_intp value, size = PyArray_SIZE(self);
 
         value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (value == -1 && PyErr_Occurred()) {
+        if (error_converting(value)) {
             return NULL;
         }
 
@@ -736,7 +736,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
 
         for (idim = 0; idim < ndim; ++idim) {
             value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
-            if (value == -1 && PyErr_Occurred()) {
+            if (error_converting(value)) {
                 return NULL;
             }
             multi_index[idim] = value;

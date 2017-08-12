@@ -472,7 +472,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 #endif
                 npy_intp ind = PyArray_PyIntAsIntp(obj);
 
-                if ((ind == -1) && PyErr_Occurred()) {
+                if (error_converting(ind)) {
                     PyErr_Clear();
                 }
                 else {
@@ -643,7 +643,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 npy_intp ind = PyArray_PyIntAsIntp((PyObject *)arr);
 
                 Py_DECREF(arr);
-                if ((ind == -1) && PyErr_Occurred()) {
+                if (error_converting(ind)) {
                     goto failed_building_indices;
                 }
                 else {
