@@ -114,10 +114,10 @@ properties of the type, such as whether it is an integer::
     >>> d
     dtype('int32')
 
-    >>> np.issubdtype(d, int)
+    >>> np.issubdtype(d, np.integer)
     True
 
-    >>> np.issubdtype(d, float)
+    >>> np.issubdtype(d, np.floating)
     False
 
 
@@ -158,8 +158,8 @@ compiler's ``long double`` available as ``np.longdouble`` (and
 numpy provides with ``np.finfo(np.longdouble)``.
 
 NumPy does not provide a dtype with more precision than C
-``long double``s; in particular, the 128-bit IEEE quad precision
-data type (FORTRAN's ``REAL*16``\) is not available.
+``long double``\\s; in particular, the 128-bit IEEE quad precision
+data type (FORTRAN's ``REAL*16``\\) is not available.
 
 For efficient memory alignment, ``np.longdouble`` is usually stored
 padded with zero bits, either to 96 or 128 bits. Which is more efficient
