@@ -1529,9 +1529,9 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  */
 /**begin repeat
  *
- * #name = tolist, item, tostring, tobytes, astype, copy, __deepcopy__,
- *         searchsorted, view, swapaxes, conj, conjugate, nonzero, flatten,
- *         ravel, fill, transpose, newbyteorder#
+ * #name = tolist, item, __deepcopy__,
+ *         swapaxes, conj, conjugate, nonzero,
+ *         fill, transpose, newbyteorder#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args)
@@ -1608,8 +1608,9 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, ptp, any, all, resize, reshape,
- *         choose#
+ *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
+ *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
+ *         flatten, ravel#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
@@ -1873,19 +1874,19 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"tobytes",
         (PyCFunction)gentype_tobytes,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)gentype_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"tostring",
         (PyCFunction)gentype_tostring,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)gentype_astype,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"getfield",
         (PyCFunction)gentype_getfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -1894,7 +1895,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"copy",
         (PyCFunction)gentype_copy,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"resize",
         (PyCFunction)gentype_resize,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -1960,7 +1961,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"searchsorted",
         (PyCFunction)gentype_searchsorted,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"argmax",
         (PyCFunction)gentype_argmax,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -1975,7 +1976,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"view",
         (PyCFunction)gentype_view,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)gentype_swapaxes,
         METH_VARARGS, NULL},
@@ -2038,10 +2039,10 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"flatten",
         (PyCFunction)gentype_flatten,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"ravel",
         (PyCFunction)gentype_ravel,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
