@@ -3956,6 +3956,7 @@ class MaskedArray(ndarray):
                 mask = np.broadcast_to(mask, check.shape).copy()
 
         check = check.view(type(self))
+        check._update_from(self)
         check._mask = mask
         return check
 
