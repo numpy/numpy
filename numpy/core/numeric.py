@@ -2159,6 +2159,8 @@ def isscalar(num):
     False
     >>> np.isscalar(False)
     True
+    >>> np.isscalar('numpy')
+    True
 
     """
     if isinstance(num, generic):
