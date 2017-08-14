@@ -112,7 +112,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None, return_mask=False,
-           return_data=True, assume_sorted=False, sort_inplace=False):
+           return_data=True, assume_sorted=False):
     """
     Find the unique elements of an array.
 
@@ -125,9 +125,6 @@ def unique(ar, return_index=False, return_inverse=False,
 
     If data comes presorted, some operations may be skipped, which can speed
     up the process and require less memory for temporary storage.
-
-    If it is ok to clobber the input array, an in-place sort can reduce
-    memory usage.
 
     Parameters
     ----------
@@ -161,12 +158,6 @@ def unique(ar, return_index=False, return_inverse=False,
     assume_sorted : bool, optional
         if True, the input will be assumed to be sorted in the relevant axis,
         and the sort operation will be skipped.
-    sort_inplace : bool, optional
-        if True, the input will be sorted in-place if needed to compute the
-        result (ie: if not unique_indices, unique_inverse or unique_counts
-        is specified), avoiding one temporary copy. For multi-dimensional
-        arrays, a copy may still be needed, so the original array may still
-        end up unsorted.
 
 
     Returns
@@ -248,11 +239,10 @@ def unique(ar, return_index=False, return_inverse=False,
     (sort in-place, instead on a temporary copy):
 
     >>> a = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    >>> u = np.unique(a, sort_inplace=True)
+    >>> a.sort()
+    >>> u = np.unique(a, assume_sorted=True)
     >>> u
     array([1,2,3])
-    >>> a
-    array([1, 1, 1, 2, 2, 2, 3, 3, 3])
 
     """
     orig_ar = ar
@@ -260,7 +250,7 @@ def unique(ar, return_index=False, return_inverse=False,
     if axis is None:
         return _unique1d(ar, return_index, return_inverse, return_counts,
                          return_mask, return_data, assume_sorted,
-                         sort_inplace, sort_inplace)
+                         False, assume_sorted)
     if not (-ar.ndim <= axis < ar.ndim):
         raise ValueError('Invalid axis kwarg specified for unique')
 
@@ -297,18 +287,17 @@ def unique(ar, return_index=False, return_inverse=False,
            and orig_base.base is not orig_ar):
         orig_base = orig_base.base
     if orig_base is orig_ar or orig_base.base is orig_ar:
-        # We're operating on a view
-        mask_is_sorted = sort_inplace
+        # We're operating on a view, so can't sort in-place
+        sort_inplace = False
     else:
         # We're operating on a copy, so we might as well
         # do an in-place sort on that copy
-        mask_is_sorted = False
         sort_inplace = True
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        return_mask, return_data, assume_sorted,
-                       sort_inplace, mask_is_sorted)
+                       sort_inplace, assume_sorted)
     if 1 == (bool(return_index) + bool(return_inverse) + bool(return_counts)
              + bool(return_mask) + bool(return_data)):
         return reshape_uniq(output)
