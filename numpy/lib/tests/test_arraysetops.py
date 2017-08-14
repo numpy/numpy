@@ -264,45 +264,83 @@ class TestUnique(object):
             assert_array_equal(v, b, msg)
 
             msg = base_msg.format('return_index', dt)
-            v, j = unique(a, 1, 0, 0)
+            v, j = unique(a, 1, 0, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i1, msg)
 
             msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, 0, 1, 0)
+            v, j = unique(a, 0, 1, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i2, msg)
 
             msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, 0, 0, 1)
+            v, j = unique(a, 0, 0, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, c, msg)
 
+            msg = base_msg.format('return_mask', dt)
+            v, j = unique(a, 0, 0, 0, None, 1, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(np.sort(np.array(a)[j]), b, msg)
+
             msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, 1, 1, 0)
+            v, j1, j2 = unique(a, 1, 1, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
 
             msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, 1, 0, 1)
+            v, j1, j2 = unique(a, 1, 0, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, 0, 1, 1)
+            v, j1, j2 = unique(a, 0, 1, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i2, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format(('return_index, return_inverse '
                                    'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, 1, 1, 1)
+            v, j1, j2, j3 = unique(a, 1, 1, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
             assert_array_equal(j3, c, msg)
+
+            msg = base_msg.format('return_index and not return_data', dt)
+            v = unique(a, 1, 0, 0, None, 0, 0)
+            assert_array_equal(v, i1, msg)
+
+            msg = base_msg.format('return_inverse and not return_data', dt)
+            v = unique(a, 0, 1, 0, None, 0, 0)
+            assert_array_equal(v, i2, msg)
+
+            msg = base_msg.format('return_counts and not return_data', dt)
+            v = unique(a, 0, 0, 1, None, 0, 0)
+            assert_array_equal(v, c, msg)
+
+            msg = base_msg.format('return_mask and not return_data', dt)
+            v = unique(a, 0, 0, 0, None, 1, 0)
+            assert_array_equal(np.sort(np.array(a)[v]), b, msg)
+
+            msg = base_msg.format('assume_sorted', dt)
+            sa = np.sort(np.array(a))
+            v = unique(sa, 0, 0, 0, None, 0, 1, 1)
+            assert_array_equal(v, b, msg)
+
+            msg = base_msg.format('assume_sorted and return_mask '
+                                  'and not return_data', dt)
+            v = unique(sa, 0, 0, 0, None, 1, 0, 1)
+            assert_array_equal(sa[v], b, msg)
+
+            msg = base_msg.format('sort_inplace and return_mask '
+                                  'and not return_data', dt)
+            ua = np.array(a)
+            v = unique(ua, 0, 0, 0, None, 1, 0, 0, 1)
+            assert_array_equal(ua[v], b, msg)
+            assert_array_equal(ua, sa, msg)
 
         a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
