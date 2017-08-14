@@ -980,16 +980,6 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 NPY_NO_EXPORT void
-@TYPE@_true_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const double in1 = (double)(*(@type@ *)ip1);
-        const double in2 = (double)(*(@type@ *)ip2);
-        *((double *)op1) = in1/in2;
-    }
-}
-
-NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {

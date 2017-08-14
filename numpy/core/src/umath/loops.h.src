@@ -120,9 +120,6 @@ NPY_NO_EXPORT void
 /**end repeat2**/
 
 NPY_NO_EXPORT void
-@S@@TYPE@_true_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @S@@TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
