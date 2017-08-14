@@ -265,7 +265,7 @@ def find_python_dll():
     lib_dirs = []
     for stem in stems:
         for folder in sub_dirs:
-            lib_dirs = os.path.join(stem, folder)
+            lib_dirs.append(os.path.join(stem, folder))
 
     # add system directory as well
     if 'SYSTEMROOT' in os.environ:
