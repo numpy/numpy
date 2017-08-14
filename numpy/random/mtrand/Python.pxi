@@ -18,6 +18,11 @@ cdef extern from "Python.h":
     double PyFloat_AsDouble(object ob) except? -1.0
     long PyInt_AsLong(object ob) except? -1
 
+    # Complex API
+    double PyComplex_RealAsDouble(object op) except? -1.0
+    double PyComplex_ImagAsDouble(object op) except? -1.0
+    object PyComplex_FromDoubles(double real, double imag)
+
     # Memory API
     void* PyMem_Malloc(size_t n)
     void* PyMem_Realloc(void* buf, size_t n)

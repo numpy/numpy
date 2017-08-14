@@ -4,8 +4,8 @@ import warnings
 import numpy as np
 from numpy.testing import (
         run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
+        assert_no_warnings, assert_array_equal, assert_almost_equal,
+        assert_array_almost_equal, suppress_warnings
         )
 from numpy import random
 import sys
@@ -933,6 +933,52 @@ class TestRandomDist(object):
                             [1, 1],
                             [3, 13]])
         assert_array_equal(actual, desired)
+
+    def test_complex_normal(self):
+        np.random.seed(self.seed)
+        vals = np.random.complex_normal(2.0 + 7.0j, 10.0, 5.0 - 5.0j, size=10)
+        assert_(len(vals) == 10)
+
+        np.random.seed(self.seed)
+        vals2 = [np.random.complex_normal(2.0 + 7.0j, 10.0, 5.0 - 5.0j)
+                 for _ in range(10)]
+        np.testing.assert_allclose(vals, vals2)
+
+        np.random.seed(self.seed)
+        vals3 = np.random.complex_normal(2.0 + 7.0j * np.ones(10),
+                                         10.0 * np.ones(1), 5.0 - 5.0j)
+        np.testing.assert_allclose(vals, vals3)
+
+        np.random.seed(self.seed)
+        norms = np.random.standard_normal(size=20)
+        norms = np.reshape(norms, (10, 2))
+        cov = 0.5 * (-5.0)
+        v_real = 7.5
+        v_imag = 2.5
+        rho = cov / np.sqrt(v_real * v_imag)
+        imag = 7 + np.sqrt(v_imag) * (rho * norms[:, 0] +
+                                      np.sqrt(1 - rho ** 2) * norms[:, 1])
+        real = 2 + np.sqrt(v_real) * norms[:, 0]
+        vals4 = [re + im * (0 + 1.0j) for re, im in zip(real, imag)]
+
+        np.testing.assert_allclose(vals4, vals)
+
+    def test_complex_normal_zero_variance(self):
+        np.random.seed(self.seed)
+        c = np.random.complex_normal(0, 1.0, 1.0)
+        assert_almost_equal(c.imag, 0.0)
+        np.random.seed(self.seed)
+        n = np.random.standard_normal()
+        np.testing.assert_allclose(c, n, atol=1e-8)
+
+        np.random.seed(self.seed)
+        c = np.random.complex_normal(0, 1.0, -1.0)
+        assert_almost_equal(c.real, 0.0)
+        np.random.seed(self.seed)
+        np.random.standard_normal()
+        n = np.random.standard_normal()
+        assert_almost_equal(c.real, 0.0)
+        np.testing.assert_allclose(c.imag, n, atol=1e-8)
 
 
 class TestBroadcast(object):

@@ -16,7 +16,7 @@ New functions
 
 * ``parametrize``: decorator added to numpy.testing
 * ``chebinterpolate``: Interpolate function at Chebyshev points.
-
+* ``complex_normal``: generate complex normal random values
 
 Deprecations
 ============
@@ -176,6 +176,11 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+
+``complex_naormal`` function added to ``numpy.random``
+------------------------------------------------------
+The new ``complex_normal`` function generates complex normal values from
+complex location, relation and gamma.
 
 
 Improvements

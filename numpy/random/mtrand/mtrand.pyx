@@ -34,6 +34,7 @@ cdef extern from "math.h":
     double floor(double x)
     double sin(double x)
     double cos(double x)
+    double sqrt(double x) nogil
 
 cdef extern from "numpy/npy_math.h":
     int npy_isfinite(double x)
@@ -550,6 +551,17 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
                 array_data[i] = func(state, oa_data[0])
                 PyArray_MultiIter_NEXTi(multi, 1)
     return array
+
+cdef inline void compute_complex(double *rv_r, double *rv_i, double loc_r,
+                                 double loc_i, double var_r, double var_i, double rho) nogil:
+    cdef double scale_c, scale_i, scale_r
+
+    scale_c = sqrt(1 - rho * rho)
+    scale_r = sqrt(var_r)
+    scale_i = sqrt(var_i)
+
+    rv_i[0] = loc_i + scale_i * (rho * rv_r[0]  + scale_c * rv_i[0])
+    rv_r[0] = loc_r + scale_r * rv_r[0]
 
 cdef double kahan_sum(double *darr, npy_intp n):
     cdef double c, y, t, sum
@@ -4533,6 +4545,164 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
+    def complex_normal(self, loc=0.0, gamma=1.0, relation=0.0, size=None):
+        """
+        complex_normal(loc=0.0, gamma=1.0, relation=0.0, size=None)
+
+        Draw random samples from a complex normal (Gaussian) distribution.
+
+        Parameters
+        ----------
+        loc : complex or array_like of complex
+            Mean of the distribution.
+        gamma : float, complex or array_like of float or complex
+            Variance of the distribution
+        relation : float, complex or array_like of float or complex
+            Relation between the two component normals
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc``, ``gamma`` and ``relation``
+            are all scalars. Otherwise,
+            ``np.broadcast(loc, gamma, relation).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized complex normal distribution.
+
+        See Also
+        --------
+        numpy.random.normal : random values from a real-valued normal
+            distribution
+
+        Notes
+        -----
+        Complex normals are generated from a bivariate normal where the
+        variance of the real component is 0.5 Re(gamma + relation), the
+        variance of the imaginary component is 0.5 Re(gamma - relation), and
+        the covariance between the two is 0.5 Im(relation).  The implied
+        covariance matrix must be positive semi-definite and so both variances
+        must be zero and the covariance must be weakly smaller than the
+        product of the two standard deviations.
+
+        References
+        ----------
+        .. [1] Wikipedia, "Complex normal distribution",
+               https://en.wikipedia.org/wiki/Complex_normal_distribution
+        .. [2] Leigh J. Halliwell, "Complex Random Variables" in "Casualty
+               Actuarial Society E-Forum", Fall 2015.
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> s = np.random.complex_normal(size=1000)
+        """
+        cdef ndarray ogamma, orelation, oloc, randoms, v_real, v_imag, rho
+        cdef double *randoms_data
+        cdef double fgamma_r, fgamma_i, frelation_r, frelation_i, frho, fvar_r , fvar_i, \
+            floc_r, floc_i, f_real, f_imag, i_r_scale, r_scale, i_scale, f_rho
+        cdef npy_intp i, j, n
+        cdef broadcast it
+
+        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
+        ogamma = <ndarray>PyArray_FROM_OTF(gamma, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
+        orelation = <ndarray>PyArray_FROM_OTF(relation, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
+
+        if PyArray_NDIM(ogamma) == PyArray_NDIM(orelation) == PyArray_NDIM(oloc) == 0:
+            floc_r = PyComplex_RealAsDouble(loc)
+            floc_i = PyComplex_ImagAsDouble(loc)
+            fgamma_r = PyComplex_RealAsDouble(gamma)
+            fgamma_i = PyComplex_ImagAsDouble(gamma)
+            frelation_r = PyComplex_RealAsDouble(relation)
+            frelation_i = 0.5 * PyComplex_ImagAsDouble(relation)
+
+            fvar_r = 0.5 * (fgamma_r + frelation_r)
+            fvar_i = 0.5 * (fgamma_r - frelation_r)
+            if fgamma_i != 0:
+                raise ValueError('Im(gamma) != 0')
+            if fvar_i < 0:
+                raise ValueError('Re(gamma - relation) < 0')
+            if fvar_r < 0:
+                raise ValueError('Re(gamma + relation) < 0')
+            f_rho = 0.0
+            if fvar_i > 0 and fvar_r > 0:
+                f_rho = frelation_i / sqrt(fvar_i * fvar_r)
+            if f_rho > 1.0 or f_rho < -1.0:
+                raise ValueError('Im(relation) ** 2 > Re(gamma ** 2 - relation** 2)')
+
+            if size is None:
+                f_real = rk_gauss(self.internal_state)
+                f_imag = rk_gauss(self.internal_state)
+
+                compute_complex(&f_real, &f_imag, floc_r, floc_i, fvar_r, fvar_i, f_rho)
+
+                return PyComplex_FromDoubles(f_real, f_imag)
+
+            randoms = <ndarray>np.empty(size, np.complex128)
+            randoms_data = <double *>PyArray_DATA(randoms)
+            n = PyArray_SIZE(randoms)
+
+            i_r_scale = sqrt(1 - f_rho * f_rho)
+            r_scale = sqrt(fvar_r)
+            i_scale = sqrt(fvar_i)
+            j = 0
+            with self.lock, nogil:
+                for i in range(n):
+                    f_real = rk_gauss(self.internal_state)
+                    f_imag = rk_gauss(self.internal_state)
+                    randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real + i_r_scale * f_imag)
+                    randoms_data[j] = floc_r + r_scale * f_real
+                    j += 2
+
+            return randoms
+
+        gpc = ogamma + orelation
+        gmc = ogamma - orelation
+        v_real = <ndarray>(0.5 * np.real(gpc))
+        if np.any(np.less(v_real, 0)):
+            raise ValueError('Re(gamma + relation) < 0')
+        v_imag = <ndarray>(0.5 * np.real(gmc))
+        if np.any(np.less(v_imag, 0)):
+            raise ValueError('Re(gamma - relation) < 0')
+        if np.any(np.not_equal(np.imag(ogamma), 0)):
+            raise ValueError('Im(gamma) != 0')
+
+        cov = 0.5 * np.imag(orelation)
+        rho = <ndarray>np.zeros_like(cov)
+        idx = (v_real.flat > 0) & (v_imag.flat > 0)
+        rho.flat[idx] = cov.flat[idx]  / np.sqrt(v_real.flat[idx] * v_imag.flat[idx])
+        if np.any(cov.flat[~idx] != 0) or np.any(np.abs(rho) > 1):
+            raise ValueError('Im(relation) ** 2 > Re(gamma ** 2 - relation ** 2)')
+
+        if size is not None:
+            randoms = <ndarray>np.empty(size, np.complex128)
+        else:
+            it = <broadcast>PyArray_MultiIterNew(4, <void *>oloc, <void *>v_real, <void *>v_imag, <void *>rho)
+            randoms = <ndarray>np.empty(it.shape, np.complex128)
+
+        randoms_data = <double *>PyArray_DATA(randoms)
+        n = PyArray_SIZE(randoms)
+
+        it = <broadcast>PyArray_MultiIterNew(5, <void *>randoms, <void *>oloc, <void *>v_real, <void *>v_imag, <void *>rho)
+        with self.lock, nogil:
+            for i in range(2 * n):
+                randoms_data[i] = rk_gauss(self.internal_state)
+        with nogil:
+            j = 0
+            for i in range(n):
+                floc_r= (<double*>PyArray_MultiIter_DATA(it, 1))[0]
+                floc_i= (<double*>PyArray_MultiIter_DATA(it, 1))[1]
+                fvar_r = (<double*>PyArray_MultiIter_DATA(it, 2))[0]
+                fvar_i = (<double*>PyArray_MultiIter_DATA(it, 3))[0]
+                f_rho = (<double*>PyArray_MultiIter_DATA(it, 4))[0]
+                compute_complex(&randoms_data[j], &randoms_data[j+1], floc_r, floc_i, fvar_r, fvar_i, f_rho)
+                j += 2
+                PyArray_MultiIter_NEXT(it)
+
+        return randoms
+
     def multinomial(self, npy_intp n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
@@ -4946,6 +5116,7 @@ hypergeometric = _rand.hypergeometric
 logseries = _rand.logseries
 
 multivariate_normal = _rand.multivariate_normal
+complex_normal = _rand.complex_normal
 multinomial = _rand.multinomial
 dirichlet = _rand.dirichlet
 
