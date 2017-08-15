@@ -335,6 +335,16 @@ class TestUnique(object):
             v = unique(sa, 0, 0, 0, None, 1, 0, 1)
             assert_array_equal(sa[v], b, msg)
 
+            msg = base_msg.format('sort_inplace', dt)
+            sa = np.array(a)
+            v = unique(sa, 0, 0, 0, None, 0, 1, 0, 1)
+            assert_array_equal(v, b, msg)
+
+            msg = base_msg.format('assume_sorted after sort_inplace '
+                                  'and return_mask and not return_data', dt)
+            v = unique(sa, 0, 0, 0, None, 1, 0, 1)
+            assert_array_equal(sa[v], b, msg)
+
         a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
