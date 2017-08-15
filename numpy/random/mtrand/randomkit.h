@@ -150,39 +150,60 @@ extern unsigned long rk_ulong(rk_state *state);
  */
 extern unsigned long rk_interval(unsigned long max, rk_state *state);
 
+extern npy_uint64 rk_random_uint64(npy_uint64 off, npy_uint64 rng, rk_state *state);
+
 /*
  * Fills an array with cnt random npy_uint64 between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
+extern void rk_random_uint64_fill(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
                              npy_uint64 *out, rk_state *state);
 
+extern npy_uint32 rk_random_uint32(npy_uint32 off, npy_uint32 rng,
+                                          const npy_uint32 *buf, const int *bcnt,
+                                          rk_state *state);
 /*
  * Fills an array with cnt random npy_uint32 between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
+extern void rk_random_uint32_fill(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
                              npy_uint32 *out, rk_state *state);
+
+extern npy_uint16 rk_random_uint16(npy_uint16 off, npy_uint16 rng,
+                                          npy_uint32 *buf, int *bcnt, rk_state *state);
+
 
 /*
  * Fills an array with cnt random npy_uint16 between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
+extern void rk_random_uint16_fill(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
                              npy_uint16 *out, rk_state *state);
+
+/*
+ * Generates a single bounded uint8 from a mask with an offset using a buffer
+ */
+extern npy_uint8 rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_uint32 *buf,
+                                 int *bcnt, rk_state *state);
 
 /*
  * Fills an array with cnt random npy_uint8 between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
  */
-extern void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
+extern void rk_random_uint8_fill(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
                             npy_uint8 *out, rk_state *state);
+
+/*
+ * Generates a single bool using a buffer
+ */
+extern npy_bool
+rk_random_bool(npy_bool off, npy_bool rng, npy_uint32 *buf, int *bcnt, rk_state *state);
 
 /*
  * Fills an array with cnt random npy_bool between off and off + rng
  * inclusive. It is assumed tha npy_bool as the same size as npy_uint8.
  */
-extern void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
+extern void rk_random_bool_fill(npy_bool off, npy_bool rng, npy_intp cnt,
                            npy_bool *out, rk_state *state);
 
 /*

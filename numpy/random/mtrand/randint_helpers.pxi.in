@@ -64,14 +64,14 @@ def _rand_{{npy_dt}}(low, high, size, rngstate):
     off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low)
 
     if size is None:
-        rk_random_{{npy_udt}}(off, rng, 1, &buf, state)
+        rk_random_{{npy_udt}}_fill(off, rng, 1, &buf, state)
         return np.{{np_dt}}(<npy_{{npy_dt}}>buf)
     else:
         array = <ndarray>np.empty(size, np.{{np_dt}})
         cnt = PyArray_SIZE(array)
         array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
         with nogil:
-            rk_random_{{npy_udt}}(off, rng, cnt, array_data, state)
+            rk_random_{{npy_udt}}_fill(off, rng, cnt, array_data, state)
         return array
 
 {{endfor}}

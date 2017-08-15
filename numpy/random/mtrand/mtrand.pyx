@@ -71,16 +71,16 @@ cdef extern from "randomkit.h":
     rk_error rk_altfill(void *buffer, size_t size, int strong,
             rk_state *state) nogil
     double rk_gauss(rk_state *state) nogil
-    void rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
-                          npy_uint64 *out, rk_state *state) nogil
-    void rk_random_uint32(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
-                          npy_uint32 *out, rk_state *state) nogil
-    void rk_random_uint16(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
-                          npy_uint16 *out, rk_state *state) nogil
-    void rk_random_uint8(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
-                         npy_uint8 *out, rk_state *state) nogil
-    void rk_random_bool(npy_bool off, npy_bool rng, npy_intp cnt,
-                        npy_bool *out, rk_state *state) nogil
+    void rk_random_uint64_fill(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
+                               npy_uint64 *out, rk_state *state) nogil
+    void rk_random_uint32_fill(npy_uint32 off, npy_uint32 rng, npy_intp cnt,
+                               npy_uint32 *out, rk_state *state) nogil
+    void rk_random_uint16_fill(npy_uint16 off, npy_uint16 rng, npy_intp cnt,
+                               npy_uint16 *out, rk_state *state) nogil
+    void rk_random_uint8_fill(npy_uint8 off, npy_uint8 rng, npy_intp cnt,
+                              npy_uint8 *out, rk_state *state) nogil
+    void rk_random_bool_fill(npy_bool off, npy_bool rng, npy_intp cnt,
+                             npy_bool *out, rk_state *state) nogil
 
 
 cdef extern from "distributions.h":
