@@ -468,23 +468,31 @@ class TestUnique(object):
         result = data3d[..., :1]
         assert_array_equal(unique(data3d, axis=2), result, msg)
 
-        uniq, idx, inv, cnt = unique(data, axis=0, return_index=True,
-                                     return_inverse=True, return_counts=True)
+        uniq, idx, inv, cnt, msk = unique(data, axis=0, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True)
         msg = "Unique's return_index=True failed with axis=0"
         assert_array_equal(data[idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=0"
         assert_array_equal(uniq[inv], data)
         msg = "Unique's return_counts=True failed with axis=0"
         assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
 
-        uniq, idx, inv, cnt = unique(data, axis=1, return_index=True,
-                                     return_inverse=True, return_counts=True)
+        uniq, idx, inv, cnt, msk = unique(data, axis=1, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True)
         msg = "Unique's return_index=True failed with axis=1"
         assert_array_equal(data[:, idx], uniq)
         msg = "Unique's return_inverse=True failed with axis=1"
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+        msg = "Unique's return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
 
 
 if __name__ == "__main__":
