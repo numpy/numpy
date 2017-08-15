@@ -112,7 +112,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None, return_mask=False,
-           return_data=True, assume_sorted=False):
+           return_data=True, assume_sorted=False, sort_inplace=False):
     """
     Find the unique elements of an array.
 
@@ -158,6 +158,12 @@ def unique(ar, return_index=False, return_inverse=False,
     assume_sorted : bool, optional
         if True, the input will be assumed to be sorted in the relevant axis,
         and the sort operation will be skipped.
+    sort_inplace : bool, optional
+        if True, the input will be sorted in-place if needed to compute the
+        result (ie: if not unique_indices, unique_inverse or unique_counts
+        is specified), avoiding one temporary copy. For multi-dimensional
+        arrays, a copy may still be needed, so the original array may still
+        end up unsorted.
 
 
     Returns
@@ -244,13 +250,20 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> u
     array([1,2,3])
 
+    >>> a = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    >>> u = np.unique(a, sort_inplace=True)
+    >>> u
+    array([1,2,3])
+    >>> a
+    array([1,1,1,2,2,2,3,3,3])
+
     """
     orig_ar = ar
     ar = np.asanyarray(ar)
     if axis is None:
         return _unique1d(ar, return_index, return_inverse, return_counts,
                          return_mask, return_data, assume_sorted,
-                         False, assume_sorted)
+                         sort_inplace, assume_sorted or sort_inplace)
     if not (-ar.ndim <= axis < ar.ndim):
         raise ValueError('Invalid axis kwarg specified for unique')
 
@@ -282,22 +295,24 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = np.swapaxes(uniq, 0, axis)
         return uniq
 
-    orig_base = ar
+    orig_base = consolidated
     while (orig_base.base is not None and orig_base is not orig_ar
            and orig_base.base is not orig_ar):
         orig_base = orig_base.base
-    if orig_base is orig_ar or orig_base.base is orig_ar:
-        # We're operating on a view, so can't sort in-place
-        sort_inplace = False
+    if ((orig_base is orig_ar or orig_base.base is orig_ar)
+        and not (return_index or return_inverse)):
+        # We're operating on a view
+        mask_is_sorted = assume_sorted or sort_inplace
     else:
         # We're operating on a copy, so we might as well
         # do an in-place sort on that copy
         sort_inplace = True
+        mask_is_sorted = assume_sorted
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        return_mask, return_data, assume_sorted,
-                       sort_inplace, assume_sorted)
+                       sort_inplace, mask_is_sorted)
     if not (return_index or return_inverse or return_counts
             or return_mask):
         return reshape_uniq(output)
@@ -327,7 +342,16 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     if ((not optional_indices and not assume_sorted and not sort_inplace)
         or len(ar.shape) != 1):
         # Otherwise, we don't need to make a copy
-        ar = ar.flatten()
+        if sort_inplace and len(ar.shape) == 2 and ar.shape[1] == 1:
+            # consolidated (n x 1) matrix, no need to copy
+            ar = ar.reshape(ar.size)
+        else:
+            ar = ar.flatten()
+            if mask_is_sorted and not assume_sorted:
+                # We'll work on a copy, so mask cannot be sorted
+                mask_is_sorted = False
+                if return_mask:
+                    optional_indices = True
 
     if ar.size == 0:
         ret = ()

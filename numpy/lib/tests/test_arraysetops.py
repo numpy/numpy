@@ -504,6 +504,58 @@ class TestUnique(object):
         assert_array_equal(np.sort(data[:, msk], axis=1),
                            np.sort(uniq, axis=1), msg)
 
+        # Sort in-place, but not really (return_index inhibits it)
+        # Sorted along axis=0
+        odata = data.copy()
+        uniq, idx, inv, cnt, msk = unique(data, axis=0, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_index=True failed with axis=0"
+        assert_array_equal(data[idx], uniq, msg)
+        msg = "Unique's sort_inplace=True return_inverse=True failed with axis=0"
+        assert_array_equal(uniq[inv], data)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=0"
+        assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
+        # Sorted along axis=1
+        data = odata.copy()
+        uniq, idx, inv, cnt, msk = unique(data, axis=1, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_index=True failed with axis=1"
+        assert_array_equal(data[:, idx], uniq, msg)
+        msg = "Unique's sort_inplace=True return_inverse=True failed with axis=1"
+        assert_array_equal(uniq[:, inv], data)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=1"
+        assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
+        # Sort in-place
+        # Sorted along axis=0
+        odata = data.copy()
+        uniq, cnt, msk = unique(data, axis=0, return_counts=True,
+                                return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=0"
+        assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
+        # Sorted along axis=1
+        data = odata.copy()
+        uniq, cnt, msk = unique(data, axis=1, return_counts=True,
+                                return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=1"
+        assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
 
 if __name__ == "__main__":
     run_module_suite()
