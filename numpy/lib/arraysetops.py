@@ -298,8 +298,8 @@ def unique(ar, return_index=False, return_inverse=False,
                        return_inverse, return_counts,
                        return_mask, return_data, assume_sorted,
                        sort_inplace, assume_sorted)
-    if 1 == (bool(return_index) + bool(return_inverse) + bool(return_counts)
-             + bool(return_mask) + bool(return_data)):
+    if not (return_index or return_inverse or return_counts
+            or return_mask):
         return reshape_uniq(output)
     elif return_data:
         uniq = reshape_uniq(output[0])
