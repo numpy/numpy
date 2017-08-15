@@ -481,6 +481,11 @@ class TestUnique(object):
         assert_array_equal(np.sort(data[msk], axis=0),
                            np.sort(uniq, axis=0), msg)
 
+        msg = "Unique's return_mask=True return_data=False failed with axis=0"
+        msk = unique(data, axis=0, return_mask=True, return_data=False)
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
         uniq, idx, inv, cnt, msk = unique(data, axis=1, return_index=True,
                                           return_inverse=True, return_counts=True,
                                           return_mask=True)
@@ -491,6 +496,11 @@ class TestUnique(object):
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
         msg = "Unique's return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
+        msg = "Unique's return_mask=True return_data=False failed with axis=1"
+        msk = unique(data, axis=1, return_mask=True, return_data=False)
         assert_array_equal(np.sort(data[:, msk], axis=1),
                            np.sort(uniq, axis=1), msg)
 
