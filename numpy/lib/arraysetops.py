@@ -160,10 +160,10 @@ def unique(ar, return_index=False, return_inverse=False,
         and the sort operation will be skipped.
     sort_inplace : bool, optional
         if True, the input will be sorted in-place if needed to compute the
-        result (ie: if not unique_indices, unique_inverse or unique_counts
-        is specified), avoiding one temporary copy. For multi-dimensional
-        arrays, a copy may still be needed, so the original array may still
-        end up unsorted.
+        result (ie: if neither unique_indices nor unique_inverse 
+        is specified, and if the shape of the input allows it), avoiding one
+        temporary copy. For multi-dimensional arrays, a copy may still be
+        needed, so the original array may still end up unsorted.
 
 
     Returns
