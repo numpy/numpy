@@ -2920,6 +2920,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
+    
+    As with `numpy.reshape`, one shape dimension can be -1. In this case, the value is 
+    inferred from the length of the array and remaining dimensions.
 
     Notes
     -----
