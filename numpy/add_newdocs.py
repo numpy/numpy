@@ -2926,6 +2926,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     May be used to "reshape" the array, as long as this would not
     require a change in the total number of elements
 
+    Using `numpy.reshape` or `ndarray.reshape` should always be preferred.
+    Setting the shape directly is not really a safe thing to do.
+
     Examples
     --------
     >>> x = np.array([1, 2, 3, 4])
@@ -2943,6 +2946,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+
+    See Also
+    --------
+    numpy.reshape : equivalent function    
+    ndarray.reshape : equivalent function 
 
     """))
 
