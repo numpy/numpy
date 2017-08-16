@@ -2920,11 +2920,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
+    
+    As with `numpy.reshape`, one shape dimension can be -1. In this case, the value is 
+    inferred from the length of the array and remaining dimensions.
 
     Notes
     -----
     May be used to "reshape" the array, as long as this would not
     require a change in the total number of elements
+
+    Using `numpy.reshape` or `ndarray.reshape` should always be preferred.
+    Setting the shape directly is not really a safe thing to do.
 
     Examples
     --------
@@ -2943,6 +2949,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+
+    See Also
+    --------
+    numpy.reshape : equivalent function    
+    ndarray.reshape : equivalent function 
 
     """))
 
