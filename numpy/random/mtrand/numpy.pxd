@@ -29,6 +29,17 @@ cdef extern from "numpy/arrayobject.h":
         NPY_NTYPES
         NPY_NOTYPE
 
+        NPY_INT8
+        NPY_INT16
+        NPY_INT32
+        NPY_INT64
+        NPY_INT128
+        NPY_INT256
+        NPY_UINT8
+        NPY_UINT16
+        NPY_UINT32
+        NPY_UINT64
+
     cdef enum requirements:
         NPY_ARRAY_C_CONTIGUOUS
         NPY_ARRAY_F_CONTIGUOUS

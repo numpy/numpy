@@ -1,6 +1,8 @@
 """
 Template for each `dtype` helper function in `np.random.randint`.
 """
+from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+                          int8_t, int16_t, int32_t, int64_t, intptr_t)
 
 {{py:
 
@@ -74,4 +76,273 @@ def _rand_{{npy_dt}}(low, high, size, rngstate):
             rk_random_{{npy_udt}}_fill(off, rng, cnt, array_data, state)
         return array
 
+{{endfor}}
+
+cdef inline npy_uint64 _gen_mask(npy_uint64 max_val) nogil:
+    # Smallest bit mask >= max
+    cdef npy_uint64 mask = max_val
+    mask |= mask >> 1
+    mask |= mask >> 2
+    mask |= mask >> 4
+    mask |= mask >> 8
+    mask |= mask >> 16
+    mask |= mask >> 32
+    return mask
+{{
+py:
+bc_ctypes = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000ULL'),
+          ('uint16', 'uint16', 'uint32', 'NPY_UINT32', 1, 16, 0, '0X10000UL'),
+          ('uint8', 'uint8', 'uint16', 'NPY_UINT16', 3, 8, 0, '0X100UL'),
+          ('bool','bool', 'uint8', 'NPY_UINT8', 31, 1, 0, '0x2UL'),
+          ('int32', 'uint32', 'uint64', 'NPY_INT64', 0, 0, '-0x80000000LL', '0x80000000LL'),
+          ('int16', 'uint16', 'uint32', 'NPY_INT32', 1, 16, '-0x8000LL', '0x8000LL' ),
+          ('int8', 'uint8', 'uint16', 'NPY_INT16', 3, 8, '-0x80LL', '0x80LL' ),
+)}}
+{{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in bc_ctypes}}
+{{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
+cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object rngstate, object lock):
+    """
+    _rand_{{nptype}}(low, high, size, *state, lock)
+
+    Return random np.{{nptype}} integers between `low` and `high`, inclusive.
+
+    Return random integers from the "discrete uniform" distribution in the
+    closed interval [`low`, `high`).  If `high` is None (the default),
+    then results are from [0, `low`). On entry the arguments are presumed
+    to have been validated for size and order for the np.{{nptype}} type.
+
+    Parameters
+    ----------
+    low : int or array-like
+        Lowest (signed) integer to be drawn from the distribution (unless
+        ``high=None``, in which case this parameter is the *highest* such
+        integer).
+    high : int or array-like
+        If provided, the largest (signed) integer to be drawn from the
+        distribution (see above for behavior if ``high=None``).
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn.  Default is None, in which case a
+        single value is returned.
+    state : augmented random state
+        State to use in the core random number generators
+    lock : threading.Lock
+        Lock to prevent multiple using a single RandomState simultaneously
+
+    Returns
+    -------
+    out : python scalar or ndarray of np.{{nptype}}
+          `size`-shaped array of random integers from the appropriate
+          distribution, or a single such random int if `size` not provided.
+    """
+    cdef npy_{{utype}} rng, last_rng, off, val, mask, out_val
+    cdef npy_uint32 buf
+    cdef npy_{{utype}} *out_data
+    cdef npy_{{nptype_up}} low_v, high_v
+    cdef ndarray low_arr, high_arr, out_arr
+    cdef npy_intp i, cnt
+    cdef broadcast it
+    cdef int buf_rem = 0
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
+
+
+    low = np.asarray(low)
+    high = np.asarray(high)
+    if low.shape == high.shape == ():
+        low = int(low) # TODO: Cast appropriately?
+        high = int(high) # TODO: Cast appropriately?
+
+        if low < {{lb}}:
+            raise ValueError("low is out of bounds for {{nptype}}")
+        if high > {{ub}}:
+            raise ValueError("high is out of bounds for {{nptype}}")
+        if low >= high:
+            raise ValueError("low >= high")
+
+        high -= 1
+        rng = <npy_{{utype}}>(high - low)
+        off = <npy_{{utype}}>(<npy_{{nptype}}>low)
+        if size is None:
+            with lock:
+                rk_random_{{utype}}_fill(off, rng, 1, &out_val, state)
+            return np.{{otype}}(<npy_{{nptype}}>out_val)
+        else:
+            out_arr = <ndarray>np.empty(size, np.{{nptype}})
+            cnt = PyArray_SIZE(out_arr)
+            out_data = <npy_{{utype}} *>PyArray_DATA(out_arr)
+            with lock, nogil:
+                rk_random_{{utype}}_fill(off, rng, cnt, out_data, state)
+            return out_arr
+
+    # Array path
+    low_arr = <ndarray>low
+    high_arr = <ndarray>high
+    if np.any(np.less(low_arr, {{lb}})):
+        raise ValueError('low is out of bounds for {{nptype}}')
+    if np.any(np.greater(high_arr, {{ub}})):
+        raise ValueError('high is out of bounds for {{nptype}}')
+    if np.any(np.greater_equal(low_arr, high_arr)):
+        raise ValueError('low >= high')
+
+    low_arr = <ndarray>PyArray_FROM_OTF(low, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+    high_arr = <ndarray>PyArray_FROM_OTF(high, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+
+    if size is not None:
+        out_arr = <ndarray>np.empty(size, np.{{otype}})
+    else:
+        it = <broadcast>PyArray_MultiIterNew(2, <void *>low_arr, <void *>high_arr)
+        out_arr = <ndarray>np.empty(it.shape, np.{{otype}})
+
+    it = <broadcast>PyArray_MultiIterNew(3, <void *>low_arr, <void *>high_arr, <void *>out_arr)
+    out_data = <npy_{{utype}} *>PyArray_DATA(out_arr)
+    n = PyArray_SIZE(out_arr)
+    mask = last_rng = 0
+    with lock, nogil:
+        for i in range(n):
+            low_v = (<npy_{{nptype_up}}*>PyArray_MultiIter_DATA(it, 0))[0]
+            high_v = (<npy_{{nptype_up}}*>PyArray_MultiIter_DATA(it, 1))[0]
+            rng = <npy_{{utype}}>((high_v - 1) - low_v)
+            off = <npy_{{utype}}>(<npy_{{nptype_up}}>low_v)
+
+            if rng != last_rng:
+                # Smallest bit mask >= max
+                mask = <npy_{{utype}}>_gen_mask(rng)
+            # TODO: Pass mask?
+            out_data[i] = rk_random_{{utype}}(off, rng, &buf, &buf_rem, state);
+
+            PyArray_MultiIter_NEXT(it)
+
+    return out_arr
+{{endfor}}
+
+
+{{
+py:
+big_bc_ctypes = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
+                 ('int64', 'uint64', 'NPY_INT64', '-0x8000000000000000LL', '0x7FFFFFFFFFFFFFFFLL' )
+)}}
+{{for  nptype, utype, npctype, lb, ub in big_bc_ctypes}}
+{{ py: otype = nptype}}
+cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object rngstate, object lock):
+    """
+    _rand_{{nptype}}(low, high, size, *state, lock)
+
+    Return random np.{{nptype}} integers between `low` and `high`, inclusive.
+
+    Return random integers from the "discrete uniform" distribution in the
+    closed interval [`low`, `high`).  If `high` is None (the default),
+    then results are from [0, `low`). On entry the arguments are presumed
+    to have been validated for size and order for the np.{{nptype}} type.
+
+    Parameters
+    ----------
+    low : int or array-like
+        Lowest (signed) integer to be drawn from the distribution (unless
+        ``high=None``, in which case this parameter is the *highest* such
+        integer).
+    high : int or array-like
+        If provided, the largest (signed) integer to be drawn from the
+        distribution (see above for behavior if ``high=None``).
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn.  Default is None, in which case a
+        single value is returned.
+    state : augmented random state
+        State to use in the core random number generators
+    lock : threading.Lock
+        Lock to prevent multiple using a single RandomState simultaneously
+
+    Returns
+    -------
+    out : python scalar or ndarray of np.{{nptype}}
+          `size`-shaped array of random integers from the appropriate
+          distribution, or a single such random int if `size` not provided.
+    """
+    cdef ndarray low_arr, high_arr, out_arr, highm1_arr
+    cdef npy_intp i, cnt
+    cdef broadcast it
+    cdef object closed_upper
+    cdef npy_uint64 *out_data
+    cdef npy_{{nptype}} *highm1_data
+    cdef npy_{{nptype}} low_v, high_v
+    cdef npy_uint64 rng, last_rng, val, mask, off, out_val
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
+
+    low = np.asarray(low)
+    high = np.asarray(high)
+    if low.shape == high.shape == ():
+        low = int(low) # TODO: Cast appropriately?
+        high = int(high) # TODO: Cast appropriately?
+        high -= 1  # Use a closed interval
+
+        if low < {{lb}}:
+            raise ValueError("low is out of bounds for {{nptype}}")
+        if high > {{ub}}:
+            raise ValueError("high is out of bounds for {{nptype}}")
+        if low > high:
+            raise ValueError("low >= high")
+
+        rng = <npy_{{utype}}>(high - low)
+        off = <npy_{{utype}}>(<npy_{{nptype}}>low)
+        if size is None:
+            with lock:
+                rk_random_{{utype}}_fill(off, rng, 1, &out_val, state)
+            return np.{{otype}}(<npy_{{nptype}}>out_val)
+        else:
+            out_arr = <ndarray>np.empty(size, np.{{nptype}})
+            cnt = PyArray_SIZE(out_arr)
+            out_data = <npy_{{utype}} *>PyArray_DATA(out_arr)
+            with lock, nogil:
+                rk_random_{{utype}}_fill(off, rng, cnt, out_data, state)
+            return out_arr
+
+    low_arr = <ndarray>low
+    high_arr = <ndarray>high
+
+    if np.any(np.less(low_arr, {{lb}})):
+        raise ValueError('low is out of bounds for {{nptype}}')
+
+    highm1_arr = <ndarray>np.empty_like(high_arr, dtype=np.{{nptype}})
+    highm1_data = <npy_{{nptype}} *>PyArray_DATA(highm1_arr)
+    n = PyArray_SIZE(high_arr)
+    flat = high_arr.flat
+    for i in range(n):
+        closed_upper = int(flat[i]) - 1
+        if closed_upper > {{ub}}:
+            raise ValueError('high is out of bounds for {{nptype}}')
+        if closed_upper < {{lb}}:
+            raise ValueError('low >= high')
+
+        highm1_data[i] = <npy_{{nptype}}>closed_upper
+
+    if np.any(np.greater(low_arr, highm1_arr)):
+        raise ValueError('low >= high')
+
+    high_arr = highm1_arr
+    low_arr = <ndarray>PyArray_FROM_OTF(low, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+
+    if size is not None:
+        out_arr = <ndarray>np.empty(size, np.{{nptype}})
+    else:
+        it = <broadcast>PyArray_MultiIterNew(2, <void *>low_arr, <void *>high_arr)
+        out_arr = <ndarray>np.empty(it.shape, np.{{nptype}})
+
+    it = <broadcast>PyArray_MultiIterNew(3, <void *>low_arr, <void *>high_arr, <void *>out_arr)
+    out_data = <npy_uint64 *>PyArray_DATA(out_arr)
+    n = PyArray_SIZE(out_arr)
+    mask = last_rng = 0
+    with lock, nogil:
+        for i in range(n):
+            low_v = (<npy_{{nptype}}*>PyArray_MultiIter_DATA(it, 0))[0]
+            high_v = (<npy_{{nptype}}*>PyArray_MultiIter_DATA(it, 1))[0]
+            rng = <npy_{{utype}}>(high_v - low_v) # No -1 here since implemented above
+            off = <npy_{{utype}}>low_v
+
+            if rng != last_rng:
+                mask = _gen_mask(rng)
+            # TODO: Pass mask?
+            out_data[i] = rk_random_{{utype}}(off, rng, state);
+            PyArray_MultiIter_NEXT(it)
+
+    return out_arr
 {{endfor}}
