@@ -6933,5 +6933,46 @@ def test_equal_override():
         assert_equal(array != my_always_equal, 'ne')
 
 
+def test_npymath_complex():
+    # Smoketest npymath functions
+    from numpy.core.multiarray_tests import (
+        npy_cabs, npy_carg)
+
+    funcs = {npy_cabs: np.absolute,
+             npy_carg: np.angle}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.complex64, np.complex128, np.clongdouble)
+
+    for fun, npfun in funcs.items():
+        for x, y in itertools.product(vals, vals):
+            for t in types:
+                z = t(complex(x, y))
+                got = fun(z)
+                expected = npfun(z)
+                assert_allclose(got, expected)
+
+
+def test_npymath_real():
+    # Smoketest npymath functions
+    from numpy.core.multiarray_tests import (
+        npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh)
+
+    funcs = {npy_log10: np.log10,
+             npy_cosh: np.cosh,
+             npy_sinh: np.sinh,
+             npy_tan: np.tan,
+             npy_tanh: np.tanh}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.float32, np.float64, np.longdouble)
+
+    with np.errstate(all='ignore'):
+        for fun, npfun in funcs.items():
+            for x, t in itertools.product(vals, types):
+                z = t(x)
+                got = fun(z)
+                expected = npfun(z)
+                assert_allclose(got, expected)
+
+
 if __name__ == "__main__":
     run_module_suite()
