@@ -1560,6 +1560,37 @@ extint_ceildiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
 }
 
 
+static char get_fpu_mode_doc[] = (
+    "get_fpu_mode()\n"
+    "\n"
+    "Get the current FPU control word, in a platform-dependent format.\n"
+    "Returns None if not implemented on current platform.");
+
+static PyObject *
+get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+
+#if defined(_MSC_VER)
+    {
+        unsigned int result = 0;
+        result = _controlfp(0, 0);
+        return PyLong_FromLongLong(result);
+    }
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+    {
+        unsigned short cw = 0;
+        __asm__("fstcw %w0" : "=m" (cw));
+        return PyLong_FromLongLong(cw);
+    }
+#else
+    return Py_RETURN_NONE;
+#endif
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -1650,6 +1681,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"extint_ceildiv_128_64",
         extint_ceildiv_128_64,
         METH_VARARGS, NULL},
+    {"get_fpu_mode",
+        get_fpu_mode,
+        METH_VARARGS, get_fpu_mode_doc},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
