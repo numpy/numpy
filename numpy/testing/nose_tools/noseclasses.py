@@ -7,6 +7,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import sys
 import doctest
 import inspect
 
@@ -315,6 +316,31 @@ class KnownFailurePlugin(ErrorClassPlugin):
             self.enabled = False
 
 KnownFailure = KnownFailurePlugin   # backwards compat
+
+
+class FPUModeCheckPlugin(Plugin):
+    """
+    Plugin that checks the FPU mode before and after each test,
+    raising failures if the test changed the mode.
+    """
+
+    def prepareTestCase(self, test):
+        from numpy.core.multiarray_tests import get_fpu_mode
+
+        def run(result):
+            old_mode = get_fpu_mode()
+            test.test(result)
+            new_mode = get_fpu_mode()
+
+            if old_mode != new_mode:
+                try:
+                    raise AssertionError(
+                        "FPU mode changed from {0:#x} to {1:#x} during the "
+                        "test".format(old_mode, new_mode))
+                except AssertionError:
+                    result.addFailure(test, sys.exc_info())
+
+        return run
 
 
 # Class allows us to save the results of the tests in runTests - see runTests
