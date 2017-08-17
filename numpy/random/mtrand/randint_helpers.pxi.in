@@ -51,12 +51,12 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
           `size`-shaped array of random integers from the appropriate
           distribution, or a single such random int if `size` not provided.
     """
-    cdef npy_{{utype}} rng, last_rng, off, val, mask, out_val
+    cdef npy_{{utype}} rng, off, val, out_val
     cdef npy_uint32 buf
     cdef npy_{{utype}} *out_data
     cdef npy_{{nptype_up}} low_v, high_v
     cdef ndarray low_arr, high_arr, out_arr
-    cdef npy_intp i, cnt
+    cdef npy_intp i, cnt, low_ndim, high_ndim
     cdef broadcast it
     cdef int buf_rem = 0
     cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
@@ -64,7 +64,10 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
 
     low = np.asarray(low)
     high = np.asarray(high)
-    if low.shape == high.shape == ():
+    low_ndim = PyArray_NDIM(<ndarray>low)
+    high_ndim = PyArray_NDIM(<ndarray>high)
+    if ((low_ndim == 0 or (low_ndim==1 and low.size==1 and size is not None)) and
+            (high_ndim == 0 or (high_ndim==1 and high.size==1 and size is not None))):
         low = int(low) 
         high = int(high)
 
@@ -112,7 +115,6 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
     it = <broadcast>PyArray_MultiIterNew(3, <void *>low_arr, <void *>high_arr, <void *>out_arr)
     out_data = <npy_{{utype}} *>PyArray_DATA(out_arr)
     n = PyArray_SIZE(out_arr)
-    mask = last_rng = 0
     with lock, nogil:
         for i in range(n):
             low_v = (<npy_{{nptype_up}}*>PyArray_MultiIter_DATA(it, 0))[0]
@@ -172,18 +174,21 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
           distribution, or a single such random int if `size` not provided.
     """
     cdef ndarray low_arr, high_arr, out_arr, highm1_arr
-    cdef npy_intp i, cnt
+    cdef npy_intp i, cnt, low_ndim, high_ndim
     cdef broadcast it
     cdef object closed_upper
     cdef npy_uint64 *out_data
     cdef npy_{{nptype}} *highm1_data
     cdef npy_{{nptype}} low_v, high_v
-    cdef npy_uint64 rng, last_rng, val, mask, off, out_val
+    cdef npy_uint64 rng, val, off, out_val
     cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
     low = np.asarray(low)
     high = np.asarray(high)
-    if low.shape == high.shape == ():
+    low_ndim = PyArray_NDIM(<ndarray>low)
+    high_ndim = PyArray_NDIM(<ndarray>high)
+    if ((low_ndim == 0 or (low_ndim==1 and low.size==1 and size is not None)) and
+            (high_ndim == 0 or (high_ndim==1 and high.size==1 and size is not None))):
         low = int(low)
         high = int(high)
         high -= 1  # Use a closed interval
@@ -243,7 +248,6 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
     it = <broadcast>PyArray_MultiIterNew(3, <void *>low_arr, <void *>high_arr, <void *>out_arr)
     out_data = <npy_uint64 *>PyArray_DATA(out_arr)
     n = PyArray_SIZE(out_arr)
-    mask = last_rng = 0
     with lock, nogil:
         for i in range(n):
             low_v = (<npy_{{nptype}}*>PyArray_MultiIter_DATA(it, 0))[0]
