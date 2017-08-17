@@ -108,6 +108,10 @@ the result is always a view on the original masked array.
 This breaks any code that used ``masked_arr.squeeze() is np.ma.masked``, but
 fixes code that writes to the result of `.squeeze()`.
 
+Broadcasting for ``randint``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to broadcast both the ``low`` and ``high`` arguments in
+``np.random.randint``.
 
 C API changes
 =============

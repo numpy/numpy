@@ -154,6 +154,11 @@ class TestRandint(object):
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
 
+            assert_raises(ValueError, self.rfunc, [lbnd - 1], ubnd, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [lbnd], [ubnd + 1], dtype=dt)
+            assert_raises(ValueError, self.rfunc, [ubnd], [lbnd], dtype=dt)
+            assert_raises(ValueError, self.rfunc, 1, [0], dtype=dt)
+
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
@@ -161,12 +166,15 @@ class TestRandint(object):
 
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt], tgt + 1, size=1000, dtype=dt), tgt)
 
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc(tgt, [tgt + 1], size=1000, dtype=dt), tgt)
 
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt], [tgt + 1], size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
         # Test for ticket #1690
@@ -229,6 +237,26 @@ class TestRandint(object):
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
+
+    def test_repeatability_broadcasting(self):
+        
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
+            # view as little endian for hash
+            np.random.seed(1234)
+            val = self.rfunc(lbnd, ubnd, size=1000, dtype=dt)
+
+            np.random.seed(1234)
+            val_bc = self.rfunc([lbnd] * 1000, ubnd, dtype=dt)
+            
+            assert_array_equal(val, val_bc)
+
+            np.random.seed(1234)
+            val_bc = self.rfunc([lbnd] * 1000, [ubnd] * 1000, dtype=dt)
+            
+            assert_array_equal(val, val_bc)
 
     def test_int64_uint64_corner_case(self):
         # When stored in Numpy arrays, `lbnd` is casted
@@ -1592,23 +1620,22 @@ class TestSingleEltArrayInput(object):
             out = func(self.argOne, argTwo[0])
             assert_equal(out.shape, self.tgtShape)
 
-# TODO: Uncomment once randint can broadcast arguments
-#    def test_randint(self):
-#        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
-#                 np.int32, np.uint32, np.int64, np.uint64]
-#        func = np.random.randint
-#        high = np.array([1])
-#        low = np.array([0])
-#
-#        for dt in itype:
-#            out = func(low, high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low[0], high, dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
-#
-#            out = func(low, high[0], dtype=dt)
-#            self.assert_equal(out.shape, self.tgtShape)
+    def test_randint(self):
+        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
+                 np.int32, np.uint32, np.int64, np.uint64]
+        func = np.random.randint
+        high = np.array([1])
+        low = np.array([0])
+
+        for dt in itype:
+            out = func(low, high, dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
+
+            out = func(low[0], high, dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
+
+            out = func(low, high[0], dtype=dt)
+            assert_equal(out.shape, self.tgtShape)
 
     def test_three_arg_funcs(self):
         funcs = [np.random.noncentral_f, np.random.triangular,

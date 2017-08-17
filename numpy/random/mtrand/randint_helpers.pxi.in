@@ -1,106 +1,22 @@
 """
 Template for each `dtype` helper function in `np.random.randint`.
 """
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int8_t, int16_t, int32_t, int64_t, intptr_t)
 
-{{py:
-
-dtypes = (
-    ('bool', 'bool', 'bool_'),
-    ('int8', 'uint8', 'int8'),
-    ('int16', 'uint16', 'int16'),
-    ('int32', 'uint32', 'int32'),
-    ('int64', 'uint64', 'int64'),
-    ('uint8', 'uint8', 'uint8'),
-    ('uint16', 'uint16', 'uint16'),
-    ('uint32', 'uint32', 'uint32'),
-    ('uint64', 'uint64', 'uint64'),
-)
-
-def get_dispatch(dtypes):
-    for npy_dt, npy_udt, np_dt in dtypes:
-        yield npy_dt, npy_udt, np_dt
-}}
-
-{{for npy_dt, npy_udt, np_dt in get_dispatch(dtypes)}}
-
-def _rand_{{npy_dt}}(low, high, size, rngstate):
-    """
-    _rand_{{npy_dt}}(low, high, size, rngstate)
-
-    Return random np.{{np_dt}} integers between ``low`` and ``high``, inclusive.
-
-    Return random integers from the "discrete uniform" distribution in the
-    closed interval [``low``, ``high``). On entry the arguments are presumed
-    to have been validated for size and order for the np.{{np_dt}} type.
-
-    Parameters
-    ----------
-    low : int
-        Lowest (signed) integer to be drawn from the distribution.
-    high : int
-        Highest (signed) integer to be drawn from the distribution.
-    size : int or tuple of ints
-        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-        ``m * n * k`` samples are drawn.  Default is None, in which case a
-        single value is returned.
-    rngstate : encapsulated pointer to rk_state
-        The specific type depends on the python version. In Python 2 it is
-        a PyCObject, in Python 3 a PyCapsule object.
-
-    Returns
-    -------
-    out : python integer or ndarray of np.{{np_dt}}
-          `size`-shaped array of random integers from the appropriate
-          distribution, or a single such random int if `size` not provided.
-
-    """
-    cdef npy_{{npy_udt}} off, rng, buf
-    cdef npy_{{npy_udt}} *out
-    cdef ndarray array "arrayObject"
-    cdef npy_intp cnt
-    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
-
-    rng = <npy_{{npy_udt}}>(high - low)
-    off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low)
-
-    if size is None:
-        rk_random_{{npy_udt}}_fill(off, rng, 1, &buf, state)
-        return np.{{np_dt}}(<npy_{{npy_dt}}>buf)
-    else:
-        array = <ndarray>np.empty(size, np.{{np_dt}})
-        cnt = PyArray_SIZE(array)
-        array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
-        with nogil:
-            rk_random_{{npy_udt}}_fill(off, rng, cnt, array_data, state)
-        return array
-
-{{endfor}}
-
-cdef inline npy_uint64 _gen_mask(npy_uint64 max_val) nogil:
-    # Smallest bit mask >= max
-    cdef npy_uint64 mask = max_val
-    mask |= mask >> 1
-    mask |= mask >> 2
-    mask |= mask >> 4
-    mask |= mask >> 8
-    mask |= mask >> 16
-    mask |= mask >> 32
-    return mask
 {{
 py:
-bc_ctypes = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000ULL'),
-          ('uint16', 'uint16', 'uint32', 'NPY_UINT32', 1, 16, 0, '0X10000UL'),
-          ('uint8', 'uint8', 'uint16', 'NPY_UINT16', 3, 8, 0, '0X100UL'),
-          ('bool','bool', 'uint8', 'NPY_UINT8', 31, 1, 0, '0x2UL'),
-          ('int32', 'uint32', 'uint64', 'NPY_INT64', 0, 0, '-0x80000000LL', '0x80000000LL'),
-          ('int16', 'uint16', 'uint32', 'NPY_INT32', 1, 16, '-0x8000LL', '0x8000LL' ),
-          ('int8', 'uint8', 'uint16', 'NPY_INT16', 3, 8, '-0x80LL', '0x80LL' ),
-)}}
-{{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in bc_ctypes}}
+dtypes = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, '0X100000000ULL'),
+          ('uint16', 'uint16', 'uint32', 'NPY_UINT32', 0, '0X10000UL'),
+          ('uint8', 'uint8', 'uint16', 'NPY_UINT16', 0, '0X100UL'),
+          ('bool', 'bool', 'uint8', 'NPY_UINT8', 0, '0x2UL'),
+          ('int32', 'uint32', 'uint64', 'NPY_INT64', '-0x80000000LL', '0x80000000LL'),
+          ('int16', 'uint16', 'uint32', 'NPY_INT32', '-0x8000LL', '0x8000LL' ),
+          ('int8', 'uint8', 'uint16', 'NPY_INT16', '-0x80LL', '0x80LL' ),
+)
+}}
+
+{{for  nptype, utype, nptype_up, apitype, lb, ub in dtypes}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
-cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object rngstate, object lock):
+cdef object _rand_{{nptype}}(object low, object high, object size, object rngstate, object lock):
     """
     _rand_{{nptype}}(low, high, size, *state, lock)
 
@@ -149,8 +65,8 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
     low = np.asarray(low)
     high = np.asarray(high)
     if low.shape == high.shape == ():
-        low = int(low) # TODO: Cast appropriately?
-        high = int(high) # TODO: Cast appropriately?
+        low = int(low) 
+        high = int(high)
 
         if low < {{lb}}:
             raise ValueError("low is out of bounds for {{nptype}}")
@@ -184,8 +100,8 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
     if np.any(np.greater_equal(low_arr, high_arr)):
         raise ValueError('low >= high')
 
-    low_arr = <ndarray>PyArray_FROM_OTF(low, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
-    high_arr = <ndarray>PyArray_FROM_OTF(high, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+    low_arr = <ndarray>PyArray_FROM_OTF(low, {{apitype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+    high_arr = <ndarray>PyArray_FROM_OTF(high, {{apitype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
 
     if size is not None:
         out_arr = <ndarray>np.empty(size, np.{{otype}})
@@ -204,10 +120,6 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
             rng = <npy_{{utype}}>((high_v - 1) - low_v)
             off = <npy_{{utype}}>(<npy_{{nptype_up}}>low_v)
 
-            if rng != last_rng:
-                # Smallest bit mask >= max
-                mask = <npy_{{utype}}>_gen_mask(rng)
-            # TODO: Pass mask?
             out_data[i] = rk_random_{{utype}}(off, rng, &buf, &buf_rem, state);
 
             PyArray_MultiIter_NEXT(it)
@@ -218,12 +130,13 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
 
 {{
 py:
-big_bc_ctypes = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
-                 ('int64', 'uint64', 'NPY_INT64', '-0x8000000000000000LL', '0x7FFFFFFFFFFFFFFFLL' )
-)}}
-{{for  nptype, utype, npctype, lb, ub in big_bc_ctypes}}
+dtypes64 = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
+            ('int64', 'uint64', 'NPY_INT64', '-0x8000000000000000LL', '0x7FFFFFFFFFFFFFFFLL' )
+)
+}}
+{{for  nptype, utype, apitype, lb, ub in dtypes64}}
 {{ py: otype = nptype}}
-cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object rngstate, object lock):
+cdef object _rand_{{nptype}}(object low, object high, object size, object rngstate, object lock):
     """
     _rand_{{nptype}}(low, high, size, *state, lock)
 
@@ -271,8 +184,8 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
     low = np.asarray(low)
     high = np.asarray(high)
     if low.shape == high.shape == ():
-        low = int(low) # TODO: Cast appropriately?
-        high = int(high) # TODO: Cast appropriately?
+        low = int(low)
+        high = int(high)
         high -= 1  # Use a closed interval
 
         if low < {{lb}}:
@@ -319,7 +232,7 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
         raise ValueError('low >= high')
 
     high_arr = highm1_arr
-    low_arr = <ndarray>PyArray_FROM_OTF(low, {{npctype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
+    low_arr = <ndarray>PyArray_FROM_OTF(low, {{apitype}}, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
 
     if size is not None:
         out_arr = <ndarray>np.empty(size, np.{{nptype}})
@@ -338,9 +251,6 @@ cdef object _rand_{{nptype}}_TEST(object low, object high, object size, object r
             rng = <npy_{{utype}}>(high_v - low_v) # No -1 here since implemented above
             off = <npy_{{utype}}>low_v
 
-            if rng != last_rng:
-                mask = _gen_mask(rng)
-            # TODO: Pass mask?
             out_data[i] = rk_random_{{utype}}(off, rng, state);
             PyArray_MultiIter_NEXT(it)
 
