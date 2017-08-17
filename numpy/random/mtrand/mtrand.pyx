@@ -4666,6 +4666,11 @@ cdef class RandomState:
         samples : ndarray,
             The drawn samples, of shape (size, alpha.ndim).
 
+        Raises
+        -------
+        ValueError
+            If any value in alpha is less than or equal to zero
+
         Notes
         -----
         .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
@@ -4731,6 +4736,8 @@ cdef class RandomState:
 
         k           = len(alpha)
         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        if np.any(np.less_equal(alpha_arr, 0)):
+            raise ValueError('alpha <= 0')
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
         shape = _shape_from_size(size, k)

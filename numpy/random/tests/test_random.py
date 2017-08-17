@@ -525,6 +525,11 @@ class TestRandomDist(object):
 
         assert_raises(TypeError, np.random.dirichlet, p, float(1))
 
+    def test_dirichlet_bad_alpha(self):
+        # gh-2089
+        alpha = np.array([5.4e-01, -1.0e-16])
+        assert_raises(ValueError, np.random.mtrand.dirichlet, alpha)
+
     def test_exponential(self):
         np.random.seed(self.seed)
         actual = np.random.exponential(1.1234, size=(3, 2))
