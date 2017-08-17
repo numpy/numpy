@@ -3,6 +3,7 @@
 #include <Python.h>
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "common.h"
@@ -1586,9 +1587,97 @@ get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
         return PyLong_FromLongLong(cw);
     }
 #else
-    return Py_RETURN_NONE;
+    Py_RETURN_NONE;
 #endif
 }
+
+/*
+ * npymath wrappers
+ */
+
+/**begin repeat
+ * #name = cabs, carg#
+ */
+
+/**begin repeat1
+ * #itype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #ITYPE = NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
+ * #otype = npy_float, npy_double, npy_longdouble#
+ * #OTYPE = NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE#
+ * #suffix= f, , l#
+ */
+
+static PyObject *
+call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *z_py = NULL, *z_arr = NULL, *w_arr = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &z_py)) {
+        return NULL;
+    }
+
+    z_arr = PyArray_FROMANY(z_py, @ITYPE@, 0, 0, NPY_ARRAY_CARRAY_RO);
+    if (z_arr == NULL) {
+        return NULL;
+    }
+
+    w_arr = PyArray_SimpleNew(0, NULL, @OTYPE@);
+    if (w_arr == NULL) {
+        Py_DECREF(z_arr);
+        return NULL;
+    }
+
+    *(@otype@*)PyArray_DATA((PyArrayObject *)w_arr) =
+        npy_@name@@suffix@(*(@itype@*)PyArray_DATA((PyArrayObject *)z_arr));
+
+    Py_DECREF(z_arr);
+    return w_arr;
+}
+
+/**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ * #name = log10, cosh, sinh, tan, tanh#
+ */
+
+/**begin repeat1
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #TYPE = NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE#
+ * #suffix= f, , l#
+ */
+
+static PyObject *
+call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *z_py = NULL, *z_arr = NULL, *w_arr = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &z_py)) {
+        return NULL;
+    }
+
+    z_arr = PyArray_FROMANY(z_py, @TYPE@, 0, 0, NPY_ARRAY_CARRAY_RO);
+    if (z_arr == NULL) {
+        return NULL;
+    }
+
+    w_arr = PyArray_SimpleNew(0, NULL, @TYPE@);
+    if (w_arr == NULL) {
+        Py_DECREF(z_arr);
+        return NULL;
+    }
+
+    *(@type@*)PyArray_DATA((PyArrayObject *)w_arr) =
+        npy_@name@@suffix@(*(@type@*)PyArray_DATA((PyArrayObject *)z_arr));
+
+    Py_DECREF(z_arr);
+    return w_arr;
+}
+
+/**end repeat1**/
+
+/**end repeat**/
 
 
 static PyMethodDef Multiarray_TestsMethods[] = {
@@ -1684,6 +1773,34 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
+/**begin repeat
+ * #name = cabs, carg#
+ */
+
+/**begin repeat1
+ * #suffix = f, , l#
+ */
+    {"npy_@name@@suffix@",
+        call_npy_@name@@suffix@,
+        METH_VARARGS, NULL},
+/**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ * #name = log10, cosh, sinh, tan, tanh#
+ */
+
+/**begin repeat1
+ * #suffix= f, , l#
+ */
+    {"npy_@name@@suffix@",
+        call_npy_@name@@suffix@,
+        METH_VARARGS, NULL},
+/**end repeat1**/
+
+/**end repeat**/
+
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

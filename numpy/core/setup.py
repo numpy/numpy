@@ -934,7 +934,8 @@ def configuration(parent_package='',top_path=None):
                     sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
                              join('src', 'private', 'mem_overlap.c')],
                     depends=[join('src', 'private', 'mem_overlap.h'),
-                             join('src', 'private', 'npy_extint128.h')])
+                             join('src', 'private', 'npy_extint128.h')],
+                    libraries=['npymath'])
 
     #######################################################################
     #                        operand_flag_tests module                    #
