@@ -1810,7 +1810,7 @@ def det(a):
 
 # Linear Least Squares
 
-def lstsq(a, b, rcond=-1):
+def lstsq(a, b, rcond=None):
     """
     Return the least-squares solution to a linear matrix equation.
 
@@ -1909,6 +1909,8 @@ def lstsq(a, b, rcond=-1):
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
+    if rcond is None:
+        rcond = finfo(t).eps*ldb
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
