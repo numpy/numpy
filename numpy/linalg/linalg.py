@@ -1810,7 +1810,7 @@ def det(a):
 
 # Linear Least Squares
 
-def lstsq(a, b, rcond=-1):
+def lstsq(a, b, rcond="warn"):
     """
     Return the least-squares solution to a linear matrix equation.
 
@@ -1835,6 +1835,13 @@ def lstsq(a, b, rcond=-1):
         For the purposes of rank determination, singular values are treated
         as zero if they are smaller than `rcond` times the largest singular
         value of `a`.
+
+        .. versionchanged:: 1.14.0
+           If not set, a FutureWarning is given. The previous default
+           of ``-1`` will use the machine precision as `rcond` parameter,
+           the new default will use the machine precision times `max(M, N)`.
+           To silence the warning and use the new default, use ``rcond=None``,
+           to keep using the old behavior, use ``rcond=-1``.
 
     Returns
     -------
@@ -1909,6 +1916,20 @@ def lstsq(a, b, rcond=-1):
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
+    # Determine default rcond value
+    if rcond == "warn":
+        # 2017-08-19, 1.14.0
+        warnings.warn("`rcond` parameter will change to the default of "
+                      "machine precision times ``max(M, N)`` where M and N "
+                      "are the input matrix dimensions.\n"
+                      "To use the future default and silence this warning "
+                      "we advise to pass `rcond=None`, to keep using the old, "
+                      "explicitly pass `rcond=-1`.",
+                      FutureWarning, stacklevel=2)
+        rcond = -1
+    if rcond is None:
+        rcond = finfo(t).eps * ldb
+
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)

@@ -793,7 +793,7 @@ class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
-        x, residuals, rank, sv = linalg.lstsq(a, b)
+        x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m <= n:
             assert_almost_equal(b, dot(a, x))
             assert_equal(rank, m)
@@ -814,6 +814,23 @@ class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
         assert_(imply(isinstance(b, matrix), isinstance(residuals, matrix)))
 
+    def test_future_rcond(self):
+        a = np.array([[0., 1.,  0.,  1.,  2.,  0.],
+                      [0., 2.,  0.,  0.,  1.,  0.],
+                      [1., 0.,  1.,  0.,  0.,  4.],
+                      [0., 0.,  0.,  2.,  3.,  0.]]).T
+
+        b = np.array([1, 0, 0, 0, 0, 0])
+        with suppress_warnings() as sup:
+            w = sup.record(FutureWarning, "`rcond` parameter will change")
+            x, residuals, rank, s = linalg.lstsq(a, b)
+            assert_(rank == 4)
+            x, residuals, rank, s = linalg.lstsq(a, b, rcond=-1)
+            assert_(rank == 4)
+            x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+            assert_(rank == 3)
+            # Warning should be raised exactly once (first command)
+            assert_(len(w) == 1)
 
 class TestMatrixPower(object):
     R90 = array([[0, 1], [-1, 0]])

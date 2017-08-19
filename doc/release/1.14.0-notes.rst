@@ -36,6 +36,12 @@ This translation now gives a warning explaining what translation is occuring.
 In future, the translation will be disabled, and the first example will be made
 equivalent to the second.
 
+``np.linalg.lstsq`` default for ``rcond`` will be changed
+---------------------------------------------------------
+
+The ``rcond`` parameter to ``np.linalg.lstsq`` will change its default to the
+better value of machine precision times the maximum of the input matrix
+dimensions. A FutureWarning is given if the parameter is not passed explicitly.
 
 Build System Changes
 ====================
