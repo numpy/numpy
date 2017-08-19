@@ -174,10 +174,10 @@ static NPY_INLINE void
 PyArray_XDECREF_ERR(PyArrayObject *arr)
 {
     if (arr != NULL) {
-        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY) {
+        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT) {
             PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
             PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
         }
         Py_DECREF(arr);
     }

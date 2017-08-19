@@ -70,6 +70,12 @@ visible change in behavior is that if compiled with ``-DDEPRECATE_UPDATEIFCOPY``
 or if run on PyPy, and writeback resolution has not occurred before calling
 ``array_dealloc``, NumPy will now raise a DeprecationWarning.
 
+Additionally, deprecrate the NPY_ARRAY_UPDATEIFCOPY flag, replace it with
+NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT. This was done to encourage downstream
+consumers of the C-API to properly use the PyArray_ResolveUpdateIfCopy
+function. Calling ndarray creation functions such as PyArray_FromArray where
+flags uses NPY_ARRAY_UPDATEIFCOPY will raise a DeprecationWarning.
+
 New Features
 ============
 

@@ -208,7 +208,7 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
 
 _define_get(NPY_ARRAY_C_CONTIGUOUS, contiguous)
 _define_get(NPY_ARRAY_F_CONTIGUOUS, fortran)
-_define_get(NPY_ARRAY_UPDATEIFCOPY, updateifcopy)
+_define_get(NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT, updateifcopy)
 _define_get(NPY_ARRAY_OWNDATA, owndata)
 _define_get(NPY_ARRAY_ALIGNED, aligned)
 _define_get(NPY_ARRAY_WRITEABLE, writeable)
@@ -595,7 +595,7 @@ arrayflags_print(PyArrayFlagsObject *self)
                         "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
                         "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
                         "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
-                        "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));
+                        "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT));
 }
 
 

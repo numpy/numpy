@@ -327,7 +327,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     array = (PyArrayObject *)PyArray_FromArray((PyArrayObject *)array0, NULL,
-                                    NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                                    NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
     if (array == NULL) {
         goto fail;
     }

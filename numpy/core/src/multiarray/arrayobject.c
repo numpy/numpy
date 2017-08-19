@@ -112,7 +112,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
      * references.
      */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
-    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
     PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
 
     return 0;
@@ -383,7 +383,7 @@ PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
     if (fa && fa->base) {
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
+        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT) {
             /*
              * UPDATEIFCOPY means that fa->base's data
              * should be updated with the contents
@@ -394,7 +394,7 @@ PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
             int retval = 0;
             PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
                                                     NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
             retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
             if (retval < 0) {
                 /* this should never happen, how did the two copies of data
@@ -453,6 +453,9 @@ array_dealloc(PyArrayObject *self)
             DEPRECATE("UPDATEIFCOPY resolution in array_dealloc is "
                       "incompatible with PyPy and will be removed in "
                       "the future");
+            /* dealloc must not raise an error, even if warning filters are set
+             */
+            PyErr_Clear();
         }
 #endif
         /*
@@ -529,7 +532,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_ALIGNED");
     if (fobj->flags & NPY_ARRAY_WRITEABLE)
         printf(" NPY_WRITEABLE");
-    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
+    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT)
         printf(" NPY_UPDATEIFCOPY");
     printf("\n");
 

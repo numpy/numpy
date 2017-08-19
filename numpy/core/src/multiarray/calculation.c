@@ -118,7 +118,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
         if (rp == NULL) {
             goto fail;
         }
@@ -234,7 +234,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
         if (rp == NULL) {
             goto fail;
         }
@@ -1119,7 +1119,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
             oflags = NPY_ARRAY_FARRAY;
         else
             oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST;
+        oflags |= NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT | NPY_ARRAY_FORCECAST;
         Py_INCREF(indescr);
         newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {

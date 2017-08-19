@@ -1009,7 +1009,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
     }
     else {
-        fa->flags = (flags & ~NPY_ARRAY_UPDATEIFCOPY);
+        fa->flags = (flags & ~NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
     }
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
@@ -1703,7 +1703,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
-        if (flags & NPY_ARRAY_UPDATEIFCOPY) {
+        if ((flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT) ||
+            (flags & NPY_ARRAY_UPDATEIFCOPY)) {
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
                             "UPDATEIFCOPY used for non-array input.");
@@ -1811,6 +1812,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * NPY_ARRAY_NOTSWAPPED,
  * NPY_ARRAY_ENSURECOPY,
  * NPY_ARRAY_UPDATEIFCOPY,
+ * NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT,
  * NPY_ARRAY_FORCECAST,
  * NPY_ARRAY_ENSUREARRAY,
  * NPY_ARRAY_ELEMENTSTRIDES
@@ -1835,10 +1837,13 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * Fortran arrays are always behaved (aligned,
  * notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d).
  *
- * NPY_ARRAY_UPDATEIFCOPY flag sets this flag in the returned array if a copy
- * is made and the base argument points to the (possibly) misbehaved array.
- * When the new array is deallocated, the original array held in base
- * is updated with the contents of the new array.
+ * NPY_ARRAY_UPDATEIFCOPY is deprecated in favor of 
+ * NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT in 1.14
+
+ * NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT flag sets this flag in the returned
+ * array if a copy is made and the base argument points to the (possibly)
+ * misbehaved array. Before returning to python, PyArray_ResolveUpdateIfCopy
+ * must be called to update the contents of the orignal array from the copy.
  *
  * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
@@ -2005,7 +2010,16 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             return NULL;
         }
 
-        if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
+        if ((flags & NPY_ARRAY_UPDATEIFCOPY) ||
+            (flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT))  {
+            if (flags & NPY_ARRAY_UPDATEIFCOPY) {
+                if (DEPRECATE("Use NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT and"
+                        " be sure to call PyArray_ResolveUpdateIfCopy") < 0) {
+                    /* 2017-07-24, 1.14 */
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+            }
             Py_INCREF(arr);
             if (PyArray_SetUpdateIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
