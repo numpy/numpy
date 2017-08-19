@@ -305,11 +305,11 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
+    header = asbytes(_filter_header(header))
 
     hlen = len(header) + 1 # 1 for newline
-    padlen1 = ARRAY_ALIGN - ((MAGIC_LEN + 2 + hlen) % ARRAY_ALIGN)
-    padlen2 = ARRAY_ALIGN - ((MAGIC_LEN + 4 + hlen) % ARRAY_ALIGN)
+    padlen1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
+    padlen2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
 
     if hlen + padlen1 < 2**16 and version in (None, (1, 0)):
         version = (1, 0)
@@ -326,10 +326,10 @@ def _write_array_header(fp, d, version=None):
 
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a
-    # ARRAY_ALIGN byte boundary.  This supports memory mapping on systems
-    # like Linux where mmap() offset must be page-aligned.
-    header = header + ' '*topad + '\n'
-    header = asbytes(header)
+    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
+    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
+    # offset must be page-aligned (i.e. the beginning of the file).
+    header = header + b' '*topad + b'\n'
 
     fp.write(header_prefix)
     fp.write(header)
@@ -474,15 +474,15 @@ def _read_array_header(fp, version):
     # header.
     import struct
     if version == (1, 0):
-        hlength_str = _read_bytes(fp, 2, "array header length")
-        header_length = struct.unpack('<H', hlength_str)[0]
-        header = _read_bytes(fp, header_length, "array header")
+        hlength_type = '<H'
     elif version == (2, 0):
-        hlength_str = _read_bytes(fp, 4, "array header length")
-        header_length = struct.unpack('<I', hlength_str)[0]
-        header = _read_bytes(fp, header_length, "array header")
+        hlength_type = '<I'
     else:
         raise ValueError("Invalid version %r" % version)
+
+    hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
+    header_length = struct.unpack(hlength_type, hlength_str)[0]
+    header = _read_bytes(fp, header_length, "array header")
 
     # The header is a pretty-printed string representation of a literal
     # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
