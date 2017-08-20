@@ -311,6 +311,7 @@ def _write_array_header(fp, d, version=None):
     padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
     padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
 
+    # Which version(s) we write depends on the total header size; v1 has a max of 65535
     if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
         version = (1, 0)
         header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
