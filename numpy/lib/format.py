@@ -308,17 +308,17 @@ def _write_array_header(fp, d, version=None):
     header = asbytes(_filter_header(header))
 
     hlen = len(header) + 1 # 1 for newline
-    padlen1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
-    padlen2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
+    padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
+    padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
 
-    if hlen + padlen1 < 2**16 and version in (None, (1, 0)):
+    if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
         version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen1)
-        topad = padlen1
-    elif hlen + padlen2 < 2**32 and version in (None, (2, 0)):
+        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
+        topad = padlen_v1
+    elif hlen + padlen_v2 < 2**32 and version in (None, (2, 0)):
         version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen2)
-        topad = padlen2
+        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen_v2)
+        topad = padlen_v2
     else:
         msg = "Header length %s too big for version=%s"
         msg %= (hlen, version)
