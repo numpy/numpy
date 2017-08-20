@@ -183,6 +183,9 @@ cdef object _rand_{{nptype}}(object low, object high, object size, object rngsta
     cdef npy_intp i, cnt, low_ndim, high_ndim
     cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
+    if size is not None and np.prod(size) == 0:
+        return np.empty(size, np.{{nptype}})
+
     low = np.asarray(low)
     high = np.asarray(high)
     low_ndim = PyArray_NDIM(<ndarray>low)

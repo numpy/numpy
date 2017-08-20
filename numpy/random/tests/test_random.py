@@ -299,6 +299,14 @@ class TestRandint(object):
             assert_(not hasattr(sample, 'dtype'))
             assert_equal(type(sample), dt)
 
+    def test_zero_size(self):
+        # See gh-7203
+        for dt in self.itype:
+            sample = self.rfunc(0, 0, (3, 0, 4), dtype=dt)
+            assert sample.shape == (3, 0, 4)
+            assert sample.dtype == dt
+            assert self.rfunc(0, -10, 0, dtype=dt).shape == (0,)
+
 
 class TestRandomDist(object):
     # Make sure the random distribution returns the correct value for a
