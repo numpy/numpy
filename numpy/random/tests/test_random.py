@@ -159,6 +159,15 @@ class TestRandint(object):
             assert_raises(ValueError, self.rfunc, [ubnd], [lbnd], dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, [0], dtype=dt)
 
+    def test_bounds_checking_array(self):
+        for dt in self.itype:
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+            assert_raises(ValueError, self.rfunc, [lbnd - 1] * 2, [ubnd] * 2, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [lbnd] * 2, [ubnd + 1] * 2, dtype=dt)
+            assert_raises(ValueError, self.rfunc, ubnd, [lbnd] * 2, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [1] * 2, 0, dtype=dt)            
+
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
@@ -176,6 +185,27 @@ class TestRandint(object):
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
             assert_equal(self.rfunc([tgt], [tgt + 1], size=1000, dtype=dt), tgt)
 
+    def test_rng_zero_and_extremes_array(self):
+        size = 1000
+        for dt in self.itype:
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+
+            tgt = ubnd - 1
+            assert_equal(self.rfunc([tgt], [tgt + 1], size=size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, size=size, dtype=dt), tgt)
+
+            tgt = lbnd
+            assert_equal(self.rfunc([tgt], [tgt + 1], size=size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, size=size, dtype=dt), tgt)
+
+            tgt = (lbnd + ubnd) // 2
+            assert_equal(self.rfunc([tgt], [tgt + 1], size=size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, dtype=dt), tgt)
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, size=size, dtype=dt), tgt)            
+
     def test_full_range(self):
         # Test for ticket #1690
 
@@ -185,6 +215,20 @@ class TestRandint(object):
 
             try:
                 self.rfunc(lbnd, ubnd, dtype=dt)
+            except Exception as e:
+                raise AssertionError("No error should have been raised, "
+                                     "but one was with the following "
+                                     "message:\n\n%s" % str(e))
+
+    def test_full_range_array(self):
+        # Test for ticket #1690
+
+        for dt in self.itype:
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+
+            try:
+                self.rfunc([lbnd] * 2, [ubnd], dtype=dt)
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
@@ -204,6 +248,23 @@ class TestRandint(object):
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
+
+    def test_scalar_array_equiv(self):
+        for dt in self.itype:
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+
+            size = 1000
+            np.random.seed(1234)
+            scalar = self.rfunc(lbnd, ubnd, size=size, dtype=dt)
+
+            np.random.seed(1234)
+            scalar_array = self.rfunc([lbnd], [ubnd], size=size, dtype=dt)
+
+            np.random.seed(1234)
+            array = self.rfunc([lbnd] * size, [ubnd] * size, size=size, dtype=dt)
+            assert_array_equal(scalar, scalar_array)
+            assert_array_equal(scalar, array)
 
     def test_repeatability(self):
         import hashlib
@@ -298,6 +359,18 @@ class TestRandint(object):
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_(not hasattr(sample, 'dtype'))
             assert_equal(type(sample), dt)
+
+    def test_respect_dtype_array(self):
+        # See gh-7203
+        for dt in self.itype:
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+            dt = np.bool_ if dt is bool else dt
+
+            sample = self.rfunc([lbnd], [ubnd], dtype=dt)
+            assert_equal(sample.dtype, dt)
+            sample = self.rfunc([lbnd] * 2, [ubnd] * 2, dtype=dt)
+            assert_equal(sample.dtype, dt)
 
     def test_zero_size(self):
         # See gh-7203
