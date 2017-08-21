@@ -139,7 +139,7 @@ class TestRandint(object):
     rfunc = np.random.randint
 
     # valid integer/boolean types
-    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+    itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
@@ -147,8 +147,8 @@ class TestRandint(object):
 
     def test_bounds_checking(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
             assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
@@ -166,12 +166,12 @@ class TestRandint(object):
             assert_raises(ValueError, self.rfunc, [lbnd - 1] * 2, [ubnd] * 2, dtype=dt)
             assert_raises(ValueError, self.rfunc, [lbnd] * 2, [ubnd + 1] * 2, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, [lbnd] * 2, dtype=dt)
-            assert_raises(ValueError, self.rfunc, [1] * 2, 0, dtype=dt)            
+            assert_raises(ValueError, self.rfunc, [1] * 2, 0, dtype=dt)
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
@@ -204,14 +204,14 @@ class TestRandint(object):
             tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc([tgt], [tgt + 1], size=size, dtype=dt), tgt)
             assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, dtype=dt), tgt)
-            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, size=size, dtype=dt), tgt)            
+            assert_equal(self.rfunc([tgt] * size, [tgt + 1] * size, size=size, dtype=dt), tgt)
 
     def test_full_range(self):
         # Test for ticket #1690
 
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
             try:
                 self.rfunc(lbnd, ubnd, dtype=dt)
@@ -244,7 +244,7 @@ class TestRandint(object):
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+        vals = self.rfunc(0, 2, size=2**16, dtype=bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
@@ -300,10 +300,10 @@ class TestRandint(object):
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_repeatability_broadcasting(self):
-        
+
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
             # view as little endian for hash
             np.random.seed(1234)
@@ -311,12 +311,12 @@ class TestRandint(object):
 
             np.random.seed(1234)
             val_bc = self.rfunc([lbnd] * 1000, ubnd, dtype=dt)
-            
+
             assert_array_equal(val, val_bc)
 
             np.random.seed(1234)
             val_bc = self.rfunc([lbnd] * 1000, [ubnd] * 1000, dtype=dt)
-            
+
             assert_array_equal(val, val_bc)
 
     def test_int64_uint64_corner_case(self):
@@ -344,7 +344,7 @@ class TestRandint(object):
 
     def test_respect_dtype_singleton(self):
         # See gh-7203
-        for dt in self.itype:
+        for dt in self.itype[1:] + [np.bool_]:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
 
@@ -1215,13 +1215,13 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
-    
+
     def test_noncentral_f_small_df(self):
         self.setSeed()
         desired = np.array([6.869638627492048, 0.785880199263955])
         actual = np.random.noncentral_f(0.9, 0.9, 2, size=2)
         assert_array_almost_equal(actual, desired, decimal=14)
-        
+
     def test_chisquare(self):
         df = [1]
         bad_df = [-1]
