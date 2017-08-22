@@ -33,10 +33,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
