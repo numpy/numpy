@@ -1114,16 +1114,42 @@ class TestVectorize(object):
         r2 = np.cos(args)
         assert_array_almost_equal(r1, r2)
 
+    def test_decorator(self):
+        @vectorize
+        def addsubtract(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        @vectorize()
+        def addsubtract2(a, b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+
+        r = addsubtract([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
+        r = addsubtract2([0, 3, 6, 9], [1, 3, 5, 7])
+        assert_array_equal(r, [1, 6, 1, 2])
+
     def test_keywords(self):
 
+        args = np.array([1, 2, 3])
         def foo(a, b=1):
             return a + b
 
         f = vectorize(foo)
-        args = np.array([1, 2, 3])
         r1 = f(args)
         r2 = np.array([2, 3, 4])
         assert_array_equal(r1, r2)
+        r1 = f(args, 2)
+        r2 = np.array([3, 4, 5])
+        assert_array_equal(r1, r2)
+
+        f = vectorize()(foo)
         r1 = f(args, 2)
         r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
@@ -1197,6 +1223,7 @@ class TestVectorize(object):
         assert_array_equal(f(), 1)
 
     def test_assigning_docstring(self):
+        doc = "Provided documentation"
         def foo(x):
             """Original documentation"""
             return x
@@ -1204,8 +1231,13 @@ class TestVectorize(object):
         f = vectorize(foo)
         assert_equal(f.__doc__, foo.__doc__)
 
-        doc = "Provided documentation"
+        f = vectorize()(foo)
+        assert_equal(f.__doc__, foo.__doc__)
+
         f = vectorize(foo, doc=doc)
+        assert_equal(f.__doc__, doc)
+
+        f = vectorize(doc=doc)(foo)
         assert_equal(f.__doc__, doc)
 
     def test_UnboundMethod_ticket_1156(self):
@@ -1346,6 +1378,14 @@ class TestVectorize(object):
 
     def test_signature_otypes(self):
         f = vectorize(lambda x: x, signature='(n)->(n)', otypes=['float64'])
+        r = f([1, 2, 3])
+        assert_equal(r.dtype, np.dtype('float64'))
+        assert_array_equal(r, [1, 2, 3])
+
+    def test_signature_otypes_decorator(self):
+        @vectorize(signature='(n)->(n)', otypes=['float64'])
+        def f(x):
+            return x
         r = f([1, 2, 3])
         assert_equal(r.dtype, np.dtype('float64'))
         assert_array_equal(r, [1, 2, 3])

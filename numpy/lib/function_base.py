@@ -2536,8 +2536,11 @@ class vectorize(object):
 
     Parameters
     ----------
-    pyfunc : callable
+    pyfunc : callable, optional
         A python function or method.
+        This is optional since numpy version 1.14. When omitted, a
+        partially-initialized decorator is returned to support keyword
+        arguments when using decorator syntax.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -2569,8 +2572,10 @@ class vectorize(object):
 
     Returns
     -------
-    vectorized : callable
-        Vectorized function.
+    out : callable
+        If pyfunc was provided, the vectorized function.
+        Otherwise, a decorator (suitable for one-time use) which takes
+        ``pyfunc`` as its sole argument.
 
     Examples
     --------
@@ -2644,6 +2649,22 @@ class vectorize(object):
            [ 0.,  0.,  1.,  2.,  1.,  0.],
            [ 0.,  0.,  0.,  1.,  2.,  1.]])
 
+    Decorator syntax is supported.  The decorator can be called as
+    a function to provide keyword arguments.
+
+    >>> @np.vectorize
+    ... def identity(x):
+    ...     return x
+    ...
+    >>> @np.vectorize(otypes=[float])
+    ... def as_float(x):
+    ...     return x
+    ...
+    >>> identity([0, 1, 2, 3])
+    array([0, 1, 2, 3])
+    >>> as_float([0, 1, 2, 3])
+    array([0., 1., 2., 3.])
+
     See Also
     --------
     frompyfunc : Takes an arbitrary Python function and returns a ufunc
@@ -2669,17 +2690,13 @@ class vectorize(object):
            <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
-    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
+    def __init__(self, pyfunc=None, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
-        self.pyfunc = pyfunc
+        self.pyfunc = None    # deferred until second stage of intialization
         self.cache = cache
         self.signature = signature
         self._ufunc = None    # Caching to improve default performance
-
-        if doc is None:
-            self.__doc__ = pyfunc.__doc__
-        else:
-            self.__doc__ = doc
+        self._doc = doc
 
         if isinstance(otypes, str):
             for char in otypes:
@@ -2701,11 +2718,30 @@ class vectorize(object):
         else:
             self._in_and_out_core_dims = None
 
+        if pyfunc:
+            self._init_stage_2(pyfunc)
+        # otherwise, set pyfunc on next call
+
+    def _init_stage_2(self, pyfunc):
+        self.pyfunc = pyfunc
+        if self._doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = self._doc
+
     def __call__(self, *args, **kwargs):
         """
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
         """
+        if self.pyfunc is None:
+            # Called as a decorator-with-keywords
+            self._init_stage_2(*args, **kwargs)
+            return self
+
+        return self._call_as_normal(*args, **kwargs)
+
+    def _call_as_normal(self, *args, **kwargs):
         excluded = self.excluded
         if not kwargs and not excluded:
             func = self.pyfunc
