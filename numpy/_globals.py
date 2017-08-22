@@ -52,6 +52,14 @@ class VisibleDeprecationWarning(UserWarning):
     """
     pass
 
+class NoValueMetaClass(type):
+    """Metaclass for _NoValue
+
+    Used to set __repr__ for the _NoValue class (see #8991)
+
+    """
+    def __repr__(self):
+        return 'np._NoValue'
 
 class _NoValue(object):
     """Special keyword value.
@@ -59,4 +67,4 @@ class _NoValue(object):
     This class may be used as the default value assigned to a deprecated
     keyword in order to check if it has been given a user defined value.
     """
-    pass
+    __metaclass__ = NoValueMetaClass
