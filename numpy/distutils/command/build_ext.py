@@ -22,10 +22,6 @@ from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      msvc_version
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 class build_ext (old_build_ext):
 
