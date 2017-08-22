@@ -492,6 +492,22 @@ class TestRandomDist(object):
                             [42, 48],
                             [46, 45]])
         assert_array_equal(actual, desired)
+    
+    def test_binomial_alt_types(self):
+        max_int = np.iinfo('l').max
+        for dt in (np.int64, np.uint64, np.float, np.double):
+            # gh-2011
+            np.random.seed(self.seed)
+            actual = np.random.binomial(np.asarray([100], dtype=dt), .456, size=(3, 2))
+
+            desired = np.array([[37, 43],
+                                [42, 48],
+                                [46, 45]])
+
+            assert_array_equal(actual, desired)
+
+        assert_raises(ValueError, np.random.binomial,
+                      np.asarray([max_int + 1], dtype=np.uint64), .456, size=(3, 2))
 
     def test_chisquare(self):
         np.random.seed(self.seed)

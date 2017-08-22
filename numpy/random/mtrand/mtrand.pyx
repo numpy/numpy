@@ -3698,7 +3698,8 @@ cdef class RandomState:
         ----------
         n : int or array_like of ints
             Parameter of the distribution, >= 0. Floats are also accepted,
-            but they will be truncated to integers.
+            but they will be truncated to integers. All values must be less
+            than or equal to np.iinfo('l').max
         p : float or array_like of floats
             Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
@@ -3771,16 +3772,20 @@ cdef class RandomState:
         cdef ndarray on, op
         cdef long ln
         cdef double fp
+        
+        on = <ndarray>np.array(n)
+        if np.any(np.greater(n, np.iinfo('l').max)):
+            raise ValueError('n > {0}'.format(np.iinfo('l').max))
+        if np.any(np.less(n, 0)):
+            raise ValueError('n < 0')
 
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
+        on = <ndarray>PyArray_FROM_OTF(on, NPY_LONG, NPY_ARRAY_ALIGNED | NPY_ARRAY_FORCECAST)
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
         if on.shape == op.shape == ():
-            fp = PyFloat_AsDouble(p)
-            ln = PyInt_AsLong(n)
+            fp = p
+            ln = n
 
-            if ln < 0:
-                raise ValueError("n < 0")
             if fp < 0:
                 raise ValueError("p < 0")
             elif fp > 1:
@@ -3790,8 +3795,6 @@ cdef class RandomState:
             return discnp_array_sc(self.internal_state, rk_binomial, size, ln,
                                    fp, self.lock)
 
-        if np.any(np.less(n, 0)):
-            raise ValueError("n < 0")
         if np.any(np.less(p, 0)):
             raise ValueError("p < 0")
         if np.any(np.greater(p, 1)):
