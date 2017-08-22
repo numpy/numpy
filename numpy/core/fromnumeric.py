@@ -1529,14 +1529,15 @@ def nonzero(a):
            [0, 2, 0],
            [1, 1, 0]])
     >>> np.nonzero(x)
-    (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
+    (array([0, 1, 2, 2]), array([0, 1, 0, 1]))
 
     >>> x[np.nonzero(x)]
-    array([ 1.,  1.,  1.])
+    array([1, 2, 1, 1])
     >>> np.transpose(np.nonzero(x))
     array([[0, 0],
            [1, 1],
-           [2, 2]])
+           [2, 0],
+           [2, 1])
 
     A common use for ``nonzero`` is to find the indices of an array, where
     a condition is True.  Given an array `a`, the condition `a` > 3 is a
