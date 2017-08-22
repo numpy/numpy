@@ -130,6 +130,7 @@ cdef extern from "numpy/arrayobject.h":
 
     object PyArray_IterNew(object arr)
     void PyArray_ITER_NEXT(flatiter it) nogil
+    void* PyArray_ITER_DATA(flatiter it) nogil
 
     dtype PyArray_DescrFromType(int)
 

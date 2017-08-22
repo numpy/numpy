@@ -211,7 +211,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, np.float64)
@@ -536,7 +536,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, int)
