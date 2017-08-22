@@ -22,10 +22,6 @@ import os
 import sys
 import re
 import types
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.compat import open_latin1
 
