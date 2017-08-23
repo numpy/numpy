@@ -2538,9 +2538,9 @@ class vectorize(object):
     ----------
     pyfunc : callable, optional
         A python function or method.
-        This is optional since numpy version 1.14. When omitted, a
-        partially-initialized decorator is returned to support keyword
-        arguments when using decorator syntax.
+
+        .. versionchanged:: 1.14.0
+        Can be omitted to produce a decorator with keyword arguments.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -2692,12 +2692,12 @@ class vectorize(object):
     # __new__ is overriden as a clean way to provide decorator-with-keywords
     # syntax while allowing 'vectorize' to remain as the type of vectorized
     # functions.
-    def __new__(cls, pyfunc=None, *args, **kw):
+    def __new__(cls, pyfunc=np._NoValue, *args, **kwargs):
         def vectorize_decorator(pyfunc):
             ''' ``vectorize`` with presupplied keyword arguments. '''
-            return cls(pyfunc, *args, **kw)
+            return cls(pyfunc, *args, **kwargs)
 
-        if pyfunc is None:
+        if pyfunc is np._NoValue:
             return vectorize_decorator
         else:
             return object.__new__(cls)
