@@ -2694,7 +2694,7 @@ class vectorize(object):
     # functions.
     def __new__(cls, pyfunc=np._NoValue, *args, **kwargs):
         def vectorize_decorator(pyfunc):
-            ''' ``vectorize`` with presupplied keyword arguments. '''
+            """ ``vectorize`` with presupplied keyword arguments. """
             return cls(pyfunc, *args, **kwargs)
 
         if pyfunc is np._NoValue:
