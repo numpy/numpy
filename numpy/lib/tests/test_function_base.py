@@ -1462,8 +1462,10 @@ class TestVectorize(object):
         kw_value = 'added kw!'
         call_value = 'added arg to call!'
         class my_vectorize(vectorize):
-            # user can add args and keywords to __init__
-            def __init__(self, f, new_arg, new_kw=None, *args, **kwargs):
+            # user can add args and permute/rename existing args in __init__
+            # (note: the renaming of 'pyfunc' to 'f' is important to
+            #        at least one of the following tests)
+            def __init__(self, new_arg, f, new_kw=None, *args, **kwargs):
                 super(my_vectorize, self).__init__(f, *args, **kwargs)
                 self.new_arg = new_arg
                 self.new_kw = new_kw
@@ -1476,7 +1478,7 @@ class TestVectorize(object):
         def is_zero_to_one(x):
             return 0 < x < 1
 
-        f = my_vectorize(is_zero_to_one, arg_value, new_kw=kw_value)
+        f = my_vectorize(arg_value, is_zero_to_one, new_kw=kw_value)
         r = f(call_value, [0.5, 1.5])
         assert_equal(type(f), my_vectorize)
         assert_equal(f.new_arg, arg_value)
@@ -1484,7 +1486,7 @@ class TestVectorize(object):
         assert_equal(r[1], call_value)
         assert_array_equal(r[0], [True, False])
 
-        f = my_vectorize(is_zero_to_one, arg_value, new_kw=kw_value,
+        f = my_vectorize(arg_value, is_zero_to_one, new_kw=kw_value,
                          otypes=['int32'])
         r = f(call_value, [0.5, 1.5])
         assert_equal(type(f), my_vectorize)
@@ -1493,6 +1495,21 @@ class TestVectorize(object):
         assert_equal(r[1], call_value)
         assert_equal(r[0].dtype, np.dtype('int32'))
         assert_array_equal(r[0], [1, 0])
+
+        # call using a keyword for ``f``.
+        #
+        # This example demonstrates why subclasses cannot receive the
+        # benefits of the enhancements to __new__;
+        # The explicitly-named ``pyfunc`` argument in __new__ would fail to
+        # bind to the value supplied for ``f``, and thus a decorator would be
+        # incorrectly returned here.
+        f = my_vectorize(new_arg=arg_value, f=is_zero_to_one, new_kw=kw_value)
+        r = f(call_value, [0.5, 1.5])
+        assert_equal(type(f), my_vectorize)
+        assert_equal(f.new_arg, arg_value)
+        assert_equal(f.new_kw, kw_value)
+        assert_equal(r[1], call_value)
+        assert_array_equal(r[0], [True, False])
 
 class TestDigitize(object):
 
