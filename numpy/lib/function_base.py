@@ -2694,12 +2694,6 @@ class vectorize(object):
     # functions.
     def __new__(cls, pyfunc=None, *args, **kwargs):
 
-        # For backwards compatibility, subclasses must not use the overloaded
-        # __new__, as vectorize.__new__ and subclass.__init__ will receive the
-        # same arguments.
-        if cls is not vectorize:
-            return object.__new__(cls)
-
         def vectorize_decorator(pyfunc):
             """ ``vectorize`` with presupplied keyword arguments. """
             # prevent an edge case where None would produce another decorator
@@ -2707,7 +2701,10 @@ class vectorize(object):
                 raise TypeError('the wrapped object must be callable')
             return cls(pyfunc, *args, **kwargs)
 
-        if pyfunc is None:
+        # For backwards compatibility, subclasses must not use the overloaded
+        # __new__, as vectorize.__new__ and subclass.__init__ will receive the
+        # same arguments.
+        if cls is vectorize and pyfunc is None:
             return vectorize_decorator
         else:
             return object.__new__(cls)
