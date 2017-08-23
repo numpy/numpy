@@ -80,11 +80,11 @@ typedef struct rk_state_
     int has_binomial; /* !=0: following parameters initialized for
                               binomial */
     double psave;
-    long nsave;
+    long long nsave;
     double r;
     double q;
     double fm;
-    long m;
+    long long m;
     double p1;
     double xm;
     double xl;

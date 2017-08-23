@@ -111,9 +111,9 @@ cdef extern from "distributions.h":
     double rk_wald(rk_state *state, double mean, double scale) nogil
     double rk_triangular(rk_state *state, double left, double mode, double right) nogil
 
-    long rk_binomial(rk_state *state, long n, double p) nogil
-    long rk_binomial_btpe(rk_state *state, long n, double p) nogil
-    long rk_binomial_inversion(rk_state *state, long n, double p) nogil
+    long long rk_binomial(rk_state *state, long long n, double p) nogil
+    long long rk_binomial_btpe(long long n, double p) nogil
+    long long rk_binomial_inversion(rk_state *state, long long n, double p) nogil
     long rk_negative_binomial(rk_state *state, double n, double p) nogil
     long rk_poisson(rk_state *state, double lam) nogil
     long rk_poisson_mult(rk_state *state, double lam) nogil
@@ -129,7 +129,7 @@ ctypedef double (* rk_cont2)(rk_state *state, double a, double b) nogil
 ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c) nogil
 
 ctypedef long (* rk_disc0)(rk_state *state) nogil
-ctypedef long (* rk_discnp)(rk_state *state, long n, double p) nogil
+ctypedef long long (* rk_discnp)(rk_state *state, long long n, double p) nogil
 ctypedef long (* rk_discdd)(rk_state *state, double n, double p) nogil
 ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N) nogil
 ctypedef long (* rk_discd)(rk_state *state, double a) nogil
@@ -350,8 +350,8 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size, object lock
         return array
 
 cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size,
-                            long n, double p, object lock):
-    cdef long *array_data
+                            long long n, double p, object lock):
+    cdef long long *array_data
     cdef ndarray array "arrayObject"
     cdef npy_intp length
     cdef npy_intp i
@@ -361,37 +361,35 @@ cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size,
             rv = func(state, n, p)
         return rv
     else:
-        array = <ndarray>np.empty(size, int)
+        array = <ndarray>np.empty(size, np.longlong)
         length = PyArray_SIZE(array)
-        array_data = <long *>PyArray_DATA(array)
+        array_data = <long long *>PyArray_DATA(array)
         with lock, nogil:
-            for i from 0 <= i < length:
+            for i in range(length):
                 array_data[i] = func(state, n, p)
         return array
 
 cdef object discnp_array(rk_state *state, rk_discnp func, object size,
                          ndarray on, ndarray op, object lock):
-    cdef long *array_data
+    cdef long long *array_data
     cdef ndarray array "arrayObject"
     cdef npy_intp i
     cdef double *op_data
-    cdef long *on_data
+    cdef long long *on_data
     cdef broadcast multi
 
     if size is None:
         multi = <broadcast>np.broadcast(on, op)
-        array = <ndarray>np.empty(multi.shape, dtype=int)
+        array = <ndarray>np.empty(multi.shape, dtype=np.longlong)
     else:
-        array = <ndarray>np.empty(size, dtype=int)
+        array = <ndarray>np.empty(size, dtype=np.longlong)
         multi = <broadcast>np.broadcast(on, op, array)
-        if multi.shape != array.shape:
-            raise ValueError("size is not compatible with inputs")
 
-    array_data = <long *>PyArray_DATA(array)
+    array_data = <long long *>PyArray_DATA(array)
 
     with lock, nogil:
         for i in range(multi.size):
-            on_data = <long *>PyArray_MultiIter_DATA(multi, 0)
+            on_data = <long long *>PyArray_MultiIter_DATA(multi, 0)
             op_data = <double *>PyArray_MultiIter_DATA(multi, 1)
             array_data[i] = func(state, on_data[0], op_data[0])
             PyArray_MultiIter_NEXT(multi)
@@ -3769,15 +3767,15 @@ cdef class RandomState:
 
         """
         cdef ndarray on, op
-        cdef long ln
+        cdef long long ln
         cdef double fp
 
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
+        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONGLONG, NPY_ARRAY_ALIGNED)
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
 
         if on.shape == op.shape == ():
-            fp = PyFloat_AsDouble(p)
-            ln = PyInt_AsLong(n)
+            fp = p
+            ln = n
 
             if ln < 0:
                 raise ValueError("n < 0")
@@ -4628,7 +4626,7 @@ cdef class RandomState:
                 Sum = 1.0
                 dn = n
                 for j from 0 <= j < d-1:
-                    mnix[i+j] = rk_binomial(self.internal_state, dn, pix[j]/Sum)
+                    mnix[i+j] = <long>rk_binomial(self.internal_state, dn, pix[j]/Sum)
                     dn = dn - mnix[i+j]
                     if dn <= 0:
                         break

@@ -259,11 +259,11 @@ double rk_noncentral_f(rk_state *state, double dfnum, double dfden, double nonc)
     return t / (rk_chisquare(state, dfden) * dfnum);
 }
 
-long rk_binomial_btpe(rk_state *state, long n, double p)
+long long rk_binomial_btpe(rk_state *state, long long n, double p)
 {
     double r,q,fm,p1,xm,xl,xr,c,laml,lamr,p2,p3,p4;
     double a,u,v,s,F,rho,t,A,nrq,x1,x2,f1,f2,z,z2,w,w2,x;
-    long m,y,k,i;
+    long long m,y,k,i;
 
     if (!(state->has_binomial) ||
          (state->nsave != n) ||
@@ -276,7 +276,7 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
         state->r = r = min(p, 1.0-p);
         state->q = q = 1.0 - r;
         state->fm = fm = n*r+r;
-        state->m = m = (long)floor(state->fm);
+        state->m = m = (long long)floor(state->fm);
         state->p1 = p1 = floor(2.195*sqrt(n*r*q)-4.6*q) + 0.5;
         state->xm = xm = m + 0.5;
         state->xl = xl = xm - p1;
@@ -314,7 +314,7 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     u = rk_double(state)*p4;
     v = rk_double(state);
     if (u > p1) goto Step20;
-    y = (long)floor(xm - p1*v + u);
+    y = (long long)floor(xm - p1*v + u);
     goto Step60;
 
   Step20:
@@ -322,18 +322,18 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     x = xl + (u - p1)/c;
     v = v*c + 1.0 - fabs(m - x + 0.5)/p1;
     if (v > 1.0) goto Step10;
-    y = (long)floor(x);
+    y = (long long)floor(x);
     goto Step50;
 
   Step30:
     if (u > p3) goto Step40;
-    y = (long)floor(xl + log(v)/laml);
+    y = (long long)floor(xl + log(v)/laml);
     if (y < 0) goto Step10;
     v = v*(u-p2)*laml;
     goto Step50;
 
   Step40:
-    y = (long)floor(xr - log(v)/lamr);
+    y = (long long)floor(xr - log(v)/lamr);
     if (y > n) goto Step10;
     v = v*(u-p3)*lamr;
 
@@ -396,10 +396,10 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     return y;
 }
 
-long rk_binomial_inversion(rk_state *state, long n, double p)
+long long rk_binomial_inversion(rk_state *state, long long n, double p)
 {
     double q, qn, np, px, U;
-    long X, bound;
+    long long X, bound;
 
     if (!(state->has_binomial) ||
          (state->nsave != n) ||
@@ -439,7 +439,7 @@ long rk_binomial_inversion(rk_state *state, long n, double p)
     return X;
 }
 
-long rk_binomial(rk_state *state, long n, double p)
+long long rk_binomial(rk_state *state, long long n, double p)
 {
     double q;
 
@@ -466,7 +466,6 @@ long rk_binomial(rk_state *state, long n, double p)
             return n - rk_binomial_btpe(state, n, q);
         }
     }
-
 }
 
 long rk_negative_binomial(rk_state *state, double n, double p)

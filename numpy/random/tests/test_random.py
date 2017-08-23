@@ -493,6 +493,16 @@ class TestRandomDist(object):
                             [46, 45]])
         assert_array_equal(actual, desired)
 
+    def test_binomial_int64(self):
+        # gh-2011
+        np.random.seed(self.seed)
+        actual = np.random.binomial(np.asarray([100], dtype=np.int64), .456, size=(3, 2))
+        desired = np.array([[37, 43],
+                            [42, 48],
+                            [46, 45]])
+
+        assert_array_equal(actual, desired)
+
     def test_chisquare(self):
         np.random.seed(self.seed)
         actual = np.random.chisquare(50, size=(3, 2))

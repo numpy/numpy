@@ -93,13 +93,13 @@ extern double rk_noncentral_f(rk_state *state, double dfnum, double dfden, doubl
  * When n*p <= 30, the "Second waiting time method" given by (Devroye p. 525) is
  * used. Otherwise, the BTPE algorithm of (Kachitvichyanukul and Schmeiser 1988)
  * is used. */
-extern long rk_binomial(rk_state *state, long n, double p);
+extern long long rk_binomial(rk_state *state, long long n, double p);
 
 /* Binomial distribution using BTPE. */
-extern long rk_binomial_btpe(rk_state *state, long n, double p);
+extern long long rk_binomial_btpe(rk_state *state, long long n, double p);
 
 /* Binomial distribution using inversion and chop-down */
-extern long rk_binomial_inversion(rk_state *state, long n, double p);
+extern long long rk_binomial_inversion(rk_state *state, long long n, double p);
 
 /* Negative binomial distribution computed by generating a Gamma(n, (1-p)/p)
  * variate Y and returning a Poisson(Y) variate (Devroye p. 543). */
