@@ -506,7 +506,9 @@ class TestRandomDist(object):
 
             assert_array_equal(actual, desired)
 
-        assert_raises(ValueError, np.random.binomial,
+        assert_raises(OverflowError, np.random.binomial, max_int + 1, .456, size=(3, 2))
+        assert_raises(OverflowError, np.random.binomial, [max_int + 1], .456, size=(3, 2))
+        assert_raises(OverflowError, np.random.binomial,
                       np.asarray([max_int + 1], dtype=np.uint64), .456, size=(3, 2))
 
     def test_chisquare(self):

@@ -3775,7 +3775,8 @@ cdef class RandomState:
         
         on = <ndarray>np.array(n)
         if np.any(np.greater(n, np.iinfo('l').max)):
-            raise ValueError('n > {0}'.format(np.iinfo('l').max))
+            raise OverflowError('n is out of range for C long '
+                                '(max : {0})'.format(np.iinfo('l').max))
         if np.any(np.less(n, 0)):
             raise ValueError('n < 0')
 
