@@ -2689,17 +2689,18 @@ class vectorize(object):
            <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
+    # __new__ is overriden as a clean way to provide decorator-with-keywords
+    # syntax while allowing 'vectorize' to remain as the type of vectorized
+    # functions.
     def __new__(cls, pyfunc=None, *args, **kw):
-        def new_with_kw(pyfunc):
+        def vectorize_decorator(pyfunc):
             ''' ``vectorize`` with presupplied keyword arguments. '''
-            self = object.__new__(cls)
-            self.__init__(pyfunc, *args, **kw)
-            return self
+            return cls(pyfunc, *args, **kw)
 
         if pyfunc is None:
-            return new_with_kw
+            return vectorize_decorator
         else:
-            return new_with_kw(pyfunc)
+            return object.__new__(cls)
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
