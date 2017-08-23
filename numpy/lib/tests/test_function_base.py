@@ -1447,13 +1447,52 @@ class TestVectorize(object):
         with assert_raises_regex(ValueError, 'new output dimensions'):
             f(x)
 
-    def test_otypes_positional(self):
+    def test_positional_regression_9477(self):
         # This supplies the first keyword argument as a positional,
         # to ensure that they are still properly forwarded after the
         # enhancement for #9477
         f = vectorize((lambda x: x), ['float64'])
         r = f([2])
         assert_equal(r.dtype, np.dtype('float64'))
+
+    def test_subclass_regression_9477(self):
+        # Test that subclasses written prior to #9477 still work;
+        # these can be easily broken by a poor implementation of __new__.
+        arg_value = 'added arg!'
+        kw_value = 'added kw!'
+        call_value = 'added arg to call!'
+        class my_vectorize(vectorize):
+            # user can add args and keywords to __init__
+            def __init__(self, f, new_arg, new_kw=None, *args, **kwargs):
+                super(my_vectorize, self).__init__(f, *args, **kwargs)
+                self.new_arg = new_arg
+                self.new_kw = new_kw
+
+            # user can add arguments to __call__
+            def __call__(self, call_arg, *args, **kwargs):
+                out = super(my_vectorize, self).__call__(*args, **kwargs)
+                return (out, call_arg)
+
+        def is_zero_to_one(x):
+            return 0 < x < 1
+
+        f = my_vectorize(is_zero_to_one, arg_value, new_kw=kw_value)
+        r = f(call_value, [0.5, 1.5])
+        assert_equal(type(f), my_vectorize)
+        assert_equal(f.new_arg, arg_value)
+        assert_equal(f.new_kw, kw_value)
+        assert_equal(r[1], call_value)
+        assert_array_equal(r[0], [True, False])
+
+        f = my_vectorize(is_zero_to_one, arg_value, new_kw=kw_value,
+                         otypes=['int32'])
+        r = f(call_value, [0.5, 1.5])
+        assert_equal(type(f), my_vectorize)
+        assert_equal(f.new_arg, arg_value)
+        assert_equal(f.new_kw, kw_value)
+        assert_equal(r[1], call_value)
+        assert_equal(r[0].dtype, np.dtype('int32'))
+        assert_array_equal(r[0], [1, 0])
 
 class TestDigitize(object):
 

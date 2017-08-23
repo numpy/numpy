@@ -2693,14 +2693,18 @@ class vectorize(object):
     # syntax while allowing 'vectorize' to remain as the type of vectorized
     # functions.
     def __new__(cls, pyfunc=None, *args, **kwargs):
+
         def vectorize_decorator(pyfunc):
             """ ``vectorize`` with presupplied keyword arguments. """
+            # prevent an edge case where None would produce another decorator
+            if not hasattr(pyfunc, '__call__'):
+                raise TypeError('the wrapped object must be callable')
             return cls(pyfunc, *args, **kwargs)
 
         if pyfunc is None:
             return vectorize_decorator
         else:
-            return object.__new__(cls)
+            return super(vectorize, cls).__new__(cls)#, *args, **kwargs)
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
