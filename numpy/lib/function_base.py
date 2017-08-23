@@ -2692,12 +2692,12 @@ class vectorize(object):
     # __new__ is overriden as a clean way to provide decorator-with-keywords
     # syntax while allowing 'vectorize' to remain as the type of vectorized
     # functions.
-    def __new__(cls, pyfunc=np._NoValue, *args, **kwargs):
+    def __new__(cls, pyfunc=None, *args, **kwargs):
         def vectorize_decorator(pyfunc):
             """ ``vectorize`` with presupplied keyword arguments. """
             return cls(pyfunc, *args, **kwargs)
 
-        if pyfunc is np._NoValue:
+        if pyfunc is None:
             return vectorize_decorator
         else:
             return object.__new__(cls)
