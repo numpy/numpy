@@ -2519,7 +2519,7 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
+    vectorize(pyfunc=None, otypes=None, doc=None, excluded=None, cache=False,
               signature=None)
 
     Generalized function class.
@@ -2574,8 +2574,7 @@ class vectorize(object):
     -------
     out : callable
         If pyfunc was provided, the vectorized function.
-        Otherwise, a decorator (suitable for one-time use) which takes
-        ``pyfunc`` as its sole argument.
+        Otherwise, a decorator which takes ``pyfunc`` as its sole argument.
 
     Examples
     --------
@@ -2690,13 +2689,29 @@ class vectorize(object):
            <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
-    def __init__(self, pyfunc=None, otypes=None, doc=None, excluded=None,
+    def __new__(cls, pyfunc=None, *args, **kw):
+        def new_with_kw(pyfunc):
+            ''' ``vectorize`` with presupplied keyword arguments. '''
+            self = object.__new__(cls)
+            self.__init__(pyfunc, *args, **kw)
+            return self
+
+        if pyfunc is None:
+            return new_with_kw
+        else:
+            return new_with_kw(pyfunc)
+
+    def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
-        self.pyfunc = None    # deferred until second stage of intialization
+        self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
         self._ufunc = None    # Caching to improve default performance
-        self._doc = doc
+
+        if doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = doc
 
         if isinstance(otypes, str):
             for char in otypes:
@@ -2718,30 +2733,11 @@ class vectorize(object):
         else:
             self._in_and_out_core_dims = None
 
-        if pyfunc:
-            self._init_stage_2(pyfunc)
-        # otherwise, set pyfunc on next call
-
-    def _init_stage_2(self, pyfunc):
-        self.pyfunc = pyfunc
-        if self._doc is None:
-            self.__doc__ = pyfunc.__doc__
-        else:
-            self.__doc__ = self._doc
-
     def __call__(self, *args, **kwargs):
         """
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
         """
-        if self.pyfunc is None:
-            # Called as a decorator-with-keywords
-            self._init_stage_2(*args, **kwargs)
-            return self
-
-        return self._call_as_normal(*args, **kwargs)
-
-    def _call_as_normal(self, *args, **kwargs):
         excluded = self.excluded
         if not kwargs and not excluded:
             func = self.pyfunc

@@ -1447,6 +1447,13 @@ class TestVectorize(object):
         with assert_raises_regex(ValueError, 'new output dimensions'):
             f(x)
 
+    def test_otypes_positional(self):
+        # This supplies the first keyword argument as a positional,
+        # to ensure that they are still properly forwarded after the
+        # enhancement for #9477
+        f = vectorize((lambda x: x), ['float64'])
+        r = f([2])
+        assert_equal(r.dtype, np.dtype('float64'))
 
 class TestDigitize(object):
 
