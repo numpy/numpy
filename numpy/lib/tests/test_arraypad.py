@@ -1014,6 +1014,10 @@ class ValueError1(TestCase):
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
 
+    def test_check_empty_array(self):
+        assert_raises(ValueError, pad, [], 4, mode='reflect')
+        assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
+
 
 class ValueError2(TestCase):
     def test_check_negative_pad_amount(self):
