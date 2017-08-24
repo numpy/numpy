@@ -56,8 +56,6 @@ def rot90(m, k=1, axes=(0,1)):
 
     Rotation direction is from the first towards the second axis.
 
-    .. versionadded:: 1.12.0
-
     Parameters
     ----------
     m : array_like
@@ -67,6 +65,8 @@ def rot90(m, k=1, axes=(0,1)):
     axes: (2,) array_like
         The array is rotated in the plane defined by the axes.
         Axes must be different.
+
+        .. versionadded:: 1.12.0
 
     Returns
     -------
