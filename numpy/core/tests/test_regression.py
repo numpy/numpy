@@ -2247,5 +2247,18 @@ class TestRegression(object):
             else:
                 assert_(t.__hash__ != None)
 
+    def test_scalar_copy(self):
+        scalar_types = set(np.sctypeDict.values())
+        values = {
+            np.void: b"a",
+            np.bytes_: b"a",
+            np.unicode_: "a",
+            np.datetime64: "2017-08-25",
+        }
+        for sctype in scalar_types:
+            item = sctype(values.get(sctype, 1))
+            item2 = copy.copy(item)
+            assert_equal(item, item2)
+
 if __name__ == "__main__":
     run_module_suite()
