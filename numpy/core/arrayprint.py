@@ -43,6 +43,7 @@ from .multiarray import (array, format_longfloat, datetime_as_string,
 from .fromnumeric import ravel
 from .numeric import asarray
 import warnings
+from copy import copy
 
 if sys.version_info[0] >= 3:
     _MAXINT = sys.maxsize
@@ -51,18 +52,18 @@ else:
     _MAXINT = sys.maxint
     _MININT = -sys.maxint - 1
 
+
 def product(x, y):
     return x*y
 
-_summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
-_summaryThreshold = 1000  # total items > triggers array summarization
-
-_float_output_precision = 8
-_float_output_suppress_small = False
-_line_width = 75
-_nan_str = 'nan'
-_inf_str = 'inf'
-_formatter = None  # formatting function for array elements
+_options = dict(edgeitems=3,     # repr N leading and trailing items of each dimension
+                threshold=1000,  # total items > triggers array summarization
+                precision=8,
+                suppress=False,
+                linewidth=75,
+                nanstr='nan',
+                infstr='inf',
+                formatter=None)  # formatting function for array element
 
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
@@ -170,26 +171,24 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... linewidth=75, nanstr='nan', precision=8,
     ... suppress=False, threshold=1000, formatter=None)
     """
-
-    global _summaryThreshold, _summaryEdgeItems, _float_output_precision
-    global _line_width, _float_output_suppress_small, _nan_str, _inf_str
-    global _formatter
-
+    temp_options = {}
     if linewidth is not None:
-        _line_width = linewidth
+        temp_options['linewidth'] = linewidth
     if threshold is not None:
-        _summaryThreshold = threshold
+        temp_options['threshold'] = threshold
     if edgeitems is not None:
-        _summaryEdgeItems = edgeitems
+        temp_options['edgeitems'] = edgeitems
     if precision is not None:
-        _float_output_precision = precision
+        temp_options['precision'] = precision
     if suppress is not None:
-        _float_output_suppress_small = not not suppress
+        temp_options['suppress'] = not not suppress
     if nanstr is not None:
-        _nan_str = nanstr
+        temp_options['nanstr'] = nanstr
     if infstr is not None:
-        _inf_str = infstr
-    _formatter = formatter
+        temp_options['infstr'] = infstr
+    temp_options['formatter'] = formatter
+    _options.update(temp_options)
+
 
 def get_printoptions():
     """
@@ -216,30 +215,24 @@ def get_printoptions():
     set_printoptions, set_string_function
 
     """
-    d = dict(precision=_float_output_precision,
-             threshold=_summaryThreshold,
-             edgeitems=_summaryEdgeItems,
-             linewidth=_line_width,
-             suppress=_float_output_suppress_small,
-             nanstr=_nan_str,
-             infstr=_inf_str,
-             formatter=_formatter)
-    return d
+    return copy(_options)
+
 
 def _leading_trailing(a):
     from . import numeric as _nc
+    edgeitems = _options['edgeitems']
     if a.ndim == 1:
-        if len(a) > 2*_summaryEdgeItems:
-            b = _nc.concatenate((a[:_summaryEdgeItems],
-                                     a[-_summaryEdgeItems:]))
+        if len(a) > 2*edgeitems:
+            b = _nc.concatenate((a[:edgeitems],
+                                     a[-edgeitems:]))
         else:
             b = a
     else:
-        if len(a) > 2*_summaryEdgeItems:
+        if len(a) > 2*edgeitems:
             l = [_leading_trailing(a[i]) for i in range(
-                min(len(a), _summaryEdgeItems))]
+                min(len(a), edgeitems))]
             l.extend([_leading_trailing(a[-i]) for i in range(
-                min(len(a), _summaryEdgeItems), 0, -1)])
+                min(len(a), edgeitems), 0, -1)])
         else:
             l = [_leading_trailing(a[i]) for i in range(0, len(a))]
         b = _nc.concatenate(tuple(l))
@@ -352,7 +345,7 @@ def _get_format_function(data, precision, suppress_small, formatter):
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
 
-    if a.size > _summaryThreshold:
+    if a.size > _options['threshold']:
         summary_insert = "..., "
         data = _leading_trailing(a)
     else:
@@ -367,10 +360,9 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     next_line_prefix = " "
     # skip over array(
     next_line_prefix += " "*len(prefix)
-
     lst = _formatArray(a, format_function, a.ndim, max_line_width,
                        next_line_prefix, separator,
-                       _summaryEdgeItems, summary_insert)[:-1]
+                       _options['edgeitems'], summary_insert)[:-1]
     return lst
 
 
@@ -510,16 +502,13 @@ def array2string(a, max_line_width=None, precision=None,
                       DeprecationWarning, stacklevel=3)
 
     if max_line_width is None:
-        max_line_width = _line_width
-
+        max_line_width = _options['linewidth']
     if precision is None:
-        precision = _float_output_precision
-
+        precision = _options['precision']
     if suppress_small is None:
-        suppress_small = _float_output_suppress_small
-
+        suppress_small = _options['suppress']
     if formatter is None:
-        formatter = _formatter
+        formatter = _options['formatter']
 
     if a.size == 0:
         # treat as a null array if any of shape elements == 0
@@ -660,8 +649,8 @@ class FloatFormat(object):
             self.max_str_len = len(str(int(max_val))) + precision + 2
             if _nc.any(special):
                 self.max_str_len = max(self.max_str_len,
-                                       len(_nan_str),
-                                       len(_inf_str)+1)
+                                       len(_options['nanstr']),
+                                       len(_options['infstr'])+1)
             if self.sign:
                 format = '%#+'
             else:
@@ -677,17 +666,17 @@ class FloatFormat(object):
         with _nc.errstate(invalid='ignore'):
             if isnan(x):
                 if self.sign:
-                    return self.special_fmt % ('+' + _nan_str,)
+                    return self.special_fmt % ('+' + _options['nanstr'],)
                 else:
-                    return self.special_fmt % (_nan_str,)
+                    return self.special_fmt % (_options['nanstr'],)
             elif isinf(x):
                 if x > 0:
                     if self.sign:
-                        return self.special_fmt % ('+' + _inf_str,)
+                        return self.special_fmt % ('+' + _options['infstr'],)
                     else:
-                        return self.special_fmt % (_inf_str,)
+                        return self.special_fmt % (_options['infstr'],)
                 else:
-                    return self.special_fmt % ('-' + _inf_str,)
+                    return self.special_fmt % ('-' + _options['infstr'],)
 
         s = self.format % x
         if self.large_exponent:
@@ -744,17 +733,17 @@ class LongFloatFormat(object):
     def __call__(self, x):
         if isnan(x):
             if self.sign:
-                return '+' + _nan_str
+                return '+' + _options['nanstr']
             else:
-                return ' ' + _nan_str
+                return ' ' + _options['nanstr']
         elif isinf(x):
             if x > 0:
                 if self.sign:
-                    return '+' + _inf_str
+                    return '+' + _options['infstr']
                 else:
-                    return ' ' + _inf_str
+                    return ' ' + _options['infstr']
             else:
-                return '-' + _inf_str
+                return '-' + _options['infstr']
         elif x >= 0:
             if self.sign:
                 return '+' + format_longfloat(x, self.precision)
