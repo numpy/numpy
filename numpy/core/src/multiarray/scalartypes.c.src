@@ -1529,7 +1529,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  */
 /**begin repeat
  *
- * #name = tolist, item, __deepcopy__,
+ * #name = tolist, item, __deepcopy__, __copy__,
  *         swapaxes, conj, conjugate, nonzero,
  *         fill, transpose, newbyteorder#
  */
@@ -1913,7 +1913,7 @@ static PyMethodDef gentype_methods[] = {
 
     /* for the copy module */
     {"__copy__",
-        (PyCFunction)gentype_copy,
+        (PyCFunction)gentype___copy__,
         METH_VARARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
