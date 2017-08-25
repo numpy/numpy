@@ -69,12 +69,8 @@ class LinAlgError(Exception):
     """
     pass
 
-# Dealing with errors in _umath_linalg
-
-_linalg_error_extobj = None
 
 def _determine_error_states():
-    global _linalg_error_extobj
     errobj = geterrobj()
     bufsize = errobj[0]
 
@@ -82,9 +78,11 @@ def _determine_error_states():
                   divide='ignore', under='ignore'):
         invalid_call_errmask = geterrobj()[1]
 
-    _linalg_error_extobj = [bufsize, invalid_call_errmask, None]
+    return [bufsize, invalid_call_errmask, None]
 
-_determine_error_states()
+# Dealing with errors in _umath_linalg
+_linalg_error_extobj = _determine_error_states()
+del _determine_error_states
 
 def _raise_linalgerror_singular(err, flag):
     raise LinAlgError("Singular matrix")
@@ -99,7 +97,7 @@ def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
 
 def get_linalg_error_extobj(callback):
-    extobj = list(_linalg_error_extobj)
+    extobj = list(_linalg_error_extobj)  # make a copy
     extobj[2] = callback
     return extobj
 
