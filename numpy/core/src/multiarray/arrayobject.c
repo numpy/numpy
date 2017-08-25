@@ -377,15 +377,10 @@ PyArray_TypeNumFromName(char *str)
 /* array object functions */
 
 static void
-array_dealloc(PyArrayObject *self)
+array_dealloc_base_and_object_arrays(PyArrayObject *self, int incref_self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
-    _array_dealloc_buffer_info(self);
-
-    if (fa->weakreflist != NULL) {
-        PyObject_ClearWeakRefs((PyObject *)self);
-    }
     if (fa->base) {
         /*
          * UPDATEIFCOPY means that base points to an
@@ -398,7 +393,9 @@ array_dealloc(PyArrayObject *self)
         if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
             PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
                                                     NPY_ARRAY_WRITEABLE);
-            Py_INCREF(self); /* hold on to self in next call */
+            if (incref_self) {
+                Py_INCREF(self); /* hold on to self in next call */
+            }
             if (PyArray_CopyAnyInto((PyArrayObject *)fa->base, self) < 0) {
                 PyErr_Print();
                 PyErr_Clear();
@@ -413,12 +410,15 @@ array_dealloc(PyArrayObject *self)
          * to DECREF -- either a view or a buffer object
          */
         Py_DECREF(fa->base);
+        fa->base = NULL;
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free internal references if an Object array */
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            Py_INCREF(self); /*hold on to self */
+            if (incref_self) {
+                Py_INCREF(self); /*hold on to self */
+            }
             PyArray_XDECREF(self);
             /*
              * Don't need to DECREF -- because we are deleting
@@ -426,13 +426,67 @@ array_dealloc(PyArrayObject *self)
              */
         }
         npy_free_cache(fa->data, PyArray_NBYTES(self));
+        fa->data = NULL;
     }
+}
+
+static void
+array_dealloc(PyArrayObject *self)
+{
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+
+#if PY_VERSION_HEX >= 0x03040000
+    /*
+     * XXX: using an undocumented Python API function,
+     *      see https://bugs.python.org/issue31276
+     */
+    if (PyObject_CallFinalizerFromDealloc((PyObject *)self) < 0) {
+        return;
+    }
+#endif
+
+    _array_dealloc_buffer_info(self);
+
+    if (fa->weakreflist != NULL) {
+        PyObject_ClearWeakRefs((PyObject *)self);
+    }
+
+#if PY_VERSION_HEX < 0x03040000
+    /*
+     * Process updateifcopy and contained object array items.
+     *
+     * On Python < 3.4, this has to be done in tp_dealloc, and we have to incref
+     * self to avoid calling dealloc recursively.
+     */
+    array_dealloc_base_and_object_arrays(self, 1);
+#endif
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
+
+
+#if PY_VERSION_HEX >= 0x03040000
+static void
+array_finalize(PyArrayObject *self)
+{
+    PyObject *error_type, *error_value, *error_traceback;
+
+    PyErr_Fetch(&error_type, &error_value, &error_traceback);
+
+    /*
+     * Process updateifcopy and contained object array items.
+     *
+     * On Python >= 3.4, this is done in tp_finalize, and we don't need to
+     * incref self as the object is still alive.
+     */
+    array_dealloc_base_and_object_arrays(self, 0);
+    PyErr_Restore(error_type, error_value, error_traceback);
+}
+#endif
+
 
 /*NUMPY_API
  * Prints the raw data of the ndarray in a form useful for debugging
@@ -1597,6 +1651,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
      | Py_TPFLAGS_CHECKTYPES
      | Py_TPFLAGS_HAVE_NEWBUFFER
 #endif
+#if PY_VERSION_HEX >= 0x03040000
+     | Py_TPFLAGS_HAVE_FINALIZE
+#endif
      | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
     0,                                          /* tp_doc */
 
@@ -1626,4 +1683,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
     0,                                          /* tp_version_tag */
+#if PY_VERSION_HEX >= 0x03040000
+    (destructor)array_finalize,                 /* tp_finalize */
+#endif
 };
