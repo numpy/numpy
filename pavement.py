@@ -65,11 +65,7 @@ import sys
 import shutil
 import subprocess
 import re
-try:
-    from hashlib import md5
-    from hashlib import sha256
-except ImportError:
-    from md5 import md5
+import hashlib
 
 import paver
 from paver.easy import \
@@ -562,25 +558,22 @@ def sdist(options):
         target = os.path.join(idirs, tarball_name(t))
         shutil.copy(source, target)
 
-def compute_md5(idirs):
+def _compute_hash(idirs, algo):
     released = paver.path.path(idirs).listdir()
     checksums = []
     for f in sorted(released):
-        m = md5(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
-
+        with open(f, 'r') as _file:
+            m = algo(_file.read())
+            checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
     return checksums
+
+def compute_md5(idirs):
+    return _compute_hash(idirs, hashlib.md5)
 
 def compute_sha256(idirs):
     # better checksum so gpg signed README.txt containing the sums can be used
     # to verify the binaries instead of signing all binaries
-    released = paver.path.path(idirs).listdir()
-    checksums = []
-    for f in sorted(released):
-        m = sha256(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
-
-    return checksums
+    return _compute_hash(idirs, hashlib.sha256)
 
 def write_release_task(options, filename='README'):
     idirs = options.installers.installersdir
