@@ -1070,7 +1070,7 @@ array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 /* Separate from array_copy to make __copy__ preserve Fortran contiguity. */
 static PyObject *
-array_copy_keeporder(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_copy_keeporder(PyArrayObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, ":__copy__")) {
         return NULL;
