@@ -28,12 +28,7 @@ __all__ = [
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
     ]
 
-
-try:
-    _gentype = types.GeneratorType
-except AttributeError:
-    _gentype = type(None)
-
+_gentype = types.GeneratorType
 # save away Python sum
 _sum_ = sum
 
