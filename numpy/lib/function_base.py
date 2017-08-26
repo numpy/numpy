@@ -25,8 +25,9 @@ from numpy.core.numerictypes import typecodes, number
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount, normalize_axis_index,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
+    _insert, add_docstring, digitize, _histogram_uniform, _histogramdd_uniform,
+    bincount, normalize_axis_index, interp as compiled_interp,
+    interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
@@ -776,40 +777,25 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             else:
                 tmp_w = weights[i:i + BLOCK]
 
-            # Only include values in the right range
+            # Only include values within range
+            # This will speed up histogramming when the
+            # histogram range is much smaller than the
+            # sample data's range.
             keep = (tmp_a >= first_edge)
             keep &= (tmp_a <= last_edge)
             if not np.logical_and.reduce(keep):
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
                     tmp_w = tmp_w[keep]
-            tmp_a_data = tmp_a.astype(float)
-            tmp_a = tmp_a_data - first_edge
-            tmp_a *= norm
 
-            # Compute the bin indices, and for values that lie exactly on
-            # last_edge we need to subtract one
-            indices = tmp_a.astype(np.intp)
-            indices[indices == n_equal_bins] -= 1
-
-            # The index computation is not guaranteed to give exactly
-            # consistent results within ~1 ULP of the bin edges.
-            decrement = tmp_a_data < bin_edges[indices]
-            indices[decrement] -= 1
-            # The last bin includes the right edge. The other bins do not.
-            increment = ((tmp_a_data >= bin_edges[indices + 1])
-                         & (indices != n_equal_bins - 1))
-            indices[increment] += 1
-
-            # We now compute the histogram using bincount
             if ntype.kind == 'c':
-                n.real += np.bincount(indices, weights=tmp_w.real,
-                                      minlength=n_equal_bins)
-                n.imag += np.bincount(indices, weights=tmp_w.imag,
-                                      minlength=n_equal_bins)
+                n.real += _histogram_uniform(tmp_a, bin_edges, tmp_w.real)
+                n.imag += _histogram_uniform(tmp_a, bin_edges, tmp_w.imag)
             else:
-                n += np.bincount(indices, weights=tmp_w,
-                                 minlength=n_equal_bins).astype(ntype)
+                n += _histogram_uniform(tmp_a, bin_edges, tmp_w).astype(ntype)
+
+        # Rename the bin edges for return.
+        bins = bin_edges
     else:
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
@@ -951,6 +937,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     else:
         edge_dt = float
     # Create edge arrays
+    edges_are_uniform = True
     for i in arange(D):
         if isscalar(bins[i]):
             if bins[i] < 1:
@@ -960,6 +947,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             nbin[i] = bins[i] + 2  # +2 for outlier bins
             edges[i] = linspace(smin[i], smax[i], nbin[i]-1, dtype=edge_dt)
         else:
+            edges_are_uniform = False
             edges[i] = asarray(bins[i], edge_dt)
             nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
@@ -968,63 +956,70 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                 "Found bin edge of size <= 0. Did you specify `bins` with"
                 "non-monotonic sequence?")
 
-    nbin = asarray(nbin)
+    if edges_are_uniform:
+        # nbins are the number of bins for each dimension
+        # len(edges_concat) == sum(n + 1 for n in nbins)
+        nbins = np.array([len(e) - 1 for e in edges])
+        edges_concat = np.concatenate(edges)
+        hist = _histogramdd_uniform(sample, nbins, edges_concat, weights)
+    else:
+        nbin = asarray(nbin)
 
-    # Handle empty input.
-    if N == 0:
-        return np.zeros(nbin-2), edges
+        # Handle empty input.
+        if N == 0:
+            return np.zeros(nbin-2), edges
 
-    # Compute the bin number each sample falls into.
-    Ncount = {}
-    for i in arange(D):
-        Ncount[i] = digitize(sample[:, i], edges[i])
+        # Compute the bin number each sample falls into.
+        Ncount = {}
+        for i in arange(D):
+            Ncount[i] = digitize(sample[:, i], edges[i])
 
-    # Using digitize, values that fall on an edge are put in the right bin.
-    # For the rightmost bin, we want values equal to the right edge to be
-    # counted in the last bin, and not as an outlier.
-    for i in arange(D):
-        # Rounding precision
-        mindiff = dedges[i].min()
-        if not np.isinf(mindiff):
-            decimal = int(-log10(mindiff)) + 6
-            # Find which points are on the rightmost edge.
-            not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (around(sample[:, i], decimal) ==
-                       around(edges[i][-1], decimal))
-            # Shift these points one bin to the left.
-            Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
+        # Using digitize, values that fall on an edge are put in the right bin.
+        # For the rightmost bin, we want values equal to the right edge to be
+        # counted in the last bin, and not as an outlier.
+        for i in arange(D):
+            # Rounding precision
+            mindiff = dedges[i].min()
+            if not np.isinf(mindiff):
+                decimal = int(-log10(mindiff)) + 6
+                # Find which points are on the rightmost edge.
+                not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
+                on_edge = (around(sample[:, i], decimal) ==
+                           around(edges[i][-1], decimal))
+                # Shift these points one bin to the left.
+                Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
 
-    # Flattened histogram matrix (1D)
-    # Reshape is used so that overlarge arrays
-    # will raise an error.
-    hist = zeros(nbin, float).reshape(-1)
+        # Flattened histogram matrix (1D)
+        # Reshape is used so that overlarge arrays
+        # will raise an error.
+        hist = zeros(nbin, float).reshape(-1)
 
-    # Compute the sample indices in the flattened histogram matrix.
-    ni = nbin.argsort()
-    xy = zeros(N, int)
-    for i in arange(0, D-1):
-        xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
-    xy += Ncount[ni[-1]]
+        # Compute the sample indices in the flattened histogram matrix.
+        ni = nbin.argsort()
+        xy = zeros(N, int)
+        for i in arange(0, D-1):
+            xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
+        xy += Ncount[ni[-1]]
 
-    # Compute the number of repetitions in xy and assign it to the
-    # flattened histmat.
-    if len(xy) == 0:
-        return zeros(nbin-2, int), edges
+        # Compute the number of repetitions in xy and assign it to the
+        # flattened histmat.
+        if len(xy) == 0:
+            return zeros(nbin-2, int), edges
 
-    flatcount = bincount(xy, weights)
-    a = arange(len(flatcount))
-    hist[a] = flatcount
+        flatcount = bincount(xy, weights)
+        a = arange(len(flatcount))
+        hist[a] = flatcount
 
-    # Shape into a proper matrix
-    hist = hist.reshape(sort(nbin))
-    for i in arange(nbin.size):
-        j = ni.argsort()[i]
-        hist = hist.swapaxes(i, j)
-        ni[i], ni[j] = ni[j], ni[i]
+        # Shape into a proper matrix
+        hist = hist.reshape(sort(nbin))
+        for i in arange(nbin.size):
+            j = ni.argsort()[i]
+            hist = hist.swapaxes(i, j)
+            ni[i], ni[j] = ni[j], ni[i]
 
-    # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*[slice(1, -1)]
-    hist = hist[core]
+        # Remove outliers (indices 0 and -1 for each dimension).
+        core = D*[slice(1, -1)]
+        hist = hist[core]
 
     # Normalize if normed is True
     if normed:
