@@ -1106,7 +1106,13 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
-
+    
+    def test_noncentral_f_small_df(self):
+        self.setSeed()
+        desired = np.array([6.869638627492048, 0.785880199263955])
+        actual = np.random.noncentral_f(0.9, 0.9, 2, size=2)
+        assert_array_almost_equal(actual, desired, decimal=14)
+        
     def test_chisquare(self):
         df = [1]
         bad_df = [-1]

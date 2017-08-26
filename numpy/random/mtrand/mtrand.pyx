@@ -2110,9 +2110,9 @@ cdef class RandomState:
         Parameters
         ----------
         dfnum : int or array_like of ints
-            Parameter, should be > 1.
+            Parameter, should be > 0.
         dfden : int or array_like of ints
-            Parameter, should be > 1.
+            Parameter, should be > 0.
         nonc : float or array_like of floats
             Parameter, should be >= 0.
         size : int or tuple of ints, optional
@@ -2175,8 +2175,8 @@ cdef class RandomState:
             fdfden = PyFloat_AsDouble(dfden)
             fnonc = PyFloat_AsDouble(nonc)
 
-            if fdfnum <= 1:
-                raise ValueError("dfnum <= 1")
+            if fdfnum <= 0:
+                raise ValueError("dfnum <= 0")
             if fdfden <= 0:
                 raise ValueError("dfden <= 0")
             if fnonc < 0:
@@ -2184,8 +2184,8 @@ cdef class RandomState:
             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,
                                   fdfnum, fdfden, fnonc, self.lock)
 
-        if np.any(np.less_equal(odfnum, 1.0)):
-            raise ValueError("dfnum <= 1")
+        if np.any(np.less_equal(odfnum, 0.0)):
+            raise ValueError("dfnum <= 0")
         if np.any(np.less_equal(odfden, 0.0)):
             raise ValueError("dfden <= 0")
         if np.any(np.less(ononc, 0.0)):
