@@ -2555,14 +2555,10 @@ def _arraymethod(funcname, onmask=True):
         result = result.view(type(self))
         result._update_from(self)
         mask = self._mask
-        if result.ndim:
-            if not onmask:
-                result.__setmask__(mask)
-            elif mask is not nomask:
-                result.__setmask__(getattr(mask, funcname)(*args, **params))
-        else:
-            if mask.ndim and (not mask.dtype.names and mask.all()):
-                return masked
+        if not onmask:
+            result.__setmask__(mask)
+        elif mask is not nomask:
+            result.__setmask__(getattr(mask, funcname)(*args, **params))
         return result
     methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
     if methdoc is not None:
@@ -4410,8 +4406,6 @@ class MaskedArray(ndarray):
 
         return (~m).sum(axis=axis, dtype=np.intp, **kwargs)
 
-    flatten = _arraymethod('flatten')
-
     def ravel(self, order='C'):
         """
         Returns a 1D version of self, as a view.
@@ -4456,8 +4450,6 @@ class MaskedArray(ndarray):
         else:
             r._mask = nomask
         return r
-
-    repeat = _arraymethod('repeat')
 
 
     def reshape(self, *s, **kwargs):
@@ -5745,14 +5737,15 @@ class MaskedArray(ndarray):
         return out[()]
 
     # Array methods
-    copy = _arraymethod('copy')
-    diagonal = _arraymethod('diagonal')
-    transpose = _arraymethod('transpose')
-    T = property(fget=lambda self: self.transpose())
-    swapaxes = _arraymethod('swapaxes')
     clip = _arraymethod('clip', onmask=False)
     copy = _arraymethod('copy')
+    diagonal = _arraymethod('diagonal')
+    flatten = _arraymethod('flatten')
+    repeat = _arraymethod('repeat')
     squeeze = _arraymethod('squeeze')
+    swapaxes = _arraymethod('swapaxes')
+    T = property(fget=lambda self: self.transpose())
+    transpose = _arraymethod('transpose')
 
     def tolist(self, fill_value=None):
         """
