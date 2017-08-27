@@ -3004,7 +3004,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 }
 
 /*
- * the formula is len = (intp) ceil((start - stop) / step);
+ * the formula is len = (intp) ceil((stop - start) / step);
  */
 static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
