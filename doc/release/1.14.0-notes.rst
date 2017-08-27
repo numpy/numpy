@@ -141,6 +141,11 @@ and shifted Chebyshev points of the first kind.
 Improvements
 ============
 
+Numerator degrees of freedom in ``random.noncentral_f`` need only be positive.
+------------------------------------------------------------------------------
+Prior to NumPy 1.14.0, the numerator degrees of freedom needed to be > 1, but
+the distribution is valid for values > 0, which is the new requirement.
+
 The GIL is released for all ``np.einsum`` variations
 ----------------------------------------------------
 Some specific loop structures which have an accelerated loop version
