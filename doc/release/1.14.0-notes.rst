@@ -175,6 +175,11 @@ them more clear::
     >>> np.polynomial.Polynomial(range(4))
     Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
 
+f2py now handles arrays of dimension 0
+--------------------------------------
+f2py now allows for the allocation of arrays of dimension 0. This allows for
+more consistent handling of corner cases downstream.
+
 
 Changes
 =======
