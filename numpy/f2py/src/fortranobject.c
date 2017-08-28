@@ -599,7 +599,7 @@ count_nonpos(const int rank,
              const npy_intp *dims) {
     int i=0,r=0;
     while (i<rank) {
-        if (dims[i] <= 0) ++r;
+        if (dims[i] < 0) ++r;
         ++i;
     }
     return r;
