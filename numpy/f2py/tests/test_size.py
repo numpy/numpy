@@ -15,6 +15,9 @@ class TestSizeSumExample(util.F2PyTest):
 
     @dec.slow
     def test_all(self):
+        r = self.module.foo([[]])
+        assert_equal(r, [0], repr(r))
+
         r = self.module.foo([[1, 2]])
         assert_equal(r, [3], repr(r))
 
@@ -26,6 +29,9 @@ class TestSizeSumExample(util.F2PyTest):
 
     @dec.slow
     def test_transpose(self):
+        r = self.module.foo([[]])
+        assert_equal(r, [[]], repr(r))
+
         r = self.module.trans([[1, 2]])
         assert_equal(r, [[1], [2]], repr(r))
 
@@ -34,6 +40,9 @@ class TestSizeSumExample(util.F2PyTest):
 
     @dec.slow
     def test_flatten(self):
+        r = self.module.flatten([[]])
+        assert_equal(r, [], repr(r))
+
         r = self.module.flatten([[1, 2]])
         assert_equal(r, [1, 2], repr(r))
 
