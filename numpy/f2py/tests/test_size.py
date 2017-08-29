@@ -2,7 +2,6 @@ from __future__ import division, absolute_import, print_function
 
 import os
 
-from numpy import array
 from numpy.testing import run_module_suite, assert_equal, dec
 from . import util
 
@@ -31,7 +30,7 @@ class TestSizeSumExample(util.F2PyTest):
     @dec.slow
     def test_transpose(self):
         r = self.module.trans([[]])
-        assert_equal(r, array([[]]).T, repr(r))
+        assert_equal(r.T, [[]], repr(r))
 
         r = self.module.trans([[1, 2]])
         assert_equal(r, [[1], [2]], repr(r))
