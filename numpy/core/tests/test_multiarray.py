@@ -2497,6 +2497,17 @@ class TestMethods(object):
         if HAS_REFCOUNT:
             assert_(sys.getrefcount(a) < 50)
 
+    def test_size_zero_memleak(self):
+        # Regression test for issue 9615
+        # Exercises a special-case code path for dot products of length
+        # zero in cblasfuncs (making it is specific to floating dtypes).
+        a = np.array([], dtype=np.float64)
+        x = np.array(2.0)
+        for _ in range(100):
+            np.dot(a, a, out=x)
+        if HAS_REFCOUNT:
+            assert_(sys.getrefcount(x) < 50)
+
     def test_trace(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.trace(), 15)
