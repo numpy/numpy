@@ -157,6 +157,9 @@ def main(argv):
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+    else:
+        _temp = __import__(PROJECT_MODULE)
+        site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
     if extra_argv and extra_argv[0] == '--':
@@ -273,8 +276,7 @@ def main(argv):
         def fix_test_path(x):
             # fix up test path
             p = x.split(':')
-            p[0] = os.path.relpath(os.path.abspath(p[0]),
-                                   test_dir)
+            p[0] = os.path.join(site_dir, p[0])
             return ':'.join(p)
 
         tests = [fix_test_path(x) for x in args.tests]
