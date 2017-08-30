@@ -595,11 +595,11 @@ static int check_and_fix_dimensions(const PyArrayObject* arr,
                                     npy_intp *dims);
 
 static int
-count_nonpos(const int rank,
-             const npy_intp *dims) {
+count_negative_dimensions(const int rank,
+                          const npy_intp *dims) {
     int i=0,r=0;
     while (i<rank) {
-        if (dims[i] <= 0) ++r;
+        if (dims[i] < 0) ++r;
         ++i;
     }
     return r;
@@ -678,7 +678,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
         || ((intent & F2PY_OPTIONAL) && (obj==Py_None))
         ) {
         /* intent(cache), optional, intent(hide) */
-        if (count_nonpos(rank,dims)) {
+        if (count_negative_dimensions(rank,dims) > 0) {
             int i;
             strcpy(mess, "failed to create intent(cache|hide)|optional array"
                    "-- must have defined dimensions but got (");
