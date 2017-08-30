@@ -437,6 +437,18 @@ gentype_format(PyObject *self, PyObject *args)
     return ret;
 }
 
+/*
+ * override method lookup for inconsistent handling of
+ * __radd__ on c-extension types with dual inheritanace
+ */
+static PyObject *
+chartype_radd(PyObject *self, PyObject *args)
+{
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+}
+
+
 #ifdef FORCE_NO_LONG_DOUBLE_FORMATTING
 #undef NPY_LONGDOUBLE_FMT
 #define NPY_LONGDOUBLE_FMT NPY_DOUBLE_FMT
@@ -2066,6 +2078,11 @@ static PyMethodDef gentype_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
+static PyMethodDef chartype_methods[] = {
+    {"__radd__",
+        (PyCFunction)chartype_radd, METH_VARARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
 
 static PyGetSetDef voidtype_getsets[] = {
     {"flags",
@@ -4068,6 +4085,8 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_repr = gentype_repr;
     PyGenericArrType_Type.tp_str = gentype_str;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
+
+    PyCharacterArrType_Type.tp_methods = chartype_methods;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
     /*
