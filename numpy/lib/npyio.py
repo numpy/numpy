@@ -443,6 +443,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         then the filename is unchanged.  If file is a string or Path, a ``.npy``
         extension will be appended to the file name if it does not already
         have one.
+    arr : array_like
+        Array data to be saved.
     allow_pickle : bool, optional
         Allow saving object arrays using Python pickles. Reasons for disallowing
         pickles include security (loading pickled data can execute arbitrary
@@ -456,8 +458,6 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
         will try to map the new Python 3 names to the old module names used in
         Python 2, so that the pickle data stream is readable with Python 2.
-    arr : array_like
-        Array data to be saved.
 
     See Also
     --------
