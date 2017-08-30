@@ -2260,5 +2260,17 @@ class TestRegression(object):
             item2 = copy.copy(item)
             assert_equal(item, item2)
 
+
+    def test_char_radd(self):
+        # GH issue 9620, used to reach gentype_add and raise TypeError
+        np_s = np.string_('abc')
+        np_u = np.unicode_('abc')
+        s = 'def'
+        u = u'def'
+        assert np_s.__radd__(np_s) is NotImplemented
+        assert np_u.__radd__(np_u) is NotImplemented
+        assert s + np_s == 'defabc'
+        assert u + np_u == u'defabc'
+
 if __name__ == "__main__":
     run_module_suite()
