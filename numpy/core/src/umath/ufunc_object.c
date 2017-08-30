@@ -502,6 +502,16 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
         return 0;
     }
     if PyArray_Check(obj) {
+        if (Py_REFCNT(obj) == 1 &&
+                (PyArray_FLAGS((PyArrayObject *)obj) & NPY_ARRAY_OWNDATA)) {
+            if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                             "the output array seems to be a new array, if the "
+                             "returned values of the ufunc are not assigned to "
+                             "a new variable the results may be lost.",
+                             1) < 0) {
+                return -1;
+            }
+        }
         /* If it's an array, store it */
         if (PyArray_FailUnlessWriteable((PyArrayObject *)obj,
                                         "output array") < 0) {
@@ -1733,7 +1743,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 /*
  * Validate the core dimensions of all the operands, and collect all of
  * the labelled core dimensions into 'core_dim_sizes'.
- * 
+ *
  * Returns 0 on success, and -1 on failure
  *
  * The behavior has been changed in NumPy 1.10.0, and the following
@@ -3678,7 +3688,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             PyDict_SetItem(kwds, npy_um_str_out, out_obj);
         }
     }
-            
+
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);

@@ -597,6 +597,15 @@ class TestUfunc(object):
         umt.inner1d(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
 
+        # Passing a temporary array as out= argument emits a Warning.
+        arr = np.ones(3)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            np.add(arr, arr, out=np.empty(3))
+        assert len(w) == 1
+        assert w[0].category is RuntimeWarning
+        assert "the results may be lost" in str(w[0].message)
+
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
         b = np.arange(10, 16).reshape((2, 3))
