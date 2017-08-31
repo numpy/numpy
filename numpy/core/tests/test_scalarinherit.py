@@ -38,5 +38,41 @@ class TestInherit(object):
         y = C0(2.0)
         assert_(str(y) == '2.0')
 
+
+class TestCharacter(object):
+    def test_char_radd(self):
+        # GH issue 9620, reached gentype_add and raise TypeError
+        np_s = np.string_('abc')
+        np_u = np.unicode_('abc')
+        s = b'def'
+        u = u'def'
+        assert_(np_s.__radd__(np_s) is NotImplemented)
+        assert_(np_s.__radd__(np_u) is NotImplemented)
+        assert_(np_s.__radd__(s) is NotImplemented)
+        assert_(np_s.__radd__(u) is NotImplemented)
+        assert_(np_u.__radd__(np_s) is NotImplemented)
+        assert_(np_u.__radd__(np_u) is NotImplemented)
+        assert_(np_u.__radd__(s) is NotImplemented)
+        assert_(np_u.__radd__(u) is NotImplemented)
+        assert_(s + np_s == b'defabc')
+        assert_(u + np_u == u'defabc')
+
+
+        class Mystr(str, np.generic):
+            # would segfault
+            pass
+
+        ret = s + Mystr('abc')
+        assert_(type(ret) is type(s))
+
+    def test_char_repeat(self):
+        np_s = np.string_('abc')
+        np_u = np.unicode_('abc')
+        np_i = np.int(5)
+        res_np = np_s * np_i
+        res_s = b'abc' * 5
+        assert_(res_np == res_s)
+
+
 if __name__ == "__main__":
     run_module_suite()

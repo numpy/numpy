@@ -2260,5 +2260,6 @@ class TestRegression(object):
             item2 = copy.copy(item)
             assert_equal(item, item2)
 
+
 if __name__ == "__main__":
     run_module_suite()
