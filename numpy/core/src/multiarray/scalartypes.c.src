@@ -195,9 +195,21 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
     }
 }
 
+static PyObject *
+gentype_add(PyObject *m1, PyObject* m2)
+{
+    /* special case str.__radd__, which should not call array_add */
+    if (PyString_Check(m1) || PyUnicode_Check(m1)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_add, gentype_add);
+    return PyArray_Type.tp_as_number->nb_add(m1, m2);
+}
+
 /**begin repeat
  *
- * #name = add, subtract, remainder, divmod, lshift, rshift,
+ * #name = subtract, remainder, divmod, lshift, rshift,
  *         and, xor, or, floor_divide, true_divide#
  */
 static PyObject *
