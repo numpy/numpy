@@ -15,9 +15,7 @@
 #include "mapping.h"
 
 #include "sequence.h"
-
-static int
-array_any_nonzero(PyArrayObject *mp);
+#include "calculation.h"
 
 /*************************************************************************
  ****************   Implement Sequence Protocol **************************
@@ -32,16 +30,18 @@ array_contains(PyArrayObject *self, PyObject *el)
 {
     /* equivalent to (self == el).any() */
 
-    PyObject *res;
     int ret;
+    PyObject *res, *any;
 
     res = PyArray_EnsureAnyArray(PyObject_RichCompare((PyObject *)self,
                                                       el, Py_EQ));
     if (res == NULL) {
         return -1;
     }
-    ret = array_any_nonzero((PyArrayObject *)res);
+    any = PyArray_Any((PyArrayObject *)res, NPY_MAXDIMS, NULL);
     Py_DECREF(res);
+    ret = PyObject_IsTrue(any);
+    Py_DECREF(any);
     return ret;
 }
 
@@ -61,74 +61,3 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
 
 /****************** End of Sequence Protocol ****************************/
 
-/*
- * Helpers
- */
-
-/* Array evaluates as "TRUE" if any of the elements are non-zero*/
-static int
-array_any_nonzero(PyArrayObject *arr)
-{
-    PyArray_NonzeroFunc *nonzero;
-    int ret = NPY_FALSE;
-    int needs_api = 0;
-
-    NpyIter *iter;
-    NpyIter_IterNextFunc *iternext;
-    char **dataptr;
-    npy_intp *strideptr, *innersizeptr;
-    NPY_BEGIN_THREADS_DEF;
-
-    nonzero = PyArray_DESCR(arr)->f->nonzero;
-
-    iter = NpyIter_New(arr, NPY_ITER_READONLY |
-                            NPY_ITER_EXTERNAL_LOOP |
-                            NPY_ITER_REFS_OK,
-                            NPY_KEEPORDER, NPY_NO_CASTING,
-                            NULL);
-    if (iter == NULL) {
-        return ret;
-    }
-    needs_api = NpyIter_IterationNeedsAPI(iter);
-
-    /* Get the pointers for inner loop iteration */
-    iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
-
-    NPY_BEGIN_THREADS_NDITER(iter);
-
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    strideptr = NpyIter_GetInnerStrideArray(iter);
-    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-    /* Iterate over all the elements to count the nonzeros */
-    do {
-        char *data = *dataptr;
-        npy_intp stride = *strideptr;
-        npy_intp count = *innersizeptr;
-
-        while (count--) {
-            if (nonzero(data, arr)) {
-                ret = NPY_TRUE;
-                goto finish;
-            }
-            if (needs_api && PyErr_Occurred()) {
-                ret = -1;
-                goto finish;
-            }
-            data += stride;
-        }
-
-    } while(iternext(iter));
-
-
-finish:
-    NPY_END_THREADS;
-
-    NpyIter_Deallocate(iter);
-
-    return ret;
-}
