@@ -1795,6 +1795,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         }
         else {
             ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
+            PyArray_ResolveUpdateIfCopy(arr); /* prevent spurious warnings */
             Py_DECREF(arr);
         }
     }
