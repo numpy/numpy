@@ -2788,6 +2788,10 @@ class TestMethods(TestCase):
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
 
+class TestCequenceMethods(object):
+    def test_array_contains(self):
+        assert_(4.0 in np.arange(16.).reshape(4,4))
+        assert_(20.0 not in np.arange(16.).reshape(4,4))
 
 class TestBinop(object):
     def test_inplace(self):
