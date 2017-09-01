@@ -20,13 +20,8 @@ source builds/venv/bin/activate
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
-if [ -n "$PYTHON_OO" ]; then
-  PYTHON="${PYTHON} -OO"
-fi
-
-
-if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
-  PYTHON="${PYTHON} -3"
+if [ -n "$PYTHON_OPTS" ]; then
+  PYTHON="${PYTHON} $PYTHON_OPTS"
 fi
 
 # make some warnings fatal, mostly to match windows compilers
