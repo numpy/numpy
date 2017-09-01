@@ -41,10 +41,10 @@
  *   SOFTWARE OR ITS DOCUMENTATION.
  */
 
-#include <math.h>
-#include <stdlib.h>
 #include "distributions.h"
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #ifndef min
 #define min(x,y) ((x<y)?x:y)
