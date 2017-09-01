@@ -445,7 +445,7 @@ def count_nonzero(a, axis=None):
     counts = np.apply_along_axis(multiarray.count_nonzero, axis[0], a)
 
     if axis.size == 1:
-        return counts
+        return counts.astype(np.intp, copy=False)
     else:
         # for subsequent axis numbers, that number decreases
         # by one in this new 'counts' array if it was larger
