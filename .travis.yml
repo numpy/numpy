@@ -38,8 +38,6 @@ python:
 matrix:
   include:
     - python: 2.7
-      env: PY3_COMPATIBILITY_CHECK=1
-    - python: 2.7
       env: USE_CHROOT=1 ARCH=i386 DIST=zesty PYTHON=2.7
       sudo: true
       dist: trusty
@@ -69,7 +67,7 @@ matrix:
        - PYTHONOPTIMIZE=2
        - USE_ASV=1
     - python: 2.7
-      env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OO=1
+      env: NPY_RELAXED_STRIDES_CHECKING=0 PYTHON_OPTS="-3 -OO"
     - python: 2.7
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 2.7
