@@ -21,6 +21,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
 #include "reduction.h"
 #include "extobj.h"  /* for _check_ufunc_fperr */
