@@ -55,11 +55,7 @@ setup_base()
         | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
         | grep -E "warning\>" \
         | tee warnings
-      # Check for an acceptable number of warnings. Some warnings are out of
-      # our control, so adjust the number as needed. At the moment a
-      # cython generated code produces a warning about '-2147483648L', but
-      # the code seems to compile OK.
-      [[ $(wc -l < warnings) -lt 2 ]]
+      [[ $(wc -l < warnings) -lt 1 ]]
     fi
   else
     sysflags="$($PYTHON -c "from distutils import sysconfig; \
