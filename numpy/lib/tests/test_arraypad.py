@@ -639,6 +639,11 @@ class TestReflect(object):
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
+    def test_check_padding_an_empty_array(self):
+        a = pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
+        b = np.zeros((0, 5))
+        assert_array_equal(a, b)
+
 
 class TestSymmetric(object):
     def test_check_simple(self):
@@ -1016,6 +1021,8 @@ class TestValueError1(object):
     def test_check_empty_array(self):
         assert_raises(ValueError, pad, [], 4, mode='reflect')
         assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
+        assert_raises(ValueError, pad, np.zeros((0, 3)), ((1,), (0,)),
+                      mode='reflect')
 
 
 class TestValueError2(object):

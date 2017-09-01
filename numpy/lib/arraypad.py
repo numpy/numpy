@@ -1406,10 +1406,15 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _append_min(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'reflect':
-        if narray.size == 0:
-            raise ValueError("There aren't any elements to reflect in `array`")
-
         for axis, (pad_before, pad_after) in enumerate(pad_width):
+            if narray.shape[axis] == 0:
+                # Axes with non-zero padding cannot be empty.
+                if pad_before > 0 or pad_after > 0:
+                    raise ValueError("There aren't any elements to reflect"
+                                     " in axis {} of `array`".format(axis))
+                # Skip zero padding on empty axes.
+                continue
+
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
             # length, to keep the period of the reflections consistent.
