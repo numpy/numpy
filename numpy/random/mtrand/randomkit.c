@@ -64,13 +64,6 @@
 
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <limits.h>
-#include <math.h>
-#include <assert.h>
 
 #ifdef _WIN32
 /*
@@ -109,18 +102,27 @@
 #include <wincrypt.h>
 #endif
 
-#else
-/* Unix */
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
-
 /*
  * Do not move this include. randomkit.h must be included
  * after windows timeb.h is included.
  */
 #include "randomkit.h"
+
+#else
+/* Unix */
+#include "randomkit.h"
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
+#include <math.h>
+#include <assert.h>
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"
