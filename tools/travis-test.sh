@@ -46,21 +46,23 @@ setup_base()
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
     if [ -z "$IN_CHROOT" ]; then
-      $PIP install .
+      $PIP install -v . 2>&1 | tee log
     else
       sysflags="$($PYTHON -c "from distutils import sysconfig; \
         print (sysconfig.get_config_var('CFLAGS'))")"
       CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install -v . 2>&1 | tee log
-      grep -v "_configtest" log \
-        | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
-        | grep -E "warning\>" \
-        | tee warnings
-      [[ $(wc -l < warnings) -lt 1 ]]
     fi
   else
     sysflags="$($PYTHON -c "from distutils import sysconfig; \
       print (sysconfig.get_config_var('CFLAGS'))")"
-    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace
+    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace 2>&1 | tee log
+  fi
+  grep -v "_configtest" log \
+    | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
+    | grep -E "warning\>" \
+    | tee warnings
+  if [ "$LAPACK" != "None" ]; then
+    [[ $(wc -l < warnings) -lt 1 ]]
   fi
 }
 
