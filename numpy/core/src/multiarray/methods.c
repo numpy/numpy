@@ -1776,7 +1776,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_XDECREF(PyArray_BASE(self));
     fa->base = NULL;
 
-    PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
 
     if (PyArray_DIMS(self) != NULL) {
         npy_free_cache_dim_array(self);
@@ -2322,7 +2322,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         else {
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
             Py_XDECREF(fa->base);
             fa->base = NULL;
         }

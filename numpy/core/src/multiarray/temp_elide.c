@@ -286,7 +286,7 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
             !PyArray_ISNUMBER(alhs) ||
             !(PyArray_FLAGS(alhs) & NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
-            PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
+            PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }

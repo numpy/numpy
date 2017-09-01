@@ -1062,6 +1062,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(ap2);
 
     /* Trigger possible copy-back into `result` */
+    PyArray_ResolveUpdateIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return (PyObject *)result;
@@ -4464,7 +4465,7 @@ set_flaginfo(PyObject *d)
     _addnew(FORTRAN, NPY_ARRAY_F_CONTIGUOUS, F);
     _addnew(CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS, C);
     _addnew(ALIGNED, NPY_ARRAY_ALIGNED, A);
-    _addnew(UPDATEIFCOPY, NPY_ARRAY_UPDATEIFCOPY, U);
+    _addnew(UPDATEIFCOPY, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT, U);
     _addnew(WRITEABLE, NPY_ARRAY_WRITEABLE, W);
     _addone(C_CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS);
     _addone(F_CONTIGUOUS, NPY_ARRAY_F_CONTIGUOUS);

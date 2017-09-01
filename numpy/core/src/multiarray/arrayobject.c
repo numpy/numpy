@@ -112,7 +112,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
      * references.
      */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
-    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
     PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
 
     return 0;
@@ -372,9 +372,62 @@ PyArray_TypeNumFromName(char *str)
     return NPY_NOTYPE;
 }
 
+/*NUMPY_API
+ *
+ * If UPDATEIFCOPY and self has data, reset the base WRITEABLE flag,
+ * copy the local data to base, release the local data, and set flags
+ * appropriately. Return 0 if not relevant, 1 if success, < 0 on failure
+ */
+NPY_NO_EXPORT int
+PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
+{
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+    if (fa && fa->base) {
+        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT) {
+            /*
+             * UPDATEIFCOPY means that fa->base's data
+             * should be updated with the contents
+             * of self.
+             * fa->base->flags is not WRITEABLE to protect the relationship
+             * unlock it.
+             */
+            int retval = 0;
+            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
+                                                    NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT);
+            retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
+            if (retval < 0) {
+                /* this should never happen, how did the two copies of data
+                 * get out of sync?
+                 */
+                return retval;
+            }
+            if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
+                /* Free internal references if an Object array */
+                if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
+                    Py_INCREF(self); /*hold on to self */
+                    PyArray_XDECREF(self);
+                    Py_DECREF(self); 
+                }
+                npy_free_cache(fa->data, PyArray_NBYTES(self));
+                fa->data = NULL;
+                PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+            }
+            return 1;
+        }
+    }
+    return 0;
+ }
+
 /*********************** end C-API functions **********************/
 
 /* array object functions */
+
+#ifdef PYPY_VERSION
+  #ifndef DEPRECATE_UPDATEIFCOPY
+    #define DEPRECATE_UPDATEIFCOPY
+  #endif
+#endif
 
 static void
 array_dealloc(PyArrayObject *self)
@@ -387,27 +440,24 @@ array_dealloc(PyArrayObject *self)
         PyObject_ClearWeakRefs((PyObject *)self);
     }
     if (fa->base) {
-        /*
-         * UPDATEIFCOPY means that base points to an
-         * array that should be updated with the contents
-         * of this array upon destruction.
-         * fa->base->flags must have been WRITEABLE
-         * (checked previously) and it was locked here
-         * thus, unlock it.
-         */
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
-                                                    NPY_ARRAY_WRITEABLE);
-            Py_INCREF(self); /* hold on to self in next call */
-            if (PyArray_CopyAnyInto((PyArrayObject *)fa->base, self) < 0) {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-            /*
-             * Don't need to DECREF -- because we are deleting
-             *self already...
-             */
+        int retval;
+        Py_INCREF(self); /* hold on to self in next call */
+        retval = PyArray_ResolveUpdateIfCopy(self);
+        if (retval < 0)
+        {
+            PyErr_Print();
+            PyErr_Clear();
         }
+#ifdef DEPRECATE_UPDATEIFCOPY
+        if (retval > 0) {
+            DEPRECATE("UPDATEIFCOPY resolution in array_dealloc is "
+                      "incompatible with PyPy and will be removed in "
+                      "the future");
+            /* dealloc must not raise an error, even if warning filters are set
+             */
+            PyErr_Clear();
+        }
+#endif
         /*
          * In any case base is pointing to something that we need
          * to DECREF -- either a view or a buffer object
@@ -482,7 +532,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_ALIGNED");
     if (fobj->flags & NPY_ARRAY_WRITEABLE)
         printf(" NPY_WRITEABLE");
-    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
+    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY_CLEAR_B4_EXIT)
         printf(" NPY_UPDATEIFCOPY");
     printf("\n");
 
@@ -506,8 +556,6 @@ NPY_NO_EXPORT void
 PyArray_SetDatetimeParseFunction(PyObject *op)
 {
 }
-
-
 
 /*NUMPY_API
  */
