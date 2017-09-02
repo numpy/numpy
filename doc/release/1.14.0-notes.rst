@@ -180,6 +180,21 @@ f2py now handles arrays of dimension 0
 f2py now allows for the allocation of arrays of dimension 0. This allows for
 more consistent handling of corner cases downstream.
 
+``numpy.distutils`` supports using MSVC and mingw64-gfortran together
+---------------------------------------------------------------------
+
+Numpy distutils now supports using MSVC and Mingw64-gfortran compilers
+together. This enables producing Python extension modules on Windows
+containing Fortran code, while retaining compatibility with the
+binaries distributed by Python.org. Not all use cases are supported,
+but most common ways to wrap Fortran for Python are functional.
+
+Compilation in this mode is usually enabled automatically, and can be
+selected via the ``--fcompiler`` and ``--compiler`` options to
+``setup.py``. Moreover, linking Fortran codes to static OpenBLAS is
+supported; by default a gfortran-compatible static archive
+``openblas.a`` is looked for.
+
 
 Changes
 =======
