@@ -181,15 +181,16 @@
   All rights reserved.
   Licensed under 3-clause BSD license, see LICENSE.txt.
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 
 
 #define MAX(a, b) (((a) >= (b)) ? (a) : (b))
