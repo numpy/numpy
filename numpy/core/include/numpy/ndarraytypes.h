@@ -677,7 +677,7 @@ typedef struct tagPyArrayObject_fields {
     /*
      * This object is decref'd upon
      * deletion of array. Except in the
-     * case of UPDATEIFCOPY which has
+     * case of WRITEBACKIFCOPY which has
      * special handling.
      *
      * For views it points to the original
@@ -688,9 +688,9 @@ typedef struct tagPyArrayObject_fields {
      * points to an object that should be
      * decref'd on deletion
      *
-     * For UPDATEIFCOPY flag this is an
-     * array to-be-updated upon deletion
-     * of this one
+     * For WRITEBACKIFCOPY flag this is an
+     * array to-be-updated upon calling
+     * PyArray_ResolveWritebackIfCopy
      */
     PyObject *base;
     /* Pointer to type structure */
@@ -865,12 +865,13 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
- * this array when this array is deallocated
+ * this array when PyArray_ResolveWritebackIfCopy is called.
  *
  * This flag may be requested in constructor functions.
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_UPDATEIFCOPY    0x1000
+#define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
+#define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
@@ -894,11 +895,11 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_IN_ARRAY     (NPY_ARRAY_CARRAY_RO)
 #define NPY_ARRAY_OUT_ARRAY    (NPY_ARRAY_CARRAY)
 #define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY | \
-                                NPY_ARRAY_UPDATEIFCOPY)
+                                NPY_ARRAY_WRITEBACKIFCOPY)
 #define NPY_ARRAY_IN_FARRAY    (NPY_ARRAY_FARRAY_RO)
 #define NPY_ARRAY_OUT_FARRAY   (NPY_ARRAY_FARRAY)
 #define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY | \
-                                NPY_ARRAY_UPDATEIFCOPY)
+                                NPY_ARRAY_WRITEBACKIFCOPY)
 
 #define NPY_ARRAY_UPDATE_ALL   (NPY_ARRAY_C_CONTIGUOUS | \
                                 NPY_ARRAY_F_CONTIGUOUS | \
@@ -1044,7 +1045,7 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_CONTIG                     0x00200000
 /* The operand may be copied to satisfy requirements */
 #define NPY_ITER_COPY                       0x00400000
-/* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
+/* The operand may be copied with WRITEBACKIFCOPY to satisfy requirements */
 #define NPY_ITER_UPDATEIFCOPY               0x00800000
 /* Allocate the operand if it is NULL */
 #define NPY_ITER_ALLOCATE                   0x01000000

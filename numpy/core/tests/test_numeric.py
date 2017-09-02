@@ -1272,7 +1272,7 @@ def assert_array_strict_equal(x, y):
         assert_(x.flags.writeable == y.flags.writeable)
         assert_(x.flags.c_contiguous == y.flags.c_contiguous)
         assert_(x.flags.f_contiguous == y.flags.f_contiguous)
-        assert_(x.flags.updateifcopy == y.flags.updateifcopy)
+        assert_(x.flags.writebackifcopy == y.flags.writebackifcopy)
     # check endianness
     assert_(x.dtype.isnative == y.dtype.isnative)
 

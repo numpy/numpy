@@ -434,5 +434,16 @@ class TestNPY_CHAR(_DeprecationTestCase):
         assert_(npy_char_deprecation() == 'S1')
 
 
+class Test_UPDATEIFCOPY(_DeprecationTestCase):
+    """
+    v1.14 deprecates creating an array with the UPDATEIFCOPY flag, use
+    WRITEBACKIFCOPY instead
+    """
+    def test_npy_updateifcopy_deprecation(self):
+        from numpy.core.multiarray_tests import npy_updateifcopy_deprecation
+        arr = np.arange(9).reshape(3, 3)
+        v = arr.T
+        assert_warns(FutureWarning, npy_updateifcopy_deprecation, v)
+    
 if __name__ == "__main__":
     run_module_suite()

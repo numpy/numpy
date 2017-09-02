@@ -619,6 +619,19 @@ npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
     return (PyObject *)descr;
 }
 
+/* used to test UPDATEIFCOPY usage emits deprecation warning */
+static PyObject*
+npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
+{
+    int flags;
+    if (!PyArray_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "test needs ndarray input");
+        return NULL;
+    }
+    flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
+    return PyArray_FromArray((PyArrayObject*)args, NULL, flags);
+}
+
 #if !defined(NPY_PY3K)
 static PyObject *
 int_subclass(PyObject *dummy, PyObject *args)
@@ -1708,6 +1721,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"npy_char_deprecation",
         npy_char_deprecation,
         METH_NOARGS, NULL},
+    {"npy_updateifcopy_deprecation",
+        npy_updateifcopy_deprecation,
+        METH_O, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",
         int_subclass,

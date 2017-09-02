@@ -189,7 +189,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
         }
 
         Py_INCREF(ret);
-        if (PyArray_SetUpdateIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
+        if (PyArray_SetWritebackIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
             Py_DECREF(ret);
             Py_DECREF(ret_copy);
             return NULL;
@@ -485,7 +485,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * This either conforms 'out' to the ndim of 'operand', or allocates
      * a new array appropriate for this reduction.
      *
-     * A new array with UPDATEIFCOPY is allocated if operand and out have memory
+     * A new array with WRITEBACKIFCOPY is allocated if operand and out have memory
      * overlap.
      */
     Py_INCREF(result_dtype);
@@ -611,7 +611,7 @@ finish:
         }
     }
     else {
-        PyArray_ResolveUpdateIfCopy(result); /* prevent spurious warnings */
+        PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
         Py_DECREF(result);
         result = out;
         Py_INCREF(result);
@@ -620,7 +620,7 @@ finish:
     return result;
 
 fail:
-    PyArray_ResolveUpdateIfCopy(result); /* prevent spurious warnings */
+    PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
     Py_XDECREF(result);
     Py_XDECREF(op_view);
     if (iter != NULL) {

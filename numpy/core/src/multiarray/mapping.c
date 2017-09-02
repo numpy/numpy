@@ -3283,7 +3283,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
  * to avoid problems if `a` is modified during the iteration.
- * `iter->array` may contain a copied array (with UPDATEIFCOPY set).
+ * `iter->array` may contain a copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
@@ -3317,7 +3317,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         }
 
         Py_INCREF(a);
-        if (PyArray_SetUpdateIfCopyBase(a_copy, a) < 0) {
+        if (PyArray_SetWritebackIfCopyBase(a_copy, a) < 0) {
             goto fail;
         }
 

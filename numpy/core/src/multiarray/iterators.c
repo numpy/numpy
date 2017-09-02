@@ -1149,7 +1149,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
         return NULL;
     }
     ret = array_richcompare(new, other, cmp_op);
-    PyArray_ResolveUpdateIfCopy(new);
+    PyArray_ResolveWritebackIfCopy(new);
     Py_DECREF(new);
     return ret;
 }

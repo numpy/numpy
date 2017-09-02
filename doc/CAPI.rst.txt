@@ -274,19 +274,23 @@ array, or part of some larger record array.  But, they may have other uses...
 ``NPY_WRITEABLE``
     True only if the data buffer can be "written" to.
 
-``NPY_UPDATEIFCOPY``
+``NPY_WRITEBACKIFCOPY``
     This is a special flag that is set if this array represents a copy
     made because a user required certain flags in ``PyArray_FromAny`` and
     a copy had to be made of some other array (and the user asked for
     this flag to be set in such a situation). The base attribute then
     points to the "misbehaved" array (which is set read_only). When
-    the array with this flag set is deallocated, it will copy its
+    ``PyArray_ResoveWritebackIfCopy`` is called, it will copy its
     contents back to the "misbehaved" array (casting if necessary) and
     will reset the "misbehaved" array to ``WRITEABLE``. If the
     "misbehaved" array was not ``WRITEABLE`` to begin with then
-    ``PyArray_FromAny`` would have returned an error because ``UPDATEIFCOPY``
+    ``PyArray_FromAny`` would have returned an error because ``WRITEBACKIFCOPY``
     would not have been possible.
 
+``NPY_UPDATEIFCOPY``
+    Similar to ``NPY_WRITEBACKIFCOPY``, but deprecated since it copied the
+    contents back when the array is deallocated, which is not explicit and
+    relies on refcount semantics.
 
 ``PyArray_UpdateFlags(obj, flags)`` will update the ``obj->flags`` for
 ``flags`` which can be any of ``NPY_CONTIGUOUS``, ``NPY_FORTRAN``, ``NPY_ALIGNED``, or

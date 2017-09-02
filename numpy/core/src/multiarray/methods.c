@@ -1776,6 +1776,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_XDECREF(PyArray_BASE(self));
     fa->base = NULL;
 
+    PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
     PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
     if (PyArray_DIMS(self) != NULL) {
@@ -2317,11 +2318,12 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (PyObject_IsTrue(uic)) {
             fa->flags = flagback;
             PyErr_SetString(PyExc_ValueError,
-                            "cannot set UPDATEIFCOPY "       \
+                            "cannot set WRITEBACKIFCOPY "       \
                             "flag to True");
             return NULL;
         }
         else {
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
             Py_XDECREF(fa->base);
             fa->base = NULL;

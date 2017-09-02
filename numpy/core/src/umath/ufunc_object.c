@@ -1691,7 +1691,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     retval = 0;
     nop = NpyIter_GetNOp(iter);
     for(i=0; i< nop; ++i) {
-        if (PyArray_ResolveUpdateIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0) {
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0) {
             retval = -1;
         }
     }
@@ -2294,9 +2294,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Write back any temporary data from PyArray_SetUpdateIfCopyBase */
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
     for(i=nin; i< nop; ++i)
-        if (PyArray_ResolveUpdateIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0)
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0)
             goto fail;
 
     PyArray_free(inner_strides);
@@ -3231,8 +3231,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 finish:
-    /* Write back any temporary data from PyArray_SetUpdateIfCopyBase */
-    if (PyArray_ResolveUpdateIfCopy(op[0]) < 0)
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
+    if (PyArray_ResolveWritebackIfCopy(op[0]) < 0)
         goto fail;
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
@@ -3616,7 +3616,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
-    if (op[0] && PyArray_ResolveUpdateIfCopy(op[0]) < 0) {
+    if (op[0] && PyArray_ResolveWritebackIfCopy(op[0]) < 0) {
         goto fail;
     }
     Py_XDECREF(op_dtypes[0]);

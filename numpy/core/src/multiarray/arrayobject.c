@@ -76,7 +76,7 @@ PyArray_Size(PyObject *op)
  * Precondition: 'arr' is a copy of 'base' (though possibly with different
  * strides, ordering, etc.). This function sets the UPDATEIFCOPY flag and the
  * ->base pointer on 'arr', so that when 'arr' is destructed, it will copy any
- * changes back to 'base'.
+ * changes back to 'base'. DEPRECATED, use PyArray_SetWritebackIfCopyBase
  *
  * Steals a reference to 'base'.
  *
@@ -85,17 +85,43 @@ PyArray_Size(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
+    int ret;
+    if (DEPRECATE_FUTUREWARNING("PyArray_SetUpdateIfCopyBase is deprecated, use"
+              "PyArray_SetWritebackIfCopyBase and PyArray_ResolveWritebackIfCopy") < 0)
+        return -1;
+    ret = PyArray_SetWritebackIfCopyBase(arr, base);
+    if (ret >=0) {
+        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+        PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
+    }
+    return ret;
+}
+
+/*NUMPY_API
+ *
+ * Precondition: 'arr' is a copy of 'base' (though possibly with different
+ * strides, ordering, etc.). This function sets the WRITEBACKIFCOPY flag and the
+ * ->base pointer on 'arr', call PyArray_ResolveWritebackIfCopy to copy any
+ * changes back to 'base' before deallocating the array.
+ *
+ * Steals a reference to 'base'.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_SetWritebackIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
+{
     if (base == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                  "Cannot UPDATEIFCOPY to NULL array");
+                  "Cannot WRITEBACKIFCOPY to NULL array");
         return -1;
     }
     if (PyArray_BASE(arr) != NULL) {
         PyErr_SetString(PyExc_ValueError,
-                  "Cannot set array with existing base to UPDATEIFCOPY");
+                  "Cannot set array with existing base to WRITEBACKIFCOPY");
         goto fail;
     }
-    if (PyArray_FailUnlessWriteable(base, "UPDATEIFCOPY base") < 0) {
+    if (PyArray_FailUnlessWriteable(base, "WRITEBACKIFCOPY base") < 0) {
         goto fail;
     }
 
@@ -112,7 +138,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
      * references.
      */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
-    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
     PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
 
     return 0;
@@ -374,18 +400,18 @@ PyArray_TypeNumFromName(char *str)
 
 /*NUMPY_API
  *
- * If UPDATEIFCOPY and self has data, reset the base WRITEABLE flag,
+ * If WRITEBACKIFCOPY and self has data, reset the base WRITEABLE flag,
  * copy the local data to base, release the local data, and set flags
  * appropriately. Return 0 if not relevant, 1 if success, < 0 on failure
  */
 NPY_NO_EXPORT int
-PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
+PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
     if (fa && fa->base) {
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
+        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY || fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             /*
-             * UPDATEIFCOPY means that fa->base's data
+             * UPDATEIFCOPY or WRITEBACKIFCOPY means that fa->base's data
              * should be updated with the contents
              * of self.
              * fa->base->flags is not WRITEABLE to protect the relationship
@@ -395,6 +421,7 @@ PyArray_ResolveUpdateIfCopy(PyArrayObject * self)
             PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
                                                     NPY_ARRAY_WRITEABLE);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
             if (retval < 0) {
                 /* this should never happen, how did the two copies of data
@@ -441,18 +468,38 @@ array_dealloc(PyArrayObject *self)
     }
     if (fa->base) {
         int retval;
-        Py_INCREF(self); /* hold on to self in next call */
-        retval = PyArray_ResolveUpdateIfCopy(self);
+        Py_INCREF(self); /* hold on to self in next call  since if refcount == 0
+                          * it will recurse back into array_dealloc
+                          */
+        retval = PyArray_ResolveWritebackIfCopy(self);
         if (retval < 0)
         {
             PyErr_Print();
             PyErr_Clear();
         }
 #ifdef DEPRECATE_UPDATEIFCOPY
+        /* TODO: enable this once a solution for UPDATEIFCOPY and nditer are resolved */
         if (retval > 0) {
-            DEPRECATE("UPDATEIFCOPY resolution in array_dealloc is "
+            char * msg = "WRITEBACKIFCOPY resolution in array_dealloc is "
                       "incompatible with PyPy and will be removed in "
-                      "the future");
+                      "the future";
+            if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+                /* dealloc must not raise an error, best effort try to write
+                   to stderr and clear the error
+                */
+                PyObject * s;
+#if PY_MAJOR_VERSION < 3
+                s = PyString_FromString(msg);
+#else
+                s = PyUnicode_FromString(msg);
+#endif
+                if (s) {
+                    PyErr_WriteUnraisable(s);
+                }
+                else {
+                    PyErr_WriteUnraisable(Py_None);
+                }
+            }
         }
 #endif
         /*
@@ -531,6 +578,8 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_WRITEABLE");
     if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
         printf(" NPY_UPDATEIFCOPY");
+    if (fobj->flags & NPY_ARRAY_WRITEBACKIFCOPY)
+        printf(" NPY_WRITEBACKIFCOPY");
     printf("\n");
 
     if (fobj->base != NULL && PyArray_Check(fobj->base)) {

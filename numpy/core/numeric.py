@@ -704,6 +704,7 @@ def require(a, dtype=None, requirements=None):
       OWNDATA : False
       WRITEABLE : True
       ALIGNED : True
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
 
     >>> y = np.require(x, dtype=np.float32, requirements=['A', 'O', 'W', 'F'])
@@ -713,6 +714,7 @@ def require(a, dtype=None, requirements=None):
       OWNDATA : True
       WRITEABLE : True
       ALIGNED : True
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
 
     """
