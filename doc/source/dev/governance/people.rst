@@ -12,8 +12,6 @@ Steering council
 
 * Ralf Gommers
 
-* Alex Griffing
-
 * Charles Harris
 
 * Nathaniel Smith
@@ -22,11 +20,21 @@ Steering council
 
 * Pauli Virtanen
 
+* Eric Wieser
+
+* Marten van Kerkwijk
+
+* Stephan Hoyer
+
+* Allan Haldane
+
 
 Emeritus members
 ----------------
 
 * Travis Oliphant - Project Founder / Emeritus Leader (served: 2005-2012)
+
+* Alex Griffing (served: 2015-2017)
 
 
 NumFOCUS Subcommittee
