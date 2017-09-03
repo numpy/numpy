@@ -2090,14 +2090,26 @@ PyArray_CountNonzero(PyArrayObject *self)
         needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
         PyArray_PREPARE_TRIVIAL_ITERATION(self, count, data, stride);
 
-        while (count--) {
-            if (nonzero(data, self)) {
-                ++nonzero_count;
+        if (needs_api){
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                if (PyErr_Occurred()) {
+                    return -1;
+                }
+                data += stride;
             }
-            if (needs_api && PyErr_Occurred()) {
-                return -1;
+        }
+        else {
+            NPY_BEGIN_THREADS_THRESHOLDED(count);
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                data += stride;
             }
-            data += stride;
+            NPY_END_THREADS;
         }
 
         return nonzero_count;
