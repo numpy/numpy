@@ -86,8 +86,12 @@ NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     int ret;
-    if (DEPRECATE_FUTUREWARNING("PyArray_SetUpdateIfCopyBase is deprecated, use"
-              "PyArray_SetWritebackIfCopyBase and PyArray_ResolveWritebackIfCopy") < 0)
+    if (DEPRECATE_FUTUREWARNING("PyArray_SetUpdateIfCopyBase is deprecated, use "
+              "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
+              "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
+              "i.e. before the last call to Py_DECREF. Note this warning could be "
+              "triggered by use of the NPY_ARRAY_UPDATEIFCOPY flag, possibly via "
+              "NPY_ARRAY_INOUT_ARRAY or NPY_ARRAY_INOUT_FARRAY. ") < 0)
         return -1;
     ret = PyArray_SetWritebackIfCopyBase(arr, base);
     if (ret >=0) {

@@ -895,10 +895,14 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_IN_ARRAY     (NPY_ARRAY_CARRAY_RO)
 #define NPY_ARRAY_OUT_ARRAY    (NPY_ARRAY_CARRAY)
 #define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY | \
+                                NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_ARRAY2 (NPY_ARRAY_CARRAY | \
                                 NPY_ARRAY_WRITEBACKIFCOPY)
 #define NPY_ARRAY_IN_FARRAY    (NPY_ARRAY_FARRAY_RO)
 #define NPY_ARRAY_OUT_FARRAY   (NPY_ARRAY_FARRAY)
 #define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY | \
+                                NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_FARRAY2 (NPY_ARRAY_FARRAY | \
                                 NPY_ARRAY_WRITEBACKIFCOPY)
 
 #define NPY_ARRAY_UPDATE_ALL   (NPY_ARRAY_C_CONTIGUOUS | \

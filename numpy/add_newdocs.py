@@ -4301,7 +4301,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The (deprecated) UPDATEIFCOPY and WRITEBACKIFCOPY flags can never be set
+    The WRITEBACKIFCOPY and (deprecated) UPDATEIFCOPY flags can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that

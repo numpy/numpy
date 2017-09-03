@@ -2012,13 +2012,18 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
 
         if (flags & NPY_ARRAY_UPDATEIFCOPY) {
+            /* This is the ONLY place the NPY-ARRAY_UPDATEIFCOPY flag
+             * is checked to call PyArray_SetUpdateIfCopyBase
+             * Deprecate this (and remove the `else` from the following
+             * condition) once the flag itself is deprecated
+             */
             Py_INCREF(arr);
             if (PyArray_SetUpdateIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
                 return NULL;
             }
         }
-        if (flags & NPY_ARRAY_WRITEBACKIFCOPY) {
+        else if (flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             Py_INCREF(arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
