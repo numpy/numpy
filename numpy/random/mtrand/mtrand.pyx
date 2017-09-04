@@ -552,8 +552,10 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
                 PyArray_MultiIter_NEXTi(multi, 1)
     return array
 
-cdef inline void compute_complex(double *rv_r, double *rv_i, double loc_r,
-                                 double loc_i, double var_r, double var_i, double rho) nogil:
+cdef inline void bivariate_normal(double *rv_r, double *rv_i, double loc_r,
+                                  double loc_i, double var_r, double var_i,
+                                  double rho) nogil:
+    """Transform two independent normals to a bivariate normal (inplace)"""
     cdef double scale_c, scale_i, scale_r
 
     scale_c = sqrt(1 - rho * rho)
@@ -4556,9 +4558,9 @@ cdef class RandomState:
         loc : complex or array_like of complex
             Mean of the distribution.
         gamma : float, complex or array_like of float or complex
-            Variance of the distribution
+            Variance of the distribution.
         relation : float, complex or array_like of float or complex
-            Relation between the two component normals
+            Relation between the two component normals.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -4583,8 +4585,8 @@ cdef class RandomState:
         variance of the imaginary component is 0.5 Re(gamma - relation), and
         the covariance between the two is 0.5 Im(relation).  The implied
         covariance matrix must be positive semi-definite and so both variances
-        must be zero and the covariance must be weakly smaller than the
-        product of the two standard deviations.
+        must be greater than or equal to zero and the covariance must be less
+        than or equal to the product of the two standard deviations.
 
         References
         ----------
@@ -4601,16 +4603,21 @@ cdef class RandomState:
         """
         cdef ndarray ogamma, orelation, oloc, randoms, v_real, v_imag, rho
         cdef double *randoms_data
-        cdef double fgamma_r, fgamma_i, frelation_r, frelation_i, frho, fvar_r , fvar_i, \
-            floc_r, floc_i, f_real, f_imag, i_r_scale, r_scale, i_scale, f_rho
+        cdef double fgamma_r, fgamma_i, frelation_r, frelation_i, frho, \
+            fvar_r, fvar_i, floc_r, floc_i, f_real, f_imag, i_r_scale, \
+            r_scale, i_scale, f_rho
         cdef npy_intp i, j, n
         cdef broadcast it
 
-        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
-        ogamma = <ndarray>PyArray_FROM_OTF(gamma, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
-        orelation = <ndarray>PyArray_FROM_OTF(relation, NPY_COMPLEX128, NPY_ARRAY_ALIGNED)
+        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_COMPLEX128,
+                                         NPY_ARRAY_ALIGNED)
+        ogamma = <ndarray>PyArray_FROM_OTF(gamma, NPY_COMPLEX128,
+                                           NPY_ARRAY_ALIGNED)
+        orelation = <ndarray>PyArray_FROM_OTF(relation, NPY_COMPLEX128,
+                                              NPY_ARRAY_ALIGNED)
 
-        if PyArray_NDIM(ogamma) == PyArray_NDIM(orelation) == PyArray_NDIM(oloc) == 0:
+        if (PyArray_NDIM(ogamma) == PyArray_NDIM(orelation) ==
+                PyArray_NDIM(oloc) == 0):
             floc_r = PyComplex_RealAsDouble(loc)
             floc_i = PyComplex_ImagAsDouble(loc)
             fgamma_r = PyComplex_RealAsDouble(gamma)
@@ -4630,13 +4637,15 @@ cdef class RandomState:
             if fvar_i > 0 and fvar_r > 0:
                 f_rho = frelation_i / sqrt(fvar_i * fvar_r)
             if f_rho > 1.0 or f_rho < -1.0:
-                raise ValueError('Im(relation) ** 2 > Re(gamma ** 2 - relation** 2)')
+                raise ValueError('Im(relation) ** 2 > '
+                                 'Re(gamma ** 2 - relation** 2)')
 
             if size is None:
                 f_real = rk_gauss(self.internal_state)
                 f_imag = rk_gauss(self.internal_state)
 
-                compute_complex(&f_real, &f_imag, floc_r, floc_i, fvar_r, fvar_i, f_rho)
+                bivariate_normal(&f_real, &f_imag, floc_r, floc_i, fvar_r,
+                                 fvar_i, f_rho)
 
                 return PyComplex_FromDoubles(f_real, f_imag)
 
@@ -4652,7 +4661,8 @@ cdef class RandomState:
                 for i in range(n):
                     f_real = rk_gauss(self.internal_state)
                     f_imag = rk_gauss(self.internal_state)
-                    randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real + i_r_scale * f_imag)
+                    randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real +
+                                                            i_r_scale * f_imag)
                     randoms_data[j] = floc_r + r_scale * f_real
                     j += 2
 
@@ -4672,20 +4682,26 @@ cdef class RandomState:
         cov = 0.5 * np.imag(orelation)
         rho = <ndarray>np.zeros_like(cov)
         idx = (v_real.flat > 0) & (v_imag.flat > 0)
-        rho.flat[idx] = cov.flat[idx]  / np.sqrt(v_real.flat[idx] * v_imag.flat[idx])
+        rho.flat[idx] = cov.flat[idx]  / np.sqrt(v_real.flat[idx] *
+                                                 v_imag.flat[idx])
         if np.any(cov.flat[~idx] != 0) or np.any(np.abs(rho) > 1):
-            raise ValueError('Im(relation) ** 2 > Re(gamma ** 2 - relation ** 2)')
+            raise ValueError('Im(relation) ** 2 > '
+                             'Re(gamma ** 2 - relation ** 2)')
 
         if size is not None:
             randoms = <ndarray>np.empty(size, np.complex128)
         else:
-            it = <broadcast>PyArray_MultiIterNew(4, <void *>oloc, <void *>v_real, <void *>v_imag, <void *>rho)
+            it = <broadcast>PyArray_MultiIterNew(4, <void *>oloc,
+                                                 <void *>v_real,
+                                                 <void *>v_imag, <void *>rho)
             randoms = <ndarray>np.empty(it.shape, np.complex128)
 
         randoms_data = <double *>PyArray_DATA(randoms)
         n = PyArray_SIZE(randoms)
 
-        it = <broadcast>PyArray_MultiIterNew(5, <void *>randoms, <void *>oloc, <void *>v_real, <void *>v_imag, <void *>rho)
+        it = <broadcast>PyArray_MultiIterNew(5, <void *>randoms, <void *>oloc,
+                                             <void *>v_real, <void *>v_imag,
+                                             <void *>rho)
         with self.lock, nogil:
             for i in range(2 * n):
                 randoms_data[i] = rk_gauss(self.internal_state)
@@ -4697,7 +4713,8 @@ cdef class RandomState:
                 fvar_r = (<double*>PyArray_MultiIter_DATA(it, 2))[0]
                 fvar_i = (<double*>PyArray_MultiIter_DATA(it, 3))[0]
                 f_rho = (<double*>PyArray_MultiIter_DATA(it, 4))[0]
-                compute_complex(&randoms_data[j], &randoms_data[j+1], floc_r, floc_i, fvar_r, fvar_i, f_rho)
+                bivariate_normal(&randoms_data[j], &randoms_data[j+1], floc_r,
+                                 floc_i, fvar_r, fvar_i, f_rho)
                 j += 2
                 PyArray_MultiIter_NEXT(it)
 
