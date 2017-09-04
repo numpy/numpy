@@ -1208,7 +1208,7 @@ def pad(array, pad_width, mode, **kwargs):
     length to the vector argument with padded values replaced. It has the
     following signature::
 
-        padding_func(vector, iaxis_pad_width, iaxis, **kwargs)
+        padding_func(vector, iaxis_pad_width, iaxis, kwargs)
 
     where
 
@@ -1222,7 +1222,7 @@ def pad(array, pad_width, mode, **kwargs):
             the end of vector.
         iaxis : int
             The axis currently being calculated.
-        kwargs : misc
+        kwargs : dict
             Any keyword arguments the function requires.
 
     Examples
@@ -1272,21 +1272,27 @@ def pad(array, pad_width, mode, **kwargs):
     >>> np.lib.pad(a, (2, 3), 'wrap')
     array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
-    >>> def padwithtens(vector, pad_width, iaxis, kwargs):
-    ...     vector[:pad_width[0]] = 10
-    ...     vector[-pad_width[1]:] = 10
+    >>> def pad_with(vector, pad_width, iaxis, kwargs):
+    ...     pad_value = kwargs.get('padder', 10)
+    ...     vector[:pad_width[0]] = pad_value
+    ...     vector[-pad_width[1]:] = pad_value
     ...     return vector
-
     >>> a = np.arange(6)
     >>> a = a.reshape((2, 3))
-
-    >>> np.lib.pad(a, 2, padwithtens)
+    >>> np.lib.pad(a, 2, pad_with)
     array([[10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10,  0,  1,  2, 10, 10],
            [10, 10,  3,  4,  5, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
+    >>> np.lib.pad(a, 2, pad_with, padder=100)
+    array([[100, 100, 100, 100, 100, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100],
+           [100, 100,   0,   1,   2, 100, 100],
+           [100, 100,   3,   4,   5, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100]])
     """
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
