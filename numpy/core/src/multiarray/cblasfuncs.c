@@ -457,7 +457,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             Py_DECREF(ap1);
             Py_DECREF(ap2);
             Py_DECREF(out_buf);
-            return PyArray_Return(out_buf);
+            return PyArray_Return(result);
     }
 
     if (ap2shape == _scalar) {

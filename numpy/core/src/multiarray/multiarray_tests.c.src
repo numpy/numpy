@@ -624,12 +624,16 @@ static PyObject*
 npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
 {
     int flags;
+    PyObject* array;
     if (!PyArray_Check(args)) {
         PyErr_SetString(PyExc_TypeError, "test needs ndarray input");
         return NULL;
     }
     flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
-    return PyArray_FromArray((PyArrayObject*)args, NULL, flags);
+    array = PyArray_FromArray((PyArrayObject*)args, NULL, flags);
+    PyArray_ResolveWritebackIfCopy((PyArrayObject*)array);
+    Py_DECREF(array);
+    Py_RETURN_NONE;
 }
 
 #if !defined(NPY_PY3K)
