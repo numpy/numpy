@@ -1136,6 +1136,12 @@ class TestStructured(object):
         assert_equal(x[["f0","f1"]][0], x[0][["f0","f1"]])
         assert_equal(x[0], x[0][()])
 
+    def test_multiindex_titles(self):
+        a = np.zeros(4, dtype=[(('a', 'b'), 'i'), ('c', 'i'), ('d', 'i')])
+        assert_raises(KeyError, lambda : a[['a','c']])
+        assert_raises(KeyError, lambda : a[['b','b']])
+        a[['b','c']]  # no exception
+
 class TestBool(object):
     def test_test_interning(self):
         a0 = np.bool_(0)

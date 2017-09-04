@@ -1498,6 +1498,35 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 Py_DECREF(names);
                 return 0;
             }
+            // disallow use of titles as index
+            if (PyTuple_Size(tup) == 3) {
+                PyObject *title = PyTuple_GET_ITEM(tup, 2);
+                int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
+                if (titlecmp == 1) {
+                    // if title == name, we were given a title, not a field name
+                    PyErr_SetString(PyExc_KeyError,
+                                "cannot use field titles in multi-field index");
+                }
+                if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
+                    Py_DECREF(title);
+                    Py_DECREF(name);
+                    Py_DECREF(fields);
+                    Py_DECREF(names);
+                    return 0;
+                }
+                Py_DECREF(title);
+            }
+            // disallow duplicate field indices
+            if (PyDict_Contains(fields, name)) {
+                PyObject *errmsg = PyUString_FromString(
+                                       "duplicate field of name ");
+                PyUString_ConcatAndDel(&errmsg, name);
+                PyErr_SetObject(PyExc_KeyError, errmsg);
+                Py_DECREF(errmsg);
+                Py_DECREF(fields);
+                Py_DECREF(names);
+                return 0;
+            }
             if (PyDict_SetItem(fields, name, tup) < 0) {
                 Py_DECREF(name);
                 Py_DECREF(fields);
