@@ -4609,11 +4609,11 @@ cdef class RandomState:
         cdef npy_intp i, j, n
         cdef broadcast it
 
-        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_COMPLEX128,
+        oloc = <ndarray>PyArray_FROM_OTF(loc, NPY_CDOUBLE,
                                          NPY_ARRAY_ALIGNED)
-        ogamma = <ndarray>PyArray_FROM_OTF(gamma, NPY_COMPLEX128,
+        ogamma = <ndarray>PyArray_FROM_OTF(gamma, NPY_CDOUBLE,
                                            NPY_ARRAY_ALIGNED)
-        orelation = <ndarray>PyArray_FROM_OTF(relation, NPY_COMPLEX128,
+        orelation = <ndarray>PyArray_FROM_OTF(relation, NPY_CDOUBLE,
                                               NPY_ARRAY_ALIGNED)
 
         if (PyArray_NDIM(ogamma) == PyArray_NDIM(orelation) ==
