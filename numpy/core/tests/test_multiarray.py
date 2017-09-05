@@ -4311,14 +4311,16 @@ class TestFlat(object):
 
         assert_(c.flags.writeable is False)
         assert_(d.flags.writeable is False)
+        # for 1.14 all are set to non-writeable on the way to replacing the
+        # UPDATEIFCOPY array returned for non-contiguous arrays.
         assert_(e.flags.writeable is True)
-        assert_(f.flags.writeable is True)
+        assert_(f.flags.writeable is False)
 
         assert_(c.flags.updateifcopy is False)
         assert_(d.flags.updateifcopy is False)
         assert_(e.flags.updateifcopy is False)
-        assert_(f.flags.updateifcopy is True)
-        assert_(f.base is self.b0)
+        # UPDATEIFCOPY is removed.
+        assert_(f.flags.updateifcopy is False)
 
 
 class TestResize(object):
