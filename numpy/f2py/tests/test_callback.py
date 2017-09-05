@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import math
 import textwrap
+import sys
 
 from numpy import array
 from numpy.testing import run_module_suite, assert_, assert_equal, dec
@@ -119,6 +120,7 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran')
     def test_string_callback(self):
 
         def callback(code):

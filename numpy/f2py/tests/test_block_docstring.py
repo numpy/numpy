@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import textwrap
+import sys
 from . import util
 
-from numpy.testing import run_module_suite, assert_equal
+from numpy.testing import run_module_suite, assert_equal, dec
 
 class TestBlockDocString(util.F2PyTest):
     code = """
@@ -15,6 +16,7 @@ class TestBlockDocString(util.F2PyTest):
       END
     """
 
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran')
     def test_block_docstring(self):
         expected = "'i'-array(2,3)\n"
         assert_equal(self.module.block.__doc__, expected)
