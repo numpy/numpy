@@ -631,6 +631,8 @@ npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
     }
     flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
     array = PyArray_FromArray((PyArrayObject*)args, NULL, flags);
+    if (array == NULL)
+        return NULL;
     PyArray_ResolveWritebackIfCopy((PyArrayObject*)array);
     Py_DECREF(array);
     Py_RETURN_NONE;

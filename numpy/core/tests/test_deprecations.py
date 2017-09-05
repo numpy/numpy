@@ -443,7 +443,7 @@ class Test_UPDATEIFCOPY(_DeprecationTestCase):
         from numpy.core.multiarray_tests import npy_updateifcopy_deprecation
         arr = np.arange(9).reshape(3, 3)
         v = arr.T
-        assert_warns(FutureWarning, npy_updateifcopy_deprecation, v)
+        self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
     
 if __name__ == "__main__":
     run_module_suite()
