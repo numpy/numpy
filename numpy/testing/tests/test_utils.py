@@ -13,7 +13,7 @@ from numpy.testing import (
     assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath,
+    assert_string_equal, assert_, tempdir, temppath, dec
     )
 import unittest
 
@@ -263,6 +263,8 @@ class TestEqual(TestArrayEqual):
         self._assert_func(x, x)
         self._test_not_equal(x, y)
 
+    @dec.knownfailureif(sys.version_info < (3, 0),
+                        msg="Error message different on Python 2")
     def test_error_message(self):
         try:
             self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
