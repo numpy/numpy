@@ -56,8 +56,8 @@ Build System Changes
 Compatibility notes
 ===================
 
-``a.flat.__array__()`` returns non-writeable arrays when ``a`` is non-contiguos
--------------------------------------------------------------------------------
+``a.flat.__array__()`` returns non-writeable arrays when ``a`` is non-contiguous
+--------------------------------------------------------------------------------
 The intent is that the UPDATEIFCOPY array previously returned when ``a`` was
 non-contiguous will be replaced by a writeable copy in the future. This
 temporary measure is aimed to notify folks who expect the underlying array be
