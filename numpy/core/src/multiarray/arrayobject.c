@@ -86,13 +86,22 @@ NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     int ret;
-    if (DEPRECATE_FUTUREWARNING("PyArray_SetUpdateIfCopyBase is deprecated, use "
+#ifdef PYPY_VERSION
+  #ifndef DEPRECATE_UPDATEIFCOPY
+    #define DEPRECATE_UPDATEIFCOPY
+  #endif
+#endif
+
+#ifdef DEPRECATE_UPDATEIFCOPY 
+    /* TODO: enable this once a solution for UPDATEIFCOPY
+     *  and nditer are resolved, also pending the fix for GH7054
+     */
+    if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
               "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
               "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
-              "i.e. before the last call to Py_DECREF. Note this warning could be "
-              "triggered by use of the NPY_ARRAY_UPDATEIFCOPY flag, possibly via "
-              "NPY_ARRAY_INOUT_ARRAY or NPY_ARRAY_INOUT_FARRAY. ") < 0)
+              "i.e. before the last call to Py_DECREF.") < 0)
         return -1;
+#endif
     ret = PyArray_SetWritebackIfCopyBase(arr, base);
     if (ret >=0) {
         PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
@@ -413,7 +422,7 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
     if (fa && fa->base) {
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY || fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) || (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
             /*
              * UPDATEIFCOPY or WRITEBACKIFCOPY means that fa->base's data
              * should be updated with the contents
@@ -454,12 +463,6 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 
 /* array object functions */
 
-#ifdef PYPY_VERSION
-  #ifndef DEPRECATE_UPDATEIFCOPY
-    #define DEPRECATE_UPDATEIFCOPY
-  #endif
-#endif
-
 static void
 array_dealloc(PyArrayObject *self)
 {
@@ -472,22 +475,12 @@ array_dealloc(PyArrayObject *self)
     }
     if (fa->base) {
         int retval;
-        Py_INCREF(self); /* hold on to self in next call  since if refcount == 0
-                          * it will recurse back into array_dealloc
-                          */
-        retval = PyArray_ResolveWritebackIfCopy(self);
-        if (retval < 0)
+        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-#ifdef DEPRECATE_UPDATEIFCOPY
-        /* TODO: enable this once a solution for UPDATEIFCOPY and nditer are resolved */
-        if (retval > 0) {
-            char * msg = "WRITEBACKIFCOPY resolution in array_dealloc is "
-                      "incompatible with PyPy and will be removed in "
-                      "the future";
-            if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+            char * msg = "WRITEBACKIFCOPY requires a call to "
+                "PyArray_ResolveWritebackIfCopy before array_dealloc is "
+                "called.";
+            if (DEPRECATE(msg) < 0) {
                 /* dealloc must not raise an error, best effort try to write
                    to stderr and clear the error
                 */
@@ -505,7 +498,19 @@ array_dealloc(PyArrayObject *self)
                 }
             }
         }
-#endif
+        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
+            /* DEPRECATED, remove once the flag is removed */
+            Py_INCREF(self); /* hold on to self in next call  since if
+                              * refcount == 0 it will recurse back into 
+                              *array_dealloc
+                              */
+            retval = PyArray_ResolveWritebackIfCopy(self);
+            if (retval < 0)
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
         /*
          * In any case base is pointing to something that we need
          * to DECREF -- either a view or a buffer object

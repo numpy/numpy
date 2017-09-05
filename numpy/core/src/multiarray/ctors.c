@@ -2017,11 +2017,21 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
              * Deprecate this (and remove the `else` from the following
              * condition) once the flag itself is deprecated
              */
+
+            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY (possibly via "
+                "NPY_ARRAY_INOUT_ARRAY or NPY_ARRAY_INOUT_FARRAY) is "
+                "deprecated, use NPY_WRITEBACKIFCOPY, NPY_ARRAY_INOUT_ARRAY2, "
+                "or NPY_ARRAY_INOUT_FARRAY2 respectively instead, and call "
+                "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
+                "i.e. before the last call to Py_DECREF.") < 0)
+                return NULL;
             Py_INCREF(arr);
-            if (PyArray_SetUpdateIfCopyBase(ret, arr) < 0) {
+            if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
                 return NULL;
             }
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEBACKIFCOPY);
         }
         else if (flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             Py_INCREF(arr);
