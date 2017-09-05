@@ -42,6 +42,12 @@ equivalent to the second.
 The ``rcond`` parameter to ``np.linalg.lstsq`` will change its default to the
 better value of machine precision times the maximum of the input matrix
 dimensions. A FutureWarning is given if the parameter is not passed explicitly.
+* ``a.flat.__array__()`` will return a writeable copy of ``a`` when ``a`` is
+  non-contiguous. Previously it returned an UPDATEIFCOPY array when ``a`` was
+  writeable. Currently it returns a non-writeable copy. See gh-7054 for a
+  discussion of the issue.
+
+
 
 Build System Changes
 ====================
@@ -49,6 +55,16 @@ Build System Changes
 
 Compatibility notes
 ===================
+
+``a.flat.__array__()`` returns non-writeable arrays when ``a`` is non-contiguous
+--------------------------------------------------------------------------------
+The intent is that the UPDATEIFCOPY array previously returned when ``a`` was
+non-contiguous will be replaced by a writeable copy in the future. This
+temporary measure is aimed to notify folks who expect the underlying array be
+modified in this situation that that will no longer be the case. The most
+likely places for this to be noticed is when expressions of the form
+``np.asarray(a.flat)`` are used, or when ``a.flat`` is passed as the out
+parameter to a ufunc.
 
 ``np.tensordot`` now returns zero array when contracting over 0-length dimension
 --------------------------------------------------------------------------------
