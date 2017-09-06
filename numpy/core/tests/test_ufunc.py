@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import itertools
+import sys
 
 import numpy as np
 import numpy.core.umath_tests as umt
@@ -602,7 +603,11 @@ class TestUfunc(object):
         with suppress_warnings() as sup:
             w = sup.record(RuntimeWarning, ".*the results may be lost")
             np.add(arr, arr, out=np.empty(3))
-            if not IS_PYPY:
+            if IS_PYPY or sys.version_info >= (3, 6):
+                # The reference count of arguments changed in 3.6 and it doesn't
+                # emit the Warning.
+                pass
+            else:
                 assert_(len(w) == 1)
 
     def test_innerwt(self):
