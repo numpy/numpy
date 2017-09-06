@@ -502,16 +502,18 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
         return 0;
     }
     if PyArray_Check(obj) {
+#ifndef PYPY_VERSION
         if (Py_REFCNT(obj) == 1 &&
                 (PyArray_FLAGS((PyArrayObject *)obj) & NPY_ARRAY_OWNDATA)) {
             if (PyErr_WarnEx(PyExc_RuntimeWarning,
                              "the output array seems to be a new array, if the "
                              "returned values of the ufunc are not assigned to "
-                             "a new variable the results may be lost.",
+                             "a new variable the results may be lost",
                              1) < 0) {
                 return -1;
             }
         }
+#endif
         /* If it's an array, store it */
         if (PyArray_FailUnlessWriteable((PyArrayObject *)obj,
                                         "output array") < 0) {

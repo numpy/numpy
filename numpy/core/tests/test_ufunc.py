@@ -10,7 +10,7 @@ from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings, assert_allclose,
+    assert_no_warnings, assert_allclose, suppress_warnings, IS_PYPY
 )
 
 
@@ -599,12 +599,11 @@ class TestUfunc(object):
 
         # Passing a temporary array as out= argument emits a Warning.
         arr = np.ones(3)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
+        with suppress_warnings() as sup:
+            w = sup.record(RuntimeWarning, ".*the results may be lost")
             np.add(arr, arr, out=np.empty(3))
-        assert len(w) == 1
-        assert w[0].category is RuntimeWarning
-        assert "the results may be lost" in str(w[0].message)
+            if not IS_PYPY:
+                assert_(len(w) == 1)
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))

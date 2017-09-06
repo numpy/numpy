@@ -2,11 +2,11 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import itertools
-import warnings
 
 import numpy as np
 from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal,
-                           assert_array_equal, assert_allclose, dec)
+                           assert_array_equal, assert_allclose, dec,
+                           suppress_warnings)
 
 from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import umath_tests
@@ -609,8 +609,8 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
     kwargs2['out'] = out.copy()
 
     out_orig = out.copy()
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
+    with suppress_warnings() as sup:
+        sup.filter(RuntimeWarning, ".*the results may be lost")
         out[...] = operation(*args, **kwargs2)
     expected = out.copy()
     out[...] = out_orig
@@ -834,8 +834,8 @@ class TestUFunc(object):
 
             a[...] = a_orig
             b[...] = b_orig
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, ".*the results may be lost")
                 c1 = ufunc(a, out=b.copy(), where=mask.copy()).copy()
 
             a[...] = a_orig
@@ -892,8 +892,8 @@ class TestUFunc(object):
         ufunc = np.invert
 
         def check(a, out, mask):
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, ".*the results may be lost")
                 c1 = ufunc(a, out=out.copy(), where=mask.copy())
             c2 = ufunc(a, out=out, where=mask)
             assert_array_equal(c1, c2)
