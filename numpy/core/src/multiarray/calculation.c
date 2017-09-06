@@ -1165,7 +1165,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     Py_XDECREF(maxa);
     Py_XDECREF(mina);
     Py_XDECREF(newin);
-    PyArray_XDECREF_ERR(newout);
+    PyArray_DiscardWritebackIfCopy(newout);
+    Py_XDECREF(newout);
     return NULL;
 }
 

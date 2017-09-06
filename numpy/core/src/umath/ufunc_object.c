@@ -4143,7 +4143,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
     else if (override) {
         for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
+            PyArray_DiscardWritebackIfCopy(mps[i]);
+            Py_XDECREF(mps[i]);
         }
         return override;
     }
@@ -4151,7 +4152,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
         for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
+            PyArray_DiscardWritebackIfCopy(mps[i]);
+            Py_XDECREF(mps[i]);
         }
         if (errval == -1) {
             return NULL;

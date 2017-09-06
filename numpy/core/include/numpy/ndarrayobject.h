@@ -171,7 +171,7 @@ extern "C" CONFUSE_EMACS
                                             (l)*PyArray_STRIDES(obj)[3]))
 
 static NPY_INLINE void
-PyArray_XDECREF_ERR(PyArrayObject *arr)
+PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     if (arr != NULL) {
         if ((PyArray_FLAGS(arr) & NPY_ARRAY_WRITEBACKIFCOPY) ||
@@ -181,8 +181,15 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
-        Py_DECREF(arr);
     }
+}
+
+/* Deprecated in 1.14 */
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *arr)
+{
+    PyArray_DiscardWritebackIfCopy(arr);
+    Py_XDECREF(arr);
 }
 
 #define PyArray_DESCR_REPLACE(descr) do { \

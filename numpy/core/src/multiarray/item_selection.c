@@ -241,7 +241,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     return (PyObject *)obj;
 
  fail:
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     return NULL;
@@ -416,7 +417,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_XDECREF(indices);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -534,7 +536,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_XDECREF(mask);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -784,7 +787,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_XDECREF(ap);
     npy_free_cache(mps, n * sizeof(mps[0]));
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     return NULL;
 }
 

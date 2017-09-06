@@ -479,9 +479,9 @@ writeable). The syntax is
             :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
-            occurs use :c:func:`PyArray_XDECREF_ERR` (obj) on an array
-            with these flags set. This will
-            delete the array without causing the contents to be copied
+            occurs use :c:func:`PyArray_DiscardWritebackIfCopy` (obj) on an
+            array with these flags set. This will set the underlying base array
+            writable without causing the contents to be copied
             back into the original array.
 
 
@@ -637,6 +637,7 @@ updates the output array.
 
         Py_DECREF(arr1);
         Py_DECREF(arr2);
+        PyArray_ResolveWritebackIfCopy(oarr);
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
@@ -644,6 +645,7 @@ updates the output array.
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
-        PyArray_XDECREF_ERR(oarr);
+        PyArray_DiscardWritebackIfCopy(oarr);
+        Py_XDECREF(oarr);
         return NULL;
     }

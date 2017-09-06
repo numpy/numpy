@@ -1424,9 +1424,7 @@ of the constant names is deprecated in 1.7.
 
     The data area represents a (well-behaved) copy whose information
     should be transferred back to the original when
-    :c:func:`PyArray_ResolveWritebackIfCopy` is called. For backwards
-    compatibility, that function is called at ``dealloc`` but relying
-    on that behavior is deprecated and not supported in PyPy.
+    :c:func:`PyArray_ResolveWritebackIfCopy` is called.
 
     This is a special flag that is set if this array represents a copy
     made because a user required certain flags in
@@ -1444,7 +1442,10 @@ of the constant names is deprecated in 1.7.
 .. c:var:: NPY_ARRAY_UPDATEIFCOPY
 
     A deprecated version of :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` which
-    depends upon ``dealloc`` to trigger the writeback.
+    depends upon ``dealloc`` to trigger the writeback. For backwards
+    compatibility, :c:func:`PyArray_ResolveWritebackIfCopy` is called at
+    ``dealloc`` but relying
+    on that behavior is deprecated and not supported in PyPy.
 
 :c:func:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
 for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
@@ -3446,7 +3447,18 @@ Miscellaneous Macros
 
     Returns the reference count of any Python object.
 
+.. c:function:: PyArray_DiscardWritebackIfCopy(PyObject \*obj)
+
+    Reset the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and deprecated
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Also resets the
+    :c:data:`NPY_ARRAY_WRITEABLE` flag on the base object. This is
+    useful for recovering from an error condition when
+    writeback semantics are used, but will lead to wrong results.
+
 .. c:function:: PyArray_XDECREF_ERR(PyObject \*obj)
+
+    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
+    followed by ``Py_XDECREF``
 
     DECREF's an array object which may have the (deprecated)
     :c:data:`NPY_ARRAY_UPDATEIFCOPY` or :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
