@@ -872,6 +872,9 @@ class TestTypes(object):
         assert_raises(TypeError, np.can_cast, 'i4', None)
         assert_raises(TypeError, np.can_cast, None, 'i4')
 
+        # Also test keyword arguments
+        assert_(np.can_cast(from_=np.int32, to=np.int64))
+
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):

@@ -1589,7 +1589,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
 add_newdoc('numpy.core.multiarray', 'can_cast',
     """
-    can_cast(from, totype, casting = 'safe')
+    can_cast(from_, to, casting='safe')
 
     Returns True if cast between data types can occur according to the
     casting rule.  If from is a scalar or array scalar, also returns
@@ -1598,9 +1598,9 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     Parameters
     ----------
-    from : dtype, dtype specifier, scalar, or array
+    from_ : dtype, dtype specifier, scalar, or array
         Data type, scalar, or array to cast from.
-    totype : dtype or dtype specifier
+    to : dtype or dtype specifier
         Data type to cast to.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
