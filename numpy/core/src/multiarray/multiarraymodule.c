@@ -3224,7 +3224,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     npy_bool ret;
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
-    static char *kwlist[] = {"from", "to", "casting", NULL};
+    static char *kwlist[] = {"from_", "to", "casting", NULL};
 
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:can_cast", kwlist,
                 &from_obj,
