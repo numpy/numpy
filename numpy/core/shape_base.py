@@ -365,7 +365,7 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
-def _check_block_depths_match(arrays, index=[]):
+def _block_check_depths_match(arrays, index=[]):
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
         return 'arrays' + idx_str
@@ -378,7 +378,7 @@ def _check_block_depths_match(arrays, index=[]):
             )
         )
     elif isinstance(arrays, list) and len(arrays) > 0:
-        indexes = [_check_block_depths_match(arr, index + [i])
+        indexes = [_block_check_depths_match(arr, index + [i])
                    for i, arr in enumerate(arrays)]
 
         first_index = indexes[0]
@@ -408,7 +408,7 @@ def _block(arrays, depth=0):
         list_ndim = list_ndims[0]
         arr_ndim = max(arr.ndim for arr in arrs)
         ndim = max(list_ndim, arr_ndim)
-        arrs = tuple(map(lambda a: _nx.array(a, ndmin=ndim), arrs))
+        arrs = [_nx.array(a, ndmin=ndim) for a in arrs]
         return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
     else:
         # We've 'bottomed out'
@@ -563,5 +563,5 @@ def block(arrays):
 
 
     """
-    _check_block_depths_match(arrays)
+    _block_check_depths_match(arrays)
     return _block(arrays)[0]
