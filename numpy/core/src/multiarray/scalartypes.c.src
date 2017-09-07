@@ -25,6 +25,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "alloc.h"
+#include "npy_import.h"
 
 #include <stdlib.h>
 
@@ -339,33 +340,6 @@ gentype_nonzero_number(PyObject *m1)
 }
 
 static PyObject *
-gentype_str(PyObject *self)
-{
-    PyObject *arr, *ret = NULL;
-
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr != NULL) {
-        ret = PyObject_Str((PyObject *)arr);
-        Py_DECREF(arr);
-    }
-    return ret;
-}
-
-static PyObject *
-gentype_repr(PyObject *self)
-{
-    PyObject *arr, *ret = NULL;
-
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr != NULL) {
-        /* XXX: Why are we using str here? */
-        ret = PyObject_Str((PyObject *)arr);
-        Py_DECREF(arr);
-    }
-    return ret;
-}
-
-static PyObject *
 genint_type_str(PyObject *self)
 {
     PyObject  *item, *item_str;
@@ -632,6 +606,34 @@ static PyObject *
     return ret;
 }
 /**end repeat**/
+
+static PyObject *
+voidtype_str(PyObject *self)
+{
+    if (PyDataType_HASFIELDS(((PyVoidScalarObject*)self)->descr)) {
+        static PyObject *reprfunc = NULL;
+
+        npy_cache_import("numpy.core.arrayprint",
+                         "_void_scalar_repr", &reprfunc);
+        if (reprfunc == NULL) {
+            return NULL;
+        }
+
+        return PyObject_CallFunction(reprfunc, "O", self);
+    }
+    else {
+        PyObject *item, *item_str;
+
+        item = gentype_generic_method(self, NULL, NULL, "item");
+        if (item == NULL) {
+            return NULL;
+        }
+
+        item_str = PyObject_Str(item);
+        Py_DECREF(item);
+        return item_str;
+    }
+}
 
 static PyObject *
 datetimetype_repr(PyObject *self)
@@ -4080,8 +4082,6 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_new = NULL;
     PyGenericArrType_Type.tp_alloc = gentype_alloc;
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
-    PyGenericArrType_Type.tp_repr = gentype_repr;
-    PyGenericArrType_Type.tp_str = gentype_str;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
@@ -4129,6 +4129,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
+    PyVoidArrType_Type.tp_repr = voidtype_str;
+    PyVoidArrType_Type.tp_str = voidtype_str;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 
