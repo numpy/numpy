@@ -309,13 +309,7 @@ def _get_format_function(data, **options):
     """
     dtype_ = data.dtype
     if dtype_.fields is not None:
-        format_functions = []
-        for field_name in dtype_.names:
-            format_function = _get_format_function(data[field_name], **options)
-            if dtype_[field_name].shape != ():
-                format_function = SubArrayFormat(format_function)
-            format_functions.append(format_function)
-        return StructureFormat(format_functions)
+        return StructureFormat.from_data(data, **options)
 
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
@@ -514,9 +508,7 @@ def array2string(a, max_line_width=None, precision=None,
     options = _format_options.copy()
     options.update(overrides)
 
-    # the ``dtype.names is None`` check is to avoid co-recursion with
-    # voidtype_str, which upcasts structured scalars to 0d arrays
-    if style is not None and a.shape == () and a.dtype.names is None:
+    if style is not None and a.shape == ():
         return style(a[()])
     elif a.size == 0:
         # treat as a null array if any of shape elements == 0
@@ -871,11 +863,34 @@ class StructureFormat(object):
         self.format_functions = format_functions
         self.num_fields = len(format_functions)
 
+    @classmethod
+    def from_data(cls, data, **options):
+        """
+        This is a second way to initialize StructureFormat, using the raw data
+        as input. Added to avoid changing the signature of __init__.
+        """
+        format_functions = []
+        for field_name in data.dtype.names:
+            format_function = _get_format_function(data[field_name], **options)
+            if data.dtype[field_name].shape != ():
+                format_function = SubArrayFormat(format_function)
+            format_functions.append(format_function)
+        return cls(format_functions)
+
     def __call__(self, x):
         s = "("
         for field, format_function in zip(x, self.format_functions):
             s += format_function(field) + ", "
         return (s[:-2] if 1 < self.num_fields else s[:-1]) + ")"
+
+
+def _void_scalar_repr(x):
+    """
+    Implements the repr for structured-void scalars. It is called from the
+    scalartypes.c.src code, and is placed here because it uses the elementwise
+    formatters defined above.
+    """
+    return StructureFormat.from_data(array(x), **_format_options)(x)
 
 
 _typelessdata = [int_, float_, complex_]

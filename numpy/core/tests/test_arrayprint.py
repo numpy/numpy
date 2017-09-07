@@ -60,6 +60,10 @@ class TestArrayRepr(object):
         assert_equal(repr(arr1d),
             'array([list([1, 2]), list([3])], dtype=object)')
 
+    def test_void_scalar_recursion(self):
+        # gh-9345
+        repr(np.void(b'test'))  # RecursionError ?
+
 
 class TestComplexArray(object):
     def test_str(self):

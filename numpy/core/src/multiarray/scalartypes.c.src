@@ -25,6 +25,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "alloc.h"
+#include "npy_import.h"
 
 #include <stdlib.h>
 
@@ -610,14 +611,15 @@ static PyObject *
 voidtype_str(PyObject *self)
 {
     if (PyDataType_HASFIELDS(((PyVoidScalarObject*)self)->descr)) {
-        PyObject *arr, *ret = NULL;
+        static PyObject *reprfunc = NULL;
 
-        arr = PyArray_FromScalar(self, NULL);
-        if (arr != NULL) {
-            ret = PyObject_Str((PyObject *)arr);
-            Py_DECREF(arr);
+        npy_cache_import("numpy.core.arrayprint",
+                         "_void_scalar_repr", &reprfunc);
+        if (reprfunc == NULL) {
+            return NULL;
         }
-        return ret;
+
+        return PyObject_CallFunction(reprfunc, "O", self);
     }
     else {
         PyObject *item, *item_str;
