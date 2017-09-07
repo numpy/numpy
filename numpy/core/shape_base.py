@@ -365,78 +365,54 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
-class _Recurser(object):
-    """
-    Utility class for recursing over nested iterables
-    """
-    def __init__(self, recurse_if):
-        self.recurse_if = recurse_if
+def _check_block_depths_match(arrays, index=[]):
+    def format_index(index):
+        idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+        return 'arrays' + idx_str
+    if isinstance(arrays, tuple):
+        raise TypeError(
+            '{} is a tuple. '
+            'Only lists can be used to arrange blocks, and np.block does '
+            'not allow implicit conversion from tuple to ndarray.'.format(
+                format_index(index)
+            )
+        )
+    elif isinstance(arrays, list) and len(arrays) > 0:
+        indexes = [_check_block_depths_match(arr, index + [i])
+                   for i, arr in enumerate(arrays)]
 
-    def map_reduce(self, x, f_map=lambda x, **kwargs: x,
-                            f_reduce=lambda x, **kwargs: x,
-                            f_kwargs=lambda **kwargs: kwargs,
-                            **kwargs):
-        """
-        Iterate over the nested list, applying:
-        * ``f_map`` (T -> U) to items
-        * ``f_reduce`` (Iterable[U] -> U) to mapped items
-
-        For instance, ``map_reduce([[1, 2], 3, 4])`` is::
-
-            f_reduce([
-              f_reduce([
-                f_map(1),
-                f_map(2)
-              ]),
-              f_map(3),
-              f_map(4)
-            ]])
+        first_index = indexes[0]
+        for i, index in enumerate(indexes):
+            if len(index) != len(first_index):
+                raise ValueError(
+                    "List depths are mismatched. First element was at depth "
+                    "{}, but there is an element at depth {} ({})".format(
+                        len(first_index),
+                        len(index),
+                        format_index(index)
+                    )
+                )
+        return first_index
+    elif isinstance(arrays, list) and len(arrays) == 0:
+        return index + [None]
+    else:
+        # We've 'bottomed out'
+        return index
 
 
-        State can be passed down through the calls with `f_kwargs`,
-        to iterables of mapped items. When kwargs are passed, as in
-        ``map_reduce([[1, 2], 3, 4], **kw)``, this becomes::
-
-            kw1 = f_kwargs(**kw)
-            kw2 = f_kwargs(**kw1)
-            f_reduce([
-              f_reduce([
-                f_map(1), **kw2)
-                f_map(2,  **kw2)
-              ],      **kw1),
-              f_map(3, **kw1),
-              f_map(4, **kw1)
-            ]],     **kw)
-        """
-        def f(x, **kwargs):
-            if not self.recurse_if(x):
-                return f_map(x, **kwargs)
-            else:
-                next_kwargs = f_kwargs(**kwargs)
-                return f_reduce((
-                    f(xi, **next_kwargs)
-                    for xi in x
-                ), **kwargs)
-        return f(x, **kwargs)
-
-    def walk(self, x, index=()):
-        """
-        Iterate over x, yielding (index, value, entering), where
-
-        * ``index``: a tuple of indices up to this point
-        * ``value``: equal to ``x[index[0]][...][index[-1]]``. On the first iteration, is
-                     ``x`` itself
-        * ``entering``: bool. The result of ``recurse_if(value)``
-        """
-        do_recurse = self.recurse_if(x)
-        yield index, x, do_recurse
-
-        if not do_recurse:
-            return
-        for i, xi in enumerate(x):
-            # yield from ...
-            for v in self.walk(xi, index + (i,)):
-                yield v
+def _block(arrays, depth=0):
+    if isinstance(arrays, list):
+        if len(arrays) == 0:
+            raise ValueError('Lists cannot be empty')
+        arrs, list_ndims = zip(*(_block(arr, depth+1) for arr in arrays))
+        list_ndim = list_ndims[0]
+        arr_ndim = max(arr.ndim for arr in arrs)
+        ndim = max(list_ndim, arr_ndim)
+        arrs = tuple(map(lambda a: _nx.array(a, ndmin=ndim), arrs))
+        return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
+    else:
+        # We've 'bottomed out'
+        return _nx.array(arrays, ndmin=depth), depth
 
 
 def block(arrays):
@@ -587,81 +563,5 @@ def block(arrays):
 
 
     """
-    def atleast_nd(x, ndim):
-        x = asanyarray(x)
-        diff = max(ndim - x.ndim, 0)
-        return x[(None,)*diff + (Ellipsis,)]
-
-    def format_index(index):
-        return 'arrays' + ''.join('[{}]'.format(i) for i in index)
-
-    rec = _Recurser(recurse_if=lambda x: type(x) is list)
-
-    # ensure that the lists are all matched in depth
-    list_ndim = None
-    any_empty = False
-    for index, value, entering in rec.walk(arrays):
-        if type(value) is tuple:
-            # not strictly necessary, but saves us from:
-            #  - more than one way to do things - no point treating tuples like
-            #    lists
-            #  - horribly confusing behaviour that results when tuples are
-            #    treated like ndarray
-            raise TypeError(
-                '{} is a tuple. '
-                'Only lists can be used to arrange blocks, and np.block does '
-                'not allow implicit conversion from tuple to ndarray.'.format(
-                    format_index(index)
-                )
-            )
-        if not entering:
-            curr_depth = len(index)
-        elif len(value) == 0:
-            curr_depth = len(index) + 1
-            any_empty = True
-        else:
-            continue
-
-        if list_ndim is not None and list_ndim != curr_depth:
-            raise ValueError(
-                "List depths are mismatched. First element was at depth {}, "
-                "but there is an element at depth {} ({})".format(
-                    list_ndim,
-                    curr_depth,
-                    format_index(index)
-                )
-            )
-        list_ndim = curr_depth
-
-    # do this here so we catch depth mismatches first
-    if any_empty:
-        raise ValueError('Lists cannot be empty')
-
-    # convert all the arrays to ndarrays
-    arrays = rec.map_reduce(arrays,
-        f_map=asanyarray,
-        f_reduce=list
-    )
-
-    # determine the maximum dimension of the elements
-    elem_ndim = rec.map_reduce(arrays,
-        f_map=lambda xi: xi.ndim,
-        f_reduce=max
-    )
-    ndim = max(list_ndim, elem_ndim)
-
-    # first axis to concatenate along
-    first_axis = ndim - list_ndim
-
-    # Make all the elements the same dimension
-    arrays = rec.map_reduce(arrays,
-        f_map=lambda xi: atleast_nd(xi, ndim),
-        f_reduce=list
-    )
-
-    # concatenate innermost lists on the right, outermost on the left
-    return rec.map_reduce(arrays,
-        f_reduce=lambda xs, axis: _nx.concatenate(list(xs), axis=axis),
-        f_kwargs=lambda axis: dict(axis=axis+1),
-        axis=first_axis
-    )
+    _check_block_depths_match(arrays)
+    return _block(arrays)[0]
