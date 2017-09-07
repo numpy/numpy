@@ -7,6 +7,8 @@ import itertools
 import warnings
 import weakref
 from operator import itemgetter, index as opindex
+from numpy.compat import isfileobj
+
 
 import numpy as np
 from . import format
@@ -33,7 +35,7 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
+    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource','IncrementalWriter'
     ]
 
 
@@ -261,6 +263,138 @@ class NpzFile(object):
 
     def __contains__(self, key):
         return self.files.__contains__(key)
+
+class IncrementalWriter:
+    """
+    Class for the incremental writing of binary ``.npy`` files.
+    Multiple calls to ``save()`` append data to one binary ``.npy``
+    file resulting in one concatenated array saved. Saved arrays must
+    have exactly the same dtype and have compatible shapes. Shapes can
+    differ in the 1st dimension only which will be added up in the file.
+    The file is written in C order.
+
+    Parameters
+    ----------
+    fp : file-like object or string
+        Name of the file to open or a file-like object supporting
+        ``tell()``, ``seek()`` and ``write()``. In the latter case,
+        data will be written from current position.
+    flush : bool, optional
+        Calls ``flush()`` at the end of each ``save()``. Default:
+        False
+    hdrupdate : bool, optional
+        If True, updates header after each call to ``save()`` by seeking back
+        to the beginning (starting position) of the file, rewrites
+        header then seeks to the current position again.  Otherwise header
+        will be updated once at ``close()``.  Default: True.
+    version : tuple or None, optional
+       The .npy file version to use or to detect automatically at
+       first ``save()`` call if None.
+
+    See Also
+    --------
+    load
+    """
+    #TODO: implement header reading to open for append and for partial
+    #reading.
+
+    EXTRAPAD=32 # We allow 32 bytes to grow in the shape description
+
+    def __init__(self, fp, flush=False, hdrupdate=True,version=None):
+        if isfileobj(fp):
+            self.fp = fp
+            self.hfilepos = fp.tell()
+        else:
+            self.fp = open(fp, 'wb')
+            self.hfilepos = 0
+        self.flush = flush
+        self.hdisklen = 0
+        self.hdrupdate = hdrupdate
+        self.version = version
+
+    def save(self, arr,headercheck=True):
+        """
+        Append an array to the ``.npy`` format binary file. The first call of
+        ``save()`` determines the dtype description to be written into
+        the file.  `arr` must have the same dtype and shape with the
+        exception of the 1st dimension in all subsequent calls. The file is
+        written in C order.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array to be saved.
+        headercheck : bool, optional
+            Whether to check dtype and shape compatibility with the
+            first call. Setting to False allows incompatible array
+            data to be appended that will corrupt the file. Default: True.
+        """
+        arr=np.asanyarray(arr)
+        # In case of F contiguous arrays, tofile() would produce a F
+        # order file.  At the moment, we support the shape update for
+        # C order only. If arr is neither C nor F contiguous, then
+        # tofile() will generate C order (same approach in
+        # format.write_array)
+        if arr.dtype.hasobject:
+            raise TypeError("Object arrays cannot be appended in .npy format")
+        if arr.flags.f_contiguous and not arr.flags.c_contiguous:
+            arr = np.asanyarray(arr,order='C')
+        if self.hdisklen == 0:
+            # First call to save()
+            self.hdict = format.header_data_from_array_1_0(arr)
+            # Write header with extra padding
+            self.version, self.hdisklen = format._write_array_header(self.fp,
+                        self.hdict,version=self.version,extrapad=self.EXTRAPAD)
+        else:
+            newshape = (arr.shape[0] + self.hdict['shape'][0], ) +  arr.shape[1:]
+            if headercheck:
+                h_arr = format.header_data_from_array_1_0(arr)
+                self.hdict['shape'] = self.hdict['shape'][1:]
+                h_arr['shape'] = h_arr['shape'][1:]
+                # All description and shapes except axis 0 must be the
+                # same
+                if h_arr != self.hdict:
+                    raise ValueError("Incompatible array dtype")
+            self.hdict['shape'] = newshape
+            if self.hdrupdate:
+                self.updateheader()
+
+        arr.tofile(self.fp) # Write data, supposed to be C order in the file
+        if self.flush:
+            self.fp.flush()
+
+    def updateheader(self):
+        """
+        Seeks back to the origin of the file and rewrites the header to
+        update the shape information.
+        """
+        if self.hdisklen > 0:  # Else, we haven't written anything to the file
+            filepos = self.fp.tell()
+            self.fp.seek(self.hfilepos) # Back to the header beginning
+            format._write_array_header(self.fp,self.hdict, version=self.version,
+                                       fixedheaderlen=self.hdisklen)
+            self.fp.seek(filepos)
+
+    def close(self):
+        """
+        Updates the header in the file if necessary and closes the file
+        writer.
+
+        """
+        if self.fp is not None:
+            if not self.hdrupdate:
+                self.updateheader()
+            self.fp.close()
+            self.fp = None
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 
 def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
