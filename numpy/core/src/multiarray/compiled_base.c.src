@@ -569,6 +569,14 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
 #define LIKELY_IN_CACHE_SIZE 8
 
+/**begin repeat
+ * #DTYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_float, npy_double, npy_longdouble#
+ * #dtype = npy_half, npy_float, npy_double, npy_longdouble#
+ * #trf = npy_half_to_float, , , #
+ * #inv = npy_float_to_half, , , #
+ */
+
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
  * If an starting index guess is in-range, the array values around this
@@ -589,17 +597,17 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
  * @return index
  */
 static npy_intp
-binary_search_with_guess(const npy_double key, const npy_double *arr,
+binary_search_with_guess_@DTYPE@(const @type@ key, const @dtype@ *arr,
                          npy_intp len, npy_intp guess)
 {
     npy_intp imin = 0;
     npy_intp imax = len;
 
     /* Handle keys outside of the arr range first */
-    if (key > arr[len - 1]) {
+    if (key > @trf@(arr[len - 1])) {
         return len;
     }
-    else if (key < arr[0]) {
+    else if (key < @trf@(arr[0])) {
         return -1;
     }
 
@@ -610,7 +618,7 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     if (len <= 4) {
         npy_intp i;
 
-        for (i = 1; i < len && key >= arr[i]; ++i);
+        for (i = 1; i < len && key >= @trf@(arr[i]); ++i);
         return i - 1;
     }
 
@@ -622,12 +630,12 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     }
 
     /* check most likely values: guess - 1, guess, guess + 1 */
-    if (key < arr[guess]) {
-        if (key < arr[guess - 1]) {
+    if (key < @trf@(arr[guess])) {
+        if (key < @trf@(arr[guess - 1])) {
             imax = guess - 1;
             /* last attempt to restrict search to items in cache */
             if (guess > LIKELY_IN_CACHE_SIZE &&
-                        key >= arr[guess - LIKELY_IN_CACHE_SIZE]) {
+                        key >= @trf@(arr[guess - LIKELY_IN_CACHE_SIZE])) {
                 imin = guess - LIKELY_IN_CACHE_SIZE;
             }
         }
@@ -638,12 +646,12 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     }
     else {
         /* key >= arr[guess] */
-        if (key < arr[guess + 1]) {
+        if (key < @trf@(arr[guess + 1])) {
             return guess;
         }
         else {
             /* key >= arr[guess + 1] */
-            if (key < arr[guess + 2]) {
+            if (key < @trf@(arr[guess + 2])) {
                 return guess + 1;
             }
             else {
@@ -651,7 +659,7 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
                 imin = guess + 2;
                 /* last attempt to restrict search to items in cache */
                 if (guess < len - LIKELY_IN_CACHE_SIZE - 1 &&
-                            key < arr[guess + LIKELY_IN_CACHE_SIZE]) {
+                            key < @trf@(arr[guess + LIKELY_IN_CACHE_SIZE])) {
                     imax = guess + LIKELY_IN_CACHE_SIZE;
                 }
             }
@@ -661,7 +669,7 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     /* finally, find index by bisection */
     while (imin < imax) {
         const npy_intp imid = imin + ((imax - imin) >> 1);
-        if (key >= arr[imid]) {
+        if (key >= @trf@(arr[imid])) {
             imin = imid + 1;
         }
         else {
@@ -670,42 +678,42 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
     }
     return imin - 1;
 }
+/**end repeat**/
 
 #undef LIKELY_IN_CACHE_SIZE
 
-NPY_NO_EXPORT PyObject *
-arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+/**begin repeat
+ * #DTYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_float, npy_double, npy_longdouble#
+ * #dtype = npy_half, npy_float, npy_double, npy_longdouble#
+ * #trf = npy_half_to_float, , , #
+ * #inv = npy_float_to_half, , , #
+ */
+NPY_NO_EXPORT PyArrayObject *
+arr_interp_@DTYPE@(PyObject *fp, PyObject *xp, PyObject *x, PyObject *left,PyObject *right)
 {
-
-    PyObject *fp, *xp, *x;
-    PyObject *left = NULL, *right = NULL;
     PyArrayObject *afp = NULL, *axp = NULL, *ax = NULL, *af = NULL;
     npy_intp i, lenx, lenxp;
-    npy_double lval, rval;
-    const npy_double *dy, *dx, *dz;
-    npy_double *dres, *slopes = NULL;
-
-    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
+    @type@ lval, rval;
+    const @dtype@ *dy, *dx, *dz;
+    @dtype@ *dres;
+    @type@ *slopes = NULL;
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
-                                     &x, &xp, &fp, &left, &right)) {
-        return NULL;
-    }
-
-    afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_DOUBLE, 1, 1);
+    afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_@DTYPE@, 1, 1);
     if (afp == NULL) {
         return NULL;
     }
-    axp = (PyArrayObject *)PyArray_ContiguousFromAny(xp, NPY_DOUBLE, 1, 1);
+    axp = (PyArrayObject *)PyArray_ContiguousFromAny(xp, NPY_@DTYPE@, 1, 1);
     if (axp == NULL) {
         goto fail;
     }
-    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_@DTYPE@, 1, 0);
     if (ax == NULL) {
         goto fail;
     }
+
     lenxp = PyArray_SIZE(axp);
     if (lenxp == 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -719,19 +727,19 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     af = (PyArrayObject *)PyArray_SimpleNew(PyArray_NDIM(ax),
-                                            PyArray_DIMS(ax), NPY_DOUBLE);
+                                            PyArray_DIMS(ax), NPY_@DTYPE@);
     if (af == NULL) {
         goto fail;
     }
     lenx = PyArray_SIZE(ax);
 
-    dy = (const npy_double *)PyArray_DATA(afp);
-    dx = (const npy_double *)PyArray_DATA(axp);
-    dz = (const npy_double *)PyArray_DATA(ax);
-    dres = (npy_double *)PyArray_DATA(af);
+    dy = (const @dtype@ *)PyArray_DATA(afp);
+    dx = (const @dtype@ *)PyArray_DATA(axp);
+    dz = (const @dtype@ *)PyArray_DATA(ax);
+    dres = (@dtype@ *)PyArray_DATA(af);
     /* Get left and right fill values. */
     if ((left == NULL) || (left == Py_None)) {
-        lval = dy[0];
+        lval = @trf@(dy[0]);
     }
     else {
         lval = PyFloat_AsDouble(left);
@@ -740,7 +748,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
     if ((right == NULL) || (right == Py_None)) {
-        rval = dy[lenxp - 1];
+        rval = @trf@(dy[lenxp - 1]);
     }
     else {
         rval = PyFloat_AsDouble(right);
@@ -751,14 +759,14 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
-        const npy_double xp_val = dx[0];
-        const npy_double fp_val = dy[0];
+        const @type@ xp_val = @trf@(dx[0]);
+        const @type@ fp_val = @trf@(dy[0]);
 
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
-            const npy_double x_val = dz[i];
-            dres[i] = (x_val < xp_val) ? lval :
-                                         ((x_val > xp_val) ? rval : fp_val);
+            const @type@ x_val = @trf@(dz[i]);
+            dres[i] = @inv@((x_val < xp_val) ? lval :
+                                               ((x_val > xp_val) ? rval : fp_val));
         }
         NPY_END_THREADS;
     }
@@ -767,7 +775,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = PyArray_malloc((lenxp - 1) * sizeof(@type@));
             if (slopes == NULL) {
                 goto fail;
             }
@@ -777,32 +785,32 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
-                slopes[i] = (dy[i+1] - dy[i]) / (dx[i+1] - dx[i]);
+                slopes[i] = (@trf@(dy[i+1]) - @trf@(dy[i])) / (@trf@(dx[i+1]) - @trf@(dx[i]));
             }
         }
 
         for (i = 0; i < lenx; ++i) {
-            const npy_double x_val = dz[i];
+            const @type@ x_val = @trf@(dz[i]);
 
             if (npy_isnan(x_val)) {
-                dres[i] = x_val;
+                dres[i] = @inv@(x_val);
                 continue;
             }
 
-            j = binary_search_with_guess(x_val, dx, lenxp, j);
+            j = binary_search_with_guess_@DTYPE@(x_val, dx, lenxp, j);
             if (j == -1) {
-                dres[i] = lval;
+                dres[i] = @inv@(lval);
             }
             else if (j == lenxp) {
-                dres[i] = rval;
+                dres[i] = @inv@(rval);
             }
             else if (j == lenxp - 1) {
                 dres[i] = dy[j];
             }
             else {
-                const npy_double slope = (slopes != NULL) ? slopes[j] :
-                                         (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
-                dres[i] = slope*(x_val - dx[j]) + dy[j];
+                const @type@ slope = (slopes != NULL) ? slopes[j] :
+                                         (@trf@(dy[j+1]) - @trf@(dy[j])) / (@trf@(dx[j+1]) - @trf@(dx[j]));
+                dres[i] = @inv@(slope*(x_val - @trf@(dx[j])) + @trf@(dy[j]));
             }
         }
 
@@ -813,7 +821,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
-    return (PyObject *)af;
+    return af;
 
 fail:
     Py_XDECREF(afp);
@@ -822,45 +830,123 @@ fail:
     Py_XDECREF(af);
     return NULL;
 }
+/**end repeat**/
 
-/* As for arr_interp but for complex fp values */
 NPY_NO_EXPORT PyObject *
-arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
 
     PyObject *fp, *xp, *x;
     PyObject *left = NULL, *right = NULL;
-    PyArrayObject *afp = NULL, *axp = NULL, *ax = NULL, *af = NULL;
-    npy_intp i, lenx, lenxp;
-
-    const npy_double *dx, *dz;
-    const npy_cdouble *dy; 
-    npy_cdouble lval, rval; 
-    npy_cdouble *dres, *slopes = NULL;
+    PyArrayObject *af = NULL;
+    PyArray_Descr *fp_dtype = NULL, *xp_dtype = NULL, *x_dtype = NULL, *dtype = NULL;
+    char fp_type, xp_type, x_type;
+    int typenum;
 
     static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
 
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
-                                     kwlist, &x, &xp, &fp, &left, &right)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp", kwlist,
+                                     &x, &xp, &fp, &left, &right)) {
         return NULL;
     }
 
-    afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_CDOUBLE, 1, 1);
+    fp_dtype = PyArray_DescrFromObject(fp, NULL);
+    if (fp_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        goto fail;
+    }
+    fp_type = fp_dtype->type;
+
+    xp_dtype = PyArray_DescrFromObject(xp, NULL);
+    if (xp_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        goto fail;
+    }
+    xp_type = xp_dtype->type;
+
+    x_dtype = PyArray_DescrFromObject(x, NULL);
+    if (x_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        goto fail;
+    }
+    x_type = x_dtype->type;
+
+    dtype = PyArray_DescrFromType(select_most_suitable_float_type(fp_type, select_most_suitable_float_type(xp_type, x_type)));
+    typenum = dtype->type_num;
+
+    switch (typenum) {
+      case NPY_HALF:
+        af = arr_interp_HALF(fp, xp, x, left, right);
+        break;
+      case NPY_FLOAT:
+        af = arr_interp_FLOAT(fp, xp, x, left, right);
+        break;
+      case NPY_DOUBLE:
+        af = arr_interp_DOUBLE(fp, xp, x, left, right);
+        break;
+      case NPY_LONGDOUBLE:
+        af = arr_interp_LONGDOUBLE(fp, xp, x, left, right);
+        break;
+      default:
+        af = arr_interp_DOUBLE(fp, xp, x, left, right);
+        break;
+    }
+
+    if (af == NULL) {
+        goto fail;
+    }
+
+    Py_DECREF(fp_dtype);
+    Py_DECREF(xp_dtype);
+    Py_DECREF(x_dtype);
+    Py_DECREF(dtype);
+
+    return (PyObject *)af;
+
+fail:
+    Py_XDECREF(fp_dtype);
+    Py_XDECREF(xp_dtype);
+    Py_XDECREF(x_dtype);
+    Py_XDECREF(dtype);
+
+    return NULL;
+}
+
+
+/**begin repeat
+ * #DTYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ */
+NPY_NO_EXPORT PyArrayObject *
+arr_interp_complex_@DTYPE@(PyObject *fp, PyObject *xp, PyObject *x, PyObject *left,PyObject *right)
+{
+
+    PyArrayObject *afp = NULL, *axp = NULL, *ax = NULL, *af = NULL;
+    npy_intp i, lenx, lenxp;
+
+    const @type@ *dx, *dz;
+    const @ctype@ *dy;
+    @ctype@ lval, rval;
+    @ctype@ *dres, *slopes = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_C@DTYPE@, 1, 1);
 
     if (afp == NULL) {
         return NULL;
     }
 
-    axp = (PyArrayObject *)PyArray_ContiguousFromAny(xp, NPY_DOUBLE, 1, 1);
+    axp = (PyArrayObject *)PyArray_ContiguousFromAny(xp, NPY_@DTYPE@, 1, 1);
     if (axp == NULL) {
         goto fail;
     }
-    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_@DTYPE@, 1, 0);
     if (ax == NULL) {
         goto fail;
     }
+
     lenxp = PyArray_SIZE(axp);
     if (lenxp == 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -874,17 +960,17 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     lenx = PyArray_SIZE(ax);
-    dx = (const npy_double *)PyArray_DATA(axp);
-    dz = (const npy_double *)PyArray_DATA(ax);
+    dx = (const @type@ *)PyArray_DATA(axp);
+    dz = (const @type@ *)PyArray_DATA(ax);
 
     af = (PyArrayObject *)PyArray_SimpleNew(PyArray_NDIM(ax),
-                                            PyArray_DIMS(ax), NPY_CDOUBLE);
+                                            PyArray_DIMS(ax), NPY_C@DTYPE@);
     if (af == NULL) {
         goto fail;
     }
         
-    dy = (const npy_cdouble *)PyArray_DATA(afp);
-    dres = (npy_cdouble *)PyArray_DATA(af);
+    dy = (const @ctype@ *)PyArray_DATA(afp);
+    dres = (@ctype@ *)PyArray_DATA(af);
     /* Get left and right fill values. */
     if ((left == NULL) || (left == Py_None)) {
         lval = dy[0];
@@ -916,12 +1002,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
-        const npy_double xp_val = dx[0];
-        const npy_cdouble fp_val = dy[0];
+        const @type@ xp_val = dx[0];
+        const @ctype@ fp_val = dy[0];
             
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
-            const npy_double x_val = dz[i];
+            const @type@ x_val = dz[i];
             dres[i] = (x_val < xp_val) ? lval :
               ((x_val > xp_val) ? rval : fp_val);
         }
@@ -932,7 +1018,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = PyArray_malloc((lenxp - 1) * sizeof(@ctype@));
             if (slopes == NULL) {
                 goto fail;
             }
@@ -942,14 +1028,14 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
-                const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
+                const @type@ inv_dx = 1.0 / (dx[i+1] - dx[i]);
                 slopes[i].real = (dy[i+1].real - dy[i].real) * inv_dx;
                 slopes[i].imag = (dy[i+1].imag - dy[i].imag) * inv_dx;
             }
         }
         
         for (i = 0; i < lenx; ++i) {
-            const npy_double x_val = dz[i];
+            const @type@ x_val = dz[i];
             
             if (npy_isnan(x_val)) {
                 dres[i].real = x_val;
@@ -957,7 +1043,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 continue;
             }
             
-            j = binary_search_with_guess(x_val, dx, lenxp, j);
+            j = binary_search_with_guess_@DTYPE@(x_val, dx, lenxp, j);
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -973,7 +1059,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                     dres[i].imag = slopes[j].imag*(x_val - dx[j]) + dy[j].imag;
                 }
                 else {
-                    const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
+                    const @type@ inv_dx = 1.0 / (dx[j+1] - dx[j]);
                     dres[i].real = (dy[j+1].real - dy[j].real)*(x_val - dx[j])*
 			inv_dx + dy[j].real;
                     dres[i].imag = (dy[j+1].imag - dy[j].imag)*(x_val - dx[j])*
@@ -989,13 +1075,93 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
-    return (PyObject *)af;
+    return af;
 
 fail:
     Py_XDECREF(afp);
     Py_XDECREF(axp);
     Py_XDECREF(ax);
     Py_XDECREF(af);
+    return NULL;
+}
+/**end repeat**/
+
+/* As for arr_interp but for complex fp values */
+NPY_NO_EXPORT PyObject *
+arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
+{
+
+    PyObject *fp, *xp, *x;
+    PyObject *left = NULL, *right = NULL;
+    PyArrayObject *af = NULL;
+
+    PyArray_Descr *fp_dtype = NULL, *xp_dtype = NULL, *x_dtype = NULL, *dtype = NULL;
+    char fp_type, xp_type, x_type;
+    int typenum;
+
+    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO:interp_complex",
+                                     kwlist, &x, &xp, &fp, &left, &right)) {
+        return NULL;
+    }
+
+    fp_dtype = PyArray_DescrFromObject(fp, NULL);
+    if (fp_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        return NULL;
+    }
+    fp_type = fp_dtype->type;
+
+    xp_dtype = PyArray_DescrFromObject(xp, NULL);
+    if (xp_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        return NULL;
+    }
+    xp_type = xp_dtype->type;
+
+    x_dtype = PyArray_DescrFromObject(x, NULL);
+    if (x_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        return NULL;
+    }
+    x_type = x_dtype->type;
+
+    dtype = PyArray_DescrFromType(select_most_suitable_float_type(fp_type, select_most_suitable_float_type(xp_type, x_type)));
+    typenum = dtype->type_num;
+
+    switch (typenum) {
+      case NPY_FLOAT:
+        af = arr_interp_complex_FLOAT(fp, xp, x, left, right);
+        break;
+      case NPY_DOUBLE:
+        af = arr_interp_complex_DOUBLE(fp, xp, x, left, right);
+        break;
+      case NPY_LONGDOUBLE:
+        af = arr_interp_complex_LONGDOUBLE(fp, xp, x, left, right);
+        break;
+      default:
+        af = arr_interp_complex_DOUBLE(fp, xp, x, left, right);
+        break;
+    }
+
+    if (af == NULL) {
+        goto fail;
+    }
+
+    Py_DECREF(fp_dtype);
+    Py_DECREF(xp_dtype);
+    Py_DECREF(x_dtype);
+    Py_DECREF(dtype);
+
+    return (PyObject *)af;
+
+fail:
+    Py_XDECREF(fp_dtype);
+    Py_XDECREF(xp_dtype);
+    Py_XDECREF(x_dtype);
+    Py_XDECREF(dtype);
+
     return NULL;
 }
 
