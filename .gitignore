@@ -117,6 +117,7 @@ numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
 numpy/core/src/multiarray/arraytypes.c
+numpy/core/src/multiarray/compiled_base.c
 numpy/core/src/multiarray/einsum.c
 numpy/core/src/multiarray/lowlevel_strided_loops.c
 numpy/core/src/multiarray/multiarray_tests.c

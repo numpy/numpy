@@ -8,11 +8,47 @@
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
 #include "npy_config.h"
+#include "numpy/halffloat.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
 #include "common.h"
 
+
+static char
+select_most_suitable_float_type(char a, char b) {
+    int i = 0, a_i = 0, b_i = 0;
+
+    static char float_type_list[] = {'E', 'F', 'D', 'G'};
+
+    a = toupper(a);
+    b = toupper(b);
+
+    if (!('D' <= a && a <= 'G')) {
+        a = 'D';
+    }
+    if (!('D' <= b && b <= 'G')) {
+        b = 'D';
+    }
+
+    for (i=0; i<4; i++) {
+        if (a == float_type_list[i]) {
+            a_i = i;
+        }
+        if (b == float_type_list[i]) {
+            b_i = i;
+        }
+    }
+
+    return tolower(float_type_list[((a_i)>(b_i))?(a_i):(b_i)]);
+}
+
+/**begin repeat
+ * #TYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_float, npy_double, npy_longdouble#
+ * #dtype = npy_half, npy_float, npy_double, npy_longdouble#
+ * #trf = npy_half_to_float, , , #
+ */
 
 /*
  * Returns -1 if the array is monotonic decreasing,
@@ -20,26 +56,26 @@
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic(const double *a, npy_int lena)
+check_array_monotonic_@TYPE@(const @dtype@ *a, npy_int lena)
 {
     npy_intp i;
-    double next;
-    double last = a[0];
+    @type@ next;
+    @type@ last = @trf@(a[0]);
 
     /* Skip repeated values at the beginning of the array */
-    for (i = 1; (i < lena) && (a[i] == last); i++);
+    for (i = 1; (i < lena) && (@trf@(a[i]) == last); i++);
 
     if (i == lena) {
         /* all bin edges hold the same value */
         return 1;
     }
 
-    next = a[i];
+    next = @trf@(a[i]);
     if (last < next) {
         /* Possibly monotonic increasing */
         for (i += 1; i < lena; i++) {
             last = next;
-            next = a[i];
+            next = @trf@(a[i]);
             if (last > next) {
                 return 0;
             }
@@ -50,7 +86,7 @@ check_array_monotonic(const double *a, npy_int lena)
         /* last > next, possibly monotonic decreasing */
         for (i += 1; i < lena; i++) {
             last = next;
-            next = a[i];
+            next = @trf@(a[i]);
             if (last < next) {
                 return 0;
             }
@@ -58,6 +94,7 @@ check_array_monotonic(const double *a, npy_int lena)
         return -1;
     }
 }
+/**end repeat**/
 
 /* Find the minimum and maximum of an integer array */
 static void
@@ -197,43 +234,33 @@ fail:
     return NULL;
 }
 
-/*
- * digitize(x, bins, right=False) returns an array of integers the same length
- * as x. The values i returned are such that bins[i - 1] <= x < bins[i] if
- * bins is monotonically increasing, or bins[i - 1] > x >= bins[i] if bins
- * is monotonically decreasing.  Beyond the bounds of bins, returns either
- * i = 0 or i = len(bins) as appropriate. If right == True the comparison
- * is bins [i - 1] < x <= bins[i] or bins [i - 1] >= x > bins[i]
+/**begin repeat
+ * #TYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_float, npy_double, npy_longdouble#
+ * #dtype = npy_half, npy_float, npy_double, npy_longdouble#
+ * #trf = npy_half_to_float, , , #
  */
 NPY_NO_EXPORT PyObject *
-arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+arr_digitize_@TYPE@(PyObject *obj_x, PyObject *obj_bins, const int right)
 {
-    PyObject *obj_x = NULL;
-    PyObject *obj_bins = NULL;
     PyArrayObject *arr_x = NULL;
     PyArrayObject *arr_bins = NULL;
     PyObject *ret = NULL;
     npy_intp len_bins;
-    int monotonic, right = 0;
+    int monotonic = 0;
     NPY_BEGIN_THREADS_DEF
 
-    static char *kwlist[] = {"x", "bins", "right", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:digitize", kwlist,
-                                     &obj_x, &obj_bins, &right)) {
-        goto fail;
-    }
 
     /* PyArray_SearchSorted will make `x` contiguous even if we don't */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(obj_x, NPY_DOUBLE, 0, 0,
+    arr_x = (PyArrayObject *)PyArray_FROMANY(obj_x, NPY_@TYPE@, 0, 0,
                                              NPY_ARRAY_CARRAY_RO);
     if (arr_x == NULL) {
         goto fail;
     }
 
     /* TODO: `bins` could be strided, needs change to check_array_monotonic */
-    arr_bins = (PyArrayObject *)PyArray_FROMANY(obj_bins, NPY_DOUBLE, 1, 1,
-                                               NPY_ARRAY_CARRAY_RO);
+    arr_bins = (PyArrayObject *)PyArray_FROMANY(obj_bins, NPY_@TYPE@, 1, 1,
+                                                NPY_ARRAY_CARRAY_RO);
     if (arr_bins == NULL) {
         goto fail;
     }
@@ -245,8 +272,8 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     NPY_BEGIN_THREADS_THRESHOLDED(len_bins)
-    monotonic = check_array_monotonic((const double *)PyArray_DATA(arr_bins),
-                                      len_bins);
+    monotonic = check_array_monotonic_@TYPE@((const @dtype@ *)PyArray_DATA(arr_bins),
+                                             len_bins);
     NPY_END_THREADS
 
     if (monotonic == 0) {
@@ -263,7 +290,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         void *data = (void *)(PyArray_BYTES(arr_bins) - stride * (shape - 1));
 
         arr_tmp = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &shape,
-                                               NPY_DOUBLE, &stride, data, 0,
+                                               NPY_@TYPE@, &stride, data, 0,
                                                PyArray_FLAGS(arr_bins), NULL);
         if (!arr_tmp) {
             goto fail;
@@ -301,6 +328,80 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         Py_XDECREF(arr_x);
         Py_XDECREF(arr_bins);
         return ret;
+}
+/**end repeat**/
+
+/*
+ * digitize(x, bins, right=False) returns an array of integers the same length
+ * as x. The values i returned are such that bins[i - 1] <= x < bins[i] if
+ * bins is monotonically increasing, or bins[i - 1] > x >= bins[i] if bins
+ * is monotonically decreasing.  Beyond the bounds of bins, returns either
+ * i = 0 or i = len(bins) as appropriate. If right == True the comparison
+ * is bins [i - 1] < x <= bins[i] or bins [i - 1] >= x > bins[i]
+ */
+NPY_NO_EXPORT PyObject *
+arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj_x = NULL;
+    PyObject *obj_bins = NULL;
+    PyObject *ret = NULL;
+    PyArray_Descr *x_dtype = NULL, *bins_dtype = NULL, *dtype = NULL;
+    int typenum, right = 0;
+
+    static char *kwlist[] = {"x", "bins", "right", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:digitize", kwlist,
+                                     &obj_x, &obj_bins, &right)) {
+        goto fail;
+    }
+
+    x_dtype = PyArray_DescrFromObject(obj_x, NULL);
+    if (x_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        goto fail;
+    }
+
+    bins_dtype = PyArray_DescrFromObject(obj_bins, NULL);
+    if (bins_dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        goto fail;
+    }
+
+    dtype = PyArray_DescrFromType(select_most_suitable_float_type(x_dtype->type, bins_dtype->type));
+    typenum = dtype->type_num;
+
+    switch (typenum) {
+      case NPY_HALF:
+        ret = arr_digitize_HALF(obj_x, obj_bins, right);
+        break;
+      case NPY_FLOAT:
+        ret = arr_digitize_FLOAT(obj_x, obj_bins, right);
+        break;
+      case NPY_DOUBLE:
+        ret = arr_digitize_DOUBLE(obj_x, obj_bins, right);
+        break;
+      case NPY_LONGDOUBLE:
+        ret = arr_digitize_LONGDOUBLE(obj_x, obj_bins, right);
+        break;
+      default:
+        ret = arr_digitize_DOUBLE(obj_x, obj_bins, right);
+        break;
+    }
+
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    Py_DECREF(x_dtype);
+    Py_DECREF(bins_dtype);
+    Py_DECREF(dtype);
+    return ret;
+
+fail:
+    Py_XDECREF(x_dtype);
+    Py_XDECREF(bins_dtype);
+    Py_XDECREF(dtype);
+    return NULL;
 }
 
 /*
