@@ -117,6 +117,51 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
     *mx = max;
 }
 
+/**begin repeat
+ * #DTYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #dtype = npy_half, npy_float, npy_double, npy_longdouble#
+ * #trf = npy_half_to_float, , , #
+ * #inv = npy_float_to_half, , , #
+ */
+NPY_NO_EXPORT PyArrayObject *
+arr_bincount_calc_with_weight_@DTYPE@(PyObject *weight, npy_intp len, npy_intp *numbers, npy_intp ans_size)
+{
+    PyArrayObject *ans = NULL, *wts = NULL;
+    npy_intp i;
+    @dtype@ *weights , *dans;
+
+    wts = (PyArrayObject *)PyArray_ContiguousFromAny(
+                                            weight, NPY_@DTYPE@, 1, 1);
+    if (wts == NULL) {
+        goto fail;
+    }
+    weights = (@dtype@ *)PyArray_DATA(wts);
+    if (PyArray_SIZE(wts) != len) {
+        PyErr_SetString(PyExc_ValueError,
+                "The weights and list don't have the same length.");
+        goto fail;
+    }
+    ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_@DTYPE@, 0);
+    if (ans == NULL) {
+        goto fail;
+    }
+    dans = (@dtype@ *)PyArray_DATA(ans);
+    NPY_BEGIN_ALLOW_THREADS;
+    for (i = 0; i < len; i++) {
+        dans[numbers[i]] = @inv@(@trf@(dans[numbers[i]]) + @trf@(weights[i]));
+    }
+    NPY_END_ALLOW_THREADS;
+    Py_DECREF(wts);
+
+    return ans;
+
+fail:
+    Py_XDECREF(wts);
+    Py_XDECREF(ans);
+    return NULL;
+}
+/**end repeat**/
+
 /*
  * arr_bincount is registered as bincount.
  *
@@ -134,10 +179,12 @@ NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
-    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
+    PyArrayObject *lst = NULL, *ans = NULL;
+    PyArray_Descr *dtype = NULL;
     npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
     npy_intp i;
-    double *weights , *dans;
+    int typenum;
+
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
@@ -201,36 +248,42 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         Py_DECREF(lst);
     }
     else {
-        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                weight, NPY_DOUBLE, 1, 1);
-        if (wts == NULL) {
+        dtype = PyArray_DescrFromObject(weight, NULL);
+        if (dtype == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
             goto fail;
         }
-        weights = (double *)PyArray_DATA(wts);
-        if (PyArray_SIZE(wts) != len) {
-            PyErr_SetString(PyExc_ValueError,
-                    "The weights and list don't have the same length.");
-            goto fail;
+        typenum = dtype->type_num;
+
+        switch (typenum) {
+          case NPY_HALF:
+            ans = arr_bincount_calc_with_weight_HALF(weight, len, numbers, ans_size);
+            break;
+          case NPY_FLOAT:
+            ans = arr_bincount_calc_with_weight_FLOAT(weight, len, numbers, ans_size);
+            break;
+          case NPY_DOUBLE:
+            ans = arr_bincount_calc_with_weight_DOUBLE(weight, len, numbers, ans_size);
+            break;
+          case NPY_LONGDOUBLE:
+            ans = arr_bincount_calc_with_weight_LONGDOUBLE(weight, len, numbers, ans_size);
+            break;
+          default:
+            ans = arr_bincount_calc_with_weight_DOUBLE(weight, len, numbers, ans_size);
+            break;
         }
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
+
         if (ans == NULL) {
             goto fail;
         }
-        dans = (double *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++) {
-            dans[numbers[i]] += weights[i];
-        }
-        NPY_END_ALLOW_THREADS;
+        Py_DECREF(dtype);
         Py_DECREF(lst);
-        Py_DECREF(wts);
     }
     return (PyObject *)ans;
 
 fail:
+    Py_XDECREF(dtype);
     Py_XDECREF(lst);
-    Py_XDECREF(wts);
-    Py_XDECREF(ans);
     return NULL;
 }
 
