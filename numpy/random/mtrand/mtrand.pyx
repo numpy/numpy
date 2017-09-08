@@ -4720,6 +4720,173 @@ cdef class RandomState:
 
         return randoms
 
+    def complex_normal2(self, loc=0.0, gamma=1.0, relation=0.0, size=None):
+        """
+        complex_normal(loc=0.0, gamma=1.0, relation=0.0, size=None)
+
+        Draw random samples from a complex normal (Gaussian) distribution.
+
+        Parameters
+        ----------
+        loc : complex
+            Mean of the distribution.
+        gamma : float
+            Variance of the distribution.
+        relation : float or complex
+            Relation between the two component normals.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc``, ``gamma`` and ``relation``
+            are all scalars. Otherwise,
+            ``np.broadcast(loc, gamma, relation).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized complex normal distribution.
+
+        See Also
+        --------
+        numpy.random.normal : random values from a real-valued normal
+            distribution
+
+        Notes
+        -----
+        Complex normals are generated from a bivariate normal where the
+        variance of the real component is 0.5 Re(gamma + relation), the
+        variance of the imaginary component is 0.5 Re(gamma - relation), and
+        the covariance between the two is 0.5 Im(relation).  The implied
+        covariance matrix must be positive semi-definite and so both variances
+        must be greater than or equal to zero and the covariance must be less
+        than or equal to the product of the two standard deviations.
+
+        References
+        ----------
+        .. [1] Wikipedia, "Complex normal distribution",
+               https://en.wikipedia.org/wiki/Complex_normal_distribution
+        .. [2] Leigh J. Halliwell, "Complex Random Variables" in "Casualty
+               Actuarial Society E-Forum", Fall 2015.
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> s = np.random.complex_normal(size=1000)
+        """
+        cdef ndarray loca, cov, randoms
+        cdef double fgamma_r, frelation_r, frelation_i
+
+        if not (PyArray_IsAnyScalar(loc) and 
+                PyArray_IsAnyScalar(gamma) and 
+                PyArray_IsAnyScalar(relation)):
+            raise ValueError('All inputs must be scalars')
+        fgamma_r = <double>gamma
+        frelation_r = PyComplex_RealAsDouble(relation)
+        frelation_i = PyComplex_ImagAsDouble(relation)
+        loca = <ndarray>PyArray_FROM_OTF([loc], NPY_CDOUBLE, NPY_ARRAY_ALIGNED)
+        # loca = <ndarray>PyArray_View(loca, PyArray_DescrFromType(NPY_DOUBLE), ndarray)
+        loca = <ndarray>loca.view(np.double)
+        
+        cov = <ndarray>np.empty((2,2))
+        cov[0,0] = 0.5 * (fgamma_r + frelation_r)
+        cov[0,1] = cov[1,0] = 0.5 * frelation_i
+        cov[1,1] = 0.5 * (fgamma_r - frelation_r)
+        
+        randoms = <ndarray>self.multivariate_normal(loca, cov, size=size)
+        # randoms = <ndarray>PyArray_View(randoms, PyArray_DescrFromType(NPY_CDOUBLE), ndarray)
+        randoms = randoms.view(np.complex128)
+        if size is None:
+            return randoms[0]
+        return randoms
+
+
+    def complex_normal3(self, loc=0.0, gamma=1.0, relation=0.0, size=None):
+        """
+        complex_normal(loc=0.0, gamma=1.0, relation=0.0, size=None)
+
+        Draw random samples from a complex normal (Gaussian) distribution.
+
+        Parameters
+        ----------
+        loc : complex
+            Mean of the distribution.
+        gamma : float
+            Variance of the distribution.
+        relation : float or complex
+            Relation between the two component normals.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``loc``, ``gamma`` and ``relation``
+            are all scalars. Otherwise,
+            ``np.broadcast(loc, gamma, relation).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized complex normal distribution.
+
+        See Also
+        --------
+        numpy.random.normal : random values from a real-valued normal
+            distribution
+
+        Notes
+        -----
+        Complex normals are generated from a bivariate normal where the
+        variance of the real component is 0.5 Re(gamma + relation), the
+        variance of the imaginary component is 0.5 Re(gamma - relation), and
+        the covariance between the two is 0.5 Im(relation).  The implied
+        covariance matrix must be positive semi-definite and so both variances
+        must be greater than or equal to zero and the covariance must be less
+        than or equal to the product of the two standard deviations.
+
+        References
+        ----------
+        .. [1] Wikipedia, "Complex normal distribution",
+               https://en.wikipedia.org/wiki/Complex_normal_distribution
+        .. [2] Leigh J. Halliwell, "Complex Random Variables" in "Casualty
+               Actuarial Society E-Forum", Fall 2015.
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> s = np.random.complex_normal(size=1000)
+        """
+        cdef ndarray loca, cov, randoms
+        cdef double fgamma_r, frelation_r, frelation_i
+
+        if not (PyArray_IsAnyScalar(loc) and
+                    PyArray_IsAnyScalar(gamma) and
+                    PyArray_IsAnyScalar(relation)):
+            raise ValueError('All inputs must be scalars')
+        loca = <ndarray> PyArray_FROM_OTF([loc], NPY_CDOUBLE,
+                                          NPY_ARRAY_ALIGNED)
+        fgamma_r = <double> gamma
+        frelation_r = PyComplex_RealAsDouble(relation)
+        frelation_i = PyComplex_ImagAsDouble(relation)
+
+        if size is None:
+            shape = 2
+        elif isinstance(size, (int, long, np.integer)):
+            shape = [size, 2]
+        else:
+            shape = list(size) + [2]
+        cov = <ndarray> np.empty((2, 2))
+        cov[0, 0] = 0.5 * (fgamma_r + frelation_r)
+        cov[0, 1] = cov[1, 0] = 0.5 * frelation_i
+        cov[1, 1] = 0.5 * (fgamma_r - frelation_r)
+        factor = np.linalg.cholesky(cov)
+        norms = self.standard_normal(shape)
+        randoms = loc + np.dot(norms, factor.T)
+        randoms = randoms.view(np.complex128)
+
+        if size is None:
+            return randoms[0]
+        return randoms
+
     def multinomial(self, npy_intp n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
@@ -5134,6 +5301,8 @@ logseries = _rand.logseries
 
 multivariate_normal = _rand.multivariate_normal
 complex_normal = _rand.complex_normal
+complex_normal2 = _rand.complex_normal2
+complex_normal3 = _rand.complex_normal3
 multinomial = _rand.multinomial
 dirichlet = _rand.dirichlet
 
