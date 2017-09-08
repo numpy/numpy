@@ -408,11 +408,11 @@ def _block(arrays, depth=0):
         list_ndim = list_ndims[0]
         arr_ndim = max(arr.ndim for arr in arrs)
         ndim = max(list_ndim, arr_ndim)
-        arrs = [_nx.array(a, ndmin=ndim) for a in arrs]
+        arrs = [array(a, ndmin=ndim, copy=False, subok=True) for a in arrs]
         return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
     else:
         # We've 'bottomed out'
-        return _nx.array(arrays, ndmin=depth), depth
+        return array(arrays, ndmin=depth, copy=False, subok=True), depth
 
 
 def block(arrays):
