@@ -19,16 +19,19 @@ static char
 select_most_suitable_float_type(char a, char b) {
     int i = 0, a_i = 0, b_i = 0;
 
-    static char float_type_list[] = {'E', 'F', 'D', 'G'};
+    static char float_type_list[] = {NPY_HALFLTR,
+                                     NPY_FLOATLTR,
+                                     NPY_DOUBLELTR,
+                                     NPY_LONGDOUBLELTR};
 
-    a = toupper(a);
-    b = toupper(b);
+    a = tolower(a);
+    b = tolower(b);
 
-    if (!('D' <= a && a <= 'G')) {
-        a = 'D';
+    if (!(NPY_DOUBLELTR <= a && a <= NPY_LONGDOUBLELTR)) {
+        a = NPY_DOUBLELTR;
     }
-    if (!('D' <= b && b <= 'G')) {
-        b = 'D';
+    if (!(NPY_DOUBLELTR <= b && b <= NPY_LONGDOUBLELTR)) {
+        b = NPY_DOUBLELTR;
     }
 
     for (i = 0; i < 4; i++) {
@@ -40,7 +43,7 @@ select_most_suitable_float_type(char a, char b) {
         }
     }
 
-    return tolower(float_type_list[(a_i > b_i) ? a_i : b_i]);
+    return float_type_list[(a_i > b_i) ? a_i : b_i];
 }
 
 /**begin repeat
