@@ -319,7 +319,7 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran')
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def setup(self):
         if self.module is not None:
             return
