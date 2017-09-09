@@ -98,8 +98,7 @@ install:
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
   # Install the BLAS library 
-  #  - install "openblas.lib" to PYTHON\lib
-  #  - install OpenBLAS.dll to MINGW\bin
+  #  - install "openblas.a" to PYTHON\lib
   - ps: |
       $PYTHON_ARCH = $env:PYTHON_ARCH
       $PYTHON = $env:PYTHON
@@ -132,10 +131,12 @@ install:
   # Upgrade to the latest pip.
   - '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
 
-  # Install the scipy test dependencies.
+  # Install the numpy test dependencies.
   - '%CMD_IN_ENV% pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
 
 build_script:
+  # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
+  # We then use the import library from the DLL to compile with MSVC
   - ps: |
       $PYTHON_ARCH = $env:PYTHON_ARCH
       If ($PYTHON_ARCH -eq 32) {
