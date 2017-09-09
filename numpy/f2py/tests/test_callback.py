@@ -120,7 +120,7 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran')
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
 
         def callback(code):
