@@ -13,7 +13,7 @@ from numpy.testing import (
     assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath
+    assert_string_equal, assert_, tempdir, temppath,
     )
 import unittest
 
@@ -269,11 +269,11 @@ class TestEqual(TestArrayEqual):
         except AssertionError as e:
             msg = str(e)
             msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
-            msg_reference = "\nArrays are not equal\n\n"
-                "(shapes (2,), (1, 2) mismatch)\n"
-                " x: array([1, 2])\n"
-                " y: [repr failed for <matrix>: The truth value of an array "
-                "with more than one element is ambiguous. Use a.any() or "
+            msg_reference = "\nArrays are not equal\n\n" \
+                "(shapes (2,), (1, 2) mismatch)\n" \
+                " x: array([1, 2])\n" \
+                " y: [repr failed for <matrix>: The truth value of an array " \
+                "with more than one element is ambiguous. Use a.any() or " \
                 "a.all()]"
             try:
                 self.assertEqual(msg, msg_reference)
