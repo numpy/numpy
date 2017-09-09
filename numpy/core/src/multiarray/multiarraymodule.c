@@ -796,32 +796,17 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
 {
     PyArrayObject *out_buf;
-    PyTypeObject *subtype;
-    double prior1, prior2;
-    /*
-     * Need to choose an output array that can hold a sum
-     * -- use priority to determine which subtype.
-     */
-    if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-    }
-    else {
-        prior1 = prior2 = 0.0;
-        subtype = Py_TYPE(ap1);
-    }
+
     if (out) {
         int d;
 
         /* verify that out is usable */
-        if (Py_TYPE(out) != subtype ||
-            PyArray_NDIM(out) != nd ||
+        if (PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable "
-                "(must have the right type, nr dimensions, and be a C-Array)");
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
             return 0;
         }
         for (d = 0; d < nd; ++d) {
@@ -862,18 +847,35 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         return out_buf;
     }
+    else {
+        PyTypeObject *subtype;
+        double prior1, prior2;
+        /*
+         * Need to choose an output array that can hold a sum
+         * -- use priority to determine which subtype.
+         */
+        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
+            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+        }
+        else {
+            prior1 = prior2 = 0.0;
+            subtype = Py_TYPE(ap1);
+        }
 
-    out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                           typenum, NULL, NULL, 0, 0,
-                                           (PyObject *)
-                                           (prior2 > prior1 ? ap2 : ap1));
+        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                               typenum, NULL, NULL, 0, 0,
+                                               (PyObject *)
+                                               (prior2 > prior1 ? ap2 : ap1));
 
-    if (out_buf != NULL && result) {
-        Py_INCREF(out_buf);
-        *result = out_buf;
+        if (out_buf != NULL && result) {
+            Py_INCREF(out_buf);
+            *result = out_buf;
+        }
+
+        return out_buf;
     }
-
-    return out_buf;
 }
 
 /* Could perhaps be redone to not make contiguous arrays */

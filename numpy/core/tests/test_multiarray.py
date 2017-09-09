@@ -2501,6 +2501,18 @@ class TestMethods(object):
             assert_raises(ValueError, np.dot, a, b, out=b[::2])
             assert_raises(ValueError, np.dot, a, b, out=b.T)
 
+    def test_dot_matmul_out(self):
+        # gh-9641
+        class Sub(np.ndarray):
+            pass
+        a = np.ones((2, 2)).view(Sub)
+        b = np.ones((2, 2)).view(Sub)
+        out = np.ones((2, 2))
+
+        # make sure out can be any ndarray (not only subclass of inputs)
+        np.dot(a, b, out=out)
+        np.matmul(a, b, out=out)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
