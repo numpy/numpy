@@ -16,7 +16,7 @@ class TestBlockDocString(util.F2PyTest):
       END
     """
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran')
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_block_docstring(self):
         expected = "'i'-array(2,3)\n"
         assert_equal(self.module.block.__doc__, expected)
