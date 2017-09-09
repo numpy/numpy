@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import itertools
+import sys
 
 import numpy as np
 import numpy.core.umath_tests as umt
@@ -10,7 +11,7 @@ from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings, assert_allclose,
+    assert_no_warnings, assert_allclose, suppress_warnings, IS_PYPY
 )
 
 
@@ -596,6 +597,18 @@ class TestUfunc(object):
         c[:] = -1
         umt.inner1d(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
+
+        # Passing a temporary array as out= argument emits a Warning.
+        arr = np.ones(3)
+        with suppress_warnings() as sup:
+            w = sup.record(RuntimeWarning, ".*the results may be lost")
+            np.add(arr, arr, out=np.empty(3))
+            if IS_PYPY or sys.version_info >= (3, 6):
+                # The reference count of arguments changed in 3.6 and it doesn't
+                # emit the Warning.
+                pass
+            else:
+                assert_(len(w) == 1)
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
