@@ -268,7 +268,7 @@ class TestEqual(TestArrayEqual):
             self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
         except AssertionError as e:
             msg = str(e)
-            msg2 = msg.replace("shapes (2,), (1, 2)", "shapes (2L,), (1L, 2L)")
+            msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
             msg_reference = "\nArrays are not equal\n\n"
                 "(shapes (2,), (1, 2) mismatch)\n"
                 " x: array([1, 2])\n"
