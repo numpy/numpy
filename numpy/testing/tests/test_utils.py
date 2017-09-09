@@ -13,7 +13,7 @@ from numpy.testing import (
     assert_allclose, assert_approx_equal,
     assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath, dec
+    assert_string_equal, assert_, tempdir, temppath
     )
 import unittest
 
