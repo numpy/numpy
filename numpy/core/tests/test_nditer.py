@@ -1816,100 +1816,45 @@ def test_iter_buffered_cast_structured_type():
     if HAS_REFCOUNT:
         assert_equal(sys.getrefcount(a[0]), rc)
 
-    # struct type -> simple (takes the first value)
-    sdt = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
-    a = np.array([(5.5, 7, 'test'), (8, 10, 11)], dtype=sdt)
+    # single-field struct type -> simple
+    sdt = [('a', 'f4')]
+    a = np.array([(5.5,), (8,)], dtype=sdt)
     i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
                     casting='unsafe',
                     op_dtypes='i4')
     assert_equal([x_[()] for x_ in i], [5, 8])
 
+    # make sure multi-field struct type -> simple doesn't work
+    sdt = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
+    a = np.array([(5.5, 7, 'test'), (8, 10, 11)], dtype=sdt)
+    assert_raises(ValueError, lambda: (
+        nditer(a, ['buffered', 'refs_ok'], ['readonly'],
+               casting='unsafe',
+               op_dtypes='i4')))
+
     # struct type -> struct type (field-wise copy)
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
     sdt2 = [('d', 'u2'), ('a', 'O'), ('b', 'f8')]
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
-    # New in 1.12: This behavior changes in 1.13, test for dep warning
-    with assert_warns(FutureWarning):
-        i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
-                        casting='unsafe',
-                        op_dtypes=sdt2)
+    i = nditer(a, ['buffered', 'refs_ok'], ['readonly'],
+                    casting='unsafe',
+                    op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
     assert_equal([np.array(x_) for x_ in i],
-                 [np.array((3, 1, 2), dtype=sdt2),
-                  np.array((6, 4, 5), dtype=sdt2)])
+                 [np.array((1, 2, 3), dtype=sdt2),
+                  np.array((4, 5, 6), dtype=sdt2)])
 
-    # struct type -> struct type (field gets discarded)
+    # make sure struct type -> struct type with different
+    # number of fields fails
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
     sdt2 = [('b', 'O'), ('a', 'f8')]
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
-    # New in 1.12: This behavior changes in 1.13, test for dep warning
-    with assert_warns(FutureWarning):
-        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                        casting='unsafe',
-                        op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    vals = []
-    for x in i:
-        vals.append(np.array(x))
-        x['a'] = x['b']+3
-    assert_equal(vals, [np.array((2, 1), dtype=sdt2),
-                     np.array((5, 4), dtype=sdt2)])
-    assert_equal(a, np.array([(5, 2, None), (8, 5, None)], dtype=sdt1))
 
-    # struct type -> struct type (structured field gets discarded)
-    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'i4')])]
-    sdt2 = [('b', 'O'), ('a', 'f8')]
-    a = np.array([(1, 2, (0, 9)), (4, 5, (20, 21))], dtype=sdt1)
-    # New in 1.12: This behavior changes in 1.13, test for dep warning
-    with assert_warns(FutureWarning):
-        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                        casting='unsafe',
-                        op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    vals = []
-    for x in i:
-        vals.append(np.array(x))
-        x['a'] = x['b']+3
-    assert_equal(vals, [np.array((2, 1), dtype=sdt2),
-                     np.array((5, 4), dtype=sdt2)])
-    assert_equal(a, np.array([(5, 2, (0, 0)), (8, 5, (0, 0))], dtype=sdt1))
+    assert_raises(ValueError, lambda : (
+        nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
+               casting='unsafe',
+               op_dtypes=sdt2)))
 
-    # struct type -> struct type (structured field w/ ref gets discarded)
-    sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'O')])]
-    sdt2 = [('b', 'O'), ('a', 'f8')]
-    a = np.array([(1, 2, (0, 9)), (4, 5, (20, 21))], dtype=sdt1)
-    # New in 1.12: This behavior changes in 1.13, test for dep warning
-    with assert_warns(FutureWarning):
-        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                        casting='unsafe',
-                        op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    vals = []
-    for x in i:
-        vals.append(np.array(x))
-        x['a'] = x['b']+3
-    assert_equal(vals, [np.array((2, 1), dtype=sdt2),
-                     np.array((5, 4), dtype=sdt2)])
-    assert_equal(a, np.array([(5, 2, (0, None)), (8, 5, (0, None))], dtype=sdt1))
-
-    # struct type -> struct type back (structured field w/ ref gets discarded)
-    sdt1 = [('b', 'O'), ('a', 'f8')]
-    sdt2 = [('a', 'f4'), ('b', 'i8'), ('d', [('a', 'i2'), ('b', 'O')])]
-    a = np.array([(1, 2), (4, 5)], dtype=sdt1)
-    # New in 1.12: This behavior changes in 1.13, test for dep warning
-    with assert_warns(FutureWarning):
-        i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-                        casting='unsafe',
-                        op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    vals = []
-    for x in i:
-        vals.append(np.array(x))
-        assert_equal(x['d'], np.array((0, None), dtype=[('a', 'i2'), ('b', 'O')]))
-        x['a'] = x['b']+3
-    assert_equal(vals, [np.array((2, 1, (0, None)), dtype=sdt2),
-                     np.array((5, 4, (0, None)), dtype=sdt2)])
-    assert_equal(a, np.array([(1, 4), (4, 7)], dtype=sdt1))
 
 def test_iter_buffered_cast_subarray():
     # Tests buffering of subarrays

@@ -1760,15 +1760,11 @@ class TestFillingValues(object):
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using a flexible type w/ a different type shouldn't matter
-        # BEHAVIOR in 1.5 and earlier: match structured types by position
-        #fill_val = np.array((-999, -12345678.9, "???"),
-        #                    dtype=[("A", int), ("B", float), ("C", "|S3")])
-        # BEHAVIOR in 1.6 and later: match structured types by name
-        fill_val = np.array(("???", -999, -12345678.9),
-                            dtype=[("c", "|S3"), ("a", int), ("b", float), ])
-        # suppress deprecation warning in 1.12 (remove in 1.13)
-        with assert_warns(FutureWarning):
-            fval = _check_fill_value(fill_val, ndtype)
+        # BEHAVIOR in 1.5 and earlier, and 1.13 and later: match structured
+        # types by position
+        fill_val = np.array((-999, -12345678.9, "???"),
+                            dtype=[("A", int), ("B", float), ("C", "|S3")])
+        fval = _check_fill_value(fill_val, ndtype)
         assert_(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
