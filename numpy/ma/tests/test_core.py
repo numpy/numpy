@@ -3608,7 +3608,7 @@ class TestMaskedArrayMathMethods(object):
                                 mX[:, k].compressed().std())
 
     @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        msg='Fails on Python < 3.6')
+                        msg='Fails on Python < 3.6 (Issue #9671)')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
