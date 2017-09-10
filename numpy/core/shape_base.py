@@ -394,6 +394,7 @@ def _block_check_depths_match(arrays, index=[]):
                 )
         return first_index
     elif isinstance(arrays, list) and len(arrays) == 0:
+        # We've 'bottomed out' on an empty list
         return index + [None]
     else:
         # We've 'bottomed out'
