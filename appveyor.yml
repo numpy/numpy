@@ -84,6 +84,7 @@ init:
       }
 
 install:
+  # Show size of cache
   - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
@@ -97,8 +98,8 @@ install:
      python -c "import sys,platform,struct;
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
-  # Install the BLAS library 
-  #  - install "openblas.a" to PYTHON\lib
+  # Install "openblas.a" to PYTHON\lib
+  # Library provided by Matthew Brett at https://github.com/matthew-brett/build-openblas
   - ps: |
       $PYTHON_ARCH = $env:PYTHON_ARCH
       $PYTHON = $env:PYTHON
@@ -149,6 +150,16 @@ build_script:
       mkdir dist
       pip wheel -v -v -v --wheel-dir=dist .
 
+      # For each wheel that pip has placed in the "dist" directory
+      # First, upload the wheel to the "artifacts" tab and then
+      # install the wheel. If we have only built numpy (as is the case here),
+      # then there will be one wheel to install.
+      
+      # This method is more representative of what will be distributed,
+      # because it actually tests what the built wheels will be rather than
+      # what 'setup.py install' will do and at it uploads the wheels so that
+      # they can be inspected.
+
       ls dist -r | Foreach-Object {
           appveyor PushArtifact $_.FullName
           pip install $_.FullName
@@ -172,6 +183,8 @@ after_build:
   - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
 
 on_finish:
+  # We can get a nice display of test results in the "test" tab with py.test
+  # For now, this does nothing.
   - ps: |
       If (Test-Path .\junit-results.xml) {
         (new-object net.webclient).UploadFile(
