@@ -931,7 +931,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=np.int)
+    >>> np.zeros((5,), dtype=int)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
@@ -1038,7 +1038,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     Examples
     --------
     >>> iterable = (x*x for x in range(5))
-    >>> np.fromiter(iterable, np.float)
+    >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
 
     """)
@@ -1500,7 +1500,7 @@ add_newdoc('numpy.core.multiarray', 'where',
     Find the indices of elements of `x` that are in `goodvalues`.
 
     >>> goodvalues = [3, 4, 7]
-    >>> ix = np.in1d(x.ravel(), goodvalues).reshape(x.shape)
+    >>> ix = np.isin(x, goodvalues)
     >>> ix
     array([[False, False, False],
            [ True,  True, False],
@@ -1635,9 +1635,9 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     >>> np.can_cast(np.int32, np.int64)
     True
-    >>> np.can_cast(np.float64, np.complex)
+    >>> np.can_cast(np.float64, complex)
     True
-    >>> np.can_cast(np.complex, np.float)
+    >>> np.can_cast(complex, float)
     False
 
     >>> np.can_cast('i8', 'f8')
@@ -3292,7 +3292,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     """
-    a.byteswap(inplace)
+    a.byteswap(inplace=False)
 
     Swap the bytes of the array elements
 
@@ -3315,7 +3315,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> A = np.array([1, 256, 8755], dtype=np.int16)
     >>> map(hex, A)
     ['0x1', '0x100', '0x2233']
-    >>> A.byteswap(True)
+    >>> A.byteswap(inplace=True)
     array([  256,     1, 13090], dtype=int16)
     >>> map(hex, A)
     ['0x100', '0x1', '0x3322']
@@ -3418,7 +3418,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         Controls the memory layout of the copy. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible. (Note that this function and :func:numpy.copy are very
+        as possible. (Note that this function and :func:`numpy.copy` are very
         similar, but have different default values for their order=
         arguments.)
 
@@ -5141,7 +5141,7 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is non-positive.
+        values, or if `minlength` is negative.
     TypeError
         If the type of the input is float or complex.
 
@@ -5163,7 +5163,7 @@ add_newdoc('numpy.core.multiarray', 'bincount',
     The input array needs to be of integer dtype, otherwise a
     TypeError is raised:
 
-    >>> np.bincount(np.arange(5, dtype=np.float))
+    >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     TypeError: array cannot be safely cast to required type
@@ -5421,40 +5421,19 @@ add_newdoc('numpy.core', 'ufunc',
     """
     Functions that operate element by element on whole arrays.
 
-    To see the documentation for a specific ufunc, use np.info().  For
-    example, np.info(np.sin).  Because ufuncs are written in C
+    To see the documentation for a specific ufunc, use `info`.  For
+    example, ``np.info(np.sin)``.  Because ufuncs are written in C
     (for speed) and linked into Python with NumPy's ufunc facility,
     Python's help() function finds this page whenever help() is called
     on a ufunc.
 
-    A detailed explanation of ufuncs can be found in the "ufuncs.rst"
-    file in the NumPy reference guide.
+    A detailed explanation of ufuncs can be found in the docs for :ref:`ufuncs`.
 
-    Unary ufuncs:
-    =============
+    Calling ufuncs:
+    ===============
 
-    op(X, out=None)
-    Apply op to X elementwise
-
-    Parameters
-    ----------
-    X : array_like
-        Input array.
-    out : array_like
-        An array to store the output. Must be the same shape as `X`.
-
-    Returns
-    -------
-    r : array_like
-        `r` will have the same shape as `X`; if out is provided, `r`
-        will be equal to out.
-
-    Binary ufuncs:
-    ==============
-
-    op(X, Y, out=None)
-    Apply `op` to `X` and `Y` elementwise. May "broadcast" to make
-    the shapes of `X` and `Y` congruent.
+    op(*x[, out], where=True, **kwargs)
+    Apply `op` to the arguments `*x` elementwise, broadcasting the arguments.
 
     The broadcasting rules are:
 
@@ -5463,18 +5442,25 @@ add_newdoc('numpy.core', 'ufunc',
 
     Parameters
     ----------
-    X : array_like
-        First input array.
-    Y : array_like
-        Second input array.
-    out : array_like
-        An array to store the output. Must be the same shape as the
-        output would have.
+    *x : array_like
+        Input arrays.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        Alternate array object(s) in which to put the result; if provided, it
+        must have a shape that the inputs broadcast to. A tuple of arrays
+        (possible only as a keyword argument) must have length equal to the
+        number of outputs; use `None` for outputs to be allocated by the ufunc.
+    where : array_like, optional
+        Values of True indicate to calculate the ufunc at that position, values
+        of False indicate to leave the value in the output alone.
+    **kwargs
+        For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
     Returns
     -------
-    r : array_like
-        The return value; if out is provided, `r` will be equal to out.
+    r : ndarray or tuple of ndarray
+        `r` will have the shape that the arrays in `x` broadcast to; if `out` is
+        provided, `r` will be equal to `out`. If the function has more than one
+        output, then the result will be a tuple of arrays.
 
     """)
 
@@ -5683,9 +5669,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         The type used to represent the intermediate results. Defaults
         to the data-type of the output array if this is provided, or
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided, a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5728,7 +5719,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',
     """
-    accumulate(array, axis=0, dtype=None, out=None, keepdims=None)
+    accumulate(array, axis=0, dtype=None, out=None)
 
     Accumulate the result of applying the operator to all elements.
 
@@ -5757,11 +5748,14 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
         The data-type used to represent the intermediate results. Defaults
         to the data-type of the output array if such is provided, or the
         the data-type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
-    keepdims : bool
-        Has no effect. Deprecated, and will be removed in future.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
 
     Returns
     -------
@@ -5836,9 +5830,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
         The type used to represent the intermediate results. Defaults
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
-    out : ndarray, optional
-        A location into which the result is stored. If not provided a
-        freshly-allocated array is returned.
+    out : ndarray, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned. For consistency with
+        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        1-element tuple.
+
+        .. versionchanged:: 1.13.0
+           Tuples are allowed for keyword argument.
 
     Returns
     -------
@@ -6100,7 +6099,7 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
     is a flexible type, here of size 10:
 
-    >>> np.dtype([('hello',(np.int,3)),('world',np.void,10)])
+    >>> np.dtype([('hello',(int,3)),('world',np.void,10)])
     dtype([('hello', '<i4', 3), ('world', '|V10')])
 
     Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are

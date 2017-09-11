@@ -5,7 +5,7 @@ import sys
 import numpy as np
 from numpy.compat import unicode
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal)
+    run_module_suite, assert_, assert_equal, assert_array_equal)
 
 # Guess the UCS length for this python interpreter
 if sys.version_info[:2] >= (3, 3):
@@ -68,24 +68,24 @@ def test_string_cast():
 #    Creation tests
 ############################################################
 
-class create_zeros(object):
+class CreateZeros(object):
     """Check the creation of zero-valued arrays"""
 
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        self.assertTrue(int(ua.dtype.str[2:]) == self.ulen)
+        assert_(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        self.assertTrue(buffer_length(ua) == nbytes)
+        assert_(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        self.assertTrue(ua_scalar == u'')
+        assert_(ua_scalar == u'')
         # Encode to ascii and double check
-        self.assertTrue(ua_scalar.encode('ascii') == b'')
+        assert_(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars
         if ucs4:
-            self.assertTrue(buffer_length(ua_scalar) == 0)
+            assert_(buffer_length(ua_scalar) == 0)
         else:
-            self.assertTrue(buffer_length(ua_scalar) == 0)
+            assert_(buffer_length(ua_scalar) == 0)
 
     def test_zeros0D(self):
         # Check creation of 0-dimensional objects
@@ -105,47 +105,47 @@ class create_zeros(object):
         self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
-class test_create_zeros_1(create_zeros, TestCase):
+class TestCreateZeros_1(CreateZeros):
     """Check the creation of zero-valued arrays (size 1)"""
     ulen = 1
 
 
-class test_create_zeros_2(create_zeros, TestCase):
+class TestCreateZeros_2(CreateZeros):
     """Check the creation of zero-valued arrays (size 2)"""
     ulen = 2
 
 
-class test_create_zeros_1009(create_zeros, TestCase):
+class TestCreateZeros_1009(CreateZeros):
     """Check the creation of zero-valued arrays (size 1009)"""
     ulen = 1009
 
 
-class create_values(object):
+class CreateValues(object):
     """Check the creation of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        self.assertTrue(int(ua.dtype.str[2:]) == self.ulen)
+        assert_(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        self.assertTrue(buffer_length(ua) == nbytes)
+        assert_(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        self.assertTrue(ua_scalar == self.ucs_value*self.ulen)
+        assert_(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        self.assertTrue(ua_scalar.encode('utf-8') ==
+        assert_(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if ucs4:
-            self.assertTrue(buffer_length(ua_scalar) == 4*self.ulen)
+            assert_(buffer_length(ua_scalar) == 4*self.ulen)
         else:
             if self.ucs_value == ucs4_value:
                 # In UCS2, the \U0010FFFF will be represented using a
                 # surrogate *pair*
-                self.assertTrue(buffer_length(ua_scalar) == 2*2*self.ulen)
+                assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
             else:
                 # In UCS2, the \uFFFF will be represented using a
                 # regular 2-byte word
-                self.assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
+                assert_(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check creation of 0-dimensional objects with values
@@ -165,37 +165,37 @@ class create_values(object):
         self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
-class test_create_values_1_ucs2(create_values, TestCase):
+class TestCreateValues_1_UCS2(CreateValues):
     """Check the creation of valued arrays (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
 
 
-class test_create_values_1_ucs4(create_values, TestCase):
+class TestCreateValues_1_UCS4(CreateValues):
     """Check the creation of valued arrays (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
 
 
-class test_create_values_2_ucs2(create_values, TestCase):
+class TestCreateValues_2_UCS2(CreateValues):
     """Check the creation of valued arrays (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
 
 
-class test_create_values_2_ucs4(create_values, TestCase):
+class TestCreateValues_2_UCS4(CreateValues):
     """Check the creation of valued arrays (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
 
 
-class test_create_values_1009_ucs2(create_values, TestCase):
+class TestCreateValues_1009_UCS2(CreateValues):
     """Check the creation of valued arrays (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
 
 
-class test_create_values_1009_ucs4(create_values, TestCase):
+class TestCreateValues_1009_UCS4(CreateValues):
     """Check the creation of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
@@ -205,32 +205,32 @@ class test_create_values_1009_ucs4(create_values, TestCase):
 #    Assignment tests
 ############################################################
 
-class assign_values(object):
+class AssignValues(object):
     """Check the assignment of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
-        self.assertTrue(int(ua.dtype.str[2:]) == self.ulen)
+        assert_(int(ua.dtype.str[2:]) == self.ulen)
         # Check the length of the data buffer
-        self.assertTrue(buffer_length(ua) == nbytes)
+        assert_(buffer_length(ua) == nbytes)
         # Small check that data in array element is ok
-        self.assertTrue(ua_scalar == self.ucs_value*self.ulen)
+        assert_(ua_scalar == self.ucs_value*self.ulen)
         # Encode to UTF-8 and double check
-        self.assertTrue(ua_scalar.encode('utf-8') ==
+        assert_(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
         if ucs4:
-            self.assertTrue(buffer_length(ua_scalar) == 4*self.ulen)
+            assert_(buffer_length(ua_scalar) == 4*self.ulen)
         else:
             if self.ucs_value == ucs4_value:
                 # In UCS2, the \U0010FFFF will be represented using a
                 # surrogate *pair*
-                self.assertTrue(buffer_length(ua_scalar) == 2*2*self.ulen)
+                assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
             else:
                 # In UCS2, the \uFFFF will be represented using a
                 # regular 2-byte word
-                self.assertTrue(buffer_length(ua_scalar) == 2*self.ulen)
+                assert_(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check assignment of 0-dimensional objects with values
@@ -255,37 +255,37 @@ class assign_values(object):
         self.content_check(ua, ua[-1, -1, -1], 4*self.ulen*2*3*4)
 
 
-class test_assign_values_1_ucs2(assign_values, TestCase):
+class TestAssignValues_1_UCS2(AssignValues):
     """Check the assignment of valued arrays (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
 
 
-class test_assign_values_1_ucs4(assign_values, TestCase):
+class TestAssignValues_1_UCS4(AssignValues):
     """Check the assignment of valued arrays (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
 
 
-class test_assign_values_2_ucs2(assign_values, TestCase):
+class TestAssignValues_2_UCS2(AssignValues):
     """Check the assignment of valued arrays (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
 
 
-class test_assign_values_2_ucs4(assign_values, TestCase):
+class TestAssignValues_2_UCS4(AssignValues):
     """Check the assignment of valued arrays (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
 
 
-class test_assign_values_1009_ucs2(assign_values, TestCase):
+class TestAssignValues_1009_UCS2(AssignValues):
     """Check the assignment of valued arrays (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
 
 
-class test_assign_values_1009_ucs4(assign_values, TestCase):
+class TestAssignValues_1009_UCS4(AssignValues):
     """Check the assignment of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
@@ -295,7 +295,7 @@ class test_assign_values_1009_ucs4(assign_values, TestCase):
 #    Byteorder tests
 ############################################################
 
-class byteorder_values:
+class ByteorderValues(object):
     """Check the byteorder of unicode arrays in round-trip conversions"""
 
     def test_values0D(self):
@@ -305,7 +305,7 @@ class byteorder_values:
         # This changes the interpretation of the data region (but not the
         #  actual data), therefore the returned scalars are not
         #  the same (they are byte-swapped versions of each other).
-        self.assertTrue(ua[()] != ua2[()])
+        assert_(ua[()] != ua2[()])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -314,8 +314,8 @@ class byteorder_values:
         # Check byteorder of single-dimensional objects
         ua = np.array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        self.assertTrue((ua != ua2).all())
-        self.assertTrue(ua[-1] != ua2[-1])
+        assert_((ua != ua2).all())
+        assert_(ua[-1] != ua2[-1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -325,8 +325,8 @@ class byteorder_values:
         ua = np.array([[[self.ucs_value*self.ulen]*2]*3]*4,
                       dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
-        self.assertTrue((ua != ua2).all())
-        self.assertTrue(ua[-1, -1, -1] != ua2[-1, -1, -1])
+        assert_((ua != ua2).all())
+        assert_(ua[-1, -1, -1] != ua2[-1, -1, -1])
         ua3 = ua2.newbyteorder()
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
@@ -338,8 +338,8 @@ class byteorder_values:
         test2 = np.repeat(test1, 2)[::2]
         for ua in (test1, test2):
             ua2 = ua.astype(dtype=ua.dtype.newbyteorder())
-            self.assertTrue((ua == ua2).all())
-            self.assertTrue(ua[-1] == ua2[-1])
+            assert_((ua == ua2).all())
+            assert_(ua[-1] == ua2[-1])
             ua3 = ua2.astype(dtype=ua.dtype)
             # Arrays must be equal after the round-trip
             assert_equal(ua, ua3)
@@ -353,45 +353,45 @@ class byteorder_values:
             # Cast to a longer type with zero padding
             longer_type = np.dtype('U%s' % (self.ulen+1)).newbyteorder()
             ua2 = ua.astype(dtype=longer_type)
-            self.assertTrue((ua == ua2).all())
-            self.assertTrue(ua[-1] == ua2[-1])
+            assert_((ua == ua2).all())
+            assert_(ua[-1] == ua2[-1])
             # Cast back again with truncating:
             ua3 = ua2.astype(dtype=ua.dtype)
             # Arrays must be equal after the round-trip
             assert_equal(ua, ua3)
 
 
-class test_byteorder_1_ucs2(byteorder_values, TestCase):
+class TestByteorder_1_UCS2(ByteorderValues):
     """Check the byteorder in unicode (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
 
 
-class test_byteorder_1_ucs4(byteorder_values, TestCase):
+class TestByteorder_1_UCS4(ByteorderValues):
     """Check the byteorder in unicode (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
 
 
-class test_byteorder_2_ucs2(byteorder_values, TestCase):
+class TestByteorder_2_UCS2(ByteorderValues):
     """Check the byteorder in unicode (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
 
 
-class test_byteorder_2_ucs4(byteorder_values, TestCase):
+class TestByteorder_2_UCS4(ByteorderValues):
     """Check the byteorder in unicode (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
 
 
-class test_byteorder_1009_ucs2(byteorder_values, TestCase):
+class TestByteorder_1009_UCS2(ByteorderValues):
     """Check the byteorder in unicode (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
 
 
-class test_byteorder_1009_ucs4(byteorder_values, TestCase):
+class TestByteorder_1009_UCS4(ByteorderValues):
     """Check the byteorder in unicode (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value

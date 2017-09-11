@@ -80,12 +80,12 @@ poly1d([ 2.])
 '''
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
     )
 
 
-class TestDocs(TestCase):
+class TestDocs(object):
     def test_doctests(self):
         return rundocs()
 

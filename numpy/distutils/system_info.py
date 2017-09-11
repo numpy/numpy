@@ -126,6 +126,7 @@ import os
 import re
 import copy
 import warnings
+import atexit
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -684,9 +685,14 @@ class system_info(object):
             return self.get_libs(key, '')
 
     def library_extensions(self):
-        static_exts = ['.a']
+        c = distutils.ccompiler.new_compiler()
+        c.customize('')
+        static_exts = []
+        if c.compiler_type != 'msvc':
+            # MSVC doesn't understand binutils
+            static_exts.append('.a')
         if sys.platform == 'win32':
-            static_exts.append('.lib')  # .lib is used by MSVC
+            static_exts.append('.lib')  # .lib is used by MSVC and others
         if self.search_static_first:
             exts = static_exts + [so_ext]
         else:
@@ -1739,12 +1745,29 @@ class openblas_info(blas_info):
         return True
 
     def calc_info(self):
+        c = distutils.ccompiler.new_compiler()
+        c.customize('')
+
         lib_dirs = self.get_lib_dirs()
 
         openblas_libs = self.get_libs('libraries', self._lib_names)
         if openblas_libs == self._lib_names: # backward compat with 1.8.0
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+
         info = self.check_libs(lib_dirs, openblas_libs, [])
+
+        if c.compiler_type == "msvc" and info is None:
+            from numpy.distutils.fcompiler import new_fcompiler
+            f = new_fcompiler(c_compiler=c)
+            if f and f.compiler_type == 'gnu95':
+                # Try gfortran-compatible library files
+                info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
+                # Skip lapack check, we'd need build_ext to do it
+                assume_lapack = True
+        elif info:
+            assume_lapack = False
+            info['language'] = 'c'
+
         if info is None:
             return
 
@@ -1752,13 +1775,42 @@ class openblas_info(blas_info):
         extra_info = self.calc_extra_info()
         dict_append(info, **extra_info)
 
-        if not self.check_embedded_lapack(info):
+        if not (assume_lapack or self.check_embedded_lapack(info)):
             return
 
-        info['language'] = 'c'
         info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
+    def check_msvc_gfortran_libs(self, library_dirs, libraries):
+        # First, find the full path to each library directory
+        library_paths = []
+        for library in libraries:
+            for library_dir in library_dirs:
+                # MinGW static ext will be .a
+                fullpath = os.path.join(library_dir, library + '.a')
+                if os.path.isfile(fullpath):
+                    library_paths.append(fullpath)
+                    break
+            else:
+                return None
+
+        # Generate numpy.distutils virtual static library file
+        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        if not os.path.isdir(tmpdir):
+            os.makedirs(tmpdir)
+
+        info = {'library_dirs': [tmpdir],
+                'libraries': ['openblas'],
+                'language': 'f77'}
+
+        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
+        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        with open(fake_lib_file, 'w') as f:
+            f.write("\n".join(library_paths))
+        with open(fake_clib_file, 'w') as f:
+            pass
+
+        return info
 
 class openblas_lapack_info(openblas_info):
     section = 'openblas'
@@ -1770,6 +1822,7 @@ class openblas_lapack_info(openblas_info):
         res = False
         c = distutils.ccompiler.new_compiler()
         c.customize('')
+
         tmpdir = tempfile.mkdtemp()
         s = """void zungqr();
         int main(int argc, const char *argv[])
@@ -1782,8 +1835,10 @@ class openblas_lapack_info(openblas_info):
         # Add the additional "extra" arguments
         try:
             extra_args = info['extra_link_args']
-        except:
+        except Exception:
             extra_args = []
+        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
+            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)

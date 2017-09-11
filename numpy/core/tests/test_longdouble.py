@@ -5,9 +5,9 @@ import locale
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
-    assert_array_equal, TestCase, temppath,
+    assert_array_equal, temppath,
 )
-from test_print import in_foreign_locale
+from .test_print import in_foreign_locale
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -110,7 +110,7 @@ def test_fromstring_missing():
                  np.array([1]))
 
 
-class FileBased(TestCase):
+class TestFileBased(object):
 
     ldbl = 1 + LD_INFO.eps
     tgt = np.array([ldbl]*5)

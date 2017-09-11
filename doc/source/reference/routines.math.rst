@@ -108,6 +108,7 @@ Arithmetic operations
 
    add
    reciprocal
+   positive
    negative
    multiply
    divide
@@ -121,6 +122,7 @@ Arithmetic operations
    mod
    modf
    remainder
+   divmod
 
 Handling complex numbers
 ------------------------

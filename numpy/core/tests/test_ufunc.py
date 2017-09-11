@@ -1,20 +1,23 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
+import itertools
+
 import numpy as np
 import numpy.core.umath_tests as umt
 import numpy.core.operand_flag_tests as opflag_tests
 from numpy.core.test_rational import rational, test_add, test_add_rationals
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings
+    assert_no_warnings, assert_allclose,
 )
 
 
-class TestUfuncKwargs(TestCase):
+class TestUfuncKwargs(object):
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
-        assert_raises(TypeError, np.add, 1, 2, dtypex=np.int)
+        assert_raises(TypeError, np.add, 1, 2, dtypex=int)
         assert_raises(TypeError, np.add, 1, 2, extobjx=[4096])
         assert_raises(TypeError, np.add, 1, 2, outx=None)
         assert_raises(TypeError, np.add, 1, 2, sigx='ii->i')
@@ -28,12 +31,12 @@ class TestUfuncKwargs(TestCase):
 
     def test_sig_dtype(self):
         assert_raises(RuntimeError, np.add, 1, 2, sig='ii->i',
-                      dtype=np.int)
+                      dtype=int)
         assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
-                      dtype=np.int)
+                      dtype=int)
 
 
-class TestUfunc(TestCase):
+class TestUfunc(object):
     def test_pickle(self):
         import pickle
         assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
@@ -171,22 +174,22 @@ class TestUfunc(TestCase):
 
         # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
-        x = np.ones(10, dtype=np.object)[0::2]
+        x = np.ones(10, dtype=object)[0::2]
         assert_(np.all(np.abs(x) == 1), msg)
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
-        x = np.zeros(10, dtype=np.object)[0::2]
+        x = np.zeros(10, dtype=object)[0::2]
         for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.conjugate(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
-        x = np.ones(10, dtype=np.object)[0::2]
+        x = np.ones(10, dtype=object)[0::2]
         assert_(np.all(np.add(x, x) == 2), msg)
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
-        x = np.zeros(10, dtype=np.object)[0::2]
+        x = np.zeros(10, dtype=object)[0::2]
         for i in range(len(x)):
             x[i] = foo()
         assert_(np.all(np.logical_xor(x, x)), msg)
@@ -353,14 +356,78 @@ class TestUfunc(TestCase):
         assert_equal(b, [0, 0, 1])
 
     def test_true_divide(self):
-        # True_divide has a non uniform signature, see #3484.
-        # This also tests type_tuple_type_resolver.
-        a = np.full(5, 12.5)
-        b = np.full(5, 10.0)
-        tgt = np.full(5, 1.25)
-        assert_almost_equal(np.true_divide(a, b, dtype=np.float64), tgt)
-        assert_almost_equal(np.true_divide(a, b, dtype=np.float32), tgt)
-        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
+        a = np.array(10)
+        b = np.array(20)
+        tgt = np.array(0.5)
+
+        for tc in 'bhilqBHILQefdgFDG':
+            dt = np.dtype(tc)
+            aa = a.astype(dt)
+            bb = b.astype(dt)
+
+            # Check result value and dtype.
+            for x, y in itertools.product([aa, -aa], [bb, -bb]):
+
+                # Check with no output type specified
+                if tc in 'FDG':
+                    tgt = complex(x)/complex(y)
+                else:
+                    tgt = float(x)/float(y)
+
+                res = np.true_divide(x, y)
+                rtol = max(np.finfo(res).resolution, 1e-15)
+                assert_allclose(res, tgt, rtol=rtol)
+
+                if tc in 'bhilqBHILQ':
+                    assert_(res.dtype.name == 'float64')
+                else:
+                    assert_(res.dtype.name == dt.name )
+
+                # Check with output type specified.  This also checks for the
+                # incorrect casts in issue gh-3484 because the unary '-' does
+                # not change types, even for unsigned types, Hence casts in the
+                # ufunc from signed to unsigned and vice versa will lead to
+                # errors in the values.
+                for tcout in 'bhilqBHILQ':
+                    dtout = np.dtype(tcout)
+                    assert_raises(TypeError, np.true_divide, x, y, dtype=dtout)
+
+                for tcout in 'efdg':
+                    dtout = np.dtype(tcout)
+                    if tc in 'FDG':
+                        # Casting complex to float is not allowed
+                        assert_raises(TypeError, np.true_divide, x, y, dtype=dtout)
+                    else:
+                        tgt = float(x)/float(y)
+                        rtol = max(np.finfo(dtout).resolution, 1e-15)
+                        atol = max(np.finfo(dtout).tiny, 3e-308)
+                        # Some test values result in invalid for float16.
+                        with np.errstate(invalid='ignore'):
+                            res = np.true_divide(x, y, dtype=dtout)
+                        if not np.isfinite(res) and tcout == 'e':
+                            continue
+                        assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                        assert_(res.dtype.name == dtout.name)
+
+                for tcout in 'FDG':
+                    dtout = np.dtype(tcout)
+                    tgt = complex(x)/complex(y)
+                    rtol = max(np.finfo(dtout).resolution, 1e-15)
+                    atol = max(np.finfo(dtout).tiny, 3e-308)
+                    res = np.true_divide(x, y, dtype=dtout)
+                    if not np.isfinite(res):
+                        continue
+                    assert_allclose(res, tgt, rtol=rtol, atol=atol)
+                    assert_(res.dtype.name == dtout.name)
+
+        # Check booleans
+        a = np.ones((), dtype=np.bool_)
+        res = np.true_divide(a, a)
+        assert_(res == 1.0)
+        assert_(res.dtype.name == 'float64')
+        res = np.true_divide(~a, a)
+        assert_(res == 0.0)
+        assert_(res.dtype.name == 'float64')
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
@@ -370,13 +437,22 @@ class TestUfunc(TestCase):
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
     def test_sum(self):
-        for dt in (np.int, np.float16, np.float32, np.float64, np.longdouble):
+        for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
                 tgt = dt(v * (v + 1) / 2)
                 d = np.arange(1, v + 1, dtype=dt)
-                assert_almost_equal(np.sum(d), tgt)
-                assert_almost_equal(np.sum(d[::-1]), tgt)
+
+                # warning if sum overflows, which it does in float16
+                overflow = not np.isfinite(tgt)
+
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    assert_almost_equal(np.sum(d), tgt)
+                    assert_equal(len(w), 1 * overflow)
+
+                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    assert_equal(len(w), 2 * overflow)
 
             d = np.ones(500, dtype=dt)
             assert_almost_equal(np.sum(d[::2]), 250.)
@@ -542,6 +618,12 @@ class TestUfunc(TestCase):
         self.compare_matrix_multiply_results(np.long)
         self.compare_matrix_multiply_results(np.double)
 
+    def test_matrix_multiply_umath_empty(self):
+        res = umt.matrix_multiply(np.ones((0, 10)), np.ones((10, 0)))
+        assert_array_equal(res, np.zeros((0, 0)))
+        res = umt.matrix_multiply(np.ones((10, 0)), np.ones((0, 10)))
+        assert_array_equal(res, np.zeros((10, 10)))
+
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
@@ -597,7 +679,7 @@ class TestUfunc(TestCase):
         assert_equal(ref, True, err_msg="reference check")
 
     def test_euclidean_pdist(self):
-        a = np.arange(12, dtype=np.float).reshape(4, 3)
+        a = np.arange(12, dtype=float).reshape(4, 3)
         out = np.empty((a.shape[0] * (a.shape[0] - 1) // 2,), dtype=a.dtype)
         umt.euclidean_pdist(a, out)
         b = np.sqrt(np.sum((a[:, None] - a)**2, axis=-1))
@@ -777,6 +859,17 @@ class TestUfunc(TestCase):
         c = 1.5 * np.ones(10, np.float64)
         np.add(a, b, out=c, where=[1, 0, 0, 1, 0, 0, 1, 1, 1, 0])
         assert_equal(c, [2, 1.5, 1.5, 2, 1.5, 1.5, 2, 2, 2, 1.5])
+
+    def test_where_param_alloc(self):
+        # With casting and allocated output
+        a = np.array([1], dtype=np.int64)
+        m = np.array([True], dtype=bool)
+        assert_equal(np.sqrt(a, where=m), [1])
+
+        # No casting and allocated output
+        a = np.array([1], dtype=np.float64)
+        m = np.array([True], dtype=bool)
+        assert_equal(np.sqrt(a, where=m), [1])
 
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is a identityless reduction
@@ -994,6 +1087,11 @@ class TestUfunc(TestCase):
             dtype=rational)
         assert_equal(result, expected)
 
+    def test_custom_ufunc_forced_sig(self):
+        # gh-9351 - looking for a non-first userloop would previously hang
+        assert_raises(TypeError,
+            np.multiply, rational(1), 1, signature=(rational, int, None))
+
     def test_custom_array_like(self):
 
         class MyThing(object):
@@ -1156,9 +1254,9 @@ class TestUfunc(TestCase):
         assert_array_equal(values, [1, 8, 6, 4])
 
         # Test exception thrown
-        values = np.array(['a', 1], dtype=np.object)
-        self.assertRaises(TypeError, np.add.at, values, [0, 1], 1)
-        assert_array_equal(values, np.array(['a', 1], dtype=np.object))
+        values = np.array(['a', 1], dtype=object)
+        assert_raises(TypeError, np.add.at, values, [0, 1], 1)
+        assert_array_equal(values, np.array(['a', 1], dtype=object))
 
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])
@@ -1276,6 +1374,10 @@ class TestUfunc(TestCase):
         assert_equal(r0, r1)
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
+
+    def test_no_doc_string(self):
+        # gh-9337
+        assert_('\n' not in umt.inner1d_no_doc.__doc__)
 
 
 if __name__ == "__main__":

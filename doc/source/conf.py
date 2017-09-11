@@ -5,8 +5,8 @@ import sys, os, re
 
 # Check Sphinx version
 import sphinx
-if sphinx.__version__ < "1.0.1":
-    raise RuntimeError("Sphinx 1.0.1 or newer required")
+if sphinx.__version__ < "1.2.1":
+    raise RuntimeError("Sphinx 1.2.1 or newer required")
 
 needs_sphinx = '1.0'
 
@@ -33,7 +33,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2009, The Scipy community'
+copyright = '2008-2017, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -126,6 +126,8 @@ htmlhelp_basename = 'numpy'
 pngmath_use_preview = True
 pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # -----------------------------------------------------------------------------
 # LaTeX output
@@ -306,19 +308,19 @@ def linkcode_resolve(domain, info):
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except:
+        except Exception:
             return None
 
     try:
         fn = inspect.getsourcefile(obj)
-    except:
+    except Exception:
         fn = None
     if not fn:
         return None
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except:
+    except Exception:
         lineno = None
 
     if lineno:

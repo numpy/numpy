@@ -339,7 +339,7 @@ def who(vardict=None):
 #-----------------------------------------------------------------------------
 
 
-# NOTE:  pydoc defines a help function which works simliarly to this
+# NOTE:  pydoc defines a help function which works similarly to this
 #  except it uses a pager to take over the screen.
 
 # combine name and arguments and split to multiple lines of width
@@ -557,7 +557,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 if len(arglist) > 1:
                     arglist[1] = "("+arglist[1]
                     arguments = ", ".join(arglist[1:])
-        except:
+        except Exception:
             pass
 
         if len(name+arguments) > maxwidth:
@@ -689,7 +689,7 @@ def source(object, output=sys.stdout):
     try:
         print("In file: %s\n" % inspect.getsourcefile(object), file=output)
         print(inspect.getsource(object), file=output)
-    except:
+    except Exception:
         print("Not available for this object.", file=output)
 
 
@@ -1138,7 +1138,7 @@ def _median_nancheck(data, result, axis, out):
     """
     if data.size == 0:
         return result
-    data = np.rollaxis(data, axis, data.ndim)
+    data = np.moveaxis(data, axis, -1)
     n = np.isnan(data[..., -1])
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):

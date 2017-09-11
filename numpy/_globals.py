@@ -53,7 +53,7 @@ class VisibleDeprecationWarning(UserWarning):
     pass
 
 
-class _NoValue:
+class _NoValue(object):
     """Special keyword value.
 
     This class may be used as the default value assigned to a deprecated

@@ -4,12 +4,12 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_raises,
+    run_module_suite, assert_, assert_raises,
     assert_array_equal, HAS_REFCOUNT
 )
 
 
-class TestTake(TestCase):
+class TestTake(object):
     def test_simple(self):
         a = [[1, 2], [3, 4]]
         a_str = [[b'1', b'2'], [b'3', b'4']]
@@ -24,7 +24,7 @@ class TestTake(TestCase):
         # Currently all types but object, use the same function generation.
         # So it should not be necessary to test all. However test also a non
         # refcounted struct on top of object.
-        types = np.int, np.object, np.dtype([('', 'i', 2)])
+        types = int, object, np.dtype([('', 'i', 2)])
         for t in types:
             # ta works, even if the array may be odd if buffer interface is used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)

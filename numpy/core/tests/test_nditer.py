@@ -1386,7 +1386,7 @@ def test_iter_allocate_output_itorder():
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
 
 def test_iter_allocate_output_opaxes():
-    # Specifing op_axes should work
+    # Specifying op_axes should work
 
     a = arange(24, dtype='i4').reshape(2, 3, 4)
     i = nditer([None, a], [], [['writeonly', 'allocate'], ['readonly']],
@@ -2145,7 +2145,7 @@ def test_iter_buffered_reduce_reuse():
     op_flags = [('readonly',), ('readwrite', 'allocate')]
     op_axes_list = [[(0, 1, 2), (0, 1, -1)], [(0, 1, 2), (0, -1, -1)]]
     # wrong dtype to force buffering
-    op_dtypes = [np.float, a.dtype]
+    op_dtypes = [float, a.dtype]
 
     def get_params():
         for xs in range(-3**2, 3**2 + 1):
@@ -2641,7 +2641,7 @@ def test_iter_element_deletion():
         del it[1:2]
     except TypeError:
         pass
-    except:
+    except Exception:
         raise AssertionError
 
 def test_iter_allocated_array_dtypes():

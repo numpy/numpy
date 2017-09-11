@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_raises, suppress_warnings
     )
 
@@ -14,7 +14,7 @@ for size, char in zip(sizes, chars):
     global_size_dict[char] = size
 
 
-class TestEinSum(TestCase):
+class TestEinSum(object):
     def test_einsum_errors(self):
         for do_opt in [True, False]:
             # Need enough arguments
@@ -568,48 +568,37 @@ class TestEinSum(TestCase):
 
         A = np.arange(2 * 3 * 4).reshape(2, 3, 4)
         B = np.arange(3)
-        ref = np.einsum('ijk,j->ijk', A, B)
-        assert_equal(np.einsum('ij...,j...->ij...', A, B), ref)
-        assert_equal(np.einsum('ij...,...j->ij...', A, B), ref)
-        assert_equal(np.einsum('ij...,j->ij...', A, B), ref)  # used to raise error
-
-        assert_equal(np.einsum('ij...,j...->ij...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ij...,...j->ij...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=True), ref)  # used to raise error
+        ref = np.einsum('ijk,j->ijk', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ij...,j...->ij...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ij...,...j->ij...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=opt), ref)  # used to raise error
 
         A = np.arange(12).reshape((4, 3))
         B = np.arange(6).reshape((3, 2))
-        ref = np.einsum('ik,kj->ij', A, B)
-        assert_equal(np.einsum('ik...,k...->i...', A, B), ref)
-        assert_equal(np.einsum('ik...,...kj->i...j', A, B), ref)
-        assert_equal(np.einsum('...k,kj', A, B), ref)  # used to raise error
-        assert_equal(np.einsum('ik,k...->i...', A, B), ref)  # used to raise error
-
-        assert_equal(np.einsum('ik...,k...->i...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ik...,...kj->i...j', A, B, optimize=True), ref)
-        assert_equal(np.einsum('...k,kj', A, B, optimize=True), ref)  # used to raise error
-        assert_equal(np.einsum('ik,k...->i...', A, B, optimize=True), ref)  # used to raise error
+        ref = np.einsum('ik,kj->ij', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ik...,k...->i...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ik...,...kj->i...j', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('...k,kj', A, B, optimize=opt), ref)  # used to raise error
+            assert_equal(np.einsum('ik,k...->i...', A, B, optimize=opt), ref)  # used to raise error
 
         dims = [2, 3, 4, 5]
         a = np.arange(np.prod(dims)).reshape(dims)
         v = np.arange(dims[2])
-        ref = np.einsum('ijkl,k->ijl', a, v)
-        assert_equal(np.einsum('ijkl,k', a, v), ref)
-        assert_equal(np.einsum('...kl,k', a, v), ref)  # used to raise error
-        assert_equal(np.einsum('...kl,k...', a, v), ref)
-        # no real diff from 1st
-
-        assert_equal(np.einsum('ijkl,k', a, v, optimize=True), ref)
-        assert_equal(np.einsum('...kl,k', a, v, optimize=True), ref)  # used to raise error
-        assert_equal(np.einsum('...kl,k...', a, v, optimize=True), ref)
+        ref = np.einsum('ijkl,k->ijl', a, v, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ijkl,k', a, v, optimize=opt), ref)
+            assert_equal(np.einsum('...kl,k', a, v, optimize=opt), ref)  # used to raise error
+            assert_equal(np.einsum('...kl,k...', a, v, optimize=opt), ref)
 
         J, K, M = 160, 160, 120
         A = np.arange(J * K * M).reshape(1, 1, 1, J, K, M)
         B = np.arange(J * K * M * 3).reshape(J, K, M, 3)
-        ref = np.einsum('...lmn,...lmno->...o', A, B)
-        assert_equal(np.einsum('...lmn,lmno->...o', A, B), ref)  # used to raise error
-        assert_equal(np.einsum('...lmn,lmno->...o', A, B,
-                               optimize=True), ref)  # used to raise error
+        ref = np.einsum('...lmn,...lmno->...o', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('...lmn,lmno->...o', A, B,
+                                   optimize=opt), ref)  # used to raise error
 
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
@@ -643,7 +632,7 @@ class TestEinSum(TestCase):
 
     def test_einsum_fixed_collapsingbug(self):
         # Issue #5147.
-        # The bug only occured when output argument of einssum was used.
+        # The bug only occurred when output argument of einssum was used.
         x = np.random.normal(0, 1, (5, 5, 5, 5))
         y1 = np.zeros((5, 5))
         np.einsum('aabb->ab', x, out=y1)
@@ -777,7 +766,7 @@ class TestEinSum(TestCase):
         self.optimize_compare('aef,fbc,dca->bde')
 
 
-class TestEinSumPath(TestCase):
+class TestEinSumPath(object):
     def build_operands(self, string):
 
         # Builds views based off initial operands

@@ -139,7 +139,7 @@ class CountNonzero(Benchmark):
 
 class PackBits(Benchmark):
     param_names = ['dtype']
-    params = [[np.bool, np.uintp]]
+    params = [[bool, np.uintp]]
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)

@@ -6,6 +6,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
@@ -202,7 +203,7 @@ static PyObject *
         return @func1@((@type1@)t1);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&t1, ip, PyArray_ISBYTESWAPPED(ap), ap);
         return @func1@((@type1@)t1);
     }
 }
@@ -238,7 +239,8 @@ static int
     if (ap == NULL || PyArray_ISBEHAVED(ap))
         *((@type@ *)ov)=temp;
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
     return 0;
 }
@@ -264,7 +266,7 @@ static PyObject *
     else {
         int size = sizeof(@type@);
 
-        npy_bool swap = !PyArray_ISNOTSWAPPED(ap);
+        npy_bool swap = PyArray_ISBYTESWAPPED(ap);
         copy_and_swap(&t1, ip, size, 1, 0, swap);
         copy_and_swap(&t2, ip + size, size, 1, 0, swap);
         return PyComplex_FromDoubles((double)t1, (double)t2);
@@ -324,11 +326,11 @@ static int
     }
 
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
-    if (!PyArray_ISNOTSWAPPED(ap)) {
+    if (PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@ftype@));
     }
     rsize = sizeof(@ftype@);
-    copy_and_swap(ov, &temp, rsize, 2, rsize, !PyArray_ISNOTSWAPPED(ap));
+    copy_and_swap(ov, &temp, rsize, 2, rsize, PyArray_ISBYTESWAPPED(ap));
     return 0;
 }
 
@@ -421,7 +423,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     }
     else {
         copy_and_swap(ov, &temp, PyArray_DESCR(ap)->elsize, 1, 0,
-                !PyArray_ISNOTSWAPPED(ap));
+                      PyArray_ISBYTESWAPPED(ap));
     }
     return 0;
 }
@@ -438,7 +440,7 @@ UNICODE_getitem(void *ip, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_ssize_t size = PyArray_ITEMSIZE(ap);
-    int swap = !PyArray_ISNOTSWAPPED(ap);
+    int swap = PyArray_ISBYTESWAPPED(ap);
     int align = !PyArray_ISALIGNED(ap);
 
     return (PyObject *)PyUnicode_FromUCS4(ip, size, swap, align);
@@ -511,7 +513,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     if (PyArray_DESCR(ap)->elsize > datalen) {
         memset((char*)ov + datalen, 0, (PyArray_DESCR(ap)->elsize - datalen));
     }
-    if (!PyArray_ISNOTSWAPPED(ap)) {
+    if (PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, PyArray_DESCR(ap)->elsize >> 2, 4);
     }
     Py_DECREF(temp);
@@ -698,7 +700,7 @@ VOID_getitem(void *input, void *vap)
         PyArrayObject *ret;
 
         if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             return NULL;
@@ -707,7 +709,7 @@ VOID_getitem(void *input, void *vap)
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                 descr->subarray->base, shape.len, shape.ptr,
                 NULL, ip, PyArray_FLAGS(ap)&(~NPY_ARRAY_F_CONTIGUOUS), NULL);
-        PyDimMem_FREE(shape.ptr);
+        npy_free_cache_dim_obj(shape);
         if (!ret) {
             return NULL;
         }
@@ -836,7 +838,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         PyArray_Dims shape = {NULL, -1};
         PyArrayObject *ret;
         if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             return -1;
@@ -845,7 +847,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                         descr->subarray->base, shape.len, shape.ptr,
                         NULL, ip, PyArray_FLAGS(ap), NULL);
-        PyDimMem_FREE(shape.ptr);
+        npy_free_cache_dim_obj(shape);
         if (!ret) {
             return -1;
         }
@@ -902,7 +904,7 @@ DATETIME_getitem(void *ip, void *vap)
         dt = *((npy_datetime *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&dt, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_datetime_to_pyobject(dt, meta);
@@ -926,7 +928,7 @@ TIMEDELTA_getitem(void *ip, void *vap)
         td = *((npy_timedelta *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&td, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_timedelta_to_pyobject(td, meta);
@@ -957,8 +959,8 @@ DATETIME_setitem(PyObject *op, void *ov, void *vap)
         *((npy_datetime *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp,
-                !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
 
     return 0;
@@ -989,7 +991,8 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
         *((npy_timedelta *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
 
     return 0;
@@ -2373,7 +2376,8 @@ static npy_bool
          */
         @type@ tmp;
 #if @isfloat@
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
 #else
         memcpy(&tmp, ip, sizeof(@type@));
 #endif
@@ -2396,7 +2400,8 @@ static npy_bool
     }
     else {
         @type@ tmp;
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
         return (npy_bool) ((tmp.real != 0) || (tmp.imag != 0));
     }
 }
@@ -2458,13 +2463,13 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     npy_bool seen_null = NPY_FALSE;
     char *buffer = NULL;
 
-    if ((!PyArray_ISNOTSWAPPED(ap)) || (!PyArray_ISALIGNED(ap))) {
+    if (PyArray_ISBYTESWAPPED(ap) || !PyArray_ISALIGNED(ap)) {
         buffer = PyArray_malloc(PyArray_DESCR(ap)->elsize);
         if (buffer == NULL) {
             return nonz;
         }
         memcpy(buffer, ip, PyArray_DESCR(ap)->elsize);
-        if (!PyArray_ISNOTSWAPPED(ap)) {
+        if (PyArray_ISBYTESWAPPED(ap)) {
             byte_swap_vector(buffer, len, 4);
         }
         ip = (npy_ucs4 *)buffer;
@@ -2743,6 +2748,15 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
      * the alignment of pointers, so it doesn't need to be handled
      * here.
      */
+
+    int ret;
+    /*
+     * work around gh-3879, we cannot abort an in-progress quicksort
+     * so at least do not raise again
+     */
+    if (PyErr_Occurred()) {
+        return 0;
+    }
     if ((*ip1 == NULL) || (*ip2 == NULL)) {
         if (ip1 == ip2) {
             return 1;
@@ -2753,7 +2767,12 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
         return 1;
     }
 
-    if (PyObject_RichCompareBool(*ip1, *ip2, Py_LT) == 1) {
+    ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
+    if (ret < 0) {
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        return 0;
+    }
+    if (ret == 1) {
         return -1;
     }
     else if (PyObject_RichCompareBool(*ip1, *ip2, Py_GT) == 1) {
@@ -4415,6 +4434,17 @@ PyArray_DescrFromType(int type)
         return NULL;
     }
     else if ((type == NPY_CHAR) || (type == NPY_CHARLTR)) {
+        if (type == NPY_CHAR) {
+            /*
+             * warning added 2017-04-25, 1.13
+             * deprecated in 1.7
+             * */
+            if (DEPRECATE("The NPY_CHAR type_num is deprecated. "
+                          "Please port your code to use "
+                          "NPY_STRING instead.") < 0) {
+                return NULL;
+            }
+        }
         ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;

@@ -5,13 +5,13 @@ import collections
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_almost_equal,
+    run_module_suite, assert_, assert_equal, assert_almost_equal,
     assert_array_equal, assert_array_almost_equal, assert_raises
 )
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.matrixlib import mat
 
-class TestCtor(TestCase):
+class TestCtor(object):
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
         mA = matrix(A)
@@ -58,7 +58,7 @@ class TestCtor(TestCase):
         assert_(np.all(b2 == mixresult))
 
 
-class TestProperties(TestCase):
+class TestProperties(object):
     def test_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
@@ -191,7 +191,7 @@ class TestProperties(TestCase):
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
 
-class TestCasting(TestCase):
+class TestCasting(object):
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
@@ -210,7 +210,7 @@ class TestCasting(TestCase):
         assert_(np.all(mA != mB))
 
 
-class TestAlgebra(TestCase):
+class TestAlgebra(object):
     def test_basic(self):
         import numpy.linalg as linalg
 
@@ -249,6 +249,12 @@ class TestAlgebra(TestCase):
         assert_array_almost_equal(m4, np.dot(m2, m2))
         assert_array_almost_equal(np.dot(mi, m), np.eye(2))
 
+    def test_scalar_type_pow(self):
+        m = matrix([[1, 2], [3, 4]])
+        for scalar_t in [np.int8, np.uint8]:
+            two = scalar_t(2)
+            assert_array_almost_equal(m ** 2, m ** two)
+
     def test_notimplemented(self):
         '''Check that 'not implemented' operations produce a failure.'''
         A = matrix([[1., 2.],
@@ -271,7 +277,7 @@ class TestAlgebra(TestCase):
             self.fail("matrix.__mul__ with non-numeric object doesn't raise"
                       "a TypeError")
 
-class TestMatrixReturn(TestCase):
+class TestMatrixReturn(object):
     def test_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
@@ -313,7 +319,7 @@ class TestMatrixReturn(TestCase):
         assert_(type(d) is np.ndarray)
 
 
-class TestIndexing(TestCase):
+class TestIndexing(object):
     def test_basic(self):
         x = asmatrix(np.zeros((3, 2), float))
         y = np.zeros((3, 1), float)
@@ -322,9 +328,8 @@ class TestIndexing(TestCase):
         assert_equal(x, [[0, 1], [0, 0], [0, 0]])
 
 
-class TestNewScalarIndexing(TestCase):
-    def setUp(self):
-        self.a = matrix([[1, 2], [3, 4]])
+class TestNewScalarIndexing(object):
+    a = matrix([[1, 2], [3, 4]])
 
     def test_dimesions(self):
         a = self.a
@@ -390,7 +395,7 @@ class TestNewScalarIndexing(TestCase):
         assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
 
 
-class TestPower(TestCase):
+class TestPower(object):
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
@@ -401,10 +406,10 @@ class TestPower(TestCase):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
 
 
-class TestShape(TestCase):
-    def setUp(self):
-        self.a = np.array([[1], [2]])
-        self.m = matrix([[1], [2]])
+class TestShape(object):
+
+    a = np.array([[1], [2]])
+    m = matrix([[1], [2]])
 
     def test_shape(self):
         assert_equal(self.a.shape, (2, 1))

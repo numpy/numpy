@@ -60,6 +60,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "compiled_base.h"
 #include "mem_overlap.h"
+#include "alloc.h"
 
 #include "get_attr_string.h"
 
@@ -83,7 +84,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return NPY_SCALAR_PRIORITY;
     }
 
-    ret = PyArray_GetAttrString_SuppressException(obj, "__array_priority__");
+    ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
     if (ret == NULL) {
         return default_;
     }
@@ -1661,7 +1662,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
             if (ndmin_obj) {
                 ndmin = PyLong_AsLong(ndmin_obj);
-                if (ndmin == -1 && PyErr_Occurred()) {
+                if (error_converting(ndmin)) {
                     goto clean_type;
                 }
                 else if (ndmin > NPY_MAXDIMS) {
@@ -1852,12 +1853,12 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     ret = (PyArrayObject *)PyArray_Empty(shape.len, shape.ptr,
                                             typecode, is_f_order);
 
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(typecode);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return NULL;
 }
 
@@ -2006,12 +2007,12 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     ret = (PyArrayObject *)PyArray_Zeros(shape.len, shape.ptr,
                                         typecode, (int) is_f_order);
 
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(typecode);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 }
 
@@ -2946,7 +2947,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     ret = PyArray_NewFromDescr(subtype, dtype,
             (int)shape.len, shape.ptr, NULL, NULL, 0, NULL);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
 
     evil_global_disable_warn_O4O8_flag = 0;
 
@@ -2956,7 +2957,7 @@ fail:
     evil_global_disable_warn_O4O8_flag = 0;
 
     Py_XDECREF(dtype);
-    PyDimMem_FREE(shape.ptr);
+    npy_free_cache_dim_obj(shape);
     return NULL;
 }
 
@@ -3556,7 +3557,7 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     char *cmp_str;
     Py_ssize_t strlength;
     PyObject *res = NULL;
-    static char msg[] = "comparision must be '==', '!=', '<', '>', '<=', '>='";
+    static char msg[] = "comparison must be '==', '!=', '<', '>', '<=', '>='";
     static char *kwlist[] = {"a1", "a2", "cmp", "rstrip", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&:compare_chararrays",
@@ -4606,15 +4607,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
         return RETVAL;
     }
-/* FIXME
- * There is no error handling here
- */
+
     c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
-    PyDict_SetItemString(d, "_ARRAY_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
+    if (c_api == NULL) {
         goto err;
     }
+    PyDict_SetItemString(d, "_ARRAY_API", c_api);
+    Py_DECREF(c_api);
 
     /*
      * PyExc_Exception should catch all the standard errors that are
@@ -4624,14 +4623,18 @@ PyMODINIT_FUNC initmultiarray(void) {
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
 
+    s = PyInt_FromLong(NPY_TRACE_DOMAIN);
+    PyDict_SetItemString(d, "tracemalloc_domain", s);
+    Py_DECREF(s);
+
     s = PyUString_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-/* FIXME
- * There is no error handling here
- */
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
+    if (s == NULL) {
+        goto err;
+    }
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
@@ -4661,23 +4664,15 @@ PyMODINIT_FUNC initmultiarray(void) {
     ADDCONST(MAY_SHARE_EXACT);
 #undef ADDCONST
 
-    Py_INCREF(&PyArray_Type);
     PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
-    Py_INCREF(&PyArrayIter_Type);
     PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
-    Py_INCREF(&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
-    Py_INCREF(&NpyIter_Type);
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
-    Py_INCREF(&PyArrayDescr_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-
-    Py_INCREF(&PyArrayFlags_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
 
     /* Business day calendar object */
-    Py_INCREF(&NpyBusDayCalendar_Type);
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);

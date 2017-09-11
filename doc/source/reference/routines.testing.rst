@@ -41,7 +41,6 @@ Decorators
    decorators.slow
    decorate_methods
 
-
 Test Running
 ------------
 .. autosummary::
@@ -50,3 +49,4 @@ Test Running
    Tester
    run_module_suite
    rundocs
+   suppress_warnings

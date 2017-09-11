@@ -80,7 +80,7 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
-class format_parser:
+class format_parser(object):
     """
     Class to convert formats, names, titles description to a dtype.
 
@@ -473,7 +473,7 @@ class recarray(ndarray):
         newattr = attr not in self.__dict__
         try:
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
                 exctype, value = sys.exc_info()[:2]
@@ -487,7 +487,7 @@ class recarray(ndarray):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         try:
             res = fielddict[attr][:2]
@@ -704,7 +704,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
     itemsize = descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
-        shape = (len(datastring) - offset) / itemsize
+        shape = (len(datastring) - offset) // itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)
     return _array

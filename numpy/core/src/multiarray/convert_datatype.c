@@ -1530,7 +1530,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         /*
          * The code to demote complex to float is disabled for now,
-         * as forcing complex by adding 0j is probably desireable.
+         * as forcing complex by adding 0j is probably desirable.
          */
         case NPY_CFLOAT: {
             /*

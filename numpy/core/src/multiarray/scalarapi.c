@@ -415,7 +415,7 @@ PyArray_ScalarFromObject(PyObject *object)
     else if (PyLong_Check(object)) {
         npy_longlong val;
         val = PyLong_AsLongLong(object);
-        if (val==-1 && PyErr_Occurred()) {
+        if (error_converting(val)) {
             PyErr_Clear();
             return NULL;
         }

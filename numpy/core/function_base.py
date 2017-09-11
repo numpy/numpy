@@ -292,13 +292,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
 
     Negative, decreasing, and complex inputs are allowed:
 
-    >>> geomspace(1000, 1, num=4)
+    >>> np.geomspace(1000, 1, num=4)
     array([ 1000.,   100.,    10.,     1.])
-    >>> geomspace(-1000, -1, num=4)
+    >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
-    >>> geomspace(1j, 1000j, num=4)  # Straight line
+    >>> np.geomspace(1j, 1000j, num=4)  # Straight line
     array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
-    >>> geomspace(-1+0j, 1+0j, num=5)  # Circle
+    >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
     array([-1.00000000+0.j        , -0.70710678+0.70710678j,
             0.00000000+1.j        ,  0.70710678+0.70710678j,
             1.00000000+0.j        ])
@@ -339,7 +339,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     # complex and another is negative and log would produce NaN otherwise
     start = start + (stop - stop)
     stop = stop + (start - start)
-    if _nx.issubdtype(dtype, complex):
+    if _nx.issubdtype(dtype, _nx.complexfloating):
         start = start + 0j
         stop = stop + 0j
 

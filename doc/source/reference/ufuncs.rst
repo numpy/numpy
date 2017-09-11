@@ -177,7 +177,7 @@ Casting Rules
 .. note::
 
    In NumPy 1.6.0, a type promotion API was created to encapsulate the
-   mechansim for determining output types. See the functions
+   mechanism for determining output types. See the functions
    :func:`result_type`, :func:`promote_types`, and
    :func:`min_scalar_type` for more details.
 
@@ -285,6 +285,8 @@ them by defining certain special methods.  For details, see
 
 :class:`ufunc`
 ==============
+
+.. _ufuncs.kwargs:
 
 Optional keyword arguments
 --------------------------
@@ -424,12 +426,14 @@ Methods
 All ufuncs have four methods. However, these methods only make sense on
 ufuncs that take two input arguments and return one output argument.
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`. The reduce-like methods all take an *axis* keyword
-and a *dtype* keyword, and the arrays must all have dimension >= 1.
+:exc:`ValueError`. The reduce-like methods all take an *axis* keyword, a *dtype*
+keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
-will take place and may be negative, but must be an integer. The
-*dtype* keyword allows you to manage a very common problem that arises
-when naively using :ref:`{op}.reduce <ufunc.reduce>`. Sometimes you may
+will take place (with negative values counting backwards). Generally, it is an
+integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
+reduce over several axes at once, or `None`, to reduce over all axes.
+The *dtype* keyword allows you to manage a very common problem that arises
+when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
 array. This commonly happens if you have an array of single-byte
@@ -441,7 +445,10 @@ mostly up to you. There is one exception: if no *dtype* is given for a
 reduction on the "add" or "multiply" operations, then if the input type is
 an integer (or Boolean) data-type and smaller than the size of the
 :class:`int_` data type, it will be internally upcast to the :class:`int_`
-(or :class:`uint`) data-type.
+(or :class:`uint`) data-type. Finally, the *out* keyword allows you to provide
+an output array (for single-output ufuncs, which are currently the only ones
+supported; for future extension, however, a tuple with a single argument
+can be passed in). If *out* is given, the *dtype* argument is ignored.
 
 Ufuncs also have a fifth method that allows in place operations to be
 performed using fancy indexing. No buffering is used on the dimensions where
@@ -505,10 +512,12 @@ Math operations
     true_divide
     floor_divide
     negative
+    positive
     power
     remainder
     mod
     fmod
+    divmod
     absolute
     fabs
     rint
@@ -656,6 +665,7 @@ single operation.
     isfinite
     isinf
     isnan
+    isnat
     fabs
     signbit
     copysign

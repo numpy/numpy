@@ -206,6 +206,9 @@ static NPY_GCC_OPT_3 void
 #else
     npy_uint64 temp0, temp1;
 #endif
+    if (N == 0) {
+        return;
+    }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
     assert(npy_is_aligned(dst, _ALIGN(@type@)));

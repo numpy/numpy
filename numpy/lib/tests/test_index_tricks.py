@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
+    run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises
     )
 from numpy.lib.index_tricks import (
@@ -11,7 +11,7 @@ from numpy.lib.index_tricks import (
     )
 
 
-class TestRavelUnravelIndex(TestCase):
+class TestRavelUnravelIndex(object):
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
         assert_equal(np.ravel_multi_index((1, 0), (2, 2)), 2)
@@ -110,11 +110,11 @@ class TestRavelUnravelIndex(TestCase):
     def test_writeability(self):
         # See gh-7269
         x, y = np.unravel_index([1, 2, 3], (4, 5))
-        self.assertTrue(x.flags.writeable)
-        self.assertTrue(y.flags.writeable)
+        assert_(x.flags.writeable)
+        assert_(y.flags.writeable)
 
 
-class TestGrid(TestCase):
+class TestGrid(object):
     def test_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
@@ -147,7 +147,7 @@ class TestGrid(TestCase):
                                   0.2*np.ones(20, 'd'), 11)
 
 
-class TestConcatenator(TestCase):
+class TestConcatenator(object):
     def test_1d(self):
         assert_array_equal(r_[1, 2, 3, 4, 5, 6], np.array([1, 2, 3, 4, 5, 6]))
         b = np.ones(5)
@@ -174,15 +174,46 @@ class TestConcatenator(TestCase):
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
 
+    def test_matrix(self):
+        a = [1, 2]
+        b = [3, 4]
 
-class TestNdenumerate(TestCase):
+        ab_r = np.r_['r', a, b]
+        ab_c = np.r_['c', a, b]
+
+        assert_equal(type(ab_r), np.matrix)
+        assert_equal(type(ab_c), np.matrix)
+
+        assert_equal(np.array(ab_r), [[1,2,3,4]])
+        assert_equal(np.array(ab_c), [[1],[2],[3],[4]])
+
+        assert_raises(ValueError, lambda: np.r_['rc', a, b])
+
+    def test_matrix_scalar(self):
+        r = np.r_['r', [1, 2], 3]
+        assert_equal(type(r), np.matrix)
+        assert_equal(np.array(r), [[1,2,3]])
+
+    def test_matrix_builder(self):
+        a = np.array([1])
+        b = np.array([2])
+        c = np.array([3])
+        d = np.array([4])
+        actual = np.r_['a, b; c, d']
+        expected = np.bmat([[a, b], [c, d]])
+
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
+
+
+class TestNdenumerate(object):
     def test_basic(self):
         a = np.array([[1, 2], [3, 4]])
         assert_equal(list(ndenumerate(a)),
                      [((0, 0), 1), ((0, 1), 2), ((1, 0), 3), ((1, 1), 4)])
 
 
-class TestIndexExpression(TestCase):
+class TestIndexExpression(object):
     def test_regression_1(self):
         # ticket #1196
         a = np.arange(2)
@@ -196,7 +227,7 @@ class TestIndexExpression(TestCase):
         assert_equal(a[:, :3, [1, 2]], a[s_[:, :3, [1, 2]]])
 
 
-class TestIx_(TestCase):
+class TestIx_(object):
     def test_regression_1(self):
         # Test empty inputs create ouputs of indexing type, gh-5804
         # Test both lists and arrays
@@ -212,7 +243,7 @@ class TestIx_(TestCase):
             for k, (a, sz) in enumerate(zip(arrays, sizes)):
                 assert_equal(a.shape[k], sz)
                 assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
-                assert_(np.issubdtype(a.dtype, int))
+                assert_(np.issubdtype(a.dtype, np.integer))
 
     def test_bool(self):
         bool_a = [True, False, True, True]

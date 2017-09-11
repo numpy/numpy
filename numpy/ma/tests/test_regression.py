@@ -3,25 +3,24 @@ from __future__ import division, absolute_import, print_function
 import warnings
 
 import numpy as np
-from numpy.testing import (assert_, TestCase, assert_array_equal,
-                           assert_allclose, run_module_suite,
-                           suppress_warnings)
+from numpy.testing import (
+    assert_, assert_array_equal, assert_allclose, run_module_suite,
+    suppress_warnings
+    )
 
-rlevel = 1
 
-
-class TestRegression(TestCase):
-    def test_masked_array_create(self,level=rlevel):
+class TestRegression(object):
+    def test_masked_array_create(self):
         # Ticket #17
         x = np.ma.masked_array([0, 1, 2, 3, 0, 4, 5, 6],
                                mask=[0, 0, 0, 1, 1, 1, 0, 0])
         assert_array_equal(np.ma.nonzero(x), [[1, 2, 6, 7]])
 
-    def test_masked_array(self,level=rlevel):
+    def test_masked_array(self):
         # Ticket #61
         np.ma.array(1, mask=[1])
 
-    def test_mem_masked_where(self,level=rlevel):
+    def test_mem_masked_where(self):
         # Ticket #62
         from numpy.ma import masked_where, MaskType
         a = np.zeros((1, 1))
@@ -29,7 +28,7 @@ class TestRegression(TestCase):
         c = masked_where(b, a)
         a-c
 
-    def test_masked_array_multiply(self,level=rlevel):
+    def test_masked_array_multiply(self):
         # Ticket #254
         a = np.ma.zeros((4, 1))
         a[2, 0] = np.ma.masked
@@ -37,7 +36,7 @@ class TestRegression(TestCase):
         a*b
         b*a
 
-    def test_masked_array_repeat(self, level=rlevel):
+    def test_masked_array_repeat(self):
         # Ticket #271
         np.ma.array([1], mask=False).repeat(10)
 

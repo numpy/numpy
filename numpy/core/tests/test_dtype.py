@@ -1,11 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
+import pickle
 import sys
 
 import numpy as np
 from numpy.core.test_rational import rational
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     dec
 )
 
@@ -19,10 +20,10 @@ def assert_dtype_not_equal(a, b):
     assert_(hash(a) != hash(b),
             "two different types hash to the same value !")
 
-class TestBuiltin(TestCase):
+class TestBuiltin(object):
     def test_run(self):
         """Only test hash runs at all."""
-        for t in [np.int, np.float, np.complex, np.int32, np.str, np.object,
+        for t in [int, float, complex, np.int32, str, object,
                 np.unicode]:
             dt = np.dtype(t)
             hash(dt)
@@ -30,12 +31,12 @@ class TestBuiltin(TestCase):
     def test_dtype(self):
         # Make sure equivalent byte order char hash the same (e.g. < and = on
         # little endian)
-        for t in [np.int, np.float]:
+        for t in [int, float]:
             dt = np.dtype(t)
             dt2 = dt.newbyteorder("<")
             dt3 = dt.newbyteorder(">")
             if dt == dt2:
-                self.assertTrue(dt.byteorder != dt2.byteorder, "bogus test")
+                assert_(dt.byteorder != dt2.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt2)
             else:
                 self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
@@ -50,8 +51,8 @@ class TestBuiltin(TestCase):
         else:
             left = uintp
             right = np.dtype(np.ulonglong)
-        self.assertTrue(left == right)
-        self.assertTrue(hash(left) == hash(right))
+        assert_(left == right)
+        assert_(hash(left) == hash(right))
 
     def test_invalid_types(self):
         # Make sure invalid type strings raise an error
@@ -103,17 +104,17 @@ class TestBuiltin(TestCase):
                          'formats':['i1', 'f4'],
                          'offsets':[0, 2]}, align=True)
 
-class TestRecord(TestCase):
+class TestRecord(object):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('yo', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('yo', int)])
         assert_dtype_equal(a, b)
 
     def test_different_names(self):
         # In theory, they may hash the same (collision) ?
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('ye', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('ye', int)])
         assert_dtype_not_equal(a, b)
 
     def test_different_titles(self):
@@ -128,9 +129,9 @@ class TestRecord(TestCase):
 
     def test_mutate(self):
         # Mutating a dtype should reset the cached hash value
-        a = np.dtype([('yo', np.int)])
-        b = np.dtype([('yo', np.int)])
-        c = np.dtype([('ye', np.int)])
+        a = np.dtype([('yo', int)])
+        b = np.dtype([('yo', int)])
+        c = np.dtype([('ye', int)])
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
         a.names = ['ye']
@@ -145,10 +146,10 @@ class TestRecord(TestCase):
         """Test if an appropriate exception is raised when passing bad values to
         the dtype constructor.
         """
-        self.assertRaises(TypeError, np.dtype,
-            dict(names=set(['A', 'B']), formats=['f8', 'i4']))
-        self.assertRaises(TypeError, np.dtype,
-            dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+        assert_raises(TypeError, np.dtype,
+                      dict(names=set(['A', 'B']), formats=['f8', 'i4']))
+        assert_raises(TypeError, np.dtype,
+                      dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
 
     def test_aligned_size(self):
         # Check that structured dtypes get padded to an aligned size
@@ -275,9 +276,9 @@ class TestRecord(TestCase):
     def test_nonint_offsets(self):
         # gh-8059
         def make_dtype(off):
-            return np.dtype({'names': ['A'], 'formats': ['i4'], 
+            return np.dtype({'names': ['A'], 'formats': ['i4'],
                              'offsets': [off]})
-        
+
         assert_raises(TypeError, make_dtype, 'ASD')
         assert_raises(OverflowError, make_dtype, 2**70)
         assert_raises(TypeError, make_dtype, 2.3)
@@ -288,10 +289,10 @@ class TestRecord(TestCase):
         np.zeros(1, dtype=dt)[0].item()
 
 
-class TestSubarray(TestCase):
+class TestSubarray(object):
     def test_single_subarray(self):
-        a = np.dtype((np.int, (2)))
-        b = np.dtype((np.int, (2,)))
+        a = np.dtype((int, (2)))
+        b = np.dtype((int, (2,)))
         assert_dtype_equal(a, b)
 
         assert_equal(type(a.subdtype[1]), tuple)
@@ -299,29 +300,29 @@ class TestSubarray(TestCase):
 
     def test_equivalent_record(self):
         """Test whether equivalent subarray dtypes hash the same."""
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (2, 3)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (2, 3)))
         assert_dtype_equal(a, b)
 
     def test_nonequivalent_record(self):
         """Test whether different subarray dtypes hash differently."""
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (3, 2)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (3, 2)))
         assert_dtype_not_equal(a, b)
 
-        a = np.dtype((np.int, (2, 3)))
-        b = np.dtype((np.int, (2, 2)))
+        a = np.dtype((int, (2, 3)))
+        b = np.dtype((int, (2, 2)))
         assert_dtype_not_equal(a, b)
 
-        a = np.dtype((np.int, (1, 2, 3)))
-        b = np.dtype((np.int, (1, 2)))
+        a = np.dtype((int, (1, 2, 3)))
+        b = np.dtype((int, (1, 2)))
         assert_dtype_not_equal(a, b)
 
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
-        assert_dtype_equal(np.dtype((np.int, 2)), np.dtype((np.int, (2,))))
+        assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
         assert_dtype_equal(np.dtype(d), np.dtype(d))
@@ -414,47 +415,47 @@ class TestSubarray(TestCase):
         assert_equal(t1.alignment, t2.alignment)
 
 
-class TestMonsterType(TestCase):
+class TestMonsterType(object):
     """Test deeply nested subtypes."""
 
     def test1(self):
         simple1 = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
             'titles': ['Red pixel', 'Blue pixel']})
-        a = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
-        b = np.dtype([('yo', np.int), ('ye', simple1),
-            ('yi', np.dtype((np.int, (3, 2))))])
+        a = np.dtype([('yo', int), ('ye', simple1),
+            ('yi', np.dtype((int, (3, 2))))])
+        b = np.dtype([('yo', int), ('ye', simple1),
+            ('yi', np.dtype((int, (3, 2))))])
         assert_dtype_equal(a, b)
 
-        c = np.dtype([('yo', np.int), ('ye', simple1),
+        c = np.dtype([('yo', int), ('ye', simple1),
             ('yi', np.dtype((a, (3, 2))))])
-        d = np.dtype([('yo', np.int), ('ye', simple1),
+        d = np.dtype([('yo', int), ('ye', simple1),
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-class TestMetadata(TestCase):
+class TestMetadata(object):
     def test_no_metadata(self):
         d = np.dtype(int)
-        self.assertEqual(d.metadata, None)
+        assert_(d.metadata is None)
 
     def test_metadata_takes_dict(self):
         d = np.dtype(int, metadata={'datum': 1})
-        self.assertEqual(d.metadata, {'datum': 1})
+        assert_(d.metadata == {'datum': 1})
 
     def test_metadata_rejects_nondict(self):
-        self.assertRaises(TypeError, np.dtype, int, metadata='datum')
-        self.assertRaises(TypeError, np.dtype, int, metadata=1)
-        self.assertRaises(TypeError, np.dtype, int, metadata=None)
+        assert_raises(TypeError, np.dtype, int, metadata='datum')
+        assert_raises(TypeError, np.dtype, int, metadata=1)
+        assert_raises(TypeError, np.dtype, int, metadata=None)
 
     def test_nested_metadata(self):
         d = np.dtype([('a', np.dtype(int, metadata={'datum': 1}))])
-        self.assertEqual(d['a'].metadata, {'datum': 1})
+        assert_(d['a'].metadata == {'datum': 1})
 
-    def base_metadata_copied(self):
+    def test_base_metadata_copied(self):
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
-        assert_equal(d.metadata, {'datum': 1})
+        assert_(d.metadata == {'datum': 1})
 
-class TestString(TestCase):
+class TestString(object):
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))], (3,)),
@@ -581,7 +582,7 @@ class TestString(TestCase):
         # Pull request #4722
         np.array(["", ""]).astype(object)
 
-class TestDtypeAttributeDeletion(TestCase):
+class TestDtypeAttributeDeletion(object):
 
     def test_dtype_non_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
@@ -599,7 +600,7 @@ class TestDtypeAttributeDeletion(TestCase):
             assert_raises(AttributeError, delattr, dt, s)
 
 
-class TestDtypeAttributes(TestCase):
+class TestDtypeAttributes(object):
     def test_descr_has_trailing_void(self):
         # see gh-6359
         dtype = np.dtype({
@@ -622,6 +623,59 @@ class TestDtypeAttributes(TestCase):
         class user_def_subcls(np.void):
             pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
+
+
+class TestPickling(object):
+
+    def check_pickling(self, dtype):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            pickled = pickle.loads(pickle.dumps(dtype, proto))
+            assert_equal(pickled, dtype)
+            assert_equal(pickled.descr, dtype.descr)
+            if dtype.metadata is not None:
+                assert_equal(pickled.metadata, dtype.metadata)
+            # Check the reconstructed dtype is functional
+            x = np.zeros(3, dtype=dtype)
+            y = np.zeros(3, dtype=pickled)
+            assert_equal(x, y)
+            assert_equal(x[0], y[0])
+
+    def test_builtin(self):
+        for t in [int, float, complex, np.int32, str, object,
+                  np.unicode, bool]:
+            self.check_pickling(np.dtype(t))
+
+    def test_structured(self):
+        dt = np.dtype(([('a', '>f4', (2, 1)), ('b', '<f8', (1, 3))], (2, 2)))
+        self.check_pickling(dt)
+        dt = np.dtype('i4, i1', align=True)
+        self.check_pickling(dt)
+        dt = np.dtype('i4, i1', align=False)
+        self.check_pickling(dt)
+        dt = np.dtype({
+            'names': ['A', 'B'],
+            'formats': ['f4', 'f4'],
+            'offsets': [0, 8],
+            'itemsize': 16})
+        self.check_pickling(dt)
+        dt = np.dtype({'names': ['r', 'b'],
+                       'formats': ['u1', 'u1'],
+                       'titles': ['Red pixel', 'Blue pixel']})
+        self.check_pickling(dt)
+
+    def test_datetime(self):
+        for base in ['m8', 'M8']:
+            for unit in ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
+                         'us', 'ns', 'ps', 'fs', 'as']:
+                dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+                self.check_pickling(dt)
+                if unit:
+                    dt = np.dtype('%s[7%s]' % (base, unit))
+                    self.check_pickling(dt)
+
+    def test_metadata(self):
+        dt = np.dtype(int, metadata={'datum': 1})
+        self.check_pickling(dt)
 
 
 def test_rational_dtype():

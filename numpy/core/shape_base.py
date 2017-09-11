@@ -439,9 +439,9 @@ def block(arrays):
     """
     Assemble an nd-array from nested lists of blocks.
 
-    Blocks in the innermost lists are `concatenate`d along the last
-    dimension (-1), then these are `concatenate`d along the second-last
-    dimension (-2), and so on until the outermost list is reached
+    Blocks in the innermost lists are concatenated (see `concatenate`) along
+    the last dimension (-1), then these are concatenated along the
+    second-last dimension (-2), and so on until the outermost list is reached.
 
     Blocks can be of any dimension, but will not be broadcasted using the normal
     rules. Instead, leading axes of size 1 are inserted, to make ``block.ndim``

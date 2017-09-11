@@ -7,6 +7,9 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 NPY_NO_EXPORT PyObject *
 ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 
+NPY_NO_EXPORT const char*
+ufunc_get_name_cstr(PyUFuncObject *ufunc);
+
 /* interned strings (on umath import) */
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_out;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_um_str_subok;

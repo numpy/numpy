@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
+    run_module_suite, assert_, assert_equal, assert_almost_equal,
     assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
     )
 
@@ -35,7 +35,7 @@ _ndat_zeros = np.array([[0.6244, 0.0, 0.2692, 0.0116, 0.0, 0.1170],
                         [0.1610, 0.0, 0.0, 0.1859, 0.3146, 0.0]])
 
 
-class TestNanFunctions_MinMax(TestCase):
+class TestNanFunctions_MinMax(object):
 
     nanfuncs = [np.nanmin, np.nanmax]
     stdfuncs = [np.min, np.max]
@@ -165,7 +165,7 @@ class TestNanFunctions_MinMax(TestCase):
             assert_(issubclass(w[0].category, RuntimeWarning))
 
 
-class TestNanFunctions_ArgminArgmax(TestCase):
+class TestNanFunctions_ArgminArgmax(object):
 
     nanfuncs = [np.nanargmin, np.nanargmax]
 
@@ -224,7 +224,7 @@ class TestNanFunctions_ArgminArgmax(TestCase):
             assert_(np.isscalar(res))
 
 
-class TestNanFunctions_IntTypes(TestCase):
+class TestNanFunctions_IntTypes(object):
 
     int_types = (np.int8, np.int16, np.int32, np.int64, np.uint8,
                  np.uint16, np.uint32, np.uint64)
@@ -396,7 +396,7 @@ class SharedNanFunctionsTestsMixin(object):
             assert_(np.isscalar(res))
 
 
-class TestNanFunctions_SumProd(TestCase, SharedNanFunctionsTestsMixin):
+class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
 
     nanfuncs = [np.nansum, np.nanprod]
     stdfuncs = [np.sum, np.prod]
@@ -430,7 +430,7 @@ class TestNanFunctions_SumProd(TestCase, SharedNanFunctionsTestsMixin):
             assert_equal(res, tgt)
 
 
-class TestNanFunctions_CumSumProd(TestCase, SharedNanFunctionsTestsMixin):
+class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
 
     nanfuncs = [np.nancumsum, np.nancumprod]
     stdfuncs = [np.cumsum, np.cumprod]
@@ -513,7 +513,7 @@ class TestNanFunctions_CumSumProd(TestCase, SharedNanFunctionsTestsMixin):
                 assert_almost_equal(res, tgt)
 
 
-class TestNanFunctions_MeanVarStd(TestCase, SharedNanFunctionsTestsMixin):
+class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
 
     nanfuncs = [np.nanmean, np.nanvar, np.nanstd]
     stdfuncs = [np.mean, np.var, np.std]
@@ -585,7 +585,7 @@ class TestNanFunctions_MeanVarStd(TestCase, SharedNanFunctionsTestsMixin):
                     assert_(len(w) == 0)
 
 
-class TestNanFunctions_Median(TestCase):
+class TestNanFunctions_Median(object):
 
     def test_mutation(self):
         # Check that passed array is not modified.
@@ -749,7 +749,7 @@ class TestNanFunctions_Median(TestCase):
                                      ([np.nan] * i) + [-inf] * j)
 
 
-class TestNanFunctions_Percentile(TestCase):
+class TestNanFunctions_Percentile(object):
 
     def test_mutation(self):
         # Check that passed array is not modified.

@@ -7,44 +7,44 @@ import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import (
-    TestCase, run_module_suite, assert_equal, assert_
+    run_module_suite, assert_equal, assert_, assert_raises
 )
 from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
                                   _float64_ma, _float128_ma, _float80_ma)
 
 ##################################################
 
-class TestPythonFloat(TestCase):
+class TestPythonFloat(object):
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
         assert_equal(id(ftype), id(ftype2))
 
-class TestHalf(TestCase):
+class TestHalf(object):
     def test_singleton(self):
         ftype = finfo(half)
         ftype2 = finfo(half)
         assert_equal(id(ftype), id(ftype2))
 
-class TestSingle(TestCase):
+class TestSingle(object):
     def test_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
         assert_equal(id(ftype), id(ftype2))
 
-class TestDouble(TestCase):
+class TestDouble(object):
     def test_singleton(self):
         ftype = finfo(double)
         ftype2 = finfo(double)
         assert_equal(id(ftype), id(ftype2))
 
-class TestLongdouble(TestCase):
-    def test_singleton(self,level=2):
+class TestLongdouble(object):
+    def test_singleton(self):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
-class TestFinfo(TestCase):
+class TestFinfo(object):
     def test_basic(self):
         dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
                        [np.float16, np.float32, np.float64, np.complex64,
@@ -55,9 +55,9 @@ class TestFinfo(TestCase):
                          'nmant', 'precision', 'resolution', 'tiny'):
                 assert_equal(getattr(finfo(dt1), attr),
                              getattr(finfo(dt2), attr), attr)
-        self.assertRaises(ValueError, finfo, 'i4')
+        assert_raises(ValueError, finfo, 'i4')
 
-class TestIinfo(TestCase):
+class TestIinfo(object):
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
                    'u1', 'u2', 'u4', 'u8'],
@@ -67,14 +67,14 @@ class TestIinfo(TestCase):
             for attr in ('bits', 'min', 'max'):
                 assert_equal(getattr(iinfo(dt1), attr),
                              getattr(iinfo(dt2), attr), attr)
-        self.assertRaises(ValueError, iinfo, 'f4')
+        assert_raises(ValueError, iinfo, 'f4')
 
     def test_unsigned_max(self):
         types = np.sctypes['uint']
         for T in types:
             assert_equal(iinfo(T).max, T(-1))
 
-class TestRepr(TestCase):
+class TestRepr(object):
     def test_iinfo_repr(self):
         expected = "iinfo(min=-32768, max=32767, dtype=int16)"
         assert_equal(repr(np.iinfo(np.int16)), expected)

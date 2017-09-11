@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.compat import long
 from numpy.testing import (
-    TestCase, assert_, assert_equal, assert_array_equal, run_module_suite
+    assert_, assert_equal, assert_array_equal, run_module_suite, assert_raises
     )
 from numpy.lib.type_check import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
@@ -15,7 +15,7 @@ def assert_all(x):
     assert_(np.all(x), x)
 
 
-class TestCommonType(TestCase):
+class TestCommonType(object):
     def test_basic(self):
         ai32 = np.array([[1, 2], [3, 4]], dtype=np.int32)
         af16 = np.array([[1, 2], [3, 4]], dtype=np.float16)
@@ -31,7 +31,7 @@ class TestCommonType(TestCase):
         assert_(common_type(acd) == np.cdouble)
 
 
-class TestMintypecode(TestCase):
+class TestMintypecode(object):
 
     def test_default_1(self):
         for itype in '1bcsuwil':
@@ -81,7 +81,7 @@ class TestMintypecode(TestCase):
         assert_equal(mintypecode('idD'), 'D')
 
 
-class TestIsscalar(TestCase):
+class TestIsscalar(object):
 
     def test_basic(self):
         assert_(np.isscalar(3))
@@ -92,7 +92,7 @@ class TestIsscalar(TestCase):
         assert_(np.isscalar(4.0))
 
 
-class TestReal(TestCase):
+class TestReal(object):
 
     def test_real(self):
         y = np.random.rand(10,)
@@ -123,7 +123,7 @@ class TestReal(TestCase):
         assert_(not isinstance(out, np.ndarray))
 
 
-class TestImag(TestCase):
+class TestImag(object):
 
     def test_real(self):
         y = np.random.rand(10,)
@@ -154,7 +154,7 @@ class TestImag(TestCase):
         assert_(not isinstance(out, np.ndarray))
 
 
-class TestIscomplex(TestCase):
+class TestIscomplex(object):
 
     def test_fail(self):
         z = np.array([-1, 0, 1])
@@ -167,7 +167,7 @@ class TestIscomplex(TestCase):
         assert_array_equal(res, [1, 0, 0])
 
 
-class TestIsreal(TestCase):
+class TestIsreal(object):
 
     def test_pass(self):
         z = np.array([-1, 0, 1j])
@@ -180,7 +180,7 @@ class TestIsreal(TestCase):
         assert_array_equal(res, [0, 1, 1])
 
 
-class TestIscomplexobj(TestCase):
+class TestIscomplexobj(object):
 
     def test_basic(self):
         z = np.array([-1, 0, 1])
@@ -233,7 +233,7 @@ class TestIscomplexobj(TestCase):
         assert_(iscomplexobj(a))
 
 
-class TestIsrealobj(TestCase):
+class TestIsrealobj(object):
     def test_basic(self):
         z = np.array([-1, 0, 1])
         assert_(isrealobj(z))
@@ -241,7 +241,7 @@ class TestIsrealobj(TestCase):
         assert_(not isrealobj(z))
 
 
-class TestIsnan(TestCase):
+class TestIsnan(object):
 
     def test_goodvalues(self):
         z = np.array((-1., 0., 1.))
@@ -271,7 +271,7 @@ class TestIsnan(TestCase):
             assert_all(np.isnan(np.array(0+0j)/0.) == 1)
 
 
-class TestIsfinite(TestCase):
+class TestIsfinite(object):
     # Fixme, wrong place, isfinite now ufunc
 
     def test_goodvalues(self):
@@ -302,7 +302,7 @@ class TestIsfinite(TestCase):
             assert_all(np.isfinite(np.array(1+1j)/0.) == 0)
 
 
-class TestIsinf(TestCase):
+class TestIsinf(object):
     # Fixme, wrong place, isinf now ufunc
 
     def test_goodvalues(self):
@@ -331,7 +331,7 @@ class TestIsinf(TestCase):
             assert_all(np.isinf(np.array((0.,))/0.) == 0)
 
 
-class TestIsposinf(TestCase):
+class TestIsposinf(object):
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -341,7 +341,7 @@ class TestIsposinf(TestCase):
         assert_(vals[2] == 1)
 
 
-class TestIsneginf(TestCase):
+class TestIsneginf(object):
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -351,7 +351,7 @@ class TestIsneginf(TestCase):
         assert_(vals[2] == 0)
 
 
-class TestNanToNum(TestCase):
+class TestNanToNum(object):
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -374,7 +374,7 @@ class TestNanToNum(TestCase):
         vals = nan_to_num(1)
         assert_all(vals == 1)
         vals = nan_to_num([1])
-        assert_array_equal(vals, np.array([1], np.int))
+        assert_array_equal(vals, np.array([1], int))
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
@@ -402,7 +402,7 @@ class TestNanToNum(TestCase):
         #assert_all(vals.real < -1e10) and assert_all(np.isfinite(vals))
 
 
-class TestRealIfClose(TestCase):
+class TestRealIfClose(object):
 
     def test_basic(self):
         a = np.random.rand(10)
@@ -415,12 +415,18 @@ class TestRealIfClose(TestCase):
         assert_all(isrealobj(b))
 
 
-class TestArrayConversion(TestCase):
+class TestArrayConversion(object):
 
     def test_asfarray(self):
         a = asfarray(np.array([1, 2, 3]))
         assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, np.float))
+        assert_(np.issubdtype(a.dtype, np.floating))
+
+        # previously this would infer dtypes from arrays, unlike every single
+        # other numpy function
+        assert_raises(TypeError,
+            asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
+
 
 if __name__ == "__main__":
     run_module_suite()

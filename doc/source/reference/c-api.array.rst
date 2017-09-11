@@ -137,7 +137,7 @@ sub-types).
 
 .. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
 
-    Returns 0 if *obj* is not a sub-class of bigndarray. Otherwise,
+    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
     returns the total number of elements in the array. Safer version
     of :c:func:`PyArray_SIZE` (*obj*).
 
@@ -257,7 +257,7 @@ From scratch
         PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, \
         npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
-    This is similar to :c:func:`PyArray_DescrNew` (...) except you
+    This is similar to :c:func:`PyArray_NewFromDescr` (...) except you
     specify the data-type descriptor with *type_num* and *itemsize*,
     where *type_num* corresponds to a builtin (or user-defined)
     type. If the type always has the same number of bytes, then
@@ -303,7 +303,7 @@ From scratch
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
     Fill the array pointed to by *obj* ---which must be a (subclass
-    of) bigndarray---with the contents of *val* (evaluated as a byte).
+    of) ndarray---with the contents of *val* (evaluated as a byte).
     This macro calls memset, so obj must be contiguous.
 
 .. c:function:: PyObject* PyArray_Zeros( \
@@ -433,9 +433,9 @@ From other objects
 
     .. c:var:: NPY_ARRAY_ENSUREARRAY
 
-        Make sure the result is a base-class ndarray or bigndarray. By
-        default, if *op* is an instance of a subclass of the
-        bigndarray, an instance of that same subclass is returned. If
+        Make sure the result is a base-class ndarray. By
+        default, if *op* is an instance of a subclass of
+        ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
     .. c:var:: NPY_ARRAY_FORCECAST
@@ -455,8 +455,7 @@ From other objects
         is deleted (presumably after your calculations are complete),
         its contents will be copied back into *op* and the *op* array
         will be made writeable again. If *op* is not writeable to begin
-        with, then an error is raised. If *op* is not already an array,
-        then this flag has no effect.
+        with, or if it is not already an array, then an error is raised.
 
     .. c:var:: NPY_ARRAY_BEHAVED
 
@@ -1483,8 +1482,7 @@ specify desired properties of the new array.
 
 .. c:var:: NPY_ARRAY_ENSUREARRAY
 
-    Make sure the resulting object is an actual ndarray (or bigndarray),
-    and not a sub-class.
+    Make sure the resulting object is an actual ndarray, and not a sub-class.
 
 .. c:var:: NPY_ARRAY_NOTSWAPPED
 
@@ -2888,10 +2886,10 @@ to.
     to a C-array of :c:type:`npy_intp`. The Python object could also be a
     single number. The *seq* variable is a pointer to a structure with
     members ptr and len. On successful return, *seq* ->ptr contains a
-    pointer to memory that must be freed to avoid a memory leak. The
-    restriction on memory size allows this converter to be
-    conveniently used for sequences intended to be interpreted as
-    array shapes.
+    pointer to memory that must be freed, by calling :c:func:`PyDimMem_FREE`,
+    to avoid a memory leak. The restriction on memory size allows this
+    converter to be conveniently used for sequences intended to be
+    interpreted as array shapes.
 
 .. c:function:: int PyArray_BufferConverter(PyObject* obj, PyArray_Chunk* buf)
 
@@ -3064,6 +3062,24 @@ the C-API is needed then some additional steps must be taken.
     header file as long as you make sure that NO_IMPORT_ARRAY is
     #defined before #including that file.
 
+    Internally, these #defines work as follows:
+
+        * If neither is defined, the C-API is declared to be
+          :c:type:`static void**`, so it is only visible within the
+          compilation unit that #includes numpy/arrayobject.h.
+        * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
+          :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
+          be :c:type:`void**`, so that it will also be visible to other
+          compilation units.
+        * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
+          whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
+          declared to be :c:type:`extern void**`, so it is expected to
+          be defined in another compilation unit.
+        * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
+          also changes the name of the variable holding the C-API, which
+          defaults to :c:data:`PyArray_API`, to whatever the macro is
+          #defined to.
+
 Checking the API Version
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3129,8 +3145,8 @@ Internal Flexibility
 
         **add**, **subtract**, **multiply**, **divide**,
         **remainder**, **power**, **square**, **reciprocal**,
-        **ones_like**, **sqrt**, **negative**, **absolute**,
-        **invert**, **left_shift**, **right_shift**,
+        **ones_like**, **sqrt**, **negative**, **positive**,
+        **absolute**, **invert**, **left_shift**, **right_shift**,
         **bitwise_and**, **bitwise_xor**, **bitwise_or**,
         **less**, **less_equal**, **equal**, **not_equal**,
         **greater**, **greater_equal**, **floor_divide**,

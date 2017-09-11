@@ -489,6 +489,8 @@ following.
                 return NotImplemented
 
             if method == 'at':
+                if isinstance(inputs[0], A):
+                    inputs[0].info = info
                 return
 
             if ufunc.nout == 1:
@@ -541,7 +543,7 @@ will be called, but now it sees an ``ndarray`` as the other argument. Likely,
 it will know how to handle this, and return a new instance of the ``B`` class
 to us. Our example class is not set up to handle this, but it might well be
 the best approach if, e.g., one were to re-implement ``MaskedArray`` using
- ``__array_ufunc__``.
+``__array_ufunc__``.
 
 As a final note: if the ``super`` route is suited to a given class, an
 advantage of using it is that it helps in constructing class hierarchies.

@@ -1,5 +1,6 @@
+=========================
 NumPy 1.6.1 Release Notes
-*************************
+=========================
 
 This is a bugfix only release in the 1.6.x series.
 

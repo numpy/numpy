@@ -35,7 +35,7 @@ def test_float_types():
     """ Check formatting.
 
         This is only for the str function, and only for simple types.
-        The precision of np.float and np.longdouble aren't the same as the
+        The precision of np.float32 and np.longdouble aren't the same as the
         python float precision.
 
     """
@@ -51,7 +51,7 @@ def test_nan_inf_float():
     """ Check formatting of nan & inf.
 
         This is only for the str function, and only for simple types.
-        The precision of np.float and np.longdouble aren't the same as the
+        The precision of np.float32 and np.longdouble aren't the same as the
         python float precision.
 
     """
@@ -79,7 +79,7 @@ def test_complex_types():
     """Check formatting of complex types.
 
         This is only for the str function, and only for simple types.
-        The precision of np.float and np.longdouble aren't the same as the
+        The precision of np.float32 and np.longdouble aren't the same as the
         python float precision.
 
     """

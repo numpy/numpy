@@ -280,7 +280,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
         npy_intp *mystrides;
 
         mystrides = newstrides + oldnd;
-        /* Make new strides -- alwasy C-contiguous */
+        /* Make new strides -- always C-contiguous */
         tempsize = (*des)->elsize;
         for (i = numnew - 1; i >= 0; i--) {
             mystrides[i] = tempsize;
@@ -753,7 +753,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_struct__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (e != NULL) {
         int nd = -1;
         if (NpyCapsule_Check(e)) {
@@ -778,7 +778,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_interface__ interface */
-    e = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    e = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (e != NULL) {
         int nd = -1;
         if (PyDict_Check(e)) {
@@ -1529,12 +1529,6 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     if (!writeable) {
         tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp != Py_NotImplemented) {
-            if (writeable
-                && PyArray_FailUnlessWriteable((PyArrayObject *)tmp,
-                                               "array interface object") < 0) {
-                Py_DECREF(tmp);
-                return -1;
-            }
             *out_arr = (PyArrayObject *)tmp;
             return (*out_arr) == NULL ? -1 : 0;
         }
@@ -1860,7 +1854,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
-            !PyArray_ISNBO(PyArray_DESCR((PyArrayObject *)op)->byteorder)) {
+                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
             descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
         }
         else if (descr && !PyArray_ISNBO(descr->byteorder)) {
@@ -2062,7 +2056,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_GetAttrString_SuppressException(input, "__array_struct__");
+    attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
     if (attr == NULL) {
         return Py_NotImplemented;
     }
@@ -2176,7 +2170,7 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_GetAttrString_SuppressException(origin,
+    iface = PyArray_LookupSpecial_OnInstance(origin,
                                                     "__array_interface__");
     if (iface == NULL) {
         return Py_NotImplemented;
@@ -2409,7 +2403,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_GetAttrString_SuppressException(op, "__array__");
+    array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         return Py_NotImplemented;
     }
@@ -2896,7 +2890,7 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 
     /*
      * PyArray_NewFromDescr steals a ref,
-     * but we need to look at type later. 
+     * but we need to look at type later.
      * */
     Py_INCREF(type);
 
@@ -3010,7 +3004,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 }
 
 /*
- * the formula is len = (intp) ceil((start - stop) / step);
+ * the formula is len = (intp) ceil((stop - start) / step);
  */
 static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)

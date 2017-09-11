@@ -19,6 +19,7 @@
 
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "common.h" /* for convert_shape_to_string */
+#include "alloc.h"
 
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
@@ -145,26 +146,33 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
     }
 
-    if (PyArray_NDIM(self) != new_nd) {
-        /* Different number of dimensions. */
-        ((PyArrayObject_fields *)self)->nd = new_nd;
-        /* Need new dimensions and strides arrays */
-        dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
-        if (dimptr == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                    "cannot allocate memory for array");
-            return NULL;
+    if (new_nd > 0) {
+        if (PyArray_NDIM(self) != new_nd) {
+            /* Different number of dimensions. */
+            ((PyArrayObject_fields *)self)->nd = new_nd;
+            /* Need new dimensions and strides arrays */
+            dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
+            if (dimptr == NULL) {
+                PyErr_SetString(PyExc_MemoryError,
+                                "cannot allocate memory for array");
+                return NULL;
+            }
+            ((PyArrayObject_fields *)self)->dimensions = dimptr;
+            ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
         }
-        ((PyArrayObject_fields *)self)->dimensions = dimptr;
-        ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
+        /* make new_strides variable */
+        _array_fill_strides(new_strides, new_dimensions, new_nd,
+                            PyArray_DESCR(self)->elsize, PyArray_FLAGS(self),
+                            &(((PyArrayObject_fields *)self)->flags));
+        memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
+        memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     }
-
-    /* make new_strides variable */
-    _array_fill_strides(
-        new_strides, new_dimensions, new_nd, PyArray_DESCR(self)->elsize,
-        PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
-    memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
-    memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
+    else {
+        PyDimMem_FREE(((PyArrayObject_fields *)self)->dimensions);
+        ((PyArrayObject_fields *)self)->nd = 0;
+        ((PyArrayObject_fields *)self)->dimensions = NULL;
+        ((PyArrayObject_fields *)self)->strides = NULL;
+    }
     Py_RETURN_NONE;
 }
 
@@ -294,7 +302,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
 
 
-/* For back-ward compatability -- Not recommended */
+/* For backward compatibility -- Not recommended */
 
 /*NUMPY_API
  * Reshape
@@ -309,7 +317,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return NULL;
     }
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
-    PyDimMem_FREE(newdims.ptr);
+    npy_free_cache_dim_obj(newdims);
     return ret;
 }
 

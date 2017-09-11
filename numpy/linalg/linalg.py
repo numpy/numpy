@@ -22,7 +22,7 @@ from numpy.core import (
     array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
-    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax, product, abs,
+    finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
     )
 from numpy.core.multiarray import normalize_axis_index
@@ -69,12 +69,8 @@ class LinAlgError(Exception):
     """
     pass
 
-# Dealing with errors in _umath_linalg
-
-_linalg_error_extobj = None
 
 def _determine_error_states():
-    global _linalg_error_extobj
     errobj = geterrobj()
     bufsize = errobj[0]
 
@@ -82,9 +78,11 @@ def _determine_error_states():
                   divide='ignore', under='ignore'):
         invalid_call_errmask = geterrobj()[1]
 
-    _linalg_error_extobj = [bufsize, invalid_call_errmask, None]
+    return [bufsize, invalid_call_errmask, None]
 
-_determine_error_states()
+# Dealing with errors in _umath_linalg
+_linalg_error_extobj = _determine_error_states()
+del _determine_error_states
 
 def _raise_linalgerror_singular(err, flag):
     raise LinAlgError("Singular matrix")
@@ -99,7 +97,7 @@ def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
 
 def get_linalg_error_extobj(callback):
-    extobj = list(_linalg_error_extobj)
+    extobj = list(_linalg_error_extobj)  # make a copy
     extobj[2] = callback
     return extobj
 
@@ -366,21 +364,8 @@ def solve(a, b):
     # We use the b = (..., M,) logic, only if the number of extra dimensions
     # match exactly
     if b.ndim == a.ndim - 1:
-        if a.shape[-1] == 0 and b.shape[-1] == 0:
-            # Legal, but the ufunc cannot handle the 0-sized inner dims
-            # let the ufunc handle all wrong cases.
-            a = a.reshape(a.shape[:-1])
-            bc = broadcast(a, b)
-            return wrap(empty(bc.shape, dtype=result_t))
-
         gufunc = _umath_linalg.solve1
     else:
-        if b.size == 0:
-            if (a.shape[-1] == 0 and b.shape[-2] == 0) or b.shape[-1] == 0:
-                a = a[:,:1].reshape(a.shape[:-1] + (1,))
-                bc = broadcast(a, b)
-                return wrap(empty(bc.shape, dtype=result_t))
-
         gufunc = _umath_linalg.solve
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
@@ -520,10 +505,6 @@ def inv(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-
-    if a.shape[-1] == 0:
-        # The inner array is 0x0, the ufunc cannot handle this case
-        return wrap(empty_like(a, dtype=result_t))
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
@@ -905,8 +886,6 @@ def eigvals(a):
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        return empty(a.shape[-1:], dtype=result_t)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1009,8 +988,6 @@ def eigvalsh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        return empty(a.shape[-1:], dtype=result_t)
     signature = 'D->d' if isComplexType(t) else 'd->d'
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
@@ -1148,10 +1125,6 @@ def eig(a):
     _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        w = empty(a.shape[-1:], dtype=result_t)
-        vt = empty(a.shape, dtype=result_t)
-        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1289,10 +1262,6 @@ def eigh(a, UPLO='L'):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    if _isEmpty2d(a):
-        w = empty(a.shape[-1:], dtype=result_t)
-        vt = empty(a.shape, dtype=result_t)
-        return w, wrap(vt)
 
     extobj = get_linalg_error_extobj(
         _raise_linalgerror_eigenvalues_nonconvergence)
@@ -1766,11 +1735,6 @@ def slogdet(a):
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
-    if _isEmpty2d(a):
-        # determinant of empty matrix is 1
-        sign = ones(a.shape[:-2], dtype=result_t)
-        logdet = zeros(a.shape[:-2], dtype=real_t)
-        return sign, logdet
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     if isscalar(sign):
@@ -1834,9 +1798,6 @@ def det(a):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    # 0x0 matrices have determinant 1
-    if _isEmpty2d(a):
-        return ones(a.shape[:-2], dtype=result_t)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     if isscalar(r):
@@ -1847,7 +1808,7 @@ def det(a):
 
 # Linear Least Squares
 
-def lstsq(a, b, rcond=-1):
+def lstsq(a, b, rcond="warn"):
     """
     Return the least-squares solution to a linear matrix equation.
 
@@ -1872,6 +1833,13 @@ def lstsq(a, b, rcond=-1):
         For the purposes of rank determination, singular values are treated
         as zero if they are smaller than `rcond` times the largest singular
         value of `a`.
+
+        .. versionchanged:: 1.14.0
+           If not set, a FutureWarning is given. The previous default
+           of ``-1`` will use the machine precision as `rcond` parameter,
+           the new default will use the machine precision times `max(M, N)`.
+           To silence the warning and use the new default, use ``rcond=None``,
+           to keep using the old behavior, use ``rcond=-1``.
 
     Returns
     -------
@@ -1946,6 +1914,20 @@ def lstsq(a, b, rcond=-1):
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
+    # Determine default rcond value
+    if rcond == "warn":
+        # 2017-08-19, 1.14.0
+        warnings.warn("`rcond` parameter will change to the default of "
+                      "machine precision times ``max(M, N)`` where M and N "
+                      "are the input matrix dimensions.\n"
+                      "To use the future default and silence this warning "
+                      "we advise to pass `rcond=None`, to keep using the old, "
+                      "explicitly pass `rcond=-1`.",
+                      FutureWarning, stacklevel=2)
+        rcond = -1
+    if rcond is None:
+        rcond = finfo(t).eps * ldb
+
     result_real_t = _realType(result_t)
     real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
@@ -2041,9 +2023,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
         is `numpy.amin` or `numpy.amax` or `numpy.sum`.
 
     """
-    if row_axis > col_axis:
-        row_axis -= 1
-    y = rollaxis(rollaxis(x, col_axis, x.ndim), row_axis, -1)
+    y = moveaxis(x, (row_axis, col_axis), (-2, -1))
     result = op(svd(y, compute_uv=0), axis=-1)
     return result
 
@@ -2214,7 +2194,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     elif not isinstance(axis, tuple):
         try:
             axis = int(axis)
-        except:
+        except Exception:
             raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
@@ -2238,18 +2218,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            if x.dtype.type is longdouble:
-                # Convert to a float type, so integer arrays give
-                # float results.  Don't apply asfarray to longdouble arrays,
-                # because it will downcast to float64.
-                absx = abs(x)
-            else:
-                absx = x if isComplexType(x.dtype.type) else asfarray(x)
-                if absx.dtype is x.dtype:
-                    absx = abs(absx)
-                else:
-                    # if the type changed, we can safely overwrite absx
-                    abs(absx, out=absx)
+            absx = abs(x)
             absx **= ord
             return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
     elif len(axis) == 2:
@@ -2364,7 +2333,7 @@ def multi_dot(arrays):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Let's assume we have three matrices
-    :math:`A_{10x100}, B_{100x5}, C_{5x50}$`.
+    :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
 
     The costs for the two different parenthesizations are as follows::
 

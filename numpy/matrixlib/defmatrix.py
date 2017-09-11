@@ -137,7 +137,7 @@ def matrix_power(M, n):
     M = asanyarray(M)
     if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
-    if not issubdtype(type(n), int):
+    if not issubdtype(type(n), N.integer):
         raise TypeError("exponent must be an integer")
 
     from numpy.linalg import inv
@@ -295,7 +295,7 @@ class matrix(N.ndarray):
             # Determine when we should have a column array
             try:
                 n = len(index)
-            except:
+            except Exception:
                 n = 0
             if n > 1 and isscalar(index[1]):
                 out.shape = (sh, 1)
@@ -1155,7 +1155,7 @@ def bmat(obj, ldict=None, gdict=None):
     --------
     block :
         A generalization of this function for N-d arrays, that returns normal
-        `ndarray`s.
+        ndarrays.
 
     Examples
     --------

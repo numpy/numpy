@@ -1,10 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import itertools
 
 import numpy as np
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal
+    run_module_suite, assert_, assert_equal, assert_raises
 )
 
 # This is the structure of the table used for plain objects:
@@ -102,99 +103,99 @@ def normalize_descr(descr):
 #    Creation tests
 ############################################################
 
-class create_zeros(object):
+class CreateZeros(object):
     """Check the creation of heterogeneous arrays zero-valued"""
 
     def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
         h = np.zeros((), dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
-        self.assertTrue(h.dtype.fields['x'][0].name[:4] == 'void')
-        self.assertTrue(h.dtype.fields['x'][0].char == 'V')
-        self.assertTrue(h.dtype.fields['x'][0].type == np.void)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(h.dtype.fields['x'][0].name[:4] == 'void')
+        assert_(h.dtype.fields['x'][0].char == 'V')
+        assert_(h.dtype.fields['x'][0].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((), dtype='u1'))
 
     def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
         h = np.zeros((2,), dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
-        self.assertTrue(h.dtype['y'].name[:4] == 'void')
-        self.assertTrue(h.dtype['y'].char == 'V')
-        self.assertTrue(h.dtype['y'].type == np.void)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(h.dtype['y'].name[:4] == 'void')
+        assert_(h.dtype['y'].char == 'V')
+        assert_(h.dtype['y'].type == np.void)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2,), dtype='u1'))
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
         h = np.zeros((2, 3), dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
-        self.assertTrue(h.dtype['z'].name == 'uint8')
-        self.assertTrue(h.dtype['z'].char == 'B')
-        self.assertTrue(h.dtype['z'].type == np.uint8)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(h.dtype['z'].name == 'uint8')
+        assert_(h.dtype['z'].char == 'B')
+        assert_(h.dtype['z'].type == np.uint8)
         # A small check that data is ok
         assert_equal(h['z'], np.zeros((2, 3), dtype='u1'))
 
 
-class test_create_zeros_plain(create_zeros, TestCase):
+class TestCreateZerosPlain(CreateZeros):
     """Check the creation of heterogeneous arrays zero-valued (plain)"""
     _descr = Pdescr
 
-class test_create_zeros_nested(create_zeros, TestCase):
+class TestCreateZerosNested(CreateZeros):
     """Check the creation of heterogeneous arrays zero-valued (nested)"""
     _descr = Ndescr
 
 
-class create_values(object):
+class CreateValues(object):
     """Check the creation of heterogeneous arrays with values"""
 
     def test_tuple(self):
         """Check creation from tuples"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assertTrue(h.shape == (2,))
+            assert_(h.shape == (2,))
         else:
-            self.assertTrue(h.shape == ())
+            assert_(h.shape == ())
 
     def test_list_of_tuple(self):
         """Check creation from list of tuples"""
         h = np.array([self._buffer], dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assertTrue(h.shape == (1, 2))
+            assert_(h.shape == (1, 2))
         else:
-            self.assertTrue(h.shape == (1,))
+            assert_(h.shape == (1,))
 
     def test_list_of_list_of_tuple(self):
         """Check creation from list of list of tuples"""
         h = np.array([[self._buffer]], dtype=self._descr)
-        self.assertTrue(normalize_descr(self._descr) == h.dtype.descr)
+        assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
-            self.assertTrue(h.shape == (1, 1, 2))
+            assert_(h.shape == (1, 1, 2))
         else:
-            self.assertTrue(h.shape == (1, 1))
+            assert_(h.shape == (1, 1))
 
 
-class test_create_values_plain_single(create_values, TestCase):
+class TestCreateValuesPlainSingle(CreateValues):
     """Check the creation of heterogeneous arrays (plain, single row)"""
     _descr = Pdescr
     multiple_rows = 0
     _buffer = PbufferT[0]
 
-class test_create_values_plain_multiple(create_values, TestCase):
+class TestCreateValuesPlainMultiple(CreateValues):
     """Check the creation of heterogeneous arrays (plain, multiple rows)"""
     _descr = Pdescr
     multiple_rows = 1
     _buffer = PbufferT
 
-class test_create_values_nested_single(create_values, TestCase):
+class TestCreateValuesNestedSingle(CreateValues):
     """Check the creation of heterogeneous arrays (nested, single row)"""
     _descr = Ndescr
     multiple_rows = 0
     _buffer = NbufferT[0]
 
-class test_create_values_nested_multiple(create_values, TestCase):
+class TestCreateValuesNestedMultiple(CreateValues):
     """Check the creation of heterogeneous arrays (nested, multiple rows)"""
     _descr = Ndescr
     multiple_rows = 1
@@ -205,18 +206,18 @@ class test_create_values_nested_multiple(create_values, TestCase):
 #    Reading tests
 ############################################################
 
-class read_values_plain(object):
+class ReadValuesPlain(object):
     """Check the reading of values in heterogeneous arrays (plain)"""
 
     def test_access_fields(self):
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            self.assertTrue(h.shape == ())
+            assert_(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[1], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[2], dtype='u1'))
         else:
-            self.assertTrue(len(h) == 2)
+            assert_(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                              self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][1],
@@ -225,31 +226,31 @@ class read_values_plain(object):
                                              self._buffer[1][2]], dtype='u1'))
 
 
-class test_read_values_plain_single(read_values_plain, TestCase):
+class TestReadValuesPlainSingle(ReadValuesPlain):
     """Check the creation of heterogeneous arrays (plain, single row)"""
     _descr = Pdescr
     multiple_rows = 0
     _buffer = PbufferT[0]
 
-class test_read_values_plain_multiple(read_values_plain, TestCase):
+class TestReadValuesPlainMultiple(ReadValuesPlain):
     """Check the values of heterogeneous arrays (plain, multiple rows)"""
     _descr = Pdescr
     multiple_rows = 1
     _buffer = PbufferT
 
-class read_values_nested(object):
+class ReadValuesNested(object):
     """Check the reading of values in heterogeneous arrays (nested)"""
 
     def test_access_top_fields(self):
         """Check reading the top fields of a nested array"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
-            self.assertTrue(h.shape == ())
+            assert_(h.shape == ())
             assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
             assert_equal(h['y'], np.array(self._buffer[4], dtype='f8'))
             assert_equal(h['z'], np.array(self._buffer[5], dtype='u1'))
         else:
-            self.assertTrue(len(h) == 2)
+            assert_(len(h) == 2)
             assert_equal(h['x'], np.array([self._buffer[0][0],
                                            self._buffer[1][0]], dtype='i4'))
             assert_equal(h['y'], np.array([self._buffer[0][4],
@@ -308,41 +309,41 @@ class read_values_nested(object):
     def test_nested1_descriptor(self):
         """Check access nested descriptors of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assertTrue(h.dtype['Info']['value'].name == 'complex128')
-        self.assertTrue(h.dtype['Info']['y2'].name == 'float64')
+        assert_(h.dtype['Info']['value'].name == 'complex128')
+        assert_(h.dtype['Info']['y2'].name == 'float64')
         if sys.version_info[0] >= 3:
-            self.assertTrue(h.dtype['info']['Name'].name == 'str256')
+            assert_(h.dtype['info']['Name'].name == 'str256')
         else:
-            self.assertTrue(h.dtype['info']['Name'].name == 'unicode256')
-        self.assertTrue(h.dtype['info']['Value'].name == 'complex128')
+            assert_(h.dtype['info']['Name'].name == 'unicode256')
+        assert_(h.dtype['info']['Value'].name == 'complex128')
 
     def test_nested2_descriptor(self):
         """Check access nested descriptors of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
-        self.assertTrue(h.dtype['Info']['Info2']['value'].name == 'void256')
-        self.assertTrue(h.dtype['Info']['Info2']['z3'].name == 'void64')
+        assert_(h.dtype['Info']['Info2']['value'].name == 'void256')
+        assert_(h.dtype['Info']['Info2']['z3'].name == 'void64')
 
 
-class test_read_values_nested_single(read_values_nested, TestCase):
+class TestReadValuesNestedSingle(ReadValuesNested):
     """Check the values of heterogeneous arrays (nested, single row)"""
     _descr = Ndescr
     multiple_rows = False
     _buffer = NbufferT[0]
 
-class test_read_values_nested_multiple(read_values_nested, TestCase):
+class TestReadValuesNestedMultiple(ReadValuesNested):
     """Check the values of heterogeneous arrays (nested, multiple rows)"""
     _descr = Ndescr
     multiple_rows = True
     _buffer = NbufferT
 
-class TestEmptyField(TestCase):
+class TestEmptyField(object):
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
         a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 
-class TestCommonType(TestCase):
+class TestCommonType(object):
     def test_scalar_loses1(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['f8'])
         assert_(res == 'f4')
@@ -363,19 +364,50 @@ class TestCommonType(TestCase):
         res = np.find_common_type(['u8', 'i8', 'i8'], ['f8'])
         assert_(res == 'f8')
 
-class TestMultipleFields(TestCase):
-    def setUp(self):
+class TestMultipleFields(object):
+    def setup(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
 
     def _bad_call(self):
         return self.ary['f0', 'f1']
 
     def test_no_tuple(self):
-        self.assertRaises(IndexError, self._bad_call)
+        assert_raises(IndexError, self._bad_call)
 
     def test_return(self):
         res = self.ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])
+
+
+class TestIsSubDType(object):
+    # scalar types can be promoted into dtypes
+    wrappers = [np.dtype, lambda x: x]
+
+    def test_both_abstract(self):
+        assert_(np.issubdtype(np.floating, np.inexact))
+        assert_(not np.issubdtype(np.inexact, np.floating))
+
+    def test_same(self):
+        for cls in (np.float32, np.int32):
+            for w1, w2 in itertools.product(self.wrappers, repeat=2):
+                assert_(np.issubdtype(w1(cls), w2(cls)))
+
+    def test_subclass(self):
+        # note we cannot promote floating to a dtype, as it would turn into a
+        # concrete type
+        for w in self.wrappers:
+            assert_(np.issubdtype(w(np.float32), np.floating))
+            assert_(np.issubdtype(w(np.float64), np.floating))
+
+    def test_subclass_backwards(self):
+        for w in self.wrappers:
+            assert_(not np.issubdtype(np.floating, w(np.float32)))
+            assert_(not np.issubdtype(np.floating, w(np.float64)))
+
+    def test_sibling_class(self):
+        for w1, w2 in itertools.product(self.wrappers, repeat=2):
+            assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
+            assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
 if __name__ == "__main__":
     run_module_suite()

@@ -390,8 +390,8 @@ an error condition set if it was not successful.
         (optional) Specify any optional data needed by the function which will
         be passed when the function is called.
 
-        .. index::
-           pair: dtype; adding new
+.. index::
+   pair: dtype; adding new
 
 
 Subtyping the ndarray in C

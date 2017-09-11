@@ -28,7 +28,7 @@ class _DeprecationTestCase(object):
     message = ''
     warning_cls = DeprecationWarning
 
-    def setUp(self):
+    def setup(self):
         self.warn_ctx = warnings.catch_warnings(record=True)
         self.log = self.warn_ctx.__enter__()
 
@@ -42,7 +42,7 @@ class _DeprecationTestCase(object):
         warnings.filterwarnings("always", message=self.message,
                                 category=self.warning_cls)
 
-    def tearDown(self):
+    def teardown(self):
         self.warn_ctx.__exit__()
 
     def assert_deprecated(self, function, num=1, ignore_others=False,
@@ -259,7 +259,7 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
     """
 
     def test_fortran_contiguous(self):
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.complex,))
+        self.assert_deprecated(np.ones((2,2)).T.view, args=(complex,))
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
@@ -375,20 +375,11 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
 
-class TestAccumulateKeepDims(_DeprecationTestCase):
-    """
-    Deprecate the keepdims argument to np.ufunc.accumulate, which was never used or documented
-    """
-    def test_keepdims(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings('always', '', FutureWarning)
-            assert_warns(FutureWarning, np.add.accumulate, [1], keepdims=True)
-
 
 class TestTestDeprecated(object):
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
-        test_case_instance.setUp()
+        test_case_instance.setup()
         assert_raises(AssertionError,
                       test_case_instance.assert_deprecated,
                       lambda: None)
@@ -397,7 +388,8 @@ class TestTestDeprecated(object):
             warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
-        test_case_instance.tearDown()
+        test_case_instance.teardown()
+
 
 class TestClassicIntDivision(_DeprecationTestCase):
     """
@@ -419,6 +411,27 @@ class TestClassicIntDivision(_DeprecationTestCase):
                 b = np.array([1,2,3], dtype=dt2)
                 self.assert_deprecated(op.div, args=(a,b))
                 dt2 = dt1
+
+
+class TestNonNumericConjugate(_DeprecationTestCase):
+    """
+    Deprecate no-op behavior of ndarray.conjugate on non-numeric dtypes,
+    which conflicts with the error behavior of np.conjugate.
+    """
+    def test_conjugate(self):
+        for a in np.array(5), np.array(5j):
+            self.assert_not_deprecated(a.conjugate)
+        for a in (np.array('s'), np.array('2016', 'M'),
+                np.array((1, 2), [('a', int), ('b', int)])):
+            self.assert_deprecated(a.conjugate)
+
+
+class TestNPY_CHAR(_DeprecationTestCase):
+    # 2017-05-03, 1.13.0
+    def test_npy_char_deprecation(self):
+        from numpy.core.multiarray_tests import npy_char_deprecation
+        self.assert_deprecated(npy_char_deprecation)
+        assert_(npy_char_deprecation() == 'S1')
 
 
 if __name__ == "__main__":

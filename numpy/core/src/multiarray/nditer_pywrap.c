@@ -15,6 +15,8 @@
 #include <numpy/arrayobject.h>
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "alloc.h"
+#include "common.h"
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -758,7 +760,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     &op_axes_in,
                     PyArray_IntpConverter, &itershape,
                     &buffersize)) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         return -1;
     }
 
@@ -804,7 +806,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
     else if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         itershape.ptr = NULL;
     }
 
@@ -832,7 +834,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
 
     /* Release the references we got to the ops and dtypes */
     for (iop = 0; iop < nop; ++iop) {
@@ -843,7 +845,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);
@@ -1618,7 +1620,7 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyInt_AsLong(v);
-            if (multi_index[idim]==-1 && PyErr_Occurred()) {
+            if (error_converting(multi_index[idim])) {
                 Py_XDECREF(v);
                 return -1;
             }
@@ -1678,7 +1680,7 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
     if (NpyIter_HasIndex(self->iter)) {
         npy_intp ind;
         ind = PyInt_AsLong(value);
-        if (ind==-1 && PyErr_Occurred()) {
+        if (error_converting(ind)) {
             return -1;
         }
         if (NpyIter_GotoIndex(self->iter, ind) != NPY_SUCCEED) {
@@ -1728,7 +1730,7 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 
     iterindex = PyInt_AsLong(value);
-    if (iterindex==-1 && PyErr_Occurred()) {
+    if (error_converting(iterindex)) {
         return -1;
     }
     if (NpyIter_GotoIterIndex(self->iter, iterindex) != NPY_SUCCEED) {
@@ -2256,7 +2258,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return NULL;
         }
         return npyiter_seq_item(self, i);
@@ -2305,7 +2307,7 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return -1;
         }
         return npyiter_seq_ass_item(self, i, value);

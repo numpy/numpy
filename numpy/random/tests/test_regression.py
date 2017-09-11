@@ -1,14 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from numpy.testing import (TestCase, run_module_suite, assert_,
-                           assert_array_equal, assert_raises)
+from numpy.testing import (
+    run_module_suite, assert_, assert_array_equal, assert_raises,
+    )
 from numpy import random
 from numpy.compat import long
 import numpy as np
 
 
-class TestRegression(TestCase):
+class TestRegression(object):
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -54,15 +55,6 @@ class TestRegression(TestCase):
         np.random.seed(1234)
         b = np.random.permutation(long(12))
         assert_array_equal(a, b)
-
-    def test_randint_range(self):
-        # Test for ticket #1690
-        lmax = np.iinfo('l').max
-        lmin = np.iinfo('l').min
-        try:
-            random.randint(lmin, lmax)
-        except:
-            raise AssertionError
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074

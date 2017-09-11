@@ -1,9 +1,12 @@
 /* -*-c-*- */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <Python.h>
+#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+#include "common.h"
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -608,6 +611,13 @@ incref_elide_l(PyObject *dummy, PyObject *args)
     return res;
 }
 
+/* used to test NPY_CHAR usage emits deprecation warning */
+static PyObject*
+npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyArray_Descr * descr = PyArray_DescrFromType(NPY_CHAR);
+    return (PyObject *)descr;
+}
 
 #if !defined(NPY_PY3K)
 static PyObject *
@@ -992,11 +1002,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
     for (j = 0; j < nterms; ++j) {
         terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
-        if (terms[j].a == -1 && PyErr_Occurred()) {
+        if (error_converting(terms[j].a)) {
             goto fail;
         }
         terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
-        if (terms[j].ub == -1 && PyErr_Occurred()) {
+        if (error_converting(terms[j].ub)) {
             goto fail;
         }
     }
@@ -1551,6 +1561,125 @@ extint_ceildiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
 }
 
 
+static char get_fpu_mode_doc[] = (
+    "get_fpu_mode()\n"
+    "\n"
+    "Get the current FPU control word, in a platform-dependent format.\n"
+    "Returns None if not implemented on current platform.");
+
+static PyObject *
+get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+
+#if defined(_MSC_VER)
+    {
+        unsigned int result = 0;
+        result = _controlfp(0, 0);
+        return PyLong_FromLongLong(result);
+    }
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+    {
+        unsigned short cw = 0;
+        __asm__("fstcw %w0" : "=m" (cw));
+        return PyLong_FromLongLong(cw);
+    }
+#else
+    Py_RETURN_NONE;
+#endif
+}
+
+/*
+ * npymath wrappers
+ */
+
+/**begin repeat
+ * #name = cabs, carg#
+ */
+
+/**begin repeat1
+ * #itype = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #ITYPE = NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
+ * #otype = npy_float, npy_double, npy_longdouble#
+ * #OTYPE = NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE#
+ * #suffix= f, , l#
+ */
+
+static PyObject *
+call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *z_py = NULL, *z_arr = NULL, *w_arr = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &z_py)) {
+        return NULL;
+    }
+
+    z_arr = PyArray_FROMANY(z_py, @ITYPE@, 0, 0, NPY_ARRAY_CARRAY_RO);
+    if (z_arr == NULL) {
+        return NULL;
+    }
+
+    w_arr = PyArray_SimpleNew(0, NULL, @OTYPE@);
+    if (w_arr == NULL) {
+        Py_DECREF(z_arr);
+        return NULL;
+    }
+
+    *(@otype@*)PyArray_DATA((PyArrayObject *)w_arr) =
+        npy_@name@@suffix@(*(@itype@*)PyArray_DATA((PyArrayObject *)z_arr));
+
+    Py_DECREF(z_arr);
+    return w_arr;
+}
+
+/**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ * #name = log10, cosh, sinh, tan, tanh#
+ */
+
+/**begin repeat1
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #TYPE = NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE#
+ * #suffix= f, , l#
+ */
+
+static PyObject *
+call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *z_py = NULL, *z_arr = NULL, *w_arr = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &z_py)) {
+        return NULL;
+    }
+
+    z_arr = PyArray_FROMANY(z_py, @TYPE@, 0, 0, NPY_ARRAY_CARRAY_RO);
+    if (z_arr == NULL) {
+        return NULL;
+    }
+
+    w_arr = PyArray_SimpleNew(0, NULL, @TYPE@);
+    if (w_arr == NULL) {
+        Py_DECREF(z_arr);
+        return NULL;
+    }
+
+    *(@type@*)PyArray_DATA((PyArrayObject *)w_arr) =
+        npy_@name@@suffix@(*(@type@*)PyArray_DATA((PyArrayObject *)z_arr));
+
+    Py_DECREF(z_arr);
+    return w_arr;
+}
+
+/**end repeat1**/
+
+/**end repeat**/
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -1576,6 +1705,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"incref_elide_l",
         incref_elide_l,
         METH_VARARGS, NULL},
+    {"npy_char_deprecation",
+        npy_char_deprecation,
+        METH_NOARGS, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",
         int_subclass,
@@ -1638,6 +1770,37 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"extint_ceildiv_128_64",
         extint_ceildiv_128_64,
         METH_VARARGS, NULL},
+    {"get_fpu_mode",
+        get_fpu_mode,
+        METH_VARARGS, get_fpu_mode_doc},
+/**begin repeat
+ * #name = cabs, carg#
+ */
+
+/**begin repeat1
+ * #suffix = f, , l#
+ */
+    {"npy_@name@@suffix@",
+        call_npy_@name@@suffix@,
+        METH_VARARGS, NULL},
+/**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ * #name = log10, cosh, sinh, tan, tanh#
+ */
+
+/**begin repeat1
+ * #suffix= f, , l#
+ */
+    {"npy_@name@@suffix@",
+        call_npy_@name@@suffix@,
+        METH_VARARGS, NULL},
+/**end repeat1**/
+
+/**end repeat**/
+
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

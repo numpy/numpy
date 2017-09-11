@@ -23,6 +23,7 @@
 #include "npy_sort.h"
 #include "npy_partition.h"
 #include "npy_binsearch.h"
+#include "alloc.h"
 
 /*NUMPY_API
  * Take
@@ -765,7 +766,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_DECREF(ap);
-    PyDataMem_FREE(mps);
+    npy_free_cache(mps, n * sizeof(mps[0]));
     if (out != NULL && out != obj) {
         Py_INCREF(out);
         Py_DECREF(obj);
@@ -779,7 +780,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_XDECREF(ap);
-    PyDataMem_FREE(mps);
+    npy_free_cache(mps, n * sizeof(mps[0]));
     PyArray_XDECREF_ERR(obj);
     return NULL;
 }
@@ -827,7 +828,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
 
     if (needcopy) {
-        buffer = PyDataMem_NEW(N * elsize);
+        buffer = npy_alloc_cache(N * elsize);
         if (buffer == NULL) {
             ret = -1;
             goto fail;
@@ -869,12 +870,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (part == NULL) {
             ret = sort(bufptr, N, op);
-#if defined(NPY_PY3K)
-            /* Object comparisons may raise an exception in Python 3 */
             if (hasrefs && PyErr_Occurred()) {
                 ret = -1;
             }
-#endif
             if (ret < 0) {
                 goto fail;
             }
@@ -885,12 +883,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             npy_intp i;
             for (i = 0; i < nkth; ++i) {
                 ret = part(bufptr, N, kth[i], pivots, &npiv, op);
-#if defined(NPY_PY3K)
-                /* Object comparisons may raise an exception in Python 3 */
                 if (hasrefs && PyErr_Occurred()) {
                     ret = -1;
                 }
-#endif
                 if (ret < 0) {
                     goto fail;
                 }
@@ -914,7 +909,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     }
 
 fail:
-    PyDataMem_FREE(buffer);
+    npy_free_cache(buffer, N * elsize);
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
@@ -978,7 +973,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
 
     if (needcopy) {
-        valbuffer = PyDataMem_NEW(N * elsize);
+        valbuffer = npy_alloc_cache(N * elsize);
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -986,7 +981,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
 
     if (needidxbuffer) {
-        idxbuffer = (npy_intp *)PyDataMem_NEW(N * sizeof(npy_intp));
+        idxbuffer = (npy_intp *)npy_alloc_cache(N * sizeof(npy_intp));
         if (idxbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1076,8 +1071,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
 
 fail:
-    PyDataMem_FREE(valbuffer);
-    PyDataMem_FREE(idxbuffer);
+    npy_free_cache(valbuffer, N * elsize);
+    npy_free_cache(idxbuffer, N * sizeof(npy_intp));
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     if (ret < 0) {
         if (!PyErr_Occurred()) {
@@ -1493,13 +1488,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         char *valbuffer, *indbuffer;
         int *swaps;
 
-        valbuffer = PyDataMem_NEW(N*maxelsize);
+        valbuffer = npy_alloc_cache(N * maxelsize);
         if (valbuffer == NULL) {
             goto fail;
         }
-        indbuffer = PyDataMem_NEW(N*sizeof(npy_intp));
+        indbuffer = npy_alloc_cache(N * sizeof(npy_intp));
         if (indbuffer == NULL) {
-            PyDataMem_FREE(indbuffer);
+            npy_free_cache(indbuffer, N * sizeof(npy_intp));
             goto fail;
         }
         swaps = malloc(n*sizeof(int));
@@ -1531,8 +1526,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 #else
                 if (rcode < 0) {
 #endif
-                    PyDataMem_FREE(valbuffer);
-                    PyDataMem_FREE(indbuffer);
+                    npy_free_cache(valbuffer, N * maxelsize);
+                    npy_free_cache(indbuffer, N * sizeof(npy_intp));
                     free(swaps);
                     goto fail;
                 }
@@ -1542,8 +1537,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                                          sizeof(npy_intp), N, sizeof(npy_intp));
             PyArray_ITER_NEXT(rit);
         }
-        PyDataMem_FREE(valbuffer);
-        PyDataMem_FREE(indbuffer);
+        npy_free_cache(valbuffer, N * maxelsize);
+        npy_free_cache(indbuffer, N * sizeof(npy_intp));
         free(swaps);
     }
     else {
@@ -2176,6 +2171,7 @@ PyArray_Nonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
+    int is_empty = 0;
 
     /*
      * First count the number of non-zeros in 'self'.
@@ -2329,13 +2325,22 @@ finish:
         return NULL;
     }
 
+    for (i = 0; i < PyArray_NDIM(ret); ++i) {
+        if (PyArray_DIMS(ret)[i] == 0) {
+            is_empty = 1;
+            break;
+        }
+    }
+
     /* Create views into ret, one for each dimension */
     for (i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
+        /* the result is an empty array, the view must point to valid memory */
+        npy_intp data_offset = is_empty ? 0 : i * NPY_SIZEOF_INTP;
 
         PyArrayObject *view = (PyArrayObject *)PyArray_New(Py_TYPE(ret), 1,
                                     &nonzero_count, NPY_INTP, &stride,
-                                    PyArray_BYTES(ret) + i*NPY_SIZEOF_INTP,
+                                    PyArray_BYTES(ret) + data_offset,
                                     0, PyArray_FLAGS(ret), (PyObject *)ret);
         if (view == NULL) {
             Py_DECREF(ret);

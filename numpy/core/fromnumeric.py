@@ -28,12 +28,7 @@ __all__ = [
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
     ]
 
-
-try:
-    _gentype = types.GeneratorType
-except AttributeError:
-    _gentype = type(None)
-
+_gentype = types.GeneratorType
 # save away Python sum
 _sum_ = sum
 
@@ -1120,18 +1115,16 @@ def resize(a, new_shape):
         new_shape = (new_shape,)
     a = ravel(a)
     Na = len(a)
-    if not Na:
-        return mu.zeros(new_shape, a.dtype)
     total_size = um.multiply.reduce(new_shape)
+    if Na == 0 or total_size == 0:
+        return mu.zeros(new_shape, a.dtype)
+
     n_copies = int(total_size / Na)
     extra = total_size % Na
 
-    if total_size == 0:
-        return a[:0]
-
     if extra != 0:
-        n_copies = n_copies+1
-        extra = Na-extra
+        n_copies = n_copies + 1
+        extra = Na - extra
 
     a = concatenate((a,)*n_copies)
     if extra > 0:
@@ -1531,14 +1524,15 @@ def nonzero(a):
            [0, 2, 0],
            [1, 1, 0]])
     >>> np.nonzero(x)
-    (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
+    (array([0, 1, 2, 2]), array([0, 1, 0, 1]))
 
     >>> x[np.nonzero(x)]
-    array([ 1.,  1.,  1.])
+    array([1, 2, 1, 1])
     >>> np.transpose(np.nonzero(x))
     array([[0, 0],
            [1, 1],
-           [2, 2]])
+           [2, 0],
+           [2, 1])
 
     A common use for ``nonzero`` is to find the indices of an array, where
     a condition is True.  Given an array `a`, the condition `a` > 3 is a
@@ -2248,7 +2242,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.amax(a, axis=1)   # Maxima along the second axis
     array([1, 3])
 
-    >>> b = np.arange(5, dtype=np.float)
+    >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amax(b)
     nan
@@ -2349,7 +2343,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.amin(a, axis=1)   # Minima along the second axis
     array([0, 2])
 
-    >>> b = np.arange(5, dtype=np.float)
+    >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amin(b)
     nan
@@ -2499,7 +2493,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     is the default platform integer:
 
     >>> x = np.array([1, 2, 3], dtype=np.int8)
-    >>> np.prod(x).dtype == np.int
+    >>> np.prod(x).dtype == int
     True
 
     """

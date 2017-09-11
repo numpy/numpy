@@ -911,7 +911,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     type = PyArray_DESCR(self->ao);
 
     /*
-     * Check for Boolean -- this is first becasue
+     * Check for Boolean -- this is first because
      * Bool is a subclass of Int
      */
     if (PyBool_Check(ind)) {
@@ -926,7 +926,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto skip;
     }
     start = PyArray_PyIntAsIntp(ind);
-    if (start==-1 && PyErr_Occurred()) {
+    if (error_converting(start)) {
         PyErr_Clear();
     }
     else {

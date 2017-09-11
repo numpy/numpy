@@ -22,9 +22,9 @@ if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
 from . import umath
-from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
-                    ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
-                    ERR_DEFAULT, PINF, NAN)
+from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
+                    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
+                    ERR_LOG, ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError, AxisError
@@ -133,7 +133,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([[0, 0, 0],
            [0, 0, 0]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.zeros_like(y)
@@ -176,7 +176,7 @@ def ones(shape, dtype=None, order='C'):
     >>> np.ones(5)
     array([ 1.,  1.,  1.,  1.,  1.])
 
-    >>> np.ones((5,), dtype=np.int)
+    >>> np.ones((5,), dtype=int)
     array([1, 1, 1, 1, 1])
 
     >>> np.ones((2, 1))
@@ -243,7 +243,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     array([[1, 1, 1],
            [1, 1, 1]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.ones_like(y)
@@ -344,7 +344,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
 
     Examples
     --------
-    >>> x = np.arange(6, dtype=np.int)
+    >>> x = np.arange(6, dtype=int)
     >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
     >>> np.full_like(x, 0.1)
@@ -436,8 +436,7 @@ def count_nonzero(a, axis=None):
     if issubdtype(a.dtype, np.number):
         return (a != 0).sum(axis=axis, dtype=np.intp)
 
-    if (issubdtype(a.dtype, np.string_) or
-            issubdtype(a.dtype, np.unicode_)):
+    if issubdtype(a.dtype, np.character):
         nullstr = a.dtype.type('')
         return (a != nullstr).sum(axis=axis, dtype=np.intp)
 
@@ -445,7 +444,7 @@ def count_nonzero(a, axis=None):
     counts = np.apply_along_axis(multiarray.count_nonzero, axis[0], a)
 
     if axis.size == 1:
-        return counts
+        return counts.astype(np.intp, copy=False)
     else:
         # for subsequent axis numbers, that number decreases
         # by one in this new 'counts' array if it was larger
@@ -838,7 +837,7 @@ def argwhere(a):
     ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
 
     The output of ``argwhere`` is not suitable for indexing arrays.
-    For this purpose use ``where(a)`` instead.
+    For this purpose use ``nonzero(a)`` instead.
 
     Examples
     --------
@@ -1106,7 +1105,10 @@ def outer(a, b, out=None):
 
     See also
     --------
-    inner, einsum
+    inner
+    einsum : ``einsum('i,j->ij', a.ravel(), b.ravel())`` is the equivalent.
+    ufunc.outer : A generalization to N dimensions and other operations.
+                  ``np.multiply.outer(a.ravel(), b.ravel())`` is the equivalent.
 
     References
     ----------
@@ -1278,7 +1280,7 @@ def tensordot(a, b, axes=2):
     """
     try:
         iter(axes)
-    except:
+    except Exception:
         axes_a = list(range(-axes, 0))
         axes_b = list(range(0, axes))
     else:
@@ -1323,7 +1325,7 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_a:
         N2 *= as_[axis]
-    newshape_a = (-1, N2)
+    newshape_a = (int(multiply.reduce([as_[ax] for ax in notin])), N2)
     olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
@@ -1331,7 +1333,7 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_b:
         N2 *= bs[axis]
-    newshape_b = (N2, -1)
+    newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
@@ -1432,6 +1434,10 @@ def roll(a, shift, axis=None):
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
+
+    This function continues to be supported for backward compatibility, but you
+    should prefer `moveaxis`. The `moveaxis` function was added in NumPy
+    1.11.
 
     Parameters
     ----------
@@ -1548,7 +1554,7 @@ def moveaxis(a, source, destination):
 
     Other axes remain in their original order.
 
-    .. versionadded::1.11.0
+    .. versionadded:: 1.11.0
 
     Parameters
     ----------
@@ -1615,7 +1621,7 @@ def moveaxis(a, source, destination):
 
 # fix hack in scipy which imports this function
 def _move_axis_to_0(a, axis):
-    return rollaxis(a, axis, 0)
+    return moveaxis(a, axis, 0)
 
 
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
@@ -1740,8 +1746,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
 
     # Move working axis to the end of the shape
-    a = rollaxis(a, axisa, a.ndim)
-    b = rollaxis(b, axisb, b.ndim)
+    a = moveaxis(a, axisa, -1)
+    b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
@@ -1812,8 +1818,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             multiply(a0, b1, out=cp2)
             cp2 -= a1 * b0
 
-    # This works because we are moving the last axis
-    return rollaxis(cp, -1, axisc)
+    return moveaxis(cp, -1, axisc)
 
 
 # Use numarray's printing function
@@ -1936,7 +1941,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
-    return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
+    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
 
 def set_string_function(f, repr=True):
@@ -2153,6 +2158,8 @@ def isscalar(num):
     >>> np.isscalar([3.1])
     False
     >>> np.isscalar(False)
+    True
+    >>> np.isscalar('numpy')
     True
 
     """
@@ -2597,7 +2604,7 @@ def array_equal(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     if a1.shape != a2.shape:
         return False
@@ -2641,11 +2648,11 @@ def array_equiv(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     try:
         multiarray.broadcast(a1, a2)
-    except:
+    except Exception:
         return False
 
     return bool(asarray(a1 == a2).all())

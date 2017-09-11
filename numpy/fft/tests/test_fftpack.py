@@ -2,8 +2,10 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.random import random
-from numpy.testing import TestCase, run_module_suite, assert_array_almost_equal
-from numpy.testing import assert_array_equal
+from numpy.testing import (
+        run_module_suite, assert_array_almost_equal, assert_array_equal,
+        assert_raises,
+        )
 import threading
 import sys
 if sys.version_info[0] >= 3:
@@ -19,13 +21,13 @@ def fft1(x):
     return np.sum(x*np.exp(phase), axis=1)
 
 
-class TestFFTShift(TestCase):
+class TestFFTShift(object):
 
     def test_fft_n(self):
-        self.assertRaises(ValueError, np.fft.fft, [1, 2, 3], 0)
+        assert_raises(ValueError, np.fft.fft, [1, 2, 3], 0)
 
 
-class TestFFT1D(TestCase):
+class TestFFT1D(object):
 
     def test_fft(self):
         x = random(30) + 1j*random(30)
@@ -145,7 +147,7 @@ class TestFFT1D(TestCase):
                     assert_array_almost_equal(x_norm,
                                               np.linalg.norm(tmp))
 
-class TestFFTThreadSafe(TestCase):
+class TestFFTThreadSafe(object):
     threads = 16
     input_shape = (800, 200)
 

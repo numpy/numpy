@@ -15,6 +15,7 @@
 #include "arraytypes.h"
 
 #include "conversion_utils.h"
+#include "alloc.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -119,7 +120,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_FAIL;
     }
     if (len > 0) {
-        seq->ptr = PyDimMem_NEW(len);
+        seq->ptr = npy_alloc_cache_dim(len);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
@@ -128,7 +129,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     seq->len = len;
     nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
     if (nd == -1 || nd != len) {
-        PyDimMem_FREE(seq->ptr);
+        npy_free_cache_dim_obj(*seq);
         seq->ptr = NULL;
         return NPY_FAIL;
     }

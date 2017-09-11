@@ -314,9 +314,7 @@ defdict = {
 'true_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.true_divide'),
-          'PyUFunc_DivisionTypeResolver',
-          TD('bBhH', out='d'),
-          TD('iIlLqQ', out='d'),
+          'PyUFunc_TrueDivisionTypeResolver',
           TD(flts+cmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
@@ -397,6 +395,14 @@ defdict = {
           TD(bints+flts+timedeltaonly, simd=[('avx2', ints)]),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
+          ),
+'positive':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.positive'),
+          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          TD(ints+flts+timedeltaonly),
+          TD(cmplx, f='pos'),
+          TD(O, f='PyNumber_Positive'),
           ),
 'sign':
     Ufunc(1, 1, None,
@@ -778,6 +784,13 @@ defdict = {
           TD(intflt),
           TD(O, f='PyNumber_Remainder'),
           ),
+'divmod':
+    Ufunc(2, 2, None,
+          docstrings.get('numpy.core.umath.divmod'),
+          None,
+          TD(intflt),
+          TD(O, f='PyNumber_Divmod'),
+          ),
 'hypot':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.hypot'),
@@ -790,6 +803,12 @@ defdict = {
           docstrings.get('numpy.core.umath.isnan'),
           None,
           TD(inexact, out='?'),
+          ),
+'isnat':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.isnat'),
+          'PyUFunc_IsNaTTypeResolver',
+          TD(times, out='?'),
           ),
 'isinf':
     Ufunc(1, 1, None,

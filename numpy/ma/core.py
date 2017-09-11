@@ -93,6 +93,33 @@ nomask = MaskType(0)
 class MaskedArrayFutureWarning(FutureWarning):
     pass
 
+def _deprecate_argsort_axis(arr):
+    """
+    Adjust the axis passed to argsort, warning if necessary
+
+    Parameters
+    ----------
+    arr
+        The array which argsort was called on
+
+    np.ma.argsort has a long-term bug where the default of the axis argument
+    is wrong (gh-8701), which now must be kept for backwards compatibiity.
+    Thankfully, this only makes a difference when arrays are 2- or more-
+    dimensional, so we only need a warning then.
+    """
+    if arr.ndim <= 1:
+        # no warning needed - but switch to -1 anyway, to avoid surprising
+        # subclasses, which are more likely to implement scalar axes.
+        return -1
+    else:
+        # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
+        warnings.warn(
+            "In the future the default for argsort will be axis=-1, not the "
+            "current None, to match its documentation and np.argsort. "
+            "Explicitly pass -1 or None to silence this warning.",
+            MaskedArrayFutureWarning, stacklevel=3)
+        return None
+
 
 def doc_note(initialdoc, note):
     """
@@ -159,7 +186,7 @@ default_filler = {'b': True,
                   'O': '?',
                   'S': b'N/A',
                   'u': 999999,
-                  'V': '???',
+                  'V': b'???',
                   'U': u'N/A'
                   }
 
@@ -176,6 +203,31 @@ min_filler.update([(k, +np.inf) for k in [np.float32, np.float64]])
 if 'float128' in ntypes.typeDict:
     max_filler.update([(np.float128, -np.inf)])
     min_filler.update([(np.float128, +np.inf)])
+
+
+def _recursive_fill_value(dtype, f):
+    """
+    Recursively produce a fill value for `dtype`, calling f on scalar dtypes
+    """
+    if dtype.names:
+        vals = tuple(_recursive_fill_value(dtype[name], f) for name in dtype.names)
+        return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
+    elif dtype.subdtype:
+        subtype, shape = dtype.subdtype
+        subval = _recursive_fill_value(subtype, f)
+        return np.full(shape, subval)
+    else:
+        return f(dtype)
+
+
+def _get_dtype_of(obj):
+    """ Convert the argument for *_fill_value into a dtype """
+    if isinstance(obj, np.dtype):
+        return obj
+    elif hasattr(obj, 'dtype'):
+        return obj.dtype
+    else:
+        return np.asanyarray(obj).dtype
 
 
 def default_fill_value(obj):
@@ -196,6 +248,11 @@ def default_fill_value(obj):
        string    'N/A'
        ========  ========
 
+    For structured types, a structured scalar is returned, with each field the
+    default fill value for its type.
+
+    For subarray types, the fill value is an array of the same size containing
+    the default scalar fill value.
 
     Parameters
     ----------
@@ -218,39 +275,29 @@ def default_fill_value(obj):
     (1e+20+0j)
 
     """
-    if hasattr(obj, 'dtype'):
-        defval = _check_fill_value(None, obj.dtype)
-    elif isinstance(obj, np.dtype):
-        if obj.subdtype:
-            defval = default_filler.get(obj.subdtype[0].kind, '?')
-        elif obj.kind in 'Mm':
-            defval = default_filler.get(obj.str[1:], '?')
+    def _scalar_fill_value(dtype):
+        if dtype.kind in 'Mm':
+            return default_filler.get(dtype.str[1:], '?')
         else:
-            defval = default_filler.get(obj.kind, '?')
-    elif isinstance(obj, float):
-        defval = default_filler['f']
-    elif isinstance(obj, int) or isinstance(obj, long):
-        defval = default_filler['i']
-    elif isinstance(obj, bytes):
-        defval = default_filler['S']
-    elif isinstance(obj, unicode):
-        defval = default_filler['U']
-    elif isinstance(obj, complex):
-        defval = default_filler['c']
-    else:
-        defval = default_filler['O']
-    return defval
+            return default_filler.get(dtype.kind, '?')
+
+    dtype = _get_dtype_of(obj)
+    return _recursive_fill_value(dtype, _scalar_fill_value)
 
 
-def _recursive_extremum_fill_value(ndtype, extremum):
-    names = ndtype.names
-    if names:
-        deflist = []
-        for name in names:
-            fval = _recursive_extremum_fill_value(ndtype[name], extremum)
-            deflist.append(fval)
-        return tuple(deflist)
-    return extremum[ndtype]
+def _extremum_fill_value(obj, extremum, extremum_name):
+
+    def _scalar_fill_value(dtype):
+        try:
+            return extremum[dtype]
+        except KeyError:
+            raise TypeError(
+                "Unsuitable type {} for calculating {}."
+                .format(dtype, extremum_name)
+            )
+
+    dtype = _get_dtype_of(obj)
+    return _recursive_fill_value(dtype, _scalar_fill_value)
 
 
 def minimum_fill_value(obj):
@@ -262,7 +309,7 @@ def minimum_fill_value(obj):
 
     Parameters
     ----------
-    obj : ndarray or dtype
+    obj : ndarray, dtype or scalar
         An object that can be queried for it's numeric type.
 
     Returns
@@ -301,19 +348,7 @@ def minimum_fill_value(obj):
     inf
 
     """
-    errmsg = "Unsuitable type for calculating minimum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, min_filler)
-    elif isinstance(obj, float):
-        return min_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return min_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return min_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return min_filler[obj]
-    else:
-        raise TypeError(errmsg)
+    return _extremum_fill_value(obj, min_filler, "minimum")
 
 
 def maximum_fill_value(obj):
@@ -325,7 +360,7 @@ def maximum_fill_value(obj):
 
     Parameters
     ----------
-    obj : {ndarray, dtype}
+    obj : ndarray, dtype or scalar
         An object that can be queried for it's numeric type.
 
     Returns
@@ -364,48 +399,7 @@ def maximum_fill_value(obj):
     -inf
 
     """
-    errmsg = "Unsuitable type for calculating maximum."
-    if hasattr(obj, 'dtype'):
-        return _recursive_extremum_fill_value(obj.dtype, max_filler)
-    elif isinstance(obj, float):
-        return max_filler[ntypes.typeDict['float_']]
-    elif isinstance(obj, int):
-        return max_filler[ntypes.typeDict['int_']]
-    elif isinstance(obj, long):
-        return max_filler[ntypes.typeDict['uint']]
-    elif isinstance(obj, np.dtype):
-        return max_filler[obj]
-    else:
-        raise TypeError(errmsg)
-
-
-def _recursive_set_default_fill_value(dt):
-    """
-    Create the default fill value for a structured dtype.
-
-    Parameters
-    ----------
-    dt: dtype
-        The structured dtype for which to create the fill value.
-
-    Returns
-    -------
-    val: tuple
-        A tuple of values corresponding to the default structured fill value.
-
-    """
-    deflist = []
-    for name in dt.names:
-        currenttype = dt[name]
-        if currenttype.subdtype:
-            currenttype = currenttype.subdtype[0]
-
-        if currenttype.names:
-            deflist.append(
-                tuple(_recursive_set_default_fill_value(currenttype)))
-        else:
-            deflist.append(default_fill_value(currenttype))
-    return tuple(deflist)
+    return _extremum_fill_value(obj, max_filler, "maximum")
 
 
 def _recursive_set_fill_value(fillvalue, dt):
@@ -444,22 +438,16 @@ def _check_fill_value(fill_value, ndtype):
     """
     Private function validating the given `fill_value` for the given dtype.
 
-    If fill_value is None, it is set to the default corresponding to the dtype
-    if this latter is standard (no fields). If the datatype is flexible (named
-    fields), fill_value is set to a tuple whose elements are the default fill
-    values corresponding to each field.
+    If fill_value is None, it is set to the default corresponding to the dtype.
 
     If fill_value is not None, its value is forced to the given dtype.
 
+    The result is always a 0d array.
     """
     ndtype = np.dtype(ndtype)
     fields = ndtype.fields
     if fill_value is None:
-        if fields:
-            fill_value = np.array(_recursive_set_default_fill_value(ndtype),
-                                  dtype=ndtype)
-        else:
-            fill_value = default_fill_value(ndtype)
+        fill_value = default_fill_value(ndtype)
     elif fields:
         fdtype = [(_[0], _[1]) for _ in ndtype.descr]
         if isinstance(fill_value, (ndarray, np.void)):
@@ -796,7 +784,7 @@ ufunc_domain = {}
 ufunc_fills = {}
 
 
-class _DomainCheckInterval:
+class _DomainCheckInterval(object):
     """
     Define a valid interval, so that :
 
@@ -821,7 +809,7 @@ class _DomainCheckInterval:
                                     umath.less(x, self.a))
 
 
-class _DomainTan:
+class _DomainTan(object):
     """
     Define a valid interval for the `tan` function, so that:
 
@@ -839,7 +827,7 @@ class _DomainTan:
             return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
 
-class _DomainSafeDivide:
+class _DomainSafeDivide(object):
     """
     Define a domain for safe division.
 
@@ -860,7 +848,7 @@ class _DomainSafeDivide:
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
-class _DomainGreater:
+class _DomainGreater(object):
     """
     DomainGreater(v)(x) is True where x <= v.
 
@@ -876,7 +864,7 @@ class _DomainGreater:
             return umath.less_equal(x, self.critical_value)
 
 
-class _DomainGreaterEqual:
+class _DomainGreaterEqual(object):
     """
     DomainGreaterEqual(v)(x) is True where x < v.
 
@@ -892,7 +880,17 @@ class _DomainGreaterEqual:
             return umath.less(x, self.critical_value)
 
 
-class _MaskedUnaryOperation:
+class _MaskedUFunc(object):
+    def __init__(self, ufunc):
+        self.f = ufunc
+        self.__doc__ = ufunc.__doc__
+        self.__name__ = ufunc.__name__
+
+    def __str__(self):
+        return "Masked version of {}".format(self.f)
+
+
+class _MaskedUnaryOperation(_MaskedUFunc):
     """
     Defines masked version of unary operations, where invalid values are
     pre-masked.
@@ -911,11 +909,9 @@ class _MaskedUnaryOperation:
     """
 
     def __init__(self, mufunc, fill=0, domain=None):
-        self.f = mufunc
+        super(_MaskedUnaryOperation, self).__init__(mufunc)
         self.fill = fill
         self.domain = domain
-        self.__doc__ = getattr(mufunc, "__doc__", str(mufunc))
-        self.__name__ = getattr(mufunc, "__name__", str(mufunc))
         ufunc_domain[mufunc] = domain
         ufunc_fills[mufunc] = fill
 
@@ -967,11 +963,8 @@ class _MaskedUnaryOperation:
         masked_result._update_from(a)
         return masked_result
 
-    def __str__(self):
-        return "Masked version of %s. [Invalid values are masked]" % str(self.f)
 
-
-class _MaskedBinaryOperation:
+class _MaskedBinaryOperation(_MaskedUFunc):
     """
     Define masked version of binary operations, where invalid
     values are pre-masked.
@@ -998,11 +991,9 @@ class _MaskedBinaryOperation:
         abfunc(x, filly) = x for all x to enable reduce.
 
         """
-        self.f = mbfunc
+        super(_MaskedBinaryOperation, self).__init__(mbfunc)
         self.fillx = fillx
         self.filly = filly
-        self.__doc__ = getattr(mbfunc, "__doc__", str(mbfunc))
-        self.__name__ = getattr(mbfunc, "__name__", str(mbfunc))
         ufunc_domain[mbfunc] = None
         ufunc_fills[mbfunc] = (fillx, filly)
 
@@ -1041,7 +1032,7 @@ class _MaskedBinaryOperation:
             # any errors, just abort; impossible to guarantee masked values
             try:
                 np.copyto(result, da, casting='unsafe', where=m)
-            except:
+            except Exception:
                 pass
 
         # Transforms to a (subclass of) MaskedArray
@@ -1119,11 +1110,9 @@ class _MaskedBinaryOperation:
         masked_result = result.view(tclass)
         return masked_result
 
-    def __str__(self):
-        return "Masked version of " + str(self.f)
 
 
-class _DomainedBinaryOperation:
+class _DomainedBinaryOperation(_MaskedUFunc):
     """
     Define binary operations that have a domain, like divide.
 
@@ -1148,12 +1137,10 @@ class _DomainedBinaryOperation:
         """abfunc(fillx, filly) must be defined.
            abfunc(x, filly) = x for all x to enable reduce.
         """
-        self.f = dbfunc
+        super(_DomainedBinaryOperation, self).__init__(dbfunc)
         self.domain = domain
         self.fillx = fillx
         self.filly = filly
-        self.__doc__ = getattr(dbfunc, "__doc__", str(dbfunc))
-        self.__name__ = getattr(dbfunc, "__name__", str(dbfunc))
         ufunc_domain[dbfunc] = domain
         ufunc_fills[dbfunc] = (fillx, filly)
 
@@ -1187,7 +1174,7 @@ class _DomainedBinaryOperation:
             # only add back if it can be cast safely
             if np.can_cast(masked_da.dtype, result.dtype, casting='safe'):
                 result += masked_da
-        except:
+        except Exception:
             pass
 
         # Transforms to a (subclass of) MaskedArray
@@ -1198,9 +1185,6 @@ class _DomainedBinaryOperation:
         elif isinstance(b, MaskedArray):
             masked_result._update_from(b)
         return masked_result
-
-    def __str__(self):
-        return "Masked version of " + str(self.f)
 
 
 # Unary ufuncs
@@ -1302,7 +1286,7 @@ def _replace_dtype_fields_recursive(dtype, primitive_dtype):
             descr.append((name, _recurse(field[0], primitive_dtype)))
         new_dtype = np.dtype(descr)
 
-    # Is this some kind of composite a la (np.float,2)
+    # Is this some kind of composite a la (float,2)
     elif dtype.subdtype:
         descr = list(dtype.subdtype)
         descr[0] = _recurse(dtype.subdtype[0], primitive_dtype)
@@ -1354,7 +1338,7 @@ def make_mask_descr(ndtype):
     --------
     >>> import numpy.ma as ma
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, np.int]})
+                          'formats':[np.float32, int]})
     >>> dtype
     dtype([('foo', '<f4'), ('bar', '<i4')])
     >>> ma.make_mask_descr(dtype)
@@ -1535,7 +1519,7 @@ def is_mask(m):
     Arrays with complex dtypes don't return True.
 
     >>> dtype = np.dtype({'names':['monty', 'pithon'],
-                          'formats':[np.bool, np.bool]})
+                          'formats':[bool, bool]})
     >>> dtype
     dtype([('monty', '|b1'), ('pithon', '|b1')])
     >>> m = np.array([(True, False), (False, True), (True, False)],
@@ -1614,7 +1598,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> arr
     [(1, 0), (0, 1), (1, 0), (1, 0)]
     >>> dtype = np.dtype({'names':['man', 'mouse'],
-                          'formats':[np.int, np.int]})
+                          'formats':[int, int]})
     >>> arr = np.array(arr, dtype=dtype)
     >>> arr
     array([(1, 0), (0, 1), (1, 0), (1, 0)],
@@ -1673,7 +1657,7 @@ def make_mask_none(newshape, dtype=None):
     Defining a more complex dtype.
 
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, np.int]})
+                          'formats':[np.float32, int]})
     >>> dtype
     dtype([('foo', '<f4'), ('bar', '<i4')])
     >>> ma.make_mask_none((3,), dtype=dtype)
@@ -1771,7 +1755,7 @@ def flatten_mask(mask):
 
     Examples
     --------
-    >>> mask = np.array([0, 0, 1], dtype=np.bool)
+    >>> mask = np.array([0, 0, 1], dtype=bool)
     >>> flatten_mask(mask)
     array([False, False,  True], dtype=bool)
 
@@ -1927,7 +1911,7 @@ def masked_where(condition, a, copy=True):
 
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
-        raise IndexError("Inconsistant shape between the condition and the input"
+        raise IndexError("Inconsistent shape between the condition and the input"
                          " (got %s and %s)" % (cshape, ashape))
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
@@ -2339,7 +2323,7 @@ def masked_invalid(a, copy=True):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=np.float)
+    >>> a = np.arange(5, dtype=float)
     >>> a[2] = np.NaN
     >>> a[3] = np.PINF
     >>> a
@@ -2370,7 +2354,7 @@ def masked_invalid(a, copy=True):
 ###############################################################################
 
 
-class _MaskedPrintOption:
+class _MaskedPrintOption(object):
     """
     Handle the string used to represent missing data in a masked array.
 
@@ -2571,14 +2555,10 @@ def _arraymethod(funcname, onmask=True):
         result = result.view(type(self))
         result._update_from(self)
         mask = self._mask
-        if result.ndim:
-            if not onmask:
-                result.__setmask__(mask)
-            elif mask is not nomask:
-                result.__setmask__(getattr(mask, funcname)(*args, **params))
-        else:
-            if mask.ndim and (not mask.dtype.names and mask.all()):
-                return masked
+        if not onmask:
+            result.__setmask__(mask)
+        elif mask is not nomask:
+            result.__setmask__(getattr(mask, funcname)(*args, **params))
         return result
     methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
     if methdoc is not None:
@@ -2908,7 +2888,7 @@ class MaskedArray(ndarray):
         Copies some attributes of obj to self.
 
         """
-        if obj is not None and isinstance(obj, ndarray):
+        if isinstance(obj, ndarray):
             _baseclass = type(obj)
         else:
             _baseclass = ndarray
@@ -3164,16 +3144,16 @@ class MaskedArray(ndarray):
 
         """
         newtype = np.dtype(newtype)
+        newmasktype = make_mask_descr(newtype)
+
         output = self._data.astype(newtype).view(type(self))
         output._update_from(self)
-        names = output.dtype.names
-        if names is None:
-            output._mask = self._mask.astype(bool)
+
+        if self._mask is nomask:
+            output._mask = nomask
         else:
-            if self._mask is nomask:
-                output._mask = nomask
-            else:
-                output._mask = self._mask.astype([(n, bool) for n in names])
+            output._mask = self._mask.astype(newmasktype)
+
         # Don't check _fill_value if it's None, that'll speed things up
         if self._fill_value is not None:
             output._fill_value = _check_fill_value(self._fill_value, newtype)
@@ -3330,8 +3310,6 @@ class MaskedArray(ndarray):
                 _mask[indx] = tuple([True] * nbfields)
             else:
                 _mask[indx] = True
-            if not self._isfield:
-                self._sharedmask = False
             return
 
         # Get the _data part of the new value
@@ -3347,27 +3325,6 @@ class MaskedArray(ndarray):
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
                 _mask[indx] = mval
         elif not self._hardmask:
-            # Unshare the mask if necessary to avoid propagation
-            # We want to remove the unshare logic from this place in the
-            # future. Note that _sharedmask has lots of false positives.
-            if not self._isfield:
-                notthree = getattr(sys, 'getrefcount', False) and (sys.getrefcount(_mask) != 3)
-                if self._sharedmask and not (
-                        # If no one else holds a reference (we have two
-                        # references (_mask and self._mask) -- add one for
-                        # getrefcount) and the array owns its own data
-                        # copying the mask should do nothing.
-                        (not notthree) and _mask.flags.owndata):
-                    # 2016.01.15 -- v1.11.0
-                    warnings.warn(
-                       "setting an item on a masked array which has a shared "
-                       "mask will not copy the mask and also change the "
-                       "original mask array in the future.\n"
-                       "Check the NumPy 1.11 release notes for more "
-                       "information.",
-                       MaskedArrayFutureWarning, stacklevel=2)
-                self.unshare_mask()
-                _mask = self._mask
             # Set the data, then the mask
             _data[indx] = dval
             _mask[indx] = mval
@@ -3995,6 +3952,7 @@ class MaskedArray(ndarray):
                 mask = np.broadcast_to(mask, check.shape).copy()
 
         check = check.view(type(self))
+        check._update_from(self)
         check._mask = mask
         return check
 
@@ -4448,8 +4406,6 @@ class MaskedArray(ndarray):
 
         return (~m).sum(axis=axis, dtype=np.intp, **kwargs)
 
-    flatten = _arraymethod('flatten')
-
     def ravel(self, order='C'):
         """
         Returns a 1D version of self, as a view.
@@ -4494,8 +4450,6 @@ class MaskedArray(ndarray):
         else:
             r._mask = nomask
         return r
-
-    repeat = _arraymethod('repeat')
 
 
     def reshape(self, *s, **kwargs):
@@ -4628,11 +4582,11 @@ class MaskedArray(ndarray):
 
         self._data.put(indices, values, mode=mode)
 
-        # short circut if neither self nor values are masked
+        # short circuit if neither self nor values are masked
         if self._mask is nomask and getmask(values) is nomask:
             return
 
-        m = getmaskarray(self).copy()
+        m = getmaskarray(self)
 
         if getmask(values) is nomask:
             m.put(indices, False, mode=mode)
@@ -5285,7 +5239,7 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=None, kind='quicksort', order=None,
+    def argsort(self, axis=np._NoValue, kind='quicksort', order=None,
                 endwith=True, fill_value=None):
         """
         Return an ndarray of indices that sort the array along the
@@ -5295,8 +5249,15 @@ class MaskedArray(ndarray):
         Parameters
         ----------
         axis : int, optional
-            Axis along which to sort.  The default is -1 (last axis).
-            If None, the flattened array is used.
+            Axis along which to sort. If None, the default, the flattened array
+            is used.
+
+            ..  versionchanged:: 1.13.0
+                Previously, the default was documented to be -1, but that was
+                in error. At some future date, the default will change to -1, as
+                originally intended.
+                Until then, the axis should be given explicitly when
+                ``arr.ndim > 1``, to avoid a FutureWarning.
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm.
         order : list, optional
@@ -5340,6 +5301,10 @@ class MaskedArray(ndarray):
         array([1, 0, 2])
 
         """
+
+        # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
+        if axis is np._NoValue:
+            axis = _deprecate_argsort_axis(self)
 
         if fill_value is None:
             if endwith:
@@ -5583,6 +5548,14 @@ class MaskedArray(ndarray):
         """
         Return the array minimum along the specified axis.
 
+        .. deprecated:: 1.13.0
+           This function is identical to both:
+
+            * ``self.min(keepdims=True, axis=axis).squeeze(axis=axis)``
+            * ``np.ma.minimum.reduce(self, axis=axis)``
+
+           Typically though, ``self.min(axis=axis)`` is sufficient.
+
         Parameters
         ----------
         axis : int, optional
@@ -5612,11 +5585,22 @@ class MaskedArray(ndarray):
         >>> print(x.mini(axis=1))
         [0 2 4]
 
+        There is a small difference between `mini` and `min`:
+
+        >>> x[:,1].mini(axis=0)
+        masked_array(data = --,
+                     mask = True,
+               fill_value = 999999)
+        >>> x[:,1].min(axis=0)
+        masked
         """
-        if axis is None:
-            return minimum(self)
-        else:
-            return minimum.reduce(self, axis)
+
+        # 2016-04-13, 1.13.0, gh-8764
+        warnings.warn(
+            "`mini` is deprecated; use the `min` method or "
+            "`np.ma.minimum.reduce instead.",
+            DeprecationWarning, stacklevel=2)
+        return minimum.reduce(self, axis)
 
     def max(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -5753,14 +5737,15 @@ class MaskedArray(ndarray):
         return out[()]
 
     # Array methods
-    copy = _arraymethod('copy')
-    diagonal = _arraymethod('diagonal')
-    transpose = _arraymethod('transpose')
-    T = property(fget=lambda self: self.transpose())
-    swapaxes = _arraymethod('swapaxes')
     clip = _arraymethod('clip', onmask=False)
     copy = _arraymethod('copy')
+    diagonal = _arraymethod('diagonal')
+    flatten = _arraymethod('flatten')
+    repeat = _arraymethod('repeat')
     squeeze = _arraymethod('squeeze')
+    swapaxes = _arraymethod('swapaxes')
+    T = property(fget=lambda self: self.transpose())
+    transpose = _arraymethod('transpose')
 
     def tolist(self, fill_value=None):
         """
@@ -5832,7 +5817,7 @@ class MaskedArray(ndarray):
         Parameters
         ----------
         fill_value : scalar, optional
-            Value used to fill in the masked values. Deafult is None, in which
+            Value used to fill in the masked values. Default is None, in which
             case `MaskedArray.fill_value` is used.
         order : {'C','F','A'}, optional
             Order of the data item in the copy. Default is 'C'.
@@ -6301,7 +6286,7 @@ def is_masked(x):
 ##############################################################################
 
 
-class _extrema_operation(object):
+class _extrema_operation(_MaskedUFunc):
     """
     Generic class for maximum/minimum functions.
 
@@ -6310,31 +6295,50 @@ class _extrema_operation(object):
       `_minimum_operation`.
 
     """
+    def __init__(self, ufunc, compare, fill_value):
+        super(_extrema_operation, self).__init__(ufunc)
+        self.compare = compare
+        self.fill_value_func = fill_value
 
     def __call__(self, a, b=None):
         "Executes the call behavior."
         if b is None:
+            # 2016-04-13, 1.13.0
+            warnings.warn(
+                "Single-argument form of np.ma.{0} is deprecated. Use "
+                "np.ma.{0}.reduce instead.".format(self.__name__),
+                DeprecationWarning, stacklevel=2)
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
 
-    def reduce(self, target, axis=None):
+    def reduce(self, target, axis=np._NoValue):
         "Reduce target along the given axis."
         target = narray(target, copy=False, subok=True)
         m = getmask(target)
-        if axis is not None:
-            kargs = {'axis': axis}
+
+        if axis is np._NoValue and target.ndim > 1:
+            # 2017-05-06, Numpy 1.13.0: warn on axis default
+            warnings.warn(
+                "In the future the default for ma.{0}.reduce will be axis=0, "
+                "not the current None, to match np.{0}.reduce. "
+                "Explicitly pass 0 or None to silence this warning.".format(
+                    self.__name__
+                ),
+                MaskedArrayFutureWarning, stacklevel=2)
+            axis = None
+
+        if axis is not np._NoValue:
+            kwargs = dict(axis=axis)
         else:
-            kargs = {}
-            target = target.ravel()
-            if not (m is nomask):
-                m = m.ravel()
+            kwargs = dict()
+
         if m is nomask:
-            t = self.ufunc.reduce(target, **kargs)
+            t = self.f.reduce(target, **kwargs)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
-            t = self.ufunc.reduce(target, **kargs)
-            m = umath.logical_and.reduce(m, **kargs)
+            t = self.f.reduce(target, **kwargs)
+            m = umath.logical_and.reduce(m, **kwargs)
             if hasattr(t, '_mask'):
                 t._mask = m
             elif m:
@@ -6351,39 +6355,11 @@ class _extrema_operation(object):
             ma = getmaskarray(a)
             mb = getmaskarray(b)
             m = logical_or.outer(ma, mb)
-        result = self.ufunc.outer(filled(a), filled(b))
+        result = self.f.outer(filled(a), filled(b))
         if not isinstance(result, MaskedArray):
             result = result.view(MaskedArray)
         result._mask = m
         return result
-
-
-class _minimum_operation(_extrema_operation):
-
-    "Object to calculate minima"
-
-    def __init__(self):
-        """minimum(a, b) or minimum(a)
-In one argument case, returns the scalar minimum.
-        """
-        self.ufunc = umath.minimum
-        self.afunc = amin
-        self.compare = less
-        self.fill_value_func = minimum_fill_value
-
-
-class _maximum_operation(_extrema_operation):
-
-    "Object to calculate maxima"
-
-    def __init__(self):
-        """maximum(a, b) or maximum(a)
-           In one argument case returns the scalar maximum.
-        """
-        self.ufunc = umath.maximum
-        self.afunc = amax
-        self.compare = greater
-        self.fill_value_func = maximum_fill_value
 
 def min(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -6429,7 +6405,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod:
+class _frommethod(object):
     """
     Define functions from existing MaskedArray methods.
 
@@ -6480,9 +6456,9 @@ copy = _frommethod('copy')
 diagonal = _frommethod('diagonal')
 harden_mask = _frommethod('harden_mask')
 ids = _frommethod('ids')
-maximum = _maximum_operation()
+maximum = _extrema_operation(umath.maximum, greater, maximum_fill_value)
 mean = _frommethod('mean')
-minimum = _minimum_operation()
+minimum = _extrema_operation(umath.minimum, less, minimum_fill_value)
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
@@ -6560,9 +6536,13 @@ def power(a, b, third=None):
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
-def argsort(a, axis=None, kind='quicksort', order=None, endwith=True, fill_value=None):
+def argsort(a, axis=np._NoValue, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
+
+    # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
+    if axis is np._NoValue:
+        axis = _deprecate_argsort_axis(a)
 
     if isinstance(a, MaskedArray):
         return a.argsort(axis=axis, kind=kind, order=order,
@@ -7241,7 +7221,7 @@ def mask_rowcols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -7422,8 +7402,8 @@ def _convolve_or_correlate(f, a, v, mode, propagate_mask):
     if propagate_mask:
         # results which are contributed to by either item in any pair being invalid
         mask = (
-            f(getmaskarray(a), np.ones(np.shape(v), dtype=np.bool), mode=mode)
-          | f(np.ones(np.shape(a), dtype=np.bool), getmaskarray(v), mode=mode)
+            f(getmaskarray(a), np.ones(np.shape(v), dtype=bool), mode=mode)
+          | f(np.ones(np.shape(a), dtype=bool), getmaskarray(v), mode=mode)
         )
         data = f(getdata(a), getdata(v), mode=mode)
     else:
@@ -7903,7 +7883,7 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma:
+class _convert2ma(object):
 
     """
     Convert functions from numpy to numpy.ma.

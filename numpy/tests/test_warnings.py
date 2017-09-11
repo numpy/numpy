@@ -1,6 +1,6 @@
 """
-Tests which scan for certain occurances in the code, they may not find
-all of these occurances but should catch almost all.
+Tests which scan for certain occurrences in the code, they may not find
+all of these occurrences but should catch almost all.
 """
 
 
@@ -13,9 +13,7 @@ if sys.version_info >= (3, 4):
     import ast
     import tokenize
     import numpy
-    from numpy.testing import run_module_suite
-    from numpy.testing.decorators import slow
-
+    from numpy.testing import run_module_suite, dec
 
     class ParseCall(ast.NodeVisitor):
         def __init__(self):
@@ -63,7 +61,7 @@ if sys.version_info >= (3, 4):
                     "{} on line {}".format(self.__filename, node.lineno))
 
 
-    @slow
+    @dec.slow
     def test_warning_calls():
         # combined "ignore" and stacklevel error
         base = Path(numpy.__file__).parent

@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy import array
 from numpy.testing import run_module_suite, assert_, dec
-import util
+from . import util
 
 
 class TestReturnCharacter(util.F2PyTest):

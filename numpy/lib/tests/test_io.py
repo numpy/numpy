@@ -17,9 +17,9 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    TestCase, run_module_suite, assert_warns, assert_,
-    assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, dec, IS_PYPY, suppress_warnings
+    run_module_suite, assert_warns, assert_, assert_raises_regex,
+    assert_raises, assert_allclose, assert_array_equal, temppath, dec, IS_PYPY,
+    suppress_warnings
 )
 
 
@@ -165,7 +165,7 @@ class RoundtripTest(object):
             self.check_roundtrips(a)
 
 
-class TestSaveLoad(RoundtripTest, TestCase):
+class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
         assert_equal(self.arr[0], self.arr_reloaded)
@@ -173,7 +173,7 @@ class TestSaveLoad(RoundtripTest, TestCase):
         assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
 
 
-class TestSavezLoad(RoundtripTest, TestCase):
+class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
@@ -304,7 +304,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             assert_(fp.closed)
 
 
-class TestSaveTxt(TestCase):
+class TestSaveTxt(object):
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -373,7 +373,7 @@ class TestSaveTxt(TestCase):
         # Test the functionality of the header and footer keyword argument.
 
         c = BytesIO()
-        a = np.array([(1, 2), (3, 4)], dtype=np.int)
+        a = np.array([(1, 2), (3, 4)], dtype=int)
         test_header_footer = 'Test header / footer'
         # Test the header keyword argument
         np.savetxt(c, a, fmt='%1d', header=test_header_footer)
@@ -461,7 +461,7 @@ class TestSaveTxt(TestCase):
         assert_array_equal(a, b)
 
 
-class TestLoadTxt(TestCase):
+class TestLoadTxt(object):
     def test_record(self):
         c = TextIO()
         c.write('1 2\n3 4')
@@ -485,7 +485,7 @@ class TestLoadTxt(TestCase):
         c.write('1 2\n3 4')
 
         c.seek(0)
-        x = np.loadtxt(c, dtype=np.int)
+        x = np.loadtxt(c, dtype=int)
         a = np.array([[1, 2], [3, 4]], int)
         assert_array_equal(x, a)
 
@@ -721,7 +721,7 @@ class TestLoadTxt(TestCase):
         # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
-        ndtype = [('idx', int), ('code', np.object)]
+        ndtype = [('idx', int), ('code', object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.loadtxt(TextIO(data), delimiter=";", dtype=ndtype,
@@ -751,11 +751,11 @@ class TestLoadTxt(TestCase):
         # IEEE doubles and floats only, otherwise the float32
         # conversion may fail.
         tgt = np.logspace(-10, 10, 5).astype(np.float32)
-        tgt = np.hstack((tgt, -tgt)).astype(np.float)
+        tgt = np.hstack((tgt, -tgt)).astype(float)
         inp = '\n'.join(map(float.hex, tgt))
         c = TextIO()
         c.write(inp)
-        for dt in [np.float, np.float32]:
+        for dt in [float, np.float32]:
             c.seek(0)
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
@@ -765,7 +765,7 @@ class TestLoadTxt(TestCase):
         c = TextIO()
         c.write("%s %s" % tgt)
         c.seek(0)
-        res = np.loadtxt(c, dtype=np.complex)
+        res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
 
     def test_universal_newline(self):
@@ -864,7 +864,7 @@ class TestLoadTxt(TestCase):
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
 
-class Testfromregex(TestCase):
+class Testfromregex(object):
     # np.fromregex expects files opened in binary mode.
     def test_record(self):
         c = TextIO()
@@ -902,7 +902,7 @@ class Testfromregex(TestCase):
 #####--------------------------------------------------------------------------
 
 
-class TestFromTxt(TestCase):
+class TestFromTxt(object):
     #
     def test_record(self):
         # Test w/ explicit dtype
@@ -1190,7 +1190,7 @@ M   33  21.99
         # Test using an explicit dtype with an object
         data = """ 1; 2001-01-01
                    2; 2002-01-31 """
-        ndtype = [('idx', int), ('code', np.object)]
+        ndtype = [('idx', int), ('code', object)]
         func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.genfromtxt(TextIO(data), delimiter=";", dtype=ndtype,
@@ -1200,7 +1200,7 @@ M   33  21.99
             dtype=ndtype)
         assert_equal(test, control)
 
-        ndtype = [('nest', [('idx', int), ('code', np.object)])]
+        ndtype = [('nest', [('idx', int), ('code', object)])]
         try:
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
@@ -1337,7 +1337,7 @@ M   33  21.99
         test = np.mafromtxt(data, dtype=None, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         #
@@ -1345,7 +1345,7 @@ M   33  21.99
         test = np.mafromtxt(data, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.float), ('B', np.float)])
+                           dtype=[('A', float), ('B', float)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
@@ -1414,7 +1414,7 @@ M   33  21.99
                             missing_values='-999.0', names=True,)
         control = ma.array([(0, 1.5), (2, -1.)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.float)])
+                           dtype=[('A', int), ('B', float)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
 
@@ -1682,15 +1682,15 @@ M   33  21.99
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
         test = np.recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', np.int), ('B', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+                           dtype=[('A', int), ('B', int)])
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
         test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
@@ -1701,15 +1701,15 @@ M   33  21.99
         kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
         test = np.recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', np.int), ('B', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+                           dtype=[('A', int), ('B', int)])
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
         test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
-                           dtype=[('A', np.int), ('B', np.int)])
+                           dtype=[('A', int), ('B', int)])
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
@@ -1717,16 +1717,16 @@ M   33  21.99
         data = TextIO('A,B\n0,1\n2,3')
         test = np.recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
-                           dtype=[('a', np.int), ('b', np.int)])
-        self.assertTrue(isinstance(test, np.recarray))
+                           dtype=[('a', int), ('b', int)])
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,3')
-        dtype = [('a', np.int), ('b', np.float)]
+        dtype = [('a', int), ('b', float)]
         test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
-        self.assertTrue(isinstance(test, np.recarray))
+        assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
     def test_max_rows(self):
@@ -1827,7 +1827,7 @@ M   33  21.99
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
-        assert_(test.dtype['f0'] == np.float)
+        assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
         assert_(test.dtype['f2'] == np.integer)
 
@@ -1836,7 +1836,7 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
-class TestPathUsage(TestCase):
+class TestPathUsage(object):
     # Test that pathlib.Path can be used
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
     def test_loadtxt(self):
@@ -1919,8 +1919,8 @@ class TestPathUsage(TestCase):
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
             test = np.recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', np.int), ('B', np.int)])
-            self.assertTrue(isinstance(test, np.recarray))
+                               dtype=[('A', int), ('B', int)])
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
     @np.testing.dec.skipif(Path is None, "No pathlib.Path")
@@ -1933,8 +1933,8 @@ class TestPathUsage(TestCase):
             kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
             test = np.recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', np.int), ('B', np.int)])
-            self.assertTrue(isinstance(test, np.recarray))
+                               dtype=[('A', int), ('B', int)])
+            assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
 

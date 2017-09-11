@@ -21,6 +21,7 @@
 #include "shape.h"
 
 #include "methods.h"
+#include "alloc.h"
 
 
 /* NpyArg_ParseKeywords
@@ -201,11 +202,11 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
     }
     ret = PyArray_Newshape(self, &newshape, order);
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     return ret;
 
  fail:
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     return NULL;
 }
 
@@ -517,12 +518,13 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
 
 
 static PyObject *
-array_byteswap(PyArrayObject *self, PyObject *args)
+array_byteswap(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     npy_bool inplace = NPY_FALSE;
+    static char *kwlist[] = {"inplace", NULL};
 
-    if (!PyArg_ParseTuple(args, "|O&:byteswap",
-                            PyArray_BoolConverter, &inplace)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:byteswap", kwlist,
+                                     PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
     return PyArray_Byteswap(self, inplace);
@@ -637,7 +639,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         npy_intp value, size = PyArray_SIZE(self);
 
         value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (value == -1 && PyErr_Occurred()) {
+        if (error_converting(value)) {
             return NULL;
         }
 
@@ -657,7 +659,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
 
         for (idim = 0; idim < ndim; ++idim) {
             value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
-            if (value == -1 && PyErr_Occurred()) {
+            if (error_converting(value)) {
                 return NULL;
             }
             multi_index[idim] = value;
@@ -714,7 +716,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         npy_intp value, size = PyArray_SIZE(self);
 
         value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (value == -1 && PyErr_Occurred()) {
+        if (error_converting(value)) {
             return NULL;
         }
 
@@ -734,7 +736,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
 
         for (idim = 0; idim < ndim; ++idim) {
             value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
-            if (value == -1 && PyErr_Occurred()) {
+            if (error_converting(value)) {
                 return NULL;
             }
             multi_index[idim] = value;
@@ -971,20 +973,18 @@ array_getarray(PyArrayObject *self, PyObject *args)
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *new;
-        PyTypeObject *subtype = &PyArray_Type;
-
-        if (!PyType_IsSubtype(Py_TYPE(self), &PyArray_Type)) {
-            subtype = &PyArray_Type;
-        }
 
         Py_INCREF(PyArray_DESCR(self));
-        new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                   PyArray_DESCR(self),
-                                   PyArray_NDIM(self),
-                                   PyArray_DIMS(self),
-                                   PyArray_STRIDES(self),
-                                   PyArray_DATA(self),
-                                   PyArray_FLAGS(self), NULL);
+        new = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type,
+                PyArray_DESCR(self),
+                PyArray_NDIM(self),
+                PyArray_DIMS(self),
+                PyArray_STRIDES(self),
+                PyArray_DATA(self),
+                PyArray_FLAGS(self),
+                NULL
+        );
         if (new == NULL) {
             return NULL;
         }
@@ -1012,6 +1012,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
+    int num_override_args;
 
     if (PyTuple_Size(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
@@ -1023,7 +1024,11 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    if (PyUFunc_WithOverride(normal_args, kwds, NULL)) {
+    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL, NULL);
+    if (num_override_args == -1) {
+        return NULL;
+    }
+    if (num_override_args) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
@@ -1065,7 +1070,7 @@ array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 /* Separate from array_copy to make __copy__ preserve Fortran contiguity. */
 static PyObject *
-array_copy_keeporder(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_copy_keeporder(PyArrayObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, ":__copy__")) {
         return NULL;
@@ -1106,7 +1111,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER);
-    PyDimMem_FREE(newshape.ptr);
+    npy_free_cache_dim_obj(newshape);
     if (ret == NULL) {
         return NULL;
     }
@@ -1774,7 +1779,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
     if (PyArray_DIMS(self) != NULL) {
-        PyDimMem_FREE(PyArray_DIMS(self));
+        npy_free_cache_dim_array(self);
         fa->dimensions = NULL;
     }
 
@@ -1783,7 +1788,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     fa->nd = nd;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(3*nd);
+        fa->dimensions = npy_alloc_cache_dim(3*nd);
         if (fa->dimensions == NULL) {
             return PyErr_NoMemory();
         }
@@ -1797,7 +1802,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
-        int swap=!PyArray_ISNOTSWAPPED(self);
+        int swap = PyArray_ISBYTESWAPPED(self);
         fa->data = datastr;
 #ifndef NPY_PY3K
         /* Check that the string is not interned */
@@ -1811,7 +1816,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             fa->data = PyDataMem_NEW(num);
             if (PyArray_DATA(self) == NULL) {
                 fa->nd = 0;
-                PyDimMem_FREE(PyArray_DIMS(self));
+                npy_free_cache_dim_array(self);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -1855,7 +1860,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (PyArray_DATA(self) == NULL) {
             fa->nd = 0;
             fa->data = PyDataMem_NEW(PyArray_DESCR(self)->elsize);
-            PyDimMem_FREE(PyArray_DIMS(self));
+            npy_free_cache_dim_array(self);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -1997,7 +2002,7 @@ array_transpose(PyArrayObject *self, PyObject *args)
             return NULL;
         }
         ret = PyArray_Transpose(self, &permute);
-        PyDimMem_FREE(permute.ptr);
+        npy_free_cache_dim_obj(permute);
     }
 
     return ret;
@@ -2527,7 +2532,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /*
      * While we could put these in `tp_sequence`, its' easier to define them
      * in terms of PyObject* arguments.
-     * 
+     *
      * We must provide these for compatibility with code that calls them
      * directly. They are already deprecated at a language level in python 2.7,
      * but are removed outright in python 3.
@@ -2564,7 +2569,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)array_byteswap,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"choose",
         (PyCFunction)array_choose,
         METH_VARARGS | METH_KEYWORDS, NULL},

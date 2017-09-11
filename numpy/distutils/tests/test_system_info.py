@@ -7,8 +7,9 @@ from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
-from numpy.testing.decorators import skipif
+from numpy.testing import (
+    run_module_suite, assert_, assert_equal, dec
+    )
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
@@ -20,9 +21,9 @@ def get_class(name, notfound_action=1):
       1 - display warning message
       2 - raise error
     """
-    cl = {'temp1': TestTemp1,
-          'temp2': TestTemp2
-          }.get(name.lower(), test_system_info)
+    cl = {'temp1': Temp1Info,
+          'temp2': Temp2Info
+          }.get(name.lower(), _system_info)
     return cl()
 
 simple_site = """
@@ -83,7 +84,7 @@ def have_compiler():
 HAVE_COMPILER = have_compiler()
 
 
-class test_system_info(system_info):
+class _system_info(system_info):
 
     def __init__(self,
                  default_lib_dirs=default_lib_dirs,
@@ -110,17 +111,19 @@ class test_system_info(system_info):
         return info
 
 
-class TestTemp1(test_system_info):
+class Temp1Info(_system_info):
+    """For testing purposes"""
     section = 'temp1'
 
 
-class TestTemp2(test_system_info):
+class Temp2Info(_system_info):
+    """For testing purposes"""
     section = 'temp2'
 
 
-class TestSystemInfoReading(TestCase):
+class TestSystemInfoReading(object):
 
-    def setUp(self):
+    def setup(self):
         """ Create the libraries """
         # Create 2 sources and 2 libraries
         self._dir1 = mkdtemp()
@@ -162,15 +165,15 @@ class TestSystemInfoReading(TestCase):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)
-        except:
+        except Exception:
             pass
         try:
             shutil.rmtree(self._dir2)
-        except:
+        except Exception:
             pass
         try:
             os.remove(self._sitecfg)
-        except:
+        except Exception:
             pass
 
     def test_all(self):
@@ -199,7 +202,7 @@ class TestSystemInfoReading(TestCase):
         extra = tsi.calc_extra_info()
         assert_equal(extra['extra_link_args'], ['-Wl,-rpath=' + self._lib2])
 
-    @skipif(not HAVE_COMPILER)
+    @dec.skipif(not HAVE_COMPILER)
     def test_compile1(self):
         # Compile source and link the first source
         c = ccompiler.new_compiler()
@@ -215,8 +218,8 @@ class TestSystemInfoReading(TestCase):
         finally:
             os.chdir(previousDir)
 
-    @skipif(not HAVE_COMPILER)
-    @skipif('msvc' in repr(ccompiler.new_compiler()))
+    @dec.skipif(not HAVE_COMPILER)
+    @dec.skipif('msvc' in repr(ccompiler.new_compiler()))
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2

@@ -1,5 +1,6 @@
+=========================
 NumPy 1.6.2 Release Notes
-*************************
+=========================
 
 This is a bugfix release in the 1.6.x series.  Due to the delay of the NumPy
 1.7.0 release, this release contains far more fixes than a regular NumPy bugfix
@@ -9,7 +10,7 @@ Issues fixed
 ============
 
 ``numpy.core``
-~~~~~~~~~~~~~~
+--------------
 
 * #2063: make unique() return consistent index
 * #1138: allow creating arrays from empty buffers or empty slices
@@ -31,7 +32,7 @@ Issues fixed
 
 
 ``numpy.lib``
-~~~~~~~~~~~~~
+-------------
 
 * #2048: break reference cycle in NpzFile
 * #1573: savetxt() now handles complex arrays
@@ -44,7 +45,7 @@ Issues fixed
 
 
 ``numpy.distutils``
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * #1261: change compile flag on AIX from -O5 to -O3
 * #1377: update HP compiler flags
@@ -60,7 +61,7 @@ Issues fixed
 
 
 ``numpy.random``
-~~~~~~~~~~~~~~~~
+----------------
 
 * BUG: Use npy_intp instead of long in mtrand
 
@@ -68,7 +69,7 @@ Changes
 =======
 
 ``numpy.f2py``
-~~~~~~~~~~~~~~
+--------------
 
 * ENH: Introduce new options extra_f77_compiler_args and extra_f90_compiler_args
 * BLD: Improve reporting of fcompiler value
@@ -76,7 +77,7 @@ Changes
 
 
 ``numpy.poly``
-~~~~~~~~~~~~~~
+--------------
 
 * ENH: Add some tests for polynomial printing
 * ENH: Add companion matrix functions

@@ -10,6 +10,8 @@
 #include "npy_config.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
+#include "alloc.h"
+#include "common.h"
 
 
 /*
@@ -579,7 +581,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         lval = PyFloat_AsDouble(left);
-        if ((lval == -1) && PyErr_Occurred()) {
+        if (error_converting(lval)) {
             goto fail;
         }
     }
@@ -588,7 +590,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         rval = PyFloat_AsDouble(right);
-        if ((rval == -1) && PyErr_Occurred()) {
+        if (error_converting(rval)) {
             goto fail;
         }
     }
@@ -735,11 +737,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         lval.real = PyComplex_RealAsDouble(left);
-        if ((lval.real == -1) && PyErr_Occurred()) {
+        if (error_converting(lval.real)) {
             goto fail;
         }
         lval.imag = PyComplex_ImagAsDouble(left);
-        if ((lval.imag == -1) && PyErr_Occurred()) {
+        if (error_converting(lval.imag)) {
             goto fail;
         }
     }
@@ -749,11 +751,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         rval.real = PyComplex_RealAsDouble(right);
-        if ((rval.real == -1) && PyErr_Occurred()) {
+        if (error_converting(rval.real)) {
             goto fail;
         }
         rval.imag = PyComplex_ImagAsDouble(right);
-        if ((rval.imag == -1) && PyErr_Occurred()) {
+        if (error_converting(rval.imag)) {
             goto fail;
         }
     }
@@ -1091,7 +1093,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return PyArray_Return(ret);
 
@@ -1100,7 +1102,7 @@ fail:
     for (i = 0; i < dimensions.len; ++i) {
         Py_XDECREF(op[i]);
     }
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return NULL;
 }
@@ -1352,7 +1354,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     Py_DECREF(ret_arr);
     Py_XDECREF(indices);
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
 
     return ret_tuple;
@@ -1362,7 +1364,7 @@ fail:
     Py_XDECREF(ret_arr);
     Py_XDECREF(dtype);
     Py_XDECREF(indices);
-    PyDimMem_FREE(dimensions.ptr);
+    npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return NULL;
 }

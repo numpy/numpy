@@ -24,7 +24,7 @@ def test_zeros():
     assert_array_equal(numpy.matlib.zeros(2), np.matrix([[ 0.,  0.]]))
 
 def test_identity():
-    x = numpy.matlib.identity(2, dtype=np.int)
+    x = numpy.matlib.identity(2, dtype=int)
     assert_array_equal(x, np.matrix([[1, 0], [0, 1]]))
 
 def test_eye():

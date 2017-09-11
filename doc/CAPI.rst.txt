@@ -178,8 +178,7 @@ function calls still remain but they are loose wrappers around the
 
       - ``ENSURECOPY``: always copy the array. Returned arrays always
         have ``CONTIGUOUS``, ``ALIGNED``, and ``WRITEABLE`` set.
-      - ``ENSUREARRAY``: ensure the returned array is an ndarray (or a
-        bigndarray if ``op`` is one).
+      - ``ENSUREARRAY``: ensure the returned array is an ndarray.
       - ``FORCECAST``: cause a cast to occur regardless of whether or
         not it is safe.
 
@@ -194,7 +193,7 @@ function calls still remain but they are loose wrappers around the
 equivalent to ``PyArray_ContiguousFromObject(...)`` (which is still
 available), except it will return the subclass if op is already a
 subclass of the ndarray. The ``ContiguousFromObject`` version will
-always return an ndarray (or a bigndarray).
+always return an ndarray.
 
 Passing Data Type information to C-code
 =======================================

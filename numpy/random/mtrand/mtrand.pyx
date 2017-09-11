@@ -211,7 +211,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, np.float64)
@@ -536,7 +536,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, int)
@@ -964,20 +964,31 @@ cdef class RandomState:
             high = low
             low = 0
 
+        # '_randint_type' is defined in
+        # 'generate_randint_helpers.py'
         key = np.dtype(dtype).name
-        if not key in _randint_type:
+        if key not in _randint_type:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
+
         lowbnd, highbnd, randfunc = _randint_type[key]
 
-        if low < lowbnd:
+        # TODO: Do not cast these inputs to Python int
+        #
+        # This is a workaround until gh-8851 is resolved (bug in NumPy
+        # integer comparison and subtraction involving uint64 and non-
+        # uint64). Afterwards, remove these two lines.
+        ilow = int(low)
+        ihigh = int(high)
+
+        if ilow < lowbnd:
             raise ValueError("low is out of bounds for %s" % (key,))
-        if high > highbnd:
+        if ihigh > highbnd:
             raise ValueError("high is out of bounds for %s" % (key,))
-        if low >= high:
+        if ilow >= ihigh:
             raise ValueError("low >= high")
 
         with self.lock:
-            ret = randfunc(low, high - 1, size, self.state_address)
+            ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
             if size is None:
                 if dtype in (np.bool, np.int, np.long):
@@ -1458,7 +1469,7 @@ cdef class RandomState:
         4
         >>> type(np.random.random_integers(5))
         <type 'int'>
-        >>> np.random.random_integers(5, size=(3.,2.))
+        >>> np.random.random_integers(5, size=(3,2))
         array([[5, 4],
                [3, 3],
                [4, 5]])
@@ -1940,7 +1951,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> shape, scale = 2., 2. # mean=4, std=2*sqrt(2)
+        >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
         >>> s = np.random.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
@@ -1996,10 +2007,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : int or array_like of ints
-            Degrees of freedom in numerator. Should be greater than zero.
-        dfden : int or array_like of ints
-            Degrees of freedom in denominator. Should be greater than zero.
+        dfnum : float or array_like of floats
+            Degrees of freedom in numerator, should be > 0.
+        dfden : float or array_like of float
+            Degrees of freedom in denominator, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2098,12 +2109,16 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : int or array_like of ints
-            Parameter, should be > 1.
-        dfden : int or array_like of ints
-            Parameter, should be > 1.
+        dfnum : float or array_like of floats
+            Numerator degrees of freedom, should be > 0.
+
+            .. versionchanged:: 1.14.0
+               Earlier NumPy versions required dfnum > 1.
+        dfden : float or array_like of floats
+            Denominator degrees of freedom, should be > 0.
         nonc : float or array_like of floats
-            Parameter, should be >= 0.
+            Non-centrality parameter, the sum of the squares of the numerator
+            means, should be >= 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2164,8 +2179,8 @@ cdef class RandomState:
             fdfden = PyFloat_AsDouble(dfden)
             fnonc = PyFloat_AsDouble(nonc)
 
-            if fdfnum <= 1:
-                raise ValueError("dfnum <= 1")
+            if fdfnum <= 0:
+                raise ValueError("dfnum <= 0")
             if fdfden <= 0:
                 raise ValueError("dfden <= 0")
             if fnonc < 0:
@@ -2173,8 +2188,8 @@ cdef class RandomState:
             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,
                                   fdfnum, fdfden, fnonc, self.lock)
 
-        if np.any(np.less_equal(odfnum, 1.0)):
-            raise ValueError("dfnum <= 1")
+        if np.any(np.less_equal(odfnum, 0.0)):
+            raise ValueError("dfnum <= 0")
         if np.any(np.less_equal(odfden, 0.0)):
             raise ValueError("dfden <= 0")
         if np.any(np.less(ononc, 0.0)):
@@ -2195,8 +2210,8 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
-             Number of degrees of freedom.
+        df : float or array_like of floats
+             Number of degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2274,9 +2289,11 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
-            Degrees of freedom, should be > 0 as of NumPy 1.10.0,
-            should be > 1 for earlier versions.
+        df : float or array_like of floats
+            Degrees of freedom, should be > 0.
+
+            .. versionchanged:: 1.10.0
+               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, should be non-negative.
         size : int or tuple of ints, optional
@@ -2444,7 +2461,7 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
+        df : float or array_like of floats
             Degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -4655,6 +4672,11 @@ cdef class RandomState:
         samples : ndarray,
             The drawn samples, of shape (size, alpha.ndim).
 
+        Raises
+        -------
+        ValueError
+            If any value in alpha is less than or equal to zero
+
         Notes
         -----
         .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
@@ -4720,6 +4742,8 @@ cdef class RandomState:
 
         k           = len(alpha)
         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        if np.any(np.less_equal(alpha_arr, 0)):
+            raise ValueError('alpha <= 0')
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
         shape = _shape_from_size(size, k)

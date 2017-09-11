@@ -182,7 +182,7 @@ def as_series(alist, trim=True):
     else:
         try:
             dtype = np.common_type(*arrays)
-        except:
+        except Exception:
             raise ValueError("Coefficient arrays have no common type")
         ret = [np.array(a, copy=1, dtype=dtype) for a in arrays]
     return ret
@@ -236,7 +236,7 @@ def trimcoef(c, tol=0):
         raise ValueError("tol must be non-negative")
 
     [c] = as_series([c])
-    [ind] = np.where(np.abs(c) > tol)
+    [ind] = np.nonzero(np.abs(c) > tol)
     if len(ind) == 0:
         return c[:1]*0
     else:

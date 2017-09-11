@@ -75,7 +75,7 @@ def load_cache():
         f = open(CACHE_FILE, 'rb')
         try:
             cache = pickle.load(f)
-        except:
+        except Exception:
             cache = {}
         finally:
             f.close()

@@ -16,7 +16,7 @@ __all__ = [
     'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
     'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
     'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
+    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
@@ -215,7 +215,7 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction:
+class _fromnxfunction(object):
     """
     Defines a wrapper to adapt NumPy functions to masked arrays.
 
@@ -778,7 +778,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     # not necessary for scalar True/False masks
     try:
         np.copyto(low.mask, high.mask, where=odd)
-    except:
+    except Exception:
         pass
 
     if np.issubdtype(asorted.dtype, np.inexact):
@@ -794,7 +794,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def compress_nd(x, axis=None):
-    """Supress slices from multiple dimensions which contain masked values.
+    """Suppress slices from multiple dimensions which contain masked values.
 
     Parameters
     ----------
@@ -803,10 +803,10 @@ def compress_nd(x, axis=None):
         elements are masked, `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
-        Which dimensions to supress slices from can be configured with this
+        Which dimensions to suppress slices from can be configured with this
         parameter.
-        - If axis is a tuple of ints, those are the axes to supress slices from.
-        - If axis is an int, then that is the only axis to supress slices from.
+        - If axis is a tuple of ints, those are the axes to suppress slices from.
+        - If axis is an int, then that is the only axis to suppress slices from.
         - If axis is None, all axis are selected.
 
     Returns
@@ -939,7 +939,7 @@ def mask_rows(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -984,7 +984,7 @@ def mask_cols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1131,6 +1131,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
+
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
@@ -1138,8 +1139,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
+    We recommend using :func:`isin` instead of `in1d` for new code.
+
     See Also
     --------
+    isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
 
     Notes
@@ -1168,6 +1172,29 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx]
     else:
         return flag[indx][rev_idx]
+
+
+def isin(element, test_elements, assume_unique=False, invert=False):
+    """
+    Calculates `element in test_elements`, broadcasting over
+    `element` only.
+
+    The output is always a masked array of the same shape as `element`.
+    See `numpy.isin` for more details.
+
+    See Also
+    --------
+    in1d       : Flattened version of this function.
+    numpy.isin : Equivalent function for ndarrays.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    """
+    element = ma.asarray(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
 
 
 def union1d(ar1, ar2):
@@ -1434,60 +1461,19 @@ class MAxisConcatenator(AxisConcatenator):
     mr_class
 
     """
+    concatenate = staticmethod(concatenate)
 
-    def __init__(self, axis=0):
-        AxisConcatenator.__init__(self, axis, matrix=False)
+    @staticmethod
+    def makemat(arr):
+        return array(arr.data.view(np.matrix), mask=arr.mask)
 
     def __getitem__(self, key):
+        # matrix builder syntax, like 'a, b; c, d'
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
-        if not isinstance(key, tuple):
-            key = (key,)
-        objs = []
-        scalars = []
-        final_dtypedescr = None
-        for k in range(len(key)):
-            scalar = False
-            if isinstance(key[k], slice):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
-                if start is None:
-                    start = 0
-                if step is None:
-                    step = 1
-                if isinstance(step, complex):
-                    size = int(abs(step))
-                    newobj = np.linspace(start, stop, num=size)
-                else:
-                    newobj = np.arange(start, stop, step)
-            elif isinstance(key[k], str):
-                if (key[k] in 'rc'):
-                    self.matrix = True
-                    self.col = (key[k] == 'c')
-                    continue
-                try:
-                    self.axis = int(key[k])
-                    continue
-                except (ValueError, TypeError):
-                    raise ValueError("Unknown special directive")
-            elif type(key[k]) in np.ScalarType:
-                newobj = asarray([key[k]])
-                scalars.append(k)
-                scalar = True
-            else:
-                newobj = key[k]
-            objs.append(newobj)
-            if isinstance(newobj, ndarray) and not scalar:
-                if final_dtypedescr is None:
-                    final_dtypedescr = newobj.dtype
-                elif newobj.dtype > final_dtypedescr:
-                    final_dtypedescr = newobj.dtype
-        if final_dtypedescr is not None:
-            for k in scalars:
-                objs[k] = objs[k].astype(final_dtypedescr)
-        res = concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
+
+        return super(MAxisConcatenator, self).__getitem__(key)
+
 
 class mr_class(MAxisConcatenator):
     """

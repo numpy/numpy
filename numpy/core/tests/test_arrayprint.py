@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     TestCase, run_module_suite, assert_, assert_equal
+     run_module_suite, assert_, assert_equal
 )
 
 class TestArrayRepr(object):
@@ -52,8 +52,16 @@ class TestArrayRepr(object):
         assert_equal(repr(first),
             'array(array(array(..., dtype=object), dtype=object), dtype=object)')
 
+    def test_containing_list(self):
+        # printing square brackets directly would be ambiguuous
+        arr1d = np.array([None, None])
+        arr1d[0] = [1, 2]
+        arr1d[1] = [3]
+        assert_equal(repr(arr1d),
+            'array([list([1, 2]), list([3])], dtype=object)')
 
-class TestComplexArray(TestCase):
+
+class TestComplexArray(object):
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
         cvals = [complex(rp, ip) for rp in rvals for ip in rvals]
@@ -100,18 +108,12 @@ class TestComplexArray(TestCase):
         for res, val in zip(actual, wanted):
             assert_(res == val)
 
-class TestArray2String(TestCase):
+class TestArray2String(object):
     def test_basic(self):
         """Basic test of array2string."""
         a = np.arange(3)
         assert_(np.array2string(a) == '[0 1 2]')
         assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
-
-    def test_style_keyword(self):
-        """This should only apply to 0-D arrays. See #1218."""
-        stylestr = np.array2string(np.array(1.5),
-                                   style=lambda x: "Value in 0-D array: " + str(x))
-        assert_(stylestr == 'Value in 0-D array: 1.5')
 
     def test_format_function(self):
         """Test custom format function for each element in array."""
@@ -181,13 +183,13 @@ class TestArray2String(TestCase):
         assert_equal(np.array2string(array_scalar), "( 1.,  2.12345679,  3.)")
 
 
-class TestPrintOptions:
+class TestPrintOptions(object):
     """Test getting and setting global print options."""
 
-    def setUp(self):
+    def setup(self):
         self.oldopts = np.get_printoptions()
 
-    def tearDown(self):
+    def teardown(self):
         np.set_printoptions(**self.oldopts)
 
     def test_basic(self):
@@ -233,6 +235,14 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
+
+    def test_0d_arrays(self):
+        assert_equal(repr(np.datetime64('2005-02-25')[...]),
+                     "array('2005-02-25', dtype='datetime64[D]')")
+
+        x = np.array(1)
+        np.set_printoptions(formatter={'all':lambda x: "test"})
+        assert_equal(repr(x), "array(test)")
 
 def test_unicode_object_array():
     import sys

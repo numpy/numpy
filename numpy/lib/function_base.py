@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import collections
-import operator
 import re
 import sys
 import warnings
@@ -16,7 +15,7 @@ from numpy.core.numeric import (
     )
 from numpy.core.umath import (
     pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, log10
+    mod, exp, log10, not_equal, subtract
     )
 from numpy.core.fromnumeric import (
     ravel, nonzero, sort, partition, mean, any, sum
@@ -57,8 +56,6 @@ def rot90(m, k=1, axes=(0,1)):
 
     Rotation direction is from the first towards the second axis.
 
-    .. versionadded:: 1.12.0
-
     Parameters
     ----------
     m : array_like
@@ -68,6 +65,8 @@ def rot90(m, k=1, axes=(0,1)):
     axes: (2,) array_like
         The array is rotated in the plane defined by the axes.
         Axes must be different.
+
+        .. versionadded:: 1.12.0
 
     Returns
     -------
@@ -627,7 +626,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
     >>> hist.sum()
     2.4999999999999996
-    >>> np.sum(hist*np.diff(bin_edges))
+    >>> np.sum(hist * np.diff(bin_edges))
     1.0
 
     .. versionadded:: 1.11.0
@@ -718,7 +717,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # At this point, if the weights are not integer, floating point, or
         # complex, we have to use the slow algorithm.
         if weights is not None and not (np.can_cast(weights.dtype, np.double) or
-                                        np.can_cast(weights.dtype, np.complex)):
+                                        np.can_cast(weights.dtype, complex)):
             bins = linspace(mn, mx, bins + 1, endpoint=True)
 
     if not iterable(bins):
@@ -974,7 +973,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             on_edge = (around(sample[:, i], decimal) ==
                        around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
-            Ncount[i][where(on_edge & not_smaller_than_edge)[0]] -= 1
+            Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
 
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
@@ -1321,16 +1320,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
         x = x[None]
         zerod = True
     if n == n2 - 1:  # compute the "otherwise" condition.
-        totlist = np.logical_or.reduce(condlist, axis=0)
-        # Only able to stack vertically if the array is 1d or less
-        if x.ndim <= 1:
-            condlist = np.vstack([condlist, ~totlist])
-        else:
-            condlist = [asarray(c, dtype=bool) for c in condlist]
-            totlist = condlist[0]
-            for k in range(1, n):
-                totlist |= condlist[k]
-            condlist.append(~totlist)
+        condelse = ~np.any(condlist, axis=0, keepdims=True)
+        condlist = np.concatenate([condlist, condelse], axis=0)
         n += 1
 
     y = zeros(x.shape, x.dtype)
@@ -1550,7 +1541,7 @@ def gradient(f, *varargs, **kwargs):
 
     Examples
     --------
-    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=np.float)
+    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=float)
     >>> np.gradient(f)
     array([ 1. ,  1.5,  2.5,  3.5,  4.5,  5. ])
     >>> np.gradient(f, 2)
@@ -1566,7 +1557,7 @@ def gradient(f, *varargs, **kwargs):
 
     Or a non uniform one:
 
-    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=np.float)
+    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=float)
     >>> np.gradient(f, x)
     array([ 1. ,  3. ,  3.5,  6.7,  6.9,  2.5])
 
@@ -1574,7 +1565,7 @@ def gradient(f, *varargs, **kwargs):
     axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float))
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float))
     [array([[ 2.,  2., -1.],
             [ 2.,  2., -1.]]), array([[ 1. ,  2.5,  4. ],
             [ 1. ,  1. ,  1. ]])]
@@ -1584,7 +1575,7 @@ def gradient(f, *varargs, **kwargs):
 
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), dx, y)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), dx, y)
     [array([[ 1. ,  1. , -0.5],
             [ 1. ,  1. , -0.5]]), array([[ 2. ,  2. ,  2. ],
             [ 2. ,  1.7,  0.5]])]
@@ -1601,13 +1592,13 @@ def gradient(f, *varargs, **kwargs):
     The `axis` keyword can be used to specify a subset of axes of which the
     gradient is calculated
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float), axis=0)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), axis=0)
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
 
     Notes
     -----
-    Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continous
+    Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
     derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
     spacing the finite difference coefficients are computed by minimising
     the consistency error :math:`\\eta_{i}`:
@@ -1723,33 +1714,27 @@ def gradient(f, *varargs, **kwargs):
     slice3 = [slice(None)]*N
     slice4 = [slice(None)]*N
 
-    otype = f.dtype.char
-    if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
-        otype = 'd'
-
-    # Difference of datetime64 elements results in timedelta64
-    if otype == 'M':
-        # Need to use the full dtype name because it contains unit information
-        otype = f.dtype.name.replace('datetime', 'timedelta')
-    elif otype == 'm':
-        # Needs to keep the specific units, can't be a general unit
-        otype = f.dtype
-
-    # Convert datetime64 data into ints. Make dummy variable `y`
-    # that is a view of ints if the data is datetime64, otherwise
-    # just set y equal to the array `f`.
-    if f.dtype.char in ["M", "m"]:
-        y = f.view('int64')
+    otype = f.dtype
+    if otype.type is np.datetime64:
+        # the timedelta dtype with the same unit information
+        otype = np.dtype(otype.name.replace('datetime', 'timedelta'))
+        # view as timedelta to allow addition
+        f = f.view(otype)
+    elif otype.type is np.timedelta64:
+        pass
+    elif np.issubdtype(otype, np.inexact):
+        pass
     else:
-        y = f
+        # all other types convert to floating point
+        otype = np.double
 
     for i, axis in enumerate(axes):
-        if y.shape[axis] < edge_order + 1:
+        if f.shape[axis] < edge_order + 1:
             raise ValueError(
                 "Shape of array too small to calculate a numerical gradient, "
                 "at least (edge_order + 1) elements are required.")
         # result allocation
-        out = np.empty_like(y, dtype=otype)
+        out = np.empty_like(f, dtype=otype)
 
         uniform_spacing = np.isscalar(dx[i])
 
@@ -1780,15 +1765,15 @@ def gradient(f, *varargs, **kwargs):
             slice2[axis] = 1
             slice3[axis] = 0
             dx_0 = dx[i] if uniform_spacing else dx[i][0]
-            # 1D equivalent -- out[0] = (y[1] - y[0]) / (x[1] - x[0])
-            out[slice1] = (y[slice2] - y[slice3]) / dx_0
+            # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
+            out[slice1] = (f[slice2] - f[slice3]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             dx_n = dx[i] if uniform_spacing else dx[i][-1]
-            # 1D equivalent -- out[-1] = (y[-1] - y[-2]) / (x[-1] - x[-2])
-            out[slice1] = (y[slice2] - y[slice3]) / dx_n
+            # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
+            out[slice1] = (f[slice2] - f[slice3]) / dx_n
 
         # Numerical differentiation: 2nd order edges
         else:
@@ -1806,8 +1791,8 @@ def gradient(f, *varargs, **kwargs):
                 a = -(2. * dx1 + dx2)/(dx1 * (dx1 + dx2))
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
-            # 1D equivalent -- out[0] = a * y[0] + b * y[1] + c * y[2]
-            out[slice1] = a * y[slice2] + b * y[slice3] + c * y[slice4]
+            # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
+            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1824,7 +1809,7 @@ def gradient(f, *varargs, **kwargs):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[slice1] = a * y[slice2] + b * y[slice3] + c * y[slice4]
+            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
 
         outvals.append(out)
 
@@ -1842,7 +1827,7 @@ def gradient(f, *varargs, **kwargs):
 
 def diff(a, n=1, axis=-1):
     """
-    Calculate the n-th discrete difference along given axis.
+    Calculate the n-th discrete difference along the given axis.
 
     The first difference is given by ``out[n] = a[n+1] - a[n]`` along
     the given axis, higher differences are calculated by using `diff`
@@ -1853,16 +1838,21 @@ def diff(a, n=1, axis=-1):
     a : array_like
         Input array
     n : int, optional
-        The number of times values are differenced.
+        The number of times values are differenced. If zero, the input
+        is returned as-is.
     axis : int, optional
-        The axis along which the difference is taken, default is the last axis.
+        The axis along which the difference is taken, default is the
+        last axis.
 
     Returns
     -------
     diff : ndarray
         The n-th differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`. The
-        type of the output is the same as that of the input.
+        type of the output is the same as the type of the difference
+        between any two elements of `a`. This is the same as the type of
+        `a` in most cases. A notable exception is `datetime64`, which
+        results in a `timedelta64` output array.
 
     See Also
     --------
@@ -1870,13 +1860,13 @@ def diff(a, n=1, axis=-1):
 
     Notes
     -----
-    For boolean arrays, the preservation of type means that the result
-    will contain `False` when consecutive elements are the same and
-    `True` when they differ.
+    Type is preserved for boolean arrays, so the result will contain
+    `False` when consecutive elements are the same and `True` when they
+    differ.
 
-    For unsigned integer arrays, the results will also be unsigned. This should
-    not be surprising, as the result is consistent with calculating the
-    difference directly:
+    For unsigned integer arrays, the results will also be unsigned. This
+    should not be surprising, as the result is consistent with
+    calculating the difference directly:
 
     >>> u8_arr = np.array([1, 0], dtype=np.uint8)
     >>> np.diff(u8_arr)
@@ -1884,8 +1874,8 @@ def diff(a, n=1, axis=-1):
     >>> u8_arr[1,...] - u8_arr[0,...]
     array(255, np.uint8)
 
-    If this is not desirable, then the array should be cast to a larger integer
-    type first:
+    If this is not desirable, then the array should be cast to a larger
+    integer type first:
 
     >>> i16_arr = u8_arr.astype(np.int16)
     >>> np.diff(i16_arr)
@@ -1906,24 +1896,33 @@ def diff(a, n=1, axis=-1):
     >>> np.diff(x, axis=0)
     array([[-1,  2,  0, -2]])
 
+    >>> x = np.arange('1066-10-13', '1066-10-16', dtype=np.datetime64)
+    >>> np.diff(x)
+    array([1, 1], dtype='timedelta64[D]')
+
     """
     if n == 0:
         return a
     if n < 0:
         raise ValueError(
             "order must be non-negative but got " + repr(n))
+
     a = asanyarray(a)
     nd = a.ndim
-    slice1 = [slice(None)]*nd
-    slice2 = [slice(None)]*nd
+    axis = normalize_axis_index(axis, nd)
+
+    slice1 = [slice(None)] * nd
+    slice2 = [slice(None)] * nd
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     slice1 = tuple(slice1)
     slice2 = tuple(slice2)
-    if n > 1:
-        return diff(a[slice1]-a[slice2], n-1, axis=axis)
-    else:
-        return a[slice1]-a[slice2]
+
+    op = not_equal if a.dtype == np.bool_ else subtract
+    for _ in range(n):
+        a = op(a[slice1], a[slice2])
+
+    return a
 
 
 def interp(x, xp, fp, left=None, right=None, period=None):
@@ -2069,6 +2068,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         else:
             return interp_func(x, xp, fp, left, right).item()
 
+
 def angle(z, deg=0):
     """
     Return the angle of the complex argument.
@@ -2090,8 +2090,6 @@ def angle(z, deg=0):
     --------
     arctan2
     absolute
-
-
 
     Examples
     --------
@@ -2602,7 +2600,7 @@ class vectorize(object):
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.int32'>
-    >>> vfunc = np.vectorize(myfunc, otypes=[np.float])
+    >>> vfunc = np.vectorize(myfunc, otypes=[float])
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.float64'>
@@ -2982,7 +2980,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     >>> x = [-2.1, -1,  4.3]
     >>> y = [3,  1.1,  0.12]
-    >>> X = np.vstack((x,y))
+    >>> X = np.stack((x, y), axis=0)
     >>> print(np.cov(X))
     [[ 11.71        -4.286     ]
      [ -4.286        2.14413333]]
@@ -3020,7 +3018,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         y = array(y, copy=False, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
             y = y.T
-        X = np.vstack((X, y))
+        X = np.concatenate((X, y), axis=0)
 
     if ddof is None:
         if bias == 0:
@@ -3031,7 +3029,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     # Get the product of frequencies and weights
     w = None
     if fweights is not None:
-        fweights = np.asarray(fweights, dtype=np.float)
+        fweights = np.asarray(fweights, dtype=float)
         if not np.all(fweights == np.around(fweights)):
             raise TypeError(
                 "fweights must be integer")
@@ -3046,7 +3044,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
                 "fweights cannot be negative")
         w = fweights
     if aweights is not None:
-        aweights = np.asarray(aweights, dtype=np.float)
+        aweights = np.asarray(aweights, dtype=float)
         if aweights.ndim > 1:
             raise RuntimeError(
                 "cannot handle multidimensional aweights")
@@ -4005,8 +4003,9 @@ def _ureduce(a, func, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
+        keepdim = tuple(keepdim)
     else:
-        keepdim = [1] * a.ndim
+        keepdim = (1,) * a.ndim
 
     r = func(a, **kwargs)
     return r, keepdim
@@ -4268,10 +4267,7 @@ def percentile(a, q, axis=None, out=None,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
-        if q.ndim == 0:
-            return r.reshape(k)
-        else:
-            return r.reshape([len(q)] + k)
+        return r.reshape(q.shape + k)
     else:
         return r
 
@@ -4340,7 +4336,7 @@ def _percentile(a, q, axis=None, out=None,
 
         ap.partition(indices, axis=axis)
         # ensure axis with qth is first
-        ap = np.rollaxis(ap, axis, 0)
+        ap = np.moveaxis(ap, axis, 0)
         axis = 0
 
         # Check if the array contains any nan's
@@ -4373,9 +4369,9 @@ def _percentile(a, q, axis=None, out=None,
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
         # ensure axis with qth is first
-        ap = np.rollaxis(ap, axis, 0)
-        weights_below = np.rollaxis(weights_below, axis, 0)
-        weights_above = np.rollaxis(weights_above, axis, 0)
+        ap = np.moveaxis(ap, axis, 0)
+        weights_below = np.moveaxis(weights_below, axis, 0)
+        weights_above = np.moveaxis(weights_above, axis, 0)
         axis = 0
 
         # Check if the array contains any nan's
@@ -4387,8 +4383,8 @@ def _percentile(a, q, axis=None, out=None,
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
         # ensure axis with qth is first
-        x1 = np.rollaxis(x1, axis, 0)
-        x2 = np.rollaxis(x2, axis, 0)
+        x1 = np.moveaxis(x1, axis, 0)
+        x2 = np.moveaxis(x2, axis, 0)
 
         if zerod:
             x1 = x1.squeeze(0)
@@ -4541,7 +4537,7 @@ def add_newdoc(place, obj, doc):
         elif isinstance(doc, list):
             for val in doc:
                 add_docstring(getattr(new, val[0]), val[1].strip())
-    except:
+    except Exception:
         pass
 
 
@@ -5044,7 +5040,7 @@ def insert(arr, obj, values, axis=None):
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that
             # it works likes the second case. (here a[:,0:1,:])
-            values = np.rollaxis(values, 0, (axis % values.ndim) + 1)
+            values = np.moveaxis(values, 0, axis)
         numnew = values.shape[axis]
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arrorder)

@@ -7,6 +7,7 @@ typedef struct {
     PyObject *multiply;
     PyObject *divide;
     PyObject *remainder;
+    PyObject *divmod;
     PyObject *power;
     PyObject *square;
     PyObject *reciprocal;
@@ -14,6 +15,7 @@ typedef struct {
     PyObject *sqrt;
     PyObject *cbrt;
     PyObject *negative;
+    PyObject *positive;
     PyObject *absolute;
     PyObject *invert;
     PyObject *left_shift;

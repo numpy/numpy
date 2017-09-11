@@ -12,11 +12,11 @@ import operator
 import numpy as np
 from numpy import ndarray, float_
 import numpy.core.umath as umath
+import numpy.testing
 from numpy.testing import (
     TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg, run_module_suite, suppress_warnings
+    assert_raises, build_err_msg, run_module_suite
     )
-import numpy.testing.utils as utils
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
 __all__masked = [
@@ -126,10 +126,8 @@ def assert_equal(actual, desired, err_msg=''):
         return _assert_equal_on_sequences(actual, desired, err_msg='')
     if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
         msg = build_err_msg([actual, desired], err_msg,)
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, ".*NAT ==")
-            if not desired == actual:
-                raise AssertionError(msg)
+        if not desired == actual:
+            raise AssertionError(msg)
         return
     # Case #4. arrays or equivalent
     if ((actual is masked) and not (desired is masked)) or \
@@ -213,11 +211,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
-    return utils.assert_array_compare(comparison,
-                                      x.filled(fill_value),
-                                      y.filled(fill_value),
-                                      err_msg=err_msg,
-                                      verbose=verbose, header=header)
+    return np.testing.assert_array_compare(comparison,
+                                           x.filled(fill_value),
+                                           y.filled(fill_value),
+                                           err_msg=err_msg,
+                                           verbose=verbose, header=header)
 
 
 def assert_array_equal(x, y, err_msg='', verbose=True):

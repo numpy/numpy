@@ -424,7 +424,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
                                  "non-pickled data")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except:
+            except Exception:
                 raise IOError(
                     "Failed to interpret file %s as a pickle" % repr(file))
     finally:
@@ -443,6 +443,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         then the filename is unchanged.  If file is a string or Path, a ``.npy``
         extension will be appended to the file name if it does not already
         have one.
+    arr : array_like
+        Array data to be saved.
     allow_pickle : bool, optional
         Allow saving object arrays using Python pickles. Reasons for disallowing
         pickles include security (loading pickled data can execute arbitrary
@@ -456,8 +458,6 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
         will try to map the new Python 3 names to the old module names used in
         Python 2, so that the pickle data stream is readable with Python 2.
-    arr : array_like
-        Array data to be saved.
 
     See Also
     --------
@@ -737,7 +737,7 @@ def _getconv(dtype):
         return np.longdouble
     elif issubclass(typ, np.floating):
         return floatconv
-    elif issubclass(typ, np.complex):
+    elif issubclass(typ, complex):
         return lambda x: complex(asstr(x))
     elif issubclass(typ, np.bytes_):
         return asbytes
@@ -1014,7 +1014,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(vals) == 0:
                 continue
             if usecols:
-                vals = [vals[i] for i in usecols]
+                vals = [vals[j] for j in usecols]
             if len(vals) != N:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
@@ -1902,16 +1902,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # If the dtype is uniform, don't define names, else use ''
             base = set([c.type for c in converters if c._checked])
             if len(base) == 1:
-                (ddtype, mdtype) = (list(base)[0], np.bool)
+                (ddtype, mdtype) = (list(base)[0], bool)
             else:
                 ddtype = [(defaultfmt % i, dt)
                           for (i, dt) in enumerate(column_types)]
                 if usemask:
-                    mdtype = [(defaultfmt % i, np.bool)
+                    mdtype = [(defaultfmt % i, bool)
                               for (i, dt) in enumerate(column_types)]
         else:
             ddtype = list(zip(names, column_types))
-            mdtype = list(zip(names, [np.bool] * len(column_types)))
+            mdtype = list(zip(names, [bool] * len(column_types)))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
@@ -1937,7 +1937,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # Now, process the rowmasks the same way
             if usemask:
                 rowmasks = np.array(
-                    masks, dtype=np.dtype([('', np.bool) for t in dtype_flat]))
+                    masks, dtype=np.dtype([('', bool) for t in dtype_flat]))
                 # Construct the new dtype
                 mdtype = make_mask_descr(dtype)
                 outputmask = rowmasks.view(mdtype)
@@ -1968,9 +1968,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             output = np.array(data, dtype)
             if usemask:
                 if dtype.names:
-                    mdtype = [(_, np.bool) for _ in dtype.names]
+                    mdtype = [(_, bool) for _ in dtype.names]
                 else:
-                    mdtype = np.bool
+                    mdtype = bool
                 outputmask = np.array(masks, dtype=mdtype)
     # Try to take care of the missing data we missed
     names = output.dtype.names

@@ -319,7 +319,7 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    def setUp(self):
+    def setup(self):
         if self.module is not None:
             return
 

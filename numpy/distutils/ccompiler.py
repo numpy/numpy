@@ -5,6 +5,7 @@ import re
 import sys
 import types
 import shlex
+import time
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
@@ -17,10 +18,20 @@ from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args, get_num_build_jobs
+                                      quote_args, get_num_build_jobs, \
+                                      _commandline_dep_string
+
+# globals for parallel build management
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
+_job_semaphore = None
+_global_lock = threading.Lock()
+_processing_files = set()
 
 
-def _needs_build(obj):
+def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     """
     Check if an objects needs to be rebuild based on its dependencies
 
@@ -40,9 +51,20 @@ def _needs_build(obj):
 
     # dep_file is a makefile containing 'object: dependencies'
     # formated like posix shell (spaces escaped, \ line continuations)
+    # the last line contains the compiler commandline arguments as some
+    # projects may compile an extension multiple times with different
+    # arguments
     with open(dep_file, "r") as f:
-        deps = [x for x in shlex.split(f.read(), posix=True)
-                if x != "\n" and not x.endswith(":")]
+        lines = f.readlines()
+
+    cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
+    last_cmdline = lines[-1]
+    if last_cmdline != cmdline:
+        return True
+
+    contents = ''.join(lines[:-1])
+    deps = [x for x in shlex.split(contents, posix=True)
+            if x != "\n" and not x.endswith(":")]
 
     try:
         t_obj = os.stat(obj).st_mtime
@@ -58,6 +80,7 @@ def _needs_build(obj):
 
     return False
 
+
 def replace_method(klass, method_name, func):
     if sys.version_info[0] < 3:
         m = types.MethodType(func, None, klass)
@@ -65,6 +88,25 @@ def replace_method(klass, method_name, func):
         # Py3k does not have unbound method anymore, MethodType does not work
         m = lambda self, *args, **kw: func(self, *args, **kw)
     setattr(klass, method_name, m)
+
+
+######################################################################
+## Method that subclasses may redefine. But don't call this method,
+## it i private to CCompiler class and may return unexpected
+## results if used elsewhere. So, you have been warned..
+
+def CCompiler_find_executables(self):
+    """
+    Does nothing here, but is called by the get_version method and can be
+    overridden by subclasses. In particular it is redefined in the `FCompiler`
+    class where more documentation can be found.
+
+    """
+    pass
+
+
+replace_method(CCompiler, 'find_executables', CCompiler_find_executables)
+
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
@@ -199,6 +241,16 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # This method is effective only with Python >=2.3 distutils.
     # Any changes here should be applied also to fcompiler.compile
     # method to support pre Python 2.3 distutils.
+    global _job_semaphore
+
+    jobs = get_num_build_jobs()
+
+    # setup semaphore to not exceed number of compile jobs when parallelized at
+    # extension level (python >= 3.5)
+    with _global_lock:
+        if _job_semaphore is None:
+            _job_semaphore = threading.Semaphore(jobs)
+
     if not sources:
         return []
     # FIXME:RELATIVE_IMPORT
@@ -230,8 +282,30 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     def single_compile(args):
         obj, (src, ext) = args
-        if _needs_build(obj):
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        if not _needs_build(obj, cc_args, extra_postargs, pp_opts):
+            return
+
+        # check if we are currently already processing the same object
+        # happens when using the same source in multiple extensions
+        while True:
+            # need explicit lock as there is no atomic check and add with GIL
+            with _global_lock:
+                # file not being worked on, start working
+                if obj not in _processing_files:
+                    _processing_files.add(obj)
+                    break
+            # wait for the processing to end
+            time.sleep(0.1)
+
+        try:
+            # retrieve slot from our #job semaphore and build
+            with _job_semaphore:
+                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        finally:
+            # register being done processing
+            with _global_lock:
+                _processing_files.remove(obj)
+
 
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
@@ -257,7 +331,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     else:
         build_items = build.items()
 
-    jobs = get_num_build_jobs()
     if len(build) > 1 and jobs > 1:
         # build parallel
         import multiprocessing.pool
@@ -364,7 +437,7 @@ def CCompiler_show_customization(self):
             log.info("compiler '%s' is set to %s" % (attrname, attr))
     try:
         self.get_version()
-    except:
+    except Exception:
         pass
     if log._global_log.threshold<2:
         print('*'*80)

@@ -68,7 +68,8 @@ class MachArLike(object):
         params = _MACHAR_PARAMS[ftype]
         float_conv = lambda v: array([v], ftype)
         float_to_float = lambda v : _fr1(float_conv(v))
-        float_to_str = lambda v: (params['fmt'] % array(_fr0(v)[0], ftype))
+        self._float_to_str = lambda v: (params['fmt'] %
+                                        array(_fr0(v)[0], ftype))
         self.title = params['title']
         # Parameter types same as for discovered MachAr object.
         self.epsilon = self.eps = float_to_float(kwargs.pop('eps'))
@@ -79,11 +80,30 @@ class MachArLike(object):
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
         self.resolution = float_to_float(float_conv(10) ** (-self.precision))
-        self._str_eps = float_to_str(self.eps)
-        self._str_epsneg = float_to_str(self.epsneg)
-        self._str_xmin = float_to_str(self.xmin)
-        self._str_xmax = float_to_str(self.xmax)
-        self._str_resolution = float_to_str(self.resolution)
+
+    # Properties below to delay need for float_to_str, and thus avoid circular
+    # imports during early numpy module loading.
+    # See: https://github.com/numpy/numpy/pull/8983#discussion_r115838683
+
+    @property
+    def _str_eps(self):
+        return self._float_to_str(self.eps)
+
+    @property
+    def _str_epsneg(self):
+        return self._float_to_str(self.epsneg)
+
+    @property
+    def _str_xmin(self):
+        return self._float_to_str(self.xmin)
+
+    @property
+    def _str_xmax(self):
+        return self._float_to_str(self.xmax)
+
+    @property
+    def _str_resolution(self):
+        return self._float_to_str(self.resolution)
 
 
 # Known parameters for float16
@@ -538,13 +558,3 @@ class iinfo(object):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
                                     self.min, self.max, self.dtype)
 
-if __name__ == '__main__':
-    f = finfo(ntypes.single)
-    print('single epsilon:', f.eps)
-    print('single tiny:', f.tiny)
-    f = finfo(ntypes.float)
-    print('float epsilon:', f.eps)
-    print('float tiny:', f.tiny)
-    f = finfo(ntypes.longfloat)
-    print('longfloat epsilon:', f.eps)
-    print('longfloat tiny:', f.tiny)
