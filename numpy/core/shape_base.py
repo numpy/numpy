@@ -407,6 +407,11 @@ def _block_check_depths_match(arrays, index=[]):
 
 
 def _block(arrays, depth=0):
+    def atleast_nd(a, ndim):
+        # Ensures `a` has at least `ndim` dimensions by prepending
+        # ones to `a.shape` as necessary
+        return array(a, ndmin=ndim, copy=False, subok=True)
+
     if type(arrays) is list:
         if len(arrays) == 0:
             raise ValueError('Lists cannot be empty')
@@ -414,11 +419,11 @@ def _block(arrays, depth=0):
         list_ndim = list_ndims[0]
         arr_ndim = max(arr.ndim for arr in arrs)
         ndim = max(list_ndim, arr_ndim)
-        arrs = [array(a, ndmin=ndim, copy=False, subok=True) for a in arrs]
+        arrs = [atleast_nd(a, ndim) for a in arrs]
         return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
     else:
         # We've 'bottomed out'
-        return array(arrays, ndmin=depth, copy=False, subok=True), depth
+        return atleast_nd(arrays, depth), depth
 
 
 def block(arrays):
