@@ -369,7 +369,7 @@ def _block_check_depths_match(arrays, index=[]):
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
         return 'arrays' + idx_str
-    if isinstance(arrays, tuple):
+    if type(arrays) is tuple:
         raise TypeError(
             '{} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
@@ -377,7 +377,7 @@ def _block_check_depths_match(arrays, index=[]):
                 format_index(index)
             )
         )
-    elif isinstance(arrays, list) and len(arrays) > 0:
+    elif type(arrays) is list and len(arrays) > 0:
         indexes = [_block_check_depths_match(arr, index + [i])
                    for i, arr in enumerate(arrays)]
 
@@ -393,7 +393,7 @@ def _block_check_depths_match(arrays, index=[]):
                     )
                 )
         return first_index
-    elif isinstance(arrays, list) and len(arrays) == 0:
+    elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
         return index + [None]
     else:
@@ -402,7 +402,7 @@ def _block_check_depths_match(arrays, index=[]):
 
 
 def _block(arrays, depth=0):
-    if isinstance(arrays, list):
+    if type(arrays) is list:
         if len(arrays) == 0:
             raise ValueError('Lists cannot be empty')
         arrs, list_ndims = zip(*(_block(arr, depth+1) for arr in arrays))
