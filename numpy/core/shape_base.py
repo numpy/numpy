@@ -370,6 +370,11 @@ def _block_check_depths_match(arrays, index=[]):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
         return 'arrays' + idx_str
     if type(arrays) is tuple:
+        # not strictly necessary, but saves us from:
+        #  - more than one way to do things - no point treating tuples like
+        #    lists
+        #  - horribly confusing behaviour that results when tuples are
+        #    treated like ndarray
         raise TypeError(
             '{} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
