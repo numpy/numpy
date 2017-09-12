@@ -741,9 +741,11 @@ long rk_zipf(rk_state *state, double a)
             X = 0.0;
             continue;
         }
-        if (X <= 1)
+        if (X >= 1)
         {
             T = pow(1.0 + 1.0/X, am1);
+        } else
+        {
             continue;
         }
     } while ((V*X*(T-1.0)/(b-1.0)) > (T/b));
