@@ -730,7 +730,7 @@ long rk_zipf(rk_state *state, double a)
     {
         U = 1.0-rk_double(state);
         V = rk_double(state);
-	X_double = floor(pow(U, -1.0/am1));
+        X_double = floor(pow(U, -1.0/am1));
         if ((X_double > (double)LONG_MAX) || (X_double < (double)LONG_MIN))
         {
             X = LONG_MIN;
