@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #ifndef min
 #define min(x,y) ((x<y)?x:y)
@@ -719,26 +720,31 @@ double rk_wald(rk_state *state, double mean, double scale)
 
 long rk_zipf(rk_state *state, double a)
 {
-    double T, U, V;
-    long X;
+    double T, U, V, X;
     double am1, b;
 
     am1 = a - 1.0;
     b = pow(2.0, am1);
+    T = 0.0;
     do
     {
         U = 1.0-rk_double(state);
         V = rk_double(state);
-        X = (long)floor(pow(U, -1.0/am1));
+        X = floor(pow(U, -1.0/am1));
         /* The real result may be above what can be represented in a signed
-         * long. It will get casted to -sys.maxint-1. Since this is
-         * a straightforward rejection algorithm, we can just reject this value
-         * in the rejection condition below. This function then models a Zipf
+         * long. Since this is a straightforward rejection algorithm, we can
+         * just reject this value. This function then models a Zipf
          * distribution truncated to sys.maxint.
          */
-        T = pow(1.0 + 1.0/X, am1);
-    } while (((V*X*(T-1.0)/(b-1.0)) > (T/b)) || X < 1);
-    return X;
+        if (X > LONG_MAX) {
+            X = 0.0;    /* X < 1 will be rejected */
+            continue;
+        }
+        if (X >= 1) {
+            T = pow(1.0 + 1.0/X, am1);
+        }
+    } while ((X < 1) || ((V*X*(T-1.0)/(b-1.0)) > (T/b)));
+    return (long)X;
 }
 
 long rk_geometric_search(rk_state *state, double p)
