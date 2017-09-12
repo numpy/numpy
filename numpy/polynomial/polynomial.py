@@ -619,7 +619,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.  Why
     is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`. Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Examples
