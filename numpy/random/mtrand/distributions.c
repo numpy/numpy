@@ -725,6 +725,7 @@ long rk_zipf(rk_state *state, double a)
 
     am1 = a - 1.0;
     b = pow(2.0, am1);
+    T = 0.0;
     do
     {
         U = 1.0-rk_double(state);
