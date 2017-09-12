@@ -736,7 +736,7 @@ long rk_zipf(rk_state *state, double a)
 	    X = LONG_MIN;
 	} else
 	{
-	    X = (long)floor(pow(U, -1.0/am1));
+	    X = (long)X_double;
 	}
         /* The real result may be above what can be represented in a signed
          * long. It will get assigned to -sys.maxint-1. Since this is
