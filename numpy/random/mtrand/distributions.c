@@ -731,13 +731,13 @@ long rk_zipf(rk_state *state, double a)
         U = 1.0-rk_double(state);
         V = rk_double(state);
 	X_double = floor(pow(U, -1.0/am1));
-	if ((X_double > (double)LONG_MAX) || (X_double < (double)LONG_MIN))
-	{
-	    X = LONG_MIN;
-	} else
-	{
-	    X = (long)X_double;
-	}
+        if ((X_double > (double)LONG_MAX) || (X_double < (double)LONG_MIN))
+        {
+            X = LONG_MIN;
+        } else
+        {
+            X = (long)X_double;
+        }
         /* The real result may be above what can be represented in a signed
          * long. It will get assigned to -sys.maxint-1. Since this is
          * a straightforward rejection algorithm, we can just reject this value
