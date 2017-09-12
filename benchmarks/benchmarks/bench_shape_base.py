@@ -4,6 +4,7 @@ from .common import Benchmark
 
 import numpy as np
 
+
 class Block(Benchmark):
     params = [1, 10, 100]
     param_names = ['size']
