@@ -735,19 +735,10 @@ long rk_zipf(rk_state *state, double a)
          * just reject this value. This function then models a Zipf
          * distribution truncated to sys.maxint.
          */
-        if (X > LONG_MAX)
-        {
-            /* X < 1 will be rejected */
-            X = 0.0;
+        if ((X < 1) || (X > LONG_MAX)) {
             continue;
         }
-        if (X >= 1)
-        {
-            T = pow(1.0 + 1.0/X, am1);
-        } else
-        {
-            continue;
-        }
+        T = pow(1.0 + 1.0/X, am1);
     } while ((V*X*(T-1.0)/(b-1.0)) > (T/b));
     return (long)X;
 }
