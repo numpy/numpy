@@ -221,6 +221,17 @@ supported; by default a gfortran-compatible static archive
 ------------------------------------------------
 Previously it was limited to a single 2d array.
 
+``numpy.save`` aligns data to 64 bytes instead of 16
+----------------------------------------------------
+Saving NumPy arrays in the ``npy`` format with ``numpy.save`` inserts
+padding before the array data to align it at 64 bytes.  Previously
+this was only 16 bytes (and sometimes less due to a bug in the code
+for version 2).  Now the alignment is 64 bytes, which matches the
+widest SIMD instruction set commonly available, and is also the most
+common cache line size.  This makes ``npy`` files easier to use in
+programs which open them with ``mmap``, especially on Linux where an
+``mmap`` offset must be a multiple of the page size.
+
 
 Changes
 =======
