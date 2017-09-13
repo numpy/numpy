@@ -19,12 +19,13 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import warnings
 
 from numpy.core import (
-    array, asarray, zeros, empty, empty_like, transpose, intc, single, double,
+    array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones
-    )
+    broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones, matmul,
+    swapaxes, divide)
+
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -223,6 +224,22 @@ def _assertNoEmpty2d(*arrays):
         if _isEmpty2d(a):
             raise LinAlgError("Arrays cannot be empty")
 
+def transpose(a):
+    """
+    Transpose each matrix in a stack of matrices.
+
+    Unlike np.transpose, this only swaps the last two axes, rather than all of
+    them
+
+    Parameters
+    ----------
+    a : (...,M,N) array_like
+
+    Returns
+    -------
+    aT : (...,N,M) ndarray
+    """
+    return swapaxes(a, -1, -2)
 
 # Linear equations
 
@@ -1279,7 +1296,7 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices=1, compute_uv=1):
+def svd(a, full_matrices=True, compute_uv=True):
     """
     Singular Value Decomposition.
 
@@ -1494,15 +1511,21 @@ def matrix_rank(M, tol=None):
     Rank of the array is the number of SVD singular values of the array that are
     greater than `tol`.
 
+    .. versionchanged:: 1.14
+       Can now operate on stacks of matrices
+
     Parameters
     ----------
     M : {(M,), (..., M, N)} array_like
         input vector or stack of matrices
-    tol : {None, float}, optional
-       threshold below which SVD values are considered zero. If `tol` is
-       None, and ``S`` is an array with singular values for `M`, and
-       ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
-       set to ``S.max() * max(M.shape) * eps``.
+    tol : (...) array_like, float, optional
+        threshold below which SVD values are considered zero. If `tol` is
+        None, and ``S`` is an array with singular values for `M`, and
+        ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
+        set to ``S.max() * max(M.shape) * eps``.
+
+        .. versionchanged:: 1.14
+           Broadcasted against the stack of matrices
 
     Notes
     -----
@@ -1569,6 +1592,8 @@ def matrix_rank(M, tol=None):
     S = svd(M, compute_uv=False)
     if tol is None:
         tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+    else:
+        tol = asarray(tol)[...,newaxis]
     return (S > tol).sum(axis=-1)
 
 
@@ -1582,26 +1607,29 @@ def pinv(a, rcond=1e-15 ):
     singular-value decomposition (SVD) and including all
     *large* singular values.
 
+    .. versionchanged:: 1.14
+       Can now operate on stacks of matrices
+
     Parameters
     ----------
-    a : (M, N) array_like
-      Matrix to be pseudo-inverted.
-    rcond : float
-      Cutoff for small singular values.
-      Singular values smaller (in modulus) than
-      `rcond` * largest_singular_value (again, in modulus)
-      are set to zero.
+    a : (..., M, N) array_like
+        Matrix or stack of matrices to be pseudo-inverted.
+    rcond : (...) array_like of float
+        Cutoff for small singular values.
+        Singular values smaller (in modulus) than
+        `rcond` * largest_singular_value (again, in modulus)
+        are set to zero. Broadcasts against the stack of matrices
 
     Returns
     -------
-    B : (N, M) ndarray
-      The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
-      is `B`.
+    B : (..., N, M) ndarray
+        The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
+        is `B`.
 
     Raises
     ------
     LinAlgError
-      If the SVD computation does not converge.
+        If the SVD computation does not converge.
 
     Notes
     -----
@@ -1638,20 +1666,20 @@ def pinv(a, rcond=1e-15 ):
 
     """
     a, wrap = _makearray(a)
+    rcond = asarray(rcond)
     if _isEmpty2d(a):
         res = empty(a.shape[:-2] + (a.shape[-1], a.shape[-2]), dtype=a.dtype)
         return wrap(res)
     a = a.conjugate()
-    u, s, vt = svd(a, 0)
-    m = u.shape[0]
-    n = vt.shape[1]
-    cutoff = rcond*maximum.reduce(s)
-    for i in range(min(n, m)):
-        if s[i] > cutoff:
-            s[i] = 1./s[i]
-        else:
-            s[i] = 0.
-    res = dot(transpose(vt), multiply(s[:, newaxis], transpose(u)))
+    u, s, vt = svd(a, full_matrices=False)
+
+    # discard small singular values
+    cutoff = rcond[..., newaxis] * amax(s, axis=-1, keepdims=True)
+    large = s > cutoff
+    s = divide(1, s, where=large, out=s)
+    s[~large] = 0
+
+    res = matmul(transpose(vt), multiply(s[..., newaxis], transpose(u)))
     return wrap(res)
 
 # Determinant
@@ -1987,13 +2015,13 @@ def lstsq(a, b, rcond="warn"):
                 resids = array([sum((ravel(bstar)[n:])**2)],
                                dtype=result_real_t)
     else:
-        x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
+        x = array(bstar.T[:n,:], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
             if isComplexType(t):
-                resids = sum(abs(transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum(abs(bstar.T[n:,:])**2, axis=0).astype(
                     result_real_t, copy=False)
             else:
-                resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(
+                resids = sum((bstar.T[n:,:])**2, axis=0).astype(
                     result_real_t, copy=False)
 
     st = s[:min(n, m)].astype(result_real_t, copy=True)
