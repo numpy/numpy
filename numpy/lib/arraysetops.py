@@ -117,11 +117,12 @@ def unique(ar, return_index=False, return_inverse=False,
     Find the unique elements of an array.
 
     Returns the sorted unique elements of an array. There are four optional
-    outputs in addition to the unique elements: the indices of the input array
-    that give the unique values, the indices of the unique array that
-    reconstruct the input array, the number of times each unique value
-    comes up in the input array, and the mask of the input array that gives
-    the unique values.
+    outputs in addition to the unique elements:
+
+    * The indices of the input array that give the unique values
+    * The indices of the unique array that reconstruct the input array
+    * The number of times each unique value comes up in the input array
+    * The mask of the input array that gives the unique values
 
     If data comes presorted, some operations may be skipped, which can speed
     up the process and require less memory for temporary storage.
