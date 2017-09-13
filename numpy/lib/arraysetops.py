@@ -262,9 +262,13 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_ar = ar
     ar = np.asanyarray(ar)
     if axis is None:
-        return _unique1d(ar, return_index, return_inverse, return_counts,
-                         return_mask, return_data, assume_sorted,
-                         sort_inplace, assume_sorted or sort_inplace)
+        output = _unique1d(ar, return_index, return_inverse, return_counts,
+                           return_mask, return_data, assume_sorted,
+                           sort_inplace, assume_sorted or sort_inplace)
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output
     if not (-ar.ndim <= axis < ar.ndim):
         raise ValueError('Invalid axis kwarg specified for unique')
 
@@ -316,12 +320,13 @@ def unique(ar, return_index=False, return_inverse=False,
                        return_inverse, return_counts,
                        return_mask, return_data, assume_sorted,
                        sort_inplace, mask_is_sorted)
-    if not (return_index or return_inverse or return_counts
-            or return_mask):
-        return reshape_uniq(output)
-    elif return_data:
+
+    if return_data:
         uniq = reshape_uniq(output[0])
-        return (uniq,) + output[1:]
+        output = (uniq,) + output[1:]
+
+    if len(output) == 1:
+        return output[0]
     else:
         return output
 
@@ -347,7 +352,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # Otherwise, we don't need to make a copy
         if sort_inplace and ar.ndim == 2 and ar.shape[1] == 1:
             # consolidated (n x 1) matrix, no need to copy
-            ar = ar.ravel(ar.size)
+            ar = ar.ravel()
         else:
             ar = ar.flatten()
             if mask_is_sorted and not assume_sorted:
@@ -368,8 +373,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             ret += (np.empty(0, np.intp),)
         if return_mask:
             ret += (np.empty(0, np.bool_),)
-        if len(ret) == 1:
-            ret = ret[0]
         return ret
 
     shape = ar.shape
@@ -382,11 +385,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.concatenate(([True], ar[1:] != ar[:-1]))
 
     if not optional_returns:
-        ret = ar[mask]
+        ret = (ar[mask],)
     else:
         ret = ()
         if return_data:
-            ret = (ar[mask],)
+            ret += (ar[mask],)
         del ar
         if return_index or (return_mask and not assume_sorted
                             and not mask_is_sorted):
@@ -412,8 +415,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 imask = np.zeros(shape, np.bool_)
                 imask[idx] = True
             ret += (imask,)
-        if len(ret) == 1:
-            ret = ret[0]
     return ret
 
 def intersect1d(ar1, ar2, assume_unique=False):
