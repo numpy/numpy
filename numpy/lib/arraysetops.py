@@ -343,11 +343,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # Will need the permutation to compute masks
         optional_indices = True
     if ((not optional_indices and not assume_sorted and not sort_inplace)
-        or len(ar.shape) != 1):
+        or ar.ndim != 1):
         # Otherwise, we don't need to make a copy
-        if sort_inplace and len(ar.shape) == 2 and ar.shape[1] == 1:
+        if sort_inplace and ar.ndim == 2 and ar.shape[1] == 1:
             # consolidated (n x 1) matrix, no need to copy
-            ar = ar.reshape(ar.size)
+            ar = ar.ravel(ar.size)
         else:
             ar = ar.flatten()
             if mask_is_sorted and not assume_sorted:
