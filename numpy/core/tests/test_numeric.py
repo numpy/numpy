@@ -1253,6 +1253,22 @@ class TestArrayComparisons(object):
         assert_(type(res) is bool)
 
 
+class TestArrayViewRoot(object):
+    def test_through_reshape(self):
+        a = np.array([[1, 2], [3, 4]])
+        b = a.ravel()
+        c = b.reshape((2, 2), order = 'F')
+        assert_(np.array_view_root(a) is a)
+        assert_(np.array_view_root(b) is a)
+        assert_(np.array_view_root(c) is a)
+
+    def test_through_copy(self):
+        a = np.array([[1, 2], [3, 4]])
+        b = a.ravel().copy()
+        assert_(np.array_view_root(a) is a)
+        assert_(np.array_view_root(b) is b)
+
+
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags, 32 bit arches typically don't provide 16 byte alignment

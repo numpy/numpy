@@ -300,14 +300,12 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = np.swapaxes(uniq, 0, axis)
         return uniq
 
-    orig_base = consolidated
-    while (orig_base.base is not None and orig_base is not orig_ar
-           and orig_base.base is not orig_ar):
-        orig_base = orig_base.base
+    consolidated_base = np.array_view_root(consolidated)
+    orig_base = np.array_view_root(orig_ar)
     if return_index or return_inverse:
         # We won't perform an in-place sort even if requested
         mask_is_sorted = assume_sorted
-    elif orig_base is orig_ar or orig_base.base is orig_ar:
+    elif orig_base is consolidated_base:
         # We're operating on a view
         mask_is_sorted = assume_sorted or sort_inplace
     else:

@@ -861,6 +861,14 @@ class TestMaskedArray(object):
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
 
+    def test_view_root(self):
+        mx1 = masked_array([[1, 2], [3, 4]], mask=[[True, False], [False, True]])
+        mx2 = mx1.ravel()
+        mx3 = mx2.copy()
+        mx1root = np.array_view_root(mx1)
+        assert_(np.array_view_root(mx2) is mx1root)
+        assert_(np.array_view_root(mx3) is not mx1root)
+
 
 class TestMaskedArrayArithmetic(object):
     # Base test class for MaskedArrays.

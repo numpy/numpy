@@ -57,7 +57,8 @@ __all__ = [
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'array2string',
     'get_printoptions', 'set_printoptions', 'array_repr', 'array_str',
     'set_string_function', 'little_endian', 'require', 'fromiter',
-    'array_equal', 'array_equiv', 'indices', 'fromfunction', 'isclose', 'load',
+    'array_equal', 'array_equiv', 'array_view_root',
+    'indices', 'fromfunction', 'isclose', 'load',
     'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones', 'identity',
     'allclose', 'compare_chararrays', 'putmask', 'seterr', 'geterr',
     'setbufsize', 'getbufsize', 'seterrcall', 'geterrcall', 'errstate',
@@ -2652,6 +2653,37 @@ def array_equiv(a1, a2):
 
     return bool(asarray(a1 == a2).all())
 
+
+def array_view_root(a1):
+    """
+    If the array is a view of another's data, it will return
+    the root array in the chain. Otherwise, it returns a1.
+
+    Parameters
+    ----------
+    a1 : ndarray
+        Input array.
+
+    Returns
+    -------
+    out : ndarray
+        The root array
+
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> b = a.ravel()
+    >>> c = b.reshape((2, 2), order = 'F')
+    >>> np.array_view_root(a) is a
+    True
+    >>> np.array_view_root(b) is a
+    True
+    >>> np.array_view_root(c) is a
+    True
+
+    """
+    base = a1
+    while isinstance(base, ndarray) and base.base is not None:
+        base = base.base
+    return base
 
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
