@@ -1600,6 +1600,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             except TypeError:
                 usecols = [usecols, ]
     nbcols = len(usecols or first_values)
+    if not nbcols and converters is not None:
+        nbcols = len(converters)
 
     # Check the names and overwrite the dtype.names if needed
     if names is True:
