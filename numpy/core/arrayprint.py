@@ -355,30 +355,6 @@ def _get_format_function(data, precision, suppress_small, formatter):
     else:
         return formatdict['numpystr']()
 
-def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
-                  prefix="", formatter=None):
-
-    if a.size > _summaryThreshold:
-        summary_insert = "..., "
-        data = _leading_trailing(a)
-    else:
-        summary_insert = ""
-        data = ravel(asarray(a))
-
-    # find the right formatting function for the array
-    format_function = _get_format_function(data, precision,
-                                           suppress_small, formatter)
-
-    # skip over "["
-    next_line_prefix = " "
-    # skip over array(
-    next_line_prefix += " "*len(prefix)
-
-    lst = _formatArray(a, format_function, a.ndim, max_line_width,
-                       next_line_prefix, separator,
-                       _summaryEdgeItems, summary_insert)[:-1]
-    return lst
-
 
 def _recursive_guard(fillvalue='...'):
     """
@@ -409,9 +385,33 @@ def _recursive_guard(fillvalue='...'):
     return decorating_function
 
 
-# gracefully handle recursive calls - this comes up when object arrays contain
-# themselves
+# gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
+def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
+                  prefix="", formatter=None):
+
+    if a.size > _summaryThreshold:
+        summary_insert = "..., "
+        data = _leading_trailing(a)
+    else:
+        summary_insert = ""
+        data = ravel(asarray(a))
+
+    # find the right formatting function for the array
+    format_function = _get_format_function(data, precision,
+                                           suppress_small, formatter)
+
+    # skip over "["
+    next_line_prefix = " "
+    # skip over array(
+    next_line_prefix += " "*len(prefix)
+
+    lst = _formatArray(a, format_function, a.ndim, max_line_width,
+                       next_line_prefix, separator,
+                       _summaryEdgeItems, summary_insert)[:-1]
+    return lst
+
+
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None):
@@ -509,7 +509,6 @@ def array2string(a, max_line_width=None, precision=None,
     '[0x0L 0x1L 0x2L]'
 
     """
-
     # Deprecation 05-16-2017  v1.14
     if style is not np._NoValue:
         warnings.warn("'style' argument is deprecated and no longer functional",
