@@ -513,7 +513,7 @@ class TestIndexing(object):
         arro = np.zeros((4, 4))
         arr = arro[::-1, ::-1]
 
-        slices = [slice(None), [0, 1, 2, 3]]
+        slices = (slice(None), [0, 1, 2, 3])
         arr[slices] = 10
         assert_array_equal(arr, 10.)
 
