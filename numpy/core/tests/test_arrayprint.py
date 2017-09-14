@@ -297,6 +297,12 @@ class TestPrintOptions(object):
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
 
+    def test_sign_spacing_structured(self):
+        a = np.ones(2, dtype='f,f')
+        assert_equal(repr(a), "array([(1., 1.), (1., 1.)],\n"
+                              "      dtype=[('f0', '<f4'), ('f1', '<f4')])")
+        assert_equal(repr(a[0]), "(1., 1.)")
+
 
 def test_unicode_object_array():
     import sys
