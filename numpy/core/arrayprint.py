@@ -38,7 +38,7 @@ else:
 
 import numpy as np
 from . import numerictypes as _nt
-from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
+from .umath import absolute, not_equal, isnan, isinf
 from . import multiarray
 from .multiarray import (array, format_longfloat, datetime_as_string,
                          datetime_data, dtype, ndarray)
@@ -312,8 +312,7 @@ def _get_format_function(data, **options):
     if dtype_.fields is not None:
         format_functions = []
         for field_name in dtype_.names:
-            field_values = ravel(data[field_name])
-            format_function = _get_format_function(field_values, **options)
+            format_function = _get_format_function(data[field_name], **options)
             if dtype_[field_name].shape != ():
                 format_function = SubArrayFormat(format_function)
             format_functions.append(format_function)
@@ -386,10 +385,7 @@ def _array2string(a, options, separator=' ', prefix=""):
         data = _leading_trailing(a)
     else:
         summary_insert = ""
-        if a.shape == () and options.get('sign', '') == 'legacy':
-            data = asarray(a)
-        else:
-            data = ravel(asarray(a))
+        data = asarray(a)
 
     # find the right formatting function for the array
     format_function = _get_format_function(data, **options)
@@ -626,7 +622,7 @@ class FloatFormat(object):
         self.exp_format = False
         self.large_exponent = False
         try:
-            self.fillFormat(ravel(data))
+            self.fillFormat(data)
         except (NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
             # instantiated in formatdict.
@@ -637,16 +633,16 @@ class FloatFormat(object):
             hasinf = isinf(data)
             special = isnan(data) | hasinf
             valid = not_equal(data, 0) & ~special
-            non_zero = data.compress(valid)
+            non_zero = data[valid]
             abs_non_zero = absolute(non_zero)
             if len(non_zero) == 0:
                 max_val = 0.
                 min_val = 0.
                 min_val_sgn = 0.
             else:
-                max_val = maximum.reduce(abs_non_zero)
-                min_val = minimum.reduce(abs_non_zero)
-                min_val_sgn = minimum.reduce(non_zero)
+                max_val = np.max(abs_non_zero)
+                min_val = np.min(abs_non_zero)
+                min_val_sgn = np.min(non_zero)
                 if max_val >= 1.e8:
                     self.exp_format = True
                 if not self.suppress_small and (min_val < 0.0001
@@ -724,8 +720,8 @@ class FloatFormat(object):
 class IntegerFormat(object):
     def __init__(self, data):
         try:
-            max_str_len = max(len(str(maximum.reduce(data))),
-                              len(str(minimum.reduce(data))))
+            max_str_len = max(len(str(np.max(data))),
+                              len(str(np.min(data))))
             self.format = '%' + str(max_str_len) + 'd'
         except (TypeError, NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
@@ -855,8 +851,8 @@ class TimedeltaFormat(object):
         v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
         if len(v) > 0:
             # Max str length of non-NaT elements
-            max_str_len = max(len(str(maximum.reduce(v))),
-                              len(str(minimum.reduce(v))))
+            max_str_len = max(len(str(np.max(v))),
+                              len(str(np.min(v))))
         else:
             max_str_len = 0
         if len(v) < len(data):
