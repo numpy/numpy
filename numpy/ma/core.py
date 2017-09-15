@@ -889,6 +889,21 @@ class _MaskedUFunc(object):
     def __str__(self):
         return "Masked version of {}".format(self.f)
 
+    def _split_out(self, out):
+        """
+        take an out argument, and split it into a data out and a mask out
+        """
+        if out is not None:
+            out_d = getdata(out)
+            out_m = getmask(out)
+            if out_m is nomask:
+                out_m = None
+        else:
+            out_d = None
+            out_m = None
+
+        return out_d, out_m
+
 
 class _MaskedUnaryOperation(_MaskedUFunc):
     """
@@ -915,29 +930,40 @@ class _MaskedUnaryOperation(_MaskedUFunc):
         ufunc_domain[mufunc] = domain
         ufunc_fills[mufunc] = fill
 
-    def __call__(self, a, *args, **kwargs):
+    def __call__(self, a, out=None, *args, **kwargs):
         """
         Execute the call behavior.
 
         """
         d = getdata(a)
+        out_d, out_m = self._split_out(out)
+
         # Deal with domain
         if self.domain is not None:
             # Case 1.1. : Domained function
+
+            # do this first, in case out_d overlaps d
+            m = self.domain(d)
+
             # nans at masked positions cause RuntimeWarnings, even though
             # they are masked. To avoid this we suppress warnings.
             with np.errstate(divide='ignore', invalid='ignore'):
-                result = self.f(d, *args, **kwargs)
+                result = self.f(d, out_d, *args, **kwargs)
+
             # Make a mask
-            m = ~umath.isfinite(result)
-            m |= self.domain(d)
+            m |= ~umath.isfinite(result)
             m |= getmask(a)
         else:
             # Case 1.2. : Function without a domain
             # Get the result and the mask
             with np.errstate(divide='ignore', invalid='ignore'):
-                result = self.f(d, *args, **kwargs)
+                result = self.f(d, out_d, *args, **kwargs)
             m = getmask(a)
+
+        # TODO: try and avoid this copy, but deal with out=a
+        if out_m is not None:
+            np.copyto(out_m, m)
+            m = out_m
 
         if not result.ndim:
             # Case 2.1. : The result is scalarscalar
@@ -949,7 +975,8 @@ class _MaskedUnaryOperation(_MaskedUFunc):
             # Case 2.2. The result is an array
             # We need to fill the invalid data back w/ the input Now,
             # that's plain silly: in C, we would just skip the element and
-            # keep the original, but we do have to do it that way in Python
+            # keep the original, but we do have to do it that way in Pytho
+            # If out == a, then it's too late, the data is already lost
 
             # In case result has a lower dtype than the inputs (as in
             # equal)
@@ -997,28 +1024,30 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         ufunc_domain[mbfunc] = None
         ufunc_fills[mbfunc] = (fillx, filly)
 
-    def __call__(self, a, b, *args, **kwargs):
+    def __call__(self, a, b, out=None, *args, **kwargs):
         """
         Execute the call behavior.
 
         """
         # Get the data, as ndarray
         (da, db) = (getdata(a), getdata(b))
+        out_d, out_m = self._split_out(out)
+
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
-            result = self.f(da, db, *args, **kwargs)
+            result = self.f(da, db, out_d, *args, **kwargs)
         # Get the mask for the result
         (ma, mb) = (getmask(a), getmask(b))
         if ma is nomask:
             if mb is nomask:
                 m = nomask
             else:
-                m = umath.logical_or(getmaskarray(a), mb)
+                m = umath.logical_or(getmaskarray(a), mb, out=out_m)
         elif mb is nomask:
-            m = umath.logical_or(ma, getmaskarray(b))
+            m = umath.logical_or(ma, getmaskarray(b), out=out_m)
         else:
-            m = umath.logical_or(ma, mb)
+            m = umath.logical_or(ma, mb, out=out_m)
 
         # Case 1. : scalar
         if not result.ndim:
@@ -1144,23 +1173,28 @@ class _DomainedBinaryOperation(_MaskedUFunc):
         ufunc_domain[dbfunc] = domain
         ufunc_fills[dbfunc] = (fillx, filly)
 
-    def __call__(self, a, b, *args, **kwargs):
+    def __call__(self, a, b, out=None, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
         (da, db) = (getdata(a), getdata(b))
-        # Get the result
-        with np.errstate(divide='ignore', invalid='ignore'):
-            result = self.f(da, db, *args, **kwargs)
+        out_d, out_m = self._split_out(out)
+
         # Get the mask as a combination of the source masks and invalid
-        m = ~umath.isfinite(result)
-        m |= getmask(a)
-        m |= getmask(b)
+        m = umath.logical_or(getmask(a), getmask(b))
+
         # Apply the domain
         domain = ufunc_domain.get(self.f, None)
         if domain is not None:
-            m |= domain(da, db)
+            m = m | domain(da, db)
+
+        # Get the result
+        with np.errstate(divide='ignore', invalid='ignore'):
+            result = self.f(da, db, out_d, *args, **kwargs)
+
+        m = umath.logical_or(m, ~umath.isfinite(result), out=out_m)
+
         # Take care of the scalar case first
-        if (not m.ndim):
+        if not m.ndim:
             if m:
                 return masked
             else:
