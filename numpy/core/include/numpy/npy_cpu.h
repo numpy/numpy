@@ -15,6 +15,8 @@
  *              NPY_CPU_ARMEB
  *              NPY_CPU_SH_LE
  *              NPY_CPU_SH_BE
+ *              NPY_CPU_ARCEL
+ *              NPY_CPU_ARCEB
  */
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
@@ -76,6 +78,10 @@
     #define NPY_CPU_AARCH64
 #elif defined(__mc68000__)
     #define NPY_CPU_M68K
+#elif defined(__arc__) && defined(__LITTLE_ENDIAN__)
+    #define NPY_CPU_ARCEL
+#elif defined(__arc__) && defined(__BIG_ENDIAN__)
+    #define NPY_CPU_ARCEB
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
