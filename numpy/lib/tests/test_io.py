@@ -1839,7 +1839,7 @@ M   33  21.99
         with suppress_warnings() as sup:
             sup.filter(message="genfromtxt: Empty input file:")
             data = TextIO()
-            test = np.genfromtxt(data, converters={0: lambda arg: arg})
+            test = np.genfromtxt(data, converters={0: lambda arg: float(arg)})
             assert_equal(test, np.array([]))
 
 
