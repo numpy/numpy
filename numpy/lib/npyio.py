@@ -1954,7 +1954,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     if i in user_converters:
                         ishomogeneous &= (ttype == dtype.type)
                         if ttype == np.string_:
-                            ttype = "|S%i" % max(len(row[i]) for row in data)
+                            ttype = "|S%i" % max((len(row[i]) for row in data),
+                                                 default=1)
                         descr.append(('', ttype))
                     else:
                         descr.append(('', dtype))
