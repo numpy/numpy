@@ -1342,7 +1342,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
-        step size is 1.  If `step` is specified, `start` must also be given.
+        step size is 1.  If `step` is specified as a position argument,
+        `start` must also be given.
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
