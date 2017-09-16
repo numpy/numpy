@@ -107,6 +107,10 @@ precision are also available by adding the F and L suffixes respectively.
 
     Pi (:math:`\pi`)
 
+.. c:var:: NPY_TAU
+
+    Tau (:math:`\tau = 2\pi`)
+
 .. c:var:: NPY_PI_2
 
     Pi divided by 2 (:math:`\frac{\pi}{2}`)

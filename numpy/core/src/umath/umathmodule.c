@@ -368,6 +368,8 @@ PyMODINIT_FUNC initumath(void)
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
+    PyDict_SetItemString(d, "tau", s = PyFloat_FromDouble(NPY_TAU));
+    Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
     Py_DECREF(s);
     PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));

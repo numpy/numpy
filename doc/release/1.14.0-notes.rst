@@ -167,6 +167,11 @@ Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
 
+New constant ``np.tau`` to match the ``math.tau`` of Python 3.6
+---------------------------------------------------------------
+PEP 628 added ``tau = 2*pi`` to the ``math`` library, so NumPy now provides
+this too.
+
 
 Improvements
 ============
