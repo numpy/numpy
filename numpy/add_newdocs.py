@@ -3769,7 +3769,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None)
+    a.max(axis=None, out=None, keepdims=False)
 
     Return the maximum along a given axis.
 
