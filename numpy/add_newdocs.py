@@ -3097,7 +3097,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__() -> Deep copy of array.
+    """a.__deepcopy__(memo, /) -> Deep copy of array.
 
     Used if copy.deepcopy is called on an array.
 
