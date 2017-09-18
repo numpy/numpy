@@ -4533,7 +4533,7 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, npy_intp n, object pvals, size=None):
+    def multinomial(self, object n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
 
@@ -4549,7 +4549,7 @@ cdef class RandomState:
 
         Parameters
         ----------
-        n : int
+        n : int or array_like of ints
             Number of experiments.
         pvals : sequence of floats, length p
             Probabilities of each of the ``p`` different outcomes.  These
@@ -4588,6 +4588,19 @@ cdef class RandomState:
         For the first run, we threw 3 times 1, 4 times 2, etc.  For the second,
         we threw 2 times 1, 4 times 2, etc.
 
+        Now, do one experiment throwing the dice 10 time, and 10 times again, 
+        and another throwing the dice 20 times, and 20 times again:
+
+        >>> np.random.multinomial([10, 20], [1/6.]*6, size=2)
+        array([[[0, 1, 3, 0, 4, 2],
+                [1, 6, 0, 2, 1, 0]],
+
+               [[4, 5, 4, 2, 2, 3],
+                [4, 2, 1, 4, 6, 3]]])
+
+        The first array shows the outcomes of throwing the dice 10 times, and 
+        the second shows the outcomes from throwing the dice 20 times.
+
         A loaded die is more likely to land on number 6:
 
         >>> np.random.multinomial(100, [1/7.]*5 + [2/7.])
@@ -4609,11 +4622,14 @@ cdef class RandomState:
 
         """
         cdef npy_intp d
-        cdef ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
+        cdef ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr", narr "arrayObject_narr"
         cdef double *pix
         cdef long *mnix
-        cdef npy_intp i, j, dn, sz
+        cdef npy_intp i, j, k, m, dn, sz
         cdef double Sum
+
+        narr = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
+        nix = <long*>PyArray_DATA(narr)
 
         d = len(pvals)
         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)
@@ -4622,27 +4638,34 @@ cdef class RandomState:
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
             raise ValueError("sum(pvals[:-1]) > 1.0")
 
-        shape = _shape_from_size(size, d)
+        base_shape = _shape_from_size(size, d)
+        if narr.shape == ():
+            m = 1
+            shape = base_shape
+        else:
+            m = len(narr)
+            shape = (m,) + base_shape
 
         multin = np.zeros(shape, int)
         mnarr = <ndarray>multin
         mnix = <long*>PyArray_DATA(mnarr)
-        sz = PyArray_SIZE(mnarr)
+        sz = PyArray_SIZE(mnarr) / m
         with self.lock, nogil, cython.cdivision(True):
-            i = 0
-            while i < sz:
-                Sum = 1.0
-                dn = n
-                for j from 0 <= j < d-1:
-                    mnix[i+j] = rk_binomial(self.internal_state, dn, pix[j]/Sum)
-                    dn = dn - mnix[i+j]
-                    if dn <= 0:
-                        break
-                    Sum = Sum - pix[j]
-                if dn > 0:
-                    mnix[i+d-1] = dn
+            for k from 0 <= k < m:
+                i = 0
+                while i < sz:
+                    Sum = 1.0
+                    dn = nix[k]
+                    for j from 0 <= j < d-1:
+                        mnix[k*sz+i+j] = rk_binomial(self.internal_state, dn, pix[j]/Sum)
+                        dn = dn - mnix[k*sz+i+j]
+                        if dn <= 0:
+                            break
+                        Sum = Sum - pix[j]
+                    if dn > 0:
+                        mnix[k*sz+i+d-1] = dn
 
-                i = i + d
+                    i = i + d
 
         return multin
 

@@ -650,7 +650,8 @@ class TestRandomDist(object):
 
     def test_multinomial(self):
         np.random.seed(self.seed)
-        actual = np.random.multinomial(20, [1/6.]*6, size=(3, 2))
+        size = (3, 2)
+        actual = np.random.multinomial(20, [1/6.]*6, size=size)
         desired = np.array([[[4, 3, 5, 4, 2, 2],
                              [5, 2, 8, 2, 2, 1]],
                             [[3, 4, 3, 6, 0, 4],
@@ -658,6 +659,13 @@ class TestRandomDist(object):
                             [[4, 4, 2, 5, 2, 3],
                              [4, 3, 4, 2, 3, 4]]])
         assert_array_equal(actual, desired)
+        assert_equal(actual.squeeze().sum(axis=-1), np.ones(size) * 20)
+
+        # Check for iterable n
+        ns = [20, 40]
+        actual = np.random.multinomial(ns, [1/6.]*6, size=size)
+        for n, sample_sum in zip(ns, actual.sum(axis=-1)):
+            assert_equal(sample_sum, np.ones(size) * n)
 
     def test_multivariate_normal(self):
         np.random.seed(self.seed)
@@ -1106,13 +1114,13 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
-    
+
     def test_noncentral_f_small_df(self):
         self.setSeed()
         desired = np.array([6.869638627492048, 0.785880199263955])
         actual = np.random.noncentral_f(0.9, 0.9, 2, size=2)
         assert_array_almost_equal(actual, desired, decimal=14)
-        
+
     def test_chisquare(self):
         df = [1]
         bad_df = [-1]
