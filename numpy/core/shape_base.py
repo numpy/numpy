@@ -366,6 +366,12 @@ def stack(arrays, axis=0, out=None):
 
 
 def _block_check_depths_match(arrays, index=[]):
+    # Recursive function checking that the depths of nested lists in `arrays`
+    # all match. Mismatch raises a ValueError as described in the block
+    # docstring below.
+    # The entire index (rather than just the depth) is calculated for each
+    # innermost list, in case an error needs to be raised, so that the index
+    # of the offending list can be printed as part of the error.
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
         return 'arrays' + idx_str
