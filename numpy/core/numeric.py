@@ -2230,7 +2230,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     See Also
     --------
-    isclose, all, any
+    isclose, all, any, equals
 
     Notes
     -----
@@ -2245,7 +2245,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         
     The comparison of `a` and `b` includes standard broadcasting,
     which means that `a` and `b` need not have the same shape in order for
-    allclose(a, b) to evaluate to True.  (The same is true for `np.equals`.)
+    allclose(a, b) to evaluate to True.  (The same is true for `equals`.)
 
     Examples
     --------
