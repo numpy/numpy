@@ -712,12 +712,16 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
+class TestPinv(LinalgSquareTestCase,
+               LinalgNonsquareTestCase,
+               LinalgGeneralizedSquareTestCase,
+               LinalgGeneralizedNonsquareTestCase):
 
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
-        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
+        dot = dot_generalized
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
@@ -1378,6 +1382,19 @@ class TestMatrixRank(object):
         yield assert_equal, matrix_rank(ms), np.array([3, 4, 0])
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
+
+    def test_symmetric_rank(self):
+        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
+        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
+        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        # rank deficient matrix
+        I = np.eye(4)
+        I[-1, -1] = 0.
+        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        # manually supplied tolerance
+        I[-1, -1] = 1e-8
+        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
+        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
 
 
 def test_reduced_rank():

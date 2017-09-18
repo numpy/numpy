@@ -1342,7 +1342,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
-        step size is 1.  If `step` is specified, `start` must also be given.
+        step size is 1.  If `step` is specified as a position argument,
+        `start` must also be given.
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
@@ -1593,7 +1594,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
 add_newdoc('numpy.core.multiarray', 'can_cast',
     """
-    can_cast(from, totype, casting = 'safe')
+    can_cast(from_, to, casting='safe')
 
     Returns True if cast between data types can occur according to the
     casting rule.  If from is a scalar or array scalar, also returns
@@ -1602,9 +1603,9 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     Parameters
     ----------
-    from : dtype, dtype specifier, scalar, or array
+    from_ : dtype, dtype specifier, scalar, or array
         Data type, scalar, or array to cast from.
-    totype : dtype or dtype specifier
+    to : dtype or dtype specifier
         Data type to cast to.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur.
@@ -3768,7 +3769,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None)
+    a.max(axis=None, out=None, keepdims=False)
 
     Return the maximum along a given axis.
 

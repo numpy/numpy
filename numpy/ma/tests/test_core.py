@@ -1760,15 +1760,11 @@ class TestFillingValues(object):
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using a flexible type w/ a different type shouldn't matter
-        # BEHAVIOR in 1.5 and earlier: match structured types by position
-        #fill_val = np.array((-999, -12345678.9, "???"),
-        #                    dtype=[("A", int), ("B", float), ("C", "|S3")])
-        # BEHAVIOR in 1.6 and later: match structured types by name
-        fill_val = np.array(("???", -999, -12345678.9),
-                            dtype=[("c", "|S3"), ("a", int), ("b", float), ])
-        # suppress deprecation warning in 1.12 (remove in 1.13)
-        with assert_warns(FutureWarning):
-            fval = _check_fill_value(fill_val, ndtype)
+        # BEHAVIOR in 1.5 and earlier, and 1.13 and later: match structured
+        # types by position
+        fill_val = np.array((-999, -12345678.9, "???"),
+                            dtype=[("A", int), ("B", float), ("C", "|S3")])
+        fval = _check_fill_value(fill_val, ndtype)
         assert_(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
@@ -3224,9 +3220,7 @@ class TestMaskedArrayMethods(object):
         assert_(m_arr_sq is not np.ma.masked)
         assert_equal(m_arr_sq.mask, True)
         m_arr_sq[...] = 2
-        # TODO: mask isn't copied to/from views yet in maskedarray, so we can
-        #       only check the data
-        assert_equal(m_arr.data[0,0], 2)
+        assert_equal(m_arr[0,0], 2)
 
     def test_swapaxes(self):
         # Tests swapaxes on MaskedArrays.
@@ -3414,6 +3408,27 @@ class TestMaskedArrayMethods(object):
         x = np.ma.array(42, mask=True)
         assert_equal(x.T.mask, x.mask)
         assert_equal(x.T.data, x.data)
+
+    def test_transpose_view(self):
+        x = np.ma.array([[1, 2, 3], [4, 5, 6]])
+        x[0,1] = np.ma.masked
+        xt = x.T
+
+        xt[1,0] = 10
+        xt[0,1] = np.ma.masked
+
+        assert_equal(x.data, xt.T.data)
+        assert_equal(x.mask, xt.T.mask)
+
+    def test_diagonal_view(self):
+        x = np.ma.zeros((3,3))
+        x[0,0] = 10
+        x[1,1] = np.ma.masked
+        x[2,2] = 20
+        xd = x.diagonal()
+        x[1,1] = 15
+        assert_equal(xd.mask, x.diagonal().mask)
+        assert_equal(xd.data, x.diagonal().data)
 
 
 class TestMaskedArrayMathMethods(object):

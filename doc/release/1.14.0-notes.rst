@@ -124,6 +124,12 @@ the result is always a view on the original masked array.
 This breaks any code that used ``masked_arr.squeeze() is np.ma.masked``, but
 fixes code that writes to the result of `.squeeze()`.
 
+Renamed first parameter of ``can_cast`` from ``from`` to ``from_``
+------------------------------------------------------------------
+The previous parameter name ``from`` is a reserved keyword in Python, which made
+it difficult to pass the argument by name. This has been fixed by renaming
+the parameter to ``from_``.
+
 
 C API changes
 =============
@@ -216,6 +222,22 @@ supported; by default a gfortran-compatible static archive
 A preallocated buffer of the desired dtype can now be used for the output of
 these functions.
 
+``np.linalg.pinv`` now works on stacked matrices
+------------------------------------------------
+Previously it was limited to a single 2d array.
+
+``numpy.save`` aligns data to 64 bytes instead of 16
+----------------------------------------------------
+Saving NumPy arrays in the ``npy`` format with ``numpy.save`` inserts
+padding before the array data to align it at 64 bytes.  Previously
+this was only 16 bytes (and sometimes less due to a bug in the code
+for version 2).  Now the alignment is 64 bytes, which matches the
+widest SIMD instruction set commonly available, and is also the most
+common cache line size.  This makes ``npy`` files easier to use in
+programs which open them with ``mmap``, especially on Linux where an
+``mmap`` offset must be a multiple of the page size.
+
+
 Changes
 =======
 
@@ -224,8 +246,51 @@ Changes
 0d arrays now use the array2string formatters to print their elements, like
 other arrays. The ``style`` argument of ``array2string`` is now non-functional.
 
+``np.linalg.matrix_rank`` is more efficient for hermitian matrices
+------------------------------------------------------------------
+The keyword argument ``hermitian`` was added to toggle between standard
+SVD-based matrix rank calculation and the more efficient eigenvalue-based
+method for symmetric/hermitian matrices.
+
 Integer scalars are now unaffected by ``np.set_string_function``
 ----------------------------------------------------------------
 Previously the str/repr of integer scalars could be controlled by
 ``np.set_string_function``, unlike most other numpy scalars. This is no longer
 the case.
+
+Multiple-field indexing/assignment of structured arrays
+-------------------------------------------------------
+The indexing and assignment of structured arrays with multiple fields has
+changed in a number of ways:
+
+First, indexing a structured array with multiple fields (eg,
+``arr[['f1', 'f3']]``) returns a view into the original array instead of a
+copy. The returned view will have extra padding bytes corresponding to
+intervening fields in the original array, unlike the copy in 1.13, which will
+affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
+
+Second, assignment between structured arrays will now occur "by position"
+instead of "by field name". The Nth field of the destination will be set to the
+Nth field of the source regardless of field name, unlike in numpy versions 1.6
+to 1.13 in which fields in the destination array were set to the
+identically-named field in the source array or to 0 if the source did not have
+a field.
+
+Correspondingly, the order of fields in a structured dtypes now matters when
+computing dtype equality. For example with the dtypes
+`x = dtype({'names': ['A', 'B'], 'formats': ['i4', 'f4'], 'offsets': [0, 4]})`
+`y = dtype({'names': ['B', 'A'], 'formats': ['f4', 'i4'], 'offsets': [4, 0]})`
+now `x == y` will return `False`, unlike before. This makes dictionary-based
+dtype specifications like `dtype({'a': ('i4', 0), 'b': ('f4', 4)})` dangerous
+in python < 3.6 since dict key-order is not preserved in those versions.
+
+Assignment from a structured array to a boolean array now raises a ValueError,
+unlike in 1.13 where it always set the destination elements to `True`.
+
+Assignment from structured array with more than one field to a non-structured
+array now raises a ValueError. In 1.13 this copied just the first field of the
+source to the destination.
+
+Using field "titles" in multiple-field indexing is now disallowed, as is
+repeating a field name in a multiple-field index.
+

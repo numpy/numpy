@@ -1613,6 +1613,11 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
 
     # Make sure the input dtype is valid.
     dtype = make_mask_descr(dtype)
+    
+    # legacy boolean special case: "existence of fields implies true"
+    if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
+        return np.ones(m.shape, dtype=dtype)
+
     # Fill the mask in case there are missing data; turn it into an ndarray.
     result = np.array(filled(m, True), copy=copy, dtype=dtype, subok=True)
     # Bas les masques !
@@ -2558,7 +2563,8 @@ def _arraymethod(funcname, onmask=True):
         if not onmask:
             result.__setmask__(mask)
         elif mask is not nomask:
-            result.__setmask__(getattr(mask, funcname)(*args, **params))
+            # __setmask__ makes a copy, which we don't want
+            result._mask = getattr(mask, funcname)(*args, **params)
         return result
     methdoc = getattr(ndarray, funcname, None) or getattr(np, funcname, None)
     if methdoc is not None:
