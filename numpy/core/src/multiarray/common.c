@@ -124,7 +124,7 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_type)
 {
-    int i, size;
+    npy_intp i, size;
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
     Py_buffer buffer_view;
@@ -158,7 +158,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
         }
         else {
-            int itemsize;
+            npy_intp itemsize;
             PyObject *temp;
 
             if (string_type == NPY_STRING) {
@@ -201,7 +201,11 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             if (dtype == NULL) {
                 goto fail;
             }
-            dtype->elsize = itemsize;
+            if (itemsize > INT_MAX) {
+                PyErr_SetString(PyExc_ValueError, "String is too large");
+                goto fail;
+            }
+            dtype->elsize = (int) itemsize;
         }
         goto promote_types;
     }
@@ -210,7 +214,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     dtype = _array_find_python_scalar_type(obj);
     if (dtype != NULL) {
         if (string_type) {
-            int itemsize;
+            npy_intp itemsize;
             PyObject *temp;
 
             if (string_type == NPY_STRING) {
@@ -253,14 +257,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             if (dtype == NULL) {
                 goto fail;
             }
-            dtype->elsize = itemsize;
+            if (itemsize > INT_MAX) {
+                PyErr_SetString(PyExc_ValueError, "String is too large");
+                goto fail;
+            }
+            dtype->elsize = (int) itemsize;
         }
         goto promote_types;
     }
 
     /* Check if it's an ASCII string */
     if (PyBytes_Check(obj)) {
-        int itemsize = PyString_GET_SIZE(obj);
+        npy_intp itemsize = PyString_GET_SIZE(obj);
 
         /* If it's already a big enough string, don't bother type promoting */
         if (*out_dtype != NULL &&
@@ -272,13 +280,17 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        dtype->elsize = itemsize;
+        if (itemsize > INT_MAX) {
+            PyErr_SetString(PyExc_ValueError, "String is too large");
+            goto fail;
+        }
+        dtype->elsize = (int) itemsize;
         goto promote_types;
     }
 
     /* Check if it's a Unicode string */
     if (PyUnicode_Check(obj)) {
-        int itemsize = PyUnicode_GET_DATA_SIZE(obj);
+        npy_intp itemsize = PyUnicode_GET_DATA_SIZE(obj);
 #ifndef Py_UNICODE_WIDE
         itemsize <<= 1;
 #endif
@@ -296,7 +308,11 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        dtype->elsize = itemsize;
+        if (itemsize > INT_MAX) {
+            PyErr_SetString(PyExc_ValueError, "String is too large");
+            goto fail;
+        }
+        dtype->elsize = (int) itemsize;
         goto promote_types;
     }
 
@@ -319,7 +335,11 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             PyErr_Clear();
             dtype = PyArray_DescrNewFromType(NPY_VOID);
-            dtype->elsize = buffer_view.itemsize;
+            if (buffer_view.itemsize > INT_MAX) {
+                PyErr_SetString(PyExc_ValueError, "Buffer is too large");
+                goto fail;
+            }
+            dtype->elsize = (int) buffer_view.itemsize;
             PyBuffer_Release(&buffer_view);
             goto promote_types;
         }
@@ -588,7 +608,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i;
+    int i;
     npy_uintp aligned;
     npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 

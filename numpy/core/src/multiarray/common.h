@@ -266,7 +266,7 @@ blas_stride(npy_intp stride, unsigned itemsize)
     if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
         stride /= itemsize;
         if (stride <= INT_MAX) {
-            return stride;
+            return (int) stride;
         }
     }
     return 0;

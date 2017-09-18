@@ -5,7 +5,7 @@ NPY_NO_EXPORT int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length);
 
 NPY_NO_EXPORT int
-PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len);
+PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, Py_ssize_t ucs2len, Py_ssize_t ucs4len);
 
 NPY_NO_EXPORT PyUnicodeObject *
 PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align);

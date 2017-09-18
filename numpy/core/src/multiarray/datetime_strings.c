@@ -178,7 +178,7 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
     localrawtime += out_dts_local->hour * 60;
     localrawtime += out_dts_local->min;
 
-    *out_timezone_offset = localrawtime - rawtime;
+    *out_timezone_offset = (int)(localrawtime - rawtime);
 
     /* Reapply the year 2038 year correction */
     out_dts_local->year += year_correction;

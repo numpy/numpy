@@ -254,7 +254,8 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     mydim = newdims + oldnd;
     tuple = PyTuple_Check(old->subarray->shape);
     if (tuple) {
-        numnew = PyTuple_GET_SIZE(old->subarray->shape);
+        /* subarray should always be < NPY_MAXDIMS, so cast is safe */
+        numnew = (int) PyTuple_GET_SIZE(old->subarray->shape);
     }
     else {
         numnew = 1;
@@ -585,7 +586,7 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
  */
 
 static int
-discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
+discover_itemsize(PyObject *s, int nd, npy_intp *itemsize, int string_type)
 {
     int r;
     npy_intp n, i;
@@ -666,7 +667,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 {
     PyObject *e;
     int r;
-    npy_intp n, i;
+    npy_intp n;
     Py_buffer buffer_view;
     PyObject * seq;
 
@@ -676,6 +677,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 
     /* obj is an Array */
     if (PyArray_Check(obj)) {
+        int i;
         PyArrayObject *arr = (PyArrayObject *)obj;
 
         if (PyArray_NDIM(arr) < *maxndim) {
@@ -732,6 +734,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
             PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
             int nd = buffer_view.ndim;
+            int i;
             if (nd < *maxndim) {
                 *maxndim = nd;
             }
@@ -762,6 +765,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             if (inter->two == 2) {
                 nd = inter->nd;
                 if (nd >= 0) {
+                    int i;
                     if (nd < *maxndim) {
                         *maxndim = nd;
                     }
@@ -780,14 +784,15 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* obj has the __array_interface__ interface */
     e = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (e != NULL) {
-        int nd = -1;
+        npy_intp nd = -1;
         if (PyDict_Check(e)) {
             PyObject *new;
             new = PyDict_GetItemString(e, "shape");
             if (new && PyTuple_Check(new)) {
+                int i;
                 nd = PyTuple_GET_SIZE(new);
                 if (nd < *maxndim) {
-                    *maxndim = nd;
+                    *maxndim = (int) nd;
                 }
                 for (i=0; i<*maxndim; i++) {
                     d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
@@ -843,6 +848,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     else {
         npy_intp dtmp[NPY_MAXDIMS];
         int j, maxndim_m1 = *maxndim - 1;
+        npy_intp i;
         e = PySequence_Fast_GET_ITEM(seq, 0);
 
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
@@ -1312,7 +1318,11 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     }
     else {
         descr = PyArray_DescrNewFromType(NPY_STRING);
-        descr->elsize = view->itemsize;
+        if (view->itemsize > INT_MAX) {
+            PyErr_SetString(PyExc_ValueError, "Buffer too large");
+            goto fail;
+        }
+        descr->elsize = (int) view->itemsize;
     }
 
     nd = view->ndim;
@@ -1619,7 +1629,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         /* If the type is flexible, determine its size */
         if ((*out_dtype)->elsize == 0 &&
                             PyTypeNum_ISEXTENDED((*out_dtype)->type_num)) {
-            int itemsize = 0;
+            npy_intp itemsize = 0;
             int string_type = 0;
             if ((*out_dtype)->type_num == NPY_STRING ||
                     (*out_dtype)->type_num == NPY_UNICODE) {
@@ -1642,10 +1652,14 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
             if ((*out_dtype)->type_num == NPY_UNICODE) {
                 itemsize *= 4;
             }
+            if (itemsize > INT_MAX) {
+                PyErr_SetString(PyExc_ValueError, "Dtype too large");
+                return -1;
+            }
 
             if (itemsize != (*out_dtype)->elsize) {
                 PyArray_DESCR_REPLACE(*out_dtype);
-                (*out_dtype)->elsize = itemsize;
+                (*out_dtype)->elsize = (int) itemsize;
             }
         }
 
@@ -2242,7 +2256,8 @@ PyArray_FromInterface(PyObject *origin)
         /* Assume shape as scalar otherwise */
         else {
             /* NOTE: pointers to data and base should be NULL */
-            n = dims[0] = 0;
+            dims[0] = 0;
+            n = 0;
         }
     }
     /* Make sure 'shape' is a tuple */
@@ -2253,7 +2268,14 @@ PyArray_FromInterface(PyObject *origin)
     }
     /* Get dimensions from shape tuple */
     else {
-        n = PyTuple_GET_SIZE(attr);
+        npy_intp n_intp = PyTuple_GET_SIZE(attr);
+
+        if (n_intp > NPY_MAXDIMS) {
+            PyErr_SetString(PyExc_TypeError,
+                    "shape is too long");
+            goto fail;
+        }
+        n = (int) n_intp;
         for (i = 0; i < n; i++) {
             tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);

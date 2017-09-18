@@ -30,11 +30,11 @@
  *
  * Values above 0xffff are converted to surrogate pairs.
  */
-NPY_NO_EXPORT int
-PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
+NPY_NO_EXPORT Py_ssize_t
+PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, Py_ssize_t ucs4length)
 {
-    int i;
-    int numucs2 = 0;
+    Py_ssize_t i;
+    Py_ssize_t numucs2 = 0;
     npy_ucs4 chr;
     for (i = 0; i < ucs4length; i++) {
         chr = *ucs4++;
@@ -62,13 +62,13 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
  *
  * The return value is the actual size of the used part of the ucs4 buffer.
  */
-NPY_NO_EXPORT int
-PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
+NPY_NO_EXPORT Py_ssize_t
+PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, Py_ssize_t ucs2len, Py_ssize_t ucs4len)
 {
-    int i;
+    Py_ssize_t i;
     npy_ucs4 chr;
     Py_UNICODE ch;
-    int numchars=0;
+    Py_ssize_t numchars = 0;
 
     for (i = 0; (i < ucs2len) && (numchars < ucs4len); i++) {
         ch = *ucs2++;

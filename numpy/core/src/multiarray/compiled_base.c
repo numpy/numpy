@@ -20,7 +20,7 @@
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic(const double *a, npy_int lena)
+check_array_monotonic(const double *a, npy_intp lena)
 {
     npy_intp i;
     double next;

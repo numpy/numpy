@@ -596,9 +596,9 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 out->as = (int)((dt % 1000LL) * 1000);
             }
             else {
-                npy_datetime minutes;
+                int minutes;
 
-                minutes = dt / (60*1000000000000000LL);
+                minutes = (int) (dt / (60*1000000000000000LL));
                 dt = dt % (60*1000000000000000LL);
                 if (dt < 0) {
                     dt += (60*1000000000000000LL);
@@ -622,9 +622,9 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 out->as = (int)(dt % 1000000LL);
             }
             else {
-                npy_datetime seconds;
+                int seconds;
 
-                seconds = dt / 1000000000000000000LL;
+                seconds = (int) (dt / 1000000000000000000LL);
                 dt = dt % 1000000000000000000LL;
                 if (dt < 0) {
                     dt += 1000000000000000000LL;
@@ -2890,12 +2890,12 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 
     /* If the type's precision is greater than days, return a datetime */
     if (meta->base > NPY_FR_D) {
-        ret = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
+        ret = PyDateTime_FromDateAndTime((int) dts.year, dts.month, dts.day,
                                 dts.hour, dts.min, dts.sec, dts.us);
     }
     /* Otherwise return a date */
     else {
-        ret = PyDate_FromDate(dts.year, dts.month, dts.day);
+        ret = PyDate_FromDate((int) dts.year, dts.month, dts.day);
     }
 
     return ret;

@@ -310,12 +310,17 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     break;
             }
 
-            if (flex_type_num == NPY_STRING) {
-                (*flex_dtype)->elsize = size;
+            if (flex_type_num == NPY_UNICODE) {
+                size *= 4;
             }
-            else if (flex_type_num == NPY_UNICODE) {
-                (*flex_dtype)->elsize = size * 4;
+
+            if (size > INT_MAX) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot create a dtype that large");
+                return;
             }
+
+            (*flex_dtype)->elsize = (int) size;
         }
         else {
             /*
@@ -2043,14 +2048,20 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
-    int i, n, allscalars = 0;
+    npy_intp i, n;
+    int allscalars = 0;
     PyArrayObject **mps = NULL;
     PyObject *otmp;
     PyArray_Descr *intype = NULL, *stype = NULL;
     PyArray_Descr *newtype = NULL;
     NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
 
-    *retn = n = PySequence_Length(op);
+    n = PySequence_Length(op);
+    if (n > INT_MAX) {
+        /* ret should have been an npy_intp to avoid this */
+        PyErr_SetString(PyExc_ValueError, "sequence too long.");
+    }
+    *retn = (int) n;
     if (n == 0) {
         PyErr_SetString(PyExc_ValueError, "0-length sequence.");
     }

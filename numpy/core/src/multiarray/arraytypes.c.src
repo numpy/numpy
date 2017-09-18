@@ -452,7 +452,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     PyArrayObject *ap = vap;
     PyObject *temp;
     Py_UNICODE *ptr;
-    int datalen;
+    npy_intp datalen;
 #ifndef Py_UNICODE_WIDE
     char *buffer;
 #endif
@@ -654,7 +654,7 @@ VOID_getitem(void *input, void *vap)
     if (PyDataType_HASFIELDS(descr)) {
         PyObject *key;
         PyObject *names;
-        int i, n;
+        npy_intp i, n;
         PyObject *ret;
         PyObject *tup;
         int savedflags;
@@ -784,7 +784,7 @@ NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
  * WARNING: Clobbers arr's dtype and alignment flag.
  */
 NPY_NO_EXPORT int
-_setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
+_setup_field(npy_intp i, PyArray_Descr *descr, PyArrayObject *arr,
             npy_intp *offset_p)
 {
     PyObject *key;
@@ -818,9 +818,9 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
                               PyArray_Descr *srcdescr, char *srcdata){
     PyArrayObject_fields dummy_struct;
     PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
-    npy_int names_size = PyTuple_GET_SIZE(dstdescr->names);
+    npy_intp names_size = PyTuple_GET_SIZE(dstdescr->names);
     npy_intp offset;
-    npy_int i;
+    npy_intp i;
     int ret;
 
     /* Fast path if dtypes are equal */
@@ -1829,7 +1829,7 @@ static int
     @btype@ result;
 
     result = @func@(str, endptr, 10);
-    *(@type@ *)ip = result;
+    *(@type@ *)ip = (@type@) result;
     return 0;
 }
 /**end repeat**/
@@ -1846,7 +1846,7 @@ static int
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-    *(@type@ *)ip = result;
+    *(@type@ *)ip = (@type@) result;
     return 0;
 }
 /**end repeat**/
@@ -3693,7 +3693,7 @@ static void
 
     delta -= start;
     for (i = 2; i < length; ++i) {
-        buffer[i] = start + i*delta;
+        buffer[i] = (@type@) (start + i*delta);
     }
 }
 /**end repeat**/

@@ -126,8 +126,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             return NPY_FAIL;
         }
     }
-    seq->len = len;
-    nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
+    seq->len = (int) len;  /* safe, assuming NPY_MAXDIMS <= MAX_INT */
+    nd = PyArray_IntpFromSequence(obj, (npy_intp *)seq->ptr, seq->len);
     if (nd == -1 || nd != len) {
         npy_free_cache_dim_obj(*seq);
         seq->ptr = NULL;
@@ -248,10 +248,16 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
     /* A tuple of which axes */
     else if (PyTuple_Check(axis_in)) {
         int i, naxes;
+        npy_intp naxes_intp;
 
         memset(out_axis_flags, 0, ndim);
 
-        naxes = PyTuple_Size(axis_in);
+        naxes_intp = PyTuple_Size(axis_in);
+        if (naxes_intp > INT_MAX) {
+            PyErr_SetString(PyExc_ValueError, "Too many axes");
+            return NPY_FAIL;
+        }
+        naxes = (int) naxes_intp;
         if (naxes < 0) {
             return NPY_FAIL;
         }
@@ -945,14 +951,20 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 }
 
 /*NUMPY_API
- * PyArray_IntpFromSequence
+ * PyArray_IntpFromSequence`
  * Returns the number of integers converted or -1 if an error occurred.
  * vals must be large enough to hold maxvals
  */
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+    npy_intp result = PyArray_IntpFromIndexSequence(
+        seq, vals, (npy_intp)maxvals);
+    if (result > INT_MAX) {
+        PyErr_SetString(PyExc_ValueError, "Result too large");
+        return -1;
+    }
+    return (int) result;
 }
 
 

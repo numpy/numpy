@@ -194,7 +194,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
         char buf[128];
-        int old_offset;
+        Py_ssize_t old_offset;
         int ret;
 
         if (PyTuple_Check(descr->subarray->shape)) {
@@ -228,7 +228,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
-        int base_offset = *offset;
+        Py_ssize_t base_offset = *offset;
 
         _append_str(str, "T{");
         for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
@@ -236,7 +236,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             PyArray_Descr *child;
             char *p;
             Py_ssize_t len;
-            int new_offset;
+            Py_ssize_t new_offset;
 
             name = PyTuple_GET_ITEM(descr->names, k);
             item = PyDict_GetItem(descr->fields, name);

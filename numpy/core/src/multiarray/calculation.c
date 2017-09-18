@@ -362,7 +362,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     PyArrayObject *arr1 = NULL, *arr2 = NULL, *arrnew = NULL;
     PyObject *ret = NULL, *newshape = NULL;
     int i, n;
-    npy_intp val;
+    npy_intp n_ax;
 
     arrnew = (PyArrayObject *)PyArray_CheckAxis(self, &axis, 0);
     if (arrnew == NULL) {
@@ -383,6 +383,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     for (i = 0; i < n; i++) {
+        npy_intp val;
         if (i == axis) {
             val = 1;
         }
@@ -458,13 +459,13 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         Py_DECREF(arrnew);
         return NULL;
     }
-    n = PyArray_DIM(arrnew,axis);
+    n_ax = PyArray_DIM(arrnew,axis);
     Py_DECREF(arrnew);
-    n = (n-num);
-    if (n == 0) {
-        n = 1;
+    n_ax = (n_ax-num);
+    if (n_ax == 0) {
+        n_ax = 1;
     }
-    obj2 = PyFloat_FromDouble(1.0/((double )n));
+    obj2 = PyFloat_FromDouble(1.0/((double )n_ax));
     if (obj2 == NULL) {
         Py_DECREF(obj1);
         return NULL;
