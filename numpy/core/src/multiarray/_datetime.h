@@ -175,7 +175,8 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
  */
 NPY_NO_EXPORT int
 convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
-                                        PyArray_DatetimeMetaData *out_meta);
+                                        PyArray_DatetimeMetaData *out_meta,
+                                        npy_bool from_pickle);
 
 /*
  * Gets a tzoffset in minutes by calling the fromutc() function on
