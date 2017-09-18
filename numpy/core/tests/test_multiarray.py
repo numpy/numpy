@@ -3172,6 +3172,15 @@ class TestTemporaryElide(TestCase):
         a = np.bool_()
         assert_(type(~(a & a)) is np.bool_)
 
+    def test_elide_scalar_readonly(self):
+        # The imaginary part of a real array is readonly. This needs to go
+        # through fast_scalar_power which is only called for powers of
+        # +1, -1, 0, 0.5, and 2, so use 2. Also need valid refcount for
+        # elision which can be gotten for the imaginary part of a real
+        # array. Should not error.
+        a = np.empty(100000, dtype=np.float64)
+        a.imag ** 2
+
     def test_elide_readonly(self):
         # don't try to elide readonly temporaries
         r = np.asarray(np.broadcast_to(np.zeros(1), 100000).flat) * 0.0
