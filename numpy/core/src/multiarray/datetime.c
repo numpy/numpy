@@ -1804,7 +1804,8 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
  */
 NPY_NO_EXPORT int
 convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
-                                        PyArray_DatetimeMetaData *out_meta)
+                                        PyArray_DatetimeMetaData *out_meta,
+                                        npy_bool from_pickle)
 {
     char *basestr = NULL;
     Py_ssize_t len = 0, tuple_size;
@@ -1876,7 +1877,31 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
     /* (unit, num, den, event) */
     else if (tuple_size == 4) {
         PyObject *event = PyTuple_GET_ITEM(tuple, 3);
-        if (event != Py_None) {
+        if (from_pickle) {
+            /* if (event == 1) */
+            PyObject *one = PyLong_FromLong(1);
+            int equal_one;
+            if (one == NULL) {
+                return -1;
+            }
+            equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
+            if (equal_one == -1) {
+                return -1;
+            }
+
+            /* if the event data is not 1, it had semantics different to how
+             * datetime types now behave, which are no longer respected.
+             */
+            if (!equal_one) {
+                if (PyErr_WarnEx(PyExc_UserWarning,
+                        "Loaded pickle file contains non-default event data "
+                        "for a datetime type, which has been ignored since 1.7",
+                        1) < 0) {
+                    return -1;
+                }
+            }
+        }
+        else if (event != Py_None) {
             /* Numpy 1.14, 2017-08-11 */
             if (DEPRECATE(
                     "When passing a 4-tuple as (unit, num, den, event), the "
@@ -1922,8 +1947,8 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
     Py_ssize_t len = 0;
 
     if (PyTuple_Check(obj)) {
-        return convert_datetime_metadata_tuple_to_datetime_metadata(obj,
-                                                                out_meta);
+        return convert_datetime_metadata_tuple_to_datetime_metadata(
+            obj, out_meta, NPY_FALSE);
     }
 
     /* Get an ASCII string */
