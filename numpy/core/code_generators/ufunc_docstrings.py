@@ -2887,8 +2887,18 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
-    as the divisor `x2`. It should not be confused with the Matlab(TM) ``rem``
-    function.
+    as the divisor `x2`. The MATLAB function equivalent to ``np.remainder``
+    is ``mod``.
+
+    .. warning::
+
+        This should not be confused with:
+
+        * Python 3.7's `math.remainder` and C's ``remainder``, which
+          computes the IEEE remainder, which are the complement to
+          ``round(x1 / x2)``.
+        * The MATLAB ``rem`` function and or the C ``%`` operator which is the
+          complement to ``int(x1 / x2)``.
 
     Parameters
     ----------
@@ -2908,7 +2918,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     --------
     floor_divide : Equivalent of Python ``//`` operator.
     divmod : Simultaneous floor division and remainder.
-    fmod : Equivalent of the Matlab(TM) ``rem`` function.
+    fmod : Equivalent of the MATLAB ``rem`` function.
     divide, floor
 
     Notes
