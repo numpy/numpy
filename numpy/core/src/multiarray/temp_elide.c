@@ -363,6 +363,8 @@ can_elide_temp_unary(PyArrayObject * m1)
     if (Py_REFCNT(m1) != 1 || !PyArray_CheckExact(m1) ||
             !PyArray_ISNUMBER(m1) ||
             !(PyArray_FLAGS(m1) & NPY_ARRAY_OWNDATA) ||
+            !PyArray_ISWRITEABLE(m1) ||
+            PyArray_CHKFLAGS(m1, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
