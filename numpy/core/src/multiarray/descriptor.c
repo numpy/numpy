@@ -2887,7 +2887,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
         if (convert_datetime_metadata_tuple_to_datetime_metadata(
                                     PyTuple_GET_ITEM(metadata, 1),
-                                    &temp_dt_data) < 0) {
+                                    &temp_dt_data,
+                                    NPY_TRUE) < 0) {
             return NULL;
         }
 
