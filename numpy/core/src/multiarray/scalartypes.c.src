@@ -2843,9 +2843,14 @@ static PyNumberMethods @name@_arrtype_as_number;
 static PyObject *
 bool_index(PyObject *a)
 {
-    PyErr_SetString(PyExc_TypeError, 
-                    "A boolean scalar cannot be converted to an index");
-    return NULL;
+    if (DEPRECATE(
+            "In future, it will be an error for 'np.bool_' scalars to be "
+            "interpreted as an index") < 0) {
+        return NULL;
+    }
+    else {
+        return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
+    }
 }
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
