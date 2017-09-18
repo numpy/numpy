@@ -3220,9 +3220,7 @@ class TestMaskedArrayMethods(object):
         assert_(m_arr_sq is not np.ma.masked)
         assert_equal(m_arr_sq.mask, True)
         m_arr_sq[...] = 2
-        # TODO: mask isn't copied to/from views yet in maskedarray, so we can
-        #       only check the data
-        assert_equal(m_arr.data[0,0], 2)
+        assert_equal(m_arr[0,0], 2)
 
     def test_swapaxes(self):
         # Tests swapaxes on MaskedArrays.
@@ -3410,6 +3408,27 @@ class TestMaskedArrayMethods(object):
         x = np.ma.array(42, mask=True)
         assert_equal(x.T.mask, x.mask)
         assert_equal(x.T.data, x.data)
+
+    def test_transpose_view(self):
+        x = np.ma.array([[1, 2, 3], [4, 5, 6]])
+        x[0,1] = np.ma.masked
+        xt = x.T
+
+        xt[1,0] = 10
+        xt[0,1] = np.ma.masked
+
+        assert_equal(x.data, xt.T.data)
+        assert_equal(x.mask, xt.T.mask)
+
+    def test_diagonal_view(self):
+        x = np.ma.zeros((3,3))
+        x[0,0] = 10
+        x[1,1] = np.ma.masked
+        x[2,2] = 20
+        xd = x.diagonal()
+        x[1,1] = 15
+        assert_equal(xd.mask, x.diagonal().mask)
+        assert_equal(xd.data, x.diagonal().data)
 
 
 class TestMaskedArrayMathMethods(object):
