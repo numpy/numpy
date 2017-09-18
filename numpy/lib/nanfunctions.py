@@ -594,7 +594,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Parameters
     ----------
     a : array_like
-        Array containing numbers whose sum is desired. If `a` is not an
+        Array containing numbers whose product is desired. If `a` is not an
         array, a conversion is attempted.
     axis : int, optional
         Axis along which the product is computed. The default is to compute
