@@ -4551,6 +4551,9 @@ cdef class RandomState:
         ----------
         n : int or array_like of ints
             Number of experiments.
+
+            .. versionchanged:: 1.14.0
+               Earlier NumPy versions did not allow array_like ``n``
         pvals : sequence of floats, length p
             Probabilities of each of the ``p`` different outcomes.  These
             should sum to 1 (however, the last element is always assumed to
