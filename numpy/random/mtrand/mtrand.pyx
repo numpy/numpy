@@ -4641,25 +4641,24 @@ cdef class RandomState:
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
             raise ValueError("sum(pvals[:-1]) > 1.0")
 
-        base_shape = _shape_from_size(size, d)
         if narr.shape == ():
             m = 1
-            shape = base_shape
+            shape = _shape_from_size(size, d)
         else:
             m = len(narr)
-            shape = (m,) + base_shape
+            shape = (m,) + _shape_from_size(size, d)
 
         multin = np.zeros(shape, int)
         mnarr = <ndarray>multin
         mnix = <long*>PyArray_DATA(mnarr)
         sz = PyArray_SIZE(mnarr) / m
         with self.lock, nogil, cython.cdivision(True):
-            for k from 0 <= k < m:
+            for k in range(m):
                 i = 0
                 while i < sz:
                     Sum = 1.0
                     dn = nix[k]
-                    for j from 0 <= j < d-1:
+                    for j in range(d - 1):
                         mnix[k*sz+i+j] = rk_binomial(self.internal_state, dn, pix[j]/Sum)
                         dn = dn - mnix[k*sz+i+j]
                         if dn <= 0:
