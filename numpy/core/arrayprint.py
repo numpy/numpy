@@ -119,8 +119,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values. If 'legacy', print a
-        space for positive values except in 0d arrays, and also add a space for
-        'True' values in size-1 bool arrays. (default '-')
+        space for positive values except in 0d arrays. (default '-')
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -263,7 +262,7 @@ def _get_formatdict(data, **opt):
     prec, supp, sign = opt['precision'], opt['suppress'], opt['sign']
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
-    formatdict = {'bool': lambda: BoolFormat(data, legacy=(sign == 'legacy')),
+    formatdict = {'bool': lambda: BoolFormat(data),
                   'int': lambda: IntegerFormat(data),
                   'float': lambda: FloatFormat(data, prec, supp, sign),
                   'longfloat': lambda: LongFloatFormat(prec),
@@ -379,7 +378,6 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
-
     if a.size > options['threshold']:
         summary_insert = "..., "
         data = _leading_trailing(a)
@@ -399,7 +397,6 @@ def _array2string(a, options, separator=' ', prefix=""):
                        next_line_prefix, separator,
                        options['edgeitems'], summary_insert)[:-1]
     return lst
-
 
 
 def array2string(a, max_line_width=None, precision=None,
@@ -471,8 +468,7 @@ def array2string(a, max_line_width=None, precision=None,
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values. If 'legacy', print a
-        space for positive values except in 0d arrays, and also add a space for
-        'True' values in size-1 bool arrays.
+        space for positive values except in 0d arrays.
 
     Returns
     -------
@@ -613,7 +609,9 @@ class FloatFormat(object):
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
+        self._legacy = False
         if sign == 'legacy':
+            self._legacy = True
             sign = '-' if data.shape == () else ' '
 
         self.precision = precision
@@ -621,12 +619,8 @@ class FloatFormat(object):
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        try:
-            self.fillFormat(data)
-        except (NotImplementedError):
-            # if reduce(data) fails, this instance will not be called, just
-            # instantiated in formatdict.
-            pass
+
+        self.fillFormat(data)
 
     def fillFormat(self, data):
         with errstate(all='ignore'):
@@ -653,8 +647,9 @@ class FloatFormat(object):
             self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
 
             signpos = self.sign != '-' or any(non_zero < 0)
-            # for back-compatibility with np 1.13, add extra space if padded
-            signpos = signpos if self.sign != ' ' else 2
+            # for back-compatibility with np 1.13, use two spaces
+            if self._legacy:
+                signpos = 2
             max_str_len = signpos + 6 + self.precision + self.large_exponent
 
             conversion = '' if self.sign == '-' else self.sign
@@ -739,15 +734,9 @@ class IntegerFormat(object):
 
 class BoolFormat(object):
     def __init__(self, data, **kwargs):
-        # in legacy printing style, include a space before True except in 0d
-        if kwargs.get('legacy', False):
-            self.truestr = ' True' if data.shape != () else 'True'
-            return
-
         # add an extra space so " True" and "False" have the same length and
-        # array elements align nicely when printed, but only for arrays with
-        # more than one element (0d and nd)
-        self.truestr = ' True' if data.size > 1 else 'True'
+        # array elements align nicely when printed, except in 0d arrays
+        self.truestr = ' True' if data.shape != () else 'True'
 
     def __call__(self, x):
         return self.truestr if x else "False"
