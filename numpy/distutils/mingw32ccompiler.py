@@ -110,6 +110,15 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             # add preprocessor statement for using customized msvcr lib
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
+        # file operations typically do not work if numpy is compiled with a
+        # different compiler than the python code.
+        # Here I used the standard python (3.6) distribution and compile
+        # numpy with msys2 mingw
+        # This macro is used in multiarray/methods.c and multiarray/multiarraymodule.c
+        # to disable fromfile / tofile
+        # Prevents crashes
+        self.define_macro('NPY_PYTHON_COMPILER_DIFFER')
+
         # Define the MSVC version as hint for MinGW
         msvcr_version = msvc_runtime_version()
         if msvcr_version:
@@ -130,6 +139,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(
+                    preprocessor='gcc -E', # required for setup.py config using
+                                           # preprocessor checks
                     compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
                     compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
                     linker_exe='gcc -g',
@@ -245,6 +256,31 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         return obj_names
 
     # object_filenames ()
+
+    # What is the  policy for msvcrt / vcruntime? Python distributes it with
+    # the standard release. Is it appropriate to include python's install
+    # directory so that it is automatically found?
+    # The directory where python.exe is  located is in my search path, but
+    # that  did not fix this issue.
+    # I needed this change to have the config tests run. This links to the
+    # vcruntime in the python directory.
+    # Can this be fixed by an appropriate environment variable?
+    def _fix_lib_args(self, libraries, library_dirs, runtime_library_dirs):
+
+        # Currently mingw32 does not know how to handle run time libraries
+        # But occurs during build process
+        assert(runtime_library_dirs == None or len(runtime_library_dirs) == 0)
+
+        # adds at least temporary build directory to library_dirs
+        libraries, library_dirs, runtime_library_dirs  = \
+        super(Mingw32CCompiler, self)._fix_lib_args(libraries, library_dirs, runtime_library_dirs)
+        assert(library_dirs != None)
+
+        # vcruntime 140 is there...
+        # configtest definitely needs this directory
+        py_path = os.path.dirname(sys.executable)
+        library_dirs.append(py_path)
+        return libraries, library_dirs, runtime_library_dirs
 
 
 def find_python_dll():
@@ -620,6 +656,10 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     maj = msvc_runtime_major()
     if maj:
+        if isinstance(msver, float) and msver == 14.0:
+            # vcruntime maj = 140 ...
+            # I did not check what should be changed here ...
+            msver = 140
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \
