@@ -32,7 +32,7 @@ Building NumPy requires the following software installed:
    FORTRAN 77 compiler installed.
 
    Note that NumPy is developed mainly using GNU compilers. Compilers from
-   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland,
+   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Portland,
    Lahey, HP, IBM, Microsoft are only supported in the form of community
    feedback, and may not work out of the box. GCC 4.x (and later) compilers
    are recommended.
@@ -137,7 +137,7 @@ Additional compiler flags can be supplied by setting the ``OPT``,
 Building with ATLAS support
 ---------------------------
 
-Ubuntu 
+Ubuntu
 ~~~~~~
 
 You can install the necessary package for optimized ATLAS with this command::
