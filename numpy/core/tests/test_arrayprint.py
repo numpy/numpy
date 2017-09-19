@@ -274,7 +274,7 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array([True, False])),
                      'array([ True, False], dtype=bool)')
         assert_equal(repr(np.array([True])),
-                     'array([True], dtype=bool)')
+                     'array([ True], dtype=bool)')
         assert_equal(repr(np.array(True)),
                      'array(True, dtype=bool)')
         assert_equal(repr(np.array(False)),
@@ -282,20 +282,26 @@ class TestPrintOptions(object):
 
     def test_sign_spacing(self):
         a = np.arange(4.)
+        b = np.array([1.234e9])
+
         assert_equal(repr(a), 'array([0., 1., 2., 3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
+        assert_equal(repr(b), 'array([1.23400000e+09])')
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array( 1.)')
+        assert_equal(repr(b), 'array([ 1.23400000e+09])')
 
         np.set_printoptions(sign='+')
         assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
         assert_equal(repr(np.array(1.)), 'array(+1.)')
+        assert_equal(repr(b), 'array([+1.23400000e+09])')
 
         np.set_printoptions(sign='legacy')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
+        assert_equal(repr(b), 'array([  1.23400000e+09])')
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')

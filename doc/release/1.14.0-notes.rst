@@ -317,25 +317,15 @@ This option controls printing of the sign of floating-point types, and may be
 one of the characters '-', '+' or ' ', or the string 'legacy'. With '+' numpy
 always prints the sign of positive values, with ' ' it always prints a space
 (whitespace character) in the sign position of positive values, and with '-' it
-will omit the sign character for positive values. The new default is '-'.
+will omit the sign character for positive values, and with 'legacy' it will
+behave like ' ' except no space is printed in 0d arrays. The new default is '-'.
 
-Setting ``sign='legacy'`` will behave like ' ' except that no space is printed
-in 0d arrays, and also includes a space before ``True`` values in size-1 bool
-arrays. This approximates the behavior of numpy 1.13 and before.
-
-Unneeded whitespace in float and bool array printing removed
-------------------------------------------------------------
+Unneeded whitespace in float array printing removed
+---------------------------------------------------
 The new default of ``sign='-'`` (see last note) means that the ``repr`` of
 float arrays now often omits the whitespace characters previously used to
 display the sign. This new behavior can be disabled to mostly reproduce numpy
-1.13 behavior by calling:
-
-    >>> np.set_printoptions(sign='legacy')
-
-Additionally, the ``repr`` of bool arrays with only one element now omits the
-whitespace before a ``True`` value, so that ``repr(array([True]))`` now returns
-``'array([True])'`` instead of ``'array([ True])'``. This is disabled by
-setting ``sign='legacy'``.
+1.13 behavior by calling ``np.set_printoptions(sign='legacy')``.
 
 ``threshold`` and ``edgeitems`` options added to ``np.array2string``
 -----------------------------------------------------------------
