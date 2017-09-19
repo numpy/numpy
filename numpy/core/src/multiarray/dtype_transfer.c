@@ -2535,7 +2535,7 @@ get_fields_transfer_function(int aligned,
 {
     PyObject *key, *tup, *title;
     PyArray_Descr *src_fld_dtype, *dst_fld_dtype;
-    npy_int i, field_count, structsize;
+    npy_intp i, field_count, structsize;
     int src_offset, dst_offset;
     _field_transfer_data *data;
     _single_field_transfer *fields;
@@ -2747,7 +2747,7 @@ get_decsrcref_fields_transfer_function(int aligned,
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype;
-    npy_int i, names_size, field_count, structsize;
+    npy_intp i, names_size, field_count, structsize;
     int src_offset;
     _field_transfer_data *data;
     _single_field_transfer *fields;
@@ -2818,7 +2818,7 @@ get_setdestzero_fields_transfer_function(int aligned,
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *dst_fld_dtype;
-    npy_int i, names_size, field_count, structsize;
+    npy_intp i, names_size, field_count, structsize;
     int dst_offset;
     _field_transfer_data *data;
     _single_field_transfer *fields;
@@ -3805,7 +3805,7 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, strides, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = strideperm[ndim - i - 1].perm;
+        npy_intp iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_strides[i] = strides[iperm];
     }
@@ -3935,7 +3935,7 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, stridesA, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = strideperm[ndim - i - 1].perm;
+        npy_intp iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_stridesA[i] = stridesA[iperm];
         out_stridesB[i] = stridesB[iperm];
@@ -4069,7 +4069,7 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, stridesA, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = strideperm[ndim - i - 1].perm;
+        npy_intp iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_stridesA[i] = stridesA[iperm];
         out_stridesB[i] = stridesB[iperm];

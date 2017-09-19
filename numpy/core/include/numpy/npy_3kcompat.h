@@ -45,6 +45,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyInt_AsLong PyLong_AsLong
 #define PyInt_AS_LONG PyLong_AsLong
 #define PyInt_AsSsize_t PyLong_AsSsize_t
+#define PyInt_FromSsize_t PyLong_FromSsize_t
 
 /* NOTE:
  *

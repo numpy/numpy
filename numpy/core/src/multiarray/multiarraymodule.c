@@ -319,10 +319,10 @@ PyArray_Free(PyObject *op, void *ptr)
  * Get the ndarray subclass with the highest priority
  */
 NPY_NO_EXPORT PyTypeObject *
-PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
+PyArray_GetSubType(npy_intp narrays, PyArrayObject **arrays) {
     PyTypeObject *subtype = &PyArray_Type;
     double priority = NPY_PRIORITY;
-    int i;
+    npy_intp i;
 
     /* Get the priority subtype for the array */
     for (i = 0; i < narrays; ++i) {
@@ -343,10 +343,11 @@ PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
  * Concatenates a list of ndarrays.
  */
 NPY_NO_EXPORT PyArrayObject *
-PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
+PyArray_ConcatenateArrays(npy_intp narrays, PyArrayObject **arrays, int axis,
                           PyArrayObject* ret)
 {
-    int iarrays, idim, ndim;
+    npy_intp iarrays;
+    int idim, ndim;
     npy_intp shape[NPY_MAXDIMS];
     PyArrayObject_fields *sliding_view = NULL;
 
@@ -490,10 +491,10 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
  * Concatenates a list of ndarrays, flattening each in the specified order.
  */
 NPY_NO_EXPORT PyArrayObject *
-PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
+PyArray_ConcatenateFlattenedArrays(npy_intp narrays, PyArrayObject **arrays,
                                     NPY_ORDER order, PyArrayObject *ret)
 {
-    int iarrays;
+    npy_intp iarrays;
     npy_intp shape = 0;
     PyArrayObject_fields *sliding_view = NULL;
 
@@ -594,7 +595,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
 {
-    int iarrays, narrays;
+    npy_intp iarrays, narrays;
     PyArrayObject **arrays;
 
     if (!PySequence_Check(op)) {
@@ -2519,16 +2520,19 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
     int i, nop;
     PyObject *subscripts_str;
 
-    nop = PyTuple_GET_SIZE(args) - 1;
-    if (nop <= 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "must specify the einstein sum subscripts string "
-                        "and at least one operand");
-        return -1;
-    }
-    else if (nop >= NPY_MAXARGS) {
-        PyErr_SetString(PyExc_ValueError, "too many operands");
-        return -1;
+    {
+        npy_intp nop_intp = PyTuple_GET_SIZE(args) - 1;
+        if (nop_intp <= 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "must specify the einstein sum subscripts string "
+                            "and at least one operand");
+            return -1;
+        }
+        else if (nop_intp >= NPY_MAXARGS) {
+            PyErr_SetString(PyExc_ValueError, "too many operands");
+            return -1;
+        }
+        nop = (int) nop_intp;
     }
 
     /* Get the subscripts string */
@@ -2626,10 +2630,10 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 return -1;
             }
             if (s < 26) {
-                subscripts[subindex++] = 'A' + s;
+                subscripts[subindex++] = 'A' + (char) s;
             }
             else {
-                subscripts[subindex++] = 'a' + s;
+                subscripts[subindex++] = 'a' + (char) s;
             }
             if (subindex >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
@@ -2664,18 +2668,20 @@ einsum_sub_op_from_lists(PyObject *args,
                 char *subscripts, int subsize, PyArrayObject **op)
 {
     int subindex = 0;
-    npy_intp i, nop;
+    int i, nop;
 
-    nop = PyTuple_Size(args)/2;
-
-    if (nop == 0) {
-        PyErr_SetString(PyExc_ValueError, "must provide at least an "
-                        "operand and a subscripts list to einsum");
-        return -1;
-    }
-    else if(nop >= NPY_MAXARGS) {
-        PyErr_SetString(PyExc_ValueError, "too many operands");
-        return -1;
+    {
+        npy_intp nop_intp = PyTuple_Size(args)/2;
+        if (nop_intp == 0) {
+            PyErr_SetString(PyExc_ValueError, "must provide at least an "
+                            "operand and a subscripts list to einsum");
+            return -1;
+        }
+        else if(nop_intp >= NPY_MAXARGS) {
+            PyErr_SetString(PyExc_ValueError, "too many operands");
+            return -1;
+        }
+        nop = (int) nop_intp;
     }
 
     /* Set the operands to NULL */
@@ -3703,7 +3709,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
         Py_DECREF(item);
     }
     in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
-        (broadcast_args, nargs, 0);
+        (broadcast_args, (int) nargs, 0);
     if (in_iter == NULL) {
         goto err;
     }

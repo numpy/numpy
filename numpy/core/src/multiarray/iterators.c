@@ -91,115 +91,6 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     return -1;
 }
 
-
-/*
- * Parses an index that has no fancy indexing. Populates
- * out_dimensions, out_strides, and out_offset.
- */
-NPY_NO_EXPORT int
-parse_index(PyArrayObject *self, PyObject *op,
-            npy_intp *out_dimensions,
-            npy_intp *out_strides,
-            npy_intp *out_offset,
-            int check_index)
-{
-    int i, j, n;
-    int nd_old, nd_new, n_add, n_ellipsis;
-    npy_intp n_steps, start, offset, step_size;
-    PyObject *op1 = NULL;
-    int is_slice;
-
-    if (PySlice_Check(op) || op == Py_Ellipsis || op == Py_None) {
-        n = 1;
-        op1 = op;
-        Py_INCREF(op);
-        /* this relies on the fact that n==1 for loop below */
-        is_slice = 1;
-    }
-    else {
-        if (!PySequence_Check(op)) {
-            PyErr_SetString(PyExc_IndexError,
-                            "index must be either an int "
-                            "or a sequence");
-            return -1;
-        }
-        n = PySequence_Length(op);
-        is_slice = 0;
-    }
-
-    nd_old = nd_new = 0;
-
-    offset = 0;
-    for (i = 0; i < n; i++) {
-        if (!is_slice) {
-            op1 = PySequence_GetItem(op, i);
-            if (op1 == NULL) {
-                return -1;
-            }
-        }
-        start = parse_index_entry(op1, &step_size, &n_steps,
-                                  nd_old < PyArray_NDIM(self) ?
-                                  PyArray_DIMS(self)[nd_old] : 0,
-                                  nd_old, check_index ?
-                                  nd_old < PyArray_NDIM(self) : 0);
-        Py_DECREF(op1);
-        if (start == -1) {
-            break;
-        }
-        if (n_steps == NEWAXIS_INDEX) {
-            out_dimensions[nd_new] = 1;
-            out_strides[nd_new] = 0;
-            nd_new++;
-        }
-        else if (n_steps == ELLIPSIS_INDEX) {
-            for (j = i + 1, n_ellipsis = 0; j < n; j++) {
-                op1 = PySequence_GetItem(op, j);
-                if (op1 == Py_None) {
-                    n_ellipsis++;
-                }
-                Py_DECREF(op1);
-            }
-            n_add = PyArray_NDIM(self)-(n-i-n_ellipsis-1+nd_old);
-            if (n_add < 0) {
-                PyErr_SetString(PyExc_IndexError, "too many indices");
-                return -1;
-            }
-            for (j = 0; j < n_add; j++) {
-                out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
-                out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-                nd_new++; nd_old++;
-            }
-        }
-        else {
-            if (nd_old >= PyArray_NDIM(self)) {
-                PyErr_SetString(PyExc_IndexError, "too many indices");
-                return -1;
-            }
-            offset += PyArray_STRIDES(self)[nd_old]*start;
-            nd_old++;
-            if (n_steps != SINGLE_INDEX) {
-                out_dimensions[nd_new] = n_steps;
-                out_strides[nd_new] = step_size *
-                                            PyArray_STRIDES(self)[nd_old-1];
-                nd_new++;
-            }
-        }
-    }
-    if (i < n) {
-        return -1;
-    }
-    n_add = PyArray_NDIM(self)-nd_old;
-    for (j = 0; j < n_add; j++) {
-        out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
-        out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-        nd_new++;
-        nd_old++;
-    }
-    *out_offset = offset;
-    return nd_new;
-}
-
-
 /*********************** Element-wise Array Iterator ***********************/
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
@@ -652,7 +543,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         return obj;
     }
     if (PyTuple_Check(ind)) {
-        int len;
+        npy_intp len;
         len = PyTuple_GET_SIZE(ind);
         if (len > 1) {
             goto fail;
@@ -900,7 +791,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     if (PyTuple_Check(ind)) {
-        int len;
+        npy_intp len;
         len = PyTuple_GET_SIZE(ind);
         if (len > 1) {
             goto finish;
@@ -1488,7 +1379,7 @@ static PyObject *
 arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
 {
 
-    Py_ssize_t n = 0;
+    int n = 0;
     Py_ssize_t i, j, k;
     PyArrayMultiIterObject *multi;
     PyObject *arr;

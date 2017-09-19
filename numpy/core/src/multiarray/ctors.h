@@ -63,7 +63,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                             npy_intp instrides, npy_intp N, int elsize);
+                             npy_intp instrides, npy_intp N, npy_intp elsize);
 
 NPY_NO_EXPORT void
 _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size);

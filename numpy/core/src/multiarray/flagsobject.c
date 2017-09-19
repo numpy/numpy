@@ -416,7 +416,7 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 {
     char *key = NULL;
     char buf[16];
-    int n;
+    npy_intp n;
     if (PyUnicode_Check(ind)) {
         PyObject *tmp_str;
         tmp_str = PyUnicode_AsASCIIString(ind);
@@ -534,7 +534,7 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 {
     char *key;
     char buf[16];
-    int n;
+    npy_intp n;
     if (PyUnicode_Check(ind)) {
         PyObject *tmp_str;
         tmp_str = PyUnicode_AsASCIIString(ind);

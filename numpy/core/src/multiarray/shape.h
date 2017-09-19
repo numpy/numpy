@@ -18,7 +18,7 @@ build_shape_string(npy_intp n, npy_intp *vals);
  * every array in the arrays list.
  */
 NPY_NO_EXPORT void
-PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
+PyArray_CreateMultiSortedStridePerm(npy_intp narrays, PyArrayObject **arrays,
                         int ndim, int *out_strideperm);
 
 /*

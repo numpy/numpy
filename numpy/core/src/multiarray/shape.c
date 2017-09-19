@@ -834,10 +834,11 @@ s_intp_abs(npy_intp x)
  * every array in the arrays list.
  */
 NPY_NO_EXPORT void
-PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
+PyArray_CreateMultiSortedStridePerm(npy_intp narrays, PyArrayObject **arrays,
                         int ndim, int *out_strideperm)
 {
-    int i0, i1, ipos, ax_j0, ax_j1, iarrays;
+    int i0, i1, ipos, ax_j0, ax_j1;
+    npy_intp iarrays;
 
     /* Initialize the strideperm values to the identity. */
     for (i0 = 0; i0 < ndim; ++i0) {

@@ -654,7 +654,7 @@ diophantine_simplify(unsigned int *n, diophantine_term_t *E, npy_int64 b)
 
 /* Gets a half-open range [start, end) of offsets from the data pointer */
 NPY_VISIBILITY_HIDDEN void
-offset_bounds_from_strides(const int itemsize, const int nd,
+offset_bounds_from_strides(const npy_intp itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset)
 {

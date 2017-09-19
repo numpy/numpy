@@ -82,7 +82,7 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
                             PyObject *forwarding_callable)
 {
     PyObject *sargs, *ret;
-    int i, n;
+    npy_intp i, n;
 
     /* Combine 'self' and 'args' together into one tuple */
     n = PyTuple_GET_SIZE(args);
@@ -612,7 +612,7 @@ static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args)
 {
     npy_intp multi_index[NPY_MAXDIMS];
-    int n = PyTuple_GET_SIZE(args);
+    npy_intp n = PyTuple_GET_SIZE(args);
     int idim, ndim = PyArray_NDIM(self);
 
     /* If there is a tuple as a single argument, treat it as the argument */
@@ -678,7 +678,7 @@ static PyObject *
 array_setscalar(PyArrayObject *self, PyObject *args)
 {
     npy_intp multi_index[NPY_MAXDIMS];
-    int n = PyTuple_GET_SIZE(args) - 1;
+    npy_intp n = PyTuple_GET_SIZE(args) - 1;
     int idim, ndim = PyArray_NDIM(self);
     PyObject *obj;
 

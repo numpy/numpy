@@ -602,8 +602,8 @@ finish_after_unrolled_loop:
         while (count >= 8) {
             count -= 8;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
-            _mm_prefetch(data1 + 512, _MM_HINT_T0);
+            _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
+            _mm_prefetch((char *) (data1 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -636,8 +636,8 @@ finish_after_unrolled_loop:
         while (count >= 8) {
             count -= 8;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
-            _mm_prefetch(data1 + 512, _MM_HINT_T0);
+            _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
+            _mm_prefetch((char *) (data1 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -668,8 +668,8 @@ finish_after_unrolled_loop:
         count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
-        _mm_prefetch(data1 + 512, _MM_HINT_T0);
+        _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
+        _mm_prefetch((char *) (data1 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -682,8 +682,8 @@ finish_after_unrolled_loop:
         accum_sse = _mm_add_ps(accum_sse, a);
 /**end repeat2**/
 #elif EINSUM_USE_SSE2 && @float64@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
-        _mm_prefetch(data1 + 512, _MM_HINT_T0);
+        _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
+        _mm_prefetch((char *) (data1 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -1075,7 +1075,7 @@ finish_after_unrolled_loop:
         while (count >= 8) {
             count -= 8;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
+            _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -1106,7 +1106,7 @@ finish_after_unrolled_loop:
         while (count >= 8) {
             count -= 8;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
+            _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -1135,7 +1135,7 @@ finish_after_unrolled_loop:
         count -= 8;
 
 #if EINSUM_USE_SSE1 && @float32@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
+        _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -1147,7 +1147,7 @@ finish_after_unrolled_loop:
         accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data0+@i@));
 /**end repeat2**/
 #elif EINSUM_USE_SSE2 && @float64@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
+        _mm_prefetch((char *) (data0 + 512), _MM_HINT_T0);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -2080,7 +2080,7 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp new_dims[NPY_MAXDIMS];
     char *out_label;
-    int label, i, idim, ndim, ibroadcast = 0;
+    int label, idim, ndim, ibroadcast = 0;
 
     ndim = PyArray_NDIM(op);
 
@@ -2119,6 +2119,8 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
             ++ibroadcast;
         }
         else {
+            npy_intp i;
+
             /* Find the position for this dimension in the output */
             out_label = (char *)memchr(output_labels, label,
                                                     ndim_output);
@@ -2319,7 +2321,7 @@ prepare_op_axes(int ndim, int iop, char *labels, int *axes,
             }
             /* Otherwise use it */
             else {
-                axes[i] = match - labels;
+                axes[i] = (int) (match - labels);
             }
         }
     }
@@ -2673,7 +2675,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      */
     ndim_broadcast = 0;
     for (iop = 0; iop < nop; ++iop) {
-        npy_intp count_zeros = 0;
+        int count_zeros = 0;
         int ndim;
         char *labels = op_labels[iop];
 
@@ -2729,7 +2731,8 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         subscripts += 2;
 
         /* Parse the output subscript string */
-        ndim_output = parse_output_subscripts(subscripts, strlen(subscripts),
+        ndim_output = parse_output_subscripts(subscripts,
+                                        (int) strlen(subscripts),
                                         ndim_broadcast, label_counts,
                                         output_labels);
     }
@@ -2872,7 +2875,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                     NPY_ITER_NO_BROADCAST;
 
     /* Allocate the iterator */
-    iter = NpyIter_AdvancedNew(nop+1, op, NPY_ITER_EXTERNAL_LOOP|
+    iter = NpyIter_AdvancedNew((int)(nop+1), op, NPY_ITER_EXTERNAL_LOOP|
                 ((dtype != NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
@@ -2953,7 +2956,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * the strides that are fixed for the whole loop.
      */
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-    sop = get_sum_of_products_function(nop,
+    sop = get_sum_of_products_function((int) nop,
                         NpyIter_GetDescrArray(iter)[0]->type_num,
                         NpyIter_GetDescrArray(iter)[0]->elsize,
                         fixed_strides);
@@ -2989,7 +2992,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         NPY_BEGIN_THREADS_NDITER(iter);
         NPY_EINSUM_DBG_PRINT("Einsum loop\n");
         do {
-            sop(nop, dataptr, stride, *countptr);
+            sop((int) nop, dataptr, stride, *countptr);
         } while(iternext(iter));
         NPY_END_THREADS;
 

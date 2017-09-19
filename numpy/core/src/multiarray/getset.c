@@ -149,7 +149,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     }
 
     /* numbytes == 0 is special here, but the 0-size array case always works */
-    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
+    if (!PyArray_CheckStrides((int) PyArray_ITEMSIZE(self), PyArray_NDIM(self),
                               numbytes, offset,
                               PyArray_DIMS(self), newstrides.ptr)) {
         PyErr_SetString(PyExc_ValueError, "strides is not "\

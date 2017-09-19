@@ -155,10 +155,11 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * Useful if a tuple is being iterated over multiple times, or for a code path
  * that doesn't always want the overhead of allocating a tuple.
  */
-static NPY_INLINE npy_intp
-unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+static NPY_INLINE int
+unpack_tuple(PyTupleObject *index, PyObject **result, int result_n)
 {
-    npy_intp n, i;
+    npy_intp n;
+    int i;
     n = PyTuple_GET_SIZE(index);
     if (n > result_n) {
         PyErr_SetString(PyExc_IndexError,
@@ -169,12 +170,12 @@ unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
         result[i] = PyTuple_GET_ITEM(index, i);
         Py_INCREF(result[i]);
     }
-    return n;
+    return (int) n;
 }
 
 /* Unpack a single scalar index, taking a new reference to match unpack_tuple */
-static NPY_INLINE npy_intp
-unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
+static NPY_INLINE int
+unpack_scalar(PyObject *index, PyObject **result, int result_n)
 {
     Py_INCREF(index);
     result[0] = index;
@@ -212,10 +213,11 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
  *                   to NULL, so are not safe to Py_XDECREF. Use multi_DECREF to
  *                   dispose of them.
  */
-NPY_NO_EXPORT npy_intp
-unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
+NPY_NO_EXPORT int
+unpack_indices(PyObject *index, PyObject **result, int result_n)
 {
-    npy_intp n, i;
+    npy_intp n;
+    int i;
     npy_bool commit_to_unpack;
 
     /* Fast route for passing a tuple */
@@ -243,6 +245,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
      * allocation, but doesn't need to be a fast path anyway
      */
     if (PyTuple_Check(index)) {
+        int n;
         PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
@@ -320,7 +323,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* unpacking was the right thing to do, and we already did it */
     if (commit_to_unpack) {
-        return n;
+        return (int) n;
     }
     /* got to the end, never found an indication that we should have unpacked */
     else {
@@ -362,7 +365,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int curr_idx, get_idx;
 
     int i;
-    npy_intp n;
 
     PyObject *obj = NULL;
     PyArrayObject *arr;
@@ -527,6 +529,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         /* Check if the array is valid and fill the information */
         if (PyArray_ISBOOL(arr)) {
+            int n;
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
@@ -560,6 +563,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
             }
 
             if (PyArray_NDIM(arr) == 0) {
+                npy_intp len;
+
                 /*
                  * This can actually be well defined. A new axis is added,
                  * but at the same time no axis is "used". So if we have True,
@@ -572,13 +577,13 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                 /* TODO: This can't fail, right? Is there a faster way? */
                 if (PyObject_IsTrue((PyObject *)arr)) {
-                    n = 1;
+                    len = 1;
                 }
                 else {
-                    n = 0;
+                    len = 0;
                 }
-                indices[curr_idx].value = n;
-                indices[curr_idx].object = PyArray_Zeros(1, &n,
+                indices[curr_idx].value = len;
+                indices[curr_idx].object = PyArray_Zeros(1, &len,
                                             PyArray_DescrFromType(NPY_INTP), 0);
                 Py_DECREF(arr);
 
@@ -695,26 +700,26 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * to find the ellipsis value or append an ellipsis if necessary.
      */
     if (used_ndim < PyArray_NDIM(self)) {
-       if (index_type & HAS_ELLIPSIS) {
-           indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[ellipsis_pos].value;
-       }
-       else {
-           /*
-            * There is no ellipsis yet, but it is not a full index
-            * so we append an ellipsis to the end.
-            */
-           index_type |= HAS_ELLIPSIS;
-           indices[curr_idx].object = NULL;
-           indices[curr_idx].type = HAS_ELLIPSIS;
-           indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
-           ellipsis_pos = curr_idx;
+        if (index_type & HAS_ELLIPSIS) {
+            indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += (int) indices[ellipsis_pos].value;
+        }
+        else {
+            /*
+             * There is no ellipsis yet, but it is not a full index
+             * so we append an ellipsis to the end.
+             */
+            index_type |= HAS_ELLIPSIS;
+            indices[curr_idx].object = NULL;
+            indices[curr_idx].type = HAS_ELLIPSIS;
+            indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
+            ellipsis_pos = curr_idx;
 
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[curr_idx].value;
-           curr_idx += 1;
-       }
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += (int) indices[curr_idx].value;
+            curr_idx += 1;
+        }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
         PyErr_SetString(PyExc_IndexError,
@@ -787,7 +792,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             }
 
             if (indices[i].type == HAS_ELLIPSIS) {
-                used_ndim += indices[i].value;
+                used_ndim += (int) indices[i].value;
             }
             else if ((indices[i].type == HAS_NEWAXIS) ||
                      (indices[i].type == HAS_0D_BOOL)) {
@@ -1441,7 +1446,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     }
     /* next check for a list of field names */
     else if (PySequence_Check(ind) && !PyTuple_Check(ind)) {
-        int seqlen, i;
+        npy_intp seqlen, i;
         PyObject *name = NULL, *tup;
         PyObject *fields, *names;
         PyArray_Descr *view_dtype;

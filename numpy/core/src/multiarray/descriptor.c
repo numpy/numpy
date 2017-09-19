@@ -355,7 +355,7 @@ _convert_from_tuple(PyObject *obj)
             npy_free_cache_dim_obj(shape);
             goto fail;
         }
-        newdescr->elsize = type->elsize * items;
+        newdescr->elsize = type->elsize * (int) items;
         if (newdescr->elsize == -1) {
             npy_free_cache_dim_obj(shape);
             goto fail;
@@ -420,7 +420,8 @@ _convert_from_tuple(PyObject *obj)
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
-    int n, i, totalsize;
+    npy_intp n, i;
+    int totalsize;
     int ret;
     PyObject *fields, *item, *newobj;
     PyObject *name, *tup, *title;
@@ -617,7 +618,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_list(PyObject *obj, int align)
 {
-    int n, i;
+    npy_intp n, i;
     int totalsize;
     PyObject *fields;
     PyArray_Descr *conv = NULL;
@@ -1019,7 +1020,7 @@ _convert_from_dict(PyObject *obj, int align)
     PyObject *fields = NULL;
     PyObject *names, *offsets, *descrs, *titles, *tmp;
     PyObject *metadata;
-    int n, i;
+    npy_intp n, i;
     int totalsize, itemsize;
     int maxalign = 0;
     /* Types with fields need the Python C API for field access */
@@ -1087,7 +1088,7 @@ _convert_from_dict(PyObject *obj, int align)
         /* Build item to insert (descr, offset, [title])*/
         len = 2;
         title = NULL;
-        ind = PyInt_FromLong(i);
+        ind = PyInt_FromSsize_t(i);
         if (titles) {
             title=PyObject_GetItem(titles, ind);
             if (title && title != Py_None) {
@@ -1861,9 +1862,9 @@ arraydescr_typename_get(PyArray_Descr *self)
     PyTypeObject *typeobj = self->typeobj;
     PyObject *res;
     char *s;
-    int len;
-    int prefix_len;
-    int suffix_len;
+    npy_intp len;
+    npy_intp prefix_len;
+    npy_intp suffix_len;
 
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
         s = strrchr(typeobj->tp_name, '.');
@@ -1963,7 +1964,7 @@ arraydescr_ndim_get(PyArray_Descr *self)
      */
     if (PyTuple_Check(self->subarray->shape)) {
         Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
-        return PyInt_FromLong(ndim);
+        return PyInt_FromSsize_t(ndim);
     }
     /* consistent with arraydescr_shape_get */
     return PyInt_FromLong(1);
@@ -2119,8 +2120,8 @@ arraydescr_names_get(PyArray_Descr *self)
 static int
 arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 {
-    int N = 0;
-    int i;
+    npy_intp N;
+    npy_intp i;
     PyObject *new_names;
     PyObject *new_fields;
 
@@ -3039,7 +3040,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         PyObject *old;
         PyArray_Descr *newdescr;
         Py_ssize_t pos = 0;
-        int len, i;
+        npy_intp len, i;
 
         newfields = PyDict_New();
         /* make new dictionary with replaced PyArray_Descr Objects */
@@ -3806,9 +3807,9 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
     }
     else if (PyInt_Check(op)) {
         PyObject *name;
-        int size = PyTuple_GET_SIZE(self->names);
-        int value = PyArray_PyIntAsInt(op);
-        int orig_value = value;
+        npy_intp size = PyTuple_GET_SIZE(self->names);
+        npy_intp value = PyArray_PyIntAsIntp(op);
+        npy_intp orig_value = value;
 
         if (PyErr_Occurred()) {
             return NULL;

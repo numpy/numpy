@@ -35,7 +35,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     PyArray_Descr *dtype;
     PyArray_FastTakeFunc *func;
     PyArrayObject *obj = NULL, *self, *indices;
-    npy_intp nd, i, j, n, m, k, max_item, tmp, chunk, itemsize, nelem;
+    npy_intp i, j, n, m, k, max_item, tmp, chunk, itemsize, nelem;
+    int ax_i, nd;
     npy_intp shape[NPY_MAXDIMS];
     char *src, *dest, *tmp_src;
     int err;
@@ -56,19 +57,19 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     n = m = chunk = 1;
     nd = PyArray_NDIM(self) + PyArray_NDIM(indices) - 1;
-    for (i = 0; i < nd; i++) {
-        if (i < axis) {
-            shape[i] = PyArray_DIMS(self)[i];
-            n *= shape[i];
+    for (ax_i = 0; ax_i < nd; ax_i++) {
+        if (ax_i < axis) {
+            shape[ax_i] = PyArray_DIMS(self)[ax_i];
+            n *= shape[ax_i];
         }
         else {
-            if (i < axis+PyArray_NDIM(indices)) {
-                shape[i] = PyArray_DIMS(indices)[i-axis];
-                m *= shape[i];
+            if (ax_i < axis+PyArray_NDIM(indices)) {
+                shape[ax_i] = PyArray_DIMS(indices)[ax_i-axis];
+                m *= shape[ax_i];
             }
             else {
-                shape[i] = PyArray_DIMS(self)[i-PyArray_NDIM(indices)+1];
-                chunk *= shape[i];
+                shape[ax_i] = PyArray_DIMS(self)[ax_i-PyArray_NDIM(indices)+1];
+                chunk *= shape[ax_i];
             }
         }
     }

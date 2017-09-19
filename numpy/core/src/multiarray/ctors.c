@@ -297,7 +297,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                             npy_intp instrides, npy_intp N, int elsize)
+                             npy_intp instrides, npy_intp N, npy_intp elsize)
 {
     npy_intp i;
     char *tout = dst;
