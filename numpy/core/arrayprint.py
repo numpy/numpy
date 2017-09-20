@@ -5,7 +5,8 @@ $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ["array2string", "set_printoptions", "get_printoptions"]
+__all__ = ["array2string", "array_str", "array_repr", "set_string_function",
+           "set_printoptions", "get_printoptions"]
 __docformat__ = 'restructuredtext'
 
 #
@@ -38,10 +39,13 @@ else:
 import numpy as np
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
+from . import multiarray
 from .multiarray import (array, format_longfloat, datetime_as_string,
-                         datetime_data, dtype)
-from .fromnumeric import ravel
-from .numeric import asarray
+                         datetime_data, dtype, ndarray)
+from .fromnumeric import ravel, any
+from .numeric import concatenate, asarray, errstate
+from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
+                           flexible)
 import warnings
 
 if sys.version_info[0] >= 3:
@@ -227,10 +231,9 @@ def get_printoptions():
     return d
 
 def _leading_trailing(a):
-    from . import numeric as _nc
     if a.ndim == 1:
         if len(a) > 2*_summaryEdgeItems:
-            b = _nc.concatenate((a[:_summaryEdgeItems],
+            b = concatenate((a[:_summaryEdgeItems],
                                      a[-_summaryEdgeItems:]))
         else:
             b = a
@@ -242,7 +245,7 @@ def _leading_trailing(a):
                 min(len(a), _summaryEdgeItems), 0, -1)])
         else:
             l = [_leading_trailing(a[i]) for i in range(0, len(a))]
-        b = _nc.concatenate(tuple(l))
+        b = concatenate(tuple(l))
     return b
 
 def _boolFormatter(x):
@@ -621,9 +624,7 @@ class FloatFormat(object):
             pass
 
     def fillFormat(self, data):
-        from . import numeric as _nc
-
-        with _nc.errstate(all='ignore'):
+        with errstate(all='ignore'):
             special = isnan(data) | isinf(data)
             valid = not_equal(data, 0) & ~special
             non_zero = absolute(data.compress(valid))
@@ -658,7 +659,7 @@ class FloatFormat(object):
                 precision = 0
             precision = min(self.precision, precision)
             self.max_str_len = len(str(int(max_val))) + precision + 2
-            if _nc.any(special):
+            if any(special):
                 self.max_str_len = max(self.max_str_len,
                                        len(_nan_str),
                                        len(_inf_str)+1)
@@ -672,9 +673,7 @@ class FloatFormat(object):
         self.format = format
 
     def __call__(self, x, strip_zeros=True):
-        from . import numeric as _nc
-
-        with _nc.errstate(invalid='ignore'):
+        with errstate(invalid='ignore'):
             if isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
@@ -859,3 +858,180 @@ class StructureFormat(object):
         for field, format_function in zip(x, self.format_functions):
             s += format_function(field) + ", "
         return (s[:-2] if 1 < self.num_fields else s[:-1]) + ")"
+
+
+_typelessdata = [int_, float_, complex_]
+if issubclass(intc, int):
+    _typelessdata.append(intc)
+if issubclass(longlong, int):
+    _typelessdata.append(longlong)
+
+def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
+    """
+    Return the string representation of an array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    max_line_width : int, optional
+        The maximum number of columns the string should span. Newline
+        characters split the string appropriately after array elements.
+    precision : int, optional
+        Floating point precision. Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
+    suppress_small : bool, optional
+        Represent very small numbers as zero, default is False. Very small
+        is defined by `precision`, if the precision is 8 then
+        numbers smaller than 5e-9 are represented as zero.
+
+    Returns
+    -------
+    string : str
+      The string representation of an array.
+
+    See Also
+    --------
+    array_str, array2string, set_printoptions
+
+    Examples
+    --------
+    >>> np.array_repr(np.array([1,2]))
+    'array([1, 2])'
+    >>> np.array_repr(np.ma.array([0.]))
+    'MaskedArray([ 0.])'
+    >>> np.array_repr(np.array([], np.int32))
+    'array([], dtype=int32)'
+
+    >>> x = np.array([1e-6, 4e-7, 2, 3])
+    >>> np.array_repr(x, precision=6, suppress_small=True)
+    'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
+
+    """
+    if type(arr) is not ndarray:
+        class_name = type(arr).__name__
+    else:
+        class_name = "array"
+
+    if arr.size > 0 or arr.shape == (0,):
+        lst = array2string(arr, max_line_width, precision, suppress_small,
+                           ', ', class_name + "(")
+    else:  # show zero-length shape unless it is (0,)
+        lst = "[], shape=%s" % (repr(arr.shape),)
+
+    skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
+
+    if skipdtype:
+        return "%s(%s)" % (class_name, lst)
+    else:
+        typename = arr.dtype.name
+        # Quote typename in the output if it is "complex".
+        if typename and not (typename[0].isalpha() and typename.isalnum()):
+            typename = "'%s'" % typename
+
+        lf = ' '
+        if issubclass(arr.dtype.type, flexible):
+            if arr.dtype.names:
+                typename = "%s" % str(arr.dtype)
+            else:
+                typename = "'%s'" % str(arr.dtype)
+            lf = '\n'+' '*len(class_name + "(")
+        return "%s(%s,%sdtype=%s)" % (class_name, lst, lf, typename)
+
+def array_str(a, max_line_width=None, precision=None, suppress_small=None):
+    """
+    Return a string representation of the data in an array.
+
+    The data in the array is returned as a single string.  This function is
+    similar to `array_repr`, the difference being that `array_repr` also
+    returns information on the kind of array and its data type.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+    max_line_width : int, optional
+        Inserts newlines if text is longer than `max_line_width`.  The
+        default is, indirectly, 75.
+    precision : int, optional
+        Floating point precision.  Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
+    suppress_small : bool, optional
+        Represent numbers "very close" to zero as zero; default is False.
+        Very close is defined by precision: if the precision is 8, e.g.,
+        numbers smaller (in absolute value) than 5e-9 are represented as
+        zero.
+
+    See Also
+    --------
+    array2string, array_repr, set_printoptions
+
+    Examples
+    --------
+    >>> np.array_str(np.arange(3))
+    '[0 1 2]'
+
+    """
+    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
+
+def set_string_function(f, repr=True):
+    """
+    Set a Python function to be used when pretty printing arrays.
+
+    Parameters
+    ----------
+    f : function or None
+        Function to be used to pretty print arrays. The function should expect
+        a single array argument and return a string of the representation of
+        the array. If None, the function is reset to the default NumPy function
+        to print arrays.
+    repr : bool, optional
+        If True (default), the function for pretty printing (``__repr__``)
+        is set, if False the function that returns the default string
+        representation (``__str__``) is set.
+
+    See Also
+    --------
+    set_printoptions, get_printoptions
+
+    Examples
+    --------
+    >>> def pprint(arr):
+    ...     return 'HA! - What are you going to do now?'
+    ...
+    >>> np.set_string_function(pprint)
+    >>> a = np.arange(10)
+    >>> a
+    HA! - What are you going to do now?
+    >>> print(a)
+    [0 1 2 3 4 5 6 7 8 9]
+
+    We can reset the function to the default:
+
+    >>> np.set_string_function(None)
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    `repr` affects either pretty printing or normal string representation.
+    Note that ``__repr__`` is still affected by setting ``__str__``
+    because the width of each array element in the returned string becomes
+    equal to the length of the result of ``__str__()``.
+
+    >>> x = np.arange(4)
+    >>> np.set_string_function(lambda x:'random', repr=False)
+    >>> x.__str__()
+    'random'
+    >>> x.__repr__()
+    'array([     0,      1,      2,      3])'
+
+    """
+    if f is None:
+        if repr:
+            return multiarray.set_string_function(array_repr, 1)
+        else:
+            return multiarray.set_string_function(array_str, 0)
+    else:
+        return multiarray.set_string_function(f, repr)
+
+set_string_function(array_str, 0)
+set_string_function(array_repr, 1)
