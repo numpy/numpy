@@ -21,6 +21,8 @@ New functions
 Deprecations
 ============
 
+* Truth testing on an empty array is deprecated. To check if an array is not
+  empty, use ``array.size > 0``.
 
 Future Changes
 ==============
