@@ -1071,7 +1071,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         If the filename ends in ``.gz``, the file is automatically saved in
         compressed gzip format.  `loadtxt` understands gzipped files
         transparently.
-    X : array_like
+    X : 1D or 2D array_like
         Data to be saved to a text file.
     fmt : str or sequence of strs, optional
         A single format (%10.5f), a sequence of formats, or a
@@ -1201,7 +1201,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         X = np.asarray(X)
 
         # Handle 1-dimensional arrays
-        if X.ndim == 1:
+        if X.ndim == 0 or X.ndim > 2:
+            raise ValueError(
+                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+        elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
