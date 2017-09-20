@@ -1933,9 +1933,9 @@ class TestIsclose(object):
     def test_non_finite_scalar(self):
         # GH7014, when two scalars are compared the output should also be a
         # scalar
-        assert_(np.isclose(np.inf, -np.inf) is False)
-        assert_(np.isclose(0, np.inf) is False)
-        assert_(type(np.isclose(0, np.inf)) is bool)
+        assert_(np.isclose(np.inf, -np.inf) is np.False_)
+        assert_(np.isclose(0, np.inf) is np.False_)
+        assert_(type(np.isclose(0, np.inf)) is np.bool_)
 
 
 class TestStdVar(object):

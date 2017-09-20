@@ -2528,13 +2528,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     def within_tol(x, y, atol, rtol):
         with errstate(invalid='ignore'):
-            result = less_equal(abs(x-y), atol + rtol * abs(y))
-        if isscalar(a) and isscalar(b):
-            result = bool(result)
-        return result
+            return less_equal(abs(x-y), atol + rtol * abs(y))
 
-    x = array(a, copy=False, subok=True, ndmin=1)
-    y = array(b, copy=False, subok=True, ndmin=1)
+    x = asanyarray(a)
+    y = asanyarray(b)
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2561,12 +2558,11 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         if equal_nan:
             # Make NaN == NaN
             both_nan = isnan(x) & isnan(y)
+
+            # Needed to treat masked arrays correctly. = True would not work.
             cond[both_nan] = both_nan[both_nan]
 
-        if isscalar(a) and isscalar(b):
-            return bool(cond)
-        else:
-            return cond
+        return cond[()]  # Flatten 0d arrays to scalars
 
 
 def array_equal(a1, a2):
