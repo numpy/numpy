@@ -365,13 +365,23 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
-def _block_check_depths_match(arrays, index=[]):
-    # Recursive function checking that the depths of nested lists in `arrays`
-    # all match. Mismatch raises a ValueError as described in the block
-    # docstring below.
-    # The entire index (rather than just the depth) is calculated for each
-    # innermost list, in case an error needs to be raised, so that the index
-    # of the offending list can be printed as part of the error.
+def _block_check_depths_match(arrays, parent_index=[]):
+    """
+    Recursive function checking that the depths of nested lists in `arrays`
+    all match. Mismatch raises a ValueError as described in the block
+    docstring below.
+
+    The entire index (rather than just the depth) needs to be calculated
+    for each innermost list, in case an error needs to be raised, so that
+    the index of the offending list can be printed as part of the error.
+
+    The parameter `parent_index` is the full index of `arrays` within the
+    nested lists passed to _block_check_depths_match at the top of the
+    recursion.
+    The return value is the full index of an element (specifically the
+    first element) from the bottom of the nesting in `arrays`. An empty
+    list at the bottom of the nesting is represented by a `None` index.
+    """
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
         return 'arrays' + idx_str
@@ -385,11 +395,11 @@ def _block_check_depths_match(arrays, index=[]):
             '{} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
             'not allow implicit conversion from tuple to ndarray.'.format(
-                format_index(index)
+                format_index(parent_index)
             )
         )
     elif type(arrays) is list and len(arrays) > 0:
-        indexes = [_block_check_depths_match(arr, index + [i])
+        indexes = [_block_check_depths_match(arr, parent_index + [i])
                    for i, arr in enumerate(arrays)]
 
         first_index = indexes[0]
@@ -406,10 +416,10 @@ def _block_check_depths_match(arrays, index=[]):
         return first_index
     elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
-        return index + [None]
+        return parent_index + [None]
     else:
-        # We've 'bottomed out'
-        return index
+        # We've 'bottomed out' - arrays is either a scalar or an array
+        return parent_index
 
 
 def _block(arrays, depth=0):
@@ -428,7 +438,7 @@ def _block(arrays, depth=0):
         arrs = [atleast_nd(a, ndim) for a in arrs]
         return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
     else:
-        # We've 'bottomed out'
+        # We've 'bottomed out' - arrays is either a scalar or an array
         return atleast_nd(arrays, depth), depth
 
 
