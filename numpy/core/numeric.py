@@ -406,7 +406,7 @@ def count_nonzero(a, axis=None):
     array([2, 3])
 
     """
-    if axis is None or axis == ():
+    if axis is None or (isinstance(axis, tuple) and axis == ()):
         return multiarray.count_nonzero(a)
 
     a = asanyarray(a)
