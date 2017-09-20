@@ -329,6 +329,12 @@ class TestSaveTxt(object):
         lines = c.readlines()
         assert_equal(lines, [b'1\n', b'2\n', b'3\n', b'4\n'])
 
+    def test_0D_3D(self):
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, np.array(1)) 
+        assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]])) 
+
+
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
