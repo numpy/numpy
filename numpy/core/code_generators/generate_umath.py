@@ -84,8 +84,9 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
+        elif len(f) != len(types):
+            raise ValueError("Number of types and f do not match")
         else:
-            assert len(f) == len(types)
             func_data = f
     else:
         func_data = (None,) * len(types)
@@ -93,10 +94,14 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
         in_ = (in_,) * len(types)
     elif in_ is None:
         in_ = (None,) * len(types)
+    elif len(in_) != len(types):
+        raise ValueError("Number of types and inputs do not match")
     if isinstance(out, str):
         out = (out,) * len(types)
     elif out is None:
         out = (None,) * len(types)
+    elif len(out) != len(types):
+        raise ValueError("Number of types and outputs do not match")
     tds = []
     for t, fd, i, o in zip(types, func_data, in_, out):
         # [(simd-name, list of types)]
