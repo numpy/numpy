@@ -6180,17 +6180,40 @@ isMA = isMaskedArray  # backward compatibility
 
 
 class MaskedConstant(MaskedArray):
-    # We define the masked singleton as a float for higher precedence.
-    # Note that it can be tricky sometimes w/ type comparison
-    _data = data = np.array(0.)
-    _mask = mask = np.array(True)
-    _baseclass = ndarray
+    # the lone np.ma.masked instance
+    __singleton = None
 
-    def __new__(self):
-        return self._data.view(self)
+    def __new__(cls):
+        if cls.__singleton is None:
+            # We define the masked singleton as a float for higher precedence.
+            # Note that it can be tricky sometimes w/ type comparison
+            data = np.array(0.)
+            mask = np.array(True)
+
+            # prevent any modifications
+            data.flags.writeable = False
+            mask.flags.writeable = False
+
+            # don't fall back on MaskedArray.__new__(MaskedConstant), since
+            # that might confuse it - this way, the construction is entirely
+            # within our control
+            cls.__singleton = MaskedArray(data, mask=mask).view(cls)
+
+        return cls.__singleton
 
     def __array_finalize__(self, obj):
-        return
+        if self.__singleton is None:
+            # this handles the `.view` in __new__, which we want to copy across
+            # properties normally
+            return super(MaskedConstant, self).__array_finalize__(obj)
+        elif self is self.__singleton:
+            # not clear how this can happen, play it safe
+            pass
+        else:
+            # everywhere else, we want to downcast to MaskedArray, to prevent a
+            # duplicate maskedconstant.
+            self.__class__ = MaskedArray
+            MaskedArray.__array_finalize__(self, obj)
 
     def __array_prepare__(self, obj, context=None):
         return self.view(MaskedArray).__array_prepare__(obj, context)
@@ -6202,15 +6225,35 @@ class MaskedConstant(MaskedArray):
         return str(masked_print_option._display)
 
     def __repr__(self):
-        return 'masked'
-
-    def flatten(self):
-        return masked_array([self._data], dtype=float, mask=[True])
+        if self is self.__singleton:
+            return 'masked'
+        else:
+            # it's a subclass, or something is wrong, make it obvious
+            return object.__repr__(self)
 
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.
         """
         return (self.__class__, ())
+
+    # inplace operations have no effect. We have to override them to avoid
+    # trying to modify the readonly data and mask arrays
+    def __iop__(self, other):
+        return self
+    __iadd__ = \
+    __isub__ = \
+    __imul__ = \
+    __ifloordiv__ = \
+    __itruediv__ = \
+    __ipow__ = \
+        __iop__
+    del __iop__  # don't leave this around
+
+    def copy(self, *args, **kwargs):
+        """ Copy is a no-op on the maskedconstant, as it is a scalar """
+        # maskedconstant is a scalar, so copy doesn't need to copy. There's
+        # precedent for this with `np.bool_` scalars.
+        return self
 
 
 masked = masked_singleton = MaskedConstant()

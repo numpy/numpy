@@ -72,6 +72,16 @@ Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
 dimension. Now it returns a zero array, which is consistent with the behaviour
 of ``np.dot`` and ``np.einsum``.
 
+``np.ma.masked`` is no longer writeable
+---------------------------------------
+Attempts to mutate the ``masked`` constant now error, as the underlying arrays
+are marked readonly. In the past, it was possible to get away with::
+
+    # emulating a function that sometimes returns np.ma.masked
+    val = random.choice([np.ma.masked, 10])
+    var_arr = np.asarray(val)
+    val_arr += 1  # now errors, previously changed np.ma.masked.data
+
 ``np.ma`` functions producing ``fill_value``s have changed
 ----------------------------------------------------------
 Previously, ``np.ma.default_fill_value`` would return a 0d array, but
