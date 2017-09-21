@@ -184,7 +184,9 @@ npy_carg@c@(@ctype@ z)
 #define SCALED_CEXP_LOWERL 11357.216553474703895L
 #define SCALED_CEXP_UPPERL 22756.021937783004509L
 
-#ifndef HAVE_CEXP@C@
+#if !defined(HAVE_CSINH@C@) || \
+    !defined(HAVE_CCOSH@C@) || \
+    !defined(HAVE_CEXP@C@)
 
 static
 @ctype@
@@ -211,6 +213,10 @@ _npy_scaled_cexp@c@(@type@ x, @type@ y, npy_int expt)
     return npy_cpack@c@( npy_ldexp@c@(mant * mantcos, expt + excos),
                          npy_ldexp@c@(mant * mantsin, expt + exsin));
 }
+
+#endif
+
+#ifndef HAVE_CEXP@C@
 
 @ctype@
 npy_cexp@c@(@ctype@ z)
