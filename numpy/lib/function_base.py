@@ -1676,23 +1676,28 @@ def gradient(f, *varargs, **kwargs):
     len_axes = len(axes)
     n = len(varargs)
     if n == 0:
+        # no spacing argument - use 1 in all axes
         dx = [1.0] * len_axes
-    elif n == len_axes or (n == 1 and np.isscalar(varargs[0])):
+    elif n == 1 and np.ndim(varargs[0]) == 0:
+        # single scalar for all axes
+        dx = varargs * len_axes
+    elif n == len_axes:
+        # scalar or 1d array for each axis
         dx = list(varargs)
         for i, distances in enumerate(dx):
-            if np.isscalar(distances):
+            if np.ndim(distances) == 0:
                 continue
+            elif np.ndim(distances) != 1:
+                raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
-                raise ValueError("distances must be either scalars or match "
+                raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
-            diffx = np.diff(dx[i])
+            diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():
                 diffx = diffx[0]
             dx[i] = diffx
-        if len(dx) == 1:
-            dx *= len_axes
     else:
         raise TypeError("invalid number of arguments")
 
@@ -1736,7 +1741,7 @@ def gradient(f, *varargs, **kwargs):
         # result allocation
         out = np.empty_like(f, dtype=otype)
 
-        uniform_spacing = np.isscalar(dx[i])
+        uniform_spacing = np.ndim(dx[i]) == 0
 
         # Numerical differentiation: 2nd order interior
         slice1[axis] = slice(1, -1)
