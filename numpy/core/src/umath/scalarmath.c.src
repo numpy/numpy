@@ -550,13 +550,13 @@ half_ctype_absolute(npy_half a, npy_half *out)
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #rname = float, double, longdouble#
  * #rtype = npy_float, npy_double, npy_longdouble#
+ * #c = f,,l#
  */
 static void
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
-    *out = _basic_@rname@_sqrt(a.real*a.real + a.imag*a.imag);
+    *out = npy_cabs@c@(a);
 }
 /**end repeat**/
 
