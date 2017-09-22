@@ -18,6 +18,7 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.cdouble, np.clongdouble]
 
 floating_types = np.floating.__subclasses__()
+complex_floating_types = np.complexfloating.__subclasses__()
 
 
 # This compares scalarmath against ufuncs.
@@ -603,9 +604,8 @@ class TestSubtract(object):
 
 
 class TestAbs(object):
-
     def _test_abs_func(self, absfunc):
-        for tp in floating_types:
+        for tp in floating_types + complex_floating_types:
             x = tp(-1.5)
             assert_equal(absfunc(x), 1.5)
             x = tp(0.0)
@@ -615,6 +615,15 @@ class TestAbs(object):
             x = tp(-0.0)
             res = absfunc(x)
             assert_equal(res, 0.0)
+
+            x = tp(np.finfo(tp).max)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).tiny)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).min)
+            assert_equal(absfunc(x), -x.real)
 
     def test_builtin_abs(self):
         self._test_abs_func(abs)
