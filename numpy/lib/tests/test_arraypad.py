@@ -640,6 +640,11 @@ class TestReflect(TestCase):
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
+    def test_check_padding_an_empty_array(self):
+        a = pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
+        b = np.zeros((0, 5))
+        assert_array_equal(a, b)
+
 
 class TestSymmetric(TestCase):
     def test_check_simple(self):
@@ -1013,6 +1018,12 @@ class ValueError1(TestCase):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
+
+    def test_check_empty_array(self):
+        assert_raises(ValueError, pad, [], 4, mode='reflect')
+        assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
+        assert_raises(ValueError, pad, np.zeros((0, 3)), ((1,), (0,)),
+                      mode='reflect')
 
 
 class ValueError2(TestCase):
