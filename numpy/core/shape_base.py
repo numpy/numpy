@@ -8,6 +8,7 @@ from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
 
+
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
@@ -422,24 +423,26 @@ def _block_check_depths_match(arrays, parent_index=[]):
         return parent_index
 
 
-def _block(arrays, depth=0):
+def _block(arrays, list_ndim):
     def atleast_nd(a, ndim):
         # Ensures `a` has at least `ndim` dimensions by prepending
         # ones to `a.shape` as necessary
         return array(a, ndmin=ndim, copy=False, subok=True)
 
-    if type(arrays) is list:
-        if len(arrays) == 0:
-            raise ValueError('Lists cannot be empty')
-        arrs, list_ndims = zip(*(_block(arr, depth+1) for arr in arrays))
-        list_ndim = list_ndims[0]
-        arr_ndim = max(arr.ndim for arr in arrs)
-        ndim = max(list_ndim, arr_ndim)
-        arrs = [atleast_nd(a, ndim) for a in arrs]
-        return _nx.concatenate(arrs, axis=depth+ndim-list_ndim), list_ndim
-    else:
-        # We've 'bottomed out' - arrays is either a scalar or an array
-        return atleast_nd(arrays, depth), depth
+    def block_recursion(arrays, depth=0):
+        if type(arrays) is list:
+            if len(arrays) == 0:
+                raise ValueError('Lists cannot be empty')
+            arrs = [block_recursion(arr, depth+1) for arr in arrays]
+            arr_ndim = max(arr.ndim for arr in arrs)
+            ndim = max(list_ndim, arr_ndim)
+            arrs = [atleast_nd(a, ndim) for a in arrs]
+            return _nx.concatenate(arrs, axis=depth+ndim-list_ndim)
+        else:
+            # We've 'bottomed out' - arrays is either a scalar or an array
+            return atleast_nd(arrays, depth)
+
+    return block_recursion(arrays)
 
 
 def block(arrays):
@@ -590,5 +593,5 @@ def block(arrays):
 
 
     """
-    _block_check_depths_match(arrays)
-    return _block(arrays)[0]
+    list_ndim = len(_block_check_depths_match(arrays))
+    return _block(arrays, list_ndim)
