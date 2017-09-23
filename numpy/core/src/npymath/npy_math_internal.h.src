@@ -659,7 +659,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* snap quotient to nearest integral value */
     if (div) {
-        floordiv = npy_floor(div);
+        floordiv = npy_floor@c@(div);
         if (div - floordiv > 0.5@c@)
             floordiv += 1.0@c@;
     }
