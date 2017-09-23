@@ -280,8 +280,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 if (PyArray_SIZE(dest) == 1) {
                     Py_DECREF(dtype);
                     Py_DECREF(src_object);
-                    ret = PyArray_DESCR(dest)->f->setitem(src_object,
-                                                PyArray_DATA(dest), dest);
+                    ret = PyArray_SETITEM(dest, PyArray_DATA(dest), src_object);
                     return ret;
                 }
                 else {
@@ -292,8 +291,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                         Py_DECREF(src_object);
                         return -1;
                     }
-                    if (PyArray_DESCR(src)->f->setitem(src_object,
-                                                PyArray_DATA(src), src) < 0) {
+                    if (PyArray_SETITEM(src, PyArray_DATA(src), src_object) < 0) {
                         Py_DECREF(src_object);
                         Py_DECREF(src);
                         return -1;
