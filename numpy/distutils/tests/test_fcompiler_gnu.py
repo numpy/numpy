@@ -26,7 +26,8 @@ gfortran_version_strings = [
      '4.9.1'),
     ("gfortran: warning: couldn't understand kern.osversion '14.1.0\n"
      "gfortran: warning: yet another warning\n4.9.1",
-     '4.9.1')
+     '4.9.1'),
+    ('GNU Fortran (crosstool-NG 8a21ab48) 7.2.0', '7.2.0')
 ]
 
 class TestG77Versions(TestCase):
