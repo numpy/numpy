@@ -2452,7 +2452,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     The comparison of `a` and `b` uses standard broadcasting, which
     means that `a` and `b` need not have the same shape in order for
     ``allclose(a, b)`` to evaluate to True.  The same is true for
-    ``equal`` but not ``array_equal``.
+    `equal` but not `array_equal`.
 
     Examples
     --------
