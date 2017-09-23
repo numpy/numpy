@@ -331,7 +331,7 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
 /* New SciPy */
 #define TRYPYARRAYTEMPLATECHAR case NPY_STRING: *(char *)(PyArray_DATA(arr))=*v; break;
 #define TRYPYARRAYTEMPLATELONG case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;
-#define TRYPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr)); break;
+#define TRYPYARRAYTEMPLATEOBJECT case NPY_OBJECT: PyArray_SETITEM(arr,PyArray_DATA(arr),pyobj_from_ ## ctype ## 1(*v)); break;
 
 #define TRYPYARRAYTEMPLATE(ctype,typecode) \\
         PyArrayObject *arr = NULL;\\
@@ -357,7 +357,7 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_ ## ctype ## 1(*v),PyArray_DATA(arr), arr); break;\\
+                case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_ ## ctype ## 1(*v)); break;\\
         default: return -2;\\
         };\\
         return 1
@@ -365,7 +365,7 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
 
 needs['TRYCOMPLEXPYARRAYTEMPLATE'] = ['PRINTPYOBJERR']
 cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
-#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;
+#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;
 #define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
         PyArrayObject *arr = NULL;\\
         if (!obj) return -2;\\
@@ -394,7 +394,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;break;\\
-                case NPY_OBJECT: (PyArray_DESCR(arr)->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),PyArray_DATA(arr), arr); break;\\
+                case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;\\
                 default: return -2;\\
         };\\
         return -1;

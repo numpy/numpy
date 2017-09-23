@@ -2383,7 +2383,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         data += ind * strides[idim];
     }
 
-    return PyArray_DESCR(self)->f->getitem(data, self);
+    return PyArray_GETITEM(self, data);
 }
 
 /*
@@ -2412,5 +2412,5 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
         data += ind * strides[idim];
     }
 
-    return PyArray_DESCR(self)->f->setitem(obj, data, self);
+    return PyArray_SETITEM(self, data, obj);
 }
