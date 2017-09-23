@@ -36,6 +36,16 @@
 #include <limits.h>
 #include <assert.h>
 
+/* check for sequences, but ignore the types numpy considers scalars */
+static NPY_INLINE npy_bool
+PySequence_NoString_Check(PyObject *op) {
+    return
+        PySequence_Check(op) &&
+        !PyString_Check(op) &&
+        !PyUnicode_Check(op) &&
+        !PyArray_IsZeroDim(op);
+}
+
 /*
  *****************************************************************************
  **                        PYTHON TYPES TO C TYPES                          **
@@ -223,8 +233,7 @@ static int
     if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (PySequence_Check(op) && !PyString_Check(op) &&
-                                    !PyUnicode_Check(op)) {
+        if (PySequence_NoString_Check(op)) {
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
             Py_DECREF(type);
@@ -461,7 +470,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
         return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
@@ -552,7 +561,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
         return convert_to_scalar_and_retry(op, ov, vap, STRING_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
