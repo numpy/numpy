@@ -66,7 +66,6 @@ static int
 dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
           npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
 {
-    PyArray_Descr *descr=PyArray_DESCR(self);
     PyObject *op = NULL, *sp = NULL;
     char *ostring;
     npy_intp i, N, ret = 0;
@@ -79,7 +78,7 @@ dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
     } while (0)
 
     if (nd == 0) {
-        if ((op = descr->f->getitem(data, self)) == NULL) {
+        if ((op = PyArray_GETITEM(self, data)) == NULL) {
             return -1;
         }
         sp = PyObject_Repr(op);

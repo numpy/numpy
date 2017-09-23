@@ -86,7 +86,7 @@ recursive_tolist(PyArrayObject *self, char *dataptr, int startdim)
 
     /* Base case */
     if (startdim >= PyArray_NDIM(self)) {
-        return PyArray_DESCR(self)->f->getitem(dataptr,self);
+        return PyArray_GETITEM(self, dataptr);
     }
 
     n = PyArray_DIM(self, startdim);
@@ -222,7 +222,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
-            obj = PyArray_DESCR(self)->f->getitem(it->dataptr, self);
+            obj = PyArray_GETITEM(self, it->dataptr);
             if (obj == NULL) {
                 Py_DECREF(it);
                 return -1;

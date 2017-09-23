@@ -687,7 +687,7 @@ VOID_getitem(void *input, void *vap)
             else {
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
-            PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
+            PyTuple_SET_ITEM(ret, i, PyArray_GETITEM(ap, ip+offset));
             ((PyArrayObject_fields *)ap)->flags = savedflags;
         }
         ((PyArrayObject_fields *)ap)->descr = descr;
@@ -907,7 +907,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
                 /* use setitem to set this field */
-                if (PyArray_DESCR(ap)->f->setitem(item, ip + offset, ap) < 0) {
+                if (PyArray_SETITEM(ap, ip + offset, item) < 0) {
                     failed = 1;
                     break;
                 }
@@ -924,7 +924,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
                 /* use setitem to set this field */
-                if (PyArray_DESCR(ap)->f->setitem(op, ip + offset, ap) < 0) {
+                if (PyArray_SETITEM(ap, ip + offset, op) < 0) {
                     failed = 1;
                     break;
                 }
