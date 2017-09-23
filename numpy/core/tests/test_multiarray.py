@@ -423,30 +423,33 @@ class TestAssignment(object):
         # only relevant if longdouble is larger than float
         # we're looking for loss of precision
 
-        # gh-8902
-        tinyb = np.nextafter(np.longdouble(0), 1)
-        tinya =  np.nextafter(np.longdouble(0), -1)
-        tiny1d = np.array([tinya])
-        assert_equal(tiny1d[0], tinya)
+        for dtype in (np.longdouble, np.longcomplex):
+            # gh-8902
+            tinyb = np.nextafter(np.longdouble(0), 1).astype(dtype)
+            tinya = np.nextafter(np.longdouble(0), -1).astype(dtype)
 
-        # scalar = scalar
-        tiny1d[0] = tinyb
-        assert_equal(tiny1d[0], tinyb)
+            # construction
+            tiny1d = np.array([tinya])
+            assert_equal(tiny1d[0], tinya)
 
-        # 0d = scalar
-        tiny1d[0, ...] = tinya
-        assert_equal(tiny1d[0], tinya)
+            # scalar = scalar
+            tiny1d[0] = tinyb
+            assert_equal(tiny1d[0], tinyb)
 
-        # 0d = 0d
-        tiny1d[0, ...] = tinyb[...]
-        assert_equal(tiny1d[0], tinyb)
+            # 0d = scalar
+            tiny1d[0, ...] = tinya
+            assert_equal(tiny1d[0], tinya)
 
-        # scalar = 0d
-        tiny1d[0] = tinyb[...]
-        assert_equal(tiny1d[0], tinyb)
+            # 0d = 0d
+            tiny1d[0, ...] = tinyb[...]
+            assert_equal(tiny1d[0], tinyb)
 
-        arr = np.array([np.array(tinya)])
-        assert_equal(arr[0], tinya)
+            # scalar = 0d
+            tiny1d[0] = tinyb[...]
+            assert_equal(tiny1d[0], tinyb)
+
+            arr = np.array([np.array(tinya)])
+            assert_equal(arr[0], tinya)
 
 
 class TestDtypedescr(object):
