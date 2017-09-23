@@ -93,8 +93,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         The number of characters per line for the purpose of inserting
         line breaks (default 75).
     suppress : bool, optional
-        Whether or not suppress printing of small floating point values
-        using scientific notation (default False).
+        If True, always print floating point numbers using fixed point
+        notation, in which case numbers equal to zero in the current precision
+        will print as zero.  If False, then scientific notation is used when
+        absolute value of the smallest number is < 1e-4 or the ratio of the
+        maximum absolute value to the minimum is > 1e3. The default is False.
     nanstr : str, optional
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
