@@ -289,37 +289,26 @@ static int
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
-    PyObject *op2;
     @type@ temp;
     int rsize;
+
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
+    }
 
     if (PyArray_IsScalar(op, @kind@)){
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        if (PyArray_IsZeroDim(op)) {
-            /*
-             * TODO: Elsewhere in this file we use PyArray_ToScalar. Is this
-             *       better or worse? Possibly an optimization.
-             */
-            op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
-                                    PyArray_BYTES((PyArrayObject *)op),
-                                    (PyArrayObject *)op);
-        }
-        else {
-            op2 = op;
-            Py_INCREF(op);
-        }
-        if (op2 == Py_None) {
+        if (op == Py_None) {
             oop.real = NPY_NAN;
             oop.imag = NPY_NAN;
         }
         else {
-            oop = PyComplex_AsCComplex (op2);
-        }
-        Py_DECREF(op2);
-        if (PyErr_Occurred()) {
-            return -1;
+            oop = PyComplex_AsCComplex (op);
+            if (PyErr_Occurred()) {
+                return -1;
+            }
         }
         temp.real = (@ftype@) oop.real;
         temp.imag = (@ftype@) oop.imag;
