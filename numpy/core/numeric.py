@@ -2230,7 +2230,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     See Also
     --------
-    isclose, all, any
+    isclose, all, any, equal
 
     Notes
     -----
@@ -2240,8 +2240,13 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
     The above equation is not symmetric in `a` and `b`, so that
-    `allclose(a, b)` might be different from `allclose(b, a)` in
+    ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
     some rare cases.
+
+    The comparison of `a` and `b` uses standard broadcasting, which
+    means that `a` and `b` need not have the same shape in order for
+    ``allclose(a, b)`` to evaluate to True.  The same is true for
+    `equal` but not `array_equal`.
 
     Examples
     --------
