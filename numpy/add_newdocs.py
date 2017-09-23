@@ -3117,9 +3117,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__reduce__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
-    """a.__setstate__(version, shape, dtype, isfortran, rawdata)
+    """a.__setstate__(state, /)
 
     For unpickling.
+    
+    The `state` argument must be a sequence that contains the following
+    elements:
 
     Parameters
     ----------
