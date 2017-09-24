@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 __author__ = "Pierre GF Gerard-Marchant"
 
+import sys
 import warnings
 import pickle
 import operator
@@ -20,7 +21,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, suppress_warnings
+    run_module_suite, assert_raises, assert_warns, suppress_warnings, dec
     )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
@@ -4835,6 +4836,28 @@ class TestMaskedConstant(object):
         assert_raises(ValueError, operator.setitem, view, (), 1)
         assert_raises(ValueError, operator.setitem, view.data, (), 1)
         assert_raises(ValueError, operator.setitem, view.mask, (), False)
+
+    @dec.knownfailureif(sys.version_info.major == 2, "See gh-9751")
+    def test_coercion_int(self):
+        a_i = np.zeros((), int)
+        assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
+
+    def test_coercion_float(self):
+        a_f = np.zeros((), float)
+        assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
+        assert_(np.isnan(a_f[()]))
+
+    @dec.knownfailureif(True, "See gh-9750")
+    def test_coercion_unicode(self):
+        a_u = np.zeros((), 'U10')
+        a_u[()] = np.ma.masked
+        assert_equal(a_u[()], u'--')
+
+    @dec.knownfailureif(True, "See gh-9750")
+    def test_coercion_bytes(self):
+        a_b = np.zeros((), 'S10')
+        a_b[()] = np.ma.masked
+        assert_equal(a_b[()], b'--')
 
 
 def test_masked_array():
