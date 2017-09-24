@@ -514,7 +514,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
             }
             else {
                 char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
-                res = PyArray_DESCR(dst)->f->setitem(o, b, dst);
+                res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
                 Py_DECREF(o);
@@ -545,7 +545,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
             }
             else {
                 char * b = (PyArray_BYTES(dst) + i * PyArray_STRIDES(dst)[0]);
-                res = PyArray_DESCR(dst)->f->setitem(o, b, dst);
+                res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
                 Py_DECREF(seq);
@@ -1772,8 +1772,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 }
             }
             else {
-                if (PyArray_DESCR(ret)->f->setitem(op,
-                                            PyArray_DATA(ret), ret) < 0) {
+                if (PyArray_SETITEM(ret, PyArray_DATA(ret), op) < 0) {
                     Py_DECREF(ret);
                     ret = NULL;
                 }
@@ -3732,7 +3731,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         PyArray_DIMS(ret)[0] = i + 1;
 
         if (((item = index2ptr(ret, i)) == NULL) ||
-                (PyArray_DESCR(ret)->f->setitem(value, item, ret) == -1)) {
+                PyArray_SETITEM(ret, item, value) == -1) {
             Py_DECREF(value);
             goto done;
         }

@@ -818,7 +818,7 @@ array_int(PyArrayObject *v)
                         " converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -860,7 +860,7 @@ array_float(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -903,7 +903,7 @@ array_long(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -944,7 +944,7 @@ array_oct(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -985,7 +985,7 @@ array_hex(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -1033,7 +1033,7 @@ array_index(PyArrayObject *v)
             "only integer scalar arrays can be converted to a scalar index");
         return NULL;
     }
-    return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    return PyArray_GETITEM(v, PyArray_DATA(v));
 }
 
 
