@@ -2068,6 +2068,8 @@ PyArray_CountNonzero(PyArrayObject *self)
     char *data;
     npy_intp stride, count;
     npy_intp nonzero_count = 0;
+    int needs_api = 0;
+    PyArray_Descr *dtype;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
@@ -2076,22 +2078,38 @@ PyArray_CountNonzero(PyArrayObject *self)
     NPY_BEGIN_THREADS_DEF;
 
     /* Special low-overhead version specific to the boolean type */
-    if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
+    dtype = PyArray_DESCR(self);
+    if (dtype->type_num == NPY_BOOL) {
         return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
                         PyArray_DIMS(self), PyArray_STRIDES(self));
     }
-
     nonzero = PyArray_DESCR(self)->f->nonzero;
 
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
+        needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
         PyArray_PREPARE_TRIVIAL_ITERATION(self, count, data, stride);
 
-        while (count--) {
-            if (nonzero(data, self)) {
-                ++nonzero_count;
+        if (needs_api){
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                if (PyErr_Occurred()) {
+                    return -1;
+                }
+                data += stride;
             }
-            data += stride;
+        }
+        else {
+            NPY_BEGIN_THREADS_THRESHOLDED(count);
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                data += stride;
+            }
+            NPY_END_THREADS;
         }
 
         return nonzero_count;
@@ -2116,6 +2134,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     if (iter == NULL) {
         return -1;
     }
+    needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Get the pointers for inner loop iteration */
     iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2140,16 +2159,21 @@ PyArray_CountNonzero(PyArrayObject *self)
             if (nonzero(data, self)) {
                 ++nonzero_count;
             }
+            if (needs_api && PyErr_Occurred()) {
+                nonzero_count = -1;
+                goto finish;
+            }
             data += stride;
         }
 
     } while(iternext(iter));
 
+finish:
     NPY_END_THREADS;
 
     NpyIter_Deallocate(iter);
 
-    return PyErr_Occurred() ? -1 : nonzero_count;
+    return nonzero_count;
 }
 
 /*NUMPY_API
