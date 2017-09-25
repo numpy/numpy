@@ -2418,12 +2418,13 @@ def _recursive_printoption(result, mask, printopt):
 
     """
     names = result.dtype.names
-    for name in names:
-        (curdata, curmask) = (result[name], mask[name])
-        if result.dtype[name].names:
+    if names:
+        for name in names:
+            curdata = result[name]
+            curmask = mask[name]
             _recursive_printoption(curdata, curmask, printopt)
-        else:
-            np.copyto(curdata, printopt, where=curmask)
+    else:
+        np.copyto(result, printopt, where=mask)
     return
 
 _print_templates = dict(long_std="""\
@@ -3832,25 +3833,22 @@ class MaskedArray(ndarray):
                 res = self._data
             else:
                 # convert to object array to make filled work
-                if self.dtype.names is None:
-                    data = self._data
-                    # For big arrays, to avoid a costly conversion to the
-                    # object dtype, extract the corners before the conversion.
-                    print_width = (self._print_width if self.ndim > 1
-                                   else self._print_width_1d)
-                    for axis in range(self.ndim):
-                        if data.shape[axis] > print_width:
-                            ind = print_width // 2
-                            arr = np.split(data, (ind, -ind), axis=axis)
-                            data = np.concatenate((arr[0], arr[2]), axis=axis)
-                            arr = np.split(mask, (ind, -ind), axis=axis)
-                            mask = np.concatenate((arr[0], arr[2]), axis=axis)
-                    res = data.astype("O")
-                    res.view(ndarray)[mask] = masked_print_option
-                else:
-                    rdtype = _replace_dtype_fields(self.dtype, "O")
-                    res = self._data.astype(rdtype)
-                    _recursive_printoption(res, mask, masked_print_option)
+                data = self._data
+                # For big arrays, to avoid a costly conversion to the
+                # object dtype, extract the corners before the conversion.
+                print_width = (self._print_width if self.ndim > 1
+                               else self._print_width_1d)
+                for axis in range(self.ndim):
+                    if data.shape[axis] > print_width:
+                        ind = print_width // 2
+                        arr = np.split(data, (ind, -ind), axis=axis)
+                        data = np.concatenate((arr[0], arr[2]), axis=axis)
+                        arr = np.split(mask, (ind, -ind), axis=axis)
+                        mask = np.concatenate((arr[0], arr[2]), axis=axis)
+
+                rdtype = _replace_dtype_fields(self.dtype, "O")
+                res = data.astype(rdtype)
+                _recursive_printoption(res, mask, masked_print_option)
         else:
             res = self.filled(self.fill_value)
         return str(res)
