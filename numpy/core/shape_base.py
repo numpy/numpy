@@ -435,12 +435,11 @@ def _block(arrays, list_ndim):
                 raise ValueError('Lists cannot be empty')
             arrs = [block_recursion(arr, depth+1) for arr in arrays]
             arr_ndim = max(arr.ndim for arr in arrs)
-            ndim = max(list_ndim, arr_ndim)
-            arrs = [atleast_nd(a, ndim) for a in arrs]
-            return _nx.concatenate(arrs, axis=depth+ndim-list_ndim)
+            arrs = [atleast_nd(a, arr_ndim) for a in arrs]
+            return _nx.concatenate(arrs, axis=depth+max(0, arr_ndim-list_ndim))
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
-            return atleast_nd(arrays, depth)
+            return atleast_nd(arrays, list_ndim)
 
     return block_recursion(arrays)
 
