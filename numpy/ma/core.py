@@ -3827,30 +3827,13 @@ class MaskedArray(ndarray):
 
         """
         if masked_print_option.enabled():
-            f = masked_print_option
-            if self is masked:
-                return str(f)
-            m = self._mask
-            if m is nomask:
+            mask = self._mask
+            if mask is nomask:
                 res = self._data
             else:
-                if m.shape == () and m.itemsize==len(m.dtype):
-                    if m.dtype.names:
-                        m = m.view((bool, len(m.dtype)))
-                        if m.any():
-                            return str(tuple((f if _m else _d) for _d, _m in
-                                             zip(self._data.tolist(), m)))
-                        else:
-                            return str(self._data)
-                    elif m:
-                        return str(f)
-                    else:
-                        return str(self._data)
                 # convert to object array to make filled work
-                names = self.dtype.names
-                if names is None:
+                if self.dtype.names is None:
                     data = self._data
-                    mask = m
                     # For big arrays, to avoid a costly conversion to the
                     # object dtype, extract the corners before the conversion.
                     print_width = (self._print_width if self.ndim > 1
@@ -3863,11 +3846,11 @@ class MaskedArray(ndarray):
                             arr = np.split(mask, (ind, -ind), axis=axis)
                             mask = np.concatenate((arr[0], arr[2]), axis=axis)
                     res = data.astype("O")
-                    res.view(ndarray)[mask] = f
+                    res.view(ndarray)[mask] = masked_print_option
                 else:
                     rdtype = _replace_dtype_fields(self.dtype, "O")
                     res = self._data.astype(rdtype)
-                    _recursive_printoption(res, m, f)
+                    _recursive_printoption(res, mask, masked_print_option)
         else:
             res = self.filled(self.fill_value)
         return str(res)
