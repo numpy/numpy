@@ -8,7 +8,6 @@ from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
 
-
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
