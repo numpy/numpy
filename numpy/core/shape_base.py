@@ -423,7 +423,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
         return parent_index
 
 
-def _block(arrays, list_ndim):
+def _block(arrays, max_depth):
     def atleast_nd(a, ndim):
         # Ensures `a` has at least `ndim` dimensions by prepending
         # ones to `a.shape` as necessary
@@ -436,10 +436,11 @@ def _block(arrays, list_ndim):
             arrs = [block_recursion(arr, depth+1) for arr in arrays]
             arr_ndim = max(arr.ndim for arr in arrs)
             arrs = [atleast_nd(a, arr_ndim) for a in arrs]
-            return _nx.concatenate(arrs, axis=depth-list_ndim)
+            return _nx.concatenate(arrs, axis=-(max_depth-depth))
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
-            return atleast_nd(arrays, list_ndim)
+            # depth == max_depth
+            return atleast_nd(arrays, max_depth)
 
     return block_recursion(arrays)
 
