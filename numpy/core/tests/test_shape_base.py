@@ -560,6 +560,28 @@ class TestBlock(object):
         assert_raises_regex(TypeError, 'tuple', np.block, ([1, 2], [3, 4]))
         assert_raises_regex(TypeError, 'tuple', np.block, [(1, 2), (3, 4)])
 
+    def test_different_ndims(self):
+        a = 1.
+        b = 2 * np.ones((1, 2))
+        c = 3 * np.ones((1, 1, 3))
+
+        result = np.block([a, b, c])
+        expected = np.array([[[1., 2., 2., 3., 3., 3.]]])
+
+        assert_equal(result, expected)
+
+    def test_different_ndims_depths(self):
+        a = 1.
+        b = 2 * np.ones((1, 2))
+        c = 3 * np.ones((1, 2, 3))
+
+        result = np.block([[a, b], [c]])
+        expected = np.array([[[1., 2., 2.],
+                              [3., 3., 3.],
+                              [3., 3., 3.]]])
+
+        assert_equal(result, expected)
+
 
 if __name__ == "__main__":
     run_module_suite()
