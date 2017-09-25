@@ -2420,7 +2420,7 @@ def _recursive_printoption(result, mask, printopt):
     names = result.dtype.names
     for name in names:
         (curdata, curmask) = (result[name], mask[name])
-        if curdata.dtype.names:
+        if result.dtype[name].names:
             _recursive_printoption(curdata, curmask, printopt)
         else:
             np.copyto(curdata, printopt, where=curmask)
@@ -6004,7 +6004,7 @@ class mvoid(MaskedArray):
 
     def _get_data(self):
         # Make sure that the _data part is a np.void
-        return self.view(ndarray)[()]
+        return super(mvoid, self)._data[()]
 
     _data = property(fget=_get_data)
 
@@ -6040,19 +6040,13 @@ class mvoid(MaskedArray):
     def __str__(self):
         m = self._mask
         if m is nomask:
-            return self._data.__str__()
-        printopt = masked_print_option
+            return str(self._data)
+
         rdtype = _replace_dtype_fields(self._data.dtype, "O")
-
-        # temporary hack to fix gh-7493. A more permanent fix
-        # is proposed in gh-6053, after which the next two
-        # lines should be changed to
-        # res = np.array([self._data], dtype=rdtype)
-        res = np.empty(1, rdtype)
-        res[:1] = self._data
-
-        _recursive_printoption(res, self._mask, printopt)
-        return str(res[0])
+        data_arr = super(mvoid, self)._data
+        res = data_arr.astype(rdtype)
+        _recursive_printoption(res, self._mask, masked_print_option)
+        return str(res)
 
     __repr__ = __str__
 
