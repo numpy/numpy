@@ -1,4 +1,5 @@
 # :Author:    Travis Oliphant
+from cpython.exc cimport PyErr_Print
 
 cdef extern from "numpy/npy_no_deprecated_api.h": pass
 
@@ -133,7 +134,7 @@ cdef extern from "numpy/arrayobject.h":
 
     dtype PyArray_DescrFromType(int)
 
-    void import_array()
+    int _import_array() except -1
 
 # include functions that were once macros in the new api
 
@@ -150,3 +151,12 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_TYPE(ndarray arr)
     int PyArray_CHKFLAGS(ndarray arr, int flags)
     object PyArray_GETITEM(ndarray arr, char *itemptr)
+
+
+# copied from cython version with addition of PyErr_Print.
+cdef inline int import_array() except -1:
+    try:
+        _import_array()
+    except Exception:
+        PyErr_Print()
+        raise ImportError("numpy.core.multiarray failed to import")
