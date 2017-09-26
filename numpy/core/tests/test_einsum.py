@@ -568,48 +568,37 @@ class TestEinSum(TestCase):
 
         A = np.arange(2 * 3 * 4).reshape(2, 3, 4)
         B = np.arange(3)
-        ref = np.einsum('ijk,j->ijk', A, B)
-        assert_equal(np.einsum('ij...,j...->ij...', A, B), ref)
-        assert_equal(np.einsum('ij...,...j->ij...', A, B), ref)
-        assert_equal(np.einsum('ij...,j->ij...', A, B), ref)  # used to raise error
-
-        assert_equal(np.einsum('ij...,j...->ij...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ij...,...j->ij...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=True), ref)  # used to raise error
+        ref = np.einsum('ijk,j->ijk', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ij...,j...->ij...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ij...,...j->ij...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=opt), ref)  # used to raise error
 
         A = np.arange(12).reshape((4, 3))
         B = np.arange(6).reshape((3, 2))
-        ref = np.einsum('ik,kj->ij', A, B)
-        assert_equal(np.einsum('ik...,k...->i...', A, B), ref)
-        assert_equal(np.einsum('ik...,...kj->i...j', A, B), ref)
-        assert_equal(np.einsum('...k,kj', A, B), ref)  # used to raise error
-        assert_equal(np.einsum('ik,k...->i...', A, B), ref)  # used to raise error
-
-        assert_equal(np.einsum('ik...,k...->i...', A, B, optimize=True), ref)
-        assert_equal(np.einsum('ik...,...kj->i...j', A, B, optimize=True), ref)
-        assert_equal(np.einsum('...k,kj', A, B, optimize=True), ref)  # used to raise error
-        assert_equal(np.einsum('ik,k...->i...', A, B, optimize=True), ref)  # used to raise error
+        ref = np.einsum('ik,kj->ij', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ik...,k...->i...', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ik...,...kj->i...j', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('...k,kj', A, B, optimize=opt), ref)  # used to raise error
+            assert_equal(np.einsum('ik,k...->i...', A, B, optimize=opt), ref)  # used to raise error
 
         dims = [2, 3, 4, 5]
         a = np.arange(np.prod(dims)).reshape(dims)
         v = np.arange(dims[2])
-        ref = np.einsum('ijkl,k->ijl', a, v)
-        assert_equal(np.einsum('ijkl,k', a, v), ref)
-        assert_equal(np.einsum('...kl,k', a, v), ref)  # used to raise error
-        assert_equal(np.einsum('...kl,k...', a, v), ref)
-        # no real diff from 1st
-
-        assert_equal(np.einsum('ijkl,k', a, v, optimize=True), ref)
-        assert_equal(np.einsum('...kl,k', a, v, optimize=True), ref)  # used to raise error
-        assert_equal(np.einsum('...kl,k...', a, v, optimize=True), ref)
+        ref = np.einsum('ijkl,k->ijl', a, v, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('ijkl,k', a, v, optimize=opt), ref)
+            assert_equal(np.einsum('...kl,k', a, v, optimize=opt), ref)  # used to raise error
+            assert_equal(np.einsum('...kl,k...', a, v, optimize=opt), ref)
 
         J, K, M = 160, 160, 120
         A = np.arange(J * K * M).reshape(1, 1, 1, J, K, M)
         B = np.arange(J * K * M * 3).reshape(J, K, M, 3)
-        ref = np.einsum('...lmn,...lmno->...o', A, B)
-        assert_equal(np.einsum('...lmn,lmno->...o', A, B), ref)  # used to raise error
-        assert_equal(np.einsum('...lmn,lmno->...o', A, B,
-                               optimize=True), ref)  # used to raise error
+        ref = np.einsum('...lmn,...lmno->...o', A, B, optimize=False)
+        for opt in [True, False]:
+            assert_equal(np.einsum('...lmn,lmno->...o', A, B,
+                                   optimize=opt), ref)  # used to raise error
 
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
@@ -784,7 +773,7 @@ class TestEinSumPath(TestCase):
         operands = [string]
         terms = string.split('->')[0].split(',')
         for term in terms:
-            dims = [global_size_dict[x] for x in term]
+            dims = [size_dict[x] for x in term]
             operands.append(np.random.rand(*dims))
 
         return operands
@@ -873,6 +862,16 @@ class TestEinSumPath(TestCase):
 
         path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 2), (0, 1)])
+
+        # Edge test5
+        edge_test4 = self.build_operands('a,ac,ab,ad,cd,bd,bc->',
+                                         size_dict={"a": 20, "b": 20, "c": 20, "d": 20})
+        path, path_str = np.einsum_path(*edge_test4, optimize='greedy')
+        self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
+
+        path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
+        self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
+
 
     def test_path_type_input(self):
         # Test explicit path handeling
