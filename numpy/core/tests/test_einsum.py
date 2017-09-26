@@ -773,7 +773,7 @@ class TestEinSumPath(TestCase):
         operands = [string]
         terms = string.split('->')[0].split(',')
         for term in terms:
-            dims = [global_size_dict[x] for x in term]
+            dims = [size_dict[x] for x in term]
             operands.append(np.random.rand(*dims))
 
         return operands
@@ -862,6 +862,16 @@ class TestEinSumPath(TestCase):
 
         path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 2), (0, 1)])
+
+        # Edge test5
+        edge_test4 = self.build_operands('a,ac,ab,ad,cd,bd,bc->',
+                                         size_dict={"a": 20, "b": 20, "c": 20, "d": 20})
+        path, path_str = np.einsum_path(*edge_test4, optimize='greedy')
+        self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
+
+        path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
+        self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
+
 
     def test_path_type_input(self):
         # Test explicit path handeling
