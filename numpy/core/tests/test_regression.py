@@ -858,7 +858,7 @@ class TestRegression(object):
 
     def test_sign_bit(self):
         x = np.array([0, -0.0, 0])
-        assert_equal(str(np.abs(x)), '[ 0.  0.  0.]')
+        assert_equal(str(np.abs(x)), '[0. 0. 0.]')
 
     def test_flat_index_byteswap(self):
         for dt in (np.dtype('<i4'), np.dtype('>i4')):
