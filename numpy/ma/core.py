@@ -2418,12 +2418,13 @@ def _recursive_printoption(result, mask, printopt):
 
     """
     names = result.dtype.names
-    for name in names:
-        (curdata, curmask) = (result[name], mask[name])
-        if curdata.dtype.names:
+    if names:
+        for name in names:
+            curdata = result[name]
+            curmask = mask[name]
             _recursive_printoption(curdata, curmask, printopt)
-        else:
-            np.copyto(curdata, printopt, where=curmask)
+    else:
+        np.copyto(result, printopt, where=mask)
     return
 
 _print_templates = dict(long_std="""\
@@ -3827,47 +3828,27 @@ class MaskedArray(ndarray):
 
         """
         if masked_print_option.enabled():
-            f = masked_print_option
-            if self is masked:
-                return str(f)
-            m = self._mask
-            if m is nomask:
+            mask = self._mask
+            if mask is nomask:
                 res = self._data
             else:
-                if m.shape == () and m.itemsize==len(m.dtype):
-                    if m.dtype.names:
-                        m = m.view((bool, len(m.dtype)))
-                        if m.any():
-                            return str(tuple((f if _m else _d) for _d, _m in
-                                             zip(self._data.tolist(), m)))
-                        else:
-                            return str(self._data)
-                    elif m:
-                        return str(f)
-                    else:
-                        return str(self._data)
                 # convert to object array to make filled work
-                names = self.dtype.names
-                if names is None:
-                    data = self._data
-                    mask = m
-                    # For big arrays, to avoid a costly conversion to the
-                    # object dtype, extract the corners before the conversion.
-                    print_width = (self._print_width if self.ndim > 1
-                                   else self._print_width_1d)
-                    for axis in range(self.ndim):
-                        if data.shape[axis] > print_width:
-                            ind = print_width // 2
-                            arr = np.split(data, (ind, -ind), axis=axis)
-                            data = np.concatenate((arr[0], arr[2]), axis=axis)
-                            arr = np.split(mask, (ind, -ind), axis=axis)
-                            mask = np.concatenate((arr[0], arr[2]), axis=axis)
-                    res = data.astype("O")
-                    res.view(ndarray)[mask] = f
-                else:
-                    rdtype = _replace_dtype_fields(self.dtype, "O")
-                    res = self._data.astype(rdtype)
-                    _recursive_printoption(res, m, f)
+                data = self._data
+                # For big arrays, to avoid a costly conversion to the
+                # object dtype, extract the corners before the conversion.
+                print_width = (self._print_width if self.ndim > 1
+                               else self._print_width_1d)
+                for axis in range(self.ndim):
+                    if data.shape[axis] > print_width:
+                        ind = print_width // 2
+                        arr = np.split(data, (ind, -ind), axis=axis)
+                        data = np.concatenate((arr[0], arr[2]), axis=axis)
+                        arr = np.split(mask, (ind, -ind), axis=axis)
+                        mask = np.concatenate((arr[0], arr[2]), axis=axis)
+
+                rdtype = _replace_dtype_fields(self.dtype, "O")
+                res = data.astype(rdtype)
+                _recursive_printoption(res, mask, masked_print_option)
         else:
             res = self.filled(self.fill_value)
         return str(res)
@@ -6004,7 +5985,7 @@ class mvoid(MaskedArray):
 
     def _get_data(self):
         # Make sure that the _data part is a np.void
-        return self.view(ndarray)[()]
+        return super(mvoid, self)._data[()]
 
     _data = property(fget=_get_data)
 
@@ -6040,19 +6021,13 @@ class mvoid(MaskedArray):
     def __str__(self):
         m = self._mask
         if m is nomask:
-            return self._data.__str__()
-        printopt = masked_print_option
+            return str(self._data)
+
         rdtype = _replace_dtype_fields(self._data.dtype, "O")
-
-        # temporary hack to fix gh-7493. A more permanent fix
-        # is proposed in gh-6053, after which the next two
-        # lines should be changed to
-        # res = np.array([self._data], dtype=rdtype)
-        res = np.empty(1, rdtype)
-        res[:1] = self._data
-
-        _recursive_printoption(res, self._mask, printopt)
-        return str(res[0])
+        data_arr = super(mvoid, self)._data
+        res = data_arr.astype(rdtype)
+        _recursive_printoption(res, self._mask, masked_print_option)
+        return str(res)
 
     __repr__ = __str__
 
