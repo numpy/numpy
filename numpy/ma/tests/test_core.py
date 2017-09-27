@@ -3550,6 +3550,11 @@ class TestMaskedArrayMathMethods(object):
                                             axis=0))
         assert_equal(np.trace(mX), mX.trace())
 
+        # gh-5560
+        arr = np.arange(2*4*4).reshape(2,4,4)
+        m_arr = np.ma.masked_array(arr, False)
+        assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
+
     def test_dot(self):
         # Tests dot on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
