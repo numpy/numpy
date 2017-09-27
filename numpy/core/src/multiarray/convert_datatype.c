@@ -1353,7 +1353,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         case NPY_UINT: {
             npy_uint value = *(npy_uint *)valueptr;
             if (value <= NPY_MAX_UBYTE) {
-                if (value < NPY_MAX_BYTE) {
+                if (value <= NPY_MAX_BYTE) {
                     *is_small_unsigned = 1;
                 }
                 return NPY_UBYTE;
