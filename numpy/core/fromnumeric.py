@@ -1245,13 +1245,13 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D and not a matrix, a 1-D array of the same type as `a`
-        containing the diagonal is returned. If `a` is a matrix, a 1-D
+        If `a` is 2-D and not a `matrix`, a 1-D array of the same type as `a`
+        containing the diagonal is returned. If `a` is a `matrix`, a 1-D
         array containing the diagonal is returned in order to maintain
-        backward compatibility.  If the dimension of `a` is greater than
-        two, then an array of diagonals is returned, "packed" from
-        left-most dimension to right-most (e.g., if `a` is 3-D, then the
-        diagonals are "packed" along rows).
+        backward compatibility.
+        If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
+        are removed, and a new axis inserted at the end corresponding to the
+        diagonal.
 
     Raises
     ------
