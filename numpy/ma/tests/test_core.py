@@ -500,6 +500,16 @@ class TestMaskedArray(object):
             '       fill_value = 999999)\n'
         )
 
+    def test_0d_unicode(self):
+        u = u'caf\xe9'
+        utype = type(u)
+
+        arr_nomask = np.ma.array(u)
+        arr_masked = np.ma.array(u, mask=True)
+
+        assert_equal(utype(arr_nomask), u)
+        assert_equal(utype(arr_masked), u'--')
+
     def test_pickling(self):
         # Tests pickling
         for dtype in (int, float, str, object):
