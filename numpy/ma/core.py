@@ -3867,6 +3867,10 @@ class MaskedArray(ndarray):
     def __str__(self):
         return str(self._insert_masked_print())
 
+    if sys.version_info.major < 3:
+        def __unicode__(self):
+            return unicode(self._insert_masked_print())
+
     def __repr__(self):
         """
         Literal string representation.
@@ -6237,6 +6241,10 @@ class MaskedConstant(MaskedArray):
 
     def __str__(self):
         return str(masked_print_option._display)
+
+    if sys.version_info.major < 3:
+        def __unicode__(self):
+            return unicode(masked_print_option._display)
 
     def __repr__(self):
         if self is MaskedConstant.__singleton:

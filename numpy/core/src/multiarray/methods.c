@@ -2505,6 +2505,12 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_ufunc,
         METH_VARARGS | METH_KEYWORDS, NULL},
 
+#ifndef NPY_PY3K
+    {"__unicode__",
+        (PyCFunction)array_unicode,
+        METH_NOARGS, NULL},
+#endif
+
     /* for the sys module */
     {"__sizeof__",
         (PyCFunction) array_sizeof,
