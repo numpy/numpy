@@ -262,11 +262,6 @@ Now, the ``str`` of a 0d array prints like a numpy scalar using
 ``str(a[()])`` and the ``repr`` prints like ndarrays using ``formatter(a[()])``,
 where  ``formatter`` is specified using ``np.set_printoptions``.
 
-The ``style`` argument of ``np.array2string`` now accepts the value ``None``,
-(the new default), which causes 0d arrays to be printed using the appropriate
-``formatter``. Otherwise ``style`` should be a function which accepts a numpy
-scalar and returns a string, and ``style(a[()])`` is returned.
-
 User-defined types now need to implement ``__str__`` and ``__repr__``
 ---------------------------------------------------------------------
 Previously, user-defined types could fall back to a default implementation of

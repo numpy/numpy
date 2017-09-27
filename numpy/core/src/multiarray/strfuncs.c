@@ -187,7 +187,13 @@ array_str(PyArrayObject *self)
 {
     PyObject *s, *arglist;
 
-    if (PyArray_StrFunction == NULL) {
+    /* 0d is treated as though it were a scalar */
+    if (PyArray_IsZeroDim(self)) {
+        PyObject *scalar = PyArray_ToScalar(PyArray_DATA(self), self);
+        if (scalar == NULL) return NULL;
+        return PyObject_Str(scalar);
+    }
+    else if (PyArray_StrFunction == NULL) {
         s = array_repr_builtin(self, 0);
     }
     else {
