@@ -1604,6 +1604,12 @@ class TestMaskedArrayAttributes(TestCase):
         assert_equal(a, b)
         assert_equal(a.mask, nomask)
 
+        # Mask cannot be shrunk on structured types, so is a no-op
+        a = np.ma.array([(1, 2.0)], [('a', int), ('b', float)])
+        b = a.copy()
+        a.shrink_mask()
+        assert_equal(a.mask, b.mask)
+
     def test_flat(self):
         # Test that flat can return all types of items [#4585, #4615]
         # test simple access
