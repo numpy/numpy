@@ -256,17 +256,24 @@ Changes
 0d arrays now use the array2string formatters to print their elements, like
 other arrays. The ``style`` argument of ``array2string`` is now non-functional.
 
+User-defined types now need to implement ``__str__`` and ``__repr__``
+---------------------------------------------------------------------
+Previously, user-defined types could fall back to a default implementation of
+``__str__`` and ``__repr__`` implemented in numpy, but this has now been
+removed. Now user-defined types will fall back to the python default
+``object.__str__`` and ``object.__repr__``.
+
 ``np.linalg.matrix_rank`` is more efficient for hermitian matrices
 ------------------------------------------------------------------
 The keyword argument ``hermitian`` was added to toggle between standard
 SVD-based matrix rank calculation and the more efficient eigenvalue-based
 method for symmetric/hermitian matrices.
 
-Integer scalars are now unaffected by ``np.set_string_function``
-----------------------------------------------------------------
-Previously the str/repr of integer scalars could be controlled by
-``np.set_string_function``, unlike most other numpy scalars. This is no longer
-the case.
+Integer and Void scalars are now unaffected by ``np.set_string_function``
+-------------------------------------------------------------------------
+Previously the ``str`` and ``repr`` of integer and void scalars could be
+controlled by ``np.set_string_function``, unlike most other numpy scalars. This
+is no longer the case.
 
 Multiple-field indexing/assignment of structured arrays
 -------------------------------------------------------
