@@ -1642,6 +1642,12 @@ class TestMaskedArrayAttributes(object):
         assert_equal(a, b)
         assert_equal(a.mask, nomask)
 
+        # Mask cannot be shrunk on structured types, so is a no-op
+        a = np.ma.array([(1, 2.0)], [('a', int), ('b', float)])
+        b = a.copy()
+        a.shrink_mask()
+        assert_equal(a.mask, b.mask)
+
     def test_flat(self):
         # Test that flat can return all types of items [#4585, #4615]
         # test simple access
@@ -3837,6 +3843,12 @@ class TestMaskedArrayFunctions(object):
         assert_equal(am.mask.dtype.names, am.dtype.names)
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))
+
+    def test_masked_where_mismatch(self):
+        # gh-4520
+        x = np.arange(10)
+        y = np.arange(5)
+        assert_raises(IndexError, np.ma.masked_where, y > 6, x)
 
     def test_masked_otherfunctions(self):
         assert_equal(masked_inside(list(range(5)), 1, 3),
