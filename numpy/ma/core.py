@@ -1958,7 +1958,7 @@ def masked_where(condition, a, copy=True):
 
     """
     # Make sure that condition is a valid standard-type mask.
-    cond = make_mask(condition)
+    cond = make_mask(condition, shrink=False)
     a = np.array(a, copy=copy, subok=True)
 
     (cshape, ashape) = (cond.shape, a.shape)
@@ -1972,7 +1972,7 @@ def masked_where(condition, a, copy=True):
         cls = MaskedArray
     result = a.view(cls)
     # Assign to *.mask so that structured masks are handled correctly.
-    result.mask = cond
+    result.mask = _shrink_mask(cond)
     return result
 
 
