@@ -1,0 +1,46 @@
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Brandon Carter
+* Charles Harris
+* Eric Wieser
+* Iryna Shcherbina +
+* James Bourbeau +
+* Jonathan Helmus
+* Julian Taylor
+* Matti Picus
+* Michael Lamparski +
+* Michael Seifert
+* Ralf Gommers
+
+Pull requests merged
+====================
+
+A total of 21 pull requests were merged for this release.
+
+* `#9390 <https://github.com/numpy/numpy/pull/9390>`__: BUG: Return the poly1d coefficients array directly
+* `#9555 <https://github.com/numpy/numpy/pull/9555>`__: BUG: fix regression in 1.13.x in distutils.mingw32ccompiler.
+* `#9556 <https://github.com/numpy/numpy/pull/9556>`__: BUG: Fix true_divide when dtype=np.float64 specified.
+* `#9557 <https://github.com/numpy/numpy/pull/9557>`__: DOC: Fix some rst markup in numpy/doc/basics.py.
+* `#9558 <https://github.com/numpy/numpy/pull/9558>`__: BLD: remove -xhost flag from IntelFCompiler.
+* `#9559 <https://github.com/numpy/numpy/pull/9559>`__: DOC: removes broken docstring example (source code, png, pdf)...
+* `#9580 <https://github.com/numpy/numpy/pull/9580>`__: BUG: Add hypot and cabs functions to WIN32 blacklist.
+* `#9732 <https://github.com/numpy/numpy/pull/9732>`__: BUG: Make scalar function elision check if temp is writeable.
+* `#9736 <https://github.com/numpy/numpy/pull/9736>`__: BUG: various fixes to np.gradient
+* `#9742 <https://github.com/numpy/numpy/pull/9742>`__: BUG: Fix np.pad for CVE-2017-12852
+* `#9744 <https://github.com/numpy/numpy/pull/9744>`__: BUG: Check for exception in sort functions, add tests
+* `#9745 <https://github.com/numpy/numpy/pull/9745>`__: DOC: Add whitespace after "versionadded::" directive so it actually...
+* `#9746 <https://github.com/numpy/numpy/pull/9746>`__: BUG: memory leak in np.dot of size 0
+* `#9747 <https://github.com/numpy/numpy/pull/9747>`__: BUG: adjust gfortran version search regex
+* `#9757 <https://github.com/numpy/numpy/pull/9757>`__: BUG: Cython 0.27 breaks NumPy on Python 3.
+* `#9764 <https://github.com/numpy/numpy/pull/9764>`__: BUG: Ensure `_npy_scaled_cexp{,f,l}` is defined when needed.
+* `#9765 <https://github.com/numpy/numpy/pull/9765>`__: BUG: PyArray_CountNonzero does not check for exceptions
+* `#9766 <https://github.com/numpy/numpy/pull/9766>`__: BUG: Fixes histogram monotonicity check for unsigned bin values
+* `#9767 <https://github.com/numpy/numpy/pull/9767>`__: BUG: ensure consistent result dtype of count_nonzero
+* `#9771 <https://github.com/numpy/numpy/pull/9771>`__: MAINT,BUG: Fix mtrand for Cython 0.27.
+* `#9772 <https://github.com/numpy/numpy/pull/9772>`__: DOC: Create the 1.13.2 release notes.
