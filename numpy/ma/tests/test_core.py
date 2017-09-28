@@ -3844,6 +3844,12 @@ class TestMaskedArrayFunctions(object):
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))
 
+    def test_masked_where_mismatch(self):
+        # gh-4520
+        x = np.arange(10)
+        y = np.arange(5)
+        assert_raises(IndexError, np.ma.masked_where, y > 6, x)
+
     def test_masked_otherfunctions(self):
         assert_equal(masked_inside(list(range(5)), 1, 3),
                      [0, 199, 199, 199, 4])
