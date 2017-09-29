@@ -38,7 +38,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 21 pull requests were merged for this release.
+A total of 22 pull requests were merged for this release.
 
 * #9390 BUG: Return the poly1d coefficients array directly
 * #9555 BUG: Fix regression in 1.13.x in distutils.mingw32ccompiler.
@@ -61,3 +61,4 @@ A total of 21 pull requests were merged for this release.
 * #9767 BUG: Ensure consistent result dtype of count_nonzero
 * #9771 BUG: MAINT: Fix mtrand for Cython 0.27.
 * #9772 DOC: Create the 1.13.2 release notes.
+* #9794 DOC: Create 1.13.3 release notes.
