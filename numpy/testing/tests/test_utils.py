@@ -267,15 +267,18 @@ class TestEqual(TestArrayEqual):
         try:
             self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
         except AssertionError as e:
-            self.assertEqual(
-                str(e),
-                "\nArrays are not equal\n\n"
-                "(shapes (2,), (1, 2) mismatch)\n"
-                " x: array([1, 2])\n"
-                " y: [repr failed for <matrix>: The truth value of an array "
-                "with more than one element is ambiguous. Use a.any() or "
-                "a.all()]")
-
+            msg = str(e)
+            msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
+            msg_reference = "\nArrays are not equal\n\n" \
+                "(shapes (2,), (1, 2) mismatch)\n" \
+                " x: array([1, 2])\n" \
+                " y: [repr failed for <matrix>: The truth value of an array " \
+                "with more than one element is ambiguous. Use a.any() or " \
+                "a.all()]"
+            try:
+                self.assertEqual(msg, msg_reference)
+            except AssertionError:
+                self.assertEqual(msg2, msg_reference)
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
 
