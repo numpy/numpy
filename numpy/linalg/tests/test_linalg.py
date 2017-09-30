@@ -1507,6 +1507,30 @@ class TestQR(object):
 class TestCholesky(object):
     # TODO: are there no other tests for cholesky?
 
+    def test_basic_property(self):
+        # Check A = L L^H
+        shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+        dtypes = (np.float32, np.float64, np.complex64, np.complex128)
+
+        for shape, dtype in itertools.product(shapes, dtypes):
+            np.random.seed(1)
+            a = np.random.randn(*shape)
+            if np.issubdtype(dtype, np.complexfloating):
+                a = a + 1j*np.random.randn(*shape)
+
+            t = list(range(len(shape)))
+            t[-2:] = -1, -2
+
+            a = np.matmul(a.transpose(t).conj(), a)
+            a = np.asarray(a, dtype=dtype)
+
+            c = np.linalg.cholesky(a)
+
+            b = np.matmul(c, c.transpose(t).conj())
+            assert_allclose(b, a,
+                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
+                            atol=500 * a.shape[0] * np.finfo(dtype).eps)
+
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
