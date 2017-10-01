@@ -365,11 +365,6 @@ _convert_from_tuple(PyObject *obj)
             goto fail;
         }
         newdescr->elsize = nbytes;
-        if (newdescr->elsize == -1) {
-            npy_free_cache_dim_obj(shape);
-            goto fail;
-        }
-
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
