@@ -1,6 +1,7 @@
 # <img alt="NumPy" src="branding/icons/numpylogo.svg" height="60">
 
-[![Travis](https://api.travis-ci.org/numpy/numpy.svg?branch=master)](https://travis-ci.org/numpy/numpy)
+[![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](https://travis-ci.org/numpy/numpy)
+[![AppVeyor](https://img.shields.io/appveyor/ci/charris/numpy/master.svg?label=AppVeyor)](https://ci.appveyor.com/project/charris/numpy)
 
 NumPy is the fundamental package needed for scientific computing with Python.
 
