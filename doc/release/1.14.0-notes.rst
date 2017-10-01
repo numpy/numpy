@@ -311,7 +311,7 @@ source to the destination.
 Using field "titles" in multiple-field indexing is now disallowed, as is
 repeating a field name in a multiple-field index.
 
-``sign`` option added to ``np.setprintoptions`` and ``np.array2string``
+``sign`` option added to ``np.set_printoptions`` and ``np.array2string``
 -----------------------------------------------------------------------
 This option controls printing of the sign of floating-point types, and may be
 one of the characters '-', '+' or ' ', or the string 'legacy'. With '+' numpy
