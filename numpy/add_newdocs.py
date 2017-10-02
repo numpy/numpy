@@ -2925,12 +2925,21 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
-
+    
+    The shape attribute is usually used to get at the shape of an ndarray.
+    However, the array may also be reshaped by assigning a different tuple
+    to this attribute.  As with `numpy.reshape`, one of the new shape
+    dimensions can be -1, in which case its value is inferred from the
+    length of the array and remaining dimensions. This method of reshaping
+    an array is not recommended, both because it can fail, and because it
+    affects any code holding a reference to the array in an indirect way.
+    
     Notes
     -----
     May be used to "reshape" the array, as long as this would not
     require a change in the total number of elements
-
+    Using `numpy.reshape` or `ndarray.reshape` should always be preferred.
+    Setting the shape directly is not really a safe thing to do.
     Examples
     --------
     >>> x = np.array([1, 2, 3, 4])
@@ -2948,6 +2957,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+    See Also
+    --------
+    numpy.reshape : equivalent function    
+    ndarray.reshape : equivalent function 
 
     """))
 
