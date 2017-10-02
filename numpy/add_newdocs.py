@@ -2921,13 +2921,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
     
-    This is usually used to get at the shape of an ndarray. However, the
-    array may also be reshaped by assigning a different tuple to this
-    attribute.  As with `numpy.reshape`, one of the new shape dimension
-    can be -1, in which case, its value is inferred from the length of the
-    array and remaining dimensions. This method of reshaping an arrau is
-    not recommended, both because it can fail and because it affects any
-    code holding a reference to the array in an indirect way.
+    The shape attribute is usually used to get at the shape of an ndarray.
+    However, the array may also be reshaped by assigning a different tuple
+    to this attribute.  As with `numpy.reshape`, one of the new shape
+    dimensions can be -1, in which case its value is inferred from the
+    length of the array and remaining dimensions. This method of reshaping
+    an arrau is not recommended, both because it can fail, and because it
+    affects any code holding a reference to the array in an indirect way.
     
     Notes
     -----
