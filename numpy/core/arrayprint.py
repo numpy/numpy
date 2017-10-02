@@ -373,7 +373,7 @@ def _recursive_guard(fillvalue='...'):
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
     if a.size > options['threshold']:
-        summary_insert = "..., "
+        summary_insert = "..."
         data = _leading_trailing(a)
     else:
         summary_insert = ""
@@ -545,7 +545,7 @@ def _formatArray(a, format_function, rank, max_line_len,
     if summary_insert and 2*edge_items < len(a):
         leading_items = edge_items
         trailing_items = edge_items
-        summary_insert1 = summary_insert
+        summary_insert1 = summary_insert + separator
     else:
         leading_items = 0
         trailing_items = len(a)

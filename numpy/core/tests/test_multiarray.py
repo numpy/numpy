@@ -5624,7 +5624,7 @@ class TestInner(object):
 class TestSummarization(object):
     def test_1d(self):
         A = np.arange(1001)
-        strA = '[   0    1    2 ...,  998  999 1000]'
+        strA = '[   0    1    2 ...  998  999 1000]'
         assert_(str(A) == strA)
 
         reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
@@ -5632,8 +5632,8 @@ class TestSummarization(object):
 
     def test_2d(self):
         A = np.arange(1002).reshape(2, 501)
-        strA = '[[   0    1    2 ...,  498  499  500]\n' \
-               ' [ 501  502  503 ...,  999 1000 1001]]'
+        strA = '[[   0    1    2 ...  498  499  500]\n' \
+               ' [ 501  502  503 ...  999 1000 1001]]'
         assert_(str(A) == strA)
 
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
