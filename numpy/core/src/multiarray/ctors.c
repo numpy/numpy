@@ -3708,14 +3708,15 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     for (i = 0; (i < count || count == -1) &&
              (value = PyIter_Next(iter)); i++) {
         if (i >= elcount) {
+            npy_intp nbytes;
             /*
               Grow PyArray_DATA(ret):
               this is similar for the strategy for PyListObject, but we use
               50% overallocation => 0, 4, 8, 14, 23, 36, 56, 86 ...
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
-            if (elcount <= NPY_MAX_INTP/elsize) {
-                new_data = PyDataMem_RENEW(PyArray_DATA(ret), elcount * elsize);
+            if (!npy_mul_with_overflow_intp(&nbytes, elcount, elsize)) {
+                new_data = PyDataMem_RENEW(PyArray_DATA(ret), nbytes);
             }
             else {
                 new_data = NULL;
