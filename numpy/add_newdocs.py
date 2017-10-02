@@ -2926,7 +2926,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     to this attribute.  As with `numpy.reshape`, one of the new shape
     dimensions can be -1, in which case its value is inferred from the
     length of the array and remaining dimensions. This method of reshaping
-    an arrau is not recommended, both because it can fail, and because it
+    an array is not recommended, both because it can fail, and because it
     affects any code holding a reference to the array in an indirect way.
     
     Notes
