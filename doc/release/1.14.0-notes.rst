@@ -254,6 +254,23 @@ A preallocated buffer of the desired dtype can now be used with ``concatenate``.
 --------------------------------------------------------
 A preallocated buffer of the desired dtype can now be used for the output of
 these functions.
+Better support for empty structured and string types
+----------------------------------------------------
+Structured types can contain zero fields, and string dtypes can contain zero
+characters. Zero-length strings still cannot be created directly, and must be
+constructed through structured dtypes:
+
+    str0 = np.empty(10, np.dtype([('v', str, N)]))['v']
+    void0 = np.empty(10, np.void)
+
+It was always possible to work with these, but the following operations are
+now supported for these arrays:
+
+ * `arr.sort()`
+ * `arr.view(bytes)`
+ * `arr.resize(...)`
+ * `pickle.dumps(arr)`
+
 
 Changes
 =======
