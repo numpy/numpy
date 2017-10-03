@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal
+     run_module_suite, assert_, assert_equal, assert_raises
 )
 
 class TestArrayRepr(object):
@@ -317,11 +317,13 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array(1.)), 'array(+1.)')
         assert_equal(repr(b), 'array([+1.234e+09])')
 
-        np.set_printoptions(sign='legacy')
+        np.set_printoptions(legacy=True)
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
-        assert_equal(repr(np.array(1.)), 'array(1.)')
         assert_equal(repr(b),  'array([  1.23400000e+09])')
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')
+        assert_equal(repr(np.array(1.)), 'array(1.0)')
+
+        assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')
