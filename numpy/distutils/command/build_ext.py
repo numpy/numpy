@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import shutil
+import platform
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -23,6 +24,19 @@ from numpy.distutils.misc_util import filter_sources, has_f_sources, \
     msvc_version
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
+
+if sys.version_info < (3, 5):
+    def iglob(pattern, recursive=True):
+        parent, child = pattern.split('/**/')
+
+        print(parent)
+        print(child)
+
+        for root, dirnames, filenames in os.walk(parent):
+            for filename in fnmatch.filter(filenames, child):
+                yield os.path.join(root, filename)
+else:
+    from glob import iglob
 
 
 class build_ext (old_build_ext):
@@ -271,6 +285,17 @@ class build_ext (old_build_ext):
                 os.makedirs(runtime_lib_dir)
             runtime_lib = os.path.join(self.extra_dll_dir, fn)
             copy_file(runtime_lib, runtime_lib_dir)
+            
+        # If the compiler is MSVC, then copy the msvcp DLL
+        # See scipy/scipy#7969 for more information
+        # Also, to avoid copying permission flags,
+        # copy in a funny manner
+        if self.compiler.compiler_type == 'msvc' and need_cxx_compiler:
+            msvcp_dll = self._get_msvcp_dll()
+            with open(os.path.join(self.extra_dll_dir,
+                                   os.path.basename(msvcp_dll)), 'wb+') as fdst:
+                with open(msvcp_dll, 'rb') as fsrc:
+                    shutil.copyfileobj(fsrc, fdst)
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -565,6 +590,24 @@ class build_ext (old_build_ext):
                         copy_file(p[0], dst_name)
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
+
+    def _get_msvcp_dll(self):
+        assert self.compiler.compiler_type == 'msvc'
+
+        vc_root = self.compiler.cc
+        while os.path.basename(vc_root).lower() != 'vc' and vc_root:
+            vc_root = os.path.dirname(vc_root)
+
+        if platform.architecture()[0] == '32bit':
+            specifier = 'x86'
+        elif sys.version_info > (3, 0):
+            specifier = 'x64'
+        else:
+            specifier = 'amd64'
+
+        return next(iglob(
+            vc_root + '/redist/' + specifier + '/**/msvcp*.dll',
+            recursive=True))
 
     def get_source_files(self):
         self.check_extensions_list(self.extensions)
