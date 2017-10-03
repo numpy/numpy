@@ -269,11 +269,11 @@ General Purpose Equivalents
      - Distance between 1 and the nearest floating point number.
 
    * - ``ode45``
-     - ``scipy.scipy.integrate.solve_ivp(f)``
+     - ``scipy.integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
-     - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=5)``
+     - ``scipy.integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
 Linear Algebra Equivalents
