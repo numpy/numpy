@@ -269,7 +269,7 @@ General Purpose Equivalents
      - Distance between 1 and the nearest floating point number.
 
    * - ``ode45``
-     - ``scipy.integrate.ode(f).set_integrator('dopri5')``
+     - ``scipy.scipy.integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
