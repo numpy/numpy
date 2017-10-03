@@ -297,7 +297,12 @@ class matrix(N.ndarray):
                 n = len(index)
             except Exception:
                 n = 0
-            if n > 1 and isscalar(index[1]):
+            # assume that ellipsis is not repeated
+            if n == 3 and Ellipsis in index:
+                index = list(index)
+                index.remove(Ellipsis)
+                n = len(index)
+            if n == 2 and isscalar(index[1]):
                 out.shape = (sh, 1)
             else:
                 out.shape = (1, sh)
@@ -327,19 +332,6 @@ class matrix(N.ndarray):
 
     def __rpow__(self, other):
         return NotImplemented
-
-    def __repr__(self):
-        s = repr(self.__array__()).replace('array', 'matrix')
-        # now, 'matrix' has 6 letters, and 'array' 5, so the columns don't
-        # line up anymore. We need to add a space.
-        l = s.splitlines()
-        for i in range(1, len(l)):
-            if l[i]:
-                l[i] = ' ' + l[i]
-        return '\n'.join(l)
-
-    def __str__(self):
-        return str(self.__array__())
 
     def _align(self, axis):
         """A convenience function for operations that need to preserve axis
