@@ -616,10 +616,15 @@ class build_ext (old_build_ext):
                 ei = msvc.EnvironmentInfo(
                     PLAT_TO_VCVARS[get_platform()],
                     vc_ver=version)
-                ei_VCTools = os.path.normpath(ei.VCTools)
-                print('Trying: ' + ei_VCTools)
-                if ei_VCTools == VCTools:
-                    break
+                print('Trying version: ' + version)
+                for directory in ei.VCTools:
+                    ei_VCTools = os.path.normpath(directory)
+                    print('Trying: ' + ei_VCTools)
+                    if ei_VCTools == VCTools:
+                        break
+                else:
+                    continue
+                break
             else:
                 raise ValueError('Unable to find a'
                                  'matching MSVC version')
