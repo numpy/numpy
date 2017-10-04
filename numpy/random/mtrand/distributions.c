@@ -720,31 +720,31 @@ double rk_wald(rk_state *state, double mean, double scale)
 
 long rk_zipf(rk_state *state, double a)
 {
-    double T, U, V, X;
     double am1, b;
 
     am1 = a - 1.0;
     b = pow(2.0, am1);
-    T = 0.0;
-    do
-    {
-        U = 1.0-rk_double(state);
+    while (1) {
+        double T, U, V, X;
+
+        U = 1.0 - rk_double(state);
         V = rk_double(state);
         X = floor(pow(U, -1.0/am1));
-        /* The real result may be above what can be represented in a signed
+        /*
+         * The real result may be above what can be represented in a signed
          * long. Since this is a straightforward rejection algorithm, we can
          * just reject this value. This function then models a Zipf
          * distribution truncated to sys.maxint.
          */
-        if (X > LONG_MAX) {
-            X = 0.0;    /* X < 1 will be rejected */
+        if (X > LONG_MAX || X < 1.0) {
             continue;
         }
-        if (X >= 1) {
-            T = pow(1.0 + 1.0/X, am1);
+
+        T = pow(1.0 + 1.0/X, am1);
+        if (V*X*(T - 1.0)/(b - 1.0) <= T/b) {
+            return (long)X;
         }
-    } while ((X < 1) || ((V*X*(T-1.0)/(b-1.0)) > (T/b)));
-    return (long)X;
+    }
 }
 
 long rk_geometric_search(rk_state *state, double p)
