@@ -4858,10 +4858,14 @@ class TestMaskedConstant(object):
         assert_raises(ValueError, operator.setitem, view.data, (), 1)
         assert_raises(ValueError, operator.setitem, view.mask, (), False)
 
-    @dec.knownfailureif(sys.version_info.major == 2, "See gh-9751")
     def test_coercion_int(self):
         a_i = np.zeros((), int)
         assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
+        assert_raises(MaskError, int, np.ma.masked)
+
+    @dec.skipif(sys.version_info.major == 3, "long doesn't exist in Python 3")
+    def test_coercion_long(self):
+        assert_raises(MaskError, long, np.ma.masked)
 
     def test_coercion_float(self):
         a_f = np.zeros((), float)
