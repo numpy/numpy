@@ -885,15 +885,16 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  string was too short).
  */
 NPY_NO_EXPORT int
-make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
+make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
                     int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
 
-    char *substr = outstr, sublen = outlen;
-    int tmplen;
+    char *substr = outstr;
+    npy_intp sublen = outlen;
+    npy_intp tmplen;
 
     /* Handle NaT, and treat a datetime with generic units as NaT */
     if (dts->year == NPY_DATETIME_NAT || base == NPY_FR_GENERIC) {
@@ -1321,7 +1322,7 @@ add_time_zone:
 string_too_short:
     PyErr_Format(PyExc_RuntimeError,
                 "The string provided for NumPy ISO datetime formatting "
-                "was too short, with length %d",
+                "was too short, with length %"NPY_INTP_FMT,
                 outlen);
     return -1;
 }
