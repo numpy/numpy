@@ -4880,6 +4880,15 @@ class TestMaskedConstant(object):
         a_b[()] = np.ma.masked
         assert_equal(a_b[()], b'--')
 
+    def test_subclass(self):
+        # https://github.com/astropy/astropy/issues/6645
+        class Sub(type(np.ma.masked)): pass
+
+        a = Sub()
+        assert_(a is Sub())
+        assert_(a is not np.ma.masked)
+        assert_not_equal(repr(a), 'masked')
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])

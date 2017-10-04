@@ -6165,8 +6165,14 @@ class MaskedConstant(MaskedArray):
     # the lone np.ma.masked instance
     __singleton = None
 
+    @classmethod
+    def __has_singleton(cls):
+        # second case ensures `cls.__singleton` is not just a view on the
+        # superclass singleton
+        return cls.__singleton is not None and type(cls.__singleton) is cls
+
     def __new__(cls):
-        if cls.__singleton is None:
+        if not cls.__has_singleton():
             # We define the masked singleton as a float for higher precedence.
             # Note that it can be tricky sometimes w/ type comparison
             data = np.array(0.)
@@ -6184,7 +6190,7 @@ class MaskedConstant(MaskedArray):
         return cls.__singleton
 
     def __array_finalize__(self, obj):
-        if self.__singleton is None:
+        if not self.__has_singleton():
             # this handles the `.view` in __new__, which we want to copy across
             # properties normally
             return super(MaskedConstant, self).__array_finalize__(obj)
@@ -6207,7 +6213,7 @@ class MaskedConstant(MaskedArray):
         return str(masked_print_option._display)
 
     def __repr__(self):
-        if self is self.__singleton:
+        if self is MaskedConstant.__singleton:
             return 'masked'
         else:
             # it's a subclass, or something is wrong, make it obvious
