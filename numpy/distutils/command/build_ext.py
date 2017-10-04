@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import shutil
-import platform
+import traceback
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -15,7 +15,6 @@ from distutils.errors import DistutilsFileError, DistutilsSetupError,\
     DistutilsError
 from distutils.file_util import copy_file
 from distutils.util import get_platform
-from setuptools import msvc
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
@@ -285,7 +284,7 @@ class build_ext (old_build_ext):
                 and sys.version_info >= (3, 5):
             if not os.path.isdir(runtime_lib_dir):
                 os.makedirs(runtime_lib_dir)
-            for msvcp_dll in self._get_msvcp_dlls():
+            for msvcp_dll in self._find_msvc_dlls():
                 dst = os.path.join(runtime_lib_dir,
                                    os.path.basename(msvcp_dll))
                 print('copying ' + msvcp_dll + ' -> ' + dst)
@@ -587,24 +586,52 @@ class build_ext (old_build_ext):
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
 
-    def _get_msvcp_dlls(self):
+    def _find_msvc_dlls(self, pattern='msvcp*.dll'):
         assert self.compiler.compiler_type == 'msvc'
+        try:
+            # Defer import of setuptools to avoid
+            # runtime effects when not needed
+            from setuptools import msvc
 
-        if not self.compiler.initialized:
-            self.compiler.initialize()
+            # Initialize to get compiler.cc
+            if not self.compiler.initialized:
+                self.compiler.initialize()
 
-        PLAT_TO_VCVARS = {
-            'win32' : 'x86',
-            'win-amd64' : 'x86_amd64',
-        }
+            # The 'bin' directory
+            VCTools = os.path.normpath(
+                os.path.dirname(self.compiler.cc))
+            PLAT_TO_VCVARS = {
+                'win32' : 'x86',
+                'win-amd64' : 'x86_amd64',
+            }
+            
+            print('Trying to find MSVC version for: ' + VCTools)
+            # I attempt to avoid implementation
+            # details as much as possible. Hopefully
+            # this will work some time before
+            # needing adjustment.
+            ei = msvc.EnvironmentInfo(
+                PLAT_TO_VCVARS[get_platform()])
+            for version in list(ei.si.find_available_vc_vers()):
+                ei = msvc.EnvironmentInfo(
+                    PLAT_TO_VCVARS[get_platform()],
+                    vc_ver=version)
+                ei_VCTools = os.path.normpath(ei.VCTools)
+                print('Trying: ' + ei_VCTools)
+                if ei_VCTools == VCTools:
+                    break
+            else:
+                raise ValueError('Unable to find a'
+                                 'matching MSVC version')
 
-        environment_info = msvc.EnvironmentInfo(
-            PLAT_TO_VCVARS[get_platform()])
-        
-        redist_dir = os.path.dirname(
-            environment_info.VCRuntimeRedist)
+            redist_dir = os.path.dirname(
+                ei.VCRuntimeRedist)
+            print('Found redist: ' + redist_dir)
+            dlls = glob(redist_dir + '/' + pattern)
+        except Exception as e:
+            traceback.print_exc()
+            dlls = []
 
-        dlls = glob(redist_dir + '/msvcp*.dll')
         if not dlls:
             print('WARNING: MSVC++ DLLs not found!')
 
