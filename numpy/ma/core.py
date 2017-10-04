@@ -4230,6 +4230,18 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
+    
+    def __long__(self):
+        """
+        Convert to long.
+        """
+        if self.size > 1:
+            raise TypeError("Only length-1 arrays can be conveted "
+                            "to Python scalars")
+        elif self._mask:
+            raise MaskError('Cannot convert masked element to a Python long.')
+        return long(self.item())
+      
 
     def get_imag(self):
         """
