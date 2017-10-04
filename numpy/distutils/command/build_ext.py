@@ -599,8 +599,8 @@ class build_ext (old_build_ext):
 
             # The 'bin' directory
             # Paths on windows are not case-sensitive
-            VCTools = os.path.normpath(
-                os.path.dirname(self.compiler.cc)).lower()
+            VCTools = os.path.normcase(
+                os.path.dirname(self.compiler.cc))
             PLAT_TO_VCVARS = {
                 'win32' : 'x86',
                 'win-amd64' : 'x86_amd64',
@@ -620,7 +620,7 @@ class build_ext (old_build_ext):
                 print('Trying version: ' + str(version))
                 for directory in ei.VCTools:
                     # Paths on windows are not case-sensitive
-                    ei_VCTools = os.path.normpath(directory).lower()
+                    ei_VCTools = os.path.normcase(directory)
                     print('Trying: ' + ei_VCTools)
                     if ei_VCTools == VCTools:
                         break
