@@ -624,6 +624,10 @@ class build_ext (old_build_ext):
                     d.replace('x86_amd64', 'amd64')
                     for d in list(directories)
                 ]
+                directories += [
+                    d.replace('amd64', 'x86_amd64')
+                    for d in list(directories)
+                ]
                 for directory in directories:
                     print('Trying: ' + directory)
                     if directory == VCTools:
