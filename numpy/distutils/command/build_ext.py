@@ -280,8 +280,7 @@ class build_ext (old_build_ext):
         #   - Copying with shutil.copy[file] will copy read-only permissions
         #   - The DLLs are not bundled with MSVC 2008 and MSVC 2010 (luckily
         #     these python versions only support a single compiler each)
-        if self.compiler.compiler_type == 'msvc' and need_cxx_compiler \
-                and sys.version_info >= (3, 5):
+        if self.compiler.compiler_type == 'msvc' and need_cxx_compiler:
             if not os.path.isdir(runtime_lib_dir):
                 os.makedirs(runtime_lib_dir)
             for msvcp_dll in self._find_msvc_dlls():
@@ -618,11 +617,16 @@ class build_ext (old_build_ext):
                     PLAT_TO_VCVARS[get_platform()],
                     vc_ver=version)
                 print('Trying version: ' + str(version))
-                for directory in ei.VCTools:
-                    # Paths on windows are not case-sensitive
-                    ei_VCTools = os.path.normcase(directory)
-                    print('Trying: ' + ei_VCTools)
-                    if ei_VCTools == VCTools:
+                directories = [
+                    os.path.normcase(d) for d in ei.VCTools
+                ]
+                directories += [
+                    d.replace('x86_amd64', 'amd64')
+                    for d in list(directories)
+                ]
+                for directory in directories:
+                    print('Trying: ' + directory)
+                    if directory == VCTools:
                         break
                 else:
                     continue
