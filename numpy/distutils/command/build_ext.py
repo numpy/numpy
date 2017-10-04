@@ -616,7 +616,7 @@ class build_ext (old_build_ext):
                 ei = msvc.EnvironmentInfo(
                     PLAT_TO_VCVARS[get_platform()],
                     vc_ver=version)
-                print('Trying version: ' + version)
+                print('Trying version: ' + str(version))
                 for directory in ei.VCTools:
                     ei_VCTools = os.path.normpath(directory)
                     print('Trying: ' + ei_VCTools)
