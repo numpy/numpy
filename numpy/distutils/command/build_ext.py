@@ -641,7 +641,9 @@ class build_ext (old_build_ext):
 
             redist_dir = os.path.dirname(
                 ei.VCRuntimeRedist)
-            print('Found redist: ' + redist_dir)
+            print('Found redist ' + redist_dir + 'with the following files: ')
+            for fname in os.listdir(redist_dir):
+                print(fname)
             dlls = glob(redist_dir + '/' + pattern)
         except Exception as e:
             traceback.print_exc()
