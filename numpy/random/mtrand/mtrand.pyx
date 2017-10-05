@@ -4387,18 +4387,12 @@ cdef class RandomState:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8):
+                            tol=1e-8, factored=False):
         """
-        multivariate_normal(mean, cov[, size, check_valid, tol])
+        multivariate_normal(mean, cov, size=None, check_valid='warn',
+                            tol=1e-8, factored=False)
 
         Draw random samples from a multivariate normal distribution.
-
-        The multivariate normal, multinormal or Gaussian distribution is a
-        generalization of the one-dimensional normal distribution to higher
-        dimensions.  Such a distribution is specified by its mean and
-        covariance matrix.  These parameters are analogous to the mean
-        (average or "center") and variance (standard deviation, or "width,"
-        squared) of the one-dimensional normal distribution.
 
         Parameters
         ----------
@@ -4416,6 +4410,10 @@ cdef class RandomState:
             Behavior when the covariance matrix is not positive semidefinite.
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
+        factored : bool, optional
+            Flag indicating that cov has been factored using a Cholesky or
+            alternative factorization.  When factored, the samples are right
+            multiplied by cov.T.
 
         Returns
         -------
@@ -4428,6 +4426,13 @@ cdef class RandomState:
 
         Notes
         -----
+        The multivariate normal, multinormal or Gaussian distribution is a
+        generalization of the one-dimensional normal distribution to higher
+        dimensions.  Such a distribution is specified by its mean and
+        covariance matrix.  These parameters are analogous to the mean
+        (average or "center") and variance (standard deviation, or "width,"
+        squared) of the one-dimensional normal distribution.
+
         The mean is a coordinate in N-dimensional space, which represents the
         location where samples are most likely to be generated.  This is
         analogous to the peak of the bell curve for the one-dimensional or
@@ -4486,6 +4491,13 @@ cdef class RandomState:
         >>> list((x[0,0,:] - mean) < 0.6)
         [True, True]
 
+        The default factorization is based on a SVD of the covariance.
+        ALternative factorizations can be used by setting factored to True and
+        passing the factored covariance.
+
+        >>> factor = np.linalg.cholesky([[1, 0.5], [0.5, 1]])
+        >>> mean = [0, 0]
+        >>> x, y = np.random.multivariate_normal(mean, factor, factored=True)
         """
         from numpy.dual import svd
 
@@ -4528,21 +4540,25 @@ cdef class RandomState:
         # order to preserve current outputs. Note that symmetry has not
         # been checked.
 
-        (u, s, v) = svd(cov)
+        if not factored:
+            (u, s, v) = svd(cov)
+            factor = (np.sqrt(s)[:, None] * v).T
+            if check_valid != 'ignore':
+                if check_valid != 'warn' and check_valid != 'raise':
+                    raise ValueError("check_valid must equal 'warn', 'raise', "
+                                     "or 'ignore'")
 
-        if check_valid != 'ignore':
-            if check_valid != 'warn' and check_valid != 'raise':
-                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
+                psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+                if not psd:
+                    psd_msg = "covariance is not positive-semidefinite."
+                    if check_valid == 'warn':
+                        warnings.warn(psd_msg, RuntimeWarning)
+                    else:
+                        raise ValueError(psd_msg)
+        else:
+            factor = cov
 
-            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
-            if not psd:
-                if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
-                                  RuntimeWarning)
-                else:
-                    raise ValueError("covariance is not positive-semidefinite.")
-
-        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        x = np.dot(x, factor.T)
         x += mean
         x.shape = tuple(final_shape)
         return x
@@ -4567,6 +4583,7 @@ cdef class RandomState:
             a single value is returned if ``loc``, ``gamma`` and ``relation``
             are all scalars. Otherwise,
             ``np.broadcast(loc, gamma, relation).size`` samples are drawn.
+
 
         Returns
         -------
@@ -4601,8 +4618,8 @@ cdef class RandomState:
 
         >>> s = np.random.complex_normal(size=1000)
         """
-        cdef ndarray loca, cov, randoms
-        cdef double fgamma_r, frelation_r, frelation_i
+        cdef ndarray loca
+        cdef double fgamma_r, frelation_r, v_real, v_imag, cov_ri, rho_ri
 
         if not (PyArray_IsAnyScalar(loc) and 
                 PyArray_IsAnyScalar(gamma) and 
@@ -4610,19 +4627,39 @@ cdef class RandomState:
             raise ValueError('All inputs must be scalars')
         fgamma_r = <double>gamma
         frelation_r = PyComplex_RealAsDouble(relation)
-        frelation_i = PyComplex_ImagAsDouble(relation)
+        cov_ri = 0.5 * PyComplex_ImagAsDouble(relation)
+
+        v_real = 0.5 * (fgamma_r + frelation_r)
+        v_imag = 0.5 * (fgamma_r - frelation_r)
+
+        if v_real < 0.0:
+            raise ValueError('Variance of real component < 0')
+        if v_imag < 0.0:
+            raise ValueError('Variance of imag component < 0')
+        corr_msg = 'Correlation outside of [-1, 1]'
+        rho_ri = 0.0
+        if v_real == 0.0 or v_imag == 0.0:
+            if cov_ri != 0:
+                raise ValueError(corr_msg)
+        else:
+            rho_ri = cov_ri / sqrt(v_real * v_imag)
+            if rho_ri > 1.0 or rho_ri < -1.0:
+                raise ValueError(corr_msg)
+
         loca = <ndarray>PyArray_FROM_OTF([loc], NPY_CDOUBLE, NPY_ARRAY_ALIGNED)
         loca = <ndarray>loca.view(np.double)
-        
-        cov = <ndarray>np.empty((2,2))
-        cov[0,0] = 0.5 * (fgamma_r + frelation_r)
-        cov[0,1] = cov[1,0] = 0.5 * frelation_i
-        cov[1,1] = 0.5 * (fgamma_r - frelation_r)
-        
-        randoms = <ndarray>self.multivariate_normal(loca, cov, size=size)
+
+        factor = np.array([[sqrt(v_real), 0.0],
+                           [sqrt(v_imag) * rho_ri,
+                            sqrt(v_imag * (1 - rho_ri * rho_ri))]])
+
+        randoms = self.multivariate_normal(loca, factor, size=size,
+                                           factored=True)
         randoms = randoms.view(np.complex128)
         if size is None:
             return randoms[0]
+        randoms.shape = randoms.shape[:-1]
+
         return randoms
 
     def multinomial(self, npy_intp n, object pvals, size=None):

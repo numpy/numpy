@@ -945,11 +945,6 @@ class TestRandomDist(object):
         np.testing.assert_allclose(vals, vals2)
 
         np.random.seed(self.seed)
-        vals3 = np.random.complex_normal(2.0 + 7.0j * np.ones(10),
-                                         10.0 * np.ones(1), 5.0 - 5.0j)
-        np.testing.assert_allclose(vals, vals3)
-
-        np.random.seed(self.seed)
         norms = np.random.standard_normal(size=20)
         norms = np.reshape(norms, (10, 2))
         cov = 0.5 * (-5.0)
@@ -959,9 +954,10 @@ class TestRandomDist(object):
         imag = 7 + np.sqrt(v_imag) * (rho * norms[:, 0] +
                                       np.sqrt(1 - rho ** 2) * norms[:, 1])
         real = 2 + np.sqrt(v_real) * norms[:, 0]
-        vals4 = [re + im * (0 + 1.0j) for re, im in zip(real, imag)]
+        print([[np.sqrt(v_real), np.sqrt(v_imag) * rho],[0, np.sqrt(v_imag)  * np.sqrt(1 - rho ** 2)]])
+        vals3 = [re + im * (0 + 1.0j) for re, im in zip(real, imag)]
 
-        np.testing.assert_allclose(vals4, vals)
+        np.testing.assert_allclose(vals3, vals)
 
     def test_complex_normal_zero_variance(self):
         np.random.seed(self.seed)

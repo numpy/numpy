@@ -100,11 +100,10 @@ cdef extern from "numpy/arrayobject.h":
         cdef int nd
         cdef npy_intp *dimensions
         cdef void **iters
-    
-    ctypedef int PyArray_Type
 
     object PyArray_ZEROS(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
     object PyArray_EMPTY(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
+    dtype PyArray_DescrFromTypeNum(NPY_TYPES type_num)
     object PyArray_SimpleNew(int ndims, npy_intp* dims, NPY_TYPES type_num)
     int PyArray_Check(object obj)
     int PyArray_IsAnyScalar(object obj)
@@ -138,7 +137,6 @@ cdef extern from "numpy/arrayobject.h":
     dtype PyArray_DescrFromType(int)
 
     int _import_array() except -1
-    object PyArray_View(ndarray self, dtype newtype, object subtype)
 
 # include functions that were once macros in the new api
 
