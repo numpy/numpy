@@ -2926,10 +2926,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
 
-    Notes
-    -----
-    May be used to "reshape" the array, as long as this would not
-    require a change in the total number of elements
+    The shape property is usually used to get the current shape of an array,
+    but may also be used to reshape the array in-place by assigning a tuple of
+    array dimensions to it.  As with `numpy.reshape`, one of the new shape
+    dimensions can be -1, in which case its value is inferred from the size of
+    the array and the remaining dimensions. Reshaping an array in-place will
+    fail if a copy is required.
 
     Examples
     --------
@@ -2948,6 +2950,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+    >>> np.zeros((4,2))[::2].shape = (-1,)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    AttributeError: incompatible shape for a non-contiguous array
+
+    See Also
+    --------
+    numpy.reshape : similar function
+    ndarray.reshape : similar method
 
     """))
 
