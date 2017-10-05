@@ -877,21 +877,21 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([[0, 3],
            [2, 2]])
 
-    >>> np.argsort(x, axis=0)
+    >>> np.argsort(x, axis=0)  # sorts along first axis (down)
     array([[0, 1],
            [1, 0]])
 
-    >>> np.argsort(x, axis=1)
+    >>> np.argsort(x, axis=1)  # sorts along last axis (across)
     array([[0, 1],
            [0, 1]])
 
     Indices of the sorted elements of a N-dimensional array:
-    >>> np.unravel_index(np.argsort(x, axis=None), x.shape)
+
+    >>> ind = np.unravel_index(np.argsort(x, axis=None), x.shape)
+    >>> ind
     (array([0, 1, 1, 0]), array([0, 0, 1, 1]))
-    >>> from np.testing import assert_equal
-    >>> assert_equal(x[(array([0, 1, 1, 0]), array([0, 0, 1, 1]))], np.sort(x, axis=None))
-    >>> list(zip(*np.unravel_index(np.argsort(x, axis=None), x.shape)))
-    [(0, 0), (1, 0), (1, 1), (0, 1)]
+    >>> x[ind]  # same as np.sort(x, axis=None)
+    array([0, 2, 2, 3])
 
     Sorting with keys:
 
@@ -955,16 +955,19 @@ def argmax(a, axis=None, out=None):
     >>> np.argmax(a, axis=1)
     array([2, 2])
 
-    Indices of the maximal elements of a N-dimensional array:
-    >>> np.unravel_index(np.argmax(a, axis=None), a.shape)
+    Indexes of the maximal elements of a N-dimensional array:
+
+    >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
+    >>> ind
     (1, 2)
-    >>> np.testing.assert_equal(a[(1, 2)], np.max(a))
+    >>> a[ind]
+    5
 
     >>> b = np.arange(6)
     >>> b[1] = 5
     >>> b
     array([0, 5, 2, 3, 4, 5])
-    >>> np.argmax(b) # Only the first occurrence is returned.
+    >>> np.argmax(b)  # Only the first occurrence is returned.
     1
 
     """
@@ -1017,15 +1020,18 @@ def argmin(a, axis=None, out=None):
     array([0, 0])
 
     Indices of the minimum elements of a N-dimensional array:
-    >>> np.unravel_index(np.argmin(a, axis=None), a.shape)
+
+    >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
+    >>> ind
     (0, 0)
-    >>> np.testing.assert_equal(a[(0, 0)], np.min(a))
+    >>> a[ind]
+    0
 
     >>> b = np.arange(6)
     >>> b[4] = 0
     >>> b
     array([0, 1, 2, 3, 0, 5])
-    >>> np.argmin(b) # Only the first occurrence is returned.
+    >>> np.argmin(b)  # Only the first occurrence is returned.
     0
 
     """
@@ -2475,7 +2481,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     raised on overflow.  That means that, on a 32-bit platform:
 
     >>> x = np.array([536870910, 536870910, 536870910, 536870910])
-    >>> np.prod(x) #random
+    >>> np.prod(x)  # random
     16
 
     The product of an empty array is the neutral element 1:
