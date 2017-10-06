@@ -604,7 +604,7 @@ class build_ext (old_build_ext):
             log.debug('Copying "%s" -> "%s"', runtime_lib,
                       runtime_lib_dir)
 
-            extra_dll = shutil.copy(vcruntime, runtime_lib_dir)
+            extra_dll = shutil.copy(runtime_lib, runtime_lib_dir)
             os.chmod(extra_dll, stat.S_IWRITE)
 
     def get_source_files(self):
