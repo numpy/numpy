@@ -579,7 +579,7 @@ class build_ext (old_build_ext):
 
     def _copy_vcruntime(self, runtime_lib_dir, pattern='msvcp*.dll'):
         def _print_msvcp_warning():
-            log.warning('WARNING: Failed to copy MSVC runtime DLLs!')
+            log.warn('WARNING: Failed to copy MSVC runtime DLLs!')
         assert self.compiler.compiler_type == 'msvc'
         
         # First, initialize the compiler so that the paths are set
