@@ -6,7 +6,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import shutil
-import traceback
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -14,7 +13,6 @@ from distutils.command.build_ext import build_ext as old_build_ext
 from distutils.errors import DistutilsFileError, DistutilsSetupError,\
     DistutilsError
 from distutils.file_util import copy_file
-from distutils.util import get_platform
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
@@ -274,22 +272,15 @@ class build_ext (old_build_ext):
             runtime_lib = os.path.join(self.extra_dll_dir, fn)
             copy_file(runtime_lib, runtime_lib_dir)
             
-        # If the compiler is MSVC, then copy the MSVC++ DLL
-        # See scipy/scipy#7969 for more information
-        # It is not so simple !!!
-        #   - Copying with shutil.copy[file] will copy read-only permissions
-        #   - The DLLs are not bundled with MSVC 2008 and MSVC 2010 (luckily
-        #     these python versions only support a single compiler each)
+        # If the compiler is MSVC, then attempt to locate and copy
+        # the Visual C++ DLL that is required to run. These DLLs are 
+        # often, but not always, pre-installed with the MSVC Redistributable
+        # so we only use our version if the target computer has none (a
+        # pre-installed version will be newer due to Windows Update).
         if self.compiler.compiler_type == 'msvc' and need_cxx_compiler:
             if not os.path.isdir(runtime_lib_dir):
                 os.makedirs(runtime_lib_dir)
-            for msvcp_dll in self._find_msvc_dlls():
-                dst = os.path.join(runtime_lib_dir,
-                                   os.path.basename(msvcp_dll))
-                print('copying ' + msvcp_dll + ' -> ' + dst)
-                with open(msvcp_dll, 'rb') as fsrc:
-                    with open(dst, 'wb+') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
+            self._copy_vcruntime(runtime_lib_dir)
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -585,74 +576,36 @@ class build_ext (old_build_ext):
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
 
-    def _find_msvc_dlls(self, pattern='msvcp*.dll'):
+    def _copy_vcruntime(self, runtime_lib_dir, pattern='msvcp*.dll'):
+        def _print_msvcp_warning():
+            log.warning('WARNING: Failed to copy MSVC runtime DLLs!')
         assert self.compiler.compiler_type == 'msvc'
-        try:
-            # Defer import of setuptools to avoid
-            # runtime effects when not needed
-            from setuptools import msvc
-
-            # Initialize to get compiler.cc
-            if not self.compiler.initialized:
-                self.compiler.initialize()
-
-            # The 'bin' directory
-            # Paths on windows are not case-sensitive
-            VCTools = os.path.normcase(
-                os.path.dirname(self.compiler.cc))
-            PLAT_TO_VCVARS = {
-                'win32' : 'x86',
-                'win-amd64' : 'x86_amd64',
-            }
+        
+        # First, initialize the compiler so that the paths are set
+        if not self.compiler.initialized:
+            self.compiler.initialize()
+        
+        # Next, check if the compiler has the '_vcruntime_redist'
+        # attribute and copy the msvcp DLL if it does.
+        vcruntime = getattr(self.compiler, '_vcruntime_redist', None)
+        if not vcruntime:
+            return _print_msvcp_warning()
+        
+        redist_directory = os.path.dirname(vcruntime)
+        runtime_libs = glob(redist_directory + '/' + pattern)
+        
+        if not runtime_libs:
+            return _print_msvcp_warning()
             
-            print('Trying to find MSVC version for: ' + VCTools)
-            # I attempt to avoid implementation
-            # details as much as possible. Hopefully
-            # this will work some time before
-            # needing adjustment.
-            ei = msvc.EnvironmentInfo(
-                PLAT_TO_VCVARS[get_platform()])
-            for version in list(ei.si.find_available_vc_vers()):
-                ei = msvc.EnvironmentInfo(
-                    PLAT_TO_VCVARS[get_platform()],
-                    vc_ver=version)
-                print('Trying version: ' + str(version))
-                directories = [
-                    os.path.normcase(d) for d in ei.VCTools
-                ]
-                directories += [
-                    d.replace('x86_amd64', 'amd64')
-                    for d in list(directories)
-                ]
-                directories += [
-                    d.replace('amd64', 'x86_amd64')
-                    for d in list(directories)
-                ]
-                for directory in directories:
-                    print('Trying: ' + directory)
-                    if directory == VCTools:
-                        break
-                else:
-                    continue
-                break
-            else:
-                raise ValueError('Unable to find a'
-                                 'matching MSVC version')
+        for runtime_lib in runtime_libs:
+            # This looks odd, but there is a reason:
+            # the wheel plugin for setuptools will fail
+            # if the permissions are not changed
+            log.debug('Copying "%s" -> "%s"', runtime_lib,
+                      runtime_lib_dir)
 
-            redist_dir = os.path.dirname(
-                ei.VCRuntimeRedist)
-            print('Found redist ' + redist_dir + 'with the following files: ')
-            for fname in os.listdir(redist_dir):
-                print(fname)
-            dlls = glob(redist_dir + '/' + pattern)
-        except Exception as e:
-            traceback.print_exc()
-            dlls = []
-
-        if not dlls:
-            print('WARNING: MSVC++ DLLs not found!')
-
-        return dlls
+            extra_dll = shutil.copy(vcruntime, runtime_lib_dir)
+            os.chmod(extra_dll, stat.S_IWRITE)
 
     def get_source_files(self):
         self.check_extensions_list(self.extensions)
