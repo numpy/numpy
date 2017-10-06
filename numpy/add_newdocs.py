@@ -5395,8 +5395,9 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
     myarray : ndarray, uint8 type
        Input array.
     axis : int, optional
-       Unpacks along this axis.
-
+        The dimension over which bit-unpacking is done.
+        ``None`` implies unpacking the flattened array.
+    
     Returns
     -------
     unpacked : ndarray, uint8 type
