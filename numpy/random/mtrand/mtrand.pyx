@@ -4076,13 +4076,15 @@ cdef class RandomState:
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
 
-            if fa <= 1.0:
-                raise ValueError("a <= 1.0")
+            # use logic that ensures NaN is rejected.
+            if not fa > 1.0:
+                raise ValueError("'a' must be a valid float > 1.0")
             return discd_array_sc(self.internal_state, rk_zipf, size, fa,
                                   self.lock)
 
-        if np.any(np.less_equal(oa, 1.0)):
-            raise ValueError("a <= 1.0")
+        # use logic that ensures NaN is rejected.
+        if not np.all(np.greater(oa, 1.0)):
+            raise ValueError("'a' must contain valid floats > 1.0")
         return discd_array(self.internal_state, rk_zipf, size, oa, self.lock)
 
     def geometric(self, p, size=None):
