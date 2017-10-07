@@ -1963,7 +1963,7 @@ class TestDateTime(object):
         for t in np.typecodes["All"]:
             if t in np.typecodes["Datetime"]:
                 continue
-            assert_raises(ValueError, np.isnat, np.zeros(10, t))
+            assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
 
 class TestDateTimeData(object):

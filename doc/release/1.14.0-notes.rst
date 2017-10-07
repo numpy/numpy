@@ -156,6 +156,12 @@ The previous parameter name ``from`` is a reserved keyword in Python, which made
 it difficult to pass the argument by name. This has been fixed by renaming
 the parameter to ``from_``.
 
+``isnat`` raises ``TypeError`` when passed wrong type
+------------------------------------------------------
+The ufunc ``isnat`` used to raise a ``ValueError`` when it was not passed
+variables of type ``datetime`` or ``timedelta``. This has been changed to
+raising a ``TypeError``.
+
 
 C API changes
 =============
