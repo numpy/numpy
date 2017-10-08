@@ -3096,17 +3096,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
-    """a.__copy__([order])
+    """a.__copy__()
 
-    Return a copy of the array.
-
-    Parameters
-    ----------
-    order : {'C', 'F', 'A'}, optional
-        If order is 'C' (False) then the result is contiguous (default).
-        If order is 'Fortran' (True) then the result has fortran order.
-        If order is 'Any' (None) then the result has fortran order
-        only if the array already is in fortran order.
+    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
+    
+    Equivalent to ``a.copy(order='K')``.
 
     """))
 
@@ -3114,7 +3108,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
     """a.__deepcopy__(memo, /) -> Deep copy of array.
 
-    Used if copy.deepcopy is called on an array.
+    Used if :func:`copy.deepcopy` is called on an array.
 
     """))
 
