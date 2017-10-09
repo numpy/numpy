@@ -42,6 +42,13 @@ class TestSeed(object):
         assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
 
+    def test_invalid_array_shape(self):
+        # gh-9832
+        assert_raises(ValueError, np.random.RandomState, np.array([], dtype=np.int64))
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3]])
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3],
+                                                          [4, 5, 6]])
+
 
 class TestBinomial(object):
     def test_n_zero(self):
