@@ -45,7 +45,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
+    'blackman', 'kaiser', 'taylorwin', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
     ]
 
@@ -3853,6 +3853,58 @@ def kaiser(M, beta):
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
+
+def taylorwin(M, nbar=4, sll=-35):
+    """
+    Return the Taylor window.
+
+    The Taylor window allows for a selectable sidelobe suppression with a 
+    minimum broadening. This window is commonly used in synthetic aperture radar
+    processing.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+    nbar : int
+        Number of nearly constant level sidelobes adjacent to the mainlobe
+    sll : float
+        Desired peak sidelobe level in decibels (db) relative to the mainlobe
+
+    Returns
+    -------
+    out : array
+        The window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
+
+    See Also
+    --------
+    kaiser, bartlett, blackman, hamming, hanning
+
+    Notes
+    -----
+    The Kaiser window is described by Carrara, Goodman, and Majewski 
+    in 'Spotlight Synthetic Aperture Radar: Signal Processing Algorithms'
+    Page 512-513
+    """
+    B = 10**(-sll/20)
+    A = log(B + sqrt(B**2 - 1))/pi
+    s2 = nbar**2 / (A**2 + (nbar - 0.5)**2)
+    ma = arange(1,nbar)
+    def calc_Fm(m):
+        numer = (-1)**(m+1) * prod(1-m**2/s2/(A**2 + (ma - 0.5)**2))
+        denom = 2* prod([ 1-m**2/j**2 for j in ma if j != m])
+        return numer/denom
+    Fm = array([calc_Fm(m) for m in ma])
+    def W(n):
+        return 2*Fm @ cos(2*pi*ma*(n-N/2 + 1/2)/N) + 1
+    w = array([W(n) for n in range(N)])
+    # normalize (Note that this is not described in the original text,
+    #            but is added for consistency)
+    scale = W((N-1)/2)
+    w /= scale
+    return w
 
 
 def sinc(x):
