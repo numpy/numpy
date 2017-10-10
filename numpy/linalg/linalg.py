@@ -1300,19 +1300,21 @@ def svd(a, full_matrices=True, compute_uv=True):
     """
     Singular Value Decomposition.
 
-    Factors the matrix `a` as ``u * np.diag(s) * v``, where `u` and `v`
-    are unitary and `s` is a 1-d array of `a`'s singular values.
+    Factors the matrix `a` as ``u * np.diag(s) * vh``. When `a` is a 2D array,
+    `u` and `vh` are 2D unitary arrays and `s` is a 1D array of `a`'s singular
+    values.
 
     Parameters
     ----------
     a : (..., M, N) array_like
-        A real or complex matrix of shape (`M`, `N`) .
+        A real or complex matrix of shape (..., `M`, `N`) .
     full_matrices : bool, optional
-        If True (default), `u` and `v` have the shapes (`M`, `M`) and
-        (`N`, `N`), respectively.  Otherwise, the shapes are (`M`, `K`)
-        and (`K`, `N`), respectively, where `K` = min(`M`, `N`).
+        If True (default), `u` and `v` have the shapes (..., `M`, `M`) and
+        (..., `N`, `N`), respectively.  Otherwise, the shapes are
+        (..., `M`, `K`) and (..., `K`, `N`), respectively, where
+        `K` = min(`M`, `N`).
     compute_uv : bool, optional
-        Whether or not to compute `u` and `v` in addition to `s`.  True
+        Whether or not to compute `u` and `vh` in addition to `s`.  True
         by default.
 
     Returns
@@ -1322,7 +1324,7 @@ def svd(a, full_matrices=True, compute_uv=True):
         ``full_matrices``. Only returned when ``compute_uv`` is True.
     s : (..., K) array
         The singular values for every matrix, sorted in descending order.
-    v : { (..., N, N), (..., K, N) } array
+    vh : { (..., N, N), (..., K, N) } array
         Unitary matrices. The actual shape depends on the value of
         ``full_matrices``. Only returned when ``compute_uv`` is True.
 
@@ -1336,24 +1338,24 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     .. versionadded:: 1.8.0
 
-    Broadcasting rules apply, see the `numpy.linalg` documentation for
-    details.
+    The decomposition is performed using LAPACK routine ``_gesdd``.
 
-    The decomposition is performed using LAPACK routine _gesdd
+    SVD is usually described for the factorization of a 2D matrix :math:`A`.
+    The more general case will be discussed below. In the 2D case, SVD is
+    written as :math:`A = U S V^H``, where :math:`A=` ``a``, :math:`U=` ``u``,
+    :math:`S=` ``np.diag(s)`` and :math:`V^H=` ``vh``. `s` is then a 1D array
+    with the singular values and `u` and `vh` are unitary: the columns of `u`
+    and the rows of `vh` form an orthonormal basis, such that ``np.dot(u.H, u)
+    == np.dot(vh, vh.H) == np.identity(K)``, with `K` = min(`M`, `N`). The rows
+    of `vh` are the eigenvectors of :math:`A^H A` and the columns of `u` are
+    the eigenvectors of :math:`A A^H`. For row ``i`` in `vh` and column ``i``
+    in `u`, the corresponding eigenvalue is ``s[i]**2``.
 
-    The SVD is commonly written as ``a = U S V.H``.  The `v` returned
-    by this function is ``V.H`` and ``u = U``.
+    Broadcasting rules apply, such that `a` can have more than 2 dimensions.
+    See the :ref:`routines.linalg-broadcasting` for details.
 
-    If ``U`` is a unitary matrix, it means that it
-    satisfies ``U.H = inv(U)``.
-
-    The rows of `v` are the eigenvectors of ``a.H a``. The columns
-    of `u` are the eigenvectors of ``a a.H``.  For row ``i`` in
-    `v` and column ``i`` in `u`, the corresponding eigenvalue is
-    ``s[i]**2``.
-
-    If `a` is a `matrix` object (as opposed to an `ndarray`), then so
-    are all the return values.
+    If `a` is a `matrix` object (as opposed to an `ndarray`), then so are all
+    the return values.
 
     Examples
     --------
@@ -1361,21 +1363,21 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     Reconstruction based on full SVD:
 
-    >>> U, s, V = np.linalg.svd(a, full_matrices=True)
-    >>> U.shape, V.shape, s.shape
-    ((9, 9), (6, 6), (6,))
-    >>> S = np.zeros((9, 6), dtype=complex)
-    >>> S[:6, :6] = np.diag(s)
-    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
+    >>> u, s, vh = np.linalg.svd(a, full_matrices=True)
+    >>> u.shape, s.shape, vh.shape
+    ((9, 9), (6,), (6, 6))
+    >>> smat = np.zeros((9, 6), dtype=complex)
+    >>> smat[:6, :6] = np.diag(s)
+    >>> np.allclose(a, np.dot(u, np.dot(smat, vh)))
     True
 
     Reconstruction based on reduced SVD:
 
-    >>> U, s, V = np.linalg.svd(a, full_matrices=False)
-    >>> U.shape, V.shape, s.shape
-    ((9, 6), (6, 6), (6,))
-    >>> S = np.diag(s)
-    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
+    >>> u, s, vh = np.linalg.svd(a, full_matrices=False)
+    >>> u.shape, s.shape, vh.shape
+    ((9, 6), (6,), (6, 6))
+    >>> smat = np.diag(s)
+    >>> np.allclose(a, np.dot(U, np.dot(smat, vh)))
     True
 
     """
@@ -1401,11 +1403,11 @@ def svd(a, full_matrices=True, compute_uv=True):
                 gufunc = _umath_linalg.svd_n_s
 
         signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
-        u, s, vt = gufunc(a, signature=signature, extobj=extobj)
+        u, s, vh = gufunc(a, signature=signature, extobj=extobj)
         u = u.astype(result_t, copy=False)
         s = s.astype(_realType(result_t), copy=False)
-        vt = vt.astype(result_t, copy=False)
-        return wrap(u), s, wrap(vt)
+        vh = vh.astype(result_t, copy=False)
+        return wrap(u), s, wrap(vh)
     else:
         if m < n:
             gufunc = _umath_linalg.svd_m
