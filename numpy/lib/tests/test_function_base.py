@@ -18,7 +18,7 @@ from numpy.random import rand
 from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
+    histogram, histogramdd, i0, insert, interp, kaiser, taylorwin, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
     unwrap, unique, vectorize
 )
@@ -2384,6 +2384,14 @@ class TestKaiser(object):
 
     def test_int_beta(self):
         kaiser(3, 4)
+
+class TestTaylorwin(object):
+    
+    def test_simple(self):
+        assert_almost_equal(taylorwin(1, 2, -15), 1.0)
+        assert_almost_equal(taylorwin(5, 2, -15),
+                            np.array([0.75803341, 0.90757699, 1.0,
+                                    0.90757699,  0.75803341]))
 
 
 class TestMsort(object):
