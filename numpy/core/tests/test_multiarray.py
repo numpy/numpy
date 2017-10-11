@@ -1203,6 +1203,37 @@ class TestBool(object):
             a[:o] = False
             assert_equal(np.count_nonzero(a), builtins.sum(a.tolist()))
 
+    def _test_cast_from_flexible(self, dtype):
+        # empty string -> false
+        for n in range(3):
+            v = np.array(b'', (dtype, n))
+            assert_equal(bool(v), False)
+            assert_equal(bool(v[()]), False)
+            assert_equal(v.astype(bool), False)
+            assert_(isinstance(v.astype(bool), np.ndarray))
+            assert_(v[()].astype(bool) is np.False_)
+
+        # anything else -> true
+        for n in range(1, 4):
+            for val in [b'a', b'0', b' ']:
+                v = np.array(val, (dtype, n))
+                assert_equal(bool(v), True)
+                assert_equal(bool(v[()]), True)
+                assert_equal(v.astype(bool), True)
+                assert_(isinstance(v.astype(bool), np.ndarray))
+                assert_(v[()].astype(bool) is np.True_)
+
+    def test_cast_from_void(self):
+        self._test_cast_from_flexible(np.void)
+
+    @dec.knownfailureif(True, "See gh-9847")
+    def test_cast_from_unicode(self):
+        self._test_cast_from_flexible(np.unicode_)
+
+    @dec.knownfailureif(True, "See gh-9847")
+    def test_cast_from_bytes(self):
+        self._test_cast_from_flexible(np.bytes_)
+
 
 class TestZeroSizeFlexible(object):
     @staticmethod
