@@ -49,6 +49,12 @@ static PyObject *
 Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
 {
     PyObject *ret = PyMapping_GetItemString(o, key);
+    if (ret && Py_REFCNT(ret) == 1) {
+        /* We cannot safely decref and use this value because it would be freed. */
+        Py_DECREF(ret);
+        PyErr_Format(PyExc_TypeError, "Mapping returned a not stored value.");
+        return NULL;
+    }
     Py_XDECREF(ret);
     return ret;
 }

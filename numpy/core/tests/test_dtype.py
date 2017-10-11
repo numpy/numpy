@@ -105,11 +105,11 @@ class TestBuiltin(object):
                          'offsets':[0, 2]}, align=True)
 
     def test_field_order_equality(self):
-        x = np.dtype({'names': ['A', 'B'], 
-                      'formats': ['i4', 'f4'], 
+        x = np.dtype({'names': ['A', 'B'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
-        y = np.dtype({'names': ['B', 'A'], 
-                      'formats': ['f4', 'i4'], 
+        y = np.dtype({'names': ['B', 'A'],
+                      'formats': ['f4', 'i4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
 
@@ -159,6 +159,19 @@ class TestRecord(object):
                       dict(names=set(['A', 'B']), formats=['f8', 'i4']))
         assert_raises(TypeError, np.dtype,
                       dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+
+        class MappingReturningTemporaries(dict):
+            def __getitem__(self, key):
+                if key == 'names':
+                    return ['f0', 'f1']
+                elif key == 'formats':
+                    return ['i4', 'i1']
+                elif key == 'offsets':
+                    return [0, 4]
+                elif key == 'itemsize':
+                    return 8
+                raise KeyError
+        assert_raises(TypeError, np.dtype, MappingReturningTemporaries())
 
     def test_aligned_size(self):
         # Check that structured dtypes get padded to an aligned size
