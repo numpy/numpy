@@ -1561,12 +1561,12 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL, *new;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *new;
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }
@@ -1621,12 +1621,11 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }
