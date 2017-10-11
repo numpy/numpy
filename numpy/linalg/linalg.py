@@ -1300,7 +1300,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     """
     Singular Value Decomposition.
 
-    Factors the matrix `a` as ``u * np.diag(s) * vh``. When `a` is a 2D array,
+    Factors the matrix `a` as ``u @ np.diag(s) @ vh``. When `a` is a 2D array,
     `u` and `vh` are 2D unitary arrays and `s` is a 1D array of `a`'s singular
     values.
 
@@ -1309,7 +1309,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     a : (..., M, N) array_like
         A real or complex matrix of shape (..., `M`, `N`) .
     full_matrices : bool, optional
-        If True (default), `u` and `v` have the shapes (..., `M`, `M`) and
+        If True (default), `u` and `vh` have the shapes (..., `M`, `M`) and
         (..., `N`, `N`), respectively.  Otherwise, the shapes are
         (..., `M`, `K`) and (..., `K`, `N`), respectively, where
         `K` = min(`M`, `N`).
@@ -1344,12 +1344,10 @@ def svd(a, full_matrices=True, compute_uv=True):
     The more general case will be discussed below. In the 2D case, SVD is
     written as :math:`A = U S V^H``, where :math:`A=` ``a``, :math:`U=` ``u``,
     :math:`S=` ``np.diag(s)`` and :math:`V^H=` ``vh``. `s` is then a 1D array
-    with the singular values and `u` and `vh` are unitary: the columns of `u`
-    and the rows of `vh` form an orthonormal basis, such that ``np.dot(u.H, u)
-    == np.dot(vh, vh.H) == np.identity(K)``, with `K` = min(`M`, `N`). The rows
-    of `vh` are the eigenvectors of :math:`A^H A` and the columns of `u` are
-    the eigenvectors of :math:`A A^H`. For row ``i`` in `vh` and column ``i``
-    in `u`, the corresponding eigenvalue is ``s[i]**2``.
+    with the singular values and `u` and `vh` are unitary: the rows of `vh`
+    are the eigenvectors of :math:`A^H A` and the columns of `u` are the
+    eigenvectors of :math:`A A^H`. For row `i` in `vh` and column `i` in `u`,
+    the corresponding eigenvalue is `s[i]**2`.
 
     Broadcasting rules apply, such that `a` can have more than 2 dimensions.
     See the :ref:`routines.linalg-broadcasting` for details.
@@ -1368,7 +1366,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     ((9, 9), (6,), (6, 6))
     >>> smat = np.zeros((9, 6), dtype=complex)
     >>> smat[:6, :6] = np.diag(s)
-    >>> np.allclose(a, np.dot(u, np.dot(smat, vh)))
+    >>> np.allclose(a, np.multi_dot(U, smat, vh))
     True
 
     Reconstruction based on reduced SVD:
@@ -1377,7 +1375,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     >>> u.shape, s.shape, vh.shape
     ((9, 6), (6,), (6, 6))
     >>> smat = np.diag(s)
-    >>> np.allclose(a, np.dot(U, np.dot(smat, vh)))
+    >>> np.allclose(a, np.multi_dot(U, smat, vh))
     True
 
     """
@@ -1418,6 +1416,7 @@ def svd(a, full_matrices=True, compute_uv=True):
         s = gufunc(a, signature=signature, extobj=extobj)
         s = s.astype(_realType(result_t), copy=False)
         return s
+
 
 def cond(x, p=None):
     """
