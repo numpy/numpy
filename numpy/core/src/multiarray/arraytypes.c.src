@@ -1545,7 +1545,7 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
  * #convert = 1*18, 0*3, 1*2,
  *            1*18, 0*3, 1*2,
  *            0*23#
- * #convstr = (Int*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
+ * #convstr = (Bool, Int*8, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
  */
 
 #if @convert@
