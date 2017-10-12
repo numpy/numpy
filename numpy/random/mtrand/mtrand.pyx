@@ -1025,7 +1025,7 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=None, replace=True, p=None, legacy=False):
+    def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=None, replace=True, p=None)
 
@@ -1048,10 +1048,6 @@ cdef class RandomState:
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
-        legacy : boolean, optional
-            Only relevant while replace==False, p==None, and size << len(a).
-            Preserves the output ordering of legacy versions of numpy
-            using a random seed, at the cost of significant loss in speed.
 
         Returns
         --------
@@ -1186,7 +1182,7 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                if pop_size >= 3 and not legacy and \
+                if pop_size >= 3 and self.version > 0 and \
                    ((pop_size+.5)*np.log(pop_size+1)-pop_size-0.60091006582)/np.log(pop_size) > size:
                     idx = set()
                     while len(idx)<size:
