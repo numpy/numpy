@@ -1182,7 +1182,7 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                if math.factorial(pop_size) < n**k:
+                if (pop_size+.5)*np.log(pop_size+1)-pop_size-1+.5*np.log(2*np.pi) < k:
                     idx = set()
                     while len(idx)<size:
                         idx.add(self.randint(0, pop_size))
