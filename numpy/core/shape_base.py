@@ -402,8 +402,8 @@ def _block_check_depths_match(arrays, parent_index=[]):
             )
         )
     elif type(arrays) is list and len(arrays) > 0:
-        indexes, arr_ndims = zip(*(_block_check_depths_match(arr, parent_index + [i])
-                                   for i, arr in enumerate(arrays)))
+        indexes, arr_ndims = zip(*[_block_check_depths_match(arr, parent_index + [i])
+                                   for i, arr in enumerate(arrays)])
 
         first_index = indexes[0]
         for i, index in enumerate(indexes):
