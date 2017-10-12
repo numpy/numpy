@@ -378,9 +378,12 @@ def _block_check_depths_match(arrays, parent_index=[]):
     The parameter `parent_index` is the full index of `arrays` within the
     nested lists passed to _block_check_depths_match at the top of the
     recursion.
-    The return value is the full index of an element (specifically the
-    first element) from the bottom of the nesting in `arrays`. An empty
-    list at the bottom of the nesting is represented by a `None` index.
+    The return value is a pair. The first item returned is the full index
+    of an element (specifically the first element) from the bottom of the
+    nesting in `arrays`. An empty list at the bottom of the nesting is
+    represented by a `None` index.
+    The second item is the maximum of the ndims of the arrays nested in
+    `arrays`.
     """
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
@@ -423,6 +426,13 @@ def _block_check_depths_match(arrays, parent_index=[]):
 
 
 def _block(arrays, max_depth, result_ndim):
+    """
+    Internal implementation of block. `arrays` is the argument passed to
+    block. `max_depth` is the depth of nested lists within `arrays` and
+    `result_ndim` is the greatest of the dimensions of the arrays in
+    `arrays` and the depth of the lists in `arrays` (see block docstring
+    for details).
+    """
     def atleast_nd(a, ndim):
         # Ensures `a` has at least `ndim` dimensions by prepending
         # ones to `a.shape` as necessary
@@ -436,7 +446,7 @@ def _block(arrays, max_depth, result_ndim):
             return _nx.concatenate(arrs, axis=-(max_depth-depth))
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
-            # depth == max_depth
+            # type(arrays) is not list
             return atleast_nd(arrays, result_ndim)
 
     return block_recursion(arrays)
