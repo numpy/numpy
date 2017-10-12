@@ -1185,7 +1185,7 @@ cdef class RandomState:
                 if (pop_size+.5)*np.log(pop_size+1)-pop_size-1+.5*np.log(2*np.pi) > size:
                     idx = set()
                     while len(idx)<size:
-                        idx.add(int(self.randint(0, pop_size)))
+                        idx.update(self.randint(0, pop_size, size=size - len(idx)))
                     idx = np.array(list(idx))
                     self.shuffle(idx)
                 else:
