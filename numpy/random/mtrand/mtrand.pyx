@@ -1186,7 +1186,8 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                if ((pop_size+.5)*np.log(pop_size+1)-pop_size-0.60091006582)/np.log(pop_size) > size and not legacy:
+                if pop_size >= 3 and not legacy and \
+                   ((pop_size+.5)*np.log(pop_size+1)-pop_size-0.60091006582)/np.log(pop_size) > size:
                     idx = set()
                     while len(idx)<size:
                         idx.update(self.randint(0, pop_size, size=size - len(idx)))
