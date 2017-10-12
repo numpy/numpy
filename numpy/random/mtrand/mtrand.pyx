@@ -1182,12 +1182,12 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                if (pop_size+.5)*np.log(pop_size+1)-pop_size-1+.5*np.log(2*np.pi) > k:
+                if (pop_size+.5)*np.log(pop_size+1)-pop_size-1+.5*np.log(2*np.pi) > size:
                     idx = set()
                     while len(idx)<size:
-                        idx.add(self.randint(0, pop_size))
+                        idx.add(int(self.randint(0, pop_size)))
                     idx = np.array(list(idx))
-                    np.shuffle(idx)
+                    self.shuffle(idx)
                 else:
                     idx = self.permutation(pop_size)[:size]
                 if shape is not None:
