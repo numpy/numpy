@@ -3013,7 +3013,7 @@ Importing the API
 ^^^^^^^^^^^^^^^^^
 
 In order to make use of the C-API from another extension module, the
-``import_array`` () command must be used. If the extension module is
+:c:func:`import_array` function must be called. If the extension module is
 self-contained in a single .c file, then that is all that needs to be
 done. If, however, the extension module involves multiple files where
 the C-API is needed then some additional steps must be taken.
@@ -3034,7 +3034,7 @@ the C-API is needed then some additional steps must be taken.
     :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` to some name that will hold the
     C-API (*e.g.* myextension_ARRAY_API). This must be done **before**
     including the numpy/arrayobject.h file. In the module
-    initialization routine you call ``import_array`` (). In addition,
+    initialization routine you call :c:func:`import_array`. In addition,
     in the files that do not have the module initialization
     sub_routine define :c:macro:`NO_IMPORT_ARRAY` prior to including
     numpy/arrayobject.h.
@@ -3115,7 +3115,7 @@ extension with the lowest NPY_FEATURE_VERSION as possible.
     it is in the C-API, however, comparing the output of this function from the
     value defined in the current header gives a way to test if the C-API has
     changed thus requiring a re-compilation of extension modules that use the
-    C-API. This is automatically checked in the function import_array.
+    C-API. This is automatically checked in the function :c:func:`import_array`.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCFeatureVersion(void)
 
