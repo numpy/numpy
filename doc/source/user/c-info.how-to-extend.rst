@@ -56,8 +56,8 @@ order for Python to use it as an extension module. The function must
 be called init{name} where {name} is the name of the module from
 Python. This function must be declared so that it is visible to code
 outside of the routine. Besides adding the methods and constants you
-desire, this subroutine must also contain calls to import_array()
-and/or import_ufunc() depending on which C-API is needed. Forgetting
+desire, this subroutine must also contain calls like ``import_array()``
+and/or ``import_ufunc()`` depending on which C-API is needed. Forgetting
 to place these commands will show itself as an ugly segmentation fault
 (crash) as soon as any C-API subroutine is actually called. It is
 actually possible to have multiple init{name} functions in a single
