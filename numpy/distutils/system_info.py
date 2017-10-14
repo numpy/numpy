@@ -211,7 +211,13 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
-
+    vcpkg_include_dirs = [
+        'include',
+        'include/suitesparse',
+    ]
+    vcpkg_lib_dirs = [
+        'lib',
+    ]
     if sys.version_info >= (3, 3):
         # VCpkg is the de-facto package manager on windows for C/C++
         # libraries. If it is on the PATH, then we append its paths here.
@@ -227,8 +233,12 @@ if sys.platform == 'win32':
             vcpkg_root = os.path.join(
                 vcpkg_dir, 'installed', specifier + '-windows')
 
-            default_lib_dirs.append(os.path.join(vcpkg_root, 'lib'))
-            default_include_dirs.append(os.path.join(vcpkg_root, 'include'))
+            default_lib_dirs.extend(
+                os.path.join(
+                    vcpkg_root, d.replace('/', os.sep)) for d in vcpkg_lib_dirs)
+            default_include_dirs.extend(
+                os.path.join(
+                    vcpkg_root, d.replace('/', os.sep)) for d in vcpkg_include_dirs)
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
