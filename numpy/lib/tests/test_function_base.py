@@ -1136,8 +1136,8 @@ class TestVectorize(object):
         assert_array_equal(r, [1, 6, 1, 2])
 
     def test_keywords(self):
-
         args = np.array([1, 2, 3])
+
         def foo(a, b=1):
             return a + b
 
@@ -1224,6 +1224,7 @@ class TestVectorize(object):
 
     def test_assigning_docstring(self):
         doc = "Provided documentation"
+
         def foo(x):
             """Original documentation"""
             return x
@@ -1461,6 +1462,7 @@ class TestVectorize(object):
         arg_value = 'added arg!'
         kw_value = 'added kw!'
         call_value = 'added arg to call!'
+
         class my_vectorize(vectorize):
             # user can add args and permute/rename existing args in __init__
             # (note: the renaming of 'pyfunc' to 'f' is important to
@@ -1510,6 +1512,7 @@ class TestVectorize(object):
         assert_equal(f.new_kw, kw_value)
         assert_equal(r[1], call_value)
         assert_array_equal(r[0], [True, False])
+
 
 class TestDigitize(object):
 
