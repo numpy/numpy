@@ -1241,27 +1241,31 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         else:
             raise ValueError('invalid fmt: %r' % (fmt,))
 
+        conversion = asbytes
+        if hasattr(fh, 'mode') and not 'b' in fh.mode:
+            conversion = asstr
+
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + header + newline))
+            fh.write(conversion(comments + header + newline))
         if iscomplex_X:
             for row in X:
                 row2 = []
                 for number in row:
                     row2.append(number.real)
                     row2.append(number.imag)
-                fh.write(asbytes(format % tuple(row2) + newline))
+                fh.write(conversion(format % tuple(row2) + newline))
         else:
             for row in X:
                 try:
-                    fh.write(asbytes(format % tuple(row) + newline))
+                    fh.write(conversion(format % tuple(row) + newline))
                 except TypeError:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format))
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
-            fh.write(asbytes(comments + footer + newline))
+            fh.write(conversion(comments + footer + newline))
     finally:
         if own_fh:
             fh.close()
