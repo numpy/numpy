@@ -270,6 +270,11 @@ A preallocated buffer of the desired dtype can now be used with ``concatenate``.
 --------------------------------------------------------
 A preallocated buffer of the desired dtype can now be used for the output of
 these functions.
+NPZ files now can be written without using temporary files
+----------------------------------------------------------
+In Python 3.6+ ``numpy.savez`` and ``numpy.savez_compressed`` now write
+directly to a ZIP file, without creating intermediate temporary files.
+
 Better support for empty structured and string types
 ----------------------------------------------------
 Structured types can contain zero fields, and string dtypes can contain zero
