@@ -263,6 +263,11 @@ common cache line size.  This makes ``npy`` files easier to use in
 programs which open them with ``mmap``, especially on Linux where an
 ``mmap`` offset must be a multiple of the page size.
 
+NPZ files now can be written without using temporary files
+----------------------------------------------------------
+In Python 3.6+ ``numpy.savez`` and ``numpy.savez_compressed`` now write
+directly to a ZIP file, without creating intermediate temporary files.
+
 Better support for empty structured and string types
 ----------------------------------------------------
 Structured types can contain zero fields, and string dtypes can contain zero
