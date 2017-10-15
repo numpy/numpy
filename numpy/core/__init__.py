@@ -24,9 +24,9 @@ files not under version control).  Otherwise reinstall numpy.
 Original error was: %s
 """ % (exc,)
     raise ImportError(msg)
-
-for envkey in env_added:
-    del os.environ[envkey]
+finally:
+    for envkey in env_added:
+        del os.environ[envkey]
 del envkey
 del env_added
 del os
