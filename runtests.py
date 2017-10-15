@@ -250,10 +250,10 @@ def main(argv):
 
             # Fix commit ids (HEAD is local to current repo)
             out = subprocess.check_output(['git', 'rev-parse', commit_b])
-            commit_b = out.strip()
+            commit_b = out.strip().decode('ascii')
 
             out = subprocess.check_output(['git', 'rev-parse', commit_a])
-            commit_a = out.strip()
+            commit_a = out.strip().decode('ascii')
 
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
                    commit_a, commit_b] + bench_args
