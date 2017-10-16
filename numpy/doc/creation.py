@@ -103,8 +103,8 @@ may be others for which it is possible to read and convert to numpy arrays so
 check the last section as well)
 ::
 
- HDF5: PyTables
- FITS: PyFITS
+ HDF5: h5py
+ FITS: Astropy
 
 Examples of formats that cannot be read directly but for which it is not hard to
 convert are those formats supported by libraries like PIL (able to read and
