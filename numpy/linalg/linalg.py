@@ -1308,7 +1308,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     Parameters
     ----------
     a : (..., M, N) array_like
-        A real or complex array with `a.ndim>1`.
+        A real or complex array with ``a.ndim >= 2``.
     full_matrices : bool, optional
         If True (default), `u` and `vh` have the shapes (..., `M`, `M`) and
         (..., `N`, `N`), respectively.  Otherwise, the shapes are
@@ -1321,19 +1321,19 @@ def svd(a, full_matrices=True, compute_uv=True):
     Returns
     -------
     u : { (..., M, M), (..., M, K) } array
-        Unitary array(s). The first `a.ndim-2` dimensions have the same size as
-        those of the input `a`. The size of the last two dimensions depends on
-        the value of ``full_matrices``. Only returned when ``compute_uv`` is
-        True.
+        Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
+        size as those of the input `a`. The size of the last two dimensions
+        depends on the value of `full_matrices`. Only returned when
+        `compute_uv` is True.
     s : (..., K) array
         Vector(s) with the singular values, within each vector sorted in
-        descending order. The first `a.ndim-2` dimensions have the same size as
-        those of the input `a`.
+        descending order. The first ``a.ndim - 2`` dimensions have the same
+        size as those of the input `a`.
     vh : { (..., N, N), (..., K, N) } array
-        Unitary array(s). The first `a.ndim-2` dimensions have the same size as
-        those of the input `a`. The size of the last two dimensions depends on
-        the value of ``full_matrices``. Only returned when ``compute_uv`` is
-        True.
+        Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
+        size as those of the input `a`. The size of the last two dimensions
+        depends on the value of `full_matrices`. Only returned when
+        `compute_uv` is True.
 
     Raises
     ------
@@ -1343,30 +1343,30 @@ def svd(a, full_matrices=True, compute_uv=True):
     Notes
     -----
 
-    .. versionadded:: 1.8.0
-
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
     The higher-dimensional case will be discussed below. In the 2D case, SVD is
     written as :math:`A = U S V^H`, where :math:`A=` `a`, :math:`U=` `u`,
-    :math:`S=` `np.diag(s)` and :math:`V^H=` `vh`. The 1D array `s` contains
+    :math:`S=` ``np.diag(s)`` and :math:`V^H=` `vh`. The 1D array `s` contains
     the singular values of `a` and `u` and `vh` are unitary. The rows of `vh`
     are the eigenvectors of :math:`A^H A` and the columns of `u` are the
-    eigenvectors of :math:`A A^H`. For row `i` in `vh` and column `i` in `u`,
-    the corresponding eigenvalue is `s[i]**2`.
+    eigenvectors of :math:`A A^H`. In both cases the corresponding (possibly
+    non-zero) eigenvalues are given by ``s**2``.
+
+    If `a` is a ``matrix`` object (as opposed to an ``ndarray``), then so are all
+    the return values.
+
+    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, such that `a` can have more than 2 dimensions, as
     explained in :ref:`routines.linalg-broadcasting`. This means that SVD is
     working in "stacked" mode: it iterates over all indices of the first
-    `a.ndim-2` dimensions and for each combination SVD is applied to the last
-    two indices. The matrix `a` can be reconstructed from the decomposition
-    with either ``(u * s[..., None, :]) @ vh`` or ``u @ (s[..., None] * vh)``.
-    (The `@` operator can be replaced by the function `np.matmul` for python
-    versions below 3.5.)
-
-    If `a` is a `matrix` object (as opposed to an `ndarray`), then so are all
-    the return values.
+    ``a.ndim - 2`` dimensions and for each combination SVD is applied to the
+    last two indices. The matrix `a` can be reconstructed from the
+    decomposition with either ``(u * s[..., None, :]) @ vh`` or
+    ``u @ (s[..., None] * vh)``. (The ``@`` operator can be replaced by the
+    function ``np.matmul`` for python versions below 3.5.)
 
     Examples
     --------
