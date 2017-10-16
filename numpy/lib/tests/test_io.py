@@ -303,6 +303,23 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
+    @np.testing.dec.skipif(sys.version_info < (3, 6), "Works only in Python 3.6+")
+    def test_savez_odd_keyword_names(self):
+        # '\0' and '\\' still are not preserved.
+        keys = ['/test', 'c:test', 'nul', 'con',
+                 'test//ing', 'test/./ing', 'test/../ing',
+                 'test.npy', '', '\xe0', '\xe3', chr(0x03b1)]
+        kwds = {key: np.array([i]) for i, key in enumerate(keys)}
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, **kwds)
+            data = np.load(tmp)
+            assert_equal(list(data), keys)
+            assert_equal(data.files, keys)
+            for key, a in kwds.items():
+                assert_equal(data[key], a)
+                assert_equal(data[key+'.npy'], a)
+            data.close()
+
 
 class TestSaveTxt(object):
     def test_array(self):
