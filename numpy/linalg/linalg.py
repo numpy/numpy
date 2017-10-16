@@ -630,15 +630,15 @@ def qr(a, mode='reduced'):
     mode : {'reduced', 'complete', 'r', 'raw', 'full', 'economic'}, optional
         If K = min(M, N), then
 
-        'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
-        'complete' : returns q, r with dimensions (M, M), (M, N)
-        'r'        : returns r only with dimensions (K, N)
-        'raw'      : returns h, tau with dimensions (N, M), (K,)
-        'full'     : alias of 'reduced', deprecated
-        'economic' : returns h from 'raw', deprecated.
+        * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
+        * 'complete' : returns q, r with dimensions (M, M), (M, N)
+        * 'r'        : returns r only with dimensions (K, N)
+        * 'raw'      : returns h, tau with dimensions (N, M), (K,)
+        * 'full'     : alias of 'reduced', deprecated
+        * 'economic' : returns h from 'raw', deprecated.
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
-        see the notes for more information. The default is 'reduced' and to
+        see the notes for more information. The default is 'reduced', and to
         maintain backward compatibility with earlier versions of numpy both
         it and the old default 'full' can be omitted. Note that array h
         returned in 'raw' mode is transposed for calling Fortran. The
