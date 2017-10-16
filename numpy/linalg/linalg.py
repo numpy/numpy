@@ -1349,12 +1349,12 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
     The higher-dimensional case will be discussed below. In the 2D case, SVD is
-    written as :math:`A = U S V^H``, where :math:`A=` ``a``, :math:`U=` ``u``,
-    :math:`S=` ``np.diag(s)`` and :math:`V^H=` ``vh``. `s` is then a 1D array
-    with the singular values of `a` and `u` and `vh` are unitary: the rows of `vh`
+    written as :math:`A = U S V^H`, where :math:`A=` `a`, :math:`U=` `u`,
+    :math:`S=` `np.diag(s)` and :math:`V^H=` `vh`. The 1D array `s` contains
+    the singular values of `a` and `u` and `vh` are unitary. The rows of `vh`
     are the eigenvectors of :math:`A^H A` and the columns of `u` are the
     eigenvectors of :math:`A A^H`. For row `i` in `vh` and column `i` in `u`,
-    the corresponding eigenvalue is ``s[i]**2``.
+    the corresponding eigenvalue is `s[i]**2`.
 
     Broadcasting rules apply, such that `a` can have more than 2 dimensions, as
     explained in :ref:`routines.linalg-broadcasting`. This means that SVD is
@@ -1362,8 +1362,8 @@ def svd(a, full_matrices=True, compute_uv=True):
     `a.ndim-2` dimensions and for each combination SVD is applied to the last
     two indices. The matrix `a` can be reconstructed from the decomposition
     with either ``(u * s[..., None, :]) @ vh`` or ``u @ (s[..., None] * vh)``.
-    (The ``@`` operator can be replaced by the function ``np.matmul`` for
-    python versions below 3.5.)
+    (The `@` operator can be replaced by the function `np.matmul` for python
+    versions below 3.5.)
 
     If `a` is a `matrix` object (as opposed to an `ndarray`), then so are all
     the return values.
