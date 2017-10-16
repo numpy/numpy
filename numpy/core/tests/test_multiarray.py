@@ -1226,11 +1226,9 @@ class TestBool(object):
     def test_cast_from_void(self):
         self._test_cast_from_flexible(np.void)
 
-    @dec.knownfailureif(True, "See gh-9847")
     def test_cast_from_unicode(self):
         self._test_cast_from_flexible(np.unicode_)
 
-    @dec.knownfailureif(True, "See gh-9847")
     def test_cast_from_bytes(self):
         self._test_cast_from_flexible(np.bytes_)
 
