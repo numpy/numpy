@@ -5,6 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import stat
 import shutil
 from glob import glob
 
@@ -271,6 +272,16 @@ class build_ext (old_build_ext):
                 os.makedirs(runtime_lib_dir)
             runtime_lib = os.path.join(self.extra_dll_dir, fn)
             copy_file(runtime_lib, runtime_lib_dir)
+            
+        # If the compiler is MSVC, then attempt to locate and copy
+        # the Visual C++ DLL that is required to run. These DLLs are 
+        # often, but not always, pre-installed with the MSVC Redistributable
+        # so we only use our version if the target computer has none (a
+        # pre-installed version will be newer due to Windows Update).
+        if self.compiler.compiler_type == 'msvc' and need_cxx_compiler:
+            if not os.path.isdir(runtime_lib_dir):
+                os.makedirs(runtime_lib_dir)
+            self._copy_vcruntime(runtime_lib_dir)
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -565,6 +576,37 @@ class build_ext (old_build_ext):
                         copy_file(p[0], dst_name)
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
+
+    def _copy_vcruntime(self, runtime_lib_dir, pattern='msvcp*.dll'):
+        def _print_msvcp_warning():
+            log.warn('WARNING: Failed to copy MSVC runtime DLLs!')
+        assert self.compiler.compiler_type == 'msvc'
+        
+        # First, initialize the compiler so that the paths are set
+        if not self.compiler.initialized:
+            self.compiler.initialize()
+        
+        # Next, check if the compiler has the '_vcruntime_redist'
+        # attribute and copy the msvcp DLL if it does.
+        vcruntime = getattr(self.compiler, '_vcruntime_redist', None)
+        if not vcruntime:
+            return _print_msvcp_warning()
+        
+        redist_directory = os.path.dirname(vcruntime)
+        runtime_libs = glob(redist_directory + '/' + pattern)
+        
+        if not runtime_libs:
+            return _print_msvcp_warning()
+            
+        for runtime_lib in runtime_libs:
+            # This looks odd, but there is a reason:
+            # the wheel plugin for setuptools will fail
+            # if the permissions are not changed
+            log.debug('Copying "%s" -> "%s"', runtime_lib,
+                      runtime_lib_dir)
+
+            extra_dll = shutil.copy(runtime_lib, runtime_lib_dir)
+            os.chmod(extra_dll, stat.S_IWRITE)
 
     def get_source_files(self):
         self.check_extensions_list(self.extensions)
