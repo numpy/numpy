@@ -2506,52 +2506,21 @@ static npy_bool
 }
 /**end repeat**/
 
-
-#define WHITESPACE " \t\n\r\v\f"
-#define WHITELEN 6
-
-static npy_bool
-Py_STRING_ISSPACE(char ch)
-{
-    char white[] = WHITESPACE;
-    int j;
-    npy_bool space = NPY_FALSE;
-
-    for (j = 0; j < WHITELEN; j++) {
-        if (ch == white[j]) {
-            space = NPY_TRUE;
-            break;
-        }
-    }
-    return space;
-}
-
 static npy_bool
 STRING_nonzero (char *ip, PyArrayObject *ap)
 {
     int len = PyArray_DESCR(ap)->elsize;
     int i;
     npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
 
     for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
-        }
-        else if (seen_null || !Py_STRING_ISSPACE(*ip)) {
+        if (ip[i] != '\0') {
             nonz = NPY_TRUE;
             break;
         }
-        ip++;
     }
     return nonz;
 }
-
-#ifdef Py_UNICODE_WIDE
-#define PyArray_UCS4_ISSPACE Py_UNICODE_ISSPACE
-#else
-#define PyArray_UCS4_ISSPACE(ch) Py_STRING_ISSPACE((char)ch)
-#endif
 
 static npy_bool
 UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
@@ -2559,7 +2528,6 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     int len = PyArray_DESCR(ap)->elsize >> 2;
     int i;
     npy_bool nonz = NPY_FALSE;
-    npy_bool seen_null = NPY_FALSE;
     char *buffer = NULL;
 
     if (PyArray_ISBYTESWAPPED(ap) || !PyArray_ISALIGNED(ap)) {
@@ -2575,14 +2543,10 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     }
 
     for (i = 0; i < len; i++) {
-        if (*ip == '\0') {
-            seen_null = NPY_TRUE;
-        }
-        else if (seen_null || !PyArray_UCS4_ISSPACE(*ip)) {
+        if (ip[i] != '\0') {
             nonz = NPY_TRUE;
             break;
         }
-        ip++;
     }
     PyArray_free(buffer);
     return nonz;

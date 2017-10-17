@@ -6974,10 +6974,10 @@ class TestBytestringArrayNonzero(object):
     def test_empty_bstring_array_is_falsey(self):
         assert_(not np.array([''], dtype=str))
 
-    def test_whitespace_bstring_array_is_falsey(self):
+    def test_whitespace_bstring_array_is_truthy(self):
         a = np.array(['spam'], dtype=str)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_bstring_array_is_falsey(self):
         a = np.array(['spam'], dtype=str)
@@ -6995,10 +6995,10 @@ class TestUnicodeArrayNonzero(object):
     def test_empty_ustring_array_is_falsey(self):
         assert_(not np.array([''], dtype=np.unicode))
 
-    def test_whitespace_ustring_array_is_falsey(self):
+    def test_whitespace_ustring_array_is_truthy(self):
         a = np.array(['eggs'], dtype=np.unicode)
         a[0] = '  \0\0'
-        assert_(not a)
+        assert_(a)
 
     def test_all_null_ustring_array_is_falsey(self):
         a = np.array(['eggs'], dtype=np.unicode)
