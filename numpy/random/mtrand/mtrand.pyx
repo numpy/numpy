@@ -590,7 +590,11 @@ _randint_type = {
     }
 
 
-cdef class RandomState:
+def RandomState(seed=None):
+    return RandomStateV1(seed)
+
+
+cdef class RandomStateV1:
     """
     RandomState(seed=None)
 
