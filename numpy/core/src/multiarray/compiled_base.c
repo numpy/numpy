@@ -1135,8 +1135,11 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -1169,8 +1172,11 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
