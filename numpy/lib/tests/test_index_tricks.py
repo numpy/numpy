@@ -3,7 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises
+    assert_almost_equal, assert_array_almost_equal, assert_raises,
+    assert_raises_regex
     )
 from numpy.lib.index_tricks import (
     mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
@@ -112,6 +113,16 @@ class TestRavelUnravelIndex(object):
         x, y = np.unravel_index([1, 2, 3], (4, 5))
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)
+
+
+    def test_0d(self):
+        # gh-580
+        x = np.unravel_index(0, ())
+        assert_equal(x, ())
+
+        assert_raises_regex(ValueError, "0d array", np.unravel_index, [0], ())
+        assert_raises_regex(
+            ValueError, "out of bounds", np.unravel_index, [1], ())
 
 
 class TestGrid(object):
