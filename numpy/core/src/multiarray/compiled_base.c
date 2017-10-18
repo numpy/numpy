@@ -1135,8 +1135,11 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -1169,8 +1172,11 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -1199,12 +1205,6 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                     &indices0,
                     PyArray_IntpConverter, &dimensions,
                     PyArray_OrderConverter, &order)) {
-        goto fail;
-    }
-
-    if (dimensions.len == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "dims must have at least one value");
         goto fail;
     }
 
@@ -1325,6 +1325,20 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_ValueError,
                         "only 'C' or 'F' order is permitted");
+        goto fail;
+    }
+
+
+    if (dimensions.len == 0 && PyArray_NDIM(indices) != 0) {
+        /*
+         * There's no index meaning "take the only element 10 times"
+         * on a zero-d array, so we have no choice but to error. (See gh-580)
+         *
+         * Do this check after iterating, so we give a better error message
+         * for invalid indices.
+         */
+        PyErr_SetString(PyExc_ValueError,
+                "multiple indices are not supported for 0d arrays");
         goto fail;
     }
 
