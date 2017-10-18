@@ -1208,12 +1208,6 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    if (dimensions.len == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "dims must have at least one value");
-        goto fail;
-    }
-
     unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
 
     if (!PyArray_Check(indices0)) {
@@ -1331,6 +1325,20 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_ValueError,
                         "only 'C' or 'F' order is permitted");
+        goto fail;
+    }
+
+
+    if (dimensions.len == 0 && PyArray_NDIM(indices) != 0) {
+        /*
+         * There's no index meaning "take the only element 10 times"
+         * on a zero-d array, so we have no choice but to error. (See gh-580)
+         *
+         * Do this check after iterating, so we give a better error message
+         * for invalid indices.
+         */
+        PyErr_SetString(PyExc_ValueError,
+                "multiple indices are not supported for 0d arrays");
         goto fail;
     }
 
