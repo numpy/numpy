@@ -20,6 +20,7 @@
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
+#include "strfuncs.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -2531,6 +2532,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     {"__complex__",
         (PyCFunction) array_complex,
+        METH_VARARGS, NULL},
+
+    {"__format__",
+        (PyCFunction) array_format,
         METH_VARARGS, NULL},
 
 #ifndef NPY_PY3K
