@@ -96,9 +96,10 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
+    PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
+    npy_intp *numbers, *ians, len, mx, mn, ans_size;
+    npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -114,18 +115,28 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     len = PyArray_SIZE(lst);
 
+    /*
+     * This if/else if can be removed by changing the argspec to O|On above,
+     * once we retire the deprecation
+     */
     if (mlength == Py_None) {
-        minlength = 0;
-    }
-    else {
-        minlength = PyArray_PyIntAsIntp(mlength);
-        if (minlength < 0) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_ValueError,
-                                "minlength must be non-negative");
-            }
+        /* NumPy 1.14, 2017-06-01 */
+        if (DEPRECATE("0 should be passed as minlength instead of None; "
+                      "this will error in future.") < 0) {
             goto fail;
         }
+    }
+    else if (mlength != NULL) {
+        minlength = PyArray_PyIntAsIntp(mlength);
+        if (error_converting(minlength)) {
+            goto fail;
+        }
+    }
+
+    if (minlength < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "'minlength' must not be negative");
+        goto fail;
     }
 
     /* handle empty list */
@@ -142,7 +153,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     minmax(numbers, len, &mn, &mx);
     if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
-                "The first argument of bincount must be non-negative");
+                "'list' argument must have no negative elements");
         goto fail;
     }
     ans_size = mx + 1;
