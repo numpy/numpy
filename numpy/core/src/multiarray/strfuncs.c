@@ -209,6 +209,7 @@ array_format(PyArrayObject *self, PyObject *args)
     if (PyArray_NDIM(self) == 0) {
         PyObject *item = PyArray_ToScalar(PyArray_DATA(self), self);
         PyObject *res;
+
         if (item == NULL) {
             return NULL;
         }
