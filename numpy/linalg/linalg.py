@@ -1352,7 +1352,7 @@ def svd(a, full_matrices=True, compute_uv=True):
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
     The higher-dimensional case will be discussed below. In the 2D case, SVD is
     written as :math:`A = U S V^H`, where :math:`A = a`, :math:`U= u`,
-    :math:`S= \mathtt{np.diag}(s)` and :math:`V^H = vh`. The 1D array `s`
+    :math:`S= \\mathtt{np.diag}(s)` and :math:`V^H = vh`. The 1D array `s`
     contains the singular values of `a` and `u` and `vh` are unitary. The rows
     of `vh` are the eigenvectors of :math:`A^H A` and the columns of `u` are
     the eigenvectors of :math:`A A^H`. In both cases the corresponding
