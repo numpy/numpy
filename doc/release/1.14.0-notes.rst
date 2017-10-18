@@ -378,3 +378,9 @@ display the sign. This new behavior can be disabled to mostly reproduce numpy
 -----------------------------------------------------------------
 These options could previously be controlled using ``np.set_printoptions``, but
 now can be changed on a per-call basis as arguments to ``np.array2string``.
+
+Seeding ``RandomState`` using an array requires a 1-d array
+-----------------------------------------------------------
+``RandomState`` previously would accept empty arrays or arrays with 2 or more
+dimensions, which resulted in either a failure to seed (empty arrays) or for
+some of the passed values to be ignored when setting the seed.
