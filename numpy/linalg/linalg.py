@@ -1310,10 +1310,10 @@ def svd(a, full_matrices=True, compute_uv=True):
     a : (..., M, N) array_like
         A real or complex array with ``a.ndim >= 2``.
     full_matrices : bool, optional
-        If True (default), `u` and `vh` have the shapes (..., `M`, `M`) and
-        (..., `N`, `N`), respectively.  Otherwise, the shapes are
-        (..., `M`, `K`) and (..., `K`, `N`), respectively, where
-        `K` = min(`M`, `N`).
+        If True (default), `u` and `vh` have the shapes ``(..., M, M)`` and
+        ``(..., N, N)``, respectively.  Otherwise, the shapes are
+        ``(..., M, K)`` and ``(..., K, N)``, respectively, where
+        ``K = min(M, N)``.
     compute_uv : bool, optional
         Whether or not to compute `u` and `vh` in addition to `s`.  True
         by default.
@@ -1343,23 +1343,22 @@ def svd(a, full_matrices=True, compute_uv=True):
     Notes
     -----
 
+    .. versionchanged:: 1.8.0
+       Broadcasting rules apply, see the `numpy.linalg` documentation for
+       details.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
     The higher-dimensional case will be discussed below. In the 2D case, SVD is
-    written as :math:`A = U S V^H`, where :math:`A=` `a`, :math:`U=` `u`,
-    :math:`S=` ``np.diag(s)`` and :math:`V^H=` `vh`. The 1D array `s` contains
-    the singular values of `a` and `u` and `vh` are unitary. The rows of `vh`
-    are the eigenvectors of :math:`A^H A` and the columns of `u` are the
-    eigenvectors of :math:`A A^H`. In both cases the corresponding (possibly
-    non-zero) eigenvalues are given by ``s**2``.
+    written as :math:`A = U S V^H`, where :math:`A = a`, :math:`U= u`,
+    :math:`S= \mathtt{np.diag}(s)` and :math:`V^H = vh`. The 1D array `s`
+    contains the singular values of `a` and `u` and `vh` are unitary. The rows
+    of `vh` are the eigenvectors of :math:`A^H A` and the columns of `u` are
+    the eigenvectors of :math:`A A^H`. In both cases the corresponding
+    (possibly non-zero) eigenvalues are given by ``s**2``.
 
-    If `a` is a ``matrix`` object (as opposed to an ``ndarray``), then so are all
-    the return values.
-
-    .. versionadded:: 1.8.0
-
-    Broadcasting rules apply, such that `a` can have more than 2 dimensions, as
+    If `a` has more than two dimensions, then broadcasting rules apply, as
     explained in :ref:`routines.linalg-broadcasting`. This means that SVD is
     working in "stacked" mode: it iterates over all indices of the first
     ``a.ndim - 2`` dimensions and for each combination SVD is applied to the
@@ -1367,6 +1366,9 @@ def svd(a, full_matrices=True, compute_uv=True):
     decomposition with either ``(u * s[..., None, :]) @ vh`` or
     ``u @ (s[..., None] * vh)``. (The ``@`` operator can be replaced by the
     function ``np.matmul`` for python versions below 3.5.)
+
+    If `a` is a ``matrix`` object (as opposed to an ``ndarray``), then so are
+    all the return values.
 
     Examples
     --------
