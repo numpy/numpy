@@ -975,10 +975,16 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             # Shift these points one bin to the left.
             Ncount[i][nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
 
+    # Histogram is an integer or a float array depending on the weights.
+    if weights is None:
+        ntype = np.dtype(np.intp)
+    else:
+        ntype = weights.dtype
+
     # Flattened histogram matrix (1D)
     # Reshape is used so that overlarge arrays
     # will raise an error.
-    hist = zeros(nbin, float).reshape(-1)
+    hist = zeros(nbin, ntype).reshape(-1)
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
