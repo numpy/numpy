@@ -214,7 +214,18 @@ class TestComparisons(TestCase):
         assert_equal(np.not_equal(a, a), [True])
 
 
-class TestDivision(TestCase):
+class TestAdd(object):
+    def test_reduce_alignment(self):
+        # gh-9876
+        # make sure arrays with weird strides work with the optimizations in
+        # pairwise_sum_@TYPE@. On x86, the 'b' field will count as aligned at a
+        # 4 byte offset, even though its itemsize is 8.
+        a = np.zeros(2, dtype=[('a', np.int32), ('b', np.float64)])
+        a['a'] = -1
+        assert_equal(a['b'].sum(), 0)
+
+
+class TestDivision(object):
     def test_division_int(self):
         # int division should follow Python
         x = np.array([5, 10, 90, 100, -5, -10, -90, -100, -120])
