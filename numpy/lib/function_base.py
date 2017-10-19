@@ -4,6 +4,7 @@ import collections
 import re
 import sys
 import warnings
+import operator
 
 import numpy as np
 import numpy.core.numeric as _nx
@@ -646,7 +647,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     a = asarray(a)
     if weights is not None:
         weights = asarray(weights)
-        if np.any(weights.shape != a.shape):
+        if weights.shape != a.shape:
             raise ValueError(
                 'weights should have the same shape as a.')
         weights = weights.ravel()
@@ -671,11 +672,21 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         mn -= 0.5
         mx += 0.5
 
+    # density overrides the normed keyword
+    if density is not None:
+        normed = False
+
+    # parse the overloaded bins argument
+    n_equal_bins = None
+    bin_edges = None
+
     if isinstance(bins, basestring):
+        bin_name = bins
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
-        if bins not in _hist_bin_selectors:
-            raise ValueError("{0} not a valid estimator for bins".format(bins))
+        if bin_name not in _hist_bin_selectors:
+            raise ValueError(
+                "{!r} is not a valid estimator for `bins`".format(bin_name))
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
@@ -689,16 +700,40 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 b = a[keep]
 
         if b.size == 0:
-            bins = 1
+            n_equal_bins = 1
         else:
             # Do not call selectors on empty arrays
-            width = _hist_bin_selectors[bins](b)
+            width = _hist_bin_selectors[bin_name](b)
             if width:
-                bins = int(np.ceil((mx - mn) / width))
+                n_equal_bins = int(np.ceil((mx - mn) / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
-                bins = 1
+                n_equal_bins = 1
+
+    elif np.ndim(bins) == 0:
+        try:
+            n_equal_bins = operator.index(bins)
+        except TypeError:
+            raise TypeError(
+                '`bins` must be an integer, a string, or an array')
+        if n_equal_bins < 1:
+            raise ValueError('`bins` must be positive, when an integer')
+
+    elif np.ndim(bins) == 1:
+        bin_edges = np.asarray(bins)
+        if np.any(bin_edges[:-1] > bin_edges[1:]):
+            raise ValueError(
+                '`bins` must increase monotonically, when an array')
+
+    else:
+        raise ValueError('`bins` must be 1d, when an array')
+
+    del bins
+
+    # compute the bins if only the count was specified
+    if n_equal_bins is not None:
+        bin_edges = linspace(mn, mx, n_equal_bins + 1, endpoint=True)
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -710,27 +745,24 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     # computing histograms, to minimize memory usage.
     BLOCK = 65536
 
-    if not iterable(bins):
-        if np.isscalar(bins) and bins < 1:
-            raise ValueError(
-                '`bins` should be a positive integer.')
-        # At this point, if the weights are not integer, floating point, or
-        # complex, we have to use the slow algorithm.
-        if weights is not None and not (np.can_cast(weights.dtype, np.double) or
-                                        np.can_cast(weights.dtype, complex)):
-            bins = linspace(mn, mx, bins + 1, endpoint=True)
+    # The fast path uses bincount, but that only works for certain types
+    # of weight
+    simple_weights = (
+        weights is None or
+        np.can_cast(weights.dtype, np.double) or
+        np.can_cast(weights.dtype, complex)
+    )
 
-    if not iterable(bins):
+    if n_equal_bins is not None and simple_weights:
+        # Fast algorithm for equal bins
         # We now convert values of a to bin indices, under the assumption of
         # equal bin widths (which is valid here).
 
         # Initialize empty histogram
-        n = np.zeros(bins, ntype)
-        # Pre-compute histogram scaling factor
-        norm = bins / (mx - mn)
+        n = np.zeros(n_equal_bins, ntype)
 
-        # Compute the bin edges for potential correction.
-        bin_edges = linspace(mn, mx, bins + 1, endpoint=True)
+        # Pre-compute histogram scaling factor
+        norm = n_equal_bins / (mx - mn)
 
         # We iterate over blocks here for two reasons: the first is that for
         # large arrays, it is actually faster (for example for a 10^8 array it
@@ -757,7 +789,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             # Compute the bin indices, and for values that lie exactly on mx we
             # need to subtract one
             indices = tmp_a.astype(np.intp)
-            indices[indices == bins] -= 1
+            indices[indices == n_equal_bins] -= 1
 
             # The index computation is not guaranteed to give exactly
             # consistent results within ~1 ULP of the bin edges.
@@ -765,35 +797,26 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             indices[decrement] -= 1
             # The last bin includes the right edge. The other bins do not.
             increment = ((tmp_a_data >= bin_edges[indices + 1])
-                         & (indices != bins - 1))
+                         & (indices != n_equal_bins - 1))
             indices[increment] += 1
 
             # We now compute the histogram using bincount
             if ntype.kind == 'c':
                 n.real += np.bincount(indices, weights=tmp_w.real,
-                                      minlength=bins)
+                                      minlength=n_equal_bins)
                 n.imag += np.bincount(indices, weights=tmp_w.imag,
-                                      minlength=bins)
+                                      minlength=n_equal_bins)
             else:
                 n += np.bincount(indices, weights=tmp_w,
-                                 minlength=bins).astype(ntype)
-
-        # Rename the bin edges for return.
-        bins = bin_edges
+                                 minlength=n_equal_bins).astype(ntype)
     else:
-        bins = asarray(bins)
-        if np.any(bins[:-1] > bins[1:]):
-            raise ValueError(
-                'bins must increase monotonically.')
-
-        # Initialize empty histogram
-        n = np.zeros(bins.shape, ntype)
-
+        # Compute via cumulative histogram
+        cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
             for i in arange(0, len(a), BLOCK):
                 sa = sort(a[i:i+BLOCK])
-                n += np.r_[sa.searchsorted(bins[:-1], 'left'),
-                           sa.searchsorted(bins[-1], 'right')]
+                cum_n += np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
+                               sa.searchsorted(bin_edges[-1], 'right')]
         else:
             zero = array(0, dtype=ntype)
             for i in arange(0, len(a), BLOCK):
@@ -802,27 +825,22 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
-                cw = np.concatenate(([zero, ], sw.cumsum()))
-                bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'),
-                                  sa.searchsorted(bins[-1], 'right')]
-                n += cw[bin_index]
+                cw = np.concatenate(([zero], sw.cumsum()))
+                bin_index = np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
+                                  sa.searchsorted(bin_edges[-1], 'right')]
+                cum_n += cw[bin_index]
 
+        n = np.diff(cum_n)
 
-        n = np.diff(n)
-
-    if density is not None:
-        if density:
-            db = array(np.diff(bins), float)
-            return n/db/n.sum(), bins
-        else:
-            return n, bins
-    else:
+    if density:
+        db = array(np.diff(bin_edges), float)
+        return n/db/n.sum(), bin_edges
+    elif normed:
         # deprecated, buggy behavior. Remove for NumPy 2.0.0
-        if normed:
-            db = array(np.diff(bins), float)
-            return n/(n*db).sum(), bins
-        else:
-            return n, bins
+        db = array(np.diff(bin_edges), float)
+        return n/(n*db).sum(), bin_edges
+    else:
+        return n, bin_edges
 
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
