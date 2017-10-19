@@ -1815,14 +1815,8 @@ def slogdet(a):
     real_t = _realType(result_t)
     signature = 'D->Dd' if isComplexType(t) else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
-    if isscalar(sign):
-        sign = sign.astype(result_t)
-    else:
-        sign = sign.astype(result_t, copy=False)
-    if isscalar(logdet):
-        logdet = logdet.astype(real_t)
-    else:
-        logdet = logdet.astype(real_t, copy=False)
+    sign = sign.astype(result_t, copy=False)
+    logdet = logdet.astype(real_t, copy=False)
     return sign, logdet
 
 def det(a):
@@ -1878,10 +1872,7 @@ def det(a):
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
-    if isscalar(r):
-        r = r.astype(result_t)
-    else:
-        r = r.astype(result_t, copy=False)
+    r = r.astype(result_t, copy=False)
     return r
 
 # Linear Least Squares
