@@ -657,20 +657,20 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if range is None:
         if a.size == 0:
             # handle empty arrays. Can't determine range, so use 0-1.
-            mn, mx = 0.0, 1.0
+            first_edge, last_edge = 0.0, 1.0
         else:
-            mn, mx = a.min() + 0.0, a.max() + 0.0
+            first_edge, last_edge = a.min() + 0.0, a.max() + 0.0
     else:
-        mn, mx = [mi + 0.0 for mi in range]
-    if mn > mx:
+        first_edge, last_edge = [mi + 0.0 for mi in range]
+    if first_edge > last_edge:
         raise ValueError(
             'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([mn, mx])):
+    if not np.all(np.isfinite([first_edge, last_edge])):
         raise ValueError(
             'range parameter must be finite.')
-    if mn == mx:
-        mn -= 0.5
-        mx += 0.5
+    if first_edge == last_edge:
+        first_edge -= 0.5
+        last_edge += 0.5
 
     # density overrides the normed keyword
     if density is not None:
@@ -694,8 +694,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         b = a
         # Update the reference if the range needs truncation
         if range is not None:
-            keep = (a >= mn)
-            keep &= (a <= mx)
+            keep = (a >= first_edge)
+            keep &= (a <= last_edge)
             if not np.logical_and.reduce(keep):
                 b = a[keep]
 
@@ -705,7 +705,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](b)
             if width:
-                n_equal_bins = int(np.ceil((mx - mn) / width))
+                n_equal_bins = int(np.ceil((last_edge - first_edge) / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
@@ -733,7 +733,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     # compute the bins if only the count was specified
     if n_equal_bins is not None:
-        bin_edges = linspace(mn, mx, n_equal_bins + 1, endpoint=True)
+        bin_edges = linspace(
+            first_edge, last_edge, n_equal_bins + 1, endpoint=True)
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -762,7 +763,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         n = np.zeros(n_equal_bins, ntype)
 
         # Pre-compute histogram scaling factor
-        norm = n_equal_bins / (mx - mn)
+        norm = n_equal_bins / (last_edge - first_edge)
 
         # We iterate over blocks here for two reasons: the first is that for
         # large arrays, it is actually faster (for example for a 10^8 array it
@@ -776,18 +777,18 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 tmp_w = weights[i:i + BLOCK]
 
             # Only include values in the right range
-            keep = (tmp_a >= mn)
-            keep &= (tmp_a <= mx)
+            keep = (tmp_a >= first_edge)
+            keep &= (tmp_a <= last_edge)
             if not np.logical_and.reduce(keep):
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
                     tmp_w = tmp_w[keep]
             tmp_a_data = tmp_a.astype(float)
-            tmp_a = tmp_a_data - mn
+            tmp_a = tmp_a_data - first_edge
             tmp_a *= norm
 
-            # Compute the bin indices, and for values that lie exactly on mx we
-            # need to subtract one
+            # Compute the bin indices, and for values that lie exactly on
+            # last_edge we need to subtract one
             indices = tmp_a.astype(np.intp)
             indices[indices == n_equal_bins] -= 1
 
