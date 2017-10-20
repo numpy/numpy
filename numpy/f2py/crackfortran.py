@@ -170,6 +170,7 @@ skipemptyends = 0      # for old F77 programs without 'program' statement
 ignorecontains = 1
 dolowercase = 1
 debug = []
+std = ''               # enforced (instead of inferred) language standard
 
 # Global variables
 beginpattern = ''
@@ -371,8 +372,10 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             strictf77 = 0
             sourcecodeform = 'fix'
             ext = os.path.splitext(currentfilename)[1]
-            if is_f_file(currentfilename) and \
-                    not (_has_f90_header(l) or _has_fix_header(l)):
+            # infer standard from filename if not explicitly set
+            f77name = ((std == 'f77') or
+                       ((std == '') and is_f_file(currentfilename)))
+            if f77name and not (_has_f90_header(l) or _has_fix_header(l)):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
                 sourcecodeform = 'free'
