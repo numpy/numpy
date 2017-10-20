@@ -79,6 +79,8 @@ class memmap(ndarray):
         :term:`row-major`, C-style or :term:`column-major`,
         Fortran-style.  This only has an effect if the shape is
         greater than 1-D.  The default order is 'C'.
+    **kwargs : optional
+        Specify keyword arguments to be passed to ``mmap.mmap.__init__``.
 
     Attributes
     ----------
@@ -200,7 +202,7 @@ class memmap(ndarray):
     __array_priority__ = -100.0
 
     def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
-                shape=None, order='C'):
+                shape=None, order='C', **kwargs):
         # Import here to minimize 'import numpy' overhead
         import mmap
         import os.path
@@ -252,16 +254,18 @@ class memmap(ndarray):
             fid.flush()
 
         if mode == 'c':
-            acc = mmap.ACCESS_COPY
+            mmap_kw = {'access':mmap.ACCESS_COPY}
         elif mode == 'r':
-            acc = mmap.ACCESS_READ
+            mmap_kw = {'access':mmap.ACCESS_READ}
         else:
-            acc = mmap.ACCESS_WRITE
+            mmap_kw = {'access':mmap.ACCESS_WRITE}
+        # `kwargs` may override key `access`
+        mmap_kw.update(kwargs)
 
         start = offset - offset % mmap.ALLOCATIONGRANULARITY
         bytes -= start
         array_offset = offset - start
-        mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
+        mm = mmap.mmap(fid.fileno(), bytes, offset=start, **mmap_kw)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
                                offset=array_offset, order=order)
