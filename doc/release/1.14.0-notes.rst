@@ -21,6 +21,12 @@ New functions
 Deprecations
 ============
 
+``np.bool_`` objects being used in place of integers
+---------------------------------------------------
+Previously ``operator.index(np.bool_)`` was legal, allowing constructs
+such as ``[1, 2, 3][np.True_]``. This was misleading, as it behaved differently
+from ``np.array([1, 2, 3])[np.True_]``. This behavior is deprecated.
+
 * Truth testing on an empty array is deprecated. To check if an array is not
   empty, use ``array.size > 0``.
 * Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
