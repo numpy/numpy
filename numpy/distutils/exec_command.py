@@ -56,6 +56,7 @@ __all__ = ['exec_command', 'find_executable']
 import os
 import sys
 import subprocess
+import locale
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
@@ -249,11 +250,15 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         proc = subprocess.Popen(command, shell=use_shell, env=env,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
-                                universal_newlines=True)
+                                universal_newlines=False)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''
     text, err = proc.communicate()
+    try:
+        text = text.decode(locale.getpreferredencoding(False))
+    except UnicodeDecodeError:
+        text = text.decode('utf-8', errors='replace')
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
