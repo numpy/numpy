@@ -23,7 +23,7 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, isscalar, object_, ones, matmul,
+    broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
     swapaxes, divide, count_nonzero
 )
 from numpy.core.multiarray import normalize_axis_index
