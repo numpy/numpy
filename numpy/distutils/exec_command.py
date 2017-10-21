@@ -56,7 +56,6 @@ __all__ = ['exec_command', 'find_executable']
 import os
 import sys
 import subprocess
-import locale
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
@@ -255,7 +254,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''
     text, err = proc.communicate()
-    text = text.decode(locale.getpreferredencoding(False),
+    text = text.decode(sys.getdefaultencoding(),
                        errors='replace')
     # Another historical oddity
     if text[-1:] == '\n':
