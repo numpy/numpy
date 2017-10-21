@@ -4,7 +4,7 @@ import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, isscalar, array, asanyarray
+    asarray, zeros, outer, concatenate, array, asanyarray
     )
 from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
