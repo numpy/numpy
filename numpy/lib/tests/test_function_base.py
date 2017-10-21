@@ -2538,7 +2538,7 @@ class TestPiecewise(object):
         assert_(y == 0)
 
         x = 5
-        y = piecewise(x, [[True], [False]], [1, 0])
+        y = piecewise(x, [True, False], [1, 0])
         assert_(y.ndim == 0)
         assert_(y == 1)
 
