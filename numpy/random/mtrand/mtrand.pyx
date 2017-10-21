@@ -659,7 +659,7 @@ cdef class RandomState:
 
         Parameters
         ----------
-        seed : int or array_like, optional
+        seed : int or 1-d array_like, optional
             Seed for `RandomState`.
             Must be convertible to 32 bit unsigned integers.
 
@@ -676,14 +676,19 @@ cdef class RandomState:
                     errcode = rk_randomseed(self.internal_state)
             else:
                 idx = operator.index(seed)
-                if idx > int(2**32 - 1) or idx < 0:
+                if (idx >= 2**32) or (idx < 0):
                     raise ValueError("Seed must be between 0 and 2**32 - 1")
                 with self.lock:
                     rk_seed(idx, self.internal_state)
         except TypeError:
-            obj = np.asarray(seed).astype(np.int64, casting='safe')
-            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
-                raise ValueError("Seed must be between 0 and 2**32 - 1")
+            obj = np.asarray(seed)
+            if obj.size == 0:
+                raise ValueError("Seed must be non-empty")
+            obj = obj.astype(np.int64, casting='safe')
+            if obj.ndim != 1:
+                raise ValueError("Seed array must be 1-d")
+            if ((obj >= 2**32) | (obj < 0)).any():
+                raise ValueError("Seed values must be between 0 and 2**32 - 1")
             obj = obj.astype('L', casting='unsafe')
             with self.lock:
                 init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
@@ -4076,13 +4081,15 @@ cdef class RandomState:
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
 
-            if fa <= 1.0:
-                raise ValueError("a <= 1.0")
+            # use logic that ensures NaN is rejected.
+            if not fa > 1.0:
+                raise ValueError("'a' must be a valid float > 1.0")
             return discd_array_sc(self.internal_state, rk_zipf, size, fa,
                                   self.lock)
 
-        if np.any(np.less_equal(oa, 1.0)):
-            raise ValueError("a <= 1.0")
+        # use logic that ensures NaN is rejected.
+        if not np.all(np.greater(oa, 1.0)):
+            raise ValueError("'a' must contain valid floats > 1.0")
         return discd_array(self.internal_state, rk_zipf, size, oa, self.lock)
 
     def geometric(self, p, size=None):

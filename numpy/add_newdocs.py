@@ -1158,7 +1158,7 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
 add_newdoc('numpy.core.multiarray', 'concatenate',
     """
-    concatenate((a1, a2, ...), axis=0)
+    concatenate((a1, a2, ...), axis=0, out=None)
 
     Join a sequence of arrays along an existing axis.
 
@@ -1169,6 +1169,10 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
         corresponding to `axis` (the first, by default).
     axis : int, optional
         The axis along which the arrays will be joined.  Default is 0.
+    out : ndarray, optional
+        If provided, the destination to place the result. The shape must be
+        correct, matching that of what concatenate would have returned if no
+        out argument were specified.
 
     Returns
     -------
@@ -1338,7 +1342,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
-        step size is 1.  If `step` is specified, `start` must also be given.
+        step size is 1.  If `step` is specified as a position argument,
+        `start` must also be given.
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
@@ -2921,10 +2926,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
 
-    Notes
-    -----
-    May be used to "reshape" the array, as long as this would not
-    require a change in the total number of elements
+    The shape property is usually used to get the current shape of an array,
+    but may also be used to reshape the array in-place by assigning a tuple of
+    array dimensions to it.  As with `numpy.reshape`, one of the new shape
+    dimensions can be -1, in which case its value is inferred from the size of
+    the array and the remaining dimensions. Reshaping an array in-place will
+    fail if a copy is required.
 
     Examples
     --------
@@ -2943,6 +2950,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+    >>> np.zeros((4,2))[::2].shape = (-1,)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    AttributeError: incompatible shape for a non-contiguous array
+
+    See Also
+    --------
+    numpy.reshape : similar function
+    ndarray.reshape : similar method
 
     """))
 
@@ -3080,25 +3096,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
-    """a.__copy__([order])
+    """a.__copy__()
 
-    Return a copy of the array.
-
-    Parameters
-    ----------
-    order : {'C', 'F', 'A'}, optional
-        If order is 'C' (False) then the result is contiguous (default).
-        If order is 'Fortran' (True) then the result has fortran order.
-        If order is 'Any' (None) then the result has fortran order
-        only if the array already is in fortran order.
+    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
+    
+    Equivalent to ``a.copy(order='K')``.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__() -> Deep copy of array.
+    """a.__deepcopy__(memo, /) -> Deep copy of array.
 
-    Used if copy.deepcopy is called on an array.
+    Used if :func:`copy.deepcopy` is called on an array.
 
     """))
 
@@ -3112,9 +3122,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__reduce__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
-    """a.__setstate__(version, shape, dtype, isfortran, rawdata)
+    """a.__setstate__(state, /)
 
     For unpickling.
+    
+    The `state` argument must be a sequence that contains the following
+    elements:
 
     Parameters
     ----------
@@ -3764,7 +3777,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None)
+    a.max(axis=None, out=None, keepdims=False)
 
     Return the maximum along a given axis.
 
@@ -5376,8 +5389,9 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
     myarray : ndarray, uint8 type
        Input array.
     axis : int, optional
-       Unpacks along this axis.
-
+        The dimension over which bit-unpacking is done.
+        ``None`` implies unpacking the flattened array.
+    
     Returns
     -------
     unpacked : ndarray, uint8 type

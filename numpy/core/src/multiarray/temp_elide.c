@@ -284,7 +284,7 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
      */
     if (Py_REFCNT(alhs) != 1 || !PyArray_CheckExact(alhs) ||
             !PyArray_ISNUMBER(alhs) ||
-            !(PyArray_FLAGS(alhs) & NPY_ARRAY_OWNDATA) ||
+            !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
@@ -362,7 +362,9 @@ can_elide_temp_unary(PyArrayObject * m1)
     int cannot;
     if (Py_REFCNT(m1) != 1 || !PyArray_CheckExact(m1) ||
             !PyArray_ISNUMBER(m1) ||
-            !(PyArray_FLAGS(m1) & NPY_ARRAY_OWNDATA) ||
+            !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
+            !PyArray_ISWRITEABLE(m1) ||
+            PyArray_CHKFLAGS(m1, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }

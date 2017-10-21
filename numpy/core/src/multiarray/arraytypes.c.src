@@ -36,6 +36,16 @@
 #include <limits.h>
 #include <assert.h>
 
+/* check for sequences, but ignore the types numpy considers scalars */
+static NPY_INLINE npy_bool
+PySequence_NoString_Check(PyObject *op) {
+    return
+        PySequence_Check(op) &&
+        !PyString_Check(op) &&
+        !PyUnicode_Check(op) &&
+        !PyArray_IsZeroDim(op);
+}
+
 /*
  *****************************************************************************
  **                        PYTHON TYPES TO C TYPES                          **
@@ -223,8 +233,7 @@ static int
     if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (PySequence_Check(op) && !PyString_Check(op) &&
-                                    !PyUnicode_Check(op)) {
+        if (PySequence_NoString_Check(op)) {
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
             Py_DECREF(type);
@@ -289,37 +298,26 @@ static int
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
-    PyObject *op2;
     @type@ temp;
     int rsize;
+
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
+    }
 
     if (PyArray_IsScalar(op, @kind@)){
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        if (PyArray_IsZeroDim(op)) {
-            /*
-             * TODO: Elsewhere in this file we use PyArray_ToScalar. Is this
-             *       better or worse? Possibly an optimization.
-             */
-            op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
-                                    PyArray_BYTES((PyArrayObject *)op),
-                                    (PyArrayObject *)op);
-        }
-        else {
-            op2 = op;
-            Py_INCREF(op);
-        }
-        if (op2 == Py_None) {
+        if (op == Py_None) {
             oop.real = NPY_NAN;
             oop.imag = NPY_NAN;
         }
         else {
-            oop = PyComplex_AsCComplex (op2);
-        }
-        Py_DECREF(op2);
-        if (PyErr_Occurred()) {
-            return -1;
+            oop = PyComplex_AsCComplex (op);
+            if (PyErr_Occurred()) {
+                return -1;
+            }
         }
         temp.real = (@ftype@) oop.real;
         temp.imag = (@ftype@) oop.imag;
@@ -461,7 +459,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
         return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
@@ -552,7 +550,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
         return convert_to_scalar_and_retry(op, ov, vap, STRING_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) && PySequence_Check(op)) {
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
@@ -687,7 +685,7 @@ VOID_getitem(void *input, void *vap)
             else {
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
-            PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
+            PyTuple_SET_ITEM(ret, i, PyArray_GETITEM(ap, ip+offset));
             ((PyArrayObject_fields *)ap)->flags = savedflags;
         }
         ((PyArrayObject_fields *)ap)->descr = descr;
@@ -907,7 +905,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
                 /* use setitem to set this field */
-                if (PyArray_DESCR(ap)->f->setitem(item, ip + offset, ap) < 0) {
+                if (PyArray_SETITEM(ap, ip + offset, item) < 0) {
                     failed = 1;
                     break;
                 }
@@ -924,7 +922,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
                 /* use setitem to set this field */
-                if (PyArray_DESCR(ap)->f->setitem(op, ip + offset, ap) < 0) {
+                if (PyArray_SETITEM(ap, ip + offset, op) < 0) {
                     failed = 1;
                     break;
                 }
@@ -1563,12 +1561,12 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL, *new;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *new;
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }
@@ -1623,12 +1621,11 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }

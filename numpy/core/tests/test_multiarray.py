@@ -423,30 +423,33 @@ class TestAssignment(object):
         # only relevant if longdouble is larger than float
         # we're looking for loss of precision
 
-        # gh-8902
-        tinyb = np.nextafter(np.longdouble(0), 1)
-        tinya =  np.nextafter(np.longdouble(0), -1)
-        tiny1d = np.array([tinya])
-        assert_equal(tiny1d[0], tinya)
+        for dtype in (np.longdouble, np.longcomplex):
+            # gh-8902
+            tinyb = np.nextafter(np.longdouble(0), 1).astype(dtype)
+            tinya = np.nextafter(np.longdouble(0), -1).astype(dtype)
 
-        # scalar = scalar
-        tiny1d[0] = tinyb
-        assert_equal(tiny1d[0], tinyb)
+            # construction
+            tiny1d = np.array([tinya])
+            assert_equal(tiny1d[0], tinya)
 
-        # 0d = scalar
-        tiny1d[0, ...] = tinya
-        assert_equal(tiny1d[0], tinya)
+            # scalar = scalar
+            tiny1d[0] = tinyb
+            assert_equal(tiny1d[0], tinyb)
 
-        # 0d = 0d
-        tiny1d[0, ...] = tinyb[...]
-        assert_equal(tiny1d[0], tinyb)
+            # 0d = scalar
+            tiny1d[0, ...] = tinya
+            assert_equal(tiny1d[0], tinya)
 
-        # scalar = 0d
-        tiny1d[0] = tinyb[...]
-        assert_equal(tiny1d[0], tinyb)
+            # 0d = 0d
+            tiny1d[0, ...] = tinyb[...]
+            assert_equal(tiny1d[0], tinyb)
 
-        arr = np.array([np.array(tinya)])
-        assert_equal(arr[0], tinya)
+            # scalar = 0d
+            tiny1d[0] = tinyb[...]
+            assert_equal(tiny1d[0], tinyb)
+
+            arr = np.array([np.array(tinya)])
+            assert_equal(arr[0], tinya)
 
 
 class TestDtypedescr(object):
@@ -1199,6 +1202,105 @@ class TestBool(object):
             a = np.ones((18,), dtype=bool)[o+1:]
             a[:o] = False
             assert_equal(np.count_nonzero(a), builtins.sum(a.tolist()))
+
+    def _test_cast_from_flexible(self, dtype):
+        # empty string -> false
+        for n in range(3):
+            v = np.array(b'', (dtype, n))
+            assert_equal(bool(v), False)
+            assert_equal(bool(v[()]), False)
+            assert_equal(v.astype(bool), False)
+            assert_(isinstance(v.astype(bool), np.ndarray))
+            assert_(v[()].astype(bool) is np.False_)
+
+        # anything else -> true
+        for n in range(1, 4):
+            for val in [b'a', b'0', b' ']:
+                v = np.array(val, (dtype, n))
+                assert_equal(bool(v), True)
+                assert_equal(bool(v[()]), True)
+                assert_equal(v.astype(bool), True)
+                assert_(isinstance(v.astype(bool), np.ndarray))
+                assert_(v[()].astype(bool) is np.True_)
+
+    def test_cast_from_void(self):
+        self._test_cast_from_flexible(np.void)
+
+    @dec.knownfailureif(True, "See gh-9847")
+    def test_cast_from_unicode(self):
+        self._test_cast_from_flexible(np.unicode_)
+
+    @dec.knownfailureif(True, "See gh-9847")
+    def test_cast_from_bytes(self):
+        self._test_cast_from_flexible(np.bytes_)
+
+
+class TestZeroSizeFlexible(object):
+    @staticmethod
+    def _zeros(shape, dtype=str):
+        dtype = np.dtype(dtype)
+        if dtype == np.void:
+            return np.zeros(shape, dtype=(dtype, 0))
+
+        # not constructable directly
+        dtype = np.dtype([('x', dtype, 0)])
+        return np.zeros(shape, dtype=dtype)['x']
+
+    def test_create(self):
+        zs = self._zeros(10, bytes)
+        assert_equal(zs.itemsize, 0)
+        zs = self._zeros(10, np.void)
+        assert_equal(zs.itemsize, 0)
+        zs = self._zeros(10, unicode)
+        assert_equal(zs.itemsize, 0)
+
+    def _test_sort_partition(self, name, kinds, **kwargs):
+        # Previously, these would all hang
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            sort_method = getattr(zs, name)
+            sort_func = getattr(np, name)
+            for kind in kinds:
+                sort_method(kind=kind, **kwargs)
+                sort_func(zs, kind=kind, **kwargs)
+
+    def test_sort(self):
+        self._test_sort_partition('sort', kinds='qhm')
+
+    def test_argsort(self):
+        self._test_sort_partition('argsort', kinds='qhm')
+
+    def test_partition(self):
+        self._test_sort_partition('partition', kinds=['introselect'], kth=2)
+
+    def test_argpartition(self):
+        self._test_sort_partition('argpartition', kinds=['introselect'], kth=2)
+
+    def test_resize(self):
+        # previously an error
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            zs.resize(25)
+            zs.resize((10, 10))
+
+    def test_view(self):
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+
+            # viewing as itself should be allowed
+            assert_equal(zs.view(dt).dtype, np.dtype(dt))
+
+            # viewing as any non-empty type gives an empty result
+            assert_equal(zs.view((dt, 1)).shape, (0,))
+
+    def test_pickle(self):
+        import pickle
+        for dt in [bytes, np.void, unicode]:
+            zs = self._zeros(10, dt)
+            p = pickle.dumps(zs)
+            zs2 = pickle.loads(p)
+
+            assert_equal(zs.dtype, zs2.dtype)
 
 
 class TestMethods(object):
@@ -2498,6 +2600,18 @@ class TestMethods(object):
             assert_raises(ValueError, np.dot, a, b, out=b[::2])
             assert_raises(ValueError, np.dot, a, b, out=b.T)
 
+    def test_dot_matmul_out(self):
+        # gh-9641
+        class Sub(np.ndarray):
+            pass
+        a = np.ones((2, 2)).view(Sub)
+        b = np.ones((2, 2)).view(Sub)
+        out = np.ones((2, 2))
+
+        # make sure out can be any ndarray (not only subclass of inputs)
+        np.dot(a, b, out=out)
+        np.matmul(a, b, out=out)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
@@ -2836,6 +2950,10 @@ class TestMethods(object):
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
 
+class TestCequenceMethods(object):
+    def test_array_contains(self):
+        assert_(4.0 in np.arange(16.).reshape(4,4))
+        assert_(20.0 not in np.arange(16.).reshape(4,4))
 
 class TestBinop(object):
     def test_inplace(self):
@@ -3245,6 +3363,15 @@ class TestTemporaryElide(object):
         # check inplace op does not create ndarray from scalars
         a = np.bool_()
         assert_(type(~(a & a)) is np.bool_)
+
+    def test_elide_scalar_readonly(self):
+        # The imaginary part of a real array is readonly. This needs to go
+        # through fast_scalar_power which is only called for powers of
+        # +1, -1, 0, 0.5, and 2, so use 2. Also need valid refcount for
+        # elision which can be gotten for the imaginary part of a real
+        # array. Should not error.
+        a = np.empty(100000, dtype=np.float64)
+        a.imag ** 2
 
     def test_elide_readonly(self):
         # don't try to elide readonly temporaries
@@ -4446,6 +4573,14 @@ class TestResize(object):
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
 
+    def test_empty_view(self):
+        # check that sizes containing a zero don't trigger a reallocate for
+        # already empty arrays
+        x = np.zeros((10, 0), int)
+        x_view = x[...]
+        x_view.resize((0, 10))
+        x_view.resize((0, 100))
+
 
 class TestRecord(object):
     def test_field_rename(self):
@@ -5520,7 +5655,7 @@ class TestInner(object):
 class TestSummarization(object):
     def test_1d(self):
         A = np.arange(1001)
-        strA = '[   0    1    2 ...,  998  999 1000]'
+        strA = '[   0    1    2 ...  998  999 1000]'
         assert_(str(A) == strA)
 
         reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
@@ -5528,8 +5663,8 @@ class TestSummarization(object):
 
     def test_2d(self):
         A = np.arange(1002).reshape(2, 501)
-        strA = '[[   0    1    2 ...,  498  499  500]\n' \
-               ' [ 501  502  503 ...,  999 1000 1001]]'
+        strA = '[[   0    1    2 ...  498  499  500]\n' \
+               ' [ 501  502  503 ...  999 1000 1001]]'
         assert_(str(A) == strA)
 
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
@@ -6394,6 +6529,32 @@ def test_array_interface_itemsize():
     assert_equal(descr_t.itemsize, typestr_t.itemsize)
 
 
+def test_array_interface_empty_shape():
+    # See gh-7994
+    arr = np.array([1, 2, 3])
+    interface1 = dict(arr.__array_interface__)
+    interface1['shape'] = ()
+
+    class DummyArray1(object):
+        __array_interface__ = interface1
+
+    # NOTE: Because Py2 str/Py3 bytes supports the buffer interface, setting
+    # the interface data to bytes would invoke the bug this tests for, that
+    # __array_interface__ with shape=() is not allowed if the data is an object
+    # exposing the buffer interface
+    interface2 = dict(interface1)
+    interface2['data'] = arr[0].tobytes()
+
+    class DummyArray2(object):
+        __array_interface__ = interface2
+
+    arr1 = np.asarray(DummyArray1())
+    arr2 = np.asarray(DummyArray2())
+    arr3 = arr[:1].reshape(())
+    assert_equal(arr1, arr2)
+    assert_equal(arr1, arr3)
+
+
 def test_flat_element_deletion():
     it = np.ones(3).flat
     try:
@@ -6876,6 +7037,37 @@ class TestUnicodeArrayNonzero(object):
         a = np.array(['eggs'], dtype=np.unicode)
         a[0] = ' \0 \0'
         assert_(a)
+
+
+class TestFormat(object):
+
+    def test_0d(self):
+        a = np.array(np.pi)
+        assert_equal('{:0.3g}'.format(a), '3.14')
+        assert_equal('{:0.3g}'.format(a[()]), '3.14')
+
+    def test_1d_no_format(self):
+        a = np.array([np.pi])
+        assert_equal('{}'.format(a), str(a))
+
+    def test_1d_format(self):
+        # until gh-5543, ensure that the behaviour matches what it used to be
+        a = np.array([np.pi])
+
+        def ret_and_exc(f, *args, **kwargs):
+            try:
+                return f(*args, **kwargs), None
+            except Exception as e:
+                # exceptions don't compare equal, so return type and args
+                # which do
+                return None, (type(e), e.args)
+
+        # Could switch on python version here, but all we care about is
+        # that the behaviour hasn't changed
+        assert_equal(
+            ret_and_exc(object.__format__, a, '30'),
+            ret_and_exc('{:30}'.format, a)
+        )
 
 
 class TestCTypes(object):

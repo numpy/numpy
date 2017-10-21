@@ -1383,6 +1383,19 @@ class TestMatrixRank(object):
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
 
+    def test_symmetric_rank(self):
+        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
+        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
+        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        # rank deficient matrix
+        I = np.eye(4)
+        I[-1, -1] = 0.
+        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        # manually supplied tolerance
+        I[-1, -1] = 1e-8
+        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
+        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
+
 
 def test_reduced_rank():
     # Test matrices with reduced rank
@@ -1493,6 +1506,30 @@ class TestQR(object):
 
 class TestCholesky(object):
     # TODO: are there no other tests for cholesky?
+
+    def test_basic_property(self):
+        # Check A = L L^H
+        shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+        dtypes = (np.float32, np.float64, np.complex64, np.complex128)
+
+        for shape, dtype in itertools.product(shapes, dtypes):
+            np.random.seed(1)
+            a = np.random.randn(*shape)
+            if np.issubdtype(dtype, np.complexfloating):
+                a = a + 1j*np.random.randn(*shape)
+
+            t = list(range(len(shape)))
+            t[-2:] = -1, -2
+
+            a = np.matmul(a.transpose(t).conj(), a)
+            a = np.asarray(a, dtype=dtype)
+
+            c = np.linalg.cholesky(a)
+
+            b = np.matmul(c, c.transpose(t).conj())
+            assert_allclose(b, a,
+                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
+                            atol=500 * a.shape[0] * np.finfo(dtype).eps)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):

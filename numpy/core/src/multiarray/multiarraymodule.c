@@ -315,20 +315,39 @@ PyArray_Free(PyObject *op, void *ptr)
     return 0;
 }
 
+/*
+ * Get the ndarray subclass with the highest priority
+ */
+NPY_NO_EXPORT PyTypeObject *
+PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
+    PyTypeObject *subtype = &PyArray_Type;
+    double priority = NPY_PRIORITY;
+    int i;
+
+    /* Get the priority subtype for the array */
+    for (i = 0; i < narrays; ++i) {
+        if (Py_TYPE(arrays[i]) != subtype) {
+            double pr = PyArray_GetPriority((PyObject *)(arrays[i]), 0.0);
+            if (pr > priority) {
+                priority = pr;
+                subtype = Py_TYPE(arrays[i]);
+            }
+        }
+    }
+
+    return subtype;
+}
+
 
 /*
  * Concatenates a list of ndarrays.
  */
 NPY_NO_EXPORT PyArrayObject *
-PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
+PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
+                          PyArrayObject* ret)
 {
-    PyTypeObject *subtype = &PyArray_Type;
-    double priority = NPY_PRIORITY;
     int iarrays, idim, ndim;
-    npy_intp shape[NPY_MAXDIMS], s, strides[NPY_MAXDIMS];
-    int strideperm[NPY_MAXDIMS];
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *ret = NULL;
+    npy_intp shape[NPY_MAXDIMS];
     PyArrayObject_fields *sliding_view = NULL;
 
     if (narrays <= 0) {
@@ -383,47 +402,57 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
         }
     }
 
-    /* Get the priority subtype for the array */
-    for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (Py_TYPE(arrays[iarrays]) != subtype) {
-            double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-            if (pr > priority) {
-                priority = pr;
-                subtype = Py_TYPE(arrays[iarrays]);
-            }
+    if (ret != NULL) {
+        if (PyArray_NDIM(ret) != ndim) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array has wrong dimensionality");
+            return NULL;
         }
+        if (!PyArray_CompareLists(shape, PyArray_SHAPE(ret), ndim)) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array is the wrong shape");
+            return NULL;
+        }
+        Py_INCREF(ret);
     }
+    else {
+        npy_intp s, strides[NPY_MAXDIMS];
+        int strideperm[NPY_MAXDIMS];
 
-    /* Get the resulting dtype from combining all the arrays */
-    dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
-    if (dtype == NULL) {
-        return NULL;
-    }
+        /* Get the priority subtype for the array */
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-    /*
-     * Figure out the permutation to apply to the strides to match
-     * the memory layout of the input arrays, using ambiguity
-     * resolution rules matching that of the NpyIter.
-     */
-    PyArray_CreateMultiSortedStridePerm(narrays, arrays, ndim, strideperm);
-    s = dtype->elsize;
-    for (idim = ndim-1; idim >= 0; --idim) {
-        int iperm = strideperm[idim];
-        strides[iperm] = s;
-        s *= shape[iperm];
-    }
+        /* Get the resulting dtype from combining all the arrays */
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        if (dtype == NULL) {
+            return NULL;
+        }
 
-    /* Allocate the array for the result. This steals the 'dtype' reference. */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                    dtype,
-                                                    ndim,
-                                                    shape,
-                                                    strides,
-                                                    NULL,
-                                                    0,
-                                                    NULL);
-    if (ret == NULL) {
-        return NULL;
+        /*
+         * Figure out the permutation to apply to the strides to match
+         * the memory layout of the input arrays, using ambiguity
+         * resolution rules matching that of the NpyIter.
+         */
+        PyArray_CreateMultiSortedStridePerm(narrays, arrays, ndim, strideperm);
+        s = dtype->elsize;
+        for (idim = ndim-1; idim >= 0; --idim) {
+            int iperm = strideperm[idim];
+            strides[iperm] = s;
+            s *= shape[iperm];
+        }
+
+        /* Allocate the array for the result. This steals the 'dtype' reference. */
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                                                        dtype,
+                                                        ndim,
+                                                        shape,
+                                                        strides,
+                                                        NULL,
+                                                        0,
+                                                        NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
 
     /*
@@ -462,15 +491,10 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
-                                    NPY_ORDER order)
+                                    NPY_ORDER order, PyArrayObject *ret)
 {
-    PyTypeObject *subtype = &PyArray_Type;
-    double priority = NPY_PRIORITY;
     int iarrays;
-    npy_intp stride;
     npy_intp shape = 0;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *ret = NULL;
     PyArrayObject_fields *sliding_view = NULL;
 
     if (narrays <= 0) {
@@ -494,36 +518,45 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
     }
 
-    /* Get the priority subtype for the array */
-    for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (Py_TYPE(arrays[iarrays]) != subtype) {
-            double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-            if (pr > priority) {
-                priority = pr;
-                subtype = Py_TYPE(arrays[iarrays]);
-            }
+    if (ret != NULL) {
+        if (PyArray_NDIM(ret) != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array must be 1D");
+            return NULL;
         }
+        if (shape != PyArray_SIZE(ret)) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array is the wrong size");
+            return NULL;
+        }
+        Py_INCREF(ret);
     }
+    else {
+        npy_intp stride;
 
-    /* Get the resulting dtype from combining all the arrays */
-    dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
-    if (dtype == NULL) {
-        return NULL;
-    }
+        /* Get the priority subtype for the array */
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-    stride = dtype->elsize;
+        /* Get the resulting dtype from combining all the arrays */
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        if (dtype == NULL) {
+            return NULL;
+        }
 
-    /* Allocate the array for the result. This steals the 'dtype' reference. */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                    dtype,
-                                                    1,
-                                                    &shape,
-                                                    &stride,
-                                                    NULL,
-                                                    0,
-                                                    NULL);
-    if (ret == NULL) {
-        return NULL;
+        stride = dtype->elsize;
+
+        /* Allocate the array for the result. This steals the 'dtype' reference. */
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                                                        dtype,
+                                                        1,
+                                                        &shape,
+                                                        &stride,
+                                                        NULL,
+                                                        0,
+                                                        NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
 
     /*
@@ -558,22 +591,11 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     return ret;
 }
 
-
-/*NUMPY_API
- * Concatenate
- *
- * Concatenate an arbitrary Python sequence into an array.
- * op is a python object supporting the sequence interface.
- * Its elements will be concatenated together to form a single
- * multidimensional array. If axis is NPY_MAXDIMS or bigger, then
- * each sequence object will be flattened before concatenation
-*/
 NPY_NO_EXPORT PyObject *
-PyArray_Concatenate(PyObject *op, int axis)
+PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
-    PyArrayObject *ret;
 
     if (!PySequence_Check(op)) {
         PyErr_SetString(PyExc_TypeError,
@@ -606,10 +628,10 @@ PyArray_Concatenate(PyObject *op, int axis)
     }
 
     if (axis >= NPY_MAXDIMS) {
-        ret = PyArray_ConcatenateFlattenedArrays(narrays, arrays, NPY_CORDER);
+        ret = PyArray_ConcatenateFlattenedArrays(narrays, arrays, NPY_CORDER, ret);
     }
     else {
-        ret = PyArray_ConcatenateArrays(narrays, arrays, axis);
+        ret = PyArray_ConcatenateArrays(narrays, arrays, axis, ret);
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
@@ -627,6 +649,21 @@ fail:
     PyArray_free(arrays);
 
     return NULL;
+}
+
+/*NUMPY_API
+ * Concatenate
+ *
+ * Concatenate an arbitrary Python sequence into an array.
+ * op is a python object supporting the sequence interface.
+ * Its elements will be concatenated together to form a single
+ * multidimensional array. If axis is NPY_MAXDIMS or bigger, then
+ * each sequence object will be flattened before concatenation
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_Concatenate(PyObject *op, int axis)
+{
+    return PyArray_ConcatenateInto(op, axis, NULL);
 }
 
 static int
@@ -759,32 +796,17 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
 {
     PyArrayObject *out_buf;
-    PyTypeObject *subtype;
-    double prior1, prior2;
-    /*
-     * Need to choose an output array that can hold a sum
-     * -- use priority to determine which subtype.
-     */
-    if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-    }
-    else {
-        prior1 = prior2 = 0.0;
-        subtype = Py_TYPE(ap1);
-    }
+
     if (out) {
         int d;
 
         /* verify that out is usable */
-        if (Py_TYPE(out) != subtype ||
-            PyArray_NDIM(out) != nd ||
+        if (PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable "
-                "(must have the right type, nr dimensions, and be a C-Array)");
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
             return 0;
         }
         for (d = 0; d < nd; ++d) {
@@ -825,18 +847,35 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         return out_buf;
     }
+    else {
+        PyTypeObject *subtype;
+        double prior1, prior2;
+        /*
+         * Need to choose an output array that can hold a sum
+         * -- use priority to determine which subtype.
+         */
+        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
+            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+        }
+        else {
+            prior1 = prior2 = 0.0;
+            subtype = Py_TYPE(ap1);
+        }
 
-    out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                           typenum, NULL, NULL, 0, 0,
-                                           (PyObject *)
-                                           (prior2 > prior1 ? ap2 : ap1));
+        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                               typenum, NULL, NULL, 0, 0,
+                                               (PyObject *)
+                                               (prior2 > prior1 ? ap2 : ap1));
 
-    if (out_buf != NULL && result) {
-        Py_INCREF(out_buf);
-        *result = out_buf;
+        if (out_buf != NULL && result) {
+            Py_INCREF(out_buf);
+            *result = out_buf;
+        }
+
+        return out_buf;
     }
-
-    return out_buf;
 }
 
 /* Could perhaps be redone to not make contiguous arrays */
@@ -2159,14 +2198,24 @@ static PyObject *
 array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *a0;
+    PyObject *out = NULL;
     int axis = 0;
-    static char *kwlist[] = {"seq", "axis", NULL};
+    static char *kwlist[] = {"seq", "axis", "out", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:concatenate", kwlist,
-                &a0, PyArray_AxisConverter, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:concatenate", kwlist,
+                &a0, PyArray_AxisConverter, &axis, &out)) {
         return NULL;
     }
-    return PyArray_Concatenate(a0, axis);
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
+    }
+    return PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out);
 }
 
 static PyObject *
