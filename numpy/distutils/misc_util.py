@@ -419,6 +419,13 @@ def msvc_runtime_major():
 
 #########################
 
+# flag that determines whether the file extension should be used to determine
+# if the source file is according to Fortran 90 or not. if this flag is set
+# to False, then all source files will be scanned for modules.
+# if you are writing the extension module yourself, please consider using an
+# appropriate file name for your code instead of using this flag.
+_f90_use_ext = True
+
 #XXX need support for .C that is also C++
 cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z', re.I).match
@@ -428,7 +435,7 @@ def _get_f90_modules(source):
     """Return a list of Fortran f90 module names that
     given source file defines.
     """
-    if not f90_ext_match(source):
+    if _f90_use_ext and not f90_ext_match(source):
         return []
     modules = []
     f = open(source, 'r')
