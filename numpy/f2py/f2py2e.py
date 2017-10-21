@@ -651,7 +651,12 @@ def run_compile():
     if flib_flags:
         sys.argv.extend(['build_ext'] + flib_flags)
 
-    setup(ext_modules=[ext])
+    # temporary disable using file extension to determine module extension and
+    # rather do a full scan, if we have set language level for all files
+    std_f90_reg = re.compile(r'[-][-]?std=[fF]90')
+    from numpy.distutils.misc_util import IgnoreF90ModExt
+    with IgnoreF90ModExt(any([std_f90_reg.match(opt) for opt in f2py_flags])):
+        setup(ext_modules=[ext])
 
     if remove_build_dir and os.path.exists(build_dir):
         import shutil
