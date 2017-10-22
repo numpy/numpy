@@ -2099,7 +2099,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    // binary mode, condition copied from PyArray_FromString
+    /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
         /* Numpy 1.14, 2017-10-19 */
         if (DEPRECATE(
