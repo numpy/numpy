@@ -2514,6 +2514,11 @@ class TestPiecewise(object):
         x = piecewise([0, 0], [[False, True]], [lambda x:-1])
         assert_array_equal(x, [0, -1])
 
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [])
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [1, 2, 3])
+
     def test_two_conditions(self):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
@@ -2555,6 +2560,11 @@ class TestPiecewise(object):
         x = 4
         y = piecewise(x, [x <= 3, (x > 3) * (x <= 5), x > 5], [1, 2, 3])
         assert_array_equal(y, 2)
+
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1])
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1, 1, 1, 1])
 
     def test_0d_0d_condition(self):
         x = np.array(3)

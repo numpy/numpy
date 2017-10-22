@@ -1254,7 +1254,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
         The length of `condlist` must correspond to that of `funclist`.
         If one extra function is given, i.e. if
-        ``len(funclist) - len(condlist) == 1``, then that extra function
+        ``len(funclist) == len(condlist) + 1``, then that extra function
         is the default value, used wherever all conditions are false.
     funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
@@ -1336,6 +1336,11 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condelse = ~np.any(condlist, axis=0, keepdims=True)
         condlist = np.concatenate([condlist, condelse], axis=0)
         n += 1
+    elif n != n2:
+        raise ValueError(
+            "with {} condition(s), either {} or {} functions are expected"
+            .format(n, n, n+1)
+        )
 
     y = zeros(x.shape, x.dtype)
     for k in range(n):
