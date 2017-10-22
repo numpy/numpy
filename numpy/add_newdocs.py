@@ -979,8 +979,8 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         elements is also ignored.
 
         .. deprecated:: 1.14
-            If this argument is not provided `fromstring` falls back on the
-            behaviour of `frombuffer`, after encoding unicode string inputs as
+            If this argument is not provided, `fromstring` falls back on the
+            behaviour of `frombuffer` after encoding unicode string inputs as
             either utf-8 (python 3), or the default encoding (python 2).
 
     Returns
