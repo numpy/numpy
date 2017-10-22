@@ -2556,6 +2556,12 @@ class TestPiecewise(object):
         y = piecewise(x, [x <= 3, (x > 3) * (x <= 5), x > 5], [1, 2, 3])
         assert_array_equal(y, 2)
 
+    def test_0d_0d_condition(self):
+        x = np.array(3)
+        c = np.array(x > 3)
+        y = piecewise(x, [c], [1, 2])
+        assert_equal(y, 2)
+
     def test_multidimensional_extrafunc(self):
         x = np.array([[-2.5, -1.5, -0.5],
                       [0.5, 1.5, 2.5]])
