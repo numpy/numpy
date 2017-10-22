@@ -1534,7 +1534,7 @@ def nonzero(a):
     (array([0, 1, 2, 2], dtype=int64), array([0, 1, 0, 1], dtype=int64))
 
     >>> x[np.nonzero(x)]
-    array([ 1.,  1.,  1.])
+    array([ 1., 2., 1.,  1.])
     >>> np.transpose(np.nonzero(x))
     array([[0, 0],
            [1, 1],
