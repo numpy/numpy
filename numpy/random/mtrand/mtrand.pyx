@@ -619,9 +619,10 @@ cdef class RandomState:
         Random seed used to initialize the pseudo-random number generator.  Can
         be any integer between 0 and 2**32 - 1 inclusive, an array (or other
         sequence) of such integers, or ``None`` (the default).  If `seed` is
-        ``None``, then `RandomState` will try to read data from
-        ``/dev/urandom`` (or the Windows analogue) if available or seed from
-        the clock otherwise.
+        ``None``, then, every time 'RandomState' is initialized or
+        ``numpy.random.seed(None)`` is called, `RandomState` will try to read
+        data from ``/dev/urandom`` (or the Windows analogue) if available or
+        seed from the clock otherwise.
 
     Notes
     -----
