@@ -256,9 +256,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     try:
         text, err = proc.communicate()
     except UnicodeDecodeError:
-        text = proc.stdout.read().decode(
-            sys.getdefaultencoding(),
-            errors='replace')
+        text = proc.stdout.read()
 
     # Another historical oddity
     if text[-1:] == '\n':
