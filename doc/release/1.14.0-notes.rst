@@ -249,6 +249,12 @@ f2py now handles arrays of dimension 0
 f2py now allows for the allocation of arrays of dimension 0. This allows for
 more consistent handling of corner cases downstream.
 
+f2py now handles hybrid Fortran 77/90 codebases
+-----------------------------------------------
+f2py can now with the new switch `--std=f90' handle codebases with mixed
+Fortran 77/90 content (for instance having both common blocks and modules),
+but where all files have extension .f or .for.
+
 ``numpy.distutils`` supports using MSVC and mingw64-gfortran together
 ---------------------------------------------------------------------
 
