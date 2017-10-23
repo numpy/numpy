@@ -279,7 +279,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=2)
+            warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, +np.inf)
