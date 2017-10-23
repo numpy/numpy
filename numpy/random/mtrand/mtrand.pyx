@@ -605,7 +605,7 @@ cdef class RandomState:
     then an array with that shape is filled and returned.
 
     *Compatibility Guarantee*
-    A fixed seed and a fixed series of calls to 'RandomState' methods using
+    A fixed seed and a fixed series of calls to `RandomState` methods using
     the same parameters will always produce the same results up to roundoff
     error except when the values were incorrect. Incorrect values will be
     fixed and the NumPy version in which the fix was made will be noted in
@@ -619,7 +619,7 @@ cdef class RandomState:
         Random seed used to initialize the pseudo-random number generator.  Can
         be any integer between 0 and 2**32 - 1 inclusive, an array (or other
         sequence) of such integers, or ``None`` (the default).  If `seed` is
-        ``None``, then, every time 'RandomState' is initialized or
+        ``None``, then every time `RandomState` is initialized or
         ``numpy.random.seed(None)`` is called, `RandomState` will try to read
         data from ``/dev/urandom`` (or the Windows analogue) if available or
         seed from the clock otherwise.
