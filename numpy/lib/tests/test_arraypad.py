@@ -640,8 +640,8 @@ class TestReflect(object):
         assert_array_equal(a, b)
 
     def test_check_padding_an_empty_array(self):
-        a = pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
-        b = np.zeros((0, 5))
+        a = pad(np.zeros((1, 3)), ((0,), (1,)), mode='reflect')
+        b = np.zeros((1, 5))
         assert_array_equal(a, b)
 
 
