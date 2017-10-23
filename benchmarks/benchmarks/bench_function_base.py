@@ -5,6 +5,34 @@ from .common import Benchmark
 import numpy as np
 
 
+class Histogram1D(Benchmark):
+    def setup(self):
+        self.d = np.linspace(0, 100, 100000)
+
+    def time_full_coverage(self):
+        np.histogram(self.d, 200, (0, 100))
+
+    def time_small_coverage(self):
+        np.histogram(self.d, 200, (50, 51))
+
+    def time_fine_binning(self):
+        np.histogram(self.d, 10000, (0, 100))
+
+
+class Histogram2D(Benchmark):
+    def setup(self):
+        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+
+    def time_full_coverage(self):
+        np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
+
+    def time_small_coverage(self):
+        np.histogramdd(self.d, (200, 200), ((50, 51), (50, 51)))
+
+    def time_fine_binning(self):
+        np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
+
+
 class Bincount(Benchmark):
     def setup(self):
         self.d = np.arange(80000, dtype=np.intp)
