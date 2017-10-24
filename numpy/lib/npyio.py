@@ -1418,11 +1418,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first valid line
-        after the first `skip_header` lines.
-        If `names` is a sequence or a single-string of comma-separated names,
-        the names will be used to define the field names in a structured dtype.
-        If `names` is None, the names of the dtype fields will be used, if any.
+        If `names` is True, the field names are read from the first line after
+        the first `skip_header` lines.  This line can optionally be proceeded
+        by a comment delimeter. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field names
+        in a structured dtype. If `names` is None, the names of the dtype
+        fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:
