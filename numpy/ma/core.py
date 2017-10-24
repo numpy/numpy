@@ -3833,10 +3833,10 @@ class MaskedArray(ndarray):
             _new._mask = _mask.compress(condition, axis=axis)
         return _new
 
-    def __str__(self):
+    def __insert_masked_print(self):
         """
-        String representation.
-
+        Replace masked values with masked_print_option, casting all innermost
+        dtypes to object.
         """
         if masked_print_option.enabled():
             mask = self._mask
@@ -3862,7 +3862,10 @@ class MaskedArray(ndarray):
                 _recursive_printoption(res, mask, masked_print_option)
         else:
             res = self.filled(self.fill_value)
-        return str(res)
+        return res
+
+    def __str__(self):
+        return str(self.__insert_masked_print())
 
     def __repr__(self):
         """
