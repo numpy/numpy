@@ -59,6 +59,8 @@ _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
     'threshold': 1000,  # total items > triggers array summarization
     'precision': 8,  # precision of floating point representations
+    'longfloat_precision': 8,  # precision of long float representations
+    'halffloat_precision': 3,  # precision of half float representations
     'suppress': False,  # suppress printing small floating values in exp format
     'linewidth': 75,
     'nanstr': 'nan',
@@ -68,7 +70,8 @@ _format_options = {
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None):
+                       sign=None, formatter=None, longfloat_precision=None,
+                       halffloat_precision=None):
     """ make a dictionary out of the non-None arguments, plus sanity checks """
 
     options = {k: v for k, v in locals().items() if v is not None}
@@ -84,7 +87,8 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None):
+                     formatter=None, sign=None, longfloat_precision=None,
+                     halffloat_precision=None):
     """
     Set printing options.
 
@@ -95,6 +99,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ----------
     precision : int, optional
         Number of digits of precision for floating point output (default 8).
+    longfloat_precision : int, optional
+        Number of digits of precision for longfloat output (default 8).
+    halffloat_precision : int, optional
+        Number of digits of precision for half float output (default 8).
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
@@ -196,7 +204,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... suppress=False, threshold=1000, formatter=None)
     """
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
-                             suppress, nanstr, infstr, sign, formatter)
+                             suppress, nanstr, infstr, sign, formatter,
+                             longfloat_precision, halffloat_precision)
     # formatter is always reset
     opt['formatter'] = formatter
     _format_options.update(opt)
@@ -260,14 +269,17 @@ def repr_format(x):
 
 def _get_formatdict(data, **opt):
     prec, supp, sign = opt['precision'], opt['suppress'], opt['sign']
+    lprec, hprec = opt['longfloat_precision'], opt['halffloat_precision']
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {'bool': lambda: BoolFormat(data),
                   'int': lambda: IntegerFormat(data),
                   'float': lambda: FloatFormat(data, prec, supp, sign),
-                  'longfloat': lambda: LongFloatFormat(prec),
+                  'longfloat': lambda: LongFloatFormat(data, lprec, supp, sign),
+                  'halffloat': lambda: FloatFormat(data, hprec, supp, sign),
                   'complexfloat': lambda: ComplexFormat(data, prec, supp, sign),
-                  'longcomplexfloat': lambda: LongComplexFormat(prec),
+                  'longcomplexfloat': lambda: LongComplexFormat(
+                                                       data, lprec, supp, sign),
                   'datetime': lambda: DatetimeFormat(data),
                   'timedelta': lambda: TimedeltaFormat(data),
                   'object': lambda: _object_format,
@@ -323,6 +335,8 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longfloat):
             return formatdict['longfloat']()
+        elif issubclass(dtypeobj, _nt.half):
+            return formatdict['halffloat']()
         else:
             return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
@@ -396,7 +410,8 @@ def _array2string(a, options, separator=' ', prefix=""):
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
-                 edgeitems=None, sign=None):
+                 edgeitems=None, sign=None, longfloat_precision=None,
+                 halffloat_precision=None):
     """
     Return a string representation of an array.
 
@@ -410,6 +425,10 @@ def array2string(a, max_line_width=None, precision=None,
     precision : int, optional
         Floating point precision. Default is the current printing
         precision (usually 8), which can be altered using `set_printoptions`.
+    longfloat_precision : int, optional
+        Number of digits of precision for longfloat output (default 8).
+    halffloat_precision : int, optional
+        Number of digits of precision for half float output (default 8).
     suppress_small : bool, optional
         Represent very small numbers as zero. A number is "very small" if it
         is smaller than the current printing precision.
@@ -510,7 +529,8 @@ def array2string(a, max_line_width=None, precision=None,
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter)
+                                   sign, formatter, longfloat_precision,
+                                   halffloat_precision)
     options = _format_options.copy()
     options.update(overrides)
 
@@ -638,28 +658,34 @@ class FloatFormat(object):
                     self.exp_format = True
 
         if self.exp_format:
-            self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
+            # remove trailing zeros, compute exponent size
+            fmt = self._makeFormatter(True, '', 0, self.precision)
+            strs = (fmt(x) for x in abs_non_zero)
+            frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
+            self.exp_size = max(len(s) for s in exp_strs) - 1
 
-            signpos = self.sign != '-' or any(non_zero < 0)
-            # for back-compatibility with np 1.13, use two spaces
+            # for back-compatibility with np 1.13, use two spaces and full prec
             if self._legacy:
                 signpos = 2
-            max_str_len = signpos + 6 + self.precision + self.large_exponent
-
-            conversion = '' if self.sign == '-' else self.sign
-            format = '%' + conversion + '%d.%de' % (max_str_len, self.precision)
+                sigfig = self.precision
+            else:
+                signpos = self.sign != '-' or any(non_zero < 0)
+                sigfig = max(self.precision - (len(s) - len(s.rstrip('0')))
+                             for s in frac_strs)
+            max_str_len = signpos + 2 + sigfig + 2 + self.exp_size
         else:
             if len(non_zero) and self.precision > 0:
-                precision = self.precision
-                trim_zero = lambda s: precision - (len(s) - len(s.rstrip('0')))
-                fmt = '%%.%df' % (precision,)
-                precision = max(trim_zero(fmt % x) for x in abs_non_zero)
+                fmt = self._makeFormatter(False, '', 0, self.precision)
+                strs = (fmt(x) for x in abs_non_zero)
+                sigfig = max(self.precision - (len(s) - len(s.rstrip('0')))
+                             for s in strs)
             else:
-                precision = 0
+                sigfig = 0
 
             int_len = len(str(int(max_val)))
             signpos = self.sign != '-' or (len(str(int(min_val_sgn))) > int_len)
-            max_str_len = signpos + int_len + 1 + precision
+            self.exp_size = None
+            max_str_len = signpos + int_len + 1 + sigfig
 
             if any(special):
                 neginf = self.sign != '-' or any(data[hasinf] < 0)
@@ -667,44 +693,47 @@ class FloatFormat(object):
                 inflen = len(_format_options['infstr']) + neginf
                 max_str_len = max(max_str_len, nanlen, inflen)
 
-            conversion = '' if self.sign == '-' else self.sign
-            format = '%#' + conversion + '%d.%df' % (max_str_len, precision)
-
+        conversion = '' if self.sign == '-' else self.sign
+        self.elem_format = self._makeFormatter(self.exp_format, conversion,
+                                               max_str_len, sigfig)
         self.special_fmt = '%%%ds' % (max_str_len,)
-        self.format = format
+
+    def _makeFormatter(self, exp_mode, conversion, max_str_len, sigfig):
+        fmt = "%#{}{}.{}{}".format(conversion, max_str_len, sigfig,
+                                   "e" if exp_mode else "f")
+        return lambda x: fmt % x
 
     def __call__(self, x, strip_zeros=True):
         with errstate(invalid='ignore'):
             if isnan(x):
                 nan_str = _format_options['nanstr']
-                if self.sign == '+':
-                    return self.special_fmt % ('+' + nan_str,)
-                else:
-                    return self.special_fmt % (nan_str,)
+                sign = '+' if self.sign == '+' else ''
+                return self.special_fmt % (sign + nan_str,)
             elif isinf(x):
                 inf_str = _format_options['infstr']
-                if x > 0:
-                    if self.sign == '+':
-                        return self.special_fmt % ('+' + inf_str,)
-                    else:
-                        return self.special_fmt % (inf_str,)
-                else:
-                    return self.special_fmt % ('-' + inf_str,)
+                sign = '-' if x < 0 else '+' if self.sign == '+' else ''
+                return self.special_fmt % (sign + inf_str,)
 
-        s = self.format % x
-        if self.large_exponent:
-            # 3-digit exponent
-            expsign = s[-3]
-            if expsign == '+' or expsign == '-':
-                s = s[1:-2] + '0' + s[-2:]
-        elif self.exp_format:
-            # 2-digit exponent
-            if s[-3] == '0':
-                s = ' ' + s[:-3] + s[-2:]
+        s = self.elem_format(x)
+
+        if self.exp_format:
+            # pad exponent with zeros, up to exp_size 0s.
+            frac_str, _, exp_str = s.partition('e')
+            expsign, expval = exp_str[0], exp_str[1:]
+            npad = self.exp_size -len(expval)
+            s = frac_str[npad:] + 'e' + expsign + '0'*npad + expval
         elif strip_zeros:
             z = s.rstrip('0')
             s = z + ' '*(len(s)-len(z))
         return s
+
+
+class LongFloatFormat(FloatFormat):
+    def _makeFormatter(self, exp_mode, conversion, max_len, sigfig):
+        def formatter(x):
+            return format_longfloat(x, exp_mode, conversion, max_len, sigfig)
+        return formatter
+
 
 class IntegerFormat(object):
     def __init__(self, data):
@@ -726,6 +755,7 @@ class IntegerFormat(object):
         else:
             return "%s" % x
 
+
 class BoolFormat(object):
     def __init__(self, data, **kwargs):
         # add an extra space so " True" and "False" have the same length and
@@ -734,53 +764,6 @@ class BoolFormat(object):
 
     def __call__(self, x):
         return self.truestr if x else "False"
-
-
-class LongFloatFormat(object):
-    # XXX Have to add something to determine the width to use a la FloatFormat
-    # Right now, things won't line up properly
-    def __init__(self, precision, sign=False):
-        # for backcompatibility, accept bools
-        if isinstance(sign, bool):
-            sign = '+' if sign else '-'
-
-        self.precision = precision
-        self.sign = sign
-
-    def __call__(self, x):
-        if isnan(x):
-            nan_str = _format_options['nanstr']
-            if self.sign == '+':
-                return '+' + nan_str
-            else:
-                return ' ' + nan_str
-        elif isinf(x):
-            inf_str = _format_options['infstr']
-            if x > 0:
-                if self.sign == '+':
-                    return '+' + inf_str
-                else:
-                    return ' ' + inf_str
-            else:
-                return '-' + inf_str
-        elif x >= 0:
-            if self.sign == '+':
-                return '+' + format_longfloat(x, self.precision)
-            else:
-                return ' ' + format_longfloat(x, self.precision)
-        else:
-            return format_longfloat(x, self.precision)
-
-
-class LongComplexFormat(object):
-    def __init__(self, precision):
-        self.real_format = LongFloatFormat(precision)
-        self.imag_format = LongFloatFormat(precision, sign='+')
-
-    def __call__(self, x):
-        r = self.real_format(x.real)
-        i = self.imag_format(x.imag)
-        return r + i + 'j'
 
 
 class ComplexFormat(object):
@@ -805,6 +788,19 @@ class ComplexFormat(object):
         return r + i
 
 
+class LongComplexFormat(object):
+    def __init__(self, x, precision, suppress_small, sign=False):
+        self.real_format = LongFloatFormat(x.real, precision, suppress_small,
+                                           sign=sign)
+        self.imag_format = LongFloatFormat(x.imag, precision, suppress_small,
+                                           sign='+')
+
+    def __call__(self, x):
+        r = self.real_format(x.real)
+        i = self.imag_format(x.imag)
+        return r + i + 'j'
+
+
 class DatetimeFormat(object):
     def __init__(self, x, unit=None, timezone=None, casting='same_kind'):
         # Get the unit from the dtype
@@ -825,6 +821,7 @@ class DatetimeFormat(object):
                                     unit=self.unit,
                                     timezone=self.timezone,
                                     casting=self.casting)
+
 
 class TimedeltaFormat(object):
     def __init__(self, data):

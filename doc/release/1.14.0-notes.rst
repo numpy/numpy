@@ -396,3 +396,18 @@ Seeding ``RandomState`` using an array requires a 1-d array
 ``RandomState`` previously would accept empty arrays or arrays with 2 or more
 dimensions, which resulted in either a failure to seed (empty arrays) or for
 some of the passed values to be ignored when setting the seed.
+
+repr for longfloat rewritten, repr precision for longfoat,half now customizable
+-------------------------------------------------------------------------------
+The reprs for arrays of ``longfloat`` type has been changed to more closely
+match the printing behavior of ``float`` arrays. Also, the precision printed
+for ``longfloat`` and ``half`` arrays is now customizable using the
+``longfloat_precision`` and ``halffloat_precision`` arguments of
+``np.set_printoptions``, with defaults of 8 and 3 respectively.
+
+repr of floating-point arrays now trims 0s in scientific notation
+-----------------------------------------------------------------
+When an array's floating-point values are output in scientific notation
+the trailing zeros in the fractional part are now dropped. In other words,
+``1.1230000e+100`` now prints as ``1.123e+100``. This new behavior
+is disable by setting the ``legacy=True`` option to ``np.set_printoptions``.

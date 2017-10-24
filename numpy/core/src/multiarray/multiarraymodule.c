@@ -17,6 +17,7 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"
+#include <locale.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -3586,26 +3587,67 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
-    PyObject *obj;
-    unsigned int precision;
-    npy_longdouble x;
-    static char *kwlist[] = {"x", "precision", NULL};
-    static char repr[100];
+    char format[64], repr[64];
+    char *modechar, *conv;
+    int exp_mode;
+    int maxlen, precision;
+    int ret;
+    PyObject *val;
+    long double x;
+    static char *kwlist[] = {"x", "exp_mode", "conversion", "maxlen",
+                             "precision", NULL};
+    char *saved_locale=NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI:format_longfloat", kwlist,
-                &obj, &precision)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oisii", kwlist,
+                             &val, &exp_mode, &conv, &maxlen, &precision)) {
         return NULL;
     }
-    if (!PyArray_IsScalar(obj, LongDouble)) {
-        PyErr_SetString(PyExc_TypeError,
-                "not a longfloat");
+
+    if (!PyArray_IsScalar(val, LongDouble)) {
+        PyErr_SetString(PyExc_TypeError, "not a longfloat");
         return NULL;
     }
-    x = ((PyLongDoubleScalarObject *)obj)->obval;
-    if (precision > 70) {
-        precision = 70;
+    x = ((PyLongDoubleScalarObject *)val)->obval;
+
+    if (strcmp(conv, "+") && strcmp(conv, "-") && strcmp(conv, "")) {
+        PyErr_SetString(PyExc_ValueError, "conversion must be '', '+' or '-'");
+        return NULL;
     }
-    format_longdouble(repr, 100, x, precision);
+
+    modechar = exp_mode ? "Le" : "Lf";
+
+    ret = PyOS_snprintf(format, sizeof(format),
+                        "%%#%s%d.%d%s", conv, maxlen, precision, modechar);
+    if (ret < 0 || ret >= sizeof(format)){
+        PyErr_SetString(PyExc_RuntimeError, "printf failed");
+        return NULL;
+    }
+
+    // if we have a locale where the decimal point is not a "." character,
+    // temporarily switch to the C locale where it is.
+    // (This avoids all the juggling in ensure_decimal_point)
+    if (strcmp(localeconv()->decimal_point, ".") != 0) {
+        // save the current locale, copying the name as setlocale clobbers it
+        saved_locale = strdup(setlocale(LC_ALL, NULL));
+        if (saved_locale == NULL){
+            PyErr_SetString(PyExc_RuntimeError, "printf failed");
+            return NULL;
+        }
+        setlocale (LC_ALL, "C");
+    }
+
+    ret = PyOS_snprintf(repr, sizeof(repr), format, x);
+
+    // restore locale if necessary
+    if (saved_locale != NULL) {
+        setlocale(LC_ALL, saved_locale);
+        free(saved_locale);
+    }
+
+    if (ret < 0 || ret >= sizeof(format)){
+        PyErr_SetString(PyExc_RuntimeError, "printf failed");
+        return NULL;
+    }
     return PyUString_FromString(repr);
 }
 
