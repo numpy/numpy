@@ -1254,12 +1254,12 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
         The length of `condlist` must correspond to that of `funclist`.
         If one extra function is given, i.e. if
-        ``len(funclist) - len(condlist) == 1``, then that extra function
+        ``len(funclist) == len(condlist) + 1``, then that extra function
         is the default value, used wherever all conditions are false.
     funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
-        condition is True.  It should take an array as input and give an array
-        or a scalar value as output.  If, instead of a callable,
+        condition is True.  It should take a 1d array as input and give an 1d
+        array or a scalar value as output.  If, instead of a callable,
         a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
     args : tuple, optional
@@ -1323,25 +1323,24 @@ def piecewise(x, condlist, funclist, *args, **kw):
     """
     x = asanyarray(x)
     n2 = len(funclist)
-    if (isscalar(condlist) or not (isinstance(condlist[0], list) or
-                                   isinstance(condlist[0], ndarray))):
-        if not isscalar(condlist) and x.size == 1 and x.ndim == 0:
-            condlist = [[c] for c in condlist]
-        else:
-            condlist = [condlist]
+
+    # undocumented: single condition is promoted to a list of one condition
+    if isscalar(condlist) or (
+            not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
+        condlist = [condlist]
+
     condlist = array(condlist, dtype=bool)
     n = len(condlist)
-    # This is a hack to work around problems with NumPy's
-    #  handling of 0-d arrays and boolean indexing with
-    #  numpy.bool_ scalars
-    zerod = False
-    if x.ndim == 0:
-        x = x[None]
-        zerod = True
+
     if n == n2 - 1:  # compute the "otherwise" condition.
         condelse = ~np.any(condlist, axis=0, keepdims=True)
         condlist = np.concatenate([condlist, condelse], axis=0)
         n += 1
+    elif n != n2:
+        raise ValueError(
+            "with {} condition(s), either {} or {} functions are expected"
+            .format(n, n, n+1)
+        )
 
     y = zeros(x.shape, x.dtype)
     for k in range(n):
@@ -1352,8 +1351,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
             vals = x[condlist[k]]
             if vals.size > 0:
                 y[condlist[k]] = item(vals, *args, **kw)
-    if zerod:
-        y = y.squeeze()
+
     return y
 
 
