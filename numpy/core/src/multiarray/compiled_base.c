@@ -80,6 +80,388 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
     *mx = max;
 }
 
+NPY_NO_EXPORT PyObject *
+arr_histogram_uniform(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj_x, *obj_edges, *weights = Py_None;
+    PyArrayObject *arr_x = NULL, *arr_edges = NULL, *arr_w = NULL, *hist = NULL;
+    npy_intp len, bins;
+    double *e, min, max, norm;
+
+    static char *kwlist[] = {"x", "edges", "weights", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:_histogram_uniform",
+            kwlist, &obj_x, &obj_edges, &weights)) {
+        goto fail;
+    }
+
+    arr_x = (PyArrayObject *)PyArray_ContiguousFromAny(obj_x, NPY_DOUBLE, 1, 1);
+    if (arr_x == NULL) {
+        goto fail;
+    }
+    len = PyArray_DIM(arr_x, 0);
+
+    arr_edges = (PyArrayObject *)PyArray_ContiguousFromAny(obj_edges, NPY_DOUBLE, 1, 1);
+    if (arr_edges == NULL) {
+        goto fail;
+    }
+    bins = PyArray_DIM(arr_edges, 0) - 1;
+
+    /* Handle empty array */
+    if (len == 0) {
+        hist = (PyArrayObject *)PyArray_ZEROS(1, &bins, NPY_INTP, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+        Py_DECREF(arr_edges);
+        Py_DECREF(arr_x);
+        return (PyObject *)hist;
+    }
+
+    e = (double *)PyArray_DATA(arr_edges);
+
+    if (bins <= 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Must supply at least one bin (two edges)");
+        goto fail;
+    }
+    min = e[0];
+    max = e[bins];
+
+    if ((max - min) <= 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Bin edges must be increasing");
+        goto fail;
+    }
+    norm = bins / (max - min);
+
+    if (weights == Py_None) {
+        npy_intp *ihist, i;
+        double *x;
+
+        hist = (PyArrayObject *)PyArray_ZEROS(1, &bins, NPY_INTP, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+
+        x = (double *)PyArray_DATA(arr_x);
+        ihist = (npy_intp *)PyArray_DATA(hist);
+
+        NPY_BEGIN_ALLOW_THREADS;
+        for(i = 0; i < len; i++) {
+            double tx = x[i];
+            if ((min <= tx) && (tx <= max)) {
+                npy_intp ix = (npy_intp)((tx - min) * norm);
+                /*
+                 * For values that lie exactly on mx we need to subtract one.
+                 * Also, the index computation is not guaranteed to give
+                 * exactly consistent results within ~1 ULP of the bin edges.
+                 * The last bin includes the right edge. The other bins do not.
+                 */
+                if (ix == bins || (ix != 0 && tx < e[ix])) {
+                    ix--;
+                }
+                else if ((ix + 1) != bins && tx >= e[ix + 1]) {
+                    ix++;
+                }
+                ihist[ix]++;
+            }
+        }
+        NPY_END_ALLOW_THREADS;
+    }
+    else {
+        npy_intp i;
+        double *x, *w, *dhist;
+
+        arr_w = (PyArrayObject *)PyArray_ContiguousFromAny(weights, NPY_DOUBLE, 1, 1);
+        if (arr_w == NULL) {
+            goto fail;
+        }
+        if (PyArray_SIZE(arr_w) != len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Weights must be same length as array");
+            goto fail;
+        }
+
+        hist = (PyArrayObject *)PyArray_ZEROS(1, &bins, NPY_DOUBLE, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+
+        x = (double *)PyArray_DATA(arr_x);
+        w = (double *)PyArray_DATA(arr_w);
+        dhist = (double *)PyArray_DATA(hist);
+
+        NPY_BEGIN_ALLOW_THREADS;
+        for(i = 0; i < len; i++) {
+            double tx = x[i];
+            if ((min <= tx) && (tx <= max)) {
+                npy_intp ix = (tx - min) * norm;
+                if (ix == bins || (ix != 0 && tx < e[ix])) {
+                    ix--;
+                }
+                else if ((ix + 1) != bins && tx >= e[ix + 1]) {
+                    ix++;
+                }
+                dhist[ix] += w[i];
+            }
+        }
+        NPY_END_ALLOW_THREADS;
+
+        Py_DECREF(arr_w);
+    }
+
+    Py_DECREF(arr_edges);
+    Py_DECREF(arr_x);
+    return (PyObject *)hist;
+
+fail:
+    Py_XDECREF(hist);
+    Py_XDECREF(arr_w);
+    Py_XDECREF(arr_edges);
+    Py_XDECREF(arr_x);
+    return NULL;
+}
+
+NPY_NO_EXPORT PyObject *
+arr_histogramdd_uniform(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj_x, *obj_bins, *obj_edges, *weights = Py_None;
+    PyArrayObject *arr_x = NULL, *arr_bins = NULL, *arr_edges = NULL,
+                  *arr_w = NULL, *hist = NULL;
+    npy_intp len, ndim, *bins;
+    double min[NPY_MAXDIMS], max[NPY_MAXDIMS], norm[NPY_MAXDIMS];
+
+    static char *kwlist[] = {"x", "nbins", "edges", "weights", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|O:_histogramdd_uniform",
+            kwlist, &obj_x, &obj_bins, &obj_edges, &weights)) {
+        goto fail;
+    }
+
+    /*
+     * Get data (x) which is of shape (len, ndim)
+     * where len is the number of samples
+     * and ndim is the number of dimensions
+     */
+    arr_x = (PyArrayObject *)PyArray_ContiguousFromAny(obj_x, NPY_DOUBLE, 2, 2);
+    if (arr_x == NULL) {
+        goto fail;
+    }
+    len = PyArray_DIM(arr_x, 0);
+    ndim = PyArray_DIM(arr_x, 1);
+
+    /*
+     * Get the number of bins for each array since
+     * the edges are passed in as a flat array
+     */
+    arr_bins = (PyArrayObject *)PyArray_FROM_O(obj_bins);
+    if (!PyArray_ISINTEGER(arr_bins))
+    {
+        PyErr_SetString(PyExc_TypeError, "Bin counts must be integers");
+        goto fail;
+    }
+    if (arr_bins == NULL) {
+        goto fail;
+    }
+    if (PyArray_DIM(arr_bins, 0) != ndim) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Number of bins array must be same length as array");
+        goto fail;
+    }
+    bins = (npy_intp *)PyArray_DATA(arr_bins);
+
+    /* Handle empty array */
+    if (len == 0) {
+        hist = (PyArrayObject *)PyArray_ZEROS(ndim, bins, NPY_INTP, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+        Py_DECREF(arr_bins);
+        Py_DECREF(arr_x);
+        return (PyObject *)hist;
+    }
+
+    /*
+     * Get bin edges which is a flat array
+     */
+    arr_edges = (PyArrayObject *)PyArray_ContiguousFromAny(obj_edges, NPY_DOUBLE, 1, 1);
+    if (arr_edges == NULL) {
+        goto fail;
+    }
+
+    /*
+     * Verify that the total number of bins is the correct
+     * according to the size of the input (flat) array of
+     * bin edges
+     */
+    {
+        npy_intp nedges_total = 0;
+        npy_intp i;
+        for (i = 0; i < ndim; i++) {
+            nedges_total += bins[i] + 1;
+        }
+        if (PyArray_SIZE(arr_edges) != nedges_total) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Length of edges must be equal to the total number of edges");
+            goto fail;
+        }
+    }
+
+    /*
+     * Calculate the min, max and norm values along
+     * each dimension
+     */
+    {
+        npy_intp d;
+        double *e = (double *)PyArray_DATA(arr_edges);
+        for (d = 0; d < ndim; d++) {
+
+            min[d] = e[0];
+            max[d] = e[bins[d]];
+
+            if (bins[d] <= 0) {
+                PyErr_SetString(PyExc_ValueError,
+                    "Must supply at least one bin (two edges) for each dimension");
+                goto fail;
+            }
+            if ((max[d] - min[d]) <= 0) {
+                PyErr_SetString(PyExc_ValueError, "Bin edges must be increasing");
+                goto fail;
+            }
+            norm[d] = bins[d] / (max[d] - min[d]);
+
+            e += bins[d] + 1;
+        }
+    }
+
+    if (weights == Py_None) {
+        /*
+         * weights is None, so output histogram dtype is int
+         */
+        npy_intp i;
+        double *x;
+
+        hist = (PyArrayObject *)PyArray_ZEROS(ndim, bins, NPY_INTP, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+
+        x = (double *)PyArray_DATA(arr_x);
+
+        NPY_BEGIN_ALLOW_THREADS;
+        for (i = 0; i < len; i++) {
+            int overflow = 0;
+            npy_intp d, ix[NPY_MAXDIMS];
+            double *e = (double *)PyArray_DATA(arr_edges);
+            for (d = 0; d < ndim; d++) {
+                double tx = x[i * ndim + d];
+                if ((min[d] <= tx) && (tx <= max[d])) {
+                    ix[d] = (tx - min[d]) * norm[d];
+                    /*
+                     * For values that lie exactly on mx we need to subtract one.
+                     * Also, the index computation is not guaranteed to give
+                     * exactly consistent results within ~1 ULP of the bin edges.
+                     * The last bin includes the right edge. The other bins do not.
+                     */
+                    if (ix[d] == bins[d] || (ix[d] != 0 && tx < e[ix[d]])) {
+                        ix[d]--;
+                    }
+                    else if ((ix[d] + 1) != bins[d] && tx >= e[ix[d] + 1]) {
+                        ix[d]++;
+                    }
+                    e += bins[d] + 1;
+                }
+                else {
+                    overflow = 1;
+                    break;
+                }
+            }
+            if (overflow) {
+                continue;
+            }
+            *((npy_intp *)PyArray_GetPtr(hist, ix)) += 1;
+        }
+        NPY_END_ALLOW_THREADS;
+    }
+    else {
+        /*
+         * weights given, so output histogram dtype is double
+         */
+        npy_intp i;
+        double *x, *w;
+
+        arr_w = (PyArrayObject *)PyArray_ContiguousFromAny(weights, NPY_DOUBLE, 1, 1);
+        if (arr_w == NULL) {
+            goto fail;
+        }
+        if (PyArray_DIM(arr_w, 0) != len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Weights must be same length as array");
+            goto fail;
+        }
+
+        hist = (PyArrayObject *)PyArray_ZEROS(ndim, bins, NPY_DOUBLE, 0);
+        if (hist == NULL) {
+            goto fail;
+        }
+
+        x = (double *)PyArray_DATA(arr_x);
+        w = (double *)PyArray_DATA(arr_w);
+
+        NPY_BEGIN_ALLOW_THREADS;
+        for (i = 0; i < len; i++) {
+            int overflow = 0;
+            npy_intp d, ix[NPY_MAXDIMS];
+            double *e = (double *)PyArray_DATA(arr_edges);
+            for (d = 0; d < ndim; d++) {
+                npy_intp ii = i * ndim + d;
+                double tx = x[ii];
+                if ((min[d] <= tx) && (tx <= max[d])) {
+                    ix[d] = (tx - min[d]) * norm[d];
+                    /*
+                     * For values that lie exactly on mx we need to subtract one.
+                     * Also, the index computation is not guaranteed to give
+                     * exactly consistent results within ~1 ULP of the bin edges.
+                     * The last bin includes the right edge. The other bins do not.
+                     */
+                    if (ix[d] == bins[d] || (ix[d] != 0 && tx < e[ix[d]])) {
+                        ix[d]--;
+                    }
+                    else if ((ix[d] + 1) != bins[d] && tx >= e[ix[d] + 1]) {
+                        ix[d]++;
+                    }
+                    e += bins[d] + 1;
+                }
+                else {
+                    overflow = 1;
+                    break;
+                }
+            }
+            if (overflow) {
+                continue;
+            }
+            *((double *)PyArray_GetPtr(hist, ix)) += w[i];
+        }
+        NPY_END_ALLOW_THREADS;
+
+        Py_DECREF(arr_w);
+    }
+
+    Py_DECREF(arr_edges);
+    Py_DECREF(arr_bins);
+    Py_DECREF(arr_x);
+    return (PyObject *)hist;
+
+fail:
+    Py_XDECREF(hist);
+    Py_XDECREF(arr_w);
+    Py_XDECREF(arr_edges);
+    Py_XDECREF(arr_bins);
+    Py_XDECREF(arr_x);
+    return NULL;
+}
+
 /*
  * arr_bincount is registered as bincount.
  *
@@ -691,8 +1073,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_intp i, lenx, lenxp;
 
     const npy_double *dx, *dz;
-    const npy_cdouble *dy; 
-    npy_cdouble lval, rval; 
+    const npy_cdouble *dy;
+    npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
     static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};

@@ -4302,6 +4302,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS,
         "Insert vals sequentially into equivalent 1-d positions "
         "indicated by mask."},
+    {"_histogram_uniform", (PyCFunction)arr_histogram_uniform,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_histogramdd_uniform", (PyCFunction)arr_histogramdd_uniform,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"bincount", (PyCFunction)arr_bincount,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"digitize", (PyCFunction)arr_digitize,
