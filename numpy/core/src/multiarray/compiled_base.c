@@ -255,12 +255,7 @@ arr_histogramdd_uniform(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kw
      * Get the number of bins for each array since
      * the edges are passed in as a flat array
      */
-    arr_bins = (PyArrayObject *)PyArray_FROM_O(obj_bins);
-    if (!PyArray_ISINTEGER(arr_bins))
-    {
-        PyErr_SetString(PyExc_TypeError, "Bin counts must be integers");
-        goto fail;
-    }
+    arr_bins = (PyArrayObject *)PyArray_ContiguousFromAny(obj_bins, NPY_INTP, 1, 1);
     if (arr_bins == NULL) {
         goto fail;
     }
