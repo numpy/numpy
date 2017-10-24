@@ -208,6 +208,22 @@ class TestNonarrayArgs(object):
             assert_(w[0].category is RuntimeWarning)
 
 
+class TestIsscalar(object):
+    def test_isscalar(self):
+        assert_(np.isscalar(3.1))
+        assert_(np.isscalar(np.int16(12345)))
+        assert_(np.isscalar(False))
+        assert_(np.isscalar('numpy'))
+        assert_(not np.isscalar([3.1]))
+        assert_(not np.isscalar(None))
+
+        # PEP 3141
+        from fractions import Fraction
+        assert_(np.isscalar(Fraction(5, 17)))
+        from numbers import Number
+        assert_(np.isscalar(Number()))
+
+
 class TestBoolScalar(object):
     def test_logical(self):
         f = np.False_

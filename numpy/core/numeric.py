@@ -5,6 +5,7 @@ import itertools
 import operator
 import sys
 import warnings
+import numbers
 
 import numpy as np
 from . import multiarray
@@ -1936,11 +1937,19 @@ def isscalar(num):
     >>> np.isscalar('numpy')
     True
 
+    NumPy supports PEP 3141 numbers:
+
+    >>> from fractions import Fraction
+    >>> isscalar(Fraction(5, 17))
+    True
+    >>> from numbers import Number
+    >>> isscalar(Number())
+    True
+
     """
-    if isinstance(num, generic):
-        return True
-    else:
-        return type(num) in ScalarType
+    return (isinstance(num, generic)
+            or type(num) in ScalarType
+            or isinstance(num, numbers.Number))
 
 
 def binary_repr(num, width=None):
