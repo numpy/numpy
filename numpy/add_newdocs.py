@@ -4125,6 +4125,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     --------
     numpy.reshape : equivalent function
 
+    Notes
+    -----
+    Unlike the free function `numpy.reshape`, this method on `ndarray` allows
+    the elements of the shape parameter to be passed in as separate arguments.
+    For example, ``a.reshape(10, 11)`` is equivalent to
+    ``a.reshape((10, 11))``.
+
     """))
 
 
