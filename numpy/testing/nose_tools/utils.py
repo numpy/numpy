@@ -524,7 +524,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import ndarray
+    from numpy.core import ndarray, result_type
     from numpy.lib import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
@@ -576,8 +576,19 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if abs(desired - actual) >= 1.5 * 10.0**(-decimal):
-        raise AssertionError(_build_err_msg())
+
+    try:
+        if abs(desired - actual) >= 1.5 * 10.0**(-decimal):
+            raise AssertionError(_build_err_msg())
+    except TypeError:
+        # Certain types can not be subtracted (numpy.bool_ for example)
+        # so cast values as an inexact type
+        desiredf = result_type(desired, 1.).type(desired)
+        actualf = result_type(actual, 1.).type(actual)
+        try:
+            assert_almost_equal(actualf, desiredf, decimal=decimal)
+        except AssertionError:
+            raise AssertionError(_build_err_msg())
 
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):

@@ -429,6 +429,36 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
         self._test_not_equal(x, y)
         self._test_not_equal(x, z)
 
+    def test_npy_bool(self):
+        """
+        types that do not support subtraction (e.g. `numpy.bool_`) are handled
+        specially in assert_almost_equal.
+        """
+        self._assert_func(np.True_, np.True_)
+        self._assert_func(np.True_, True)
+        self._assert_func(np.True_, 1)
+        self._assert_func(True, np.True_)
+        self._assert_func(1, np.True_)
+        self._assert_func(np.False_, np.False_)
+        self._assert_func(np.False_, False)
+        self._assert_func(np.False_, 0)
+        self._assert_func(False, np.False_)
+        self._assert_func(0, np.False_)
+
+        self._test_not_equal(np.True_, np.False_)
+        self._test_not_equal(np.True_, False)
+        self._test_not_equal(np.True_, 0)
+        self._test_not_equal(True, np.False_)
+        self._test_not_equal(1, np.False_)
+        self._test_not_equal(np.False_, np.True_)
+        self._test_not_equal(np.False_, True)
+        self._test_not_equal(np.False_, 1)
+        self._test_not_equal(False, np.True_)
+        self._test_not_equal(0, np.True_)
+
+        # if tolerance is large enough false almost equals true
+        self._assert_func(np.True_, np.False_, decimal=0)
+
     def test_error_message(self):
         """Check the message is formatted correctly for the decimal value"""
         x = np.array([1.00000000001, 2.00000000002, 3.00003])
