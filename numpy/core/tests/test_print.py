@@ -17,6 +17,38 @@ else:
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
+class TestRealScalars(object):
+    def test_str(self):
+        svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
+        styps = [np.float16, np.float32, np.float64, np.longdouble]
+        actual = [str(f(c)) for c in svals for f in styps]
+        wanted = [
+             '0.0',  '0.0',  '0.0',  '0.0',
+             '-0.0', '-0.0', '-0.0', '-0.0',
+             '1.0',  '1.0',  '1.0',  '1.0',
+             '-1.0', '-1.0', '-1.0', '-1.0',
+             'inf',  'inf',  'inf',  'inf',
+             '-inf', '-inf', '-inf', '-inf',
+             'nan',  'nan',  'nan',  'nan']
+
+        for res, val in zip(actual, wanted):
+            assert_equal(res, val)
+
+class TestDTOA:
+    def test_dtoa(self):
+        assert_equal(repr(np.float64('0.')), '0.0')
+        assert_equal(repr(np.float64('1.')), '1.0')
+        assert_equal(repr(np.float64('1.2')),  '1.2')
+        assert_equal(repr(np.float64('1.e20')), '1e+20')
+        assert_equal(repr(np.float64(0.3)), '0.3')
+        assert_equal(repr(np.complex128(complex(0,0))), '0j')
+
+    def test_longdouble_printf(self):
+        assert_equal(repr(np.longdouble('0.')), '0.0')
+        assert_equal(repr(np.longdouble('1.')), '1.0')
+        assert_equal(repr(np.longdouble('1.2')),  '1.2')
+        assert_equal(repr(np.longdouble('1.e20')), '1e+20')
+        assert_equal(repr(np.complex256(complex(0,0))), '0j')
 
 def check_float_type(tp):
     for x in [0, 1, -1, 1e20]:
@@ -90,21 +122,21 @@ def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
     TESTS = {
         complex(np.inf, 0): "(inf+0j)",
-        complex(0, np.inf): "inf*j",
+        complex(0, np.inf): "infj",
         complex(-np.inf, 0): "(-inf+0j)",
-        complex(0, -np.inf): "-inf*j",
+        complex(0, -np.inf): "-infj",
         complex(np.inf, 1): "(inf+1j)",
-        complex(1, np.inf): "(1+inf*j)",
+        complex(1, np.inf): "(1+infj)",
         complex(-np.inf, 1): "(-inf+1j)",
-        complex(1, -np.inf): "(1-inf*j)",
+        complex(1, -np.inf): "(1-infj)",
         complex(np.nan, 0): "(nan+0j)",
-        complex(0, np.nan): "nan*j",
+        complex(0, np.nan): "nanj",
         complex(-np.nan, 0): "(nan+0j)",
-        complex(0, -np.nan): "nan*j",
+        complex(0, -np.nan): "nanj",
         complex(np.nan, 1): "(nan+1j)",
-        complex(1, np.nan): "(1+nan*j)",
+        complex(1, np.nan): "(1+nanj)",
         complex(-np.nan, 1): "(nan+1j)",
-        complex(1, -np.nan): "(1+nan*j)",
+        complex(1, -np.nan): "(1+nanj)",
     }
     for tp in [np.complex64, np.cdouble, np.clongdouble]:
         for c, s in TESTS.items():

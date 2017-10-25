@@ -3590,7 +3590,6 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     unsigned int precision;
     npy_longdouble x;
     static char *kwlist[] = {"x", "precision", NULL};
-    static char repr[100];
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI:format_longfloat", kwlist,
                 &obj, &precision)) {
@@ -3605,8 +3604,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     if (precision > 70) {
         precision = 70;
     }
-    format_longdouble(repr, 100, x, precision);
-    return PyUString_FromString(repr);
+    return format_longdouble(x, 'g', precision-1, 0, '0');
 }
 
 static PyObject *

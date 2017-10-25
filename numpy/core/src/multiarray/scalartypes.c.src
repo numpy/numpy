@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"
+#include <locale.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #ifndef _MULTIARRAYMODULE
@@ -423,151 +424,291 @@ gentype_format(PyObject *self, PyObject *args)
     return ret;
 }
 
+
+/*
+ * Helper func to post-process floats with trailing zeros.
+ *
+ * This function requires that the string include a decimal point.
+ * Strategy: Find the e or \0, then work back until decimal point or non-zero,
+ * then copy the exponent or '\0' back over any 0s.
+ * Arguments:
+ *   * repr: the output of printf. It is assumed to have a decimal point
+ *   * tail: one of 'k', 'r', '.', '0' or '\0', with the following meanings
+ *     when the output of printf could be represented as an integer (eg "1.000")
+ *       'k': keep trailing zeros, and keep '.'
+ *      '\0': trim trailing zeros and '.'
+ *       '.': trim zeros but leave "."
+ *       '0': trim zeros but leave ".0".
+ *            Important: input string must already contain the .0 to use this option
+ *       'r': like '\0' for scientific notation, like '0' for decimal notation
+ *            (this emulates python's repr(float) behavior)
+ */
+NPY_NO_EXPORT void
+trim_float_zeros(char *repr, char tail)
+{
+    int epos=0, nzpos;
+
+    if (tail == 'k') {
+        return;
+    }
+
+    /* find the 'e' position */
+    while (repr[epos] != 'e' && repr[epos] != '\0') {
+        epos++;
+    }
+    /* find the previous non-zero digit */
+    nzpos = epos - 1;
+    while (nzpos > 0 && repr[nzpos] == '0') {
+        nzpos--;
+    }
+
+    /* quietly fail if there was none (shouldn't happen) */
+    if (nzpos < 0){
+        return;
+    }
+
+    /* adjust the tail depending on if repr was integer-like or not */
+    if (repr[nzpos] == '.') {
+        if (tail == 'r') {
+            /* in "r" mode, print ".0" for non-exponential ouput only */
+            if (repr[epos] != 'e') {
+                nzpos += 2;
+            }
+        }
+        else if (tail == '.') {
+            nzpos += 1;
+        }
+        else if (tail == '0') {
+            nzpos += 2;
+        }
+    }
+    else {
+        /* we found a nonzero-digit instead of '.' so trim up to it  */
+        nzpos += 1;
+    }
+
+    if (nzpos == epos) {
+        return;
+    }
+
+    /* copy exponent or '\0' back to offset position */
+    while (repr[epos] != '\0') {
+        repr[nzpos++] = repr[epos++];
+    }
+    repr[nzpos] = repr[epos];
+}
+
 #ifdef FORCE_NO_LONG_DOUBLE_FORMATTING
 #undef NPY_LONGDOUBLE_FMT
 #define NPY_LONGDOUBLE_FMT NPY_DOUBLE_FMT
 #endif
 
 /**begin repeat
- * #name = float, double, longdouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_float, npy_double, npy_longdouble#
- * #suff = f, d, l#
+ * #name = float, double#
+ * #type = npy_float, npy_double#
  */
 
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
-
-NPY_NO_EXPORT void
-format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
+/*
+ * Converts a floating point value to a string.
+ * Arguments are similar to those of PyOS_double_to_string:
+ *   * format_code: similar to the argument to PyOS_double_to_string,
+ *                  but only 'e', 'f', 'g' formats accounted for (not 'r').
+ *   * prec: same as the argument to PyOS_double_to_string.
+ *           Note that the number of digits output for format 'g' is one
+ *           less than for 'e' and 'f', so you may need to decr the 'g' precision
+ *           by one to get the equivalent digits.
+ *   * sign: boolean value, controls whether sign is always printed
+ *   * tail: one of 'k', 'r', '.', '0' or '\0', to control trimming of zeros for
+ *           floats that look like integers. See trim_float_zeros for more info.
+ */
+NPY_NO_EXPORT PyObject *
+format_@name@(@type@ val, char format_code, unsigned int prec, int sign,
+              char tail)
 {
-    /* XXX: Find a correct size here for format string */
-    char format[64], *res;
-    size_t i, cnt;
+    char *repr;
+    PyObject *ret;
+    int flags = 0;
 
-    PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-    res = NumPyOS_ascii_format@suff@(buf, buflen, format, val, 0);
-    if (res == NULL) {
-        fprintf(stderr, "Error while formatting\n");
-        return;
+    if (sign) {
+        flags |= Py_DTSF_SIGN;
     }
 
-    /* If nothing but digits after sign, append ".0" */
-    cnt = strlen(buf);
-    for (i = (buf[0] == '-') ? 1 : 0; i < cnt; ++i) {
-        if (!isdigit(Py_CHARMASK(buf[i]))) {
-            break;
-        }
+    /* we always include the decimal point, as required by trim_float_zeros */
+    if (tail == 'r' || tail == '0') {
+        flags |= Py_DTSF_ADD_DOT_0;
     }
-    if (i == cnt && buflen >= cnt + 3) {
-        strcpy(&buf[cnt],".0");
+    else {
+        flags |= Py_DTSF_ALT;
     }
+
+    repr = PyOS_double_to_string((double)val, format_code, prec, flags, NULL);
+    if (repr == NULL) {
+        return NULL;
+    }
+
+    trim_float_zeros(repr, tail);
+
+    ret = PyUString_FromString(repr);
+    PyMem_Free(repr);
+    return ret;
 }
 
-#undef _FMT1
-#undef _FMT2
-
 /**end repeat**/
+
+NPY_NO_EXPORT PyObject *
+format_half(npy_half val, char format_code, unsigned int prec,
+            int sign, char tail)
+{
+    return format_float(npy_half_to_float(val), format_code, prec, sign, tail);
+}
+
+/*
+ * For longfloat can't use PyOS_double_to_string: fall back to the OS printf
+ */
+NPY_NO_EXPORT PyObject *
+format_longdouble(npy_longdouble val, char format_code, unsigned int prec,
+                  int sign, char tail)
+{
+    char format[64], repr[64];
+    char *conversion;
+    int ret;
+    char *saved_locale=NULL;
+
+    if (!npy_isfinite(val)) {
+        if (npy_isnan(val)) {
+            return PyUString_FromString("nan");
+        }
+        else if (npy_signbit(val)) {
+            return PyUString_FromString("-inf");
+        }
+        else {
+            return PyUString_FromString("inf");
+        }
+    }
+
+    if (format_code != 'e' && format_code != 'f' && format_code != 'g') {
+            PyErr_SetString(PyExc_ValueError, "invalid format");
+            return NULL;
+    }
+
+    /* if user requested a trailing zero but prec is too low, incr it */
+    if (tail == '0' || tail == 'r'){
+        /* g format has one less digit than e,f formats, needs bigger incr */
+        if (format_code =='g' && prec < 2) {
+            prec = 2;
+        }
+        else if (prec < 1) {
+            prec = 1;
+       }
+    }
+
+    conversion = sign ? "+" : "";
+
+    /* the '#' conversion char forces a decimal point to appear */
+    ret = PyOS_snprintf(format, sizeof(format),
+                        "%%#%s.%dL%c", conversion, prec, format_code);
+    if (ret < 0 || ret >= sizeof(format)) {
+        PyErr_SetString(PyExc_RuntimeError, "printf failed");
+        return NULL;
+    }
+
+    /*
+     * if we have a locale where the decimal point is not a "." character,
+     * temporarily switch to the C locale where it is.
+     * (This avoids all the juggling in ensure_decimal_point)
+     */
+    if (strcmp(localeconv()->decimal_point, ".") != 0) {
+        /* save the current locale, copy the name as setlocale clobbers it */
+        saved_locale = strdup(setlocale(LC_ALL, NULL));
+        if (saved_locale == NULL){
+            PyErr_SetString(PyExc_RuntimeError, "printf failed");
+            return NULL;
+        }
+        setlocale (LC_ALL, "C");
+    }
+
+    ret = PyOS_snprintf(repr, sizeof(repr), format, val);
+
+    /* restore locale if necessary */
+    if (saved_locale != NULL) {
+        setlocale(LC_ALL, saved_locale);
+        free(saved_locale);
+    }
+
+    if (ret < 0 || ret >= sizeof(repr)) {
+        PyErr_SetString(PyExc_RuntimeError, "printf failed");
+        return NULL;
+    }
+
+    trim_float_zeros(repr, tail);
+
+    return PyUString_FromString(repr);
+}
 
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #fname = float, double, longdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #suff = f, d, l#
  */
 
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
-
-static void
-format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
+NPY_NO_EXPORT PyObject *
+format_@name@(@type@ val, char format_code, unsigned int prec, int sign,
+              char tail)
 {
-    /* XXX: Find a correct size here for format string */
-    char format[64];
-    char *res;
+    PyObject *rstr, *istr, *ret;
 
-    /*
-     * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
-     */
     if (val.real == 0.0 && npy_signbit(val.real) == 0) {
-        PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-        res = NumPyOS_ascii_format@suff@(buf, buflen - 1, format, val.imag, 0);
-        if (res == NULL) {
-            /* FIXME
-             * We need a better way to handle the error message
-             */
-            fprintf(stderr, "Error while formatting\n");
-            return;
+        istr = format_@fname@(val.imag, format_code, prec, sign, tail);
+        if (istr == NULL) {
+            return NULL;
         }
-        if (!npy_isfinite(val.imag)) {
-            strncat(buf, "*", 1);
+        PyUString_ConcatAndDel(&istr, PyUString_FromString("j"));
+        return istr;
+    }
+
+    if (npy_isfinite(val.real)) {
+        rstr = format_@fname@(val.real, format_code, prec, sign, tail);
+        if (rstr == NULL) {
+            return NULL;
         }
-        strncat(buf, "j", 1);
+    }
+    else if (npy_isnan(val.real)) {
+        rstr = PyUString_FromString("nan");
+    }
+    else if (val.real > 0){
+        rstr = PyUString_FromString("inf");
     }
     else {
-        char re[64], im[64];
-        if (npy_isfinite(val.real)) {
-                PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-                res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                        val.real, 0);
-                if (res == NULL) {
-                    /* FIXME
-                     * We need a better way to handle the error message
-                     */
-                    fprintf(stderr, "Error while formatting\n");
-                    return;
-                }
-        }
-        else {
-                if (npy_isnan(val.real)) {
-                        strcpy(re, "nan");
-                }
-                else if (val.real > 0){
-                        strcpy(re, "inf");
-                }
-                else {
-                        strcpy(re, "-inf");
-                }
-        }
-
-
-        if (npy_isfinite(val.imag)) {
-                PyOS_snprintf(format, sizeof(format), _FMT2, prec);
-                res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                        val.imag, 0);
-                if (res == NULL) {
-                    fprintf(stderr, "Error while formatting\n");
-                    return;
-                }
-        }
-        else {
-                if (npy_isnan(val.imag)) {
-                        strcpy(im, "+nan");
-                }
-                else if (val.imag > 0){
-                        strcpy(im, "+inf");
-                }
-                else {
-                        strcpy(im, "-inf");
-                }
-                if (!npy_isfinite(val.imag)) {
-                        strncat(im, "*", 1);
-                }
-        }
-        PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
+        rstr = PyUString_FromString("-inf");
     }
+
+    if (npy_isfinite(val.imag)) {
+        istr = format_@fname@(val.imag, format_code, prec, 1, tail);
+        if (istr == NULL) {
+            return NULL;
+        }
+    }
+    else if (npy_isnan(val.imag)) {
+        istr = PyUString_FromString("+nan");
+    }
+    else if (val.imag > 0){
+        istr = PyUString_FromString("+inf");
+    }
+    else {
+        istr = PyUString_FromString("-inf");
+    }
+
+    ret = PyUString_FromString("(");
+    PyUString_ConcatAndDel(&ret, rstr);
+    PyUString_ConcatAndDel(&ret, istr);
+    PyUString_ConcatAndDel(&ret, PyUString_FromString("j)"));
+    return ret;
 }
 
 #undef _FMT1
 #undef _FMT2
 
 /**end repeat**/
-
-NPY_NO_EXPORT void
-format_half(char *buf, size_t buflen, npy_half val, unsigned int prec)
-{
-    format_float(buf, buflen, npy_half_to_float(val), prec);
-}
 
 /*
  * over-ride repr and str of array-scalar strings and unicode to
@@ -865,71 +1006,22 @@ timedeltatype_str(PyObject *self)
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    char buf[100];
     npy_@name@ val = ((Py@Name@ScalarObject *)self)->obval;
-
-    format_@name@(buf, sizeof(buf), val, PREC);
-    return PyUString_FromString(buf);
+    return format_@name@(val, 'g', PREC-1, 0, 'r');
 }
 
 #if @hascomplex@
 static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
-    char buf[202];
     npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
-
-    format_c@name@(buf, sizeof(buf), val, PREC);
-    return PyUString_FromString(buf);
+    return format_c@name@(val, 'g', PREC-1, 0, '\0');
 }
 #endif
 
 #undef PREC
 
 /**end repeat1**/
-/**end repeat**/
-
-/*
- * float type print (control print a, where a is a float type instance)
- */
-/**begin repeat
- * #name = half, float, double, longdouble#
- * #Name = Half, Float, Double, LongDouble#
- * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
- * #hascomplex = 0, 1, 1, 1#
- */
-
-static int
-@name@type_print(PyObject *v, FILE *fp, int flags)
-{
-        char buf[100];
-        npy_@name@ val = ((Py@Name@ScalarObject *)v)->obval;
-
-        format_@name@(buf, sizeof(buf), val,
-                      (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-        Py_BEGIN_ALLOW_THREADS
-        fputs(buf, fp);
-        Py_END_ALLOW_THREADS
-        return 0;
-}
-
-#if @hascomplex@
-static int
-c@name@type_print(PyObject *v, FILE *fp, int flags)
-{
-        /* Size of buf: twice sizeof(real) + 2 (for the parenthesis) */
-        char buf[202];
-        npy_c@name@ val = ((PyC@Name@ScalarObject *)v)->obval;
-
-        format_c@name@(buf, sizeof(buf), val,
-                       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-        Py_BEGIN_ALLOW_THREADS
-        fputs(buf, fp);
-        Py_END_ALLOW_THREADS
-        return 0;
-}
-#endif
-
 /**end repeat**/
 
 
@@ -4226,15 +4318,6 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
-
-    PyHalfArrType_Type.tp_print = halftype_print;
-    PyFloatArrType_Type.tp_print = floattype_print;
-    PyDoubleArrType_Type.tp_print = doubletype_print;
-    PyLongDoubleArrType_Type.tp_print = longdoubletype_print;
-
-    PyCFloatArrType_Type.tp_print = cfloattype_print;
-    PyCDoubleArrType_Type.tp_print = cdoubletype_print;
-    PyCLongDoubleArrType_Type.tp_print = clongdoubletype_print;
 
     /*
      * These need to be coded specially because getitem does not
