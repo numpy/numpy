@@ -3833,7 +3833,7 @@ class MaskedArray(ndarray):
             _new._mask = _mask.compress(condition, axis=axis)
         return _new
 
-    def __insert_masked_print(self):
+    def _insert_masked_print(self):
         """
         Replace masked values with masked_print_option, casting all innermost
         dtypes to object.
@@ -3865,7 +3865,7 @@ class MaskedArray(ndarray):
         return res
 
     def __str__(self):
-        return str(self.__insert_masked_print())
+        return str(self._insert_masked_print())
 
     def __repr__(self):
         """
