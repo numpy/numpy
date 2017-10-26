@@ -271,6 +271,9 @@ class TestIntegral(object):
         assert_raises(ValueError, poly.polyint, [0], .5)
         assert_raises(ValueError, poly.polyint, [0], -1)
         assert_raises(ValueError, poly.polyint, [0], 1, [0, 0])
+        assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
+        assert_raises(ValueError, poly.polyint, [0], scl=[0])
+        assert_raises(ValueError, poly.polyint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
