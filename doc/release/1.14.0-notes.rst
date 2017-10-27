@@ -407,9 +407,9 @@ algorithm. For example, ``repr(np.float64(0.3))`` returns
 ``0.3``.
 
 Now, numpy scalars print using the same algorithm as python floats, except for
-``np.longdouble`` which must still use the OS's printf function.
+``np.longdouble`` which must still use the OS's printf function. As a
+consequence some float scalars now print slightly differently.
 
-As a consequence many float scalars now print slightly differently.
 Additionally, complex scalars now drop the ``*`` sign that was sometimes
 included, so ``repr(np.complex128(complex(1,np.inf)))`` returns ``(1+infj)``
 instead of ``(1+inf*j)``. This is like python's complex type.

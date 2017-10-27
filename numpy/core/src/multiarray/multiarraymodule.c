@@ -3604,7 +3604,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     if (precision > 70) {
         precision = 70;
     }
-    return format_longdouble(x, 'g', precision-1, 0, '0');
+    return format_longdouble(x, 'g', precision+0, 0, '0');
 }
 
 static PyObject *

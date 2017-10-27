@@ -27,6 +27,7 @@
 #include "datetime_strings.h"
 #include "alloc.h"
 #include "npy_import.h"
+#include "dtoa.h"
 
 #include <stdlib.h>
 
@@ -541,7 +542,8 @@ format_@name@(@type@ val, char format_code, unsigned int prec, int sign,
         flags |= Py_DTSF_ALT;
     }
 
-    repr = PyOS_double_to_string((double)val, format_code, prec, flags, NULL);
+    //repr = PyOS_double_to_string((double)val, format_code, prec, flags, NULL);
+    repr = dtoa_double_to_string((double)val, format_code, prec, flags, NULL);
     if (repr == NULL) {
         return NULL;
     }
@@ -1007,7 +1009,7 @@ static PyObject *
 @name@type_@kind@(PyObject *self)
 {
     npy_@name@ val = ((Py@Name@ScalarObject *)self)->obval;
-    return format_@name@(val, 'g', PREC-1, 0, 'r');
+    return format_@name@(val, 'g', PREC+0, 0, 'r');
 }
 
 #if @hascomplex@
@@ -1015,7 +1017,7 @@ static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
     npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
-    return format_c@name@(val, 'g', PREC-1, 0, '\0');
+    return format_c@name@(val, 'g', PREC+0, 0, '\0');
 }
 #endif
 
