@@ -2247,6 +2247,24 @@ class TestRegression(object):
             else:
                 assert_(t.__hash__ != None)
 
+    @dec.skipif(not hasattr(sys, 'gettotalrefcount') or
+                sys.version_info < (3, 4) or
+                IS_PYPY)
+    def test_objarray_refcount_leak(self):
+        # gh-9600 - ndarray.tp_dealloc increfs without paired decref.
+        # Fixed for Python >= 3.4 by using tp_finalize instead.
+
+        for k in range(3):
+            before = sys.gettotalrefcount()
+            x = np.array(1.0, dtype=object)
+            del x
+            after = sys.gettotalrefcount()
+
+            if before == after:
+                break
+        else:
+            raise AssertionError("reference count increases")
+
     def test_scalar_copy(self):
         scalar_types = set(np.sctypeDict.values())
         values = {
