@@ -289,7 +289,7 @@ class TestRegression(object):
         # Fix in r2836
         # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
-        assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
+        assert_array_almost_equal(x.ravel(), np.frombuffer(x.tobytes()))
 
     def test_flat_assignment(self):
         # Correct behaviour of ticket #194
@@ -833,14 +833,14 @@ class TestRegression(object):
 
     def test_string_argsort_with_zeros(self):
         # Check argsort for strings containing zeros.
-        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
+        x = np.frombuffer(b"\x00\x02\x00\x01", dtype="|S2")
         assert_array_equal(x.argsort(kind='m'), np.array([1, 0]))
         assert_array_equal(x.argsort(kind='q'), np.array([1, 0]))
 
     def test_string_sort_with_zeros(self):
         # Check sort for strings containing zeros.
-        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
-        y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
+        x = np.frombuffer(b"\x00\x02\x00\x01", dtype="|S2")
+        y = np.frombuffer(b"\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
 
     def test_copy_detection_zero_dim(self):
@@ -1430,10 +1430,10 @@ class TestRegression(object):
             y = x.byteswap()
             if x.dtype.byteorder == z.dtype.byteorder:
                 # little-endian machine
-                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype.newbyteorder()))
+                assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype.newbyteorder()))
             else:
                 # big-endian machine
-                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype))
+                assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype))
             # double check real and imaginary parts:
             assert_equal(x.real, y.real.byteswap())
             assert_equal(x.imag, y.imag.byteswap())
@@ -1783,8 +1783,8 @@ class TestRegression(object):
             assert_equal(a1, a2)
 
     def test_fields_strides(self):
-        "Ticket #1760"
-        r = np.fromstring('abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
+        "gh-2355"
+        r = np.frombuffer(b'abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
         assert_equal(r[0:3:2]['f1'], r['f1'][0:3:2])
         assert_equal(r[0:3:2]['f1'][0], r[0:3:2][0]['f1'])
         assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])

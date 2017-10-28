@@ -2514,6 +2514,11 @@ class TestPiecewise(object):
         x = piecewise([0, 0], [[False, True]], [lambda x:-1])
         assert_array_equal(x, [0, -1])
 
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [])
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [1, 2, 3])
+
     def test_two_conditions(self):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
@@ -2538,7 +2543,7 @@ class TestPiecewise(object):
         assert_(y == 0)
 
         x = 5
-        y = piecewise(x, [[True], [False]], [1, 0])
+        y = piecewise(x, [True, False], [1, 0])
         assert_(y.ndim == 0)
         assert_(y == 1)
 
@@ -2555,6 +2560,17 @@ class TestPiecewise(object):
         x = 4
         y = piecewise(x, [x <= 3, (x > 3) * (x <= 5), x > 5], [1, 2, 3])
         assert_array_equal(y, 2)
+
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1])
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1, 1, 1, 1])
+
+    def test_0d_0d_condition(self):
+        x = np.array(3)
+        c = np.array(x > 3)
+        y = piecewise(x, [c], [1, 2])
+        assert_equal(y, 2)
 
     def test_multidimensional_extrafunc(self):
         x = np.array([[-2.5, -1.5, -0.5],
@@ -2623,7 +2639,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
         x = np.arange(5)
@@ -2631,7 +2647,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "minlength must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")

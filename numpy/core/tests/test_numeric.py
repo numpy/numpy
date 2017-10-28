@@ -208,6 +208,22 @@ class TestNonarrayArgs(object):
             assert_(w[0].category is RuntimeWarning)
 
 
+class TestIsscalar(object):
+    def test_isscalar(self):
+        assert_(np.isscalar(3.1))
+        assert_(np.isscalar(np.int16(12345)))
+        assert_(np.isscalar(False))
+        assert_(np.isscalar('numpy'))
+        assert_(not np.isscalar([3.1]))
+        assert_(not np.isscalar(None))
+
+        # PEP 3141
+        from fractions import Fraction
+        assert_(np.isscalar(Fraction(5, 17)))
+        from numbers import Number
+        assert_(np.isscalar(Number()))
+
+
 class TestBoolScalar(object):
     def test_logical(self):
         f = np.False_
@@ -1125,6 +1141,10 @@ class TestNonzero(object):
                         np.count_nonzero(m, axis=perm),
                         np.count_nonzero(n, axis=perm),
                         err_msg=msg % (perm,))
+
+    def test_countnonzero_axis_empty(self):
+        a = np.array([[0, 0, 1], [1, 0, 1]])
+        assert_equal(np.count_nonzero(a, axis=()), a.astype(bool))
 
     def test_array_method(self):
         # Tests that the array method

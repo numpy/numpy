@@ -21,8 +21,22 @@ New functions
 Deprecations
 ============
 
+``np.bool_`` objects being used in place of integers
+---------------------------------------------------
+Previously ``operator.index(np.bool_)`` was legal, allowing constructs
+such as ``[1, 2, 3][np.True_]``. This was misleading, as it behaved differently
+from ``np.array([1, 2, 3])[np.True_]``. This behavior is deprecated.
+
 * Truth testing on an empty array is deprecated. To check if an array is not
   empty, use ``array.size > 0``.
+* Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
+  ``minlength=0`` should be used.
+``np.fromstring`` should always be passed a ``sep`` argument
+------------------------------------------------------------
+Without this argument, this falls back on a broken version of `np.frombuffer`
+that silently accepts and then encode unicode strings. If reading binary data
+is desired, ``frombuffer`` should be used directly.
+
 
 Future Changes
 ==============
@@ -121,6 +135,13 @@ passed, despite not doing so under the simple cases::
     dtype('float32')  # numpy 1.14
 
 This change affects only ``float32`` and ``float16`` arrays.
+
+``count_nonzero(arr, axis=())`` now counts over no axes, not all axes
+---------------------------------------------------------------------
+Elsewhere, ``axis==()`` is always understood as "no axes", but
+`count_nonzero` had a special case to treat this as "all axes". This was
+inconsistent and surprising. The correct way to count over all axes has always
+been to pass ``axis == None``.
 
 ``__init__.py`` files added to test directories
 -----------------------------------------------
@@ -369,3 +390,9 @@ display the sign. This new behavior can be disabled to mostly reproduce numpy
 -----------------------------------------------------------------
 These options could previously be controlled using ``np.set_printoptions``, but
 now can be changed on a per-call basis as arguments to ``np.array2string``.
+
+Seeding ``RandomState`` using an array requires a 1-d array
+-----------------------------------------------------------
+``RandomState`` previously would accept empty arrays or arrays with 2 or more
+dimensions, which resulted in either a failure to seed (empty arrays) or for
+some of the passed values to be ignored when setting the seed.

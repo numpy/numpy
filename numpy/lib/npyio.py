@@ -1090,12 +1090,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
             a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-                like `' (%s+%sj)' % (fmt, fmt)`
+               like `' (%s+%sj)' % (fmt, fmt)`
             b) a full string specifying every real and imaginary part, e.g.
-                `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+               `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
             c) a list of specifiers, one per column - in this case, the real
-                and imaginary part must have separate specifiers,
-                e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+               and imaginary part must have separate specifiers,
+               e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1418,11 +1418,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first valid line
-        after the first `skip_header` lines.
-        If `names` is a sequence or a single-string of comma-separated names,
-        the names will be used to define the field names in a structured dtype.
-        If `names` is None, the names of the dtype fields will be used, if any.
+        If `names` is True, the field names are read from the first line after
+        the first `skip_header` lines.  This line can optionally be proceeded
+        by a comment delimeter. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field names
+        in a structured dtype. If `names` is None, the names of the dtype
+        fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:

@@ -4183,11 +4183,11 @@ class TestIO(object):
 
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()
-        y = np.fromstring(s, dtype=self.dtype)
+        y = np.frombuffer(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
         s = self.x.tobytes('F')
-        y = np.fromstring(s, dtype=self.dtype)
+        y = np.frombuffer(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flatten('F'))
 
     def test_roundtrip_str(self):
@@ -4302,7 +4302,10 @@ class TestIO(object):
             assert_equal(pos, 10, err_msg=err_msg)
 
     def _check_from(self, s, value, **kw):
-        y = np.fromstring(s, **kw)
+        if 'sep' not in kw:
+            y = np.frombuffer(s, **kw)
+        else:
+            y = np.fromstring(s, **kw)
         assert_array_equal(y, value)
 
         f = open(self.filename, 'wb')
@@ -6529,6 +6532,32 @@ def test_array_interface_itemsize():
     assert_equal(descr_t.itemsize, typestr_t.itemsize)
 
 
+def test_array_interface_empty_shape():
+    # See gh-7994
+    arr = np.array([1, 2, 3])
+    interface1 = dict(arr.__array_interface__)
+    interface1['shape'] = ()
+
+    class DummyArray1(object):
+        __array_interface__ = interface1
+
+    # NOTE: Because Py2 str/Py3 bytes supports the buffer interface, setting
+    # the interface data to bytes would invoke the bug this tests for, that
+    # __array_interface__ with shape=() is not allowed if the data is an object
+    # exposing the buffer interface
+    interface2 = dict(interface1)
+    interface2['data'] = arr[0].tobytes()
+
+    class DummyArray2(object):
+        __array_interface__ = interface2
+
+    arr1 = np.asarray(DummyArray1())
+    arr2 = np.asarray(DummyArray2())
+    arr3 = arr[:1].reshape(())
+    assert_equal(arr1, arr2)
+    assert_equal(arr1, arr3)
+
+
 def test_flat_element_deletion():
     it = np.ones(3).flat
     try:
@@ -7011,6 +7040,37 @@ class TestUnicodeArrayNonzero(object):
         a = np.array(['eggs'], dtype=np.unicode)
         a[0] = ' \0 \0'
         assert_(a)
+
+
+class TestFormat(object):
+
+    def test_0d(self):
+        a = np.array(np.pi)
+        assert_equal('{:0.3g}'.format(a), '3.14')
+        assert_equal('{:0.3g}'.format(a[()]), '3.14')
+
+    def test_1d_no_format(self):
+        a = np.array([np.pi])
+        assert_equal('{}'.format(a), str(a))
+
+    def test_1d_format(self):
+        # until gh-5543, ensure that the behaviour matches what it used to be
+        a = np.array([np.pi])
+
+        def ret_and_exc(f, *args, **kwargs):
+            try:
+                return f(*args, **kwargs), None
+            except Exception as e:
+                # exceptions don't compare equal, so return type and args
+                # which do
+                return None, (type(e), e.args)
+
+        # Could switch on python version here, but all we care about is
+        # that the behaviour hasn't changed
+        assert_equal(
+            ret_and_exc(object.__format__, a, '30'),
+            ret_and_exc('{:30}'.format, a)
+        )
 
 
 class TestCTypes(object):

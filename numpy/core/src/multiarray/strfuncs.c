@@ -197,3 +197,31 @@ array_str(PyArrayObject *self)
     }
     return s;
 }
+
+NPY_NO_EXPORT PyObject *
+array_format(PyArrayObject *self, PyObject *args)
+{
+    PyObject *format;
+    if (!PyArg_ParseTuple(args, "O:__format__", &format))
+        return NULL;
+
+    /* 0d arrays - forward to the scalar type */
+    if (PyArray_NDIM(self) == 0) {
+        PyObject *item = PyArray_ToScalar(PyArray_DATA(self), self);
+        PyObject *res;
+
+        if (item == NULL) {
+            return NULL;
+        }
+        res = PyObject_Format(item, format);
+        Py_DECREF(item);
+        return res;
+    }
+    /* Everything else - use the builtin */
+    else {
+        return PyObject_CallMethod(
+            (PyObject *)&PyBaseObject_Type, "__format__", "OO",
+            (PyObject *)self, format
+        );
+    }
+}
