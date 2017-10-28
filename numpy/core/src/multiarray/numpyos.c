@@ -574,6 +574,9 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
             *endptr = (char*)s;
         }
     }
+    else if(s){
+        return result*NPY_INFINITY;
+    }
     else {
         *endptr = (char*)s;
         result = 0;
