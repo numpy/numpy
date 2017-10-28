@@ -248,15 +248,14 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     try:
         proc = subprocess.Popen(command, shell=use_shell, env=env,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                universal_newlines=True)
+                                stderr=subprocess.PIPE)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''
-    try:
-        text, err = proc.communicate()
-    except UnicodeDecodeError:
-        text = proc.stdout.read()
+    
+    text, err = proc.communicate()
+    text = text.decode(sys.getdefaultencoding(),
+                       errors='replace')
 
     # Another historical oddity
     if text[-1:] == '\n':
