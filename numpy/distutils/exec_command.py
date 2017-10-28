@@ -248,7 +248,7 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     try:
         proc = subprocess.Popen(command, shell=use_shell, env=env,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.OUT,
+                                stderr=subprocess.STDOUT,
                                 universal_newlines=True)
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
