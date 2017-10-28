@@ -30,7 +30,15 @@
 
 #ifndef _NPY_DRAGON4_H_
 #define _NPY_DRAGON4_H_
-#include "numpy/npy_common.h"
+
+#include "Python.h"
+#include "structmember.h"
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include "numpy/arrayobject.h"
+#include "npy_config.h"
+#include "npy_pycompat.h"
+#include "numpy/arrayscalars.h"
 
 typedef enum TrimMode
 {
@@ -40,53 +48,23 @@ typedef enum TrimMode
     TrimMode_DptZeros,     /* trim trailing zeros & trailing decimal point */
 } TrimMode;
 
+PyObject *
+Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
+                           int precision, int sign, TrimMode trim,
+                           int pad_left, int pad_right);
 
-//******************************************************************************
-// These functions frint a floating-point number as a decimal string.
-// The output string is always NUL terminated and the string length (not
-// including the NUL) is returned.
-//******************************************************************************
-//
-// Arguments are:
-//   * buffer - buffer to output into
-//   * bufferSize - maximum characters that can be printed to buffer
-//   * value - value significand
-//   * scientific - boolean controlling whether scientific notation is used
-//   * precision - If positive, specifies the number of decimals to show after
-//                 decimal point. If negative, sufficient digits to uniquely
-//                 specify the float will be output.
-//   * trim_mode - how to treat trailing zeros and decimal point. See TrimMode.
-//   * digits_right - pad the result with '' on the right past the decimal point
-//   * digits_left - pad the result with '' on the right past the decimal point
-//   * exp_digits - Only affects scientific output. If positive, pads the
-//                  exponent with 0s until there are this many digits. If
-//                  negative, only use sufficient digits.
+PyObject *
+Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
+                           int precision, int sign, TrimMode trim,
+                           int pad_left, int exp_digits);
 
-npy_uint32
-Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
-                     npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
-                     npy_int32 digits_right, npy_int32 exp_digits);
+PyObject *
+Dragon4_Positional(PyObject *obj, npy_bool unique, int precision, int sign,
+                   TrimMode trim, int pad_left, int pad_right);
 
-npy_uint32
-Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
-                     npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
-                     npy_int32 digits_right, npy_int32 exp_digits);
-
-npy_uint32
-Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
-                     npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
-                     npy_int32 digits_right, npy_int32 exp_digits);
-
-#ifdef NPY_FLOAT128
-npy_uint32
-Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
-                      npy_bool scientific, npy_bool unique, npy_int32 precision,
-                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
-                      npy_int32 digits_right, npy_int32 exp_digits);
-#endif
+PyObject *
+Dragon4_Scientific(PyObject *obj, npy_bool unique, int precision, int sign,
+                   TrimMode trim, int pad_left, int exp_digits);
 
 #endif
 
