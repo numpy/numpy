@@ -1509,10 +1509,15 @@ npy_uint64 GetMantissa_F64(FloatUnion64 *v) { return v->integer & 0xFFFFFFFFFFFF
  * intbit     1 bit,  first u64
  * mantissa: 63 bits, first u64
  */
-typedef union FloatUnion128 {
-    npy_float128 floatingPoint;
+
+/*
+ * Since systems have different types of long doubles, and may not necessarily
+ * have a 128-byte format we can use to pass values around, here we create
+ * our own 128-bit storage type for convenience.
+ */
+typedef struct FloatVal128 {
     npy_uint64 integer[2];
-} FloatUnion128;
+} FloatVal128;
 npy_bool   IsNegative_F128(FloatVal128 *v) {
     return ((v->integer[1] >> 15) & 0x1) != 0;
 }
@@ -1520,6 +1525,44 @@ npy_uint32 GetExponent_F128(FloatVal128 *v) { return v->integer[1] & 0x7FFF; }
 npy_uint64 GetMantissa_F128(FloatVal128 *v) {
     return v->integer[0] &  0x7FFFFFFFFFFFFFFFull;
 }
+
+/*
+ * then for each different definition of long double, we create a union to
+ * unpack the float data safely. We can then copy these integers to a
+ * FloatVal128.
+ */
+#ifdef NPY_FLOAT128
+typedef union FloatUnion128
+{
+    npy_float128 floatingPoint;
+    struct {
+        npy_uint64 a;
+        npy_uint16 b;
+    } integer;
+} FloatUnion128;
+#endif
+
+#ifdef NPY_FLOAT96
+typedef union FloatUnion96
+{
+    npy_float96 floatingPoint;
+    struct {
+        npy_uint64 a;
+        npy_uint32 b;
+    } integer;
+} FloatUnion96;
+#endif
+
+#ifdef NPY_FLOAT80
+typedef union FloatUnion80
+{
+    npy_float80 floatingPoint;
+    struct {
+        npy_uint64 a;
+        npy_uint16 b;
+    } integer;
+} FloatUnion80;
+#endif
 
 /*
  * The main changes above this point, relative to Ryan Juckett's code, are:
@@ -1532,7 +1575,7 @@ npy_uint64 GetMantissa_F128(FloatVal128 *v) {
  * Below this point, the FormatPositional and FormatScientific functions have
  * been more significantly rewritten. The Dragon4_PrintFloat16 and
  * Dragon4_PrintFloat128 functions are new, and were adapted from the 64 and 32
- * bit versions.
+ * bit versions. The python interfacing functions (in the header) are new.
  */
 
 
@@ -2102,7 +2145,7 @@ PrintInfNan(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
  *                exponent with 0s until there are this many digits. If
  *                negative, only use sufficient digits.
  */
-npy_uint32
+static npy_uint32
 Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
                      npy_bool scientific, npy_bool unique, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
@@ -2198,7 +2241,7 @@ Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
     }
 }
 
-npy_uint32
+static npy_uint32
 Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
                      npy_bool scientific, npy_bool unique, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
@@ -2294,7 +2337,7 @@ Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
     }
 }
 
-npy_uint32
+static npy_uint32
 Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
                      npy_bool scientific, npy_bool unique, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
@@ -2391,7 +2434,7 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
     }
 }
 
-npy_uint32
+static npy_uint32
 Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
                       npy_bool scientific, npy_bool unique, npy_int32 precision,
                       npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
@@ -2485,4 +2528,209 @@ Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
                                 digits_left, digits_right);
     }
 }
+
+PyObject *
+Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
+                           int precision, int sign, TrimMode trim,
+                           int pad_left, int pad_right)
+{
+    /* 
+     * Use a very large buffer in case anyone tries to output a large numberG.
+     * 16384 should be enough to uniquely print any float128, which goes up
+     * to about 10^4932 */
+    static char repr[16384];
+    FloatVal128 val128;
+#ifdef NPY_FLOAT80
+    FloatUnion80 buf80;;
 #endif
+#ifdef NPY_FLOAT96
+    FloatUnion96 buf96;
+#endif
+#ifdef NPY_FLOAT128
+    FloatUnion128 buf128;
+#endif
+
+    switch (size) {
+        case 2:
+            Dragon4_PrintFloat16(repr, sizeof(repr), *(npy_float16*)val,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+        case 4:
+            Dragon4_PrintFloat32(repr, sizeof(repr), *(npy_float32*)val,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+        case 8:
+            Dragon4_PrintFloat64(repr, sizeof(repr), *(npy_float64*)val,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+#ifdef NPY_FLOAT80
+        case 10:
+            buf80.floatingPoint = *(npy_float80*)val;
+            val128.integer[0] = buf80.integer.a;
+            val128.integer[1] = buf80.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+#endif
+#ifdef NPY_FLOAT96
+        case 12:
+            buf96.floatingPoint = *(npy_float96*)val;
+            val128.integer[0] = buf96.integer.a;
+            val128.integer[1] = buf96.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+#endif
+#ifdef NPY_FLOAT128
+        case 16:
+            buf128.floatingPoint = *(npy_float128*)val;
+            val128.integer[0] = buf128.integer.a;
+            val128.integer[1] = buf128.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+            break;
+#endif
+        default:
+            PyErr_Format(PyExc_ValueError, "unexpected itemsize %zu", size);
+            return NULL;
+    }
+
+    return PyUString_FromString(repr);
+}
+
+PyObject *
+Dragon4_Positional(PyObject *obj, npy_bool unique, int precision, int sign,
+                   TrimMode trim, int pad_left, int pad_right)
+{
+    double val;
+
+    if (PyArray_IsScalar(obj, Half)) {
+        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_half), unique,
+                                    precision, sign, trim, pad_left, pad_right);
+    }
+    else if (PyArray_IsScalar(obj, Float)) {
+        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_float), unique,
+                                    precision, sign, trim, pad_left, pad_right);
+    }
+    else if (PyArray_IsScalar(obj, Double)) {
+        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_double), unique,
+                                    precision, sign, trim, pad_left, pad_right);
+    }
+    else if (PyArray_IsScalar(obj, LongDouble)) {
+        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_longdouble), unique,
+                                    precision, sign, trim, pad_left, pad_right);
+    }
+
+    val = PyFloat_AsDouble(obj);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    return Dragon4_Positional_AnySize(&val, sizeof(double), unique,
+                               precision, sign, trim, pad_left, pad_right);
+}
+
+PyObject *
+Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
+                           int precision, int sign, TrimMode trim,
+                           int pad_left, int exp_digits)
+{
+    /* use a very large buffer in case anyone tries to output a large precision */
+    static char repr[4096];
+    FloatVal128 val128;
+#ifdef NPY_FLOAT80
+    FloatUnion80 buf80;;
+#endif
+#ifdef NPY_FLOAT96
+    FloatUnion96 buf96;
+#endif
+#ifdef NPY_FLOAT128
+    FloatUnion128 buf128;
+#endif
+
+
+    switch (size) {
+        case 2:
+            Dragon4_PrintFloat16(repr, sizeof(repr), *(npy_float16*)val,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+        case 4:
+            Dragon4_PrintFloat32(repr, sizeof(repr), *(npy_float32*)val,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+        case 8:
+            Dragon4_PrintFloat64(repr, sizeof(repr), *(npy_float64*)val,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+#ifdef NPY_FLOAT80
+        case 10:
+            buf80.floatingPoint = *(npy_float80*)val;
+            val128.integer[0] = buf80.integer.a;
+            val128.integer[1] = buf80.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+#endif
+#ifdef NPY_FLOAT96
+        case 12:
+            buf96.floatingPoint = *(npy_float96*)val;
+            val128.integer[0] = buf96.integer.a;
+            val128.integer[1] = buf96.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+#endif
+#ifdef NPY_FLOAT128
+        case 16:
+            buf128.floatingPoint = *(npy_float128*)val;
+            val128.integer[0] = buf128.integer.a;
+            val128.integer[1] = buf128.integer.b;
+            Dragon4_PrintFloat128(repr, sizeof(repr), val128,
+                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+            break;
+#endif
+        default:
+            PyErr_Format(PyExc_ValueError, "unexpected itemsize %zu", size);
+            return NULL;
+    }
+
+    return PyUString_FromString(repr);
+}
+
+PyObject *
+Dragon4_Scientific(PyObject *obj, npy_bool unique, int precision, int sign,
+                   TrimMode trim, int pad_left, int exp_digits)
+{
+    double val;
+
+    if (PyArray_IsScalar(obj, Half)) {
+        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_half), unique,
+                                   precision, sign, trim, pad_left, exp_digits);
+    }
+    else if (PyArray_IsScalar(obj, Float)) {
+        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_float), unique,
+                                   precision, sign, trim, pad_left, exp_digits);
+    }
+    else if (PyArray_IsScalar(obj, Double)) {
+        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_double), unique,
+                                   precision, sign, trim, pad_left, exp_digits);
+    }
+    else if (PyArray_IsScalar(obj, LongDouble)) {
+        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_longdouble), unique,
+                                   precision, sign, trim, pad_left, exp_digits);
+    }
+
+    val = PyFloat_AsDouble(obj);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    return Dragon4_Scientific_AnySize(&val, sizeof(double), unique,
+                               precision, sign, trim, pad_left, exp_digits);
+}
