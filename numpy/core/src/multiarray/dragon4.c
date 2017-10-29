@@ -1021,7 +1021,7 @@ typedef enum CutoffMode
  *   * mantissaBit - index of the highest set mantissa bit
  *   * hasUnequalMargins - is the high margin twice as large as the low margin
  *   * cutoffMode - how to determine output length
- *   * cutoffNumber - parameter to the selected cutoffMode
+ *   * cutoffNumber - parameter to the selected cutoffMode. For each mode:
  *   * pOutBuffer - buffer to output into
  *   * bufferSize - maximum characters that can be printed to pOutBuffer
  *   * pOutExponent - the base 10 exponent of the first digit
@@ -1563,6 +1563,7 @@ typedef union FloatUnion80
     } integer;
 } FloatUnion80;
 #endif
+
 
 /*
  * The main changes above this point, relative to Ryan Juckett's code, are:
