@@ -23,12 +23,12 @@ def check_float_type(tp):
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
 
-    if tp(1e10).itemsize > 4:
-        assert_equal(str(tp(1e10)), str(float('1e10')),
+    if tp(1e16).itemsize > 4:
+        assert_equal(str(tp(1e16)), str(float('1e16')),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        ref = '1e+10'
-        assert_equal(str(tp(1e10)), ref,
+        ref = '1e+16'
+        assert_equal(str(tp(1e16)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
@@ -67,12 +67,12 @@ def check_complex_type(tp):
         assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
                      err_msg='Failed str formatting for type %s' % tp)
 
-    if tp(1e10).itemsize > 8:
-        assert_equal(str(tp(1e10)), str(complex(1e10)),
+    if tp(1e16).itemsize > 8:
+        assert_equal(str(tp(1e16)), str(complex(1e16)),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        ref = '(1e+10+0j)'
-        assert_equal(str(tp(1e10)), ref,
+        ref = '(1e+16+0j)'
+        assert_equal(str(tp(1e16)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
@@ -90,21 +90,21 @@ def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
     TESTS = {
         complex(np.inf, 0): "(inf+0j)",
-        complex(0, np.inf): "inf*j",
+        complex(0, np.inf): "infj",
         complex(-np.inf, 0): "(-inf+0j)",
-        complex(0, -np.inf): "-inf*j",
+        complex(0, -np.inf): "-infj",
         complex(np.inf, 1): "(inf+1j)",
-        complex(1, np.inf): "(1+inf*j)",
+        complex(1, np.inf): "(1+infj)",
         complex(-np.inf, 1): "(-inf+1j)",
-        complex(1, -np.inf): "(1-inf*j)",
+        complex(1, -np.inf): "(1-infj)",
         complex(np.nan, 0): "(nan+0j)",
-        complex(0, np.nan): "nan*j",
+        complex(0, np.nan): "nanj",
         complex(-np.nan, 0): "(nan+0j)",
-        complex(0, -np.nan): "nan*j",
+        complex(0, -np.nan): "nanj",
         complex(np.nan, 1): "(nan+1j)",
-        complex(1, np.nan): "(1+nan*j)",
+        complex(1, np.nan): "(1+nanj)",
         complex(-np.nan, 1): "(nan+1j)",
-        complex(1, -np.nan): "(1+nan*j)",
+        complex(1, -np.nan): "(1+nanj)",
     }
     for tp in [np.complex64, np.cdouble, np.clongdouble]:
         for c, s in TESTS.items():
@@ -139,11 +139,11 @@ def check_float_type_print(tp):
     for x in [np.inf, -np.inf, np.nan]:
         _test_redirected_print(float(x), tp, _REF[x])
 
-    if tp(1e10).itemsize > 4:
-        _test_redirected_print(float(1e10), tp)
+    if tp(1e16).itemsize > 4:
+        _test_redirected_print(float(1e16), tp)
     else:
-        ref = '1e+10'
-        _test_redirected_print(float(1e10), tp, ref)
+        ref = '1e+16'
+        _test_redirected_print(float(1e16), tp, ref)
 
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
@@ -151,11 +151,11 @@ def check_complex_type_print(tp):
     for x in [0, 1, -1, 1e20]:
         _test_redirected_print(complex(x), tp)
 
-    if tp(1e10).itemsize > 8:
-        _test_redirected_print(complex(1e10), tp)
+    if tp(1e16).itemsize > 8:
+        _test_redirected_print(complex(1e16), tp)
     else:
-        ref = '(1e+10+0j)'
-        _test_redirected_print(complex(1e10), tp, ref)
+        ref = '(1e+16+0j)'
+        _test_redirected_print(complex(1e16), tp, ref)
 
     _test_redirected_print(complex(np.inf, 1), tp, '(inf+1j)')
     _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
@@ -240,7 +240,7 @@ def test_locale_double():
 
 @in_foreign_locale
 def test_locale_longdouble():
-    assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
+    assert_equal(str(np.longdouble('1.2')), str(float(1.2)))
 
 if __name__ == "__main__":
     run_module_suite()
