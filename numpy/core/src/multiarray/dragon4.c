@@ -998,6 +998,10 @@ typedef enum CutoffMode
  * There is some more documentation of these changes on Ryan Juckett's website
  * at http://www.ryanjuckett.com/programming/printing-floating-point-numbers/
  *
+ * Ryan Juckett's implementation did not implement "IEEE unbiased rounding",
+ * except in the last digit. This has been added back, following the Burger &
+ * Dybvig code, using the isEven variable.
+ *
  * Arguments:
  *   * mantissa - value significand
  *   * exponent - value exponent in base 2
@@ -1039,6 +1043,8 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
     npy_int32 digitExponent, cutoffExponent, desiredCutoffExponent, hiBlock;
     npy_uint32 outputDigit;    /* current digit being output */
     npy_uint32 outputLen;
+    npy_bool isEven = (mantissa % 2) == 0;
+    npy_int32 cmp;
 
     /* values used to determine how to round */
     npy_bool low, high, roundDown;
@@ -1312,8 +1318,10 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
              * stop looping if we are far enough away from our neighboring
              * values or if we have reached the cutoff digit
              */
-            low = BigInt_Compare(&scaledValue, &scaledMarginLow) < 0;
-            high = BigInt_Compare(&scaledValueHigh, &scale) > 0;
+            cmp = BigInt_Compare(&scaledValue, &scaledMarginLow);
+            low = isEven ? (cmp <= 0) : (cmp < 0);
+            cmp = BigInt_Compare(&scaledValueHigh, &scale);
+            high = isEven ? (cmp >= 0) : (cmp > 0);
             if (low | high | (digitExponent == cutoffExponent))
                 break;
 
@@ -1500,6 +1508,7 @@ npy_uint64 GetMantissa_F128(FloatVal128 *v) {
  *     by replacing multiplication by 2 or 4 by BigInt_ShiftLeft calls.
  *  2. Increased c_BigInt_MaxBlocks
  *  3. Added more entries to the g_PowerOf10_Big table
+ *  4. Added unbiased rounding calculation with isEven
  *
  * Below this point, the FormatPositional and FormatScientific functions have
  * been more significantly rewritten. The Dragon4_PrintFloat16 and
