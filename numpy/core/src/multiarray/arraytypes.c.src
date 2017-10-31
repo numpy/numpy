@@ -356,18 +356,18 @@ string_to_long_double(PyObject*op)
     if (s) {
         errno = 0;
         temp = NumPyOS_ascii_strtold(s, &end);
-        if (end==s || *end) {
-            PyErr_Format(PyExc_ValueError,
-                         "invalid literal for long double: %s",
-                         s);
-            Py_XDECREF(b);
-            return 0;
-        }
-        else if (errno) {
+        if (errno) {
             PyErr_Format(PyExc_ValueError,
                          "invalid literal for long double: %s (%s)",
                          s,
                          strerror(errno));
+            Py_XDECREF(b);
+            return 0;
+        }
+        else if (end == s || *end) {
+            PyErr_Format(PyExc_ValueError,
+                         "invalid literal for long double: %s",
+                         s);
             Py_XDECREF(b);
             return 0;
         }
