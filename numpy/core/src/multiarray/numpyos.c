@@ -572,7 +572,9 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         freelocale(clocale);
     }
     else {
-        *endptr = (char*)s;
+        if (endptr != NULL) {
+            *endptr = (char*)s;
+        }
         result = 0;
     }
     return result;
