@@ -253,7 +253,14 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     except EnvironmentError:
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''
-    text, err = proc.communicate()
+
+    try:
+        text, err = proc.communicate()
+    except UnicodeDecodeError:
+        text = '\n'.join(
+            byte_line.decode(sys.getdefaultencoding(), errors='replace')
+            for byte_line in iter(proc.stdout.readline, ''))
+
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
