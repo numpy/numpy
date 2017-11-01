@@ -402,11 +402,13 @@ def _block_check_depths_match(arrays, parent_index=[]):
             )
         )
     elif type(arrays) is list and len(arrays) > 0:
-        indexes, arr_ndims = zip(*[_block_check_depths_match(arr, parent_index + [i])
-                                   for i, arr in enumerate(arrays)])
+        idxs_ndims = (_block_check_depths_match(arr, parent_index + [i])
+                      for i, arr in enumerate(arrays))
 
-        first_index = indexes[0]
-        for i, index in enumerate(indexes):
+        first_index, max_arr_ndim = idxs_ndims.__next__()
+        for i, (index, ndim) in enumerate(idxs_ndims, 1):
+            if ndim > max_arr_ndim:
+                max_arr_ndim = ndim
             if len(index) != len(first_index):
                 raise ValueError(
                     "List depths are mismatched. First element was at depth "
@@ -416,7 +418,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
                         format_index(index)
                     )
                 )
-        return first_index, max(arr_ndims)
+        return first_index, max_arr_ndim
     elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
         return parent_index + [None], 0
