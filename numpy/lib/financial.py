@@ -32,6 +32,14 @@ def _convert_when(when):
     except (KeyError, TypeError):
         return [_when_to_num[x] for x in when]
 
+def _generate_typed_number(array_like, number):
+    """
+    Returns the `number` representation based on the type of the array.
+    This allows for custom types to be used when doing financial computations.
+    For example using Decimal instead of float
+    """
+    return type(array_like.item())(number)
+
 
 def fv(rate, nper, pmt, pv, when='end'):
     """
@@ -116,11 +124,12 @@ def fv(rate, nper, pmt, pv, when='end'):
     """
     when = _convert_when(when)
     (rate, nper, pmt, pv, when) = map(np.asarray, [rate, nper, pmt, pv, when])
-    temp = (1+rate)**nper
+    one = _generate_typed_number(rate, 1)
+    temp = (one+rate)**nper
     miter = np.broadcast(rate, nper, pmt, pv, when)
-    zer = np.zeros(miter.shape)
+    zer = np.zeros(miter.shape, dtype=rate.dtype)
     fact = np.where(rate == zer, nper + zer,
-                    (1 + rate*when)*(temp - 1)/rate + zer)
+                    (one + rate*when)*(temp - one)/rate + zer)
     return -(pv*temp + pmt*fact)
 
 def pmt(rate, nper, pv, fv=0, when='end'):
@@ -209,11 +218,12 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     when = _convert_when(when)
     (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
-    mask = (rate == 0.0)
-    masked_rate = np.where(mask, 1.0, rate)
-    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
+    mask = (rate == _generate_typed_number(rate, 0.0))
+    one = _generate_typed_number(rate, 1.0)
+    masked_rate = np.where(mask, one, rate)
+    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape, dtype=rate.dtype)
     fact = np.where(mask != z, nper + z,
-                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
+                    (one + masked_rate*when)*(temp - one)/masked_rate + z)
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
@@ -268,6 +278,9 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     when = _convert_when(when)
     (rate, pmt, pv, fv, when) = map(np.asarray, [rate, pmt, pv, fv, when])
 
+    zero = _generate_typed_number(rate, 0.0)
+    one = _generate_typed_number(rate, 1)
+
     use_zero_rate = False
     with np.errstate(divide="raise"):
         try:
@@ -276,13 +289,13 @@ def nper(rate, pmt, pv, fv=0, when='end'):
             use_zero_rate = True
 
     if use_zero_rate:
-        return (-fv + pv) / (pmt + 0.0)
+        return (-fv + pv) / (pmt + zero)
     else:
-        A = -(fv + pv)/(pmt+0.0)
-        B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
+        A = -(fv + pv)/(pmt+zero)
+        B = np.log((-fv+z) / (pv+z))/np.log(one+rate)
         miter = np.broadcast(rate, pmt, pv, fv, when)
-        zer = np.zeros(miter.shape)
-        return np.where(rate == zer, A + zer, B + zer) + 0.0
+        zer = np.zeros(miter.shape, dtype=rate.dtype)
+        return np.where(rate == zer, A + zer, B + zer) + zero
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -370,11 +383,14 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     when = _convert_when(when)
     rate, per, nper, pv, fv, when = np.broadcast_arrays(rate, per, nper,
                                                         pv, fv, when)
+
+    one = _generate_typed_number(rate, 1)
+    zero = _generate_typed_number(rate, 0.0)
     total_pmt = pmt(rate, nper, pv, fv, when)
     ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
     try:
-        ipmt = np.where(when == 1, ipmt/(1 + rate), ipmt)
-        ipmt = np.where(np.logical_and(when == 1, per == 1), 0.0, ipmt)
+        ipmt = np.where(when == one, ipmt/(one + rate), ipmt)
+        ipmt = np.where(np.logical_and(when == one, per == one), zero, ipmt)
     except IndexError:
         pass
     return ipmt
@@ -386,7 +402,8 @@ def _rbl(rate, per, pmt, pv, when):
     function.  It is the 'remaining balance on loan' which might be useful as
     it's own function, but is easily calculated with the 'fv' function.
     """
-    return fv(rate, (per - 1), pmt, pv, when)
+    one = _generate_typed_number(rate, 1)
+    return fv(rate, (per - one), pmt, pv, when)
 
 def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -504,10 +521,11 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     """
     when = _convert_when(when)
     (rate, nper, pmt, fv, when) = map(np.asarray, [rate, nper, pmt, fv, when])
-    temp = (1+rate)**nper
+    one = _generate_typed_number(rate, 1)
+    temp = (one+rate)**nper
     miter = np.broadcast(rate, nper, pmt, fv, when)
-    zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
+    zer = np.zeros(miter.shape, dtype=rate.dtype)
+    fact = np.where(rate == zer, nper+zer, (one+rate*when)*(temp-one)/rate+zer)
     return -(fv + pmt*fact)/temp
 
 # Computed with Sage
