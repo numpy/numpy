@@ -306,6 +306,11 @@ now supported for these arrays:
  * `arr.resize(...)`
  * `pickle.dumps(arr)`
 
+Support for ``decimal.Decimal`` in ``np.lib.financial``
+---------------------------------------------------
+Unless otherwise stated all functions within the ``financial`` package now
+support using the ``decimal.Decimal`` built-in type.
+
 
 Changes
 =======
