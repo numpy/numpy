@@ -947,6 +947,12 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     Type represents one of the flexible array types ( :c:data:`NPY_STRING`,
     :c:data:`NPY_UNICODE`, or :c:data:`NPY_VOID` ).
 
+.. c:function:: PyDataType_ISUNSIZED(descr):
+
+    Type has no size information attached, and can be resized. Should only be
+    called on flexible dtypes. Types that are attached to an array will always
+    be sized, hence the array form of this macro not existing.
+
 .. c:function:: PyTypeNum_ISUSERDEF(num)
 
 .. c:function:: PyDataType_ISUSERDEF(descr)

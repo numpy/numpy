@@ -4746,6 +4746,15 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
+
+    /**begin repeat
+      * #name = STRING, UNICODE, VOID#
+      */
+
+    PyDataType_MAKEUNSIZED(&@name@_Descr);
+
+    /**end repeat**/
+
     /* Set a dictionary with type information */
     infodict = PyDict_New();
     if (infodict == NULL) return -1;
