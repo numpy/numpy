@@ -6,7 +6,8 @@ $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 from __future__ import division, absolute_import, print_function
 
 __all__ = ["array2string", "array_str", "array_repr", "set_string_function",
-           "set_printoptions", "get_printoptions"]
+           "set_printoptions", "get_printoptions", "format_float_positional",
+           "format_float_scientific"]
 __docformat__ = 'restructuredtext'
 
 #
@@ -767,6 +768,142 @@ class FloatingFormat(object):
                                       trim=self.trim, sign=self.sign == '+',
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
+
+
+def format_float_scientific(x, precision=None, unique=True, trim='k',
+                            sign=False, pad_left=None, exp_digits=None):
+    """
+    Format a floating-point scalar as a string in fractional notation.
+
+    Provides control over rounding, trimming and padding. Uses and assumes
+    IEEE unbiased rounding. Uses the "Dragon4" algorithm.
+
+    Parameters
+    ----------
+    x : python float or numpy floating scalar
+        Value to format.
+    precision : non-negative integer, optional
+        Maximum number of fractional digits to print. May be ommited
+        if `unique` is `True`, but is required if unique is `False`.
+    unique : boolean, optional
+        If `False`, output exactly `precision` fractional digits and round the
+        remaining value. Digits are generated as if printing an
+        infinite-precision value and stopping after `precision` digits.
+        If `True`, use a digit-generation strategy which gives the shortest
+        representation which uniquely identifies the floating-point number from
+        other values of the same type, by judicious rounding. If `precision`
+        was omitted, print out the full unique representation, otherwise digit
+        generation is cut off after `precision` digits and the remaining value
+        is rounded.
+    trim : one of 'k', '.', '0', '-', optional
+        Controls post-processing trimming of trailing digits, as follows:
+            k : keep trailing zeros, keep decimal point (no trimming)
+            . : trim all trailing zeros, leave decimal point
+            0 : trim all but the zero before the decimal point. Insert the
+                zero if it is missing.
+            - : trim trailing zeros and any trailing decimal point
+    sign : boolean, optional
+        Whether to show the sign for positive values.
+    pad_left : non-negative integer, optional
+        Pad the left side of the string with whitespace until at least that
+        many characters are to the left of the decimal point.
+    exp_digits : non-negative integer, optional
+        Pad the exponent with zeros until it contains at least this many digits.
+        If omitted, the exponent will be at least 2 digits.
+
+    Returns
+    -------
+    rep : string
+        The string representation of the floating point value
+
+    See Also
+    --------
+    format_float_positional
+
+    Examples
+    --------
+    >>> np.format_float_scientific(np.float32(np.pi))
+    '3.1415927e+00'
+    >>> s = np.float32(1.23e24)
+    >>> np.format_float_scientific(s, unique=False, precision=15)
+    '1.230000071797338e+24'
+    >>> np.format_float_scientific(s, exp_digits=4)
+    '1.23e+0024'
+    """
+    precision = -1 if precision is None else precision
+    pad_left = -1 if pad_left is None else pad_left
+    exp_digits = -1 if exp_digits is None else exp_digits
+    return dragon4_scientific(x, precision=precision, unique=unique, trim=trim,
+                              sign=sign, pad_left=pad_left,
+                              exp_digits=exp_digits)
+
+def format_float_positional(x, precision=None, unique=True, trim='k',
+                            sign=False, pad_left=None, pad_right=None):
+    """
+    Format a floating-point scalar as a string in scientific notation.
+
+    Provides control over rounding, trimming and padding.  Uses and assumes
+    IEEE unbiased rounding. Uses the "Dragon4" algorithm.
+
+    Parameters
+    ----------
+    x : python float or numpy floating scalar
+        Value to format.
+    precision : non-negative integer, optional
+        Maximum number of fractional digits to print. May be ommited
+        if `unique` is `True`, but is required if unique is `False`.
+    unique : boolean, optional
+        If `False`, output exactly `precision` fractional digits and round the
+        remaining value. Digits are generated as if printing an
+        infinite-precision value and stopping after `precision` digits.
+        If `True`, use a digit-generation strategy which gives the shortest
+        representation which uniquely identifies the floating-point number from
+        other values of the same type, by judicious rounding. If `precision`
+        was omitted, print out the full unique representation, otherwise digit
+        generation is cut off after `precision` digits and the remaining value
+        is rounded.
+    trim : one of 'k', '.', '0', '-', optional
+        Controls post-processing trimming of trailing digits, as follows:
+            k : keep trailing zeros, keep decimal point (no trimming)
+            . : trim all trailing zeros, leave decimal point
+            0 : trim all but the zero before the decimal point. Insert the
+                zero if it is missing.
+            - : trim trailing zeros and any trailing decimal point
+    sign : boolean, optional
+        Whether to show the sign for positive values.
+    pad_left : non-negative integer, optional
+        Pad the left side of the string with whitespace until at least that
+        many characters are to the left of the decimal point.
+    pad_right : non-negative integer, optional
+        Pad the right side of the string with whitespace until at least that
+        many characters are to the right of the decimal point.
+
+    Returns
+    -------
+    rep : string
+        The string representation of the floating point value
+
+    See Also
+    --------
+    format_float_scientific
+
+    Examples
+    --------
+    >>> np.format_float_scientific(np.float32(np.pi))
+    '3.1415927'
+    >>> np.format_float_positional(np.float16(np.pi))
+    '3.14'
+    >>> np.format_float_positional(np.float16(0.3))
+    '0.3'
+    >>> np.format_float_positional(np.float16(0.3), unique=False, precision=10)
+    '0.3000488281'
+    """
+    precision = -1 if precision is None else precision
+    pad_left = -1 if pad_left is None else pad_left
+    pad_right = -1 if pad_right is None else pad_right
+    return dragon4_positional(x, precision=precision, unique=unique, trim=trim,
+                              sign=sign, pad_left=pad_left,
+                              pad_right=pad_right)
 
 
 class IntegerFormat(object):
