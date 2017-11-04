@@ -400,3 +400,20 @@ Seeding ``RandomState`` using an array requires a 1-d array
 ``RandomState`` previously would accept empty arrays or arrays with 2 or more
 dimensions, which resulted in either a failure to seed (empty arrays) or for
 some of the passed values to be ignored when setting the seed.
+
+The ``repr`` of floating/complex scalars changed to use python's repr algorithm
+-------------------------------------------------------------------------------
+Previously, numpy scalars like ``np.float64`, ``np.float32``, ``np.complex128``
+printed floating-point values using the OS's printf function, unlike python
+floats which are printed using a more accurate and human friendly 'dtoa'
+algorithm. For example, ``repr(np.float64(0.3))`` returns
+``0.29999999999999999`` in numpy 1.13, even though ``repr(0.3)`` returns
+``0.3``.
+
+Now, numpy scalars print using the same algorithm as python floats, except for
+``np.longdouble`` which must still use the OS's printf function. As a
+consequence some float scalars now print slightly differently.
+
+Additionally, complex scalars now drop the ``*`` sign that was sometimes
+included, so ``repr(np.complex128(complex(1,np.inf)))`` returns ``(1+infj)``
+instead of ``(1+inf*j)``. This is like python's complex type.

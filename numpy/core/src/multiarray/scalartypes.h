@@ -19,8 +19,9 @@ initialize_casting_tables(void);
 NPY_NO_EXPORT void
 initialize_numeric_types(void);
 
-NPY_NO_EXPORT void
-format_longdouble(char *buf, size_t buflen, npy_longdouble val, unsigned int prec);
+NPY_NO_EXPORT PyObject *
+format_longdouble(npy_longdouble val, char format_code, unsigned int prec,
+                 int sign, char tail);
 
 #if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
