@@ -63,6 +63,12 @@ typedef enum TrimMode
 //                  negative, only use sufficient digits.
 
 npy_uint32
+Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
+                     npy_bool scientific, npy_int32 precision,
+                     TrimMode trim_mode, npy_int32 digits_left,
+                     npy_int32 digits_right, npy_int32 exp_digits);
+
+npy_uint32
 Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
                      npy_bool scientific, npy_int32 precision,
                      TrimMode trim_mode, npy_int32 digits_left,
@@ -73,6 +79,14 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
                      npy_bool scientific, npy_int32 precision,
                      TrimMode trim_mode, npy_int32 digits_left,
                      npy_int32 digits_right, npy_int32 exp_digits);
+
+#ifdef NPY_FLOAT128
+npy_uint32
+Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, npy_float128 value,
+                      npy_bool scientific, npy_int32 precision,
+                      TrimMode trim_mode, npy_int32 digits_left,
+                      npy_int32 digits_right, npy_int32 exp_digits);
+#endif
 
 #endif
 

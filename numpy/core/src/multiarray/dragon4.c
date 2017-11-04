@@ -101,9 +101,10 @@ LogBase2_64(npy_uint64 val)
 
 /*
  * Maximum number of 32 bit blocks needed in high precision arithmetic to print
- * out 128 bit IEEE floating point values.
+ * out 128 bit IEEE floating point values. 1023 chosen to be large enough for
+ * 128 bit floats, and BigInt is exactly 4kb (nice for page/cache?)
  */
-#define c_BigInt_MaxBlocks  35
+#define c_BigInt_MaxBlocks  1023
 
 /*
  * This structure stores a high precision unsigned integer. It uses a buffer of
@@ -462,6 +463,172 @@ static BigInt g_PowerOf10_Big[] =
             0x26b2716e, 0xadc666b0, 0x1d153624, 0x3c42d35a, 0x63ff540e,
             0xcc5573c0, 0x65f9ef17, 0x55bc28f2, 0x80dcc7f7, 0xf46eeddc,
             0x5fdcefce, 0x000553f7, } },
+    /* 10 ^ 512 */
+    { 54, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0xfc6cf801, 0x77f27267, 0x8f9546dc, 0x5d96976f,
+            0xb83a8a97, 0xc31e1ad9, 0x46c40513, 0x94e65747, 0xc88976c1,
+            0x4475b579, 0x28f8733b, 0xaa1da1bf, 0x703ed321, 0x1e25cfea,
+            0xb21a2f22, 0xbc51fb2e, 0x96e14f5d, 0xbfa3edac, 0x329c57ae,
+            0xe7fc7153, 0xc3fc0695, 0x85a91924, 0xf95f635e, 0xb2908ee0,
+            0x93abade4, 0x1366732a, 0x9449775c, 0x69be5b0e, 0x7343afac,
+            0xb099bc81, 0x45a71d46, 0xa2699748, 0x8cb07303, 0x8a0b1f13,
+            0x8cab8a97, 0xc1d238d9, 0x633415d4, 0x0000001c, } },
+    /* 10 ^ 1024 */
+    { 107, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x2919f001, 0xf55b2b72, 0x6e7c215b,
+             0x1ec29f86, 0x991c4e87, 0x15c51a88, 0x140ac535, 0x4c7d1e1a,
+             0xcc2cd819, 0x0ed1440e, 0x896634ee, 0x7de16cfb, 0x1e43f61f,
+             0x9fce837d, 0x231d2b9c, 0x233e55c7, 0x65dc60d7, 0xf451218b,
+             0x1c5cd134, 0xc9635986, 0x922bbb9f, 0xa7e89431, 0x9f9f2a07,
+             0x62be695a, 0x8e1042c4, 0x045b7a74, 0x1abe1de3, 0x8ad822a5,
+             0xba34c411, 0xd814b505, 0xbf3fdeb3, 0x8fc51a16, 0xb1b896bc,
+             0xf56deeec, 0x31fb6bfd, 0xb6f4654b, 0x101a3616, 0x6b7595fb,
+             0xdc1a47fe, 0x80d98089, 0x80bda5a5, 0x9a202882, 0x31eb0f66,
+             0xfc8f1f90, 0x976a3310, 0xe26a7b7e, 0xdf68368a, 0x3ce3a0b8,
+             0x8e4262ce, 0x75a351a2, 0x6cb0b6c9, 0x44597583, 0x31b5653f,
+             0xc356e38a, 0x35faaba6, 0x0190fba0, 0x9fc4ed52, 0x88bc491b,
+             0x1640114a, 0x005b8041, 0xf4f3235e, 0x1e8d4649, 0x36a8de06,
+             0x73c55349, 0xa7e6bd2a, 0xc1a6970c, 0x47187094, 0xd2db49ef,
+             0x926c3f5b, 0xae6209d4, 0x2d433949, 0x34f4a3c6, 0xd4305d94,
+             0xd9d61a05, 0x00000325, } },
+    /* 10 ^ 2048 */
+    { 213, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x1333e001,
+             0xe3096865, 0xb27d4d3f, 0x49e28dcf, 0xec2e4721, 0xee87e354,
+             0xb6067584, 0x368b8abb, 0xa5e5a191, 0x2ed56d55, 0xfd827773,
+             0xea50d142, 0x51b78db2, 0x98342c9e, 0xc850dabc, 0x866ed6f1,
+             0x19342c12, 0x92794987, 0xd2f869c2, 0x66912e4a, 0x71c7fd8f,
+             0x57a7842d, 0x235552eb, 0xfb7fedcc, 0xf3861ce0, 0x38209ce1,
+             0x9713b449, 0x34c10134, 0x8c6c54de, 0xa7a8289c, 0x2dbb6643,
+             0xe3cb64f3, 0x8074ff01, 0xe3892ee9, 0x10c17f94, 0xa8f16f92,
+             0xa8281ed6, 0x967abbb3, 0x5a151440, 0x9952fbed, 0x13b41e44,
+             0xafe609c3, 0xa2bca416, 0xf111821f, 0xfb1264b4, 0x91bac974,
+             0xd6c7d6ab, 0x8e48ff35, 0x4419bd43, 0xc4a65665, 0x685e5510,
+             0x33554c36, 0xab498697, 0x0dbd21fe, 0x3cfe491d, 0x982da466,
+             0xcbea4ca7, 0x9e110c7b, 0x79c56b8a, 0x5fc5a047, 0x84d80e2e,
+             0x1aa9f444, 0x730f203c, 0x6a57b1ab, 0xd752f7a6, 0x87a7dc62,
+             0x944545ff, 0x40660460, 0x77c1a42f, 0xc9ac375d, 0xe866d7ef,
+             0x744695f0, 0x81428c85, 0xa1fc6b96, 0xd7917c7b, 0x7bf03c19,
+             0x5b33eb41, 0x5715f791, 0x8f6cae5f, 0xdb0708fd, 0xb125ac8e,
+             0x785ce6b7, 0x56c6815b, 0x6f46eadb, 0x4eeebeee, 0x195355d8,
+             0xa244de3c, 0x9d7389c0, 0x53761abd, 0xcf99d019, 0xde9ec24b,
+             0x0d76ce39, 0x70beb181, 0x2e55ecee, 0xd5f86079, 0xf56d9d4b,
+             0xfb8886fb, 0x13ef5a83, 0x408f43c5, 0x3f3389a4, 0xfad37943,
+             0x58ccf45c, 0xf82df846, 0x415c7f3e, 0x2915e818, 0x8b3d5cf4,
+             0x6a445f27, 0xf8dbb57a, 0xca8f0070, 0x8ad803ec, 0xb2e87c34,
+             0x038f9245, 0xbedd8a6c, 0xc7c9dee0, 0x0eac7d56, 0x2ad3fa14,
+             0xe0de0840, 0xf775677c, 0xf1bd0ad5, 0x92be221e, 0x87fa1fb9,
+             0xce9d04a4, 0xd2c36fa9, 0x3f6f7024, 0xb028af62, 0x907855ee,
+             0xd83e49d6, 0x4efac5dc, 0xe7151aab, 0x77cd8c6b, 0x0a753b7d,
+             0x0af908b4, 0x8c983623, 0xe50f3027, 0x94222771, 0x1d08e2d6,
+             0xf7e928e6, 0xf2ee5ca6, 0x1b61b93c, 0x11eb962b, 0x9648b21c,
+             0xce2bcba1, 0x34f77154, 0x7bbebe30, 0xe526a319, 0x8ce329ac,
+             0xde4a74d2, 0xb5dc53d5, 0x0009e8b3, } },
+    /* 10 ^ 4096 */
+    { 426, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x00000000, 0x00000000, 0x2a67c001, 0xd4724e8d,
+             0x8efe7ae7, 0xf89a1e90, 0xef084117, 0x54e05154, 0x13b1bb51,
+             0x506be829, 0xfb29b172, 0xe599574e, 0xf0da6146, 0x806c0ed3,
+             0xb86ae5be, 0x45155e93, 0xc0591cc2, 0x7e1e7c34, 0x7c4823da,
+             0x1d1f4cce, 0x9b8ba1e8, 0xd6bfdf75, 0xe341be10, 0xc2dfae78,
+             0x016b67b2, 0x0f237f1a, 0x3dbeabcd, 0xaf6a2574, 0xcab3e6d7,
+             0x142e0e80, 0x61959127, 0x2c234811, 0x87009701, 0xcb4bf982,
+             0xf8169c84, 0x88052f8c, 0x68dde6d4, 0xbc131761, 0xff0b0905,
+             0x54ab9c41, 0x7613b224, 0x1a1c304e, 0x3bfe167b, 0x441c2d47,
+             0x4f6cea9c, 0x78f06181, 0xeb659fb8, 0x30c7ae41, 0x947e0d0e,
+             0xa1ebcad7, 0xd97d9556, 0x2130504d, 0x1a8309cb, 0xf2acd507,
+             0x3f8ec72a, 0xfd82373a, 0x95a842bc, 0x280f4d32, 0xf3618ac0,
+             0x811a4f04, 0x6dc3a5b4, 0xd3967a1b, 0x15b8c898, 0xdcfe388f,
+             0x454eb2a0, 0x8738b909, 0x10c4e996, 0x2bd9cc11, 0x3297cd0c,
+             0x655fec30, 0xae0725b1, 0xf4090ee8, 0x037d19ee, 0x398c6fed,
+             0x3b9af26b, 0xc994a450, 0xb5341743, 0x75a697b2, 0xac50b9c1,
+             0x3ccb5b92, 0xffe06205, 0xa8329761, 0xdfea5242, 0xeb83cadb,
+             0xe79dadf7, 0x3c20ee69, 0x1e0a6817, 0x7021b97a, 0x743074fa,
+             0x176ca776, 0x77fb8af6, 0xeca19beb, 0x92baf1de, 0xaf63b712,
+             0xde35c88b, 0xa4eb8f8c, 0xe137d5e9, 0x40b464a0, 0x87d1cde8,
+             0x42923bbd, 0xcd8f62ff, 0x2e2690f3, 0x095edc16, 0x59c89f1b,
+             0x1fa8fd5d, 0x5138753d, 0x390a2b29, 0x80152f18, 0x2dd8d925,
+             0xf984d83e, 0x7a872e74, 0xc19e1faf, 0xed4d542d, 0xecf9b5d0,
+             0x9462ea75, 0xc53c0adf, 0x0caea134, 0x37a2d439, 0xc8fa2e8a,
+             0x2181327e, 0x6e7bb827, 0x2d240820, 0x50be10e0, 0x5893d4b8,
+             0xab312bb9, 0x1f2b2322, 0x440b3f25, 0xbf627ede, 0x72dac789,
+             0xb608b895, 0x78787e2a, 0x86deb3f0, 0x6fee7aab, 0xbb9373f4,
+             0x27ecf57b, 0xf7d8b57e, 0xfca26a9f, 0x3d04e8d2, 0xc9df13cb,
+             0x3172826a, 0xcd9e8d7c, 0xa8fcd8e0, 0xb2c39497, 0x307641d9,
+             0x1cc939c1, 0x2608c4cf, 0xb6d1c7bf, 0x3d326a7e, 0xeeaf19e6,
+             0x8e13e25f, 0xee63302b, 0x2dfe6d97, 0x25971d58, 0xe41d3cc4,
+             0x0a80627c, 0xab8db59a, 0x9eea37c8, 0xe90afb77, 0x90ca19cf,
+             0x9ee3352c, 0x3613c850, 0xfe78d682, 0x788f6e50, 0x5b060904,
+             0xb71bd1a4, 0x3fecb534, 0xb32c450c, 0x20c33857, 0xa6e9cfda,
+             0x0239f4ce, 0x48497187, 0xa19adb95, 0xb492ed8a, 0x95aca6a8,
+             0x4dcd6cd9, 0xcf1b2350, 0xfbe8b12a, 0x1a67778c, 0x38eb3acc,
+             0xc32da383, 0xfb126ab1, 0xa03f40a8, 0xed5bf546, 0xe9ce4724,
+             0x4c4a74fd, 0x73a130d8, 0xd9960e2d, 0xa2ebd6c1, 0x94ab6feb,
+             0x6f233b7c, 0x49126080, 0x8e7b9a73, 0x4b8c9091, 0xd298f999,
+             0x35e836b5, 0xa96ddeff, 0x96119b31, 0x6b0dd9bc, 0xc6cc3f8d,
+             0x282566fb, 0x72b882e7, 0xd6769f3b, 0xa674343d, 0x00fc509b,
+             0xdcbf7789, 0xd6266a3f, 0xae9641fd, 0x4e89541b, 0x11953407,
+             0x53400d03, 0x8e0dd75a, 0xe5b53345, 0x108f19ad, 0x108b89bc,
+             0x41a4c954, 0xe03b2b63, 0x437b3d7f, 0x97aced8e, 0xcbd66670,
+             0x2c5508c2, 0x650ebc69, 0x5c4f2ef0, 0x904ff6bf, 0x9985a2df,
+             0x9faddd9e, 0x5ed8d239, 0x25585832, 0xe3e51cb9, 0x0ff4f1d4,
+             0x56c02d9a, 0x8c4ef804, 0xc1a08a13, 0x13fd01c8, 0xe6d27671,
+             0xa7c234f4, 0x9d0176cc, 0xd0d73df2, 0x4d8bfa89, 0x544f10cd,
+             0x2b17e0b2, 0xb70a5c7d, 0xfd86fe49, 0xdf373f41, 0x214495bb,
+             0x84e857fd, 0x00d313d5, 0x0496fcbe, 0xa4ba4744, 0xe8cac982,
+             0xaec29e6e, 0x87ec7038, 0x7000a519, 0xaeee333b, 0xff66e42c,
+             0x8afd6b25, 0x03b4f63b, 0xbd7991dc, 0x5ab8d9c7, 0x2ed4684e,
+             0x48741a6c, 0xaf06940d, 0x2fdc6349, 0xb03d7ecd, 0xe974996f,
+             0xac7867f9, 0x52ec8721, 0xbcdd9d4a, 0x8edd2d00, 0x3557de06,
+             0x41c759f8, 0x3956d4b9, 0xa75409f2, 0x123cd8a1, 0xb6100fab,
+             0x3e7b21e2, 0x2e8d623b, 0x92959da2, 0xbca35f77, 0x200c03a5,
+             0x35fcb457, 0x1bb6c6e4, 0xf74eb928, 0x3d5d0b54, 0x87cc1d21,
+             0x4964046f, 0x18ae4240, 0xd868b275, 0x8bd2b496, 0x1c5563f4,
+             0xc234d8f5, 0xf868e970, 0xf9151fff, 0xae7be4a2, 0x271133ee,
+             0xbb0fd922, 0x25254932, 0xa60a9fc0, 0x104bcd64, 0x30290145,
+             0x00000062, } },
 };
 
 /* result = 10^exponent */
@@ -798,7 +965,7 @@ typedef enum CutoffMode
  * This is an implementation the Dragon4 algorithm to convert a binary number in
  * floating point format to a decimal number in string format. The function
  * returns the number of digits written to the output buffer and the output is
- * not NULL terminated.
+ * not NUL terminated.
  *
  * The floating point input value is (mantissa * 2^exponent).
  *
@@ -827,7 +994,6 @@ typedef enum CutoffMode
  *  There is also some new code to account for details of the BigInt
  *  implementation, which are not present in the paper since it does not specify
  *  details of the integer calculations.
- *
  *
  * There is some more documentation of these changes on Ryan Juckett's website
  * at http://www.ryanjuckett.com/programming/printing-floating-point-numbers/
@@ -899,8 +1065,8 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
              */
 
             /* scaledValue      = 2 * 2 * mantissa*2^exponent */
-            BigInt_Set_uint64(&scaledValue, 4 * mantissa);
-            BigInt_ShiftLeft(&scaledValue, exponent);
+            BigInt_Set_uint64(&scaledValue, mantissa);
+            BigInt_ShiftLeft(&scaledValue, exponent + 2);
 
             /* scale            = 2 * 2 * 1 */
             BigInt_Set_uint32(&scale,  4);
@@ -919,7 +1085,8 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
              */
 
             /* scaledValue      = 2 * 2 * mantissa */
-            BigInt_Set_uint64(&scaledValue, 4 * mantissa);
+            BigInt_Set_uint64(&scaledValue, mantissa);
+            BigInt_ShiftLeft(&scaledValue, 2);
 
             /* scale            = 2 * 2 * 2^(-exponent) */
             BigInt_Pow2(&scale, -exponent + 2);
@@ -938,8 +1105,8 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
         /* if we have no fractional component */
         if (exponent > 0) {
             /* scaledValue     = 2 * mantissa*2^exponent */
-            BigInt_Set_uint64(&scaledValue, 2 * mantissa);
-            BigInt_ShiftLeft(&scaledValue, exponent);
+            BigInt_Set_uint64(&scaledValue, mantissa);
+            BigInt_ShiftLeft(&scaledValue, exponent + 1);
 
             /* scale           = 2 * 1 */
             BigInt_Set_uint32(&scale, 2);
@@ -955,7 +1122,8 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
              */
 
             /* scaledValue     = 2 * mantissa */
-            BigInt_Set_uint64(&scaledValue, 2 * mantissa);
+            BigInt_Set_uint64(&scaledValue, mantissa);
+            BigInt_ShiftLeft(&scaledValue, 1);
 
             /* scale           = 2 * 2^(-exponent) */
             BigInt_Pow2(&scale, -exponent + 1);
@@ -1059,7 +1227,6 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
      * Default to the maximum size of the output buffer.
      */
     cutoffExponent = digitExponent - bufferSize;
-    desiredCutoffExponent = digitExponent - (npy_int32)cutoffNumber;
     switch(cutoffMode) {
         /* print digits until we pass the accuracy margin or buffer size */
         case CutoffMode_Unique:
@@ -1260,6 +1427,23 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
     return outputLen;
 }
 
+
+/*
+ * Helper union to decompose a 16-bit IEEE float.
+ * sign:      1 bit
+ * exponent:  5 bits
+ * mantissa: 10 bits
+ */
+typedef union FloatUnion16
+{
+    npy_uint16 integer;
+} FloatUnion16;
+
+npy_bool   IsNegative_F16(FloatUnion16 *v) { return (v->integer >> 15) != 0; }
+npy_uint32 GetExponent_F16(FloatUnion16 *v) { return (v->integer >> 10) & 0x1F;}
+npy_uint32 GetMantissa_F16(FloatUnion16 *v) { return v->integer & 0x3FF; }
+
+
 /*
  * Helper union to decompose a 32-bit IEEE float.
  * sign:      1 bit
@@ -1290,7 +1474,38 @@ typedef union FloatUnion64
 npy_bool   IsNegative_F64(FloatUnion64 *v) { return (v->integer >> 63) != 0; }
 npy_uint32 GetExponent_F64(FloatUnion64 *v) { return (v->integer >> 52) & 0x7FF; }
 npy_uint64 GetMantissa_F64(FloatUnion64 *v) { return v->integer & 0xFFFFFFFFFFFFFull; }
-/* The code below has been modified to add different "zero trimming" modes */
+
+/*
+ * Helper unions and datatype to decompose a 80-bit IEEE float
+ * sign:      1 bit,  second u64
+ * exponent: 15 bits, second u64
+ * intbit     1 bit,  first u64
+ * mantissa: 63 bits, first u64
+ */
+typedef union FloatUnion128 {
+    npy_float128 floatingPoint;
+    npy_uint64 integer[2];
+} FloatUnion128;
+npy_bool   IsNegative_F128(FloatVal128 *v) {
+    return ((v->integer[1] >> 15) & 0x1) != 0;
+}
+npy_uint32 GetExponent_F128(FloatVal128 *v) { return v->integer[1] & 0x7FFF; }
+npy_uint64 GetMantissa_F128(FloatVal128 *v) {
+    return v->integer[0] &  0x7FFFFFFFFFFFFFFFull;
+}
+
+/*
+ * The main changes above this point, relative to Ryan Juckett's code, are:
+ *  1. fixed overflow problems when mantissa was 64 bits (in float128 types),
+ *     by replacing multiplication by 2 or 4 by BigInt_ShiftLeft calls.
+ *  2. Increased c_BigInt_MaxBlocks
+ *  3. Added more entries to the g_PowerOf10_Big table
+ *
+ * Below this point, the FormatPositional and FormatScientific functions have
+ * been more significantly rewritten. The Dragon4_PrintFloat16 and
+ * Dragon4_PrintFloat128 functions are new, and were adapted from the 64 and 32
+ * bit versions.
+ */
 
 
 /*
@@ -1848,6 +2063,101 @@ PrintInfNan(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
  *                exponent with 0s until there are this many digits. If
  *                negative, only use sufficient digits.
  */
+npy_uint32
+Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
+                     npy_bool scientific, npy_int32 precision, npy_bool sign,
+                     TrimMode trim_mode, npy_int32 digits_left,
+                     npy_int32 digits_right, npy_int32 exp_digits)
+{
+    FloatUnion16 floatUnion;
+    npy_uint32 floatExponent, floatMantissa;
+
+    npy_uint32 mantissa;
+    npy_int32 exponent;
+    npy_uint32 mantissaBit;
+    npy_bool hasUnequalMargins;
+    char signbit = '\0';
+
+    if (bufferSize == 0) {
+        return 0;
+    }
+
+    if (bufferSize == 1) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    /* deconstruct the floating point value */
+    floatUnion.integer = value;
+    floatExponent = GetExponent_F16(&floatUnion);
+    floatMantissa = GetMantissa_F16(&floatUnion);
+
+    /* output the sign */
+    if (IsNegative_F16(&floatUnion)) {
+        signbit = '-';
+    }
+    else if (sign) {
+        signbit = '+';
+    }
+
+    /* if this is a special value */
+    if (floatExponent == 0x1F) {
+        return PrintInfNan(buffer, bufferSize, floatMantissa, 3, signbit);
+    }
+    /* else this is a number */
+
+    /* factor the value into its parts */
+    if (floatExponent != 0) {
+        /*
+         * normalized
+         * The floating point equation is:
+         *  value = (1 + mantissa/2^10) * 2 ^ (exponent-15)
+         * We convert the integer equation by factoring a 2^10 out of the
+         * exponent
+         *  value = (1 + mantissa/2^10) * 2^10 * 2 ^ (exponent-15-10)
+         *  value = (2^10 + mantissa) * 2 ^ (exponent-15-10)
+         * Because of the implied 1 in front of the mantissa we have 10 bits of
+         * precision.
+         *   m = (2^10 + mantissa)
+         *   e = (exponent-15-10)
+         */
+        mantissa            = (1UL << 10) | floatMantissa;
+        exponent            = floatExponent - 15 - 10;
+        mantissaBit         = 10;
+        hasUnequalMargins   = (floatExponent != 1) && (floatMantissa == 0);
+    }
+    else {
+        /*
+         * denormalized
+         * The floating point equation is:
+         *  value = (mantissa/2^10) * 2 ^ (1-15)
+         * We convert the integer equation by factoring a 2^23 out of the
+         * exponent
+         *  value = (mantissa/2^10) * 2^10 * 2 ^ (1-15-10)
+         *  value = mantissa * 2 ^ (1-15-10)
+         * We have up to 10 bits of precision.
+         *   m = (mantissa)
+         *   e = (1-15-10)
+         */
+        mantissa           = floatMantissa;
+        exponent           = 1 - 15 - 10;
+        mantissaBit        = LogBase2_32(mantissa);
+        hasUnequalMargins  = NPY_FALSE;
+    }
+
+    /* format the value */
+    if (scientific) {
+        return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
+                                mantissaBit, hasUnequalMargins,
+                                precision, trim_mode, digits_left, exp_digits);
+    }
+    else {
+        return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
+                                mantissaBit, hasUnequalMargins,
+                                precision, trim_mode,
+                                digits_left, digits_right);
+    }
+}
 
 npy_uint32
 Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
@@ -2042,4 +2352,100 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
     }
 }
 
+#ifdef NPY_FLOAT128
+npy_uint32
+Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, npy_float128 value,
+                      npy_bool scientific, npy_int32 precision, npy_bool sign,
+                      TrimMode trim_mode, npy_int32 digits_left,
+                      npy_int32 digits_right, npy_int32 exp_digits)
+{
+    FloatUnion128 floatUnion;
+    npy_uint32 floatExponent;
+    npy_uint64 floatMantissa;
 
+    npy_uint64 mantissa;
+    npy_int32 exponent;
+    npy_uint32 mantissaBit;
+    npy_bool hasUnequalMargins;
+    char signbit = '\0';
+
+    if (bufferSize == 0) {
+        return 0;
+    }
+
+    if (bufferSize == 1) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    /* deconstruct the floating point value */
+    floatExponent = GetExponent_F128(&value);
+    floatMantissa = GetMantissa_F128(&value);
+
+    /* output the sign */
+    if (IsNegative_F128(&value)) {
+        signbit = '-';
+    }
+    else if (sign) {
+        signbit = '+';
+    }
+
+    /* if this is a special value */
+    if (floatExponent == 0x7FFF) {
+        return PrintInfNan(buffer, bufferSize, floatMantissa, 16, signbit);
+    }
+    /* else this is a number */
+
+    /* factor the value into its parts */
+    if (floatExponent != 0) {
+        /*
+         * normal
+         * The floating point equation is:
+         *  value = (1 + mantissa/2^63) * 2 ^ (exponent-16383)
+         * We convert the integer equation by factoring a 2^63 out of the
+         * exponent
+         *  value = (1 + mantissa/2^63) * 2^63 * 2 ^ (exponent-16383-63)
+         *  value = (2^63 + mantissa) * 2 ^ (exponent-16383-63)
+         * Because of the implied 1 in front of the mantissa we have 64 bits of
+         * precision.
+         *   m = (2^63 + mantissa)
+         *   e = (exponent-16383+1-64)
+         */
+        mantissa            = (1ull << 63) | floatMantissa;
+        exponent            = floatExponent - 16383 - 63;
+        mantissaBit         = 63;
+        hasUnequalMargins   = (floatExponent != 1) && (floatMantissa == 0);
+    }
+    else {
+        /*
+         * subnormal
+         * The floating point equation is:
+         *  value = (mantissa/2^63) * 2 ^ (1-16383)
+         * We convert the integer equation by factoring a 2^52 out of the
+         * exponent
+         *  value = (mantissa/2^63) * 2^52 * 2 ^ (1-16383-63)
+         *  value = mantissa * 2 ^ (1-16383-63)
+         * We have up to 63 bits of precision.
+         *   m = (mantissa)
+         *   e = (1-16383-63)
+         */
+        mantissa            = floatMantissa;
+        exponent            = 1 - 16383 - 63;
+        mantissaBit         = LogBase2_64(mantissa);
+        hasUnequalMargins   = NPY_FALSE;
+    }
+
+    /* format the value */
+    if (scientific) {
+        return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
+                                mantissaBit, hasUnequalMargins,
+                                precision, trim_mode, digits_left, exp_digits);
+    }
+    else {
+        return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
+                                mantissaBit, hasUnequalMargins,
+                                precision, trim_mode,
+                                digits_left, digits_right);
+    }
+}
+#endif
