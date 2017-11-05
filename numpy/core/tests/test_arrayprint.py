@@ -72,42 +72,42 @@ class TestComplexArray(object):
         dtypes = [np.complex64, np.cdouble, np.clongdouble]
         actual = [str(np.array([c], dt)) for c in cvals for dt in dtypes]
         wanted = [
-            '[0.+0.j]',    '[0.+0.j]',    '[ 0.0+0.0j]',
-            '[0.+1.j]',    '[0.+1.j]',    '[ 0.0+1.0j]',
-            '[0.-1.j]',    '[0.-1.j]',    '[ 0.0-1.0j]',
-            '[0.+infj]',   '[0.+infj]',   '[ 0.0+infj]',
-            '[0.-infj]',   '[0.-infj]',   '[ 0.0-infj]',
-            '[0.+nanj]',   '[0.+nanj]',   '[ 0.0+nanj]',
-            '[1.+0.j]',    '[1.+0.j]',    '[ 1.0+0.0j]',
-            '[1.+1.j]',    '[1.+1.j]',    '[ 1.0+1.0j]',
-            '[1.-1.j]',    '[1.-1.j]',    '[ 1.0-1.0j]',
-            '[1.+infj]',   '[1.+infj]',   '[ 1.0+infj]',
-            '[1.-infj]',   '[1.-infj]',   '[ 1.0-infj]',
-            '[1.+nanj]',   '[1.+nanj]',   '[ 1.0+nanj]',
-            '[-1.+0.j]',    '[-1.+0.j]',    '[-1.0+0.0j]',
-            '[-1.+1.j]',    '[-1.+1.j]',    '[-1.0+1.0j]',
-            '[-1.-1.j]',    '[-1.-1.j]',    '[-1.0-1.0j]',
-            '[-1.+infj]',   '[-1.+infj]',   '[-1.0+infj]',
-            '[-1.-infj]',   '[-1.-infj]',   '[-1.0-infj]',
-            '[-1.+nanj]',   '[-1.+nanj]',   '[-1.0+nanj]',
-            '[inf+0.j]',   '[inf+0.j]',   '[ inf+0.0j]',
-            '[inf+1.j]',   '[inf+1.j]',   '[ inf+1.0j]',
-            '[inf-1.j]',   '[inf-1.j]',   '[ inf-1.0j]',
-            '[inf+infj]',  '[inf+infj]',  '[ inf+infj]',
-            '[inf-infj]',  '[inf-infj]',  '[ inf-infj]',
-            '[inf+nanj]',  '[inf+nanj]',  '[ inf+nanj]',
-            '[-inf+0.j]',   '[-inf+0.j]',   '[-inf+0.0j]',
-            '[-inf+1.j]',   '[-inf+1.j]',   '[-inf+1.0j]',
-            '[-inf-1.j]',   '[-inf-1.j]',   '[-inf-1.0j]',
-            '[-inf+infj]',  '[-inf+infj]',  '[-inf+infj]',
-            '[-inf-infj]',  '[-inf-infj]',  '[-inf-infj]',
-            '[-inf+nanj]',  '[-inf+nanj]',  '[-inf+nanj]',
-            '[nan+0.j]',   '[nan+0.j]',   '[ nan+0.0j]',
-            '[nan+1.j]',   '[nan+1.j]',   '[ nan+1.0j]',
-            '[nan-1.j]',   '[nan-1.j]',   '[ nan-1.0j]',
-            '[nan+infj]',  '[nan+infj]',  '[ nan+infj]',
-            '[nan-infj]',  '[nan-infj]',  '[ nan-infj]',
-            '[nan+nanj]',  '[nan+nanj]',  '[ nan+nanj]']
+            '[0.+0.j]',    '[0.+0.j]',    '[0.+0.j]',
+            '[0.+1.j]',    '[0.+1.j]',    '[0.+1.j]',
+            '[0.-1.j]',    '[0.-1.j]',    '[0.-1.j]',
+            '[0.+infj]',   '[0.+infj]',   '[0.+infj]',
+            '[0.-infj]',   '[0.-infj]',   '[0.-infj]',
+            '[0.+nanj]',   '[0.+nanj]',   '[0.+nanj]',
+            '[1.+0.j]',    '[1.+0.j]',    '[1.+0.j]',
+            '[1.+1.j]',    '[1.+1.j]',    '[1.+1.j]',
+            '[1.-1.j]',    '[1.-1.j]',    '[1.-1.j]',
+            '[1.+infj]',   '[1.+infj]',   '[1.+infj]',
+            '[1.-infj]',   '[1.-infj]',   '[1.-infj]',
+            '[1.+nanj]',   '[1.+nanj]',   '[1.+nanj]',
+            '[-1.+0.j]',   '[-1.+0.j]',   '[-1.+0.j]',
+            '[-1.+1.j]',   '[-1.+1.j]',   '[-1.+1.j]',
+            '[-1.-1.j]',   '[-1.-1.j]',   '[-1.-1.j]',
+            '[-1.+infj]',  '[-1.+infj]',  '[-1.+infj]',
+            '[-1.-infj]',  '[-1.-infj]',  '[-1.-infj]',
+            '[-1.+nanj]',  '[-1.+nanj]',  '[-1.+nanj]',
+            '[inf+0.j]',   '[inf+0.j]',   '[inf+0.j]',
+            '[inf+1.j]',   '[inf+1.j]',   '[inf+1.j]',
+            '[inf-1.j]',   '[inf-1.j]',   '[inf-1.j]',
+            '[inf+infj]',  '[inf+infj]',  '[inf+infj]',
+            '[inf-infj]',  '[inf-infj]',  '[inf-infj]',
+            '[inf+nanj]',  '[inf+nanj]',  '[inf+nanj]',
+            '[-inf+0.j]',  '[-inf+0.j]',  '[-inf+0.j]',
+            '[-inf+1.j]',  '[-inf+1.j]',  '[-inf+1.j]',
+            '[-inf-1.j]',  '[-inf-1.j]',  '[-inf-1.j]',
+            '[-inf+infj]', '[-inf+infj]', '[-inf+infj]',
+            '[-inf-infj]', '[-inf-infj]', '[-inf-infj]',
+            '[-inf+nanj]', '[-inf+nanj]', '[-inf+nanj]',
+            '[nan+0.j]',   '[nan+0.j]',   '[nan+0.j]',
+            '[nan+1.j]',   '[nan+1.j]',   '[nan+1.j]',
+            '[nan-1.j]',   '[nan-1.j]',   '[nan-1.j]',
+            '[nan+infj]',  '[nan+infj]',  '[nan+infj]',
+            '[nan-infj]',  '[nan-infj]',  '[nan-infj]',
+            '[nan+nanj]',  '[nan+nanj]',  '[nan+nanj]']
 
         for res, val in zip(actual, wanted):
             assert_equal(res, val)
@@ -290,22 +290,23 @@ class TestPrintOptions(object):
 
         assert_equal(repr(a), 'array([0., 1., 2., 3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
-        assert_equal(repr(b), 'array([1.23400000e+09])')
+        assert_equal(repr(b), 'array([1.234e+09])')
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array( 1.)')
-        assert_equal(repr(b), 'array([ 1.23400000e+09])')
+        assert_equal(repr(b), 'array([ 1.234e+09])')
 
         np.set_printoptions(sign='+')
         assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
         assert_equal(repr(np.array(1.)), 'array(+1.)')
-        assert_equal(repr(b), 'array([+1.23400000e+09])')
+        assert_equal(repr(b), 'array([+1.234e+09])')
 
         np.set_printoptions(sign='legacy')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
-        assert_equal(repr(b), 'array([  1.23400000e+09])')
+        assert_equal(repr(b),  'array([  1.23400000e+09])')
+        assert_equal(repr(-b), 'array([ -1.23400000e+09])')
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')
@@ -313,6 +314,86 @@ class TestPrintOptions(object):
                               "      dtype=[('f0', '<f4'), ('f1', '<f4')])")
         assert_equal(repr(a[0]), "(1., 1.)")
 
+    def test_floatmode(self):
+        x = np.array([0.6104, 0.922, 0.457, 0.0906, 0.3733, 0.007244,
+                      0.5933, 0.947, 0.2383, 0.4226], dtype=np.float16)
+        y = np.array([0.2918820979355541, 0.5064172631089138,
+                      0.2848750619642916, 0.4342965294660567,
+                      0.7326538397312751, 0.3459503329096204,
+                      0.0862072768214508, 0.39112753029631175],
+                      dtype=np.float64)
+        z = np.arange(6, dtype=np.float16)/10
+
+        # also make sure 1e23 is right (is between two fp numbers)
+        w = np.array(['1e{}'.format(i) for i in range(25)], dtype=np.float64)
+        # note: we construct w from the strings `1eXX` instead of doing
+        # `10.**arange(24)` because it turns out the two are not equivalent in
+        # python. On some architectures `1e23 != 10.**23`.
+        wp = np.array([1.234e1, 1e2, 1e123])
+
+        # unique mode
+        np.set_printoptions(floatmode='unique')
+        assert_equal(repr(x),
+    "array([0.6104  , 0.922   , 0.457   , 0.0906  , 0.3733  , 0.007244,\n"
+    "       0.5933  , 0.947   , 0.2383  , 0.4226  ], dtype=float16)")
+        assert_equal(repr(y),
+    "array([0.2918820979355541 , 0.5064172631089138 , 0.2848750619642916 ,\n"
+    "       0.4342965294660567 , 0.7326538397312751 , 0.3459503329096204 ,\n"
+    "       0.0862072768214508 , 0.39112753029631175])")
+        assert_equal(repr(z),
+    "array([0. , 0.1, 0.2, 0.3, 0.4, 0.5], dtype=float16)")
+        assert_equal(repr(w),
+    "array([1.e+00, 1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06, 1.e+07,\n"
+    "       1.e+08, 1.e+09, 1.e+10, 1.e+11, 1.e+12, 1.e+13, 1.e+14, 1.e+15,\n"
+    "       1.e+16, 1.e+17, 1.e+18, 1.e+19, 1.e+20, 1.e+21, 1.e+22, 1.e+23,\n"
+    "       1.e+24])")
+        assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
+
+        # maxprec mode, precision=8
+        np.set_printoptions(floatmode='maxprec', precision=8)
+        assert_equal(repr(x),
+            "array([0.6104  , 0.922   , 0.457   , 0.0906  , 0.3733  , 0.007244,\n"
+            "       0.5933  , 0.947   , 0.2383  , 0.4226  ], dtype=float16)")
+        assert_equal(repr(y),
+            "array([0.2918821 , 0.50641726, 0.28487506, 0.43429653, 0.73265384,\n"
+            "       0.34595033, 0.08620728, 0.39112753])")
+        assert_equal(repr(z),
+            "array([0. , 0.1, 0.2, 0.3, 0.4, 0.5], dtype=float16)")
+        assert_equal(repr(w[::5]),
+            "array([1.e+00, 1.e+05, 1.e+10, 1.e+15, 1.e+20])")
+        assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
+
+        # fixed mode, precision=4
+        np.set_printoptions(floatmode='fixed', precision=4)
+        assert_equal(repr(x),
+    "array([0.6104, 0.9219, 0.4570, 0.0906, 0.3733, 0.0072, 0.5933, 0.9468,\n"
+    "       0.2383, 0.4226], dtype=float16)")
+        assert_equal(repr(y),
+    "array([0.2919, 0.5064, 0.2849, 0.4343, 0.7327, 0.3460, 0.0862, 0.3911])")
+        assert_equal(repr(z),
+    "array([0.0000, 0.1000, 0.2000, 0.3000, 0.3999, 0.5000], dtype=float16)")
+        assert_equal(repr(w[::5]),
+    "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
+        assert_equal(repr(wp), "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
+        # for larger precision, representation error becomes more apparent:
+        np.set_printoptions(floatmode='fixed', precision=8)
+        assert_equal(repr(z),
+    "array([0.00000000, 0.09997559, 0.19995117, 0.30004883, 0.39990234,\n"
+    "       0.50000000], dtype=float16)")
+
+        # maxprec_equal  mode, precision=8
+        np.set_printoptions(floatmode='maxprec_equal', precision=8)
+        assert_equal(repr(x),
+    "array([0.610352, 0.921875, 0.457031, 0.090576, 0.373291, 0.007244,\n"
+    "       0.593262, 0.946777, 0.238281, 0.422607], dtype=float16)")
+        assert_equal(repr(y),
+    "array([0.29188210, 0.50641726, 0.28487506, 0.43429653, 0.73265384,\n"
+    "       0.34595033, 0.08620728, 0.39112753])")
+        assert_equal(repr(z),
+            "array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5], dtype=float16)")
+        assert_equal(repr(w[::5]),
+            "array([1.e+00, 1.e+05, 1.e+10, 1.e+15, 1.e+20])")
+        assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
 
 def test_unicode_object_array():
     import sys
