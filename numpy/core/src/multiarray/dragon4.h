@@ -40,6 +40,22 @@
 #include "npy_pycompat.h"
 #include "numpy/arrayscalars.h"
 
+typedef enum DigitMode
+{
+    /* Round digits to print shortest uniquely identifiable number. */
+    DigitMode_Unique,
+    /* Output the digits of the number as if with infinite precision */
+    DigitMode_Exact,
+} DigitMode;
+
+typedef enum CutoffMode
+{
+    /* up to cutoffNumber significant digits */
+    CutoffMode_TotalLength,
+    /* up to cutoffNumber significant digits past the decimal point */
+    CutoffMode_FractionLength,
+} CutoffMode;
+
 typedef enum TrimMode
 {
     TrimMode_None,         /* don't trim zeros, always leave a decimal point */
@@ -49,22 +65,23 @@ typedef enum TrimMode
 } TrimMode;
 
 PyObject *
-Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
+Dragon4_Positional_AnySize(void *val, size_t size, DigitMode digit_mode,
+                           CutoffMode cutoff_mode, int precision, int sign,
+                           TrimMode trim, int pad_left, int pad_right);
+
+PyObject *
+Dragon4_Scientific_AnySize(void *val, size_t size, DigitMode digit_mode,
                            int precision, int sign, TrimMode trim,
                            int pad_left, int pad_right);
 
 PyObject *
-Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
-                           int precision, int sign, TrimMode trim,
-                           int pad_left, int exp_digits);
+Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
+                   int precision, int sign, TrimMode trim, int pad_left,
+                   int pad_right);
 
 PyObject *
-Dragon4_Positional(PyObject *obj, npy_bool unique, int precision, int sign,
-                   TrimMode trim, int pad_left, int pad_right);
-
-PyObject *
-Dragon4_Scientific(PyObject *obj, npy_bool unique, int precision, int sign,
-                   TrimMode trim, int pad_left, int exp_digits);
+Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
+                   int sign, TrimMode trim, int pad_left, int exp_digits);
 
 #endif
 
