@@ -60,7 +60,7 @@ class TestRealScalars(object):
                             '9.9999999999999694e-311')
 
 
-	# test rounding
+        # test rounding
         # 3.1415927410 is closest float32 to np.pi
         assert_equal(fpos32('3.14159265358979323846', **preckwd(10)),
                             "3.1415927410")
@@ -83,7 +83,7 @@ class TestRealScalars(object):
         assert_equal(fpos64('3.14159265358979323846'), "3.141592653589793")
 
 
-	# smallest numbers
+        # smallest numbers
         assert_equal(fpos32(0.5**(126 + 23), unique=False, precision=149),
                     "0.00000000000000000000000000000000000000000000140129846432"
                     "4817070923729583289916131280261941876515771757068283889791"
@@ -109,9 +109,9 @@ class TestRealScalars(object):
                     "8373897335989936648099411642057026370902792427675445652290"
                     "87538682506419718265533447265625")
 
-	# largest numbers
+        # largest numbers
         assert_equal(fpos32(np.finfo(np.float32).max, **preckwd(0)),
-	            "340282346638528859811704183484516925440.")
+                    "340282346638528859811704183484516925440.")
         assert_equal(fpos64(np.finfo(np.float64).max, **preckwd(0)),
                     "1797693134862315708145274237317043567980705675258449965989"
                     "1747680315726078002853876058955863276687817154045895351438"
@@ -122,9 +122,9 @@ class TestRealScalars(object):
         # Warning: In unique mode only the integer digits necessary for
         # uniqueness are computed, the rest are 0. Should we change this?
         assert_equal(fpos32(np.finfo(np.float32).max, precision=0),
-	            "340282350000000000000000000000000000000.")
+                    "340282350000000000000000000000000000000.")
 
-	# test trailing zeros
+        # test trailing zeros
         assert_equal(fpos32('1.0', unique=False, precision=3), "1.000")
         assert_equal(fpos64('1.0', unique=False, precision=3), "1.000")
         assert_equal(fsci32('1.0', unique=False, precision=3), "1.000e+00")
