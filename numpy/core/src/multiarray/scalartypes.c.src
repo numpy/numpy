@@ -1993,6 +1993,92 @@ static PyObject *
 }
 /**end repeat**/
 
+/**begin repeat
+ *  #name = half, float, double, longdouble#
+ *  #Name = Half, Float, Double, LongDouble#
+ *  #is_half = 1,0,0,0#
+ *  #c    = f, f, , l#
+ *  #convert = PyLong_FromDouble, PyLong_FromDouble, PyLong_FromDouble,
+ *             npy_longdouble_to_PyLong#
+ *  #
+ */
+/* Heavily copied from the builtin float.as_integer_ratio */
+static PyObject *
+@name@_as_integer_ratio(PyObject *self)
+{
+#if @is_half@
+    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+    npy_double frac;
+#else
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+    npy_@name@ frac;
+#endif
+    int exponent;
+    int i;
+
+    PyObject *py_exponent = NULL;
+    PyObject *numerator = NULL;
+    PyObject *denominator = NULL;
+    PyObject *result_pair = NULL;
+    PyNumberMethods *long_methods = PyLong_Type.tp_as_number;
+
+    if (npy_isnan(val)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot convert NaN to integer ratio");
+        return NULL;
+    }
+    if (!npy_isfinite(val)) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "cannot convert Infinity to integer ratio");
+        return NULL;
+    }
+
+    frac = npy_frexp@c@(val, &exponent); /* val == frac * 2**exponent exactly */
+
+    /* This relies on the floating point type being base 2 to converge */
+    for (i = 0; frac != npy_floor@c@(frac); i++) {
+        frac *= 2.0;
+        exponent--;
+    }
+
+    /* self == frac * 2**exponent exactly and frac is integral. */
+    numerator = @convert@(frac);
+    if (numerator == NULL)
+        goto error;
+    denominator = PyLong_FromLong(1);
+    if (denominator == NULL)
+        goto error;
+    py_exponent = PyLong_FromLong(exponent < 0 ? -exponent : exponent);
+    if (py_exponent == NULL)
+        goto error;
+
+    /* fold in 2**exponent */
+    if (exponent > 0) {
+        PyObject *temp = long_methods->nb_lshift(numerator, py_exponent);
+        if (temp == NULL)
+            goto error;
+        Py_DECREF(numerator);
+        numerator = temp;
+    }
+    else {
+        PyObject *temp = long_methods->nb_lshift(denominator, py_exponent);
+        if (temp == NULL)
+            goto error;
+        Py_DECREF(denominator);
+        denominator = temp;
+    }
+
+    result_pair = PyTuple_Pack(2, numerator, denominator);
+
+error:
+    Py_XDECREF(py_exponent);
+    Py_XDECREF(denominator);
+    Py_XDECREF(numerator);
+    return result_pair;
+}
+/**end repeat**/
+
+
 /*
  * need to fill in doc-strings for these methods on import -- copy from
  * array docstrings
@@ -2252,6 +2338,17 @@ static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}
+};
+/**end repeat**/
+
+/**begin repeat
+ * #name = half,float,double,longdouble#
+ */
+static PyMethodDef @name@type_methods[] = {
+    {"as_integer_ratio",
+        (PyCFunction)@name@_as_integer_ratio,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -4308,6 +4405,15 @@ initialize_numeric_types(void)
      */
 
     Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
+
+    /**end repeat**/
+
+    /**begin repeat
+     * #name = half, float, double, longdouble#
+     * #Name = Half, Float, Double, LongDouble#
+     */
+
+    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
 
     /**end repeat**/
 
