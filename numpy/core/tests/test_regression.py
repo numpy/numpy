@@ -159,20 +159,6 @@ class TestRegression(object):
         assert_raises(TypeError, np.dtype,
                               {'names':['a'], 'formats':['foo']}, align=1)
 
-    @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and
-                         platform.architecture()[0] == "64bit"),
-                        "numpy.intp('0xff', 16) not supported on Py3, "
-                        "as it does not inherit from Python int")
-    def test_intp(self):
-        # Ticket #99
-        i_width = np.int_(0).nbytes*2 - 1
-        np.intp('0x' + 'f'*i_width, 16)
-        assert_raises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
-        assert_raises(ValueError, np.intp, '0x1', 32)
-        assert_equal(255, np.intp('0xFF', 16))
-        assert_equal(1024, np.intp(1024))
-
     def test_endian_bool_indexing(self):
         # Ticket #105
         a = np.arange(10., dtype='>f8')
@@ -853,9 +839,6 @@ class TestRegression(object):
         assert_array_equal(x.astype('>i4'), x.astype('<i4').flat[:])
         assert_array_equal(x.astype('>i4').flat[:], x.astype('<i4'))
 
-    def test_uint64_from_negative(self):
-        assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
-
     def test_sign_bit(self):
         x = np.array([0, -0.0, 0])
         assert_equal(str(np.abs(x)), '[0. 0. 0.]')
@@ -1023,15 +1006,6 @@ class TestRegression(object):
     def test_mem_0d_array_index(self):
         # Ticket #714
         np.zeros(10)[np.array(0)]
-
-    def test_floats_from_string(self):
-        # Ticket #640, floats from string
-        fsingle = np.single('1.234')
-        fdouble = np.double('1.234')
-        flongdouble = np.longdouble('1.234')
-        assert_almost_equal(fsingle, 1.234)
-        assert_almost_equal(fdouble, 1.234)
-        assert_almost_equal(flongdouble, 1.234)
 
     def test_nonnative_endian_fill(self):
         # Non-native endian arrays were incorrectly filled with scalars
