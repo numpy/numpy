@@ -136,6 +136,7 @@ NPY_INPLACE double npy_cbrt(double x);
 NPY_INPLACE double npy_fabs(double x);
 NPY_INPLACE double npy_ceil(double x);
 NPY_INPLACE double npy_fmod(double x, double y);
+NPY_INPLACE double npy_remainder(double x, double y);
 NPY_INPLACE double npy_floor(double x);
 
 NPY_INPLACE double npy_expm1(double x);
@@ -256,6 +257,7 @@ NPY_INPLACE float npy_atan2f(float x, float y);
 NPY_INPLACE float npy_hypotf(float x, float y);
 NPY_INPLACE float npy_powf(float x, float y);
 NPY_INPLACE float npy_fmodf(float x, float y);
+NPY_INPLACE float npy_remainderf(float x, float y);
 
 NPY_INPLACE float npy_modff(float x, float* y);
 NPY_INPLACE float npy_frexpf(float x, int* y);
@@ -299,6 +301,7 @@ NPY_INPLACE npy_longdouble npy_atan2l(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_hypotl(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 NPY_INPLACE npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
+NPY_INPLACE npy_longdouble npy_remainderl(npy_longdouble x, npy_longdouble y);
 
 NPY_INPLACE npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
 NPY_INPLACE npy_longdouble npy_frexpl(npy_longdouble x, int* y);

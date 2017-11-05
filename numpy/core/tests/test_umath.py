@@ -1268,6 +1268,25 @@ class TestHeavside(object):
         assert_equal(h, expected1.astype(np.float32))
 
 
+class TestIeeeRemainder(object):
+    def test_remainder_ieee(self):
+        # Testing is basic because implementation is copied from cpython, and
+        # tested extensively there.
+        # No support for integer inputs yet, hence the float expectations.
+
+        x = np.arange(9)
+        expected = np.array([ 0.,  1.,  2., -1.,  0.,  1., -2., -1.,  0.])
+        r = np.remainder_ieee(x, 4)
+        assert_equal(r, expected)
+        assert_equal(r.dtype, expected.dtype)
+
+        x = -np.arange(9)
+        expected = np.array([ 0., -1., -2.,  1.,  0., -1.,  2.,  1.,  0.])
+        r = np.remainder_ieee(x, 4)
+        assert_equal(r, expected)
+        assert_equal(r.dtype, expected.dtype)
+
+
 class TestSign(object):
     def test_sign(self):
         a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])

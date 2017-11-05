@@ -2883,7 +2883,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
 add_newdoc('numpy.core.umath', 'remainder',
     """
-    Return element-wise remainder of division.
+    Return element-wise remainder of floor division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
@@ -2895,8 +2895,8 @@ add_newdoc('numpy.core.umath', 'remainder',
         This should not be confused with:
 
         * Python 3.7's `math.remainder` and C's ``remainder``, which
-          computes the IEEE remainder, which are the complement to
-          ``round(x1 / x2)``.
+          computes the IEEE remainder, the complement to ``round(x1 / x2)``.
+          This is available as `remainder_ieee`.
         * The MATLAB ``rem`` function and or the C ``%`` operator which is the
           complement to ``int(x1 / x2)``.
 
@@ -2932,6 +2932,42 @@ add_newdoc('numpy.core.umath', 'remainder',
     array([0, 1])
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'remainder_ieee',
+    """
+    Return element-wise remainder of round-to-even division.
+
+    Computes the remainder complementary to the `round` function.  It is
+    equivalent to the Python 3.7 `math.remainder` and C99 ``remainder``
+    functions.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Dividend array.
+    x2 : array_like
+        Divisor array.
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        The element-wise remainder of the quotient ``round(x1 / x2)``.
+        Returns a scalar if both  `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    round : Equivalent of Python ``round`` function.
+    remainder : Remainder upon floor-division
+
+    Examples
+    --------
+    >>> np.remainder_ieee([4, 7], [2, 3])
+    array([0., 1.])
+    >>> np.remainder_ieee(np.arange(9), 4)
+    array([ 0.,  1.,  2., -1.,  0.,  1., -2., -1.,  0.])
 
     """)
 

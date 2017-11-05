@@ -220,6 +220,11 @@ Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
 
+``remainder_ieee`` ufunc added to match Python 3.7's ``math.remainder``
+-----------------------------------------------------------------------
+This computes the IEEE remainder, which will be added to the ``math`` module
+in Python 3.7. This is the same function as ``remainder`` refers to in C99.
+
 
 Improvements
 ============
