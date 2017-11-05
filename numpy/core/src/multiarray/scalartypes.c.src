@@ -723,7 +723,6 @@ timedeltatype_str(PyObject *self)
 
 /**begin repeat
  * #kind = str, repr#
- * #maxprec = 8, -1#
  */
 
 /**begin repeat1
@@ -737,10 +736,12 @@ static PyObject *
 @name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
                          npy_bool sign)
 {
-    if (val < (npy_@name@)1.e10L) {
-        return format_@name@(val, 0, @maxprec@, sign, trim_pos, -1, -1, -1);
+    npy_@name@ absval = val < 0 ? -val : val;
+
+    if (absval == 0 || (absval < 1.e16L && absval >= 1.e-4L) ) {
+        return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
     }
-    return format_@name@(val, 1, @maxprec@, sign, trim_sci, -1, -1, -1);
+    return format_@name@(val, 1, -1, sign, trim_sci, -1, -1, -1);
 }
 
 static PyObject *
@@ -813,7 +814,10 @@ static PyObject *
 halftype_@kind@(PyObject *self)
 {
     npy_half val = ((PyHalfScalarObject *)self)->obval;
-    if (npy_half_to_double(val) < 1.e16) {
+    double absval = npy_half_to_double(val);
+    absval = absval < 0 ? -absval : absval;
+
+    if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
         return format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
