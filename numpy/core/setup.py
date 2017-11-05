@@ -688,8 +688,10 @@ def configuration(parent_package='',top_path=None):
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
-            extra_compile_args=(['/GL-'] if sys.platform == 'win32' else []),
-            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
+            build_info={
+                'include_dirs' : [],
+                'extra_compiler_args' : (['/GL-'] if sys.platform == 'win32' else []),
+            })  # empty list required for creating npy_math_internal.h
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
