@@ -26,6 +26,25 @@ class TestRealScalars(object):
                 msg = 'for str({}({}))'.format(np.dtype(styp).name, repr(val))
                 assert_equal(str(styp(val)), want, err_msg=msg)
 
+    def test_scalar_cutoffs(self):
+        # test that both the str and repr of np.float64 behaves
+        # like python floats in python3. Note that in python2
+        # the str has truncated digits, but we do not do this
+        def check(v):
+            # we compare str to repr, to avoid python2 truncation behavior
+            assert_equal(str(np.float64(v)), repr(v))
+            assert_equal(repr(np.float64(v)), repr(v))
+
+        # check we use the same number of significant digits
+        check(1.12345678901234567890)
+        check(0.0112345678901234567890)
+
+        # check switch from scientific output to positional and back
+        check(1e-5)
+        check(1e-4)
+        check(1e15)
+        check(1e16)
+
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
         # see dragon4.c for details.
