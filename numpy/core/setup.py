@@ -685,13 +685,11 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
-    npymath_build_info = {'include_dirs' : []} # empty list required for creating npy_math_internal.h
-    if sys.platform == 'win32':
-        npymath_build_info.update({'extra_compile_args': '/GL-'})
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
-            build_info=npymath_build_info)  
+            extra_compile_args=(['/GL-'] if sys.platform == 'win32' else []),
+            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
