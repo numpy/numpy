@@ -753,6 +753,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_longdouble.h'),
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h'),
             join('src', 'private', 'npy_extint128.h'),
@@ -827,6 +828,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'npy_longdouble.c'),
             join('src', 'private', 'ufunc_override.c'),
             ]
 
@@ -884,6 +886,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'npy_longdouble.c'),
             join('src', 'private', 'ufunc_override.c')]
 
     umath_deps = [
@@ -897,6 +900,7 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_longdouble.h'),
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h')] + npymath_sources
 

@@ -24,6 +24,7 @@
 #include "templ_common.h"
 
 #include "binop_override.h"
+#include "npy_longdouble.h"
 
 /* Basic operations:
  *
@@ -1391,45 +1392,42 @@ emit_complexwarning(void)
  *
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #sign = (signed, unsigned)*5, , , , , , , #
- * #unsigntyp = 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0*7#
- * #ctype = long*8, PY_LONG_LONG*2, double*7#
+ * #ctype = long*8, PY_LONG_LONG*2,
+ *          double*3, npy_longdouble, double*2, npy_longdouble#
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
- * #realtyp = 0*10, 1*7#
  * #func = (PyLong_FromLong, PyLong_FromUnsignedLong)*4,
  *         PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
- *         PyLong_FromDouble*7#
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
  */
 static PyObject *
 @name@_int(PyObject *obj)
 {
+    PyObject *long_result;
+
 #if @cmplx@
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
-    int ret;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
 #else
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
-#endif
-
-#if @realtyp@
-    double ix;
-    modf(x, &ix);
-    x = ix;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
 #endif
 
 #if @cmplx@
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
 #endif
 
-#if @unsigntyp@
-    if(x < LONG_MAX)
-        return PyInt_FromLong(x);
-#else
-    if(LONG_MIN < x && x < LONG_MAX)
-        return PyInt_FromLong(x);
+    long_result = @func@(x);
+    if (long_result == NULL){
+        return NULL;
+    }
+
+#ifndef NPY_PY3K
+    /* Invoke long.__int__ to try to downcast */
+    long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
 #endif
-    return @func@(x);
+
+    return long_result;
 }
 /**end repeat**/
 
@@ -1447,18 +1445,18 @@ static PyObject *
  * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )*2#
  * #which = long*17, float*17#
  * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
- *         PyLong_FromDouble*7, PyFloat_FromDouble*17#
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong,
+ *         PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
 @name@_@which@(PyObject *obj)
 {
 #if @cmplx@
-    int ret;
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
-    return @func@(@to_ctype@((PyArrayScalar_VAL(obj, @Name@)).real));
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
 #else
     return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
 #endif
