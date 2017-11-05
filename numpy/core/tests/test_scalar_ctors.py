@@ -9,7 +9,7 @@ import numpy as np
 
 from numpy.testing import (
     run_module_suite,
-    assert_equal, assert_almost_equal, assert_raises,
+    assert_equal, assert_almost_equal, assert_raises, assert_warns,
     dec
 )
 
@@ -22,6 +22,26 @@ class TestFromString(object):
         assert_almost_equal(fsingle, 1.234)
         assert_almost_equal(fdouble, 1.234)
         assert_almost_equal(flongdouble, 1.234)
+
+    def test_floating_overflow(self):
+        """ Strings containing an unrepresentable float overflow """
+        fhalf = np.half('1e10000')
+        assert_equal(fhalf, np.inf)
+        fsingle = np.single('1e10000')
+        assert_equal(fsingle, np.inf)
+        fdouble = np.double('1e10000')
+        assert_equal(fdouble, np.inf)
+        flongdouble = assert_warns(RuntimeWarning, np.longdouble, '1e10000')
+        assert_equal(flongdouble, np.inf)
+
+        fhalf = np.half('-1e10000')
+        assert_equal(fhalf, -np.inf)
+        fsingle = np.single('-1e10000')
+        assert_equal(fsingle, -np.inf)
+        fdouble = np.double('-1e10000')
+        assert_equal(fdouble, -np.inf)
+        flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
+        assert_equal(flongdouble, -np.inf)
 
     @dec.knownfailureif((sys.version_info[0] >= 3) or
                         (sys.platform == "win32" and
