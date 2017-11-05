@@ -570,12 +570,11 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         errno = 0;
         result = strtold_l(s, endptr, clocale);
         freelocale(clocale);
-        if (errno) {
-            *endptr = (char*)s;
-        }
     }
     else {
-        *endptr = (char*)s;
+        if (endptr != NULL) {
+            *endptr = (char*)s;
+        }
         result = 0;
     }
     return result;
