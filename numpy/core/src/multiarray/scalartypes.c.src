@@ -442,14 +442,17 @@ format_@name@(@type@ val, npy_bool scientific,
               int pad_left, int pad_right, int exp_digits)
 {
     if (scientific) {
-        return Dragon4_Scientific_AnySize(&val, sizeof(@type@), 1, precision,
-                                          sign, trim, pad_left, exp_digits);
+        return Dragon4_Scientific_AnySize(&val, sizeof(@type@),
+                        DigitMode_Unique, precision,
+                        sign, trim, pad_left, exp_digits);
     }
     else {
-        return Dragon4_Positional_AnySize(&val, sizeof(@type@), 1, precision,
-                                          sign, trim, pad_left, pad_right);
+        return Dragon4_Positional_AnySize(&val, sizeof(@type@),
+                        DigitMode_Unique, CutoffMode_TotalLength, precision,
+                        sign, trim, pad_left, pad_right);
     }
 }
+
 
 /**end repeat**/
 
@@ -720,6 +723,7 @@ timedeltatype_str(PyObject *self)
 
 /**begin repeat
  * #kind = str, repr#
+ * #maxprec = 8, -1#
  */
 
 /**begin repeat1
@@ -728,14 +732,15 @@ timedeltatype_str(PyObject *self)
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  */
 
+/* helper function choose scientific of fractional output, based on a cutoff */
 static PyObject *
 @name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
                          npy_bool sign)
 {
-    if (val < (npy_@name@)1.e16L) {
-        return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
+    if (val < (npy_@name@)1.e10L) {
+        return format_@name@(val, 0, @maxprec@, sign, trim_pos, -1, -1, -1);
     }
-    return format_@name@(val, 1, -1, sign, trim_sci, -1, -1, -1);
+    return format_@name@(val, 1, @maxprec@, sign, trim_sci, -1, -1, -1);
 }
 
 static PyObject *

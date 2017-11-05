@@ -35,8 +35,12 @@
 #include <string.h>
 
 #include <assert.h>
-/* #define DEBUG_ASSERT(stmnt) assert(stmnt) */
+
+#if 0
+#define DEBUG_ASSERT(stmnt) assert(stmnt)
+#else
 #define DEBUG_ASSERT(stmnt) {}
+#endif
 
 /*
  *  Get the log base 2 of a 32-bit unsigned integer.
@@ -951,28 +955,6 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
     }
 }
 
-typedef enum CutoffMode
-{
-    /*
-     * As many digits as necessary to print a uniquely identifiable number.
-     * cutoffNumber should be -1.
-     */
-    CutoffMode_Unique,
-    /* up to cutoffNumber significant digits */
-    CutoffMode_TotalLength,
-    /* up to cutoffNumber significant digits past the decimal point */
-    CutoffMode_FractionLength,
-    /*
-     * up to cutoffNumber digits, or fewer if the number can be uniquely
-     * identified with fewer
-     */
-    CutoffMode_MaxTotalUnique,
-    /*
-     * up to cutoffNumber digits pas decimal point, or fewer if the number can
-     * be uniquely identified with fewer
-     */
-    CutoffMode_MaxFractionUnique,
-} CutoffMode;
 
 /*
  * This is an implementation the Dragon4 algorithm to convert a binary number in
@@ -1029,7 +1011,8 @@ typedef enum CutoffMode
 static npy_uint32
 Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
         const npy_uint32 mantissaBit, const npy_bool hasUnequalMargins,
-        const CutoffMode cutoffMode, npy_int32 cutoffNumber, char *pOutBuffer,
+        const DigitMode digitMode, const CutoffMode cutoffMode,
+        npy_int32 cutoffNumber, char *pOutBuffer,
         npy_uint32 bufferSize, npy_int32 *pOutExponent)
 {
     char *curDigit = pOutBuffer;
@@ -1053,7 +1036,7 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
     BigInt optionalMarginHigh;
 
     const npy_float64 log10_2 = 0.30102999566398119521373889472449;
-    npy_int32 digitExponent, cutoffExponent, desiredCutoffExponent, hiBlock;
+    npy_int32 digitExponent, cutoffExponent, hiBlock;
     npy_uint32 outputDigit;    /* current digit being output */
     npy_uint32 outputLen;
     npy_bool isEven = (mantissa % 2) == 0;
@@ -1187,8 +1170,7 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
      * increases the number. This will either correct digitExponent to an
      * accurate value or it will clamp it above the accurate value.
      */
-    if ( (cutoffMode == CutoffMode_FractionLength ||
-          cutoffMode == CutoffMode_MaxFractionUnique) &&
+    if (cutoffNumber >= 0 && cutoffMode == CutoffMode_FractionLength &&
             digitExponent <= -cutoffNumber) {
         digitExponent = -cutoffNumber + 1;
     }
@@ -1247,29 +1229,24 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
      * Default to the maximum size of the output buffer.
      */
     cutoffExponent = digitExponent - bufferSize;
-    switch(cutoffMode) {
-        /* print digits until we pass the accuracy margin or buffer size */
-        case CutoffMode_Unique:
-            DEBUG_ASSERT(cutoffNumber == -1);
-            break;
-        /* print cutoffNumber of digits or until we reach the buffer size */
-        case CutoffMode_MaxTotalUnique:
-        case CutoffMode_TotalLength:
+    if (cutoffNumber >= 0) {
+        npy_int32 desiredCutoffExponent;
+
+        if (cutoffMode == CutoffMode_TotalLength) {
             desiredCutoffExponent = digitExponent - cutoffNumber;
             if (desiredCutoffExponent > cutoffExponent) {
                 cutoffExponent = desiredCutoffExponent;
             }
-            break;
-        /* print cutoffNumber digits past the decimal point or until we reach
-         * the buffer size
+        }
+        /* Otherwise it's CutoffMode_FractionLength. Print cutoffNumber digits
+         * past the decimal point or until we reach the buffer size
          */
-        case CutoffMode_MaxFractionUnique:
-        case CutoffMode_FractionLength:
+        else {
             desiredCutoffExponent = -cutoffNumber;
             if (desiredCutoffExponent > cutoffExponent) {
                 cutoffExponent = desiredCutoffExponent;
             }
-            break;
+        }
     }
 
     /* Output the exponent of the first digit we will print */
@@ -1311,9 +1288,7 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
         }
     }
 
-    if (cutoffMode == CutoffMode_Unique ||
-            cutoffMode == CutoffMode_MaxFractionUnique ||
-            cutoffMode == CutoffMode_MaxTotalUnique) {
+    if (digitMode == DigitMode_Unique) {
         /*
          * For the unique cutoff mode, we will try to print until we have
          * reached a level of precision that uniquely distinguishes this value
@@ -1358,7 +1333,7 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
     }
     else {
         /*
-         * For length based cutoff modes, we will try to print until we
+         * For exact digit mode, we will try to print until we
          * have exhausted all precision (i.e. all remaining digits are zeros) or
          * until we reach the desired cutoff digit.
          */
@@ -1607,31 +1582,22 @@ typedef union FloatUnion80
 static npy_uint32
 FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
-                 npy_bool hasUnequalMargins, npy_bool unique,
-                 npy_int32 precision, TrimMode trim_mode,
-                 npy_int32 digits_left, npy_int32 digits_right)
+                 npy_bool hasUnequalMargins, DigitMode digit_mode,
+                 CutoffMode cutoff_mode, npy_int32 precision,
+                 TrimMode trim_mode, npy_int32 digits_left,
+                 npy_int32 digits_right)
 {
     npy_int32 printExponent;
     npy_int32 numDigits, numWholeDigits, has_sign=0;
 
     npy_int32 maxPrintLen = bufferSize - 1, pos = 0;
-    CutoffMode cutoffMode;
 
     /* track the # of digits past the decimal point that have been printed */
     npy_int32 numFractionDigits = 0;
 
     DEBUG_ASSERT(bufferSize > 0);
 
-    if (unique) {
-        if (precision < 0) {
-            cutoffMode = CutoffMode_Unique;
-        }
-        else {
-            cutoffMode = CutoffMode_MaxFractionUnique;
-        }
-    }
-    else {
-        cutoffMode = CutoffMode_FractionLength;
+    if (digit_mode != DigitMode_Unique) {
         DEBUG_ASSERT(precision >= 0);
     }
 
@@ -1645,7 +1611,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     }
 
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
-                        cutoffMode, precision, buffer + has_sign,
+                        digit_mode, cutoff_mode, precision, buffer + has_sign,
                         maxPrintLen - has_sign, &printExponent);
 
     DEBUG_ASSERT(numDigits > 0);
@@ -1752,7 +1718,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         }
     }
     else if (trim_mode == TrimMode_None &&
-            cutoffMode != CutoffMode_MaxFractionUnique &&
+            digit_mode != DigitMode_Unique &&
             precision > (npy_int32)numFractionDigits && pos < maxPrintLen) {
         /* add trailing zeros up to precision length */
         /* compute the number of trailing zeros needed */
@@ -1848,7 +1814,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
 static npy_uint32
 FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
                   npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
-                  npy_bool hasUnequalMargins, npy_bool unique,
+                  npy_bool hasUnequalMargins, DigitMode digit_mode,
                   npy_int32 precision, TrimMode trim_mode,
                   npy_int32 digits_left, npy_int32 exp_digits)
 {
@@ -1857,20 +1823,11 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     char *pCurOut;
     npy_int32 numFractionDigits;
     npy_int32 leftchars;
-    CutoffMode cutoffMode;
 
-    if (unique) {
-        if (precision < 0) {
-            cutoffMode = CutoffMode_Unique;
-        }
-        else {
-            cutoffMode = CutoffMode_MaxTotalUnique;
-        }
-    }
-    else {
-        cutoffMode = CutoffMode_TotalLength;
+    if (digit_mode != DigitMode_Unique) {
         DEBUG_ASSERT(precision >= 0);
     }
+
 
     DEBUG_ASSERT(bufferSize > 0);
 
@@ -1899,8 +1856,8 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     }
 
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
-                        cutoffMode, precision + 1, pCurOut, bufferSize,
-                        &printExponent);
+                        digit_mode, CutoffMode_TotalLength, precision + 1,
+                        pCurOut, bufferSize, &printExponent);
 
     DEBUG_ASSERT(numDigits > 0);
     DEBUG_ASSERT(numDigits <= bufferSize);
@@ -1943,7 +1900,7 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         }
     }
     else if (trim_mode == TrimMode_None &&
-            cutoffMode != CutoffMode_MaxTotalUnique) {
+            digit_mode != DigitMode_Unique) {
         /* add trailing zeros up to precision length */
         if (precision > (npy_int32)numFractionDigits) {
             char *pEnd;
@@ -2148,7 +2105,8 @@ PrintInfNan(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
  */
 static npy_uint32
 Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
+                     npy_bool scientific, DigitMode digit_mode,
+                     CutoffMode cutoff_mode, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
                      npy_int32 digits_right, npy_int32 exp_digits)
 {
@@ -2231,20 +2189,21 @@ Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
     /* format the value */
     if (scientific) {
         return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
+                                mantissaBit, hasUnequalMargins, digit_mode,
                                 precision, trim_mode, digits_left, exp_digits);
     }
     else {
         return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
-                                precision, trim_mode,
+                                mantissaBit, hasUnequalMargins, digit_mode,
+                                cutoff_mode, precision, trim_mode,
                                 digits_left, digits_right);
     }
 }
 
 static npy_uint32
 Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
+                     npy_bool scientific, DigitMode digit_mode,
+                     CutoffMode cutoff_mode, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
                      npy_int32 digits_right, npy_int32 exp_digits)
 {
@@ -2327,20 +2286,21 @@ Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
     /* format the value */
     if (scientific) {
         return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
+                                mantissaBit, hasUnequalMargins, digit_mode,
                                 precision, trim_mode, digits_left, exp_digits);
     }
     else {
         return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
-                                precision, trim_mode,
+                                mantissaBit, hasUnequalMargins, digit_mode,
+                                cutoff_mode, precision, trim_mode,
                                 digits_left, digits_right);
     }
 }
 
 static npy_uint32
 Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
-                     npy_bool scientific, npy_bool unique, npy_int32 precision,
+                     npy_bool scientific, DigitMode digit_mode,
+                     CutoffMode cutoff_mode, npy_int32 precision,
                      npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
                      npy_int32 digits_right, npy_int32 exp_digits)
 {
@@ -2424,20 +2384,21 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
     /* format the value */
     if (scientific) {
         return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
+                                mantissaBit, hasUnequalMargins, digit_mode,
                                 precision, trim_mode, digits_left, exp_digits);
     }
     else {
         return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
-                                precision, trim_mode,
+                                mantissaBit, hasUnequalMargins, digit_mode,
+                                cutoff_mode, precision, trim_mode,
                                 digits_left, digits_right);
     }
 }
 
 static npy_uint32
 Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
-                      npy_bool scientific, npy_bool unique, npy_int32 precision,
+                      npy_bool scientific, DigitMode digit_mode,
+                      CutoffMode cutoff_mode, npy_int32 precision,
                       npy_bool sign, TrimMode trim_mode, npy_int32 digits_left,
                       npy_int32 digits_right, npy_int32 exp_digits)
 {
@@ -2519,23 +2480,23 @@ Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
     /* format the value */
     if (scientific) {
         return FormatScientific(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
+                                mantissaBit, hasUnequalMargins, digit_mode,
                                 precision, trim_mode, digits_left, exp_digits);
     }
     else {
         return FormatPositional(buffer, bufferSize, mantissa, exponent, signbit,
-                                mantissaBit, hasUnequalMargins, unique,
-                                precision, trim_mode,
+                                mantissaBit, hasUnequalMargins, digit_mode,
+                                cutoff_mode, precision, trim_mode,
                                 digits_left, digits_right);
     }
 }
 
 PyObject *
-Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
-                           int precision, int sign, TrimMode trim,
-                           int pad_left, int pad_right)
+Dragon4_Positional_AnySize(void *val, size_t size, DigitMode digit_mode,
+                           CutoffMode cutoff_mode, int precision, int sign,
+                           TrimMode trim, int pad_left, int pad_right)
 {
-    /* 
+    /*
      * Use a very large buffer in case anyone tries to output a large numberG.
      * 16384 should be enough to uniquely print any float128, which goes up
      * to about 10^4932 */
@@ -2554,15 +2515,18 @@ Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
     switch (size) {
         case 2:
             Dragon4_PrintFloat16(repr, sizeof(repr), *(npy_float16*)val,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                 0, digit_mode, cutoff_mode, precision,
+                                 sign, trim, pad_left, pad_right, -1);
             break;
         case 4:
             Dragon4_PrintFloat32(repr, sizeof(repr), *(npy_float32*)val,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                 0, digit_mode, cutoff_mode, precision,
+                                 sign, trim, pad_left, pad_right, -1);
             break;
         case 8:
             Dragon4_PrintFloat64(repr, sizeof(repr), *(npy_float64*)val,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                 0, digit_mode, cutoff_mode, precision,
+                                 sign, trim, pad_left, pad_right, -1);
             break;
 #ifdef NPY_FLOAT80
         case 10:
@@ -2570,7 +2534,8 @@ Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf80.integer.a;
             val128.integer[1] = buf80.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                  0, digit_mode, cutoff_mode, precision,
+                                  sign, trim, pad_left, pad_right, -1);
             break;
 #endif
 #ifdef NPY_FLOAT96
@@ -2579,7 +2544,8 @@ Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf96.integer.a;
             val128.integer[1] = buf96.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                  0, digit_mode, cutoff_mode, precision,
+                                  sign, trim, pad_left, pad_right, -1);
             break;
 #endif
 #ifdef NPY_FLOAT128
@@ -2588,7 +2554,8 @@ Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf128.integer.a;
             val128.integer[1] = buf128.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                     0, unique, precision, sign, trim, pad_left, pad_right, -1);
+                                  0, digit_mode, cutoff_mode, precision,
+                                  sign, trim, pad_left, pad_right, -1);
             break;
 #endif
         default:
@@ -2600,42 +2567,48 @@ Dragon4_Positional_AnySize(void *val, size_t size, npy_bool unique,
 }
 
 PyObject *
-Dragon4_Positional(PyObject *obj, npy_bool unique, int precision, int sign,
-                   TrimMode trim, int pad_left, int pad_right)
+Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
+                   int precision, int sign, TrimMode trim, int pad_left,
+                   int pad_right)
 {
     double val;
 
     if (PyArray_IsScalar(obj, Half)) {
         npy_half x = ((PyHalfScalarObject *)obj)->obval;
-        return Dragon4_Positional_AnySize(&x, sizeof(npy_half), unique,
-                                    precision, sign, trim, pad_left, pad_right);
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_half),
+                                          digit_mode, cutoff_mode, precision,
+                                          sign, trim, pad_left, pad_right);
     }
     else if (PyArray_IsScalar(obj, Float)) {
         npy_float x = ((PyFloatScalarObject *)obj)->obval;
-        return Dragon4_Positional_AnySize(&x, sizeof(npy_float), unique,
-                                    precision, sign, trim, pad_left, pad_right);
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_float),
+                                          digit_mode, cutoff_mode, precision,
+                                          sign, trim, pad_left, pad_right);
     }
     else if (PyArray_IsScalar(obj, Double)) {
         npy_double x = ((PyDoubleScalarObject *)obj)->obval;
-        return Dragon4_Positional_AnySize(&x, sizeof(npy_double), unique,
-                                    precision, sign, trim, pad_left, pad_right);
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_double),
+                                          digit_mode, cutoff_mode, precision,
+                                          sign, trim, pad_left, pad_right);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
         npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
-        return Dragon4_Positional_AnySize(&x, sizeof(npy_longdouble), unique,
-                                    precision, sign, trim, pad_left, pad_right);
+        return Dragon4_Positional_AnySize(&x, sizeof(npy_longdouble),
+                                          digit_mode, cutoff_mode, precision,
+                                          sign, trim, pad_left, pad_right);
     }
 
     val = PyFloat_AsDouble(obj);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    return Dragon4_Positional_AnySize(&val, sizeof(double), unique,
-                               precision, sign, trim, pad_left, pad_right);
+    return Dragon4_Positional_AnySize(&val, sizeof(double),
+                                      digit_mode, cutoff_mode, precision,
+                                      sign, trim, pad_left, pad_right);
 }
 
 PyObject *
-Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
+Dragon4_Scientific_AnySize(void *val, size_t size, DigitMode digit_mode,
                            int precision, int sign, TrimMode trim,
                            int pad_left, int exp_digits)
 {
@@ -2652,19 +2625,24 @@ Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
     FloatUnion128 buf128;
 #endif
 
+    /* dummy, is ignored in scientific mode */
+    CutoffMode cutoff_mode = CutoffMode_TotalLength;
 
     switch (size) {
         case 2:
             Dragon4_PrintFloat16(repr, sizeof(repr), *(npy_float16*)val,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                 1, digit_mode, cutoff_mode, precision, sign,
+                                 trim, pad_left, -1, exp_digits);
             break;
         case 4:
             Dragon4_PrintFloat32(repr, sizeof(repr), *(npy_float32*)val,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                 1, digit_mode, cutoff_mode, precision, sign,
+                                 trim, pad_left, -1, exp_digits);
             break;
         case 8:
             Dragon4_PrintFloat64(repr, sizeof(repr), *(npy_float64*)val,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                 1, digit_mode, cutoff_mode, precision, sign,
+                                 trim, pad_left, -1, exp_digits);
             break;
 #ifdef NPY_FLOAT80
         case 10:
@@ -2672,7 +2650,8 @@ Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf80.integer.a;
             val128.integer[1] = buf80.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                  1, digit_mode, cutoff_mode, precision, sign,
+                                  trim, pad_left, -1, exp_digits);
             break;
 #endif
 #ifdef NPY_FLOAT96
@@ -2681,7 +2660,8 @@ Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf96.integer.a;
             val128.integer[1] = buf96.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                  1, digit_mode, cutoff_mode, precision, sign,
+                                  trim, pad_left, -1, exp_digits);
             break;
 #endif
 #ifdef NPY_FLOAT128
@@ -2690,7 +2670,8 @@ Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
             val128.integer[0] = buf128.integer.a;
             val128.integer[1] = buf128.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
-                    1, unique, precision, sign, trim, pad_left, -1, exp_digits);
+                                  1, digit_mode, cutoff_mode, precision, sign,
+                                  trim, pad_left, -1, exp_digits);
             break;
 #endif
         default:
@@ -2702,36 +2683,41 @@ Dragon4_Scientific_AnySize(void *val, size_t size, npy_bool unique,
 }
 
 PyObject *
-Dragon4_Scientific(PyObject *obj, npy_bool unique, int precision, int sign,
-                   TrimMode trim, int pad_left, int exp_digits)
+Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
+                   int sign, TrimMode trim, int pad_left, int exp_digits)
 {
     double val;
 
     if (PyArray_IsScalar(obj, Half)) {
         npy_half x = ((PyHalfScalarObject *)obj)->obval;
-        return Dragon4_Scientific_AnySize(&x, sizeof(npy_half), unique,
-                                   precision, sign, trim, pad_left, exp_digits);
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_half),
+                                          digit_mode, precision,
+                                          sign, trim, pad_left, exp_digits);
     }
     else if (PyArray_IsScalar(obj, Float)) {
         npy_float x = ((PyFloatScalarObject *)obj)->obval;
-        return Dragon4_Scientific_AnySize(&x, sizeof(npy_float), unique,
-                                   precision, sign, trim, pad_left, exp_digits);
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_float),
+                                          digit_mode, precision,
+                                          sign, trim, pad_left, exp_digits);
     }
     else if (PyArray_IsScalar(obj, Double)) {
         npy_double x = ((PyDoubleScalarObject *)obj)->obval;
-        return Dragon4_Scientific_AnySize(&x, sizeof(npy_double), unique,
-                                   precision, sign, trim, pad_left, exp_digits);
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_double),
+                                          digit_mode, precision,
+                                          sign, trim, pad_left, exp_digits);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
         npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
-        return Dragon4_Scientific_AnySize(&x, sizeof(npy_longdouble), unique,
-                                   precision, sign, trim, pad_left, exp_digits);
+        return Dragon4_Scientific_AnySize(&x, sizeof(npy_longdouble),
+                                          digit_mode, precision,
+                                          sign, trim, pad_left, exp_digits);
     }
 
     val = PyFloat_AsDouble(obj);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    return Dragon4_Scientific_AnySize(&val, sizeof(double), unique,
-                               precision, sign, trim, pad_left, exp_digits);
+    return Dragon4_Scientific_AnySize(&val, sizeof(double),
+                                      digit_mode, precision,
+                                      sign, trim, pad_left, exp_digits);
 }
