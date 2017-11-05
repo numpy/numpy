@@ -81,7 +81,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if sign not in [None, '-', '+', ' ', 'legacy']:
         raise ValueError("sign option must be one of "
                          "' ', '+', '-', or 'legacy'")
-    
+
     modes = ['fixed', 'unique', 'maxprec', 'maxprec_equal']
     if floatmode not in modes + [None]:
         raise ValueError("floatmode option must be one of " +
@@ -288,17 +288,18 @@ def _get_formatdict(data, **opt):
     supp, sign = opt['suppress'], opt['sign']
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
-    formatdict = {'bool': lambda: BoolFormat(data),
-                  'int': lambda: IntegerFormat(data),
-                  'float': lambda: FloatingFormat(data, prec, fmode, 
-                                                  supp, sign),
-                  'complexfloat': lambda: ComplexFormat(data, prec, fmode,
-                                                        supp, sign),
-                  'datetime': lambda: DatetimeFormat(data),
-                  'timedelta': lambda: TimedeltaFormat(data),
-                  'object': lambda: _object_format,
-                  'numpystr': lambda: repr_format,
-                  'str': lambda: str}
+    formatdict = {
+        'bool': lambda: BoolFormat(data),
+        'int': lambda: IntegerFormat(data),
+        'float': lambda:
+            FloatingFormat(data, prec, fmode, supp, sign),
+        'complexfloat': lambda:
+            ComplexFloatingFormat(data, prec, fmode, supp, sign),
+        'datetime': lambda: DatetimeFormat(data),
+        'timedelta': lambda: TimedeltaFormat(data),
+        'object': lambda: _object_format,
+        'numpystr': lambda: repr_format,
+        'str': lambda: str}
 
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
@@ -634,7 +635,10 @@ def _formatArray(a, format_function, rank, max_line_len,
                           summary_insert).rstrip()+']\n'
     return s
 
+
 class FloatingFormat(object):
+    """ Formatter for subtypes of np.floating """
+
     def __init__(self, data, precision, floatmode, suppress_small, sign=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
@@ -644,7 +648,7 @@ class FloatingFormat(object):
         if sign == 'legacy':
             self._legacy = True
             sign = '-' if data.shape == () else ' '
-        
+
         self.floatmode = floatmode
         if floatmode == 'unique':
             self.precision = -1
@@ -937,15 +941,17 @@ class BoolFormat(object):
         return self.truestr if x else "False"
 
 
-class ComplexFormat(object):
+class ComplexFloatingFormat(object):
+    """ Formatter for subtypes of np.complexfloating """
+
     def __init__(self, x, precision, floatmode, suppress_small, sign=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self.real_format = FloatingFormat(x.real, precision, floatmode, 
+        self.real_format = FloatingFormat(x.real, precision, floatmode,
                                           suppress_small, sign=sign)
-        self.imag_format = FloatingFormat(x.imag, precision, floatmode, 
+        self.imag_format = FloatingFormat(x.imag, precision, floatmode,
                                           suppress_small, sign='+')
 
     def __call__(self, x):
