@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils import customized_fcompiler
 
 compilers = ['NoneFCompiler']
 
@@ -26,6 +27,4 @@ class NoneFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    compiler = NoneFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler(compiler='none').get_version())

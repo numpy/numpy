@@ -152,6 +152,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+from numpy.distutils import customized_ccompiler
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -713,8 +714,7 @@ class system_info(object):
             return self.get_libs(key, '')
 
     def library_extensions(self):
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
         static_exts = []
         if c.compiler_type != 'msvc':
             # MSVC doesn't understand binutils
@@ -1721,8 +1721,7 @@ class blas_info(system_info):
         # primitive cblas check by looking for the header and trying to link
         # cblas or blas
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
         tmpdir = tempfile.mkdtemp()
         s = """#include <cblas.h>
         int main(int argc, const char *argv[])
@@ -1773,8 +1772,7 @@ class openblas_info(blas_info):
         return True
 
     def calc_info(self):
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
 
         lib_dirs = self.get_lib_dirs()
 
@@ -1848,8 +1846,7 @@ class openblas_lapack_info(openblas_info):
 
     def check_embedded_lapack(self, info):
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
         s = """void zungqr();

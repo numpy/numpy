@@ -52,7 +52,5 @@ class MIPSFCompiler(FCompiler):
         return r
 
 if __name__ == '__main__':
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='mips')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='mips').get_version())
