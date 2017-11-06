@@ -26,6 +26,7 @@
 #include "datetime_strings.h"
 #include "alloc.h"
 #include "npy_import.h"
+#include "dragon4.h"
 
 #include <stdlib.h>
 
@@ -429,145 +430,28 @@ gentype_format(PyObject *self, PyObject *args)
 #endif
 
 /**begin repeat
- * #name = float, double, longdouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_float, npy_double, npy_longdouble#
- * #suff = f, d, l#
+ * #name = half, float, double, longdouble#
+ * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_half, npy_float, npy_double, npy_longdouble#
+ * #suff = h, f, d, l#
  */
 
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
-
-NPY_NO_EXPORT void
-format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
+NPY_NO_EXPORT PyObject *
+format_@name@(@type@ val, npy_bool scientific,
+              int precision, int sign, TrimMode trim,
+              int pad_left, int pad_right, int exp_digits)
 {
-    /* XXX: Find a correct size here for format string */
-    char format[64], *res;
-    size_t i, cnt;
-
-    PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-    res = NumPyOS_ascii_format@suff@(buf, buflen, format, val, 0);
-    if (res == NULL) {
-        fprintf(stderr, "Error while formatting\n");
-        return;
-    }
-
-    /* If nothing but digits after sign, append ".0" */
-    cnt = strlen(buf);
-    for (i = (buf[0] == '-') ? 1 : 0; i < cnt; ++i) {
-        if (!isdigit(Py_CHARMASK(buf[i]))) {
-            break;
-        }
-    }
-    if (i == cnt && buflen >= cnt + 3) {
-        strcpy(&buf[cnt],".0");
-    }
-}
-
-#undef _FMT1
-#undef _FMT2
-
-/**end repeat**/
-
-/**begin repeat
- * #name = cfloat, cdouble, clongdouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #suff = f, d, l#
- */
-
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
-
-static void
-format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
-{
-    /* XXX: Find a correct size here for format string */
-    char format[64];
-    char *res;
-
-    /*
-     * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
-     */
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
-        PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-        res = NumPyOS_ascii_format@suff@(buf, buflen - 1, format, val.imag, 0);
-        if (res == NULL) {
-            /* FIXME
-             * We need a better way to handle the error message
-             */
-            fprintf(stderr, "Error while formatting\n");
-            return;
-        }
-        if (!npy_isfinite(val.imag)) {
-            strncat(buf, "*", 1);
-        }
-        strncat(buf, "j", 1);
+    if (scientific) {
+        return Dragon4_Scientific_AnySize(&val, sizeof(@type@), 1, precision,
+                                          sign, trim, pad_left, exp_digits);
     }
     else {
-        char re[64], im[64];
-        if (npy_isfinite(val.real)) {
-                PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-                res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                        val.real, 0);
-                if (res == NULL) {
-                    /* FIXME
-                     * We need a better way to handle the error message
-                     */
-                    fprintf(stderr, "Error while formatting\n");
-                    return;
-                }
-        }
-        else {
-                if (npy_isnan(val.real)) {
-                        strcpy(re, "nan");
-                }
-                else if (val.real > 0){
-                        strcpy(re, "inf");
-                }
-                else {
-                        strcpy(re, "-inf");
-                }
-        }
-
-
-        if (npy_isfinite(val.imag)) {
-                PyOS_snprintf(format, sizeof(format), _FMT2, prec);
-                res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                        val.imag, 0);
-                if (res == NULL) {
-                    fprintf(stderr, "Error while formatting\n");
-                    return;
-                }
-        }
-        else {
-                if (npy_isnan(val.imag)) {
-                        strcpy(im, "+nan");
-                }
-                else if (val.imag > 0){
-                        strcpy(im, "+inf");
-                }
-                else {
-                        strcpy(im, "-inf");
-                }
-                if (!npy_isfinite(val.imag)) {
-                        strncat(im, "*", 1);
-                }
-        }
-        PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
+        return Dragon4_Positional_AnySize(&val, sizeof(@type@), 1, precision,
+                                          sign, trim, pad_left, pad_right);
     }
 }
 
-#undef _FMT1
-#undef _FMT2
-
 /**end repeat**/
-
-NPY_NO_EXPORT void
-format_half(char *buf, size_t buflen, npy_half val, unsigned int prec)
-{
-    format_float(buf, buflen, npy_half_to_float(val), prec);
-}
 
 /*
  * over-ride repr and str of array-scalar strings and unicode to
@@ -828,21 +712,6 @@ timedeltatype_str(PyObject *self)
     return ret;
 }
 
-/* The REPR values are finfo.precision + 2 */
-#define HALFPREC_REPR 5
-#define HALFPREC_STR 5
-#define FLOATPREC_REPR 8
-#define FLOATPREC_STR 6
-#define DOUBLEPREC_REPR 17
-#define DOUBLEPREC_STR 12
-#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
-#define LONGDOUBLEPREC_REPR DOUBLEPREC_REPR
-#define LONGDOUBLEPREC_STR DOUBLEPREC_STR
-#else /* More than probably needed on Intel FP */
-#define LONGDOUBLEPREC_REPR 20
-#define LONGDOUBLEPREC_STR 12
-#endif
-
 /*
  * float type str and repr
  *
@@ -850,137 +719,139 @@ timedeltatype_str(PyObject *self)
  */
 
 /**begin repeat
- * #name = half, float, double, longdouble#
- * #Name = Half, Float, Double, LongDouble#
- * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
- * #hascomplex = 0, 1, 1, 1#
- */
-/**begin repeat1
  * #kind = str, repr#
- * #KIND = STR, REPR#
  */
 
-#define PREC @NAME@PREC_@KIND@
+/**begin repeat1
+ * #name = float, double, longdouble#
+ * #Name = Float, Double, LongDouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ */
+
+static PyObject *
+@name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
+                         npy_bool sign)
+{
+    if (val < (npy_@name@)1.e16L) {
+        return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
+    }
+    return format_@name@(val, 1, -1, sign, trim_sci, -1, -1, -1);
+}
 
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    char buf[100];
-    npy_@name@ val = ((Py@Name@ScalarObject *)self)->obval;
-
-    format_@name@(buf, sizeof(buf), val, PREC);
-    return PyUString_FromString(buf);
+    return @name@type_@kind@_either(((Py@Name@ScalarObject *)self)->obval,
+                                  TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
 }
 
-#if @hascomplex@
 static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
-    char buf[202];
+    PyObject *rstr, *istr, *ret;
     npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
+    TrimMode trim = TrimMode_DptZeros;
 
-    format_c@name@(buf, sizeof(buf), val, PREC);
-    return PyUString_FromString(buf);
+    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+        istr = @name@type_@kind@_either(val.imag, trim, trim, 0);
+        if (istr == NULL) {
+            return NULL;
+        }
+        PyUString_ConcatAndDel(&istr, PyUString_FromString("j"));
+        return istr;
+    }
+
+    if (npy_isfinite(val.real)) {
+        rstr = @name@type_@kind@_either(val.real, trim, trim, 0);
+        if (rstr == NULL) {
+            return NULL;
+        }
+    }
+    else if (npy_isnan(val.real)) {
+        rstr = PyUString_FromString("nan");
+    }
+    else if (val.real > 0){
+        rstr = PyUString_FromString("inf");
+    }
+    else {
+        rstr = PyUString_FromString("-inf");
+    }
+
+    if (npy_isfinite(val.imag)) {
+        istr = @name@type_@kind@_either(val.imag, trim, trim, 1);
+        if (istr == NULL) {
+            return NULL;
+        }
+    }
+    else if (npy_isnan(val.imag)) {
+        istr = PyUString_FromString("+nan");
+    }
+    else if (val.imag > 0){
+        istr = PyUString_FromString("+inf");
+    }
+    else {
+        istr = PyUString_FromString("-inf");
+    }
+
+    ret = PyUString_FromString("(");
+    PyUString_ConcatAndDel(&ret, rstr);
+    PyUString_ConcatAndDel(&ret, istr);
+    PyUString_ConcatAndDel(&ret, PyUString_FromString("j)"));
+    return ret;
 }
-#endif
 
 #undef PREC
 
 /**end repeat1**/
-/**end repeat**/
 
-/*
- * float type print (control print a, where a is a float type instance)
- */
-/**begin repeat
- * #name = half, float, double, longdouble#
- * #Name = Half, Float, Double, LongDouble#
- * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
- * #hascomplex = 0, 1, 1, 1#
- */
-
-static int
-@name@type_print(PyObject *v, FILE *fp, int flags)
+static PyObject *
+halftype_@kind@(PyObject *self)
 {
-        char buf[100];
-        npy_@name@ val = ((Py@Name@ScalarObject *)v)->obval;
-
-        format_@name@(buf, sizeof(buf), val,
-                      (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-        Py_BEGIN_ALLOW_THREADS
-        fputs(buf, fp);
-        Py_END_ALLOW_THREADS
-        return 0;
+    npy_half val = ((PyHalfScalarObject *)self)->obval;
+    if (npy_half_to_double(val) < 1.e16) {
+        return format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
+    }
+    return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
 }
-
-#if @hascomplex@
-static int
-c@name@type_print(PyObject *v, FILE *fp, int flags)
-{
-        /* Size of buf: twice sizeof(real) + 2 (for the parenthesis) */
-        char buf[202];
-        npy_c@name@ val = ((PyC@Name@ScalarObject *)v)->obval;
-
-        format_c@name@(buf, sizeof(buf), val,
-                       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-        Py_BEGIN_ALLOW_THREADS
-        fputs(buf, fp);
-        Py_END_ALLOW_THREADS
-        return 0;
-}
-#endif
 
 /**end repeat**/
 
-
-/*
- * Could improve this with a PyLong_FromLongDouble(longdouble ldval)
- * but this would need some more work...
- */
-
 /**begin repeat
- *
- * #name = (int, float)*2#
- * #KIND = (Long, Float)*2#
- * #char = ,,c*2#
- * #CHAR = ,,C*2#
- * #POST = ,,.real*2#
+ * #char = ,c#
+ * #CHAR = ,C#
+ * #POST = ,.real#
  */
 static PyObject *
-@char@longdoubletype_@name@(PyObject *self)
+@char@longdoubletype_float(PyObject *self)
 {
-    double dval;
-    PyObject *obj, *ret;
-
-    dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
-    obj = Py@KIND@_FromDouble(dval);
-    if (obj == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
-    Py_DECREF(obj);
-    return ret;
+    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+    return PyFloat_FromDouble((double) val);
 }
-/**end repeat**/
+
+static PyObject *
+@char@longdoubletype_long(PyObject *self)
+{
+    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+
+    /*
+     * This raises OverflowError when the cast overflows to infinity (gh-9964)
+     *
+     * Could fix this with a PyLong_FromLongDouble(longdouble ldval)
+     * but this would need some more work...
+     */
+    return PyLong_FromDouble((double) val);
+}
 
 #if !defined(NPY_PY3K)
 
-/**begin repeat
- *
- * #name = (long, hex, oct)*2#
- * #KIND = (Long*3)*2#
- * #char = ,,,c*3#
- * #CHAR = ,,,C*3#
- * #POST = ,,,.real*3#
+/**begin repeat1
+ * #name = int, hex, oct#
  */
 static PyObject *
 @char@longdoubletype_@name@(PyObject *self)
 {
-    double dval;
-    PyObject *obj, *ret;
-
-    dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
-    obj = Py@KIND@_FromDouble(dval);
+    PyObject *ret;
+    PyObject *obj = @char@longdoubletype_long(self);
     if (obj == NULL) {
         return NULL;
     }
@@ -988,9 +859,11 @@ static PyObject *
     Py_DECREF(obj);
     return ret;
 }
-/**end repeat**/
+/**end repeat1**/
 
 #endif /* !defined(NPY_PY3K) */
+
+/**end repeat**/
 
 static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
@@ -4227,45 +4100,31 @@ initialize_numeric_types(void)
     /**end repeat**/
 
 
-    PyHalfArrType_Type.tp_print = halftype_print;
-    PyFloatArrType_Type.tp_print = floattype_print;
-    PyDoubleArrType_Type.tp_print = doubletype_print;
-    PyLongDoubleArrType_Type.tp_print = longdoubletype_print;
 
-    PyCFloatArrType_Type.tp_print = cfloattype_print;
-    PyCDoubleArrType_Type.tp_print = cdoubletype_print;
-    PyCLongDoubleArrType_Type.tp_print = clongdoubletype_print;
+    /**begin repeat
+     * #char = ,c#
+     * #CHAR = ,C#
+     */
 
     /*
-     * These need to be coded specially because getitem does not
-     * return a normal Python type
+     * These need to be coded specially because longdouble/clongdouble getitem
+     * does not return a normal Python type
      */
-    PyLongDoubleArrType_Type.tp_as_number = &longdoubletype_as_number;
-    PyCLongDoubleArrType_Type.tp_as_number = &clongdoubletype_as_number;
-
-    /**begin repeat
-     * #name = int, float, repr, str#
-     * #kind = tp_as_number->nb*2, tp*2#
-     */
-
-    PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
-    PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
-
-    /**end repeat**/
-
-
-#if !defined(NPY_PY3K)
-    /**begin repeat
-     * #name = long, hex, oct#
-     * #kind = tp_as_number->nb*3#
-     */
-
-    PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
-    PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
-
-    /**end repeat**/
-
+    @char@longdoubletype_as_number.nb_float = @char@longdoubletype_float;
+#if defined(NPY_PY3K)
+    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
+#else
+    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_int;
+    @char@longdoubletype_as_number.nb_long = @char@longdoubletype_long;
+    @char@longdoubletype_as_number.nb_hex  = @char@longdoubletype_hex;
+    @char@longdoubletype_as_number.nb_oct  = @char@longdoubletype_oct;
 #endif
+
+    Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
+    Py@CHAR@LongDoubleArrType_Type.tp_repr = @char@longdoubletype_repr;
+    Py@CHAR@LongDoubleArrType_Type.tp_str = @char@longdoubletype_str;
+
+    /**end repeat**/
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;

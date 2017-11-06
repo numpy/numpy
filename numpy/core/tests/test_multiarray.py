@@ -4606,7 +4606,7 @@ class TestRecord(object):
             assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
 
             dt = np.dtype([((b'a', 'b'), int)])
-            assert_raises(ValueError, dt.__getitem__, b'a')
+            assert_raises(TypeError, dt.__getitem__, b'a')
 
             x = np.array([(1,), (2,), (3,)], dtype=dt)
             assert_raises(IndexError, x.__getitem__, b'a')
