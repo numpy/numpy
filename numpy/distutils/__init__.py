@@ -26,10 +26,10 @@ except ImportError:
 def customized_fcompiler(plat=None, compiler=None):
     from numpy.distutils.fcompiler import new_fcompiler
     c = new_fcompiler(plat=plat, compiler=compiler)
-    c.customize() 
+    c.customize('') 
     return c
 
 def customized_ccompiler(plat=None, compiler=None):
     c = ccompiler.new_compiler(plat=plat, compiler=compiler)
-    c.customize()
+    c.customize('')
     return c
