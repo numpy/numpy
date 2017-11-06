@@ -1013,7 +1013,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     ------
     ValueError
         If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
-         ``np.ndim(scl) != 0``.
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -1062,6 +1062,10 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)

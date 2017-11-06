@@ -11,7 +11,7 @@ Glossary
        vertically downwards across rows (axis 0), and the second running
        horizontally across columns (axis 1).
 
-       Many operation can take place along one of these axes.  For example,
+       Many operations can take place along one of these axes.  For example,
        we can sum each row of an array, in which case we operate along
        columns, or axis 1::
 

@@ -470,19 +470,18 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     }
 
     /*
-     * Treat V0 as resizable void - unless the destination is already V0, then
-     * don't allow np.void to be duplicated
+     * Viewing as an unsized void implies a void dtype matching the size of the
+     * current dtype.
      */
     if (newtype->type_num == NPY_VOID &&
-            newtype->elsize == 0 &&
-            PyArray_DESCR(self)->elsize != 0) {
+            PyDataType_ISUNSIZED(newtype) &&
+            newtype->elsize != PyArray_DESCR(self)->elsize) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return -1;
         }
         newtype->elsize = PyArray_DESCR(self)->elsize;
     }
-
 
     /* Changing the size of the dtype results in a shape change */
     if (newtype->elsize != PyArray_DESCR(self)->elsize) {
