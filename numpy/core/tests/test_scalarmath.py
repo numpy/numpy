@@ -408,7 +408,8 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY)
+    @dec.knownfailureif(not IS_PYPY,
+        "__int__ is not the same as int in cpython (gh-9972)")
     def test_clongdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
@@ -416,7 +417,7 @@ class TestConversion(object):
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
