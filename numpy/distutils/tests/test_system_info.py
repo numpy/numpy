@@ -6,7 +6,7 @@ from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
-from numpy.distutils import ccompiler
+from numpy.distutils import ccompiler, customized_ccompiler
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec
     )
@@ -60,8 +60,7 @@ void bar(void) {
 def have_compiler():
     """ Return True if there appears to be an executable compiler
     """
-    compiler = ccompiler.new_compiler()
-    compiler.customize(None)
+    compiler = customized_ccompiler()
     try:
         cmd = compiler.compiler  # Unix compilers
     except AttributeError:
