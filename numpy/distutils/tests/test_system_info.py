@@ -204,8 +204,7 @@ class TestSystemInfoReading(object):
     @dec.skipif(not HAVE_COMPILER)
     def test_compile1(self):
         # Compile source and link the first source
-        c = ccompiler.new_compiler()
-        c.customize(None)
+        c = customized_ccompiler()
         previousDir = os.getcwd()
         try:
             # Change directory to not screw up directories
@@ -222,8 +221,7 @@ class TestSystemInfoReading(object):
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
-        c = ccompiler.new_compiler()
-        c.customize(None)
+        c = customized_ccompiler()
         extra_link_args = tsi.calc_extra_info()['extra_link_args']
         previousDir = os.getcwd()
         try:
