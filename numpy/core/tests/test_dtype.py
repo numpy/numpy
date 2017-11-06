@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import pickle
 import sys
+import operator
 
 import numpy as np
 from numpy.core.test_rational import rational
@@ -297,6 +298,19 @@ class TestRecord(object):
         # no errors here:
         dt = make_dtype(np.uint32(0))
         np.zeros(1, dtype=dt)[0].item()
+
+    def test_fields_by_index(self):
+        dt = np.dtype([('a', np.int8), ('b', np.float32, 3)])
+        assert_dtype_equal(dt[0], np.dtype(np.int8))
+        assert_dtype_equal(dt[1], np.dtype((np.float32, 3)))
+        assert_dtype_equal(dt[-1], dt[1])
+        assert_dtype_equal(dt[-2], dt[0])
+        assert_raises(IndexError, lambda: dt[-3])
+
+        assert_raises(TypeError, operator.getitem, dt, 3.0)
+        assert_raises(TypeError, operator.getitem, dt, [])
+
+        assert_equal(dt[1], dt[np.int8(1)])
 
 
 class TestSubarray(object):

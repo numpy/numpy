@@ -167,7 +167,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
     flex_type_num = (*flex_dtype)->type_num;
 
     /* Flexible types with expandable size */
-    if ((*flex_dtype)->elsize == 0) {
+    if (PyDataType_ISUNSIZED(*flex_dtype)) {
         /* First replace the flex dtype */
         PyArray_DESCR_REPLACE(*flex_dtype);
         if (*flex_dtype == NULL) {
@@ -526,7 +526,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             }
 
             ret = 0;
-            if (to->elsize == 0) {
+            if (PyDataType_ISUNSIZED(to)) {
                 ret = 1;
             }
             /* 
@@ -1152,7 +1152,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type2, &temp);
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1190,7 +1190,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type2, &temp);
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1238,7 +1238,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type1, &temp);
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1255,7 +1255,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type1, &temp);
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);

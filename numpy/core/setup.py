@@ -688,7 +688,10 @@ def configuration(parent_package='',top_path=None):
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
-            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
+            build_info={
+                'include_dirs' : [],
+                'extra_compiler_args' : (['/GL-'] if sys.platform == 'win32' else []),
+            })  # empty list required for creating npy_math_internal.h
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
@@ -728,6 +731,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'conversion_utils.h'),
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
@@ -793,6 +797,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
             join('src', 'multiarray', 'flagsobject.c'),
