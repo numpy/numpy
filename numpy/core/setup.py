@@ -7,7 +7,7 @@ import copy
 import sysconfig
 import warnings
 from os.path import join
-from numpy.distutils import log
+from numpy.distutils import log, customized_ccompiler
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 from numpy._build_utils.apple_accelerate import (
@@ -685,13 +685,15 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
+    
+    is_msvc = customized_ccompiler().compiler_type == 'msvc'
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
-                'include_dirs' : [],
-                'extra_compiler_args' : (['/GL-'] if sys.platform == 'win32' else []),
-            })  # empty list required for creating npy_math_internal.h
+                'include_dirs' : [],  # empty list required for creating npy_math_internal.h
+                'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
