@@ -451,6 +451,14 @@ class TestAssignment(object):
             arr = np.array([np.array(tinya)])
             assert_equal(arr[0], tinya)
 
+    def test_cast_to_string(self):
+        # cast to str should do "str(scalar)", not "str(scalar.item())"
+        # Example: In python2, str(float) is truncated, so we want to avoid
+        # str(np.float64(...).item()) as this would incorrectly truncate.
+        a = np.zeros(1, dtype='S20')
+        a[:] = np.array(['1.12345678901234567890'], dtype='f8')
+        assert_equal(a[0], b"1.1234567890123457")
+
 
 class TestDtypedescr(object):
     def test_construction(self):
