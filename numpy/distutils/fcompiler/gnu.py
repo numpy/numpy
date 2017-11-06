@@ -504,16 +504,11 @@ def _can_target(cmd, arch):
 
 if __name__ == '__main__':
     from distutils import log
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
 
-    compiler = GnuFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
-
+    print(customized_fcompiler('gnu').get_version())
     try:
-        compiler = Gnu95FCompiler()
-        compiler.customize()
-        print(compiler.get_version())
+        print(customized_fcompiler('g95').get_version())
     except Exception:
-        msg = get_exception()
-        print(msg)
+        print(get_exception())
