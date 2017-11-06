@@ -2021,14 +2021,8 @@ def lstsq(a, b, rcond="warn"):
         work = zeros((lwork,), t)
         results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
                                  0, work, -1, rwork, iwork, 0)
-        lwork = int(abs(work[0]))
-        rwork = zeros((lwork,), real_t)
-        a_real = zeros((m, n), real_t)
-        bstar_real = zeros((ldb, n_rhs,), real_t)
-        results = lapack_lite.dgelsd(m, n, n_rhs, a_real, m,
-                                     bstar_real, ldb, s, rcond,
-                                     0, rwork, -1, iwork, 0)
         lrwork = int(rwork[0])
+        lwork = int(work[0].real)
         work = zeros((lwork,), t)
         rwork = zeros((lrwork,), real_t)
         results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
