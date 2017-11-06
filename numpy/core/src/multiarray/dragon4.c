@@ -39,7 +39,7 @@
 #if 0
 #define DEBUG_ASSERT(stmnt) assert(stmnt)
 #else
-#define DEBUG_ASSERT(stmnt) {}
+#define DEBUG_ASSERT(stmnt) do {} while(0)
 #endif
 
 /*
@@ -1002,8 +1002,8 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
  *   * exponent - value exponent in base 2
  *   * mantissaBit - index of the highest set mantissa bit
  *   * hasUnequalMargins - is the high margin twice as large as the low margin
- *   * cutoffMode - how to determine output length
- *   * cutoffNumber - parameter to the selected cutoffMode. For each mode:
+ *   * cutoffMode - how to intepret cutoffNumber: fractional or total digits?
+ *   * cutoffNumber - cut off printing after this many digits. -1 for no cutoff
  *   * pOutBuffer - buffer to output into
  *   * bufferSize - maximum characters that can be printed to pOutBuffer
  *   * pOutExponent - the base 10 exponent of the first digit

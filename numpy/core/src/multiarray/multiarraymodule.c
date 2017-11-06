@@ -3603,8 +3603,8 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii", kwlist,
-                &obj, &precision, &unique, &sign, &trimstr, &pad_left,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii:dragon4_scientific",
+                kwlist, &obj, &precision, &unique, &sign, &trimstr, &pad_left,
                 &exp_digits)) {
         return NULL;
     }
@@ -3660,8 +3660,8 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1, fractional=0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiisii", kwlist,
-                &obj, &precision, &unique, &fractional, &sign, &trimstr,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiisii:dragon4_positional",
+                kwlist, &obj, &precision, &unique, &fractional, &sign, &trimstr,
                 &pad_left, &pad_right)) {
         return NULL;
     }
