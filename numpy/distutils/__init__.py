@@ -21,3 +21,4 @@ try:
     test = _numpy_tester().test
 except ImportError:
     pass
+ 
