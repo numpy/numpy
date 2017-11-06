@@ -315,24 +315,28 @@ now supported for these arrays:
 Float printing now uses "dragon4" algorithm for shortest decimal representation
 -------------------------------------------------------------------------------
 All numpy floating-point types (16, 32, 64 and 128 bit) can now be printed to
-give shortest decimal representation of the number, which uniquely identifies
+give shortest decimal representation of the number which uniquely identifies
 the value from others of the same type.
 
 New functions ``np.format_float_scientific`` and ``np.format_float_positional``
-are provided to generate these decimal representations, with control over
-rounding, trimming and padding.
+are provided to generate these decimal representations.
 
-The ``str`` and ``repr`` of floating-point scalars now shows the shortest
-unique decimal representation. This means there will be a different number of
-digits compared to numpy 1.13, for instance float64 and float128 will be longer
-and float16 will be shorter.
+The ``str`` and ``repr`` of floating-point scalars now use the shortest unique
+decimal representation. This means float128s will appear longer and float16s
+shorter than in numpy 1.13. Additionally, the `str` of these scalars will no
+longer be truncated in python2, unlike python2 `float`s. `np.double` scalars
+now have a `str` and `repr` identical to that of a python3 float.
 
-For arrays of floating-point type, a new formatting option ``floatmode`` has
-been added to ``np.set_printoptions`` and ``np.array2string``, which gives
-control over uniqueness and rounding of printed elements in arrays. The new
-default is ``floatmode='maxprec'`` with ``precision=8``, which will print at most
-8 fractional digits, or fewer if an element can be uniquely represented with
-fewer.
+A new option ``floatmode`` has been added to ``np.set_printoptions`` and
+``np.array2string``, which gives control over uniqueness and rounding of
+printed elements in an array. The new default is ``floatmode='maxprec'`` with
+``precision=8``, which will print at most 8 fractional digits, or fewer if an
+element can be uniquely represented with fewer. A useful new mode is
+``floatmode="unique"``, which will output enough digits to specify the array
+elements uniquely.
+
+Numpy complex-floating-scalars with values like ``inf*j`` or ``nan*j`` now
+print as ``infj`` and ``nanj``, like the pure-python ``complex`` type.
 
 
 Changes
