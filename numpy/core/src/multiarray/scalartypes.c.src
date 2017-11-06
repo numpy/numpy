@@ -816,55 +816,42 @@ halftype_@kind@(PyObject *self)
 
 /**end repeat**/
 
-
-/*
- * Could improve this with a PyLong_FromLongDouble(longdouble ldval)
- * but this would need some more work...
- */
-
 /**begin repeat
- *
- * #name = (int, float)*2#
- * #KIND = (Long, Float)*2#
- * #char = ,,c*2#
- * #CHAR = ,,C*2#
- * #POST = ,,.real*2#
+ * #char = ,c#
+ * #CHAR = ,C#
+ * #POST = ,.real#
  */
 static PyObject *
-@char@longdoubletype_@name@(PyObject *self)
+@char@longdoubletype_float(PyObject *self)
 {
-    double dval;
-    PyObject *obj, *ret;
-
-    dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
-    obj = Py@KIND@_FromDouble(dval);
-    if (obj == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
-    Py_DECREF(obj);
-    return ret;
+    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+    return PyFloat_FromDouble((double) val);
 }
-/**end repeat**/
+
+static PyObject *
+@char@longdoubletype_long(PyObject *self)
+{
+    npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
+
+    /*
+     * This raises OverflowError when the cast overflows to infinity (gh-9964)
+     *
+     * Could fix this with a PyLong_FromLongDouble(longdouble ldval)
+     * but this would need some more work...
+     */
+    return PyLong_FromDouble((double) val);
+}
 
 #if !defined(NPY_PY3K)
 
-/**begin repeat
- *
- * #name = (long, hex, oct)*2#
- * #KIND = (Long*3)*2#
- * #char = ,,,c*3#
- * #CHAR = ,,,C*3#
- * #POST = ,,,.real*3#
+/**begin repeat1
+ * #name = int, hex, oct#
  */
 static PyObject *
 @char@longdoubletype_@name@(PyObject *self)
 {
-    double dval;
-    PyObject *obj, *ret;
-
-    dval = (double)(((Py@CHAR@LongDoubleScalarObject *)self)->obval)@POST@;
-    obj = Py@KIND@_FromDouble(dval);
+    PyObject *ret;
+    PyObject *obj = @char@longdoubletype_long(self);
     if (obj == NULL) {
         return NULL;
     }
@@ -872,9 +859,11 @@ static PyObject *
     Py_DECREF(obj);
     return ret;
 }
-/**end repeat**/
+/**end repeat1**/
 
 #endif /* !defined(NPY_PY3K) */
+
+/**end repeat**/
 
 static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
@@ -4111,36 +4100,31 @@ initialize_numeric_types(void)
     /**end repeat**/
 
 
+
+    /**begin repeat
+     * #char = ,c#
+     * #CHAR = ,C#
+     */
+
     /*
-     * These need to be coded specially because getitem does not
-     * return a normal Python type
+     * These need to be coded specially because longdouble/clongdouble getitem
+     * does not return a normal Python type
      */
-    PyLongDoubleArrType_Type.tp_as_number = &longdoubletype_as_number;
-    PyCLongDoubleArrType_Type.tp_as_number = &clongdoubletype_as_number;
-
-    /**begin repeat
-     * #name = int, float, repr, str#
-     * #kind = tp_as_number->nb*2, tp*2#
-     */
-
-    PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
-    PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
-
-    /**end repeat**/
-
-
-#if !defined(NPY_PY3K)
-    /**begin repeat
-     * #name = long, hex, oct#
-     * #kind = tp_as_number->nb*3#
-     */
-
-    PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
-    PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
-
-    /**end repeat**/
-
+    @char@longdoubletype_as_number.nb_float = @char@longdoubletype_float;
+#if defined(NPY_PY3K)
+    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
+#else
+    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_int;
+    @char@longdoubletype_as_number.nb_long = @char@longdoubletype_long;
+    @char@longdoubletype_as_number.nb_hex  = @char@longdoubletype_hex;
+    @char@longdoubletype_as_number.nb_oct  = @char@longdoubletype_oct;
 #endif
+
+    Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
+    Py@CHAR@LongDoubleArrType_Type.tp_repr = @char@longdoubletype_repr;
+    Py@CHAR@LongDoubleArrType_Type.tp_str = @char@longdoubletype_str;
+
+    /**end repeat**/
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
