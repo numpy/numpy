@@ -134,15 +134,6 @@ the parameter to ``from_``.
 C API changes
 =============
 
-Change internal UPDATEIFCOPY semantics
---------------------------------------
-When ndarrays are created with the ``UPDATEIFCOPY`` flag, a temporary copy of
-the data is created. The writeback to the original data occurrs at ndarray
-deallocation. Refactor the writeback into a new PyArray_ResolveUpdateIfCopy
-function and use it internally wherever such an array is created. The only
-visible change in behavior is that if compiled with ``-DDEPRECATE_UPDATEIFCOPY``
-or if run on PyPy, and writeback resolution has not occurred before calling
-``array_dealloc``, NumPy will now raise a DeprecationWarning.
 Change internal WRITEBACKIFCOPY (deprecates UPDATIFCOPY) semantics
 ----------------------------------------------------------------
 When ndarrays are created with either the deprecated ``UPDATEIFCOPY`` or new
@@ -157,7 +148,7 @@ or if run on PyPy, and writeback resolution has not occurred before calling
 ``nditer`` and the deprecated semantics have been resolved, the warning will be
 raised on all implementations.
 
-Additionally, deprecrate the ``NPY_ARRAY_UPDATEIFCOPY`` flag, replace it with
+Additionally, deprecate the ``NPY_ARRAY_UPDATEIFCOPY`` flag, replace it with
 ``NPY_ARRAY_WRITEBACKIFCOPY``, and deprecate ``PyArray_SetUpdateIfCopyBase``
 in favor of ``PyArray_SetWritebackIfCopyBase``. This was done to encourage downstream
 consumers of the C-API to properly use the PyArray_ResolveWritebackIfCopy
