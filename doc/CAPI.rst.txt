@@ -280,13 +280,15 @@ array, or part of some larger record array.  But, they may have other uses...
     a copy had to be made of some other array (and the user asked for
     this flag to be set in such a situation). The base attribute then
     points to the "misbehaved" array (which is set read_only). If you use
-    this flag, you are must call ``PyArray_ResoveWritebackIfCopy`` before
+    this flag, you are must call ``PyArray_ResolveWritebackIfCopy`` before
     deallocating this array (i.e. before calling ``Py_DECREF`` the last time)
     which will write the data contents back to the "misbehaved" array (casting
     if necessary) and will reset the "misbehaved" array to ``WRITEABLE``. If
     the "misbehaved" array was not ``WRITEABLE`` to begin with then
     ``PyArray_FromAny`` would have returned an error because ``WRITEBACKIFCOPY``
-    would not have been possible.
+    would not have been possible. In error conditions, call
+    ``PyArray_DiscardWritebackIfCopy`` to throw away the scratch buffer, then
+    ``Py_DECREF`` or ``Py_XDECREF``.
 
 ``NPY_UPDATEIFCOPY``
     Similar to ``NPY_WRITEBACKIFCOPY``, but deprecated since it copied the

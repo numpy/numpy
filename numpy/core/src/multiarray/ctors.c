@@ -1838,7 +1838,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * Fortran arrays are always behaved (aligned,
  * notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d).
  *
- * NPY_ARRAY_UPDATEIFCOPY is deprecated in favor of 
+ * NPY_ARRAY_UPDATEIFCOPY is deprecated in favor of
  * NPY_ARRAY_WRITEBACKIFCOPY in 1.14
 
  * NPY_ARRAY_WRITEBACKIFCOPY flag sets this flag in the returned
@@ -2012,18 +2012,17 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
 
         if (flags & NPY_ARRAY_UPDATEIFCOPY) {
-            /* This is the ONLY place the NPY-ARRAY_UPDATEIFCOPY flag
-             * is checked to call PyArray_SetUpdateIfCopyBase
-             * Deprecate this (and remove the `else` from the following
-             * condition) once the flag itself is deprecated
+            /* This is the ONLY place the NPY_ARRAY_UPDATEIFCOPY flag
+             * is still used.
+             * Can be deleted once the flag itself is removed
              */
 
-            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY (possibly via "
-                "NPY_ARRAY_INOUT_ARRAY or NPY_ARRAY_INOUT_FARRAY) is "
-                "deprecated, use NPY_WRITEBACKIFCOPY, NPY_ARRAY_INOUT_ARRAY2, "
-                "or NPY_ARRAY_INOUT_FARRAY2 respectively instead, and call "
-                "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
-                "i.e. before the last call to Py_DECREF.") < 0)
+            /* 2017-Nov-10 1.14 */
+            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
+                "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
+                "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
+                "instead, and call PyArray_ResolveWritebackIfCopy before the "
+                "array is deallocated, i.e. before the last call to Py_DECREF.") < 0)
                 return NULL;
             Py_INCREF(arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {

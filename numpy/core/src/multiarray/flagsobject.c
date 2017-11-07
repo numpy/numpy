@@ -222,6 +222,7 @@ static PyObject *
 arrayflags_updateifcopy_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
+    /* 2017-Nov-10 1.14 */
     if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
         return NULL;
     }
@@ -308,6 +309,7 @@ arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
                 "Cannot set flags on array scalars.");
         return -1;
     }
+    /* 2017-Nov-10 1.14 */
     if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
         return -1;
     }

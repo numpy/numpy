@@ -96,10 +96,13 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     /* TODO: enable this once a solution for UPDATEIFCOPY
      *  and nditer are resolved, also pending the fix for GH7054
      */
+    /* 2017-Nov-10 1.14 */
     if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
               "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
               "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
-              "i.e. before the last call to Py_DECREF.") < 0)
+              "i.e. before the last call to Py_DECREF. If cleaning up from an "
+              "error, PyArray_DiscardWritebackIfCopy may be called instead to "
+              "throw away the scratch buffer.") < 0)
         return -1;
 #endif
     ret = PyArray_SetWritebackIfCopyBase(arr, base);
@@ -480,6 +483,7 @@ array_dealloc(PyArrayObject *self)
             char * msg = "WRITEBACKIFCOPY requires a call to "
                 "PyArray_ResolveWritebackIfCopy before array_dealloc is "
                 "called.";
+            /* 2017-Nov-10 1.14 */
             if (DEPRECATE(msg) < 0) {
                 /* dealloc must not raise an error, best effort try to write
                    to stderr and clear the error
@@ -492,10 +496,17 @@ array_dealloc(PyArrayObject *self)
 #endif
                 if (s) {
                     PyErr_WriteUnraisable(s);
+                    Py_DECREF(s);
                 }
                 else {
                     PyErr_WriteUnraisable(Py_None);
                 }
+            }
+            retval = PyArray_ResolveWritebackIfCopy(self);
+            if (retval < 0)
+            {
+                PyErr_Print();
+                PyErr_Clear();
             }
         }
         if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {

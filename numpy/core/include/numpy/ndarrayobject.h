@@ -184,14 +184,6 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
     }
 }
 
-/* Deprecated in 1.14 */
-static NPY_INLINE void
-PyArray_XDECREF_ERR(PyArrayObject *arr)
-{
-    PyArray_DiscardWritebackIfCopy(arr);
-    Py_XDECREF(arr);
-}
-
 #define PyArray_DESCR_REPLACE(descr) do { \
                 PyArray_Descr *_new_; \
                 _new_ = PyArray_DescrNew(descr); \
@@ -246,6 +238,19 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
 
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)
+
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_14_API_VERSION)
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *arr)
+{
+    /* 2017-Nov-10 1.14 */
+    DEPRECATE("PyArray_XDECREF_ERR is deprecated, call "
+        "PyArray_DiscardWritebackIfCopy then Py_XDECREF instead");
+    PyArray_DiscardWritebackIfCopy(arr);
+    Py_XDECREF(arr);
+}
+#endif
 
 
 #ifdef __cplusplus

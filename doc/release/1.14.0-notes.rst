@@ -143,7 +143,7 @@ function and use it internally wherever such an array is created. The only
 visible change in behavior is that if compiled with ``-DDEPRECATE_UPDATEIFCOPY``
 or if run on PyPy, and writeback resolution has not occurred before calling
 ``array_dealloc``, NumPy will now raise a DeprecationWarning.
-Change internal WRITEBACKIFCOPY (depreacates UPDATIFCOPY) semantics
+Change internal WRITEBACKIFCOPY (deprecates UPDATIFCOPY) semantics
 ----------------------------------------------------------------
 When ndarrays are created with either the deprecated ``UPDATEIFCOPY`` or new
 ``WRITEBACKIFCOPY`` flags, a temporary copy of
