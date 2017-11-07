@@ -4,7 +4,7 @@ import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, isscalar, array, asanyarray
+    asarray, zeros, outer, concatenate, array, asanyarray
     )
 from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
@@ -85,11 +85,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     array([[[1, 0, 0],
             [0, 2, 0],
             [0, 0, 3]],
-
            [[4, 0, 0],
             [0, 5, 0],
             [0, 0, 6]],
-
            [[7, 0, 0],
             [0, 8, 0],
             [0, 0, 9]]])
@@ -423,7 +421,9 @@ def array_split(ary, indices_or_sections, axis=0):
     Please refer to the ``split`` documentation.  The only difference
     between these functions is that ``array_split`` allows
     `indices_or_sections` to be an integer that does *not* equally
-    divide the axis.
+    divide the axis. For an array of length l that should be split 
+    into n sections, it returns l % n sub-arrays of size l//n + 1 
+    and the rest of size l//n.
 
     See Also
     --------
@@ -434,6 +434,10 @@ def array_split(ary, indices_or_sections, axis=0):
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
         [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.]), array([ 6.,  7.])]
+
+    >>> x = np.arange(7.0)
+    >>> np.array_split(x, 3)
+        [array([ 0.,  1.,  2.]), array([ 3.,  4.]), array([ 5.,  6.])]
 
     """
     try:

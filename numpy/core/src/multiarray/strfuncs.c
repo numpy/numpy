@@ -66,7 +66,6 @@ static int
 dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
           npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
 {
-    PyArray_Descr *descr=PyArray_DESCR(self);
     PyObject *op = NULL, *sp = NULL;
     char *ostring;
     npy_intp i, N, ret = 0;
@@ -79,7 +78,7 @@ dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
     } while (0)
 
     if (nd == 0) {
-        if ((op = descr->f->getitem(data, self)) == NULL) {
+        if ((op = PyArray_GETITEM(self, data)) == NULL) {
             return -1;
         }
         sp = PyObject_Repr(op);
@@ -197,4 +196,32 @@ array_str(PyArrayObject *self)
         Py_DECREF(arglist);
     }
     return s;
+}
+
+NPY_NO_EXPORT PyObject *
+array_format(PyArrayObject *self, PyObject *args)
+{
+    PyObject *format;
+    if (!PyArg_ParseTuple(args, "O:__format__", &format))
+        return NULL;
+
+    /* 0d arrays - forward to the scalar type */
+    if (PyArray_NDIM(self) == 0) {
+        PyObject *item = PyArray_ToScalar(PyArray_DATA(self), self);
+        PyObject *res;
+
+        if (item == NULL) {
+            return NULL;
+        }
+        res = PyObject_Format(item, format);
+        Py_DECREF(item);
+        return res;
+    }
+    /* Everything else - use the builtin */
+    else {
+        return PyObject_CallMethod(
+            (PyObject *)&PyBaseObject_Type, "__format__", "OO",
+            (PyObject *)self, format
+        );
+    }
 }

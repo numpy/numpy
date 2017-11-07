@@ -329,6 +329,12 @@ class TestSaveTxt(object):
         lines = c.readlines()
         assert_equal(lines, [b'1\n', b'2\n', b'3\n', b'4\n'])
 
+    def test_0D_3D(self):
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, np.array(1)) 
+        assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]])) 
+
+
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
@@ -1178,12 +1184,12 @@ M   33  21.99
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              names=None, converters=conv)
-        control = np.rec.array([[1,5,-1,0], [2,8,-1,1], [3,3,-2,3]], dtype=dtyp)
+        control = np.rec.array([(1,5,-1,0), (2,8,-1,1), (3,3,-2,3)], dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
         test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              usecols=(0,1,3), names=None, converters=conv)
-        control = np.rec.array([[1,5,0], [2,8,1], [3,3,3]], dtype=dtyp)
+        control = np.rec.array([(1,5,0), (2,8,1), (3,3,3)], dtype=dtyp)
         assert_equal(test, control)
 
     def test_dtype_with_object(self):

@@ -1446,10 +1446,6 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         PyObject *fields, *names;
         PyArray_Descr *view_dtype;
 
-        /* variables needed to make a copy, to remove in the future */
-        static PyObject *copyfunc = NULL;
-        PyObject *viewcopy;
-
         seqlen = PySequence_Size(ind);
 
         /* quit if have a 0-d array (seqlen==-1) or a 0-len array */
@@ -1502,6 +1498,35 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 Py_DECREF(names);
                 return 0;
             }
+            // disallow use of titles as index
+            if (PyTuple_Size(tup) == 3) {
+                PyObject *title = PyTuple_GET_ITEM(tup, 2);
+                int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
+                if (titlecmp == 1) {
+                    // if title == name, we were given a title, not a field name
+                    PyErr_SetString(PyExc_KeyError,
+                                "cannot use field titles in multi-field index");
+                }
+                if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
+                    Py_DECREF(title);
+                    Py_DECREF(name);
+                    Py_DECREF(fields);
+                    Py_DECREF(names);
+                    return 0;
+                }
+                Py_DECREF(title);
+            }
+            // disallow duplicate field indices
+            if (PyDict_Contains(fields, name)) {
+                PyObject *errmsg = PyUString_FromString(
+                                       "duplicate field of name ");
+                PyUString_ConcatAndDel(&errmsg, name);
+                PyErr_SetObject(PyExc_KeyError, errmsg);
+                Py_DECREF(errmsg);
+                Py_DECREF(fields);
+                Py_DECREF(names);
+                return 0;
+            }
             if (PyDict_SetItem(fields, name, tup) < 0) {
                 Py_DECREF(name);
                 Py_DECREF(fields);
@@ -1545,29 +1570,6 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
 
-        /*
-         * Return copy for now (future plan to return the view above). All the
-         * following code in this block can then be replaced by "return 0;"
-         */
-        npy_cache_import("numpy.core._internal", "_copy_fields", &copyfunc);
-        if (copyfunc == NULL) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
-
-        PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
-        viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
-        if (viewcopy == NULL) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
-        Py_DECREF(*view);
-        *view = (PyArrayObject*)viewcopy;
-
-        /* warn when writing to the copy */
-        PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         return 0;
     }
     return -1;
@@ -1600,11 +1602,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
         if (ret == 0){
             if (view == NULL) {
                 return NULL;
-            }
-
-            /* warn if writing to a copy. copies will have no base */
-            if (PyArray_BASE(view) == NULL) {
-                PyArray_ENABLEFLAGS(view, NPY_ARRAY_WARN_ON_WRITE);
             }
             return (PyObject*)view;
         }
@@ -1892,17 +1889,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         PyArrayObject *view;
         int ret = _get_field_view(self, ind, &view);
         if (ret == 0){
-
-#if defined(NPY_PY3K)
-            if (!PyUnicode_Check(ind)) {
-#else
-            if (!PyString_Check(ind) && !PyUnicode_Check(ind)) {
-#endif
-                PyErr_SetString(PyExc_ValueError,
-                                "multi-field assignment is not supported");
-                return -1;
-            }
-
             if (view == NULL) {
                 return -1;
             }

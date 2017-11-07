@@ -661,8 +661,6 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
-    # Import deferred for startup time improvement
-    import tempfile
 
     if isinstance(file, basestring):
         if not file.endswith('.npz'):
@@ -686,31 +684,44 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
-    # Stage arrays in a temporary file on disk, before writing to zip.
-
-    # Since target file might be big enough to exceed capacity of a global
-    # temporary directory, create temp file side-by-side with the target file.
-    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-    os.close(fd)
-    try:
+    if sys.version_info >= (3, 6):
+        # Since Python 3.6 it is possible to write directly to a ZIP file.
         for key, val in namedict.items():
             fname = key + '.npy'
-            fid = open(tmpfile, 'wb')
-            try:
-                format.write_array(fid, np.asanyarray(val),
+            val = np.asanyarray(val)
+            force_zip64 = val.nbytes >= 2**30
+            with zipf.open(fname, 'w', force_zip64=force_zip64) as fid:
+                format.write_array(fid, val,
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
-                fid.close()
-                fid = None
-                zipf.write(tmpfile, arcname=fname)
-            except IOError as exc:
-                raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-            finally:
-                if fid:
+    else:
+        # Stage arrays in a temporary file on disk, before writing to zip.
+
+        # Import deferred for startup time improvement
+        import tempfile
+        # Since target file might be big enough to exceed capacity of a global
+        # temporary directory, create temp file side-by-side with the target file.
+        file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
+        fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
+        os.close(fd)
+        try:
+            for key, val in namedict.items():
+                fname = key + '.npy'
+                fid = open(tmpfile, 'wb')
+                try:
+                    format.write_array(fid, np.asanyarray(val),
+                                       allow_pickle=allow_pickle,
+                                       pickle_kwargs=pickle_kwargs)
                     fid.close()
-    finally:
-        os.remove(tmpfile)
+                    fid = None
+                    zipf.write(tmpfile, arcname=fname)
+                except IOError as exc:
+                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
+                finally:
+                    if fid:
+                        fid.close()
+        finally:
+            os.remove(tmpfile)
 
     zipf.close()
 
@@ -1071,7 +1082,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         If the filename ends in ``.gz``, the file is automatically saved in
         compressed gzip format.  `loadtxt` understands gzipped files
         transparently.
-    X : array_like
+    X : 1D or 2D array_like
         Data to be saved to a text file.
     fmt : str or sequence of strs, optional
         A single format (%10.5f), a sequence of formats, or a
@@ -1079,12 +1090,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
             a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-                like `' (%s+%sj)' % (fmt, fmt)`
+               like `' (%s+%sj)' % (fmt, fmt)`
             b) a full string specifying every real and imaginary part, e.g.
-                `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+               `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
             c) a list of specifiers, one per column - in this case, the real
-                and imaginary part must have separate specifiers,
-                e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+               and imaginary part must have separate specifiers,
+               e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1201,7 +1212,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         X = np.asarray(X)
 
         # Handle 1-dimensional arrays
-        if X.ndim == 1:
+        if X.ndim == 0 or X.ndim > 2:
+            raise ValueError(
+                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+        elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
@@ -1404,11 +1418,12 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first valid line
-        after the first `skip_header` lines.
-        If `names` is a sequence or a single-string of comma-separated names,
-        the names will be used to define the field names in a structured dtype.
-        If `names` is None, the names of the dtype fields will be used, if any.
+        If `names` is True, the field names are read from the first line after
+        the first `skip_header` lines.  This line can optionally be proceeded
+        by a comment delimeter. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field names
+        in a structured dtype. If `names` is None, the names of the dtype
+        fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:

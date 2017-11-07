@@ -37,6 +37,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arrayobject.h"
 #include "hashdescr.h"
 #include "descriptor.h"
+#include "dragon4.h"
 #include "calculation.h"
 #include "number.h"
 #include "scalartypes.h"
@@ -315,20 +316,39 @@ PyArray_Free(PyObject *op, void *ptr)
     return 0;
 }
 
+/*
+ * Get the ndarray subclass with the highest priority
+ */
+NPY_NO_EXPORT PyTypeObject *
+PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
+    PyTypeObject *subtype = &PyArray_Type;
+    double priority = NPY_PRIORITY;
+    int i;
+
+    /* Get the priority subtype for the array */
+    for (i = 0; i < narrays; ++i) {
+        if (Py_TYPE(arrays[i]) != subtype) {
+            double pr = PyArray_GetPriority((PyObject *)(arrays[i]), 0.0);
+            if (pr > priority) {
+                priority = pr;
+                subtype = Py_TYPE(arrays[i]);
+            }
+        }
+    }
+
+    return subtype;
+}
+
 
 /*
  * Concatenates a list of ndarrays.
  */
 NPY_NO_EXPORT PyArrayObject *
-PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
+PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
+                          PyArrayObject* ret)
 {
-    PyTypeObject *subtype = &PyArray_Type;
-    double priority = NPY_PRIORITY;
     int iarrays, idim, ndim;
-    npy_intp shape[NPY_MAXDIMS], s, strides[NPY_MAXDIMS];
-    int strideperm[NPY_MAXDIMS];
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *ret = NULL;
+    npy_intp shape[NPY_MAXDIMS];
     PyArrayObject_fields *sliding_view = NULL;
 
     if (narrays <= 0) {
@@ -383,47 +403,57 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
         }
     }
 
-    /* Get the priority subtype for the array */
-    for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (Py_TYPE(arrays[iarrays]) != subtype) {
-            double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-            if (pr > priority) {
-                priority = pr;
-                subtype = Py_TYPE(arrays[iarrays]);
-            }
+    if (ret != NULL) {
+        if (PyArray_NDIM(ret) != ndim) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array has wrong dimensionality");
+            return NULL;
         }
+        if (!PyArray_CompareLists(shape, PyArray_SHAPE(ret), ndim)) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array is the wrong shape");
+            return NULL;
+        }
+        Py_INCREF(ret);
     }
+    else {
+        npy_intp s, strides[NPY_MAXDIMS];
+        int strideperm[NPY_MAXDIMS];
 
-    /* Get the resulting dtype from combining all the arrays */
-    dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
-    if (dtype == NULL) {
-        return NULL;
-    }
+        /* Get the priority subtype for the array */
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-    /*
-     * Figure out the permutation to apply to the strides to match
-     * the memory layout of the input arrays, using ambiguity
-     * resolution rules matching that of the NpyIter.
-     */
-    PyArray_CreateMultiSortedStridePerm(narrays, arrays, ndim, strideperm);
-    s = dtype->elsize;
-    for (idim = ndim-1; idim >= 0; --idim) {
-        int iperm = strideperm[idim];
-        strides[iperm] = s;
-        s *= shape[iperm];
-    }
+        /* Get the resulting dtype from combining all the arrays */
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        if (dtype == NULL) {
+            return NULL;
+        }
 
-    /* Allocate the array for the result. This steals the 'dtype' reference. */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                    dtype,
-                                                    ndim,
-                                                    shape,
-                                                    strides,
-                                                    NULL,
-                                                    0,
-                                                    NULL);
-    if (ret == NULL) {
-        return NULL;
+        /*
+         * Figure out the permutation to apply to the strides to match
+         * the memory layout of the input arrays, using ambiguity
+         * resolution rules matching that of the NpyIter.
+         */
+        PyArray_CreateMultiSortedStridePerm(narrays, arrays, ndim, strideperm);
+        s = dtype->elsize;
+        for (idim = ndim-1; idim >= 0; --idim) {
+            int iperm = strideperm[idim];
+            strides[iperm] = s;
+            s *= shape[iperm];
+        }
+
+        /* Allocate the array for the result. This steals the 'dtype' reference. */
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                                                        dtype,
+                                                        ndim,
+                                                        shape,
+                                                        strides,
+                                                        NULL,
+                                                        0,
+                                                        NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
 
     /*
@@ -462,15 +492,10 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
-                                    NPY_ORDER order)
+                                    NPY_ORDER order, PyArrayObject *ret)
 {
-    PyTypeObject *subtype = &PyArray_Type;
-    double priority = NPY_PRIORITY;
     int iarrays;
-    npy_intp stride;
     npy_intp shape = 0;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *ret = NULL;
     PyArrayObject_fields *sliding_view = NULL;
 
     if (narrays <= 0) {
@@ -494,36 +519,45 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
     }
 
-    /* Get the priority subtype for the array */
-    for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (Py_TYPE(arrays[iarrays]) != subtype) {
-            double pr = PyArray_GetPriority((PyObject *)(arrays[iarrays]), 0.0);
-            if (pr > priority) {
-                priority = pr;
-                subtype = Py_TYPE(arrays[iarrays]);
-            }
+    if (ret != NULL) {
+        if (PyArray_NDIM(ret) != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array must be 1D");
+            return NULL;
         }
+        if (shape != PyArray_SIZE(ret)) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array is the wrong size");
+            return NULL;
+        }
+        Py_INCREF(ret);
     }
+    else {
+        npy_intp stride;
 
-    /* Get the resulting dtype from combining all the arrays */
-    dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
-    if (dtype == NULL) {
-        return NULL;
-    }
+        /* Get the priority subtype for the array */
+        PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-    stride = dtype->elsize;
+        /* Get the resulting dtype from combining all the arrays */
+        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
+        if (dtype == NULL) {
+            return NULL;
+        }
 
-    /* Allocate the array for the result. This steals the 'dtype' reference. */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                    dtype,
-                                                    1,
-                                                    &shape,
-                                                    &stride,
-                                                    NULL,
-                                                    0,
-                                                    NULL);
-    if (ret == NULL) {
-        return NULL;
+        stride = dtype->elsize;
+
+        /* Allocate the array for the result. This steals the 'dtype' reference. */
+        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                                                        dtype,
+                                                        1,
+                                                        &shape,
+                                                        &stride,
+                                                        NULL,
+                                                        0,
+                                                        NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
 
     /*
@@ -558,22 +592,11 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     return ret;
 }
 
-
-/*NUMPY_API
- * Concatenate
- *
- * Concatenate an arbitrary Python sequence into an array.
- * op is a python object supporting the sequence interface.
- * Its elements will be concatenated together to form a single
- * multidimensional array. If axis is NPY_MAXDIMS or bigger, then
- * each sequence object will be flattened before concatenation
-*/
 NPY_NO_EXPORT PyObject *
-PyArray_Concatenate(PyObject *op, int axis)
+PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
-    PyArrayObject *ret;
 
     if (!PySequence_Check(op)) {
         PyErr_SetString(PyExc_TypeError,
@@ -606,10 +629,10 @@ PyArray_Concatenate(PyObject *op, int axis)
     }
 
     if (axis >= NPY_MAXDIMS) {
-        ret = PyArray_ConcatenateFlattenedArrays(narrays, arrays, NPY_CORDER);
+        ret = PyArray_ConcatenateFlattenedArrays(narrays, arrays, NPY_CORDER, ret);
     }
     else {
-        ret = PyArray_ConcatenateArrays(narrays, arrays, axis);
+        ret = PyArray_ConcatenateArrays(narrays, arrays, axis, ret);
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
@@ -627,6 +650,21 @@ fail:
     PyArray_free(arrays);
 
     return NULL;
+}
+
+/*NUMPY_API
+ * Concatenate
+ *
+ * Concatenate an arbitrary Python sequence into an array.
+ * op is a python object supporting the sequence interface.
+ * Its elements will be concatenated together to form a single
+ * multidimensional array. If axis is NPY_MAXDIMS or bigger, then
+ * each sequence object will be flattened before concatenation
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_Concatenate(PyObject *op, int axis)
+{
+    return PyArray_ConcatenateInto(op, axis, NULL);
 }
 
 static int
@@ -759,32 +797,17 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
 {
     PyArrayObject *out_buf;
-    PyTypeObject *subtype;
-    double prior1, prior2;
-    /*
-     * Need to choose an output array that can hold a sum
-     * -- use priority to determine which subtype.
-     */
-    if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-    }
-    else {
-        prior1 = prior2 = 0.0;
-        subtype = Py_TYPE(ap1);
-    }
+
     if (out) {
         int d;
 
         /* verify that out is usable */
-        if (Py_TYPE(out) != subtype ||
-            PyArray_NDIM(out) != nd ||
+        if (PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable "
-                "(must have the right type, nr dimensions, and be a C-Array)");
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
             return 0;
         }
         for (d = 0; d < nd; ++d) {
@@ -825,18 +848,35 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         return out_buf;
     }
+    else {
+        PyTypeObject *subtype;
+        double prior1, prior2;
+        /*
+         * Need to choose an output array that can hold a sum
+         * -- use priority to determine which subtype.
+         */
+        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
+            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+        }
+        else {
+            prior1 = prior2 = 0.0;
+            subtype = Py_TYPE(ap1);
+        }
 
-    out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                           typenum, NULL, NULL, 0, 0,
-                                           (PyObject *)
-                                           (prior2 > prior1 ? ap2 : ap1));
+        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                               typenum, NULL, NULL, 0, 0,
+                                               (PyObject *)
+                                               (prior2 > prior1 ? ap2 : ap1));
 
-    if (out_buf != NULL && result) {
-        Py_INCREF(out_buf);
-        *result = out_buf;
+        if (out_buf != NULL && result) {
+            Py_INCREF(out_buf);
+            *result = out_buf;
+        }
+
+        return out_buf;
     }
-
-    return out_buf;
 }
 
 /* Could perhaps be redone to not make contiguous arrays */
@@ -1419,29 +1459,34 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 /*
  * Compare the field dictionaries for two types.
  *
- * Return 1 if the contents are the same, 0 if not.
+ * Return 1 if the field types and field names of the two descrs are equal and
+ * in the same order, 0 if not.
  */
 static int
-_equivalent_fields(PyObject *field1, PyObject *field2) {
+_equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
 
-    int same, val;
+    int val;
 
-    if (field1 == field2) {
+    if (type1->fields == type2->fields && type1->names == type2->names) {
         return 1;
     }
-    if (field1 == NULL || field2 == NULL) {
+    if (type1->fields == NULL || type2->fields == NULL) {
         return 0;
     }
 
-    val = PyObject_RichCompareBool(field1, field2, Py_EQ);
+    val = PyObject_RichCompareBool(type1->fields, type2->fields, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
-        same = 0;
+        PyErr_Clear();
+        return 0;
     }
-    else {
-        same = 1;
+
+    val = PyObject_RichCompareBool(type1->names, type2->names, Py_EQ);
+    if (val != 1 || PyErr_Occurred()) {
+        PyErr_Clear();
+        return 0;
     }
-    PyErr_Clear();
-    return same;
+
+    return 1;
 }
 
 /*
@@ -1500,10 +1545,8 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return ((type_num1 == type_num2)
                 && _equivalent_subarrays(type1->subarray, type2->subarray));
     }
-    if (type_num1 == NPY_VOID
-        || type_num2 == NPY_VOID) {
-        return ((type_num1 == type_num2)
-                && _equivalent_fields(type1->fields, type2->fields));
+    if (type_num1 == NPY_VOID || type_num2 == NPY_VOID) {
+        return ((type_num1 == type_num2) && _equivalent_fields(type1, type2));
     }
     if (type_num1 == NPY_DATETIME
             || type_num1 == NPY_TIMEDELTA
@@ -2057,6 +2100,17 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         Py_XDECREF(descr);
         return NULL;
     }
+
+    /* binary mode, condition copied from PyArray_FromString */
+    if (sep == NULL || strlen(sep) == 0) {
+        /* Numpy 1.14, 2017-10-19 */
+        if (DEPRECATE(
+                "The binary mode of fromstring is deprecated, as it behaves "
+                "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+    }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }
 
@@ -2157,14 +2211,24 @@ static PyObject *
 array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *a0;
+    PyObject *out = NULL;
     int axis = 0;
-    static char *kwlist[] = {"seq", "axis", NULL};
+    static char *kwlist[] = {"seq", "axis", "out", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:concatenate", kwlist,
-                &a0, PyArray_AxisConverter, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:concatenate", kwlist,
+                &a0, PyArray_AxisConverter, &axis, &out)) {
         return NULL;
     }
-    return PyArray_Concatenate(a0, axis);
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
+    }
+    return PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out);
 }
 
 static PyObject *
@@ -3521,14 +3585,156 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 #undef _test_code
 
+
+/*
+ * Prints floating-point scalars usign the Dragon4 algorithm, scientific mode.
+ * Arguments:
+ *  x - a numpy scalar of Floating type
+ *  precision - number of fractional digits to show. In unique mode, can be
+ *              ommited and the unique repr will be returned, otherwise the
+ *              unique value will be truncated to this number of digits
+ *              (breaking the uniqueness guarantee). In fixed mode, is
+ *              required, and specifies the number of fractional digits to
+ *              print.
+ *  unique - whether to use unique (default) or fixed mode.
+ *  sign - whether to show the sign for positive values. Default False
+ *  trim - one of 'k', '.', '0', '-' to control trailing digits, as follows:
+ *          k : don't trim zeros, always leave a decimal point
+ *          . : trim all but the zero before the decimal point
+ *          0 : trim all trailing zeros, leave decimal point
+ *          - : trim trailing zeros and a trailing decimal point
+ *         Default is k.
+ *  pad_left - pads left side of string with whitespace until at least
+ *             this many characters are to the left of the decimal point. If
+ *             -1, don't add any padding. Default -1.
+ *  exp_digits - exponent will contain at least this many digits, padding
+ *               with 0 if necessary. -1 means pad to 2. Maximum of 5.
+ */
+static PyObject *
+dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj;
+    static char *kwlist[] = {"x", "precision", "unique", "sign", "trim",
+                             "pad_left", "exp_digits", NULL};
+    int precision=-1, pad_left=-1, exp_digits=-1;
+    char *trimstr=NULL;
+    TrimMode trim = TrimMode_None;
+    int sign=0, unique=1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii", kwlist,
+                &obj, &precision, &unique, &sign, &trimstr, &pad_left,
+                &exp_digits)) {
+        return NULL;
+    }
+
+    if (trimstr != NULL) {
+        if (strcmp(trimstr, "k") == 0) {
+            trim = TrimMode_None;
+        }
+        else if (strcmp(trimstr, ".") == 0) {
+            trim = TrimMode_Zeros;
+        }
+        else if (strcmp(trimstr, "0") == 0) {
+            trim = TrimMode_LeaveOneZero;
+        }
+        else if (strcmp(trimstr, "-") == 0) {
+            trim = TrimMode_DptZeros;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "if supplied, trim must be 'k', '.', '0' or '-'");
+            return NULL;
+        }
+    }
+
+    if (unique == 0 && precision < 0) {
+        PyErr_SetString(PyExc_TypeError,
+            "in non-unique mode `precision` must be supplied");
+        return NULL;
+    }
+
+    return Dragon4_Scientific(obj, unique, precision, sign,
+                              trim, pad_left, exp_digits);
+}
+
+/*
+ * Prints floating-point scalars usign the Dragon4 algorithm, positional mode.
+ * Arguments:
+ *  x - a numpy scalar of Floating type
+ *  precision - number of fractional digits to show. In unique mode, can be
+ *              ommited and the unique repr will be returned, otherwise the
+ *              unique value will be truncated to this number of digits
+ *              (breaking the uniqueness guarantee). In fixed mode, is
+ *              required, and specifies the number of fractional digits to
+ *              print.
+ *  unique - whether to use unique (default) or fixed mode.
+ *  sign - whether to show the sign for positive values. Default False
+ *  trim - one of 'k', '.', '0', '-' to control trailing digits, as follows:
+ *          k : don't trim zeros, always leave a decimal point
+ *          . : trim all but the zero before the decimal point
+ *          0 : trim all trailing zeros, leave decimal point
+ *          - : trim trailing zeros and a trailing decimal point
+ *         Default is k.
+ *  pad_left - pads left side of string with whitespace until at least
+ *             this many characters are to the left of the decimal point. If
+ *             -1, don't add any padding. Default -1.
+ *  pad_right - pads right side of string with whitespace until at least
+ *             this many characters are to the right of the decimal point. If
+ *             -1, don't add any padding. Default -1.
+ */
+static PyObject *
+dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj;
+    static char *kwlist[] = {"x", "precision", "unique", "sign", "trim",
+                             "pad_left", "pad_right", NULL};
+    int precision=-1, pad_left=-1, pad_right=-1;
+    char *trimstr=NULL;
+    TrimMode trim = TrimMode_None;
+    int sign=0, unique=1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii", kwlist,
+                &obj, &precision, &unique, &sign, &trimstr, &pad_left,
+                &pad_right)) {
+        return NULL;
+    }
+
+    if (trimstr != NULL) {
+        if (strcmp(trimstr, "k") == 0) {
+            trim = TrimMode_None;
+        }
+        else if (strcmp(trimstr, ".") == 0) {
+            trim = TrimMode_Zeros;
+        }
+        else if (strcmp(trimstr, "0") == 0) {
+            trim = TrimMode_LeaveOneZero;
+        }
+        else if (strcmp(trimstr, "-") == 0) {
+            trim = TrimMode_DptZeros;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "if supplied, trim must be 'k', '.', '0' or '-'");
+            return NULL;
+        }
+    }
+
+    if (unique == 0 && precision < 0) {
+        PyErr_SetString(PyExc_TypeError,
+            "in non-unique mode `precision` must be supplied");
+        return NULL;
+    }
+
+    return Dragon4_Positional(obj, unique, precision, sign,
+                              trim, pad_left, pad_right);
+}
+
 static PyObject *
 format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     unsigned int precision;
-    npy_longdouble x;
     static char *kwlist[] = {"x", "precision", NULL};
-    static char repr[100];
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI:format_longfloat", kwlist,
                 &obj, &precision)) {
@@ -3539,12 +3745,8 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                 "not a longfloat");
         return NULL;
     }
-    x = ((PyLongDoubleScalarObject *)obj)->obval;
-    if (precision > 70) {
-        precision = 70;
-    }
-    format_longdouble(repr, 100, x, precision);
-    return PyUString_FromString(repr);
+    return Dragon4_Scientific(obj, precision, 0, 1, TrimMode_LeaveOneZero,
+                              -1, -1);
 }
 
 static PyObject *
@@ -4226,6 +4428,12 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"format_longfloat",
         (PyCFunction)format_longfloat,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"dragon4_positional",
+        (PyCFunction)dragon4_positional,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"dragon4_scientific",
+        (PyCFunction)dragon4_scientific,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"compare_chararrays",
         (PyCFunction)compare_chararrays,

@@ -159,20 +159,6 @@ class TestRegression(object):
         assert_raises(TypeError, np.dtype,
                               {'names':['a'], 'formats':['foo']}, align=1)
 
-    @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and
-                         platform.architecture()[0] == "64bit"),
-                        "numpy.intp('0xff', 16) not supported on Py3, "
-                        "as it does not inherit from Python int")
-    def test_intp(self):
-        # Ticket #99
-        i_width = np.int_(0).nbytes*2 - 1
-        np.intp('0x' + 'f'*i_width, 16)
-        assert_raises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
-        assert_raises(ValueError, np.intp, '0x1', 32)
-        assert_equal(255, np.intp('0xFF', 16))
-        assert_equal(1024, np.intp(1024))
-
     def test_endian_bool_indexing(self):
         # Ticket #105
         a = np.arange(10., dtype='>f8')
@@ -289,7 +275,7 @@ class TestRegression(object):
         # Fix in r2836
         # Create non-contiguous Fortran ordered array
         x = np.array(np.random.rand(3, 3), order='F')[:, :2]
-        assert_array_almost_equal(x.ravel(), np.fromstring(x.tobytes()))
+        assert_array_almost_equal(x.ravel(), np.frombuffer(x.tobytes()))
 
     def test_flat_assignment(self):
         # Correct behaviour of ticket #194
@@ -833,14 +819,14 @@ class TestRegression(object):
 
     def test_string_argsort_with_zeros(self):
         # Check argsort for strings containing zeros.
-        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
+        x = np.frombuffer(b"\x00\x02\x00\x01", dtype="|S2")
         assert_array_equal(x.argsort(kind='m'), np.array([1, 0]))
         assert_array_equal(x.argsort(kind='q'), np.array([1, 0]))
 
     def test_string_sort_with_zeros(self):
         # Check sort for strings containing zeros.
-        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
-        y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
+        x = np.frombuffer(b"\x00\x02\x00\x01", dtype="|S2")
+        y = np.frombuffer(b"\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
 
     def test_copy_detection_zero_dim(self):
@@ -853,12 +839,9 @@ class TestRegression(object):
         assert_array_equal(x.astype('>i4'), x.astype('<i4').flat[:])
         assert_array_equal(x.astype('>i4').flat[:], x.astype('<i4'))
 
-    def test_uint64_from_negative(self):
-        assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
-
     def test_sign_bit(self):
         x = np.array([0, -0.0, 0])
-        assert_equal(str(np.abs(x)), '[ 0.  0.  0.]')
+        assert_equal(str(np.abs(x)), '[0. 0. 0.]')
 
     def test_flat_index_byteswap(self):
         for dt in (np.dtype('<i4'), np.dtype('>i4')):
@@ -1023,15 +1006,6 @@ class TestRegression(object):
     def test_mem_0d_array_index(self):
         # Ticket #714
         np.zeros(10)[np.array(0)]
-
-    def test_floats_from_string(self):
-        # Ticket #640, floats from string
-        fsingle = np.single('1.234')
-        fdouble = np.double('1.234')
-        flongdouble = np.longdouble('1.234')
-        assert_almost_equal(fsingle, 1.234)
-        assert_almost_equal(fdouble, 1.234)
-        assert_almost_equal(flongdouble, 1.234)
 
     def test_nonnative_endian_fill(self):
         # Non-native endian arrays were incorrectly filled with scalars
@@ -1352,7 +1326,7 @@ class TestRegression(object):
         dt = np.dtype([('f1', np.uint)])
         assert_raises(KeyError, dt.__getitem__, "f2")
         assert_raises(IndexError, dt.__getitem__, 1)
-        assert_raises(ValueError, dt.__getitem__, 0.0)
+        assert_raises(TypeError, dt.__getitem__, 0.0)
 
     def test_lexsort_buffer_length(self):
         # Ticket #1217, don't segfault.
@@ -1430,10 +1404,10 @@ class TestRegression(object):
             y = x.byteswap()
             if x.dtype.byteorder == z.dtype.byteorder:
                 # little-endian machine
-                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype.newbyteorder()))
+                assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype.newbyteorder()))
             else:
                 # big-endian machine
-                assert_equal(x, np.fromstring(y.tobytes(), dtype=dtype))
+                assert_equal(x, np.frombuffer(y.tobytes(), dtype=dtype))
             # double check real and imaginary parts:
             assert_equal(x.real, y.real.byteswap())
             assert_equal(x.imag, y.imag.byteswap())
@@ -1783,8 +1757,8 @@ class TestRegression(object):
             assert_equal(a1, a2)
 
     def test_fields_strides(self):
-        "Ticket #1760"
-        r = np.fromstring('abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
+        "gh-2355"
+        r = np.frombuffer(b'abcdefghijklmnop'*4*3, dtype='i4,(2,3)u2')
         assert_equal(r[0:3:2]['f1'], r['f1'][0:3:2])
         assert_equal(r[0:3:2]['f1'][0], r[0:3:2][0]['f1'])
         assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])

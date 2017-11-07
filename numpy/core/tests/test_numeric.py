@@ -208,6 +208,22 @@ class TestNonarrayArgs(object):
             assert_(w[0].category is RuntimeWarning)
 
 
+class TestIsscalar(object):
+    def test_isscalar(self):
+        assert_(np.isscalar(3.1))
+        assert_(np.isscalar(np.int16(12345)))
+        assert_(np.isscalar(False))
+        assert_(np.isscalar('numpy'))
+        assert_(not np.isscalar([3.1]))
+        assert_(not np.isscalar(None))
+
+        # PEP 3141
+        from fractions import Fraction
+        assert_(np.isscalar(Fraction(5, 17)))
+        from numbers import Number
+        assert_(np.isscalar(Number()))
+
+
 class TestBoolScalar(object):
     def test_logical(self):
         f = np.False_
@@ -875,6 +891,20 @@ class TestTypes(object):
         # Also test keyword arguments
         assert_(np.can_cast(from_=np.int32, to=np.int64))
 
+    def test_can_cast_values(self):
+        # gh-5917
+        for dt in np.sctypes['int'] + np.sctypes['uint']:
+            ii = np.iinfo(dt)
+            assert_(np.can_cast(ii.min, dt))
+            assert_(np.can_cast(ii.max, dt))
+            assert_(not np.can_cast(ii.min - 1, dt))
+            assert_(not np.can_cast(ii.max + 1, dt))
+
+        for dt in np.sctypes['float']:
+            fi = np.finfo(dt)
+            assert_(np.can_cast(fi.min, dt))
+            assert_(np.can_cast(fi.max, dt))
+            
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):
@@ -1112,6 +1142,10 @@ class TestNonzero(object):
                         np.count_nonzero(n, axis=perm),
                         err_msg=msg % (perm,))
 
+    def test_countnonzero_axis_empty(self):
+        a = np.array([[0, 0, 1], [1, 0, 1]])
+        assert_equal(np.count_nonzero(a, axis=()), a.astype(bool))
+
     def test_array_method(self):
         # Tests that the array method
         # call to nonzero works
@@ -1119,6 +1153,19 @@ class TestNonzero(object):
         tgt = [[0, 1, 1], [0, 0, 2]]
 
         assert_equal(m.nonzero(), tgt)
+
+    def test_nonzero_invalid_object(self):
+        # gh-9295
+        a = np.array([np.array([1, 2]), 3])
+        assert_raises(ValueError, np.nonzero, a)
+
+        class BoolErrors:
+            def __bool__(self):
+                raise ValueError("Not allowed")
+            def __nonzero__(self):
+                raise ValueError("Not allowed")
+
+        assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
 
 
 class TestIndex(object):
@@ -1933,9 +1980,9 @@ class TestIsclose(object):
     def test_non_finite_scalar(self):
         # GH7014, when two scalars are compared the output should also be a
         # scalar
-        assert_(np.isclose(np.inf, -np.inf) is False)
-        assert_(np.isclose(0, np.inf) is False)
-        assert_(type(np.isclose(0, np.inf)) is bool)
+        assert_(np.isclose(np.inf, -np.inf) is np.False_)
+        assert_(np.isclose(0, np.inf) is np.False_)
+        assert_(type(np.isclose(0, np.inf)) is np.bool_)
 
 
 class TestStdVar(object):

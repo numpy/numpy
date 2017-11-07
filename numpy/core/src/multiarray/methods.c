@@ -13,12 +13,14 @@
 #include "npy_import.h"
 #include "ufunc_override.h"
 #include "common.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "ctors.h"
 #include "calculation.h"
 #include "convert_datatype.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
+#include "strfuncs.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -1671,6 +1673,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_ssize_t len;
     npy_intp size, dimensions[NPY_MAXDIMS];
     int nd;
+    npy_intp nbytes;
+    int overflowed;
 
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
@@ -1712,13 +1716,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     size = PyArray_MultiplyList(dimensions, nd);
-    if (PyArray_DESCR(self)->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError, "Invalid data-type size.");
-        return NULL;
+    if (size < 0) {
+        /* More items than are addressable */
+        return PyErr_NoMemory();
     }
-    if (size < 0 || size > NPY_MAX_INTP / PyArray_DESCR(self)->elsize) {
-        PyErr_NoMemory();
-        return NULL;
+    overflowed = npy_mul_with_overflow_intp(
+        &nbytes, size, PyArray_DESCR(self)->elsize);
+    if (overflowed) {
+        /* More bytes than are addressable */
+        return PyErr_NoMemory();
     }
 
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
@@ -1760,7 +1766,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        if ((len != (PyArray_DESCR(self)->elsize * size))) {
+        if (len != nbytes) {
             PyErr_SetString(PyExc_ValueError,
                             "buffer size does not"  \
                             " match array size");
@@ -1823,7 +1829,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             }
             if (swap) {
                 /* byte-swap on pickle-read */
-                npy_intp numels = num / PyArray_DESCR(self)->elsize;
+                npy_intp numels = PyArray_SIZE(self);
                 PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
                                         PyArray_DESCR(self)->elsize,
                                         datastr, PyArray_DESCR(self)->elsize,
@@ -2528,6 +2534,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     {"__complex__",
         (PyCFunction) array_complex,
+        METH_VARARGS, NULL},
+
+    {"__format__",
+        (PyCFunction) array_format,
         METH_VARARGS, NULL},
 
 #ifndef NPY_PY3K

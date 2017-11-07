@@ -293,7 +293,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     if (((PyArray_NDIM(dst) == 1 && PyArray_NDIM(src) >= 1 &&
                     PyArray_STRIDES(dst)[0] *
                             PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
-                    PyArray_NDIM(dst) > 1) && arrays_overlap(src, dst)) {
+                    PyArray_NDIM(dst) > 1 || PyArray_HASFIELDS(dst)) &&
+                    arrays_overlap(src, dst)) {
         PyArrayObject *tmp;
 
         /*

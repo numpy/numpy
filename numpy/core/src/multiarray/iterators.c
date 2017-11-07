@@ -917,7 +917,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = type->f->setitem(val, self->dataptr, self->ao);
+            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
         }
         goto finish;
     }
@@ -1804,7 +1804,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
-        st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
+        st = PyArray_SETITEM(ar->ao, ret, (PyObject*)fill);
         ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {

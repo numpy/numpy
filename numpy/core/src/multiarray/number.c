@@ -797,6 +797,12 @@ _array_nonzero(PyArrayObject *mp)
         return res;
     }
     else if (n == 0) {
+        /* 2017-09-25, 1.14 */
+        if (DEPRECATE("The truth value of an empty array is ambiguous. "
+                      "Returning False, but in future this will result in an error. "
+                      "Use `array.size > 0` to check that an array is not empty.") < 0) {
+            return -1;
+        }
         return 0;
     }
     else {
@@ -818,7 +824,7 @@ array_int(PyArrayObject *v)
                         " converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -860,7 +866,7 @@ array_float(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -903,7 +909,7 @@ array_long(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -944,7 +950,7 @@ array_oct(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -985,7 +991,7 @@ array_hex(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    pv = PyArray_GETITEM(v, PyArray_DATA(v));
     if (pv == NULL) {
         return NULL;
     }
@@ -1033,7 +1039,7 @@ array_index(PyArrayObject *v)
             "only integer scalar arrays can be converted to a scalar index");
         return NULL;
     }
-    return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
+    return PyArray_GETITEM(v, PyArray_DATA(v));
 }
 
 

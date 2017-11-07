@@ -159,9 +159,9 @@ class TestBuildErrorMessage(unittest.TestCase):
         err_msg = 'There is a mismatch'
 
         a = build_err_msg([x, y], err_msg)
-        b = ('\nItems are not equal: There is a mismatch\n ACTUAL: array([ '
-             '1.00001,  2.00002,  3.00003])\n DESIRED: array([ 1.00002,  '
-             '2.00003,  3.00004])')
+        b = ('\nItems are not equal: There is a mismatch\n ACTUAL: array(['
+             '1.00001, 2.00002, 3.00003])\n DESIRED: array([1.00002, '
+             '2.00003, 3.00004])')
         self.assertEqual(a, b)
 
     def test_build_err_msg_no_verbose(self):
@@ -179,8 +179,8 @@ class TestBuildErrorMessage(unittest.TestCase):
         err_msg = 'There is a mismatch'
 
         a = build_err_msg([x, y], err_msg, names=('FOO', 'BAR'))
-        b = ('\nItems are not equal: There is a mismatch\n FOO: array([ '
-             '1.00001,  2.00002,  3.00003])\n BAR: array([ 1.00002,  2.00003,  '
+        b = ('\nItems are not equal: There is a mismatch\n FOO: array(['
+             '1.00001, 2.00002, 3.00003])\n BAR: array([1.00002, 2.00003, '
              '3.00004])')
         self.assertEqual(a, b)
 
@@ -190,9 +190,9 @@ class TestBuildErrorMessage(unittest.TestCase):
         err_msg = 'There is a mismatch'
 
         a = build_err_msg([x, y], err_msg, precision=10)
-        b = ('\nItems are not equal: There is a mismatch\n ACTUAL: array([ '
-             '1.000000001,  2.00002    ,  3.00003    ])\n DESIRED: array([ '
-             '1.000000002,  2.00003    ,  3.00004    ])')
+        b = ('\nItems are not equal: There is a mismatch\n ACTUAL: array(['
+             '1.000000001, 2.00002    , 3.00003    ])\n DESIRED: array(['
+             '1.000000002, 2.00003    , 3.00004    ])')
         self.assertEqual(a, b)
 
 
@@ -267,15 +267,18 @@ class TestEqual(TestArrayEqual):
         try:
             self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
         except AssertionError as e:
-            self.assertEqual(
-                str(e),
-                "\nArrays are not equal\n\n"
-                "(shapes (2,), (1, 2) mismatch)\n"
-                " x: array([1, 2])\n"
-                " y: [repr failed for <matrix>: The truth value of an array "
-                "with more than one element is ambiguous. Use a.any() or "
-                "a.all()]")
-
+            msg = str(e)
+            msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
+            msg_reference = "\nArrays are not equal\n\n" \
+                "(shapes (2,), (1, 2) mismatch)\n" \
+                " x: array([1, 2])\n" \
+                " y: [repr failed for <matrix>: The truth value of an array " \
+                "with more than one element is ambiguous. Use a.any() or " \
+                "a.all()]"
+            try:
+                self.assertEqual(msg, msg_reference)
+            except AssertionError:
+                self.assertEqual(msg2, msg_reference)
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
 
@@ -433,8 +436,8 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
         # test with a different amount of decimal digits
         # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([ 1.00000000001,  2.00000000002,  3.00003     '
-             ' ])\n y: array([ 1.00000000002,  2.00000000003,  3.00004      ])')
+        b = ('x: array([1.00000000001, 2.00000000002, 3.00003     '
+             ' ])\n y: array([1.00000000002, 2.00000000003, 3.00004      ])')
         try:
             self._assert_func(x, y, decimal=12)
         except AssertionError as e:
@@ -443,8 +446,8 @@ class TestAlmostEqual(_GenericTest, unittest.TestCase):
 
         # with the default value of decimal digits, only the 3rd element differs
         # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([ 1.     ,  2.     ,  3.00003])\n y: array([ 1.     ,  '
-             '2.     ,  3.00004])')
+        b = ('x: array([1.     , 2.     , 3.00003])\n y: array([1.     , '
+             '2.     , 3.00004])')
         try:
             self._assert_func(x, y)
         except AssertionError as e:

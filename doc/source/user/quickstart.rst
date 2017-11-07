@@ -25,14 +25,12 @@ The Basics
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*. The
-number of axes is *rank*.
+tuple of positive integers. In NumPy dimensions are called *axes*.
 
-For example, the coordinates of a point in 3D space ``[1, 2, 1]`` is an
-array of rank 1, because it has one axis. That axis has a length of 3.
-In the example pictured below, the array has rank 2 (it is 2-dimensional).
-The first dimension (axis) has a length of 2, the second dimension has a
-length of 3.
+For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
+one axis. That axis has 3 elements in it, so we say it has a length
+of 3. In the example pictured below, the array has 2 axes. The first
+axis has a length of 2, the second axis has a length of 3.
 
 ::
 
@@ -46,14 +44,12 @@ arrays and offers less functionality. The more important attributes of
 an ``ndarray`` object are:
 
 ndarray.ndim
-    the number of axes (dimensions) of the array. In the Python world,
-    the number of dimensions is referred to as *rank*.
+    the number of axes (dimensions) of the array.
 ndarray.shape
     the dimensions of the array. This is a tuple of integers indicating
     the size of the array in each dimension. For a matrix with *n* rows
     and *m* columns, ``shape`` will be ``(n,m)``. The length of the
-    ``shape`` tuple is therefore the rank, or number of dimensions,
-    ``ndim``.
+    ``shape`` tuple is therefore the number of axes, ``ndim``.
 ndarray.size
     the total number of elements of the array. This is equal to the
     product of the elements of ``shape``.
@@ -537,8 +533,8 @@ remaining axes. NumPy also allows you to write this using dots as
 ``b[i,...]``.
 
 The **dots** (``...``) represent as many colons as needed to produce a
-complete indexing tuple. For example, if ``x`` is a rank 5 array (i.e.,
-it has 5 axes), then
+complete indexing tuple. For example, if ``x`` is an array with 5
+axes, then
 
 -  ``x[1,2,...]`` is equivalent to ``x[1,2,:,:,:]``,
 -  ``x[...,3]`` to ``x[:,:,:,:,3]`` and
@@ -1245,9 +1241,9 @@ selecting the slices we want::
 
 Note that the length of the 1D boolean array must coincide with the
 length of the dimension (or axis) you want to slice. In the previous
-example, ``b1`` is a 1-rank array with length 3 (the number of *rows* in
-``a``), and ``b2`` (of length 4) is suitable to index the 2nd rank
-(columns) of ``a``.
+example, ``b1`` has length 3 (the number of *rows* in ``a``), and
+``b2`` (of length 4) is suitable to index the 2nd axis (columns) of
+``a``.
 
 The ix_() function
 -------------------

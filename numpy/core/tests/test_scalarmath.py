@@ -18,6 +18,7 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.cdouble, np.clongdouble]
 
 floating_types = np.floating.__subclasses__()
+complex_floating_types = np.complexfloating.__subclasses__()
 
 
 # This compares scalarmath against ufuncs.
@@ -407,7 +408,8 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY)
+    @dec.knownfailureif(not IS_PYPY,
+        "__int__ is not the same as int in cpython (gh-9972)")
     def test_clongdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
@@ -415,7 +417,7 @@ class TestConversion(object):
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
@@ -603,9 +605,8 @@ class TestSubtract(object):
 
 
 class TestAbs(object):
-
     def _test_abs_func(self, absfunc):
-        for tp in floating_types:
+        for tp in floating_types + complex_floating_types:
             x = tp(-1.5)
             assert_equal(absfunc(x), 1.5)
             x = tp(0.0)
@@ -615,6 +616,15 @@ class TestAbs(object):
             x = tp(-0.0)
             res = absfunc(x)
             assert_equal(res, 0.0)
+
+            x = tp(np.finfo(tp).max)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).tiny)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).min)
+            assert_equal(absfunc(x), -x.real)
 
     def test_builtin_abs(self):
         self._test_abs_func(abs)

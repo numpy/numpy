@@ -471,24 +471,19 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         Py_DECREF(safe);
     }
 
-    if (newtype->elsize == 0) {
-        /* Allow a void view */
-        if (newtype->type_num == NPY_VOID) {
-            PyArray_DESCR_REPLACE(newtype);
-            if (newtype == NULL) {
-                return -1;
-            }
-            newtype->elsize = PyArray_DESCR(self)->elsize;
-        }
-        /* But no other flexible types */
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "data-type must not be 0-sized");
-            Py_DECREF(newtype);
+    /*
+     * Viewing as an unsized void implies a void dtype matching the size of the
+     * current dtype.
+     */
+    if (newtype->type_num == NPY_VOID &&
+            PyDataType_ISUNSIZED(newtype) &&
+            newtype->elsize != PyArray_DESCR(self)->elsize) {
+        PyArray_DESCR_REPLACE(newtype);
+        if (newtype == NULL) {
             return -1;
         }
+        newtype->elsize = PyArray_DESCR(self)->elsize;
     }
-
 
     /* Changing the size of the dtype results in a shape change */
     if (newtype->elsize != PyArray_DESCR(self)->elsize) {
@@ -534,7 +529,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
         if (newtype->elsize < PyArray_DESCR(self)->elsize) {
             /* if it is compatible, increase the size of the relevant axis */
-            if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+            if (newtype->elsize == 0 ||
+                    PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "When changing to a smaller dtype, its size must be a "
                         "divisor of the size of original dtype");

@@ -544,7 +544,7 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
                           PyArray_Descr **out_dtypes)
 {
     if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "ufunc 'isnat' is only defined for datetime and timedelta.");
         return -1;
     }
