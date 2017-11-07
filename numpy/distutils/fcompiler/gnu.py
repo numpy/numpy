@@ -166,6 +166,23 @@ class GnuFCompiler(FCompiler):
             return os.path.dirname(output)
         return None
 
+    def get_libgfortran_dir(self):
+        if sys.platform[:5] == 'linux':
+            libgfortran_name = 'libgfortran.so'
+        elif sys.platform == 'darwin':
+            libgfortran_name = 'libgfortran.dylib'
+        else:
+            libgfortran_name = None
+
+        libgfortran_dir = None
+        if libgfortran_name:
+            find_lib_arg = ['-print-file-name={0}'.format(libgfortran_name)]
+            status, output = exec_command(
+                self.compiler_f77 + find_lib_arg, use_tee=0)
+            if not status:
+                libgfortran_dir = os.path.dirname(output)
+        return libgfortran_dir
+
     def get_library_dirs(self):
         opt = []
         if sys.platform[:5] != 'linux':
@@ -182,6 +199,11 @@ class GnuFCompiler(FCompiler):
                         if os.path.exists(path):
                             opt.append(d2)
                 opt.append(d)
+        # For Macports / Linux, libgfortran and libgcc are not co-located
+        if sys.platform[:5] == 'linux' or sys.platform == 'darwin':
+            lib_gfortran_dir = self.get_libgfortran_dir()
+            if lib_gfortran_dir:
+                opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
@@ -327,6 +349,11 @@ class Gnu95FCompiler(GnuFCompiler):
                     mingwdir = os.path.normpath(path)
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
                         opt.append(mingwdir)
+        # For Macports / Linux, libgfortran and libgcc are not co-located
+        if sys.platform[:5] == 'linux' or sys.platform == 'darwin':
+            lib_gfortran_dir = self.get_libgfortran_dir()
+            if lib_gfortran_dir:
+                opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
