@@ -212,13 +212,28 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
-    vcpkg_include_dirs = [
+    _include_dirs = [
         'include',
         'include/suitesparse',
     ]
-    vcpkg_lib_dirs = [
+    _lib_dirs = [
         'lib',
     ]
+    
+    _include_dirs = [d.replace('/', os.sep) for d in _include_dirs]
+    _lib_dirs = [d.replace('/', os.sep) for d in _lib_dirs]
+    def add_system_root(library_root):
+        """Add a package manager root to the include directories"""
+        global default_lib_dirs
+        global default_include_dirs
+        
+        library_root = os.path.normpath(library_root)
+ 
+        default_lib_dirs.extend(
+            os.path.join(library_root, d) for d in _lib_dirs)
+        default_include_dirs.extend(
+            os.path.join(library_root, d) for d in _include_dirs)
+    
     if sys.version_info >= (3, 3):
         # VCpkg is the de-facto package manager on windows for C/C++
         # libraries. If it is on the PATH, then we append its paths here.
@@ -231,15 +246,21 @@ if sys.platform == 'win32':
                 specifier = 'x86'
             else:
                 specifier = 'x64'
-            vcpkg_root = os.path.join(
-                vcpkg_dir, 'installed', specifier + '-windows')
 
-            default_lib_dirs.extend(
-                os.path.join(
-                    vcpkg_root, d.replace('/', os.sep)) for d in vcpkg_lib_dirs)
-            default_include_dirs.extend(
-                os.path.join(
-                    vcpkg_root, d.replace('/', os.sep)) for d in vcpkg_include_dirs)
+            vcpkg_installed = os.path.join(vcpkg_dir, 'installed') 
+            for vcpkg_root in [
+                os.path.join(vcpkg_installed, specifier + '-windows'),
+                os.path.join(vcpkg_installed, specifier + '-windows-static'),
+            ]:
+                add_system_root(vcpkg_root)
+
+        # Conda is another popular package manager that provides libraries
+        conda = shutil.which('conda')
+        if conda:
+            conda_dir = os.path.dirname(conda)
+            add_system_root(os.path.join(conda_dir, '..', 'Library'))
+            add_system_root(os.path.join(conda_dir, 'Library'))
+                        
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
@@ -360,6 +381,7 @@ def get_info(name, notfound_action=0):
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
           'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'openblas_clapack': openblas_clapack_info, # use blas_opt instead
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
@@ -1514,6 +1536,11 @@ class lapack_opt_info(system_info):
             self.set_info(**openblas_info)
             return
 
+        openblas_info = get_info('openblas_clapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
         atlas_info = get_info('atlas_3_10_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_3_10')
@@ -1879,6 +1906,8 @@ class openblas_lapack_info(openblas_info):
             shutil.rmtree(tmpdir)
         return res
 
+class openblas_clapack_info(openblas_lapack_info):
+    _lib_names = ['openblas', 'lapack']
 
 class blis_info(blas_info):
     section = 'blis'
