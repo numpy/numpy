@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns
 )
 
 class TestArrayRepr(object):
@@ -262,6 +262,13 @@ class TestPrintOptions(object):
         assert_equal(repr(x), "array(test)")
         # str is unaffected
         assert_equal(str(x), "1")
+
+        # check `style` arg raises
+        assert_warns(DeprecationWarning, np.array2string,
+                                         np.array(1.), style=repr)
+        # but not in legacy mode
+        np.set_printoptions(legacy=True)
+        np.array2string(np.array(1.), style=repr)
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
