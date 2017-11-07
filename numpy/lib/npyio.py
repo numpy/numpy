@@ -708,25 +708,21 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         # Stage arrays in a temporary file on disk, before writing to zip.
 
         # Import deferred for startup time improvement
-        import tempfile
+        from ..testing import temppath
         # Since target file might be big enough to exceed capacity of a global
         # temporary directory, create temp file side-by-side with the target file.
         file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-        fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-        os.close(fd)
-        try:
+        with temppath(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy') as tmpfile:
             for key, val in namedict.items():
                 fname = key + '.npy'
                 with open(tmpfile, 'wb') as fid:
                     try:
                         format.write_array(fid, np.asanyarray(val),
-                                        allow_pickle=allow_pickle,
-                                        pickle_kwargs=pickle_kwargs)
+                                           allow_pickle=allow_pickle,
+                                           pickle_kwargs=pickle_kwargs)
                     except IOError as exc:
                         raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
                 zipf.write(tmpfile, arcname=fname)
-        finally:
-            os.remove(tmpfile)
 
     zipf.close()
 
