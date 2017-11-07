@@ -1683,7 +1683,7 @@ static void
     int skip = 1;
     int oskip = PyArray_DESCR(aop)->elsize;
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
-        temp = @from@_getitem(ip, aip);
+        temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             Py_INCREF(Py_False);
             temp = Py_False;
