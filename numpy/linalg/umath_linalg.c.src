@@ -129,10 +129,24 @@ FNAME(zheevd)(char *jobz, char *uplo, int *n,
               int *info);
 
 extern int
+FNAME(sgelsd)(int *m, int *n, int *nrhs,
+              float a[], int *lda, float b[], int *ldb,
+              float s[], float *rcond, int *rank,
+              float work[], int *lwork, int iwork[],
+              int *info);
+extern int
 FNAME(dgelsd)(int *m, int *n, int *nrhs,
               double a[], int *lda, double b[], int *ldb,
               double s[], double *rcond, int *rank,
               double work[], int *lwork, int iwork[],
+              int *info);
+extern int
+FNAME(cgelsd)(int *m, int *n, int *nrhs,
+              f2c_complex a[], int *lda,
+              f2c_complex b[], int *ldb,
+              float s[], float *rcond, int *rank,
+              f2c_complex work[], int *lwork,
+              float rwork[], int iwork[],
               int *info);
 extern int
 FNAME(zgelsd)(int *m, int *n, int *nrhs,
