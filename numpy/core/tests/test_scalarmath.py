@@ -7,9 +7,10 @@ import operator
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings, dec, _gen_alignment_data,
+    run_module_suite,
+    assert_, assert_equal, assert_raises,
+    assert_almost_equal, assert_allclose, assert_array_equal,
+    IS_PYPY, suppress_warnings, dec, _gen_alignment_data,
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -398,7 +399,7 @@ class TestConversion(object):
         for code in 'lLqQ':
             assert_raises(OverflowError, overflow_error_func, code)
 
-    def test_longdouble_int(self):
+    def test_int_from_infinite_longdouble(self):
         # gh-627
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
@@ -410,7 +411,7 @@ class TestConversion(object):
 
     @dec.knownfailureif(not IS_PYPY,
         "__int__ is not the same as int in cpython (gh-9972)")
-    def test_clongdouble___int__(self):
+    def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
@@ -418,6 +419,21 @@ class TestConversion(object):
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)
+
+    @dec.skipif(np.finfo(np.double) == np.finfo(np.longdouble))
+    def test_int_from_huge_longdouble(self):
+        # produce a longdouble that would overflow a double
+        exp = np.finfo(np.double).maxexp
+        huge_ld = 1234 * np.longdouble(2) ** exp
+        huge_i = 1234 * 2 ** exp
+        assert_(huge_ld != np.inf)
+        assert_equal(int(huge_ld), huge_i)
+
+    def test_int_from_longdouble(self):
+        x = np.longdouble(1.5)
+        assert_equal(int(x), 1)
+        x = np.longdouble(-10.5)
+        assert_equal(int(x), -10)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer

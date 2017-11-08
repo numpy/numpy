@@ -27,6 +27,7 @@
 #include "alloc.h"
 #include "npy_import.h"
 #include "dragon4.h"
+#include "npy_longdouble.h"
 
 #include <stdlib.h>
 
@@ -832,14 +833,7 @@ static PyObject *
 @char@longdoubletype_long(PyObject *self)
 {
     npy_longdouble val = PyArrayScalar_VAL(self, @CHAR@LongDouble)@POST@;
-
-    /*
-     * This raises OverflowError when the cast overflows to infinity (gh-9964)
-     *
-     * Could fix this with a PyLong_FromLongDouble(longdouble ldval)
-     * but this would need some more work...
-     */
-    return PyLong_FromDouble((double) val);
+    return npy_longdouble_to_PyLong(val);
 }
 
 #if !defined(NPY_PY3K)
