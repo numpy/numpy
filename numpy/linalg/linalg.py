@@ -1982,7 +1982,11 @@ def lstsq(a, b, rcond="warn"):
     ldb = max(n, m)
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
+
     t, result_t = _commonType(a, b)
+    real_t = _linalgRealType(t)
+    result_real_t = _realType(result_t)
+
     # Determine default rcond value
     if rcond == "warn":
         # 2017-08-19, 1.14.0
@@ -1997,8 +2001,6 @@ def lstsq(a, b, rcond="warn"):
     if rcond is None:
         rcond = finfo(t).eps * ldb
 
-    result_real_t = _realType(result_t)
-    real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
     bstar[:b.shape[0], :n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
