@@ -250,7 +250,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY/WRTIEBACKIFCOPY if necessary */
+    /* Trigger the UPDATEIFCOPY/WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
         PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
