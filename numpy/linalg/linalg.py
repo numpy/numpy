@@ -1915,7 +1915,7 @@ def lstsq(a, b, rcond="warn"):
     x : {(N,), (N, K)} ndarray
         Least-squares solution. If `b` is two-dimensional,
         the solutions are in the `K` columns of `x`.
-    residuals : {(), (1,), (K,)} ndarray
+    residuals : {(1,), (K,), (0,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
         If the rank of `a` is < N or M <= N, this is an empty array.
