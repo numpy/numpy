@@ -1347,6 +1347,21 @@ Special functions for NPY_OBJECT
     decrement all the items in the object array prior to calling this
     function.
 
+.. c:function:: int PyArray_SetUpdateIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
+
+    Precondition: ``arr`` is a copy of ``base`` (though possibly with different
+    strides, ordering, etc.) Set the UPDATEIFCOPY flag and ``arr->base`` so
+    that when ``arr`` is destructed, it will copy any changes back to ``base``.
+    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase``.
+
+.. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
+
+    Precondition: ``arr`` is a copy of ``base`` (though possibly with different
+    strides, ordering, etc.) Sets the WRITEBACKIFCOPY flag and ``arr->base``, and
+    set ``base`` to READONLY. Call PyArray_ResolveWritebackIfCopy before calling
+    :c:func:`PyArray_DECREF`` in order copy any changes back to ``base`` and
+    reset the READONLY flag.
+
 
 Array flags
 -----------
@@ -3453,7 +3468,7 @@ Miscellaneous Macros
 
     Returns the reference count of any Python object.
 
-.. c:function:: PyArray_DiscardWritebackIfCopy(PyObject \*obj)
+.. c:function:: PyArray_DiscardWritebackIfCopy(PyObject* obj)
 
     Reset the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and deprecated
     :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Also resets the
@@ -3461,7 +3476,7 @@ Miscellaneous Macros
     useful for recovering from an error condition when
     writeback semantics are used, but will lead to wrong results.
 
-.. c:function:: PyArray_XDECREF_ERR(PyObject \*obj)
+.. c:function:: PyArray_XDECREF_ERR(PyObject* obj)
 
     Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
     followed by ``Py_XDECREF``

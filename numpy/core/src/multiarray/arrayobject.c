@@ -479,7 +479,8 @@ array_dealloc(PyArrayObject *self)
         if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
             char * msg = "WRITEBACKIFCOPY requires a call to "
-                "PyArray_ResolveWritebackIfCopy before array_dealloc is "
+                "PyArray_ResolveWritebackIfCopy or "
+                "PyArray_DiscardWritebackIfCopy before array_dealloc is "
                 "called.";
             /* 2017-Nov-10 1.14 */
             if (DEPRECATE(msg) < 0) {
