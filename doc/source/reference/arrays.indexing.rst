@@ -170,7 +170,7 @@ concepts to remember include:
 
 .. data:: newaxis
 
-   The :const:`newaxis` object can be used in all slicing operations to 
+   The :const:`newaxis` object can be used in all slicing operations to
    create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
@@ -503,7 +503,7 @@ dictionary-like.
 Indexing ``x['field-name']`` returns a new :term:`view` to the array,
 which is of the same shape as *x* (except when the field is a
 sub-array) but of data type ``x.dtype['field-name']`` and contains
-only the part of the data in the specified field. Also 
+only the part of the data in the specified field. Also
 :ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
 
 Indexing into a structured array can also be done with a list of field names,

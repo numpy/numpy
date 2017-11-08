@@ -1177,7 +1177,7 @@ iterator_loop(PyUFuncObject *ufunc,
                     PyUFuncGenericFunction innerloop,
                     void *innerloopdata)
 {
-    npy_intp i, nin = ufunc->nin, nout = ufunc->nout;
+    npy_intp i, iop, nin = ufunc->nin, nout = ufunc->nout;
     npy_intp nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1263,6 +1263,12 @@ iterator_loop(PyUFuncObject *ufunc,
             /* Call the __array_prepare__ functions for the new array */
             if (prepare_ufunc_output(ufunc, &op[nin+i],
                                      arr_prep[i], arr_prep_args, i) < 0) {
+                for(iop = 0; iop < nin+i; ++iop) {
+                    if (op_it[iop] != op[iop]) {
+                        /* ignore errrors */
+                        PyArray_ResolveWritebackIfCopy(op_it[iop]);
+                    }
+                }
                 NpyIter_Deallocate(iter);
                 return -1;
             }
@@ -1315,7 +1321,11 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
-
+    for(iop = 0; iop < nop; ++iop) {
+        if (op_it[iop] != op[iop]) {
+            PyArray_ResolveWritebackIfCopy(op_it[iop]);
+        }
+    }
     NpyIter_Deallocate(iter);
     return 0;
 }
@@ -1502,7 +1512,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                     PyObject **arr_prep,
                     PyObject *arr_prep_args)
 {
-    int i, nin = ufunc->nin, nout = ufunc->nout;
+    int retval, i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1688,8 +1698,16 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         NPY_AUXDATA_FREE(innerloopdata);
     }
 
+    retval = 0;
+    nop = NpyIter_GetNOp(iter);
+    for(i=0; i< nop; ++i) {
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0) {
+            retval = -1;
+        }
+    }
+
     NpyIter_Deallocate(iter);
-    return 0;
+    return retval;
 }
 
 static PyObject *
@@ -2285,6 +2303,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         retval = -1;
         goto fail;
     }
+
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
+    for(i=nin; i< nop; ++i)
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0)
+            goto fail;
 
     PyArray_free(inner_strides);
     NpyIter_Deallocate(iter);
@@ -3218,6 +3241,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 finish:
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
+    if (PyArray_ResolveWritebackIfCopy(op[0]) < 0)
+        goto fail;
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
@@ -3600,6 +3626,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
+    if (op[0] && PyArray_ResolveWritebackIfCopy(op[0]) < 0) {
+        goto fail;
+    }
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
 
@@ -4114,7 +4143,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
     else if (override) {
         for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
+            PyArray_DiscardWritebackIfCopy(mps[i]);
+            Py_XDECREF(mps[i]);
         }
         return override;
     }
@@ -4122,7 +4152,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
         for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
+            PyArray_DiscardWritebackIfCopy(mps[i]);
+            Py_XDECREF(mps[i]);
         }
         if (errval == -1) {
             return NULL;
@@ -5215,6 +5246,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     NpyIter_Deallocate(iter_buffer);
 
+    if (op1_array != (PyArrayObject*)op1) {
+        PyArray_ResolveWritebackIfCopy(op1_array);
+    }
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
@@ -5231,6 +5265,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
 fail:
 
+    if (op1_array != (PyArrayObject*)op1) {
+        PyArray_ResolveWritebackIfCopy(op1_array);
+    }
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);

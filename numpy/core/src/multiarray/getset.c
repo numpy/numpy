@@ -365,9 +365,11 @@ array_data_set(PyArrayObject *self, PyObject *op)
         PyDataMem_FREE(PyArray_DATA(self));
     }
     if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
+        if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||
+            (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY)) {
             PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
                                                 NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(PyArray_BASE(self));
@@ -614,7 +616,7 @@ array_struct_get(PyArrayObject *self)
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
     /* reset unused flags */
-    inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
+    inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;
     /*
      * Copy shape and strides over since these can be reset
