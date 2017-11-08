@@ -76,6 +76,11 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
 
     NPY_ALLOW_C_API_DEF
 
+    /* don't need C API for a simple ignore */
+    if (method == UFUNC_ERR_IGNORE) {
+        return 0;
+    }
+
     /* don't need C API for a simple print */
     if (method == UFUNC_ERR_PRINT) {
         if (*first) {
