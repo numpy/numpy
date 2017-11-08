@@ -686,7 +686,10 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'halffloat.c')
                        ]
     
-    is_msvc = customized_ccompiler().compiler_type == 'msvc'
+    compiler_type = customized_ccompiler().compiler_type
+    is_msvc = compiler_type == 'msvc'
+    is_msvc = is_msvc or (sys.platform == 'win32' and compiler_type in ('clang', 'intel'))
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
