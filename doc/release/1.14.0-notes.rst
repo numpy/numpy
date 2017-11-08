@@ -187,6 +187,42 @@ When indexed with a float, the dtype object used to raise ``ValueError``.
 C API changes
 =============
 
+``UPDATEIFCOPY`` semantics deprecated in favor of ``WRITEBACKIFCOPY``
+---------------------------------------------------------------------
+
+The ``UPDATEIFCOPY`` flag is deprecated, and replaced by a new flag
+``WRITEBACKIFCOPY``. Use of the flag requires a call to ``PyArray_ResolveWritebackIfCopy``.
+
+Code using ``UPDATEIFCOPY`` must be updated to account for changed semantics, as
+follows:. When ndarrays are created with either the deprecated ``UPDATEIFCOPY``
+or new ``WRITEBACKIFCOPY`` flags, a temporary copy of the data is created which
+is eventually written back to the original array. For ``UPDATEIFCOPY``, the
+writeback to the original array occurs at ndarray deallocation. For
+``WRITEBACKIFCOPY``, a new ``PyArray_ResolveWritebackIfCopy`` function must be
+explicitly called before deallocation (or, if an error occurred,
+``PyArray_DiscardWritebackIfCopy``). Numpy now mostly uses the
+``WRITEBACKIFCOPY`` mechanism internally, but still uses ``UPDATEIFCOPY`` in
+nditer use for backward-compatibility with the python nditer interface.
+
+In python code, if numpy is compiled with ``-DDEPRECATE_UPDATEIFCOPY`` or if
+run on PyPy, ``DeprecationWarning`` warnings will be issued on use of
+``UPDATEIFCOPY`` (eg, when nditer is used) if writeback resolution has not
+occurred before calling ``array_dealloc``. In the future this warning will
+always be issued, once nditer stops using ``UPDATEIFCOPY``.
+
+In C code, calling ``PyArray_SetUpdateIfCopyBase`` will now always issue a
+``DeprecationWarning`` and should be replaced by
+``PyArray_SetWritebackIfCopyBase``. Similarly, calls to ``PyArray_XDECREF_ERR``
+should be replaced by ``PyArray_DiscardWritebackIfCopy``.  Calling ndarray
+creation functions such as ``PyArray_FromArray`` where flags uses
+``NPY_ARRAY_UPDATEIFCOPY`` will also raise a ``DeprecationWarning``. In all
+these cases the code must be further modified to call 
+``PyArray_ResolveWritebackIfCopy`` before deallocation.
+
+Note that during the deprecation period, the ``NPY_ARRAY_INOUT_ARRAY`` and
+``NPY_ARRAY_INOUT_FARRAY`` flags should be replaced by
+``NPY_ARRAY_INOUT_ARRAY2`` and ``NPY_ARRAY_INOUT_FARRAY2``, which behave
+similarly but require use of the new ``WRITEBACKIFCOPY`` semantics.
 
 New Features
 ============

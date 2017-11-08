@@ -412,7 +412,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
 
             /* set copy-back */
             Py_INCREF(out);
-            if (PyArray_SetUpdateIfCopyBase(out_buf, out) < 0) {
+            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
                 Py_DECREF(out);
                 goto fail;
             }
@@ -772,6 +772,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     Py_DECREF(ap2);
 
     /* Trigger possible copyback into `result` */
+    PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return PyArray_Return(result);

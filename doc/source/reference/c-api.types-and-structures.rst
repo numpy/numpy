@@ -133,10 +133,11 @@ PyArray_Type
     is related to this array. There are two use cases: 1) If this array
     does not own its own memory, then base points to the Python object
     that owns it (perhaps another array object), 2) If this array has
-    the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set, then this array is
-    a working copy of a "misbehaved" array. As soon as this array is
-    deleted, the array pointed to by base will be updated with the
-    contents of this array.
+    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or 
+    :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
+    a working copy of a "misbehaved" array. When 
+    ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
+    will be updated with the contents of this array.
 
 .. c:member:: PyArray_Descr *PyArrayObject.descr
 
@@ -153,8 +154,8 @@ PyArray_Type
     Flags indicating how the memory pointed to by data is to be
     interpreted. Possible flags are :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_F_CONTIGUOUS`, :c:data:`NPY_ARRAY_OWNDATA`,
-    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`, and
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
+    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, and :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. c:member:: PyObject *PyArrayObject.weakreflist
 

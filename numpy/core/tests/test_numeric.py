@@ -904,7 +904,7 @@ class TestTypes(object):
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
-
+            
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):
@@ -1319,7 +1319,7 @@ def assert_array_strict_equal(x, y):
         assert_(x.flags.writeable == y.flags.writeable)
         assert_(x.flags.c_contiguous == y.flags.c_contiguous)
         assert_(x.flags.f_contiguous == y.flags.f_contiguous)
-        assert_(x.flags.updateifcopy == y.flags.updateifcopy)
+        assert_(x.flags.writebackifcopy == y.flags.writebackifcopy)
     # check endianness
     assert_(x.dtype.isnative == y.dtype.isnative)
 

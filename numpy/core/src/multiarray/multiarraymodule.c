@@ -830,7 +830,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
             /* set copy-back */
             Py_INCREF(out);
-            if (PyArray_SetUpdateIfCopyBase(out_buf, out) < 0) {
+            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
                 Py_DECREF(out);
                 Py_DECREF(out_buf);
                 return NULL;
@@ -1102,6 +1102,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(ap2);
 
     /* Trigger possible copy-back into `result` */
+    PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return (PyObject *)result;
@@ -4673,6 +4674,7 @@ set_flaginfo(PyObject *d)
     _addnew(CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS, C);
     _addnew(ALIGNED, NPY_ARRAY_ALIGNED, A);
     _addnew(UPDATEIFCOPY, NPY_ARRAY_UPDATEIFCOPY, U);
+    _addnew(WRITEBACKIFCOPY, NPY_ARRAY_WRITEBACKIFCOPY, X);
     _addnew(WRITEABLE, NPY_ARRAY_WRITEABLE, W);
     _addone(C_CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS);
     _addone(F_CONTIGUOUS, NPY_ARRAY_F_CONTIGUOUS);

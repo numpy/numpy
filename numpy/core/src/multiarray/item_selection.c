@@ -87,8 +87,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     }
     else {
-        int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
 
         if ((PyArray_NDIM(out) != nd) ||
             !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
@@ -235,13 +234,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     Py_XDECREF(self);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
+        PyArray_ResolveWritebackIfCopy(obj);
         Py_DECREF(obj);
         obj = out;
     }
     return (PyObject *)obj;
 
  fail:
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     return NULL;
@@ -273,7 +274,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
 
         if (clipmode == NPY_RAISE) {
             flags |= NPY_ARRAY_ENSURECOPY;
@@ -407,6 +408,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_XDECREF(values);
     Py_XDECREF(indices);
     if (copied) {
+        PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
     }
     Py_RETURN_NONE;
@@ -415,7 +417,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_XDECREF(indices);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -448,7 +451,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         dtype = PyArray_DESCR(self);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(self, dtype,
-                                NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (obj != self) {
             copied = 1;
         }
@@ -524,6 +527,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_XDECREF(values);
     Py_XDECREF(mask);
     if (copied) {
+        PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
     }
     Py_RETURN_NONE;
@@ -532,7 +536,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_XDECREF(mask);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -694,7 +699,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     else {
         int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY |
+                    NPY_ARRAY_WRITEBACKIFCOPY |
                     NPY_ARRAY_FORCECAST;
 
         if ((PyArray_NDIM(out) != multi->nd)
@@ -769,6 +774,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_free_cache(mps, n * sizeof(mps[0]));
     if (out != NULL && out != obj) {
         Py_INCREF(out);
+        PyArray_ResolveWritebackIfCopy(obj);
         Py_DECREF(obj);
         obj = out;
     }
@@ -781,7 +787,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_XDECREF(ap);
     npy_free_cache(mps, n * sizeof(mps[0]));
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     return NULL;
 }
 

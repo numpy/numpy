@@ -118,7 +118,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (rp == NULL) {
             goto fail;
         }
@@ -134,8 +134,9 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY if necessary */
+    /* Trigger the UPDATEIFCOPY/WRTIEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
+        PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
@@ -233,7 +234,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (rp == NULL) {
             goto fail;
         }
@@ -249,8 +250,9 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY if necessary */
+    /* Trigger the UPDATEIFCOPY/WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
+        PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
@@ -1117,7 +1119,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
             oflags = NPY_ARRAY_FARRAY;
         else
             oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST;
+        oflags |= NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST;
         Py_INCREF(indescr);
         newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {
@@ -1153,6 +1155,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     Py_XDECREF(maxa);
     Py_DECREF(newin);
     /* Copy back into out if out was not already a nice array. */
+    PyArray_ResolveWritebackIfCopy(newout);
     Py_DECREF(newout);
     return (PyObject *)out;
 
@@ -1162,7 +1165,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     Py_XDECREF(maxa);
     Py_XDECREF(mina);
     Py_XDECREF(newin);
-    PyArray_XDECREF_ERR(newout);
+    PyArray_DiscardWritebackIfCopy(newout);
+    Py_XDECREF(newout);
     return NULL;
 }
 

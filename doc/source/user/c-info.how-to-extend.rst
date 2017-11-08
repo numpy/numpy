@@ -468,18 +468,20 @@ writeable). The syntax is
 
             Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
             :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+            :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
             :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
             useful to specify an array that will be used for both
-            input and output. If a copy is needed, then when the
-            temporary is deleted (by your use of :c:func:`Py_DECREF` at
-            the end of the interface routine), the temporary array
-            will be copied back into the original array passed in. Use
-            of the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
+            input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
+            must be called before :func:`Py_DECREF` at
+            the end of the interface routine to write back the temporary data
+            into the original array passed in. Use
+            of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or
+            :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
-            occurs use :c:func:`PyArray_DECREF_ERR` (obj) on an array
-            with the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
-            delete the array without causing the contents to be copied
+            occurs use :c:func:`PyArray_DiscardWritebackIfCopy` (obj) on an
+            array with these flags set. This will set the underlying base array
+            writable without causing the contents to be copied
             back into the original array.
 
 
@@ -635,6 +637,7 @@ updates the output array.
 
         Py_DECREF(arr1);
         Py_DECREF(arr2);
+        PyArray_ResolveWritebackIfCopy(oarr);
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
@@ -642,6 +645,7 @@ updates the output array.
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
-        PyArray_XDECREF_ERR(oarr);
+        PyArray_DiscardWritebackIfCopy(oarr);
+        Py_XDECREF(oarr);
         return NULL;
     }

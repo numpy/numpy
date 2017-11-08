@@ -18,11 +18,11 @@ if sys.version_info[0] >= 3:
 else:
     import __builtin__ as builtins
 from decimal import Decimal
-
+from unittest import TestCase
 
 import numpy as np
 from numpy.compat import strchar, unicode
-from .test_print import in_foreign_locale
+from numpy.core.tests.test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
     test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
@@ -89,6 +89,7 @@ class TestFlags(object):
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
+        assert_equal(self.a.flags['C'], True)
         assert_equal(self.a.flags.farray, False)
         assert_equal(self.a.flags.behaved, True)
         assert_equal(self.a.flags.fnc, False)
@@ -96,7 +97,13 @@ class TestFlags(object):
         assert_equal(self.a.flags.owndata, True)
         assert_equal(self.a.flags.writeable, True)
         assert_equal(self.a.flags.aligned, True)
-        assert_equal(self.a.flags.updateifcopy, False)
+        with assert_warns(DeprecationWarning):
+            assert_equal(self.a.flags.updateifcopy, False)
+        with assert_warns(DeprecationWarning):
+            assert_equal(self.a.flags['U'], False)
+        assert_equal(self.a.flags.writebackifcopy, False)
+        assert_equal(self.a.flags['X'], False)
+
 
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
@@ -4498,12 +4505,19 @@ class TestFlat(object):
         # UPDATEIFCOPY array returned for non-contiguous arrays.
         assert_(e.flags.writeable is True)
         assert_(f.flags.writeable is False)
-
-        assert_(c.flags.updateifcopy is False)
-        assert_(d.flags.updateifcopy is False)
-        assert_(e.flags.updateifcopy is False)
-        # UPDATEIFCOPY is removed.
-        assert_(f.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(c.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(d.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(e.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            # UPDATEIFCOPY is removed.
+            assert_(f.flags.updateifcopy is False)
+        assert_(c.flags.writebackifcopy is False)
+        assert_(d.flags.writebackifcopy is False)
+        assert_(e.flags.writebackifcopy is False)
+        assert_(f.flags.writebackifcopy is False)
 
 
 class TestResize(object):
@@ -6481,7 +6495,7 @@ class TestArrayAttributeDeletion(object):
 
     def test_multiarray_flags_writable_attribute_deletion(self):
         a = np.ones(2).flags
-        attr = ['updateifcopy', 'aligned', 'writeable']
+        attr = ['writebackifcopy', 'updateifcopy', 'aligned', 'writeable']
         for s in attr:
             assert_raises(AttributeError, delattr, a, s)
 
@@ -7100,6 +7114,72 @@ class TestCTypes(object):
             assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
         finally:
             _internal.ctypes = ctypes
+
+
+class TestUpdateIfCopy(TestCase):
+    # all these tests use the WRITEBACKIFCOPY mechanism
+    def test_argmax_with_out(self):
+        mat = np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmax(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_argmin_with_out(self):
+        mat = -np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmin(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_clip_with_out(self):
+        mat = np.eye(5)
+        out = np.eye(5, dtype='i2')
+        res = np.clip(mat, a_min=-10, a_max=0, out=out)
+        assert_equal(np.sum(out), 0)
+
+    def test_insert_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_insert
+        np.place(a, a>2, [44, 55])
+        assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
+
+    def test_put_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        np.put(a, [0, 2], [44, 55])
+        assert_equal(a, np.array([[44, 3], [55, 4], [2, 5]]))
+
+    def test_putmask_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_putmask
+        np.putmask(a, a>2, a**2)
+        assert_equal(a, np.array([[0, 9], [1, 16], [2, 25]]))
+
+    def test_take_mode_raise(self):
+        a = np.arange(6, dtype='int')
+        out = np.empty(2, dtype='int')
+        np.take(a, [0, 2], out=out, mode='raise')
+        assert_equal(out, np.array([0, 2]))
+
+    def test_choose_mod_raise(self):
+        a = np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]])
+        out = np.empty((3,3), dtype='int')
+        choices = [-10, 10]
+        np.choose(a, choices, out=out, mode='raise')
+        assert_equal(out, np.array([[ 10, -10,  10],
+                                    [-10,  10, -10],
+                                    [ 10, -10,  10]]))
+
+    def test_flatiter__array__(self):
+        a = np.arange(9).reshape(3,3)
+        b = a.T.flat
+        c = b.__array__()
+        # triggers the WRITEBACKIFCOPY resolution, assuming refcount semantics
+        del c
+
+    def test_dot_out(self):
+        # if HAVE_CBLAS, will use WRITEBACKIFCOPY
+        a = np.arange(9, dtype=float).reshape(3,3)
+        b = np.dot(a, a, out=a)
+        assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
 
 
 def test_orderconverter_with_nonASCII_unicode_ordering():

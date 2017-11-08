@@ -4663,6 +4663,7 @@ class MaskedArray(ndarray):
           OWNDATA : False
           WRITEABLE : True
           ALIGNED : True
+          WRITEBACKIFCOPY : False
           UPDATEIFCOPY : False
 
         """
