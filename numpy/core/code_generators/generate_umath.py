@@ -791,6 +791,12 @@ defdict = {
           TD(intflt),
           TD(O, f='PyNumber_Divmod'),
           ),
+'remainder_ieee':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.remainder_ieee'),
+          None,
+          TD(flts, f='remainder', astype={'e':'f'}),
+          ),
 'hypot':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.hypot'),
