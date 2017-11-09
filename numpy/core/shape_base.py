@@ -406,7 +406,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
                       for i, arr in enumerate(arrays))
 
         first_index, max_arr_ndim = next(idxs_ndims)
-        for i, (index, ndim) in enumerate(idxs_ndims, 1):
+        for index, ndim in idxs_ndims:
             if ndim > max_arr_ndim:
                 max_arr_ndim = ndim
             if len(index) != len(first_index):
