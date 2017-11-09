@@ -4,7 +4,8 @@ from numpy import (logspace, linspace, geomspace, dtype, array, sctypes,
                    arange, isnan, ndarray, sqrt, nextafter)
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_allclose, suppress_warnings
+    assert_array_equal, assert_allclose, suppress_warnings,
+    dec
 )
 
 
@@ -89,7 +90,7 @@ class TestGeomspace(object):
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
 
         y = geomspace(8, 2, num=3)
-        assert_allclose(y, [8, 4, 2])
+        assert_array_equal(y, [8, 4, 2])
         assert_array_equal(y.imag, 0)
 
         y = geomspace(-1, -100, num=3)
@@ -149,10 +150,38 @@ class TestGeomspace(object):
         assert_equal(y.dtype, dtype('int32'))
 
         # Native types
+        for x in range(1, 11):
+            y = geomspace(x, x**4, num=4, dtype=int)
+            assert_array_equal(y, [x, x**2, x**3, x**4])
+            y = geomspace(x, x**4, num=7, dtype=int)
+            assert_array_equal(y[::2], [x, x**2, x**3, x**4])
+            y = geomspace(x, x**3, num=3, dtype=int)
+            assert_array_equal(y, [x, x**2, x**3])
+            y = geomspace(x**3, x, num=3, dtype=int)
+            assert_array_equal(y, [x**3, x**2, x])
+
         y = geomspace(1, 1e6, dtype=float)
         assert_equal(y.dtype, dtype('float_'))
         y = geomspace(1, 1e6, dtype=complex)
         assert_equal(y.dtype, dtype('complex'))
+
+    def test_dtype_num_special_bases(self):
+        num = 4
+        skip = 8
+        for x in [2, 10]:
+            y = geomspace(1, x**num, num=skip * num + 1)
+            assert_array_equal(y[::skip], [1, x, x**2, x**3, x**4])
+            y = geomspace(x**num, 1, num=skip * num + 1)
+            assert_array_equal(y[::skip], [x**4, x**3, x**2, x, 1])
+
+    @dec.knownfailureif(
+        True, 'See gh-9993. geomspace will fail to detect exact base.')
+    def test_dtype_num_other_bases(self):
+        num = 4
+        skip = 8
+        for x in range(3, 10):
+            y = geomspace(1, x**num, num=skip * num + 1, dtype=int)
+            assert_array_equal(y[::skip], [1, x, x**2, x**3, x**4])
 
     def test_array_scalar(self):
         lim1 = array([120, 100], dtype="int8")

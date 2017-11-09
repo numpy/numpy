@@ -2,10 +2,11 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import operator
+from decimal import Decimal
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError,asanyarray)
+                      TooHardError, asanyarray)
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -234,6 +235,92 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     return _nx.power(base, y).astype(dtype)
 
 
+def _geom_common_ratio(start, stop, num, use_decimal=False, alternate=False):
+    """Common ratio of a geometric progression.
+
+    Parameters
+    ----------
+    start : scalar
+        The starting value of the sequence.
+    stop : scalar
+        The final value of the sequence.
+    num : integer
+        Number of samples in the sequence to be generated.
+    use_decimal : boolean, optional
+        Use `decimal.Decimal` type to calculate the common ratio.
+    alternate: boolean, optional
+        Chooses alternate ratio if `stop` and `start` can be expressed as a
+        power of an integer base or 2 or 10 irrespective of the value of `num`.
+
+    Returns
+    -------
+    ratio : scalar
+        Common ratio of the sequence.
+
+    """
+    if use_decimal:
+        # Decimal provides superior precision to calculate real n-th roots
+        # Convert numpy scalar data-types
+        if hasattr(start, 'item'):
+            start = start.item()
+        if hasattr(stop, 'item'):
+            stop = stop.item()
+
+        start = Decimal(start)
+        stop = Decimal(stop)
+        exponent = Decimal(1) / Decimal(num - 1)
+    else:
+        exponent = 1 / (num - 1)
+
+    # Keep ratio > 1 to get similar results for ascending and descending
+    # sequences
+    if abs(stop) > abs(start):
+        ratio = (stop / start) ** exponent
+    else:
+        ratio = (start / stop) ** exponent
+
+    if use_decimal:
+        ratio = float(ratio)
+        start = float(start)
+        stop = float(stop)
+
+    def is_perfect_power(a, b=None, logfunc=_nx.log):
+        """Check if `a` is a perfect power of the base of logfunc
+        or if `a / b` is a perfect power of base b.
+
+        """
+        power = logfunc(a)
+        if b is not None:
+            power /= logfunc(b)
+
+        power = _nx.around(power, decimals=10)
+        return _nx.mod(power, 1) == 0
+
+    if alternate and _nx.mod(ratio, 1) != 0:
+        if abs(stop) > abs(start):
+            if start != 1 and is_perfect_power(stop, start):
+                # Check if stop is a power of start
+                ratio = start
+            elif start == 1:
+                # Check if stop is a power of 2 or 10
+                if is_perfect_power(stop, logfunc=_nx.log2):
+                    ratio = 2.0
+                elif is_perfect_power(stop, logfunc=_nx.log10):
+                    ratio = 10.0
+        else:
+            if stop != 1 and is_perfect_power(start, stop):
+                # Check if start is a power of stop
+                ratio = stop
+            elif stop == 1:
+                # Check if start is a power of 2 or 10
+                if is_perfect_power(start, logfunc=_nx.log2):
+                    ratio = 2.0
+                elif is_perfect_power(start, logfunc=_nx.log10):
+                    ratio = 10.0
+
+    return ratio
+
+
 def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     """
     Return numbers spaced evenly on a log scale (a geometric progression).
@@ -350,9 +437,32 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
         start = start + 0j
         stop = stop + 0j
 
-    log_start = _nx.log10(start)
-    log_stop = _nx.log10(stop)
+    # Calculate the common ratio of the required geometric progression
+    if num == 1 or start == stop:
+        # Avoiding division by zero for `num = 1`
+        base = 10.0
+        log_start = _nx.log10(start)
+        log_stop = _nx.log10(stop)
+    else:
+        # Use Decimal type for real sequences
+        if start.imag == 0 and stop.imag == 0 and _nx.sign(start) == _nx.sign(stop):
+            base = _geom_common_ratio(start.real, stop.real, num,
+                                      use_decimal=True, alternate=True)
+        else:
+            base = _geom_common_ratio(start, stop, num)
+
+        if base == 2:
+            log = _nx.log2
+        elif base == 10:
+            log = _nx.log10
+        else:
+            log = _nx.log
+
+        log_base = log(base)
+        log_start = log(start) / log_base
+        log_stop = log(stop) / log_base
+
     result = out_sign * logspace(log_start, log_stop, num=num,
-                                 endpoint=endpoint, base=10.0, dtype=dtype)
+                                 endpoint=endpoint, base=base, dtype=dtype)
 
     return result.astype(dtype)
