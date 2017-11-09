@@ -6,8 +6,9 @@ import pickle
 import copy
 import sysconfig
 import warnings
+import platform
 from os.path import join
-from numpy.distutils import log, customized_ccompiler
+from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 from numpy._build_utils.apple_accelerate import (
@@ -686,10 +687,8 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'halffloat.c')
                        ]
     
-    compiler_type = customized_ccompiler().compiler_type
-    is_msvc = compiler_type == 'msvc'
-    is_msvc = is_msvc or (sys.platform == 'win32' and compiler_type in ('clang', 'intel'))
-
+    # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
+    is_msvc = platform.system() == 'Windows'
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
