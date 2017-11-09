@@ -2002,7 +2002,7 @@ def lstsq(a, b, rcond="warn"):
         rcond = finfo(t).eps * ldb
 
     bstar = zeros((ldb, n_rhs), t)
-    bstar[:b.shape[0], :n_rhs] = b.copy()
+    bstar[:m, :n_rhs] = b
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
@@ -2066,9 +2066,9 @@ def lstsq(a, b, rcond="warn"):
         resids = array([], result_real_t)
 
     # coerce output arrays
-    s = s.astype(result_real_t, copy=True)
-    resids = resids.astype(result_real_t, copy=False)  # array is temporary
-    x = x.astype(result_t, copy=True)
+    s = s.astype(result_real_t, copy=False)
+    resids = resids.astype(result_real_t, copy=False)
+    x = x.astype(result_t, copy=True)  # Copying lets the memory in r_parts be freed
     return wrap(x), wrap(resids), rank, s
 
 
