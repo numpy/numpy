@@ -1915,7 +1915,7 @@ def lstsq(a, b, rcond="warn"):
     x : {(N,), (N, K)} ndarray
         Least-squares solution. If `b` is two-dimensional,
         the solutions are in the `K` columns of `x`.
-    residuals : {(), (1,), (K,)} ndarray
+    residuals : {(1,), (K,), (0,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
         If the rank of `a` is < N or M <= N, this is an empty array.
@@ -1982,7 +1982,11 @@ def lstsq(a, b, rcond="warn"):
     ldb = max(n, m)
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
+
     t, result_t = _commonType(a, b)
+    real_t = _linalgRealType(t)
+    result_real_t = _realType(result_t)
+
     # Determine default rcond value
     if rcond == "warn":
         # 2017-08-19, 1.14.0
@@ -1997,10 +2001,8 @@ def lstsq(a, b, rcond="warn"):
     if rcond is None:
         rcond = finfo(t).eps * ldb
 
-    result_real_t = _realType(result_t)
-    real_t = _linalgRealType(t)
     bstar = zeros((ldb, n_rhs), t)
-    bstar[:b.shape[0], :n_rhs] = b.copy()
+    bstar[:m, :n_rhs] = b
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
     a, bstar = _to_native_byte_order(a, bstar)
     s = zeros((min(m, n),), real_t)
@@ -2039,28 +2041,35 @@ def lstsq(a, b, rcond="warn"):
                                  0, work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError('SVD did not converge in Linear Least Squares')
-    resids = array([], result_real_t)
-    if is_1d:
-        x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
-        if results['rank'] == n and m > n:
-            if isComplexType(t):
-                resids = array([sum(abs(ravel(bstar)[n:])**2)],
-                               dtype=result_real_t)
-            else:
-                resids = array([sum((ravel(bstar)[n:])**2)],
-                               dtype=result_real_t)
-    else:
-        x = array(bstar.T[:n,:], dtype=result_t, copy=True)
-        if results['rank'] == n and m > n:
-            if isComplexType(t):
-                resids = sum(abs(bstar.T[n:,:])**2, axis=0).astype(
-                    result_real_t, copy=False)
-            else:
-                resids = sum((bstar.T[n:,:])**2, axis=0).astype(
-                    result_real_t, copy=False)
 
-    st = s[:min(n, m)].astype(result_real_t, copy=True)
-    return wrap(x), wrap(resids), results['rank'], st
+    # undo transpose imposed by fortran-order arrays
+    b_out = bstar.T
+
+    # b_out contains both the solution and the components of the residuals
+    x = b_out[:n,:]
+    r_parts = b_out[n:,:]
+    if isComplexType(t):
+        resids = sum(abs(r_parts)**2, axis=-2)
+    else:
+        resids = sum(r_parts**2, axis=-2)
+
+    rank = results['rank']
+
+    # remove the axis we added
+    if is_1d:
+        x = x.squeeze(axis=-1)
+        # we probably should squeeze resids too, but we can't
+        # without breaking compatibility.
+
+    # as documented
+    if rank != n or m <= n:
+        resids = array([], result_real_t)
+
+    # coerce output arrays
+    s = s.astype(result_real_t, copy=False)
+    resids = resids.astype(result_real_t, copy=False)
+    x = x.astype(result_t, copy=True)  # Copying lets the memory in r_parts be freed
+    return wrap(x), wrap(resids), rank, s
 
 
 def _multi_svd_norm(x, row_axis, col_axis, op):
