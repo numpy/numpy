@@ -200,10 +200,9 @@ class GnuFCompiler(FCompiler):
                             opt.append(d2)
                 opt.append(d)
         # For Macports / Linux, libgfortran and libgcc are not co-located
-        if sys.platform[:5] == 'linux' or sys.platform == 'darwin':
-            lib_gfortran_dir = self.get_libgfortran_dir()
-            if lib_gfortran_dir:
-                opt.append(lib_gfortran_dir)
+        lib_gfortran_dir = self.get_libgfortran_dir()
+        if lib_gfortran_dir:
+            opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
@@ -350,10 +349,9 @@ class Gnu95FCompiler(GnuFCompiler):
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
                         opt.append(mingwdir)
         # For Macports / Linux, libgfortran and libgcc are not co-located
-        if sys.platform[:5] == 'linux' or sys.platform == 'darwin':
-            lib_gfortran_dir = self.get_libgfortran_dir()
-            if lib_gfortran_dir:
-                opt.append(lib_gfortran_dir)
+        lib_gfortran_dir = self.get_libgfortran_dir()
+        if lib_gfortran_dir:
+            opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
