@@ -182,19 +182,19 @@ raising a ``TypeError``.
 ``dtype.__getitem__`` raises ``TypeError`` when passed wrong type
 -----------------------------------------------------------------
 When indexed with a float, the dtype object used to raise ``ValueError``.
-Unneeded whitespace in float array printing removed, 0d str/repr changes
-------------------------------------------------------------------------
-The new default of ``sign='-'`` (see improvements below) means that the
-``repr`` of float arrays now often omits the whitespace characters previously
-used to display the sign. Also, the printing of 0d arrays has been overhauled,
-to print more like other ndarrays or numpy scalars (see improvements), which
-subtly changes the whitespace and precision of the reprs. These changes are
-likely to break the doctests of downstream users.
+
+Changes to array printing, and the new "legacy" printing mode.
+--------------------------------------------------------------
+The new ``sign='-'`` option (see new features below) causes the ``repr`` of
+float arrays to often omit a whitespace previously printed in the sign
+position, and 0d arrays also now print with small whitespace and precision
+differences (see changes below). These changes are likely to break downstream
+user's doctests.
 
 These new behaviors can be disabled to mostly reproduce numpy 1.13 behavior by
-enabling the new "legacy" printing mode, by calling 
+enabling the new "legacy" printing mode. This is enabled by calling
 ``np.set_printoptions(legacy=True)``, or using the new ``legacy`` argument
-to ``np.array2string``. This legacy mode overrides the ``sign`` option.
+to ``np.array2string``.
 
 
 C API changes
@@ -277,27 +277,9 @@ positive values, with ' ' it always prints a space (whitespace character) in
 the sign position of positive values, and with '-' it will omit the sign
 character for positive values. The new default is '-'.
 
-Note that this new default changes the float output relative to numpy 1.13. The
-old behavior can be obtained by enabling "legacy" printing mode using the
-``legacy`` argument to ``np.set_printoptions`` or ``np.array2string``,  see
-compatibility notes above, 
-
-0d array printing changed to be more consistent with scalars/ndarrays
----------------------------------------------------------------------
-Previously the ``str`` and ``repr`` of 0d arrays had idiosyncratic
-implementations which returned ``str(a.item())`` and ``'array(' +
-repr(a.item()) + ')'`` respectively for 0d array ``a``, unlike both numpy
-scalars and higher dimension ndarrays.
-
-Now, the ``str`` of a 0d array acts like a numpy scalar using ``str(a[()])``
-and the ``repr`` acts like higher dimension arrays using ``formatter(a[()])``,
-where  ``formatter``  can be specified using ``np.set_printoptions``.
-
-The ``style`` argument of ``np.array2string`` now accepts the value ``None``,
-(the new default), which causes 0d arrays to be printed using the appropriate
-``formatter``. Otherwise ``style`` should be a function which accepts a numpy
-scalar and returns a string, and ``style(a[()])`` is returned.
-
+This new default changes the float output relative to numpy 1.13. The old
+behavior can be obtained in "legacy" printing mode, see compatibility notes
+above.
 
 Improvements
 ============
@@ -470,6 +452,21 @@ Integer and Void scalars are now unaffected by ``np.set_string_function``
 Previously the ``str`` and ``repr`` of integer and void scalars could be
 controlled by ``np.set_string_function``, unlike most other numpy scalars. This
 is no longer the case.
+
+0d array printing changed, `style` arg of array2string deprecated
+-----------------------------------------------------------------
+Previously the ``str`` and ``repr`` of 0d arrays had idiosyncratic
+implementations which returned ``str(a.item())`` and ``'array(' +
+repr(a.item()) + ')'`` respectively for 0d array ``a``, unlike both numpy
+scalars and higher dimension ndarrays.
+
+Now, the ``str`` of a 0d array acts like a numpy scalar using ``str(a[()])``
+and the ``repr`` acts like higher dimension arrays using ``formatter(a[()])``,
+where  ``formatter``  can be specified using ``np.set_printoptions``. The
+``style`` argument of ``np.array2string`` is deprecated.
+
+This new behavior is disabled in legacy printing mode, see compatibility notes
+above.
 
 ``threshold`` and ``edgeitems`` options added to ``np.array2string``
 -----------------------------------------------------------------
