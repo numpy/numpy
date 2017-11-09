@@ -2046,7 +2046,7 @@ def lstsq(a, b, rcond="warn"):
     b_out = bstar.T
 
     # b_out contains both the solution and the components of the residuals
-    x       = b_out[:n,:]
+    x = b_out[:n,:]
     r_parts = b_out[n:,:]
     if isComplexType(t):
         resids = sum(abs(r_parts)**2, axis=-2)
