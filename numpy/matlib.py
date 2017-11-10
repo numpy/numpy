@@ -24,8 +24,6 @@ def empty(shape, dtype=None, order='C'):
         (C-style) or column-major (Fortran-style) order in
         memory.
 
-        .. versionadded:: 1.13.4
-
     See Also
     --------
     empty_like, zeros
@@ -194,6 +192,8 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
