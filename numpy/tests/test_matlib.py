@@ -36,9 +36,9 @@ def test_eye():
     assert not xc.flags.f_contiguous
 
     xf = numpy.matlib.eye(3, 4, dtype=int, order='F')
-    assert_array_equal(x, np.matrix([[ 1,  0,  0,  0],
-                                     [ 0,  1,  0,  0],
-                                     [ 0,  0,  1,  0]]))
+    assert_array_equal(xf, np.matrix([[ 1,  0,  0,  0],
+                                      [ 0,  1,  0,  0],
+                                      [ 0,  0,  1,  0]]))
     assert not xf.flags.c_contiguous
     assert xf.flags.f_contiguous
 
