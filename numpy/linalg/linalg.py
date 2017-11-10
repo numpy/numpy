@@ -2036,17 +2036,9 @@ def lstsq(a, b, rcond="warn"):
     else:
         gufunc = _umath_linalg.lstsq_n
 
-    signature = 'DDd->Did' if isComplexType(t) else 'ddd->did'
+    signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
     extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
-    b_out, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
-
-    # b_out contains both the solution and the components of the residuals
-    x = b_out[...,:n,:]
-    r_parts = b_out[...,n:,:]
-    if isComplexType(t):
-        resids = sum(abs(r_parts)**2, axis=-2)
-    else:
-        resids = sum(r_parts**2, axis=-2)
+    x, resids, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
 
     # remove the axis we added
     if is_1d:

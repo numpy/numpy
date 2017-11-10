@@ -765,6 +765,10 @@ fortran_int_max(fortran_int x, fortran_int y) {
     INIT_OUTER_LOOP_5\
     npy_intp s5 = *steps++;
 
+#define INIT_OUTER_LOOP_7  \
+    INIT_OUTER_LOOP_6\
+    npy_intp s6 = *steps++;
+
 #define BEGIN_OUTER_LOOP_2 \
     for (N_ = 0;\
          N_ < dN;\
@@ -805,6 +809,17 @@ fortran_int_max(fortran_int x, fortran_int y) {
              args[4] += s4,\
              args[5] += s5) {
 
+#define BEGIN_OUTER_LOOP_7 \
+    for (N_ = 0;\
+         N_ < dN;\
+         N_++, args[0] += s0,\
+             args[1] += s1,\
+             args[2] += s2,\
+             args[3] += s3,\
+             args[4] += s4,\
+             args[5] += s5,\
+             args[6] += s6) {
+
 #define END_OUTER_LOOP  }
 
 static NPY_INLINE void
@@ -836,6 +851,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
     #copy = scopy, dcopy, ccopy, zcopy#
     #nan = s_nan, d_nan, c_nan, z_nan#
+    #zero = s_zero, d_zero, c_zero, z_zero#
  */
 static NPY_INLINE void *
 linearize_@TYPE@_matrix(void *dst_in,
@@ -943,6 +959,23 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
         for (j = 0; j < data->columns; ++j) {
             *cp = @nan@;
+            cp += cs;
+        }
+        dst += data->row_strides/sizeof(@typ@);
+    }
+}
+
+static NPY_INLINE void
+zero_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
+{
+    @typ@ *dst = (@typ@ *) dst_in;
+
+    int i, j;
+    for (i = 0; i < data->rows; i++) {
+        @typ@ *cp = dst;
+        ptrdiff_t cs = data->column_strides/sizeof(@typ@);
+        for (j = 0; j < data->columns; ++j) {
+            *cp = @zero@;
             cp += cs;
         }
         dst += data->row_strides/sizeof(@typ@);
@@ -3196,6 +3229,12 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
    #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
    #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
+   #dot_func=sdot,ddot,cdotc,zdotc#
+   #typ     = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double, npy_float,  npy_double#
+   #ftyp = fortran_real, fortran_doublereal,
+           fortran_complex, fortran_doublecomplex#
+   #cmplx = 0, 0, 1, 1#
  */
 static inline void
 release_@lapack_func@(GELSD_PARAMS_t* params)
@@ -3206,6 +3245,22 @@ release_@lapack_func@(GELSD_PARAMS_t* params)
     memset(params, 0, sizeof(*params));
 }
 
+/** Compute the squared l2 norm of a contiguous vector */
+static @basetyp@
+@TYPE@_abs2(@typ@ *p, npy_intp n) {
+    npy_intp i;
+    @basetyp@ res = 0;
+    for (i = 0; i < n; i++) {
+        @typ@ el = p[i];
+#if @cmplx@
+        res += el.real*el.real + el.imag*el.imag;
+#else
+        res += el*el;
+#endif
+    }
+    return res;
+}
+
 static void
 @TYPE@_lstsq(char **args, npy_intp *dimensions, npy_intp *steps,
              void *NPY_UNUSED(func))
@@ -3213,21 +3268,25 @@ static void
     GELSD_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
     fortran_int n, m, nrhs;
-    INIT_OUTER_LOOP_6
+    fortran_int excess;
+
+    INIT_OUTER_LOOP_7
 
     m = (fortran_int)dimensions[0];
     n = (fortran_int)dimensions[1];
     nrhs = (fortran_int)dimensions[2];
+    excess = m - n;
 
     if (init_@lapack_func@(&params, m, n, nrhs)) {
-        LINEARIZE_DATA_t a_in, b_in, x_out, s_out;
+        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
 
         init_linearize_data(&a_in, n, m, steps[1], steps[0]);
         init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
-        init_linearize_data(&x_out, nrhs, fortran_int_max(n, m), steps[5], steps[4]);
-        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[6]);
+        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
+        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
+        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
 
-        BEGIN_OUTER_LOOP_6
+        BEGIN_OUTER_LOOP_7
             int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             linearize_@TYPE@_matrix(params.B, args[1], &b_in);
@@ -3235,13 +3294,35 @@ static void
             not_ok = call_@lapack_func@(&params);
             if (!not_ok) {
                 delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
-                *(npy_int*) args[4] = params.RANK;
-                delinearize_@REALTYPE@_matrix(args[5], params.S, &s_out);
+                *(npy_int*) args[5] = params.RANK;
+                delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
+
+                /* Note that linalg.lstsq discards this when excess == 0 */
+                if (excess >= 0 && params.RANK == n) {
+                    /* Compute the residuals as the square sum of each column */
+                    int i;
+                    char *resid = args[4];
+                    @ftyp@ *components = (@ftyp@ *)params.B + n;
+                    for (i = 0; i < nrhs; i++) {
+                        @ftyp@ *vector = components + i*m;
+                        /* Numpy and fortran floating types are the same size,
+                         * so this case is safe */
+                        @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
+                        memcpy(
+                            resid + i*r_out.column_strides,
+                            &abs2, sizeof(abs2));
+                    }
+                }
+                else {
+                    /* Note that this is always discarded by linalg.lstsq */
+                    nan_@REALTYPE@_matrix(args[4], &r_out);
+                }
             } else {
                 error_occurred = 1;
                 nan_@TYPE@_matrix(args[3], &x_out);
-                *(npy_int*) args[4] = -1;
-                nan_@REALTYPE@_matrix(args[5], &s_out);
+                nan_@REALTYPE@_matrix(args[4], &r_out);
+                *(npy_int*) args[5] = -1;
+                nan_@REALTYPE@_matrix(args[6], &s_out);
             }
         END_OUTER_LOOP
 
@@ -3389,12 +3470,12 @@ static char svd_1_3_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
 };
 
-/*  A,           b,           rcond,      x,           rank,    s        */
+/*  A,           b,           rcond,      x,           resid,      rank,    s,        */
 static char lstsq_types[] = {
-    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_INT, NPY_FLOAT,
-    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_INT, NPY_DOUBLE,
-    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_INT, NPY_FLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_INT, NPY_DOUBLE
+    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
+    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
 };
 
 typedef struct gufunc_descriptor_struct {
@@ -3590,19 +3671,19 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "lstsq_m",
-        "(m,n),(m,nrhs),()->(n,nrhs),(),(m)",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(m)",
         "least squares on the last two dimensions and broadcast to the rest. \n"\
         "For m <= n. \n",
-        4, 3, 3,
+        4, 3, 4,
         FUNC_ARRAY_NAME(lstsq),
         lstsq_types
     },
     {
         "lstsq_n",
-        "(m,n),(m,nrhs),()->(m,nrhs),(),(n)",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(n)",
         "least squares on the last two dimensions and broadcast to the rest. \n"\
-        "For m >= n. \n",
-        4, 3, 3,
+        "For m >= n, meaning that residuals are produced. \n",
+        4, 3, 4,
         FUNC_ARRAY_NAME(lstsq),
         lstsq_types
     }
