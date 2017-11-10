@@ -449,13 +449,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ar2 = np.asarray(ar2).ravel()
 
     # Check if one of the arrays is of type object
-    is_object = ar1.dtype == np.dtype('O') or ar2.dtype == np.dtype('O')
+    contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 
     # This code is run when
     # a) the first condition is true, making the code significantly faster
     # b) the second condition is true (i.e. `ar1` or `ar2` are of type
     #    object), since sorting object arrays is not guaranteed to work
-    if len(ar2) < 10 * len(ar1) ** 0.145 or is_object:
+    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
