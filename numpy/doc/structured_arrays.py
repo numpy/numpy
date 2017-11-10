@@ -62,7 +62,7 @@ structure. The datatype of a field may be any numpy datatype including other
 structured datatypes, and it may also be a :term:`sub-array` which behaves like
 an ndarray of a specified shape. The offsets of the fields are arbitrary, and
 fields may even overlap. These offsets are usually determined automatically by
-numpy, but can also be manually specified.
+numpy, but can also be specified.
 
 Structured Datatype Creation
 ----------------------------
@@ -78,8 +78,8 @@ summary they are:
      Each tuple has the form ``(fieldname, datatype, shape)`` where shape is
      optional. ``fieldname`` is a string (or tuple if titles are used, see
      :ref:`Field Titles <titles>` below), ``datatype`` may be any object
-     convertible to a datatype, and shape (optional) is a tuple of integers
-     specifying subarray shape.
+     convertible to a datatype, and ``shape`` is a tuple of integers specifying
+     subarray shape.
 
       >>> np.dtype([('x', 'f4'), ('y', np.float32), ('z', 'f4', (2,2))])
       dtype=[('x', '<f4'), ('y', '<f4'), ('z', '<f4', (2, 2))])
@@ -196,9 +196,9 @@ Numpy uses one of two methods to automatically determine the field byte offsets
 and the overall itemsize of a structured datatype, depending on whether
 ``align=True`` was specified as a keyword argument to :func:`numpy.dtype`.
 
-By default (with ``align=False``), numpy will pack the fields together tightly
-such that each field starts at the byte offset the previous field ended, and the
-fields are contiguous in memory. ::
+By default (``align=False``), numpy will pack the fields together such that
+each field starts at the byte offset the previous field ended, and the fields
+are contiguous in memory. ::
 
  >>> def print_offsets(d):
  ...     print("offsets:", [d.fields[name][1] for name in d.names])
@@ -211,9 +211,9 @@ If ``align=True`` is set, numpy will pad the structure in the same way many C
 compilers would pad a C-struct. Aligned structures can give a performance
 improvement in some cases, at the cost of increased datatype size. Padding
 bytes are inserted between fields such that each field's byte offset will be a
-multiple of that field's alignment (usually equal to the field's size in bytes
-for simple datatypes, see :c:member:`PyArray_Descr.alignment`).
-The structure will also have trailing padding added so that its itemsize is a
+multiple of that field's alignment, which is usually equal to the field's size
+in bytes for simple datatypes, see :c:member:`PyArray_Descr.alignment`.  The
+structure will also have trailing padding added so that its itemsize is a
 multiple of the largest field's alignment. ::
 
  >>> print_offsets(np.dtype('u1,u1,i4,u1,i8,u2', align=True))
@@ -223,10 +223,10 @@ multiple of the largest field's alignment. ::
 Note that although almost all modern C compilers pad in this way by default,
 padding in C structs is C-implementation-dependent so this memory layout is not
 guaranteed to exactly match that of a corresponding struct in a C program. Some
-massaging may be needed either on the numpy side or the C side to obtain exact
+work may be needed, either on the numpy side or the C side, to obtain exact
 correspondence.
 
-If offsets were specified manually using the optional ``offsets`` key in the
+If offsets were specified using the optional ``offsets`` key in the
 dictionary-based dtype specification, setting ``align=True`` will check that
 each field's offset is a multiple of its size and that the itemsize is a
 multiple of the largest field size, and raise an exception if not.
@@ -242,12 +242,12 @@ Field Titles
 
 In addition to field names, fields may also have an associated :term:`title`,
 an alternate name, which is sometimes used as an additional description or
-mnemonic for the field. The title may be used to index an array, just like a
-fieldname.
+alias for the field. The title may be used to index an array, just like a
+field name.
 
 To add titles when using the list-of-tuples form of dtype specification, the
-fieldname may be be specified as a tuple of two strings (instead of a single
-string), which will be the field's title and field name respectively. For
+field name may be be specified as a tuple of two strings instead of a single
+string, which will be the field's title and field name respectively. For
 example::
 
  >>> np.dtype([(('my title', 'name'), 'f4')])
@@ -263,12 +263,11 @@ providing a 3-element tuple ``(datatype, offset, title)`` instead of the usual
 The ``dtype.fields`` dictionary will contain :term:`titles` as keys, if any
 titles are used.  This means effectively that a field with a title will be
 represented twice in the fields dictionary. The tuple values for these fields
-will also have a third element, the field title.
-
-Because of this, and because the ``names`` attribute preserves the field order
-while the ``fields`` attribute may not, it is recommended to iterate through
-the fields of a dtype using the ``names`` attribute of the dtype (which will
-not list titles), as in::
+will also have a third element, the field title. Because of this, and because
+the ``names`` attribute preserves the field order while the ``fields``
+attribute may not, it is recommended to iterate through the fields of a dtype
+using the ``names`` attribute of the dtype, which will not list titles, as
+in::
 
  >>> for name in d.names:
  ...     print(d.fields[name][:2])
@@ -296,10 +295,10 @@ tuples, using scalar values, or using other structured arrays.
 Assignment from Python Native Types (Tuples)
 ```````````````````````````````````````````
 
-The simplest way to assign values to a structured array is using python
-tuples. Each assigned value should be a tuple (and not a list or array, as
-these will trigger numpy's broadcasting rules) of length equal to the number of
-fields in the array. The tuple's elements are assigned to the successive fields
+The simplest way to assign values to a structured array is using python tuples.
+Each assigned value should be a tuple of length equal to the number of fields
+in the array, and not a list or array as these will trigger numpy's
+broadcasting rules. The tuple's elements are assigned to the successive fields
 of the array, from left to right::
 
  >>> x = np.array([(1,2,3),(4,5,6)], dtype='i8,f4,f8')
@@ -312,8 +311,8 @@ Assignment from Scalars
 ```````````````````````
 
 A scalar assigned to a structured element will be assigned to all fields. This
-happens when a scalar is assigned to a structured array, or when a scalar array
-is assigned to a structured array::
+happens when a scalar is assigned to a structured array, or when an
+unstructured array is assigned to a structured array::
 
  >>> x = np.zeros(2, dtype='i8,f4,?,S1')
  >>> x[:] = 3
@@ -325,16 +324,16 @@ is assigned to a structured array::
  array([(0, 0.0, False, b'0'), (1, 1.0, True, b'1')],
        dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '?'), ('f3', 'S1')])
 
-Structured arrays can also be assigned to scalar arrays, but only if the
+Structured arrays can also be assigned to unstructured arrays, but only if the
 structured datatype has just a single field::
 
- >>> x = np.zeros(2, dtype=[('A', 'i4'), ('B', 'i4')])
- >>> y = np.zeros(2, dtype=[('A', 'i4')])
- >>> a = np.zeros(2, dtype='i4')
- >>> a[:] = x
+ >>> twofield = np.zeros(2, dtype=[('A', 'i4'), ('B', 'i4')])
+ >>> onefield = np.zeros(2, dtype=[('A', 'i4')])
+ >>> nostruct = np.zeros(2, dtype='i4')
+ >>> nostruct[:] = twofield
  ValueError: Can't cast from structure to non-structure, except if the structure only has a single field.
- >>> a[:] = y
- >>> a
+ >>> nostruct[:] = onefield
+ >>> nostruct
  array([0, 0], dtype=int32)
 
 Assignment from other Structured Arrays
@@ -389,7 +388,7 @@ memory locations and writing to the view will modify the original array. ::
        dtype=[('foo', '<i8'), ('bar', '<f4')])
 
 This view has the same dtype and itemsize as the indexed field, so it is
-typically a non-structured array (except in the case of nested structures).
+typically a non-structured array, except in the case of nested structures.
 
  >>> y.dtype, y.shape, y.strides
  (dtype('float32'), (2,), (12,))
@@ -410,12 +409,12 @@ list of field names::
        dtype=[('a', '<i8'), ('b', '<i4'), ('c', '<f8')])
 
 The resulting array is a view into the original array, such that assignment to
-the view modifies the original array. This view's fields will be in the order
+the view modifies the original array. The view's fields will be in the order
 they were indexed. Note that unlike for single-field indexing, the view's dtype
-has the same itemsize as the original array and has fields at the same offsets
+has the same itemsize as the original array, and has fields at the same offsets
 as in the original array, and unindexed fields are merely missing.
 
-Since this view is a structured array itself, it obeys the assignment rules
+Since the view is a structured array itself, it obeys the assignment rules
 described above. For example, this means that one can swap the values of two
 fields using appropriate multi-field indexes::
 
@@ -434,10 +433,10 @@ a structured scalar::
  >>> type(scalar)
  numpy.void
 
-Importantly, unlike other numpy scalars, structured scalars are mutable and act
-like views into the original array, such that modifying the scalar will modify
-the original array. Structured scalars also support access and assignment by
-field name::
+Unlike other numpy scalars, structured scalars are mutable and act like views
+into the original array, such that modifying the scalar will modify the
+original array. Structured scalars also support access and assignment by field
+name::
 
  >>> x = np.array([(1,2),(3,4)], dtype=[('foo', 'i8'), ('bar', 'f4')])
  >>> s = x[0]
@@ -453,7 +452,7 @@ Similarly to tuples, structured scalars can also be indexed with an integer::
  1
  >>> scalar[1] = 4
 
-Thus, tuples might be though of as the native Python equivalent to numpy's
+Thus, tuples might be thought of as the native Python equivalent to numpy's
 structured types, much like native python integers are the equivalent to
 numpy's integer types. Structured scalars may be converted to a tuple by
 calling :func:`ndarray.item`::
@@ -464,17 +463,17 @@ calling :func:`ndarray.item`::
 Viewing Structured Arrays Containing Objects
 --------------------------------------------
 
-In order to prevent clobbering of object pointers in fields of
+In order to prevent clobbering object pointers in fields of
 :class:`numpy.object` type, numpy currently does not allow views of structured
 arrays containing objects.
 
 Structure Comparison
 --------------------
 
-If the dtypes of two structured arrays are equivalent, testing the equality of
-the arrays will result in a boolean array with the dimension of the original
-arrays, with elements set to True where all fields of the corresponding
-structures are equal. Structured dtypes are equivalent if the field names,
+If the dtypes of two void structured arrays are equal, testing the equality of
+the arrays will result in a boolean array with the dimensions of the original
+arrays, with elements set to ``True`` where all fields of the corresponding
+structures are equal. Structured dtypes are equal if the field names,
 dtypes and titles are the same, ignoring endianness, and the fields are in
 the same order::
 
@@ -483,21 +482,22 @@ the same order::
  >>> a == b
  array([False, False], dtype=bool)
 
-Currently, if the dtypes of two arrays are not equivalent all comparisons will
-return ``False``. This behavior is deprecated as of numpy 1.10 and may change
-in the future.
+Currently, if the dtypes of two void structured arrays are not equivalent the
+comparison fails, returning the scalar value ``False``. This behavior is
+deprecated as of numpy 1.10 and will raise an error or perform elementwise
+comparison in the future.
 
-Currently, the ``<`` and ``>`` operators will always return ``False`` when
-comparing structured arrays. Many other pairwise operators are not supported.
+The ``<`` and ``>`` operators always return ``False`` when comparing void
+structured arrays, and arithmetic and bitwise operations are not supported.
 
 Record Arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
 :class:`numpy.recarray`, and associated helper functions in the
-:mod:`numpy.rec` submodule, which allows access to fields of structured arrays
-by attribute, instead of only by index. Record arrays also use a special
-datatype, :class:`numpy.record`, which allows field access by attribute on the
+:mod:`numpy.rec` submodule, that allows access to fields of structured arrays
+by attribute instead of only by index. Record arrays also use a special
+datatype, :class:`numpy.record`, that allows field access by attribute on the
 structured scalars obtained from the array.
 
 The simplest way to create a record array is with :func:`numpy.rec.array`::
