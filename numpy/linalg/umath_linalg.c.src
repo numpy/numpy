@@ -294,20 +294,20 @@ extern double
 FNAME(ddot)(int *n,
             double *sx, int *incx,
             double *sy, int *incy);
-extern f2c_complex
-FNAME(cdotu)(int *n,
+extern void
+FNAME(cdotu)(f2c_complex *ret, int *n,
              f2c_complex *sx, int *incx,
              f2c_complex *sy, int *incy);
-extern f2c_doublecomplex
-FNAME(zdotu)(int *n,
+extern void
+FNAME(zdotu)(f2c_doublecomplex *ret, int *n,
              f2c_doublecomplex *sx, int *incx,
              f2c_doublecomplex *sy, int *incy);
-extern f2c_complex
-FNAME(cdotc)(int *n,
+extern void
+FNAME(cdotc)(f2c_complex *ret, int *n,
              f2c_complex *sx, int *incx,
              f2c_complex *sy, int *incy);
-extern f2c_doublecomplex
-FNAME(zdotc)(int *n,
+extern void
+FNAME(zdotc)(f2c_doublecomplex *ret, int *n,
              f2c_doublecomplex *sx, int *incx,
              f2c_doublecomplex *sy, int *incy);
 
