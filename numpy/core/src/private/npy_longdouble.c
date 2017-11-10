@@ -13,7 +13,8 @@
     } while (0)
 
 
-/* Heavily derived from PyLong_FromDouble
+/*
+ * Heavily derived from PyLong_FromDouble
  * Notably, we can't set the digits directly, so have to shift and or instead.
  */
 PyObject *
@@ -21,8 +22,10 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
 {
     PyObject *v;
     PyObject *l_chunk_size;
-    // number of bits to extract at a time. CPython uses 30, but that's because
-    // it's tied to the internal long representation
+    /*
+     * number of bits to extract at a time. CPython uses 30, but that's because
+     * it's tied to the internal long representation
+     */
     const int chunk_size = NPY_BITSOF_LONGLONG;
     npy_longdouble frac;
     int i, ndig, expo, neg;
