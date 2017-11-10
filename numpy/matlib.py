@@ -24,6 +24,8 @@ def empty(shape, dtype=None, order='C'):
         (C-style) or column-major (Fortran-style) order in
         memory.
 
+        .. versionadded:: 1.13.4
+
     See Also
     --------
     empty_like, zeros
