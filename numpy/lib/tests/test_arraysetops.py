@@ -208,6 +208,11 @@ class TestSetOps(object):
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
 
+    def test_in1d_unorderable_types(self):
+        ar1 = 1
+        ar2 = np.array([None]*10)
+        np.in1d(ar1, ar2)
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
