@@ -7,6 +7,13 @@ ulimit -a
 mkdir builds
 pushd builds
 
+if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+    brew update
+    brew install python3
+    python3 -m venv venv
+    source venv/bin/activate
+fi
+
 # Build into own virtualenv
 # We therefore control our own environment, avoid travis' numpy
 #
@@ -16,8 +23,7 @@ pushd builds
 # bumping to 14.0.6 will help.
 pip install -U 'virtualenv==14.0.6'
 
-if [ -n "$USE_DEBUG" ]
-then
+if [ -n "$USE_DEBUG" ]; then
   virtualenv --python=python3-dbg venv
 else
   virtualenv --python=python venv
