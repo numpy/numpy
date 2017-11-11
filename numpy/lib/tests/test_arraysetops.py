@@ -233,8 +233,8 @@ class TestSetOps(object):
         # Test arrays of a structured data type containing an integer field
         # and a field of dtype `object` allowing for arbitrary Python objects
         dt = np.dtype([('field1', int), ('field2', object)])
-        ar1 = np.array([(1, 2)], dtype=dt)
-        ar2 = np.array([(1, 2)]*10, dtype=dt)
+        ar1 = np.array([(1, None)], dtype=dt)
+        ar2 = np.array([(1, None)]*10, dtype=dt)
         expected = np.array([True])
         result = np.in1d(ar1, ar2)
         assert_array_equal(result, expected)
