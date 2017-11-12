@@ -3588,27 +3588,9 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 /*
  * Prints floating-point scalars usign the Dragon4 algorithm, scientific mode.
- * Arguments:
- *  x - a numpy scalar of Floating type
- *  precision - number of fractional digits to show. In unique mode, can be
- *              ommited and the unique repr will be returned, otherwise the
- *              unique value will be truncated to this number of digits
- *              (breaking the uniqueness guarantee). In fixed mode, is
- *              required, and specifies the number of fractional digits to
- *              print.
- *  unique - whether to use unique (default) or fixed mode.
- *  sign - whether to show the sign for positive values. Default False
- *  trim - one of 'k', '.', '0', '-' to control trailing digits, as follows:
- *          k : don't trim zeros, always leave a decimal point
- *          . : trim all but the zero before the decimal point
- *          0 : trim all trailing zeros, leave decimal point
- *          - : trim trailing zeros and a trailing decimal point
- *         Default is k.
- *  pad_left - pads left side of string with whitespace until at least
- *             this many characters are to the left of the decimal point. If
- *             -1, don't add any padding. Default -1.
- *  exp_digits - exponent will contain at least this many digits, padding
- *               with 0 if necessary. -1 means pad to 2. Maximum of 5.
+ * See docstring of `np.format_float_scientific` for description of arguments.
+ * The differences is that a value of -1 is valid for pad_left, exp_digits,
+ * precision, which is equivalent to `None`.
  */
 static PyObject *
 dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
@@ -3618,11 +3600,12 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                              "pad_left", "exp_digits", NULL};
     int precision=-1, pad_left=-1, exp_digits=-1;
     char *trimstr=NULL;
+    DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii", kwlist,
-                &obj, &precision, &unique, &sign, &trimstr, &pad_left,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii:dragon4_scientific",
+                kwlist, &obj, &precision, &unique, &sign, &trimstr, &pad_left,
                 &exp_digits)) {
         return NULL;
     }
@@ -3647,55 +3630,40 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         }
     }
 
+    digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
+
     if (unique == 0 && precision < 0) {
         PyErr_SetString(PyExc_TypeError,
             "in non-unique mode `precision` must be supplied");
         return NULL;
     }
 
-    return Dragon4_Scientific(obj, unique, precision, sign,
-                              trim, pad_left, exp_digits);
+    return Dragon4_Scientific(obj, digit_mode, precision, sign, trim,
+                              pad_left, exp_digits);
 }
 
 /*
  * Prints floating-point scalars usign the Dragon4 algorithm, positional mode.
- * Arguments:
- *  x - a numpy scalar of Floating type
- *  precision - number of fractional digits to show. In unique mode, can be
- *              ommited and the unique repr will be returned, otherwise the
- *              unique value will be truncated to this number of digits
- *              (breaking the uniqueness guarantee). In fixed mode, is
- *              required, and specifies the number of fractional digits to
- *              print.
- *  unique - whether to use unique (default) or fixed mode.
- *  sign - whether to show the sign for positive values. Default False
- *  trim - one of 'k', '.', '0', '-' to control trailing digits, as follows:
- *          k : don't trim zeros, always leave a decimal point
- *          . : trim all but the zero before the decimal point
- *          0 : trim all trailing zeros, leave decimal point
- *          - : trim trailing zeros and a trailing decimal point
- *         Default is k.
- *  pad_left - pads left side of string with whitespace until at least
- *             this many characters are to the left of the decimal point. If
- *             -1, don't add any padding. Default -1.
- *  pad_right - pads right side of string with whitespace until at least
- *             this many characters are to the right of the decimal point. If
- *             -1, don't add any padding. Default -1.
+ * See docstring of `np.format_float_positional` for description of arguments.
+ * The differences is that a value of -1 is valid for pad_left, pad_right,
+ * precision, which is equivalent to `None`.
  */
 static PyObject *
 dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    static char *kwlist[] = {"x", "precision", "unique", "sign", "trim",
-                             "pad_left", "pad_right", NULL};
+    static char *kwlist[] = {"x", "precision", "unique", "fractional",
+                             "sign", "trim", "pad_left", "pad_right", NULL};
     int precision=-1, pad_left=-1, pad_right=-1;
     char *trimstr=NULL;
+    CutoffMode cutoff_mode;
+    DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
-    int sign=0, unique=1;
+    int sign=0, unique=1, fractional=0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii", kwlist,
-                &obj, &precision, &unique, &sign, &trimstr, &pad_left,
-                &pad_right)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiisii:dragon4_positional",
+                kwlist, &obj, &precision, &unique, &fractional, &sign, &trimstr,
+                &pad_left, &pad_right)) {
         return NULL;
     }
 
@@ -3719,13 +3687,17 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         }
     }
 
+    digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
+    cutoff_mode = fractional ? CutoffMode_FractionLength :
+                               CutoffMode_TotalLength;
+
     if (unique == 0 && precision < 0) {
         PyErr_SetString(PyExc_TypeError,
             "in non-unique mode `precision` must be supplied");
         return NULL;
     }
 
-    return Dragon4_Positional(obj, unique, precision, sign,
+    return Dragon4_Positional(obj, digit_mode, cutoff_mode, precision, sign,
                               trim, pad_left, pad_right);
 }
 
@@ -3745,8 +3717,8 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                 "not a longfloat");
         return NULL;
     }
-    return Dragon4_Scientific(obj, precision, 0, 1, TrimMode_LeaveOneZero,
-                              -1, -1);
+    return Dragon4_Scientific(obj, DigitMode_Unique, precision, 0,
+                              TrimMode_LeaveOneZero, -1, -1);
 }
 
 static PyObject *
