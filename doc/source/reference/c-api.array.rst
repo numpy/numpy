@@ -3473,7 +3473,7 @@ Miscellaneous Macros
     Reset the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and deprecated
     :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Resets the
     :c:data:`NPY_ARRAY_WRITEABLE` flag on the base object. It also
-    deletes pending changes to the base object. This is
+    discards pending changes to the base object. This is
     useful for recovering from an error condition when
     writeback semantics are used.
 
