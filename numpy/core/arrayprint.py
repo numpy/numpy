@@ -305,7 +305,11 @@ def _get_formatdict(data, **opt):
         'int': lambda: IntegerFormat(data),
         'float': lambda:
             FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
+        'longfloat': lambda:
+            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
         'complexfloat': lambda:
+            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
+        'longcomplexfloat': lambda:
             ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data),
         'timedelta': lambda: TimedeltaFormat(data),
@@ -329,7 +333,7 @@ def _get_formatdict(data, **opt):
             for key in ['int']:
                 formatdict[key] = indirect(formatter['int_kind'])
         if 'float_kind' in fkeys:
-            for key in ['half', 'float', 'longfloat']:
+            for key in ['float', 'longfloat']:
                 formatdict[key] = indirect(formatter['float_kind'])
         if 'complex_kind' in fkeys:
             for key in ['complexfloat', 'longcomplexfloat']:
@@ -361,9 +365,15 @@ def _get_format_function(data, **options):
         else:
             return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
-        return formatdict['float']()
+        if issubclass(dtypeobj, _nt.longfloat):
+            return formatdict['longfloat']()
+        else:
+            return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
-        return formatdict['complexfloat']()
+        if issubclass(dtypeobj, _nt.clongfloat):
+            return formatdict['longcomplexfloat']()
+        else:
+            return formatdict['complexfloat']()
     elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
         return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
@@ -805,6 +815,20 @@ class FloatingFormat(object):
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
 
+# for back-compatibility, we keep the classes for each float type too
+class FloatFormat(FloatingFormat):
+    def __init__(self, *args, **kwargs):
+        warnings.warn("FloatFormat has been replaced by FloatingFormat",
+                      DeprecationWarning, stacklevel=2)
+        super(FloatFormat, self).__init__(*args, **kwargs)
+
+
+class LongFloatFormat(FloatingFormat):
+    def __init__(self, *args, **kwargs):
+        warnings.warn("LongFloatFormat has been replaced by FloatingFormat",
+                      DeprecationWarning, stacklevel=2)
+        super(LongFloatFormat, self).__init__(*args, **kwargs)
+
 
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
@@ -995,6 +1019,22 @@ class ComplexFloatingFormat(object):
         r = self.real_format(x.real)
         i = self.imag_format(x.imag)
         return r + i + 'j'
+
+# for back-compatibility, we keep the classes for each float type too
+class ComplexFormat(ComplexFloatingFormat):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "ComplexFormat has been replaced by ComplexFloatingFormat",
+            DeprecationWarning, stacklevel=2)
+        super(ComplexFormat, self).__init__(*args, **kwargs)
+
+class LongComplexFormat(ComplexFloatingFormat):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "LongComplexFormat has been replaced by ComplexFloatingFormat",
+            DeprecationWarning, stacklevel=2)
+        super(LongComplexFormat, self).__init__(*args, **kwargs)
+
 
 class DatetimeFormat(object):
     def __init__(self, x, unit=None, timezone=None, casting='same_kind'):

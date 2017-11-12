@@ -403,6 +403,10 @@ elements uniquely.
 Numpy complex-floating-scalars with values like ``inf*j`` or ``nan*j`` now
 print as ``infj`` and ``nanj``, like the pure-python ``complex`` type.
 
+The ``FloatFormat`` and ``LongFloatFormat`` classes are deprecated and should
+both be replaced by ``FloatingFormat``. Similarly ``ComplexFormat`` and
+``LongComplexFormat`` should be replaced by ``ComplexFloatingFormat``.
+
 ``void`` datatype elements are now printed in hex notation
 ----------------------------------------------------------
 A hex representation compatible with the python ``bytes`` type is now printed
