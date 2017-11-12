@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns
 )
 
 class TestArrayRepr(object):
@@ -241,12 +241,34 @@ class TestPrintOptions(object):
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_0d_arrays(self):
+        if sys.version_info[0] >= 3:
+            assert_equal(str(np.array('café', np.unicode_)), 'café')
+            assert_equal(repr(np.array('café', np.unicode_)),
+                         "array('café',\n      dtype='<U4')")
+        else:
+            assert_equal(repr(np.array(u'café', np.unicode_)),
+                         "array(u'caf\\xe9',\n      dtype='<U4')")
+        assert_equal(str(np.array('test', np.str_)), 'test')
+
+        a = np.zeros(1, dtype=[('a', '<i4', (3,))])
+        assert_equal(str(a[0]), '([0, 0, 0],)')
+
         assert_equal(repr(np.datetime64('2005-02-25')[...]),
                      "array('2005-02-25', dtype='datetime64[D]')")
 
+        # repr of 0d arrays is affected by printoptions
         x = np.array(1)
         np.set_printoptions(formatter={'all':lambda x: "test"})
         assert_equal(repr(x), "array(test)")
+        # str is unaffected
+        assert_equal(str(x), "1")
+
+        # check `style` arg raises
+        assert_warns(DeprecationWarning, np.array2string,
+                                         np.array(1.), style=repr)
+        # but not in legacy mode
+        np.set_printoptions(legacy=True)
+        np.array2string(np.array(1.), style=repr)
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
@@ -302,11 +324,13 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array(1.)), 'array(+1.)')
         assert_equal(repr(b), 'array([+1.234e+09])')
 
-        np.set_printoptions(sign='legacy')
+        np.set_printoptions(legacy=True)
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
-        assert_equal(repr(np.array(1.)), 'array(1.)')
         assert_equal(repr(b),  'array([  1.23400000e+09])')
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')
+        assert_equal(repr(np.array(1.)), 'array(1.0)')
+
+        assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')

@@ -66,11 +66,12 @@ _format_options = {
     'nanstr': 'nan',
     'infstr': 'inf',
     'sign': '-',
-    'formatter': None }
+    'formatter': None,
+    'legacy': False}
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None, floatmode=None):
+                       sign=None, formatter=None, floatmode=None, legacy=None):
     """ make a dictionary out of the non-None arguments, plus sanity checks """
 
     options = {k: v for k, v in locals().items() if v is not None}
@@ -78,20 +79,19 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if suppress is not None:
         options['suppress'] = bool(suppress)
 
-    if sign not in [None, '-', '+', ' ', 'legacy']:
-        raise ValueError("sign option must be one of "
-                         "' ', '+', '-', or 'legacy'")
-
     modes = ['fixed', 'unique', 'maxprec', 'maxprec_equal']
     if floatmode not in modes + [None]:
         raise ValueError("floatmode option must be one of " +
                          ", ".join('"{}"'.format(m) for m in modes))
 
+    if sign not in [None, '-', '+', ' ']:
+        raise ValueError("sign option must be one of ' ', '+', or '-'")
+
     return options
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None, floatmode=None):
+                     formatter=None, sign=None, floatmode=None, **kwarg):
     """
     Set printing options.
 
@@ -121,12 +121,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
         String representation of floating point infinity (default inf).
-    sign : string, either '-', '+', ' ' or 'legacy', optional
+    sign : string, either '-', '+', or ' ', optional
         Controls printing of the sign of floating-point types. If '+', always
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
-        '-', omit the sign character of positive values. If 'legacy', print a
-        space for positive values except in 0d arrays. (default '-')
+        '-', omit the sign character of positive values. (default '-')
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -170,6 +169,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
+    legacy : boolean, optional
+        If True, enables legacy printing mode, which approximates numpy 1.13
+        print output by including a space in the sign position of floats and
+        different behavior for 0d arrays.
 
     See Also
     --------
@@ -219,9 +222,14 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ... linewidth=75, nanstr='nan', precision=8,
     ... suppress=False, threshold=1000, formatter=None)
     """
+    legacy = kwarg.pop('legacy', None)
+    if kwarg:
+        msg = "set_printoptions() got unexpected keyword argument '{}'"
+        raise TypeError(msg.format(kwarg.popitem()[0]))
+
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
-                             floatmode)
+                             floatmode, legacy)
     # formatter is always reset
     opt['formatter'] = formatter
     _format_options.update(opt)
@@ -286,15 +294,16 @@ def repr_format(x):
 def _get_formatdict(data, **opt):
     prec, fmode = opt['precision'], opt['floatmode']
     supp, sign = opt['suppress'], opt['sign']
+    legacy = opt['legacy']
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda:
-            FloatingFormat(data, prec, fmode, supp, sign),
+            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
         'complexfloat': lambda:
-            ComplexFloatingFormat(data, prec, fmode, supp, sign),
+            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -417,7 +426,7 @@ def _array2string(a, options, separator=' ', prefix=""):
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
-                 edgeitems=None, sign=None, floatmode=None):
+                 edgeitems=None, sign=None, floatmode=None, **kwarg):
     """
     Return a string representation of an array.
 
@@ -441,8 +450,7 @@ def array2string(a, max_line_width=None, precision=None,
 
           'prefix(' + array2string(a) + ')'
 
-        The length of the prefix string is used to align the
-        output correctly.
+        The length of the prefix string is used to align the output correctly.
     style : _NoValue, optional
         Has no effect, do not use.
 
@@ -478,12 +486,11 @@ def array2string(a, max_line_width=None, precision=None,
     edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension.
-    sign : string, either '-', '+', ' ' or 'legacy', optional
+    sign : string, either '-', '+', or ' ', optional
         Controls printing of the sign of floating-point types. If '+', always
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
-        '-', omit the sign character of positive values. If 'legacy', print a
-        space for positive values except in 0d arrays.
+        '-', omit the sign character of positive values.
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types. Can take the following values:
@@ -501,6 +508,11 @@ def array2string(a, max_line_width=None, precision=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
+    legacy : boolean, optional
+        If True, enables legacy printing mode, which overrides the `sign`
+        option.  Legacy printing mode approximates numpy 1.13 print output,
+        which includes a space in the sign position of floats and different
+        behavior for 0d arrays.
 
     Returns
     -------
@@ -541,23 +553,31 @@ def array2string(a, max_line_width=None, precision=None,
     '[0x0L 0x1L 0x2L]'
 
     """
-    # Deprecation 05-16-2017  v1.14
-    if style is not np._NoValue:
-        warnings.warn("'style' argument is deprecated and no longer functional",
-                      DeprecationWarning, stacklevel=3)
+    legacy = kwarg.pop('legacy', None)
+    if kwarg:
+        msg = "array2string() got unexpected keyword argument '{}'"
+        raise TypeError(msg.format(kwarg.popitem()[0]))
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter, floatmode)
+                                   sign, formatter, floatmode, legacy)
     options = _format_options.copy()
     options.update(overrides)
 
+    if options['legacy']:
+        if a.shape == () and not a.dtype.names:
+            return style(a.item())
+    elif style is not np._NoValue:
+        # Deprecation 11-9-2017  v1.14
+        warnings.warn("'style' argument is deprecated and no longer functional"
+                      " except in 'legacy' mode",
+                      DeprecationWarning, stacklevel=3)
+
+    # treat as a null array if any of shape elements == 0
     if a.size == 0:
-        # treat as a null array if any of shape elements == 0
-        lst = "[]"
-    else:
-        lst = _array2string(a, options, separator, prefix)
-    return lst
+        return "[]"
+
+    return _array2string(a, options, separator, prefix)
 
 
 def _extendLine(s, line, word, max_line_len, next_line_prefix):
@@ -638,14 +658,13 @@ def _formatArray(a, format_function, rank, max_line_len,
 
 class FloatingFormat(object):
     """ Formatter for subtypes of np.floating """
-
-    def __init__(self, data, precision, floatmode, suppress_small, sign=False):
+    def __init__(self, data, precision, floatmode, suppress_small, sign=False, **kwarg):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
         self._legacy = False
-        if sign == 'legacy':
+        if kwarg.get('legacy', False):
             self._legacy = True
             sign = '-' if data.shape == () else ' '
 
@@ -954,16 +973,16 @@ class BoolFormat(object):
 
 class ComplexFloatingFormat(object):
     """ Formatter for subtypes of np.complexfloating """
-
-    def __init__(self, x, precision, floatmode, suppress_small, sign=False):
+    def __init__(self, x, precision, floatmode, suppress_small,
+                 sign=False, **kwarg):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
         self.real_format = FloatingFormat(x.real, precision, floatmode,
-                                          suppress_small, sign=sign)
+                                          suppress_small, sign=sign, **kwarg)
         self.imag_format = FloatingFormat(x.imag, precision, floatmode,
-                                          suppress_small, sign='+')
+                                          suppress_small, sign='+', **kwarg)
 
     def __call__(self, x):
         r = self.real_format(x.real)
@@ -1116,7 +1135,9 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:
         class_name = "array"
 
-    if arr.size > 0 or arr.shape == (0,):
+    if _format_options['legacy'] and arr.shape == () and not arr.dtype.names:
+        lst = repr(arr.item())
+    elif arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
                            ', ', class_name + "(")
     else:  # show zero-length shape unless it is (0,)
@@ -1175,6 +1196,15 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
+    if _format_options['legacy'] and a.shape == () and not a.dtype.names:
+        return str(a.item())
+
+    # the str of 0d arrays is a special case: It should appear like a scalar,
+    # so floats are not truncated by `precision`, and strings are not wrapped
+    # in quotes. So we return the str of the scalar value.
+    if a.shape == ():
+        return str(a[()])
+
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
 def set_string_function(f, repr=True):
