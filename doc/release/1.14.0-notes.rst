@@ -348,6 +348,11 @@ now supported for these arrays:
  * `arr.resize(...)`
  * `pickle.dumps(arr)`
 
+Support for ``decimal.Decimal`` in ``np.lib.financial``
+---------------------------------------------------
+Unless otherwise stated all functions within the ``financial`` package now
+support using the ``decimal.Decimal`` built-in type.
+
 Float printing now uses "dragon4" algorithm for shortest decimal representation
 -------------------------------------------------------------------------------
 All numpy floating-point types (16, 32, 64 and 128 bit) can now be printed to
