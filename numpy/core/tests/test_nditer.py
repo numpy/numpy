@@ -2146,172 +2146,175 @@ def test_iter_no_broadcast():
     assert_raises(ValueError, nditer, [a, b, c], [],
                   [['readonly'], ['readonly'], ['readonly', 'no_broadcast']])
 
-def test_iter_nested_iters_basic():
-    # Test nested iteration basic usage
-    a = arange(12).reshape(2, 3, 2)
 
-    i, j = np.nested_iters(a, [[0], [1, 2]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+class TestIterNested(object):
 
-    i, j = np.nested_iters(a, [[0, 1], [2]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
+    def test_basic(self):
+        # Test nested iteration basic usage
+        a = arange(12).reshape(2, 3, 2)
 
-    i, j = np.nested_iters(a, [[0, 2], [1]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
+        i, j = np.nested_iters(a, [[0], [1, 2]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
-def test_iter_nested_iters_reorder():
-    # Test nested iteration basic usage
-    a = arange(12).reshape(2, 3, 2)
+        i, j = np.nested_iters(a, [[0, 1], [2]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
-    # In 'K' order (default), it gets reordered
-    i, j = np.nested_iters(a, [[0], [2, 1]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+        i, j = np.nested_iters(a, [[0, 2], [1]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
-    i, j = np.nested_iters(a, [[1, 0], [2]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
+    def test_reorder(self):
+        # Test nested iteration basic usage
+        a = arange(12).reshape(2, 3, 2)
 
-    i, j = np.nested_iters(a, [[2, 0], [1]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
+        # In 'K' order (default), it gets reordered
+        i, j = np.nested_iters(a, [[0], [2, 1]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
-    # In 'C' order, it doesn't
-    i, j = np.nested_iters(a, [[0], [2, 1]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 2, 4, 1, 3, 5], [6, 8, 10, 7, 9, 11]])
+        i, j = np.nested_iters(a, [[1, 0], [2]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
-    i, j = np.nested_iters(a, [[1, 0], [2]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
+        i, j = np.nested_iters(a, [[2, 0], [1]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
-    i, j = np.nested_iters(a, [[2, 0], [1]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 2, 4], [6, 8, 10], [1, 3, 5], [7, 9, 11]])
+        # In 'C' order, it doesn't
+        i, j = np.nested_iters(a, [[0], [2, 1]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 2, 4, 1, 3, 5], [6, 8, 10, 7, 9, 11]])
 
-def test_iter_nested_iters_flip_axes():
-    # Test nested iteration with negative axes
-    a = arange(12).reshape(2, 3, 2)[::-1, ::-1, ::-1]
+        i, j = np.nested_iters(a, [[1, 0], [2]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
 
-    # In 'K' order (default), the axes all get flipped
-    i, j = np.nested_iters(a, [[0], [1, 2]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+        i, j = np.nested_iters(a, [[2, 0], [1]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 2, 4], [6, 8, 10], [1, 3, 5], [7, 9, 11]])
 
-    i, j = np.nested_iters(a, [[0, 1], [2]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
+    def test_flip_axes(self):
+        # Test nested iteration with negative axes
+        a = arange(12).reshape(2, 3, 2)[::-1, ::-1, ::-1]
 
-    i, j = np.nested_iters(a, [[0, 2], [1]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
+        # In 'K' order (default), the axes all get flipped
+        i, j = np.nested_iters(a, [[0], [1, 2]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
-    # In 'C' order, flipping axes is disabled
-    i, j = np.nested_iters(a, [[0], [1, 2]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[11, 10, 9, 8, 7, 6], [5, 4, 3, 2, 1, 0]])
+        i, j = np.nested_iters(a, [[0, 1], [2]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
-    i, j = np.nested_iters(a, [[0, 1], [2]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[11, 10], [9, 8], [7, 6], [5, 4], [3, 2], [1, 0]])
+        i, j = np.nested_iters(a, [[0, 2], [1]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
-    i, j = np.nested_iters(a, [[0, 2], [1]], order='C')
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[11, 9, 7], [10, 8, 6], [5, 3, 1], [4, 2, 0]])
+        # In 'C' order, flipping axes is disabled
+        i, j = np.nested_iters(a, [[0], [1, 2]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[11, 10, 9, 8, 7, 6], [5, 4, 3, 2, 1, 0]])
 
-def test_iter_nested_iters_broadcast():
-    # Test nested iteration with broadcasting
-    a = arange(2).reshape(2, 1)
-    b = arange(3).reshape(1, 3)
+        i, j = np.nested_iters(a, [[0, 1], [2]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[11, 10], [9, 8], [7, 6], [5, 4], [3, 2], [1, 0]])
 
-    i, j = np.nested_iters([a, b], [[0], [1]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[[0, 0], [0, 1], [0, 2]], [[1, 0], [1, 1], [1, 2]]])
+        i, j = np.nested_iters(a, [[0, 2], [1]], order='C')
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[11, 9, 7], [10, 8, 6], [5, 3, 1], [4, 2, 0]])
 
-    i, j = np.nested_iters([a, b], [[1], [0]])
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[[0, 0], [1, 0]], [[0, 1], [1, 1]], [[0, 2], [1, 2]]])
+    def test_broadcast(self):
+        # Test nested iteration with broadcasting
+        a = arange(2).reshape(2, 1)
+        b = arange(3).reshape(1, 3)
 
-def test_iter_nested_iters_dtype_copy():
-    # Test nested iteration with a copy to change dtype
+        i, j = np.nested_iters([a, b], [[0], [1]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[[0, 0], [0, 1], [0, 2]], [[1, 0], [1, 1], [1, 2]]])
 
-    # copy
-    a = arange(6, dtype='i4').reshape(2, 3)
-    i, j = np.nested_iters(a, [[0], [1]],
-                        op_flags=['readonly', 'copy'],
-                        op_dtypes='f8')
-    assert_equal(j[0].dtype, np.dtype('f8'))
-    vals = []
-    for x in i:
-        vals.append([y for y in j])
-    assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
-    vals = None
+        i, j = np.nested_iters([a, b], [[1], [0]])
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[[0, 0], [1, 0]], [[0, 1], [1, 1]], [[0, 2], [1, 2]]])
 
-    # updateifcopy
-    a = arange(6, dtype='f4').reshape(2, 3)
-    i, j = np.nested_iters(a, [[0], [1]],
-                        op_flags=['readwrite', 'updateifcopy'],
-                        casting='same_kind',
-                        op_dtypes='f8')
-    assert_equal(j[0].dtype, np.dtype('f8'))
-    for x in i:
-        for y in j:
-            y[...] += 1
-    assert_equal(a, [[0, 1, 2], [3, 4, 5]])
-    i, j, x, y = (None,)*4  # force the updateifcopy
-    assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+    def test_dtype_copy(self):
+        # Test nested iteration with a copy to change dtype
 
-def test_iter_nested_iters_dtype_buffered():
-    # Test nested iteration with buffering to change dtype
+        # copy
+        a = arange(6, dtype='i4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            op_flags=['readonly', 'copy'],
+                            op_dtypes='f8')
+        assert_equal(j[0].dtype, np.dtype('f8'))
+        vals = []
+        for x in i:
+            vals.append([y for y in j])
+        assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
+        vals = None
 
-    a = arange(6, dtype='f4').reshape(2, 3)
-    i, j = np.nested_iters(a, [[0], [1]],
-                        flags=['buffered'],
-                        op_flags=['readwrite'],
-                        casting='same_kind',
-                        op_dtypes='f8')
-    assert_equal(j[0].dtype, np.dtype('f8'))
-    for x in i:
-        for y in j:
-            y[...] += 1
-    assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+        # updateifcopy
+        a = arange(6, dtype='f4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            op_flags=['readwrite', 'updateifcopy'],
+                            casting='same_kind',
+                            op_dtypes='f8')
+        assert_equal(j[0].dtype, np.dtype('f8'))
+        for x in i:
+            for y in j:
+                y[...] += 1
+        assert_equal(a, [[0, 1, 2], [3, 4, 5]])
+        i, j, x, y = (None,)*4  # force the updateifcopy
+        assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+
+    def test_dtype_buffered(self):
+        # Test nested iteration with buffering to change dtype
+
+        a = arange(6, dtype='f4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            flags=['buffered'],
+                            op_flags=['readwrite'],
+                            casting='same_kind',
+                            op_dtypes='f8')
+        assert_equal(j[0].dtype, np.dtype('f8'))
+        for x in i:
+            for y in j:
+                y[...] += 1
+        assert_equal(a, [[1, 2, 3], [4, 5, 6]])
 
 def test_iter_reduction_error():
 
