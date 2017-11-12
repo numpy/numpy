@@ -3471,10 +3471,11 @@ Miscellaneous Macros
 .. c:function:: PyArray_DiscardWritebackIfCopy(PyObject* obj)
 
     Reset the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and deprecated
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Also resets the
-    :c:data:`NPY_ARRAY_WRITEABLE` flag on the base object. This is
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Resets the
+    :c:data:`NPY_ARRAY_WRITEABLE` flag on the base object. It also
+    discards pending changes to the base object. This is
     useful for recovering from an error condition when
-    writeback semantics are used, but will lead to wrong results.
+    writeback semantics are used.
 
 .. c:function:: PyArray_XDECREF_ERR(PyObject* obj)
 
