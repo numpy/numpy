@@ -403,6 +403,18 @@ elements uniquely.
 Numpy complex-floating-scalars with values like ``inf*j`` or ``nan*j`` now
 print as ``infj`` and ``nanj``, like the pure-python ``complex`` type.
 
+``void`` datatype elements are now printed in hex notation
+----------------------------------------------------------
+A hex representation compatible with the python ``bytes`` type is now printed
+for unstructured ``np.void`` elements (eg, ``V4`` datatype). Previously, in
+python2 the raw void data of the element was printed to stdout, or in python3
+the integer byte values were shown.
+
+printing style for ``void`` datatypes is now independently customizable
+-----------------------------------------------------------------------
+The printing style of ``np.void`` arrays is now independently customizable
+using the ``formatter`` argument to ``np.set_printoptions``, using the
+``'void'`` key, instead of the catch-all ``numpystr`` key as before.
 
 Changes
 =======
