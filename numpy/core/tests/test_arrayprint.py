@@ -157,6 +157,12 @@ class TestArray2String(object):
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
+        # check for backcompat that using FloatFormat works and emits warning
+        with assert_warns(DeprecationWarning):
+            fmt = np.core.arrayprint.FloatFormat(x, 9, 'maxprec', False)
+        assert_equal(np.array2string(x, formatter={'float_kind': fmt}),
+                     '[0. 1. 2.]')
+
     def test_structure_format(self):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
         x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
