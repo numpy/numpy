@@ -9,6 +9,8 @@ Highlights
 ==========
 
 * The `np.einsum` function will use BLAS when possible
+* ``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
+with arbitrary encoding supported by Python.
 
 
 New functions
@@ -240,6 +242,18 @@ similarly but require use of the new ``WRITEBACKIFCOPY`` semantics.
 New Features
 ============
 
+Encoding argument for text IO functions
+---------------------------------------
+``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
+with arbitrary encoding supported by Python via the encoding argument.
+For backward compatiblity the argument defaults to the special ``bytes`` value
+which continues to treat text as raw byte values and continues to pass latin1
+encoded bytes to custom converters.
+Using any other value (including ``None`` for system default) will switch the
+functions to real text IO so one receives unicode strings instead of bytes in
+the resulting arrays.
+
+
 External ``nose`` plugins are usable by ``numpy.testing.Tester``
 ----------------------------------------------------------------
 ``numpy.testing.Tester`` is now aware of ``nose`` plugins that are outside the
@@ -268,6 +282,10 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+Support for reading lzma compressed text files in Python 3
+----------------------------------------------------------
+With Python versions containing the ``lzma`` module the text IO functions can
+now transparently read from files with ``xz`` or ``lzma`` extension.
 
 ``sign`` option added to ``np.setprintoptions`` and ``np.array2string``
 -----------------------------------------------------------------------
@@ -403,6 +421,10 @@ elements uniquely.
 Numpy complex-floating-scalars with values like ``inf*j`` or ``nan*j`` now
 print as ``infj`` and ``nanj``, like the pure-python ``complex`` type.
 
+Reduced memory usage of ``np.loadtxt``
+--------------------------------------
+``np.loadtxt`` now reads files in chunks instead of all at once which decreases
+its memory usage significantly for large files.
 
 Changes
 =======
