@@ -95,6 +95,15 @@ class TestEye(object):
     def test_bool(self):
         assert_equal(eye(2, 2, dtype=bool), [[True, False], [False, True]])
 
+    def test_order(self):
+        mat_c = eye(4, 3, k=-1)
+        mat_f = eye(4, 3, k=-1, order='F')
+        assert_equal(mat_c, mat_f)
+        assert mat_c.flags.c_contiguous
+        assert not mat_c.flags.f_contiguous
+        assert not mat_f.flags.c_contiguous
+        assert mat_f.flags.f_contiguous
+
 
 class TestDiag(object):
     def test_vector(self):
