@@ -260,8 +260,10 @@ class TestPrintOptions(object):
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_0d_arrays(self):
+        unicode = type(u'')
+        assert_equal(unicode(np.array(u'café', np.unicode_)), u'café')
+
         if sys.version_info[0] >= 3:
-            assert_equal(str(np.array('café', np.unicode_)), 'café')
             assert_equal(repr(np.array('café', np.unicode_)),
                          "array('café',\n      dtype='<U4')")
         else:
