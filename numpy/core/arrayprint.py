@@ -1020,7 +1020,7 @@ class ComplexFloatingFormat(object):
         i = self.imag_format(x.imag)
         return r + i + 'j'
 
-# for back-compatibility, we keep the classes for each float type too
+# for back-compatibility, we keep the classes for each complex type too
 class ComplexFormat(ComplexFloatingFormat):
     def __init__(self, *args, **kwargs):
         warnings.warn(
