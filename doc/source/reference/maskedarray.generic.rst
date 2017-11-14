@@ -394,7 +394,7 @@ required to ensure propagation of any modification of the mask to the original.
                 mask = [False False False],
           fill_value = 999999)
    >>> x.mask
-   array([False,  True, False, False,  True], dtype=bool)
+   array([False,  True, False, False,  True])
    >>> x.data
    array([ 1, -1,  3,  4,  5])
 

@@ -1129,7 +1129,7 @@ def _void_scalar_repr(x):
     return StructureFormat.from_data(array(x), **_format_options)(x)
 
 
-_typelessdata = [int_, float_, complex_]
+_typelessdata = [int_, float_, complex_, bool_]
 if issubclass(intc, int):
     _typelessdata.append(intc)
 if issubclass(longlong, int):
@@ -1162,6 +1162,8 @@ def dtype_is_implied(dtype):
     array([1, 2, 3], dtype=np.int8)
     """
     dtype = np.dtype(dtype)
+    if _format_options['legacy'] and dtype.type == bool_:
+        return False
     return dtype.type in _typelessdata
 
 

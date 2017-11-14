@@ -902,7 +902,7 @@ cdef class RandomState:
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
-                [ True,  True]]], dtype=bool)
+                [ True,  True]]])
 
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)

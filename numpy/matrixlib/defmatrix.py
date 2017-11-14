@@ -699,15 +699,15 @@ class matrix(N.ndarray):
         >>> (x == y)
         matrix([[ True,  True,  True,  True],
                 [False, False, False, False],
-                [False, False, False, False]], dtype=bool)
+                [False, False, False, False]])
         >>> (x == y).all()
         False
         >>> (x == y).all(0)
-        matrix([[False, False, False, False]], dtype=bool)
+        matrix([[False, False, False, False]])
         >>> (x == y).all(1)
         matrix([[ True],
                 [False],
-                [False]], dtype=bool)
+                [False]])
 
         """
         return N.ndarray.all(self, axis, out, keepdims=True)._collapse(axis)

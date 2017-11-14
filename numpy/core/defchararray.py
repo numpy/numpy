@@ -575,9 +575,9 @@ def endswith(a, suffix, start=0, end=None):
     array(['foo', 'bar'],
         dtype='|S3')
     >>> np.char.endswith(s, 'ar')
-    array([False,  True], dtype=bool)
+    array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
-    array([False,  True], dtype=bool)
+    array([False,  True])
 
     """
     return _vec_string(
