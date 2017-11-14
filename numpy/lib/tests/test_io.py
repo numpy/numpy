@@ -1841,6 +1841,22 @@ M   33  21.99
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_empty_file_with_converters(self):
+        with suppress_warnings() as sup:
+            sup.filter(message="genfromtxt: Empty input file:")
+            data = TextIO()
+            test = np.genfromtxt(data, converters={0: lambda arg: int(arg)})
+            assert_equal(test, np.array([], dtype=int))
+
+            test = np.genfromtxt(data, converters={0: lambda arg: arg})
+            assert_equal(test, np.array([], dtype='|S1'))
+
+            dtype = np.dtype([('f', 'float32'), ('i', 'int64')])
+            test = np.genfromtxt(data, converters={0: lambda arg: arg},
+                                 dtype=dtype)
+            assert_equal(test, np.array([], dtype=dtype))
+
+
 
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
