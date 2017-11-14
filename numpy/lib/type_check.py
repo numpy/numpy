@@ -208,7 +208,7 @@ def iscomplex(x):
     Examples
     --------
     >>> np.iscomplex([1+1j, 1+0j, 4.5, 3, 2, 2j])
-    array([ True, False, False, False, False,  True], dtype=bool)
+    array([ True, False, False, False, False,  True])
 
     """
     ax = asanyarray(x)
@@ -242,7 +242,7 @@ def isreal(x):
     Examples
     --------
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
-    array([False,  True,  True,  True,  True, False], dtype=bool)
+    array([False,  True,  True,  True,  True, False])
 
     """
     return imag(x) == 0

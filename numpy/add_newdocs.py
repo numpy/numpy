@@ -1512,7 +1512,7 @@ add_newdoc('numpy.core.multiarray', 'where',
     >>> ix
     array([[False, False, False],
            [ True,  True, False],
-           [False,  True, False]], dtype=bool)
+           [False,  True, False]])
     >>> np.where(ix)
     (array([1, 1, 2]), array([0, 1, 1]))
 

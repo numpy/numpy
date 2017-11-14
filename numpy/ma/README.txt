@@ -104,9 +104,9 @@ array(data =
  [False False True False False],
       fill_value=?)
 >>> old_ma.getmask(x) == new_ma.getmask(x)
-array([True, True, True, True, True], dtype=bool)
+array([True, True, True, True, True])
 >>> old_ma.getmask(y) == new_ma.getmask(y)
-array([True, True, False, True, True], dtype=bool)
+array([True, True, False, True, True])
 >>> old_ma.getmask(y)
 False
 

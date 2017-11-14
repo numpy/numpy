@@ -240,7 +240,7 @@ The result will be multidimensional if y has more dimensions than b.
 For example: ::
 
  >>> b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
- array([False, False, False,  True,  True], dtype=bool)
+ array([False, False, False,  True,  True])
  >>> y[b[:,5]]
  array([[21, 22, 23, 24, 25, 26, 27],
         [28, 29, 30, 31, 32, 33, 34]])

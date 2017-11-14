@@ -1567,7 +1567,7 @@ def nonzero(a):
     >>> a > 3
     array([[False, False, False],
            [ True,  True,  True],
-           [ True,  True,  True]], dtype=bool)
+           [ True,  True,  True]])
     >>> np.nonzero(a > 3)
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
@@ -1962,7 +1962,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     True
 
     >>> np.any([[True, False], [False, False]], axis=0)
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> np.any([-1, 0, 5])
     True
@@ -1973,7 +1973,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     >>> o=np.array([False])
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
-    (array([ True], dtype=bool), array([ True], dtype=bool))
+    (array([ True]), array([ True]))
     >>> # Check now that z is a reference to o
     >>> z is o
     True
@@ -2047,7 +2047,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     False
 
     >>> np.all([[True,False],[True,True]], axis=0)
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> np.all([-1, 4, 5])
     True
@@ -2058,7 +2058,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> o=np.array([False])
     >>> z=np.all([-1, 4, 5], out=o)
     >>> id(z), id(o), z                             # doctest: +SKIP
-    (28293632, 28293632, array([ True], dtype=bool))
+    (28293632, 28293632, array([ True]))
 
     """
     arr = asanyarray(a)

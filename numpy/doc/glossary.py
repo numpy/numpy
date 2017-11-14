@@ -233,7 +233,7 @@ Glossary
 
          >>> mask = (x > 2)
          >>> mask
-         array([False, False, False, True,  True], dtype=bool)
+         array([False, False, False, True,  True])
 
          >>> x[mask] = -1
          >>> x

@@ -480,7 +480,7 @@ the same order::
  >>> a = np.zeros(2, dtype=[('a', 'i4'), ('b', 'i4')])
  >>> b = np.ones(2, dtype=[('a', 'i4'), ('b', 'i4')])
  >>> a == b
- array([False, False], dtype=bool)
+ array([False, False])
 
 Currently, if the dtypes of two void structured arrays are not equivalent the
 comparison fails, returning the scalar value ``False``. This behavior is

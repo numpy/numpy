@@ -1193,7 +1193,7 @@ def tensordot(a, b, axes=2):
            [ True,  True],
            [ True,  True],
            [ True,  True],
-           [ True,  True]], dtype=bool)
+           [ True,  True]])
 
     An extended example taking advantage of the overloading of + and \\*:
 
@@ -1901,7 +1901,7 @@ def fromfunction(function, shape, **kwargs):
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],
-           [False, False,  True]], dtype=bool)
+           [False, False,  True]])
 
     >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
     array([[0, 1, 2],
