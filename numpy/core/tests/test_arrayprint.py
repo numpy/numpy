@@ -333,6 +333,7 @@ class TestPrintOptions(object):
         assert_equal(repr(a), 'array([0., 1., 2., 3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
         assert_equal(repr(b), 'array([1.234e+09])')
+        assert_equal(repr(np.array([0.])), 'array([0.])')
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
@@ -349,6 +350,7 @@ class TestPrintOptions(object):
         assert_equal(repr(b),  'array([  1.23400000e+09])')
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')
         assert_equal(repr(np.array(1.)), 'array(1.0)')
+        assert_equal(repr(np.array([0.])), 'array([ 0.])')
 
         assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
@@ -419,6 +421,7 @@ class TestPrintOptions(object):
         assert_equal(repr(w[::5]),
             "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
         assert_equal(repr(wp), "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
+        assert_equal(repr(np.zeros(3)), "array([0.0000, 0.0000, 0.0000])")
         # for larger precision, representation error becomes more apparent:
         np.set_printoptions(floatmode='fixed', precision=8)
         assert_equal(repr(z),
