@@ -447,6 +447,18 @@ class TestPrintOptions(object):
             "array([1.e+00, 1.e+05, 1.e+10, 1.e+15, 1.e+20])")
         assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
 
+    def test_legacy_mode_scalars(self):
+        # in legacy mode, str of floats get truncated, and complex scalars
+        # use * for non-finite imaginary part
+        np.set_printoptions(legacy='1.13')
+        assert_equal(str(np.float64(1.123456789123456789)), '1.12345678912')
+        assert_equal(str(np.complex128(complex(1, np.nan))), '(1+nan*j)')
+
+        np.set_printoptions(legacy=False)
+        assert_equal(str(np.float64(1.123456789123456789)),
+                     '1.1234567891234568')
+        assert_equal(str(np.complex128(complex(1, np.nan))), '(1+nanj)')
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:
