@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import (
      run_module_suite, assert_, assert_equal, assert_raises, assert_warns
 )
+import textwrap
 
 class TestArrayRepr(object):
     def test_nan_inf(self):
@@ -30,8 +31,7 @@ class TestArrayRepr(object):
         xstruct = np.ones((2,2), dtype=[('a', 'i4')]).view(sub)
         assert_equal(repr(xstruct),
             "sub([[(1,), (1,)],\n"
-            "     [(1,), (1,)]],\n"
-            "    dtype=[('a', '<i4')])"
+            "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
 
     def test_self_containing(self):
@@ -199,8 +199,7 @@ class TestArray2String(object):
         assert_equal(str(a[0]), r"b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'")
         assert_equal(repr(a),
             r"array([b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'," "\n"
-            r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64']," "\n"
-            r"      dtype='|V8')")
+            r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)
         assert_equal(eval(repr(a[0]), vars(np)), a[0])
@@ -265,10 +264,10 @@ class TestPrintOptions(object):
 
         if sys.version_info[0] >= 3:
             assert_equal(repr(np.array('café', np.unicode_)),
-                         "array('café',\n      dtype='<U4')")
+                         "array('café', dtype='<U4')")
         else:
             assert_equal(repr(np.array(u'café', np.unicode_)),
-                         "array(u'caf\\xe9',\n      dtype='<U4')")
+                         "array(u'caf\\xe9', dtype='<U4')")
         assert_equal(str(np.array('test', np.str_)), 'test')
 
         a = np.zeros(1, dtype=[('a', '<i4', (3,))])
@@ -361,8 +360,8 @@ class TestPrintOptions(object):
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')
-        assert_equal(repr(a), "array([(1., 1.), (1., 1.)],\n"
-                              "      dtype=[('f0', '<f4'), ('f1', '<f4')])")
+        assert_equal(repr(a),
+            "array([(1., 1.), (1., 1.)], dtype=[('f0', '<f4'), ('f1', '<f4')])")
         assert_equal(repr(a[0]), "(1., 1.)")
 
     def test_floatmode(self):
@@ -459,20 +458,20 @@ class TestPrintOptions(object):
                      '1.1234567891234568')
         assert_equal(str(np.complex128(complex(1, np.nan))), '(1+nanj)')
 
-    def test_dtype_linwdith_wrappiing(self):
+    def test_dtype_linewidth_wrapping(self):
         np.set_printoptions(linewidth=75)
         assert_equal(repr(np.arange(10,20., dtype='f4')),
             "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.], dtype=float32)")
-        assert_equal(repr(np.arange(10,24., dtype='f4')),
-            "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23.],\n"
-            "      dtype=float32)")
+        assert_equal(repr(np.arange(10,24., dtype='f4')), textwrap.dedent("""\
+            array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23.],
+                  dtype=float32)"""))
 
         styp = '<U4' if sys.version_info[0] >= 3 else '|S4'
         assert_equal(repr(np.ones(3, dtype=styp)),
             "array(['1', '1', '1'], dtype='{}')".format(styp))
-        assert_equal(repr(np.ones(12, dtype=styp)),
-            ("array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],\n"
-             "      dtype='{}')").format(styp))
+        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
+            array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
+                  dtype='{}')""".format(styp)))
 
 def test_unicode_object_array():
     import sys
