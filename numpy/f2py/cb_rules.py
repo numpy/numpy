@@ -367,11 +367,15 @@ cb_arg_rules = [
         'pyobjfrom': [{debugcapi: '\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                       {isintent_c: """\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_ARRAY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tint itemsize_ = #atype# == NPY_STRING ? 1 : 0;
+\t\t/*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_CARRAY,NULL);
 """,
                        l_not(isintent_c): """\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,0,NPY_ARRAY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tint itemsize_ = #atype# == NPY_STRING ? 1 : 0;
+\t\t/*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_FARRAY,NULL);
 """,
                        },
                       """
