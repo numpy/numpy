@@ -710,8 +710,8 @@ class FloatingFormat(object):
         with errstate(all='ignore'):
             hasinf = isinf(data)
             special = isnan(data) | hasinf
-            valid = not_equal(data, 0) & ~special
-            non_zero = data[valid]
+            non_special = data[~special]
+            non_zero = non_special[non_special != 0]
             abs_non_zero = absolute(non_zero)
             if len(non_zero) == 0:
                 max_val = 0.
@@ -727,7 +727,7 @@ class FloatingFormat(object):
                                            or max_val/min_val > 1000.):
                     self.exp_format = True
 
-        if len(non_zero) == 0:
+        if len(non_special) == 0:
             self.pad_left = 0
             self.pad_right = 0
             self.trim = '.'
@@ -740,7 +740,7 @@ class FloatingFormat(object):
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
                                unique=unique, trim=trim, sign=self.sign == '+')
-                    for x in non_zero)
+                    for x in non_special)
             frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
             int_part, frac_part = zip(*(s.split('.') for s in frac_strs))
             self.exp_size = max(len(s) for s in exp_strs) - 1
@@ -751,7 +751,7 @@ class FloatingFormat(object):
             # for back-compatibility with np 1.13, use two spaces and full prec
             if self._legacy == '1.13':
                 # undo addition of sign pos below
-                will_add_sign = all(non_zero > 0) and self.sign == ' '
+                will_add_sign = all(non_special > 0) and self.sign == ' '
                 self.pad_left = 3 - will_add_sign
             else:
                 # this should be only 1 or two. Can be calculated from sign.
@@ -769,7 +769,7 @@ class FloatingFormat(object):
                                        fractional=True,
                                        unique=unique, trim=trim,
                                        sign=self.sign == '+')
-                    for x in non_zero)
+                    for x in non_special)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
             self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
@@ -784,7 +784,7 @@ class FloatingFormat(object):
                 self.trim = '.'
 
         # account for sign = ' ' by adding one to pad_left
-        if len(non_zero) > 0 and all(non_zero > 0) and self.sign == ' ':
+        if all(non_special >= 0) and self.sign == ' ':
             self.pad_left += 1
 
         if any(special):
