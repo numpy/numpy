@@ -420,6 +420,11 @@ The printing style of ``np.void`` arrays is now independently customizable
 using the ``formatter`` argument to ``np.set_printoptions``, using the
 ``'void'`` key, instead of the catch-all ``numpystr`` key as before.
 
+``np.asarray`` and ``np.asanyarray`` now take a ``ndmin`` argument to match ``array``
+-------------------------------------------------------------------------------------
+This makes the shorthands marginally more useful.
+
+
 Changes
 =======
 

@@ -435,11 +435,6 @@ def _block(arrays, max_depth, result_ndim):
     `arrays` and the depth of the lists in `arrays` (see block docstring
     for details).
     """
-    def atleast_nd(a, ndim):
-        # Ensures `a` has at least `ndim` dimensions by prepending
-        # ones to `a.shape` as necessary
-        return array(a, ndmin=ndim, copy=False, subok=True)
-
     def block_recursion(arrays, depth=0):
         if depth < max_depth:
             if len(arrays) == 0:
@@ -449,7 +444,7 @@ def _block(arrays, max_depth, result_ndim):
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
             # type(arrays) is not list
-            return atleast_nd(arrays, result_ndim)
+            return asanyarray(arrays, ndmin=result_ndim)
 
     return block_recursion(arrays)
 
