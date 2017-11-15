@@ -192,9 +192,9 @@ differences (see changes below). These changes are likely to break downstream
 user's doctests.
 
 These new behaviors can be disabled to mostly reproduce numpy 1.13 behavior by
-enabling the new "legacy" printing mode. This is enabled by calling
-``np.set_printoptions(legacy=True)``, or using the new ``legacy`` argument
-to ``np.array2string``.
+enabling the new 1.13 "legacy" printing mode. This is enabled by calling
+``np.set_printoptions(legacy="1.13")``, or using the new ``legacy`` argument to
+``np.array2string``, as ``np.array2string(arr, legacy='1.13')``.
 
 
 C API changes
@@ -278,8 +278,8 @@ the sign position of positive values, and with '-' it will omit the sign
 character for positive values. The new default is '-'.
 
 This new default changes the float output relative to numpy 1.13. The old
-behavior can be obtained in "legacy" printing mode, see compatibility notes
-above.
+behavior can be obtained in 1.13 "legacy" printing mode, see compatibility
+notes above.
 
 Improvements
 ============
@@ -490,8 +490,8 @@ and the ``repr`` acts like higher dimension arrays using ``formatter(a[()])``,
 where  ``formatter``  can be specified using ``np.set_printoptions``. The
 ``style`` argument of ``np.array2string`` is deprecated.
 
-This new behavior is disabled in legacy printing mode, see compatibility notes
-above.
+This new behavior is disabled in 1.13 legacy printing mode, see compatibility
+notes above.
 
 ``threshold`` and ``edgeitems`` options added to ``np.array2string``
 -----------------------------------------------------------------

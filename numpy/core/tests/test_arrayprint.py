@@ -288,8 +288,7 @@ class TestPrintOptions(object):
         assert_warns(DeprecationWarning, np.array2string,
                                          np.array(1.), style=repr)
         # but not in legacy mode
-        np.set_printoptions(legacy=True)
-        np.array2string(np.array(1.), style=repr)
+        np.array2string(np.array(1.), style=repr, legacy='1.13')
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
@@ -345,7 +344,7 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array(1.)), 'array(+1.)')
         assert_equal(repr(b), 'array([+1.234e+09])')
 
-        np.set_printoptions(legacy=True)
+        np.set_printoptions(legacy='1.13')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(b),  'array([  1.23400000e+09])')
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')

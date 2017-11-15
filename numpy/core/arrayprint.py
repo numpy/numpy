@@ -87,6 +87,10 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if sign not in [None, '-', '+', ' ']:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
 
+    if legacy not in [None, False, '1.13']:
+        warnings.warn("legacy printing option can currently only be '1.13' or "
+                      "`False`", stacklevel=3)
+
     return options
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
@@ -169,10 +173,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
-    legacy : boolean, optional
-        If True, enables legacy printing mode, which approximates numpy 1.13
-        print output by including a space in the sign position of floats and
-        different behavior for 0d arrays.
+    legacy : string or `False`, optional
+        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        approximates numpy 1.13 print output by including a space in the sign
+        position of floats and different behavior for 0d arrays. If set to
+        `False`, disables legacy mode.
 
     See Also
     --------
@@ -525,11 +530,11 @@ def array2string(a, max_line_width=None, precision=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
-    legacy : boolean, optional
-        If True, enables legacy printing mode, which overrides the `sign`
-        option.  Legacy printing mode approximates numpy 1.13 print output,
-        which includes a space in the sign position of floats and different
-        behavior for 0d arrays.
+    legacy : string or `False`, optional
+        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        approximates numpy 1.13 print output by including a space in the sign
+        position of floats and different behavior for 0d arrays. If set to
+        `False`, disables legacy mode.
 
     Returns
     -------
@@ -581,13 +586,13 @@ def array2string(a, max_line_width=None, precision=None,
     options = _format_options.copy()
     options.update(overrides)
 
-    if options['legacy']:
+    if options['legacy'] == '1.13':
         if a.shape == () and not a.dtype.names:
             return style(a.item())
     elif style is not np._NoValue:
         # Deprecation 11-9-2017  v1.14
         warnings.warn("'style' argument is deprecated and no longer functional"
-                      " except in 'legacy' mode",
+                      " except in 1.13 'legacy' mode",
                       DeprecationWarning, stacklevel=3)
 
     # treat as a null array if any of shape elements == 0
@@ -675,14 +680,14 @@ def _formatArray(a, format_function, rank, max_line_len,
 
 class FloatingFormat(object):
     """ Formatter for subtypes of np.floating """
-    def __init__(self, data, precision, floatmode, suppress_small, sign=False, **kwarg):
+    def __init__(self, data, precision, floatmode, suppress_small, sign=False,
+                 **kwarg):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self._legacy = False
-        if kwarg.get('legacy', False):
-            self._legacy = True
+        self._legacy = kwarg.get('legacy', False)
+        if self._legacy == '1.13':
             sign = '-' if data.shape == () else ' '
 
         self.floatmode = floatmode
@@ -693,6 +698,7 @@ class FloatingFormat(object):
                 raise ValueError(
                     "precision must be >= 0 in {} mode".format(floatmode))
             self.precision = precision
+
         self.suppress_small = suppress_small
         self.sign = sign
         self.exp_format = False
@@ -730,7 +736,7 @@ class FloatingFormat(object):
         elif self.exp_format:
             # first pass printing to determine sizes
             trim, unique = '.', True
-            if self.floatmode == 'fixed' or self._legacy:
+            if self.floatmode == 'fixed' or self._legacy == '1.13':
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
                                unique=unique, trim=trim, sign=self.sign == '+')
@@ -743,12 +749,14 @@ class FloatingFormat(object):
             self.precision = max(len(s) for s in frac_part)
 
             # for back-compatibility with np 1.13, use two spaces and full prec
-            if self._legacy:
-                self.pad_left = 2 + (not (all(non_zero > 0) and self.sign == ' '))
+            if self._legacy == '1.13':
+                # undo addition of sign pos below
+                will_add_sign = all(non_zero > 0) and self.sign == ' '
+                self.pad_left = 3 - will_add_sign
             else:
                 # this should be only 1 or two. Can be calculated from sign.
                 self.pad_left = max(len(s) for s in int_part)
-            # pad_right is not used to print, but needed for nan length calculation
+            # pad_right is only needed for nan length calculation
             self.pad_right = self.exp_size + 2 + self.precision
 
             self.unique = False
@@ -1182,7 +1190,8 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:
         class_name = "array"
 
-    if _format_options['legacy'] and arr.shape == () and not arr.dtype.names:
+    if (_format_options['legacy'] == '1.13' and
+            arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
     elif arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
@@ -1243,7 +1252,8 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
-    if _format_options['legacy'] and a.shape == () and not a.dtype.names:
+    if (_format_options['legacy'] == '1.13' and
+            a.shape == () and not a.dtype.names):
         return str(a.item())
 
     # the str of 0d arrays is a special case: It should appear like a scalar,
