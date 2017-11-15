@@ -65,6 +65,24 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "get_attr_string.h"
 
+/*
+ * global variable to determine if legacy printing is enabled, accessible from
+ * C. For simplicity the mode is encoded as an integer where '0' means no
+ * legacy mode, and '113' means 1.13 legacy mode. We can upgrade this if we
+ * have more complex requirements in the future.
+ */
+int npy_legacy_print_mode = 0;
+
+static PyObject *
+set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "i", &npy_legacy_print_mode)) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
 
@@ -4440,6 +4458,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

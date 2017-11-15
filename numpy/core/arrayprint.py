@@ -42,7 +42,8 @@ from . import numerictypes as _nt
 from .umath import absolute, not_equal, isnan, isinf, isfinite
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, dtype, ndarray)
+                         datetime_as_string, datetime_data, dtype, ndarray,
+                         set_legacy_print_mode)
 from .fromnumeric import ravel, any
 from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
@@ -241,6 +242,12 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     # formatter is always reset
     opt['formatter'] = formatter
     _format_options.update(opt)
+
+    # set the C variable for legacy mode
+    if _format_options['legacy'] == '1.13':
+        set_legacy_print_mode(113)
+    elif _format_options['legacy'] is False:
+        set_legacy_print_mode(0)
 
 
 def get_printoptions():

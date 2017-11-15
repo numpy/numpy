@@ -780,6 +780,173 @@ timedeltatype_str(PyObject *self)
  * These functions will return NULL if PyString creation fails.
  */
 
+
+/*
+ *               *** BEGIN LEGACY PRINTING MODE CODE ***
+ *
+ * This code is legacy code needed to reproduce the printing behavior of
+ * scalars in numpy 1.13. One day we hope to remove it.
+ */
+
+/* determines if legacy mode is enabled, global set in multiarraymodule.c */
+extern int npy_legacy_print_mode;
+
+#define HALFPREC_REPR 5
+#define HALFPREC_STR 5
+#define FLOATPREC_REPR 8
+#define FLOATPREC_STR 6
+#define DOUBLEPREC_REPR 17
+#define DOUBLEPREC_STR 12
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+#define LONGDOUBLEPREC_REPR DOUBLEPREC_REPR
+#define LONGDOUBLEPREC_STR DOUBLEPREC_STR
+#else /* More than probably needed on Intel FP */
+#define LONGDOUBLEPREC_REPR 20
+#define LONGDOUBLEPREC_STR 12
+#endif
+
+/**begin repeat
+ * #kind = str, repr#
+ * #KIND = STR, REPR#
+ */
+
+/**begin repeat1
+ * #name = cfloat, cdouble, clongdouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #suff = f, d, l#
+ */
+
+#define _FMT1 "%%.%i" NPY_@NAME@_FMT
+#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
+
+static PyObject*
+legacy_@name@_format@kind@(@type@ val)
+{
+    /* XXX: Find a correct size here for format string */
+    char format[64], buf[100], *res;
+
+    /*
+     * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
+     */
+    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+        PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
+        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, val.imag, 0);
+        if (res == NULL) {
+            PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+            return NULL;
+        }
+        if (!npy_isfinite(val.imag)) {
+            strncat(buf, "*", 1);
+        }
+        strncat(buf, "j", 1);
+    }
+    else {
+        char re[64], im[64];
+        if (npy_isfinite(val.real)) {
+                PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
+                res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
+                        val.real, 0);
+                if (res == NULL) {
+                    PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+                    return NULL;
+                }
+        }
+        else {
+                if (npy_isnan(val.real)) {
+                        strcpy(re, "nan");
+                }
+                else if (val.real > 0){
+                        strcpy(re, "inf");
+                }
+                else {
+                        strcpy(re, "-inf");
+                }
+        }
+
+
+        if (npy_isfinite(val.imag)) {
+                PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
+                res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
+                        val.imag, 0);
+                if (res == NULL) {
+                    PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+                    return NULL;
+                }
+        }
+        else {
+                if (npy_isnan(val.imag)) {
+                        strcpy(im, "+nan");
+                }
+                else if (val.imag > 0){
+                        strcpy(im, "+inf");
+                }
+                else {
+                        strcpy(im, "-inf");
+                }
+                if (!npy_isfinite(val.imag)) {
+                        strncat(im, "*", 1);
+                }
+        }
+        PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
+    }
+
+    return PyUString_FromString(buf);
+}
+
+#undef _FMT1
+#undef _FMT2
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #name = float, double, longdouble#
+ * #Name = Float, Double, LongDouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #suff = f, d, l#
+ */
+
+#define _FMT1 "%%.%i" NPY_@NAME@_FMT
+
+static PyObject *
+legacy_@name@_format@kind@(npy_@name@ val){
+    /* XXX: Find a correct size here for format string */
+    char format[64], buf[100], *res;
+    size_t i, cnt;
+
+    PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
+    res = NumPyOS_ascii_format@suff@(buf, sizeof(buf), format, val, 0);
+    if (res == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+        return NULL;
+    }
+
+    /* If nothing but digits after sign, append ".0" */
+    cnt = strlen(buf);
+    for (i = (buf[0] == '-') ? 1 : 0; i < cnt; ++i) {
+        if (!isdigit(Py_CHARMASK(buf[i]))) {
+            break;
+        }
+    }
+    if (i == cnt && sizeof(buf) >= cnt + 3) {
+        strcpy(&buf[cnt],".0");
+    }
+
+    return PyUString_FromString(buf);
+}
+
+#undef _FMT1
+
+/**end repeat1**/
+
+/**end repeat**/
+
+
+/*
+ *               *** END LEGACY PRINTING MODE CODE ***
+ */
+
+
 /**begin repeat
  * #kind = str, repr#
  */
@@ -795,7 +962,13 @@ static PyObject *
 @name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
                          npy_bool sign)
 {
-    npy_@name@ absval = val < 0 ? -val : val;
+    npy_@name@ absval;
+
+    if (npy_legacy_print_mode == 113) {
+        return legacy_@name@_format@kind@(val);
+    }
+
+    absval = val < 0 ? -val : val;
 
     if (absval == 0 || (absval < 1.e16L && absval >= 1.e-4L) ) {
         return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
@@ -817,11 +990,16 @@ c@name@type_@kind@(PyObject *self)
     npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
     TrimMode trim = TrimMode_DptZeros;
 
+    if (npy_legacy_print_mode == 113) {
+        return legacy_c@name@_format@kind@(val);
+    }
+
     if (val.real == 0.0 && npy_signbit(val.real) == 0) {
         istr = @name@type_@kind@_either(val.imag, trim, trim, 0);
         if (istr == NULL) {
             return NULL;
         }
+
         PyUString_ConcatAndDel(&istr, PyUString_FromString("j"));
         return istr;
     }
@@ -869,18 +1047,26 @@ c@name@type_@kind@(PyObject *self)
 
 /**end repeat1**/
 
+
 static PyObject *
 halftype_@kind@(PyObject *self)
 {
     npy_half val = ((PyHalfScalarObject *)self)->obval;
-    double absval = npy_half_to_double(val);
-    absval = absval < 0 ? -absval : absval;
+    float floatval = npy_half_to_float(val);
+    float absval;
+
+    if (npy_legacy_print_mode == 113) {
+        return legacy_float_format@kind@(floatval);
+    }
+
+    absval = floatval < 0 ? -floatval : floatval;
 
     if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
         return format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
 }
+
 
 /**end repeat**/
 
