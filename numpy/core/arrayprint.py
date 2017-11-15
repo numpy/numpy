@@ -180,7 +180,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored
         with a warning for forward compatibility.
-        
+
         .. versionadded:: 1.14.0
 
     See Also
@@ -546,7 +546,7 @@ def array2string(a, max_line_width=None, precision=None,
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored
         with a warning for forward compatibility.
-        
+
         .. versionadded:: 1.14.0
 
     Returns
@@ -1224,6 +1224,9 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
+    if max_line_width is None:
+        max_line_width = _format_options['linewidth']
+
     if type(arr) is not ndarray:
         class_name = type(arr).__name__
     else:
@@ -1242,20 +1245,34 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     if skipdtype:
         return "%s(%s)" % (class_name, lst)
+
+    # determine typename
+    if issubclass(arr.dtype.type, flexible):
+        if arr.dtype.names:
+            typename = "%s" % str(arr.dtype)
+        else:
+            typename = "'%s'" % str(arr.dtype)
     else:
         typename = arr.dtype.name
-        # Quote typename in the output if it is "complex".
+        # quote typenames which can't be represented as python variable names
         if typename and not (typename[0].isalpha() and typename.isalnum()):
             typename = "'%s'" % typename
 
-        lf = ' '
+    prefix = "{}({},".format(class_name, lst)
+    suffix = "dtype={})".format(typename)
+
+    # compute whether we should put dtype on a new line: Do so if adding the
+    # dtype would extend the last line past max_line_width.
+    # Note: This line gives the correct result even when rfind returns -1.
+    last_line_len = len(prefix) - (prefix.rfind('\n') + 1)
+    spacer = " "
+    if _format_options['legacy'] == '1.13':
         if issubclass(arr.dtype.type, flexible):
-            if arr.dtype.names:
-                typename = "%s" % str(arr.dtype)
-            else:
-                typename = "'%s'" % str(arr.dtype)
-            lf = '\n'+' '*len(class_name + "(")
-        return "%s(%s,%sdtype=%s)" % (class_name, lst, lf, typename)
+            spacer = '\n' + ' '*len(class_name + "(")
+    elif last_line_len + len(suffix) + 1 > max_line_width:
+        spacer = '\n' + ' '*len(class_name + "(")
+
+    return prefix + spacer + suffix
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
