@@ -459,6 +459,21 @@ class TestPrintOptions(object):
                      '1.1234567891234568')
         assert_equal(str(np.complex128(complex(1, np.nan))), '(1+nanj)')
 
+    def test_dtype_linwdith_wrappiing(self):
+        np.set_printoptions(linewidth=75)
+        assert_equal(repr(np.arange(10,20., dtype='f4')),
+            "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.], dtype=float32)")
+        assert_equal(repr(np.arange(10,24., dtype='f4')),
+            "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23.],\n"
+            "      dtype=float32)")
+
+        styp = '<U4' if sys.version_info[0] >= 3 else '|S4'
+        assert_equal(repr(np.ones(3, dtype=styp)),
+            "array(['1', '1', '1'], dtype='{}')".format(styp))
+        assert_equal(repr(np.ones(12, dtype=styp)),
+            ("array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],\n"
+             "      dtype='{}')").format(styp))
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:
