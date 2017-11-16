@@ -4000,8 +4000,70 @@ initialize_casting_tables(void)
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
+static PyNumberMethods stringtype_as_number;
+static PyNumberMethods unicodetype_as_number;
 static void init_basetypes(void);
 
+/* Copied from CPython abstract.c int_from_string*/
+static PyObject*
+int_from_string(PyObject * o) {
+    const char *s; 
+    Py_ssize_t len;
+    char *end;
+    PyObject *x;
+    if (!PyString_Check(o)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "non-string in int_from_string");
+        return NULL;
+    }
+    s = PyString_AS_STRING(o);
+    len = PyString_GET_SIZE(o);
+    x = PyInt_FromString((char*)s, &end, 10);
+    if (x == NULL)
+        return NULL;
+    if (end != s + len) {
+        PyErr_SetString(PyExc_ValueError,
+                        "null byte in argument for int()");
+        Py_DECREF(x);
+        return NULL;
+    }
+    return x;
+};
+
+static PyObject*
+int_from_unicode(PyObject *o) {
+    PyObject *x;
+    Py_UNICODE *s;
+    Py_ssize_t length;
+    char *buffer;
+    if (!PyUnicode_Check(o)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "non-unicode in int_from_unicode");
+        return NULL;
+    }
+    s = PyUnicode_AS_UNICODE(o);
+    length = PyUnicode_GET_SIZE(o);
+    buffer = (char *)PyMem_MALLOC(length+1);
+    if (buffer == NULL)
+        return PyErr_NoMemory();
+
+    if (PyUnicode_EncodeDecimal(s, length, buffer, NULL)) {
+        PyMem_FREE(buffer);
+        return NULL;
+    }
+    x = PyInt_FromString(buffer, NULL, 10);
+    PyMem_FREE(buffer);
+    return x;
+};
+
+static PyObject*
+float_from_string(PyObject* x) {
+#if PY_MAJOR_VERSION >= 3
+    return PyFloat_FromString(x);
+#else
+    return PyFloat_FromString(x, NULL);
+#endif
+}
 
 NPY_NO_EXPORT void
 initialize_numeric_types(void)
@@ -4056,9 +4118,19 @@ initialize_numeric_types(void)
 
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;
+    if (PyString_Type.tp_as_number)
+        stringtype_as_number = *PyString_Type.tp_as_number;
+    stringtype_as_number.nb_int = int_from_string;
+    stringtype_as_number.nb_float = float_from_string;
+    PyStringArrType_Type.tp_as_number = &stringtype_as_number;
 
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
+    if (PyUnicode_Type.tp_as_number)
+        unicodetype_as_number = *PyUnicode_Type.tp_as_number;
+    unicodetype_as_number.nb_int = int_from_unicode;
+    unicodetype_as_number.nb_float = float_from_string;
+    PyUnicodeArrType_Type.tp_as_number = &unicodetype_as_number;
 
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;

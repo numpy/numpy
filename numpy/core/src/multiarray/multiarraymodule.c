@@ -4602,6 +4602,16 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
     DUAL_INHERIT2(String, String, Character);
     DUAL_INHERIT2(Unicode, Unicode, Character);
+/*
+    since PyStringArrType_Type, PyUnicodeArrType_Type have a tp_as_number, all
+    th nb_* functions will be filled in by looking up the mro. They will be
+    erroneously filled by PyGenericArrType_Type's values. Zero out the ones
+    we care about
+ */
+    PyStringArrType_Type.tp_as_number->nb_add = NULL;
+    PyStringArrType_Type.tp_as_number->nb_multiply = NULL;
+    PyUnicodeArrType_Type.tp_as_number->nb_add = NULL;
+    PyUnicodeArrType_Type.tp_as_number->nb_multiply = NULL;
 
     SINGLE_INHERIT(Void, Flexible);
 
