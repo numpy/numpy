@@ -20,6 +20,10 @@ from numpy.testing import (
         )
 from numpy.compat import asbytes, asunicode, long
 
+try:
+    RecursionError
+except NameError:
+    RecursionError = RuntimeError  # python < 3.5
 
 class TestRegression(object):
     def test_invalid_round(self):
@@ -1683,24 +1687,46 @@ class TestRegression(object):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
         a[()] = a
-        assert_raises(TypeError, int, a)
-        assert_raises(TypeError, long, a)
-        assert_raises(TypeError, float, a)
-        assert_raises(TypeError, oct, a)
-        assert_raises(TypeError, hex, a)
+        assert_raises(RecursionError, int, a)
+        assert_raises(RecursionError, long, a)
+        assert_raises(RecursionError, float, a)
+        if sys.version_info.major == 2:
+            # in python 3, this falls back on operator.index, which fails on
+            # on dtype=object
+            assert_raises(RecursionError, oct, a)
+            assert_raises(RecursionError, hex, a)
+        a[()] = None
 
+    def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
-        b = np.array(a, dtype=object)
+        a = np.array(0, dtype=object)
+        b = np.array(0, dtype=object)
         a[()] = b
-        assert_raises(TypeError, int, a)
+        b[()] = a
+        assert_raises(RecursionError, int, a)
         # NumPy has no tp_traverse currently, so circular references
         # cannot be detected. So resolve it:
-        a[()] = 0
+        a[()] = None
 
         # This was causing a to become like the above
         a = np.array(0, dtype=object)
         a[...] += 1
         assert_equal(a, 1)
+
+    def test_object_array_nested(self):
+        # but is fine with a reference to a different array
+        a = np.array(0, dtype=object)
+        b = np.array(0, dtype=object)
+        a[()] = b
+        assert_equal(int(a), int(0))
+        assert_equal(long(a), long(0))
+        assert_equal(float(a), float(0))
+        if sys.version_info.major == 2:
+            # in python 3, this falls back on operator.index, which fails on
+            # on dtype=object
+            assert_equal(oct(a), oct(0))
+            assert_equal(hex(a), hex(0))
+
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
