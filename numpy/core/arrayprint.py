@@ -39,7 +39,7 @@ else:
 
 import numpy as np
 from . import numerictypes as _nt
-from .umath import absolute, not_equal, isnan, isinf
+from .umath import absolute, not_equal, isnan, isinf, isfinite
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, dtype, ndarray)
@@ -707,40 +707,32 @@ class FloatingFormat(object):
         self.fillFormat(data)
 
     def fillFormat(self, data):
-        with errstate(all='ignore'):
-            hasinf = isinf(data)
-            special = isnan(data) | hasinf
-            non_special = data[~special]
-            non_zero = non_special[non_special != 0]
-            abs_non_zero = absolute(non_zero)
-            if len(non_zero) == 0:
-                max_val = 0.
-                min_val = 0.
-                min_val_sgn = 0.
-            else:
-                max_val = np.max(abs_non_zero)
-                min_val = np.min(abs_non_zero)
-                min_val_sgn = np.min(non_zero)
-                if max_val >= 1.e8:
-                    self.exp_format = True
-                if not self.suppress_small and (min_val < 0.0001
-                                           or max_val/min_val > 1000.):
-                    self.exp_format = True
+        # only the finite values are used to compute the number of digits
+        finite_vals = data[isfinite(data)]
 
-        if len(non_special) == 0:
+        # choose exponential mode based on the non-zero finite values:
+        abs_non_zero = absolute(finite_vals[finite_vals != 0])
+        if len(abs_non_zero) != 0:
+            max_val = np.max(abs_non_zero)
+            min_val = np.min(abs_non_zero)
+            if max_val >= 1.e8 or (not self.suppress_small and
+                    (min_val < 0.0001 or max_val/min_val > 1000.)):
+                self.exp_format = True
+
+        # do a first pass of printing all the numbers, to determine sizes
+        if len(finite_vals) == 0:
             self.pad_left = 0
             self.pad_right = 0
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
         elif self.exp_format:
-            # first pass printing to determine sizes
             trim, unique = '.', True
             if self.floatmode == 'fixed' or self._legacy == '1.13':
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
                                unique=unique, trim=trim, sign=self.sign == '+')
-                    for x in non_special)
+                    for x in finite_vals)
             frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
             int_part, frac_part = zip(*(s.split('.') for s in frac_strs))
             self.exp_size = max(len(s) for s in exp_strs) - 1
@@ -751,10 +743,10 @@ class FloatingFormat(object):
             # for back-compatibility with np 1.13, use two spaces and full prec
             if self._legacy == '1.13':
                 # undo addition of sign pos below
-                will_add_sign = all(non_special > 0) and self.sign == ' '
+                will_add_sign = all(finite_vals > 0) and self.sign == ' '
                 self.pad_left = 3 - will_add_sign
             else:
-                # this should be only 1 or two. Can be calculated from sign.
+                # this should be only 1 or 2. Can be calculated from sign.
                 self.pad_left = max(len(s) for s in int_part)
             # pad_right is only needed for nan length calculation
             self.pad_right = self.exp_size + 2 + self.precision
@@ -769,7 +761,7 @@ class FloatingFormat(object):
                                        fractional=True,
                                        unique=unique, trim=trim,
                                        sign=self.sign == '+')
-                    for x in non_special)
+                    for x in finite_vals)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
             self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
@@ -784,11 +776,12 @@ class FloatingFormat(object):
                 self.trim = '.'
 
         # account for sign = ' ' by adding one to pad_left
-        if all(non_special >= 0) and self.sign == ' ':
+        if all(finite_vals >= 0) and self.sign == ' ':
             self.pad_left += 1
 
-        if any(special):
-            neginf = self.sign != '-' or any(data[hasinf] < 0)
+        # if there are non-finite values, may need to increase pad_left
+        if data.size != finite_vals.size:
+            neginf = self.sign != '-' or any(data[isinf(data)] < 0)
             nanlen = len(_format_options['nanstr'])
             inflen = len(_format_options['infstr']) + neginf
             offset = self.pad_right + 1  # +1 for decimal pt
@@ -841,7 +834,7 @@ class LongFloatFormat(FloatingFormat):
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
     """
-    Format a floating-point scalar as a string in scientific notation.
+    Format a floating-point scalar as a decimal string in scientific notation.
 
     Provides control over rounding, trimming and padding. Uses and assumes
     IEEE unbiased rounding. Uses the "Dragon4" algorithm.
@@ -908,7 +901,7 @@ def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
                             pad_left=None, pad_right=None):
     """
-    Format a floating-point scalar as a string in positional notation.
+    Format a floating-point scalar as a decimal string in positional notation.
 
     Provides control over rounding, trimming and padding. Uses and assumes
     IEEE unbiased rounding. Uses the "Dragon4" algorithm.
