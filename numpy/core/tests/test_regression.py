@@ -2234,6 +2234,15 @@ class TestRegression(object):
             item2 = copy.copy(item)
             assert_equal(item, item2)
 
+    def test_void_item_memview(self):
+        va = np.zeros(10, 'V4')
+        # for now, there is just a futurewarning
+        assert_warns(FutureWarning, va[:1].item)
+        # in the future, test we got a bytes copy:
+        #x = va[:1].item()
+        #va[0] = b'\xff\xff\xff\xff'
+        #del va
+        #assert_equal(x, b'\x00\x00\x00\x00')
 
 if __name__ == "__main__":
     run_module_suite()

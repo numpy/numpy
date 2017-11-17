@@ -33,6 +33,7 @@ from ``np.array([1, 2, 3])[np.True_]``. This behavior is deprecated.
   empty, use ``array.size > 0``.
 * Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
   ``minlength=0`` should be used.
+
 ``np.fromstring`` should always be passed a ``sep`` argument
 ------------------------------------------------------------
 Without this argument, this falls back on a broken version of `np.frombuffer`
@@ -65,6 +66,13 @@ dimensions. A FutureWarning is given if the parameter is not passed explicitly.
   writeable. Currently it returns a non-writeable copy. See gh-7054 for a
   discussion of the issue.
 
+unstructured void array's ``.item`` method will return a bytes object
+---------------------------------------------------------------------
+In the future calling ``.item()`` on arrays or scalars of ``np.void`` datatype
+will return a ``bytes`` object instead of a buffer or int array, the same as
+returned by ``bytes(void_scalar)``. This may affect code which assumed the
+return value was mutable, which will no longer be the case. A ``FutureWarning``
+is now issued when this would occur.
 
 
 Build System Changes
