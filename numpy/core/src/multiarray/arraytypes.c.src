@@ -730,6 +730,21 @@ VOID_getitem(void *input, void *vap)
         return (PyObject *)ret;
     }
 
+    /* 2017-11-26, 1.14 */
+    if (DEPRECATE_FUTUREWARNING(
+            "the `.item()` method of unstructured void types will return an "
+            "immutable `bytes` object in the near future, the same as "
+            "returned by `bytes(void_obj)`, instead of the mutable memoryview "
+            "or integer array returned in numpy 1.13.") < 0) {
+        return NULL;
+    }
+    /*
+     * In the future all the code below will be replaced by
+     *
+     *       For unstructured void types like V4, return a bytes object (copy).
+     *     return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
+     */
+
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
             || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
         PyErr_SetString(PyExc_ValueError,
