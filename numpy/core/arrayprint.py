@@ -177,7 +177,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         If set to the string `'1.13'` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. If set to
-        `False`, disables legacy mode.
+        `False`, disables legacy mode. Unrecognized strings will be ignored
+        with a warning for forward compatibility.
+        
+        .. versionadded:: 1.14.0
 
     See Also
     --------
@@ -534,7 +537,10 @@ def array2string(a, max_line_width=None, precision=None,
         If set to the string `'1.13'` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
         position of floats and different behavior for 0d arrays. If set to
-        `False`, disables legacy mode.
+        `False`, disables legacy mode. Unrecognized strings will be ignored
+        with a warning for forward compatibility.
+        
+        .. versionadded:: 1.14.0
 
     Returns
     -------
