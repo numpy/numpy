@@ -208,6 +208,37 @@ class TestSetOps(object):
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
 
+    def test_in1d_first_array_is_object(self):
+        ar1 = [None]
+        ar2 = np.array([1]*10)
+        expected = np.array([False])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+
+    def test_in1d_second_array_is_object(self):
+        ar1 = 1
+        ar2 = np.array([None]*10)
+        expected = np.array([False])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+
+    def test_in1d_both_arrays_are_object(self):
+        ar1 = [None]
+        ar2 = np.array([None]*10)
+        expected = np.array([True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+
+    def test_in1d_both_arrays_have_structured_dtype(self):
+        # Test arrays of a structured data type containing an integer field
+        # and a field of dtype `object` allowing for arbitrary Python objects
+        dt = np.dtype([('field1', int), ('field2', object)])
+        ar1 = np.array([(1, None)], dtype=dt)
+        ar2 = np.array([(1, None)]*10, dtype=dt)
+        expected = np.array([True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
