@@ -37,6 +37,8 @@ python:
   - 3.6
 matrix:
   include:
+    - python: pypy3
+      env: USE_WHEEL=1 RUN_FULL_TESTS=1
     - python: 2.7
       env: USE_CHROOT=1 ARCH=i386 DIST=zesty PYTHON=2.7
       sudo: true
