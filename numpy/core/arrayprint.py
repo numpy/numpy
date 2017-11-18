@@ -1137,11 +1137,43 @@ def _void_scalar_repr(x):
     return StructureFormat.from_data(array(x), **_format_options)(x)
 
 
-_typelessdata = [int_, float_, complex_]
+_typelessdata = [int_, float_, complex_, bool_]
 if issubclass(intc, int):
     _typelessdata.append(intc)
 if issubclass(longlong, int):
     _typelessdata.append(longlong)
+
+
+def dtype_is_implied(dtype):
+    """
+    Determine if the given dtype is implied by the representation of its values.
+
+    Parameters
+    ----------
+    dtype : dtype
+        Data type
+
+    Returns
+    -------
+    implied : bool
+        True if the dtype is implied by the representation of its values.
+
+    Examples
+    --------
+    >>> np.core.arrayprint.dtype_is_implied(int)
+    True
+    >>> np.array([1, 2, 3], int)
+    array([1, 2, 3])
+    >>> np.core.arrayprint.dtype_is_implied(np.int8)
+    False
+    >>> np.array([1, 2, 3], np.int8)
+    array([1, 2, 3], dtype=np.int8)
+    """
+    dtype = np.dtype(dtype)
+    if _format_options['legacy'] and dtype.type == bool_:
+        return False
+    return dtype.type in _typelessdata
+
 
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     """
@@ -1199,7 +1231,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
 
-    skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
+    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
 
     if skipdtype:
         return "%s(%s)" % (class_name, lst)

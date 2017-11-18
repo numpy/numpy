@@ -133,11 +133,11 @@ add_newdoc('numpy', 'NZERO',
     0.0
 
     >>> np.isfinite([np.NZERO])
-    array([ True], dtype=bool)
+    array([ True])
     >>> np.isnan([np.NZERO])
-    array([False], dtype=bool)
+    array([False])
     >>> np.isinf([np.NZERO])
-    array([False], dtype=bool)
+    array([False])
 
     """)
 
@@ -204,11 +204,11 @@ add_newdoc('numpy', 'PZERO',
     -0.0
 
     >>> np.isfinite([np.PZERO])
-    array([ True], dtype=bool)
+    array([ True])
     >>> np.isnan([np.PZERO])
-    array([False], dtype=bool)
+    array([False])
     >>> np.isinf([np.PZERO])
-    array([False], dtype=bool)
+    array([False])
 
     """)
 

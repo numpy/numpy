@@ -2333,7 +2333,7 @@ def extract(condition, arr):
     >>> condition
     array([[ True, False, False,  True],
            [False, False,  True, False],
-           [False,  True, False, False]], dtype=bool)
+           [False,  True, False, False]])
     >>> np.extract(condition, arr)
     array([0, 3, 6, 9])
 

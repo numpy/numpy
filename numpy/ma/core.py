@@ -1383,13 +1383,13 @@ def getmask(a):
           fill_value=999999)
     >>> ma.getmask(a)
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Equivalently use the `MaskedArray` `mask` attribute.
 
     >>> a.mask
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Result when mask == `nomask`
 
@@ -1447,7 +1447,7 @@ def getmaskarray(arr):
           fill_value=999999)
     >>> ma.getmaskarray(a)
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Result when mask == ``nomask``
 
@@ -1461,7 +1461,7 @@ def getmaskarray(arr):
           fill_value=999999)
     >>> >ma.getmaskarray(b)
     array([[False, False],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     """
     mask = getmask(arr)
@@ -1513,7 +1513,7 @@ def is_mask(m):
     False
     >>> m = np.array([False, True, False])
     >>> m
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
     >>> ma.is_mask(m)
     True
 
@@ -1581,13 +1581,13 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> import numpy.ma as ma
     >>> m = [True, False, True, True]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
     >>> m = [1, 0, 1, 1]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
     >>> m = [1, 0, 2, -3]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
 
     Effect of the `shrink` parameter.
 
@@ -1597,7 +1597,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> ma.make_mask(m)
     False
     >>> ma.make_mask(m, shrink=False)
-    array([False, False, False, False], dtype=bool)
+    array([False, False, False, False])
 
     Using a flexible `dtype`.
 
@@ -1667,7 +1667,7 @@ def make_mask_none(newshape, dtype=None):
     --------
     >>> import numpy.ma as ma
     >>> ma.make_mask_none((3,))
-    array([False, False, False], dtype=bool)
+    array([False, False, False])
 
     Defining a more complex dtype.
 
@@ -1720,7 +1720,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
     >>> m1 = np.ma.make_mask([0, 1, 1, 0])
     >>> m2 = np.ma.make_mask([1, 0, 0, 0])
     >>> np.ma.mask_or(m1, m2)
-    array([ True,  True,  True, False], dtype=bool)
+    array([ True,  True,  True, False])
 
     """
 
@@ -1770,18 +1770,18 @@ def flatten_mask(mask):
 
     Examples
     --------
-    >>> mask = np.array([0, 0, 1], dtype=bool)
+    >>> mask = np.array([0, 0, 1])
     >>> flatten_mask(mask)
-    array([False, False,  True], dtype=bool)
+    array([False, False,  True])
 
     >>> mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
     >>> flatten_mask(mask)
-    array([False, False, False,  True], dtype=bool)
+    array([False, False, False,  True])
 
     >>> mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
     >>> mask = np.array([(0, (0, 0)), (0, (0, 1))], dtype=mdtype)
     >>> flatten_mask(mask)
-    array([False, False, False, False, False,  True], dtype=bool)
+    array([False, False, False, False, False,  True])
 
     """
 
@@ -3551,7 +3551,7 @@ class MaskedArray(ndarray):
         >>> x = np.ma.array([[1,2 ], [3, 4]], mask=[0]*4)
         >>> x.mask
         array([[False, False],
-               [False, False]], dtype=bool)
+               [False, False]])
         >>> x.shrink_mask()
         >>> x.mask
         False

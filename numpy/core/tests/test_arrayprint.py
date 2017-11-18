@@ -316,15 +316,15 @@ class TestPrintOptions(object):
 
     def test_bool_spacing(self):
         assert_equal(repr(np.array([True,  True])),
-                     'array([ True,  True], dtype=bool)')
+                     'array([ True,  True])')
         assert_equal(repr(np.array([True, False])),
-                     'array([ True, False], dtype=bool)')
+                     'array([ True, False])')
         assert_equal(repr(np.array([True])),
-                     'array([ True], dtype=bool)')
+                     'array([ True])')
         assert_equal(repr(np.array(True)),
-                     'array(True, dtype=bool)')
+                     'array(True)')
         assert_equal(repr(np.array(False)),
-                     'array(False, dtype=bool)')
+                     'array(False)')
 
     def test_sign_spacing(self):
         a = np.arange(4.)

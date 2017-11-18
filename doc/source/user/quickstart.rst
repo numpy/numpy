@@ -293,7 +293,7 @@ created and filled with the result.
     >>> 10*np.sin(a)
     array([ 9.12945251, -9.88031624,  7.4511316 , -2.62374854])
     >>> a<35
-    array([ True, True, False, False], dtype=bool)
+    array([ True, True, False, False])
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
@@ -1176,7 +1176,7 @@ boolean arrays that have *the same shape* as the original array::
     >>> b                                          # b is a boolean with a's shape
     array([[False, False, False, False],
            [False,  True,  True,  True],
-           [ True,  True,  True,  True]], dtype=bool)
+           [ True,  True,  True,  True]])
     >>> a[b]                                       # 1d array with the selected elements
     array([ 5,  6,  7,  8,  9, 10, 11])
 

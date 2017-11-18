@@ -435,12 +435,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     >>> states = [0, 2]
     >>> mask = np.in1d(test, states)
     >>> mask
-    array([ True, False,  True, False,  True], dtype=bool)
+    array([ True, False,  True, False,  True])
     >>> test[mask]
     array([0, 2, 0])
     >>> mask = np.in1d(test, states, invert=True)
     >>> mask
-    array([False,  True, False,  True, False], dtype=bool)
+    array([False,  True, False,  True, False])
     >>> test[mask]
     array([1, 5])
     """
@@ -552,13 +552,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> mask = np.isin(element, test_elements)
     >>> mask
     array([[ False,  True],
-           [ True,  False]], dtype=bool)
+           [ True,  False]])
     >>> element[mask]
     array([2, 4])
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
-           [ False, True]], dtype=bool)
+           [ False, True]])
     >>> element[mask]
     array([0, 6])
 
@@ -568,13 +568,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> test_set = {1, 2, 4, 8}
     >>> np.isin(element, test_set)
     array([[ False, False],
-           [ False, False]], dtype=bool)
+           [ False, False]])
 
     Casting the set to a list gives the expected result:
 
     >>> np.isin(element, list(test_set))
     array([[ False,  True],
-           [ True,  False]], dtype=bool)
+           [ True,  False]])
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,

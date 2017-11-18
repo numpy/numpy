@@ -431,7 +431,7 @@ also supports boolean arrays and will work without any surprises.
     ...            [ 9, 10, 11]])
     >>> rows = (x.sum(-1) % 2) == 0
     >>> rows
-    array([False,  True, False,  True], dtype=bool)
+    array([False,  True, False,  True])
     >>> columns = [0, 2]
     >>> x[np.ix_(rows, columns)]
     array([[ 3,  5],
