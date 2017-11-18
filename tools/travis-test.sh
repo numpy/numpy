@@ -14,7 +14,9 @@ elif [ -r /usr/lib/*/libeatmydata.so ]; then
   export LD_PRELOAD='/usr/$LIB/libeatmydata.so'
 fi
 
-source builds/venv/bin/activate
+if [ -f builds/venv/bin/activate ]; then
+  source builds/venv/bin/activate
+fi
 
 # travis venv tests override python
 PYTHON=${PYTHON:-python}
