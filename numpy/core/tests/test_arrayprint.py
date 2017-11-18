@@ -354,6 +354,11 @@ class TestPrintOptions(object):
 
         assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
+    def test_float_overflow_nowarn(self):
+        # make sure internal computations in FloatingFormat don't
+        # warn about overflow
+        repr(np.array([1e4, 0.1], dtype='f2'))
+
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')
         assert_equal(repr(a), "array([(1., 1.), (1., 1.)],\n"
