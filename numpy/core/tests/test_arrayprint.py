@@ -288,8 +288,7 @@ class TestPrintOptions(object):
         assert_warns(DeprecationWarning, np.array2string,
                                          np.array(1.), style=repr)
         # but not in legacy mode
-        np.set_printoptions(legacy=True)
-        np.array2string(np.array(1.), style=repr)
+        np.array2string(np.array(1.), style=repr, legacy='1.13')
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
@@ -334,6 +333,7 @@ class TestPrintOptions(object):
         assert_equal(repr(a), 'array([0., 1., 2., 3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
         assert_equal(repr(b), 'array([1.234e+09])')
+        assert_equal(repr(np.array([0.])), 'array([0.])')
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
@@ -345,13 +345,19 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array(1.)), 'array(+1.)')
         assert_equal(repr(b), 'array([+1.234e+09])')
 
-        np.set_printoptions(legacy=True)
+        np.set_printoptions(legacy='1.13')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(b),  'array([  1.23400000e+09])')
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')
         assert_equal(repr(np.array(1.)), 'array(1.0)')
+        assert_equal(repr(np.array([0.])), 'array([ 0.])')
 
         assert_raises(TypeError, np.set_printoptions, wrongarg=True)
+
+    def test_float_overflow_nowarn(self):
+        # make sure internal computations in FloatingFormat don't
+        # warn about overflow
+        repr(np.array([1e4, 0.1], dtype='f2'))
 
     def test_sign_spacing_structured(self):
         a = np.ones(2, dtype='f,f')
@@ -420,6 +426,7 @@ class TestPrintOptions(object):
         assert_equal(repr(w[::5]),
             "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
         assert_equal(repr(wp), "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
+        assert_equal(repr(np.zeros(3)), "array([0.0000, 0.0000, 0.0000])")
         # for larger precision, representation error becomes more apparent:
         np.set_printoptions(floatmode='fixed', precision=8)
         assert_equal(repr(z),

@@ -39,7 +39,7 @@ else:
 
 import numpy as np
 from . import numerictypes as _nt
-from .umath import absolute, not_equal, isnan, isinf
+from .umath import absolute, not_equal, isnan, isinf, isfinite
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, dtype, ndarray)
@@ -86,6 +86,10 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
     if sign not in [None, '-', '+', ' ']:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
+
+    if legacy not in [None, False, '1.13']:
+        warnings.warn("legacy printing option can currently only be '1.13' or "
+                      "`False`", stacklevel=3)
 
     return options
 
@@ -169,10 +173,14 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
-    legacy : boolean, optional
-        If True, enables legacy printing mode, which approximates numpy 1.13
-        print output by including a space in the sign position of floats and
-        different behavior for 0d arrays.
+    legacy : string or `False`, optional
+        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        approximates numpy 1.13 print output by including a space in the sign
+        position of floats and different behavior for 0d arrays. If set to
+        `False`, disables legacy mode. Unrecognized strings will be ignored
+        with a warning for forward compatibility.
+        
+        .. versionadded:: 1.14.0
 
     See Also
     --------
@@ -525,11 +533,14 @@ def array2string(a, max_line_width=None, precision=None,
                     but if every element in the array can be uniquely
                     represented with an equal number of fewer digits, use that
                     many digits for all elements.
-    legacy : boolean, optional
-        If True, enables legacy printing mode, which overrides the `sign`
-        option.  Legacy printing mode approximates numpy 1.13 print output,
-        which includes a space in the sign position of floats and different
-        behavior for 0d arrays.
+    legacy : string or `False`, optional
+        If set to the string `'1.13'` enables 1.13 legacy printing mode. This
+        approximates numpy 1.13 print output by including a space in the sign
+        position of floats and different behavior for 0d arrays. If set to
+        `False`, disables legacy mode. Unrecognized strings will be ignored
+        with a warning for forward compatibility.
+        
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -581,13 +592,13 @@ def array2string(a, max_line_width=None, precision=None,
     options = _format_options.copy()
     options.update(overrides)
 
-    if options['legacy']:
+    if options['legacy'] == '1.13':
         if a.shape == () and not a.dtype.names:
             return style(a.item())
     elif style is not np._NoValue:
         # Deprecation 11-9-2017  v1.14
         warnings.warn("'style' argument is deprecated and no longer functional"
-                      " except in 'legacy' mode",
+                      " except in 1.13 'legacy' mode",
                       DeprecationWarning, stacklevel=3)
 
     # treat as a null array if any of shape elements == 0
@@ -675,14 +686,14 @@ def _formatArray(a, format_function, rank, max_line_len,
 
 class FloatingFormat(object):
     """ Formatter for subtypes of np.floating """
-    def __init__(self, data, precision, floatmode, suppress_small, sign=False, **kwarg):
+    def __init__(self, data, precision, floatmode, suppress_small, sign=False,
+                 **kwarg):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self._legacy = False
-        if kwarg.get('legacy', False):
-            self._legacy = True
+        self._legacy = kwarg.get('legacy', False)
+        if self._legacy == '1.13':
             sign = '-' if data.shape == () else ' '
 
         self.floatmode = floatmode
@@ -693,6 +704,7 @@ class FloatingFormat(object):
                 raise ValueError(
                     "precision must be >= 0 in {} mode".format(floatmode))
             self.precision = precision
+
         self.suppress_small = suppress_small
         self.sign = sign
         self.exp_format = False
@@ -701,40 +713,33 @@ class FloatingFormat(object):
         self.fillFormat(data)
 
     def fillFormat(self, data):
-        with errstate(all='ignore'):
-            hasinf = isinf(data)
-            special = isnan(data) | hasinf
-            valid = not_equal(data, 0) & ~special
-            non_zero = data[valid]
-            abs_non_zero = absolute(non_zero)
-            if len(non_zero) == 0:
-                max_val = 0.
-                min_val = 0.
-                min_val_sgn = 0.
-            else:
-                max_val = np.max(abs_non_zero)
-                min_val = np.min(abs_non_zero)
-                min_val_sgn = np.min(non_zero)
-                if max_val >= 1.e8:
-                    self.exp_format = True
-                if not self.suppress_small and (min_val < 0.0001
-                                           or max_val/min_val > 1000.):
+        # only the finite values are used to compute the number of digits
+        finite_vals = data[isfinite(data)]
+
+        # choose exponential mode based on the non-zero finite values:
+        abs_non_zero = absolute(finite_vals[finite_vals != 0])
+        if len(abs_non_zero) != 0:
+            max_val = np.max(abs_non_zero)
+            min_val = np.min(abs_non_zero)
+            with errstate(over='ignore'):  # division can overflow
+                if max_val >= 1.e8 or (not self.suppress_small and
+                        (min_val < 0.0001 or max_val/min_val > 1000.)):
                     self.exp_format = True
 
-        if len(non_zero) == 0:
+        # do a first pass of printing all the numbers, to determine sizes
+        if len(finite_vals) == 0:
             self.pad_left = 0
             self.pad_right = 0
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
         elif self.exp_format:
-            # first pass printing to determine sizes
             trim, unique = '.', True
-            if self.floatmode == 'fixed' or self._legacy:
+            if self.floatmode == 'fixed' or self._legacy == '1.13':
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
                                unique=unique, trim=trim, sign=self.sign == '+')
-                    for x in non_zero)
+                    for x in finite_vals)
             frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
             int_part, frac_part = zip(*(s.split('.') for s in frac_strs))
             self.exp_size = max(len(s) for s in exp_strs) - 1
@@ -743,12 +748,14 @@ class FloatingFormat(object):
             self.precision = max(len(s) for s in frac_part)
 
             # for back-compatibility with np 1.13, use two spaces and full prec
-            if self._legacy:
-                self.pad_left = 2 + (not (all(non_zero > 0) and self.sign == ' '))
+            if self._legacy == '1.13':
+                # undo addition of sign pos below
+                will_add_sign = all(finite_vals > 0) and self.sign == ' '
+                self.pad_left = 3 - will_add_sign
             else:
-                # this should be only 1 or two. Can be calculated from sign.
+                # this should be only 1 or 2. Can be calculated from sign.
                 self.pad_left = max(len(s) for s in int_part)
-            # pad_right is not used to print, but needed for nan length calculation
+            # pad_right is only needed for nan length calculation
             self.pad_right = self.exp_size + 2 + self.precision
 
             self.unique = False
@@ -761,7 +768,7 @@ class FloatingFormat(object):
                                        fractional=True,
                                        unique=unique, trim=trim,
                                        sign=self.sign == '+')
-                    for x in non_zero)
+                    for x in finite_vals)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
             self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
@@ -776,11 +783,12 @@ class FloatingFormat(object):
                 self.trim = '.'
 
         # account for sign = ' ' by adding one to pad_left
-        if len(non_zero) > 0 and all(non_zero > 0) and self.sign == ' ':
+        if all(finite_vals >= 0) and self.sign == ' ':
             self.pad_left += 1
 
-        if any(special):
-            neginf = self.sign != '-' or any(data[hasinf] < 0)
+        # if there are non-finite values, may need to increase pad_left
+        if data.size != finite_vals.size:
+            neginf = self.sign != '-' or any(data[isinf(data)] < 0)
             nanlen = len(_format_options['nanstr'])
             inflen = len(_format_options['infstr']) + neginf
             offset = self.pad_right + 1  # +1 for decimal pt
@@ -833,7 +841,7 @@ class LongFloatFormat(FloatingFormat):
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
     """
-    Format a floating-point scalar as a string in scientific notation.
+    Format a floating-point scalar as a decimal string in scientific notation.
 
     Provides control over rounding, trimming and padding. Uses and assumes
     IEEE unbiased rounding. Uses the "Dragon4" algorithm.
@@ -900,7 +908,7 @@ def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
                             pad_left=None, pad_right=None):
     """
-    Format a floating-point scalar as a string in positional notation.
+    Format a floating-point scalar as a decimal string in positional notation.
 
     Provides control over rounding, trimming and padding. Uses and assumes
     IEEE unbiased rounding. Uses the "Dragon4" algorithm.
@@ -1182,7 +1190,8 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:
         class_name = "array"
 
-    if _format_options['legacy'] and arr.shape == () and not arr.dtype.names:
+    if (_format_options['legacy'] == '1.13' and
+            arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
     elif arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
@@ -1243,7 +1252,8 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
-    if _format_options['legacy'] and a.shape == () and not a.dtype.names:
+    if (_format_options['legacy'] == '1.13' and
+            a.shape == () and not a.dtype.names):
         return str(a.item())
 
     # the str of 0d arrays is a special case: It should appear like a scalar,
