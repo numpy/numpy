@@ -721,9 +721,10 @@ class FloatingFormat(object):
         if len(abs_non_zero) != 0:
             max_val = np.max(abs_non_zero)
             min_val = np.min(abs_non_zero)
-            if max_val >= 1.e8 or (not self.suppress_small and
-                    (min_val < 0.0001 or max_val/min_val > 1000.)):
-                self.exp_format = True
+            with errstate(over='ignore'):  # division can overflow
+                if max_val >= 1.e8 or (not self.suppress_small and
+                        (min_val < 0.0001 or max_val/min_val > 1000.)):
+                    self.exp_format = True
 
         # do a first pass of printing all the numbers, to determine sizes
         if len(finite_vals) == 0:
