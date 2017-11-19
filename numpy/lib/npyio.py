@@ -734,7 +734,7 @@ def _getconv(dtype):
     def floatconv(x):
         x.lower()
         if '0x' in x:
-            return float.fromhex(asstr(x))
+            return float.fromhex(x)
         return float(x)
 
     typ = dtype.type
@@ -782,13 +782,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         each row will be interpreted as an element of the array.  In this
         case, the number of columns used must match the number of fields in
         the data-type.
-    comments : str or sequence, optional
+    comments : str or sequence of str, optional
         The characters or list of characters used to indicate the start of a
-        comment;
-        default: '#'.
+        comment. For backwards compatibility, byte strings will be decoded as
+        'latin1'. The default is '#'.
     delimiter : str, optional
-        The string used to separate values.  By default, this is any
-        whitespace.
+        The string used to separate values. For backwards compatibility, byte
+        strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict, optional
         A dictionary mapping column number to a function that will convert
         that column to a float.  E.g., if column 0 is a date string:
@@ -797,18 +797,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
-
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
         usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
 
-        .. versionadded:: 1.11.0
-
-        Also when a single column has to be read it is possible to use
-        an integer instead of a tuple. E.g ``usecols = 3`` reads the
-        fourth column the same way as `usecols = (3,)`` would.
-
+        .. versionchanged:: 1.11.0
+            When a single column has to be read it is possible to use
+            an integer instead of a tuple. E.g ``usecols = 3`` reads the
+            fourth column the same way as `usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -877,12 +874,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if comments is not None:
         if isinstance(comments, (basestring, bytes)):
             comments = [comments]
-
         comments = [_decode_line(x) for x in comments]
-
         # Compile regex for comments beforehand
         comments = (re.escape(comment) for comment in comments)
         regex_comments = re.compile('|'.join(comments))
+
+    if delimiter is not None:
+        delimiter = _decode_line(delimiter)
+
     user_converters = converters
 
     if encoding == 'bytes':
@@ -1071,7 +1070,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Unused converter specified
                     continue
             if byte_converters:
-                # converters may use decode to workaround numpy's oldd behaviour,
+                # converters may use decode to workaround numpy's old behaviour,
                 # so encode the string again before passing to the user converter
                 def tobytes_first(x, conv):
                     if type(x) is bytes:
@@ -1181,9 +1180,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         ``numpy.loadtxt``.
 
         .. versionadded:: 1.7.0
-    encoding : str, optional
+    encoding : {None, str}, optional
         Encoding used to encode the outputfile. Does not apply to output
-        streams.
+        streams. If the encoding is something other than 'bytes' or 'latin1'
+        you will not be able to load the file in NumPy versions < 1.14. Default
+        is 'latin1'.
 
         .. versionadded:: 1.14.0
 
@@ -1908,7 +1909,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if conv is bytes:
             user_conv = asbytes
         elif byte_converters:
-            # converters may use decode to workaround numpy's oldd behaviour,
+            # converters may use decode to workaround numpy's old behaviour,
             # so encode the string again before passing to the user converter
             def tobytes_first(x, conv):
                 if type(x) is bytes:
@@ -1927,7 +1928,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_converters.update(uc_update)
 
     # Fixme: possible error as following variable never used.
-    #miss_chars = [_.missing_values for _ in converters]
+    # miss_chars = [_.missing_values for _ in converters]
 
     # Initialize the output lists ...
     # ... rows
@@ -2041,39 +2042,38 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         strcolidx = [i for (i, v) in enumerate(column_types)
                      if v == np.unicode_]
 
-        typestr = 'U'
+        type_str = np.unicode_
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
             warnings.warn(
-                "Reading strings without specifying the encoding argument is "
-                "deprecated. Set encoding, use None for the system default.",
+                "Reading unicode strings without specifying the encoding "
+                "argument is deprecated. Set the encoding, use None for the "
+                "system default.",
                 np.VisibleDeprecationWarning, stacklevel=2)
+            def encode_unicode_cols(row_tup):
+                row = list(row_tup)
+                for i in strcolidx:
+                    row[i] = row[i].encode('latin1')
+                return tuple(row)
+
             try:
-                for j in range(len(data)):
-                    row = list(data[j])
-                    for i in strcolidx:
-                        row[i] = row[i].encode('latin1')
-                    data[j] = tuple(row)
-                typestr = 'S'
+                data = [encode_unicode_cols(r) for r in data]
+                type_str = np.bytes_
             except UnicodeEncodeError:
-                # we must use unicode, revert encoding
-                for k in range(0, j + 1):
-                    row = list(data[k])
-                    for i in strcolidx:
-                        if isinstance(row[i], bytes):
-                            row[i] = row[i].decode('latin1')
-                    data[k] = tuple(row)
+                pass
+
 
         # ... and take the largest number of chars.
         for i in strcolidx:
-            column_types[i] = "|%s%i" % (typestr, max(len(row[i]) for row in data))
+            max_line_length = max(len(row[i]) for row in data)
+            column_types[i] = np.dtype((type_str, max_line_length))
         #
         if names is None:
             # If the dtype is uniform, don't define names, else use ''
             base = set([c.type for c in converters if c._checked])
             if len(base) == 1:
                 if strcolidx:
-                    (ddtype, mdtype) = (typestr, bool)
+                    (ddtype, mdtype) = (type_str, bool)
                 else:
                     (ddtype, mdtype) = (list(base)[0], bool)
             else:
@@ -2148,7 +2148,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Try to take care of the missing data we missed
     names = output.dtype.names
     if usemask and names:
-        for (name, conv) in zip(names or (), converters):
+        for (name, conv) in zip(names, converters):
             missing_values = [conv(_) for _ in conv.missing_values
                               if _ != '']
             for mval in missing_values:

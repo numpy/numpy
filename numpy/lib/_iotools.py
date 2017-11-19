@@ -18,7 +18,22 @@ else:
 
 
 def _decode_line(line, encoding=None):
-    """ decode bytes from binary input streams, default to latin1 """
+    """Decode bytes from binary input streams.
+
+    Defaults to decoding from 'latin1'. That differs from the behavior of
+    np.compat.asunicode that decodes from 'ascii'.
+
+    Parameters
+    ----------
+    line : str or bytes
+         Line to be decoded.
+
+    Returns
+    -------
+    decoded_line : unicode
+         Unicode in Python 2, a str (unicode) in Python 3.
+
+    """
     if type(line) is bytes:
         if encoding is None:
             line = line.decode('latin1')
@@ -510,8 +525,10 @@ class StringConverter(object):
         Value to return by default, that is, when the string to be
         converted is flagged as missing. If not given, `StringConverter`
         tries to supply a reasonable default value.
-    missing_values : sequence of str, optional
-        Sequence of strings indicating a missing value.
+    missing_values : {None, sequence of str}, optional
+        ``None`` or sequence of strings indicating a missing value. If ``None``
+        then missing values are indicated by empty entries. The default is
+        ``None``.
     locked : bool, optional
         Whether the StringConverter should be locked to prevent automatic
         upgrade or not. Default is False.
@@ -813,8 +830,9 @@ class StringConverter(object):
             A string representing a standard input value of the converter.
             This string is used to help defining a reasonable default
             value.
-        missing_values : sequence of str, optional
-            Sequence of strings indicating a missing value.
+        missing_values : {sequence of str, None}, optional
+            Sequence of strings indicating a missing value. If ``None``, then
+            the existing `missing_values` are cleared. The default is `''`.
         locked : bool, optional
             Whether the StringConverter should be locked to prevent
             automatic upgrade or not. Default is False.
@@ -828,6 +846,7 @@ class StringConverter(object):
         """
         self.func = func
         self._locked = locked
+
         # Don't reset the default to None if we can avoid it
         if default is not None:
             self.default = default
@@ -838,15 +857,18 @@ class StringConverter(object):
             except (TypeError, ValueError):
                 tester = None
             self.type = self._dtypeortype(self._getdtype(tester))
-        # Add the missing values to the existing set
-        if missing_values is not None:
-            if isinstance(missing_values, basestring):
-                self.missing_values.add(missing_values)
-            elif hasattr(missing_values, '__iter__'):
-                for val in missing_values:
-                    self.missing_values.add(val)
+
+        # Add the missing values to the existing set or clear it.
+        if missing_values is None:
+            # Clear all missing values even though the ctor initializes it to
+            # {''} when the argument is None.
+            self.missing_values = {}
         else:
-            self.missing_values = []
+            if not np.iterable(missing_values):
+                missing_values = [missing_values]
+            if not all(isinstance(v, basestring) for v in missing_values):
+                raise TypeError("missing_values must be strings or unicode")
+            self.missing_values.update(missing_values)
 
 
 def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
