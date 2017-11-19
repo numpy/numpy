@@ -17,6 +17,9 @@ from numpy.ma.core import (
     )
 # from numpy.ma.core import (
 
+def assert_startswith(a, b):
+    # produces a better error message than assert_(a.startswith(b))
+    assert_equal(a[:len(b)], b)
 
 class SubArray(np.ndarray):
     # Defines a generic np.ndarray subclass, that stores some metadata
@@ -336,11 +339,11 @@ class TestSubclassing(object):
         and 'array' for np.ndarray"""
         x = np.arange(5)
         mx = masked_array(x, mask=[True, False, True, False, False])
-        assert_(repr(mx).startswith('masked_array'))
+        assert_startswith(repr(mx), 'masked_array')
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
-        assert_(repr(mxsub).startswith(
-            'masked_{0}(data = [-- 1 -- 3 4]'.format(SubArray.__name__)))
+        assert_startswith(repr(mxsub),
+            'masked_{0}(data=[-- 1 -- 3 4]'.format(SubArray.__name__))
 
     def test_subclass_str(self):
         """test str with subclass that has overridden str, setitem"""
@@ -348,13 +351,13 @@ class TestSubclassing(object):
         x = np.arange(5)
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
-        assert_(str(mxsub) == '[-- 1 -- 3 4]')
+        assert_equal(str(mxsub), '[-- 1 -- 3 4]')
 
         xcsub = ComplicatedSubArray(x)
         assert_raises(ValueError, xcsub.__setitem__, 0,
                       np.ma.core.masked_print_option)
         mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
-        assert_(str(mxcsub) == 'myprefix [-- 1 -- 3 4] mypostfix')
+        assert_equal(str(mxcsub), 'myprefix [-- 1 -- 3 4] mypostfix')
 
     def test_pure_subclass_info_preservation(self):
         # Test that ufuncs and methods conserve extra information consistently;
