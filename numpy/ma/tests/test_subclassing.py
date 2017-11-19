@@ -343,7 +343,7 @@ class TestSubclassing(object):
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
         assert_startswith(repr(mxsub),
-            'masked_{0}(data=[-- 1 -- 3 4]'.format(SubArray.__name__))
+            'masked_{0}(data=[--, 1, --, 3, 4]'.format(SubArray.__name__))
 
     def test_subclass_str(self):
         """test str with subclass that has overridden str, setitem"""

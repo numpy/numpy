@@ -2438,7 +2438,7 @@ def _recursive_printoption(result, mask, printopt):
     return
 
 # For better or worse, these end in a newline
-_print_templates = dict(
+_legacy_print_templates = dict(
     long_std=textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
@@ -3881,23 +3881,77 @@ class MaskedArray(ndarray):
         else:
             name = self._baseclass.__name__
 
-        is_long = self.ndim > 1
-        is_structured = bool(self.dtype.names)
 
-        parameters = dict(
-            name=name,
-            nlen=" " * len(name),
-            data=str(self),
-            mask=str(self._mask),
-            fill=str(self.fill_value),
-            dtype=str(self.dtype)
+        # 2016-11-19: Demoted to legacy format
+        if np.get_printoptions()['legacy'] == '1.13':
+            is_long = self.ndim > 1
+            parameters = dict(
+                name=name,
+                nlen=" " * len(name),
+                data=str(self),
+                mask=str(self._mask),
+                fill=str(self.fill_value),
+                dtype=str(self.dtype)
+            )
+            is_structured = bool(self.dtype.names)
+            key = '{}_{}'.format(
+                'long' if is_long else 'short',
+                'flx' if is_structured else 'std'
+            )
+            return _legacy_print_templates[key] % parameters
+
+        prefix = 'masked_{}('.format(name)
+
+        dtype_needed = (
+            not np.core.arrayprint.dtype_is_implied(self.dtype) or
+            np.all(self.mask) or
+            self.size == 0
         )
 
-        key = '{}_{}'.format(
-            'long' if is_long else 'short',
-            'flx' if is_structured else 'std'
+        # determine which keyword args need to be shown
+        keys = ['data', 'mask', 'fill_value']
+        if dtype_needed:
+            keys.append('dtype')
+
+        # array has only one row (non-column)
+        is_one_row = builtins.all(dim == 1 for dim in self.shape[:-1])
+
+        # choose what to indent each keyword with
+        min_indent = 2
+        if is_one_row:
+            # first key on the same line as the type, remaining keys
+            # aligned by equals
+            indents = {}
+            indents[keys[0]] = prefix
+            for k in keys[1:]:
+                n = builtins.max(min_indent, len(prefix + keys[0]) - len(k))
+                indents[k] = ' ' * n
+            prefix = ''  # absorbed into the first indent
+        else:
+            # each key on its own line, indented by two spaces
+            indents = {k: ' ' * min_indent for k in keys}
+            prefix = prefix + '\n'  # first key on the next line
+
+        # format the field values
+        reprs = {}
+        reprs['data'] = np.array2string(
+            self._insert_masked_print(),
+            separator=", ",
+            prefix=indents['data'] + 'data=')
+        reprs['mask'] = np.array2string(
+            self._mask,
+            separator=", ",
+            prefix=indents['mask'] + 'mask=')
+        reprs['fill_value'] = repr(self.fill_value)
+        if dtype_needed:
+            reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
+
+        # join keys with values and indentations
+        result = ',\n'.join(
+            '{}{}={}'.format(indents[k], k, reprs[k])
+            for k in keys
         )
-        return _print_templates[key] % parameters
+        return prefix + result + ')'
 
     def _delegate_binop(self, other):
         # This emulates the logic in
