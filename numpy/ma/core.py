@@ -7865,7 +7865,6 @@ def load(F):
             pickle.load(F)
     else:
         pickle.load(F)
-    
 
 
 def loads(strg):
