@@ -1170,7 +1170,7 @@ def dtype_is_implied(dtype):
     array([1, 2, 3], dtype=np.int8)
     """
     dtype = np.dtype(dtype)
-    if _format_options['legacy'] and dtype.type == bool_:
+    if _format_options['legacy'] == '1.13' and dtype.type == bool_:
         return False
     return dtype.type in _typelessdata
 
