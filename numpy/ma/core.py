@@ -7818,7 +7818,7 @@ def dump(a, F):
 
     """
     if not hasattr(F, 'readline'):
-        with open (F, 'wb') as F:
+        with open(F, 'w') as F:
             pickle.dump(a, F)
     else:
         pickle.dump(a, F)
@@ -7861,7 +7861,7 @@ def load(F):
 
     """
     if not hasattr(F, 'readline'):
-        with open (F, 'r') as F:
+        with open(F, 'r') as F:
             pickle.load(F)
     else:
         pickle.load(F)
