@@ -844,49 +844,49 @@ legacy_@name@_format@kind@(@type@ val)
     else {
         char re[64], im[64];
         if (npy_isfinite(val.real)) {
-                PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-                res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                        val.real, 0);
-                if (res == NULL) {
-                    PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
-                    return NULL;
-                }
+            PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
+            res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
+                                             val.real, 0);
+            if (res == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+                return NULL;
+            }
         }
         else {
-                if (npy_isnan(val.real)) {
-                        strcpy(re, "nan");
-                }
-                else if (val.real > 0){
-                        strcpy(re, "inf");
-                }
-                else {
-                        strcpy(re, "-inf");
-                }
+            if (npy_isnan(val.real)) {
+                strcpy(re, "nan");
+            }
+            else if (val.real > 0){
+                strcpy(re, "inf");
+            }
+            else {
+                strcpy(re, "-inf");
+            }
         }
 
 
         if (npy_isfinite(val.imag)) {
-                PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
-                res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                        val.imag, 0);
-                if (res == NULL) {
-                    PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
-                    return NULL;
-                }
+            PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
+            res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
+                                             val.imag, 0);
+            if (res == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
+                return NULL;
+            }
         }
         else {
-                if (npy_isnan(val.imag)) {
-                        strcpy(im, "+nan");
-                }
-                else if (val.imag > 0){
-                        strcpy(im, "+inf");
-                }
-                else {
-                        strcpy(im, "-inf");
-                }
-                if (!npy_isfinite(val.imag)) {
-                        strncat(im, "*", 1);
-                }
+            if (npy_isnan(val.imag)) {
+                strcpy(im, "+nan");
+            }
+            else if (val.imag > 0){
+                strcpy(im, "+inf");
+            }
+            else {
+                strcpy(im, "-inf");
+            }
+            if (!npy_isfinite(val.imag)) {
+                strncat(im, "*", 1);
+            }
         }
         PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
     }
