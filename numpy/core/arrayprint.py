@@ -1182,6 +1182,30 @@ def dtype_is_implied(dtype):
     return dtype.type in _typelessdata
 
 
+def dtype_short_repr(dtype):
+    """
+    Convert a dtype to a short form which evaluates to the same dtype.
+
+    The intent is roughly that the following holds
+
+    >>> from numpy import *
+    >>> assert eval(dtype_short_repr(dt)) == dt
+    """
+    # handle these separately so they don't give garbage like str256
+    if issubclass(dtype.type, flexible):
+        if dtype.names:
+            return "%s" % str(dtype)
+        else:
+            return "'%s'" % str(dtype)
+
+    typename = dtype.name
+    # quote typenames which can't be represented as python variable names
+    if typename and not (typename[0].isalpha() and typename.isalnum()):
+        typename = repr(typename)
+
+    return typename
+
+
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     """
     Return the string representation of an array.
@@ -1245,18 +1269,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     if skipdtype:
         return "%s(%s)" % (class_name, lst)
-
-    # determine typename
-    if issubclass(arr.dtype.type, flexible):
-        if arr.dtype.names:
-            typename = "%s" % str(arr.dtype)
-        else:
-            typename = "'%s'" % str(arr.dtype)
-    else:
-        typename = arr.dtype.name
-        # quote typenames which can't be represented as python variable names
-        if typename and not (typename[0].isalpha() and typename.isalnum()):
-            typename = "'%s'" % typename
+    typename = dtype_short_repr(arr.dtype)
 
     prefix = "{}({},".format(class_name, lst)
     suffix = "dtype={})".format(typename)
