@@ -164,6 +164,7 @@ class _FileOpeners(object):
     def _load(self):
         if self._loaded:
             return
+
         try:
             import bz2
             if sys.version_info[0] >= 3:
@@ -172,6 +173,7 @@ class _FileOpeners(object):
                 self._file_openers[".bz2"] = _python2_bz2open
         except ImportError:
             pass
+
         try:
             import gzip
             if sys.version_info[0] >= 3:
@@ -180,12 +182,16 @@ class _FileOpeners(object):
                 self._file_openers[".gz"] = _python2_gzipopen
         except ImportError:
             pass
+
         try:
             import lzma
             self._file_openers[".xz"] = lzma.open
             self._file_openers[".lzma"] = lzma.open
-        except ImportError:
+        except (ImportError, AttributeError):
+            # There are incompatible backports of lzma that do not have the
+            # lzma.open attribute, so catch that as well as ImportError.
             pass
+
         self._loaded = True
 
     def keys(self):

@@ -133,8 +133,6 @@ class TestNameValidator(object):
 
 
 def _bytes_to_date(s):
-    if type(s) == bytes:
-        s = s.decode("latin1")
     return date(*time.strptime(s, "%Y-%m-%d")[:3])
 
 
