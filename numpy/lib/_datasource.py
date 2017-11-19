@@ -43,6 +43,18 @@ import io
 _open = open
 
 def _check_mode(mode, encoding, newline):
+    """Check mode and that encoding and newline are compatible.
+
+    Parameters
+    ----------
+    mode : str
+        File open mode.
+    encoding : str
+        File encoding.
+    newline : str
+        Newline for text files.
+
+    """
     if "t" in mode:
         if "b" in mode:
             raise ValueError("Invalid mode: %r" % (mode,))
@@ -52,8 +64,21 @@ def _check_mode(mode, encoding, newline):
         if newline is not None:
             raise ValueError("Argument 'newline' not supported in binary mode")
 
+
 def _python2_bz2open(fn, mode, encoding, newline):
-    """ wrapper to open bz2 in text mode """
+    """Wrapper to open bz2 in text mode.
+
+    Parameters
+    ----------
+    fn : str
+        File name
+    mode : {'r', 'w'}
+        File mode. Note that bz2 Text files are not supported.
+    encoding : str
+        Ignored, text bz2 files not supported in Python2.
+    newline : str
+        Ignored, text bz2 files not supported in Python2.
+    """
     import bz2
 
     _check_mode(mode, encoding, newline)
@@ -65,7 +90,21 @@ def _python2_bz2open(fn, mode, encoding, newline):
         return bz2.BZ2File(fn, mode)
 
 def _python2_gzipopen(fn, mode, encoding, newline):
-    """ wrapper to open gzip in text mode """
+    """ Wrapper to open gzip in text mode.
+
+    Parameters
+    ----------
+    fn : str, bytes, file
+        File path or opened file.
+    mode : str
+        File mode. The actual files are opened as binary, but will decoded
+        using the specified `encoding` and `newline`.
+    encoding : str
+        Encoding to be used when reading/writing as text.
+    newline : str
+        Newline to be used when reading/writing as text.
+
+    """
     import gzip
     # gzip is lacking read1 needed for TextIOWrapper
     class GzipWrap(gzip.GzipFile):
@@ -75,6 +114,7 @@ def _python2_gzipopen(fn, mode, encoding, newline):
     _check_mode(mode, encoding, newline)
 
     gz_mode = mode.replace("t", "")
+
     if isinstance(fn, (str, bytes)):
         binary_file = GzipWrap(fn, gz_mode)
     elif hasattr(fn, "read") or hasattr(fn, "write"):
