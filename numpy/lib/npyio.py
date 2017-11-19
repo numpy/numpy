@@ -296,7 +296,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         used in Python 3.
     encoding : str, optional
         What encoding to use when reading Python 2 strings. Only useful when
-        loading Python 2 generated pickled files on Python 3, which includes
+        loading Python 2 generated pickled files in Python 3, which includes
         npy/npz files containing object arrays. Values other than 'latin1',
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
@@ -819,13 +819,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Legal values: 0 (default), 1 or 2.
 
         .. versionadded:: 1.6.0
-    encoding: string, optional
+    encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
         that ensures you receive byte arrays as results if possible and passes
         latin1 encoded strings to converters. Override this value to receive
-        unicode arrays and pass strings as input to converters.
-        If set to None the system default is used.
+        unicode arrays and pass strings as input to converters.  If set to None
+        the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
 
@@ -993,7 +993,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return []
 
     def read_data(chunk_size):
-        # Parse each line, including the first
+        """Parse each line, including the first.
+
+        The file read, `fh`, is a global defined above.
+
+        Parameters
+        ----------
+        chunk_size : int
+            At most `chunk_size` lines are read at a time, with iteration
+            until all lines are read.
+
+        """
         X = []
         for i, line in enumerate(itertools.chain([first_line], fh)):
             vals = split_line(line)
@@ -1171,7 +1181,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         ``numpy.loadtxt``.
 
         .. versionadded:: 1.7.0
-    encoding: string, optional
+    encoding : str, optional
         Encoding used to encode the outputfile. Does not apply to output
         streams.
 
@@ -1251,7 +1261,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter = asstr(delimiter)
 
     class WriteWrap(object):
-        """ convert to unicode in py2 or to bytes on bytestream inputs """
+        """Convert to unicode in py2 or to bytes on bytestream inputs.
+
+        """
         def __init__(self, fh, encoding):
             self.fh = fh
             self.encoding = encoding
@@ -1387,7 +1399,7 @@ def fromregex(file, regexp, dtype, encoding=None):
         Groups in the regular expression correspond to fields in the dtype.
     dtype : dtype or list of dtypes
         Dtype for the structured array.
-    encoding: string, optional
+    encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
 
         .. versionadded:: 1.14.0
@@ -1562,13 +1574,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to read the entire file.
 
         .. versionadded:: 1.10.0
-    encoding: string, optional
-        Encoding used to decode the inputfile. Does not apply to input streams.
-        The special value 'bytes' enables backward compatibility workarounds
-        that ensures you receive byte arrays as results if possible and passes
-        latin1 encoded strings to converters. Override this value to receive
-        unicode arrays and pass strings as input to converters.
-        If set to None the system default is used.
+    encoding : str, optional
+        Encoding used to decode the inputfile. Does not apply when `fname` is
+        a file object.  The special value 'bytes' enables backward compatibility
+        workarounds that ensure that you receive byte arrays when possible
+        and passes latin1 encoded strings to converters. Override this value to
+        receive unicode arrays and pass strings as input to converters.  If set
+        to None the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
 
