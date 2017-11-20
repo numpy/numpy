@@ -7818,8 +7818,10 @@ def dump(a, F):
 
     """
     if not hasattr(F, 'readline'):
-        F = open(F, 'w')
-    return pickle.dump(a, F)
+        with open(F, 'w') as F:
+            pickle.dump(a, F)
+    else:
+        pickle.dump(a, F)
 
 
 def dumps(a):
@@ -7859,8 +7861,10 @@ def load(F):
 
     """
     if not hasattr(F, 'readline'):
-        F = open(F, 'r')
-    return pickle.load(F)
+        with open(F, 'r') as F:
+            pickle.load(F)
+    else:
+        pickle.load(F)
 
 
 def loads(strg):
