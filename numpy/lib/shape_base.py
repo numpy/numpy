@@ -354,25 +354,26 @@ def dstack(tup):
     """
     Stack arrays in sequence depth wise (along third axis).
 
-    Takes a sequence of arrays and stack them along the third axis
-    to make a single array. Rebuilds arrays divided by `dsplit`.
-    This is a simple way to stack 2D arrays (images) into a single
-    3D array for processing.
+    This is equivalent to concatenation along the third axis after 2-D arrays
+    of shape `(M,N)` have been reshaped to `(M,N,1)` and 1-D arrays of shape
+    `(N,)` have been reshaped to `(1,N,1)`. Rebuilds arrays divided by
+    `dsplit`.
 
-    This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
-    function was added in NumPy 1.10.
+    This function makes most sense for arrays with up to 3 dimensions. For
+    instance, for pixel-data with a height (first axis), width (second axis),
+    and r/g/b channels (third axis). The functions `concatenate`, `stack` and
+    `block` provide more general stacking and concatenation operations.
 
     Parameters
     ----------
     tup : sequence of arrays
-        Arrays to stack. All of them must have the same shape along all
-        but the third axis.
+        The arrays must have the same shape along all but the third axis.
+        1-D or 2-D arrays must have the same shape.
 
     Returns
     -------
     stacked : ndarray
-        The array formed by stacking the given arrays.
+        The array formed by stacking the given arrays, will be at least 3-D.
 
     See Also
     --------
@@ -381,11 +382,6 @@ def dstack(tup):
     hstack : Stack along second axis.
     concatenate : Join a sequence of arrays along an existing axis.
     dsplit : Split array along third axis.
-
-    Notes
-    -----
-    Equivalent to ``np.concatenate(tup, axis=2)`` if `tup` contains arrays that
-    are at least 3-dimensional.
 
     Examples
     --------

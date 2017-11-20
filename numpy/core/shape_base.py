@@ -183,23 +183,25 @@ def vstack(tup):
     """
     Stack arrays in sequence vertically (row wise).
 
-    Take a sequence of arrays and stack them vertically to make a single
-    array. Rebuild arrays divided by `vsplit`.
+    This is equivalent to concatenation along the first axis after 1-D arrays
+    of shape `(N,)` have been reshaped to `(1,N)`. Rebuilds arrays divided by
+    `vsplit`.
 
-    This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
-    function was added in NumPy 1.10.
+    This function makes most sense for arrays with up to 3 dimensions. For
+    instance, for pixel-data with a height (first axis), width (second axis),
+    and r/g/b channels (third axis). The functions `concatenate`, `stack` and
+    `block` provide more general stacking and concatenation operations.
 
     Parameters
     ----------
     tup : sequence of ndarrays
-        Tuple containing arrays to be stacked. The arrays must have the same
-        shape along all but the first axis.
+        The arrays must have the same shape along all but the first axis.
+        1-D arrays must have the same length.
 
     Returns
     -------
     stacked : ndarray
-        The array formed by stacking the given arrays.
+        The array formed by stacking the given arrays, will be at least 2-D.
 
     See Also
     --------
@@ -209,11 +211,6 @@ def vstack(tup):
     concatenate : Join a sequence of arrays along an existing axis.
     vsplit : Split array into a list of multiple sub-arrays vertically.
     block : Assemble arrays from blocks.
-
-    Notes
-    -----
-    Equivalent to ``np.concatenate(tup, axis=0)`` if `tup` contains arrays that
-    are at least 2-dimensional.
 
     Examples
     --------
@@ -240,17 +237,20 @@ def hstack(tup):
     """
     Stack arrays in sequence horizontally (column wise).
 
-    Take a sequence of arrays and stack them horizontally to make
-    a single array. Rebuild arrays divided by `hsplit`.
+    This is equivalent to concatenation along the second axis, except for 1-D
+    arrays where it concatenates along the first axis. Rebuilds arrays divided
+    by `hsplit`.
 
-    This function continues to be supported for backward compatibility, but
-    you should prefer ``np.concatenate`` or ``np.stack``. The ``np.stack``
-    function was added in NumPy 1.10.
+    This function makes most sense for arrays with up to 3 dimensions. For
+    instance, for pixel-data with a height (first axis), width (second axis),
+    and r/g/b channels (third axis). The functions `concatenate`, `stack` and
+    `block` provide more general stacking and concatenation operations.
 
     Parameters
     ----------
     tup : sequence of ndarrays
-        All arrays must have the same shape along all but the second axis.
+        The arrays must have the same shape along all but the second axis,
+        except 1-D arrays which can be any length.
 
     Returns
     -------
@@ -265,11 +265,6 @@ def hstack(tup):
     concatenate : Join a sequence of arrays along an existing axis.
     hsplit : Split array along second axis.
     block : Assemble arrays from blocks.
-
-    Notes
-    -----
-    Equivalent to ``np.concatenate(tup, axis=1)`` if `tup` contains arrays that
-    are at least 2-dimensional.
 
     Examples
     --------
