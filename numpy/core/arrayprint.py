@@ -1252,25 +1252,35 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if max_line_width is None:
         max_line_width = _format_options['linewidth']
 
+    # determine class name
     if type(arr) is not ndarray:
         class_name = type(arr).__name__
     else:
         class_name = "array"
 
-    if (_format_options['legacy'] == '1.13' and
-            arr.shape == () and not arr.dtype.names):
-        lst = repr(arr.item())
-    elif arr.size > 0 or arr.shape == (0,):
+    # determine dtype name
+    typename = dtype_short_repr(arr.dtype)
+
+    # stringify the array elements and take care of empty arrays
+    if _format_options['legacy'] == '1.13':
+        if arr.shape == () and not arr.dtype.names:
+            lst = repr(arr.item())
+        elif arr.size > 0 or arr.shape == (0,):
+            lst = array2string(arr, max_line_width, precision, suppress_small,
+                               ', ', class_name + "(")
+        else:  # show zero-length shape unless it is (0,)
+            lst = "[], shape=%s" % (repr(arr.shape),)
+    else:
+        # print empty arrays with an unusual shapes using "empty"
+        if arr.size == 0 and arr.shape != (0,):
+            return "empty({}, dtype={})".format(arr.shape, typename)
+
         lst = array2string(arr, max_line_width, precision, suppress_small,
                            ', ', class_name + "(")
-    else:  # show zero-length shape unless it is (0,)
-        lst = "[], shape=%s" % (repr(arr.shape),)
 
-    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
-
-    if skipdtype:
+    # skip the dtype if it's not needed
+    if dtype_is_implied(arr.dtype) and arr.size > 0:
         return "%s(%s)" % (class_name, lst)
-    typename = dtype_short_repr(arr.dtype)
 
     prefix = "{}({},".format(class_name, lst)
     suffix = "dtype={})".format(typename)
