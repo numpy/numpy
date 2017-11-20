@@ -14,6 +14,7 @@ import pickle
 import operator
 import itertools
 import sys
+import textwrap
 from functools import reduce
 
 
@@ -487,18 +488,95 @@ class TestMaskedArray(object):
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
         assert_equal(str(a), '[0 -- 2]')
-        assert_equal(repr(a), 'masked_array(data = [0 -- 2],\n'
-                              '             mask = [False  True False],\n'
-                              '       fill_value = 999999)\n')
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(data=[0, --, 2],
+                         mask=[False,  True, False],
+                   fill_value=999999)''')
+        )
 
+        # arrays with a continuation
         a = np.ma.arange(2000)
         a[1:50] = np.ma.masked
         assert_equal(
             repr(a),
-            'masked_array(data = [0 -- -- ... 1997 1998 1999],\n'
-            '             mask = [False  True  True ... False False False],\n'
-            '       fill_value = 999999)\n'
+            textwrap.dedent('''\
+            masked_array(data=[0, --, --, ..., 1997, 1998, 1999],
+                         mask=[False,  True,  True, ..., False, False, False],
+                   fill_value=999999)''')
         )
+
+        # line-wrapped 1d arrays are correctly aligned
+        a = np.ma.arange(20)
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(data=[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                               14, 15, 16, 17, 18, 19],
+                         mask=False,
+                   fill_value=999999)''')
+        )
+
+        # 2d arrays cause wrapping
+        a = array([[1, 2, 3], [4, 5, 6]], dtype=np.int8)
+        a[1,1] = np.ma.masked
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(
+              data=[[1, 2, 3],
+                    [4, --, 6]],
+              mask=[[False, False, False],
+                    [False,  True, False]],
+              fill_value=999999,
+              dtype=int8)''')
+        )
+
+        # but not it they're a row vector
+        assert_equal(
+            repr(a[:1]),
+            textwrap.dedent('''\
+            masked_array(data=[[1, 2, 3]],
+                         mask=[[False, False, False]],
+                   fill_value=999999,
+                        dtype=int8)''')
+        )
+
+        # dtype=int is implied, so not shown
+        assert_equal(
+            repr(a.astype(int)),
+            textwrap.dedent('''\
+            masked_array(
+              data=[[1, 2, 3],
+                    [4, --, 6]],
+              mask=[[False, False, False],
+                    [False,  True, False]],
+              fill_value=999999)''')
+        )
+
+
+
+    def test_str_repr_legacy(self):
+        oldopts = np.get_printoptions()
+        np.set_printoptions(legacy='1.13')
+        try:
+            a = array([0, 1, 2], mask=[False, True, False])
+            assert_equal(str(a), '[0 -- 2]')
+            assert_equal(repr(a), 'masked_array(data = [0 -- 2],\n'
+                                  '             mask = [False  True False],\n'
+                                  '       fill_value = 999999)\n')
+
+            a = np.ma.arange(2000)
+            a[1:50] = np.ma.masked
+            assert_equal(
+                repr(a),
+                'masked_array(data = [0 -- -- ... 1997 1998 1999],\n'
+                '             mask = [False  True  True ... False False False],\n'
+                '       fill_value = 999999)\n'
+            )
+        finally:
+            np.set_printoptions(**oldopts)
 
     def test_0d_unicode(self):
         u = u'caf\xe9'

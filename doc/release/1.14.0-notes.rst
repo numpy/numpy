@@ -503,3 +503,10 @@ Seeding ``RandomState`` using an array requires a 1-d array
 ``RandomState`` previously would accept empty arrays or arrays with 2 or more
 dimensions, which resulted in either a failure to seed (empty arrays) or for
 some of the passed values to be ignored when setting the seed.
+
+``MaskedArray`` objects show a more useful ``repr``
+---------------------------------------------------
+The ``repr`` of a ``MaskedArray`` is now closer to the python code that would
+produce it, with arrays now being shown with commas and dtypes. Like the other
+formatting changes, this can be disabled with the 1.13 legacy printing mode in
+order to help transition doctests.
