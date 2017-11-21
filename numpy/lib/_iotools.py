@@ -861,8 +861,8 @@ class StringConverter(object):
         # Add the missing values to the existing set or clear it.
         if missing_values is None:
             # Clear all missing values even though the ctor initializes it to
-            # {''} when the argument is None.
-            self.missing_values = {}
+            # set(['']) when the argument is None.
+            self.missing_values = set()
         else:
             if not np.iterable(missing_values):
                 missing_values = [missing_values]
