@@ -12,6 +12,7 @@ from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
     has_nested_fields, easy_dtype, flatten_dtype
     )
+from numpy.compat import unicode
 
 
 class TestLineSplitter(object):
@@ -155,10 +156,10 @@ class TestStringConverter(object):
         assert_equal(converter.upgrade('0'), 0)
         assert_equal(converter._status, 1)
 
-        # On systems where integer defaults to 32-bit, the statuses will be
+        # On systems where long defaults to 32-bit, the statuses will be
         # offset by one, so we check for this here.
         import numpy.core.numeric as nx
-        status_offset = int(nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize)
+        status_offset = int(nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize)
 
         # test int > 2**32
         assert_equal(converter.upgrade('17179869184'), 17179869184)
@@ -172,9 +173,15 @@ class TestStringConverter(object):
         assert_equal(converter.upgrade('0j'), complex('0j'))
         assert_equal(converter._status, 3 + status_offset)
 
-        # test str TODO
-        #assert_equal(converter.upgrade(b'a'), b'a')
-        #assert_equal(converter._status, len(converter._mapper) - 1)
+        # test str
+        # note that the longdouble type has been skipped, so the
+        # _status increases by 2. Everything should succeed with
+        # unicode conversion (5).
+        for s in ['a', u'a', b'a']:
+            res = converter.upgrade(s)
+            assert_(type(res) is unicode)
+            assert_equal(res, u'a')
+            assert_equal(converter._status, 5 + status_offset)
 
     def test_missing(self):
         "Tests the use of missing values."
@@ -204,8 +211,9 @@ class TestStringConverter(object):
 
     def test_string_to_object(self):
         "Make sure that string-to-object functions are properly recognized"
+        old_mapper = StringConverter._mapper[:]  # copy of list
         conv = StringConverter(_bytes_to_date)
-        assert_equal(conv._mapper[-3][0](0), 0j)
+        assert_equal(conv._mapper, old_mapper)
         assert_(hasattr(conv, 'default'))
 
     def test_keep_default(self):

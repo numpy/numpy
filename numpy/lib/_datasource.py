@@ -238,6 +238,11 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
+    encoding : {None, str}, optional
+        Open text file with given encoding. The default encoding will be
+        what `io.open` uses.
+    newline : {None, str}, optional
+        Newline to use when reading text file.
 
     Returns
     -------
@@ -577,6 +582,11 @@ class DataSource (object):
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
             'a' to append. Available modes depend on the type of object
             specified by `path`. Default is 'r'.
+        encoding : {None, str}, optional
+            Open text file with given encoding. The default encoding will be
+            what `io.open` uses.
+        newline : {None, str}, optional
+            Newline to use when reading text file.
 
         Returns
         -------
@@ -741,6 +751,11 @@ class Repository (DataSource):
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
             'a' to append. Available modes depend on the type of object
             specified by `path`. Default is 'r'.
+        encoding : {None, str}, optional
+            Open text file with given encoding. The default encoding will be
+            what `io.open` uses.
+        newline : {None, str}, optional
+            Newline to use when reading text file.
 
         Returns
         -------
