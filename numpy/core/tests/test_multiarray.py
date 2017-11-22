@@ -6711,6 +6711,34 @@ class TestConversion(object):
             Error = RuntimeError  # python < 3.5
         assert_raises(Error, bool, self_containing)  # previously stack overflow
 
+    def test_to_int_scalar(self):
+        # gh-9972 means that these aren't always the same
+        int_funcs = (int, lambda x: x.__int__())
+        for int_func in int_funcs:
+            assert_equal(int_func(np.array([1])), 1)
+            assert_equal(int_func(np.array([0])), 0)
+            assert_equal(int_func(np.array([[42]])), 42)
+            assert_raises(TypeError, int_func, np.array([1, 2]))
+
+            # gh-9972
+            assert_equal(4, int_func(np.array('4')))
+            assert_equal(5, int_func(np.bytes_(b'5')))
+            assert_equal(6, int_func(np.unicode_(u'6')))
+
+            class HasTrunc:
+                def __trunc__(self):
+                    return 3
+            assert_equal(3, int_func(np.array(HasTrunc())))
+            assert_equal(3, int_func(np.array([HasTrunc()])))
+
+            class NotConvertible(object):
+                def __int__(self):
+                    raise NotImplementedError
+            assert_raises(NotImplementedError,
+                int_func, np.array(NotConvertible()))
+            assert_raises(NotImplementedError,
+                int_func, np.array([NotConvertible()]))
+
 
 class TestWhere(object):
     def test_basic(self):
