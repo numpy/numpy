@@ -2452,7 +2452,7 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 static PyObject *
 array_getslice(PyArrayObject *self, PyObject *args)
 {
-    PyObject *start, *stop, *slice;
+    PyObject *start, *stop, *slice, *result;
     if (!PyArg_ParseTuple(args, "OO:__getslice__", &start, &stop)) {
         return NULL;
     }
@@ -2463,7 +2463,9 @@ array_getslice(PyArrayObject *self, PyObject *args)
     }
 
     /* Deliberately delegate to subclasses */
-    return PyObject_GetItem((PyObject *)self, slice);
+    result = PyObject_GetItem((PyObject *)self, slice);
+    Py_DECREF(slice);
+    return result;
 }
 
 static PyObject *
@@ -2481,9 +2483,10 @@ array_setslice(PyArrayObject *self, PyObject *args)
 
     /* Deliberately delegate to subclasses */
     if (PyObject_SetItem((PyObject *)self, slice, value) < 0) {
+        Py_DECREF(slice);
         return NULL;
     }
-
+    Py_DECREF(slice);
     Py_RETURN_NONE;
 }
 
