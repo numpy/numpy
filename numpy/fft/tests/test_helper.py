@@ -41,6 +41,68 @@ class TestFFTShift(object):
         assert_array_almost_equal(fft.ifftshift(shifted, axes=0),
                 fft.ifftshift(shifted, axes=(0,)))
 
+        assert_array_almost_equal(fft.fftshift(freqs), shifted)
+        assert_array_almost_equal(fft.ifftshift(shifted), freqs)
+
+    def test_uneven_dims(self):
+        """ Test when 2D array has shape of 3x6 """
+        freqs = [[0, 1, 2], [3, 4, -4], [-3, -2, -1], [0, 1, 2], [3, 4, -4], [-3, -2, -1]]
+        shifted = [[2, 0, 1], [-4, 3, 4], [-1, -3, -2], [2, 0, 1], [-4, 3, 4], [-1, -3, -2]]
+
+        assert_array_almost_equal(fft.fftshift(freqs), shifted)
+        assert_array_almost_equal(fft.ifftshift(shifted), freqs)
+
+    def test_equal_to_original(self):
+        """ Test that the new (>=v1.14) implementation is equal to the original (<=v1.13) """
+        from numpy.compat import integer_types
+        from numpy.core import asarray, concatenate, arange, take
+
+        def original_fftshift(x, axes=None):
+            """ How fftshift was implemented in v1.13 """
+            tmp = asarray(x)
+            ndim = tmp.ndim
+            if axes is None:
+                axes = list(range(ndim))
+            elif isinstance(axes, integer_types):
+                axes = (axes,)
+            y = tmp
+            for k in axes:
+                n = tmp.shape[k]
+                p2 = (n + 1) // 2
+                mylist = concatenate((arange(p2, n), arange(p2)))
+                y = take(y, mylist, k)
+            return y
+
+        def original_ifftshift(x, axes=None):
+            """ How ifftshift was implemented in v1.13 """
+            tmp = asarray(x)
+            ndim = tmp.ndim
+            if axes is None:
+                axes = list(range(ndim))
+            elif isinstance(axes, integer_types):
+                axes = (axes,)
+            y = tmp
+            for k in axes:
+                n = tmp.shape[k]
+                p2 = n - (n + 1) // 2
+                mylist = concatenate((arange(p2, n), arange(p2)))
+                y = take(y, mylist, k)
+            return y
+
+        # create possible 2d array combinations and try all possible keywords
+        # compare output to original functions
+        for i in range(16):
+            for j in range(16):
+                for axes_keyword in [0, 1, None, (0,), (0, 1)]:
+                    inp = np.random.rand(i, j)
+
+                    assert_array_almost_equal(fft.fftshift(inp, axes_keyword),
+                                              original_fftshift(inp, axes_keyword))
+
+                    assert_array_almost_equal(fft.ifftshift(inp, axes_keyword),
+                                              original_ifftshift(inp, axes_keyword))
+
+
 
 class TestFFTFreq(object):
 
