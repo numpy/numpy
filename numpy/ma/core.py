@@ -1580,6 +1580,16 @@ def is_mask(m):
         return False
 
 
+def _shrink_mask(m):
+    """
+    Shrink a mask to nomask if possible
+    """
+    if not m.dtype.names and not m.any():
+        return nomask
+    else:
+        return m
+
+
 def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     """
     Create a boolean mask from an array.
@@ -1659,10 +1669,9 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     # Fill the mask in case there are missing data; turn it into an ndarray.
     result = np.array(filled(m, True), copy=copy, dtype=dtype, subok=True)
     # Bas les masques !
-    if shrink and (not result.dtype.names) and (not result.any()):
-        return nomask
-    else:
-        return result
+    if shrink:
+        result = _shrink_mask(result)
+    return result
 
 
 def make_mask_none(newshape, dtype=None):
@@ -1949,7 +1958,7 @@ def masked_where(condition, a, copy=True):
 
     """
     # Make sure that condition is a valid standard-type mask.
-    cond = make_mask(condition)
+    cond = make_mask(condition, shrink=False)
     a = np.array(a, copy=copy, subok=True)
 
     (cshape, ashape) = (cond.shape, a.shape)
@@ -1963,7 +1972,7 @@ def masked_where(condition, a, copy=True):
         cls = MaskedArray
     result = a.view(cls)
     # Assign to *.mask so that structured masks are handled correctly.
-    result.mask = cond
+    result.mask = _shrink_mask(cond)
     return result
 
 
@@ -3607,9 +3616,7 @@ class MaskedArray(ndarray):
         False
 
         """
-        m = self._mask
-        if m.ndim and not m.any():
-            self._mask = nomask
+        self._mask = _shrink_mask(self._mask)
         return self
 
     baseclass = property(fget=lambda self: self._baseclass,
@@ -6709,12 +6716,11 @@ def concatenate(arrays, axis=0):
         return data
     # OK, so we have to concatenate the masks
     dm = np.concatenate([getmaskarray(a) for a in arrays], axis)
+    dm = dm.reshape(d.shape)
+
     # If we decide to keep a '_shrinkmask' option, we want to check that
     # all of them are True, and then check for dm.any()
-    if not dm.dtype.fields and not dm.any():
-        data._mask = nomask
-    else:
-        data._mask = dm.reshape(d.shape)
+    data._mask = _shrink_mask(dm)
     return data
 
 
@@ -7132,8 +7138,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     mask = np.where(cm, np.ones((), dtype=mask.dtype), mask)
 
     # collapse the mask, for backwards compatibility
-    if mask.dtype == np.bool_ and not mask.any():
-        mask = nomask
+    mask = _shrink_mask(mask)
 
     return masked_array(data, mask=mask)
 
