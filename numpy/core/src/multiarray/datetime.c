@@ -2459,12 +2459,8 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
 
     /* Do no conversion on raw integers */
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
     npy_intp intp = PyArray_PyIntAsIntp(obj);
-    PyErr_Restore(type, value, traceback);
-
-    if (intp != -1 || PyInt_Check(obj)) {
+    if (!error_converting(intp)) {
         /* Don't allow conversion from an integer without specifying a unit */
         if (meta->base == -1 || meta->base == NPY_FR_GENERIC) {
             PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
@@ -2474,6 +2470,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
+    PyErr_Clear();
 
     /* Datetime scalar */
     if (PyArray_IsScalar(obj, Datetime)) {
@@ -2664,12 +2661,8 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
 
     /* Do no conversion on raw integers */
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
     npy_intp intp = PyArray_PyIntAsIntp(obj);
-    PyErr_Restore(type, value, traceback);
-
-    if (intp != -1 || PyInt_Check(obj)) {
+    if (!error_converting(intp)) {
         /* Use the default unit if none was specified */
         if (meta->base == -1) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
@@ -2679,6 +2672,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
+    PyErr_Clear();
 
     /* Timedelta scalar */
     if (PyArray_IsScalar(obj, Timedelta)) {
