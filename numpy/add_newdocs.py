@@ -2793,11 +2793,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
     ALIGNED (A)
         The data and all elements are aligned appropriately for the hardware.
     WRITEBACKIFCOPY (X)
-        This array is a copy of some other array. The C-API function 
+        This array is a copy of some other array. The C-API function
         PyArray_ResolveWritebackIfCopy must be called before deallocating
         to the base array will be updated with the contents of this array.
     UPDATEIFCOPY (U)
-        (Deprecated, use WRITEBACKIFCOPY) This array is a copy of some other array. 
+        (Deprecated, use WRITEBACKIFCOPY) This array is a copy of some other array.
         When this array is
         deallocated, the base array will be updated with the contents of
         this array.
@@ -3118,7 +3118,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
     """a.__copy__()
 
     Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
-    
+
     Equivalent to ``a.copy(order='K')``.
 
     """))
@@ -3144,7 +3144,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
     """a.__setstate__(state, /)
 
     For unpickling.
-    
+
     The `state` argument must be a sequence that contains the following
     elements:
 
@@ -5422,7 +5422,7 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
     axis : int, optional
         The dimension over which bit-unpacking is done.
         ``None`` implies unpacking the flattened array.
-    
+
     Returns
     -------
     unpacked : ndarray, uint8 type
@@ -5663,6 +5663,36 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('signature',
+    """
+    Definition of the core elements a generalized ufunc operates on.
+
+    The signature determines how the dimensions of each input/output array
+    are split into core and loop dimensions:
+
+    1. Each dimension in the signature is matched to a dimension of the
+       corresponding passed-in array, starting from the end of the shape tuple.
+    2. Core dimensions assigned to the same label in the signature must have
+       exactly matching sizes, no broadcasting is performed.
+    3. The core dimensions are removed from all inputs and the remaining
+       dimensions are broadcast together, defining the loop dimensions.
+
+    Notes
+    -----
+    Generalized ufuncs are used internally in many linalg functions, and in
+    the testing suite; the examples below are taken from these.
+    For ufuncs that operate on scalars, the signature is `None`, which is
+    equivalent to '()' for every argument.
+
+    Examples
+    --------
+    >>> np.core.umath_tests.matrix_multiply.signature
+    '(m,n),(n,p)->(m,p)'
+    >>> np.linalg._umath_linalg.det.signature
+    '(m,m)->()'
+    >>> np.add.signature is None
+    True  # equivalent to '(),()->()'
+    """))
 
 ##############################################################################
 #
