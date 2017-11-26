@@ -6,7 +6,7 @@ import numpy
 import numpy as np
 import datetime
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises, assert_array_equal,
     assert_warns, dec, suppress_warnings
 )
 
@@ -209,24 +209,24 @@ class TestDateTime(object):
                      np.datetime64('1920'))
 
         # Construction from numpy types
-        assert_equal(str(np.datetime64(np.int(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.int32(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.int64(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.uint(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.uint32(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.uint64(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.long(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.longlong(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
-        assert_equal(str(np.datetime64(np.ulonglong(1262304000), 's')),
-                     str(np.datetime64(1262304000, 's')))
+        assert_array_equal(np.datetime64(np.int(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.int32(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.int64(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint32(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint64(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.long(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.longlong(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.ulonglong(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
 
     def test_datetime_scalar_construction_timezone(self):
         # verify that supplying an explicit timezone works, but is deprecated
@@ -345,24 +345,24 @@ class TestDateTime(object):
         assert_raises(TypeError, np.timedelta64, a, 'm')
 
         # Construction from numpy types
-        assert_equal(str(np.timedelta64(np.int(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.int32(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.int64(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.uint(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.uint32(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.uint64(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.long(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.longlong(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
-        assert_equal(str(np.timedelta64(np.ulonglong(1262304000), 's')),
-                     str(np.timedelta64(1262304000, 's')))
+        assert_array_equal(np.timedelta64(np.int(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.int32(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.int64(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint32(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint64(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.long(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.longlong(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.ulonglong(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
