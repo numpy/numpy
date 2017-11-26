@@ -2457,8 +2457,14 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(bytes);
         return 0;
     }
+
     /* Do no conversion on raw integers */
-    else if (PyInt_Check(obj) || PyLong_Check(obj)) {
+    PyObject *type, *value, *traceback;
+    PyErr_Fetch(&type, &value, &traceback);
+    npy_intp intp = PyArray_PyIntAsIntp(obj);
+    PyErr_Restore(type, value, traceback);
+
+    if (intp != -1 || PyInt_Check(obj)) {
         /* Don't allow conversion from an integer without specifying a unit */
         if (meta->base == -1 || meta->base == NPY_FR_GENERIC) {
             PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
@@ -2468,8 +2474,9 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
+
     /* Datetime scalar */
-    else if (PyArray_IsScalar(obj, Datetime)) {
+    if (PyArray_IsScalar(obj, Datetime)) {
         PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
 
         /* Copy the scalar directly if units weren't specified */
@@ -2655,8 +2662,14 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return 0;
         }
     }
+
     /* Do no conversion on raw integers */
-    else if (PyInt_Check(obj) || PyLong_Check(obj)) {
+    PyObject *type, *value, *traceback;
+    PyErr_Fetch(&type, &value, &traceback);
+    npy_intp intp = PyArray_PyIntAsIntp(obj);
+    PyErr_Restore(type, value, traceback);
+
+    if (intp != -1 || PyInt_Check(obj)) {
         /* Use the default unit if none was specified */
         if (meta->base == -1) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
@@ -2666,8 +2679,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = PyLong_AsLongLong(obj);
         return 0;
     }
+
     /* Timedelta scalar */
-    else if (PyArray_IsScalar(obj, Timedelta)) {
+    if (PyArray_IsScalar(obj, Timedelta)) {
         PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
 
         /* Copy the scalar directly if units weren't specified */
