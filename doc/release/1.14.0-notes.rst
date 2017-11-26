@@ -9,6 +9,8 @@ Highlights
 ==========
 
 * The `np.einsum` function will use BLAS when possible
+* ``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
+  with arbitrary encoding supported by Python.
 
 
 New functions
@@ -58,9 +60,9 @@ equivalent to the second.
 ``np.linalg.lstsq`` default for ``rcond`` will be changed
 ---------------------------------------------------------
 
-The ``rcond`` parameter to ``np.linalg.lstsq`` will change its default to the
-better value of machine precision times the maximum of the input matrix
-dimensions. A FutureWarning is given if the parameter is not passed explicitly.
+* The ``rcond`` parameter to ``np.linalg.lstsq`` will change its default to the
+  better value of machine precision times the maximum of the input matrix
+  dimensions. A FutureWarning is given if the parameter is not passed explicitly.
 * ``a.flat.__array__()`` will return a writeable copy of ``a`` when ``a`` is
   non-contiguous. Previously it returned an UPDATEIFCOPY array when ``a`` was
   writeable. Currently it returns a non-writeable copy. See gh-7054 for a
@@ -237,7 +239,7 @@ In C code, calling ``PyArray_SetUpdateIfCopyBase`` will now always issue a
 should be replaced by ``PyArray_DiscardWritebackIfCopy``.  Calling ndarray
 creation functions such as ``PyArray_FromArray`` where flags uses
 ``NPY_ARRAY_UPDATEIFCOPY`` will also raise a ``DeprecationWarning``. In all
-these cases the code must be further modified to call 
+these cases the code must be further modified to call
 ``PyArray_ResolveWritebackIfCopy`` before deallocation.
 
 Note that during the deprecation period, the ``NPY_ARRAY_INOUT_ARRAY`` and
@@ -247,6 +249,18 @@ similarly but require use of the new ``WRITEBACKIFCOPY`` semantics.
 
 New Features
 ============
+
+Encoding argument for text IO functions
+---------------------------------------
+``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
+with arbitrary encoding supported by Python via the encoding argument.
+For backward compatiblity the argument defaults to the special ``bytes`` value
+which continues to treat text as raw byte values and continues to pass latin1
+encoded bytes to custom converters.
+Using any other value (including ``None`` for system default) will switch the
+functions to real text IO so one receives unicode strings instead of bytes in
+the resulting arrays.
+
 
 External ``nose`` plugins are usable by ``numpy.testing.Tester``
 ----------------------------------------------------------------
@@ -276,6 +290,10 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+Support for reading lzma compressed text files in Python 3
+----------------------------------------------------------
+With Python versions containing the ``lzma`` module the text IO functions can
+now transparently read from files with ``xz`` or ``lzma`` extension.
 
 ``sign`` option added to ``np.setprintoptions`` and ``np.array2string``
 -----------------------------------------------------------------------
@@ -427,6 +445,10 @@ printing style for ``void`` datatypes is now independently customizable
 The printing style of ``np.void`` arrays is now independently customizable
 using the ``formatter`` argument to ``np.set_printoptions``, using the
 ``'void'`` key, instead of the catch-all ``numpystr`` key as before.
+Reduced memory usage of ``np.loadtxt``
+--------------------------------------
+``np.loadtxt`` now reads files in chunks instead of all at once which decreases
+its memory usage significantly for large files.
 
 Changes
 =======
