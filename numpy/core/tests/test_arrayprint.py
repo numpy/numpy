@@ -172,11 +172,23 @@ class TestArray2String(object):
         # for issue #5692
         A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
         A[5:].fill(np.datetime64('NaT'))
-        assert_equal(np.array2string(A),
-                "[('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) " +
-                "('1970-01-01T00:00:00',)\n ('1970-01-01T00:00:00',) " +
-                "('1970-01-01T00:00:00',) ('NaT',) ('NaT',)\n " +
-                "('NaT',) ('NaT',) ('NaT',)]")
+        assert_equal(
+            np.array2string(A),
+            textwrap.dedent("""\
+            [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
+             ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
+             ('NaT',) ('NaT',) ('NaT',)]""")
+        )
+
+        # and again, with timedeltas
+        A = np.full(10, 123456, dtype=[("A", "m8[s]")])
+        A[5:].fill(np.datetime64('NaT'))
+        assert_equal(
+            np.array2string(A),
+            textwrap.dedent("""\
+            [(123456,) (123456,) (123456,) (123456,) (123456,) ( 'NaT',) ( 'NaT',)
+             ( 'NaT',) ( 'NaT',) ( 'NaT',)]""")
+        )
 
         # See #8160
         struct_int = np.array([([1, -1],), ([123, 1],)], dtype=[('B', 'i4', 2)])
@@ -275,6 +287,9 @@ class TestPrintOptions(object):
 
         assert_equal(repr(np.datetime64('2005-02-25')[...]),
                      "array('2005-02-25', dtype='datetime64[D]')")
+
+        assert_equal(repr(np.timedelta64('10', 'Y')[...]),
+                     "array(10, dtype='timedelta64[Y]')")
 
         # repr of 0d arrays is affected by printoptions
         x = np.array(1)
