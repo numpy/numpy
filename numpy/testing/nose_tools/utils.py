@@ -377,44 +377,42 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     # Inf/nan/negative zero handling
     try:
-        # If one of desired/actual is not finite, handle it specially here:
-        # check that both are nan if any is a nan, and test for equality
-        # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            isdesnan = gisnan(desired)
-            isactnan = gisnan(actual)
-            if isdesnan or isactnan:
-                if not (isdesnan and isactnan):
-                    raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
-            return
-        elif desired == 0 and actual == 0:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        if desired == 0 and actual == 0:
             if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
+
     except (TypeError, ValueError, NotImplementedError):
         pass
 
     try:
-        # If both are NaT (and have the same dtype -- datetime or timedelta)
-        # they are considered equal.
-        if (isnat(desired) == isnat(actual) and
-                array(desired).dtype.type == array(actual).dtype.type):
+        isdesnat = isnat(desired)
+        isactnat = isnat(actual)
+        dtypes_match = array(desired).dtype.type == array(actual).dtype.type
+        if isdesnat and isactnat and dtypes_match:
+            # If both are NaT (and have the same dtype -- datetime or
+            # timedelta) they are considered equal.
             return
-        else:
-            raise AssertionError(msg)
-
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
 
-    # Explicitly use __eq__ for comparison, ticket #2552
-    if not (desired == actual):
-        raise AssertionError(msg)
+
+    try:
+        # Explicitly use __eq__ for comparison, gh-2552
+        if not (desired == actual):
+            raise AssertionError(msg)
+
+    except (DeprecationWarning, FutureWarning) as e:
+        # this handles the case when the two types are not even comparable
+        if 'elementwise == comparison' in e.args[0]:
+            raise AssertionError(msg)
+        else:
+            raise
 
 
 def print_assert_equal(test_string, actual, desired):
