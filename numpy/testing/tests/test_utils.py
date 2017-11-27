@@ -212,6 +212,26 @@ class TestEqual(TestArrayEqual):
         self._assert_func([np.inf], [np.inf])
         self._test_not_equal(np.inf, [np.inf])
 
+    def test_datetime(self):
+        self._test_equal(
+            np.datetime64("2017-01-01", "s"),
+            np.datetime64("2017-01-01", "s")
+        )
+        self._test_equal(
+            np.datetime64("2017-01-01", "s"),
+            np.datetime64("2017-01-01", "m")
+        )
+
+        # gh-10081
+        self._test_not_equal(
+            np.datetime64("2017-01-01", "s"),
+            np.datetime64("2017-01-02", "s")
+        )
+        self._test_not_equal(
+            np.datetime64("2017-01-01", "s"),
+            np.datetime64("2017-01-02", "m")
+        )
+
     def test_nat_items(self):
         # not a datetime
         nadt_no_unit = np.datetime64("NaT")
