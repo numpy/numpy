@@ -336,6 +336,20 @@ advanced usage and will not typically be used.
     of False indicate to leave the value in the output alone. This argument
     cannot be used for generalized ufuncs as those take non-scalar input.
 
+*axes*
+
+    .. versionadded:: 1.15
+
+    A list of tuples with indices of axes a generalized ufunc should operate
+    on. For instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate
+    for matrix multiplication, the base elements are two-dimensional matrices
+    and these are taken to be stored in the two last axes of each argument.
+    The corresponding axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``.
+    For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+    (vectors), a single integer is accepted instead of a single-element tuple,
+    and for generalized ufuncs for which all outputs are scalars, the output
+    tuples can be omitted.
+
 *casting*
 
     .. versionadded:: 1.6
