@@ -171,11 +171,11 @@ def reshape(a, newshape, order='C'):
     Notes
     -----
     It is not always possible to change the shape of an array without
-    copying the data. If you want an error to be raised if the data is copied,
+    copying the data. If you want an error to be raised when the data is copied,
     you should assign the new shape to the shape attribute of the array::
 
      >>> a = np.zeros((10, 2))
-     # A transpose makes the array non-contiguous
+     # A transpose converts the C-contiguous array into an F-contiguous array
      >>> b = a.T
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
