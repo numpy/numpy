@@ -19,11 +19,17 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
+extensions = ['sphinx.ext.autodoc', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
               'sphinx.ext.graphviz',
               'matplotlib.sphinxext.plot_directive']
+
+if sphinx.__version__ >= "1.4":
+    extensions.append('sphinx.ext.imgmath')
+    imgmath_image_format = 'svg'
+else:
+    extensions.append('sphinx.ext.pngmath')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -123,8 +129,9 @@ html_file_suffix = '.html'
 
 htmlhelp_basename = 'numpy'
 
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+if 'sphinx.ext.pngmath' in extensions:
+    pngmath_use_preview = True
+    pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
