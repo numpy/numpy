@@ -1602,6 +1602,45 @@ class TestMaskedArrayArithmetic(object):
             assert_equal(test.mask, [[False, True],
                                      [False, True]])
 
+    def test_eq_subclass_knowledge(self):
+        # Test a case where only of the internal data classes knows how to
+        # handle the other. The test case is based on astropy issue
+        # https://github.com/astropy/astropy/issues/6838.
+        class BAS(np.ndarray):
+            """If unicode, compares with bytes assuming utf-8 encoding."""
+            def __eq__(self, other):
+                if (self.dtype.kind == 'S' and
+                        isinstance(other, np.ndarray) and
+                        other.dtype.kind == 'U'):
+                    other = np.char.encode(other, encoding='utf-8')
+                return super(BAS, self).__eq__(other)
+
+        class MaskedBAS(np.ma.MaskedArray, BAS):
+            pass
+
+        bas = np.array([b'a']).view(BAS)
+        a = np.array(['a'])
+        mbas = bas.view(MaskedBAS)
+        ma = a.view(np.ma.MaskedArray)
+        # Normal arrays cannot compare bytes and str, but BAS can.
+        assert_(a.__eq__(bas) is NotImplemented)
+        assert_equal(bas.__eq__(a), [True])
+        assert_equal(a == bas, [True])
+        # So, a normal masked array should also be unable to compare.
+        assert_(ma.__eq__(bas) is NotImplemented)
+        assert_(ma.__eq__(mbas) is NotImplemented)
+        assert_(ma.__ne__(bas) is NotImplemented)
+        assert_(ma.__ne__(mbas) is NotImplemented)
+        # A masked BAS should be able to compare equality.
+        assert_equal(mbas.__eq__(a), [True])
+        assert_equal(mbas.__eq__(ma), [True])
+        assert_equal(mbas == ma, [True])
+        # but since we didn't define __ne__, it cannot compare inequality.
+        assert_(mbas.__ne__(a) is NotImplemented)
+        assert_(mbas.__ne__(ma) is NotImplemented)
+        assert_((mbas != a) is True)
+        assert_((mbas != ma) is True)
+
     def test_numpyarithmetics(self):
         # Check that the mask is not back-propagated when using numpy functions
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
