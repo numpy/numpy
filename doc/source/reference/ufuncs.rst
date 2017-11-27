@@ -387,7 +387,9 @@ advanced usage and will not typically be used.
     search and choose a particular loop. A list of available signatures is
     provided by the **types** attribute of the ufunc object. For backwards
     compatibility this argument can also be provided as *sig*, although
-    the long form is preferred.
+    the long form is preferred. Note that this should not be confused with
+    the generalized ufunc signature that is stored in the **signature**
+    attribute of the of the ufunc object.
 
 *extobj*
 
