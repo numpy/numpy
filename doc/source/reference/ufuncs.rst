@@ -334,7 +334,7 @@ advanced usage and will not typically be used.
     Accepts a boolean array which is broadcast together with the operands.
     Values of True indicate to calculate the ufunc at that position, values
     of False indicate to leave the value in the output alone. This argument
-    cannot be used for generalized ufuncs (as these take non-scalar input).
+    cannot be used for generalized ufuncs as those take non-scalar input.
 
 *casting*
 
