@@ -39,7 +39,7 @@ else:
 
 import numpy as np
 from . import numerictypes as _nt
-from .umath import absolute, not_equal, isnan, isinf, isfinite
+from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, dtype, ndarray,
@@ -1075,25 +1075,21 @@ class DatetimeFormat(object):
 
 class TimedeltaFormat(object):
     def __init__(self, data):
-        nat_value = array(['NaT'], dtype=data.dtype)[0]
-        int_dtype = dtype(data.dtype.byteorder + 'i8')
-        int_view = data.view(int_dtype)
-        v = int_view[not_equal(int_view, nat_value.view(int_dtype))]
-        if len(v) > 0:
+        non_nat = data[~isnat(data)]
+        if len(non_nat) > 0:
             # Max str length of non-NaT elements
-            max_str_len = max(len(str(np.max(v))),
-                              len(str(np.min(v))))
+            max_str_len = max(len(str(np.max(non_nat).astype('i8'))),
+                              len(str(np.min(non_nat).astype('i8'))))
         else:
             max_str_len = 0
-        if len(v) < len(data):
+        if len(non_nat) < data.size:
             # data contains a NaT
             max_str_len = max(max_str_len, 5)
         self.format = '%' + str(max_str_len) + 'd'
         self._nat = "'NaT'".rjust(max_str_len)
 
     def __call__(self, x):
-        # TODO: After NAT == NAT deprecation should be simplified:
-        if (x + 1).view('i8') == x.view('i8'):
+        if isnat(x):
             return self._nat
         else:
             return self.format % x.astype('i8')
