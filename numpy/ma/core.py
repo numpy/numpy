@@ -1624,7 +1624,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
 
     # Make sure the input dtype is valid.
     dtype = make_mask_descr(dtype)
-    
+
     # legacy boolean special case: "existence of fields implies true"
     if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
         return np.ones(m.shape, dtype=dtype)
@@ -3968,7 +3968,7 @@ class MaskedArray(ndarray):
             return array_ufunc is None
 
     def _comparison(self, other, compare):
-        """Compare self with other using operator.eq or operator.ne.
+        """Compare self with other using ``compare`` on the data.
 
         When either of the elements is masked, the result is masked as well,
         but the underlying boolean data are still set, with self and other
@@ -3977,6 +3977,9 @@ class MaskedArray(ndarray):
         For structured arrays, all fields are combined, with masked values
         ignored. The result is masked if all fields were masked, with self
         and other considered equal only if both were fully masked.
+
+        The comparison function is defined in __eq__ and __ne__ to return
+        ``getattr(self, {'__eq__', '__ne__'})(other)``.
         """
         omask = getmask(other)
         smask = self.mask
@@ -4002,6 +4005,9 @@ class MaskedArray(ndarray):
             sdata = self.data
 
         check = compare(sdata, odata)
+
+        if check is NotImplemented:
+            return NotImplemented
 
         if isinstance(check, (np.bool_, bool)):
             return masked if mask else check
@@ -4032,7 +4038,8 @@ class MaskedArray(ndarray):
         ignored. The result is masked if all fields were masked, with self
         and other considered equal only if both were fully masked.
         """
-        return self._comparison(other, operator.eq)
+        return self._comparison(other, lambda self, other:
+                                getattr(self, '__eq__')(other))
 
     def __ne__(self, other):
         """Check whether other does not equal self elementwise.
@@ -4045,7 +4052,8 @@ class MaskedArray(ndarray):
         ignored. The result is masked if all fields were masked, with self
         and other considered equal only if both were fully masked.
         """
-        return self._comparison(other, operator.ne)
+        return self._comparison(other, lambda self, other:
+                                getattr(self, '__ne__')(other))
 
     def __add__(self, other):
         """
@@ -4301,7 +4309,7 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
-    
+
     def __long__(self):
         """
         Convert to long.
@@ -4312,7 +4320,6 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
-      
 
     def get_imag(self):
         """
