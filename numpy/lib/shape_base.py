@@ -297,7 +297,7 @@ def expand_dims(a, axis):
     >>> y.shape
     (1, 2)
 
-    >>> y = np.expand_dims(x, axis=1)  # Equivalent to x[:,newaxis]
+    >>> y = np.expand_dims(x, axis=1)  # Equivalent to x[:,np.newaxis]
     >>> y
     array([[1],
            [2]])
@@ -435,8 +435,8 @@ def array_split(ary, indices_or_sections, axis=0):
     Please refer to the ``split`` documentation.  The only difference
     between these functions is that ``array_split`` allows
     `indices_or_sections` to be an integer that does *not* equally
-    divide the axis. For an array of length l that should be split 
-    into n sections, it returns l % n sub-arrays of size l//n + 1 
+    divide the axis. For an array of length l that should be split
+    into n sections, it returns l % n sub-arrays of size l//n + 1
     and the rest of size l//n.
 
     See Also
