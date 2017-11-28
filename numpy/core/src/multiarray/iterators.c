@@ -342,7 +342,9 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     it->ao = ao;
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = dims[i] - 1;
         k = i - diff;
@@ -1324,7 +1326,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
         it->nd_m1 = mit->nd - 1;
         it->size = tmp;
         nd = PyArray_NDIM(it->ao);
-        it->factors[mit->nd-1] = 1;
+        if (nd != 0) {
+            it->factors[mit->nd-1] = 1;
+        }
         for (j = 0; j < mit->nd; j++) {
             it->dims_m1[j] = mit->dimensions[j] - 1;
             k = j + nd - mit->nd;
