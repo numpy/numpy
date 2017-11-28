@@ -9,6 +9,7 @@ Datetime Support Functions
    :toctree: generated/
 
    datetime_as_string
+   datetime_data
 
 
 Business Day Functions
