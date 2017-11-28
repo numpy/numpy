@@ -27,14 +27,32 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     Execute `func1d(a, *args)` where `func1d` operates on 1-D arrays and `a`
     is a 1-D slice of `arr` along `axis`.
 
+    This is equivalent to (but faster than) the following use of `ndindex` and
+    `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nk):
+                f = func1d(arr[ii + s_[:,] + kk])
+                Nj = f.shape
+                for jj in ndindex(Nj):
+                    out[ii + jj + kk] = f[jj]
+
+    Equivalently, eliminating the inner loop, this can be expressed as::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nk):
+                out[ii + s_[...,] + kk] = func1d(arr[ii + s_[:,] + kk])
+
     Parameters
     ----------
-    func1d : function
+    func1d : function (M,) -> (Nj...)
         This function should accept 1-D arrays. It is applied to 1-D
         slices of `arr` along the specified axis.
     axis : integer
         Axis along which `arr` is sliced.
-    arr : ndarray
+    arr : ndarray (Ni..., M, Nk...)
         Input array.
     args : any
         Additional arguments to `func1d`.
@@ -46,11 +64,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     Returns
     -------
-    apply_along_axis : ndarray
-        The output array. The shape of `outarr` is identical to the shape of
+    out : ndarray  (Ni..., Nj..., Nk...)
+        The output array. The shape of `out` is identical to the shape of
         `arr`, except along the `axis` dimension. This axis is removed, and
         replaced with new dimensions equal to the shape of the return value
-        of `func1d`. So if `func1d` returns a scalar `outarr` will have one
+        of `func1d`. So if `func1d` returns a scalar `out` will have one
         fewer dimensions than `arr`.
 
     See Also
