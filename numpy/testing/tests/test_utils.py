@@ -4,6 +4,7 @@ import warnings
 import sys
 import os
 import itertools
+import textwrap
 
 import numpy as np
 from numpy.testing import (
@@ -289,16 +290,18 @@ class TestEqual(TestArrayEqual):
         except AssertionError as e:
             msg = str(e)
             msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
-            msg_reference = "\nArrays are not equal\n\n" \
-                "(shapes (2,), (1, 2) mismatch)\n" \
-                " x: array([1, 2])\n" \
-                " y: [repr failed for <matrix>: The truth value of an array " \
-                "with more than one element is ambiguous. Use a.any() or " \
-                "a.all()]"
+            msg_reference = textwrap.dedent("""\
+
+            Arrays are not equal
+
+            (shapes (2,), (1, 2) mismatch)
+             x: array([1, 2])
+             y: [repr failed for <matrix>: %d format: a number is required, not matrix]""")
             try:
                 self.assertEqual(msg, msg_reference)
             except AssertionError:
                 self.assertEqual(msg2, msg_reference)
+
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
 
